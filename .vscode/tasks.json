@@ -1,0 +1,335 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // ===================================================================
+        // CORE AITHERZERO TASKS
+        // ===================================================================
+        
+        {
+            "label": "AitherZero: Initialize Environment",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './AitherZero.psd1' -Force; Write-Host 'AitherZero initialized successfully' -ForegroundColor Green"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "AitherZero: Run PSScriptAnalyzer",
+            "type": "shell", 
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./az.ps1",
+                "0404"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$powershell"
+            ]
+        },
+        
+        {
+            "label": "AitherZero: Run Unit Tests",
+            "type": "shell",
+            "command": "pwsh", 
+            "args": [
+                "-File",
+                "./az.ps1",
+                "0402"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        // ===================================================================
+        // AI AGENT TASKS
+        // ===================================================================
+        
+        {
+            "label": "AI: Setup All Agents",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./az.ps1",
+                "0730",
+                "-Provider", "All"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "AI: Validate Agent Configuration",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File", 
+                "./az.ps1",
+                "0730",
+                "-ValidateOnly"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "AI: Code Review with Claude",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./az.ps1", 
+                "0731"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared" 
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "AI: Generate Tests",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./az.ps1",
+                "0732"
+            ],
+            "group": {
+                "kind": "build", 
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "AI: Generate Documentation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./az.ps1",
+                "0733"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        // ===================================================================
+        // GIT & CI/CD TASKS
+        // ===================================================================
+        
+        {
+            "label": "Git: Create Feature Branch with AI",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./az.ps1",
+                "0701",
+                "-Type", "feature"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "Git: AI-Assisted Commit",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File", 
+                "./az.ps1",
+                "0702"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always", 
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        // ===================================================================
+        // DEVELOPMENT WORKFLOW TASKS
+        // ===================================================================
+        
+        {
+            "label": "Build: Full Quality Check",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "AitherZero: Initialize Environment",
+                "AitherZero: Run PSScriptAnalyzer",
+                "AitherZero: Run Unit Tests",
+                "AI: Validate Agent Configuration"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "Development: AI-Powered Setup",
+            "dependsOrder": "sequence", 
+            "dependsOn": [
+                "AitherZero: Initialize Environment",
+                "AI: Setup All Agents",
+                "AI: Validate Agent Configuration"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        // ===================================================================
+        // UTILITY TASKS
+        // ===================================================================
+        
+        {
+            "label": "Utility: Clean Logs",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Remove-Item ./logs/*.log -ErrorAction SilentlyContinue; Write-Host 'Logs cleaned' -ForegroundColor Green"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent", 
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        
+        {
+            "label": "Utility: Show Project Report",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./az.ps1",
+                "0510",
+                "-ShowAll"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

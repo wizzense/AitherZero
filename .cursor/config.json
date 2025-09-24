@@ -1,0 +1,56 @@
+{
+    "version": "1.0",
+    "configurations": {
+        "cursor": {
+            "enableAI": true,
+            "aiModel": "gpt-4",
+            "enableTabAutocomplete": true,
+            "enableInlineChat": true,
+            "maxTokens": 4000,
+            "temperature": 0.2,
+            "enableCodeActions": true,
+            "enableRefactoring": true,
+            "autoImportSuggestions": true
+        },
+        "project": {
+            "name": "AitherZero",
+            "type": "powershell-infrastructure",
+            "rootPath": ".",
+            "mainEntry": "Start-AitherZero.ps1",
+            "configPath": "config.psd1",
+            "testPath": "tests/",
+            "scriptPath": "automation-scripts/",
+            "modulePath": "domains/"
+        },
+        "ai": {
+            "contextFiles": [
+                ".github/copilot-instructions.md",
+                "README.md",
+                "config.psd1",
+                "config.example.psd1",
+                "docs/architecture.md",
+                "domains/*/README.md"
+            ],
+            "excludePatterns": [
+                "logs/**",
+                "backups/**", 
+                "archive/**",
+                "temp-*/**",
+                "*.log",
+                ".terraform/**",
+                "node_modules/**",
+                "__pycache__/**"
+            ],
+            "includePatterns": [
+                "**/*.ps1",
+                "**/*.psm1",
+                "**/*.psd1",
+                "**/*.md",
+                "**/*.json",
+                "**/*.yml",
+                "**/*.yaml",
+                "**/*.tf"
+            ]
+        }
+    }
+}

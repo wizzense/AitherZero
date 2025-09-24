@@ -1,0 +1,79 @@
+{
+    "recommendations": [
+        // Core PowerShell Development
+        "ms-vscode.powershell",
+        "ms-vscode.vscode-powershell", 
+        "ms-vscode.powershell-preview",
+        
+        // AI Code Assistants (Primary Focus)
+        "github.copilot",
+        "github.copilot-chat",
+        "github.copilot-labs",
+        "continue.continue",
+        "sourcegraph.cody-ai",
+        "cursor.cursor-vscode",
+        "tabnine.tabnine-vscode",
+        
+        // Claude Integration & Anthropic
+        "anthropic.claude-dev",
+        
+        // Testing Framework
+        "pester.pester",
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        
+        // Infrastructure as Code & DevOps
+        "hashicorp.terraform",
+        "gamunu.opentofu",
+        "redhat.ansible",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "ms-azuretools.vscode-docker",
+        
+        // Git & Version Control
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "github.vscode-pull-request-github",
+        "github.vscode-github-actions",
+        "donjayamanne.githistory",
+        
+        // Code Quality & Analysis
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker",
+        "sonarsource.sonarqube-for-ide",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        
+        // Documentation & Markdown
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        "bierner.markdown-mermaid",
+        "shd101wyy.markdown-preview-enhanced",
+        
+        // Productivity & UI Enhancement
+        "gruntfuggly.todo-tree",
+        "alefragnani.bookmarks",
+        "vscode-icons-team.vscode-icons",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        "ms-vscode.vscode-file-utils",
+        
+        // Remote Development
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode-remote.remote-ssh",
+        "ms-vscode-remote.remote-wsl",
+        "ms-vsliveshare.vsliveshare",
+        
+        // Language Support for Multi-Platform
+        "ms-python.python",
+        "golang.go",
+        "ms-dotnettools.csharp",
+        "redhat.java",
+        "ms-vscode.cmake-tools"
+    ],
+    "unwantedRecommensions": [
+        // Remove potentially conflicting extensions
+        "ms-python.flake8",
+        "ms-python.pylint"
+    ]
+}

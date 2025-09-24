@@ -1,0 +1,195 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // ===================================================================
+        // AITHERZERO DEBUGGING
+        // ===================================================================
+        
+        {
+            "name": "Debug: AitherZero Main Entry",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/Start-AitherZero.ps1",
+            "args": ["-DebugMode"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true
+        },
+        
+        {
+            "name": "Debug: AI Agent Setup",
+            "type": "PowerShell", 
+            "request": "launch",
+            "script": "${workspaceFolder}/automation-scripts/0730_Setup-AIAgents.ps1",
+            "args": ["-ValidateOnly", "-Verbose"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true
+        },
+        
+        {
+            "name": "Debug: Claude Integration",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/domains/ai-agents/ClaudeCodeIntegration.psm1",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true,
+            "env": {
+                "ANTHROPIC_API_KEY": "${env:ANTHROPIC_API_KEY}"
+            }
+        },
+        
+        {
+            "name": "Debug: AI Workflow Orchestrator",
+            "type": "PowerShell",
+            "request": "launch", 
+            "script": "${workspaceFolder}/domains/ai-agents/AIWorkflowOrchestrator.psm1",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true
+        },
+        
+        // ===================================================================
+        // TESTING & VALIDATION
+        // ===================================================================
+        
+        {
+            "name": "Debug: Unit Tests",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/az.ps1",
+            "args": ["0402", "-Verbose"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true
+        },
+        
+        {
+            "name": "Debug: PSScriptAnalyzer", 
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/az.ps1",
+            "args": ["0404"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true
+        },
+        
+        {
+            "name": "Debug: Pester Tests (Current File)",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/tools/Invoke-PesterTests.ps1",
+            "args": ["-Path", "${file}"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true
+        },
+        
+        // ===================================================================
+        // MODULE DEBUGGING
+        // ===================================================================
+        
+        {
+            "name": "Debug: Configuration Module",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/domains/configuration/Configuration.psm1", 
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true,
+            "preLaunchTask": "AitherZero: Initialize Environment"
+        },
+        
+        {
+            "name": "Debug: Infrastructure Module",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/domains/infrastructure/Infrastructure.psm1",
+            "cwd": "${workspaceFolder}", 
+            "createTemporaryIntegratedConsole": true,
+            "preLaunchTask": "AitherZero: Initialize Environment"
+        },
+        
+        // ===================================================================
+        // AUTOMATION SCRIPT DEBUGGING  
+        // ===================================================================
+        
+        {
+            "name": "Debug: Current Automation Script",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${file}",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true,
+            "env": {
+                "AITHERZERO_ROOT": "${workspaceFolder}",
+                "AITHERZERO_DEBUG": "true"
+            }
+        },
+        
+        {
+            "name": "Debug: Git Automation (0701)",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/automation-scripts/0701_Git-CreateBranch.ps1",
+            "args": ["-Type", "feature", "-Name", "debug-test"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true
+        },
+        
+        // ===================================================================
+        // AI-SPECIFIC DEBUGGING
+        // ===================================================================
+        
+        {
+            "name": "Debug: AI Code Review",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/automation-scripts/0731_Invoke-AICodeReview.ps1",
+            "args": ["-Provider", "Claude", "-Verbose"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true,
+            "env": {
+                "ANTHROPIC_API_KEY": "${env:ANTHROPIC_API_KEY}"
+            }
+        },
+        
+        {
+            "name": "Debug: AI Test Generation", 
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/automation-scripts/0732_Generate-AITests.ps1",
+            "args": ["-Provider", "Gemini", "-Verbose"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true,
+            "env": {
+                "GOOGLE_API_KEY": "${env:GOOGLE_API_KEY}"
+            }
+        },
+        
+        {
+            "name": "Debug: AI Documentation Generation",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/automation-scripts/0733_Create-AIDocs.ps1", 
+            "args": ["-Provider", "Codex", "-Verbose"],
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true,
+            "env": {
+                "OPENAI_API_KEY": "${env:OPENAI_API_KEY}"
+            }
+        },
+        
+        // ===================================================================
+        // INTERACTIVE DEBUGGING
+        // ===================================================================
+        
+        {
+            "name": "Interactive: PowerShell with AitherZero",
+            "type": "PowerShell",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": true,
+            "script": "",
+            "args": [
+                "-NoExit", 
+                "-Command",
+                "Import-Module './AitherZero.psd1' -Force; Write-Host 'AitherZero loaded for interactive debugging' -ForegroundColor Cyan"
+            ]
+        }
+    ]
+}
