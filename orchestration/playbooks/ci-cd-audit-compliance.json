@@ -96,7 +96,7 @@
       "sequence": [],
       "customScript": {
         "description": "Audit data handling and privacy controls",
-        "script": "# Check for PII handling, data retention policies, and privacy controls"
+        "script": "Write-Host 'Auditing data handling and privacy controls...'; $piiScanEnabled = Test-Path '.github/workflows/*' | ForEach-Object { Get-Content $_ | Select-String -Pattern 'pii|personal.*data|gdpr' -Quiet } | Where-Object { $_ -eq $true }; if ($piiScanEnabled) { Write-Host 'PII scanning patterns found in workflows.' } else { Write-Warning 'No PII scanning patterns detected in workflows!' }; $dataRetentionPolicy = Test-Path 'docs/data-retention-policy.md'; if ($dataRetentionPolicy) { Write-Host 'Data retention policy documentation found.' } else { Write-Warning 'Data retention policy documentation missing!' }; $encryptionCheck = Get-ChildItem -Path '.github/workflows/*' -ErrorAction SilentlyContinue | Get-Content | Select-String -Pattern 'encrypt|ssl|tls' -Quiet; if ($encryptionCheck) { Write-Host 'Encryption configurations found in workflows.' } else { Write-Warning 'No encryption configurations detected!' }"
       },
       "audit": {
         "checkpoints": [
@@ -115,7 +115,7 @@
       "sequence": [],
       "customScript": {
         "description": "Audit access controls and permissions",
-        "script": "# Review GitHub permissions, secrets access, and role-based controls"
+        "script": "Write-Host 'Auditing access controls and permissions...'; $githubPermsCheck = Test-Path '.github/CODEOWNERS'; if ($githubPermsCheck) { Write-Host 'CODEOWNERS file found for access control.' } else { Write-Warning 'CODEOWNERS file missing!' }; $secretsCheck = Get-ChildItem -Path '.github/workflows/*' -ErrorAction SilentlyContinue | Get-Content | Select-String -Pattern 'secrets\\.' | Measure-Object | Select-Object -ExpandProperty Count; Write-Host \"Found $secretsCheck secret references in workflows.\"; $branchProtection = Test-Path '.github/branch-protection.yml' -ErrorAction SilentlyContinue; if ($branchProtection) { Write-Host 'Branch protection configuration found.' } else { Write-Warning 'Branch protection configuration not found!' }; $mfaCheck = Get-Content '.github/workflows/*' -ErrorAction SilentlyContinue | Select-String -Pattern 'require.*mfa|two.*factor|2fa' -Quiet; if ($mfaCheck) { Write-Host 'MFA requirements found in workflows.' } else { Write-Warning 'No MFA requirements detected in workflows!' }"
       },
       "audit": {
         "checkpoints": [
@@ -174,7 +174,7 @@
       "sequence": [],
       "customScript": {
         "description": "Audit disaster recovery and business continuity plans",
-        "script": "# Validate backup procedures, recovery time objectives, and continuity plans"
+        "script": "Write-Host 'Auditing Disaster Recovery & Business Continuity...'; if (Test-Path './backup/config.json') { Write-Host 'Backup configuration found.' } else { Write-Warning 'Backup configuration missing!' }; if (Test-Path './docs/DR_RTO_RPO.md') { Write-Host 'RTO/RPO documentation found.' } else { Write-Warning 'RTO/RPO documentation missing!' }; if (Test-Path './docs/business_continuity_plan.md') { Write-Host 'Business continuity plan found.' } else { Write-Warning 'Business continuity plan missing!' }; $backupValidation = Get-ChildItem -Path './backup/*' -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count; Write-Host \"Found $backupValidation backup-related files.\"; $recoveryScripts = Get-ChildItem -Path './recovery-scripts/*', './disaster-recovery/*' -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count; Write-Host \"Found $recoveryScripts recovery automation scripts.\""
       },
       "audit": {
         "checkpoints": [

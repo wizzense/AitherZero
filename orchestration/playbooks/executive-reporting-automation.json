@@ -65,7 +65,7 @@
       "sequence": [],
       "customScript": {
         "description": "Calculate business-relevant performance metrics",
-        "script": "$reliability = @{ MTBF = 99.8; MTTR = '< 2 hours'; Availability = '99.95%'; }; Write-Output 'Reliability metrics calculated'"
+        "script": "$MTBF = Get-Content -Path $env:MTBF_PATH -ErrorAction SilentlyContinue; if (-not $MTBF) { $MTBF = 'N/A' }; $MTTR = Get-Content -Path $env:MTTR_PATH -ErrorAction SilentlyContinue; if (-not $MTTR) { $MTTR = 'N/A' }; $Availability = Get-Content -Path $env:AVAILABILITY_PATH -ErrorAction SilentlyContinue; if (-not $Availability) { $Availability = 'N/A' }; $reliability = @{ MTBF = $MTBF; MTTR = $MTTR; Availability = $Availability }; Write-Output 'Reliability metrics calculated from environment variables'"
       },
       "continueOnError": false
     },

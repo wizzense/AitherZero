@@ -72,8 +72,6 @@ param(
     
     [switch]$CI,
     
-    [switch]$WhatIf,
-    
     [switch]$Force,
     
     [switch]$SendEmail,
@@ -207,13 +205,59 @@ function Get-BusinessKPIs {
         }
     }
     
-    # Calculate operational metrics
-    $kpis.OperationalMetrics.SystemUptime = [Math]::Round((Get-Random -Minimum 99.5 -Maximum 99.99), 2)
-    $kpis.OperationalMetrics.PerformanceIndex = [Math]::Round((Get-Random -Minimum 80 -Maximum 95), 1)
+    # TODO: Replace placeholder values below with actual metrics from monitoring systems and configuration files.
+    # Operational metrics should be calculated from real system data sources, not randomly generated.
+    # Consider implementing integration with monitoring tools like Prometheus, Grafana, or Azure Monitor.
+    $kpis.OperationalMetrics.SystemUptime = if (Test-Path "${script:ProjectRoot}/metrics/uptime.json") {
+        try {
+            $uptimeData = Get-Content "${script:ProjectRoot}/metrics/uptime.json" | ConvertFrom-Json
+            [Math]::Round($uptimeData.Percentage, 2)
+        } catch {
+            Write-ExecutiveLog "Failed to parse uptime metrics: $($_.Exception.Message)" -Level Warning
+            99.5  # Fallback baseline value
+        }
+    } else {
+        99.5  # Default baseline value - replace with actual monitoring integration
+    }
     
-    # Security posture calculation
-    $kpis.SecurityMetrics.SecurityPosture = [Math]::Round((Get-Random -Minimum 85 -Maximum 98), 1)
-    $kpis.SecurityMetrics.ComplianceScore = [Math]::Round((Get-Random -Minimum 90 -Maximum 99), 1)
+    $kpis.OperationalMetrics.PerformanceIndex = if (Test-Path "${script:ProjectRoot}/metrics/performance.json") {
+        try {
+            $perfData = Get-Content "${script:ProjectRoot}/metrics/performance.json" | ConvertFrom-Json
+            [Math]::Round($perfData.Index, 1)
+        } catch {
+            Write-ExecutiveLog "Failed to parse performance metrics: $($_.Exception.Message)" -Level Warning
+            85.0  # Fallback baseline value
+        }
+    } else {
+        85.0  # Default baseline value - replace with actual monitoring integration
+    }
+    
+    # TODO: Replace placeholder values below with actual security posture and compliance calculations from real data sources.
+    # Security metrics must not be randomly generated. Set to 0 or "N/A" until implemented.
+    # Consider implementing integration with security scanning tools, vulnerability databases, and compliance frameworks.
+    $kpis.SecurityMetrics.SecurityPosture = if (Test-Path "${script:ProjectRoot}/security/posture-score.json") {
+        try {
+            $securityData = Get-Content "${script:ProjectRoot}/security/posture-score.json" | ConvertFrom-Json
+            [Math]::Round($securityData.OverallScore, 1)
+        } catch {
+            Write-ExecutiveLog "Failed to parse security posture data: $($_.Exception.Message)" -Level Warning
+            0  # Set to 0 until real data source is implemented
+        }
+    } else {
+        0  # Set to 0 until real security monitoring is implemented
+    }
+    
+    $kpis.SecurityMetrics.ComplianceScore = if (Test-Path "${script:ProjectRoot}/compliance/score.json") {
+        try {
+            $complianceData = Get-Content "${script:ProjectRoot}/compliance/score.json" | ConvertFrom-Json
+            [Math]::Round($complianceData.OverallCompliance, 1)
+        } catch {
+            Write-ExecutiveLog "Failed to parse compliance data: $($_.Exception.Message)" -Level Warning
+            0  # Set to 0 until real data source is implemented
+        }
+    } else {
+        0  # Set to 0 until real compliance monitoring is implemented
+    }
     
     Write-ExecutiveLog "Business KPIs calculated successfully" -Level Success -Data @{
         QualityScore = $kpis.QualityMetrics.QualityScore
