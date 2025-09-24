@@ -53,34 +53,100 @@ function Initialize-AIWorkflowOrchestrator {
                 "claude" {
                     if (Test-Path "$PSScriptRoot/ClaudeCodeIntegration.psm1") {
                         Import-Module "$PSScriptRoot/ClaudeCodeIntegration.psm1" -Force
+                        
+                        # Test Claude connection
+                        $claudeAvailable = $false
+                        try {
+                            if (Get-Command Initialize-ClaudeIntegration -ErrorAction SilentlyContinue) {
+                                $claudeAvailable = Initialize-ClaudeIntegration
+                            }
+                        } catch {
+                            Write-WorkflowLog "Claude initialization failed: $_" -Level Warning
+                        }
+                        
                         $script:AgentPool.Claude = @{
                             Type = "Claude"
-                            Available = $true
-                            Capabilities = @("code_analysis", "documentation", "testing", "review")
+                            Available = $claudeAvailable
+                            Capabilities = @("code_analysis", "documentation", "testing", "review", "security_analysis", "refactoring")
+                            Specialties = @("security", "code_quality", "architecture_review")
+                            MaxTokens = 4096
+                            Temperature = 0.7
+                            Model = "claude-3-sonnet-20240229"
                         }
-                        Write-WorkflowLog "Claude agent registered" -Level Success
+                        
+                        if ($claudeAvailable) {
+                            Write-WorkflowLog "Claude agent registered and available" -Level Success
+                        } else {
+                            Write-WorkflowLog "Claude agent registered but not available (check ANTHROPIC_API_KEY)" -Level Warning
+                        }
+                    } else {
+                        Write-WorkflowLog "ClaudeCodeIntegration.psm1 not found" -Level Warning
                     }
                 }
                 "gemini" {
                     if (Test-Path "$PSScriptRoot/GeminiIntegration.psm1") {
                         Import-Module "$PSScriptRoot/GeminiIntegration.psm1" -Force
+                        
+                        # Test Gemini connection
+                        $geminiAvailable = $false
+                        try {
+                            if (Get-Command Initialize-GeminiIntegration -ErrorAction SilentlyContinue) {
+                                $geminiAvailable = Initialize-GeminiIntegration
+                            }
+                        } catch {
+                            Write-WorkflowLog "Gemini initialization failed: $_" -Level Warning
+                        }
+                        
                         $script:AgentPool.Gemini = @{
                             Type = "Gemini"
-                            Available = $true
-                            Capabilities = @("code_generation", "optimization", "analysis")
+                            Available = $geminiAvailable
+                            Capabilities = @("code_generation", "optimization", "analysis", "large_context_processing")
+                            Specialties = @("optimization", "performance", "code_generation", "bulk_analysis")
+                            MaxTokens = 1000000  # Large context window
+                            Temperature = 0.9
+                            Model = "gemini-pro"
                         }
-                        Write-WorkflowLog "Gemini agent registered" -Level Success
+                        
+                        if ($geminiAvailable) {
+                            Write-WorkflowLog "Gemini agent registered and available" -Level Success
+                        } else {
+                            Write-WorkflowLog "Gemini agent registered but not available (check GOOGLE_API_KEY)" -Level Warning
+                        }
+                    } else {
+                        Write-WorkflowLog "GeminiIntegration.psm1 not found" -Level Warning
                     }
                 }
                 "codex" {
                     if (Test-Path "$PSScriptRoot/CodexIntegration.psm1") {
                         Import-Module "$PSScriptRoot/CodexIntegration.psm1" -Force
+                        
+                        # Test Codex connection
+                        $codexAvailable = $false
+                        try {
+                            if (Get-Command Initialize-CodexIntegration -ErrorAction SilentlyContinue) {
+                                $codexAvailable = Initialize-CodexIntegration
+                            }
+                        } catch {
+                            Write-WorkflowLog "Codex initialization failed: $_" -Level Warning
+                        }
+                        
                         $script:AgentPool.Codex = @{
                             Type = "Codex"
-                            Available = $true
-                            Capabilities = @("code_completion", "refactoring", "bug_fixing")
+                            Available = $codexAvailable
+                            Capabilities = @("documentation", "code_generation", "refactoring", "code_review")
+                            Specialties = @("documentation", "technical_writing", "code_explanation")
+                            MaxTokens = 8192
+                            Temperature = 0.5
+                            Model = "gpt-4"
                         }
-                        Write-WorkflowLog "Codex agent registered" -Level Success
+                        
+                        if ($codexAvailable) {
+                            Write-WorkflowLog "Codex agent registered and available" -Level Success
+                        } else {
+                            Write-WorkflowLog "Codex agent registered but not available (check OPENAI_API_KEY)" -Level Warning
+                        }
+                    } else {
+                        Write-WorkflowLog "CodexIntegration.psm1 not found" -Level Warning
                     }
                 }
             }

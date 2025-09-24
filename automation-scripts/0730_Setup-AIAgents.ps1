@@ -65,8 +65,15 @@ function Get-AIConfig {
     
     try {
         if (Test-Path $ConfigPath) {
-            $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
-            return $config.AI
+            # Handle .psd1 files (PowerShell Data Files)
+            if ($ConfigPath -like "*.psd1") {
+                $config = Import-PowerShellDataFile -Path $ConfigPath
+                return $config.AI
+            } else {
+                # Handle JSON files
+                $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+                return $config.AI
+            }
         } else {
             Write-Warning "Config file not found at $ConfigPath"
             return $null
@@ -316,7 +323,7 @@ function Main {
     }
     
     $providers = if ($Provider -eq 'All') {
-        $aiConfig.Providers.PSObject.Properties.Name | Where-Object { $aiConfig.Providers.$_.Enabled }
+        $aiConfig.Providers.Keys | Where-Object { $aiConfig.Providers[$_].Enabled }
     } else {
         @($Provider)
     }
@@ -325,7 +332,7 @@ function Main {
     $availableProviders = @()
     
     foreach ($p in $providers) {
-        $providerConfig = $aiConfig.Providers.$p
+        $providerConfig = $aiConfig.Providers[$p]
         
         if (-not $providerConfig -or -not $providerConfig.Enabled) {
             Write-AILog "$p is not enabled in configuration" -Level Warning

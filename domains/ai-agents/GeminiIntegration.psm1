@@ -36,7 +36,7 @@ function Write-GeminiLog {
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message $Message -Level $Level -Source "GeminiIntegration"
     } else {
-        Write-Host "[$Level] Gemini: $Message"
+        Write-Output "[$Level] Gemini: $Message"
     }
 }
 
@@ -416,14 +416,16 @@ function Update-RateLimit {
     .SYNOPSIS
         Update rate limiting counters
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [int]$TokensUsed = 0
     )
     
-    $script:RateLimiter.LastRequest = Get-Date
-    $script:RateLimiter.RequestCount++
-    $script:RateLimiter.TokenCount += $TokensUsed
+    if ($PSCmdlet.ShouldProcess("Rate limiter", "Update counters")) {
+        $script:RateLimiter.LastRequest = Get-Date
+        $script:RateLimiter.RequestCount++
+        $script:RateLimiter.TokenCount += $TokensUsed
+    }
 }
 
 function Get-GeminiUsage {

@@ -36,7 +36,7 @@ function Write-CodexLog {
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message $Message -Level $Level -Source "CodexIntegration"
     } else {
-        Write-Host "[$Level] Codex: $Message"
+        Write-Output "[$Level] Codex: $Message"
     }
 }
 
