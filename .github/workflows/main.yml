@@ -67,34 +67,39 @@ jobs:
     
     - name: Bootstrap
       shell: pwsh
-      run: ./bootstrap.ps1 -Mode New -NonInteractive
+      run: |
+        chmod +x *.ps1 *.sh 2>/dev/null || true
+        pwsh ./bootstrap.ps1 -Mode New -NonInteractive
     
-    - name: Run Pipeline
+    - name: Syntax Validation
       shell: pwsh
       run: |
-        # Determine playbook and profile based on context
-        $playbook = '${{ github.event.inputs.playbook }}'
-        $ProfileName = '${{ github.event.inputs.profile }}'
+        Write-Host "Running syntax validation..." -ForegroundColor Cyan
+        pwsh ./automation-scripts/0407_Validate-Syntax.ps1 -FilePath "./Start-AitherZero.ps1"
         
-        if ($playbook -eq '' -or $playbook -eq 'auto') {
-          if ('${{ github.event_name }}' -eq 'pull_request') {
-            $playbook = 'github-cicd'
-            $ProfileName = 'pr'
-          } elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
-            $playbook = 'github-cicd'
-            $ProfileName = 'full'
-          } else {
-            $playbook = 'test-ci'
-            $ProfileName = ''
+        # Validate key automation scripts
+        $scripts = @(
+          "./automation-scripts/0402_Run-UnitTests.ps1",
+          "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+          "./automation-scripts/0407_Validate-Syntax.ps1"
+        )
+        foreach ($script in $scripts) {
+          if (Test-Path $script) {
+            pwsh ./automation-scripts/0407_Validate-Syntax.ps1 -FilePath $script
           }
         }
-        
-        # Run orchestration
-        if ($ProfileName -and $ProfileName -ne 'auto') {
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -PlaybookProfile $ProfileName -CI
-        } else {
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -CI
-        }
+    
+    - name: Run PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        Write-Host "Running PSScriptAnalyzer..." -ForegroundColor Cyan
+        pwsh ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+    
+    - name: Run Unit Tests
+      shell: pwsh
+      run: |
+        Write-Host "Running unit tests..." -ForegroundColor Cyan
+        pwsh ./automation-scripts/0402_Run-UnitTests.ps1 -CI
     
     - name: Upload Results
       if: always() && !cancelled()
@@ -111,7 +116,11 @@ jobs:
       if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-latest'
       shell: pwsh
       run: |
-        # Post PR comment if results exist
-        if (Test-Path "./test-results/results.json") {
-          ./az 0709 -CI
+        # Create simple test report for PR
+        Write-Host "Creating test summary for PR..." -ForegroundColor Cyan
+        if (Test-Path "./tests/results/") {
+          $testFiles = Get-ChildItem -Path "./tests/results/" -Filter "*.xml" -ErrorAction SilentlyContinue
+          if ($testFiles) {
+            Write-Host "Found test results: $($testFiles.Count) files"
+          }
         }
