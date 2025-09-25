@@ -322,7 +322,7 @@ jobs:
         # Create output directory  
         New-Item -ItemType Directory -Path "./tests/results/${{ matrix.name }}" -Force -ErrorAction SilentlyContinue
         if (Test-Path "./automation-scripts/0403_Run-IntegrationTests.ps1") {
-          ${{ matrix.pwsh }} ./automation-scripts/0403_Run-IntegrationTests.ps1 -CI -OutputPath "./tests/results/${{ matrix.name }}"
+          ${{ matrix.pwsh }} ./automation-scripts/0403_Run-IntegrationTests.ps1 -OutputPath "./tests/results/${{ matrix.name }}"
         } else {
           Write-Host "Integration tests script not found - skipping" -ForegroundColor Yellow
         }
@@ -334,7 +334,7 @@ jobs:
         # Create output directory
         New-Item -ItemType Directory -Path "./tests/coverage/${{ matrix.name }}" -Force -ErrorAction SilentlyContinue
         if (Test-Path "./automation-scripts/0406_Generate-Coverage.ps1") {
-          ${{ matrix.pwsh }} ./automation-scripts/0406_Generate-Coverage.ps1 -CI -OutputPath "./tests/coverage/${{ matrix.name }}"
+          ${{ matrix.pwsh }} ./automation-scripts/0406_Generate-Coverage.ps1 -OutputPath "./tests/coverage/${{ matrix.name }}"
         } else {
           Write-Host "Coverage script not found - skipping" -ForegroundColor Yellow
         }
@@ -712,12 +712,12 @@ jobs:
         
         # Check if we have Claude Code integration
         if (Test-Path "./automation-scripts/0731_Invoke-AICodeReview.ps1") {
-          pwsh ./automation-scripts/0731_Invoke-AICodeReview.ps1 -CI -OutputPath "./ai-analysis/"
+          pwsh ./automation-scripts/0731_Invoke-AICodeReview.ps1 -OutputPath "./ai-analysis/"
         }
         
         # Generate AI-powered tech debt report
         if (Test-Path "./automation-scripts/0524_Generate-TechDebtReport.ps1") {
-          pwsh ./automation-scripts/0524_Generate-TechDebtReport.ps1 -CI -UseAI
+          pwsh ./automation-scripts/0524_Generate-TechDebtReport.ps1 -UseAI
         }
     
     - name: 🧠 Test Analysis with AI
