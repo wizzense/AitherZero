@@ -274,7 +274,7 @@ jobs:
           if ("${{ matrix.pwsh }}" -eq "pwsh") {
             Import-Module ./AitherZero.psd1 -Force -Global
           }
-          ${{ matrix.pwsh }} ./automation-scripts/0403_Run-IntegrationTests.ps1 -CI
+          ${{ matrix.pwsh }} ./automation-scripts/0403_Run-IntegrationTests.ps1
         } else {
           Write-Host "Integration tests script not found - skipping" -ForegroundColor Yellow
         }
@@ -297,7 +297,7 @@ jobs:
           if ("${{ matrix.pwsh }}" -eq "pwsh") {
             Import-Module ./AitherZero.psd1 -Force -Global
           }
-          ${{ matrix.pwsh }} ./automation-scripts/0406_Generate-Coverage.ps1 -CI
+          ${{ matrix.pwsh }} ./automation-scripts/0406_Generate-Coverage.ps1
         } else {
           Write-Host "Coverage script not found - skipping" -ForegroundColor Yellow
         }
