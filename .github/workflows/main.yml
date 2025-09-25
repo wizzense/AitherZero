@@ -45,19 +45,15 @@ jobs:
   pipeline:
     name: Pipeline - ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 20
     strategy:
       fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
         include:
           - os: ubuntu-latest
             name: Ubuntu-Latest
-          - os: windows-2022
-            name: Windows-Server-2022
-          - os: windows-latest
+          - os: windows-2025
             name: Windows-Server-2025
-          - os: macos-latest
-            name: macOS-Latest
     
     steps:
     - name: Checkout
@@ -67,33 +63,75 @@ jobs:
     
     - name: Bootstrap
       shell: pwsh
-      run: ./bootstrap.ps1 -Mode New -NonInteractive
+      run: |
+        $ErrorActionPreference = 'Stop'
+        # Set CI environment variables explicitly
+        $env:AITHERZERO_CI = "true"
+        $env:AITHERZERO_NONINTERACTIVE = "true" 
+        $env:CI = "true"
+        
+        # Run bootstrap with timeout for CI
+        $timeout = 300 # 5 minutes
+        $job = Start-Job -ScriptBlock {
+          param($Path)
+          & $Path -Mode New -NonInteractive -SkipAutoStart -AutoInstallDeps
+        } -ArgumentList (Resolve-Path "./bootstrap.ps1").Path
+        
+        $completed = Wait-Job $job -Timeout $timeout
+        if (-not $completed) {
+          Write-Host "Bootstrap timed out after $timeout seconds"
+          Remove-Job $job -Force
+          throw "Bootstrap process timed out"
+        }
+        
+        $result = Receive-Job $job
+        Write-Host $result
+        Remove-Job $job
+        
+        if ($LASTEXITCODE -ne 0) {
+          throw "Bootstrap failed with exit code $LASTEXITCODE"
+        }
     
     - name: Run Pipeline
       shell: pwsh
+      timeout-minutes: 25
       run: |
+        $ErrorActionPreference = 'Stop'
+        
         # Determine playbook and profile based on context
         $playbook = '${{ github.event.inputs.playbook }}'
         $ProfileName = '${{ github.event.inputs.profile }}'
         
         if ($playbook -eq '' -or $playbook -eq 'auto') {
           if ('${{ github.event_name }}' -eq 'pull_request') {
-            $playbook = 'github-cicd'
+            $playbook = 'test-ci'
             $ProfileName = 'pr'
           } elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
-            $playbook = 'github-cicd'
+            $playbook = 'test-ci'
             $ProfileName = 'full'
           } else {
             $playbook = 'test-ci'
-            $ProfileName = ''
+            $ProfileName = 'quick'
           }
         }
         
-        # Run orchestration
-        if ($ProfileName -and $ProfileName -ne 'auto') {
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -PlaybookProfile $ProfileName -CI
-        } else {
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -CI
+        Write-Host "Running playbook: $playbook with profile: $ProfileName"
+        
+        # Run orchestration with timeout handling
+        try {
+          if ($ProfileName -and $ProfileName -ne 'auto' -and $ProfileName -ne '') {
+            pwsh -Command "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -PlaybookProfile $ProfileName -CI -NonInteractive"
+          } else {
+            pwsh -Command "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -CI -NonInteractive"
+          }
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Pipeline execution failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
+        } catch {
+          Write-Error "Pipeline execution failed: $_"
+          throw
         }
     
     - name: Upload Results

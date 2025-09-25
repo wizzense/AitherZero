@@ -130,7 +130,22 @@ try {
         }
         
         if ($PSCmdlet.ShouldProcess("Pester module", "Install version $($testingConfig.MinVersion)+")) {
-            Install-Module -Name Pester -MinimumVersion $testingConfig.MinVersion -Force -SkipPublisherCheck -Scope CurrentUser
+            # Use timeout for CI environments to prevent hanging
+            if ($env:CI -eq 'true') {
+                $job = Start-Job -ScriptBlock {
+                    Install-Module -Name Pester -MinimumVersion $using:testingConfig.MinVersion -Force -SkipPublisherCheck -Scope CurrentUser -AllowClobber
+                }
+                $completed = Wait-Job $job -Timeout 120 # 2 minutes timeout
+                if ($completed) {
+                    Receive-Job $job
+                    Remove-Job $job
+                } else {
+                    Remove-Job $job -Force
+                    throw "Pester installation timed out after 2 minutes"
+                }
+            } else {
+                Install-Module -Name Pester -MinimumVersion $testingConfig.MinVersion -Force -SkipPublisherCheck -Scope CurrentUser
+            }
         }
         Write-ScriptLog -Message "Pester installed successfully"
     } else {
@@ -143,22 +158,57 @@ try {
 
     if (-not $psaModule -or $Force) {
         if ($PSCmdlet.ShouldProcess("PSScriptAnalyzer module", "Install module")) {
-            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+            # Use timeout for CI environments to prevent hanging
+            if ($env:CI -eq 'true') {
+                $job = Start-Job -ScriptBlock {
+                    Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -AllowClobber
+                }
+                $completed = Wait-Job $job -Timeout 120 # 2 minutes timeout
+                if ($completed) {
+                    Receive-Job $job
+                    Remove-Job $job
+                } else {
+                    Remove-Job $job -Force
+                    throw "PSScriptAnalyzer installation timed out after 2 minutes"
+                }
+            } else {
+                Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+            }
         }
         Write-ScriptLog -Message "PSScriptAnalyzer installed successfully"
     } else {
         Write-ScriptLog -Message "PSScriptAnalyzer $($psaModule.Version) already installed"
     }
 
-    # Install Plaster (for test scaffolding)
+    # Install Plaster (for test scaffolding) - Optional in CI
     Write-ScriptLog -Message "Installing Plaster (test scaffolding)"
     $plasterModule = Get-Module -ListAvailable -Name Plaster
 
     if (-not $plasterModule -or $Force) {
         if ($PSCmdlet.ShouldProcess("Plaster module", "Install module")) {
-            Install-Module -Name Plaster -Force -Scope CurrentUser
+            try {
+                # Use timeout for CI environments to prevent hanging
+                if ($env:CI -eq 'true') {
+                    $job = Start-Job -ScriptBlock {
+                        Install-Module -Name Plaster -Force -Scope CurrentUser -AllowClobber -SkipPublisherCheck
+                    }
+                    $completed = Wait-Job $job -Timeout 60 # 1 minute timeout
+                    if ($completed) {
+                        Receive-Job $job
+                        Remove-Job $job
+                        Write-ScriptLog -Message "Plaster installed successfully"
+                    } else {
+                        Remove-Job $job -Force
+                        Write-ScriptLog -Level Warning -Message "Plaster installation timed out - skipping (optional for CI)"
+                    }
+                } else {
+                    Install-Module -Name Plaster -Force -Scope CurrentUser
+                    Write-ScriptLog -Message "Plaster installed successfully"
+                }
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to install Plaster (optional): $_"
+            }
         }
-        Write-ScriptLog -Message "Plaster installed successfully"
     } else {
         Write-ScriptLog -Message "Plaster $($plasterModule.Version) already installed"
     }
@@ -172,19 +222,23 @@ try {
         Plaster = (Get-Module -ListAvailable -Name Plaster) -ne $null
     }
     
-    $allInstalled = $verificationResults.Values -notcontains $false
+    # In CI environments, Plaster is optional
+    $requiredTools = if ($env:CI -eq 'true') { @('Pester', 'PSScriptAnalyzer') } else { @('Pester', 'PSScriptAnalyzer', 'Plaster') }
+    $allRequiredInstalled = ($requiredTools | ForEach-Object { $verificationResults[$_] }) -notcontains $false
 
-    if ($allInstalled) {
-        Write-ScriptLog -Message "All testing tools installed successfully" -Data $verificationResults
+    if ($allRequiredInstalled) {
+        Write-ScriptLog -Message "All required testing tools installed successfully" -Data $verificationResults
         
         # Import modules to verify they work
         Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
         Import-Module PSScriptAnalyzer -Force
-        Import-Module Plaster -Force
+        if ($verificationResults.Plaster) {
+            Import-Module Plaster -Force
+        }
         
         Write-ScriptLog -Message "Testing tools verified and loaded"
     } else {
-        Write-ScriptLog -Level Error -Message "Some tools failed to install" -Data $verificationResults
+        Write-ScriptLog -Level Error -Message "Some required tools failed to install" -Data $verificationResults
         exit 1
     }
 

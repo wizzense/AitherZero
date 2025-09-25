@@ -753,7 +753,13 @@ function Initialize-CleanEnvironment {
         $manifestPath = Join-Path $script:ProjectRoot "AitherZero.psd1"
         if (Test-Path $manifestPath) {
             Write-BootstrapLog "Loading module from: $manifestPath" -Level Info
-            Import-Module $manifestPath -Force -Global
+            
+            # For CI environments, use faster import with reduced validation
+            if ($script:IsCI) {
+                Import-Module $manifestPath -Force -Global -DisableNameChecking
+            } else {
+                Import-Module $manifestPath -Force -Global
+            }
 
             # Verify critical functions
             $criticalFunctions = @(
@@ -891,7 +897,10 @@ try {
                 $env:SKIP_AUTO_MODULES = "1"
                 $env:AITHERZERO_ONLY = "1"
 
-                if ($NonInteractive) {
+                # In CI environments, skip auto-start to prevent hangs
+                if ($script:IsCI) {
+                    Write-BootstrapLog "CI environment detected - skipping auto-start" -Level Info
+                } elseif ($NonInteractive) {
                     pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -NonInteractive }"
                 } else {
                     pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -Setup }"

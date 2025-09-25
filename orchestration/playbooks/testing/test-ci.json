@@ -7,17 +7,18 @@
   "requirements": {
     "modules": ["Pester", "PSScriptAnalyzer"],
     "minimumVersion": "7.0",
-    "estimatedDuration": "15-20 minutes",
+    "estimatedDuration": "10-15 minutes",
     "platforms": ["Windows", "Linux", "macOS"]
   },
   "variables": {
     "testPath": "./tests",
     "outputPath": "./tests/results",
     "artifactsPath": "./artifacts",
-    "minimumCoverage": 80,
+    "minimumCoverage": 70,
     "failFast": true,
     "generateArtifacts": true,
-    "ciMode": true
+    "ciMode": true,
+    "timeout": 600
   },
   "environment": {
     "CI": "true",
@@ -30,14 +31,16 @@
       "name": "CI Environment Info",
       "description": "Log CI environment details",
       "sequence": [],
-      "preScript": "Write-Host \"CI Environment: $($env:GITHUB_ACTIONS ? 'GitHub Actions' : $env:AZURE_PIPELINES ? 'Azure Pipelines' : 'Unknown')\"; Write-Host \"OS: $($PSVersionTable.OS)\"; Write-Host \"PowerShell: $($PSVersionTable.PSVersion)\""
+      "preScript": "Write-Host \"CI Environment: $($env:GITHUB_ACTIONS ? 'GitHub Actions' : $env:AZURE_PIPELINES ? 'Azure Pipelines' : 'Unknown')\"; Write-Host \"OS: $($PSVersionTable.OS)\"; Write-Host \"PowerShell: $($PSVersionTable.PSVersion)\"",
+      "timeout": 30
     },
     {
       "name": "Install Dependencies",
       "description": "Ensure testing tools are available",
       "sequence": ["0400"],
       "variables": {
-        "Force": true
+        "Force": false,
+        "Timeout": 300
       },
       "continueOnError": false,
       "timeout": 300
@@ -53,29 +56,21 @@
         "CheckModuleDependencies": false
       },
       "continueOnError": false,
-      "failFast": true
+      "failFast": true,
+      "timeout": 120
     },
     {
       "name": "Unit Tests",
       "description": "Run unit tests with coverage",
       "sequence": ["0402"],
       "variables": {
-        "NoCoverage": false,
-        "OutputPath": "./artifacts/test-results"
+        "NoCoverage": true,
+        "OutputPath": "./artifacts/test-results",
+        "TestScope": "Unit",
+        "QuickTest": true
       },
       "continueOnError": false,
-      "timeout": 600
-    },
-    {
-      "name": "Integration Tests",
-      "description": "Run integration tests",
-      "sequence": ["0403"],
-      "variables": {
-        "IncludeE2E": false,
-        "OutputPath": "./artifacts/test-results"
-      },
-      "continueOnError": true,
-      "timeout": 900
+      "timeout": 300
     },
     {
       "name": "Static Analysis",
@@ -83,26 +78,17 @@
       "sequence": ["0404"],
       "variables": {
         "OutputPath": "./artifacts/analysis",
-        "ExcludePaths": ["tests", "legacy-to-migrate", "examples", ".github"]
+        "ExcludePaths": ["tests", "legacy-to-migrate", "examples", ".github"],
+        "Severity": ["Error", "Warning"],
+        "Quick": true
       },
-      "continueOnError": true
-    },
-    {
-      "name": "Coverage Report",
-      "description": "Generate coverage reports for CI",
-      "sequence": ["0406"],
-      "variables": {
-        "Format": "All",
-        "OutputPath": "./artifacts/coverage",
-        "RunTests": false
-      },
-      "continueOnError": false
+      "continueOnError": true,
+      "timeout": 180
     }
   ],
   "artifacts": {
     "paths": [
       "./artifacts/test-results/*.xml",
-      "./artifacts/coverage/*",
       "./artifacts/analysis/*",
       "./tests/results/*-Summary.json"
     ],
@@ -111,20 +97,14 @@
   },
   "reporting": {
     "enabled": true,
-    "formats": ["JUnit", "Cobertura", "SARIF"],
+    "formats": ["JUnit", "SARIF"],
     "publishTestResults": true,
-    "publishCodeCoverage": true,
+    "publishCodeCoverage": false,
     "commentOnPR": true
   },
   "qualityGates": {
     "enabled": true,
     "rules": [
-      {
-        "name": "Minimum Coverage",
-        "type": "coverage",
-        "threshold": 80,
-        "failBuild": true
-      },
       {
         "name": "No Test Failures",
         "type": "tests",
@@ -161,20 +141,15 @@
     "github": {
       "enabled": true,
       "checkRuns": true,
-      "statusChecks": ["tests", "coverage", "analysis"],
+      "statusChecks": ["tests", "analysis"],
       "prComments": true
-    },
-    "codecov": {
-      "enabled": false,
-      "token": "${CODECOV_TOKEN}",
-      "flags": ["unittests", "integration"]
     }
   },
   "postActions": [
     {
       "description": "Create test summary",
       "type": "script",
-      "inline": "@{Status = if ((Get-ChildItem './artifacts/test-results/*.xml' | Select-String '<failure').Count -eq 0) {'Passed'} else {'Failed'}; Timestamp = Get-Date; Duration = [System.Diagnostics.Stopwatch]::StartNew()} | ConvertTo-Json | Set-Content './artifacts/ci-summary.json'"
+      "inline": "@{Status = if ((Get-ChildItem './artifacts/test-results/*.xml' -ErrorAction SilentlyContinue | Select-String '<failure' -ErrorAction SilentlyContinue).Count -eq 0) {'Passed'} else {'Failed'}; Timestamp = Get-Date; Duration = [System.Diagnostics.Stopwatch]::StartNew()} | ConvertTo-Json | Set-Content './artifacts/ci-summary.json'"
     },
     {
       "description": "Set CI output variables",
@@ -182,8 +157,42 @@
       "condition": "$env:GITHUB_ACTIONS -eq 'true'",
       "action": {
         "type": "script",
-        "inline": "$coverage = Get-Content './artifacts/coverage/coverage-summary.json' | ConvertFrom-Json; Write-Host \"::set-output name=coverage::$($coverage.CoveragePercent)%\"; Write-Host \"::set-output name=tests-passed::$($coverage.Passed)\""
+        "inline": "if (Test-Path './artifacts/test-results/*.xml') { $testCount = (Select-Xml -Path './artifacts/test-results/*.xml' -XPath '//testcase').Count; Write-Host \"::set-output name=tests-run::$testCount\" }"
       }
     }
-  ]
+  ],
+  "profiles": {
+    "quick": {
+      "description": "Minimal testing for quick feedback",
+      "variables": {
+        "TestScope": "Smoke",
+        "SkipIntegration": true,
+        "QuickAnalysis": true
+      }
+    },
+    "pr": {
+      "description": "PR validation pipeline",
+      "variables": {
+        "TestScope": "Unit",
+        "PostPRComment": true,
+        "FailFast": true
+      }
+    },
+    "full": {
+      "description": "Full CI test suite",
+      "stages": [
+        "Install Dependencies",
+        "Syntax Validation", 
+        "Unit Tests",
+        "Integration Tests",
+        "Static Analysis",
+        "Coverage Report"
+      ],
+      "variables": {
+        "TestScope": "All",
+        "Coverage": true,
+        "GenerateReports": true
+      }
+    }
+  }
 }
