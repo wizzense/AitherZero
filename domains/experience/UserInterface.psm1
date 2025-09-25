@@ -21,6 +21,14 @@ $script:UIState = @{
     SupportsEmoji = $false
     MenuStyle = 'Interactive'
     ProgressBarStyle = 'Classic'
+    ClearScreenOnStart = $true
+    ShowExecutionTime = $true
+    ShowMemoryUsage = $false
+    NotificationPosition = 'TopRight'
+    AutoRefreshInterval = 5
+    ShowWelcomeMessage = $true
+    ShowHints = $true
+    EnableAnimations = $false
 }
 
 # Default color themes

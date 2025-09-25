@@ -186,6 +186,12 @@
         ProgressBarStyle = 'Classic'
         NotificationPosition = 'TopRight'
         ShowMemoryUsage = $false
+        CI = $false
+        OutputFormat = 'HTML'
+        Profile = 'Standard'
+        DryRun = $false
+        NonInteractive = $false
+        VerboseOutput = $false
         Themes = @{
             Default = @{
                 Primary = 'Cyan'
@@ -920,6 +926,15 @@
         MetricsRetentionDays = 90
         IncludeExecutionLogs = $true
         TemplateEngine = 'Default'
+        Profile = 'Standard'
+        CI = $false
+        EnableAnimations = $false
+        DryRun = $false
+        OutputFormat = 'HTML'
+        OpenReportAfterRun = $false
+        ContinueOnError = $false
+        NonInteractive = $false
+        VerboseOutput = $false
     }
     Logging = @{
         MaxFileSize = '10MB'
