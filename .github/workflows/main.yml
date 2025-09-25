@@ -68,13 +68,18 @@ jobs:
     - name: Bootstrap
       shell: pwsh
       run: |
-        chmod +x *.ps1 *.sh 2>/dev/null || true
+        # Set execute permissions on Unix-like systems
+        if (-not $IsWindows) {
+          & chmod +x *.ps1 *.sh 2>$null -ErrorAction SilentlyContinue
+        }
         pwsh ./bootstrap.ps1 -Mode New -NonInteractive
     
     - name: Syntax Validation
       shell: pwsh
       run: |
         Write-Host "Running syntax validation..." -ForegroundColor Cyan
+        # Load AitherZero module first
+        Import-Module ./AitherZero.psd1 -Force -Global
         pwsh ./automation-scripts/0407_Validate-Syntax.ps1 -FilePath "./Start-AitherZero.ps1"
         
         # Validate key automation scripts
@@ -94,6 +99,8 @@ jobs:
       run: |
         Write-Host "Running PSScriptAnalyzer..." -ForegroundColor Cyan
         try {
+          # Load AitherZero module first
+          Import-Module ./AitherZero.psd1 -Force -Global
           pwsh ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
           Write-Host "✅ PSScriptAnalyzer completed"
         } catch {
@@ -105,6 +112,8 @@ jobs:
       run: |
         Write-Host "Running unit tests..." -ForegroundColor Cyan
         try {
+          # Load AitherZero module first
+          Import-Module ./AitherZero.psd1 -Force -Global
           pwsh ./automation-scripts/0402_Run-UnitTests.ps1 -CI
           Write-Host "✅ Unit tests completed"
         } catch {

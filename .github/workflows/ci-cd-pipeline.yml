@@ -102,7 +102,10 @@ jobs:
     - name: 🔧 Bootstrap Environment
       shell: pwsh
       run: |
-        chmod +x *.ps1 *.sh 2>/dev/null || true
+        # Set execute permissions on Unix-like systems
+        if (-not $IsWindows) {
+          & chmod +x *.ps1 *.sh 2>$null -ErrorAction SilentlyContinue
+        }
         pwsh ./bootstrap.ps1 -Mode New -NonInteractive
     
     - name: 🧪 Syntax Validation
@@ -110,6 +113,8 @@ jobs:
       run: |
         # Validate key scripts
         Write-Host "Running syntax validation..." -ForegroundColor Cyan
+        # Load AitherZero module first
+        Import-Module ./AitherZero.psd1 -Force -Global
         $keyScripts = @(
           "./Start-AitherZero.ps1",
           "./bootstrap.ps1"
@@ -125,6 +130,8 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "Running PSScriptAnalyzer..." -ForegroundColor Cyan
+        # Load AitherZero module first
+        Import-Module ./AitherZero.psd1 -Force -Global
         pwsh ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -OutputPath "./tests/analysis/"
         
         # Convert to SARIF for GitHub Code Scanning
@@ -228,7 +235,10 @@ jobs:
             Write-Host "Bootstrap script not found - continuing with basic setup"
           }
         } else {
-          chmod +x *.ps1 *.sh 2>/dev/null || true
+          # Set execute permissions on Unix-like systems  
+          if (-not $IsWindows) {
+            & chmod +x *.ps1 *.sh 2>$null -ErrorAction SilentlyContinue
+          }
           pwsh ./bootstrap.ps1 -Mode New -NonInteractive
         }
     
@@ -237,6 +247,10 @@ jobs:
       run: |
         Write-Host "Running unit tests..." -ForegroundColor Cyan
         if (Test-Path "./automation-scripts/0402_Run-UnitTests.ps1") {
+          # Load AitherZero module first for PowerShell 7
+          if ("${{ matrix.pwsh }}" -eq "pwsh") {
+            Import-Module ./AitherZero.psd1 -Force -Global
+          }
           ${{ matrix.pwsh }} ./automation-scripts/0402_Run-UnitTests.ps1 -CI
         } else {
           Write-Host "Unit tests script not found - skipping" -ForegroundColor Yellow
@@ -256,6 +270,10 @@ jobs:
       run: |
         Write-Host "Running integration tests..." -ForegroundColor Cyan
         if (Test-Path "./automation-scripts/0403_Run-IntegrationTests.ps1") {
+          # Load AitherZero module first for PowerShell 7
+          if ("${{ matrix.pwsh }}" -eq "pwsh") {
+            Import-Module ./AitherZero.psd1 -Force -Global
+          }
           ${{ matrix.pwsh }} ./automation-scripts/0403_Run-IntegrationTests.ps1 -CI
         } else {
           Write-Host "Integration tests script not found - skipping" -ForegroundColor Yellow
@@ -275,6 +293,10 @@ jobs:
       run: |
         Write-Host "Generating code coverage..." -ForegroundColor Cyan
         if (Test-Path "./automation-scripts/0406_Generate-Coverage.ps1") {
+          # Load AitherZero module first for PowerShell 7
+          if ("${{ matrix.pwsh }}" -eq "pwsh") {
+            Import-Module ./AitherZero.psd1 -Force -Global
+          }
           ${{ matrix.pwsh }} ./automation-scripts/0406_Generate-Coverage.ps1 -CI
         } else {
           Write-Host "Coverage script not found - skipping" -ForegroundColor Yellow
