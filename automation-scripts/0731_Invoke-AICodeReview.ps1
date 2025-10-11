@@ -149,11 +149,11 @@ function Invoke-SecurityAnalysis {
         
         # Check each enabled security check from config
         if ($SecurityConfig.CredentialExposure) {
-            if ($content -match 'password\s*=\s*["\']|apikey\s*=\s*["\']|secret\s*=\s*["\']') {
+            if ($content -match 'password\s*=\s*[''"]|apikey\s*=\s*[''"]|secret\s*=\s*[''"') {
                 $analysis.SecurityIssues += @{
                     Type = 'Credential Exposure'
                     Severity = 'Critical'
-                    Line = ($content | Select-String 'password\s*=\s*["\']|apikey\s*=\s*["\']').LineNumber
+                    Line = ($content | Select-String 'password\s*=\s*[''"]|apikey\s*=\s*[''"]').LineNumber
                     Description = 'Hardcoded credentials detected'
                     Recommendation = 'Use secure credential storage (e.g., Azure Key Vault, AWS Secrets Manager)'
                 }
@@ -395,14 +395,14 @@ function Format-ReviewReport {
         }
         
         'Markdown' {
-            $report = @"
+            $report = @'
 # AI Code Review Report
 
-Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+Generated: {0}
 
 ## Summary
 
-"@
+'@ -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
             foreach ($analysis in $Analyses) {
                 $report += @"
 
@@ -410,7 +410,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 - **Provider**: $($analysis.Provider)
 - **Files Analyzed**: $($analysis.TotalFiles)
 "@
-                
+
                 if ($analysis.Type -eq 'Security') {
                     $report += "- **Security Issues**: $($analysis.TotalIssues)`n"
                 } elseif ($analysis.Type -eq 'Performance') {
@@ -451,6 +451,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         
         'HTML' {
             # Generate HTML report (simplified)
+            $dateStr = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
             $html = @"
 <!DOCTYPE html>
 <html>
@@ -469,17 +470,17 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 <body>
     <div class="header">
         <h1>AI Code Review Report</h1>
-        <p>Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
+        <p>Generated: $dateStr</p>
     </div>
 "@
-            
+
             foreach ($analysis in $Analyses) {
                 $html += "<div class='section'><h2>$($analysis.Type) Analysis</h2>"
                 $html += "<p>Provider: $($analysis.Provider)<br/>Files: $($analysis.TotalFiles)</p>"
                 # Add more HTML generation logic here
                 $html += "</div>"
             }
-            
+
             $html += "</body></html>"
             return $html
         }
