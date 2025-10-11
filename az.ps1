@@ -27,7 +27,7 @@ try {
 }
 
 # Now run the requested script
-if ($arguments.Count -eq 0) {
+if ($args.Count -eq 0) {
     Write-Host "Usage: az <script-number> [arguments]" -ForegroundColor Yellow
     Write-Host "Examples:" -ForegroundColor Gray
     Write-Host "  az 0402              # Run unit tests" -ForegroundColor White
@@ -37,8 +37,8 @@ if ($arguments.Count -eq 0) {
 }
 
 # Pass the first argument as ScriptNumber and rest as additional parameters
-$scriptNumber = [string]$arguments[0]
-$remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count-1)] } else { @() }
+$scriptNumber = [string]$args[0]
+$remainingArgs = if ($args.Count -gt 1) { $args[1..($args.Count-1)] } else { @() }
 
 # Call Invoke-AitherScript with remaining arguments
 if ($remainingArgs.Count -gt 0) {

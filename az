@@ -1,6 +1,7 @@
 #!/usr/bin/env pwsh
-$root = $PSScriptRoot
+# Get script directory - $PSScriptRoot may be empty when invoked directly
+$root = if ($PSScriptRoot) { $PSScriptRoot } else { Get-Location | Select-Object -ExpandProperty Path }
 if (-not $env:AITHERZERO_INITIALIZED) {
-    Import-Module "$root/AitherZero.psd1" -Force -Global
+    Import-Module (Join-Path $root "AitherZero.psd1") -Force -Global
 }
-& "$root/az.ps1" $arguments
+& (Join-Path $root "az.ps1") @args
