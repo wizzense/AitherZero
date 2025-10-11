@@ -64,7 +64,7 @@ jobs:
       shell: pwsh
       run: |
         # Semantic versioning based on git history
-        $version = Get-Content ./VERSION -Raw
+        $version = (Get-Content ./VERSION -Raw).Trim()
         $buildNumber = "${{ github.run_number }}"
         $sha = "${{ github.sha }}".Substring(0, 7)
         
@@ -202,8 +202,8 @@ jobs:
       shell: ${{ matrix.pwsh }}
       run: |
         if ("${{ matrix.pwsh }}" -eq "powershell") {
-          # Use PS5.1 bootstrap
-          iwr -useb https://raw.githubusercontent.com/${{ github.repository }}/main/bootstrap-ps5.ps1 | iex
+          # PS5.1: Run bootstrap.ps1 which will upgrade to PS7
+          & ./bootstrap.ps1 -Mode New -NonInteractive
         } else {
           ./bootstrap.ps1 -Mode New -NonInteractive
         }

@@ -556,8 +556,8 @@ Describe "Orchestration Engine Features" {
             $cliExecution.Parameters.WhatIf | Should -BeTrue
         }
     }
-}
 
+    Context "User Experience Documentation" {
         It "Should demonstrate the actual commands users would run" {
             # This test documents the REAL user experience
 

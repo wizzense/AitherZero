@@ -66,26 +66,26 @@ jobs:
       run: |
         # Determine playbook and profile based on context
         $playbook = '${{ github.event.inputs.playbook }}'
-        $ProfileName = '${{ github.event.inputs.profile }}'
-        
+        $profile = '${{ github.event.inputs.profile }}'
+
         if ($playbook -eq '' -or $playbook -eq 'auto') {
           if ('${{ github.event_name }}' -eq 'pull_request') {
             $playbook = 'github-cicd'
-            $ProfileName = 'pr'
+            $profile = 'pr'
           } elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
             $playbook = 'github-cicd'
-            $ProfileName = 'full'
+            $profile = 'full'
           } else {
             $playbook = 'test-ci'
-            $ProfileName = ''
+            $profile = 'quick'
           }
         }
-        
+
         # Run orchestration
-        if ($ProfileName -and $ProfileName -ne 'auto') {
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -PlaybookProfile $ProfileName -CI
+        if ($profile -and $profile -ne 'auto' -and $profile -ne '') {
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -PlaybookProfile $profile -NonInteractive
         } else {
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -CI
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -NonInteractive
         }
     
     - name: Upload Results
