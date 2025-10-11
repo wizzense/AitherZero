@@ -21,6 +21,7 @@ $script:ValidationSchemas = @{}
 $script:CurrentEnvironment = "Development"
 $script:IsCI = $false
 $script:CIDefaults = @{}
+$script:CIDefaultsUI = @{}
 
 # Logging helper for Configuration module
 function Write-ConfigLog {
@@ -78,7 +79,7 @@ function Initialize-CIEnvironment {
         Write-ConfigLog -Message "CI environment detected" -Level Information
         $script:CurrentEnvironment = "CI"
         
-        # Set CI defaults
+        # Set CI defaults for Core section
         $script:CIDefaults = @{
             Profile = 'Full'
             NonInteractive = $true
@@ -87,12 +88,16 @@ function Initialize-CIEnvironment {
             VerboseOutput = $false
             ShowProgress = $false
             OpenReportAfterRun = $false
-            ClearScreenOnStart = $false
-            EnableAnimations = $false
-            EnableColors = $false
             DryRun = $false
             WhatIf = $false
             ContinueOnError = $false
+        }
+
+        # Set CI defaults for UI section
+        $script:CIDefaultsUI = @{
+            ClearScreenOnStart = $false
+            EnableAnimations = $false
+            EnableColors = $false
         }
     }
 }
@@ -178,6 +183,18 @@ function Get-Configuration {
                             $script:Config.Core | Add-Member -MemberType NoteProperty -Name $key -Value $script:CIDefaults[$key]
                         }
                     }
+
+                    # Apply UI-specific CI defaults to UI section
+                    if ($script:CIDefaultsUI -and $script:CIDefaultsUI.Count -gt 0) {
+                        if (-not $script:Config.UI) {
+                            $script:Config | Add-Member -MemberType NoteProperty -Name UI -Value ([PSCustomObject]@{})
+                        }
+                        foreach ($key in $script:CIDefaultsUI.Keys) {
+                            if (-not $script:Config.UI.$key) {
+                                $script:Config.UI | Add-Member -MemberType NoteProperty -Name $key -Value $script:CIDefaultsUI[$key]
+                            }
+                        }
+                    }
                 }
                 Write-ConfigLog -Message "Configuration loaded successfully" -Data @{ 
                     Sections = ($script:Config.PSObject.Properties.Name -join ', ')
@@ -229,6 +246,18 @@ function Get-Configuration {
                 foreach ($key in $script:CIDefaults.Keys) {
                     if (-not $script:Config.Core.$key) {
                         $script:Config.Core | Add-Member -MemberType NoteProperty -Name $key -Value $script:CIDefaults[$key]
+                    }
+                }
+
+                # Apply UI-specific CI defaults to UI section
+                if ($script:CIDefaultsUI -and $script:CIDefaultsUI.Count -gt 0) {
+                    if (-not $script:Config.UI) {
+                        $script:Config | Add-Member -MemberType NoteProperty -Name UI -Value ([PSCustomObject]@{})
+                    }
+                    foreach ($key in $script:CIDefaultsUI.Keys) {
+                        if (-not $script:Config.UI.$key) {
+                            $script:Config.UI | Add-Member -MemberType NoteProperty -Name $key -Value $script:CIDefaultsUI[$key]
+                        }
                     }
                 }
             }
