@@ -235,7 +235,7 @@ function Install-RequiredTools {
                     Write-RunnerLog "✗ Failed to install $tool (exit code: $LASTEXITCODE)" -Level Warning
                 }
             } catch {
-                Write-RunnerLog "✗ Failed to install $tool: $($_.Exception.Message)" -Level Warning
+                Write-RunnerLog "Failed to install ${tool}: $($_.Exception.Message)" -Level Warning
             }
         } else {
             Write-RunnerLog "⚠ No installation script available for $tool" -Level Warning
@@ -272,7 +272,7 @@ function Install-PowerShellModules {
             Install-Module -Name $module -Force -SkipPublisherCheck -AllowClobber -ErrorAction Stop
             Write-RunnerLog "✓ $module installed successfully" -Level Success
         } catch {
-            Write-RunnerLog "✗ Failed to install module $module: $($_.Exception.Message)" -Level Warning
+            Write-RunnerLog "Failed to install module ${module}: $($_.Exception.Message)" -Level Warning
         }
     }
 }
