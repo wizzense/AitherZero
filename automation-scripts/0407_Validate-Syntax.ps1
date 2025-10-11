@@ -23,14 +23,58 @@
 # Description: PowerShell syntax validation using AST parser
 # Tags: testing, validation, syntax, ast, quality
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$false)]
     [ValidateScript({ Test-Path $_ -PathType Leaf })]
     [string]$FilePath,
 
-    [switch]$Detailed
+    [switch]$Detailed,
+
+    # When called from CI/orchestration without FilePath, validate all PowerShell files
+    [switch]$All
 )
 
 try {
+    # If All switch or no FilePath, validate all PowerShell files
+    if ($All -or -not $FilePath) {
+        Write-Host "Validating all PowerShell files..." -ForegroundColor Cyan
+        $filesToValidate = @(
+            Get-ChildItem -Path . -Filter "*.ps1" -Recurse -File |
+                Where-Object { $_.FullName -notmatch '[\\/](\.git|node_modules|\.vscode|legacy-to-migrate|examples)[\\/]' }
+        )
+
+        Write-Host "Found $($filesToValidate.Count) PowerShell files to validate" -ForegroundColor Gray
+
+        $totalErrors = 0
+        $validatedFiles = 0
+
+        foreach ($file in $filesToValidate) {
+            $parseErrors = $null
+            $tokens = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$parseErrors)
+
+            if ($parseErrors -and $parseErrors.Count -gt 0) {
+                Write-Host "✗ $($file.FullName -replace [regex]::Escape($PWD), '.')" -ForegroundColor Red
+                foreach ($parseError in $parseErrors) {
+                    Write-Host "  Line $($parseError.Extent.StartLineNumber): $($parseError.Message)" -ForegroundColor Yellow
+                }
+                $totalErrors += $parseErrors.Count
+            } else {
+                $validatedFiles++
+                if ($Detailed) {
+                    Write-Host "✓ $($file.FullName -replace [regex]::Escape($PWD), '.')" -ForegroundColor Green
+                }
+            }
+        }
+
+        Write-Host "`nValidation Complete:" -ForegroundColor Cyan
+        Write-Host "  Total Files: $($filesToValidate.Count)"
+        Write-Host "  Valid: $validatedFiles" -ForegroundColor Green
+        Write-Host "  Errors: $totalErrors" -ForegroundColor $(if ($totalErrors -gt 0) { 'Red' } else { 'Green' })
+
+        exit $(if ($totalErrors -gt 0) { 1 } else { 0 })
+    }
+
+    # Validate single file
     $parseErrors = $null
     $tokens = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($FilePath, [ref]$tokens, [ref]$parseErrors)
