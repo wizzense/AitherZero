@@ -104,8 +104,11 @@ function Get-ProjectMetrics {
     $metrics.Files.Total = $metrics.Files.PowerShell + $metrics.Files.Modules + $metrics.Files.Data
     
     # Count lines of code and functions
-    $allPSFiles = Get-ChildItem -Path $ProjectPath -Filter "*.ps*1" -Recurse | 
-                  Where-Object { $_.FullName -notmatch '(tests|examples|legacy)' }
+    $allPSFiles = @(
+        Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
+        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse  
+        Get-ChildItem -Path $ProjectPath -Filter "*.psd1" -Recurse
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy)' }
     
     foreach ($file in $allPSFiles) {
         try {

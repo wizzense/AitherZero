@@ -1,0 +1,80 @@
+{
+  "Status": {
+    "LastSuccess": "Unknown",
+    "Security": "Unknown",
+    "Tests": "Unknown",
+    "Badges": {
+      "Tests": "https://img.shields.io/badge/tests-unknown-lightgrey",
+      "Security": "https://img.shields.io/badge/security-unknown-lightgrey",
+      "Build": "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI",
+      "Coverage": "https://img.shields.io/badge/coverage-unknown-lightgrey"
+    },
+    "Deployment": "Unknown",
+    "Coverage": "Unknown",
+    "Overall": "Unknown",
+    "LastBuild": "Unknown"
+  },
+  "Project": {
+    "Name": "AitherZero",
+    "Description": "Infrastructure Automation Platform",
+    "Repository": "https://github.com/wizzense/AitherZero"
+  },
+  "Environment": {
+    "Platform": "Unix",
+    "WorkingDirectory": "/home/runner/work/AitherZero/AitherZero",
+    "CI": false,
+    "PowerShell": "7.4.12"
+  },
+  "Metrics": {
+    "Dependencies": {},
+    "PSVersion": "7.4.12",
+    "Files": {
+      "Data": 9,
+      "Modules": 36,
+      "Total": 140,
+      "PowerShell": 95
+    },
+    "LastUpdated": "2025-10-24 17:51:41",
+    "Platform": "Unix",
+    "Tests": {
+      "Total": 102,
+      "Unit": 96,
+      "Integration": 6
+    },
+    "Functions": 0,
+    "Coverage": {
+      "CoveredLines": 0,
+      "Percentage": 0,
+      "TotalLines": 0
+    },
+    "LinesOfCode": 50386
+  },
+  "Activity": {
+    "Issues": [],
+    "Releases": [],
+    "LastUpdate": "2025-10-24 17:51:42",
+    "Commits": [
+      {
+        "Message": "Complete comprehensive reporting and dashboard system",
+        "Hash": "7a9d7b0",
+        "Date": "2025-10-24 17:48:40 +0000"
+      },
+      {
+        "Message": "Implement comprehensive CI/CD pipeline with AI integration and issue management",
+        "Hash": "14cfeeb",
+        "Date": "2025-10-24 17:42:00 +0000"
+      },
+      {
+        "Message": "Initial plan",
+        "Hash": "b00a0bc",
+        "Date": "2025-10-24 17:23:06 +0000"
+      },
+      {
+        "Message": "Update README.md (#673)",
+        "Hash": "72bceb6",
+        "Date": "2025-10-24 10:14:56 -0700"
+      }
+    ]
+  },
+  "Generated": "2025-10-24T17:51:42Z"
+}
