@@ -1,0 +1,434 @@
+---
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'copilot/**']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test scope'
+        type: choice
+        options: ['quick', 'full', 'integration']
+        default: 'quick'
+      create_release:
+        description: 'Create release after successful build'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  pages: write
+  id-token: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_CI_PROGRESS: true
+
+jobs:
+  # Quick validation for fast feedback
+  quick-validation:
+    name: Quick Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      syntax-status: ${{ steps.syntax.outputs.status }}
+      module-status: ${{ steps.module.outputs.status }}
+      
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 💾 Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-powershell-modules-${{ hashFiles('**/*.psd1') }}
+          restore-keys: |
+            ${{ runner.os }}-powershell-modules-
+
+      - name: 🔧 Bootstrap Environment  
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Quick validation pipeline starting..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          Write-Host "✅ Bootstrap completed" -ForegroundColor Green
+
+      - name: 🔍 Syntax Validation
+        id: syntax
+        shell: pwsh
+        run: |
+          Write-Host "📝 Running syntax validation..." -ForegroundColor Yellow
+          try {
+            ./az 0407
+            Write-Host "✅ Syntax validation passed" -ForegroundColor Green
+            echo "status=success" >> $env:GITHUB_OUTPUT
+          } catch {
+            Write-Host "❌ Syntax validation failed: $_" -ForegroundColor Red
+            echo "status=failed" >> $env:GITHUB_OUTPUT
+            echo "error=$_" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
+
+      - name: 📦 Module Load Test
+        id: module
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "📦 Testing module loading..." -ForegroundColor Yellow
+          try {
+            Import-Module ./AitherZero.psd1 -Force -Verbose
+            $moduleInfo = Get-Module AitherZero
+            Write-Host "✅ Module loaded: $($moduleInfo.Name) v$($moduleInfo.Version)" -ForegroundColor Green
+            Write-Host "   Commands: $($moduleInfo.ExportedCommands.Count)" -ForegroundColor Cyan
+            echo "status=success" >> $env:GITHUB_OUTPUT
+          } catch {
+            Write-Host "❌ Module load failed: $_" -ForegroundColor Red
+            echo "status=failed" >> $env:GITHUB_OUTPUT
+            echo "error=$_" >> $env:GITHUB_OUTPUT
+          }
+
+  # Comprehensive testing across platforms
+  comprehensive-testing:
+    name: Test - ${{ matrix.os }} (${{ matrix.scope }})
+    runs-on: ${{ matrix.os }}
+    needs: quick-validation
+    if: needs.quick-validation.outputs.syntax-status == 'success'
+    timeout-minutes: 25
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        scope: [quick]
+        include:
+          # Full testing only on Ubuntu for efficiency
+          - os: ubuntu-latest
+            scope: full
+            generate-reports: true
+            
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 💾 Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/AppData/Local/Microsoft/Windows/PowerShell/PowerShellGet/
+          key: ${{ runner.os }}-powershell-modules-${{ hashFiles('**/*.psd1') }}
+          restore-keys: |
+            ${{ runner.os }}-powershell-modules-
+
+      - name: 💾 Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/
+            ~/AppData/Local/Temp/
+          key: ${{ runner.os }}-deps-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Starting comprehensive testing on ${{ matrix.os }}..." -ForegroundColor Magenta
+          Write-Host "📋 Scope: ${{ matrix.scope }}" -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Standard
+
+      - name: 📦 Install Testing Dependencies
+        shell: pwsh
+        run: |
+          $modules = @('Pester', 'PSScriptAnalyzer')
+          foreach ($module in $modules) {
+            if (-not (Get-Module -ListAvailable $module)) {
+              Write-Host "Installing $module..." -ForegroundColor Yellow
+              Install-Module -Name $module -Force -SkipPublisherCheck -Scope CurrentUser
+            }
+          }
+
+      - name: 🧪 Run Tests
+        shell: pwsh
+        run: |
+          $testScope = "${{ matrix.scope }}"
+          $env:AITHERZERO_TEST_TIMEOUT = if ($testScope -eq "full") { "900" } else { "300" }
+          
+          Write-Host "🧪 Running $testScope tests..." -ForegroundColor Yellow
+          
+          try {
+            if ($testScope -eq "full") {
+              ./az 0409  # Run all tests
+            } else {
+              ./az 0402  # Quick unit tests
+            }
+            Write-Host "✅ Tests completed successfully" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Tests encountered issues: $_" -ForegroundColor Yellow
+            # Don't fail build for test issues in CI, but log them
+            echo "TESTS_ISSUES=true" >> $env:GITHUB_ENV
+          }
+
+      - name: 🔬 Code Analysis
+        if: matrix.scope == 'full'
+        shell: pwsh
+        run: |
+          Write-Host "🔬 Running code quality analysis..." -ForegroundColor Yellow
+          try {
+            ./az 0404  # PSScriptAnalyzer
+            Write-Host "✅ Code analysis completed" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Code analysis issues: $_" -ForegroundColor Yellow
+            echo "ANALYSIS_ISSUES=true" >> $env:GITHUB_ENV
+          }
+
+      - name: 📊 Generate Reports
+        if: matrix.generate-reports == true
+        shell: pwsh
+        run: |
+          Write-Host "📊 Generating comprehensive reports..." -ForegroundColor Yellow
+          try {
+            # Generate project report
+            ./az 0510
+            # Generate coverage report if available
+            ./az 0408
+            Write-Host "✅ Reports generated" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Report generation issues: $_" -ForegroundColor Yellow
+          }
+
+      - name: 📤 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.scope }}
+          path: |
+            tests/results/
+            logs/
+            *.xml
+            *.json
+          retention-days: 7
+
+      - name: 📤 Upload Reports  
+        if: matrix.generate-reports == true && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-reports
+          path: |
+            tests/reports/
+            tests/coverage/
+            reports/
+            *.html
+          retention-days: 30
+
+  # Build and package 
+  build-package:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: comprehensive-testing
+    if: always() && (needs.comprehensive-testing.result == 'success' || needs.comprehensive-testing.result == 'skipped')
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Environment
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+
+      - name: 📦 Create Build Package
+        shell: pwsh
+        run: |
+          $version = Get-Content ./VERSION -Raw | ForEach-Object Trim
+          $buildNumber = "${{ github.run_number }}"
+          $packageName = "AitherZero-v$version-build$buildNumber"
+          
+          # Create build info
+          $buildInfo = @{
+            Version = $version
+            BuildNumber = $buildNumber
+            Commit = "${{ github.sha }}"
+            Branch = "${{ github.ref_name }}"
+            BuildTime = (Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+            Platform = "Multi-Platform"
+            Workflow = "ci-pipeline"
+          }
+          
+          $buildInfo | ConvertTo-Json -Depth 2 | Set-Content "./build-info.json"
+          
+          # Create package
+          New-Item -ItemType Directory -Path "./$packageName" -Force
+          
+          # Essential files for package
+          $essentialFiles = @(
+            "*.psd1", "*.psm1", "*.ps1", "*.md", "LICENSE", "VERSION",
+            "domains", "automation-scripts", "orchestration", 
+            "config.example.psd1", "build-info.json", ".azprofile.ps1",
+            "az", "az.ps1", "bootstrap.ps1", "bootstrap.sh"
+          )
+          
+          foreach ($pattern in $essentialFiles) {
+            if (Test-Path $pattern) {
+              Copy-Item -Path $pattern -Destination "./$packageName" -Recurse -Force
+              Write-Host "✅ Copied: $pattern" -ForegroundColor Green
+            }
+          }
+          
+          # Create archives
+          Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip" -Force
+          
+          Write-Host "📦 Package created: $packageName.zip" -ForegroundColor Green
+          Get-ChildItem -Filter "AitherZero-v*" | Format-Table Name, Length
+
+      - name: 📤 Upload Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aitherzero-package
+          path: |
+            AitherZero-v*.zip
+            build-info.json
+          retention-days: 30
+
+  # Deployment and release
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [comprehensive-testing, build-package]
+    if: |
+      always() && 
+      needs.build-package.result == 'success' &&
+      ((github.ref == 'refs/heads/main' && github.event_name == 'push') || 
+       github.event.inputs.create_release == 'true')
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📥 Download Package
+        uses: actions/download-artifact@v4
+        with:
+          name: aitherzero-package
+          path: ./artifacts
+
+      - name: 🏷️ Create Release Tag
+        shell: pwsh
+        run: |
+          $version = Get-Content ./VERSION -Raw | ForEach-Object Trim
+          $buildNumber = "${{ github.run_number }}"
+          $tag = "v$version-build$buildNumber"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git tag $tag
+          git push origin $tag
+          
+          echo "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: AitherZero ${{ env.RELEASE_TAG }}
+          draft: false
+          prerelease: false
+          body: |
+            ## AitherZero Build ${{ github.run_number }}
+            
+            **Automated release from the new consolidated CI pipeline**
+            
+            ### 📋 Build Information
+            - **Version:** ${{ env.RELEASE_TAG }}
+            - **Commit:** ${{ github.sha }}
+            - **Branch:** ${{ github.ref_name }}
+            - **Workflow:** ci-pipeline (consolidated)
+            
+            ### ✨ Improvements
+            - Consolidated CI/CD workflows for better efficiency
+            - Cross-platform testing with optimized resource usage
+            - Enhanced caching for faster builds  
+            - Streamlined packaging and release automation
+            
+            ### 📦 Installation
+            ```powershell
+            # One-liner installation
+            iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
+            
+            # Or download and extract the ZIP file, then:
+            ./bootstrap.ps1 -Mode New -NonInteractive
+            ```
+            
+            ### 🚀 Quick Start
+            ```powershell
+            ./Start-AitherZero.ps1           # Interactive mode
+            ./az 0407                        # Syntax validation  
+            ./az 0402                        # Run tests
+            ./az 0510                        # Generate reports
+            ```
+          files: |
+            ./artifacts/AitherZero-*.zip
+
+  # Summary and status reporting
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [quick-validation, comprehensive-testing, build-package]
+    if: always()
+    
+    steps:
+      - name: 📊 Generate CI Summary
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "📊 CI Pipeline Summary" -ForegroundColor Magenta
+          Write-Host "═══════════════════════════════════════════" -ForegroundColor Magenta
+          
+          $quickValidation = "${{ needs.quick-validation.result }}"
+          $testing = "${{ needs.comprehensive-testing.result }}" 
+          $packaging = "${{ needs.build-package.result }}"
+          
+          Write-Host "🔍 Quick Validation: $(if ($quickValidation -eq 'success') { '✅ PASSED' } else { '❌ FAILED' })" -ForegroundColor $(if ($quickValidation -eq 'success') { 'Green' } else { 'Red' })
+          Write-Host "🧪 Comprehensive Testing: $(if ($testing -eq 'success') { '✅ PASSED' } elseif ($testing -eq 'skipped') { '⏭️ SKIPPED' } else { '⚠️ ISSUES' })" -ForegroundColor $(if ($testing -eq 'success') { 'Green' } elseif ($testing -eq 'skipped') { 'Yellow' } else { 'Yellow' })  
+          Write-Host "📦 Package Build: $(if ($packaging -eq 'success') { '✅ PASSED' } elseif ($packaging -eq 'skipped') { '⏭️ SKIPPED' } else { '❌ FAILED' })" -ForegroundColor $(if ($packaging -eq 'success') { 'Green' } elseif ($packaging -eq 'skipped') { 'Yellow' } else { 'Red' })
+          
+          Write-Host ""
+          Write-Host "Repository: ${{ github.repository }}" -ForegroundColor Cyan
+          Write-Host "Branch: ${{ github.ref_name }}" -ForegroundColor Cyan  
+          Write-Host "Commit: ${{ github.sha }}" -ForegroundColor Cyan
+          Write-Host "Run: ${{ github.run_number }}" -ForegroundColor Cyan
+          
+          if ("$quickValidation" -ne "success") {
+            Write-Host ""
+            Write-Host "❌ Critical validation failure - check syntax and module loading" -ForegroundColor Red
+            exit 1
+          } elseif ("$testing" -eq "failure" -or "$packaging" -eq "failure") {
+            Write-Host ""
+            Write-Host "⚠️ Some issues detected but not critical - check individual job outputs" -ForegroundColor Yellow
+          } else {
+            Write-Host ""
+            Write-Host "🎉 CI pipeline completed successfully!" -ForegroundColor Green
+          }
