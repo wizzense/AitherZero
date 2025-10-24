@@ -191,7 +191,7 @@ try {
         }
         Write-CIProgress -Operation $Operation -Stage "Failed" -Progress $CurrentStep -Message $Message -Status "Failed" -Metrics $metrics
     } else {
-        $status = if ($Message -match "(warning|warn)" -i) { "Warning" } else { "Running" }
+        $status = if ($Message -imatch "(warning|warn)") { "Warning" } else { "Running" }
         Write-CIProgress -Operation $Operation -Stage $Stage -Progress $CurrentStep -Message $Message -Status $status -Metrics $metrics
     }
     
@@ -200,5 +200,5 @@ try {
     exit 1
 }
 
-# Export functions for module use
-Export-ModuleMember -Function Write-CIProgress, Get-SystemMetrics
+# Note: Export-ModuleMember only works when this file is loaded as a module
+# For direct execution, functions are available in the current scope
