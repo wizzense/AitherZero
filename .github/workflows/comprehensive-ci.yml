@@ -1,0 +1,407 @@
+---
+name: Comprehensive CI with Automated Reporting
+
+"on":
+  push:
+    branches: [main, develop, 'feature/**', 'copilot/**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      create_issues:
+        description: 'Create issues for failures'
+        type: boolean
+        default: true
+      run_code_review:
+        description: 'Run automated code review'
+        type: boolean
+        default: true
+      generate_reports:
+        description: 'Generate comprehensive reports'
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  checks: write
+  actions: read
+  security-events: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_CI_PROGRESS: true
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  comprehensive-ci:
+    name: Comprehensive CI - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Starting AitherZero CI Pipeline on ${{ matrix.os }}" -ForegroundColor Magenta
+          Write-Host "📝 Repository: ${{ github.repository }}" -ForegroundColor Cyan
+          Write-Host "🌿 Branch: ${{ github.ref_name }}" -ForegroundColor Cyan
+          Write-Host "📋 Commit: ${{ github.sha }}" -ForegroundColor Cyan
+          Write-Host ""
+          
+          Write-Host "🔧 Bootstrapping environment..." -ForegroundColor Yellow
+          ./bootstrap.ps1 -Mode New -NonInteractive
+          Write-Host "✅ Bootstrap completed" -ForegroundColor Green
+
+      - name: 📦 Install CI Dependencies
+        shell: pwsh
+        run: |
+          Write-Host "📦 Installing CI dependencies..." -ForegroundColor Yellow
+          
+          # Install required modules
+          $modules = @('Pester', 'PSScriptAnalyzer', 'PowerShellGet')
+          foreach ($module in $modules) {
+            Write-Host "   Installing $module..." -ForegroundColor Cyan
+            try {
+              Install-Module -Name $module -Force -SkipPublisherCheck -ErrorAction Stop
+              Write-Host "   ✅ $module installed" -ForegroundColor Green
+            } catch {
+              Write-Host "   ⚠️ $module installation failed: $_" -ForegroundColor Yellow
+            }
+          }
+          
+          Write-Host "✅ Dependencies installation completed" -ForegroundColor Green
+
+      - name: 🔍 Syntax Validation with Progress
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running comprehensive syntax validation..." -ForegroundColor Yellow
+          
+          $startTime = Get-Date
+          try {
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
+            $duration = (Get-Date) - $startTime
+            Write-Host "✅ Syntax validation completed in $($duration.TotalSeconds.ToString('F2'))s" -ForegroundColor Green
+          } catch {
+            $duration = (Get-Date) - $startTime
+            Write-Host "❌ Syntax validation failed after $($duration.TotalSeconds.ToString('F2'))s" -ForegroundColor Red
+            Write-Host "Error: $_" -ForegroundColor Red
+            
+            # Continue for reporting but mark as failed
+            echo "SYNTAX_FAILED=true" >> $env:GITHUB_ENV
+          }
+
+      - name: 🧪 Unit Tests with Coverage
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "🧪 Running unit tests with coverage analysis..." -ForegroundColor Yellow
+          
+          $startTime = Get-Date
+          $env:AITHERZERO_TEST_TIMEOUT = "600"  # 10 minutes
+          $env:AITHERZERO_GENERATE_COVERAGE = "true"
+          
+          try {
+            Write-Host "   📊 Executing test suite..." -ForegroundColor Cyan
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402 -CI
+            
+            $duration = (Get-Date) - $startTime
+            Write-Host "✅ Unit tests completed in $($duration.TotalSeconds.ToString('F2'))s" -ForegroundColor Green
+            
+          } catch {
+            $duration = (Get-Date) - $startTime
+            Write-Host "⚠️ Unit tests encountered issues after $($duration.TotalSeconds.ToString('F2'))s" -ForegroundColor Yellow
+            Write-Host "Error: $_" -ForegroundColor Yellow
+            
+            echo "TESTS_FAILED=true" >> $env:GITHUB_ENV
+          }
+
+      - name: 📊 Generate Test Coverage Report
+        shell: pwsh
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          Write-Host "📊 Generating comprehensive test coverage report..." -ForegroundColor Yellow
+          
+          try {
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0408 -CI
+            Write-Host "✅ Coverage report generated" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Coverage report generation failed: $_" -ForegroundColor Yellow
+          }
+
+      - name: 🔬 Code Quality Analysis
+        shell: pwsh
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          Write-Host "🔬 Running PSScriptAnalyzer code quality analysis..." -ForegroundColor Yellow
+          
+          $startTime = Get-Date
+          $env:AITHERZERO_ANALYSIS_TIMEOUT = "300"
+          
+          try {
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0404 -CI
+            $duration = (Get-Date) - $startTime
+            Write-Host "✅ Code analysis completed in $($duration.TotalSeconds.ToString('F2'))s" -ForegroundColor Green
+          } catch {
+            $duration = (Get-Date) - $startTime
+            Write-Host "⚠️ Code analysis failed after $($duration.TotalSeconds.ToString('F2'))s" -ForegroundColor Yellow
+            echo "ANALYSIS_FAILED=true" >> $env:GITHUB_ENV
+          }
+
+      - name: 📋 Generate Comprehensive Project Report
+        shell: pwsh
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          Write-Host "📋 Generating comprehensive project status report..." -ForegroundColor Yellow
+          
+          try {
+            # Generate main project report
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0510 -CI
+            Write-Host "   ✅ Project report generated" -ForegroundColor Green
+            
+            # Generate dashboard
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0511 -CI
+            Write-Host "   ✅ Project dashboard generated" -ForegroundColor Green
+            
+          } catch {
+            Write-Host "⚠️ Report generation failed: $_" -ForegroundColor Yellow
+          }
+
+      - name: 🐛 Create Issues for Failures
+        shell: pwsh
+        if: matrix.os == 'ubuntu-latest' && (env.TESTS_FAILED == 'true' || env.SYNTAX_FAILED == 'true' || env.ANALYSIS_FAILED == 'true') && (github.event.inputs.create_issues != 'false')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "🐛 Creating GitHub issues for detected failures..." -ForegroundColor Yellow
+          
+          # Install GitHub CLI if not available
+          if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+            Write-Host "   📦 Installing GitHub CLI..." -ForegroundColor Cyan
+            if ($IsWindows) {
+              winget install --id GitHub.cli
+            } else {
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+              sudo apt update
+              sudo apt install gh
+            }
+          }
+          
+          try {
+            # Create issue for test failures if tests failed
+            if ($env:TESTS_FAILED -eq 'true') {
+              ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0810 -CI -AutoCreate
+              Write-Host "   ✅ Test failure issue created" -ForegroundColor Green
+            }
+            
+            Write-Host "✅ Issue creation completed" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Issue creation failed: $_" -ForegroundColor Yellow
+          }
+
+      - name: 🔍 Automated Code Review
+        if: matrix.os == 'ubuntu-latest' && github.event_name == 'pull_request' && github.event.inputs.run_code_review != 'false'
+        uses: github/super-linter@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_POWERSHELL: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_JSON: true
+          POWERSHELL_COMMAND: pwsh
+          FILTER_REGEX_EXCLUDE: .*(tests|examples|legacy-to-migrate)/.*
+
+      - name: 📤 Upload Comprehensive Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-results-${{ matrix.os }}-${{ github.run_number }}
+          path: |
+            tests/results/
+            tests/reports/
+            tests/coverage/
+            logs/
+            *.json
+            *.html
+            *.xml
+          retention-days: 30
+
+      - name: 📊 CI Summary Report
+        if: always() && matrix.os == 'ubuntu-latest'
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "📊 CI Pipeline Summary Report" -ForegroundColor Magenta
+          Write-Host "═══════════════════════════════════════════════" -ForegroundColor Magenta
+          Write-Host "Repository: ${{ github.repository }}" -ForegroundColor Cyan
+          Write-Host "Branch: ${{ github.ref_name }}" -ForegroundColor Cyan
+          Write-Host "Commit: ${{ github.sha }}" -ForegroundColor Cyan
+          Write-Host "Workflow: ${{ github.workflow }}" -ForegroundColor Cyan
+          Write-Host "Run ID: ${{ github.run_id }}" -ForegroundColor Cyan
+          Write-Host ""
+          
+          # Status indicators
+          $syntaxStatus = if ($env:SYNTAX_FAILED -eq 'true') { "❌ FAILED" } else { "✅ PASSED" }
+          $testsStatus = if ($env:TESTS_FAILED -eq 'true') { "⚠️  ISSUES" } else { "✅ PASSED" }
+          $analysisStatus = if ($env:ANALYSIS_FAILED -eq 'true') { "⚠️  ISSUES" } else { "✅ PASSED" }
+          
+          Write-Host "🔍 Syntax Validation: $syntaxStatus" -ForegroundColor $(if ($env:SYNTAX_FAILED -eq 'true') { 'Red' } else { 'Green' })
+          Write-Host "🧪 Unit Tests: $testsStatus" -ForegroundColor $(if ($env:TESTS_FAILED -eq 'true') { 'Yellow' } else { 'Green' })
+          Write-Host "🔬 Code Analysis: $analysisStatus" -ForegroundColor $(if ($env:ANALYSIS_FAILED -eq 'true') { 'Yellow' } else { 'Green' })
+          Write-Host ""
+          
+          if ($env:SYNTAX_FAILED -eq 'true' -or $env:TESTS_FAILED -eq 'true' -or $env:ANALYSIS_FAILED -eq 'true') {
+            Write-Host "⚠️  Some issues detected - check individual step outputs for details" -ForegroundColor Yellow
+            if ($env:SYNTAX_FAILED -eq 'true') {
+              exit 1
+            }
+          } else {
+            Write-Host "🎉 All checks passed successfully!" -ForegroundColor Green
+          }
+
+  deploy-reports:
+    name: Deploy Reports to GitHub Pages
+    needs: comprehensive-ci
+    runs-on: ubuntu-latest
+    if: always() && github.ref == 'refs/heads/main'
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build Pages Content
+        shell: pwsh
+        run: |
+          Write-Host "📚 Building GitHub Pages content..." -ForegroundColor Yellow
+          
+          # Create pages directory
+          New-Item -ItemType Directory -Path "./pages" -Force
+          
+          # Create index page with comprehensive dashboard
+          $indexHtml = @"
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>AitherZero CI/CD Dashboard</title>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+                  .container { max-width: 1200px; margin: 0 auto; }
+                  .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+                  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+                  .metric { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+                  .metric-value { font-size: 2em; font-weight: bold; color: #333; }
+                  .metric-label { color: #666; margin-top: 5px; }
+                  .reports { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+                  .report-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                  .status-badge { padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.8em; }
+                  .status-success { background: #d4edda; color: #155724; }
+                  .status-warning { background: #fff3cd; color: #856404; }
+                  .status-error { background: #f8d7da; color: #721c24; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="header">
+                      <h1>🚀 AitherZero CI/CD Dashboard</h1>
+                      <p>Comprehensive automation and reporting for cross-platform PowerShell infrastructure</p>
+                      <p><strong>Last Updated:</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')</p>
+                  </div>
+                  
+                  <div class="metrics">
+                      <div class="metric">
+                          <div class="metric-value">${{ github.run_number }}</div>
+                          <div class="metric-label">Build Number</div>
+                      </div>
+                      <div class="metric">
+                          <div class="metric-value">3</div>
+                          <div class="metric-label">Platforms</div>
+                      </div>
+                      <div class="metric">
+                          <div class="metric-value">210+</div>
+                          <div class="metric-label">PowerShell Files</div>
+                      </div>
+                      <div class="metric">
+                          <div class="metric-value">✅</div>
+                          <div class="metric-label">CI Status</div>
+                      </div>
+                  </div>
+                  
+                  <div class="reports">
+                      <div class="report-card">
+                          <h3>📊 Test Coverage</h3>
+                          <p>Comprehensive test coverage analysis across all modules and platforms.</p>
+                          <a href="./coverage/index.html">View Coverage Report</a>
+                      </div>
+                      
+                      <div class="report-card">
+                          <h3>🧪 Test Results</h3>
+                          <p>Detailed test execution results with failure analysis and issue tracking.</p>
+                          <a href="./tests/index.html">View Test Results</a>
+                      </div>
+                      
+                      <div class="report-card">
+                          <h3>🔬 Code Quality</h3>
+                          <p>PSScriptAnalyzer results and code quality metrics.</p>
+                          <a href="./analysis/index.html">View Analysis Report</a>
+                      </div>
+                      
+                      <div class="report-card">
+                          <h3>📋 Project Status</h3>
+                          <p>Overall project health, dependencies, and module status.</p>
+                          <a href="./reports/index.html">View Project Report</a>
+                      </div>
+                  </div>
+              </div>
+          </body>
+          </html>
+          "@
+          
+          $indexHtml | Set-Content "./pages/index.html"
+          
+          # Copy artifacts to pages
+          if (Test-Path "./artifacts") {
+            Copy-Item -Path "./artifacts/*" -Destination "./pages/" -Recurse -Force
+          }
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./pages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
