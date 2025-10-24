@@ -44,11 +44,14 @@ function Write-TestingLog {
     }
 }
 
-# Log module initialization
-Write-TestingLog -Message "Testing framework module initialized" -Data @{
-    ProjectRoot = $script:ProjectRoot
-    ConfigPath = $script:ConfigPath
-    CurrentProfile = $script:TestingState.CurrentProfile
+# Log module initialization (only once)
+if (-not (Get-Variable -Name "AitherZeroTestingInitialized" -Scope Global -ErrorAction SilentlyContinue)) {
+    Write-TestingLog -Message "Testing framework module initialized" -Data @{
+        ProjectRoot = $script:ProjectRoot
+        ConfigPath = $script:ConfigPath
+        CurrentProfile = $script:TestingState.CurrentProfile
+    }
+    $global:AitherZeroTestingInitialized = $true
 }
 
 # Load configuration

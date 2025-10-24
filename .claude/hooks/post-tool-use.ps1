@@ -49,7 +49,7 @@ try {
     
     # Tool-specific post-processing
     switch ($toolName) {
-        "Edit" -or "MultiEdit" -or "Write" {
+        { $_ -in @("Edit", "MultiEdit", "Write") } {
             $filePath = $toolArgs.file_path ?? $toolArgs.path
             Write-HookLog "File modified: $filePath"
             
@@ -100,10 +100,10 @@ try {
                     
                     # Trigger follow-up actions for specific scripts
                     switch ($scriptNumber) {
-                        "0404" -or "0407" {
+                        { $_ -in @("0404", "0407") } {
                             Write-HookLog "Code analysis completed, results available for review"
                         }
-                        "0402" -or "0403" -or "0411" {
+                        { $_ -in @("0402", "0403", "0411") } {
                             Write-HookLog "Tests completed, consider reviewing coverage and results"
                             
                             # Generate project report after test runs
@@ -153,10 +153,10 @@ try {
                                 Write-HookLog "Could not cache test results: $_" "DEBUG"
                             }
                         }
-                        "0700" -or "0701" -or "0702" -or "0703" {
+                        { $_ -in @("0700", "0701", "0702", "0703") } {
                             Write-HookLog "Git workflow action completed, consider next development steps"
                         }
-                        "0720" -or "0721" -or "0722" -or "0723" {
+                        { $_ -in @("0720", "0721", "0722", "0723") } {
                             Write-HookLog "Runner configuration completed, validate with GitHub Actions"
                         }
                     }

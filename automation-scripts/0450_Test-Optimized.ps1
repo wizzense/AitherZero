@@ -160,15 +160,44 @@ function New-TestBatches {
     return $batches
 }
 
-# High-performance isolated test runner
-function Invoke-TestBatchIsolated {
-    param([array]$TestFiles, [int]$BatchIndex)
+
+
+# Main execution
+if ($PSCmdlet.ShouldProcess("Test execution", "Run optimized tests")) {
     
-    $batchOutput = Join-Path $OutputPath "batch-$BatchIndex-$timestamp.xml"
-    $batchLog = Join-Path $OutputPath "batch-$BatchIndex-$timestamp.log"
+    # Discover tests
+    $testFiles = Get-TestFilesOptimized -Path $TestPath -Type $TestType
     
-    # Create minimal PowerShell script for isolated execution
-    $testScript = @"
+    if ($testFiles.Count -eq 0) {
+        Write-OptimizedLog "⚠️  No test files found" "Warning"
+        exit 0
+    }
+    
+    # Create batches
+    $batches = New-TestBatches -TestFiles $testFiles -BatchSize $BatchSize
+    
+    Write-OptimizedLog "🚀 Executing $($batches.Count) batches with $MaxWorkers workers"
+    
+    # Execute batches in parallel using PowerShell 7's ForEach-Object -Parallel
+    # Create indexed batches for parallel processing
+    $indexedBatches = for ($i = 0; $i -lt $batches.Count; $i++) {
+        @{ Index = $i; Batch = $batches[$i] }
+    }
+    
+    $batchResults = $indexedBatches | ForEach-Object -ThrottleLimit $MaxWorkers -Parallel {
+        $batchInfo = $_
+        $batch = $batchInfo.Batch
+        $batchIndex = $batchInfo.Index
+        $OutputPath = $using:OutputPath
+        $timestamp = $using:timestamp
+        
+        # Invoke-TestBatchIsolated function logic inline
+        $TestFiles = $batch | ForEach-Object { $_.FullName }
+        $batchOutput = Join-Path $OutputPath "batch-$BatchIndex-$timestamp.xml"
+        $batchLog = Join-Path $OutputPath "batch-$BatchIndex-$timestamp.log"
+        
+        # Create minimal PowerShell script for isolated execution
+        $testScript = @"
 # Optimized test execution script - minimal imports to reduce startup time
 `$ProgressPreference = 'SilentlyContinue'
 `$VerbosePreference = 'SilentlyContinue'  
@@ -213,48 +242,23 @@ try {
     } | ConvertTo-Json
 }
 "@
-    
-    # Execute in isolated PowerShell process
-    $result = pwsh -Command $testScript 2>$batchLog
-    
-    try {
-        return $result | ConvertFrom-Json
-    } catch {
-        Write-OptimizedLog "⚠️  Batch $BatchIndex failed to parse result" "Warning"
-        return @{
-            BatchIndex = $BatchIndex
-            Error = "Failed to parse batch result"
-            Success = $false
+        
+        # Execute in isolated PowerShell process
+        $result = pwsh -Command $testScript 2>$batchLog
+        
+        try {
+            $batchResult = $result | ConvertFrom-Json
+            if ($batchResult) {
+                Write-Host "Batch $batchIndex completed: $($batchResult.Passed) passed, $($batchResult.Failed) failed" -ForegroundColor $(if ($batchResult.Success) { 'Green' } else { 'Red' })
+                return $batchResult
+            } else {
+                Write-Warning "Batch $batchIndex returned no result"
+                return @{ BatchIndex = $batchIndex; Success = $false; Error = "No result returned" }
+            }
+        } catch {
+            Write-Warning "Failed to parse batch $batchIndex result: $_"
+            return @{ BatchIndex = $batchIndex; Success = $false; Error = $_.Exception.Message }
         }
-    }
-}
-
-# Main execution
-if ($PSCmdlet.ShouldProcess("Test execution", "Run optimized tests")) {
-    
-    # Discover tests
-    $testFiles = Get-TestFilesOptimized -Path $TestPath -Type $TestType
-    
-    if ($testFiles.Count -eq 0) {
-        Write-OptimizedLog "⚠️  No test files found" "Warning"
-        exit 0
-    }
-    
-    # Create batches
-    $batches = New-TestBatches -TestFiles $testFiles -BatchSize $BatchSize
-    
-    Write-OptimizedLog "🚀 Executing $($batches.Count) batches with $MaxWorkers workers"
-    
-    # Execute batches in parallel using PowerShell 7's ForEach-Object -Parallel
-    $batchResults = $batches | ForEach-Object -ThrottleLimit $MaxWorkers -Parallel {
-        $batch = $_
-        $batchIndex = $using:batches.IndexOf($batch)
-        
-        # Import the function into the parallel runspace  
-        $invokeTestBatch = $using:function:Invoke-TestBatchIsolated
-        
-        # Execute batch
-        & $invokeTestBatch -TestFiles ($batch | ForEach-Object { $_.FullName }) -BatchIndex $batchIndex
     }
     
     # Aggregate results
