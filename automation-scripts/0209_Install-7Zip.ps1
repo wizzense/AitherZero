@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 # Stage: Development
-# Dependencies: None
-# Description: Install 7-Zip file archiver
+# Dependencies: PackageManager
+# Description: Install 7-Zip file archiver using package managers (winget priority)
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -19,6 +19,20 @@ try {
     }
 } catch {
     # Fallback to basic output
+}
+
+# Import PackageManager module
+try {
+    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    if (Test-Path $packageManagerPath) {
+        Import-Module $packageManagerPath -Force -Global
+        $script:PackageManagerAvailable = $true
+    } else {
+        throw "PackageManager module not found at: $packageManagerPath"
+    }
+} catch {
+    Write-Warning "Could not load PackageManager module: $_"
+    $script:PackageManagerAvailable = $false
 }
 
 function Write-ScriptLog {
@@ -41,7 +55,7 @@ function Write-ScriptLog {
     }
 }
 
-Write-ScriptLog "Starting 7-Zip installation"
+Write-ScriptLog "Starting 7-Zip installation using package managers"
 
 try {
     # Get configuration
@@ -60,6 +74,46 @@ try {
         Write-ScriptLog "7-Zip installation is not enabled in configuration"
         exit 0
     }
+
+    # Use PackageManager if available
+    if ($script:PackageManagerAvailable) {
+        Write-ScriptLog "Using PackageManager module for 7-Zip installation"
+        
+        # Try package manager installation
+        try {
+            $preferredPackageManager = $sevenZipConfig.PreferredPackageManager
+            $installResult = Install-SoftwarePackage -SoftwareName '7zip' -PreferredPackageManager $preferredPackageManager
+            
+            if ($installResult.Success) {
+                Write-ScriptLog "7-Zip installed successfully via $($installResult.PackageManager)"
+                
+                # Verify installation
+                $sevenZipCmd = if ($IsWindows) { '7z.exe' } else { '7z' }
+                if (Get-Command $sevenZipCmd -ErrorAction SilentlyContinue) {
+                    Write-ScriptLog "7-Zip is working correctly"
+                    
+                    # Test 7-Zip
+                    try {
+                        $testOutput = & $sevenZipCmd 2>&1
+                        if ($testOutput -match '7-Zip') {
+                            Write-ScriptLog "7-Zip functionality verified"
+                        }
+                    } catch {
+                        Write-ScriptLog "7-Zip installed but may not be functioning correctly" -Level 'Warning'
+                    }
+                }
+                
+                Write-ScriptLog "7-Zip installation completed successfully"
+                exit 0
+            }
+        } catch {
+            Write-ScriptLog "Package manager installation failed: $_" -Level 'Warning'
+            Write-ScriptLog "Falling back to manual installation" -Level 'Information'
+        }
+    }
+
+    # Fallback to original installation logic
+    Write-ScriptLog "Using legacy installation method"
 
     # Platform-specific installation
     if ($IsWindows) {

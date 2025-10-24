@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 # Stage: Development
-# Dependencies: None
-# Description: Install Git version control system
+# Dependencies: PackageManager
+# Description: Install Git version control system using package managers (winget priority)
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -19,6 +19,20 @@ try {
     }
 } catch {
     # Fallback to basic output
+}
+
+# Import PackageManager module
+try {
+    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    if (Test-Path $packageManagerPath) {
+        Import-Module $packageManagerPath -Force -Global
+        $script:PackageManagerAvailable = $true
+    } else {
+        throw "PackageManager module not found at: $packageManagerPath"
+    }
+} catch {
+    Write-Warning "Could not load PackageManager module: $_"
+    $script:PackageManagerAvailable = $false
 }
 
 function Write-ScriptLog {
@@ -41,7 +55,7 @@ function Write-ScriptLog {
     }
 }
 
-Write-ScriptLog "Starting Git installation check"
+Write-ScriptLog "Starting Git installation using package managers"
 
 try {
     # Get configuration
@@ -58,6 +72,34 @@ try {
         Write-ScriptLog "Git installation is not enabled in configuration"
         exit 0
     }
+
+    # Use PackageManager if available
+    if ($script:PackageManagerAvailable) {
+        Write-ScriptLog "Using PackageManager module for Git installation"
+        
+        # Try package manager installation
+        try {
+            $preferredPackageManager = $gitConfig.PreferredPackageManager
+            $installResult = Install-SoftwarePackage -SoftwareName 'git' -PreferredPackageManager $preferredPackageManager
+            
+            if ($installResult.Success) {
+                Write-ScriptLog "Git installed successfully via $($installResult.PackageManager)"
+                
+                # Verify installation
+                $version = Get-SoftwareVersion -SoftwareName 'git'
+                Write-ScriptLog "Git version: $version"
+                
+                Write-ScriptLog "Git installation completed successfully"
+                exit 0
+            }
+        } catch {
+            Write-ScriptLog "Package manager installation failed: $_" -Level 'Warning'
+            Write-ScriptLog "Falling back to manual installation" -Level 'Information'
+        }
+    }
+
+    # Fallback to original installation logic
+    Write-ScriptLog "Using legacy installation method"
 
     # Check if Git is already installed
     $gitCommand = if ($IsWindows) { 'git.exe' } else { 'git' }
