@@ -1,0 +1,188 @@
+---
+name: Manual Release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+      prerelease:
+        description: 'Mark as pre-release'
+        type: boolean
+        default: false
+      run_tests:
+        description: 'Run full test suite before release'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Pre-Release Testing
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_tests == 'true'
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bootstrap Environment
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -NonInteractive
+
+      - name: Validate Syntax
+        shell: pwsh
+        run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
+
+      - name: Quick Module Test
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Write-Host "✅ Module validation passed"
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update Version
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version }}"
+          
+          # Update VERSION file
+          $version | Set-Content ./VERSION
+          
+          # Update module manifest
+          $manifest = Get-Content ./AitherZero.psd1 -Raw
+          $manifest = $manifest -replace "ModuleVersion\s*=\s*'[\d\.]+'", "ModuleVersion = '$version'"
+          $manifest | Set-Content ./AitherZero.psd1
+
+      - name: Create Release Package
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version }}"
+          $packageName = "AitherZero-v$version"
+          
+          # Create build info
+          $buildInfo = @{
+            Version = $version
+            BuildNumber = "${{ github.run_number }}"
+            Commit = "${{ github.sha }}"
+            Branch = "${{ github.ref_name }}"
+            BuildTime = (Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+            Platform = "Multi-Platform"
+            ReleaseType = if ("${{ github.event.inputs.prerelease }}" -eq "true") { "Pre-Release" } else { "Release" }
+          }
+          
+          $buildInfo | ConvertTo-Json -Depth 2 | Set-Content "./build-info.json"
+          
+          # Create package directory
+          New-Item -ItemType Directory -Path "./$packageName" -Force
+          
+          # Copy all essential files
+          $filesToCopy = @(
+            "*.psd1", "*.psm1", "*.ps1", "*.md", "LICENSE", "VERSION",
+            "domains", "automation-scripts", "orchestration", "tests",
+            "config.example.psd1", "build-info.json", ".azprofile.ps1",
+            "az", "az.ps1", "bootstrap.ps1", "bootstrap.sh"
+          )
+          
+          foreach ($pattern in $filesToCopy) {
+            if (Test-Path $pattern) {
+              Copy-Item -Path $pattern -Destination "./$packageName" -Recurse -Force
+            }
+          }
+          
+          # Create ZIP and TAR archives
+          Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip" -Force
+          
+          # Create TAR.GZ for Unix systems
+          if (Get-Command tar -ErrorAction SilentlyContinue) {
+            tar -czf "./$packageName.tar.gz" "./$packageName/"
+          }
+          
+          Write-Host "✅ Package created: $packageName"
+          Get-ChildItem -Filter "AitherZero-v*"
+
+      - name: Generate Release Notes
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version }}"
+          $buildInfo = Get-Content "./build-info.json" | ConvertFrom-Json
+          
+          $releaseNotes = @"
+          # AitherZero v$version
+          
+          **Build Information:**
+          - Version: $($buildInfo.Version)
+          - Build: #$($buildInfo.BuildNumber)
+          - Commit: $($buildInfo.Commit.Substring(0,8))
+          - Build Time: $($buildInfo.BuildTime)
+          
+          ## ✨ Features
+          - Cross-platform PowerShell automation framework
+          - Number-based orchestration system (0000-9999)
+          - Integrated CI/CD pipeline with GitHub Actions
+          - Comprehensive testing and validation tools
+          - Infrastructure automation with OpenTofu/Terraform support
+          
+          ## 📦 Installation
+          
+          ### Quick Start
+          ```powershell
+          # Download and extract AitherZero-v$version.zip
+          # Then run:
+          ./bootstrap.ps1 -Mode New -NonInteractive
+          ```
+          
+          ### One-liner Installation
+          ```powershell
+          iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
+          ```
+          
+          ## 🚀 Usage
+          ```powershell
+          # Interactive mode
+          ./Start-AitherZero.ps1
+          
+          # Run specific automation sequence
+          ./az 0402  # Unit tests
+          ./az 0407  # Syntax validation
+          ./az 0510  # Generate project report
+          ```
+          
+          ## 📋 System Requirements
+          - PowerShell 7+ (PowerShell 5.1+ supported with auto-upgrade)
+          - Windows, Linux, or macOS
+          - Git (for development workflows)
+          
+          ---
+          **Full Changelog:** https://github.com/wizzense/AitherZero/compare/main...v$version
+          "@
+          
+          $releaseNotes | Set-Content ./release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: AitherZero v${{ github.event.inputs.version }}
+          body_path: ./release-notes.md
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+          files: |
+            AitherZero-v*.zip
+            AitherZero-v*.tar.gz
+            build-info.json

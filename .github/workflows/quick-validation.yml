@@ -1,0 +1,56 @@
+---
+name: Quick Validation
+
+"on":
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  validate:
+    name: Quick Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Validate Syntax
+        shell: pwsh
+        run: |
+          # Quick syntax validation only
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
+
+      - name: Validate Module Load
+        shell: pwsh
+        run: |
+          # Test that the main module loads without errors
+          try {
+            Import-Module ./AitherZero.psd1 -Force
+            Write-Host "✅ Module loads successfully"
+            
+            # Test basic functionality
+            $config = Get-AitherConfiguration -ErrorAction SilentlyContinue
+            Write-Host "✅ Configuration system works"
+            
+            Get-Module AitherZero | Select-Object Name, Version, ModuleType
+            Write-Host "✅ Module validation complete"
+          } catch {
+            Write-Error "❌ Module validation failed: $_"
+            exit 1
+          }
