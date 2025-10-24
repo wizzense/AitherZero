@@ -187,9 +187,13 @@ if ($Help) {
 function Initialize-CoreModules {
     # Direct import without background jobs to avoid double initialization
     try {
-        # Check if already loaded
-        if (-not (Get-Module -Name "AitherZero")) {
+        # Check if already loaded and avoid repeated imports in CI
+        $moduleLoaded = Get-Module -Name "AitherZero"
+        $shouldReload = -not $moduleLoaded -or (-not $env:AITHERZERO_CI -and -not $global:AitherZeroModuleLoaded)
+        
+        if ($shouldReload) {
             Import-Module (Join-Path $script:ProjectRoot "AitherZero.psd1") -Force -Global
+            $global:AitherZeroModuleLoaded = $true
         }
         
         # Initialize UI if available (without re-loading config)

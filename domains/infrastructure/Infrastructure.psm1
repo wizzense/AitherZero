@@ -24,10 +24,13 @@ function Write-InfraLog {
     }
 }
 
-# Log module initialization
-Write-InfraLog -Message "Infrastructure module initialized" -Data @{
-    OpenTofuAvailable = (Get-Command tofu -ErrorAction SilentlyContinue) -ne $null
-    TerraformAvailable = (Get-Command terraform -ErrorAction SilentlyContinue) -ne $null
+# Log module initialization (only once)
+if (-not (Get-Variable -Name "AitherZeroInfrastructureInitialized" -Scope Global -ErrorAction SilentlyContinue)) {
+    Write-InfraLog -Message "Infrastructure module initialized" -Data @{
+        OpenTofuAvailable = (Get-Command tofu -ErrorAction SilentlyContinue) -ne $null
+        TerraformAvailable = (Get-Command terraform -ErrorAction SilentlyContinue) -ne $null
+    }
+    $global:AitherZeroInfrastructureInitialized = $true
 }
 
 function Test-OpenTofu {

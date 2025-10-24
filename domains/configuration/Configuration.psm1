@@ -75,8 +75,9 @@ function Initialize-CIEnvironment {
         $env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI  # Azure DevOps
     )
     
-    if ($script:IsCI) {
+    if ($script:IsCI -and -not (Get-Variable -Name "AitherZeroCIDetected" -Scope Global -ErrorAction SilentlyContinue)) {
         Write-ConfigLog -Message "CI environment detected" -Level Information
+        $global:AitherZeroCIDetected = $true
         $script:CurrentEnvironment = "CI"
         
         # Set CI defaults for Core section
