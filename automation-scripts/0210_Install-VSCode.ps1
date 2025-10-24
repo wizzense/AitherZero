@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 # Stage: Development
-# Dependencies: None
-# Description: Install Visual Studio Code editor
+# Dependencies: PackageManager
+# Description: Install Visual Studio Code editor using package managers (winget priority)
 # Tags: development, editor, vscode, ide
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -20,6 +20,20 @@ try {
     }
 } catch {
     # Fallback to basic output
+}
+
+# Import PackageManager module
+try {
+    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    if (Test-Path $packageManagerPath) {
+        Import-Module $packageManagerPath -Force -Global
+        $script:PackageManagerAvailable = $true
+    } else {
+        throw "PackageManager module not found at: $packageManagerPath"
+    }
+} catch {
+    Write-Warning "Could not load PackageManager module: $_"
+    $script:PackageManagerAvailable = $false
 }
 
 function Write-ScriptLog {
@@ -42,7 +56,7 @@ function Write-ScriptLog {
     }
 }
 
-Write-ScriptLog "Starting Visual Studio Code installation check"
+Write-ScriptLog "Starting Visual Studio Code installation using package managers"
 
 try {
     # Get configuration
@@ -59,6 +73,56 @@ try {
         Write-ScriptLog "Visual Studio Code installation is not enabled in configuration"
         exit 0
     }
+
+    # Use PackageManager if available
+    if ($script:PackageManagerAvailable) {
+        Write-ScriptLog "Using PackageManager module for Visual Studio Code installation"
+        
+        # Try package manager installation
+        try {
+            $preferredPackageManager = $vscodeConfig.PreferredPackageManager
+            $installResult = Install-SoftwarePackage -SoftwareName 'vscode' -PreferredPackageManager $preferredPackageManager
+            
+            if ($installResult.Success) {
+                Write-ScriptLog "Visual Studio Code installed successfully via $($installResult.PackageManager)"
+                
+                # Verify installation  
+                $version = Get-SoftwareVersion -SoftwareName 'vscode'
+                Write-ScriptLog "Visual Studio Code version: $version"
+                
+                # Install extensions if specified
+                if ($vscodeConfig.Extensions -and $vscodeConfig.Extensions.Count -gt 0) {
+                    Write-ScriptLog "Installing Visual Studio Code extensions..."
+                    
+                    # Wait a moment for VSCode to be available
+                    Start-Sleep -Seconds 2
+                    
+                    $codeCmd = if ($IsWindows) { 'code.cmd' } else { 'code' }
+                    foreach ($extension in $vscodeConfig.Extensions) {
+                        try {
+                            Write-ScriptLog "Installing extension: $extension"
+                            & $codeCmd --install-extension $extension --force
+                            
+                            if ($LASTEXITCODE -ne 0) {
+                                Write-ScriptLog "Failed to install extension: $extension" -Level 'Warning'
+                            }
+                        } catch {
+                            Write-ScriptLog "Error installing extension $extension : $_" -Level 'Warning'
+                        }
+                    }
+                }
+                
+                Write-ScriptLog "Visual Studio Code installation completed successfully"
+                exit 0
+            }
+        } catch {
+            Write-ScriptLog "Package manager installation failed: $_" -Level 'Warning'
+            Write-ScriptLog "Falling back to manual installation" -Level 'Information'
+        }
+    }
+
+    # Fallback to original installation logic
+    Write-ScriptLog "Using legacy installation method"
 
     # Check if VSCode is already installed
     $codeCmd = if ($IsWindows) { 'code.cmd' } else { 'code' }
