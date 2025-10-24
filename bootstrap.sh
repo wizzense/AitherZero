@@ -175,7 +175,7 @@ initialize_modules() {
     pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1 \
         -InstallProfile "$PROFILE" \
         -NonInteractive \
-        -SkipAutoStart:$([ "$AUTO_START" = "false" ] && echo "true" || echo "false")
+        $([ "$AUTO_START" = "false" ] && echo "-SkipAutoStart" || echo "")
     
     print_log "SUCCESS" "Modules initialized"
 }
@@ -187,7 +187,12 @@ is_aitherzero_project() {
 
 # Main installation
 main() {
-    clear
+    # Clear screen if clear command is available, otherwise use printf
+    if command -v clear &> /dev/null; then
+        clear
+    else
+        printf '\033[2J\033[H'
+    fi
     cat << "EOF"
     _    _ _   _               ______               
    / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___  
