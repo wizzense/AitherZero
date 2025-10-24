@@ -144,7 +144,24 @@ function Test-IsWindows {
     if ($PSVersionTable.PSVersion.Major -ge 6) {
         return $IsWindows
     }
+    # PowerShell 5.1 assumes Windows
     return $true
+}
+
+function Test-IsLinux {
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        return $IsLinux
+    }
+    # PowerShell 5.1 only runs on Windows
+    return $false
+}
+
+function Test-IsMacOS {
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        return $IsMacOS
+    }
+    # PowerShell 5.1 only runs on Windows
+    return $false
 }
 
 function Test-IsAdmin {
@@ -190,14 +207,19 @@ function Test-Dependencies {
     if ($PSVersionTable.PSVersion.Major -lt 7) {
         $missing += 'PowerShell7'
         Write-BootstrapLog "PowerShell 7 is required. Current version: $($PSVersionTable.PSVersion)" -Level Warning
+    } else {
+        Write-BootstrapLog "PowerShell 7 detected: $($PSVersionTable.PSVersion)" -Level Success
     }
 
     if ($missing.Count -gt 0) {
+        # Always auto-install PowerShell 7 if missing, since it's required
         if ($AutoInstallDeps -or $missing -contains 'PowerShell7') {
             Install-Dependencies -Missing $missing
         } else {
             throw "Missing dependencies: $($missing -join ', '). Use -AutoInstallDeps to install automatically."
         }
+    } else {
+        Write-BootstrapLog "All dependencies satisfied" -Level Success
     }
 }
 
@@ -211,23 +233,58 @@ function Install-Dependencies {
         # Re-launch in PowerShell 7
         Write-BootstrapLog "Re-launching bootstrap in PowerShell 7..." -Level Info
 
-        $pwsh = if (Test-IsWindows) { "pwsh.exe" } else { "pwsh" }
-        $scriptPath = $MyInvocation.PSCommandPath
+        # Find PowerShell 7 executable
+        $pwsh = $null
+        if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+            $pwsh = "pwsh"
+        } elseif (Test-IsWindows) {
+            # Try common Windows paths
+            $pwshPaths = @(
+                "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+                "${env:ProgramFiles(x86)}\PowerShell\7\pwsh.exe"
+            )
+            foreach ($path in $pwshPaths) {
+                if (Test-Path $path) {
+                    $pwsh = $path
+                    break
+                }
+            }
+        }
+        
+        if (-not $pwsh) {
+            throw "PowerShell 7 was installed but pwsh command not found in PATH"
+        }
 
-        # Build arguments to preserve
-        $arguments = @()
-        if ($Mode) { $arguments += "-Mode", $Mode }
-        if ($InstallProfile) { $arguments += "-InstallProfile", $InstallProfile }
-        if ($InstallPath) { $arguments += "-InstallPath", $InstallPath }
-        if ($Branch) { $arguments += "-Branch", $Branch }
-        if ($NonInteractive) { $arguments += "-NonInteractive" }
-        if ($AutoInstallDeps) { $arguments += "-AutoInstallDeps" }
-        if ($SkipAutoStart) { $arguments += "-SkipAutoStart" }
+        # Get the current script path 
+        $scriptPath = $null
+        if ($MyInvocation.PSCommandPath) {
+            $scriptPath = $MyInvocation.PSCommandPath
+        } elseif ($PSCommandPath) {
+            $scriptPath = $PSCommandPath
+        } elseif ($MyInvocation.MyCommand.Path) {
+            $scriptPath = $MyInvocation.MyCommand.Path
+        } else {
+            # Fallback - assume bootstrap.ps1 in current directory
+            $scriptPath = Join-Path (Get-Location) "bootstrap.ps1"
+        }
 
-    # IMPORTANT: Use the constructed $arguments array (the previous implementation mistakenly
-    # referenced the automatic @args which lost our preserved parameters when upgrading from
-    # Windows PowerShell 5 to PowerShell 7). This fixes cross-version bootstrap continuation.
-    & $pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptPath @arguments
+        # Build arguments to preserve all parameters
+        $argumentList = @()
+        $argumentList += "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath
+        
+        # Preserve all bound parameters
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Value -is [switch]) {
+                if ($param.Value) {
+                    $argumentList += "-$($param.Key)"
+                }
+            } else {
+                $argumentList += "-$($param.Key)", $param.Value
+            }
+        }
+
+        Write-BootstrapLog "Executing: $pwsh $($argumentList -join ' ')" -Level Info
+        & $pwsh @argumentList
         exit $LASTEXITCODE
     }
 
@@ -248,7 +305,7 @@ function Install-Dependencies {
                         Start-Process -FilePath $gitInstaller -ArgumentList "/VERYSILENT", "/NORESTART" -Wait
                         Remove-Item $gitInstaller -Force
                     }
-                } elseif ($IsMacOS) {
+                } elseif (Test-IsMacOS) {
                     if (Get-Command brew -ErrorAction SilentlyContinue) {
                         brew install git
                     } else {
@@ -275,6 +332,12 @@ function Install-Dependencies {
 
 function Install-PowerShell7 {
     Write-BootstrapLog "Installing PowerShell 7..." -Level Info
+    
+    # First check if it's already available but not detected
+    if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+        Write-BootstrapLog "PowerShell 7 already available as 'pwsh'" -Level Success
+        return
+    }
 
     if (Test-IsWindows) {
         # Windows installation
@@ -314,7 +377,7 @@ function Install-PowerShell7 {
             throw
         }
 
-    } elseif ($IsMacOS) {
+    } elseif (Test-IsMacOS) {
         # macOS installation
         if (Get-Command brew -ErrorAction SilentlyContinue) {
             Write-BootstrapLog "Installing via Homebrew..." -Level Info
@@ -326,32 +389,57 @@ function Install-PowerShell7 {
         }
 
     } else {
-        # Linux installation
-        Write-BootstrapLog "Installing PowerShell 7 for Linux..." -Level Info
+        # Linux or other Unix-like systems
+        Write-BootstrapLog "Installing PowerShell 7 for Unix..." -Level Info
 
-        # Download and run Microsoft's install script
-        $installScript = "$env:HOME/install-powershell.sh"
-        Invoke-WebRequest -Uri https://aka.ms/install-powershell.sh -OutFile $installScript
-        chmod +x $installScript
-        sudo $installScript
-        Remove-Item $installScript -Force
-    }
-
-    # Verify installation
-    $pwshPath = if (Test-IsWindows) {
-        "$env:ProgramFiles\PowerShell\7\pwsh.exe"
-    } else {
-        "/usr/bin/pwsh"
-    }
-
-    if (-not (Test-Path $pwshPath)) {
-        # Check in PATH
-        if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) {
-            throw "PowerShell 7 installation completed but pwsh not found"
+        try {
+            # Download and run Microsoft's install script
+            $installScript = if ($env:HOME) { "$env:HOME/install-powershell.sh" } else { "/tmp/install-powershell.sh" }
+            Write-BootstrapLog "Downloading PowerShell install script to: $installScript" -Level Info
+            
+            Invoke-WebRequest -Uri "https://aka.ms/install-powershell.sh" -OutFile $installScript -UseBasicParsing
+            & chmod "+x" $installScript
+            
+            Write-BootstrapLog "Running PowerShell install script..." -Level Info
+            & sudo $installScript
+            
+            Remove-Item $installScript -Force -ErrorAction SilentlyContinue
+        } catch {
+            Write-BootstrapLog "Microsoft install script failed: $_" -Level Warning
+            Write-BootstrapLog "Please install PowerShell 7 manually and re-run bootstrap" -Level Error
+            throw
         }
     }
 
-    Write-BootstrapLog "PowerShell 7 installed successfully!" -Level Success
+    # Verify installation - refresh PATH first
+    if (Test-IsWindows) {
+        # Refresh environment variables on Windows
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    }
+
+    # Check common locations and PATH
+    $pwshFound = $false
+    if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+        $pwshFound = $true
+    } elseif (Test-IsWindows) {
+        # Check common Windows installation paths
+        $commonPaths = @(
+            "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+            "${env:ProgramFiles(x86)}\PowerShell\7\pwsh.exe"
+        )
+        foreach ($path in $commonPaths) {
+            if (Test-Path $path) {
+                $pwshFound = $true
+                break
+            }
+        }
+    }
+
+    if (-not $pwshFound) {
+        throw "PowerShell 7 installation completed but pwsh not found. Please add PowerShell 7 to PATH and re-run."
+    }
+
+    Write-BootstrapLog "PowerShell 7 installed and verified successfully!" -Level Success
 }
 
 function Install-AitherZero {
