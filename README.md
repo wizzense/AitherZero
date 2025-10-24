@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/branding/aitherium-logo.png" alt="Aitherium Logo" width="200"/>
+  <img src="aitherium_logo.jpg" alt="Aitherium Logo" width="200"/>
 </p>
 
 <h1 align="center">AitherZero</h1>
@@ -19,12 +19,6 @@
 ---
 
 ## Quick Install
-
-### Windows (PowerShell 5.1)
-```powershell
-# Automatically installs PowerShell 7 if needed
-irm https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap-ps5.ps1 | iex
-```
 
 ### Windows/Linux/macOS (PowerShell 7+)
 ```powershell
