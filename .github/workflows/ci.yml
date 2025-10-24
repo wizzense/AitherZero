@@ -17,8 +17,7 @@ name: CI Pipeline
         default: 'quick'
 
 concurrency:
-  group: >-
-    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -52,8 +51,7 @@ jobs:
 
       - name: Validate Syntax
         shell: pwsh
-        run: >-
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
+        run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
 
       - name: Run Unit Tests
         shell: pwsh

@@ -46,8 +46,7 @@ jobs:
           }
 
           # Create ZIP archive
-          Compress-Archive -Path "./$packageName" `
-            -DestinationPath "./$packageName.zip"
+          Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
