@@ -2,10 +2,17 @@
 
 <#
 .SYNOPSIS
-    AitherZero Reporting Engine Module
+    AitherZero Reporting Engine Module (Enhanced)
 .DESCRIPTION
     Provides comprehensive reporting capabilities including real-time dashboards,
     historical analysis, test result visualization, and multi-format exports.
+    Enhanced to consolidate functionality from automation scripts 0500-0599.
+.NOTES
+    Copyright © 2025 Aitherium Corporation
+    Consolidates: 0500_Validate-Environment.ps1, 0501_Get-SystemInfo.ps1,
+                  0510_Generate-ProjectReport.ps1, 0511_Show-ProjectDashboard.ps1,
+                  0512_Generate-Dashboard.ps1, 0520_Analyze-*.ps1 scripts,
+                  0530_View-Logs.ps1, and other reporting automation
 #>
 
 Set-StrictMode -Version Latest
@@ -1112,9 +1119,360 @@ function Export-MetricsReport {
 # Initialize on module load
 Initialize-ReportingEngine
 
-# Export functions
+######################################################################################
+# CONSOLIDATED REPORTING FUNCTIONS (from automation scripts 0500-0599)
+######################################################################################
+
+function Test-EnvironmentValidation {
+    <#
+    .SYNOPSIS
+        Validate AitherZero environment configuration
+    .DESCRIPTION
+        Comprehensive environment validation and reporting
+        Consolidates 0500_Validate-Environment.ps1
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$Detailed,
+        [string]$OutputPath = (Join-Path $script:ProjectRoot "reports")
+    )
+    
+    Write-ReportLog "Running environment validation"
+    
+    $validation = @{
+        Timestamp = Get-Date
+        Overall = $true
+        PowerShell = @{}
+        Modules = @{}
+        Directories = @{}
+        Tools = @{}
+        Configuration = @{}
+        Issues = @()
+    }
+    
+    # PowerShell validation
+    $validation.PowerShell = @{
+        Version = $PSVersionTable.PSVersion
+        Compatible = $PSVersionTable.PSVersion.Major -ge 7
+        Edition = $PSVersionTable.PSEdition
+        OS = $PSVersionTable.OS
+    }
+    
+    if (-not $validation.PowerShell.Compatible) {
+        $validation.Issues += "PowerShell 7+ required, found $($PSVersionTable.PSVersion)"
+        $validation.Overall = $false
+    }
+    
+    # Module validation
+    $requiredModules = @('Pester', 'PSScriptAnalyzer')
+    foreach ($moduleName in $requiredModules) {
+        $module = Get-Module -ListAvailable -Name $moduleName | Sort-Object Version -Descending | Select-Object -First 1
+        $validation.Modules[$moduleName] = @{
+            Available = $null -ne $module
+            Version = if ($module) { $module.Version } else { $null }
+        }
+        
+        if (-not $module) {
+            $validation.Issues += "Required module missing: $moduleName"
+            $validation.Overall = $false
+        }
+    }
+    
+    # Directory structure validation
+    $requiredDirs = @('logs', 'test-results', 'reports', 'domains')
+    foreach ($dir in $requiredDirs) {
+        $dirPath = Join-Path $script:ProjectRoot $dir
+        $validation.Directories[$dir] = @{
+            Exists = Test-Path $dirPath
+            Path = $dirPath
+        }
+        
+        if (-not (Test-Path $dirPath)) {
+            $validation.Issues += "Missing directory: $dir"
+            $validation.Overall = $false
+        }
+    }
+    
+    # External tools validation
+    $tools = @('git', 'node', 'python', 'docker')
+    foreach ($tool in $tools) {
+        $command = Get-Command $tool -ErrorAction SilentlyContinue
+        $validation.Tools[$tool] = @{
+            Available = $null -ne $command
+            Path = if ($command) { $command.Source } else { $null }
+        }
+    }
+    
+    Write-ReportLog "Environment validation completed. Overall status: $($validation.Overall)"
+    
+    return $validation
+}
+
+function Get-SystemInformation {
+    <#
+    .SYNOPSIS
+        Gather comprehensive system information
+    .DESCRIPTION
+        Collects detailed system and environment information
+        Consolidates 0501_Get-SystemInfo.ps1
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$IncludeHardware,
+        [switch]$IncludeNetwork,
+        [switch]$IncludeProcesses
+    )
+    
+    Write-ReportLog "Gathering system information"
+    
+    $systemInfo = @{
+        Timestamp = Get-Date
+        Environment = @{
+            OS = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
+            OSVersion = [System.Environment]::OSVersion
+            Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+            ProcessorCount = [System.Environment]::ProcessorCount
+            MachineName = [System.Environment]::MachineName
+            UserName = [System.Environment]::UserName
+            WorkingDirectory = Get-Location
+        }
+        PowerShell = @{
+            Version = $PSVersionTable.PSVersion
+            Edition = $PSVersionTable.PSEdition
+            Host = $Host.Name
+            ExecutionPolicy = Get-ExecutionPolicy
+            Modules = (Get-Module | Measure-Object).Count
+        }
+        AitherZero = @{
+            ProjectRoot = $script:ProjectRoot
+            Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) { 
+                Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw 
+            } else { "Unknown" }
+            ModulesLoaded = (Get-Module | Where-Object { $_.Path -like "*$script:ProjectRoot*" }).Count
+        }
+    }
+    
+    if ($IncludeHardware) {
+        $systemInfo.Hardware = @{
+            TotalMemory = [System.GC]::GetTotalMemory($true)
+            AvailableMemory = if ($IsWindows) {
+                try {
+                    Get-WmiObject -Class Win32_OperatingSystem | ForEach-Object { $_.FreePhysicalMemory * 1KB }
+                } catch { "N/A" }
+            } else { "N/A" }
+        }
+    }
+    
+    if ($IncludeNetwork) {
+        $systemInfo.Network = @{
+            HostName = [System.Net.Dns]::GetHostName()
+            IPAddresses = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) | ForEach-Object { $_.IPAddressToString }
+        }
+    }
+    
+    if ($IncludeProcesses) {
+        $systemInfo.Processes = @{
+            Total = (Get-Process | Measure-Object).Count
+            PowerShellProcesses = (Get-Process -Name pwsh, powershell -ErrorAction SilentlyContinue | Measure-Object).Count
+        }
+    }
+    
+    Write-ReportLog "System information gathered successfully"
+    
+    return $systemInfo
+}
+
+function New-ProjectReport {
+    <#
+    .SYNOPSIS
+        Generate comprehensive project report
+    .DESCRIPTION
+        Creates detailed project status and metrics report
+        Consolidates 0510_Generate-ProjectReport.ps1
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [string]$OutputPath = (Join-Path $script:ProjectRoot "reports"),
+        [ValidateSet('Standard', 'Detailed', 'Executive')]
+        [string]$ReportType = 'Standard',
+        [string]$Format = 'HTML',
+        [switch]$ShowAll
+    )
+    
+    Write-ReportLog "Generating $ReportType project report"
+    
+    $report = @{
+        GeneratedAt = Get-Date
+        ReportType = $ReportType
+        ProjectInfo = @{
+            Name = "AitherZero"
+            Root = $script:ProjectRoot
+            Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) { 
+                Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw 
+            } else { "Unknown" }
+        }
+        Environment = Get-SystemInformation
+        Validation = Test-EnvironmentValidation
+        Statistics = @{}
+        TestResults = @{}
+        CodeMetrics = @{}
+    }
+    
+    # Gather project statistics
+    $report.Statistics = @{
+        TotalFiles = (Get-ChildItem -Path $script:ProjectRoot -Recurse -File | Measure-Object).Count
+        PowerShellFiles = (Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1", "*.psd1" | Measure-Object).Count
+        ModuleFiles = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Recurse -Filter "*.psm1" | Measure-Object).Count
+        AutomationScripts = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "automation-scripts") -Filter "*.ps1" | Measure-Object).Count
+        TestFiles = if (Test-Path (Join-Path $script:ProjectRoot "tests")) {
+            (Get-ChildItem -Path (Join-Path $script:ProjectRoot "tests") -Recurse -Filter "*.Tests.ps1" | Measure-Object).Count
+        } else { 0 }
+    }
+    
+    # Export report
+    if (-not (Test-Path $OutputPath)) {
+        if ($PSCmdlet.ShouldProcess($OutputPath, "Create reports directory")) {
+            New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        }
+    }
+    
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $reportFileName = "ProjectReport-$ReportType-$timestamp"
+    
+    if ($Format -eq 'HTML') {
+        $htmlPath = Join-Path $OutputPath "$reportFileName.html"
+        $htmlContent = ConvertTo-ProjectReportHTML -Report $report
+        if ($PSCmdlet.ShouldProcess($htmlPath, "Save HTML report")) {
+            Set-Content -Path $htmlPath -Value $htmlContent -Encoding UTF8
+            Write-ReportLog "Project report saved: $htmlPath"
+        }
+        return $htmlPath
+    } else {
+        $jsonPath = Join-Path $OutputPath "$reportFileName.json"
+        if ($PSCmdlet.ShouldProcess($jsonPath, "Save JSON report")) {
+            $report | ConvertTo-Json -Depth 10 | Set-Content -Path $jsonPath -Encoding UTF8
+            Write-ReportLog "Project report saved: $jsonPath"
+        }
+        return $jsonPath
+    }
+}
+
+function Show-ProjectDashboard {
+    <#
+    .SYNOPSIS
+        Display interactive project dashboard
+    .DESCRIPTION
+        Shows real-time project metrics and status
+        Consolidates 0511_Show-ProjectDashboard.ps1
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$Continuous,
+        [int]$RefreshSeconds = 30
+    )
+    
+    Write-ReportLog "Launching project dashboard"
+    
+    do {
+        Clear-Host
+        
+        # Header
+        Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+        Write-Host "║                    AitherZero Dashboard                      ║" -ForegroundColor Cyan
+        Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        Write-Host ""
+        
+        # Get current status
+        $validation = Test-EnvironmentValidation
+        $systemInfo = Get-SystemInformation
+        
+        # Environment Status
+        Write-Host "🔧 Environment Status" -ForegroundColor Yellow
+        $statusIcon = if ($validation.Overall) { "✅" } else { "❌" }
+        Write-Host "   Overall Status: $statusIcon $($validation.Overall)" -ForegroundColor $(if ($validation.Overall) { 'Green' } else { 'Red' })
+        Write-Host "   PowerShell: $($systemInfo.PowerShell.Version) ($($systemInfo.PowerShell.Edition))"
+        Write-Host "   OS: $($systemInfo.Environment.OS) $($systemInfo.Environment.Architecture)"
+        Write-Host ""
+        
+        # Project Info
+        Write-Host "📊 Project Information" -ForegroundColor Yellow
+        Write-Host "   Root: $($script:ProjectRoot)"
+        Write-Host "   Modules Loaded: $($systemInfo.AitherZero.ModulesLoaded)"
+        Write-Host ""
+        
+        # Issues
+        if ($validation.Issues.Count -gt 0) {
+            Write-Host "⚠️  Issues Found:" -ForegroundColor Red
+            foreach ($issue in $validation.Issues) {
+                Write-Host "   • $issue" -ForegroundColor DarkRed
+            }
+            Write-Host ""
+        }
+        
+        if ($Continuous) {
+            Write-Host "Dashboard refreshing every $RefreshSeconds seconds. Press Ctrl+C to exit." -ForegroundColor Gray
+            Start-Sleep -Seconds $RefreshSeconds
+        }
+        
+    } while ($Continuous)
+}
+
+function ConvertTo-ProjectReportHTML {
+    <#
+    .SYNOPSIS
+        Convert project report to HTML format
+    #>
+    param([hashtable]$Report)
+    
+    $html = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero Project Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background-color: #0078d4; color: white; padding: 15px; border-radius: 5px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AitherZero Project Report</h1>
+        <p>Generated: $($Report.GeneratedAt)</p>
+        <p>Type: $($Report.ReportType)</p>
+    </div>
+    
+    <div class="section">
+        <h2>Project Information</h2>
+        <table>
+            <tr><td><strong>Name</strong></td><td>$($Report.ProjectInfo.Name)</td></tr>
+            <tr><td><strong>Version</strong></td><td>$($Report.ProjectInfo.Version)</td></tr>
+            <tr><td><strong>Root Path</strong></td><td>$($Report.ProjectInfo.Root)</td></tr>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2>Environment Status</h2>
+        <p class="$($Report.Validation.Overall ? 'success' : 'error')">
+            Overall Status: $($Report.Validation.Overall ? 'Valid' : 'Issues Found')
+        </p>
+    </div>
+</body>
+</html>
+"@
+    
+    return $html
+}
+
+# Export functions (original + consolidated)
 Export-ModuleMember -Function @(
-    'Initialize-ReportingEngine'
+    # Original exports
+    'Initialize-ReportingEngine',
     'New-ExecutionDashboard',
     'Update-ExecutionDashboard',
     'Show-Dashboard',
@@ -1122,5 +1480,11 @@ Export-ModuleMember -Function @(
     'Get-ExecutionMetrics',
     'New-TestReport',
     'Show-TestTrends',
-    'Export-MetricsReport'
+    'Export-MetricsReport',
+    
+    # New consolidated exports (from automation scripts 0500-0599)
+    'Test-EnvironmentValidation',
+    'Get-SystemInformation',
+    'New-ProjectReport',
+    'Show-ProjectDashboard'
 )

@@ -1,10 +1,17 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    AitherZero Testing Framework Module
+    AitherZero Testing Framework Module (Legacy + Enhanced)
 .DESCRIPTION
     Core testing orchestration module that integrates Pester, PSScriptAnalyzer,
     and custom testing capabilities into the AitherZero platform.
+    Enhanced to consolidate functionality from automation scripts 0400-0499.
+.NOTES
+    Copyright © 2025 Aitherium Corporation
+    Consolidates: 0400_Install-TestingTools.ps1, 0402_Run-UnitTests.ps1, 
+                  0403_Run-IntegrationTests.ps1, 0404_Run-PSScriptAnalyzer.ps1,
+                  0405_Validate-AST.ps1, 0406_Generate-Coverage.ps1, 0407_Validate-Syntax.ps1,
+                  0408_Generate-TestCoverage.ps1, 0409_Run-AllTests.ps1, plus workflow testing
 #>
 
 Set-StrictMode -Version Latest
@@ -728,11 +735,371 @@ Generated: $($report.Generated)
     return $outputFile
 }
 
-# Export functions
+######################################################################################
+# CONSOLIDATED TESTING FUNCTIONS (from automation scripts 0400-0499)
+######################################################################################
+
+function Install-TestingTools {
+    <#
+    .SYNOPSIS
+        Install complete testing toolchain
+    .DESCRIPTION
+        Installs Pester, PSScriptAnalyzer, and other testing tools
+        Consolidates 0400_Install-TestingTools.ps1
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [switch]$Force,
+        [string[]]$AdditionalTools = @()
+    )
+    
+    Write-TestingLog "Installing testing tools"
+    
+    $tools = @(
+        @{ Name = 'Pester'; MinVersion = '5.0.0'; Repository = 'PSGallery' },
+        @{ Name = 'PSScriptAnalyzer'; MinVersion = '1.20.0'; Repository = 'PSGallery' },
+        @{ Name = 'PSCodeCovIo'; MinVersion = '1.0.0'; Repository = 'PSGallery' },
+        @{ Name = 'PowerShellYaml'; MinVersion = '0.4.0'; Repository = 'PSGallery' }
+    ) + $AdditionalTools
+    
+    foreach ($tool in $tools) {
+        try {
+            $installed = Get-Module -Name $tool.Name -ListAvailable | 
+                Where-Object { $_.Version -ge [Version]$tool.MinVersion } | 
+                Sort-Object Version -Descending | 
+                Select-Object -First 1
+            
+            if (-not $installed -or $Force) {
+                Write-TestingLog "Installing $($tool.Name)"
+                if ($PSCmdlet.ShouldProcess($tool.Name, "Install module")) {
+                    Install-Module -Name $tool.Name -Repository $tool.Repository -MinimumVersion $tool.MinVersion -Force -Scope CurrentUser
+                }
+            } else {
+                Write-TestingLog "$($tool.Name) v$($installed.Version) is already installed"
+            }
+        } catch {
+            Write-TestingLog "Failed to install $($tool.Name): $($_.Exception.Message)" -Level Warning
+        }
+    }
+    
+    Write-TestingLog "Testing tools installation completed"
+}
+
+function Invoke-UnitTestSuite {
+    <#
+    .SYNOPSIS
+        Execute unit tests with enhanced capabilities
+    .DESCRIPTION
+        Runs unit tests using Pester with advanced configuration
+        Consolidates and enhances 0402_Run-UnitTests.ps1
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [string]$Path = (Join-Path $script:ProjectRoot "tests/unit"),
+        [string]$OutputPath = (Join-Path $script:ProjectRoot "test-results"),
+        [switch]$NoCoverage,
+        [switch]$CI,
+        [switch]$UseCache,
+        [int]$CoverageThreshold = 80,
+        [string[]]$Tags = @(),
+        [string[]]$ExcludeTags = @()
+    )
+    
+    Write-TestingLog "Executing unit test suite"
+    
+    # Use new AitherTestFramework if available
+    if (Get-Command Invoke-TestCategory -ErrorAction SilentlyContinue) {
+        Write-TestingLog "Using AitherTestFramework for unit tests"
+        
+        $params = @{ Category = 'Unit' }
+        if ($Tags.Count -gt 0) { $params['IncludeTags'] = $Tags }
+        if ($ExcludeTags.Count -gt 0) { $params['ExcludeTags'] = $ExcludeTags }
+        if ($CI) { $params['Force'] = $true }
+        
+        return Invoke-TestCategory @params
+    }
+    
+    # Fallback to legacy Pester execution
+    return Invoke-LegacyPesterTests -Path $Path -OutputPath $OutputPath -NoCoverage:$NoCoverage -CI:$CI
+}
+
+function Invoke-PSScriptAnalyzerSuite {
+    <#
+    .SYNOPSIS
+        Execute PSScriptAnalyzer static analysis
+    .DESCRIPTION
+        Runs PSScriptAnalyzer with comprehensive rules
+        Consolidates 0404_Run-PSScriptAnalyzer.ps1
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [string]$Path = $script:ProjectRoot,
+        [string]$OutputPath = (Join-Path $script:ProjectRoot "test-results"),
+        [string[]]$Severity = @('Error', 'Warning', 'Information'),
+        [string[]]$ExcludeRules = @('PSAvoidUsingWriteHost'),
+        [switch]$Fix
+    )
+    
+    Write-TestingLog "Running PSScriptAnalyzer static analysis"
+    
+    # Ensure PSScriptAnalyzer is available
+    if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+        Write-TestingLog "PSScriptAnalyzer not found, installing..."
+        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+    }
+    
+    Import-Module PSScriptAnalyzer
+    
+    $analyzerParams = @{
+        Path = $Path
+        Recurse = $true
+        Severity = $Severity
+        ExcludeRule = $ExcludeRules
+    }
+    
+    if ($Fix) {
+        $analyzerParams['Fix'] = $true
+        Write-TestingLog "Running with auto-fix enabled" -Level Warning
+    }
+    
+    if ($PSCmdlet.ShouldProcess($Path, "Run PSScriptAnalyzer")) {
+        $results = Invoke-ScriptAnalyzer @analyzerParams
+        
+        # Export results
+        if ($results) {
+            $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+            $csvPath = Join-Path $OutputPath "PSScriptAnalyzer-$timestamp.csv"
+            $results | Export-Csv -Path $csvPath -NoTypeInformation
+            Write-TestingLog "Analysis results saved to: $csvPath"
+        }
+        
+        return @{
+            Success = $results.Count -eq 0
+            Results = $results
+            ErrorCount = ($results | Where-Object { $_.Severity -eq 'Error' }).Count
+            WarningCount = ($results | Where-Object { $_.Severity -eq 'Warning' }).Count
+        }
+    }
+}
+
+function Test-SyntaxValidation {
+    <#
+    .SYNOPSIS
+        Validate PowerShell syntax across all files
+    .DESCRIPTION
+        Performs syntax validation using AST parsing
+        Consolidates 0405_Validate-AST.ps1 and 0407_Validate-Syntax.ps1
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$Path = $script:ProjectRoot,
+        [string[]]$Include = @('*.ps1', '*.psm1', '*.psd1'),
+        [string[]]$Exclude = @('tests/*', 'legacy-to-migrate/*')
+    )
+    
+    Write-TestingLog "Validating PowerShell syntax"
+    
+    $files = Get-ChildItem -Path $Path -Include $Include -Recurse | 
+        Where-Object { 
+            $file = $_
+            -not ($Exclude | Where-Object { $file.FullName -like "*$_*" })
+        }
+    
+    $results = @()
+    $errorCount = 0
+    
+    foreach ($file in $files) {
+        try {
+            $errors = $null
+            $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$errors)
+            
+            if ($errors.Count -gt 0) {
+                $errorCount += $errors.Count
+                $results += @{
+                    File = $file.FullName
+                    Errors = $errors
+                    Status = 'Failed'
+                }
+                Write-TestingLog "Syntax errors in $($file.Name): $($errors.Count)" -Level Error
+            } else {
+                $results += @{
+                    File = $file.FullName
+                    Errors = @()
+                    Status = 'Passed'
+                }
+            }
+        } catch {
+            $errorCount++
+            $results += @{
+                File = $file.FullName
+                Errors = @($_.Exception.Message)
+                Status = 'Failed'
+            }
+            Write-TestingLog "Failed to parse $($file.Name): $($_.Exception.Message)" -Level Error
+        }
+    }
+    
+    Write-TestingLog "Syntax validation completed. Files: $($files.Count), Errors: $errorCount"
+    
+    return @{
+        Success = $errorCount -eq 0
+        TotalFiles = $files.Count
+        ErrorCount = $errorCount
+        Results = $results
+    }
+}
+
+function Invoke-AllTestSuites {
+    <#
+    .SYNOPSIS
+        Execute all test suites in sequence
+    .DESCRIPTION
+        Runs unit tests, integration tests, and static analysis
+        Consolidates 0409_Run-AllTests.ps1
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [switch]$CI,
+        [switch]$NoCoverage,
+        [string]$OutputPath = (Join-Path $script:ProjectRoot "test-results")
+    )
+    
+    Write-TestingLog "Executing all test suites"
+    
+    # Use new AitherTestFramework if available for comprehensive testing
+    if (Get-Command Invoke-TestCategory -ErrorAction SilentlyContinue) {
+        Write-TestingLog "Using AitherTestFramework for comprehensive testing"
+        
+        # Run Full category tests which includes everything
+        $params = @{ Category = 'Full' }
+        if ($CI) { $params['Force'] = $true }
+        
+        return Invoke-TestCategory @params
+    }
+    
+    # Fallback to individual legacy test execution
+    Write-TestingLog "Using legacy individual test execution"
+    
+    $overallResults = @{
+        StartTime = Get-Date
+        UnitTests = $null
+        StaticAnalysis = $null
+        SyntaxValidation = $null
+        OverallSuccess = $true
+    }
+    
+    try {
+        # Unit tests
+        Write-TestingLog "Running unit tests..."
+        $overallResults.UnitTests = Invoke-UnitTestSuite -CI:$CI -NoCoverage:$NoCoverage -OutputPath $OutputPath
+        
+        # Static analysis  
+        Write-TestingLog "Running static analysis..."
+        $overallResults.StaticAnalysis = Invoke-PSScriptAnalyzerSuite -OutputPath $OutputPath
+        
+        # Syntax validation
+        Write-TestingLog "Running syntax validation..."
+        $overallResults.SyntaxValidation = Test-SyntaxValidation
+        
+        # Determine overall success
+        $overallResults.OverallSuccess = (
+            $overallResults.UnitTests.Success -and
+            $overallResults.StaticAnalysis.Success -and
+            $overallResults.SyntaxValidation.Success
+        )
+        
+        $overallResults.EndTime = Get-Date
+        $overallResults.Duration = $overallResults.EndTime - $overallResults.StartTime
+        
+        Write-TestingLog "All test suites completed. Overall success: $($overallResults.OverallSuccess)"
+        
+        return $overallResults
+        
+    } catch {
+        Write-TestingLog "Test suite execution failed: $($_.Exception.Message)" -Level Error
+        throw
+    }
+}
+
+function Invoke-LegacyPesterTests {
+    <#
+    .SYNOPSIS
+        Legacy Pester test execution for backward compatibility
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$Path,
+        [string]$OutputPath,
+        [switch]$NoCoverage,
+        [switch]$CI
+    )
+    
+    # Ensure Pester is available
+    $pesterModule = Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1
+    if (-not $pesterModule -or $pesterModule.Version -lt [Version]"5.0.0") {
+        throw "Pester 5.0+ is required"
+    }
+    
+    Import-Module Pester -MinimumVersion 5.0.0 -Force
+    
+    # Build Pester configuration
+    $pesterConfig = New-PesterConfiguration
+    $pesterConfig.Run.Path = $Path
+    $pesterConfig.Run.PassThru = $true
+    $pesterConfig.Run.Exit = $false
+    
+    if ($CI) {
+        $pesterConfig.Output.Verbosity = 'Normal'
+        $pesterConfig.Should.ErrorAction = 'Continue'
+    }
+    
+    # Configure test results output
+    if (-not (Test-Path $OutputPath)) {
+        New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $pesterConfig.TestResult.Enabled = $true
+    $pesterConfig.TestResult.OutputPath = Join-Path $OutputPath "TestResults-$timestamp.xml"
+    $pesterConfig.TestResult.OutputFormat = 'NUnitXml'
+    
+    # Configure code coverage if not disabled
+    if (-not $NoCoverage) {
+        $pesterConfig.CodeCoverage.Enabled = $true
+        $pesterConfig.CodeCoverage.Path = @(
+            Join-Path $script:ProjectRoot 'domains'
+            Join-Path $script:ProjectRoot 'AitherZero.psm1'
+        )
+        $pesterConfig.CodeCoverage.OutputPath = Join-Path $OutputPath "Coverage-$timestamp.xml"
+        $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'
+    }
+    
+    # Execute tests
+    $result = Invoke-Pester -Configuration $pesterConfig
+    
+    return @{
+        Success = $result.FailedCount -eq 0
+        TotalCount = $result.TotalCount
+        PassedCount = $result.PassedCount
+        FailedCount = $result.FailedCount
+        Duration = $result.Duration
+        Result = $result
+    }
+}
+
+# Export functions (original + consolidated)
 Export-ModuleMember -Function @(
+    # Original exports
     'Invoke-TestSuite',
     'Invoke-ScriptAnalysis',
     'Test-ASTValidation',
     'New-TestReport',
-    'Get-TestingConfiguration'
+    'Get-TestingConfiguration',
+    
+    # New consolidated exports (from automation scripts 0400-0499)
+    'Install-TestingTools',
+    'Invoke-UnitTestSuite',
+    'Invoke-PSScriptAnalyzerSuite',
+    'Test-SyntaxValidation',
+    'Invoke-AllTestSuites'
 )

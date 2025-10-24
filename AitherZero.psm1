@@ -59,8 +59,10 @@ $modulesToLoad = @(
     './domains/development/IssueTracker.psm1',
     './domains/development/PullRequestManager.psm1',
     
-    # Testing
+    # Testing (Legacy and New)
     './domains/testing/TestingFramework.psm1',
+    './domains/testing/AitherTestFramework.psm1',
+    './domains/testing/CoreTestSuites.psm1',
     
     # Reporting
     './domains/reporting/ReportingEngine.psm1',

@@ -32,8 +32,11 @@
         # From GitAutomation
         'New-FeatureBranch', 'New-ConventionalCommit', 'Sync-GitRepository',
         
-        # From TestingFramework
+        # From TestingFramework (Legacy)
         'Invoke-BulletproofTest', 'New-TestReport', 'Show-TestTrends',
+        
+        # From AitherTestFramework (New)
+        'Initialize-TestFramework', 'Register-TestSuite', 'Invoke-TestCategory', 'Clear-TestCache',
         
         # From ReportingEngine
         'New-ExecutionDashboard', 'Update-ExecutionDashboard', 'Export-MetricsReport',
