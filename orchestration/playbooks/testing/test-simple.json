@@ -1,0 +1,93 @@
+{
+  "name": "test-simple",
+  "description": "Ultra-fast simple testing for development workflow",
+  "version": "1.0.0",
+  "tags": ["testing", "simple", "fast", "development"],
+  
+  "metadata": {
+    "author": "AitherZero AI Agent",
+    "created": "2025-10-24",
+    "purpose": "Eliminate configuration reloading and provide lightning-fast test feedback",
+    "expectedDuration": "30-60 seconds",
+    "aiOptimized": true
+  },
+  
+  "environment": {
+    "variables": {
+      "AITHERZERO_NO_MODULES": "true",
+      "AITHERZERO_TEST_ISOLATION": "true",
+      "AITHERZERO_MINIMAL_LOGGING": "true",
+      "AITHERZERO_NO_CONFIG_WATCH": "true"
+    }
+  },
+  
+  "sequences": [
+    {
+      "name": "simple-testing",
+      "description": "Execute tests with zero configuration overhead",
+      "parallel": false,
+      "continueOnError": false,
+      
+      "steps": [
+        {
+          "name": "fast-tests",
+          "script": "0480_Test-Simple.ps1",
+          "description": "Ultra-fast isolated test execution",
+          "parameters": {
+            "Mode": "fast",
+            "Workers": 4,
+            "BatchSize": 3,
+            "Quiet": false
+          },
+          "timeout": 300,
+          "retries": 0,
+          "required": true
+        }
+      ]
+    }
+  ],
+  
+  "profiles": {
+    "lightning": {
+      "description": "Fastest possible testing (unit tests only, 2 workers)",
+      "sequences": ["simple-testing"],
+      "environment": {
+        "variables": {
+          "AITHERZERO_TEST_MODE": "lightning"
+        }
+      },
+      "parameters": {
+        "Mode": "unit",
+        "Workers": 2,
+        "BatchSize": 5,
+        "Quiet": true
+      }
+    },
+    
+    "development": {
+      "description": "Development workflow (fast mode, 4 workers)",
+      "sequences": ["simple-testing"], 
+      "parameters": {
+        "Mode": "fast",
+        "Workers": 4,
+        "BatchSize": 3
+      }
+    },
+    
+    "validation": {
+      "description": "Full validation (all tests, max workers)",
+      "sequences": ["simple-testing"],
+      "parameters": {
+        "Mode": "all",
+        "Workers": 6,
+        "BatchSize": 2
+      }
+    }
+  },
+  
+  "defaults": {
+    "profile": "development",
+    "timeout": 600,
+    "retryCount": 1
+  }
+}
