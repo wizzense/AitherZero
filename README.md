@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/branding/aitherium-logo.png" alt="Aitherium Logo" width="200"/>
+  <img src="aitherium-logo.png" alt="Aitherium Logo" width="200"/>
 </p>
 
 <h1 align="center">AitherZero</h1>
