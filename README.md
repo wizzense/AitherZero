@@ -20,12 +20,6 @@
 
 ## Quick Install
 
-### Windows (PowerShell 5.1)
-```powershell
-# Automatically installs PowerShell 7 if needed
-irm https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap-ps5.ps1 | iex
-```
-
 ### Windows/Linux/macOS (PowerShell 7+)
 ```powershell
 irm https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
