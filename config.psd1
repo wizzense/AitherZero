@@ -904,6 +904,7 @@
         VerboseOutput = $false
     }
     Reporting = @{
+        ClearScreenOnStart = $false  # Fix missing config key
         TechDebtReporting = @{
             Thresholds = @{
                 Documentation = 80

@@ -245,8 +245,54 @@ try {
 "@
 
             # Execute in completely isolated PowerShell process
-            $result = pwsh -NoProfile -Command $isolatedScript | ConvertFrom-Json
-            return $result
+            $jsonOutput = pwsh -NoProfile -Command $isolatedScript
+            if ([string]::IsNullOrWhiteSpace($jsonOutput)) {
+                Write-Host "❌ Empty output from batch $($batch.BatchId)" -ForegroundColor Red
+                return [PSCustomObject]@{
+                    BatchId = $batch.BatchId; Total = 0; Passed = 0; Failed = 0; Skipped = 0
+                    Duration = 0; Success = $false; Error = "Empty output"; OutputFile = ''
+                }
+            }
+            try {
+                # Extract JSON from the output (it's at the end after Pester output)
+                $lines = $jsonOutput -split "`n"
+                $jsonStart = -1
+                for ($i = $lines.Count - 1; $i -ge 0; $i--) {
+                    if ($lines[$i].Trim() -match '^\s*\{') {
+                        $jsonStart = $i
+                        break
+                    }
+                }
+                
+                if ($jsonStart -ge 0) {
+                    $jsonPart = ($lines[$jsonStart..($lines.Count-1)] | Where-Object { $_.Trim() }) -join "`n"
+                    $result = $jsonPart | ConvertFrom-Json
+                    return $result
+                } else {
+                    # No JSON found, create result from Pester output
+                    $passedMatch = if ($jsonOutput -match "Tests Passed: (\d+)") { [int]$matches[1] } else { 0 }
+                    $failedMatch = if ($jsonOutput -match "Failed: (\d+)") { [int]$matches[1] } else { 0 }
+                    $skippedMatch = if ($jsonOutput -match "Skipped: (\d+)") { [int]$matches[1] } else { 0 }
+                    
+                    return [PSCustomObject]@{
+                        BatchId = $batch.BatchId
+                        Total = $passedMatch + $failedMatch + $skippedMatch  
+                        Passed = $passedMatch
+                        Failed = $failedMatch
+                        Skipped = $skippedMatch
+                        Duration = 1.0
+                        Success = ($failedMatch -eq 0)
+                        OutputFile = ''
+                    }
+                }
+            } catch {
+                Write-Host "❌ JSON parse error for batch $($batch.BatchId): $($_.Exception.Message)" -ForegroundColor Red
+                Write-Host "Raw output length: $($jsonOutput.Length)" -ForegroundColor Yellow
+                return [PSCustomObject]@{
+                    BatchId = $batch.BatchId; Total = 0; Passed = 0; Failed = 0; Skipped = 0
+                    Duration = 0; Success = $false; Error = "JSON parse error: $($_.Exception.Message)"; OutputFile = ''
+                }
+            }
         }
         
         # Aggregate results
