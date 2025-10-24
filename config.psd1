@@ -49,6 +49,7 @@
         TelemetryEnabled = $false
         Environment = 'Development'
         ErrorReporting = $true
+        EnableColors = $true
     }
     InstallationOptions = @{
         HyperV = @{
@@ -560,6 +561,7 @@
         ExitOnFailure = $false
         OutputFormat = @('NUnitXml', 'JUnitXml')
         ShowPending = $true
+        ClearScreenOnStart = $false
     }
     System = @{
         ConfigPXE = $false
@@ -918,6 +920,8 @@
         AutoGenerateReports = $true
         MetricsCollection = $true
         MetricsRetentionDays = 90
+        EnableColors = $true
+        EnableAnimations = $false
         IncludeExecutionLogs = $true
         TemplateEngine = 'Default'
     }

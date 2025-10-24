@@ -288,9 +288,7 @@ try {
         Write-ScriptLog -Message "Running in CI mode"
         $pesterConfig.Output.Verbosity = 'Normal'
         $pesterConfig.Should.ErrorAction = 'Continue'
-        if ($pesterSettings.Output -and $pesterSettings.Output.CIFormat) {
-            $pesterConfig.Output.CIFormat = $true
-        }
+        # CIFormat is not a boolean property in newer Pester versions - remove this setting
     }
 
     # Apply filter settings from config or use defaults for unit tests
