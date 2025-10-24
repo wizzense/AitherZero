@@ -46,7 +46,9 @@ param(
 
     [switch]$AutoInstallDeps,
 
-    [switch]$SkipAutoStart
+    [switch]$SkipAutoStart,
+
+    [switch]$IsRelaunch
 )
 
 # Detect CI early so normalization logic has accurate context
@@ -174,6 +176,16 @@ function Test-IsAdmin {
     }
 }
 
+function Get-TempDirectory {
+    if ($env:TEMP) { 
+        return $env:TEMP 
+    } elseif ($env:TMPDIR) { 
+        return $env:TMPDIR 
+    } else { 
+        return '/tmp' 
+    }
+}
+
 function Get-DefaultInstallPath {
     if (-not $InstallPath) {
         $currentPath = Get-Location
@@ -230,6 +242,12 @@ function Install-Dependencies {
     if ($Missing -contains 'PowerShell7') {
         Install-PowerShell7
 
+        # Don't re-launch if we're already in a relaunch to avoid infinite loops
+        if ($IsRelaunch) {
+            Write-BootstrapLog "PowerShell 7 installed, continuing in current session..." -Level Info
+            return
+        }
+
         # Re-launch in PowerShell 7
         Write-BootstrapLog "Re-launching bootstrap in PowerShell 7..." -Level Info
 
@@ -264,15 +282,25 @@ function Install-Dependencies {
         } elseif ($MyInvocation.MyCommand.Path) {
             $scriptPath = $MyInvocation.MyCommand.Path
         } else {
-            # Fallback - assume bootstrap.ps1 in current directory
-            $scriptPath = Join-Path (Get-Location) "bootstrap.ps1"
+            # When executed via iwr | iex, there's no physical file
+            # Download the script to temp and execute from there
+            Write-BootstrapLog "Script executed via one-liner, downloading to temp file..." -Level Info
+            $tempScript = Join-Path (Get-TempDirectory) "aitherzero-bootstrap-$(Get-Random).ps1"
+            try {
+                Invoke-WebRequest -Uri "$script:RawContentUrl/$Branch/bootstrap.ps1" -OutFile $tempScript -UseBasicParsing
+                $scriptPath = $tempScript
+            } catch {
+                Write-BootstrapLog "Failed to download script: $_" -Level Error
+                # Fallback - assume bootstrap.ps1 in current directory
+                $scriptPath = Join-Path (Get-Location) "bootstrap.ps1"
+            }
         }
 
         # Build arguments to preserve all parameters
         $argumentList = @()
         $argumentList += "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath
         
-        # Preserve all bound parameters
+        # Preserve all bound parameters and add IsRelaunch flag
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             if ($param.Value -is [switch]) {
                 if ($param.Value) {
@@ -282,10 +310,22 @@ function Install-Dependencies {
                 $argumentList += "-$($param.Key)", $param.Value
             }
         }
+        # Add relaunch flag to prevent infinite loops
+        $argumentList += "-IsRelaunch"
 
         Write-BootstrapLog "Executing: $pwsh $($argumentList -join ' ')" -Level Info
-        & $pwsh @argumentList
-        exit $LASTEXITCODE
+        
+        try {
+            & $pwsh @argumentList
+            $exitCode = $LASTEXITCODE
+        } finally {
+            # Clean up temporary script if we created one
+            $tempDir = Get-TempDirectory
+            if ($scriptPath -and $scriptPath.StartsWith($tempDir, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path $scriptPath)) {
+                Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
+            }
+        }
+        exit $exitCode
     }
 
     foreach ($dep in $Missing) {
