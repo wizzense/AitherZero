@@ -176,6 +176,16 @@ function Test-IsAdmin {
     }
 }
 
+function Get-TempDirectory {
+    if ($env:TEMP) { 
+        return $env:TEMP 
+    } elseif ($env:TMPDIR) { 
+        return $env:TMPDIR 
+    } else { 
+        return '/tmp' 
+    }
+}
+
 function Get-DefaultInstallPath {
     if (-not $InstallPath) {
         $currentPath = Get-Location
@@ -275,7 +285,7 @@ function Install-Dependencies {
             # When executed via iwr | iex, there's no physical file
             # Download the script to temp and execute from there
             Write-BootstrapLog "Script executed via one-liner, downloading to temp file..." -Level Info
-            $tempScript = Join-Path $env:TEMP "aitherzero-bootstrap-$(Get-Random).ps1"
+            $tempScript = Join-Path (Get-TempDirectory) "aitherzero-bootstrap-$(Get-Random).ps1"
             try {
                 Invoke-WebRequest -Uri "$script:RawContentUrl/$Branch/bootstrap.ps1" -OutFile $tempScript -UseBasicParsing
                 $scriptPath = $tempScript
@@ -310,7 +320,8 @@ function Install-Dependencies {
             $exitCode = $LASTEXITCODE
         } finally {
             # Clean up temporary script if we created one
-            if ($scriptPath -and $scriptPath.StartsWith($env:TEMP) -and (Test-Path $scriptPath)) {
+            $tempDir = Get-TempDirectory
+            if ($scriptPath -and $scriptPath.StartsWith($tempDir, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path $scriptPath)) {
                 Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
             }
         }
