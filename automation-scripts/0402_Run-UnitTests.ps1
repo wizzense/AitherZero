@@ -351,12 +351,16 @@ try {
         return
     }
     
+    # Performance optimization: disable config watching during tests
+    $env:AITHERZERO_NO_CONFIG_WATCH = 'true'
+    $env:AITHERZERO_TEST_MODE = 'true'
+    
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
     $useParallel = $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
     
     if ($useParallel) {
-        $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 4 }
-        $parallelBlockSize = if ($pesterSettings.Parallel.BlockSize) { $pesterSettings.Parallel.BlockSize } else { 4 }
+        $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 6 }
+        $parallelBlockSize = if ($pesterSettings.Parallel.BlockSize) { $pesterSettings.Parallel.BlockSize } else { 5 }
         Write-ScriptLog -Message "Running tests in parallel (Workers: $parallelWorkers, Block size: $parallelBlockSize)"
         
         # Split test files into chunks for parallel execution

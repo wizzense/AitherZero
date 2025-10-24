@@ -414,20 +414,31 @@
         ShowSkipped = $true
         Framework = 'Pester'
         
+        # Performance optimizations
+        Performance = @{
+            DisableConfigWatch = $true    # Prevent config file watching during tests
+            MinimalLogging = $true        # Reduce logging overhead
+            CacheResults = $true          # Enable test result caching
+            CacheMinutes = 10            # Cache validity period
+            FastStartup = $true          # Skip non-essential initializations
+        }
+        
         # Pester configuration
         Pester = @{
-            # Parallel execution settings
+            # Parallel execution settings - optimized for performance
             Parallel = @{
                 Enabled = $true
-                BlockSize = 10  # Number of tests per parallel batch
-                Workers = 4    # Number of parallel workers
+                BlockSize = 5   # Smaller batches for faster feedback  
+                Workers = 6     # More workers for better parallelization
+                ProcessIsolation = $true  # Run batches in separate processes
             }
             
-            # Output settings
+            # Output settings - optimized for CI/CD
             Output = @{
-                Verbosity = 'Normal'  # None, Normal, Detailed, Diagnostic
-                CIFormat = $true      # Use CI-friendly output format
-                StackTraceVerbosity = 'Filtered'  # None, FirstLine, Filtered, Full
+                Verbosity = 'Minimal'     # Minimal output for speed
+                CIFormat = $true          # Use CI-friendly output format
+                StackTraceVerbosity = 'FirstLine'  # Reduce verbose output
+                ShowPassedTests = $false  # Only show failures for speed
             }
             
             # Test filtering

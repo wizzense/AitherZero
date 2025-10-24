@@ -1,0 +1,167 @@
+{
+  "name": "test-lightning",
+  "description": "Lightning-fast test execution optimized for development workflow",
+  "version": "1.0.0",
+  "author": "AitherZero Performance Team",
+  "tags": ["testing", "fast", "parallel", "optimized", "development"],
+  "requirements": {
+    "modules": ["Pester"],
+    "minimumVersion": "7.0",
+    "estimatedDuration": "30 seconds - 2 minutes",
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "variables": {
+    "testPath": "./tests",
+    "outputPath": "./tests/results/lightning",
+    "maxWorkers": "${env:NUMBER_OF_PROCESSORS || 4}",
+    "batchSize": 3,
+    "useCache": true,
+    "fastFail": true,
+    "skipSlowTests": true
+  },
+  "environment": {
+    "AITHERZERO_TEST_MODE": "lightning",
+    "AITHERZERO_NO_CONFIG_WATCH": "true",
+    "AITHERZERO_MINIMAL_LOGGING": "true",
+    "AITHERZERO_FAST_STARTUP": "true",
+    "PESTER_CI": "true"
+  },
+  "stages": [
+    {
+      "name": "Pre-flight Check",
+      "description": "Ultra-fast environment validation",
+      "sequence": [],
+      "preScript": "if (-not (Get-Module Pester -ListAvailable)) { throw 'Pester not available' }; Write-Host '⚡ Lightning test mode enabled' -ForegroundColor Green"
+    },
+    {
+      "name": "Smart Unit Tests",
+      "description": "Parallel execution of unit tests with intelligent batching",
+      "sequence": ["0450"],
+      "variables": {
+        "TestType": "Smart",
+        "NoCoverage": true,
+        "FastFail": true,
+        "UseCache": true,
+        "MaxWorkers": "${maxWorkers}",
+        "BatchSize": "${batchSize}"
+      },
+      "continueOnError": false,
+      "timeout": 120,
+      "parallel": true
+    },
+    {
+      "name": "Critical Syntax Check",
+      "description": "Fast syntax validation for changed files only",
+      "sequence": ["0407"],
+      "variables": {
+        "CheckSyntax": true,
+        "CheckParameters": false,
+        "CheckCommands": false,
+        "ChangedFilesOnly": true
+      },
+      "continueOnError": true,
+      "timeout": 30,
+      "parallel": true
+    }
+  ],
+  "optimization": {
+    "enabled": true,
+    "strategies": [
+      {
+        "name": "Test Caching",
+        "description": "Cache test discovery and results",
+        "enabled": true
+      },
+      {
+        "name": "Parallel Execution", 
+        "description": "Run tests in parallel batches",
+        "enabled": true,
+        "maxConcurrency": "${maxWorkers}"
+      },
+      {
+        "name": "Process Isolation",
+        "description": "Run test batches in isolated processes",
+        "enabled": true
+      },
+      {
+        "name": "Minimal Configuration",
+        "description": "Disable configuration watching and verbose logging",
+        "enabled": true
+      }
+    ]
+  },
+  "qualityGates": {
+    "enabled": true,
+    "fastFail": true,
+    "rules": [
+      {
+        "name": "No Test Failures",
+        "type": "tests",
+        "condition": "Failed == 0",
+        "failBuild": true
+      },
+      {
+        "name": "Performance Threshold",
+        "type": "performance",
+        "condition": "Duration < 120",
+        "failBuild": false,
+        "warning": true
+      }
+    ]
+  },
+  "notifications": {
+    "channels": ["console"],
+    "minimal": true,
+    "onStart": {
+      "message": "⚡ Lightning tests starting...",
+      "showProgress": false
+    },
+    "onSuccess": {
+      "message": "🚀 Lightning tests completed successfully!",
+      "includeMetrics": true,
+      "showDuration": true
+    },
+    "onFailure": {
+      "message": "💥 Lightning tests failed - check results",
+      "includeFailures": true,
+      "showQuickFix": true
+    }
+  },
+  "artifacts": {
+    "enabled": false,
+    "comment": "Lightning mode focuses on speed over artifact generation"
+  },
+  "integrations": {
+    "vscode": {
+      "enabled": true,
+      "showInProblems": true,
+      "showInTerminal": true
+    },
+    "github": {
+      "enabled": false,
+      "comment": "Disable for development speed"
+    }
+  },
+  "postActions": [
+    {
+      "description": "Show quick summary",
+      "type": "script",
+      "inline": "$summary = Get-Content './tests/results/lightning/*summary*.json' | Select-Object -Last 1 | ConvertFrom-Json; Write-Host \"⚡ $($summary.Passed)/$($summary.TotalTests) tests passed in $($summary.Duration)s (efficiency: $($summary.Efficiency)%)\" -ForegroundColor $(if ($summary.Success) {'Green'} else {'Red'})"
+    },
+    {
+      "description": "Performance feedback",
+      "type": "conditional", 
+      "condition": "$summary.Duration -gt 60",
+      "action": {
+        "type": "script",
+        "inline": "Write-Host '💡 Tip: Tests took longer than expected. Consider using test-quick for faster feedback.' -ForegroundColor Yellow"
+      }
+    }
+  ],
+  "metadata": {
+    "purpose": "Lightning-fast development testing",
+    "targetAudience": "Developers during active coding",
+    "optimizedFor": "Speed and quick feedback",
+    "tradeoffs": "Skips some comprehensive checks for speed"
+  }
+}
