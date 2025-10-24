@@ -1,8 +1,8 @@
-name: AitherZero Production CI/CD Pipeline
+name: Production CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop, 'release/**', 'feature/**', 'hotfix/**']
+    branches: [main, develop, 'release/**']
     tags: ['v*']
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -19,14 +19,6 @@ on:
         description: 'Skip Tests'
         type: boolean
         default: false
-      run_ai_review:
-        description: 'Run AI Code Review'
-        type: boolean
-        default: true
-      create_issues:
-        description: 'Auto-create Issues from Failures'
-        type: boolean
-        default: true
 
 # Prevent duplicate runs
 concurrency:
@@ -407,203 +399,10 @@ jobs:
         path: performance-results.json
         retention-days: 30
 
-  # === STAGE 5: AI CODE REVIEW ===
-  ai-review:
-    name: AI Code Review & Analysis
-    needs: [build, test]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: github.event_name == 'pull_request' && github.event.inputs.run_ai_review != 'false'
-    
-    steps:
-    - name: 📥 Checkout Code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: 🔧 Bootstrap Environment
-      shell: pwsh
-      run: ./bootstrap.ps1 -Mode New -NonInteractive
-    
-    - name: 🤖 Setup AI Tools
-      shell: pwsh
-      run: |
-        # Install AI tools
-        ./automation-scripts/0740_Integrate-AITools.ps1 -Tool all -SkipInstallation
-    
-    - name: 🔍 AI Code Review
-      shell: pwsh
-      env:
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
-      run: |
-        # Get changed files for this PR
-        $changedFiles = @(git diff --name-only HEAD~1 HEAD | Where-Object { $_ -match '\.(ps1|psm1|psd1)$' })
-        
-        Write-Host "Changed PowerShell files: $($changedFiles.Count)"
-        
-        # Create AI review report
-        $reviewReport = @{
-          Files = $changedFiles
-          Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-          Status = "AI Review Completed"
-          Recommendations = @()
-          SecurityFindings = @()
-          QualityScore = 85
-        }
-        
-        # Simulate AI analysis (replace with actual AI calls when API keys are available)
-        foreach ($file in $changedFiles) {
-          if (Test-Path $file) {
-            $content = Get-Content $file -Raw
-            
-            # Basic analysis patterns
-            if ($content -match 'Write-Host') {
-              $reviewReport.Recommendations += "Consider using Write-Information instead of Write-Host in $file"
-            }
-            if ($content -match '\$env:') {
-              $reviewReport.SecurityFindings += "Environment variable usage detected in $file - ensure proper sanitization"
-            }
-            if ($content -notmatch 'param\(' -and $content -match 'function ') {
-              $reviewReport.Recommendations += "Functions in $file should have proper parameter blocks"
-            }
-          }
-        }
-        
-        # Save review report
-        $reviewReport | ConvertTo-Json -Depth 10 | Set-Content ./ai-review-report.json
-        
-        Write-Host "AI Review completed for $($changedFiles.Count) files"
-        Write-Host "Recommendations: $($reviewReport.Recommendations.Count)"
-        Write-Host "Security Findings: $($reviewReport.SecurityFindings.Count)"
-    
-    - name: 📝 Post AI Review Comment
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const fs = require('fs');
-          if (fs.existsSync('./ai-review-report.json')) {
-            const report = JSON.parse(fs.readFileSync('./ai-review-report.json', 'utf8'));
-            
-            let comment = `## 🤖 AI Code Review Report
-            
-**Files Analyzed:** ${report.Files.length}
-**Quality Score:** ${report.QualityScore}/100
-**Status:** ${report.Status}
-
-### 📋 Recommendations
-${report.Recommendations.length > 0 ? report.Recommendations.map(r => `- ${r}`).join('\n') : '- No recommendations at this time'}
-
-### 🔒 Security Findings  
-${report.SecurityFindings.length > 0 ? report.SecurityFindings.map(f => `- ⚠️ ${f}`).join('\n') : '- No security issues detected'}
-
-### 📊 Analysis Summary
-- **PowerShell Files:** ${report.Files.filter(f => f.endsWith('.ps1')).length}
-- **Module Files:** ${report.Files.filter(f => f.endsWith('.psm1')).length}  
-- **Data Files:** ${report.Files.filter(f => f.endsWith('.psd1')).length}
-
-*Generated on ${report.Timestamp} by AitherZero AI Pipeline*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-          }
-    
-    - name: 📤 Upload AI Review Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: ai-review-report
-        path: ai-review-report.json
-        retention-days: 30
-
-  # === STAGE 6: ISSUE MANAGEMENT ===
-  issue-management:
-    name: Automated Issue Management
-    needs: [build, test, security]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: always() && !cancelled() && github.event.inputs.create_issues != 'false'
-    
-    steps:
-    - name: 📥 Checkout Code
-      uses: actions/checkout@v4
-    
-    - name: 📥 Download Test Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        pattern: 'test-results-*'
-        path: test-artifacts/
-    
-    - name: 🔧 Bootstrap Environment
-      shell: pwsh
-      run: ./bootstrap.ps1 -Mode New -NonInteractive
-    
-    - name: 🎯 Setup Issue Management
-      shell: pwsh
-      run: |
-        # Setup issue management tools
-        ./automation-scripts/0815_Setup-IssueManagement.ps1 -EnableAutoIssues -EnableChangeTracking -EnableReleaseNotes
-    
-    - name: 🚨 Create Issues from Test Failures
-      if: failure() || contains(needs.test.result, 'failure')
-      shell: pwsh
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        # Install GitHub CLI if not available
-        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-          Write-Host "GitHub CLI not available, skipping issue creation"
-          exit 0
-        }
-        
-        # Create issues from test failures
-        if (Test-Path ./test-artifacts) {
-          ./tools/create-issues-from-tests.ps1 -TestResultsPath ./test-artifacts -Repository ${{ github.repository }}
-        }
-    
-    - name: 📊 Generate Change Impact Analysis
-      if: github.event_name == 'pull_request'
-      shell: pwsh
-      run: |
-        # Generate change impact analysis
-        $analysis = ./tools/analyze-change-impact.ps1 -OutputJson | ConvertFrom-Json
-        
-        # Save analysis for PR update
-        $analysis | ConvertTo-Json -Depth 10 | Set-Content ./change-impact.json
-        
-        Write-Host "Change Impact Analysis:"
-        Write-Host "- Files Changed: $($analysis.TotalFiles)"
-        Write-Host "- Risk Level: $($analysis.RiskLevel)"
-        Write-Host "- Impact Areas: $($analysis.ImpactAreas -join ', ')"
-    
-    - name: 🏷️ Generate Release Notes
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-      shell: pwsh
-      run: |
-        # Generate release notes for tagged releases
-        $releaseNotes = ./tools/generate-release-notes.ps1 -OutputFormat markdown
-        $releaseNotes | Set-Content ./release-notes.md
-        
-        Write-Host "Release notes generated for ${{ github.ref_name }}"
-    
-    - name: 📤 Upload Issue Management Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: issue-management
-        path: |
-          change-impact.json
-          release-notes.md
-          config/issue-management.json
-        retention-days: 30
-
-  # === STAGE 7: COMPREHENSIVE REPORTING ===
+  # === STAGE 5: DOCUMENTATION & REPORTING ===
   documentation:
     name: Generate Documentation
-    needs: [build, test, security, performance, ai-review, issue-management]
+    needs: [build, test]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: always()
