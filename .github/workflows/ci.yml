@@ -1,7 +1,7 @@
 ---
 name: CI Pipeline
 
-on:
+"on":
   push:
     branches: [main, develop, 'feature/**']
   pull_request:
@@ -11,13 +11,14 @@ on:
       test_scope:
         description: 'Test scope'
         type: choice
-        options: 
+        options:
           - 'quick'
           - 'full'
         default: 'quick'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -38,36 +39,37 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-    - name: Bootstrap Environment
-      shell: pwsh
-      run: ./bootstrap.ps1 -Mode New -NonInteractive
+      - name: Bootstrap Environment
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -NonInteractive
 
-    - name: Validate Syntax
-      shell: pwsh
-      run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
+      - name: Validate Syntax
+        shell: pwsh
+        run: >-
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
 
-    - name: Run Unit Tests
-      shell: pwsh
-      run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402 -CI
+      - name: Run Unit Tests
+        shell: pwsh
+        run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402 -CI
 
-    - name: PSScriptAnalyzer
-      shell: pwsh
-      run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0404 -CI
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0404 -CI
 
-    - name: Upload Test Results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results-${{ matrix.os }}
-        path: |
-          test-results/
-          tests/results/
-          logs/transcript-*.log
-        retention-days: 7
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            test-results/
+            tests/results/
+            logs/transcript-*.log
+          retention-days: 7

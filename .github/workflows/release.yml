@@ -1,7 +1,7 @@
 ---
 name: Release
 
-on:
+"on":
   push:
     tags: ['v*']
   workflow_dispatch:
@@ -19,41 +19,42 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Create Release Package
-      shell: pwsh
-      run: |
-        $version = "${{ github.event.inputs.version || github.ref_name }}"
-        $packageName = "AitherZero-$version"
-        
-        # Create package directory
-        New-Item -ItemType Directory -Path "./$packageName" -Force
-        
-        # Copy essential files
-        $filesToCopy = @(
-          "*.psd1", "*.psm1", "*.ps1", "*.md", "LICENSE",
-          "domains", "automation-scripts", "orchestration", "tests"
-        )
-        
-        foreach ($pattern in $filesToCopy) {
-          if (Test-Path $pattern) {
-            Copy-Item -Path $pattern -Destination "./$packageName" -Recurse
+      - name: Create Release Package
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version || github.ref_name }}"
+          $packageName = "AitherZero-$version"
+
+          # Create package directory
+          New-Item -ItemType Directory -Path "./$packageName" -Force
+
+          # Copy essential files
+          $filesToCopy = @(
+            "*.psd1", "*.psm1", "*.ps1", "*.md", "LICENSE",
+            "domains", "automation-scripts", "orchestration", "tests"
+          )
+
+          foreach ($pattern in $filesToCopy) {
+            if (Test-Path $pattern) {
+              Copy-Item -Path $pattern -Destination "./$packageName" -Recurse
+            }
           }
-        }
-        
-        # Create ZIP archive
-        Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip"
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ github.event.inputs.version || github.ref_name }}
-        name: Release ${{ github.event.inputs.version || github.ref_name }}
-        draft: false
-        prerelease: false
-        files: |
-          AitherZero-*.zip
+          # Create ZIP archive
+          Compress-Archive -Path "./$packageName" `
+            -DestinationPath "./$packageName.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          name: Release ${{ github.event.inputs.version || github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            AitherZero-*.zip
