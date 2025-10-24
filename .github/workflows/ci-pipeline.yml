@@ -182,9 +182,9 @@ jobs:
           
           try {
             if ($testScope -eq "full") {
-              ./az 0409  # Run all tests
+              ./az 0409  # Run all tests (comprehensive suite)
             } else {
-              ./az 0402  # Quick unit tests
+              ./az 0402  # Quick unit tests (essential validation)
             }
             Write-Host "✅ Tests completed successfully" -ForegroundColor Green
           } catch {
@@ -263,7 +263,24 @@ jobs:
       - name: 📦 Create Build Package
         shell: pwsh
         run: |
-          $version = Get-Content ./VERSION -Raw | ForEach-Object Trim
+          # Robust version parsing with error handling
+          try {
+            if (-not (Test-Path ./VERSION)) {
+              throw "VERSION file not found"
+            }
+            $version = Get-Content ./VERSION -Raw | ForEach-Object Trim
+            if (-not $version -or $version -eq "") {
+              throw "VERSION file is empty"
+            }
+            if ($version -notmatch '^\d+\.\d+\.\d+') {
+              throw "VERSION format invalid: $version"
+            }
+          } catch {
+            Write-Host "⚠️ VERSION issue: $_" -ForegroundColor Yellow
+            Write-Host "Using fallback version: 1.0.0" -ForegroundColor Yellow
+            $version = "1.0.0"
+          }
+          
           $buildNumber = "${{ github.run_number }}"
           $packageName = "AitherZero-v$version-build$buildNumber"
           

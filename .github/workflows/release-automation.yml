@@ -311,7 +311,7 @@ jobs:
           
           ## 📋 System Requirements
           - **PowerShell:** 7.0+ (5.1+ supported with auto-upgrade)
-          - **Operating System:** Windows 10/11, Ubuntu 18.04+, macOS 10.15+
+          - **Operating System:** Windows 10/11, Ubuntu 20.04+, macOS 11.0+
           - **Memory:** 2GB RAM minimum, 4GB recommended
           - **Storage:** 1GB free space
           - **Network:** Internet connection for initial setup and updates

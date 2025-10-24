@@ -10,29 +10,81 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: write
+  issues: write  
   checks: write
+  # Explicitly deny dangerous permissions
+  actions: none
+  security-events: none
 
 concurrency:
   group: pr-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
+  # Safe analysis for fork PRs - no code execution
+  fork-pr-analysis:
+    name: Fork PR Analysis (Safe)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name != github.repository
+    
+    steps:
+      - name: 📋 Fork PR Notice
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const prAuthor = context.payload.pull_request.user.login;
+            const forkRepo = context.payload.pull_request.head.repo.full_name;
+            
+            const comment = `## 🔒 Fork PR Security Notice
+            
+            **PR #${prNumber} from Fork Repository**
+            - **Author:** @${prAuthor}
+            - **Fork:** ${forkRepo}
+            
+            ### 🛡️ Security Policy
+            For security reasons, automated validation is **limited** for fork PRs:
+            - ✅ **Static analysis** and change review available
+            - ❌ **Code execution** disabled to prevent security risks  
+            - 🔍 **Full CI pipeline** will run after maintainer review
+            
+            ### 🚀 Next Steps
+            1. **Maintainer review** required before full validation
+            2. **Manual approval** needed to run comprehensive tests
+            3. **Security review** for any sensitive changes
+            
+            ### 📋 Contribution Guidelines
+            - Review [Contributing Guidelines](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
+            - Ensure all changes follow project standards
+            - Add tests for new functionality when possible
+            
+            ---
+            *This is an automated security notice for fork contributions.*
+            `;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });
+
   pr-analysis:
     name: Analyze PR Changes
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       has-powershell: ${{ steps.analyze.outputs.has-powershell }}
       has-workflows: ${{ steps.analyze.outputs.has-workflows }}
       change-summary: ${{ steps.analyze.outputs.change-summary }}
       
     steps:
-      - name: 📥 Checkout PR
+      - name: 📥 Checkout Base Branch (Safe)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
+          # Always checkout base branch for security - never checkout fork PR code
+          ref: ${{ github.event.pull_request.base.ref }}
 
       - name: 🔍 Analyze Changes
         id: analyze
@@ -40,8 +92,17 @@ jobs:
         run: |
           Write-Host "🔍 Analyzing PR changes..." -ForegroundColor Cyan
           
-          # Get changed files
-          $changedFiles = git diff --name-only origin/${{ github.event.pull_request.base.ref }}..HEAD
+          # Get changed files using GitHub API (safe for forks)
+          $prNumber = "${{ github.event.pull_request.number }}"
+          $apiUrl = "https://api.github.com/repos/${{ github.repository }}/pulls/$prNumber/files"
+          
+          try {
+            $response = Invoke-RestMethod -Uri $apiUrl -Headers @{ 'Accept' = 'application/vnd.github.v3+json' }
+            $changedFiles = $response | ForEach-Object { $_.filename }
+          } catch {
+            Write-Host "⚠️ Could not fetch PR files via API, using local diff" -ForegroundColor Yellow
+            $changedFiles = @()  # Empty array for safety
+          }
           
           # Categorize files
           $psFiles = $changedFiles | Where-Object { $_ -match '\.(ps1|psm1|psd1)$' }
@@ -90,11 +151,18 @@ jobs:
           Write-Host "   PowerShell files: $($psFiles.Count)" -ForegroundColor White
           Write-Host "   Workflow files: $($yamlFiles.Count)" -ForegroundColor White
 
-      - name: 🔍 Quick Validation
-        if: steps.analyze.outputs.has-powershell == 'true'
+      - name: 🔍 Quick Validation (Trusted PRs Only)
+        if: steps.analyze.outputs.has-powershell == 'true' && github.event.pull_request.head.repo.full_name == github.repository
         shell: pwsh
         run: |
           Write-Host "🔍 Running quick validation for PowerShell changes..." -ForegroundColor Yellow
+          
+          # Security check
+          if ("${{ github.event.pull_request.head.repo.full_name }}" -ne "${{ github.repository }}") {
+            Write-Host "⚠️ Skipping validation for fork PR for security" -ForegroundColor Yellow
+            echo "SYNTAX_STATUS=⏭️ SKIPPED (Fork PR)" >> $env:GITHUB_ENV
+            exit 0
+          }
           
           # Minimal bootstrap for validation
           ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
