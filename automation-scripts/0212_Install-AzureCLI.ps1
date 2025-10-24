@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 # Stage: Development
-# Dependencies: None
-# Description: Install Azure CLI for cloud management
+# Dependencies: PackageManager
+# Description: Install Azure CLI for cloud management using package managers (winget priority)
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -19,6 +19,20 @@ try {
     }
 } catch {
     # Fallback to basic output
+}
+
+# Import PackageManager module
+try {
+    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    if (Test-Path $packageManagerPath) {
+        Import-Module $packageManagerPath -Force -Global
+        $script:PackageManagerAvailable = $true
+    } else {
+        throw "PackageManager module not found at: $packageManagerPath"
+    }
+} catch {
+    Write-Warning "Could not load PackageManager module: $_"
+    $script:PackageManagerAvailable = $false
 }
 
 function Write-ScriptLog {
@@ -41,7 +55,7 @@ function Write-ScriptLog {
     }
 }
 
-Write-ScriptLog "Starting Azure CLI installation"
+Write-ScriptLog "Starting Azure CLI installation using package managers"
 
 try {
     # Get configuration
@@ -60,6 +74,57 @@ try {
         Write-ScriptLog "Azure CLI installation is not enabled in configuration"
         exit 0
     }
+
+    # Use PackageManager if available
+    if ($script:PackageManagerAvailable) {
+        Write-ScriptLog "Using PackageManager module for Azure CLI installation"
+        
+        # Try package manager installation
+        try {
+            $preferredPackageManager = $azureCliConfig.PreferredPackageManager
+            $installResult = Install-SoftwarePackage -SoftwareName 'azure-cli' -PreferredPackageManager $preferredPackageManager
+            
+            if ($installResult.Success) {
+                Write-ScriptLog "Azure CLI installed successfully via $($installResult.PackageManager)"
+                
+                # Verify installation
+                $version = Get-SoftwareVersion -SoftwareName 'azure-cli'
+                Write-ScriptLog "Azure CLI version: $version"
+                
+                # Configure if settings provided
+                if ($azureCliConfig.DefaultSettings) {
+                    Write-ScriptLog "Configuring Azure CLI defaults..."
+                    
+                    foreach ($setting in $azureCliConfig.DefaultSettings.GetEnumerator()) {
+                        if ($PSCmdlet.ShouldProcess("az config $($setting.Key)", 'Configure')) {
+                            & az config set $setting.Key=$setting.Value 2>&1 | ForEach-Object { Write-ScriptLog $_ -Level 'Debug' }
+                        }
+                    }
+                }
+
+                # Install extensions if specified
+                if ($azureCliConfig.Extensions) {
+                    Write-ScriptLog "Installing Azure CLI extensions..."
+                    
+                    foreach ($extension in $azureCliConfig.Extensions) {
+                        if ($PSCmdlet.ShouldProcess($extension, 'Install extension')) {
+                            Write-ScriptLog "Installing extension: $extension"
+                            & az extension add --name $extension 2>&1 | ForEach-Object { Write-ScriptLog $_ -Level 'Debug' }
+                        }
+                    }
+                }
+                
+                Write-ScriptLog "Azure CLI installation completed successfully"
+                exit 0
+            }
+        } catch {
+            Write-ScriptLog "Package manager installation failed: $_" -Level 'Warning'
+            Write-ScriptLog "Falling back to manual installation" -Level 'Information'
+        }
+    }
+
+    # Fallback to original installation logic
+    Write-ScriptLog "Using legacy installation method"
 
     # Platform-specific installation
     if ($IsWindows) {

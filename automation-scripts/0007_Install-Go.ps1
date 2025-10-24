@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 # Stage: Development
-# Dependencies: None
-# Description: Install Go programming language
+# Dependencies: PackageManager
+# Description: Install Go programming language using package managers (winget priority)
 # Tags: development, go, golang, programming
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -24,6 +24,20 @@ try {
     $script:LoggingAvailable = $false
 }
 
+# Import PackageManager module
+try {
+    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    if (Test-Path $packageManagerPath) {
+        Import-Module $packageManagerPath -Force -Global
+        $script:PackageManagerAvailable = $true
+    } else {
+        throw "PackageManager module not found at: $packageManagerPath"
+    }
+} catch {
+    Write-Warning "Could not load PackageManager module: $_"
+    $script:PackageManagerAvailable = $false
+}
+
 function Write-ScriptLog {
     param(
         [string]$Message,
@@ -44,7 +58,7 @@ function Write-ScriptLog {
     }
 }
 
-Write-ScriptLog "Starting Go installation check"
+Write-ScriptLog "Starting Go installation using package managers"
 
 try {
     # Get configuration
@@ -53,13 +67,17 @@ try {
     # Check if Go installation is enabled
     $shouldInstall = $false
     $goConfig = @{
-        Install = $false
-        Version = 'latest'
-        InstallerUrl = ''
+        PreferredPackageManager = $null
+        Version = $null
+        GoPath = $null
     }
 
-    if ($config.InstallationOptions -and $config.InstallationOptions.Go) {
-        $goConfig = $config.InstallationOptions.Go
+    if ($config.DevelopmentTools -and $config.DevelopmentTools.Go) {
+        $goConfig = $config.DevelopmentTools.Go + $goConfig  # Merge with defaults
+        $shouldInstall = $goConfig.Install -eq $true
+    } elseif ($config.DevelopmentTools -and $config.DevelopmentTools.Golang) {
+        # Alternative configuration key for backward compatibility
+        $goConfig = $config.DevelopmentTools.Golang + $goConfig  # Merge with defaults
         $shouldInstall = $goConfig.Install -eq $true
     }
 
@@ -68,16 +86,66 @@ try {
         exit 0
     }
 
+    # Use PackageManager if available
+    if ($script:PackageManagerAvailable) {
+        Write-ScriptLog "Using PackageManager module for Go installation"
+        
+        # Try package manager installation
+        try {
+            $preferredPackageManager = $goConfig.PreferredPackageManager
+            $installResult = Install-SoftwarePackage -SoftwareName 'golang' -PreferredPackageManager $preferredPackageManager
+            
+            if ($installResult.Success) {
+                Write-ScriptLog "Go installed successfully via $($installResult.PackageManager)"
+                
+                # Verify installation
+                $version = Get-SoftwareVersion -SoftwareName 'golang'
+                Write-ScriptLog "Go version: $version"
+                
+                # Set up GOPATH if configured
+                if ($goConfig.GoPath) {
+                    $goPath = [System.Environment]::ExpandEnvironmentVariables($goConfig.GoPath)
+                    Write-ScriptLog "Setting GOPATH to: $goPath"
+                    
+                    if ($IsWindows) {
+                        [Environment]::SetEnvironmentVariable('GOPATH', $goPath, 'User')
+                    } else {
+                        # For Unix-like systems, we'll note it but can't set permanently from here
+                        Write-ScriptLog "Please add 'export GOPATH=$goPath' to your shell profile"
+                    }
+                }
+                
+                Write-ScriptLog "Go installation completed successfully"
+                exit 0
+            }
+        } catch {
+            Write-ScriptLog "Package manager installation failed: $_" -Level 'Warning'
+            Write-ScriptLog "Falling back to manual installation" -Level 'Information'
+        }
+    }
+
+    # Fallback to original installation logic
+    Write-ScriptLog "Using legacy installation method"
+
     # Check if Go is already installed
     try {
         $goVersion = & go version 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-ScriptLog "Go is already installed: $goVersion"
-
-            # Check GOPATH
-            $goPath = & go env GOPATH 2>&1
-            if ($goPath) {
-                Write-ScriptLog "GOPATH: $goPath" -Level 'Debug'
+            
+            # Display GOPATH and GOROOT if set
+            try {
+                $goRoot = & go env GOROOT 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Write-ScriptLog "GOROOT: $goRoot"
+                }
+                
+                $goPath = & go env GOPATH 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Write-ScriptLog "GOPATH: $goPath"
+                }
+            } catch {
+                Write-ScriptLog "Could not get Go environment variables" -Level 'Debug'
             }
             
             exit 0
@@ -86,33 +154,19 @@ try {
         Write-ScriptLog "Go not found, proceeding with installation"
     }
 
-    # Determine version to install
-    $version = if ($goConfig.Version -and $goConfig.Version -ne 'latest') {
+    # Determine Go version to install
+    $goVersion = if ($goConfig.Version) {
         $goConfig.Version
     } else {
-        # Get latest version from Go website
-        try {
-            $latestPage = Invoke-WebRequest -Uri 'https://go.dev/VERSION?m=text' -UseBasicParsing
-            $latestVersion = $latestPage.Content.Trim()
-            $latestVersion -replace '^go', ''
-        } catch {
-            Write-ScriptLog "Could not fetch latest version, using default" -Level 'Warning'
-            '1.22.0'  # Fallback version
-        }
+        '1.21.5'  # Default to a stable version
     }
-    
-    Write-ScriptLog "Installing Go version: $version"
 
     # Install Go based on platform
     if ($IsWindows) {
         Write-ScriptLog "Installing Go for Windows..."
         
-        # Use configured URL or build default
-        $downloadUrl = if ($goConfig.InstallerUrl) {
-            $goConfig.InstallerUrl
-        } else {
-            "https://go.dev/dl/go$version.windows-amd64.msi"
-        }
+        # Construct download URL
+        $downloadUrl = "https://golang.org/dl/go$goVersion.windows-amd64.msi"
         
         $tempDir = if ($config.Infrastructure -and $config.Infrastructure.Directories -and $config.Infrastructure.Directories.LocalPath) {
             [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories.LocalPath)
@@ -120,7 +174,7 @@ try {
             $env:TEMP
         }
         
-        $installerPath = Join-Path $tempDir "go-installer.msi"
+        $installerPath = Join-Path $tempDir 'go-installer.msi'
         
         # Download installer
         Write-ScriptLog "Downloading Go installer from $downloadUrl"
@@ -145,27 +199,8 @@ try {
                 throw "Go installation failed"
             }
 
-            # Set up environment variables
-            $goRoot = "$env:ProgramFiles\Go"
-            $goPath = "$env:USERPROFILE\go"
-
-            # Update PATH
-            $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
-            if ($userPath -notlike "*$goRoot\bin*") {
-                [Environment]::SetEnvironmentVariable('PATH', "$userPath;$goRoot\bin", 'User')
-            }
-            if ($userPath -notlike "*$goPath\bin*") {
-                [Environment]::SetEnvironmentVariable('PATH', "$userPath;$goPath\bin", 'User')
-            }
-
-            # Set GOPATH
-            [Environment]::SetEnvironmentVariable('GOPATH', $goPath, 'User')
-
-            # Update current session
-            $env:PATH = "$env:PATH;$goRoot\bin;$goPath\bin"
-            $env:GOPATH = $goPath
-            
-            Write-ScriptLog "Go environment variables configured"
+            # Refresh PATH
+            $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH', 'User')
         }
         
         # Clean up installer
@@ -173,97 +208,147 @@ try {
             Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
         }
         
+        # Set GOPATH if configured
+        if ($goConfig.GoPath) {
+            $goPath = [System.Environment]::ExpandEnvironmentVariables($goConfig.GoPath)
+            Write-ScriptLog "Setting GOPATH to: $goPath"
+            [Environment]::SetEnvironmentVariable('GOPATH', $goPath, 'User')
+        }
+        
     } elseif ($IsLinux) {
         Write-ScriptLog "Installing Go for Linux..."
         
-        $arch = switch ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) {
-            'X64' { 'amd64' }
-            'Arm64' { 'arm64' }
-            'Arm' { 'armv6l' }
+        # Determine architecture
+        $arch = & uname -m 2>&1
+        $goArch = switch ($arch) {
+            'x86_64' { 'amd64' }
+            'aarch64' { 'arm64' }
+            'armv6l' { 'armv6l' }
             default { 'amd64' }
         }
         
-        $downloadUrl = "https://go.dev/dl/go$version.linux-$arch.tar.gz"
-        $tarPath = "/tmp/go$version.tar.gz"
+        # Download URL
+        $downloadUrl = "https://golang.org/dl/go$goVersion.linux-$goArch.tar.gz"
+        $tarPath = "/tmp/go$goVersion.linux-$goArch.tar.gz"
         
-        # Download
+        # Download Go
         Write-ScriptLog "Downloading Go from $downloadUrl"
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $tarPath -UseBasicParsing
+        & curl -L -o $tarPath $downloadUrl
         
-        # Remove old installation
-        if (Test-Path '/usr/local/go') {
-            sudo rm -rf /usr/local/go
+        if ($LASTEXITCODE -ne 0) {
+            Write-ScriptLog "Failed to download Go" -Level 'Error'
+            throw "Go download failed"
         }
         
-        # Extract
-        sudo tar -C /usr/local -xzf $tarPath
-        
-        # Set up environment
-        $ProfileNamePath = "$HOME/.profile"
-        if (Test-Path "$HOME/.bashrc") {
-            $ProfileNamePath = "$HOME/.bashrc"
+        # Install Go
+        if ($PSCmdlet.ShouldProcess('/usr/local', 'Install Go')) {
+            Write-ScriptLog "Installing Go to /usr/local..."
+            
+            # Remove existing Go installation
+            & sudo rm -rf /usr/local/go
+            
+            # Extract new Go
+            & sudo tar -C /usr/local -xzf $tarPath
+            
+            # Clean up
+            & rm $tarPath
+            
+            # Add to PATH in current session
+            if ($env:PATH -notlike "*:/usr/local/go/bin*") {
+                $env:PATH = "$env:PATH:/usr/local/go/bin"
+            }
+            
+            # Create or update shell profile
+            $shellProfile = if ($env:SHELL -like "*zsh*") {
+                "$HOME/.zshrc"
+            } else {
+                "$HOME/.bashrc"
+            }
+            
+            $pathExport = 'export PATH=$PATH:/usr/local/go/bin'
+            
+            if (Test-Path $shellProfile) {
+                $profileContent = Get-Content $shellProfile -Raw
+                if ($profileContent -notlike "*$pathExport*") {
+                    Add-Content -Path $shellProfile -Value "`n# Go"
+                    Add-Content -Path $shellProfile -Value $pathExport
+                    Write-ScriptLog "Added Go to PATH in $shellProfile"
+                }
+            }
+            
+            # Set GOPATH if configured
+            if ($goConfig.GoPath) {
+                $goPath = [System.Environment]::ExpandEnvironmentVariables($goConfig.GoPath)
+                $goPathExport = "export GOPATH=$goPath"
+                
+                if (Test-Path $shellProfile) {
+                    $profileContent = Get-Content $shellProfile -Raw
+                    if ($profileContent -notlike "*$goPathExport*") {
+                        Add-Content -Path $shellProfile -Value $goPathExport
+                        Write-ScriptLog "Added GOPATH to $shellProfile"
+                    }
+                }
+                
+                # Create GOPATH directory if it doesn't exist
+                if (-not (Test-Path $goPath)) {
+                    New-Item -ItemType Directory -Path $goPath -Force | Out-Null
+                    Write-ScriptLog "Created GOPATH directory: $goPath"
+                }
+            }
         }
-        
-        # Add to PATH if not already there
-        $ProfileNameContent = Get-Content $ProfileNamePath -Raw
-        if ($ProfileNameContent -notmatch 'export PATH.*\/usr\/local\/go\/bin') {
-            @"
-
-# Go programming language
-export PATH=`$PATH:/usr/local/go/bin
-export GOPATH=`$HOME/go
-export PATH=`$PATH:`$GOPATH/bin
-"@ | Add-Content $ProfileNamePath
-        }
-        
-        # Update current session
-        $env:PATH = "$env:PATH:/usr/local/go/bin:$HOME/go/bin"
-        $env:GOPATH = "$HOME/go"
-        
-        # Clean up
-        Remove-Item $tarPath -Force
         
     } elseif ($IsMacOS) {
         Write-ScriptLog "Installing Go for macOS..."
         
         if (Get-Command brew -ErrorAction SilentlyContinue) {
-            # Install using Homebrew
-            brew install go
+            if ($PSCmdlet.ShouldProcess('go', 'Install via Homebrew')) {
+                & brew install go
+            }
         } else {
-            # Manual installation
-            $arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'arm64' } else { 'amd64' }
-            $downloadUrl = "https://go.dev/dl/go$version.darwin-$arch.pkg"
-            $pkgPath = "/tmp/go-installer.pkg"
-
-            # Download
-            Write-ScriptLog "Downloading Go installer..."
-            curl -o $pkgPath $downloadUrl
-
-            # Install
-            sudo installer -pkg $pkgPath -target /
-
-            # Clean up
-            rm $pkgPath
+            # Determine architecture
+            $arch = & uname -m 2>&1
+            $goArch = if ($arch -eq 'arm64') { 'arm64' } else { 'amd64' }
+            
+            # Download Go
+            $downloadUrl = "https://golang.org/dl/go$goVersion.darwin-$goArch.pkg"
+            $pkgPath = "/tmp/go$goVersion.darwin-$goArch.pkg"
+            
+            Write-ScriptLog "Downloading Go from $downloadUrl"
+            & curl -L -o $pkgPath $downloadUrl
+            
+            # Install Go
+            & sudo installer -pkg $pkgPath -target /
+            & rm $pkgPath
         }
         
-        # Set up environment
-        $ProfileNamePath = "$HOME/.zshrc"
-        if (-not (Test-Path $ProfileNamePath)) {
-            $ProfileNamePath = "$HOME/.bash_profile"
+        # Set GOPATH if configured
+        if ($goConfig.GoPath) {
+            $goPath = [System.Environment]::ExpandEnvironmentVariables($goConfig.GoPath)
+            
+            # Add to shell profile
+            $shellProfile = if ($env:SHELL -like "*zsh*") {
+                "$HOME/.zshrc"
+            } else {
+                "$HOME/.bash_profile"
+            }
+            
+            $goPathExport = "export GOPATH=$goPath"
+            
+            if (Test-Path $shellProfile) {
+                $profileContent = Get-Content $shellProfile -Raw
+                if ($profileContent -notlike "*$goPathExport*") {
+                    Add-Content -Path $shellProfile -Value "`n# Go"
+                    Add-Content -Path $shellProfile -Value $goPathExport
+                    Write-ScriptLog "Added GOPATH to $shellProfile"
+                }
+            }
+            
+            # Create GOPATH directory if it doesn't exist
+            if (-not (Test-Path $goPath)) {
+                New-Item -ItemType Directory -Path $goPath -Force | Out-Null
+                Write-ScriptLog "Created GOPATH directory: $goPath"
+            }
         }
-        
-        # Add to PATH if not already there
-        $ProfileNameContent = Get-Content $ProfileNamePath -Raw -ErrorAction SilentlyContinue
-        if ($ProfileNameContent -notmatch 'export PATH.*\/usr\/local\/go\/bin') {
-            @"
-
-# Go programming language
-export PATH=`$PATH:/usr/local/go/bin
-export GOPATH=`$HOME/go
-export PATH=`$PATH:`$GOPATH/bin
-"@ | Add-Content $ProfileNamePath
-        }
-        
     } else {
         Write-ScriptLog "Unsupported operating system" -Level 'Error'
         throw "Cannot install Go on this platform"
@@ -271,42 +356,24 @@ export PATH=`$PATH:`$GOPATH/bin
 
     # Verify installation
     try {
-        # Need to use full path on first run
-        $goCmd = if ($IsWindows) { "$env:ProgramFiles\Go\bin\go.exe" } else { '/usr/local/go/bin/go' }
-        $goVersion = & $goCmd version 2>&1
-        
+        $goVersion = & go version 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-ScriptLog "Go installed successfully: $goVersion"
-
-            # Create Go workspace directories
-            $goPath = if ($IsWindows) { "$env:USERPROFILE\go" } else { "$HOME/go" }
             
-            @('bin', 'src', 'pkg') | ForEach-Object {
-                $dir = Join-Path $goPath $_
-                if (-not (Test-Path $dir)) {
-                    New-Item -ItemType Directory -Path $dir -Force | Out-Null
-                    Write-ScriptLog "Created Go directory: $dir" -Level 'Debug'
+            # Display Go environment
+            try {
+                $goRoot = & go env GOROOT 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Write-ScriptLog "GOROOT: $goRoot"
                 }
-            }
-
-            # Install common Go tools if specified
-            if ($goConfig.Tools -and $goConfig.Tools.Count -gt 0) {
-                Write-ScriptLog "Installing Go tools..."
                 
-                foreach ($tool in $goConfig.Tools) {
-                    try {
-                        Write-ScriptLog "Installing tool: $tool"
-                        & $goCmd install $tool
-                        
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-ScriptLog "Failed to install $tool" -Level 'Warning'
-                        }
-                    } catch {
-                        Write-ScriptLog "Error installing $tool : $_" -Level 'Warning'
-                    }
+                $goPath = & go env GOPATH 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Write-ScriptLog "GOPATH: $goPath"
                 }
+            } catch {
+                Write-ScriptLog "Could not get Go environment variables" -Level 'Debug'
             }
-            
         } else {
             throw "Go command failed after installation"
         }

@@ -1,7 +1,7 @@
 #Requires -Version 7.0
-# Stage: Development
-# Dependencies: None
-# Description: Install Node.js runtime
+# Stage: Development  
+# Dependencies: PackageManager
+# Description: Install Node.js runtime using package managers (winget priority)
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -19,6 +19,20 @@ try {
     }
 } catch {
     # Fallback to basic output
+}
+
+# Import PackageManager module
+try {
+    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    if (Test-Path $packageManagerPath) {
+        Import-Module $packageManagerPath -Force -Global
+        $script:PackageManagerAvailable = $true
+    } else {
+        throw "PackageManager module not found at: $packageManagerPath"
+    }
+} catch {
+    Write-Warning "Could not load PackageManager module: $_"
+    $script:PackageManagerAvailable = $false
 }
 
 function Write-ScriptLog {
@@ -41,7 +55,7 @@ function Write-ScriptLog {
     }
 }
 
-Write-ScriptLog "Starting Node.js installation check"
+Write-ScriptLog "Starting Node.js installation using package managers"
 
 try {
     # Get configuration
@@ -61,6 +75,60 @@ try {
         exit 0
     }
 
+    # Use PackageManager if available
+    if ($script:PackageManagerAvailable) {
+        Write-ScriptLog "Using PackageManager module for Node.js installation"
+        
+        # Try package manager installation
+        try {
+            $preferredPackageManager = $nodeConfig.PreferredPackageManager
+            $installResult = Install-SoftwarePackage -SoftwareName 'nodejs' -PreferredPackageManager $preferredPackageManager
+            
+            if ($installResult.Success) {
+                Write-ScriptLog "Node.js installed successfully via $($installResult.PackageManager)"
+                
+                # Verify installation
+                $version = Get-SoftwareVersion -SoftwareName 'nodejs'
+                Write-ScriptLog "Node.js version: $version"
+                
+                # Also check npm
+                try {
+                    $npmVersion = Get-SoftwareVersion -SoftwareName 'nodejs' -Command 'npm --version'
+                    Write-ScriptLog "npm version: $npmVersion"
+                } catch {
+                    Write-ScriptLog "Could not verify npm version" -Level 'Warning'
+                }
+                
+                # Install global packages if configured
+                if ($nodeConfig.GlobalPackages -and $nodeConfig.GlobalPackages.Count -gt 0) {
+                    Write-ScriptLog "Installing global npm packages..."
+                    
+                    foreach ($package in $nodeConfig.GlobalPackages) {
+                        try {
+                            Write-ScriptLog "Installing global package: $package"
+                            & npm install -g $package
+                            
+                            if ($LASTEXITCODE -ne 0) {
+                                Write-ScriptLog "Failed to install $package" -Level 'Warning'
+                            }
+                        } catch {
+                            Write-ScriptLog "Error installing $package : $_" -Level 'Warning'
+                        }
+                    }
+                }
+                
+                Write-ScriptLog "Node.js installation completed successfully"
+                exit 0
+            }
+        } catch {
+            Write-ScriptLog "Package manager installation failed: $_" -Level 'Warning'
+            Write-ScriptLog "Falling back to manual installation" -Level 'Information'
+        }
+    }
+
+    # Fallback to original installation logic
+    Write-ScriptLog "Using legacy installation method"
+    
     # Check if Node is already installed
     try {
         $nodeVersion = & node --version 2>&1
