@@ -288,9 +288,7 @@ try {
         Write-ScriptLog -Message "Running in CI mode"
         $pesterConfig.Output.Verbosity = 'Normal'
         $pesterConfig.Should.ErrorAction = 'Continue'
-        if ($pesterSettings.Output -and $pesterSettings.Output.CIFormat) {
-            $pesterConfig.Output.CIFormat = $true
-        }
+        # CIFormat is not a boolean property in newer Pester versions - remove this setting
     }
 
     # Apply filter settings from config or use defaults for unit tests
@@ -353,12 +351,16 @@ try {
         return
     }
     
+    # Performance optimization: disable config watching during tests
+    $env:AITHERZERO_NO_CONFIG_WATCH = 'true'
+    $env:AITHERZERO_TEST_MODE = 'true'
+    
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
     $useParallel = $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
     
     if ($useParallel) {
-        $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 4 }
-        $parallelBlockSize = if ($pesterSettings.Parallel.BlockSize) { $pesterSettings.Parallel.BlockSize } else { 4 }
+        $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 6 }
+        $parallelBlockSize = if ($pesterSettings.Parallel.BlockSize) { $pesterSettings.Parallel.BlockSize } else { 5 }
         Write-ScriptLog -Message "Running tests in parallel (Workers: $parallelWorkers, Block size: $parallelBlockSize)"
         
         # Split test files into chunks for parallel execution

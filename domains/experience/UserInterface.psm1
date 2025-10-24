@@ -178,7 +178,9 @@ function Initialize-AitherUI {
     if ($Configuration) {
         $uiConfig = if ($Configuration.UI) { $Configuration.UI } else { $null }
     } elseif (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
-        $uiConfig = Get-Configuration -Section 'UI'
+        # Work around configuration section access issue - get full config and access UI section directly
+        $fullConfig = Get-Configuration
+        $uiConfig = if ($fullConfig -and $fullConfig.UI) { $fullConfig.UI } else { $null }
     }
 
     # Safe property access helper (defined outside to be available always)

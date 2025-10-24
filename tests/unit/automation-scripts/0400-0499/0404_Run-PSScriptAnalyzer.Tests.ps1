@@ -60,7 +60,9 @@ BeforeAll {
     }
     Mock Test-Path { return $true }
     Mock New-Item {}
-    Mock Get-Content { return '{"Testing":{"PSScriptAnalyzer":{"Enabled":true,"Rules":{"Severity":["Error","Warning"],"ExcludeRules":["PSAvoidUsingWriteHost"]}}}}' }
+    Mock Get-Content { 
+        return '{"Testing":{"PSScriptAnalyzer":{"Enabled":true,"Rules":{"Severity":["Error","Warning"],"ExcludeRules":["PSAvoidUsingWriteHost"]}}}}'
+    } -ParameterFilter { $Path -like "*config*" }
     Mock ConvertFrom-Json { 
         return @{
             Testing = @{

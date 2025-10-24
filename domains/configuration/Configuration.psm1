@@ -698,9 +698,27 @@ function Merge-Configuration {
 
 # Hot reload support
 function Enable-ConfigurationHotReload {
+    # Check for performance optimization settings
+    if ($env:AITHERZERO_NO_CONFIG_WATCH -eq 'true' -or 
+        $env:AITHERZERO_TEST_MODE -eq 'true') {
+        Write-ConfigLog -Level Debug -Message "Configuration hot reload disabled (performance optimization)"
+        return
+    }
+    
     if ($script:ConfigWatcher) {
         Write-Host "Configuration hot reload is already enabled" -ForegroundColor Yellow
         return
+    }
+    
+    # Check if testing performance optimizations are enabled
+    try {
+        $config = Get-Configuration -Section 'Testing'
+        if ($config -and $config.Performance -and $config.Performance.DisableConfigWatch) {
+            Write-ConfigLog -Level Debug -Message "Configuration hot reload disabled (Testing.Performance.DisableConfigWatch = true)"
+            return
+        }
+    } catch {
+        # Continue if we can't read config (avoid infinite recursion)
     }
     
     $action = {

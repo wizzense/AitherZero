@@ -259,17 +259,25 @@ try {
             # Handle multiple files by analyzing each one and combining results
             $allResults = @()
             foreach ($file in $analyzerParams.Path) {
+                if ([string]::IsNullOrWhiteSpace($file)) {
+                    continue
+                }
                 # Create a proper hashtable copy
                 $singleFileParams = @{}
                 foreach ($key in $analyzerParams.Keys) {
-                    if ($key -ne 'Path') {
+                    if ($key -ne 'Path' -and $null -ne $analyzerParams[$key]) {
                         $singleFileParams[$key] = $analyzerParams[$key]
                     }
                 }
                 $singleFileParams['Path'] = $file
-                $fileResults = Invoke-ScriptAnalyzer @singleFileParams
-                if ($fileResults) {
-                    $allResults += $fileResults
+                
+                try {
+                    $fileResults = Invoke-ScriptAnalyzer @singleFileParams
+                    if ($fileResults) {
+                        $allResults += $fileResults
+                    }
+                } catch {
+                    Write-ScriptLog -Level Warning -Message "Failed to analyze file: $file - $($_.Exception.Message)"
                 }
             }
             $results = $allResults

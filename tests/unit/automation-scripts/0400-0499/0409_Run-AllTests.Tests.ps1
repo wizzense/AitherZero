@@ -92,7 +92,9 @@ BeforeAll {
     }
     Mock Test-Path { return $true }
     Mock New-Item {}
-    Mock Get-Content { return '{"Testing":{"Framework":"Pester","MinVersion":"5.0.0","CodeCoverage":{"Enabled":true,"MinimumPercent":80}}}' }
+    Mock Get-Content { 
+        return '{"Testing":{"Framework":"Pester","MinVersion":"5.0.0","CodeCoverage":{"Enabled":true,"MinimumPercent":80}}}'
+    } -ParameterFilter { $Path -like "*config*" }
     Mock ConvertFrom-Json { 
         return @{
             Testing = @{
