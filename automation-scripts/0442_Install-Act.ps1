@@ -74,17 +74,17 @@ if ($IsWindows) {
     $fileName = "act_Windows_$arch.zip"
     $downloadUrl = "$baseUrl/$fileName"
     $tempFile = Join-Path $env:TEMP "act.zip"
-    
+
     Write-Host "📥 Downloading from $downloadUrl..." -ForegroundColor Yellow
-    
+
     if ($PSCmdlet.ShouldProcess($downloadUrl, "Download act")) {
         Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile -UseBasicParsing
-        
+
         # Extract
         Write-Host "📦 Extracting..." -ForegroundColor Yellow
         Expand-Archive -Path $tempFile -DestinationPath $installPath -Force
         Remove-Item $tempFile
-        
+
         # Ensure in PATH
         if ($env:PATH -notlike "*$installPath*") {
             [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$installPath", [EnvironmentVariableTarget]::User)
@@ -96,16 +96,16 @@ if ($IsWindows) {
     $fileName = "act_${os}_$arch.tar.gz"
     $downloadUrl = "$baseUrl/$fileName"
     $tempFile = "/tmp/act.tar.gz"
-    
+
     Write-Host "📥 Downloading from $downloadUrl..." -ForegroundColor Yellow
-    
+
     if ($PSCmdlet.ShouldProcess($downloadUrl, "Download act")) {
         Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile -UseBasicParsing
-        
+
         # Extract
         Write-Host "📦 Extracting..." -ForegroundColor Yellow
         tar -xzf $tempFile -C /tmp
-        
+
         # Move to install path (may need sudo)
         $actBinary = "/tmp/act"
         if (Test-Path $actBinary) {
@@ -121,7 +121,7 @@ if ($IsWindows) {
                 }
                 Move-Item $actBinary "$userBin/act" -Force
                 chmod +x "$userBin/act"
-                
+
                 # Add to PATH if needed
                 if ($env:PATH -notlike "*$userBin*") {
                     Write-Host "📝 Add this to your shell profile:" -ForegroundColor Yellow
@@ -129,7 +129,7 @@ if ($IsWindows) {
                 }
             }
         }
-        
+
         Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
     }
 }
@@ -141,17 +141,17 @@ if ($act) {
     Write-Host "✅ act installed successfully!" -ForegroundColor Green
     Write-Host "   Version: $version" -ForegroundColor Gray
     Write-Host "   Path: $($act.Source)" -ForegroundColor Gray
-    
+
     # Show usage
     Write-Host "`n📚 Usage:" -ForegroundColor Cyan
     Write-Host "   act                    # Run default event (push)" -ForegroundColor White
     Write-Host "   act pull_request       # Run pull_request event" -ForegroundColor White
     Write-Host "   act -l                 # List workflows" -ForegroundColor White
     Write-Host "   act -n                 # Dry run" -ForegroundColor White
-    
+
     Write-Host "`n💡 Test our workflow:" -ForegroundColor Cyan
     Write-Host "   act pull_request -W .github/workflows/main.yml" -ForegroundColor Yellow
-    
+
     # Check Docker
     $docker = Get-Command docker -ErrorAction SilentlyContinue
     if (-not $docker) {

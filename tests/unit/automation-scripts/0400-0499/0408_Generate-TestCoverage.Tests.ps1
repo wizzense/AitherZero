@@ -10,22 +10,22 @@
 BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0408_Generate-TestCoverage.ps1"
-    
+
     # Mock functions
     Mock Import-Module {}
-    Mock Get-Module { 
+    Mock Get-Module {
         return @([PSCustomObject]@{
             Name = 'Pester'
             Version = [Version]'5.3.0'
-        }) 
+        })
     }
     Mock Get-ChildItem {
         return @(
-            [PSCustomObject]@{ 
+            [PSCustomObject]@{
                 Name = 'TestModule1'
                 FullName = '/path/to/TestModule1'
             }
-            [PSCustomObject]@{ 
+            [PSCustomObject]@{
                 Name = 'TestModule2'
                 FullName = '/path/to/TestModule2'
             }
@@ -57,13 +57,13 @@ BeforeAll {
         }
     }
     Mock Write-Host {}
-    Mock New-BaselineTestContent { 
+    Mock New-BaselineTestContent {
         return "# Generated test content for module"
     }
 }
 
 Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Generation') {
-    
+
     Context "Script Metadata" {
         It "Should have correct metadata structure" {
             $scriptContent = Get-Content $scriptPath -Raw
@@ -87,7 +87,7 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             { & $scriptPath -Configuration $config } | Should -Not -Throw
         }
 
@@ -99,7 +99,7 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             $result = & $scriptPath -Configuration $config
             $LASTEXITCODE | Should -Be 0
         }
@@ -107,7 +107,7 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
         It "Should use default configuration when none provided" {
             $result = & $scriptPath -Configuration @{}
             $LASTEXITCODE | Should -Be 0
-            
+
             # Should exit early due to no enable flag
             Assert-MockCalled Write-Host -Times 1
         }
@@ -115,16 +115,16 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
 
     Context "Prerequisites Checking" {
         It "Should check for Pester availability" {
-            Mock Get-Module { return $null } -ParameterFilter { 
-                $ListAvailable -and $Name -eq 'Pester' 
+            Mock Get-Module { return $null } -ParameterFilter {
+                $ListAvailable -and $Name -eq 'Pester'
             }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{ Enable = $true }
                 }
             }
-            
+
             $result = & $scriptPath -Configuration $config 2>$null
             $LASTEXITCODE | Should -Be 1
         }
@@ -135,27 +135,27 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     CoverageGeneration = @{ Enable = $true }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Import-Module -ParameterFilter { 
-                $Name -eq 'Pester' -and $MinimumVersion -eq '5.0' 
+
+            Assert-MockCalled Import-Module -ParameterFilter {
+                $Name -eq 'Pester' -and $MinimumVersion -eq '5.0'
             }
         }
 
         It "Should create output directory if it doesn't exist" {
             Mock Test-Path { return $false } -ParameterFilter { $Path -like "*tests/generated*" }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{ Enable = $true }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled New-Item -ParameterFilter { 
-                $ItemType -eq 'Directory' 
+
+            Assert-MockCalled New-Item -ParameterFilter {
+                $ItemType -eq 'Directory'
             }
         }
     }
@@ -167,11 +167,11 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     CoverageGeneration = @{ Enable = $true }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Get-ChildItem -ParameterFilter { 
-                $Directory -eq $true -and $Recurse -eq $true 
+
+            Assert-MockCalled Get-ChildItem -ParameterFilter {
+                $Directory -eq $true -and $Recurse -eq $true
             }
         }
 
@@ -184,9 +184,9 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             # Should process modules but filter them
             Assert-MockCalled Get-ChildItem
         }
@@ -200,9 +200,9 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             # Should process modules but exclude specified ones
             Assert-MockCalled Get-ChildItem
         }
@@ -222,11 +222,11 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Set-Content -ParameterFilter { 
-                $Path -like "*Generated.Tests.ps1" 
+
+            Assert-MockCalled Set-Content -ParameterFilter {
+                $Path -like "*Generated.Tests.ps1"
             }
         }
 
@@ -239,17 +239,17 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Set-Content -Times 0 -ParameterFilter { 
-                $Path -like "*Generated.Tests.ps1" 
+
+            Assert-MockCalled Set-Content -Times 0 -ParameterFilter {
+                $Path -like "*Generated.Tests.ps1"
             }
         }
 
         It "Should skip existing test files" {
             Mock Test-Path { return $true } -ParameterFilter { $Path -like "*Generated.Tests.ps1" }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{
@@ -258,12 +258,12 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             # Should skip generating files that already exist
-            Assert-MockCalled Set-Content -Times 0 -ParameterFilter { 
-                $Path -like "*Generated.Tests.ps1" 
+            Assert-MockCalled Set-Content -Times 0 -ParameterFilter {
+                $Path -like "*Generated.Tests.ps1"
             }
         }
 
@@ -276,15 +276,15 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             Assert-MockCalled New-BaselineTestContent -Times 2  # For 2 mocked modules
         }
 
         It "Should handle test generation errors gracefully" {
             Mock New-BaselineTestContent { throw "Test generation failed" }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{
@@ -293,9 +293,9 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             { & $scriptPath -Configuration $config } | Should -Not -Throw
-            
+
             # Should continue despite errors
             Assert-MockCalled Write-Host -Times 1
         }
@@ -311,9 +311,9 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             Assert-MockCalled Invoke-Pester
         }
 
@@ -326,9 +326,9 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             Assert-MockCalled Invoke-Pester -Times 0
         }
 
@@ -341,9 +341,9 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             Assert-MockCalled New-PesterConfiguration
         }
 
@@ -357,12 +357,12 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             # Should display test results
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Test Results*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Test Results*"
             }
         }
 
@@ -376,12 +376,12 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
+
             # Should display coverage results
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Code Coverage*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Code Coverage*"
             }
         }
 
@@ -397,7 +397,7 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{
@@ -407,11 +407,11 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Target coverage*achieved*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Target coverage*achieved*"
             }
         }
 
@@ -427,7 +427,7 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{
@@ -437,11 +437,11 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Below target coverage*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Below target coverage*"
             }
         }
     }
@@ -457,11 +457,11 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Generating HTML coverage report*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Generating HTML coverage report*"
             }
         }
 
@@ -475,11 +475,11 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config
-            
-            Assert-MockCalled Write-Host -Times 0 -ParameterFilter { 
-                $Object -like "*Generating HTML coverage report*" 
+
+            Assert-MockCalled Write-Host -Times 0 -ParameterFilter {
+                $Object -like "*Generating HTML coverage report*"
             }
         }
     }
@@ -494,9 +494,9 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             { & $scriptPath -Configuration $config -WhatIf } | Should -Not -Throw
-            
+
             # Should not actually create files in WhatIf mode
             Assert-MockCalled Set-Content -Times 0
         }
@@ -505,20 +505,20 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
     Context "Error Handling" {
         It "Should handle critical errors gracefully" {
             Mock Import-Module { throw "Module import failed" }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{ Enable = $true }
                 }
             }
-            
+
             $result = & $scriptPath -Configuration $config 2>$null
             $LASTEXITCODE | Should -Be 1
         }
 
         It "Should provide error details on failure" {
             Mock Invoke-Pester { throw "Pester execution failed" }
-            
+
             $config = @{
                 Testing = @{
                     CoverageGeneration = @{
@@ -527,7 +527,7 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
                     }
                 }
             }
-            
+
             $result = & $scriptPath -Configuration $config 2>$null
             $LASTEXITCODE | Should -Be 1
         }
@@ -536,7 +536,7 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
     Context "Baseline Test Content Generation" {
         It "Should generate proper test structure" {
             $testContent = New-BaselineTestContent -ModulePath "/path/to/module" -ModuleName "TestModule"
-            
+
             $testContent | Should -Match "BeforeAll"
             $testContent | Should -Match "Describe 'TestModule Module Tests'"
             $testContent | Should -Match "Context 'Module Loading'"
@@ -546,13 +546,13 @@ Describe "0408_Generate-TestCoverage" -Tag @('Unit', 'Testing', 'Coverage', 'Gen
 
         It "Should include module import in test content" {
             $testContent = New-BaselineTestContent -ModulePath "/path/to/module" -ModuleName "TestModule"
-            
+
             $testContent | Should -Match "Import-Module.*Force"
         }
 
         It "Should test exported functions" {
             $testContent = New-BaselineTestContent -ModulePath "/path/to/module" -ModuleName "TestModule"
-            
+
             $testContent | Should -Match "exportedFunctions"
             $testContent | Should -Match "Get-Help"
         }

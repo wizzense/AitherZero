@@ -37,7 +37,7 @@ function Write-AutomationLog {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [ValidateSet('Trace', 'Debug', 'Information', 'Warning', 'Error', 'Critical')]
         [string]$Level = 'Information'
     )
@@ -56,24 +56,24 @@ function Write-AutomationLog {
             'Error' = 'Red'
             'Critical' = 'Magenta'
         }[$Level]
-        
+
         Write-Host "[$timestamp] [$Level] [NOLOG] $Message" -ForegroundColor $color
     }
 }
 
 # Get current platform
 function Get-DeploymentPlatform {
-    if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) { 
-        return 'Windows' 
+    if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+        return 'Windows'
     }
-    elseif ($IsLinux) { 
-        return 'Linux' 
+    elseif ($IsLinux) {
+        return 'Linux'
     }
-    elseif ($IsMacOS) { 
-        return 'macOS' 
+    elseif ($IsMacOS) {
+        return 'macOS'
     }
-    else { 
-        return 'Unknown' 
+    else {
+        return 'Unknown'
     }
 }
 
@@ -82,29 +82,29 @@ function Start-DeploymentAutomation {
     <#
     .SYNOPSIS
         Start automated deployment with parallel execution support
-    
+
     .DESCRIPTION
         Enhanced deployment automation with dependency resolution, parallel execution,
         and comprehensive error handling. Successor to Invoke-ParallelLabRunner.
-    
+
     .PARAMETER Configuration
         Configuration hashtable or path to configuration file
-    
+
     .PARAMETER Scripts
         Array of scripts to execute (optional - will auto-discover if not provided)
-    
+
     .PARAMETER MaxConcurrency
         Maximum number of concurrent executions
-    
+
     .PARAMETER TimeoutMinutes
         Timeout for each script execution
-    
+
     .PARAMETER Stage
         Run specific deployment stage only
-    
+
     .PARAMETER DryRun
         Perform validation without execution
-    
+
     .EXAMPLE
         Start-DeploymentAutomation -Configuration @{Profile="Developer"} -MaxConcurrency 4
     #>
@@ -112,23 +112,23 @@ function Start-DeploymentAutomation {
     param(
         [Parameter()]
         [object]$Configuration,
-        
+
         [Parameter()]
         [array]$Scripts,
-        
+
         [Parameter()]
         [int]$MaxConcurrency = [Environment]::ProcessorCount,
-        
+
         [Parameter()]
         [int]$TimeoutMinutes = 30,
-        
+
         [Parameter()]
         [ValidateSet('Prepare', 'Core', 'Services', 'Configuration', 'Validation', 'All')]
         [string]$Stage = 'All',
-        
+
         [Parameter()]
         [switch]$DryRun,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -136,26 +136,26 @@ function Start-DeploymentAutomation {
     Write-AutomationLog "Starting AitherZero deployment automation" -Level Information
     Write-AutomationLog "Platform: $(Get-DeploymentPlatform)" -Level Debug
     Write-AutomationLog "Stage: $Stage | MaxConcurrency: $MaxConcurrency" -Level Debug
-    
+
     try {
         # Load configuration
         $config = Resolve-DeploymentConfiguration -Configuration $Configuration
-        
+
         # Discover or validate scripts
         if (-not $Scripts) {
             $Scripts = Get-AutomationScripts -Configuration $config -Stage $Stage
         }
-        
+
         Write-AutomationLog "Found $($Scripts.Count) scripts to execute" -Level Information
-        
+
         # Validate environment
         if (-not $DryRun) {
             Test-DeploymentEnvironment -Configuration $config
         }
-        
+
         # Build execution plan
         $executionPlan = New-ExecutionPlan -Scripts $Scripts -Configuration $config
-        
+
         if ($DryRun) {
             Write-AutomationLog "DRY RUN - Execution plan:" -Level Information
             $executionPlan | ForEach-Object {
@@ -163,24 +163,24 @@ function Start-DeploymentAutomation {
             }
             return $executionPlan
         }
-        
+
         # Execute deployment
         $results = if ($MaxConcurrency -gt 1) {
             Invoke-ParallelExecution -Plan $executionPlan -Configuration $config -MaxConcurrency $MaxConcurrency -Timeout $TimeoutMinutes
         } else {
             Invoke-SequentialExecution -Plan $executionPlan -Configuration $config -Timeout $TimeoutMinutes
         }
-        
+
         # Process results
         $summary = Get-ExecutionSummary -Results $results
         Write-DeploymentSummary -Summary $summary
-        
+
         if ($summary.Failed -gt 0 -and -not $Force) {
             throw "$($summary.Failed) scripts failed during execution"
         }
-        
+
         return $results
-        
+
     } catch {
         Write-AutomationLog "Deployment automation failed: $_" -Level Error
         throw
@@ -233,11 +233,11 @@ function Get-AutomationScripts {
     # Auto-discover scripts if none in config
     if ($scripts.Count -eq 0 -and (Test-Path $script:AutomationScriptsPath)) {
         Write-AutomationLog "Auto-discovering scripts from: $script:AutomationScriptsPath" -Level Debug
-        
-        $scriptFiles = Get-ChildItem -Path $script:AutomationScriptsPath -Filter "*.ps1" | 
+
+        $scriptFiles = Get-ChildItem -Path $script:AutomationScriptsPath -Filter "*.ps1" |
             Where-Object { $_.Name -match '^\d{4}_' } |
             Sort-Object Name
-        
+
         foreach ($file in $scriptFiles) {
             # Parse script metadata
             $metadata = Get-ScriptMetadata -Path $file.FullName
@@ -254,14 +254,14 @@ function Get-AutomationScripts {
             }
         }
     }
-    
+
     return $scripts | Sort-Object { $_.Priority }
 }
 
 # Get script metadata
 function Get-ScriptMetadata {
     param([string]$Path)
-    
+
     $metadata = @{
         Name = [System.IO.Path]::GetFileNameWithoutExtension($Path)
         Priority = 50
@@ -288,14 +288,14 @@ function Get-ScriptMetadata {
             break
         }
     }
-    
+
     return $metadata
 }
 
 # Test deployment environment
 function Test-DeploymentEnvironment {
     param([hashtable]$Configuration)
-    
+
     Write-AutomationLog "Validating deployment environment" -Level Information
 
     # Check PowerShell version
@@ -308,7 +308,7 @@ function Test-DeploymentEnvironment {
     if ($Configuration.RequiredModules) {
         $requiredModules += $Configuration.RequiredModules
     }
-    
+
     foreach ($module in $requiredModules) {
         if (-not (Get-Module -Name $module -ListAvailable)) {
             Write-AutomationLog "Installing required module: $module" -Level Information
@@ -357,14 +357,14 @@ function New-ExecutionPlan {
     $sorted = @()
     $visited = @{}
     $visiting = @{}
-    
+
     function Test-DependencyNode {
         param([string]$Node)
-        
+
         if ($visiting[$Node]) {
             throw "Circular dependency detected: $Node"
         }
-        
+
         if (-not $visited[$Node]) {
             $visiting[$Node] = $true
 
@@ -375,21 +375,21 @@ function New-ExecutionPlan {
                     }
                 }
             }
-            
+
             $visiting[$Node] = $false
             $visited[$Node] = $true
-            
+
             $script = $Scripts | Where-Object { $_.Name -eq $Node }
             if ($script) {
                 $sorted += $script
             }
         }
     }
-    
+
     foreach ($script in $Scripts) {
         Test-DependencyNode -Node $script.Name
     }
-    
+
     return $sorted
 }
 
@@ -403,15 +403,15 @@ function Invoke-ParallelExecution {
     )
 
     Import-Module ThreadJob -Force
-    
+
     $results = @()
     $jobs = @{}
     $completed = @{}
     $startTime = Get-Date
     $timeoutTime = $startTime.AddMinutes($Timeout)
-    
+
     Write-AutomationLog "Starting parallel execution with max concurrency: $MaxConcurrency" -Level Information
-    
+
     while ($Plan.Count -gt 0 -or $jobs.Count -gt 0) {
         # Start new jobs if under concurrency limit
         while ($jobs.Count -lt $MaxConcurrency -and $Plan.Count -gt 0) {
@@ -428,14 +428,14 @@ function Invoke-ParallelExecution {
 
             if ($canStart) {
                 $Plan = $Plan[1..($Plan.Count-1)]
-                
+
                 Write-AutomationLog "Starting: $($script.Name)" -Level Information
-                
+
                 $job = Start-ThreadJob -Name $script.Name -ScriptBlock {
                     param($Script, $Configuration, $ProjectRoot)
-                    
+
                     Set-Location $ProjectRoot
-                    
+
                     $result = @{
                         Name = $Script.Name
                         StartTime = Get-Date
@@ -443,16 +443,16 @@ function Invoke-ParallelExecution {
                         Output = ""
                         Error = ""
                     }
-                    
+
                     try {
                         $params = @{}
                         if ($Configuration) { $params['Configuration'] = $Configuration }
-                        if ($Script.Parameters) { 
+                        if ($Script.Parameters) {
                             foreach ($key in $Script.Parameters.Keys) {
                                 $params[$key] = $Script.Parameters[$key]
                             }
                         }
-                        
+
                         $output = & $Script.Path @params 2>&1
                         $result.Success = $?
                         $result.Output = $output -join "`n"
@@ -462,11 +462,11 @@ function Invoke-ParallelExecution {
                         $result.EndTime = Get-Date
                         $result.Duration = $result.EndTime - $result.StartTime
                     }
-                    
+
                     return $result
-                    
+
                 } -ArgumentList $script, $Configuration, $script:ProjectRoot
-                
+
                 $jobs[$job.Id] = @{
                     Job = $job
                     Script = $script
@@ -474,26 +474,26 @@ function Invoke-ParallelExecution {
             } else {
                 # Move to end if dependencies not met
                 $Plan = $Plan[1..($Plan.Count-1)] + $script
-                
+
                 # Prevent infinite loop
                 if ($Plan.Count -eq 1 -and $jobs.Count -eq 0) {
                     throw "Cannot satisfy dependencies for: $($script.Name)"
                 }
             }
         }
-        
+
         # Check for completed jobs
         $completedJobs = $jobs.Values | Where-Object { $_.Job.State -ne 'Running' }
-        
+
         foreach ($jobInfo in $completedJobs) {
             $job = $jobInfo.Job
             $script = $jobInfo.Script
-            
+
             try {
                 $result = Receive-Job -Job $job -ErrorAction Stop
                 $results += $result
                 $completed[$script.Name] = $result.Success
-                
+
                 if ($result.Success) {
                     Write-AutomationLog "Completed: $($script.Name) (Duration: $($result.Duration.TotalSeconds)s)" -Level Information
                 } else {
@@ -512,19 +512,19 @@ function Invoke-ParallelExecution {
                 $jobs.Remove($job.Id)
             }
         }
-        
+
         # Check timeout
         if ((Get-Date) -gt $timeoutTime) {
             Write-AutomationLog "Execution timeout reached, stopping remaining jobs" -Level Warning
             $jobs.Values | ForEach-Object { Stop-Job -Job $_.Job -Force }
             break
         }
-        
+
         if ($jobs.Count -gt 0) {
             Start-Sleep -Milliseconds 500
         }
     }
-    
+
     return $results
 }
 
@@ -539,12 +539,12 @@ function Invoke-SequentialExecution {
     $results = @()
     $startTime = Get-Date
     $timeoutTime = $startTime.AddMinutes($Timeout)
-    
+
     Write-AutomationLog "Starting sequential execution" -Level Information
-    
+
     foreach ($script in $Plan) {
         Write-AutomationLog "Executing: $($script.Name)" -Level Information
-        
+
         $result = @{
             Name = $script.Name
             StartTime = Get-Date
@@ -552,16 +552,16 @@ function Invoke-SequentialExecution {
             Output = ""
             Error = ""
         }
-        
+
         try {
             $params = @{}
             if ($Configuration) { $params['Configuration'] = $Configuration }
-            if ($script.Parameters) { 
+            if ($script.Parameters) {
                 foreach ($key in $script.Parameters.Keys) {
                     $params[$key] = $script.Parameters[$key]
                 }
             }
-            
+
             $output = & $script.Path @params 2>&1
             $result.Success = $?
             $result.Output = $output -join "`n"
@@ -572,54 +572,54 @@ function Invoke-SequentialExecution {
             $result.EndTime = Get-Date
             $result.Duration = $result.EndTime - $result.StartTime
         }
-        
+
         $results += $result
-        
+
         Write-AutomationLog "Completed: $($script.Name) (Duration: $($result.Duration.TotalSeconds)s)" -Level Information
-        
+
         # Check timeout
         if ((Get-Date) -gt $timeoutTime) {
             Write-AutomationLog "Execution timeout reached" -Level Warning
             break
         }
     }
-    
+
     return $results
 }
 
 # Get execution summary
 function Get-ExecutionSummary {
     param([array]$Results)
-    
+
     $summary = @{
         Total = $Results.Count
         Succeeded = ($Results | Where-Object { $_.Success }).Count
         Failed = ($Results | Where-Object { -not $_.Success }).Count
         TotalDuration = [TimeSpan]::Zero
     }
-    
+
     foreach ($result in $Results) {
         if ($result.Duration) {
             $summary.TotalDuration += $result.Duration
         }
     }
-    
+
     return $summary
 }
 
 # Write deployment summary
 function Write-DeploymentSummary {
     param($Summary)
-    
+
     Write-Host "`n$('='*70)" -ForegroundColor Cyan
     Write-Host "DEPLOYMENT AUTOMATION SUMMARY" -ForegroundColor Cyan
     Write-Host "$('='*70)" -ForegroundColor Cyan
-    
+
     Write-Host "Total Scripts: $($Summary.Total)"
     Write-Host "Succeeded: $($Summary.Succeeded)" -ForegroundColor Green
     Write-Host "Failed: $($Summary.Failed)" -ForegroundColor $(if ($Summary.Failed -gt 0) { 'Red' } else { 'Green' })
     Write-Host "Total Duration: $([Math]::Round($Summary.TotalDuration.TotalMinutes, 2)) minutes"
-    
+
     Write-Host "$('='*70)`n" -ForegroundColor Cyan
 }
 

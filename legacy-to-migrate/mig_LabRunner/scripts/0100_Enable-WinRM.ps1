@@ -26,13 +26,13 @@ Invoke-LabStep -Config $Config -Body {
         # Enable WinRM
         Write-CustomLog "Enabling WinRM..."
         Enable-PSRemoting -Force -SkipNetworkProfileCheck
-        
+
         # Configure WinRM settings
         Set-WSManInstance -ResourceURI winrm/config/service -ValueSet @{AllowUnencrypted="true"}
         Set-WSManInstance -ResourceURI winrm/config/service/auth -ValueSet @{Basic="true"}
         Set-WSManInstance -ResourceURI winrm/config/client -ValueSet @{AllowUnencrypted="true"}
         Set-WSManInstance -ResourceURI winrm/config/client/auth -ValueSet @{Basic="true"}
-        
+
         Write-CustomLog "WinRM enabled successfully"
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to enable WinRM: $($_.Exception.Message)"

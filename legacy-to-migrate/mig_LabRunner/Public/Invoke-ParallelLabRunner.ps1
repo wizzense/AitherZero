@@ -5,50 +5,50 @@ function Invoke-ParallelLabRunner {
     <#
     .SYNOPSIS
     Execute LabRunner scripts in parallel with safety controls and enhanced progress tracking
-    
+
     .PARAMETER Scripts
     Array of script objects to run in parallel
-    
+
     .PARAMETER MaxConcurrency
     Maximum number of concurrent threads (default: number of CPU cores)
-    
+
     .PARAMETER TimeoutMinutes
     Timeout for each script execution (default: 30 minutes)
-    
+
     .PARAMETER SafeMode
     Enable safe mode with dependency checking and resource locking
-    
+
     .PARAMETER ShowProgress
     Enable enhanced progress tracking with visual indicators
-    
+
     .PARAMETER ProgressStyle
     Style of progress display: Bar, Spinner, Percentage, or Detailed
-    
+
     .PARAMETER Config
     Configuration object for lab deployment
     #>
-    
+
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$false)]
         [array]$Scripts,
-        
+
         [Parameter()]
         [int]$MaxConcurrency = [Environment]::ProcessorCount,
-        
+
         [Parameter()]
         [int]$TimeoutMinutes = 30,
-        
+
         [Parameter()]
         [switch]$SafeMode,
-        
+
         [Parameter()]
         [switch]$ShowProgress,
-        
+
         [Parameter()]
         [ValidateSet('Bar', 'Spinner', 'Percentage', 'Detailed')]
         [string]$ProgressStyle = 'Bar',
-        
+
         [Parameter()]
         [object]$Config
     )
@@ -94,7 +94,7 @@ function Invoke-ParallelLabRunner {
                     Steps = 5  # Estimate steps per script: init, validate, execute, verify, cleanup
                 }
             }
-            
+
             $multiProgressIds = Start-MultiProgress -Title "Lab Script Execution" -Operations $operations
             Write-ProgressLog -Message "Started parallel execution with $MaxConcurrency concurrent threads" -Level 'Info'
         } catch {
@@ -106,7 +106,7 @@ function Invoke-ParallelLabRunner {
     if (-not $useProgressTracking) {
         Write-Host "Starting parallel execution with $MaxConcurrency concurrent threads" -ForegroundColor Green
     }
-    
+
     $results = @()
     $activeJobs = @()
     $completed = 0
@@ -117,11 +117,11 @@ function Invoke-ParallelLabRunner {
     # Process scripts in batches
     for ($i = 0; $i -lt $total; $i++) {
         $script = $Scripts[$i]
-        
+
         # Wait for available slot if at max concurrency
         while ($activeJobs.Count -ge $MaxConcurrency) {
             $finishedJobs = $activeJobs | Where-Object{ $_.State -eq 'Completed' -or $_.State -eq 'Failed' }
-            
+
             foreach ($job in $finishedJobs) {
                 $result = Receive-Job $job -ErrorAction SilentlyContinue
                 $jobResult = @{
@@ -133,13 +133,13 @@ function Invoke-ParallelLabRunner {
                     EndTime = Get-Date
                 }
                 $results += $jobResult
-                
+
                 # Update progress tracking for completed job
                 if ($useProgressTracking -and $multiProgressIds) {
                     $scriptName = $script.Name
                     if ($multiProgressIds.ContainsKey($scriptName)) {
                         Complete-ProgressOperation -OperationId $multiProgressIds[$scriptName] -ShowSummary:$false
-                        
+
                         if ($job.State -eq 'Completed') {
                             Write-ProgressLog -Message "Completed: $scriptName ($([Math]::Round($jobResult.Duration.TotalSeconds, 1))s)" -Level 'Success'
                         } else {
@@ -147,11 +147,11 @@ function Invoke-ParallelLabRunner {
                         }
                     }
                 }
-                
+
                 Remove-Job $job
                 $activeJobs = $activeJobs | Where-Object{ $_.Id -ne $job.Id }
                 $completed++
-                
+
                 # Update overall progress
                 if ($useProgressTracking -and $overallProgressId) {
                     $percentComplete = [math]::Round(($completed / $total) * 100, 1)
@@ -166,11 +166,11 @@ function Invoke-ParallelLabRunner {
                 Start-Sleep -Milliseconds 500
             }
         }
-        
+
         # Start new job
         $scriptBlock = {
             param($ScriptPath, $Config, $SafeMode, $ScriptName, $UseProgressTracking, $ProgressId)
-            
+
             try {
                 # Progress tracking within the script block
                 if ($UseProgressTracking -and $ProgressId) {
@@ -181,11 +181,11 @@ function Invoke-ParallelLabRunner {
                         # Silently continue if progress tracking fails within runspace
                     }
                 }
-                
+
                 if ($SafeMode) {
                     # Implement resource locking and dependency checking
                     $lockFile = "$env:TEMP\labrunner-$($ScriptPath -replace '[\\/:*?"<>|]', '_').lock"
-                    
+
                     # Check for existing lock
                     if (Test-Path $lockFile) {
                         $lockContent = Get-Content $lockFile -ErrorAction SilentlyContinue
@@ -193,17 +193,17 @@ function Invoke-ParallelLabRunner {
                             throw "Script is locked by another process"
                         }
                     }
-                    
+
                     # Create lock
                     Set-Content $lockFile -Value @((Get-Date).ToString(), $PID)
-                    
+
                     try {
                         if ($UseProgressTracking -and $ProgressId) {
                             try {
                                 Update-ProgressOperation -OperationId $ProgressId -CurrentStep 2 -StepName "Executing $ScriptName (Safe Mode)"
                             } catch { }
                         }
-                        
+
                         # Execute script or simulate based on script type
                         if (Test-Path $ScriptPath -PathType Leaf) {
                             & $ScriptPath -Config $Config
@@ -222,7 +222,7 @@ function Invoke-ParallelLabRunner {
                             Update-ProgressOperation -OperationId $ProgressId -CurrentStep 2 -StepName "Executing $ScriptName"
                         } catch { }
                     }
-                    
+
                     # Execute script or simulate based on script type
                     if (Test-Path $ScriptPath -PathType Leaf) {
                         & $ScriptPath -Config $Config
@@ -231,13 +231,13 @@ function Invoke-ParallelLabRunner {
                         Invoke-PredefinedLabOperation -OperationName $ScriptPath -Config $Config -ProgressId $ProgressId -UseProgressTracking $UseProgressTracking
                     }
                 }
-                
+
                 if ($UseProgressTracking -and $ProgressId) {
                     try {
                         Update-ProgressOperation -OperationId $ProgressId -CurrentStep 5 -StepName "Completed $ScriptName"
                     } catch { }
                 }
-                
+
                 return @{
                     Success = $true
                     Message = "$ScriptName completed successfully"
@@ -252,23 +252,23 @@ function Invoke-ParallelLabRunner {
                 }
             }
         }
-        
+
         # Prepare progress tracking for this script
         $scriptProgressId = $null
         if ($useProgressTracking -and $multiProgressIds -and $script.Name) {
             $scriptProgressId = $multiProgressIds[$script.Name]
         }
-        
+
         # Start the job
         $jobName = "LabRunner-$($script.Name -replace '[^a-zA-Z0-9]', '')-$i"
         $scriptStartTimes[$jobName] = Get-Date
-        
+
         $job = Start-ThreadJob -ScriptBlock $scriptBlock -ArgumentList $script.Path, $script.Config, $SafeMode.IsPresent, $script.Name, $useProgressTracking, $scriptProgressId -Name $jobName
         $activeJobs += $job
-        
+
         # Track estimated durations for better progress estimation
         $estimatedDurations[$jobName] = [TimeSpan]::FromMinutes(5)  # Default 5-minute estimate
-        
+
         if ($useProgressTracking) {
             Write-ProgressLog -Message "Started: $($script.Name)" -Level 'Info'
         } else {
@@ -282,10 +282,10 @@ function Invoke-ParallelLabRunner {
     } else {
         Write-Host "Waiting for remaining jobs to complete..." -ForegroundColor Yellow
     }
-    
+
     while ($activeJobs.Count -gt 0) {
         $finishedJobs = $activeJobs | Where-Object{ $_.State -eq 'Completed' -or $_.State -eq 'Failed' }
-        
+
         foreach ($job in $finishedJobs) {
             $result = Receive-Job $job -ErrorAction SilentlyContinue
             $jobResult = @{
@@ -304,7 +304,7 @@ function Invoke-ParallelLabRunner {
                 $matchingScript = $Scripts | Where-Object { $job.Name -like "*$($_.Name -replace '[^a-zA-Z0-9]', '')*" } | Select-Object -First 1
                 if ($matchingScript -and $multiProgressIds.ContainsKey($matchingScript.Name)) {
                     Complete-ProgressOperation -OperationId $multiProgressIds[$matchingScript.Name] -ShowSummary:$false
-                    
+
                     if ($job.State -eq 'Completed') {
                         Write-ProgressLog -Message "Completed: $($matchingScript.Name) ($([Math]::Round($jobResult.Duration.TotalSeconds, 1))s)" -Level 'Success'
                     } else {
@@ -312,7 +312,7 @@ function Invoke-ParallelLabRunner {
                     }
                 }
             }
-            
+
             Remove-Job $job
             $activeJobs = $activeJobs | Where-Object{ $_.Id -ne $job.Id }
             $completed++
@@ -326,7 +326,7 @@ function Invoke-ParallelLabRunner {
                 Write-Progress -Activity "Parallel Script Execution" -Status "$completed of $total completed ($percentComplete%)" -PercentComplete $percentComplete
             }
         }
-        
+
         if ($activeJobs.Count -gt 0) {
             Start-Sleep -Milliseconds 500
         }
@@ -346,11 +346,11 @@ function Invoke-ParallelLabRunner {
         TotalScripts = $total
         CompletedSuccessfully = ($results | Where-Object { $_.State -eq 'Completed' }).Count
         Failed = ($results | Where-Object { $_.State -eq 'Failed' }).Count
-        TotalDuration = if ($results.Count -gt 0) { 
-            ($results | Measure-Object -Property { $_.Duration.TotalSeconds } -Maximum).Maximum 
+        TotalDuration = if ($results.Count -gt 0) {
+            ($results | Measure-Object -Property { $_.Duration.TotalSeconds } -Maximum).Maximum
         } else { 0 }
-        AverageDuration = if ($results.Count -gt 0) { 
-            ($results | Measure-Object -Property { $_.Duration.TotalSeconds } -Average).Average 
+        AverageDuration = if ($results.Count -gt 0) {
+            ($results | Measure-Object -Property { $_.Duration.TotalSeconds } -Average).Average
         } else { 0 }
         Results = $results
         ProgressTrackingEnabled = $useProgressTracking
@@ -370,7 +370,7 @@ function Get-DeploymentScriptsFromConfig {
         Generate deployment scripts based on configuration
     #>
     param([object]$Config)
-    
+
     $scripts = @()
 
     # Environment setup script
@@ -422,7 +422,7 @@ function Get-DeploymentScriptsFromConfig {
         Path = "Test-LabDeployment"
         Config = $Config
     }
-    
+
     return $scripts
 }
 
@@ -444,17 +444,17 @@ function Invoke-PredefinedLabOperation {
                 if ($UseProgressTracking -and $ProgressId) {
                     try { Update-ProgressOperation -OperationId $ProgressId -CurrentStep 3 -StepName "Setting up environment" } catch { }
                 }
-                
+
                 # Simulate environment setup
                 Start-Sleep -Seconds 2
                 Write-Host "Environment setup completed" -ForegroundColor Green
             }
-            
+
             "Deploy-LabInfrastructure" {
                 if ($UseProgressTracking -and $ProgressId) {
                     try { Update-ProgressOperation -OperationId $ProgressId -CurrentStep 3 -StepName "Deploying infrastructure" } catch { }
                 }
-                
+
                 # Try to call OpenTofu deployment if available
                 if (Get-Command "Start-InfrastructureDeployment" -ErrorAction SilentlyContinue) {
                     # Call actual infrastructure deployment
@@ -466,25 +466,25 @@ function Invoke-PredefinedLabOperation {
                     Write-Host "Infrastructure deployment completed" -ForegroundColor Green
                 }
             }
-            
+
             "Configure-LabNetwork" {
                 if ($UseProgressTracking -and $ProgressId) {
                     try { Update-ProgressOperation -OperationId $ProgressId -CurrentStep 3 -StepName "Configuring network" } catch { }
                 }
-                
+
                 # Simulate network configuration
                 Start-Sleep -Seconds 3
                 Write-Host "Network configuration completed" -ForegroundColor Green
             }
-            
+
             "Provision-LabVMs" {
                 if ($UseProgressTracking -and $ProgressId) {
                     try { Update-ProgressOperation -OperationId $ProgressId -CurrentStep 3 -StepName "Provisioning VMs" } catch { }
                 }
-                
+
                 # Simulate VM provisioning
                 $vmCount = if ($Config.vms) { $Config.vms.Count } elseif ($Config.virtual_machines) { $Config.virtual_machines.Count } else { 3 }
-                
+
                 for ($i = 1; $i -le $vmCount; $i++) {
                     if ($UseProgressTracking -and $ProgressId) {
                         try { Update-ProgressOperation -OperationId $ProgressId -CurrentStep 3 -StepName "Provisioning VM $i of $vmCount" } catch { }
@@ -493,25 +493,25 @@ function Invoke-PredefinedLabOperation {
                     Write-Host "VM $i provisioned" -ForegroundColor Green
                 }
             }
-            
+
             "Deploy-LabApplications" {
                 if ($UseProgressTracking -and $ProgressId) {
                     try { Update-ProgressOperation -OperationId $ProgressId -CurrentStep 3 -StepName "Deploying applications" } catch { }
                 }
-                
+
                 # Simulate application deployment
                 Start-Sleep -Seconds 4
                 Write-Host "Application deployment completed" -ForegroundColor Green
             }
-            
+
             "Test-LabDeployment" {
                 if ($UseProgressTracking -and $ProgressId) {
                     try { Update-ProgressOperation -OperationId $ProgressId -CurrentStep 4 -StepName "Validating deployment" } catch { }
                 }
-                
+
                 # Simulate deployment validation
                 Start-Sleep -Seconds 2
-                
+
                 # Simulate some validation checks
                 $checks = @("Network connectivity", "Service availability", "Resource health")
                 foreach ($check in $checks) {
@@ -522,18 +522,18 @@ function Invoke-PredefinedLabOperation {
                     Write-Host "${check}: OK" -ForegroundColor Green
                 }
             }
-            
+
             default {
                 Write-Warning "Unknown lab operation: $OperationName"
                 Start-Sleep -Seconds 1
             }
         }
-        
+
         return @{
             Success = $true
             Message = "$OperationName completed successfully"
         }
-        
+
     } catch {
         Write-Error "Failed to execute $OperationName : $($_.Exception.Message)"
         return @{

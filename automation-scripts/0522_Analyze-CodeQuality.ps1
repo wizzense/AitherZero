@@ -97,7 +97,7 @@ function Analyze-FileComplexity {
     # Analyze functions
     if ($AST) {
         $functions = $AST.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-        
+
         foreach ($function in $functions) {
             $funcComplexity = @{
                 Name = $function.Name
@@ -118,7 +118,7 @@ function Analyze-FileComplexity {
                 $arguments[0] -is [System.Management.Automation.Language.SwitchStatementAst] -or
                 $arguments[0] -is [System.Management.Automation.Language.TryStatementAst]
             }, $true)
-            
+
             $funcComplexity.CyclomaticComplexity += $controlFlow.Count
 
             # Calculate max nesting
@@ -139,7 +139,7 @@ function Analyze-FileComplexity {
                     $nestingLevel--
                 }
             })
-            
+
             $funcComplexity.MaxNesting = $maxNesting
 
             # Check for issues
@@ -154,11 +154,11 @@ function Analyze-FileComplexity {
             if ($funcComplexity.MaxNesting -gt 4) {
                 $funcComplexity.Issues += "Deep nesting (level $($funcComplexity.MaxNesting))"
             }
-            
+
             $complexity.Functions += $funcComplexity
         }
     }
-    
+
     return $complexity
 }
 
@@ -199,7 +199,7 @@ function Analyze-CodeQuality {
     # Process files in parallel
     $fileResults = Start-ParallelAnalysis -ScriptBlock {
         param($File)
-        
+
         $result = @{
             Path = $File.FullName
             Issues = @{
@@ -214,7 +214,7 @@ function Analyze-CodeQuality {
             Complexity = $null
             Errors = @()
         }
-        
+
         try {
             $content = Get-Content $File.FullName -Raw
 
@@ -227,14 +227,14 @@ function Analyze-CodeQuality {
                 Deprecated = @('DEPRECATED:', '@deprecated', '\[DEPRECATED\]', '#\s*DEPRECATED')
                 TechDebt = @('TECHDEBT:', 'TECH DEBT:', 'Technical Debt:', '\[TECHDEBT\]')
             }
-            
+
             foreach ($category in $todoPatterns.GetEnumerator()) {
                 foreach ($pattern in $category.Value) {
                     $matchResults = [regex]::Matches($content, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
                     foreach ($match in $matchResults) {
                         $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
                         $line = ($content -split "`n")[$lineNumber - 1].Trim()
-                        
+
                         $result.Issues[$category.Key] += @{
                             Line = $lineNumber
                             Content = $line
@@ -252,12 +252,12 @@ function Analyze-CodeQuality {
                 @{ Pattern = 'password\s*=\s*["\''`][^"\''`]+["\''`]'; Type = 'HardcodedCredential' }
                 @{ Pattern = 'apikey\s*=\s*["\''`][^"\''`]+["\''`]'; Type = 'HardcodedCredential' }
             )
-        
+
             foreach ($patternInfo in $hardcodedPatterns) {
                 $matchResults = [regex]::Matches($content, $patternInfo.Pattern)
                 foreach ($match in $matchResults) {
                     $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
-                    
+
                     $result.Issues.HardcodedValues += @{
                         Line = $lineNumber
                         Value = $match.Value
@@ -276,9 +276,9 @@ function Analyze-CodeQuality {
                     TotalLines = ($content -split "`n").Count
                     Functions = @()
                 }
-                
+
                 $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-                
+
                 foreach ($function in $functions) {
                     $funcInfo = @{
                         Name = $function.Name
@@ -286,7 +286,7 @@ function Analyze-CodeQuality {
                         StartLine = $function.Extent.StartLineNumber
                         Complexity = 1
                     }
-                    
+
                     # Count control flow
                     $controlFlow = $function.FindAll({
                         $arguments[0] -is [System.Management.Automation.Language.IfStatementAst] -or
@@ -295,17 +295,17 @@ function Analyze-CodeQuality {
                         $arguments[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
                         $arguments[0] -is [System.Management.Automation.Language.SwitchStatementAst]
                     }, $true)
-                    
+
                     $funcInfo.Complexity += $controlFlow.Count
                     $complexityInfo.Functions += $funcInfo
                 }
-                
+
                 $result.Complexity = $complexityInfo
             }
         } catch {
             $result.Errors += "Analysis error: $_"
         }
-        
+
         return $result
     } -InputObject $files -MaxConcurrency 8 -JobName "CodeQualityAnalysis"
 
@@ -313,7 +313,7 @@ function Analyze-CodeQuality {
     foreach ($fileResult in $fileResults) {
         $issues.Statistics.TotalFiles++
         $relativePath = $fileResult.Path.Replace($script:ProjectRoot, '.')
-        
+
         # Aggregate issues
         foreach ($category in @('TODOs', 'FIXMEs', 'HACKs', 'XXXs', 'Deprecated', 'TechDebt')) {
             foreach ($issue in $fileResult.Issues[$category]) {
@@ -324,7 +324,7 @@ function Analyze-CodeQuality {
                 }
             }
         }
-        
+
         # Aggregate hardcoded values
         foreach ($hardcoded in $fileResult.Issues.HardcodedValues) {
             $issues.HardcodedValues += @{
@@ -334,11 +334,11 @@ function Analyze-CodeQuality {
                 Type = $hardcoded.Type
             }
         }
-        
+
         # Process complexity
         if ($fileResult.Complexity) {
             $issues.Statistics.TotalLines += $fileResult.Complexity.TotalLines
-            
+
             foreach ($func in $fileResult.Complexity.Functions) {
                 if ($func.Lines -gt $MaxFunctionLength) {
                     $issues.LongFunctions += @{
@@ -348,7 +348,7 @@ function Analyze-CodeQuality {
                         StartLine = $func.StartLine
                     }
                 }
-                
+
                 if ($func.Complexity -gt $MaxComplexity) {
                     $issues.ComplexFunctions += @{
                         Function = $func.Name
@@ -359,7 +359,7 @@ function Analyze-CodeQuality {
                 }
             }
         }
-        
+
         if ($fileResult.Errors.Count -gt 0 -and $Detailed) {
             Write-AnalysisLog "Errors in $relativePath`: $($fileResult.Errors -join '; ')" -Component "CodeQuality" -Level Warning
         }
@@ -367,7 +367,7 @@ function Analyze-CodeQuality {
 
     # Calculate summary statistics
     $issues.Summary = @{
-        TotalIssues = $issues.TODOs.Count + $issues.FIXMEs.Count + $issues.HACKs.Count + 
+        TotalIssues = $issues.TODOs.Count + $issues.FIXMEs.Count + $issues.HACKs.Count +
                       $issues.XXXs.Count + $issues.Deprecated.Count + $issues.TechDebt.Count
         CriticalIssues = $issues.FIXMEs.Count + $issues.HACKs.Count + $issues.Deprecated.Count
         HardcodedValues = $issues.HardcodedValues.Count
@@ -383,19 +383,19 @@ function Analyze-CodeQuality {
     $deductions += $issues.HardcodedValues.Count * 1
     $deductions += $issues.LongFunctions.Count * 2
     $deductions += $issues.ComplexFunctions.Count * 3
-    
+
     $issues.Summary.QualityScore = [Math]::Max(0, 100 - $deductions)
-    
+
     $issues.ScanEndTime = Get-Date
     $issues.Duration = $issues.ScanEndTime - $issues.ScanStartTime
-    
+
     return $issues
 }
 
 # Main execution
 try {
     Write-AnalysisLog "=== Code Quality Analysis ===" -Component "CodeQuality"
-    
+
     $results = Analyze-CodeQuality
 
     # Save results
@@ -413,12 +413,12 @@ try {
     Write-Host "    HACKs: $($results.HACKs.Count)" -ForegroundColor $(if ($results.HACKs.Count -eq 0) { 'Green' } else { 'Red' })
     Write-Host "    Deprecated: $($results.Deprecated.Count)" -ForegroundColor $(if ($results.Deprecated.Count -eq 0) { 'Green' } else { 'Red' })
     Write-Host "    Tech Debt: $($results.TechDebt.Count)" -ForegroundColor $(if ($results.TechDebt.Count -eq 0) { 'Green' } else { 'Yellow' })
-    
+
     Write-Host "`n  Code Complexity:" -ForegroundColor Yellow
     Write-Host "    Long Functions: $($results.LongFunctions.Count)" -ForegroundColor $(if ($results.LongFunctions.Count -eq 0) { 'Green' } else { 'Yellow' })
     Write-Host "    Complex Functions: $($results.ComplexFunctions.Count)" -ForegroundColor $(if ($results.ComplexFunctions.Count -eq 0) { 'Green' } else { 'Yellow' })
     Write-Host "    Hardcoded Values: $($results.HardcodedValues.Count)" -ForegroundColor $(if ($results.HardcodedValues.Count -eq 0) { 'Green' } else { 'Yellow' })
-    
+
     Write-Host "`n  Quality Score: $($results.Summary.QualityScore)/100" -ForegroundColor $(
         if ($results.Summary.QualityScore -ge 80) { 'Green' }
         elseif ($results.Summary.QualityScore -ge 60) { 'Yellow' }
@@ -434,9 +434,9 @@ try {
         $criticalIssues += $results.HACKs | ForEach-Object { "HACK: $($_.File):$($_.Line) - $($_.Content)" }
         $criticalIssues | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" }
     }
-    
+
     Write-Host "`nDetailed results saved to: $outputFile" -ForegroundColor Green
-    
+
     exit 0
 } catch {
     Write-AnalysisLog "Code quality analysis failed: $_" -Component "CodeQuality" -Level Error

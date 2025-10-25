@@ -23,7 +23,7 @@
 
 .EXAMPLE
     ./0731_Invoke-AICodeReview.ps1 -Path ./src -Profile Standard
-    
+
 .EXAMPLE
     ./0731_Invoke-AICodeReview.ps1 -Path ./module.psm1 -PRNumber 123 -OutputFormat Markdown
 #>
@@ -32,15 +32,15 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
-    
+
     [ValidateSet('Quick', 'Standard', 'Comprehensive')]
     [string]$ProfileName = 'Standard',
-    
+
     [ValidateSet('Console', 'HTML', 'Markdown', 'JSON')]
     [string[]]$OutputFormat = @('Console'),
-    
+
     [int]$PRNumber = 0,
-    
+
     [switch]$SkipSecurity,
     [switch]$SkipPerformance,
     [switch]$SkipQuality
@@ -73,7 +73,7 @@ foreach ($modulePath in $modulePaths) {
 #region Helper Functions
 function Get-AIConfig {
     param([string]$ConfigPath)
-    
+
     try {
         if (Test-Path $ConfigPath) {
             $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -94,7 +94,7 @@ function Write-ReviewLog {
         [ValidateSet('Information', 'Warning', 'Error', 'Debug')]
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $Level -Message $Message -Source "AI-CodeReview"
     } else {
@@ -111,10 +111,10 @@ function Write-ReviewLog {
 
 function Get-CodeFiles {
     param([string]$Path)
-    
+
     $extensions = @('*.ps1', '*.psm1', '*.psd1', '*.cs', '*.js', '*.ts', '*.py', '*.go', '*.java')
     $files = @()
-    
+
     if (Test-Path $Path -PathType Leaf) {
         $files = @(Get-Item $Path)
     } else {
@@ -122,7 +122,7 @@ function Get-CodeFiles {
             $files += Get-ChildItem -Path $Path -Filter $ext -Recurse -File -ErrorAction SilentlyContinue
         }
     }
-    
+
     return $files
 }
 
@@ -132,21 +132,21 @@ function Invoke-SecurityAnalysis {
         [string]$Provider,
         [hashtable]$SecurityConfig
     )
-    
+
     Write-ReviewLog "Starting security analysis with $Provider" -Level Information
-    
+
     $results = @()
     $totalIssues = 0
-    
+
     foreach ($file in $Files) {
         $content = Get-Content $file.FullName -Raw
-        
+
         $analysis = @{
             File = $file.Name
             Path = $file.FullName
             SecurityIssues = @()
         }
-        
+
         # Check each enabled security check from config
         if ($SecurityConfig.CredentialExposure) {
             if ($content -match 'password\s*=\s*[''"]|apikey\s*=\s*[''"]|secret\s*=\s*[''"') {
@@ -160,7 +160,7 @@ function Invoke-SecurityAnalysis {
                 $totalIssues++
             }
         }
-        
+
         if ($SecurityConfig.InjectionVulnerabilities) {
             if ($content -match 'Invoke-Expression|iex') {
                 $analysis.SecurityIssues += @{
@@ -173,7 +173,7 @@ function Invoke-SecurityAnalysis {
                 $totalIssues++
             }
         }
-        
+
         if ($SecurityConfig.InputValidation) {
             if ($content -match '\$_\.' -and $content -notmatch 'ValidateScript|ValidateSet|ValidatePattern') {
                 $analysis.SecurityIssues += @{
@@ -185,12 +185,12 @@ function Invoke-SecurityAnalysis {
                 $totalIssues++
             }
         }
-        
+
         $results += $analysis
     }
-    
+
     Write-ReviewLog "Security analysis complete: $totalIssues issue(s) found" -Level $(if ($totalIssues -gt 0) { 'Warning' } else { 'Information' })
-    
+
     return @{
         Provider = $Provider
         Type = 'Security'
@@ -205,21 +205,21 @@ function Invoke-PerformanceAnalysis {
         [System.IO.FileInfo[]]$Files,
         [string]$Provider = 'Gemini'
     )
-    
+
     Write-ReviewLog "Starting performance analysis with $Provider" -Level Information
-    
+
     $results = @()
     $totalOptimizations = 0
-    
+
     foreach ($file in $Files) {
         $content = Get-Content $file.FullName -Raw
-        
+
         $analysis = @{
             File = $file.Name
             Path = $file.FullName
             PerformanceIssues = @()
         }
-        
+
         # Check for common performance issues
         if ($content -match 'Get-ChildItem.*-Recurse.*\|.*Where-Object') {
             $analysis.PerformanceIssues += @{
@@ -231,7 +231,7 @@ function Invoke-PerformanceAnalysis {
             }
             $totalOptimizations++
         }
-        
+
         if ($content -match '\+=') {
             $analysis.PerformanceIssues += @{
                 Type = 'Array Concatenation'
@@ -242,7 +242,7 @@ function Invoke-PerformanceAnalysis {
             }
             $totalOptimizations++
         }
-        
+
         if ($content -match 'Import-Module.*-Force' -and $content -notmatch 'if.*Get-Module') {
             $analysis.PerformanceIssues += @{
                 Type = 'Redundant Module Loading'
@@ -253,12 +253,12 @@ function Invoke-PerformanceAnalysis {
             }
             $totalOptimizations++
         }
-        
+
         $results += $analysis
     }
-    
+
     Write-ReviewLog "Performance analysis complete: $totalOptimizations optimization(s) found" -Level Information
-    
+
     return @{
         Provider = $Provider
         Type = 'Performance'
@@ -273,22 +273,22 @@ function Invoke-QualityAnalysis {
         [System.IO.FileInfo[]]$Files,
         [string]$Provider = 'Codex'
     )
-    
+
     Write-ReviewLog "Starting code quality analysis with $Provider" -Level Information
-    
+
     $results = @()
     $totalIssues = 0
-    
+
     foreach ($file in $Files) {
         $content = Get-Content $file.FullName -Raw
-        
+
         $analysis = @{
             File = $file.Name
             Path = $file.FullName
             QualityIssues = @()
             Metrics = @{}
         }
-        
+
         # Calculate complexity metrics
         $lines = ($content -split "`n").Count
         $functions = ([regex]::Matches($content, 'function\s+\w+')).Count
@@ -297,7 +297,7 @@ function Invoke-QualityAnalysis {
             Functions = $functions
             AverageComplexity = if ($functions -gt 0) { [math]::Round($lines / $functions, 2) } else { 0 }
         }
-        
+
         # Check for quality issues
         if ($content -match 'TODO|FIXME|HACK') {
             $matchResults = [regex]::Matches($content, 'TODO|FIXME|HACK')
@@ -310,7 +310,7 @@ function Invoke-QualityAnalysis {
             }
             $totalIssues += $matchResults.Count
         }
-        
+
         if (-not ($content -match '\.SYNOPSIS')) {
             $analysis.QualityIssues += @{
                 Type = 'Missing Documentation'
@@ -320,7 +320,7 @@ function Invoke-QualityAnalysis {
             }
             $totalIssues++
         }
-        
+
         if ($content -match 'catch\s*{\s*}') {
             $analysis.QualityIssues += @{
                 Type = 'Empty Catch Block'
@@ -330,12 +330,12 @@ function Invoke-QualityAnalysis {
             }
             $totalIssues++
         }
-        
+
         $results += $analysis
     }
-    
+
     Write-ReviewLog "Quality analysis complete: $totalIssues issue(s) found" -Level Information
-    
+
     return @{
         Provider = $Provider
         Type = 'Quality'
@@ -350,17 +350,17 @@ function Format-ReviewReport {
         [hashtable[]]$Analyses,
         [string]$Format
     )
-    
+
     switch ($Format) {
         'Console' {
             Write-Host "`n═══════════════════════════════════════════════" -ForegroundColor Cyan
             Write-Host "           AI Code Review Report" -ForegroundColor Cyan
             Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan
-            
+
             foreach ($analysis in $Analyses) {
                 Write-Host "`n$($analysis.Type) Analysis ($($analysis.Provider)):" -ForegroundColor Yellow
                 Write-Host "Files analyzed: $($analysis.TotalFiles)"
-                
+
                 if ($analysis.Type -eq 'Security') {
                     Write-Host "Security issues: $($analysis.TotalIssues)" -ForegroundColor $(if ($analysis.TotalIssues -gt 0) { 'Red' } else { 'Green' })
                 } elseif ($analysis.Type -eq 'Performance') {
@@ -368,7 +368,7 @@ function Format-ReviewReport {
                 } elseif ($analysis.Type -eq 'Quality') {
                     Write-Host "Quality issues: $($analysis.TotalIssues)" -ForegroundColor $(if ($analysis.TotalIssues -gt 0) { 'Yellow' } else { 'Green' })
                 }
-                
+
                 foreach ($result in $analysis.Results) {
                     if ($result.SecurityIssues -and $result.SecurityIssues.Count -gt 0) {
                         Write-Host "`n  File: $($result.File)" -ForegroundColor White
@@ -376,14 +376,14 @@ function Format-ReviewReport {
                             Write-Host "    [$($issue.Severity)] $($issue.Type): $($issue.Description)" -ForegroundColor Red
                         }
                     }
-                    
+
                     if ($result.PerformanceIssues -and $result.PerformanceIssues.Count -gt 0) {
                         Write-Host "`n  File: $($result.File)" -ForegroundColor White
                         foreach ($issue in $result.PerformanceIssues) {
                             Write-Host "    [$($issue.Severity)] $($issue.Type): $($issue.Description)" -ForegroundColor Yellow
                         }
                     }
-                    
+
                     if ($result.QualityIssues -and $result.QualityIssues.Count -gt 0) {
                         Write-Host "`n  File: $($result.File)" -ForegroundColor White
                         foreach ($issue in $result.QualityIssues) {
@@ -393,7 +393,7 @@ function Format-ReviewReport {
                 }
             }
         }
-        
+
         'Markdown' {
             $report = @'
 # AI Code Review Report
@@ -418,7 +418,7 @@ Generated: {0}
                 } elseif ($analysis.Type -eq 'Quality') {
                     $report += "- **Quality Issues**: $($analysis.TotalIssues)`n"
                 }
-                
+
                 if ($analysis.Results) {
                     $report += "`n#### Detailed Findings`n"
                     foreach ($result in $analysis.Results) {
@@ -426,7 +426,7 @@ Generated: {0}
                         $allIssues += $result.SecurityIssues
                         $allIssues += $result.PerformanceIssues
                         $allIssues += $result.QualityIssues
-                        
+
                         if ($allIssues.Count -gt 0) {
                             $report += "`n**$($result.File)**`n"
                             foreach ($issue in $allIssues) {
@@ -441,14 +441,14 @@ Generated: {0}
                     }
                 }
             }
-            
+
             return $report
         }
-        
+
         'JSON' {
             return $Analyses | ConvertTo-Json -Depth 10
         }
-        
+
         'HTML' {
             # Generate HTML report (simplified)
             $dateStr = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -492,7 +492,7 @@ function Post-PRComment {
         [int]$PRNumber,
         [string]$Comment
     )
-    
+
     if (Get-Command gh -ErrorAction SilentlyContinue) {
         try {
             gh pr comment $PRNumber --body $Comment
@@ -509,66 +509,66 @@ function Post-PRComment {
 #region Main Execution
 function Main {
     Write-ReviewLog "Starting AI Code Review (Profile: $ProfileName)" -Level Information
-    
+
     # Load configuration
-    $configPath = if ($PSScriptRoot) { 
+    $configPath = if ($PSScriptRoot) {
         Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
     } else {
         "./config.psd1"
     }
-    
+
     $aiConfig = Get-AIConfig -ConfigPath $configPath
     if (-not $aiConfig -or -not $aiConfig.Enabled -or -not $aiConfig.CodeReview.Enabled) {
         Write-ReviewLog "AI Code Review is not enabled in configuration" -Level Warning
         exit 1
     }
-    
+
     # Get profile configuration
     $ProfileNameConfig = $aiConfig.CodeReview.Profiles.$ProfileName
     if (-not $ProfileNameConfig) {
         Write-ReviewLog "Profile '$ProfileName' not found in configuration" -Level Error
         exit 1
     }
-    
+
     # Get files to review
     $files = Get-CodeFiles -Path $Path
-    
+
     if ($files.Count -eq 0) {
         Write-ReviewLog "No code files found to review" -Level Warning
         exit 1
     }
-    
+
     Write-ReviewLog "Found $($files.Count) file(s) to review" -Level Information
     Write-ReviewLog "Using profile: $($ProfileNameConfig.Description)" -Level Information
     Write-ReviewLog "Providers: $($ProfileNameConfig.Providers -join ', ')" -Level Information
-    
+
     $analyses = @()
-    
+
     # Run security analysis if configured
     if (-not $SkipSecurity -and 'security' -in $ProfileNameConfig.Checks) {
         $securityProvider = $aiConfig.SecurityAnalysis.Provider ?? $ProfileNameConfig.Providers[0]
         $securityAnalysis = Invoke-SecurityAnalysis -Files $files -Provider $securityProvider -SecurityConfig $aiConfig.CodeReview.SecurityChecks
         $analyses += $securityAnalysis
     }
-    
+
     # Run performance analysis if configured
     if (-not $SkipPerformance -and 'performance' -in $ProfileNameConfig.Checks) {
         $perfProvider = $aiConfig.PerformanceOptimization.Provider ?? $ProfileNameConfig.Providers[1]
         $performanceAnalysis = Invoke-PerformanceAnalysis -Files $files -Provider $perfProvider
         $analyses += $performanceAnalysis
     }
-    
+
     # Run quality analysis if configured
     if (-not $SkipQuality -and 'quality' -in $ProfileNameConfig.Checks) {
         $qualityProvider = $ProfileNameConfig.Providers | Select-Object -Last 1
         $qualityAnalysis = Invoke-QualityAnalysis -Files $files -Provider $qualityProvider
         $analyses += $qualityAnalysis
     }
-    
+
     # Generate reports
     foreach ($format in $OutputFormat) {
         $report = Format-ReviewReport -Analyses $analyses -Format $format
-        
+
         if ($format -eq 'Console') {
             # Already displayed
         } elseif ($format -eq 'Markdown') {
@@ -606,17 +606,17 @@ function Main {
             }
         }
     }
-    
+
     # Post to PR if specified
     if ($PRNumber -gt 0) {
         $markdownReport = Format-ReviewReport -Analyses $analyses -Format 'Markdown'
         Post-PRComment -PRNumber $PRNumber -Comment $markdownReport
     }
-    
+
     # Calculate exit code based on severity and configuration
     $criticalCount = ($analyses.Results.SecurityIssues | Where-Object { $_.Severity -eq 'Critical' }).Count
     $highCount = ($analyses.Results.SecurityIssues | Where-Object { $_.Severity -eq 'High' }).Count
-    
+
     if ($criticalCount -gt 0) {
         Write-ReviewLog "Review failed: $criticalCount critical issue(s) found" -Level Error
         exit 2

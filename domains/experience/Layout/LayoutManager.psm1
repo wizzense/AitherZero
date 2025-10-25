@@ -38,21 +38,21 @@ function New-UILayout {
     param(
         [ValidateSet("Flow", "Grid", "Stack", "Absolute", "Flex")]
         [string]$Type = "Flow",
-        
+
         [ValidateSet("Horizontal", "Vertical")]
         [string]$Direction = "Horizontal",
-        
+
         [int]$Columns = 1,
         [int]$Rows = 0,  # 0 = auto
-        
+
         [int]$Gap = 1,
-        
+
         [hashtable]$Padding = @{ Top = 0; Right = 0; Bottom = 0; Left = 0 },
-        
+
         [ValidateSet("TopLeft", "TopCenter", "TopRight", "MiddleLeft", "Center", "MiddleRight", "BottomLeft", "BottomCenter", "BottomRight")]
         [string]$Alignment = "TopLeft"
     )
-    
+
     return [PSCustomObject]@{
         Type = $Type
         Direction = $Direction
@@ -80,14 +80,14 @@ function Calculate-UILayout {
     param(
         [Parameter(Mandatory)]
         $Layout,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Container,  # @{ X, Y, Width, Height }
-        
+
         [Parameter(Mandatory)]
         [array]$Components
     )
-    
+
     # Calculate content area (container minus padding)
     $contentArea = @{
         X = $Container.X + $Layout.Padding.Left
@@ -95,7 +95,7 @@ function Calculate-UILayout {
         Width = $Container.Width - $Layout.Padding.Left - $Layout.Padding.Right
         Height = $Container.Height - $Layout.Padding.Top - $Layout.Padding.Bottom
     }
-    
+
     # Apply layout algorithm
     switch ($Layout.Type) {
         "Flow" {
@@ -118,16 +118,16 @@ function Calculate-UILayout {
 
 function Calculate-FlowLayout {
     param($Layout, $ContentArea, $Components)
-    
+
     $positions = @()
     $x = $ContentArea.X
     $y = $ContentArea.Y
     $rowHeight = 0
-    
+
     foreach ($component in $Components) {
         $width = if ($component.Width) { $component.Width } else { 10 }
         $height = if ($component.Height) { $component.Height } else { 1 }
-        
+
         # Check if component fits in current row
         if (($x + $width) -gt ($ContentArea.X + $ContentArea.Width)) {
             # Move to next row
@@ -135,7 +135,7 @@ function Calculate-FlowLayout {
             $y += $rowHeight + $Layout.Gap
             $rowHeight = 0
         }
-        
+
         # Position component
         $positions += @{
             Component = $component
@@ -144,20 +144,20 @@ function Calculate-FlowLayout {
             Width = $width
             Height = $height
         }
-        
+
         # Update position
         $x += $width + $Layout.Gap
         $rowHeight = [Math]::Max($rowHeight, $height)
     }
-    
+
     return $positions
 }
 
 function Calculate-GridLayout {
     param($Layout, $ContentArea, $Components)
-    
+
     $positions = @()
-    
+
     # Calculate cell dimensions
     $cellWidth = [Math]::Floor(($ContentArea.Width - ($Layout.Columns - 1) * $Layout.Gap) / $Layout.Columns)
     $cellHeight = if ($Layout.Rows -gt 0) {
@@ -166,18 +166,18 @@ function Calculate-GridLayout {
         # Auto-calculate row height based on components
         10  # Default height
     }
-    
+
     for ($i = 0; $i -lt $Components.Count; $i++) {
         $component = $Components[$i]
-        
+
         # Calculate grid position
         $col = $i % $Layout.Columns
         $row = [Math]::Floor($i / $Layout.Columns)
-        
+
         # Calculate pixel position
         $x = $ContentArea.X + ($col * ($cellWidth + $Layout.Gap))
         $y = $ContentArea.Y + ($row * ($cellHeight + $Layout.Gap))
-        
+
         $positions += @{
             Component = $component
             X = $x
@@ -186,16 +186,16 @@ function Calculate-GridLayout {
             Height = [Math]::Min($component.Height, $cellHeight)
         }
     }
-    
+
     return $positions
 }
 
 function Calculate-StackLayout {
     param($Layout, $ContentArea, $Components)
-    
+
     $positions = @()
     $offset = 0
-    
+
     foreach ($component in $Components) {
         if ($Layout.Direction -eq "Vertical") {
             $positions += @{
@@ -218,15 +218,15 @@ function Calculate-StackLayout {
             $offset += $component.Width + $Layout.Gap
         }
     }
-    
+
     return $positions
 }
 
 function Calculate-AbsoluteLayout {
     param($Layout, $ContentArea, $Components)
-    
+
     $positions = @()
-    
+
     foreach ($component in $Components) {
         # Use component's absolute position
         $positions += @{
@@ -237,19 +237,19 @@ function Calculate-AbsoluteLayout {
             Height = $component.Height
         }
     }
-    
+
     return $positions
 }
 
 function Calculate-FlexLayout {
     param($Layout, $ContentArea, $Components)
-    
+
     $positions = @()
-    
+
     # Calculate flex weights
     $totalFlex = 0
     $fixedSize = 0
-    
+
     foreach ($component in $Components) {
         if ($component.Flex) {
             $totalFlex += $component.Flex
@@ -257,27 +257,27 @@ function Calculate-FlexLayout {
             $fixedSize += if ($Layout.Direction -eq "Horizontal") { $component.Width } else { $component.Height }
         }
     }
-    
+
     # Calculate available space for flex items
-    $availableSpace = if ($Layout.Direction -eq "Horizontal") { 
+    $availableSpace = if ($Layout.Direction -eq "Horizontal") {
         $ContentArea.Width - $fixedSize - (($Components.Count - 1) * $Layout.Gap)
-    } else { 
+    } else {
         $ContentArea.Height - $fixedSize - (($Components.Count - 1) * $Layout.Gap)
     }
-    
+
     $flexUnit = if ($totalFlex -gt 0) { $availableSpace / $totalFlex } else { 0 }
-    
+
     # Position components
     $offset = 0
-    
+
     foreach ($component in $Components) {
         if ($Layout.Direction -eq "Horizontal") {
-            $width = if ($component.Flex) { 
-                [Math]::Floor($flexUnit * $component.Flex) 
-            } else { 
-                $component.Width 
+            $width = if ($component.Flex) {
+                [Math]::Floor($flexUnit * $component.Flex)
+            } else {
+                $component.Width
             }
-            
+
             $positions += @{
                 Component = $component
                 X = $ContentArea.X + $offset
@@ -285,16 +285,16 @@ function Calculate-FlexLayout {
                 Width = $width
                 Height = [Math]::Min($component.Height, $ContentArea.Height)
             }
-            
+
             $offset += $width + $Layout.Gap
         }
         else {
-            $height = if ($component.Flex) { 
-                [Math]::Floor($flexUnit * $component.Flex) 
-            } else { 
-                $component.Height 
+            $height = if ($component.Flex) {
+                [Math]::Floor($flexUnit * $component.Flex)
+            } else {
+                $component.Height
             }
-            
+
             $positions += @{
                 Component = $component
                 X = $ContentArea.X
@@ -302,11 +302,11 @@ function Calculate-FlexLayout {
                 Width = [Math]::Min($component.Width, $ContentArea.Width)
                 Height = $height
             }
-            
+
             $offset += $height + $Layout.Gap
         }
     }
-    
+
     return $positions
 }
 
@@ -323,10 +323,10 @@ function Apply-UILayout {
     param(
         [Parameter(Mandatory)]
         [array]$Positions,
-        
+
         [switch]$UpdateComponents
     )
-    
+
     foreach ($pos in $Positions) {
         if ($UpdateComponents -and $pos.Component) {
             $pos.Component.X = $pos.X
@@ -335,7 +335,7 @@ function Apply-UILayout {
             $pos.Component.Height = $pos.Height
         }
     }
-    
+
     return $Positions
 }
 
@@ -351,23 +351,23 @@ function Get-UILayoutBounds {
         [Parameter(Mandatory)]
         [array]$Positions
     )
-    
+
     if ($Positions.Count -eq 0) {
         return @{ X = 0; Y = 0; Width = 0; Height = 0 }
     }
-    
+
     $minX = $Positions[0].X
     $minY = $Positions[0].Y
     $maxX = $Positions[0].X + $Positions[0].Width
     $maxY = $Positions[0].Y + $Positions[0].Height
-    
+
     foreach ($pos in $Positions[1..($Positions.Count - 1)]) {
         $minX = [Math]::Min($minX, $pos.X)
         $minY = [Math]::Min($minY, $pos.Y)
         $maxX = [Math]::Max($maxX, $pos.X + $pos.Width)
         $maxY = [Math]::Max($maxY, $pos.Y + $pos.Height)
     }
-    
+
     return @{
         X = $minX
         Y = $minY
@@ -391,19 +391,19 @@ function Test-UILayoutFit {
     param(
         [Parameter(Mandatory)]
         $Layout,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Container,
-        
+
         [Parameter(Mandatory)]
         [array]$Components
     )
-    
+
     $positions = Calculate-UILayout -Layout $Layout -Container $Container -Components $Components
     $bounds = Get-UILayoutBounds -Positions $positions
-    
+
     $fits = ($bounds.Width -le $Container.Width) -and ($bounds.Height -le $Container.Height)
-    
+
     return @{
         Fits = $fits
         Bounds = $bounds

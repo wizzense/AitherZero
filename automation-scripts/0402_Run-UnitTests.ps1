@@ -5,12 +5,12 @@
     Execute unit tests for AitherZero
 .DESCRIPTION
     Runs all unit tests using Pester framework with code coverage
-    
+
     Exit Codes:
     0   - All tests passed
     1   - One or more tests failed
     2   - Test execution error
-    
+
 .NOTES
     Stage: Testing
     Order: 0402
@@ -126,17 +126,17 @@ try {
     # Check cache if enabled and not forced
     if ($UseCache -and -not $ForceRun -and $script:CacheAvailable) {
         Write-ScriptLog -Message "Checking test cache..."
-        
+
         # Generate cache key
         $cacheKey = Get-TestCacheKey -TestPath $Path -TestType 'Unit'
         $sourcePath = Join-Path $projectRoot "domains"
-        
+
         # Check if tests should run
         $testDecision = Test-ShouldRunTests -TestPath $Path -SourcePath $sourcePath -MinutesSinceLastRun $CacheMinutes
-        
+
         if (-not $testDecision.ShouldRun) {
             Write-ScriptLog -Message "Tests skipped: $($testDecision.Reason)"
-            
+
             if ($testDecision.LastRun) {
                 Write-Host "`n📊 Cached Test Results:" -ForegroundColor Cyan
                 Write-Host "  Total: $($testDecision.LastRun.Summary.TotalTests)"
@@ -144,7 +144,7 @@ try {
                 Write-Host "  ❌ Failed: $($testDecision.LastRun.Summary.Failed)" -ForegroundColor $(if ($testDecision.LastRun.Summary.Failed -gt 0) { 'Red' } else { 'Green' })
                 Write-Host "  ⏱️ Duration: $($testDecision.LastRun.Summary.Duration)s"
                 Write-Host "  💾 From cache ($(([DateTime]::Now - [DateTime]::Parse($testDecision.LastRun.Timestamp)).TotalMinutes) min ago)" -ForegroundColor Cyan
-                
+
                 if ($PassThru) {
                     return [PSCustomObject]@{
                         TotalCount = $testDecision.LastRun.Summary.TotalTests
@@ -154,14 +154,14 @@ try {
                         FromCache = $true
                     }
                 }
-                
+
                 exit $(if ($testDecision.LastRun.Summary.Failed -eq 0) { 0 } else { 1 })
             }
         }
-        
+
         # Try to get cached result
         $cachedResult = Get-CachedTestResult -CacheKey $cacheKey -SourcePath $sourcePath
-        
+
         if ($cachedResult) {
             Write-ScriptLog -Message "Using cached test results"
             Write-Host "`n📊 Cached Test Results:" -ForegroundColor Cyan
@@ -170,7 +170,7 @@ try {
             Write-Host "  ❌ Failed: $($cachedResult.Failed)" -ForegroundColor $(if ($cachedResult.Failed -gt 0) { 'Red' } else { 'Green' })
             Write-Host "  ⏱️ Duration: $($cachedResult.Duration)s"
             Write-Host "  💾 From cache" -ForegroundColor Cyan
-            
+
             if ($PassThru) {
                 return [PSCustomObject]@{
                     TotalCount = $cachedResult.TotalTests
@@ -180,7 +180,7 @@ try {
                     FromCache = $true
                 }
             }
-            
+
             exit $(if ($cachedResult.Failed -eq 0) { 0 } else { 1 })
         }
     }
@@ -191,7 +191,7 @@ try {
         Write-ScriptLog -Message "Test path: $Path"
         Write-ScriptLog -Message "Coverage enabled: $(-not $NoCoverage)"
         Write-ScriptLog -Message "Cache enabled: $UseCache"
-        
+
         # List test files that would be run
         if (Test-Path $Path) {
             $testFiles = @(Get-ChildItem -Path $Path -Filter "*.Tests.ps1" -Recurse)
@@ -219,7 +219,7 @@ try {
         Write-ScriptLog -Level Warning -Message "No test files found in: $Path"
         exit 0
     }
-    
+
     Write-ScriptLog -Message "Found $($testFiles.Count) test files"
 
     # Load configuration
@@ -240,12 +240,12 @@ try {
 
     # Ensure Pester is available
     $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]$testingConfig.MinVersion } | Sort-Object Version -Descending | Select-Object -First 1
-    
+
     if (-not $pesterModule) {
         Write-ScriptLog -Level Error -Message "Pester $($testingConfig.MinVersion) or higher is required. Run 0400_Install-TestingTools.ps1 first."
         exit 2
     }
-    
+
     Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
     Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
 
@@ -260,13 +260,13 @@ try {
     } else {
         @{}
     }
-    
+
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
     $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
     $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
-    
+
 
     # Apply output settings from config
     if ($pesterSettings.Output) {
@@ -277,12 +277,12 @@ try {
             $pesterConfig.Output.StackTraceVerbosity = $pesterSettings.Output.StackTraceVerbosity
         }
     }
-    
+
     # Apply Should settings from config
     if ($pesterSettings.Should -and $pesterSettings.Should.ErrorAction) {
         $pesterConfig.Should.ErrorAction = $pesterSettings.Should.ErrorAction
     }
-    
+
     # CI mode adjustments (override config if in CI)
     if ($CI) {
         Write-ScriptLog -Message "Running in CI mode"
@@ -299,7 +299,7 @@ try {
         } else {
             @('Unit')
         }
-        
+
         # Use config exclude tags if specified, otherwise default exclusions
         $pesterConfig.Filter.ExcludeTag = if ($pesterSettings.Filter.ExcludeTag -and $pesterSettings.Filter.ExcludeTag.Count -gt 0) {
             $pesterSettings.Filter.ExcludeTag
@@ -322,7 +322,7 @@ try {
             New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $pesterConfig.TestResult.Enabled = $true
     $pesterConfig.TestResult.OutputPath = Join-Path $OutputPath "UnitTests-$timestamp.xml"
@@ -344,32 +344,32 @@ try {
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Start-PerformanceTrace -Name "UnitTests" -Description "Unit test execution"
     }
-    
+
     Write-ScriptLog -Message "Executing unit tests..."
     if (-not $PSCmdlet.ShouldProcess("Unit tests in $Path", "Execute Pester tests")) {
         Write-ScriptLog -Message "WhatIf: Would execute unit tests with Pester configuration"
         return
     }
-    
+
     # Performance optimization: disable config watching during tests
     $env:AITHERZERO_NO_CONFIG_WATCH = 'true'
     $env:AITHERZERO_TEST_MODE = 'true'
-    
+
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
     $useParallel = $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
-    
+
     if ($useParallel) {
         $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 6 }
         $parallelBlockSize = if ($pesterSettings.Parallel.BlockSize) { $pesterSettings.Parallel.BlockSize } else { 5 }
         Write-ScriptLog -Message "Running tests in parallel (Workers: $parallelWorkers, Block size: $parallelBlockSize)"
-        
+
         # Split test files into chunks for parallel execution
         $testChunks = @()
         for ($i = 0; $i -lt $testFiles.Count; $i += $parallelBlockSize) {
             $chunk = $testFiles | Select-Object -Skip $i -First $parallelBlockSize
             $testChunks += ,@($chunk)
         }
-        
+
         # Run test chunks in parallel
         $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
             $chunk = $_
@@ -379,26 +379,26 @@ try {
             $CI = $using:CI
             $NoCoverage = $using:NoCoverage
             $CoverageThreshold = $using:CoverageThreshold
-            
+
             # Import Pester in parallel runspace
             Import-Module Pester -MinimumVersion 5.0 -Force
-            
+
             # Create config for this chunk
             $chunkConfig = New-PesterConfiguration
             $chunkConfig.Run.Path = $chunk
             $chunkConfig.Run.PassThru = $true
             $chunkConfig.Run.Exit = $false
-            
+
             # Apply settings from parent scope
             $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
             $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
             $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
             $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
-            
+
             # Run tests for this chunk
             Invoke-Pester -Configuration $chunkConfig
         }
-        
+
         # Aggregate results from all parallel runs
         $result = [PSCustomObject]@{
             TotalCount = ($parallelResults | Measure-Object -Property TotalCount -Sum).Sum
@@ -427,7 +427,7 @@ try {
         Skipped = $result.SkippedCount
         Duration = if ($duration) { $duration.TotalSeconds } else { $result.Duration.TotalSeconds }
     }
-    
+
     Write-ScriptLog -Message "Unit test execution completed" -Data $testSummary
 
     # Display summary
@@ -444,7 +444,7 @@ try {
         Write-Host "  Coverage: $($coveragePercent)%" -ForegroundColor $(
             if ($coveragePercent -ge $testingConfig.CodeCoverage.MinimumPercent) { 'Green' } else { 'Yellow' }
         )
-    
+
         # Handle different Pester versions
         if ($result.CodeCoverage.PSObject.Properties['CommandsAnalyzedCount']) {
             # Pester 5.5+
@@ -459,7 +459,7 @@ try {
             # Fallback for other versions
             Write-Host "  Files Covered: $($result.CodeCoverage.FilesAnalyzedCount ?? 'N/A')"
         }
-        
+
         if ($coveragePercent -lt $testingConfig.CodeCoverage.MinimumPercent) {
             Write-ScriptLog -Level Warning -Message "Code coverage below minimum threshold ($($testingConfig.CodeCoverage.MinimumPercent)%)"
         }

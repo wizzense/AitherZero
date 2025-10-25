@@ -26,16 +26,16 @@ function Initialize-StandardParameters {
     param(
         [Parameter()]
         [string]$ScriptName = (Split-Path -Leaf $MyInvocation.PSCommandPath),
-        
+
         [Parameter()]
         [object]$Config,
-        
+
         [Parameter()]
         [hashtable]$inputValueParameters = @{},
-        
+
         [Parameter()]
         [string[]]$RequiredParameters = @(),
-        
+
         [Parameter()]
         [hashtable]$DefaultConfig = @{}
     )
@@ -91,7 +91,7 @@ function Initialize-StandardParameters {
     }
     else {
         # Auto-detect non-interactive mode if not explicitly set
-        $scriptParams.IsNonInteractive = ($Host.Name -eq 'Default Host') -or 
+        $scriptParams.IsNonInteractive = ($Host.Name -eq 'Default Host') -or
                                         ([Environment]::UserInteractive -eq $false) -or
                                         ($env:PESTER_RUN -eq 'true') -or
                                         $scriptParams.IsWhatIfMode
@@ -120,7 +120,7 @@ function Initialize-StandardParameters {
     else {
         # Use default config if no config was provided
         $scriptParams.Config = $DefaultConfig
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog "No configuration provided, using default configuration" -Level WARN
         }
@@ -161,7 +161,7 @@ function Initialize-StandardParameters {
         Write-CustomLog " - NonInteractive mode: $($scriptParams.IsNonInteractive)" -Level $logLevel
         Write-CustomLog " - Auto mode: $($scriptParams.IsAutoMode)" -Level $logLevel
         Write-CustomLog " - Force mode: $($scriptParams.IsForceMode)" -Level $logLevel
-        
+
         # Output configuration summary in detailed mode
         if ($scriptParams.Verbosity -eq 'detailed') {
             Write-CustomLog "Configuration:" -Level DEBUG

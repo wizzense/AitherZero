@@ -16,13 +16,13 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$TestResults = "./tests/results/latest-test-results.json",
-    
+
     [Parameter(Mandatory = $false)]
     [ValidateSet('TestFailure', 'CodeViolation', 'Bug')]
     [string]$IssueType = 'TestFailure',
-    
+
     [switch]$AutoCreate,
-    
+
     [switch]$GitHubActions
 )
 
@@ -58,31 +58,31 @@ function Get-SystemContext {
         GitCommit = & git rev-parse --short HEAD 2>$null
         Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     }
-    
+
     if (Test-GitHubActions) {
         $context.GitHubRun = $env:GITHUB_RUN_ID
         $context.GitHubActor = $env:GITHUB_ACTOR
         $context.GitHubWorkflow = $env:GITHUB_WORKFLOW
     }
-    
+
     return $context
 }
 
 # Parse test results
 function Get-TestFailures {
     param([string]$ResultsPath)
-    
+
     if (-not (Test-Path $ResultsPath)) {
         Write-Warning "Test results not found at: $ResultsPath"
         return @()
     }
-    
+
     $failures = @()
-    
+
     # Handle different result formats
     if ($ResultsPath -match '\.json$') {
         $results = Get-Content $ResultsPath | ConvertFrom-Json
-        
+
         # Parse Pester JSON format
         if ($results.Tests) {
             $failures = $results.Tests | Where-Object { $_.Result -eq 'Failed' }
@@ -97,14 +97,14 @@ function Get-TestFailures {
         [xml]$results = Get-Content $ResultsPath
         $failures = $results.SelectNodes("//test-case[@result='Failed']")
     }
-    
+
     return $failures
 }
 
 # Parse PSScriptAnalyzer results
 function Get-CodeViolations {
     param([string]$ResultsPath = "./tests/results/psscriptanalyzer-results.json")
-    
+
     if (-not (Test-Path $ResultsPath)) {
         # Run PSScriptAnalyzer if results don't exist
         $analyzerScript = Join-Path $PSScriptRoot "0404_Run-PSScriptAnalyzer.ps1"
@@ -112,11 +112,11 @@ function Get-CodeViolations {
             & $analyzerScript -OutputPath $ResultsPath
         }
     }
-    
+
     if (Test-Path $ResultsPath) {
         return Get-Content $ResultsPath | ConvertFrom-Json
     }
-    
+
     return @()
 }
 
@@ -127,9 +127,9 @@ function New-IssueBody {
         [object]$Data,
         [hashtable]$Context
     )
-    
+
     $body = @()
-    
+
     switch ($Type) {
         'TestFailure' {
             $body += "## Test Failure Summary"
@@ -141,7 +141,7 @@ function New-IssueBody {
             $body += "**Execution Time:** $($Context.Timestamp)"
             $body += "**Environment:** $($Context.OS) / PowerShell $($Context.PowerShellVersion)"
             $body += ""
-            
+
             if (Test-GitHubActions) {
                 $body += "## GitHub Actions Context"
                 $body += "**Workflow:** $($Context.GitHubWorkflow)"
@@ -149,7 +149,7 @@ function New-IssueBody {
                 $body += "**Actor:** @$($Context.GitHubActor)"
                 $body += ""
             }
-            
+
             $body += "## Failed Test Details"
             $body += '```powershell'
             $body += "Test: $($Data.Name)"
@@ -165,7 +165,7 @@ function New-IssueBody {
             $body += $Data.StackTrace
             $body += '```'
         }
-        
+
         'CodeViolation' {
             $body += "## Code Quality Violation"
             $body += "PSScriptAnalyzer detected code quality issues."
@@ -182,7 +182,7 @@ function New-IssueBody {
             $body += "Review the PSScriptAnalyzer documentation for rule: $($Data.RuleName)"
             $body += "https://github.com/PowerShell/PSScriptAnalyzer/tree/master/docs/Rules/$($Data.RuleName).md"
         }
-        
+
         'Bug' {
             $body += "## Bug Description"
             $body += $Data.Description
@@ -198,7 +198,7 @@ function New-IssueBody {
             $body += '```'
         }
     }
-    
+
     # Add common footer
     $body += ""
     $body += "## Environment Information"
@@ -208,7 +208,7 @@ function New-IssueBody {
     $body += ""
     $body += "---"
     $body += "*This issue was automatically created by AitherZero test automation*"
-    
+
     return $body -join "`n"
 }
 
@@ -220,26 +220,26 @@ function New-GitHubIssue {
         [string[]]$Labels = @(),
         [string]$Assignee = $null
     )
-    
+
     # Check if gh CLI is available
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
         Write-Error "GitHub CLI (gh) is not installed. Cannot create issue."
         return $null
     }
-    
+
     # Build gh command
     $ghArgs = @('issue', 'create')
     $ghArgs += '--title', $Title
     $ghArgs += '--body', $Body
-    
+
     if ($Labels) {
         $ghArgs += '--label', ($Labels -join ',')
     }
-    
+
     if ($Assignee) {
         $ghArgs += '--assignee', $Assignee
     }
-    
+
     # Create issue
     try {
         $issueUrl = & gh @ghArgs 2>&1
@@ -261,23 +261,23 @@ function New-GitHubIssue {
 # Main execution
 try {
     Write-Host "🔍 Analyzing test results and system context..." -ForegroundColor Cyan
-    
+
     $context = Get-SystemContext
     $issues = @()
-    
+
     switch ($IssueType) {
         'TestFailure' {
             $failures = Get-TestFailures -ResultsPath $TestResults
-            
+
             foreach ($failure in $failures) {
                 $title = "[TEST] $($failure.Name) failed"
                 $body = New-IssueBody -Type 'TestFailure' -Data $failure -Context $context
                 $labels = @('test-failure', 'automated')
-                
+
                 if (Test-GitHubActions) {
                     $labels += 'ci-failure'
                 }
-                
+
                 $issues += @{
                     Title = $title
                     Body = $body
@@ -285,18 +285,18 @@ try {
                 }
             }
         }
-        
+
         'CodeViolation' {
             $violations = Get-CodeViolations
-            
+
             # Group violations by rule
             $groupedViolations = $violations | Group-Object RuleName
-            
+
             foreach ($group in $groupedViolations) {
                 $title = "[QUALITY] $($group.Name) - $($group.Count) violations"
                 $body = New-IssueBody -Type 'CodeViolation' -Data $group.Group[0] -Context $context
                 $labels = @('code-quality', 'psscriptanalyzer', 'automated')
-                
+
                 $issues += @{
                     Title = $title
                     Body = $body
@@ -305,14 +305,14 @@ try {
             }
         }
     }
-    
+
     if ($issues.Count -eq 0) {
         Write-Host "✅ No issues to create!" -ForegroundColor Green
         exit 0
     }
-    
+
     Write-Host "📝 Found $($issues.Count) issue(s) to create" -ForegroundColor Yellow
-    
+
     foreach ($issue in $issues) {
         if (-not $AutoCreate -and -not (Test-GitHubActions)) {
             Write-Host ""
@@ -321,13 +321,13 @@ try {
             Write-Host "Preview:" -ForegroundColor Gray
             Write-Host ($issue.Body | Select-Object -First 10) -ForegroundColor DarkGray
             Write-Host "..."
-            
+
             $response = Read-Host "Create this issue? (Y/N)"
             if ($response -ne 'Y') {
                 continue
             }
         }
-        
+
         $result = New-GitHubIssue @issue
 
         if ($result -and (Test-GitHubActions)) {
@@ -335,7 +335,7 @@ try {
             Write-Host "::notice::Created issue: $result"
         }
     }
-    
+
     Write-Host "✅ Issue creation complete!" -ForegroundColor Green
     exit 0
 }

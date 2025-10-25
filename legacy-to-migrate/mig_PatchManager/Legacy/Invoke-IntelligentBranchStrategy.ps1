@@ -11,13 +11,13 @@ function Invoke-IntelligentBranchStrategy {
 
     try {
         Write-Verbose "Analyzing branch strategy for: $PatchDescription"
-        
+
         # Get current branch
         $currentBranch = git rev-parse --abbrev-ref HEAD 2>$null
         if (-not $currentBranch) { $currentBranch = "main" }
-        
+
         Write-Verbose "Current branch detected: $currentBranch"
-        
+
         # Determine strategy based on current branch
         $strategy = @{
             Success = $true
@@ -26,7 +26,7 @@ function Invoke-IntelligentBranchStrategy {
             NewBranchName = $null
             Message = "Branch strategy determined"
         }
-        
+
         # If ForceNewBranch is specified, always create a new branch
         if ($ForceNewBranch) {
             $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -37,14 +37,14 @@ function Invoke-IntelligentBranchStrategy {
             Write-Verbose "Force creating new patch branch: $($strategy.NewBranchName)"
             return $strategy
         }
-        
+
         # Anti-recursive logic: if already on a feature branch, work in place
         if ($currentBranch -match "^(patch|feature|fix|hotfix)/" -and $currentBranch -ne "main") {
             $strategy.SkipBranchCreation = $true
             $strategy.NewBranchName = $currentBranch
             $strategy.Message = "Working from current feature branch: $currentBranch"
             Write-Verbose "Anti-recursive protection: Using current branch $currentBranch"
-        } 
+        }
         # Create new branch if on main branch
         elseif ($currentBranch -eq "main" -or $currentBranch -eq "master") {
             $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -63,7 +63,7 @@ function Invoke-IntelligentBranchStrategy {
             $strategy.Message = "Creating new branch: $($strategy.NewBranchName)"
             Write-Verbose "Creating new patch branch from unknown branch: $($strategy.NewBranchName)"
         }
-        
+
         return $strategy
     } catch {
         return @{

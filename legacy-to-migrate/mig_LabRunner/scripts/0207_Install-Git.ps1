@@ -20,7 +20,7 @@ Invoke-LabStep -Config $Config -Body {
         if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing Git..."
             $url = 'https://github.com/git-for-windows/git/releases/download/v2.48.1.windows.1/Git-2.48.1-64-bit.exe'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'git-installer' -Extension '.exe' -Action {
                 param($installer)
                 if ($PSCmdlet.ShouldProcess($installer, 'Install Git')) {

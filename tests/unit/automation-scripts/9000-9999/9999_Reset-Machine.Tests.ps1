@@ -3,27 +3,27 @@
 Describe "9999_Reset-Machine" {
     BeforeAll {
         $scriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/9999_Reset-Machine.ps1"
-        
+
         # Mock dangerous external commands that could cause damage
         Mock -CommandName Start-Process
         Mock -CommandName Checkpoint-Computer
         Mock -CommandName Set-ItemProperty
-        Mock -CommandName Enable-NetFirewallRule  
+        Mock -CommandName Enable-NetFirewallRule
         Mock -CommandName New-NetFirewallRule
         Mock -CommandName Get-ChildItem { @() }
         Mock -CommandName Remove-Item
         Mock -CommandName Get-Command { $null }
         Mock -CommandName Import-Module
-        
+
         # Mock Write-Host to capture logging output
         Mock -CommandName Write-Host
-        
+
         # Mock platform detection variables
         $script:OriginalIsWindows = $global:IsWindows
-        $script:OriginalIsLinux = $global:IsLinux  
+        $script:OriginalIsLinux = $global:IsLinux
         $script:OriginalIsMacOS = $global:IsMacOS
     }
-    
+
     AfterAll {
         # Restore original platform variables if they were set
         if ($null -ne $script:OriginalIsWindows) { $global:IsWindows = $script:OriginalIsWindows }
@@ -41,13 +41,13 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $false }
-            
+
             # This should not throw for parameter binding
             { & $scriptPath -Configuration $config -WhatIf } | Should -Not -Throw
         }
-        
+
         It "Should exit gracefully when reset is not enabled" {
             $config = @{
                 Maintenance = @{
@@ -57,18 +57,18 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $false }
             Mock -CommandName Write-Host
-            
+
             $result = & $scriptPath -Configuration $config -WhatIf 2>$null
             $LASTEXITCODE | Should -Be 0
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Machine reset is not enabled*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Machine reset is not enabled*"
             }
         }
-        
+
         It "Should apply configuration overrides correctly" {
             $config = @{
                 Maintenance = @{
@@ -82,10 +82,10 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $false }
             Mock -CommandName Write-Host
-            
+
             # Should not throw and should process configuration
             { & $scriptPath -Configuration $config -WhatIf 2>$null } | Should -Not -Throw
         }
@@ -97,7 +97,7 @@ Describe "9999_Reset-Machine" {
             $global:IsLinux = $false
             $global:IsMacOS = $false
         }
-        
+
         It "Should detect Windows platform correctly" {
             $config = @{
                 Maintenance = @{
@@ -107,17 +107,17 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $false }  # No sysprep found
             Mock -CommandName Write-Host
-            
+
             { & $scriptPath -Configuration $config -WhatIf 2>$null } | Should -Throw "*Sysprep not found*"
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Detected Windows platform*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Detected Windows platform*"
             }
         }
-        
+
         It "Should create restore point when configured" {
             $config = @{
                 Maintenance = @{
@@ -128,21 +128,21 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
-            Mock -CommandName Test-Path { 
+
+            Mock -CommandName Test-Path {
                 param($Path)
                 if ($Path -like "*Sysprep.exe") { $true } else { $false }
             }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             Should -Invoke Checkpoint-Computer -Times 0 -Exactly  # WhatIf should not execute
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Creating system restore point*" 
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Creating system restore point*"
             }
         }
-        
+
         It "Should configure remote access when enabled" {
             $config = @{
                 Maintenance = @{
@@ -153,25 +153,25 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
-            Mock -CommandName Test-Path { 
+
+            Mock -CommandName Test-Path {
                 param($Path)
                 if ($Path -like "*Sysprep.exe") { $true } else { $false }
             }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             # WhatIf should not execute dangerous operations
             Should -Invoke Set-ItemProperty -Times 0 -Exactly
             Should -Invoke Enable-NetFirewallRule -Times 0 -Exactly
             Should -Invoke New-NetFirewallRule -Times 0 -Exactly
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Preparing for remote access*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Preparing for remote access*"
             }
         }
-        
+
         It "Should handle sysprep OOBE mode correctly" {
             $config = @{
                 Maintenance = @{
@@ -182,21 +182,21 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
-            Mock -CommandName Test-Path { 
+
+            Mock -CommandName Test-Path {
                 param($Path)
                 if ($Path -like "*Sysprep.exe") { $true } else { $false }
             }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             Should -Invoke Start-Process -Times 0 -Exactly  # WhatIf should not execute
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Sysprep will generalize and shutdown for OOBE*" 
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Sysprep will generalize and shutdown for OOBE*"
             }
         }
-        
+
         It "Should handle sysprep audit mode correctly" {
             $config = @{
                 Maintenance = @{
@@ -207,20 +207,20 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
-            Mock -CommandName Test-Path { 
+
+            Mock -CommandName Test-Path {
                 param($Path)
                 if ($Path -like "*Sysprep.exe") { $true } else { $false }
             }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Sysprep will generalize and reboot to audit mode*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Sysprep will generalize and reboot to audit mode*"
             }
         }
-        
+
         It "Should respect WhatIf for sysprep execution" {
             $config = @{
                 Maintenance = @{
@@ -230,12 +230,12 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $true }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             # WhatIf should prevent actual execution
             Should -Invoke Start-Process -Times 0 -Exactly
         }
@@ -247,7 +247,7 @@ Describe "9999_Reset-Machine" {
             $global:IsLinux = $true
             $global:IsMacOS = $false
         }
-        
+
         It "Should detect Linux platform correctly" {
             $config = @{
                 Maintenance = @{
@@ -257,17 +257,17 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Write-Host
             Mock -CommandName Get-Command { $null }  # No package managers found
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Detected Linux platform*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Detected Linux platform*"
             }
         }
-        
+
         It "Should clear temporary files on Linux" {
             $config = @{
                 Maintenance = @{
@@ -277,17 +277,17 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Write-Host
             Mock -CommandName Get-ChildItem { @() }  # Empty temp directory
             Mock -CommandName Get-Command { $null }
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             # WhatIf should not execute Remove-Item
             Should -Invoke Remove-Item -Times 0 -Exactly
         }
-        
+
         It "Should handle apt package manager cleanup" {
             $config = @{
                 Maintenance = @{
@@ -297,20 +297,20 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Write-Host
-            Mock -CommandName Get-Command { 
+            Mock -CommandName Get-Command {
                 param($Name)
                 if ($Name -eq 'apt-get') { [PSCustomObject]@{} } else { $null }
             }
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Clean package cache*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Clean package cache*"
             }
         }
-        
+
         It "Should schedule reboot with proper warning" {
             $config = @{
                 Maintenance = @{
@@ -320,14 +320,14 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Write-Host
             Mock -CommandName Get-Command { $null }
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*System will reboot in 1 minute*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*System will reboot in 1 minute*"
             }
         }
     }
@@ -338,7 +338,7 @@ Describe "9999_Reset-Machine" {
             $global:IsLinux = $false
             $global:IsMacOS = $true
         }
-        
+
         It "Should detect macOS platform correctly" {
             $config = @{
                 Maintenance = @{
@@ -348,17 +348,17 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Write-Host
             Mock -CommandName Get-Command { $null }
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Detected macOS platform*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Detected macOS platform*"
             }
         }
-        
+
         It "Should handle Homebrew cleanup on macOS" {
             $config = @{
                 Maintenance = @{
@@ -368,17 +368,17 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Write-Host
-            Mock -CommandName Get-Command { 
+            Mock -CommandName Get-Command {
                 param($Name)
                 if ($Name -eq 'brew') { [PSCustomObject]@{} } else { $null }
             }
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Clean package cache*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Clean package cache*"
             }
         }
     }
@@ -389,7 +389,7 @@ Describe "9999_Reset-Machine" {
             $global:IsLinux = $false
             $global:IsMacOS = $false
         }
-        
+
         It "Should fail gracefully on unsupported platforms" {
             $config = @{
                 Maintenance = @{
@@ -399,13 +399,13 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Write-Host
-            
+
             { & $scriptPath -Configuration $config -WhatIf 2>$null } | Should -Throw "*Unsupported platform*"
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Unknown platform*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Unknown platform*"
             }
         }
     }
@@ -416,7 +416,7 @@ Describe "9999_Reset-Machine" {
             $global:IsLinux = $false
             $global:IsMacOS = $false
         }
-        
+
         It "Should respect WhatIf for registry changes" {
             $config = @{
                 Maintenance = @{
@@ -427,16 +427,16 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $true }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             # WhatIf should prevent registry modifications
             Should -Invoke Set-ItemProperty -Times 0 -Exactly
         }
-        
+
         It "Should respect WhatIf for firewall changes" {
             $config = @{
                 Maintenance = @{
@@ -447,17 +447,17 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $true }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             # WhatIf should prevent firewall modifications
             Should -Invoke Enable-NetFirewallRule -Times 0 -Exactly
             Should -Invoke New-NetFirewallRule -Times 0 -Exactly
         }
-        
+
         It "Should respect WhatIf for restore point creation" {
             $config = @{
                 Maintenance = @{
@@ -468,12 +468,12 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $true }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             # WhatIf should prevent restore point creation
             Should -Invoke Checkpoint-Computer -Times 0 -Exactly
         }
@@ -485,7 +485,7 @@ Describe "9999_Reset-Machine" {
             $global:IsLinux = $false
             $global:IsMacOS = $false
         }
-        
+
         It "Should handle restore point creation failure gracefully" {
             $config = @{
                 Maintenance = @{
@@ -496,18 +496,18 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $true }
             Mock -CommandName Checkpoint-Computer { throw "Access denied" }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -Confirm:$false 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Failed to create restore point*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Failed to create restore point*"
             }
         }
-        
+
         It "Should handle remote desktop configuration failure gracefully" {
             $config = @{
                 Maintenance = @{
@@ -518,32 +518,32 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             Mock -CommandName Test-Path { $true }
             Mock -CommandName Set-ItemProperty { throw "Registry error" }
             Mock -CommandName Write-Host
-            
+
             & $scriptPath -Configuration $config -Confirm:$false 2>$null
-            
-            Should -Invoke Write-Host -ParameterFilter { 
-                $Object -like "*Failed to enable Remote Desktop*" 
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like "*Failed to enable Remote Desktop*"
             }
         }
     }
 
     Context "Logging Integration" {
         It "Should use Write-CustomLog when Logging module is available" {
-            Mock -CommandName Test-Path { 
+            Mock -CommandName Test-Path {
                 param($Path)
                 if ($Path -like "*Logging.psm1") { $true } else { $false }
             }
             Mock -CommandName Import-Module
-            Mock -CommandName Get-Command { 
+            Mock -CommandName Get-Command {
                 param($Name)
                 if ($Name -eq 'Write-CustomLog') { [PSCustomObject]@{} } else { $null }
             }
             Mock -CommandName Write-CustomLog
-            
+
             $config = @{
                 Maintenance = @{
                     MachineReset = @{
@@ -552,18 +552,18 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
-            Should -Invoke Import-Module -ParameterFilter { 
-                $Name -like "*Logging.psm1*" 
+
+            Should -Invoke Import-Module -ParameterFilter {
+                $Name -like "*Logging.psm1*"
             }
         }
-        
+
         It "Should fall back to Write-Host when Logging module is not available" {
             Mock -CommandName Test-Path { $false }
             Mock -CommandName Write-Host
-            
+
             $config = @{
                 Maintenance = @{
                     MachineReset = @{
@@ -572,9 +572,9 @@ Describe "9999_Reset-Machine" {
                     }
                 }
             }
-            
+
             & $scriptPath -Configuration $config -WhatIf 2>$null
-            
+
             Should -Invoke Write-Host -Times 1 -AtLeast
         }
     }

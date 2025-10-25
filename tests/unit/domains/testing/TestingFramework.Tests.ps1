@@ -18,7 +18,7 @@ BeforeAll {
     # Mock external dependencies
     Mock Import-Module { } -ParameterFilter { $Name -eq 'Pester' }
     Mock Import-Module { } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
-    
+
     # Create test configuration
     $script:TestConfig = @{
         Testing = @{
@@ -140,7 +140,7 @@ BeforeAll {
 }
 
 Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
-    
+
     Context "Module Loading and Initialization" {
         It "Should have the required functions exported" {
             $exportedFunctions = Get-Command -Module TestingFramework
@@ -170,9 +170,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should load configuration from file when it exists" {
             Mock Test-Path { $true }
-            
+
             $result = Get-TestingConfiguration
-            
+
             $result | Should -Not -BeNullOrEmpty
             $result.Framework | Should -Be 'Pester'
             $result.MinVersion | Should -Be '5.0.0'
@@ -180,25 +180,25 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should return default configuration when file does not exist" {
             Mock Test-Path { $false }
-            
+
             $result = Get-TestingConfiguration
-            
+
             $result | Should -BeOfType [hashtable]
         }
 
         It "Should handle JSON parsing errors gracefully" {
             Mock Test-Path { $true }
             Mock Get-Content { 'invalid json' }
-            
+
             { Get-TestingConfiguration } | Should -Throw
         }
 
         It "Should use custom config path when provided" {
             $customPath = '/custom/config.psd1'
             Mock Test-Path { $true } -ParameterFilter { $Path -eq $customPath }
-            
+
             $result = Get-TestingConfiguration -ConfigPath $customPath
-            
+
             Assert-MockCalled Test-Path -ParameterFilter { $Path -eq $customPath }
         }
     }
@@ -208,7 +208,7 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock Import-Module { }
-            Mock New-PesterConfiguration { 
+            Mock New-PesterConfiguration {
                 [PSCustomObject]@{
                     Run = [PSCustomObject]@{ Path = ''; PassThru = $false; Exit = $false }
                     Filter = [PSCustomObject]@{ Tag = @() }
@@ -222,54 +222,54 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should execute test suite with default profile" {
             $result = Invoke-TestSuite
-            
+
             $result | Should -Be $true
             Assert-MockCalled Invoke-Pester
         }
 
         It "Should execute test suite with specified profile" {
             $result = Invoke-TestSuite -Profile 'Quick'
-            
+
             $result | Should -Be $true
             Assert-MockCalled Invoke-Pester
         }
 
         It "Should override categories when specified" {
             $customCategories = @('Unit', 'Custom')
-            
+
             $result = Invoke-TestSuite -Categories $customCategories
-            
+
             $result | Should -Be $true
             Assert-MockCalled Invoke-Pester
         }
 
         It "Should configure output path when provided" {
             $outputPath = '/custom/output'
-            
+
             $result = Invoke-TestSuite -OutputPath $outputPath
-            
+
             $result | Should -Be $true
             Assert-MockCalled Invoke-Pester
         }
 
         It "Should apply custom configuration when provided" {
             $customConfig = @{ CustomSetting = 'Value' }
-            
+
             $result = Invoke-TestSuite -Configuration $customConfig
-            
+
             $result | Should -Be $true
             Assert-MockCalled Invoke-Pester
         }
 
         It "Should return Pester result when PassThru is specified" {
             $result = Invoke-TestSuite -PassThru
-            
+
             $result | Should -Be $script:MockPesterResult
         }
 
         It "Should fail when required Pester version is not available" {
             Mock Get-Module { $null }
-            
+
             { Invoke-TestSuite } | Should -Throw '*Pester*required*'
         }
 
@@ -277,9 +277,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             $failedResult = $script:MockPesterResult.PSObject.Copy()
             $failedResult.FailedCount = 5
             Mock Invoke-Pester { $failedResult }
-            
+
             $result = Invoke-TestSuite
-            
+
             $result | Should -Be $false
         }
 
@@ -288,9 +288,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             $lowCoverageConfig.CodeCoverage.MinimumPercent = 90
             Mock Get-TestingConfiguration { $lowCoverageConfig }
             Mock Write-Warning { }
-            
+
             $result = Invoke-TestSuite
-            
+
             Assert-MockCalled Write-Warning -ParameterFilter { $Message -like '*coverage*below*' }
         }
     }
@@ -307,7 +307,7 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should run PSScriptAnalyzer with default settings" {
             $result = Invoke-ScriptAnalysis
-            
+
             $result | Should -Be $script:MockAnalyzerResults
             Assert-MockCalled Invoke-ScriptAnalyzer
         }
@@ -317,61 +317,61 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             $disabledConfig.PSScriptAnalyzer.Enabled = $false
             Mock Get-TestingConfiguration { $disabledConfig }
             Mock Write-Warning { }
-            
+
             $result = Invoke-ScriptAnalysis
-            
+
             $result | Should -BeNullOrEmpty
             Assert-MockCalled Write-Warning -ParameterFilter { $Message -like '*disabled*' }
         }
 
         It "Should use custom path when provided" {
             $customPath = '/custom/path'
-            
+
             $result = Invoke-ScriptAnalysis -Path $customPath
-            
+
             Assert-MockCalled Invoke-ScriptAnalyzer -ParameterFilter { $Path -eq $customPath }
         }
 
         It "Should enable recursion when specified" {
             $result = Invoke-ScriptAnalysis -Recurse
-            
+
             Assert-MockCalled Invoke-ScriptAnalyzer -ParameterFilter { $Recurse -eq $true }
         }
 
         It "Should use settings file when provided" {
             Mock Test-Path { $true }
             $settingsPath = '/custom/settings.psd1'
-            
+
             $result = Invoke-ScriptAnalysis -SettingsPath $settingsPath
-            
+
             Assert-MockCalled Invoke-ScriptAnalyzer
         }
 
         It "Should enable fix mode when specified" {
             $result = Invoke-ScriptAnalysis -Fix
-            
+
             Assert-MockCalled Invoke-ScriptAnalyzer -ParameterFilter { $Fix -eq $true }
         }
 
         It "Should export results when output path is provided" {
             $outputPath = '/custom/output'
-            
+
             $result = Invoke-ScriptAnalysis -OutputPath $outputPath
-            
+
             Assert-MockCalled Export-Csv
         }
 
         It "Should fail when PSScriptAnalyzer module is not available" {
             Mock Get-Module { $null }
-            
+
             { Invoke-ScriptAnalysis } | Should -Throw '*PSScriptAnalyzer*required*'
         }
 
         It "Should display no issues message when no problems found" {
             Mock Invoke-ScriptAnalyzer { @() }
-            
+
             $result = Invoke-ScriptAnalysis
-            
+
             $result.Count | Should -Be 0
             Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*No issues*' }
         }
@@ -379,16 +379,16 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
     Context "Test-ASTValidation Function" {
         BeforeEach {
-            Mock Get-ChildItem { 
+            Mock Get-ChildItem {
                 @([PSCustomObject]@{ FullName = 'TestFile.ps1' })
             }
             Mock Get-Item {
                 [PSCustomObject]@{ FullName = 'TestFile.ps1' }
             }
-            
+
             # Mock AST parsing
             $mockAST = [PSCustomObject]@{
-                FindAll = { 
+                FindAll = {
                     param($predicate, $searchNestedScriptBlocks)
                     @()
                 }
@@ -400,35 +400,35 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should validate syntax when CheckSyntax is enabled" {
             $result = Test-ASTValidation -Path 'TestFile.ps1' -CheckSyntax
-            
+
             $result | Should -BeOfType [Array]
         }
 
         It "Should validate parameters when CheckParameters is enabled" {
             $result = Test-ASTValidation -Path 'TestFile.ps1' -CheckParameters
-            
+
             $result | Should -BeOfType [Array]
         }
 
         It "Should validate commands when CheckCommands is enabled" {
             $result = Test-ASTValidation -Path 'TestFile.ps1' -CheckCommands
-            
+
             $result | Should -BeOfType [Array]
         }
 
         It "Should process directory recursively" {
             Mock Test-Path { $true } -ParameterFilter { $PathType -eq 'Container' }
-            
+
             $result = Test-ASTValidation -Path '/test/directory' -CheckSyntax
-            
+
             Assert-MockCalled Get-ChildItem
         }
 
         It "Should process single file" {
             Mock Test-Path { $false } -ParameterFilter { $PathType -eq 'Container' }
-            
+
             $result = Test-ASTValidation -Path 'TestFile.ps1' -CheckSyntax
-            
+
             Assert-MockCalled Get-Item
         }
 
@@ -436,18 +436,18 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock -CommandName '[System.Management.Automation.Language.Parser]::ParseFile' -MockWith {
                 throw 'Parse error'
             } -ModuleName TestingFramework
-            
+
             $result = Test-ASTValidation -Path 'TestFile.ps1' -CheckSyntax
-            
+
             $result | Should -Not -BeNullOrEmpty
             $result[0].Type | Should -Be 'ParseError'
         }
 
         It "Should report success when no issues found" {
             Mock Write-Host { }
-            
+
             $result = Test-ASTValidation -Path 'TestFile.ps1' -CheckSyntax
-            
+
             Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*validation passed*' }
         }
     }
@@ -458,7 +458,7 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock ConvertTo-Json { '{"test": "data"}' }
             Mock Set-Content { }
             Mock Write-Host { }
-            
+
             # Set up mock testing state with results
             $mockState = @{
                 Results = @($script:MockPesterResult)
@@ -469,7 +469,7 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should generate JSON report" {
             $result = New-TestReport -Format 'JSON'
-            
+
             $result | Should -Match '\.json$'
             Assert-MockCalled ConvertTo-Json
             Assert-MockCalled Set-Content
@@ -477,49 +477,49 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should generate HTML report" {
             $result = New-TestReport -Format 'HTML'
-            
+
             $result | Should -Match '\.html$'
             Assert-MockCalled Set-Content
         }
 
         It "Should generate Markdown report" {
             $result = New-TestReport -Format 'Markdown'
-            
+
             $result | Should -Match '\.md$'
             Assert-MockCalled Set-Content
         }
 
         It "Should include test results when requested" {
             $result = New-TestReport -IncludeTests
-            
+
             Assert-MockCalled Set-Content
         }
 
         It "Should include analysis results when requested" {
             $result = New-TestReport -IncludeAnalysis
-            
+
             Assert-MockCalled Set-Content
         }
 
         It "Should include coverage results when requested" {
             $result = New-TestReport -IncludeCoverage
-            
+
             Assert-MockCalled Set-Content
         }
 
         It "Should use custom output path" {
             $customPath = '/custom/reports'
-            
+
             $result = New-TestReport -OutputPath $customPath
-            
+
             Assert-MockCalled New-Item -ParameterFilter { $Path -eq $customPath }
         }
 
         It "Should create output directory if it does not exist" {
             Mock Test-Path { $false }
-            
+
             $result = New-TestReport
-            
+
             Assert-MockCalled New-Item -ParameterFilter { $ItemType -eq 'Directory' }
         }
     }
@@ -527,16 +527,16 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
     Context "Error Handling and Edge Cases" {
         It "Should handle missing configuration file gracefully" {
             Mock Test-Path { $false }
-            
+
             $result = Get-TestingConfiguration
-            
+
             $result | Should -BeOfType [hashtable]
         }
 
         It "Should handle empty test results" {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
-            Mock Invoke-Pester { 
+            Mock Invoke-Pester {
                 [PSCustomObject]@{
                     TotalCount = 0
                     PassedCount = 0
@@ -547,9 +547,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
                     CodeCoverage = $null
                 }
             }
-            
+
             $result = Invoke-TestSuite
-            
+
             $result | Should -Be $true
         }
 
@@ -557,7 +557,7 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock New-PesterConfiguration { $null }
-            
+
             { Invoke-TestSuite } | Should -Not -Throw
         }
 
@@ -565,9 +565,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Name = 'PSScriptAnalyzer' } }
             Mock Invoke-ScriptAnalyzer { $null }
-            
+
             $result = Invoke-ScriptAnalysis
-            
+
             $result | Should -BeNullOrEmpty
         }
     }
@@ -577,9 +577,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite -Profile 'Quick'
-            
+
             $result | Should -Be $true
         }
 
@@ -587,9 +587,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite -Profile 'Full'
-            
+
             $result | Should -Be $true
         }
 
@@ -597,9 +597,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite -Profile 'CI'
-            
+
             $result | Should -Be $true
         }
 
@@ -607,9 +607,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $script:TestConfig.Testing }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite -Profile 'NonExistentProfile'
-            
+
             $result | Should -Be $true
         }
     }
@@ -624,9 +624,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
 
         It "Should enable code coverage when configured" {
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite
-            
+
             $result | Should -Be $true
             Assert-MockCalled Invoke-Pester
         }
@@ -636,9 +636,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             $lowCoverageResult.CodeCoverage.CoveragePercent = 70
             Mock Invoke-Pester { $lowCoverageResult }
             Mock Write-Warning { }
-            
+
             $result = Invoke-TestSuite
-            
+
             Assert-MockCalled Write-Warning -ParameterFilter { $Message -like '*coverage*below*' }
         }
     }
@@ -647,9 +647,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
         It "Should use Write-TestingLog when available" {
             Mock Get-Command { [PSCustomObject]@{ Name = 'Write-CustomLog' } } -ParameterFilter { $Name -eq 'Write-CustomLog' }
             Mock Write-CustomLog { }
-            
+
             $result = Get-TestingConfiguration
-            
+
             # The function should not throw and should have attempted logging
             $result | Should -Not -BeNullOrEmpty
         }
@@ -657,9 +657,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
         It "Should fallback to Write-Host when Write-CustomLog not available" {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Write-CustomLog' }
             Mock Write-Host { }
-            
+
             $result = Get-TestingConfiguration
-            
+
             $result | Should -Not -BeNullOrEmpty
         }
     }
@@ -672,9 +672,9 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $parallelConfig }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite
-            
+
             $result | Should -Be $true
         }
 
@@ -684,29 +684,29 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
             Mock Get-TestingConfiguration { $serialConfig }
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } }
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite
-            
+
             $result | Should -Be $true
         }
     }
 }
 
 Describe "TestingFramework Integration Tests" -Tag @('Integration', 'TestingFramework') {
-    
+
     Context "End-to-End Test Suite Execution" {
         BeforeEach {
             # Create a temporary test structure
             $testPath = Join-Path $TestDrive 'integration-tests'
             New-Item -Path $testPath -ItemType Directory -Force
-            
+
             # Create a simple test file
             $testContent = @'
 Describe "Sample Test" {
     It "Should pass" {
         $true | Should -Be $true
     }
-    
+
     It "Should fail" {
         $false | Should -Be $true
     }
@@ -720,7 +720,7 @@ Describe "Sample Test" {
             # For now, we'll mock the behavior
             Mock Get-Module { [PSCustomObject]@{ Version = '5.3.0' } } -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' }
             Mock Import-Module { }
-            Mock New-PesterConfiguration { 
+            Mock New-PesterConfiguration {
                 [PSCustomObject]@{
                     Run = [PSCustomObject]@{ Path = ''; PassThru = $false; Exit = $false }
                     Filter = [PSCustomObject]@{ Tag = @() }
@@ -729,9 +729,9 @@ Describe "Sample Test" {
                 }
             }
             Mock Invoke-Pester { $script:MockPesterResult }
-            
+
             $result = Invoke-TestSuite -Path $TestDrive -Profile 'Quick'
-            
+
             $result | Should -Be $true
         }
     }
@@ -747,9 +747,9 @@ Describe "Sample Test" {
                 }
             }
             $testConfig | ConvertTo-Json -Depth 10 | Set-Content $configPath
-            
+
             $result = Get-TestingConfiguration -ConfigPath $configPath
-            
+
             $result.Framework | Should -Be 'Pester'
             $result.MinVersion | Should -Be '5.0.0'
         }
@@ -759,7 +759,7 @@ Describe "Sample Test" {
 AfterAll {
     # Clean up test environment
     Clear-TestEnvironment
-    
+
     # Remove any created test files
     if (Test-Path $TestDrive) {
         Get-ChildItem $TestDrive -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue

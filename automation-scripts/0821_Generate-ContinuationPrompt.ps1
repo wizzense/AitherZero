@@ -16,14 +16,14 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$ContextPath = "./.claude/session-context.json",
-    
+
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "./.claude/continuation-prompt.md",
-    
+
     [int]$MaxTokens = 4000,
-    
+
     [switch]$CopyToClipboard,
-    
+
     [switch]$ShowPrompt
 )
 
@@ -57,13 +57,13 @@ function Get-PrioritizedContext {
         [hashtable]$Context,
         [int]$MaxTokens
     )
-    
+
     $prioritized = @{
         Critical = @()
         Important = @()
         Nice = @()
     }
-    
+
     # Critical: Current errors and failures
     if ($Context.PowerShell.RecentErrors) {
         $prioritized.Critical += @{
@@ -71,7 +71,7 @@ function Get-PrioritizedContext {
             Content = $Context.PowerShell.RecentErrors
         }
     }
-    
+
     if ($Context.Test.TestResults -and $Context.Test.TestResults -ne "Failed to parse test results") {
         if ($Context.Test.TestResults.Failed -gt 0) {
             $prioritized.Critical += @{
@@ -80,7 +80,7 @@ function Get-PrioritizedContext {
             }
         }
     }
-    
+
     # Critical: Modified files
     if ($Context.Git.ModifiedFiles) {
         $prioritized.Critical += @{
@@ -88,7 +88,7 @@ function Get-PrioritizedContext {
             Content = $Context.Git.ModifiedFiles
         }
     }
-    
+
     # Important: Git status and branch
     $prioritized.Important += @{
         Type = "Git Context"
@@ -98,7 +98,7 @@ function Get-PrioritizedContext {
             Status = $Context.Git.Status
         }
     }
-    
+
     # Important: TODO items
     if ($Context.Project.TodoList) {
         $prioritized.Important += @{
@@ -106,7 +106,7 @@ function Get-PrioritizedContext {
             Content = $Context.Project.TodoList | Select-Object -First 10
         }
     }
-    
+
     # Nice: Command history
     if ($Context.PowerShell.CommandHistory) {
         $prioritized.Nice += @{
@@ -114,7 +114,7 @@ function Get-PrioritizedContext {
             Content = $Context.PowerShell.CommandHistory | Select-Object -Last 10
         }
     }
-    
+
     return $prioritized
 }
 
@@ -125,11 +125,11 @@ function New-PromptSection {
         [object]$Content,
         [int]$MaxLength = 1000
     )
-    
+
     $section = @()
     $section += "## $Title"
     $section += ""
-    
+
     if ($Content -is [string]) {
         $section += $Content
     }
@@ -152,7 +152,7 @@ function New-PromptSection {
         $section += $json
         $section += '```'
     }
-    
+
     $section += ""
     return $section -join "`n"
 }
@@ -160,18 +160,18 @@ function New-PromptSection {
 # Main execution
 try {
     Write-Host "🤖 Generating AI continuation prompt..." -ForegroundColor Cyan
-    
+
     # Load saved context
     if (-not (Test-Path $ContextPath)) {
         Write-Error "Context file not found. Run 0820_Save-WorkContext.ps1 first."
         exit 1
     }
-    
+
     $context = Get-Content $ContextPath | ConvertFrom-Json -AsHashtable
-    
+
     # Build prompt
     $prompt = @()
-    
+
     # Header
     $prompt += "# AitherZero Session Continuation"
     $prompt += ""
@@ -181,7 +181,7 @@ try {
     $prompt += "**Timestamp:** $($context.Timestamp)"
     $prompt += "**Project Version:** $($context.Project.Version)"
     $prompt += ""
-    
+
     # Current state
     $prompt += "## Current State"
     $prompt += ""
@@ -190,7 +190,7 @@ try {
     $prompt += "- **Last Commit:** $($context.Git.LastCommit)"
     $prompt += "- **Modified Files:** $($context.Git.ModifiedFiles.Count)"
     $prompt += ""
-    
+
     if ($context.Git.ModifiedFiles -and $context.Git.ModifiedFiles.Count -gt 0) {
         $prompt += "### Files Being Worked On"
         foreach ($file in $context.Git.ModifiedFiles.Keys | Select-Object -First 10) {
@@ -199,7 +199,7 @@ try {
         }
         $prompt += ""
     }
-    
+
     # Errors and issues
     if ($context.PowerShell.RecentErrors -and $context.PowerShell.RecentErrors.Count -gt 0) {
         $prompt += "## ⚠️ Recent Errors"
@@ -211,7 +211,7 @@ try {
             $prompt += ""
         }
     }
-    
+
     # Test results
     if ($context.Test.TestResults) {
         $prompt += "## Test Status"
@@ -221,7 +221,7 @@ try {
             $prompt += "- **Passed:** $($context.Test.TestResults.PassedCount ?? 'Unknown')"
             $prompt += "- **Failed:** $($context.Test.TestResults.FailedCount ?? 'Unknown')"
         }
-        
+
         if ($context.Test.AnalyzerResults) {
             $prompt += ""
             $prompt += "### PSScriptAnalyzer Results"
@@ -236,7 +236,7 @@ try {
         }
         $prompt += ""
     }
-    
+
     # TODO items
     if ($context.Project.TodoList -and $context.Project.TodoList.Count -gt 0) {
         $prompt += "## Outstanding TODO Items"
@@ -249,7 +249,7 @@ try {
         }
         $prompt += ""
     }
-    
+
     # Recent commands (for context)
     if ($context.PowerShell.CommandHistory -and $context.PowerShell.CommandHistory.Count -gt 0) {
         $prompt += "## Recent Commands"
@@ -261,49 +261,49 @@ try {
         $prompt += '```'
         $prompt += ""
     }
-    
+
     # Next steps section
     $prompt += "## Suggested Next Steps"
     $prompt += ""
-    
+
     $nextSteps = @()
-    
+
     # Based on errors
     if ($context.PowerShell.RecentErrors -and $context.PowerShell.RecentErrors.Count -gt 0) {
         $nextSteps += "1. Fix the errors reported above"
     }
-    
+
     # Based on test failures
     if ($context.Test.TestResults -and $context.Test.TestResults.FailedCount -gt 0) {
         $nextSteps += "2. Fix failing tests"
     }
-    
+
     # Based on analyzer results
     if ($context.Test.AnalyzerResults -and $context.Test.AnalyzerResults.TotalIssues -gt 0) {
         $nextSteps += "3. Address PSScriptAnalyzer violations"
     }
-    
+
     # Based on modified files
     if ($context.Git.ModifiedFiles -and $context.Git.ModifiedFiles.Count -gt 0) {
         $nextSteps += "4. Complete changes to modified files"
         $nextSteps += "5. Run tests on modified code"
         $nextSteps += "6. Commit changes with descriptive message"
     }
-    
+
     # Based on TODO items
     if ($context.Project.TodoList -and $context.Project.TodoList.Count -gt 0) {
         $nextSteps += "7. Address TODO items in code"
     }
-    
+
     if ($nextSteps.Count -eq 0) {
         $nextSteps += "No specific issues detected. Continue with planned development."
     }
-    
+
     foreach ($step in $nextSteps) {
         $prompt += $step
     }
     $prompt += ""
-    
+
     # Instructions
     $prompt += "## Instructions"
     $prompt += ""
@@ -317,7 +317,7 @@ try {
     $prompt += "Use the established patterns and conventions in the codebase."
     $prompt += "Run tests frequently to ensure changes don't break existing functionality."
     $prompt += ""
-    
+
     # Footer with quick commands
     $prompt += "## Quick Commands"
     $prompt += '```powershell'
@@ -331,22 +331,22 @@ try {
     $prompt += '# Save progress'
     $prompt += 'seq 0820  # Save work context'
     $prompt += '```'
-    
+
     $promptText = $prompt -join "`n"
-    
+
     # Check token count and compress if needed
     $tokenCount = Get-TokenEstimate -Text $promptText
     if ($tokenCount -gt $MaxTokens) {
         Write-Warning "Prompt exceeds token limit ($tokenCount > $MaxTokens). Compressing..."
-        
+
         # Remove less important sections
         $promptText = $promptText -replace '## Recent Commands[\s\S]*?(?=##|$)', ''
         $promptText = $promptText -replace '## Quick Commands[\s\S]*?$', ''
-        
+
         $newTokenCount = Get-TokenEstimate -Text $promptText
         Write-Host "   Compressed from $tokenCount to $newTokenCount tokens" -ForegroundColor Gray
     }
-    
+
     # Save prompt
     $outputDir = Split-Path $OutputPath -Parent
     if ($outputDir -and -not (Test-Path $outputDir)) {
@@ -354,15 +354,15 @@ try {
             New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
         }
     }
-    
+
     if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Continuation Prompt')) {
         $promptText | Set-Content $OutputPath -Encoding UTF8
     }
-    
+
     Write-Host "✅ Continuation prompt generated!" -ForegroundColor Green
     Write-Host "   File: $OutputPath" -ForegroundColor Gray
     Write-Host "   Tokens: ~$(Get-TokenEstimate -Text $promptText)" -ForegroundColor Gray
-    
+
     # Copy to clipboard if requested
     if ($CopyToClipboard) {
         if ($IsWindows) {
@@ -380,7 +380,7 @@ try {
             }
         }
     }
-    
+
     # Show prompt if requested
     if ($ShowPrompt) {
         Write-Host ""
@@ -388,7 +388,7 @@ try {
         Write-Host $promptText
         Write-Host "=" * 80 -ForegroundColor Cyan
     }
-    
+
     exit 0
 }
 catch {

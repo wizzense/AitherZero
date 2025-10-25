@@ -31,17 +31,17 @@ $scriptPath = Get-ChildItem "$ProjectRoot/automation-scripts" -Filter "${ScriptN
 
 if ($scriptPath) {
     Write-Host "Found script: $($scriptPath.Name)" -ForegroundColor Green
-    
+
     # Generate unit test with mocks
     $result = New-AutomationScriptTest -ScriptPath $scriptPath.FullName -IncludeMocks -IncludeIntegration
-    
+
     if ($result.Success) {
         Write-Host "`n✓ Unit test generated: $($result.TestPath)" -ForegroundColor Green
-        
+
         if ($result.IntegrationPath) {
             Write-Host "✓ Integration test generated: $($result.IntegrationPath)" -ForegroundColor Green
         }
-        
+
         # Show a preview of the generated test
         Write-Host "`nTest file preview:" -ForegroundColor Cyan
         Write-Host "==================" -ForegroundColor Cyan
@@ -71,14 +71,14 @@ Write-Host "========================================" -ForegroundColor Cyan
 
 if ($result -and $result.Success -and (Test-Path $result.TestPath)) {
     Write-Host "`nRunning the generated test..." -ForegroundColor Yellow
-    
+
     # Check if Pester is available
     if (Get-Module -ListAvailable -Name Pester) {
         Import-Module Pester
-        
+
         # Run the test
         $testResult = Invoke-Pester -Path $result.TestPath -PassThru -Show None
-        
+
         Write-Host "`nTest Results:" -ForegroundColor Cyan
         Write-Host "  Total: $($testResult.TotalCount)"
         Write-Host "  Passed: $($testResult.PassedCount)" -ForegroundColor Green
@@ -135,7 +135,7 @@ Add to your CI/CD pipeline:
   # Generate missing tests
   Import-Module ./domains/testing/TestGenerator.psm1
   New-AllAutomationTests
-  
+
   # Run all generated tests
   Invoke-Pester -Path "./tests/unit/automation-scripts" -OutputFile TestResults.xml
 

@@ -5,31 +5,31 @@
     AitherZero Configuration File
 .DESCRIPTION
     Main configuration for the AitherZero infrastructure automation platform.
-    
+
     This file uses PowerShell Data File format (.psd1) which provides:
     - Native PowerShell IntelliSense support
     - Syntax highlighting in editors
     - Comment support for documentation
     - No JSON escaping issues
-    
+
     Configuration Precedence (highest to lowest):
     1. Command-line parameters
     2. Environment variables (AITHERZERO_*)
     3. config.local.psd1 (if exists, gitignored)
     4. This file (config.psd1)
-    
+
     For CI/CD environments:
     - Set environment variable CI=true for automatic CI defaults
     - Or use AITHERZERO_* environment variables to override specific settings
-    
+
 .EXAMPLE
     # Override a setting via environment variable:
     $env:AITHERZERO_PROFILE = "Full"
-    
+
 .EXAMPLE
     # Load configuration in a script:
     $config = Import-PowerShellDataFile ./config.psd1
-    
+
 .NOTES
     Main configuration file for AitherZero platform
     Use config.example.psd1 for a fully documented template
@@ -413,7 +413,7 @@
         NotifyOnCompletion = $true
         ShowSkipped = $true
         Framework = 'Pester'
-        
+
         # Performance optimizations
         Performance = @{
             DisableConfigWatch = $true    # Prevent config file watching during tests
@@ -422,17 +422,17 @@
             CacheMinutes = 10            # Cache validity period
             FastStartup = $true          # Skip non-essential initializations
         }
-        
+
         # Pester configuration
         Pester = @{
             # Parallel execution settings - optimized for performance
             Parallel = @{
                 Enabled = $true
-                BlockSize = 5   # Smaller batches for faster feedback  
+                BlockSize = 5   # Smaller batches for faster feedback
                 Workers = 6     # More workers for better parallelization
                 ProcessIsolation = $true  # Run batches in separate processes
             }
-            
+
             # Output settings - optimized for CI/CD
             Output = @{
                 Verbosity = 'Minimal'     # Minimal output for speed
@@ -440,7 +440,7 @@
                 StackTraceVerbosity = 'FirstLine'  # Reduce verbose output
                 ShowPassedTests = $false  # Only show failures for speed
             }
-            
+
             # Test filtering
             Filter = @{
                 Tag = @()  # Tags to include (empty = all)
@@ -448,7 +448,7 @@
                 FullNameFilter = @()  # Test name patterns to include
                 ScriptBlockFilter = @()  # ScriptBlock filters
             }
-            
+
             # Run settings
             Run = @{
                 PassThru = $true  # Return result object
@@ -457,13 +457,13 @@
                 Container = @()   # Specific containers to run
                 TestExtension = '.Tests.ps1'  # Test file extension
             }
-            
+
             # Should assertion settings
             Should = @{
                 ErrorAction = 'Stop'  # Stop, Continue, SilentlyContinue
                 DisableV5 = $false    # Disable Pester v5 assertions
             }
-            
+
             # Debug settings
             Debug = @{
                 ShowFullErrors = $false
@@ -472,12 +472,12 @@
                 ShowNavigationMarkers = $false
                 ReturnRawResultObject = $false
             }
-            
+
             # TestDrive and TestRegistry
             TestDrive = @{
                 Enabled = $true
             }
-            
+
             TestRegistry = @{
                 Enabled = $true
             }
@@ -486,19 +486,19 @@
             Enabled = $true
             OutputPath = './tests/analysis'
             # SettingsPath removed - settings now inline in this config
-            
+
             # Select which rules to run
             IncludeRules = @('*')
-            
+
             # Exclude specific rules
             ExcludeRules = @(
                 'PSAvoidUsingWriteHost'  # We use Write-Host for UI output
                 'PSUseShouldProcessForStateChangingFunctions'  # Not all functions need ShouldProcess
             )
-            
+
             # Severity levels to check
             Severity = @('Error', 'Warning', 'Information')
-            
+
             # Rule-specific settings
             Rules = @{
                 PSProvideCommentHelp = @{
@@ -507,12 +507,12 @@
                     BlockComment = $true
                     Placement = 'begin'
                 }
-                
+
                 PSUseCompatibleSyntax = @{
                     Enable = $true
                     TargetVersions = @('7.0')
                 }
-                
+
                 PSUseCorrectCasing = @{
                     Enable = $true
                 }

@@ -15,20 +15,20 @@
 [CmdletBinding()]
 param(
     [string]$Branch,
-    
+
     [string]$BaseBranch = 'main',
-    
+
     [switch]$IncludeClosed,
-    
+
     [ValidateSet('All', 'Bug', 'Feature', 'Test', 'Documentation')]
     [string]$IssueType = 'All',
-    
+
     [int]$MaxIssues = 100,
-    
+
     [switch]$UseAI,
-    
+
     [decimal]$MatchThreshold = 0.7,
-    
+
     [switch]$Verbose
 )
 
@@ -117,27 +117,27 @@ $matchedIssues = @()
 foreach ($issue in $issues) {
     $matchScore = 0
     $matchReasons = @()
-    
+
     # Direct issue number reference in commits
     if ($commits -match "#$($issue.number)\b") {
         $matchScore = 1.0
         $matchReasons += "Direct reference in commit"
     }
-    
+
     # File path matching
     if ($issue.body) {
         foreach ($file in $changedFiles) {
             $fileName = Split-Path $file -Leaf
             $fileBase = [System.IO.Path]::GetFileNameWithoutExtension($file)
-            
-            if ($issue.body -match [regex]::Escape($fileName) -or 
+
+            if ($issue.body -match [regex]::Escape($fileName) -or
                 $issue.title -match [regex]::Escape($fileBase)) {
                 $matchScore += 0.5
                 $matchReasons += "File match: $fileName"
             }
         }
     }
-    
+
     # Error message matching
     if ($issue.body -match 'error|exception|failed|failure') {
         # Extract error messages from issue
@@ -147,12 +147,12 @@ foreach ($issue in $issues) {
                 $issueErrors += $line
             }
         }
-        
+
         # Check if we're fixing these errors
         foreach ($errorMsg in $issueErrors) {
             # Simple pattern matching for common error patterns
             $errorPattern = $errorMsg -replace '[^\w\s]', '.*'
-            
+
             foreach ($line in $removedLines) {
                 if ($line -match $errorPattern) {
                     $matchScore += 0.3
@@ -162,7 +162,7 @@ foreach ($issue in $issues) {
             }
         }
     }
-    
+
     # Function/class name matching
     $codePatterns = @(
         'function\s+(\w+)',
@@ -171,7 +171,7 @@ foreach ($issue in $issues) {
         '\$script:(\w+)',
         'Export-ModuleMember.*-Function\s+(\w+)'
     )
-    
+
     foreach ($pattern in $codePatterns) {
         $matchResults = [regex]::Matches($issue.body, $pattern)
         foreach ($match in $matchResults) {
@@ -182,14 +182,14 @@ foreach ($issue in $issues) {
             }
         }
     }
-    
+
     # Keyword matching in commit messages
     $keywords = @('fix', 'fixes', 'resolve', 'resolves', 'close', 'closes', 'address', 'addresses')
     $issueKeywords = ($issue.title -split '\s+') | Where-Object { $_.Length -gt 4 }
-    
+
     foreach ($keyword in $keywords) {
         foreach ($commit in $commits) {
-            if ($commit -match "$keyword.*$($issue.number)" -or 
+            if ($commit -match "$keyword.*$($issue.number)" -or
                 ($commit -match $keyword -and $issueKeywords | Where-Object { $commit -match $_ })) {
                 $matchScore += 0.4
                 $matchReasons += "Keyword match in commit"
@@ -197,12 +197,12 @@ foreach ($issue in $issues) {
             }
         }
     }
-    
+
     # AI matching if enabled
     if ($UseAI -and $matchScore -lt $MatchThreshold) {
         # This would call an AI service to analyze the relationship
         # For now, using enhanced pattern matching as placeholder
-        
+
         # Check for similar error patterns
         if ($issue.body -match 'TerminatingError|Write-Error|throw') {
             foreach ($line in $addedLines) {
@@ -213,7 +213,7 @@ foreach ($issue in $issues) {
             }
         }
     }
-    
+
     # Add to matched issues if above threshold
     if ($matchScore -ge $MatchThreshold) {
         $matchedIssues += [PSCustomObject]@{
@@ -236,14 +236,14 @@ if ($matchedIssues.Count -eq 0) {
     Write-Host "No matching issues found" -ForegroundColor Gray
 } else {
     Write-Host "`nMatched Issues:" -ForegroundColor Cyan
-    
+
     foreach ($match in $matchedIssues) {
         $confidence = switch ([Math]::Round($match.Score, 1)) {
             { $_ -ge 0.9 } { 'High' }
             { $_ -ge 0.7 } { 'Medium' }
             default { 'Low' }
         }
-        
+
         Write-Host "`n  #$($match.Number): $($match.Title)" -ForegroundColor $(
             switch ($confidence) {
                 'High' { 'Green' }
@@ -258,16 +258,16 @@ if ($matchedIssues.Count -eq 0) {
             Write-Host "      - $reason" -ForegroundColor Gray
         }
     }
-    
+
     # Generate PR body section
     Write-Host "`nPR Body Section:" -ForegroundColor Cyan
     Write-Host "=================" -ForegroundColor Gray
-    
+
     $prBody = @"
 ## Related Issues
 
 "@
-    
+
     $closingIssues = $matchedIssues | Where-Object { $_.LinkType -eq 'Closes' }
     if ($closingIssues) {
         $prBody += "`n### Closes`n"
@@ -275,7 +275,7 @@ if ($matchedIssues.Count -eq 0) {
             $prBody += "- Closes #$($issue.Number) - $($issue.Title)`n"
         }
     }
-    
+
     $fixingIssues = $matchedIssues | Where-Object { $_.LinkType -eq 'Fixes' }
     if ($fixingIssues) {
         $prBody += "`n### Fixes`n"
@@ -283,7 +283,7 @@ if ($matchedIssues.Count -eq 0) {
             $prBody += "- Fixes #$($issue.Number) - $($issue.Title)`n"
         }
     }
-    
+
     $referencingIssues = $matchedIssues | Where-Object { $_.LinkType -eq 'Refs' }
     if ($referencingIssues) {
         $prBody += "`n### References`n"
@@ -291,7 +291,7 @@ if ($matchedIssues.Count -eq 0) {
             $prBody += "- Refs #$($issue.Number) - $($issue.Title)`n"
         }
     }
-    
+
     Write-Host $prBody -ForegroundColor White
 }
 

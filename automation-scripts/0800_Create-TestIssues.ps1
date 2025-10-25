@@ -16,26 +16,26 @@
 param(
     [ValidateSet('Pester', 'PSScriptAnalyzer', 'All')]
     [string]$Source = 'All',
-    
+
     [string]$ResultsPath = './tests/results',
-    
+
     [string[]]$Labels = @('bug', 'automated'),
-    
+
     [ValidateSet('P0', 'P1', 'P2', 'P3')]
     [string]$DefaultPriority = 'P2',
-    
+
     [switch]$DryRun,
-    
+
     [switch]$GroupByFile,
-    
+
     [int]$MaxIssues = 20,
-    
+
     [switch]$UpdateExisting,
-    
+
     [string]$Milestone,
-    
+
     [string[]]$Assignees,
-    
+
     [switch]$NonInteractive
 )
 
@@ -54,21 +54,21 @@ $failures = @()
 # Parse Pester results
 if ($Source -in @('Pester', 'All')) {
     Write-Host "Parsing Pester results..." -ForegroundColor Yellow
-    
-    $pesterFiles = Get-ChildItem -Path $ResultsPath -Filter "*Pester*.xml" -ErrorAction SilentlyContinue | 
-                   Sort-Object LastWriteTime -Descending | 
+
+    $pesterFiles = Get-ChildItem -Path $ResultsPath -Filter "*Pester*.xml" -ErrorAction SilentlyContinue |
+                   Sort-Object LastWriteTime -Descending |
                    Select-Object -First 1
-    
+
     if ($pesterFiles) {
         foreach ($file in $pesterFiles) {
             Write-Host "  Processing: $($file.Name)" -ForegroundColor Gray
-            
+
             try {
                 $xml = [xml](Get-Content $file.FullName)
-                
+
                 # Parse test failures
                 $testCases = $xml.SelectNodes("//test-case[@result='Failed']")
-                
+
                 foreach ($testCase in $testCases) {
                     $failures += [PSCustomObject]@{
                         Type = 'TestFailure'
@@ -80,9 +80,9 @@ if ($Source -in @('Pester', 'All')) {
                         Severity = 'High'
                     }
                 }
-                
+
                 Write-Host "  Found $($testCases.Count) test failures" -ForegroundColor Yellow
-                
+
             } catch {
                 Write-Warning "Failed to parse Pester results: $_"
             }
@@ -95,22 +95,22 @@ if ($Source -in @('Pester', 'All')) {
 # Parse PSScriptAnalyzer results
 if ($Source -in @('PSScriptAnalyzer', 'All')) {
     Write-Host "Parsing PSScriptAnalyzer results..." -ForegroundColor Yellow
-    
+
     $analyzerFiles = Get-ChildItem -Path $ResultsPath -Filter "*Analyzer*.json" -ErrorAction SilentlyContinue |
                      Sort-Object LastWriteTime -Descending |
                      Select-Object -First 1
-    
+
     if ($analyzerFiles) {
         foreach ($file in $analyzerFiles) {
             Write-Host "  Processing: $($file.Name)" -ForegroundColor Gray
-            
+
             try {
                 $results = Get-Content $file.FullName | ConvertFrom-Json
-                
+
                 foreach ($violation in $results) {
                     # Skip informational messages
                     if ($violation.Severity -eq 'Information') { continue }
-                    
+
                     $failures += [PSCustomObject]@{
                         Type = 'CodeViolation'
                         Source = 'PSScriptAnalyzer'
@@ -122,9 +122,9 @@ if ($Source -in @('PSScriptAnalyzer', 'All')) {
                         Severity = $violation.Severity
                     }
                 }
-                
+
                 Write-Host "  Found $($results.Count) violations" -ForegroundColor Yellow
-                
+
             } catch {
                 Write-Warning "Failed to parse PSScriptAnalyzer results: $_"
             }
@@ -168,7 +168,7 @@ foreach ($group in $grouped) {
     } else {
         $title = "Test failures found - $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
     }
-    
+
     # Build issue body
     $body = @"
 ## Test Failures Report
@@ -185,7 +185,7 @@ This issue was automatically created from test failures.
 
     foreach ($failure in $group.Group | Select-Object -First 10) {
         $body += "`n`n#### $(if ($failure.Type -eq 'TestFailure') { '❌ Test Failure' } else { '⚠️ Code Violation' })`n"
-        
+
         if ($failure.Type -eq 'TestFailure') {
             $body += @"
 - **Test**: ``$($failure.Test)``
@@ -215,11 +215,11 @@ $($failure.StackTrace)
 "@
         }
     }
-    
+
     if ($group.Group.Count -gt 10) {
         $body += "`n`n*... and $($group.Group.Count - 10) more failures*"
     }
-    
+
     # Add action items
     $body += @"
 
@@ -241,7 +241,7 @@ Script: ``0800_Create-TestIssues.ps1``
     } elseif ($group.Group | Where-Object { $_.Severity -eq 'Warning' }) {
         $priority = 'P2'
     }
-    
+
     # Build labels
     $issueLabels = $Labels + @("priority:$priority")
     if ($GroupByFile) {
@@ -250,7 +250,7 @@ Script: ``0800_Create-TestIssues.ps1``
             $issueLabels += "lang:$($extension.TrimStart('.'))"
         }
     }
-    
+
     # Check for existing issue if updating
     $existingIssue = $null
     if ($UpdateExisting) {
@@ -265,7 +265,7 @@ Script: ``0800_Create-TestIssues.ps1``
             Write-Warning "Failed to search for existing issues: $_"
         }
     }
-    
+
     if ($DryRun) {
         Write-Host "`n[DRY RUN] Would create issue:" -ForegroundColor Magenta
         Write-Host "  Title: $title" -ForegroundColor Gray
@@ -277,45 +277,45 @@ Script: ``0800_Create-TestIssues.ps1``
             if ($existingIssue) {
                 # Update existing issue
                 Write-Host "Updating issue #$existingIssue..." -ForegroundColor Yellow
-                
+
                 # Add comment with new failures
                 $comment = "## Updated Test Results`n`n$body"
                 gh issue comment $existingIssue --body $comment
-                
+
                 $createdIssues += [PSCustomObject]@{
                     Number = $existingIssue
                     Title = $title
                     Updated = $true
                 }
-                
+
                 Write-Host "✓ Updated issue #$existingIssue" -ForegroundColor Green
             } else {
                 # Create new issue
                 Write-Host "Creating new issue..." -ForegroundColor Yellow
-                
+
                 $issueParams = @{
                     Title = $title
                     Body = $body
                     Labels = $issueLabels
                 }
-                
+
                 if ($Assignees) {
                     $issueParams.Assignees = $Assignees
                 }
-                
+
                 if ($Milestone) {
                     $issueParams.Milestone = $Milestone
                 }
-                
+
                 $issue = New-GitHubIssue @issueParams
-                
+
                 $createdIssues += [PSCustomObject]@{
                     Number = $issue.Number
                     Title = $title
                     Url = $issue.Url
                     Updated = $false
                 }
-                
+
                 Write-Host "✓ Created issue #$($issue.Number)" -ForegroundColor Green
                 Write-Host "  URL: $($issue.Url)" -ForegroundColor Gray
             }

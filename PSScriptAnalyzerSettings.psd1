@@ -16,7 +16,7 @@
             BlockComment = $true
             Placement = "begin"
         }
-        
+
         PSUseCompatibleSyntax = @{
             Enable = $true
             TargetVersions = @('7.0')

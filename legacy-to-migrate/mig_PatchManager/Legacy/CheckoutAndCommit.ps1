@@ -2,20 +2,20 @@ function Invoke-CheckoutAndCommit {
     <#
     .SYNOPSIS
         Creates a new branch and commits changes
-    
+
     .DESCRIPTION
         This function creates a new Git branch and commits all staged changes with the specified message.
         Compatible with PowerShell 5.1 and 7.x.
-    
+
     .PARAMETER BranchName
         Name of the branch to create
-    
+
     .PARAMETER BaseBranch
         Base branch to create the new branch from (default: main)
-    
+
     .PARAMETER CommitMessage
         Commit message for the changes
-    
+
     .EXAMPLE
         Invoke-CheckoutAndCommit -BranchName "feature/new-fix" -CommitMessage "Fix compatibility issues"
     #>
@@ -24,11 +24,11 @@ function Invoke-CheckoutAndCommit {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$BranchName,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$BaseBranch = 'main',
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$CommitMessage
@@ -49,7 +49,7 @@ function Invoke-CheckoutAndCommit {
         if ([string]::IsNullOrWhiteSpace($BranchName)) {
             throw "Branch name is required and cannot be empty"
         }
-        
+
         if ([string]::IsNullOrWhiteSpace($CommitMessage)) {
             throw "Commit message is required and cannot be empty"
         }
@@ -67,7 +67,7 @@ function Invoke-CheckoutAndCommit {
         # Commit changes
         CommitChanges -CommitMessage $CommitMessage
         Write-Host "Changes committed successfully with message: '$CommitMessage'." -ForegroundColor Green
-        
+
         return @{
             Success = $true
             BranchName = $BranchName

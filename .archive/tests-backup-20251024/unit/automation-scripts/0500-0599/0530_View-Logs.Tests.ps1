@@ -4,7 +4,7 @@ Describe "0530_View-Logs" {
     BeforeAll {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0530_View-Logs.ps1"
         $script:TestLogPath = Join-Path ([System.IO.Path]::GetTempPath()) "test.log"
-        
+
         # Create test log content
         @(
             "[2024-01-01 12:00:00] [INFO] Application started",
@@ -12,13 +12,13 @@ Describe "0530_View-Logs" {
             "[2024-01-01 12:02:00] [WARNING] High memory usage detected",
             "[2024-01-01 12:03:00] [DEBUG] Processing user request"
         ) | Set-Content -Path $script:TestLogPath
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-CustomLog -MockWith { param($Message, $Level) Write-Host "[$Level] $Message" }
         Mock -CommandName Get-LogFiles -MockWith {
             if ($Type -eq "Application" -or $Type -eq "All") {
-                @(@{ 
+                @(@{
                     Name = "aitherzero.log"
                     FullName = $script:TestLogPath
                     Type = "Application"
@@ -27,7 +27,7 @@ Describe "0530_View-Logs" {
                 })
             }
             if ($Type -eq "Transcript" -or $Type -eq "All") {
-                @(@{ 
+                @(@{
                     Name = "transcript-001.log"
                     FullName = "transcript.log"
                     Type = "Transcript"
@@ -114,42 +114,42 @@ Describe "0530_View-Logs" {
     Context "Log Viewing Modes" {
         It "Should display dashboard in interactive mode" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             & $script:ScriptPath -Mode "Dashboard" -WhatIf 2>&1
             Should -Not -Invoke Show-LogDashboard  # WhatIf mode
         }
 
         It "Should display latest logs" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             & $script:ScriptPath -Mode "Latest" -Tail 25 -WhatIf 2>&1
             Should -Not -Invoke Show-LogContent  # WhatIf mode
         }
 
         It "Should display error logs" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             & $script:ScriptPath -Mode "Errors" -WhatIf 2>&1
             Should -Not -Invoke Show-LogContent  # WhatIf mode
         }
 
         It "Should display transcript logs" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             & $script:ScriptPath -Mode "Transcript" -WhatIf 2>&1
             Should -Not -Invoke Show-LogContent  # WhatIf mode
         }
 
         It "Should handle search mode" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             & $script:ScriptPath -Mode "Search" -SearchPattern "error" -WhatIf 2>&1
             Should -Not -Invoke Search-Logs  # WhatIf mode
         }
 
         It "Should display logging status" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             & $script:ScriptPath -Mode "Status" -WhatIf 2>&1
             Should -Not -Invoke Get-LoggingStatus  # WhatIf mode
         }
@@ -158,7 +158,7 @@ Describe "0530_View-Logs" {
     Context "Non-Interactive Mode" {
         It "Should handle non-interactive dashboard mode" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             $env:AITHERZERO_NONINTERACTIVE = "true"
             try {
                 & $script:ScriptPath -Mode "Dashboard" -WhatIf 2>&1
@@ -170,7 +170,7 @@ Describe "0530_View-Logs" {
 
         It "Should require search pattern in non-interactive search mode" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             $env:AITHERZERO_NONINTERACTIVE = "true"
             try {
                 $result = & $script:ScriptPath -Mode "Search" -WhatIf 2>&1
@@ -184,7 +184,7 @@ Describe "0530_View-Logs" {
     Context "WhatIf Support" {
         It "Should show log viewer preview with WhatIf" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             $result = & $script:ScriptPath -WhatIf 2>&1
             $result | Should -Not -BeNullOrEmpty
         }
@@ -198,7 +198,7 @@ Describe "0530_View-Logs" {
     Context "Error Handling" {
         It "Should handle missing LogViewer module" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $false }
-            
+
             $result = & $script:ScriptPath -Mode "Status" 2>&1
             $LASTEXITCODE | Should -Be 1
         }
@@ -206,7 +206,7 @@ Describe "0530_View-Logs" {
         It "Should handle module import failures" {
             Mock -CommandName Import-Module -MockWith { throw "Module not found" }
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             $result = & $script:ScriptPath -Mode "Status" 2>&1
             $LASTEXITCODE | Should -Be 1
         }
@@ -214,7 +214,7 @@ Describe "0530_View-Logs" {
         It "Should handle missing log files gracefully" {
             Mock -CommandName Get-LogFiles -MockWith { @() }
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*LogViewer.psm1" } -MockWith { $true }
-            
+
             { & $script:ScriptPath -Mode "Latest" } | Should -Not -Throw
         }
     }

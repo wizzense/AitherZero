@@ -48,10 +48,10 @@ $logPath = Join-Path $PSScriptRoot "../logs/scheduled-reports.log"
 try {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     "[$timestamp] Starting scheduled report generation" | Add-Content $logPath
-    
+
     # Run report generation
     & $scriptPath -Format All
-    
+
     "[$timestamp] Report generation completed successfully" | Add-Content $logPath
 } catch {
     "[$timestamp] Report generation failed: $_" | Add-Content $logPath
@@ -72,10 +72,10 @@ if ($PSCmdlet.ShouldProcess($wrapperPath, "Create wrapper script")) {
 
 if ($IsWindows) {
     Write-ScheduleLog "Configuring Windows Task Scheduler"
-    
+
     $taskName = "AitherZero-ReportGeneration"
     $action = New-ScheduledTaskAction -Execute "pwsh.exe" -Argument "-File `"$wrapperPath`""
-    
+
     switch ($Schedule) {
         'Daily' {
             $trigger = New-ScheduledTaskTrigger -Daily -At $Time
@@ -99,14 +99,14 @@ if ($IsWindows) {
             return
         }
     }
-    
+
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-    
+
     if ($PSCmdlet.ShouldProcess($taskName, "Create/update scheduled task")) {
         try {
             # Remove existing task if present
             Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-            
+
             # Register new task
             Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "Automatic report generation for AitherZero project"
             Write-ScheduleLog "Windows scheduled task created successfully"
@@ -114,10 +114,10 @@ if ($IsWindows) {
             Write-ScheduleLog "Failed to create Windows scheduled task: $_" -Level 'Error'
         }
     }
-    
+
 } else {
     Write-ScheduleLog "Configuring cron job for Linux/Mac"
-    
+
     # Create cron entry
     $cronTime = switch ($Schedule) {
         'Daily' {
@@ -150,20 +150,20 @@ if ($IsWindows) {
             return
         }
     }
-    
+
     $cronEntry = "$cronTime cd $ProjectPath && /usr/bin/pwsh $wrapperPath >> $ProjectPath/logs/cron-reports.log 2>&1 # AitherZero scheduled-report"
-    
+
     if ($PSCmdlet.ShouldProcess("cron job", "Create/update scheduled cron job")) {
         try {
             # Get current crontab
             $currentCron = @(crontab -l 2>/dev/null | Where-Object { $_ -notmatch 'AitherZero.*scheduled-report' })
-            
+
             # Add new entry
             $newCron = $currentCron + $cronEntry
-            
+
             # Set new crontab
             $newCron | crontab -
-            
+
             Write-ScheduleLog "Cron job configured successfully: $cronTime"
             Write-ScheduleLog "View with: crontab -l"
         } catch {
@@ -178,19 +178,19 @@ if ($Schedule -eq 'OnTestRun' -or $Schedule -eq 'Daily') {
     if (Test-Path $hookConfig) {
         try {
             $config = Get-Content $hookConfig -Raw | ConvertFrom-Json
-            
+
             # Ensure report generation is enabled in hooks
             if (-not $config.PSObject.Properties['reporting']) {
                 $config | Add-Member -MemberType NoteProperty -Name 'reporting' -Value @{} -Force
             }
-            
+
             $config.reporting = @{
                 autoGenerate = $true
                 onTestRun = ($Schedule -eq 'OnTestRun' -or $Schedule -eq 'Daily')
                 formats = @('HTML', 'JSON', 'Markdown')
                 retentionDays = 7
             }
-            
+
             if ($PSCmdlet.ShouldProcess($hookConfig, "Update hook configuration")) {
                 $config | ConvertTo-Json -Depth 10 | Set-Content $hookConfig
                 Write-ScheduleLog "Hook configuration updated for automatic report generation"

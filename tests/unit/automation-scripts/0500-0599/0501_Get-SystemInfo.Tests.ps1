@@ -3,7 +3,7 @@
 Describe "0501_Get-SystemInfo" {
     BeforeAll {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0501_Get-SystemInfo.ps1"
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-CustomLog -MockWith { param($Message, $Level) Write-Host "[$Level] $Message" }
@@ -59,23 +59,23 @@ Describe "0501_Get-SystemInfo" {
     Context "System Information Collection" {
         It "Should collect basic system information" {
             Mock -CommandName Write-Host -MockWith { }
-            
+
             $result = & $script:ScriptPath -Configuration @{} 2>&1
             $LASTEXITCODE | Should -Be 0
         }
 
         It "Should detect platform correctly" {
             Mock -CommandName Write-Host -MockWith { }
-            
+
             & $script:ScriptPath -Configuration @{} 2>&1
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*Platform:*" }
         }
 
         It "Should collect memory information" {
             Mock -CommandName Write-Host -MockWith { }
-            
+
             & $script:ScriptPath -Configuration @{} 2>&1
-            
+
             if ($IsWindows) {
                 Should -Invoke Get-CimInstance -ParameterFilter { $ClassName -eq "Win32_OperatingSystem" }
             }
@@ -91,21 +91,21 @@ Describe "0501_Get-SystemInfo" {
 
         It "Should support Summary format" {
             Mock -CommandName Write-Host -MockWith { }
-            
+
             & $script:ScriptPath -OutputFormat "Summary" 2>&1
             Should -Invoke Write-Host -AtLeast 5
         }
 
         It "Should support Detailed format" {
             Mock -CommandName Write-Host -MockWith { }
-            
+
             & $script:ScriptPath -OutputFormat "Detailed" 2>&1
             Should -Invoke Write-Host -AtLeast 10
         }
 
         It "Should support Full format" {
             Mock -CommandName Write-Host -MockWith { }
-            
+
             & $script:ScriptPath -OutputFormat "Full" 2>&1
             Should -Invoke Write-Host -AtLeast 10
         }

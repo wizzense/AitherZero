@@ -26,10 +26,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
-    
+
     [ValidateSet('CommentBasedHelp', 'README', 'API', 'Architecture', 'All')]
     [string]$DocType = 'All',
-    
+
     [string]$OutputPath = "./docs/generated"
 )
 
@@ -92,7 +92,7 @@ if ($PSCmdlet.ShouldProcess($OutputPath, "Create documentation files")) {
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
         Write-Host "✓ Created output directory: $OutputPath" -ForegroundColor Green
     }
-    
+
     if ($DocType -eq 'All' -or $DocType -eq 'CommentBasedHelp') {
         # In full implementation: Update source files with comment-based help
         Write-Host "✓ Comment-based help generated" -ForegroundColor Green
@@ -109,7 +109,7 @@ if ($PSCmdlet.ShouldProcess($OutputPath, "Create documentation files")) {
         # In full implementation: Set-Content -Path "$OutputPath/Architecture.md" -Value $archContent
         Write-Host "✓ Architecture diagrams created" -ForegroundColor Green
     }
-    
+
     Write-Host ""
     Write-Host "Documentation would be saved to: $OutputPath" -ForegroundColor Cyan
 } else {
@@ -126,7 +126,7 @@ if ($PSCmdlet.ShouldProcess($OutputPath, "Create documentation files")) {
     if ($DocType -eq 'All' -or $DocType -eq 'Architecture') {
         Write-Host "✓ Would create architecture diagrams" -ForegroundColor Yellow
     }
-    
+
     Write-Host ""
     Write-Host "Would save documentation to: $OutputPath" -ForegroundColor Cyan
 }

@@ -78,20 +78,20 @@ try {
     # Use PackageManager if available
     if ($script:PackageManagerAvailable) {
         Write-ScriptLog "Using PackageManager module for 7-Zip installation"
-        
+
         # Try package manager installation
         try {
             $preferredPackageManager = $sevenZipConfig.PreferredPackageManager
             $installResult = Install-SoftwarePackage -SoftwareName '7zip' -PreferredPackageManager $preferredPackageManager
-            
+
             if ($installResult.Success) {
                 Write-ScriptLog "7-Zip installed successfully via $($installResult.PackageManager)"
-                
+
                 # Verify installation
                 $sevenZipCmd = if ($IsWindows) { '7z.exe' } else { '7z' }
                 if (Get-Command $sevenZipCmd -ErrorAction SilentlyContinue) {
                     Write-ScriptLog "7-Zip is working correctly"
-                    
+
                     # Test 7-Zip
                     try {
                         $testOutput = & $sevenZipCmd 2>&1
@@ -102,7 +102,7 @@ try {
                         Write-ScriptLog "7-Zip installed but may not be functioning correctly" -Level 'Warning'
                     }
                 }
-                
+
                 Write-ScriptLog "7-Zip installation completed successfully"
                 exit 0
             }
@@ -122,9 +122,9 @@ try {
             "${env:ProgramFiles}\7-Zip\7z.exe",
             "${env:ProgramFiles(x86)}\7-Zip\7z.exe"
         )
-    
+
         $existingPath = $sevenZipPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
-        
+
         if ($existingPath) {
             Write-ScriptLog "7-Zip is already installed at: $(Split-Path $existingPath -Parent)"
 
@@ -142,12 +142,12 @@ try {
                 $env:PATH = "$env:PATH;$sevenZipDir"
                 Write-ScriptLog "Added 7-Zip to current session PATH"
             }
-            
+
             exit 0
         }
-        
+
         Write-ScriptLog "Installing 7-Zip for Windows..."
-        
+
         # Determine download URL
         $downloadUrl = if ($sevenZipConfig.Version) {
             # Construct URL for specific version
@@ -157,44 +157,44 @@ try {
             # Use latest stable version
             'https://www.7-zip.org/a/7z2408-x64.exe'
         }
-        
+
         $tempInstaller = Join-Path $env:TEMP "7z_$(Get-Date -Format 'yyyyMMddHHmmss').exe"
-        
+
         try {
             if ($PSCmdlet.ShouldProcess($downloadUrl, 'Download 7-Zip installer')) {
                 Write-ScriptLog "Downloading from: $downloadUrl"
-                
+
                 $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempInstaller -UseBasicParsing
                 $ProgressPreference = 'Continue'
-                
+
                 Write-ScriptLog "Downloaded to: $tempInstaller"
             }
 
             # Run installer
             if ($PSCmdlet.ShouldProcess('7-Zip', 'Install')) {
                 Write-ScriptLog "Running installer..."
-                
+
                 $installArgs = '/S'  # Silent install
-                
+
                 # Add install directory if specified
                 if ($sevenZipConfig.InstallPath) {
                     $installPath = [System.Environment]::ExpandEnvironmentVariables($sevenZipConfig.InstallPath)
                     $installArgs = "/S /D=$installPath"
                 }
-                
+
                 $process = Start-Process -FilePath $tempInstaller -ArgumentList $installArgs -Wait -PassThru
-                
+
                 if ($process.ExitCode -ne 0) {
                     throw "Installer exited with code: $($process.ExitCode)"
                 }
-                
+
                 Write-ScriptLog "Installation completed"
             }
 
             # Clean up
             Remove-Item $tempInstaller -Force -ErrorAction SilentlyContinue
-            
+
         } catch {
             # Clean up on failure
             if (Test-Path $tempInstaller) {
@@ -202,20 +202,20 @@ try {
             }
             throw
         }
-        
+
         # Verify installation
         $installedPath = $sevenZipPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
-        
+
         if (-not $installedPath) {
             Write-ScriptLog "7-Zip executable not found after installation" -Level 'Error'
             exit 1
         }
-        
+
         Write-ScriptLog "7-Zip installed successfully at: $(Split-Path $installedPath -Parent)"
-        
+
         # Add to PATH
         $sevenZipDir = Split-Path $installedPath -Parent
-        
+
         # Add to system PATH if configured
         if ($sevenZipConfig.AddToPath -eq $true) {
             try {
@@ -230,23 +230,23 @@ try {
                 Write-ScriptLog "Could not modify system PATH: $_" -Level 'Warning'
             }
         }
-        
+
         # Add to current session
         if ($env:PATH -notlike "*$sevenZipDir*") {
             $env:PATH = "$env:PATH;$sevenZipDir"
             Write-ScriptLog "Added 7-Zip to current session PATH"
         }
-        
+
     } elseif ($IsLinux) {
         # Linux installation
         Write-ScriptLog "Installing 7-Zip for Linux..."
-        
+
         # Check if already installed
         if (Get-Command 7z -ErrorAction SilentlyContinue) {
             Write-ScriptLog "7-Zip is already installed"
             exit 0
         }
-        
+
         # Install using package manager
         if (Get-Command apt-get -ErrorAction SilentlyContinue) {
             # Debian/Ubuntu
@@ -263,17 +263,17 @@ try {
             Write-ScriptLog "Unsupported Linux distribution for automatic installation" -Level 'Error'
             exit 1
         }
-        
+
     } elseif ($IsMacOS) {
         # macOS installation
         Write-ScriptLog "Installing 7-Zip for macOS..."
-        
+
         # Check if already installed
         if (Get-Command 7z -ErrorAction SilentlyContinue) {
             Write-ScriptLog "7-Zip is already installed"
             exit 0
         }
-        
+
         # Install using Homebrew
         if (Get-Command brew -ErrorAction SilentlyContinue) {
             if ($PSCmdlet.ShouldProcess('p7zip', 'Install via Homebrew')) {
@@ -301,10 +301,10 @@ try {
     } catch {
         Write-ScriptLog "7-Zip installed but may not be functioning correctly" -Level 'Warning'
     }
-    
+
     Write-ScriptLog "7-Zip installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during 7-Zip installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'
