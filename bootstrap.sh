@@ -61,40 +61,134 @@ install_powershell() {
                 . /etc/os-release
                 case "$ID" in
                     ubuntu|debian)
-                        # Install PowerShell on Ubuntu/Debian
-                        sudo apt-get update
-                        sudo apt-get install -y wget apt-transport-https software-properties-common
-                        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-                        sudo dpkg -i packages-microsoft-prod.deb
-                        sudo apt-get update
-                        sudo apt-get install -y powershell
-                        rm packages-microsoft-prod.deb
+                        # Modern Ubuntu/Debian installation method
+                        print_log "INFO" "Installing PowerShell via Microsoft repository..."
+                        
+                        # Update package list and install prerequisites
+                        sudo apt-get update || error_exit "Failed to update package list"
+                        sudo apt-get install -y wget apt-transport-https software-properties-common curl || error_exit "Failed to install prerequisites"
+                        
+                        # Get Ubuntu version for correct repository
+                        UBUNTU_VERSION=$(lsb_release -rs 2>/dev/null || echo "20.04")
+                        
+                        # Download and install Microsoft signing key and repository
+                        if ! wget -q "https://packages.microsoft.com/config/ubuntu/${UBUNTU_VERSION}/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb; then
+                            print_log "WARNING" "Failed to download specific Ubuntu repository, trying generic method..."
+                            install_powershell_generic
+                            return $?
+                        fi
+                        
+                        sudo dpkg -i packages-microsoft-prod.deb || error_exit "Failed to install Microsoft repository"
+                        sudo apt-get update || error_exit "Failed to update package list after adding Microsoft repository"
+                        sudo apt-get install -y powershell || {
+                            print_log "WARNING" "Package installation failed, trying generic method..."
+                            rm -f packages-microsoft-prod.deb
+                            install_powershell_generic
+                            return $?
+                        }
+                        rm -f packages-microsoft-prod.deb
                         ;;
-                    rhel|centos|fedora)
-                        # Install PowerShell on RHEL/CentOS/Fedora
-                        curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
-                        sudo yum install -y powershell
+                    rhel|centos|rocky|almalinux)
+                        # RHEL/CentOS/Rocky/AlmaLinux installation
+                        print_log "INFO" "Installing PowerShell for RHEL-based distribution..."
+                        
+                        # Determine version number for repository URL
+                        VERSION_ID=$(echo "$VERSION_ID" | cut -d. -f1)
+                        
+                        if command -v dnf &> /dev/null; then
+                            # Use dnf for modern RHEL/CentOS
+                            curl -sSL "https://packages.microsoft.com/config/rhel/${VERSION_ID}/prod.repo" | sudo tee /etc/yum.repos.d/microsoft.repo > /dev/null || {
+                                print_log "WARNING" "Failed to add Microsoft repository, trying generic method..."
+                                install_powershell_generic
+                                return $?
+                            }
+                            sudo dnf install -y powershell || {
+                                print_log "WARNING" "Package installation failed, trying generic method..."
+                                install_powershell_generic
+                                return $?
+                            }
+                        elif command -v yum &> /dev/null; then
+                            # Use yum for older systems
+                            curl -sSL "https://packages.microsoft.com/config/rhel/${VERSION_ID}/prod.repo" | sudo tee /etc/yum.repos.d/microsoft.repo > /dev/null || {
+                                print_log "WARNING" "Failed to add Microsoft repository, trying generic method..."
+                                install_powershell_generic
+                                return $?
+                            }
+                            sudo yum install -y powershell || {
+                                print_log "WARNING" "Package installation failed, trying generic method..."
+                                install_powershell_generic
+                                return $?
+                            }
+                        else
+                            error_exit "No suitable package manager found (dnf or yum)"
+                        fi
+                        ;;
+                    fedora)
+                        # Fedora installation
+                        print_log "INFO" "Installing PowerShell for Fedora..."
+                        curl -sSL "https://packages.microsoft.com/config/rhel/8/prod.repo" | sudo tee /etc/yum.repos.d/microsoft.repo > /dev/null || {
+                            print_log "WARNING" "Failed to add Microsoft repository, trying generic method..."
+                            install_powershell_generic
+                            return $?
+                        }
+                        sudo dnf install -y powershell || {
+                            print_log "WARNING" "Package installation failed, trying generic method..."
+                            install_powershell_generic
+                            return $?
+                        }
+                        ;;
+                    opensuse*|sles)
+                        # openSUSE/SLES installation
+                        print_log "INFO" "Installing PowerShell for openSUSE/SLES..."
+                        sudo zypper refresh || error_exit "Failed to refresh repositories"
+                        sudo zypper install -y curl || error_exit "Failed to install curl"
+                        install_powershell_generic
+                        ;;
+                    arch|manjaro)
+                        # Arch Linux installation
+                        print_log "INFO" "Installing PowerShell for Arch Linux..."
+                        if command -v yay &> /dev/null; then
+                            yay -S --noconfirm powershell-bin || install_powershell_generic
+                        elif command -v paru &> /dev/null; then
+                            paru -S --noconfirm powershell-bin || install_powershell_generic
+                        else
+                            install_powershell_generic
+                        fi
                         ;;
                     *)
-                        # Generic installation using Microsoft script
-                        wget -q https://aka.ms/install-powershell.sh -O install-powershell.sh
-                        chmod +x install-powershell.sh
-                        sudo ./install-powershell.sh
-                        rm install-powershell.sh
+                        # Unknown distribution - use generic method
+                        print_log "INFO" "Unknown Linux distribution '$ID', using generic installation method..."
+                        install_powershell_generic
                         ;;
                 esac
             else
-                error_exit "Cannot determine Linux distribution"
+                print_log "WARNING" "Cannot determine Linux distribution, using generic installation method..."
+                install_powershell_generic
             fi
             ;;
         Darwin*)
             # Install PowerShell on macOS
+            print_log "INFO" "Installing PowerShell for macOS..."
             if command -v brew &> /dev/null; then
-                brew install --cask powershell
+                brew install --cask powershell || {
+                    print_log "WARNING" "Homebrew installation failed, trying generic method..."
+                    install_powershell_generic
+                }
             else
-                print_log "WARNING" "Homebrew not found. Installing Homebrew first..."
-                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-                brew install --cask powershell
+                print_log "INFO" "Homebrew not found. Installing Homebrew first..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || error_exit "Failed to install Homebrew"
+                
+                # Add Homebrew to PATH for this session
+                if [ -f "/opt/homebrew/bin/brew" ]; then
+                    export PATH="/opt/homebrew/bin:$PATH"
+                elif [ -f "/usr/local/bin/brew" ]; then
+                    export PATH="/usr/local/bin:$PATH"
+                fi
+                
+                brew install --cask powershell || {
+                    print_log "WARNING" "Homebrew installation failed, trying generic method..."
+                    install_powershell_generic
+                }
             fi
             ;;
         *)
@@ -105,15 +199,45 @@ install_powershell() {
     # Verify installation
     if command -v pwsh &> /dev/null; then
         print_log "SUCCESS" "PowerShell 7 installed successfully"
+        pwsh -Version || print_log "WARNING" "PowerShell installed but version check failed"
     else
-        error_exit "PowerShell 7 installation failed"
+        error_exit "PowerShell 7 installation failed - pwsh command not found"
     fi
+}
+
+# Generic PowerShell installation using Microsoft's official script
+install_powershell_generic() {
+    print_log "INFO" "Using Microsoft's generic PowerShell installation script..."
+    
+    # Download and run the official PowerShell installation script
+    if command -v curl &> /dev/null; then
+        curl -sSL https://aka.ms/install-powershell.sh -o install-powershell.sh || error_exit "Failed to download PowerShell installation script"
+    elif command -v wget &> /dev/null; then
+        wget -q https://aka.ms/install-powershell.sh -O install-powershell.sh || error_exit "Failed to download PowerShell installation script"
+    else
+        error_exit "Neither curl nor wget found - cannot download PowerShell installation script"
+    fi
+    
+    chmod +x install-powershell.sh || error_exit "Failed to make installation script executable"
+    
+    # Run the installation script with error handling
+    if sudo ./install-powershell.sh; then
+        print_log "SUCCESS" "PowerShell installed using generic method"
+    else
+        print_log "ERROR" "Generic PowerShell installation failed"
+        rm -f install-powershell.sh
+        return 1
+    fi
+    
+    rm -f install-powershell.sh
+    return 0
 }
 
 # Check and install Git
 install_git() {
     if command -v git &> /dev/null; then
         print_log "SUCCESS" "Git already installed"
+        git --version | head -n1 | print_log "INFO" || true
         return 0
     fi
     
@@ -121,29 +245,106 @@ install_git() {
     
     case "$(uname -s)" in
         Linux*)
-            if command -v apt-get &> /dev/null; then
-                sudo apt-get update && sudo apt-get install -y git
-            elif command -v yum &> /dev/null; then
-                sudo yum install -y git
-            elif command -v dnf &> /dev/null; then
-                sudo dnf install -y git
+            # Detect Linux distribution for proper Git installation
+            if [ -f /etc/os-release ]; then
+                . /etc/os-release
+                case "$ID" in
+                    ubuntu|debian)
+                        sudo apt-get update || error_exit "Failed to update package list"
+                        sudo apt-get install -y git || error_exit "Failed to install Git via apt"
+                        ;;
+                    rhel|centos|rocky|almalinux)
+                        if command -v dnf &> /dev/null; then
+                            sudo dnf install -y git || error_exit "Failed to install Git via dnf"
+                        elif command -v yum &> /dev/null; then
+                            sudo yum install -y git || error_exit "Failed to install Git via yum"
+                        else
+                            error_exit "No suitable package manager found for RHEL-based system"
+                        fi
+                        ;;
+                    fedora)
+                        sudo dnf install -y git || error_exit "Failed to install Git via dnf"
+                        ;;
+                    opensuse*|sles)
+                        sudo zypper refresh || error_exit "Failed to refresh repositories"
+                        sudo zypper install -y git || error_exit "Failed to install Git via zypper"
+                        ;;
+                    arch|manjaro)
+                        sudo pacman -Sy --noconfirm git || error_exit "Failed to install Git via pacman"
+                        ;;
+                    alpine)
+                        sudo apk update || error_exit "Failed to update package list"
+                        sudo apk add git || error_exit "Failed to install Git via apk"
+                        ;;
+                    *)
+                        # Try common package managers
+                        if command -v apt-get &> /dev/null; then
+                            sudo apt-get update && sudo apt-get install -y git
+                        elif command -v dnf &> /dev/null; then
+                            sudo dnf install -y git
+                        elif command -v yum &> /dev/null; then
+                            sudo yum install -y git
+                        elif command -v zypper &> /dev/null; then
+                            sudo zypper install -y git
+                        elif command -v pacman &> /dev/null; then
+                            sudo pacman -Sy --noconfirm git
+                        elif command -v apk &> /dev/null; then
+                            sudo apk add git
+                        else
+                            error_exit "Cannot determine package manager for distribution: $ID"
+                        fi
+                        ;;
+                esac
             else
-                error_exit "Cannot determine package manager"
+                # Generic Linux - try common package managers
+                print_log "WARNING" "Cannot determine Linux distribution, trying common package managers..."
+                if command -v apt-get &> /dev/null; then
+                    sudo apt-get update && sudo apt-get install -y git
+                elif command -v dnf &> /dev/null; then
+                    sudo dnf install -y git
+                elif command -v yum &> /dev/null; then
+                    sudo yum install -y git
+                elif command -v zypper &> /dev/null; then
+                    sudo zypper install -y git
+                elif command -v pacman &> /dev/null; then
+                    sudo pacman -Sy --noconfirm git
+                elif command -v apk &> /dev/null; then
+                    sudo apk add git
+                else
+                    error_exit "No suitable package manager found"
+                fi
             fi
             ;;
         Darwin*)
+            # macOS Git installation
             if command -v brew &> /dev/null; then
-                brew install git
+                brew install git || error_exit "Failed to install Git via Homebrew"
+            elif command -v port &> /dev/null; then
+                sudo port install git || error_exit "Failed to install Git via MacPorts"
             else
-                error_exit "Please install Xcode Command Line Tools: xcode-select --install"
+                print_log "INFO" "No package manager found. Attempting to install Xcode Command Line Tools..."
+                xcode-select --install 2>/dev/null || {
+                    print_log "ERROR" "Please install Xcode Command Line Tools manually:"
+                    print_log "ERROR" "  xcode-select --install"
+                    print_log "ERROR" "Or install Homebrew and run this script again"
+                    error_exit "Git installation failed - no package manager available"
+                }
+                print_log "INFO" "Xcode Command Line Tools installation initiated."
+                print_log "INFO" "Please complete the installation and run this script again."
+                exit 0
             fi
+            ;;
+        *)
+            error_exit "Unsupported operating system: $(uname -s)"
             ;;
     esac
 
+    # Verify Git installation
     if command -v git &> /dev/null; then
         print_log "SUCCESS" "Git installed successfully"
+        git --version | print_log "INFO"
     else
-        error_exit "Git installation failed"
+        error_exit "Git installation failed - git command not found"
     fi
 }
 
@@ -231,9 +432,48 @@ EOF
         print_log "INFO" "Profile: $PROFILE"
         print_log "INFO" "Branch: $BRANCH"
         
-        # Check and install dependencies
-        install_git
-        install_powershell
+        # Pre-installation dependency check
+        print_log "INFO" "Checking system requirements..."
+        MISSING_DEPS=""
+        
+        if ! command -v git &> /dev/null; then
+            MISSING_DEPS="$MISSING_DEPS git"
+        fi
+        
+        if ! command -v pwsh &> /dev/null; then
+            MISSING_DEPS="$MISSING_DEPS PowerShell"
+        fi
+        
+        if [ -n "$MISSING_DEPS" ]; then
+            print_log "WARNING" "Missing dependencies:$MISSING_DEPS"
+            print_log "INFO" "Will attempt to install missing dependencies automatically..."
+        else
+            print_log "SUCCESS" "All required dependencies are already installed"
+        fi
+        
+        # Check and install dependencies with better error handling
+        print_log "INFO" "Checking and installing required dependencies..."
+        
+        # Check for sudo access early
+        if ! sudo -n true 2>/dev/null; then
+            print_log "WARNING" "This script requires sudo access to install dependencies"
+            print_log "INFO" "You may be prompted for your password during installation"
+        fi
+        
+        # Install dependencies
+        if ! install_git; then
+            error_exit "Failed to install Git - this is required for AitherZero"
+        fi
+        
+        if ! install_powershell; then
+            error_exit "Failed to install PowerShell 7 - this is required for AitherZero"
+        fi
+        
+        # Verify both dependencies are working
+        print_log "INFO" "Verifying installed dependencies..."
+        git --version >/dev/null 2>&1 || error_exit "Git installation verification failed"
+        pwsh -Version >/dev/null 2>&1 || error_exit "PowerShell installation verification failed"
+        print_log "SUCCESS" "All dependencies verified and working"
         
         # Clone or update repository
         if [ -d "$INSTALL_DIR/.git" ]; then
