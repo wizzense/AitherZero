@@ -207,13 +207,13 @@ jobs:
           # Create multiple archive formats
           Write-Host "📁 Creating archive formats..." -ForegroundColor Cyan
           
-          # ZIP for Windows compatibility
-          Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip" -Force
+          # ZIP for Windows compatibility - compress contents, not the directory itself
+          Compress-Archive -Path "./$packageName/*" -DestinationPath "./$packageName.zip" -Force
           Write-Host "  ✅ Created: $packageName.zip" -ForegroundColor Green
           
-          # TAR.GZ for Unix systems
+          # TAR.GZ for Unix systems - use -C to change directory and avoid nested structure
           if (Get-Command tar -ErrorAction SilentlyContinue) {
-            tar -czf "./$packageName.tar.gz" "./$packageName/"
+            tar -czf "./$packageName.tar.gz" -C "./$packageName" .
             Write-Host "  ✅ Created: $packageName.tar.gz" -ForegroundColor Green
           }
           
