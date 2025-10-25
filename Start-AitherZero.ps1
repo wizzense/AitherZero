@@ -95,7 +95,10 @@ if ([string]::IsNullOrEmpty($ProfileName)) {
 if (-not $CI -and -not $NonInteractive) {
     if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
         # Let Configuration module detect CI
-        $NonInteractive = Get-ConfiguredValue -Name 'NonInteractive' -Section 'Automation' -Default $false
+        $nonInteractiveValue = Get-ConfiguredValue -Name 'NonInteractive' -Section 'Automation' -Default $false
+        if ($nonInteractiveValue -eq $true -or $nonInteractiveValue -eq '1' -or $nonInteractiveValue -eq 'true') {
+            $NonInteractive = $true
+        }
     }
 }
 
