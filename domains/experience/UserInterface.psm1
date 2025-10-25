@@ -261,7 +261,7 @@ function Initialize-AitherUI {
 
     # Clear screen if configured (skip in CI/non-interactive environments)
     if ($script:UIState.ClearScreenOnStart -and -not $env:CI -and -not $env:GITHUB_ACTIONS) {
-        try { Clear-Host } catch { }
+        try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
     }
 
     # Show welcome message if configured
@@ -841,7 +841,9 @@ function Get-TerminalWidth {
             $script:UIState.TerminalWidth = $Host.UI.RawUI.WindowSize.Width
             return $script:UIState.TerminalWidth
         }
-    } catch {}
+    } catch { 
+        Write-Verbose "Unable to determine terminal width: $_"
+    }
 
     $script:UIState.TerminalWidth = 80  # Default fallback
     return $script:UIState.TerminalWidth
@@ -920,7 +922,7 @@ function Show-UIWizard {
         $step = $Steps[$wizardState.CurrentStep]
 
         if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
-            try { Clear-Host } catch { }
+            try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
         }
         Show-UIBorder -Title "$Title - Step $($wizardState.CurrentStep + 1) of $($Steps.Count): $($step.Name)" -Style 'Double'
 
