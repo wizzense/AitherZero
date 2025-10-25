@@ -115,7 +115,7 @@ function Show-BetterMenu {
         
         # Clear previous menu (preserve title)
         $cursorTop = [Console]::CursorTop
-        [Console]::SetCursorPosition(0, $cursorTop - $pageSize - 2)
+        [Console]::SetCursorPosition(0, $cursorTop - $PageSize - 2)
         
         # Display menu items
         for ($i = $startIndex; $i -le $endIndex; $i++) {
