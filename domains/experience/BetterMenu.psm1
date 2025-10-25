@@ -35,16 +35,25 @@ function Show-BetterMenu {
 
     # Check if we can use interactive mode
     $canUseInteractive = $false
-    try {
-        # Test if we can read keys
-        if ($host.UI.RawUI.KeyAvailable) {}  # Just test the property
-        $canUseInteractive = $true
-    } catch {
-        $canUseInteractive = $false
+    $isNonInteractive = $env:AITHERZERO_NONINTERACTIVE -eq '1' -or 
+                       $env:CI -eq 'true' -or 
+                       $env:GITHUB_ACTIONS -eq 'true' -or 
+                       $env:TF_BUILD -eq 'True' -or
+                       -not [Environment]::UserInteractive
+    
+    if (-not $isNonInteractive) {
+        try {
+            # Test if we can read keys and have a proper console
+            if ($host.UI -and $host.UI.RawUI -and $host.UI.RawUI.KeyAvailable -ne $null) {
+                $canUseInteractive = $true
+            }
+        } catch {
+            $canUseInteractive = $false
+        }
     }
 
     # If we can't use interactive mode, fall back to simple prompt
-    if (-not $canUseInteractive -or $env:AITHERZERO_NONINTERACTIVE) {
+    if (-not $canUseInteractive -or $isNonInteractive) {
         # Simple numbered menu
         if ($Title) {
             Write-Host "`n$Title" -ForegroundColor Cyan
@@ -69,7 +78,14 @@ function Show-BetterMenu {
         }
 
         Write-Host "`nSelect an option: " -ForegroundColor Yellow -NoNewline
-        $selection = Read-Host
+        
+        # Don't wait indefinitely for input in CI environments
+        try {
+            $selection = Read-Host
+        } catch {
+            # If Read-Host fails in automation, return null to exit gracefully
+            return $null
+        }
 
         if ($CustomActions -and $selection -and $CustomActions.ContainsKey($selection.ToUpper())) {
             return @{ Action = $selection.ToUpper() }
@@ -228,7 +244,14 @@ function Show-BetterMenu {
             }
 
             Write-Host "`nSelect option: " -ForegroundColor Yellow -NoNewline
-            $inputValue = Read-Host
+            
+            # Don't wait indefinitely for input in CI environments
+            try {
+                $inputValue = Read-Host
+            } catch {
+                # If Read-Host fails in automation, return null to exit gracefully
+                return $null
+            }
 
             if ([string]::IsNullOrWhiteSpace($inputValue)) {
                 return $null

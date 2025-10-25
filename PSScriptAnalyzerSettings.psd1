@@ -23,14 +23,5 @@
         }
     }
 
-    # Code formatting settings
-    CodeFormatting = @{
-        UseCorrectCasing = $true
-        WhitespaceInsideBrace = $true
-        WhitespaceAroundOperator = $true
-        WhitespaceAfterSeparator = $true
-        IgnoreOneLineBlock = $true
-        NewLineAfterOpenBrace = $true
-        NewLineAfterCloseBrace = $true
-    }
+
 }
