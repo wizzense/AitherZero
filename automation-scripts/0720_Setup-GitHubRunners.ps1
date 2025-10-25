@@ -81,40 +81,40 @@ function Get-RunnerPlatform {
 
 function Test-Prerequisites {
     Write-RunnerLog "Checking prerequisites..." -Level Information
-    
+
     $issues = @()
-    
+
     # Check GitHub CLI
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
         $issues += "GitHub CLI (gh) is not installed. Run: az 0207"
     }
-    
+
     # Check admin permissions on Windows
     if ($IsWindows -and -not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         $issues += "Administrator permissions required on Windows"
     }
-    
+
     # Check sudo on Linux/macOS
     if ((-not $IsWindows) -and -not (Get-Command sudo -ErrorAction SilentlyContinue)) {
         $issues += "sudo access required on Unix systems"
     }
-    
+
     if ($issues.Count -gt 0) {
         Write-RunnerLog "Prerequisites not met:" -Level Error
         $issues | ForEach-Object { Write-RunnerLog "  - $_" -Level Error }
         throw "Prerequisites validation failed"
     }
-    
+
     Write-RunnerLog "Prerequisites validated successfully" -Level Success
 }
 
 function Get-GitHubToken {
     param([string]$ProvidedToken)
-    
+
     if ($ProvidedToken) {
         return $ProvidedToken
     }
-    
+
     # Try to get token from gh CLI
     try {
         $authStatus = gh auth status --show-token 2>&1 | Out-String
@@ -125,7 +125,7 @@ function Get-GitHubToken {
     } catch {
         Write-RunnerLog "No existing GitHub CLI authentication found" -Level Warning
     }
-    
+
     # Prompt for token
     if (-not $CI) {
         Write-Host "GitHub Personal Access Token required with 'repo' and 'admin:org' scopes"
@@ -143,22 +143,22 @@ function Get-RunnerRegistrationToken {
         [string]$Repository,
         [string]$Token
     )
-    
+
     Write-RunnerLog "Getting runner registration token..." -Level Information
-    
+
     $headers = @{
         'Authorization' = "Bearer $Token"
         'Accept' = 'application/vnd.github.v3+json'
         'User-Agent' = 'AitherZero-Runner-Setup'
     }
-    
+
     try {
         if ($Repository) {
             $url = "https://api.github.com/repos/$Organization/$Repository/actions/runners/registration-token"
         } else {
             $url = "https://api.github.com/orgs/$Organization/actions/runners/registration-token"
         }
-        
+
         $response = Invoke-RestMethod -Uri $url -Method Post -Headers $headers
         return $response.token
     } catch {
@@ -169,22 +169,22 @@ function Get-RunnerRegistrationToken {
 
 function Install-RunnerBinary {
     param([string]$TargetPlatform)
-    
-    $runnerDir = if ($IsWindows) { 
-        "$env:ProgramFiles\GitHub-Runner" 
-    } else { 
-        "$env:HOME/actions-runner" 
+
+    $runnerDir = if ($IsWindows) {
+        "$env:ProgramFiles\GitHub-Runner"
+    } else {
+        "$env:HOME/actions-runner"
     }
-    
+
     Write-RunnerLog "Installing GitHub Actions runner binary to: $runnerDir" -Level Information
-    
+
     if (-not (Test-Path $runnerDir)) {
         New-Item -ItemType Directory -Path $runnerDir -Force | Out-Null
     }
-    
+
     # Determine download URL based on platform
     $downloadUrl = switch ($TargetPlatform) {
-        'Windows' { 
+        'Windows' {
             $arch = if ([System.Environment]::Is64BitOperatingSystem) { 'x64' } else { 'x86' }
             "https://github.com/actions/runner/releases/latest/download/actions-runner-win-$arch.zip"
         }
@@ -197,13 +197,13 @@ function Install-RunnerBinary {
             "https://github.com/actions/runner/releases/latest/download/actions-runner-osx-$arch.tar.gz"
         }
     }
-    
+
     $downloadFile = Join-Path ([System.IO.Path]::GetTempPath()) (Split-Path $downloadUrl -Leaf)
-    
+
     try {
         Write-RunnerLog "Downloading runner from: $downloadUrl" -Level Information
         Invoke-WebRequest -Uri $downloadUrl -OutFile $downloadFile -UseBasicParsing
-        
+
         Write-RunnerLog "Extracting runner binary..." -Level Information
         if ($TargetPlatform -eq 'Windows') {
             Expand-Archive -Path $downloadFile -DestinationPath $runnerDir -Force
@@ -216,7 +216,7 @@ function Install-RunnerBinary {
                 Pop-Location
             }
         }
-        
+
         Write-RunnerLog "Runner binary installed successfully" -Level Success
         return $runnerDir
     } catch {
@@ -240,45 +240,45 @@ function Register-Runner {
         [string]$Labels,
         [string]$WorkDirectory
     )
-    
+
     Write-RunnerLog "Registering runner: $RunnerName" -Level Information
-    
+
     Push-Location $RunnerDirectory
     try {
         $configArgs = @()
-        
+
         if ($Repository) {
             $configArgs += '--url', "https://github.com/$Organization/$Repository"
         } else {
             $configArgs += '--url', "https://github.com/$Organization"
         }
-        
+
         $configArgs += '--token', $RegistrationToken
         $configArgs += '--name', $RunnerName
         $configArgs += '--work', $WorkDirectory
         $configArgs += '--runnergroup', $RunnerGroup
-        
+
         if ($Labels) {
             $configArgs += '--labels', $Labels
         }
-        
+
         $configArgs += '--unattended'
-        
+
         if ($IsWindows) {
             $configScript = '.\config.cmd'
         } else {
             $configScript = './config.sh'
         }
-        
+
         Write-RunnerLog "Configuring runner with command: $configScript $($configArgs -join ' ')" -Level Information
-        
+
         if ($DryRun) {
             Write-RunnerLog "[DRY RUN] Would execute: $configScript $($configArgs -join ' ')" -Level Information
             return $true
         }
-        
+
         & $configScript @configArgs
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-RunnerLog "Runner registered successfully: $RunnerName" -Level Success
             return $true
@@ -299,14 +299,14 @@ function Install-RunnerService {
         [string]$RunnerDirectory,
         [string]$RunnerName
     )
-    
+
     Write-RunnerLog "Installing runner as system service: $RunnerName" -Level Information
-    
+
     if ($DryRun) {
         Write-RunnerLog "[DRY RUN] Would install runner service: $RunnerName" -Level Information
         return
     }
-    
+
     Push-Location $RunnerDirectory
     try {
         if ($IsWindows) {
@@ -341,19 +341,19 @@ function Get-RunnerStatus {
         [string]$Repository,
         [string]$Token
     )
-    
+
     $headers = @{
         'Authorization' = "Bearer $Token"
         'Accept' = 'application/vnd.github.v3+json'
     }
-    
+
     try {
         if ($Repository) {
             $url = "https://api.github.com/repos/$Organization/$Repository/actions/runners"
         } else {
             $url = "https://api.github.com/orgs/$Organization/actions/runners"
         }
-        
+
         $response = Invoke-RestMethod -Uri $url -Headers $headers
         return $response.runners
     } catch {
@@ -371,26 +371,26 @@ try {
     }
     Write-RunnerLog "Platform: $(Get-RunnerPlatform)" -Level Information
     Write-RunnerLog "Runner Count: $RunnerCount" -Level Information
-    
+
     if ($DryRun) {
         Write-RunnerLog "Running in DRY RUN mode - no changes will be made" -Level Warning
     }
-    
+
     # Validate prerequisites
     Test-Prerequisites
-    
+
     # Get GitHub token
     $gitHubToken = Get-GitHubToken -ProvidedToken $Token
-    
+
     # Get registration token
     $registrationToken = Get-RunnerRegistrationToken -Organization $Organization -Repository $Repository -Token $gitHubToken
-    
+
     # Determine target platform
     $targetPlatform = Get-RunnerPlatform
-    
+
     # Install runner binary
     $runnerDirectory = Install-RunnerBinary -TargetPlatform $targetPlatform
-    
+
     # Setup multiple runners
     $successCount = 0
     for ($i = 1; $i -le $RunnerCount; $i++) {
@@ -399,29 +399,29 @@ try {
         } else {
             "$Organization-runner-$i"
         }
-        
+
         $runnerLabels = @('self-hosted', $targetPlatform.ToLower())
         if ($Labels) {
             $runnerLabels += $Labels.Split(',').Trim()
         }
         $allLabels = $runnerLabels -join ','
-        
+
         Write-RunnerLog "Setting up runner $i of $RunnerCount..." -Level Information
-        
+
         if (Register-Runner -RunnerDirectory $runnerDirectory -Organization $Organization -Repository $Repository -RegistrationToken $registrationToken -RunnerName $runnerName -RunnerGroup $RunnerGroup -Labels $allLabels -WorkDirectory $WorkDirectory) {
             Install-RunnerService -RunnerDirectory $runnerDirectory -RunnerName $runnerName
             $successCount++
         }
     }
-    
+
     # Display results
     Write-RunnerLog "Runner setup completed: $successCount of $RunnerCount runners configured" -Level Information
-    
+
     if (-not $DryRun) {
         Start-Sleep -Seconds 2
         Write-RunnerLog "Checking runner status..." -Level Information
         $runners = Get-RunnerStatus -Organization $Organization -Repository $Repository -Token $gitHubToken
-        
+
         if ($runners.Count -gt 0) {
             Write-RunnerLog "Active runners:" -Level Information
             $runners | ForEach-Object {
@@ -430,18 +430,18 @@ try {
             }
         }
     }
-    
+
     Write-RunnerLog "GitHub Actions runner setup completed successfully!" -Level Success
-    
+
     if (-not $CI) {
         Write-Host "`nNext steps:" -ForegroundColor Cyan
         Write-Host "1. Update your GitHub Actions workflows to use: runs-on: [self-hosted, $($targetPlatform.ToLower())]" -ForegroundColor White
         Write-Host "2. Add any additional labels if needed: runs-on: [self-hosted, $($targetPlatform.ToLower()), your-label]" -ForegroundColor White
         Write-Host "3. Run az 0721 to configure the runner environment" -ForegroundColor White
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-RunnerLog "Runner setup failed: $($_.Exception.Message)" -Level Error
     exit 1

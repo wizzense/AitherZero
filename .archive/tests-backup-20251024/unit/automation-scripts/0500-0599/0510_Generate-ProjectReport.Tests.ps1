@@ -6,11 +6,11 @@ Describe "0510_Generate-ProjectReport" {
         $script:TempDir = [System.IO.Path]::GetTempPath()
         $script:TestProjectPath = Join-Path $script:TempDir "TestProject"
         $script:TestOutputPath = Join-Path $script:TestProjectPath "tests/reports"
-        
+
         # Create test directory structure
         New-Item -ItemType Directory -Path $script:TestProjectPath -Force | Out-Null
         New-Item -ItemType Directory -Path $script:TestOutputPath -Force | Out-Null
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-CustomLog -MockWith { param($Message, $Level, $Source) Write-Host "[$Level] $Message" }
@@ -131,14 +131,14 @@ Describe "0510_Generate-ProjectReport" {
         It "Should handle missing project path gracefully" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*nonexistent*" } -MockWith { $false }
             Mock -CommandName Get-ChildItem -MockWith { @() }
-            
+
             $result = & $script:ScriptPath -ProjectPath "nonexistent" -OutputPath $script:TestOutputPath 2>&1
             $LASTEXITCODE | Should -Be 0  # Should complete even with missing files
         }
 
         It "Should handle module import failures" {
             Mock -CommandName Import-Module -MockWith { throw "Module not found" }
-            
+
             { & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath } | Should -Not -Throw
         }
     }

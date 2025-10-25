@@ -26,7 +26,7 @@ $orchestrationMarker = ".claude/.orchestration-used"
 if (-not (Test-Path $orchestrationMarker)) {
     Write-Host "❌ Commits must use orchestrated playbook workflow!" -ForegroundColor Red
     Write-Host "Please use: ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook claude-commit-workflow" -ForegroundColor Yellow
-    
+
     # Provide quick action
     $response = Read-Host "Would you like to run the orchestration now? (y/n)"
     if ($response -eq 'y') {

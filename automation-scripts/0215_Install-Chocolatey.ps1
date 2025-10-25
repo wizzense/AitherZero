@@ -82,7 +82,7 @@ try {
 
     if ($chocoCmd) {
         Write-ScriptLog "Chocolatey is already installed at: $($chocoCmd.Source)"
-        
+
         # Get version
         try {
             $version = & choco --version 2>&1
@@ -98,10 +98,10 @@ try {
         } catch {
             Write-ScriptLog "Could not determine version" -Level 'Debug'
         }
-        
+
         exit 0
     }
-    
+
     Write-ScriptLog "Installing Chocolatey..."
 
     # Set installation options
@@ -139,7 +139,7 @@ try {
             # Run installer
             Write-ScriptLog "Running Chocolatey installer..."
             Invoke-Expression $installScript
-            
+
         } catch {
             Write-ScriptLog "Failed to download or run installer: $_" -Level 'Error'
             throw
@@ -160,7 +160,7 @@ try {
         Write-ScriptLog "Chocolatey executable not found after installation" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Chocolatey installed successfully"
 
     # Test Chocolatey
@@ -174,7 +174,7 @@ try {
     # Configure Chocolatey settings
     if ($chocoConfig.Settings) {
         Write-ScriptLog "Configuring Chocolatey settings..."
-        
+
         foreach ($setting in $chocoConfig.Settings.GetEnumerator()) {
             if ($PSCmdlet.ShouldProcess("Chocolatey feature $($setting.Key)", "Set to $($setting.Value)")) {
                 $cmd = if ($setting.Value -eq $true) { 'enable' } else { 'disable' }
@@ -186,23 +186,23 @@ try {
     # Configure sources if specified
     if ($chocoConfig.Sources) {
         Write-ScriptLog "Configuring Chocolatey sources..."
-        
+
         foreach ($source in $chocoConfig.Sources) {
             if ($PSCmdlet.ShouldProcess($source.Name, 'Add Chocolatey source')) {
                 $sourceArgs = @('source', 'add', '-n', $source.Name, '-s', $source.Url)
-                
+
                 if ($source.Priority) {
                     $sourceArgs += '--priority', $source.Priority
                 }
-                
+
                 if ($source.Username) {
                     $sourceArgs += '-u', $source.Username
                 }
-                
+
                 if ($source.Password) {
                     $sourceArgs += '-p', $source.Password
                 }
-                
+
                 & $chocoExe $sourceArgs -y 2>&1 | ForEach-Object { Write-ScriptLog $_ -Level 'Debug' }
             }
         }
@@ -211,7 +211,7 @@ try {
     # Install initial packages if specified
     if ($chocoConfig.InitialPackages) {
         Write-ScriptLog "Installing initial packages..."
-        
+
         foreach ($package in $chocoConfig.InitialPackages) {
             if ($PSCmdlet.ShouldProcess($package, 'Install package')) {
                 Write-ScriptLog "Installing package: $package"
@@ -219,10 +219,10 @@ try {
             }
         }
     }
-    
+
     Write-ScriptLog "Chocolatey installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during Chocolatey installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

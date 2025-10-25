@@ -64,7 +64,7 @@ function Write-MatrixLog {
 
 function Get-PredefinedMatrix {
     param([string]$MatrixName)
-    
+
     $predefinedMatrices = @{
         'minimal' = @{
             Description = "Single runner on current platform"
@@ -169,15 +169,15 @@ function Get-PredefinedMatrix {
             )
         }
     }
-    
+
     return $predefinedMatrices[$MatrixName]
 }
 
 function Read-MatrixConfiguration {
     param([string]$MatrixPath)
-    
+
     Write-MatrixLog "Reading matrix configuration from: $MatrixPath" -Level Information
-    
+
     if (Test-Path $MatrixPath) {
         try {
             $content = Get-Content $MatrixPath -Raw | ConvertFrom-Json
@@ -201,60 +201,60 @@ function Read-MatrixConfiguration {
 
 function Test-MatrixConfiguration {
     param([hashtable]$MatrixConfig)
-    
+
     Write-MatrixLog "Validating matrix configuration..." -Level Information
-    
+
     $issues = @()
-    
+
     # Check basic structure
     if (-not $MatrixConfig.Runners) {
         $issues += "Matrix configuration missing 'Runners' section"
     } elseif ($MatrixConfig.Runners.Count -eq 0) {
         $issues += "Matrix configuration contains no runners"
     }
-    
+
     # Validate each runner configuration
     $totalRunners = 0
     foreach ($runner in $MatrixConfig.Runners) {
         if (-not $runner.Name) {
             $issues += "Runner missing required 'Name' property"
         }
-        
+
         if (-not $runner.Platform) {
             $issues += "Runner '$($runner.Name)' missing required 'Platform' property"
         }
-        
+
         if (-not $runner.Profile) {
             $runner.Profile = "Standard"  # Default profile
         }
-        
+
         if (-not $runner.Count) {
             $runner.Count = 1  # Default count
         }
-        
+
         $totalRunners += $runner.Count
     }
-    
+
     # Check total runner count
     if ($totalRunners -gt 20) {
         $issues += "Total runner count ($totalRunners) exceeds recommended maximum (20)"
     }
-    
+
     if ($issues.Count -gt 0) {
         Write-MatrixLog "Matrix validation issues:" -Level Error
         $issues | ForEach-Object { Write-MatrixLog "  - $_" -Level Error }
         return $false
     }
-    
+
     Write-MatrixLog "Matrix configuration validated - $totalRunners total runners" -Level Success
     return $true
 }
 
 function Get-PlatformSupport {
     param([string]$Platform)
-    
+
     $currentPlatform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
-    
+
     switch ($Platform) {
         'Auto' { return @{ Supported = $true; ActualPlatform = $currentPlatform } }
         'Windows' { return @{ Supported = $IsWindows; ActualPlatform = 'Windows' } }
@@ -272,29 +272,29 @@ function Setup-RunnerConfiguration {
         [string]$Token,
         [int]$Index
     )
-    
+
     $runnerName = if ($Repository) {
         "$($RunnerConfig.Name)-$($Repository)-$Index"
     } else {
         "$($RunnerConfig.Name)-$Organization-$Index"
     }
-    
+
     $platformSupport = Get-PlatformSupport -Platform $RunnerConfig.Platform
-    
+
     if (-not $platformSupport.Supported) {
         Write-MatrixLog "Skipping runner $runnerName - platform $($RunnerConfig.Platform) not supported on current system" -Level Warning
         return @{ Success = $false; Reason = "Platform not supported"; Name = $runnerName }
     }
-    
+
     Write-MatrixLog "Setting up runner: $runnerName" -Level Information
-    
+
     try {
         # Build labels
         $labels = @($RunnerConfig.Labels)
         $labels += $platformSupport.ActualPlatform.ToLower()
         $labels += $RunnerConfig.Profile.ToLower()
         $allLabels = ($labels | Sort-Object -Unique) -join ','
-        
+
         # Setup runner using 0720 script
         $setupArgs = @{
             Organization = $Organization
@@ -305,11 +305,11 @@ function Setup-RunnerConfiguration {
             DryRun = $DryRun
             CI = $CI
         }
-        
+
         if ($Repository) {
             $setupArgs.Repository = $Repository
         }
-        
+
         if ($DryRun) {
             Write-MatrixLog "[DRY RUN] Would setup runner $runnerName with labels: $allLabels" -Level Information
             $setupResult = @{ Success = $true }
@@ -319,14 +319,14 @@ function Setup-RunnerConfiguration {
             if (-not (Test-Path $setupScript)) {
                 throw "Runner setup script not found: $setupScript"
             }
-            
+
             & $setupScript @setupArgs
             $setupResult = @{ Success = ($LASTEXITCODE -eq 0) }
         }
-        
+
         if ($setupResult.Success) {
             Write-MatrixLog "✓ Runner setup completed: $runnerName" -Level Success
-            
+
             # Configure environment using 0721 script
             if (-not $DryRun) {
                 $envArgs = @{
@@ -334,7 +334,7 @@ function Setup-RunnerConfiguration {
                     Platform = $platformSupport.ActualPlatform
                     CI = $CI
                 }
-                
+
                 $envScript = "$PSScriptRoot/0721_Configure-RunnerEnvironment.ps1"
                 if (Test-Path $envScript) {
                     & $envScript @envArgs
@@ -342,13 +342,13 @@ function Setup-RunnerConfiguration {
                 } else {
                     Write-MatrixLog "Warning: Environment configuration script not found" -Level Warning
                 }
-                
+
                 # Install as service using 0722 script
                 $serviceArgs = @{
                     RunnerName = $runnerName
                     CI = $CI
                 }
-                
+
                 $serviceScript = "$PSScriptRoot/0722_Install-RunnerServices.ps1"
                 if (Test-Path $serviceScript) {
                     & $serviceScript @serviceArgs
@@ -358,15 +358,15 @@ function Setup-RunnerConfiguration {
                 }
             }
         }
-        
-        return @{ 
+
+        return @{
             Success = $setupResult.Success
             Name = $runnerName
             Platform = $platformSupport.ActualPlatform
             Labels = $allLabels
             Profile = $RunnerConfig.Profile
         }
-        
+
     } catch {
         Write-MatrixLog "Failed to setup runner $runnerName`: $($_.Exception.Message)" -Level Error
         return @{ Success = $false; Reason = $_.Exception.Message; Name = $runnerName }
@@ -378,14 +378,14 @@ function Setup-RunnersParallel {
         [array]$RunnerJobs,
         [int]$MaxConcurrencyValue
     )
-    
+
     Write-MatrixLog "Setting up $($RunnerJobs.Count) runners in parallel (max concurrency: $MaxConcurrencyValue)" -Level Information
-    
+
     if ($DryRun) {
         Write-MatrixLog "[DRY RUN] Would setup runners in parallel" -Level Information
         return $RunnerJobs | ForEach-Object { @{ Success = $true; Name = $_.Name } }
     }
-    
+
     # Import ThreadJob module if available
     if (-not (Get-Module ThreadJob -ErrorAction SilentlyContinue)) {
         try {
@@ -395,62 +395,62 @@ function Setup-RunnersParallel {
             return Setup-RunnersSequential -RunnerJobs $RunnerJobs
         }
     }
-    
+
     $results = @()
     $jobBatches = @()
-    
+
     # Split jobs into batches
     for ($i = 0; $i -lt $RunnerJobs.Count; $i += $MaxConcurrencyValue) {
         $end = [Math]::Min($i + $MaxConcurrencyValue - 1, $RunnerJobs.Count - 1)
         $jobBatches += ,@($RunnerJobs[$i..$end])
     }
-    
+
     foreach ($batch in $jobBatches) {
         Write-MatrixLog "Processing batch of $($batch.Count) runners..." -Level Information
-        
+
         $jobs = @()
         foreach ($runnerJob in $batch) {
             $job = Start-ThreadJob -ScriptBlock {
                 param($RunnerConfig, $Organization, $Repository, $Token, $Index, $ScriptRoot)
-                
+
                 # Re-import functions in thread context
                 . "$ScriptRoot/0723_Setup-MatrixRunners.ps1"
-                
+
                 Setup-RunnerConfiguration -RunnerConfig $RunnerConfig -Organization $Organization -Repository $Repository -Token $Token -Index $Index
             } -ArgumentList $runnerJob.Config, $Organization, $Repository, $Token, $runnerJob.Index, $PSScriptRoot
-            
+
             $jobs += @{ Job = $job; Name = $runnerJob.Name }
         }
-        
+
         # Wait for batch to complete
         $batchResults = $jobs | ForEach-Object {
             $result = Receive-Job -Job $_.Job -Wait
             Remove-Job -Job $_.Job -Force
             $result
         }
-        
+
         $results += $batchResults
-        
+
         # Brief pause between batches
         if ($jobBatches.IndexOf($batch) -lt $jobBatches.Count - 1) {
             Start-Sleep -Seconds 2
         }
     }
-    
+
     return $results
 }
 
 function Setup-RunnersSequential {
     param([array]$RunnerJobs)
-    
+
     Write-MatrixLog "Setting up $($RunnerJobs.Count) runners sequentially" -Level Information
-    
+
     $results = @()
     foreach ($runnerJob in $RunnerJobs) {
         $result = Setup-RunnerConfiguration -RunnerConfig $runnerJob.Config -Organization $Organization -Repository $Repository -Token $Token -Index $runnerJob.Index
         $results += $result
     }
-    
+
     return $results
 }
 
@@ -462,20 +462,20 @@ try {
         Write-MatrixLog "Repository: $Repository" -Level Information
     }
     Write-MatrixLog "Matrix: $Matrix" -Level Information
-    
+
     if ($DryRun) {
         Write-MatrixLog "Running in DRY RUN mode - no changes will be made" -Level Warning
     }
-    
+
     # Read matrix configuration
     $matrixConfig = Read-MatrixConfiguration -MatrixPath $Matrix
     Write-MatrixLog "Matrix: $($matrixConfig.Description)" -Level Information
-    
+
     # Validate matrix configuration
     if (-not (Test-MatrixConfiguration -MatrixConfig $matrixConfig)) {
         throw "Matrix configuration validation failed"
     }
-    
+
     # Get GitHub token
     if (-not $Token) {
         if ($env:GITHUB_TOKEN) {
@@ -488,7 +488,7 @@ try {
             throw "GitHub token required. Set -Token parameter or GITHUB_TOKEN environment variable"
         }
     }
-    
+
     # Build runner job list
     $runnerJobs = @()
     foreach ($runnerConfig in $matrixConfig.Runners) {
@@ -500,43 +500,43 @@ try {
             }
         }
     }
-    
+
     Write-MatrixLog "Total runners to setup: $($runnerJobs.Count)" -Level Information
-    
+
     # Setup runners
     $results = if ($Parallel -and $runnerJobs.Count -gt 1) {
         Setup-RunnersParallel -RunnerJobs $runnerJobs -MaxConcurrencyValue $MaxConcurrency
     } else {
         Setup-RunnersSequential -RunnerJobs $runnerJobs
     }
-    
+
     # Analyze results
     $successful = @($results | Where-Object { $_.Success })
     $failed = @($results | Where-Object { -not $_.Success })
-    
+
     Write-MatrixLog "Matrix runner setup completed:" -Level Information
     Write-MatrixLog "  Successful: $($successful.Count)" -Level Success
     Write-MatrixLog "  Failed: $($failed.Count)" -Level $(if ($failed.Count -gt 0) { 'Warning' } else { 'Success' })
-    
+
     if ($successful.Count -gt 0) {
         Write-MatrixLog "Successfully configured runners:" -Level Success
         $successful | ForEach-Object {
             Write-MatrixLog "  - $($_.Name) [$($_.Platform)] {$($_.Labels)}" -Level Success
         }
     }
-    
+
     if ($failed.Count -gt 0) {
         Write-MatrixLog "Failed runners:" -Level Warning
         $failed | ForEach-Object {
             Write-MatrixLog "  - $($_.Name): $($_.Reason)" -Level Warning
         }
     }
-    
+
     if (-not $CI) {
         Write-Host "`nMatrix runner setup complete!" -ForegroundColor Green
         Write-Host "Matrix: $($matrixConfig.Description)" -ForegroundColor Cyan
         Write-Host "Successful: $($successful.Count) / $($results.Count)" -ForegroundColor $(if ($failed.Count -eq 0) { 'Green' } else { 'Yellow' })
-        
+
         if ($successful.Count -gt 0) {
             Write-Host "`nUpdate your workflows to use these runners:" -ForegroundColor Yellow
             $successful | Group-Object Platform | ForEach-Object {
@@ -546,9 +546,9 @@ try {
             }
         }
     }
-    
+
     exit $(if ($failed.Count -eq 0) { 0 } else { 1 })
-    
+
 } catch {
     Write-MatrixLog "Matrix runner setup failed: $($_.Exception.Message)" -Level Error
     exit 1

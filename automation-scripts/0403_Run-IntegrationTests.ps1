@@ -5,12 +5,12 @@
     Execute integration tests for AitherZero
 .DESCRIPTION
     Runs all integration tests that validate component interactions
-    
+
     Exit Codes:
     0   - All tests passed
     1   - One or more tests failed
     2   - Test execution error
-    
+
 .NOTES
     Stage: Testing
     Order: 0403
@@ -85,7 +85,7 @@ try {
         Write-ScriptLog -Message "DRY RUN: Would execute integration tests"
         Write-ScriptLog -Message "Test path: $Path"
         Write-ScriptLog -Message "Include E2E: $IncludeE2E"
-        
+
         # List test files that would be run
         if (Test-Path $Path) {
             $testFiles = Get-ChildItem -Path $Path -Filter "*.Tests.ps1" -Recurse
@@ -111,7 +111,7 @@ try {
         Write-ScriptLog -Level Warning -Message "No test files found in: $Path"
         exit 0
     }
-    
+
     Write-ScriptLog -Message "Found $($testFiles.Count) integration test files"
 
     # Load configuration
@@ -129,12 +129,12 @@ try {
 
     # Ensure Pester is available
     $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]$testingConfig.MinVersion } | Sort-Object Version -Descending | Select-Object -First 1
-    
+
     if (-not $pesterModule) {
         Write-ScriptLog -Level Error -Message "Pester $($testingConfig.MinVersion) or higher is required. Run 0400_Install-TestingTools.ps1 first."
         exit 2
     }
-    
+
     Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
     Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
 
@@ -157,13 +157,13 @@ try {
     } else {
         @{}
     }
-    
+
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
     $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
     $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
-    
+
     # Apply parallel execution settings from config
     if ($pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
         $pesterConfig.Run.Parallel = $true
@@ -179,7 +179,7 @@ try {
         $tags += 'E2E'
         Write-ScriptLog -Message "Including End-to-End tests"
     }
-    
+
     $pesterConfig.Filter.Tag = $tags
     $pesterConfig.Filter.ExcludeTag = @('Unit', 'Performance')
 
@@ -196,7 +196,7 @@ try {
             New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $pesterConfig.TestResult.Enabled = $true
     $pesterConfig.TestResult.OutputPath = Join-Path $OutputPath "IntegrationTests-$timestamp.xml"
@@ -206,7 +206,7 @@ try {
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Start-PerformanceTrace -Name "IntegrationTests" -Description "Integration test execution"
     }
-    
+
     Write-ScriptLog -Message "Executing integration tests..."
     Write-Host "`nRunning integration tests. This may take several minutes..." -ForegroundColor Yellow
 
@@ -221,7 +221,7 @@ try {
         $env:AITHERZERO_TEST_MODE = "Integration"
         $env:AITHERZERO_TEST_DRIVE = $testDrive
     }
-    
+
     try {
         if ($PSCmdlet.ShouldProcess("Integration tests in $Path", "Execute Pester tests")) {
             $result = Invoke-Pester -Configuration $pesterConfig
@@ -253,7 +253,7 @@ try {
         Skipped = $result.SkippedCount
         Duration = if ($duration) { $duration.TotalSeconds } else { $result.Duration.TotalSeconds }
     }
-    
+
     Write-ScriptLog -Message "Integration test execution completed" -Data $testSummary
 
     # Display summary
@@ -320,8 +320,8 @@ try {
     }
 }
 catch {
-    Write-ScriptLog -Level Error -Message "Integration test execution failed: $_" -Data @{ 
-        Exception = $_.Exception.Message 
+    Write-ScriptLog -Level Error -Message "Integration test execution failed: $_" -Data @{
+        Exception = $_.Exception.Message
         ScriptStackTrace = $_.ScriptStackTrace
     }
     exit 2

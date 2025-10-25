@@ -12,13 +12,13 @@ function Start-PerformanceTimer {
     <#
     .SYNOPSIS
     Starts a performance timer for measuring operation duration.
-    
+
     .PARAMETER Name
     Unique name for the timer
-    
+
     .PARAMETER Category
     Category for grouping related metrics (e.g., 'ModuleLoading', 'FileProcessing')
-    
+
     .PARAMETER Tags
     Optional tags for additional context
     #>
@@ -26,10 +26,10 @@ function Start-PerformanceTimer {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Category = 'General',
-        
+
         [Parameter()]
         [string[]]$Tags = @()
     )
@@ -44,13 +44,13 @@ function Start-PerformanceTimer {
         ThreadId = [System.Threading.Thread]::CurrentThread.ManagedThreadId
         MemoryStart = [System.GC]::GetTotalMemory($false)
     }
-    
+
     $script:ActiveTimers[$Name] = $timer
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog "Started performance timer: $Name [$Category]" -Level Debug
     }
-    
+
     return $timer
 }
 
@@ -58,10 +58,10 @@ function Stop-PerformanceTimer {
     <#
     .SYNOPSIS
     Stops a performance timer and records the metrics.
-    
+
     .PARAMETER Name
     Name of the timer to stop
-    
+
     .PARAMETER ReturnMetrics
     Whether to return the collected metrics
     #>
@@ -69,7 +69,7 @@ function Stop-PerformanceTimer {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$ReturnMetrics
     )
@@ -78,12 +78,12 @@ function Stop-PerformanceTimer {
         Write-Warning "Performance timer '$Name' not found or already stopped"
         return $null
     }
-    
+
     $timer = $script:ActiveTimers[$Name]
     $endTime = Get-Date
     $endTicks = [System.Diagnostics.Stopwatch]::GetTimestamp()
     $memoryEnd = [System.GC]::GetTotalMemory($false)
-    
+
     $metrics = @{
         Name = $timer.Name
         Category = $timer.Category
@@ -116,16 +116,16 @@ function Measure-Performance {
     <#
     .SYNOPSIS
     Measures the performance of a script block.
-    
+
     .PARAMETER ScriptBlock
     The code to measure
-    
+
     .PARAMETER Name
     Name for the measurement
-    
+
     .PARAMETER Category
     Category for grouping
-    
+
     .PARAMETER Tags
     Optional tags
     #>
@@ -133,23 +133,23 @@ function Measure-Performance {
     param(
         [Parameter(Mandatory)]
         [scriptblock]$ScriptBlock,
-        
+
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Category = 'General',
-        
+
         [Parameter()]
         [string[]]$Tags = @()
     )
 
     Start-PerformanceTimer -Name $Name -Category $Category -Tags $Tags
-    
+
     try {
         $result = & $ScriptBlock
         $metrics = Stop-PerformanceTimer -Name $Name -ReturnMetrics
-        
+
         return @{
             Result = $result
             Metrics = $metrics
@@ -169,16 +169,16 @@ function Get-PerformanceMetrics {
     <#
     .SYNOPSIS
     Retrieves performance metrics with optional filtering.
-    
+
     .PARAMETER Category
     Filter by category
-    
+
     .PARAMETER Name
     Filter by name pattern
-    
+
     .PARAMETER Since
     Only return metrics since this time
-    
+
     .PARAMETER Last
     Return only the last N metrics
     #>
@@ -186,13 +186,13 @@ function Get-PerformanceMetrics {
     param(
         [Parameter()]
         [string]$Category,
-        
+
         [Parameter()]
         [string]$Name,
-        
+
         [Parameter()]
         [datetime]$Since,
-        
+
         [Parameter()]
         [int]$Last
     )
@@ -214,7 +214,7 @@ function Get-PerformanceMetrics {
     if ($Last -gt 0) {
         $metrics = $metrics | Select-Object -Last $Last
     }
-    
+
     return $metrics
 }
 
@@ -222,10 +222,10 @@ function Get-PerformanceSummary {
     <#
     .SYNOPSIS
     Generates a summary of performance metrics.
-    
+
     .PARAMETER Category
     Category to summarize
-    
+
     .PARAMETER GroupBy
     Group results by this property
     #>
@@ -233,7 +233,7 @@ function Get-PerformanceSummary {
     param(
         [Parameter()]
         [string]$Category,
-        
+
         [Parameter()]
         [ValidateSet('Category', 'Name', 'Hour', 'Day')]
         [string]$GroupBy = 'Category'
@@ -250,11 +250,11 @@ function Get-PerformanceSummary {
     else {
         $grouped = $metrics | Group-Object $GroupBy
     }
-    
+
     $summary = $grouped | ForEach-Object {
         $durations = $_.Group | Select-Object -ExpandProperty DurationMs
         $memoryDeltas = $_.Group | Select-Object -ExpandProperty MemoryDelta
-        
+
         [PSCustomObject]@{
             Group = $_.Name
             Count = $_.Count
@@ -268,7 +268,7 @@ function Get-PerformanceSummary {
             LastSeen = ($_.Group | Sort-Object StartTime | Select-Object -Last 1).StartTime
         }
     }
-    
+
     return $summary | Sort-Object AvgDurationMs -Descending
 }
 
@@ -276,10 +276,10 @@ function Show-PerformanceDashboard {
     <#
     .SYNOPSIS
     Displays a real-time performance dashboard.
-    
+
     .PARAMETER RefreshSeconds
     How often to refresh the display
-    
+
     .PARAMETER Top
     Show top N slow operations
     #>
@@ -287,7 +287,7 @@ function Show-PerformanceDashboard {
     param(
         [Parameter()]
         [int]$RefreshSeconds = 5,
-        
+
         [Parameter()]
         [int]$Top = 10
     )
@@ -295,16 +295,16 @@ function Show-PerformanceDashboard {
     if (Get-Command Show-UIProgress -ErrorAction SilentlyContinue) {
         Show-UIProgress -Activity "Performance Dashboard" -Status "Loading..." -PercentComplete 0
     }
-    
+
     while ($true) {
         Clear-Host
-        
+
         Write-Host "=" * 80 -ForegroundColor Cyan
         Write-Host " AitherZero Performance Dashboard" -ForegroundColor Yellow
         Write-Host " Last Updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Green
         Write-Host "=" * 80 -ForegroundColor Cyan
         Write-Host
-        
+
         # Active Timers
         Write-Host "Active Timers:" -ForegroundColor Yellow
         if ($script:ActiveTimers.Count -gt 0) {
@@ -316,7 +316,7 @@ function Show-PerformanceDashboard {
             Write-Host "  No active timers" -ForegroundColor Gray
         }
         Write-Host
-        
+
         # Recent Metrics Summary
         Write-Host "Recent Performance (Last Hour):" -ForegroundColor Yellow
         $recent = Get-PerformanceMetrics -Since (Get-Date).AddHours(-1)
@@ -329,17 +329,17 @@ function Show-PerformanceDashboard {
             Write-Host "  No recent metrics" -ForegroundColor Gray
         }
         Write-Host
-        
+
         # Slowest Operations
         Write-Host "Slowest Operations:" -ForegroundColor Yellow
         $slow = $recent | Sort-Object DurationMs -Descending | Select-Object -First $Top
         $slow | ForEach-Object {
             Write-Host "  $($_.Name): $($_.DurationMs.ToString('F1'))ms" -ForegroundColor White
         }
-        
+
         Write-Host
         Write-Host "Press Ctrl+C to exit, refreshing in $RefreshSeconds seconds..." -ForegroundColor Gray
-        
+
         Start-Sleep -Seconds $RefreshSeconds
     }
 }
@@ -352,16 +352,16 @@ function Measure-FileProcessing {
     <#
     .SYNOPSIS
     Measures file processing performance with detailed metrics.
-    
+
     .PARAMETER Files
     Array of files to process
-    
+
     .PARAMETER ProcessingFunction
     Function to apply to each file
-    
+
     .PARAMETER BatchSize
     Number of files to process in parallel
-    
+
     .PARAMETER Name
     Name for the measurement
     #>
@@ -369,35 +369,35 @@ function Measure-FileProcessing {
     param(
         [Parameter(Mandatory)]
         [System.IO.FileInfo[]]$Files,
-        
+
         [Parameter(Mandatory)]
         [scriptblock]$ProcessingFunction,
-        
+
         [Parameter()]
         [int]$BatchSize = 8,
-        
+
         [Parameter()]
         [string]$Name = 'FileProcessing'
     )
 
     Start-PerformanceTimer -Name $Name -Category 'FileProcessing' -Tags @($Files.Count, $BatchSize)
-    
+
     $results = @()
     $processed = 0
-    
+
     try {
         for ($i = 0; $i -lt $Files.Count; $i += $BatchSize) {
             $batch = $Files[$i..([Math]::Min($i + $BatchSize - 1, $Files.Count - 1))]
-            
+
             $batchName = "$Name-Batch$($i/$BatchSize + 1)"
             Start-PerformanceTimer -Name $batchName -Category 'FileProcessing'
-            
+
             $batchResults = $batch | ForEach-Object {
                 & $ProcessingFunction $_
             }
-            
+
             Stop-PerformanceTimer -Name $batchName
-            
+
             $results += $batchResults
             $processed += $batch.Count
 
@@ -405,14 +405,14 @@ function Measure-FileProcessing {
                 Write-CustomLog "Processed $processed/$($Files.Count) files" -Level Information
             }
         }
-        
+
         $metrics = Stop-PerformanceTimer -Name $Name -ReturnMetrics
-        
+
         # Add file processing specific metrics
         $metrics.FilesProcessed = $Files.Count
         $metrics.FilesPerSecond = $Files.Count / ($metrics.DurationMs / 1000)
         $metrics.AvgTimePerFile = $metrics.DurationMs / $Files.Count
-        
+
         return @{
             Results = $results
             Metrics = $metrics
@@ -450,10 +450,10 @@ function Export-PerformanceReport {
     <#
     .SYNOPSIS
     Exports performance metrics to various formats.
-    
+
     .PARAMETER Path
     Path to save the report
-    
+
     .PARAMETER Format
     Report format
     #>
@@ -461,7 +461,7 @@ function Export-PerformanceReport {
     param(
         [Parameter()]
         [string]$Path = "./reports/performance-$(Get-Date -Format 'yyyyMMdd-HHmmss')",
-        
+
         [Parameter()]
         [ValidateSet('JSON', 'CSV', 'HTML')]
         [string]$Format = 'JSON'
@@ -469,7 +469,7 @@ function Export-PerformanceReport {
 
     $metrics = $script:MetricsHistory
     $summary = Get-PerformanceSummary
-    
+
     $report = @{
         Generated = Get-Date
         TotalMetrics = $metrics.Count
@@ -477,7 +477,7 @@ function Export-PerformanceReport {
         Summary = $summary
         Metrics = $metrics
     }
-    
+
     switch ($Format) {
         'JSON' {
             $report | ConvertTo-Json -Depth 10 | Out-File "$Path.json"
@@ -502,7 +502,7 @@ function Export-PerformanceReport {
                 $html += "<tr><td>$($_.Group)</td><td>$($_.Count)</td><td>$($_.AvgDurationMs.ToString('F2'))</td><td>$($_.TotalDurationMs.ToString('F2'))</td></tr>"
             }
             $html += "</table></body></html>"
-            
+
             $html | Out-File "$Path.html"
         }
     }
@@ -519,7 +519,7 @@ function Export-PerformanceReport {
 # Performance budgets (in milliseconds)
 $script:PerformanceBudgets = @{
     'TotalInitialization' = 150    # Total initialization should be < 150ms
-    'ModuleLoad_Average' = 15      # Average module load time should be < 15ms  
+    'ModuleLoad_Average' = 15      # Average module load time should be < 15ms
     'ModuleLoad_UserInterface' = 25 # UserInterface module should be < 25ms (was 40ms)
     'ModuleLoad_Individual' = 30   # No individual module should take > 30ms
 }
@@ -552,7 +552,7 @@ function Test-PerformanceBudget {
         $actual = $Metrics.TotalInitTimeMs
         $budget = $script:PerformanceBudgets.TotalInitialization
         $results.TotalTests++
-        
+
         if ($actual -le $budget) {
             $results.Passed += @{
                 Test = 'TotalInitialization'
@@ -613,7 +613,7 @@ function Test-PerformanceBudget {
         $average = ($Metrics.ModuleTimings.Values | Measure-Object -Average).Average
         $budget = $script:PerformanceBudgets.ModuleLoad_Average
         $results.TotalTests++
-        
+
         if ($average -le $budget) {
             $results.Passed += @{
                 Test = 'ModuleLoad_Average'
@@ -649,7 +649,7 @@ function Test-PerformanceBudget {
     }
 
     if ($results.Passed.Count -gt 0) {
-        Write-Host "`nPassed Tests:" -ForegroundColor Green  
+        Write-Host "`nPassed Tests:" -ForegroundColor Green
         foreach ($pass in $results.Passed) {
             Write-Host "  ✅ $($pass.Test): $($pass.Actual)ms <= $($pass.Budget)ms" -ForegroundColor Green
         }
@@ -658,7 +658,7 @@ function Test-PerformanceBudget {
     if ($Throw -and $results.FailedTests -gt 0) {
         throw "Performance budget exceeded: $($results.FailedTests) of $($results.TotalTests) tests failed"
     }
-    
+
     return $results
 }
 
@@ -675,7 +675,7 @@ function Set-PerformanceBudget {
     param(
         [Parameter(Mandatory)]
         [string]$BudgetName,
-        
+
         [Parameter(Mandatory)]
         [double]$Value
     )
@@ -689,7 +689,7 @@ function Set-PerformanceBudget {
 # Export functions
 Export-ModuleMember -Function @(
     'Start-PerformanceTimer',
-    'Stop-PerformanceTimer', 
+    'Stop-PerformanceTimer',
     'Measure-Performance',
     'Get-PerformanceMetrics',
     'Get-PerformanceSummary',

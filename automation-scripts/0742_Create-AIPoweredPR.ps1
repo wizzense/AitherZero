@@ -7,34 +7,34 @@
 param(
     [Parameter()]
     [string]$Title,
-    
+
     [Parameter()]
     [string]$Body,
-    
+
     [Parameter()]
     [string]$Base = "main",
-    
+
     [Parameter()]
     [string[]]$Labels,
-    
+
     [Parameter()]
     [switch]$UseAI,
-    
+
     [Parameter()]
     [switch]$EnhanceWithCopilot,
-    
+
     [Parameter()]
     [switch]$EnhanceWithClaude,
-    
+
     [Parameter()]
     [switch]$AutoMerge,
-    
+
     [Parameter()]
     [switch]$Draft,
-    
+
     [Parameter()]
     [switch]$NonInteractive,
-    
+
     [Parameter()]
     [switch]$Force
 )
@@ -53,7 +53,7 @@ function Write-ScriptLog {
         [string]$Message,
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message "[AI-PR] $Message" -Level $Level
     } else {
@@ -75,11 +75,11 @@ function Get-GitChangeSummary {
     #>
     [CmdletBinding()]
     param()
-    
+
     $diff = git diff origin/$Base --stat
     $files = git diff origin/$Base --name-only
     $commits = git log origin/$Base..HEAD --oneline
-    
+
     return @{
         Diff = $diff
         Files = $files
@@ -99,9 +99,9 @@ function Generate-AIDescription {
         [hashtable]$Changes,
         [string]$Title
     )
-    
+
     Write-ScriptLog "Generating AI-enhanced PR description"
-    
+
     $description = @"
 ## 🚀 Summary
 
@@ -111,7 +111,7 @@ $Title
 
 ### Files Modified ($($Changes.FileCount) files)
 "@
-    
+
     # Categorize files
     $categories = @{}
     foreach ($file in $Changes.Files) {
@@ -125,17 +125,17 @@ $Title
             '\.md$' { '📄 Markdown Files' }
             default { '📁 Other Files' }
         }
-        
+
         if (-not $categories[$category]) {
             $categories[$category] = @()
         }
         $categories[$category] += $file
     }
-    
+
     foreach ($cat in $categories.Keys | Sort-Object) {
         $description += "`n#### $cat ($($categories[$cat].Count) files)`n"
     }
-    
+
     # Add simple summary
     $description += @"
 
@@ -156,14 +156,14 @@ $Title
 
 This PR description was generated using AitherZero's AI-enhanced workflow:
 "@
-    
+
     if ($UseAI -or $EnhanceWithCopilot -or $EnhanceWithClaude) {
         $description += "`n### AI Services Used:`n"
         if ($UseAI) { $description += "- ✅ AitherZero AI Analysis`n" }
         if ($EnhanceWithCopilot) { $description += "- ✅ GitHub Copilot Enhancement`n" }
         if ($EnhanceWithClaude) { $description += "- ✅ Claude Code Review`n" }
     }
-    
+
     # Detect potential issues
     $potentialIssues = @()
     if ($Changes.FileCount -gt 50) {
@@ -175,7 +175,7 @@ This PR description was generated using AitherZero's AI-enhanced workflow:
     if ($Changes.Files | Where-Object { $_ -match 'break|remove|delete' -or $_ -match '^-' }) {
         $potentialIssues += "Potential breaking changes detected"
     }
-    
+
     if ($potentialIssues) {
         $description += @"
 
@@ -186,7 +186,7 @@ This PR description was generated using AitherZero's AI-enhanced workflow:
             $description += "- $issue`n"
         }
     }
-    
+
     # Add AI recommendations
     $description += @"
 
@@ -197,7 +197,7 @@ This PR description was generated using AitherZero's AI-enhanced workflow:
 3. Check CI/CD pipeline results
 4. Request review from relevant team members
 "@
-    
+
     if ($AutoMerge) {
         $description += @"
 
@@ -206,7 +206,7 @@ This PR description was generated using AitherZero's AI-enhanced workflow:
 Auto-merge is **ENABLED** for this PR. It will be merged automatically once all checks pass and required reviews are completed.
 "@
     }
-    
+
     return $description
 }
 
@@ -220,12 +220,12 @@ function Invoke-ClaudeEnhancement {
         [string]$Description,
         [hashtable]$Changes
     )
-    
+
     Write-ScriptLog "Invoking Claude for PR enhancement"
-    
+
     # Here we would call Claude API if available
     # For now, we'll add a placeholder
-    
+
     $claudeSection = @"
 
 ---
@@ -243,7 +243,7 @@ When enabled, Claude will:
 - Identify potential bugs
 - Recommend test cases
 "@
-    
+
     return $Description + $claudeSection
 }
 
@@ -256,9 +256,9 @@ function Invoke-CopilotEnhancement {
     param(
         [string]$Description
     )
-    
+
     Write-ScriptLog "Preparing for GitHub Copilot enhancement"
-    
+
     # Add Copilot instructions
     $copilotSection = @"
 
@@ -278,7 +278,7 @@ Focus areas:
 - Security considerations
 - Test coverage
 "@
-    
+
     return $Description + $copilotSection
 }
 
@@ -290,24 +290,24 @@ try {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         throw "Git is not installed"
     }
-    
+
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
         throw "GitHub CLI is not installed"
     }
-    
+
     # Get current branch
     $currentBranch = git branch --show-current
     if (-not $currentBranch -or $currentBranch -eq $Base) {
         throw "Cannot create PR from base branch. Create a feature branch first."
     }
-    
+
     Write-Host "`n🔍 Analyzing changes..." -ForegroundColor Cyan
     $changes = Get-GitChangeSummary
-    
+
     Write-Host "  Branch: $currentBranch → $Base" -ForegroundColor White
     Write-Host "  Files: $($changes.FileCount)" -ForegroundColor White
     Write-Host "  Commits: $($changes.CommitCount)" -ForegroundColor White
-    
+
     # Generate or use provided title
     if (-not $Title) {
         # Get last commit message as title
@@ -315,51 +315,51 @@ try {
         $Title = $lastCommit
         Write-Host "  Using last commit as title: $Title" -ForegroundColor Yellow
     }
-    
+
     # Generate or enhance body
     if (-not $Body -or $UseAI) {
         Write-Host "`n🤖 Generating AI description..." -ForegroundColor Cyan
         $Body = Generate-AIDescription -Changes $changes -Title $Title
-        
+
         if ($EnhanceWithClaude) {
             $Body = Invoke-ClaudeEnhancement -Description $Body -Changes $changes
         }
-        
+
         if ($EnhanceWithCopilot) {
             $Body = Invoke-CopilotEnhancement -Description $Body
         }
     }
-    
+
     # Prepare PR command
     Write-Host "`n📝 Creating pull request..." -ForegroundColor Green
-    
+
     $prArgs = @(
         "pr", "create",
         "--title", $Title,
         "--body", $Body,
         "--base", $Base
     )
-    
+
     if ($Labels) {
         $prArgs += "--label"
         $prArgs += ($Labels -join ",")
     }
-    
+
     if ($Draft) {
         $prArgs += "--draft"
     }
-    
+
     if ($NonInteractive) {
         $prArgs += "--no-maintainer-edit"
     }
-    
+
     # Write body to temp file because it might be too long
     $bodyFile = $null
     if ($PSCmdlet.ShouldProcess("temporary file", "Create PR body file")) {
         $bodyFile = [System.IO.Path]::GetTempFileName()
         $Body | Set-Content -Path $bodyFile -Encoding UTF8
     }
-    
+
     # Update args to use body file or direct body
     if ($bodyFile) {
         $prArgs = @(
@@ -377,40 +377,40 @@ try {
             "--base", $Base
         )
     }
-    
+
     if ($Labels) {
         $prArgs += "--label"
         $prArgs += ($Labels -join ",")
     }
-    
+
     if ($Draft) {
         $prArgs += "--draft"
     }
-    
+
     # Create the PR
     $prUrl = $null
     if ($PSCmdlet.ShouldProcess("GitHub", "Create pull request")) {
         $prUrl = gh @prArgs
     }
-    
+
     # Clean up temp file
     if ($bodyFile -and $PSCmdlet.ShouldProcess("temporary file", "Remove PR body file")) {
         Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
     }
-    
+
     if ($prUrl -and $LASTEXITCODE -eq 0) {
         Write-Host "✅ Pull request created successfully!" -ForegroundColor Green
         Write-Host "   URL: $prUrl" -ForegroundColor Cyan
-        
+
         # Extract PR number
         if ($prUrl -match '/pull/(\d+)') {
             $prNumber = $Matches[1]
-            
+
             # Add AI-enhancement comment
             if ($UseAI -or $EnhanceWithCopilot -or $EnhanceWithClaude) {
                 if ($PSCmdlet.ShouldProcess("PR #$prNumber", "Add AI enhancement comment")) {
                     Write-Host "`n💬 Adding AI enhancement comment..." -ForegroundColor Yellow
-                    
+
                     $comment = @"
 ## 🤖 AI-Enhanced Pull Request
 
@@ -429,11 +429,11 @@ $(if ($AutoMerge) { "4. PR will auto-merge when all checks pass" })
 ---
 _Generated by AitherZero AI-PR Assistant v2.0_
 "@
-                    
+
                     gh pr comment $prNumber --body $comment
                 }
             }
-            
+
             # Enable auto-merge if requested
             if ($AutoMerge) {
                 if ($PSCmdlet.ShouldProcess("PR #$prNumber", "Enable auto-merge")) {
@@ -450,9 +450,9 @@ _Generated by AitherZero AI-PR Assistant v2.0_
     } else {
         throw "Failed to create PR"
     }
-    
+
     Write-ScriptLog "AI-powered PR creation completed successfully"
-    
+
 } catch {
     Write-ScriptLog "Error creating PR: $_" -Level 'Error'
     Write-Error $_

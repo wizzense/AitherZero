@@ -2,29 +2,29 @@ function Update-Changelog {
     <#
     .SYNOPSIS
     Automatically updates the project changelog with patch information
-    
+
     .DESCRIPTION
     Updates CHANGELOG.md with patch details, maintaining proper formatting and structure.
     Supports multiple change types and automatic commit information.
-    
+
     .PARAMETER PatchDescription
     Description of the patch changes
-    
+
     .PARAMETER ChangeType
     Type of change: Added, Changed, Deprecated, Removed, Fixed, Security
-    
+
     .PARAMETER AffectedFiles
     List of files affected by the patch
-    
+
     .PARAMETER CommitHash
     Git commit hash for reference
-    
+
     .PARAMETER PullRequestNumber
     PR number if available
-    
+
     .PARAMETER ProjectRoot
     Project root directory (defaults to $env:PROJECT_ROOT)
-    
+
     .EXAMPLE
     Update-Changelog -PatchDescription "feat: add new feature" -ChangeType "Added" -AffectedFiles @("file1.ps1", "file2.ps1")
     #>
@@ -32,27 +32,27 @@ function Update-Changelog {
     param(
         [Parameter(Mandatory = $true)]
         [string]$PatchDescription,
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateSet("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security")]
         [string]$ChangeType = "Added",
-        
+
         [Parameter(Mandatory = $false)]
         [string[]]$AffectedFiles = @(),
-        
+
         [Parameter(Mandatory = $false)]
         [string]$CommitHash,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$PullRequestNumber,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$ProjectRoot = $env:PROJECT_ROOT
     )
 
     try {
         $changelogPath = Join-Path $ProjectRoot "CHANGELOG.md"
-        
+
         if (-not (Test-Path $changelogPath)) {
             Write-Warning "CHANGELOG.md not found at $changelogPath. Creating basic changelog."
             $initialContent = @"
@@ -68,9 +68,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 "@
             Set-Content -Path $changelogPath -Value $initialContent -Encoding UTF8
         }
-        
+
         $content = Get-Content $changelogPath -Raw
-        
+
         # Extract change type from patch description if not specified
         if ($ChangeType -eq "Added") {
             if ($PatchDescription -match "^fix:|^hotfix:") { $ChangeType = "Fixed" }
@@ -80,28 +80,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
             elseif ($PatchDescription -match "^security:") { $ChangeType = "Security" }
             elseif ($PatchDescription -match "^deprecate:") { $ChangeType = "Deprecated" }
         }
-        
+
         # Clean up patch description for changelog
         $cleanDescription = $PatchDescription -replace "^(feat|fix|hotfix|refactor|style|perf|remove|delete|security|deprecate):\s*", ""
         $cleanDescription = $cleanDescription.Substring(0,1).ToUpper() + $cleanDescription.Substring(1)
           # Build the changelog entry
         $entry = "- $cleanDescription"
-        
+
         # Add reference information if available
         $references = @()
         if ($CommitHash) { $references += "commit: $($CommitHash.Substring(0,7))" }
         if ($PullRequestNumber) { $references += "PR: #$PullRequestNumber" }
-        if ($AffectedFiles.Count -gt 0 -and $AffectedFiles.Count -le 3) { 
-            $references += "files: $($AffectedFiles -join ', ')" 
+        if ($AffectedFiles.Count -gt 0 -and $AffectedFiles.Count -le 3) {
+            $references += "files: $($AffectedFiles -join ', ')"
         }
         elseif ($AffectedFiles.Count -gt 3) {
             $references += "files: $($AffectedFiles[0..2] -join ', ') + $($AffectedFiles.Count - 3) more"
         }
-        
+
         if ($references.Count -gt 0) {
             $entry += " ($($references -join ', '))"
         }
-        
+
         # Find the Unreleased section and add the entry
         if ($content -match "## \[Unreleased\]") {
             # Check if the change type section exists
@@ -118,17 +118,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
             Write-Warning "Could not find [Unreleased] section in changelog. Appending entry at the end."
             $content += "`n### $ChangeType`n$entry`n"
         }
-        
+
         # Write the updated content
         Set-Content -Path $changelogPath -Value $content -Encoding UTF8
-        
+
         Write-Host "✓ Updated changelog:" -ForegroundColor Green
         Write-Host "  Type: $ChangeType" -ForegroundColor Cyan
         Write-Host "  Entry: $cleanDescription" -ForegroundColor White
         if ($references.Count -gt 0) {
             Write-Host "  References: $($references -join ', ')" -ForegroundColor Gray
         }
-        
+
         return @{
             Success = $true
             ChangelogPath = $changelogPath

@@ -23,10 +23,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
-    
+
     [ValidateSet('SOC2', 'PCI-DSS', 'HIPAA', 'All')]
     [string]$ComplianceFramework = 'All',
-    
+
     [switch]$GenerateRemediation
 )
 
@@ -67,7 +67,7 @@ Write-Host ""
 if ($PSCmdlet.ShouldProcess("$Path", "Perform security scan and analysis")) {
     Start-Sleep -Seconds 1
     Write-Host "✓ Security scan complete (stub)" -ForegroundColor Green
-    
+
     # Additional state-changing operations for remediation if requested
     if ($GenerateRemediation -and $PSCmdlet.ShouldProcess("remediation scripts", "Generate security remediation scripts")) {
         Write-Host "✓ Remediation scripts generated (stub)" -ForegroundColor Green

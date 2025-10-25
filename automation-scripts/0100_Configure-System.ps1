@@ -89,12 +89,12 @@ try {
 
             # Get active network adapters
             $adapters = Get-NetAdapter | Where-Object { $_.Status -eq 'Up' }
-            
+
             foreach ($adapter in $adapters) {
                 Write-ScriptLog "Setting DNS for adapter: $($adapter.Name)" -Level 'Debug'
                 Set-DnsClientServerAddress -InterfaceIndex $adapter.InterfaceIndex -ServerAddresses $dnsServers
             }
-            
+
             Write-ScriptLog "DNS servers configured successfully"
         } catch {
             Write-ScriptLog "Failed to configure DNS servers: $_" -Level 'Error'
@@ -127,7 +127,7 @@ try {
                 New-Item -Path $regPath -Force | Out-Null
             }
             Set-ItemProperty -Path $regPath -Name 'DisabledComponents' -Value 0xff -Type DWord
-            
+
             Write-ScriptLog "IPv6 disabled. Restart required for full effect." -Level 'Warning'
         } catch {
             Write-ScriptLog "Failed to disable IPv6: $_" -Level 'Error'
@@ -147,7 +147,7 @@ try {
             # Start Remote Desktop services
             Set-Service -Name TermService -StartupType Automatic
             Start-Service -Name TermService -ErrorAction SilentlyContinue
-            
+
             Write-ScriptLog "Remote Desktop enabled successfully"
         } catch {
             Write-ScriptLog "Failed to enable Remote Desktop: $_" -Level 'Error'
@@ -157,7 +157,7 @@ try {
     # Configure Windows Firewall
     if ($systemConfig.ConfigureFirewall -eq $true -and $systemConfig.FirewallPorts) {
         Write-ScriptLog "Configuring Windows Firewall..."
-        
+
         foreach ($port in $systemConfig.FirewallPorts) {
             try {
                 if ($port -match '-') {
@@ -165,7 +165,7 @@ try {
                     $portRange = $port -split '-'
                     $startPort = [int]$portRange[0]
                     $endPort = [int]$portRange[1]
-                    
+
                     Write-ScriptLog "Opening port range: $startPort-$endPort"
                     New-NetFirewallRule -DisplayName "AitherZero Port Range $startPort-$endPort" `
                         -Direction Inbound -LocalPort "$startPort-$endPort" -Protocol TCP -Action Allow -ErrorAction Stop
@@ -182,7 +182,7 @@ try {
                 }
             }
         }
-        
+
         Write-ScriptLog "Firewall configuration completed"
     }
 
@@ -198,16 +198,16 @@ try {
             if ($config.CertificateAuthority -and $config.CertificateAuthority.InstallCA -eq $true) {
                 Write-ScriptLog "WinRM HTTPS configuration will be handled by certificate installation script" -Level 'Debug'
             }
-            
+
             Write-ScriptLog "WinRM enabled successfully"
         } catch {
             Write-ScriptLog "Failed to enable WinRM: $_" -Level 'Error'
         }
     }
-    
+
     Write-ScriptLog "System configuration completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "System configuration failed: $_" -Level 'Error'
     exit 1

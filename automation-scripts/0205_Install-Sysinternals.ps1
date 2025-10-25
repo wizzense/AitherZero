@@ -73,7 +73,7 @@ try {
     } else {
         'C:\Tools\Sysinternals'
     }
-    
+
     Write-ScriptLog "Target installation path: $installPath"
 
     # Check if already installed
@@ -92,11 +92,11 @@ try {
                 $env:PATH = "$env:PATH;$installPath"
                 Write-ScriptLog "Added Sysinternals to current session PATH"
             }
-            
+
             exit 0
         }
     }
-    
+
     Write-ScriptLog "Installing Sysinternals Suite..."
 
     # Create installation directory
@@ -110,7 +110,7 @@ try {
     # Download Sysinternals Suite
     $downloadUrl = 'https://download.sysinternals.com/files/SysinternalsSuite.zip'
     $tempZip = Join-Path $env:TEMP "SysinternalsSuite_$(Get-Date -Format 'yyyyMMddHHmmss').zip"
-    
+
     try {
         if ($PSCmdlet.ShouldProcess($downloadUrl, 'Download Sysinternals Suite')) {
             Write-ScriptLog "Downloading from: $downloadUrl"
@@ -119,7 +119,7 @@ try {
             $ProgressPreference = 'SilentlyContinue'  # Faster download
             Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing
             $ProgressPreference = 'Continue'
-            
+
             Write-ScriptLog "Downloaded to: $tempZip"
 
             # Verify download
@@ -127,17 +127,17 @@ try {
                 throw "Download failed or resulted in empty file"
             }
         }
-        
+
         # Extract archive
         if ($PSCmdlet.ShouldProcess($tempZip, 'Extract archive')) {
             Write-ScriptLog "Extracting archive..."
             Expand-Archive -Path $tempZip -DestinationPath $installPath -Force
             Write-ScriptLog "Extraction completed"
         }
-        
+
         # Clean up
         Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
-        
+
     } catch {
         # Clean up on failure
         if (Test-Path $tempZip) {
@@ -152,7 +152,7 @@ try {
         Write-ScriptLog "No executables found after extraction" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Successfully installed $($installedTools.Count) Sysinternals tools"
 
     # Verify key tools
@@ -199,7 +199,7 @@ try {
             if (-not (Test-Path $eulaKey)) {
                 New-Item -Path $eulaKey -Force | Out-Null
             }
-            
+
             foreach ($tool in $installedTools) {
                 $toolName = [System.IO.Path]::GetFileNameWithoutExtension($tool.Name)
                 $toolKey = Join-Path $eulaKey $toolName
@@ -208,16 +208,16 @@ try {
                 }
                 Set-ItemProperty -Path $toolKey -Name 'EulaAccepted' -Value 1 -Type DWord
             }
-            
+
             Write-ScriptLog "EULA acceptance configured for all tools"
         } catch {
             Write-ScriptLog "Could not configure EULA acceptance: $_" -Level 'Warning'
         }
     }
-    
+
     Write-ScriptLog "Sysinternals installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during Sysinternals installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

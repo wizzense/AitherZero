@@ -78,23 +78,23 @@ try {
     # Use PackageManager if available
     if ($script:PackageManagerAvailable) {
         Write-ScriptLog "Using PackageManager module for Azure CLI installation"
-        
+
         # Try package manager installation
         try {
             $preferredPackageManager = $azureCliConfig.PreferredPackageManager
             $installResult = Install-SoftwarePackage -SoftwareName 'azure-cli' -PreferredPackageManager $preferredPackageManager
-            
+
             if ($installResult.Success) {
                 Write-ScriptLog "Azure CLI installed successfully via $($installResult.PackageManager)"
-                
+
                 # Verify installation
                 $version = Get-SoftwareVersion -SoftwareName 'azure-cli'
                 Write-ScriptLog "Azure CLI version: $version"
-                
+
                 # Configure if settings provided
                 if ($azureCliConfig.DefaultSettings) {
                     Write-ScriptLog "Configuring Azure CLI defaults..."
-                    
+
                     foreach ($setting in $azureCliConfig.DefaultSettings.GetEnumerator()) {
                         if ($PSCmdlet.ShouldProcess("az config $($setting.Key)", 'Configure')) {
                             & az config set $setting.Key=$setting.Value 2>&1 | ForEach-Object { Write-ScriptLog $_ -Level 'Debug' }
@@ -105,7 +105,7 @@ try {
                 # Install extensions if specified
                 if ($azureCliConfig.Extensions) {
                     Write-ScriptLog "Installing Azure CLI extensions..."
-                    
+
                     foreach ($extension in $azureCliConfig.Extensions) {
                         if ($PSCmdlet.ShouldProcess($extension, 'Install extension')) {
                             Write-ScriptLog "Installing extension: $extension"
@@ -113,7 +113,7 @@ try {
                         }
                     }
                 }
-                
+
                 Write-ScriptLog "Azure CLI installation completed successfully"
                 exit 0
             }
@@ -133,7 +133,7 @@ try {
         if (-not $azCmd) {
             $azCmd = Get-Command az.cmd -ErrorAction SilentlyContinue
         }
-        
+
         if ($azCmd) {
             Write-ScriptLog "Azure CLI is already installed at: $($azCmd.Source)"
 
@@ -141,7 +141,7 @@ try {
             try {
                 $version = & az version --output json | ConvertFrom-Json
                 Write-ScriptLog "Current version: $($version.'azure-cli')"
-                
+
                 # Check for updates if configured
                 if ($azureCliConfig.CheckForUpdates -eq $true) {
                     Write-ScriptLog "Checking for updates..."
@@ -152,56 +152,56 @@ try {
             } catch {
                 Write-ScriptLog "Could not determine version" -Level 'Debug'
             }
-            
+
             exit 0
         }
-        
+
         Write-ScriptLog "Installing Azure CLI for Windows..."
-        
+
         # Download URL
         $downloadUrl = 'https://aka.ms/installazurecliwindows'
         $tempInstaller = Join-Path $env:TEMP "AzureCLI_$(Get-Date -Format 'yyyyMMddHHmmss').msi"
-        
+
         try {
             if ($PSCmdlet.ShouldProcess($downloadUrl, 'Download Azure CLI installer')) {
                 Write-ScriptLog "Downloading from: $downloadUrl"
-                
+
                 $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempInstaller -UseBasicParsing
                 $ProgressPreference = 'Continue'
-                
+
                 Write-ScriptLog "Downloaded to: $tempInstaller"
             }
 
             # Run MSI installer
             if ($PSCmdlet.ShouldProcess('Azure CLI', 'Install')) {
                 Write-ScriptLog "Running installer..."
-                
+
                 $msiArgs = @(
                     '/i', "`"$tempInstaller`"",
                     '/quiet',
                     '/norestart'
                 )
-            
+
                 # Add logging if debug mode
                 if ($azureCliConfig.EnableInstallerLogging -eq $true) {
                     $logFile = Join-Path $env:TEMP "AzureCLI_Install_$(Get-Date -Format 'yyyyMMddHHmmss').log"
                     $msiArgs += '/l*v', "`"$logFile`""
                     Write-ScriptLog "Installer log will be written to: $logFile" -Level 'Debug'
                 }
-                
+
                 $process = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
-                
+
                 if ($process.ExitCode -ne 0) {
                     throw "MSI installer exited with code: $($process.ExitCode)"
                 }
-                
+
                 Write-ScriptLog "Installation completed"
             }
 
             # Clean up
             Remove-Item $tempInstaller -Force -ErrorAction SilentlyContinue
-            
+
         } catch {
             # Clean up on failure
             if (Test-Path $tempInstaller) {
@@ -209,42 +209,42 @@ try {
             }
             throw
         }
-        
+
     } elseif ($IsLinux) {
         # Linux installation
         Write-ScriptLog "Installing Azure CLI for Linux..."
-        
+
         # Check if already installed
         if (Get-Command az -ErrorAction SilentlyContinue) {
             Write-ScriptLog "Azure CLI is already installed"
-            
+
             try {
                 $version = & az version --output json | ConvertFrom-Json
                 Write-ScriptLog "Current version: $($version.'azure-cli')"
             } catch {
                 Write-ScriptLog "Could not determine version" -Level 'Debug'
             }
-            
+
             exit 0
         }
-        
+
         # Install using distribution-specific method
         if (Get-Command apt-get -ErrorAction SilentlyContinue) {
             # Debian/Ubuntu
             if ($PSCmdlet.ShouldProcess('Azure CLI', 'Install via apt-get')) {
                 Write-ScriptLog "Installing via apt-get..."
-                
+
                 # Install prerequisites
                 & sudo apt-get update
                 & sudo apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
-                
+
                 # Add Microsoft GPG key
                 & curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-                
+
                 # Add Azure CLI repository
                 $AZ_REPO = & lsb_release -cs
                 & bash -c "echo 'deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main' | sudo tee /etc/apt/sources.list.d/azure-cli.list"
-                
+
                 # Install Azure CLI
                 & sudo apt-get update
                 & sudo apt-get install -y azure-cli
@@ -253,13 +253,13 @@ try {
             # RHEL/CentOS
             if ($PSCmdlet.ShouldProcess('Azure CLI', 'Install via yum')) {
                 Write-ScriptLog "Installing via yum..."
-                
+
                 # Import Microsoft repository key
                 & sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-                
+
                 # Add repository
                 & bash -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo'
-                
+
                 # Install
                 & sudo yum install -y azure-cli
             }
@@ -267,17 +267,17 @@ try {
             Write-ScriptLog "Unsupported Linux distribution for automatic installation" -Level 'Error'
             exit 1
         }
-        
+
     } elseif ($IsMacOS) {
         # macOS installation
         Write-ScriptLog "Installing Azure CLI for macOS..."
-        
+
         # Check if already installed
         if (Get-Command az -ErrorAction SilentlyContinue) {
             Write-ScriptLog "Azure CLI is already installed"
             exit 0
         }
-        
+
         # Install using Homebrew
         if (Get-Command brew -ErrorAction SilentlyContinue) {
             if ($PSCmdlet.ShouldProcess('azure-cli', 'Install via Homebrew')) {
@@ -296,7 +296,7 @@ try {
         Write-ScriptLog "Azure CLI command not found after installation" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Azure CLI installed successfully"
 
     # Test Azure CLI
@@ -310,7 +310,7 @@ try {
     # Configure if settings provided
     if ($azureCliConfig.DefaultSettings) {
         Write-ScriptLog "Configuring Azure CLI defaults..."
-        
+
         foreach ($setting in $azureCliConfig.DefaultSettings.GetEnumerator()) {
             if ($PSCmdlet.ShouldProcess("az config $($setting.Key)", 'Configure')) {
                 & az config set $setting.Key=$setting.Value 2>&1 | ForEach-Object { Write-ScriptLog $_ -Level 'Debug' }
@@ -321,7 +321,7 @@ try {
     # Install extensions if specified
     if ($azureCliConfig.Extensions) {
         Write-ScriptLog "Installing Azure CLI extensions..."
-        
+
         foreach ($extension in $azureCliConfig.Extensions) {
             if ($PSCmdlet.ShouldProcess($extension, 'Install extension')) {
                 Write-ScriptLog "Installing extension: $extension"
@@ -329,10 +329,10 @@ try {
             }
         }
     }
-    
+
     Write-ScriptLog "Azure CLI installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during Azure CLI installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

@@ -177,12 +177,12 @@ function Test-IsAdmin {
 }
 
 function Get-TempDirectory {
-    if ($env:TEMP) { 
-        return $env:TEMP 
-    } elseif ($env:TMPDIR) { 
-        return $env:TMPDIR 
-    } else { 
-        return '/tmp' 
+    if ($env:TEMP) {
+        return $env:TEMP
+    } elseif ($env:TMPDIR) {
+        return $env:TMPDIR
+    } else {
+        return '/tmp'
     }
 }
 
@@ -252,11 +252,11 @@ function Test-Dependencies {
 
     if ($missing.Count -gt 0) {
         Write-BootstrapLog "Missing dependencies: $($missing -join ', ')" -Level Warning
-        
+
         # Determine installation strategy
         $shouldInstall = $false
         $reason = ""
-        
+
         if ($AutoInstallDeps) {
             $shouldInstall = $true
             $reason = "AutoInstallDeps flag is set"
@@ -267,7 +267,7 @@ function Test-Dependencies {
             $shouldInstall = $true
             $reason = "CI environment detected"
         }
-        
+
         if ($shouldInstall) {
             Write-BootstrapLog "Will attempt to install missing dependencies ($reason)" -Level Info
             Install-Dependencies -Missing $missing
@@ -275,18 +275,18 @@ function Test-Dependencies {
             Write-BootstrapLog "Automatic dependency installation not enabled" -Level Warning
             Write-BootstrapLog "To enable automatic installation, use: bootstrap.ps1 -AutoInstallDeps" -Level Info
             Write-BootstrapLog "Manual installation options:" -Level Info
-            
+
             foreach ($dep in $missing) {
                 switch ($dep) {
-                    'Git' { 
-                        Write-BootstrapLog "  Git: https://git-scm.com/downloads" -Level Info 
+                    'Git' {
+                        Write-BootstrapLog "  Git: https://git-scm.com/downloads" -Level Info
                     }
-                    'PowerShell7' { 
-                        Write-BootstrapLog "  PowerShell 7: https://github.com/PowerShell/PowerShell#get-powershell" -Level Info 
+                    'PowerShell7' {
+                        Write-BootstrapLog "  PowerShell 7: https://github.com/PowerShell/PowerShell#get-powershell" -Level Info
                     }
                 }
             }
-            
+
             throw "Missing dependencies: $($missing -join ', '). Use -AutoInstallDeps to install automatically."
         }
     } else {
@@ -334,12 +334,12 @@ function Install-Dependencies {
                 }
             }
         }
-        
+
         if (-not $pwsh) {
             throw "PowerShell 7 was installed but pwsh command not found in PATH"
         }
 
-        # Get the current script path 
+        # Get the current script path
         $scriptPath = $null
         if ($MyInvocation.PSCommandPath) {
             $scriptPath = $MyInvocation.PSCommandPath
@@ -365,7 +365,7 @@ function Install-Dependencies {
         # Build arguments to preserve all parameters
         $argumentList = @()
         $argumentList += "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath
-        
+
         # Preserve all bound parameters and add IsRelaunch flag
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             if ($param.Value -is [switch]) {
@@ -380,7 +380,7 @@ function Install-Dependencies {
         $argumentList += "-IsRelaunch"
 
         Write-BootstrapLog "Executing: $pwsh $($argumentList -join ' ')" -Level Info
-        
+
         try {
             & $pwsh @argumentList
             $exitCode = $LASTEXITCODE
@@ -438,7 +438,7 @@ function Install-Dependencies {
 
 function Install-Git {
     Write-BootstrapLog "Installing Git..." -Level Info
-    
+
     # Check if Git is already available
     if (Get-Command git -ErrorAction SilentlyContinue) {
         Write-BootstrapLog "Git is already installed" -Level Success
@@ -449,17 +449,17 @@ function Install-Git {
         if (Test-IsWindows) {
             # Windows Git installation
             Write-BootstrapLog "Installing Git for Windows..." -Level Info
-            
+
             # Try winget first (modern Windows package manager)
             if (Get-Command winget -ErrorAction SilentlyContinue) {
                 Write-BootstrapLog "Attempting Git installation via winget..." -Level Info
                 & winget install --id Git.Git --source winget --accept-source-agreements --accept-package-agreements --silent
                 if ($LASTEXITCODE -eq 0) {
                     Write-BootstrapLog "Git installed successfully via winget" -Level Success
-                    
+
                     # Refresh PATH on Windows
                     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-                    
+
                     if (Get-Command git -ErrorAction SilentlyContinue) {
                         return
                     }
@@ -467,42 +467,42 @@ function Install-Git {
                     Write-BootstrapLog "Winget installation failed, trying alternative method..." -Level Warning
                 }
             }
-            
+
             # Try Chocolatey if available
             if (Get-Command choco -ErrorAction SilentlyContinue) {
                 Write-BootstrapLog "Attempting Git installation via Chocolatey..." -Level Info
                 & choco install git -y
                 if ($LASTEXITCODE -eq 0) {
                     Write-BootstrapLog "Git installed successfully via Chocolatey" -Level Success
-                    
+
                     # Refresh PATH
                     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-                    
+
                     if (Get-Command git -ErrorAction SilentlyContinue) {
                         return
                     }
                 }
             }
-            
+
             # Fallback: Download and install Git MSI
             Write-BootstrapLog "Downloading Git for Windows installer..." -Level Info
             $gitUrl = "https://github.com/git-for-windows/git/releases/latest/download/Git-2.42.0.2-64-bit.exe"
             $gitInstaller = "$env:TEMP\Git-installer.exe"
-            
+
             Invoke-WebRequest -Uri $gitUrl -OutFile $gitInstaller -UseBasicParsing -ErrorAction Stop
-            
+
             Write-BootstrapLog "Running Git installer..." -Level Info
             if (Test-IsAdmin) {
                 Start-Process -FilePath $gitInstaller -ArgumentList "/SILENT" -Wait
             } else {
                 Start-Process -FilePath $gitInstaller -ArgumentList "/SILENT" -Verb RunAs -Wait
             }
-            
+
             Remove-Item $gitInstaller -Force -ErrorAction SilentlyContinue
-            
+
             # Refresh PATH
             $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-            
+
         } elseif (Test-IsMacOS) {
             # macOS Git installation
             if (Get-Command brew -ErrorAction SilentlyContinue) {
@@ -517,16 +517,16 @@ function Install-Git {
                 Write-BootstrapLog "Xcode Command Line Tools installation initiated. Please complete it and re-run this script." -Level Warning
                 return
             }
-            
+
         } else {
             # Linux/Unix Git installation
             Write-BootstrapLog "Installing Git for Linux..." -Level Info
-            
+
             # Detect distribution and use appropriate package manager
             if (Test-Path "/etc/os-release") {
                 $osRelease = Get-Content "/etc/os-release" | ConvertFrom-StringData -Delimiter "="
                 $distroId = $osRelease.ID.Trim('"')
-                
+
                 switch -Regex ($distroId) {
                     "ubuntu|debian" {
                         & sudo apt-get update
@@ -558,7 +558,7 @@ function Install-Git {
                 throw "Cannot determine Linux distribution for Git installation"
             }
         }
-        
+
         # Verify Git installation
         if (Get-Command git -ErrorAction SilentlyContinue) {
             $gitVersion = & git --version
@@ -566,7 +566,7 @@ function Install-Git {
         } else {
             throw "Git installation completed but git command not found in PATH"
         }
-        
+
     } catch {
         Write-BootstrapLog "Failed to install Git: $_" -Level Error
         Write-BootstrapLog "Please install Git manually from https://git-scm.com/downloads" -Level Info
@@ -576,7 +576,7 @@ function Install-Git {
 
 function Install-PowerShell7 {
     Write-BootstrapLog "Installing PowerShell 7..." -Level Info
-    
+
     # First check if it's already available but not detected
     if (Get-Command pwsh -ErrorAction SilentlyContinue) {
         Write-BootstrapLog "PowerShell 7 already available as 'pwsh'" -Level Success
@@ -640,13 +640,13 @@ function Install-PowerShell7 {
             # Download and run Microsoft's install script
             $installScript = if ($env:HOME) { "$env:HOME/install-powershell.sh" } else { "/tmp/install-powershell.sh" }
             Write-BootstrapLog "Downloading PowerShell install script to: $installScript" -Level Info
-            
+
             Invoke-WebRequest -Uri "https://aka.ms/install-powershell.sh" -OutFile $installScript -UseBasicParsing
             & chmod "+x" $installScript
-            
+
             Write-BootstrapLog "Running PowerShell install script..." -Level Info
             & sudo $installScript
-            
+
             Remove-Item $installScript -Force -ErrorAction SilentlyContinue
         } catch {
             Write-BootstrapLog "Microsoft install script failed: $_" -Level Warning

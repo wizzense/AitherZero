@@ -3,7 +3,7 @@
 .SYNOPSIS
     Generates comprehensive tech debt report from analysis results
 .DESCRIPTION
-    Aggregates results from all tech debt analyzers and generates 
+    Aggregates results from all tech debt analyzers and generates
     consolidated reports in multiple formats (HTML, Markdown, JSON)
 #>
 
@@ -40,9 +40,9 @@ if ($PSCmdlet.ShouldProcess($AnalysisPath, "Initialize tech debt analysis result
 
 function Invoke-AnalysisIfNeeded {
     Write-AnalysisLog "Checking for existing analysis results..." -Component "TechDebtReport"
-    
+
     $missingAnalysis = @()
-    
+
     foreach ($type in $AnalysisTypes) {
         $latestFile = Join-Path $AnalysisPath "$type-latest.json"
         if (-not (Test-Path $latestFile)) {
@@ -57,21 +57,21 @@ function Invoke-AnalysisIfNeeded {
 
     if ($missingAnalysis.Count -gt 0) {
         Write-AnalysisLog "Missing analysis results: $($missingAnalysis -join ', ')" -Component "TechDebtReport" -Level Warning
-        
+
         if ($RunAnalysis) {
             Write-AnalysisLog "Running missing analysis components..." -Component "TechDebtReport"
-            
+
             $scriptMap = @{
                 'ConfigurationUsage' = '0520_Analyze-ConfigurationUsage.ps1'
                 'DocumentationCoverage' = '0521_Analyze-DocumentationCoverage.ps1'
                 'CodeQuality' = '0522_Analyze-CodeQuality.ps1'
                 'SecurityIssues' = '0523_Analyze-SecurityIssues.ps1'
             }
-            
+
             foreach ($analysis in $missingAnalysis) {
                 $scriptName = $scriptMap[$analysis]
                 $scriptPath = Join-Path $PSScriptRoot $scriptName
-                
+
                 if (Test-Path $scriptPath) {
                     if ($PSCmdlet.ShouldProcess($analysis, "Run missing analysis component")) {
                         Write-AnalysisLog "Running $analysis analysis..." -Component "TechDebtReport"
@@ -89,7 +89,7 @@ function Invoke-AnalysisIfNeeded {
 
 function Get-TechDebtSummary {
     param($Results)
-    
+
     $summary = @{
         Generated = Get-Date -Format 'o'
         Platform = if ($IsWindows) { "Windows" } elseif ($IsLinux) { "Linux" } elseif ($IsMacOS) { "macOS" } else { "Unknown" }
@@ -105,7 +105,7 @@ function Get-TechDebtSummary {
         $summary.Scores.ConfigurationUsage = $config.UsagePercentage
         $summary.Metrics.UnusedSettings = $config.UnusedSettings.Count
         $summary.Metrics.TotalSettings = $config.TotalSettings
-        
+
         if ($config.UsagePercentage -lt 80) {
             $summary.Recommendations += "Review and implement unused configuration settings or remove them"
         }
@@ -117,7 +117,7 @@ function Get-TechDebtSummary {
         $summary.Scores.Documentation = $docs.OverallCoveragePercentage
         $summary.Metrics.MissingDocs = $docs.MissingDocs.Count
         $summary.Metrics.OutdatedDocs = $docs.OutdatedDocs.Count
-        
+
         if ($docs.OverallCoveragePercentage -lt 80) {
             $summary.Recommendations += "Improve documentation coverage, especially for public functions"
         }
@@ -130,7 +130,7 @@ function Get-TechDebtSummary {
         $summary.Metrics.TODOs = $quality.TODOs.Count
         $summary.Metrics.FIXMEs = $quality.FIXMEs.Count
         $summary.Metrics.TechnicalDebt = ($quality.TODOs.Count + $quality.FIXMEs.Count + $quality.HACKs.Count)
-        
+
         if ($quality.Summary.QualityScore -lt 70) {
             $summary.Recommendations += "Address outstanding TODOs and FIXMEs to reduce technical debt"
         }
@@ -142,7 +142,7 @@ function Get-TechDebtSummary {
         $summary.Scores.Security = $security.SecurityScore
         $summary.Metrics.SecurityIssues = $security.Summary.Critical + $security.Summary.High
         $summary.Metrics.CriticalSecurity = $security.Summary.Critical
-        
+
         if ($security.Summary.Critical -gt 0) {
             $summary.Recommendations += "ADDRESS CRITICAL SECURITY ISSUES IMMEDIATELY!"
         } elseif ($security.SecurityScore -lt 90) {
@@ -157,10 +157,10 @@ function Get-TechDebtSummary {
         CodeQuality = 0.35
         Security = 0.25
     }
-    
+
     $overallScore = 0
     $totalWeight = 0
-    
+
     foreach ($scoreType in $summary.Scores.Keys) {
         $weight = $weights[$scoreType]
         if ($weight) {
@@ -168,7 +168,7 @@ function Get-TechDebtSummary {
             $totalWeight += $weight
         }
     }
-    
+
     $summary.Scores.Overall = if ($totalWeight -gt 0) {
         [Math]::Round($overallScore / $totalWeight, 2)
     } else { 0 }
@@ -181,13 +181,13 @@ function Get-TechDebtSummary {
         { $_ -ge 60 } { 'D' }
         default { 'F' }
     }
-    
+
     return $summary
 }
 
 function Export-HTMLReport {
     param($Results, $Summary, $OutputFile)
-    
+
     $html = @"
 <!DOCTYPE html>
 <html lang="en">
@@ -197,7 +197,7 @@ function Export-HTMLReport {
     <title>AitherZero Tech Debt Report</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #333;
@@ -218,7 +218,7 @@ function Export-HTMLReport {
         }
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { opacity: 0.9; }
-        
+
         .grade-badge {
             display: inline-block;
             font-size: 3em;
@@ -237,14 +237,14 @@ function Export-HTMLReport {
         .grade-C { color: #f59e0b; }
         .grade-D { color: #ef4444; }
         .grade-F { color: #991b1b; }
-        
+
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .metric-card {
             background: white;
             padding: 25px;
@@ -267,7 +267,7 @@ function Export-HTMLReport {
             font-size: 1.2em;
             color: #6b7280;
         }
-        
+
         .section {
             background: white;
             padding: 30px;
@@ -281,7 +281,7 @@ function Export-HTMLReport {
             padding-bottom: 10px;
             border-bottom: 2px solid #e5e7eb;
         }
-        
+
         .progress-bar {
             width: 100%;
             height: 20px;
@@ -298,7 +298,7 @@ function Export-HTMLReport {
         .progress-good { background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); }
         .progress-fair { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
         .progress-poor { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -315,7 +315,7 @@ function Export-HTMLReport {
             color: #374151;
         }
         tr:hover { background-color: #f9fafb; }
-        
+
         .issue-badge {
             display: inline-block;
             padding: 4px 8px;
@@ -327,7 +327,7 @@ function Export-HTMLReport {
         .high { background-color: #fef3c7; color: #92400e; }
         .medium { background-color: #dbeafe; color: #1e40af; }
         .low { background-color: #d1fae5; color: #065f46; }
-        
+
         .recommendations {
             background-color: #fef3c7;
             border-left: 4px solid #f59e0b;
@@ -345,14 +345,14 @@ function Export-HTMLReport {
         .recommendations li {
             margin: 5px 0;
         }
-        
+
         .footer {
             text-align: center;
             color: #6b7280;
             margin-top: 40px;
             padding: 20px;
         }
-        
+
         @media (max-width: 768px) {
             .container { padding: 10px; }
             .header { padding: 20px; }
@@ -371,7 +371,7 @@ function Export-HTMLReport {
                 </div>
             </div>
         </div>
-        
+
         <div class="summary-grid">
             <div class="metric-card">
                 <div class="metric-label">Overall Score</div>
@@ -420,22 +420,22 @@ function Export-HTMLReport {
     # Configuration Usage Section
     if ($Results.Analyses.ConfigurationUsage) {
         $config = $Results.Analyses.ConfigurationUsage
-        $progressClass = if ($config.UsagePercentage -ge 80) { 'progress-excellent' } 
+        $progressClass = if ($config.UsagePercentage -ge 80) { 'progress-excellent' }
                         elseif ($config.UsagePercentage -ge 60) { 'progress-good' }
                         elseif ($config.UsagePercentage -ge 40) { 'progress-fair' }
                         else { 'progress-poor' }
-        
+
         $html += @"
         <div class="section">
             <h2>Configuration Usage Analysis</h2>
             <p>Analyzing how configuration settings are utilized across the codebase.</p>
-            
+
             <div class="progress-bar">
                 <div class="progress-fill $progressClass" style="width: $($config.UsagePercentage)%"></div>
             </div>
             <p>Usage: $($config.UsedSettings) of $($config.TotalSettings) settings ($($config.UsagePercentage)%)</p>
 "@
-        
+
         if ($config.UnusedSettings.Count -gt 0) {
             $html += @"
             <h3>Unused Settings</h3>
@@ -450,28 +450,28 @@ function Export-HTMLReport {
             }
             $html += "            </table>`n"
         }
-        
+
         $html += "        </div>`n"
     }
 
     # Documentation Coverage Section
     if ($Results.Analyses.DocumentationCoverage) {
         $docs = $Results.Analyses.DocumentationCoverage
-        $progressClass = if ($docs.OverallCoveragePercentage -ge 80) { 'progress-excellent' } 
+        $progressClass = if ($docs.OverallCoveragePercentage -ge 80) { 'progress-excellent' }
                         elseif ($docs.OverallCoveragePercentage -ge 60) { 'progress-good' }
                         elseif ($docs.OverallCoveragePercentage -ge 40) { 'progress-fair' }
                         else { 'progress-poor' }
-        
+
         $html += @"
         <div class="section">
             <h2>Documentation Coverage</h2>
             <p>Assessing the completeness and currency of code documentation.</p>
-            
+
             <div class="progress-bar">
                 <div class="progress-fill $progressClass" style="width: $($docs.OverallCoveragePercentage)%"></div>
             </div>
             <p>Coverage: $($docs.DocumentedFunctions) of $($docs.TotalFunctions) functions documented ($($docs.FunctionCoveragePercentage)%)</p>
-            
+
             <table>
                 <tr>
                     <th>Metric</th>
@@ -506,12 +506,12 @@ function Export-HTMLReport {
     # Code Quality Section
     if ($Results.Analyses.CodeQuality) {
         $quality = $Results.Analyses.CodeQuality
-        
+
         $html += @"
         <div class="section">
             <h2>Code Quality Analysis</h2>
             <p>Identifying technical debt and code quality issues.</p>
-            
+
             <table>
                 <tr>
                     <th>Issue Type</th>
@@ -554,7 +554,7 @@ function Export-HTMLReport {
                     <td><span class="issue-badge low">Low</span></td>
                 </tr>
             </table>
-            
+
             <p><strong>Quality Score: $($quality.Summary.QualityScore)/100</strong></p>
         </div>
 "@
@@ -563,12 +563,12 @@ function Export-HTMLReport {
     # Security Analysis Section
     if ($Results.Analyses.SecurityIssues) {
         $security = $Results.Analyses.SecurityIssues
-        
+
         $html += @"
         <div class="section">
             <h2>Security Analysis</h2>
             <p>Scanning for potential security vulnerabilities and risks.</p>
-            
+
             <table>
                 <tr>
                     <th>Security Issue</th>
@@ -606,10 +606,10 @@ function Export-HTMLReport {
                     <td><span class="issue-badge critical">Critical</span></td>
                 </tr>
             </table>
-            
+
             <p><strong>Security Score: $($security.SecurityScore)/100</strong></p>
 "@
-        
+
         if ($security.Summary.Critical -gt 0) {
             $html += @"
             <div class="recommendations" style="background-color: #fee2e2; border-color: #ef4444;">
@@ -618,7 +618,7 @@ function Export-HTMLReport {
             </div>
 "@
         }
-        
+
         $html += "        </div>`n"
     }
 
@@ -638,12 +638,12 @@ function Export-HTMLReport {
 
 function Export-MarkdownReport {
     param($Results, $Summary, $OutputFile)
-    
+
     $md = @"
 # AitherZero Tech Debt Report
 
-**Generated**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  
-**Platform**: $($Summary.Platform) | **PowerShell**: $($Summary.PowerShellVersion)  
+**Generated**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+**Platform**: $($Summary.Platform) | **PowerShell**: $($Summary.PowerShellVersion)
 **Overall Grade**: **$($Summary.Grade)** ($($Summary.Scores.Overall)%)
 
 ## Executive Summary
@@ -753,12 +753,12 @@ function Export-MarkdownReport {
 "@
         }
     }
-    
+
     $md += @"
 ---
 *Generated by AitherZero Tech Debt Analysis System*
 "@
-    
+
     $md | Set-Content -Path $OutputFile -Encoding UTF8
 }
 
@@ -783,26 +783,26 @@ try {
             New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
         }
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
     # Generate reports in requested formats
     foreach ($fmt in $Format) {
         Write-AnalysisLog "Generating $fmt report..." -Component "TechDebtReport"
-        
+
         switch ($fmt.ToUpper()) {
             'HTML' {
                 $htmlFile = Join-Path $OutputPath "TechDebtReport-$timestamp.html"
                 if ($PSCmdlet.ShouldProcess($htmlFile, "Generate HTML tech debt report")) {
                     Export-HTMLReport -Results $mergedResults -Summary $summary -OutputFile $htmlFile
                     Write-AnalysisLog "HTML report saved: $htmlFile" -Component "TechDebtReport" -Level Success
-                    
+
                     if ($OpenReport -and $IsWindows) {
                         Start-Process $htmlFile
                     }
                 }
             }
-            
+
             'MARKDOWN' {
                 $mdFile = Join-Path $OutputPath "TechDebtReport-$timestamp.md"
                 if ($PSCmdlet.ShouldProcess($mdFile, "Generate Markdown tech debt report")) {
@@ -810,7 +810,7 @@ try {
                     Write-AnalysisLog "Markdown report saved: $mdFile" -Component "TechDebtReport" -Level Success
                 }
             }
-            
+
             'JSON' {
                 $jsonFile = Join-Path $OutputPath "TechDebtReport-$timestamp.json"
                 if ($PSCmdlet.ShouldProcess($jsonFile, "Generate JSON tech debt report")) {
@@ -851,9 +851,9 @@ try {
         Write-Host "`nKey Recommendations:" -ForegroundColor Yellow
         $summary.Recommendations | ForEach-Object { Write-Host "  • $_" }
     }
-    
+
     Write-Host "`nReports generated successfully!" -ForegroundColor Green
-    
+
     exit 0
 } catch {
     Write-AnalysisLog "Tech debt report generation failed: $_" -Component "TechDebtReport" -Level Error

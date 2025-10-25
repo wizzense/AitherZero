@@ -72,7 +72,7 @@ function Initialize-ReportingEngine {
     # Apply configuration settings
     if ($reportConfig) {
         $script:ReportingState.Config = $reportConfig
-        
+
         # Update state with config values
         $script:ReportingState.DefaultFormat = if ($reportConfig.DefaultFormat) { $reportConfig.DefaultFormat } else { 'HTML' }
         $script:ReportingState.AutoGenerateReports = if ($null -ne $reportConfig.AutoGenerateReports) { $reportConfig.AutoGenerateReports } else { $true }
@@ -90,12 +90,12 @@ function Initialize-ReportingEngine {
         $script:ReportingState.MetricsRetentionDays = if ($null -ne $reportConfig.MetricsRetentionDays) { $reportConfig.MetricsRetentionDays } else { 90 }
         $script:ReportingState.ExportFormats = if ($reportConfig.ExportFormats) { $reportConfig.ExportFormats } else { @('HTML', 'JSON', 'CSV', 'PDF', 'Markdown') }
         $script:ReportingState.TemplateEngine = if ($reportConfig.TemplateEngine) { $reportConfig.TemplateEngine } else { 'Default' }
-        
+
         # Create report directory if it doesn't exist
         if (-not (Test-Path $script:ReportingState.ReportPath)) {
             New-Item -ItemType Directory -Path $script:ReportingState.ReportPath -Force | Out-Null
         }
-        
+
         Write-ReportLog "Reporting engine initialized with configuration"
     }
 }
@@ -124,21 +124,21 @@ function New-ExecutionDashboard {
     [CmdletBinding()]
     param(
         [string]$Title = "AitherZero Execution Dashboard",
-        
+
         [ValidateSet('Compact', 'Standard', 'Detailed')]
         [string]$Layout = 'Standard',
-        
+
         [int]$RefreshInterval = 5,
-        
+
         [switch]$AutoRefresh,
-        
+
         [switch]$ShowMetrics,
-        
+
         [switch]$ShowLogs
     )
 
     Write-ReportLog "Creating execution dashboard: $Title"
-    
+
     $dashboard = @{
         Title = $Title
         Layout = $Layout
@@ -176,14 +176,14 @@ function New-ExecutionDashboard {
             MaxLines = 20
         }
     }
-    
+
     $script:ReportingState.CurrentDashboard = $dashboard
 
     # Start dashboard render loop if auto-refresh
     if ($AutoRefresh) {
         Start-DashboardRefresh -Dashboard $dashboard
     }
-    
+
     return $dashboard
 }
 
@@ -195,13 +195,13 @@ function Update-ExecutionDashboard {
     [CmdletBinding()]
     param(
         [hashtable]$Dashboard = $script:ReportingState.CurrentDashboard,
-        
+
         [hashtable]$Status,
-        
+
         [hashtable]$Progress,
-        
+
         [hashtable]$Metrics,
-        
+
         [string[]]$LogEntries
     )
 
@@ -231,7 +231,7 @@ function Update-ExecutionDashboard {
             $Dashboard.Components.Logs.Data = @()
         }
         $Dashboard.Components.Logs.Data += $LogEntries
-        
+
         # Keep only last MaxLines
         $maxLines = $Dashboard.Components.Logs.MaxLines
         if ($Dashboard.Components.Logs.Data.Count -gt $maxLines) {
@@ -283,17 +283,17 @@ function Show-Dashboard {
     if ($Dashboard.Components.Progress.Data) {
         $progress = $Dashboard.Components.Progress.Data
         Write-Host "`nProgress:" -ForegroundColor Yellow
-        
+
         $completed = $progress.Completed ?? 0
         $total = $progress.Total ?? 100
         $percent = if ($total -gt 0) { [Math]::Round(($completed / $total) * 100) } else { 0 }
-        
+
         $barLength = 50
         $filledLength = [Math]::Round(($percent / 100) * $barLength)
         $bar = "[" + ("█" * $filledLength) + ("░" * ($barLength - $filledLength)) + "]"
-        
+
         Write-Host "  $bar $percent% ($completed/$total)" -ForegroundColor Green
-        
+
         if ($progress.CurrentTask) {
             Write-Host "  Current: $($progress.CurrentTask)" -ForegroundColor Gray
         }
@@ -303,7 +303,7 @@ function Show-Dashboard {
     if ($Dashboard.Components.ContainsKey('Metrics') -and $Dashboard.Components.Metrics.Data) {
         Write-Host "`nMetrics:" -ForegroundColor Yellow
         $metrics = $Dashboard.Components.Metrics.Data
-        
+
         foreach ($metric in $Dashboard.Components.Metrics.Metrics) {
             if ($metrics.ContainsKey($metric)) {
                 $value = $metrics[$metric]
@@ -319,7 +319,7 @@ function Show-Dashboard {
             Write-Host "  $log" -ForegroundColor Gray
         }
     }
-    
+
     Write-Host "`n[Press Ctrl+C to exit dashboard]" -ForegroundColor DarkGray
 }
 
@@ -336,12 +336,12 @@ function Start-DashboardRefresh {
     $timer = New-Object System.Timers.Timer
     $timer.Interval = $Dashboard.RefreshInterval * 1000
     $timer.AutoReset = $true
-    
+
     Register-ObjectEvent -InputObject $timer -EventName Elapsed -Action {
         $dashboard = $EventName.MessageData
         Show-Dashboard -Dashboard $dashboard
     } -MessageData $Dashboard | Out-Null
-    
+
     $timer.Start()
 
     # Store timer reference
@@ -373,9 +373,9 @@ function Get-ExecutionMetrics {
     [CmdletBinding()]
     param(
         [switch]$IncludeSystem,
-        
+
         [switch]$IncludeProcess,
-        
+
         [switch]$IncludeCustom
     )
 
@@ -385,12 +385,12 @@ function Get-ExecutionMetrics {
         # CPU usage
         $cpu = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue).CounterSamples[0].CookedValue
         $metrics['CPU'] = "{0:N1}%" -f $cpu
-        
+
         # Memory usage
         $os = Get-CimInstance Win32_OperatingSystem
         $memUsed = ($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize * 100
         $metrics['Memory'] = "{0:N1}%" -f $memUsed
-        
+
         # Disk usage
         $disk = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -and $_.Used }
         $diskUsed = ($disk.Used | Measure-Object -Sum).Sum
@@ -414,7 +414,7 @@ function Get-ExecutionMetrics {
             }
         }
     }
-    
+
     return $metrics
 }
 
@@ -429,23 +429,23 @@ function New-TestReport {
     param(
         [ValidateSet('HTML', 'Markdown', 'JSON', 'PDF', 'Excel')]
         [string]$Format = $script:ReportingState.DefaultFormat,
-        
+
         [string]$Title = "AitherZero Test Report",
-        
+
         [string]$OutputPath = $script:ReportingState.ReportPath,
-        
+
         [switch]$IncludeTests,
-        
+
         [switch]$IncludeCoverage,
-        
+
         [switch]$IncludeAnalysis,
-        
+
         [switch]$IncludeTrends,
-        
+
         [hashtable]$TestResults,
-        
+
         [hashtable]$CoverageData,
-        
+
         [hashtable]$AnalysisResults
     )
 
@@ -486,8 +486,8 @@ function New-TestReport {
                 Failed = $TestResults.FailedCount
                 Skipped = $TestResults.SkippedCount
                 Duration = $TestResults.Duration
-                SuccessRate = if ($TestResults.TotalCount -gt 0) { 
-                    [Math]::Round(($TestResults.PassedCount / $TestResults.TotalCount) * 100, 2) 
+                SuccessRate = if ($TestResults.TotalCount -gt 0) {
+                    [Math]::Round(($TestResults.PassedCount / $TestResults.TotalCount) * 100, 2)
                 } else { 0 }
             }
             Details = $TestResults.Tests
@@ -524,7 +524,7 @@ function New-TestReport {
     if (-not (Test-Path $OutputPath)) {
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $filename = "TestReport-$timestamp.$($Format.ToLower())"
     $reportPath = Join-Path $OutputPath $filename
@@ -534,22 +534,22 @@ function New-TestReport {
         'JSON' {
             $report | ConvertTo-Json -Depth 10 | Set-Content -Path $reportPath
         }
-        
+
         'Markdown' {
             $markdown = New-MarkdownReport -Report $report
             $markdown | Set-Content -Path $reportPath
         }
-        
+
         'HTML' {
             $html = New-HtmlReport -Report $report
             $html | Set-Content -Path $reportPath
         }
-        
+
         'PDF' {
             Write-ReportLog "PDF generation not yet implemented" -Level Warning
             return $null
         }
-        
+
         'Excel' {
             Write-ReportLog "Excel generation not yet implemented" -Level Warning
             return $null
@@ -563,14 +563,14 @@ function New-TestReport {
         Generated = $report.Generated
         Title = $Title
     }
-    
+
     Write-ReportLog "Report generated: $reportPath"
     return $reportPath
 }
 
 function New-MarkdownReport {
     param([hashtable]$Report)
-    
+
     $md = @"
 # $($Report.Title)
 
@@ -629,29 +629,29 @@ Generated: $($Report.Generated.ToString('yyyy-MM-dd HH:mm:ss'))
             }
         }
     }
-    
+
     return $md
 }
 
 function New-HtmlReport {
     param([hashtable]$Report)
-    
+
     $html = @"
 <!DOCTYPE html>
 <html>
 <head>
     <title>$($Report.Title) - Aitherium™</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f5f5f5;
         }
-        .container { 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            background-color: white; 
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
         .header {
@@ -685,11 +685,11 @@ function New-HtmlReport {
         .content {
             padding: 30px;
         }
-        h1 { 
+        h1 {
             margin: 0;
             font-size: 2.5em;
         }
-        h2 { 
+        h2 {
             color: #007acc;
             border-bottom: 2px solid #007acc;
             padding-bottom: 10px;
@@ -771,7 +771,7 @@ function New-HtmlReport {
                 <div class="timestamp">Generated: $($Report.Generated.ToString('yyyy-MM-dd HH:mm:ss'))</div>
             </div>
         </div>
-        
+
         <div class="content">
 "@
 
@@ -791,7 +791,7 @@ function New-HtmlReport {
     if ($Report.TestResults) {
         $successRate = $Report.TestResults.Summary.SuccessRate
         $rateClass = if ($successRate -ge 80) { 'success' } elseif ($successRate -ge 60) { 'warning' } else { 'danger' }
-        
+
         $html += @"
             <h2>Test Results</h2>
             <div class="metrics">
@@ -822,7 +822,7 @@ function New-HtmlReport {
     # Coverage section
     if ($Report.Coverage) {
         $coverageClass = if ($Report.Coverage.Overall -ge 80) { 'success' } elseif ($Report.Coverage.Overall -ge 60) { 'warning' } else { 'danger' }
-        
+
         $html += @"
             <h2>Code Coverage</h2>
             <div class="metrics">
@@ -852,7 +852,7 @@ function New-HtmlReport {
                     <div class="value">$($Report.Analysis.IssueCount)</div>
                 </div>
             </div>
-            
+
             <h3>Issues by Severity</h3>
             <table>
                 <tr><th>Severity</th><th>Count</th></tr>
@@ -864,7 +864,7 @@ function New-HtmlReport {
         }
         $html += "</table>"
     }
-    
+
     $html += @"
         </div>
         <div style="background: linear-gradient(135deg, #add8e6 0%, #e0bbf0 50%, #ffb6c1 100%); color: white; padding: 20px; text-align: center; margin-top: 40px;">
@@ -877,7 +877,7 @@ function New-HtmlReport {
 </body>
 </html>
 "@
-    
+
     return $html
 }
 
@@ -888,20 +888,20 @@ function Get-LatestTestResults {
     #>
     [CmdletBinding()]
     param()
-    
+
     $resultsPath = Join-Path $script:ProjectRoot "tests/results"
     if (-not (Test-Path $resultsPath)) {
         return $null
     }
-    
-    $latestResult = Get-ChildItem -Path $resultsPath -Filter "*-Summary.json" | 
-        Sort-Object LastWriteTime -Descending | 
+
+    $latestResult = Get-ChildItem -Path $resultsPath -Filter "*-Summary.json" |
+        Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
 
     if ($latestResult) {
         return Get-Content $latestResult.FullName | ConvertFrom-Json -AsHashtable
     }
-    
+
     return $null
 }
 
@@ -912,20 +912,20 @@ function Get-LatestCoverageData {
     #>
     [CmdletBinding()]
     param()
-    
+
     $coveragePath = Join-Path $script:ProjectRoot "tests/coverage"
     if (-not (Test-Path $coveragePath)) {
         return $null
     }
-    
-    $latestCoverage = Get-ChildItem -Path $coveragePath -Filter "coverage-summary.json" | 
-        Sort-Object LastWriteTime -Descending | 
+
+    $latestCoverage = Get-ChildItem -Path $coveragePath -Filter "coverage-summary.json" |
+        Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
 
     if ($latestCoverage) {
         return Get-Content $latestCoverage.FullName | ConvertFrom-Json -AsHashtable
     }
-    
+
     return $null
 }
 
@@ -936,20 +936,20 @@ function Get-LatestAnalysisResults {
     #>
     [CmdletBinding()]
     param()
-    
+
     $analysisPath = Join-Path $script:ProjectRoot "tests/analysis"
     if (-not (Test-Path $analysisPath)) {
         return $null
     }
-    
-    $latestAnalysis = Get-ChildItem -Path $analysisPath -Filter "PSScriptAnalyzer-*.csv" | 
-        Sort-Object LastWriteTime -Descending | 
+
+    $latestAnalysis = Get-ChildItem -Path $analysisPath -Filter "PSScriptAnalyzer-*.csv" |
+        Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
 
     if ($latestAnalysis) {
         return Import-Csv $latestAnalysis.FullName
     }
-    
+
     return $null
 }
 
@@ -961,9 +961,9 @@ function Show-TestTrends {
     [CmdletBinding()]
     param(
         [int]$Days = 7,
-        
+
         [switch]$IncludeCoverage,
-        
+
         [switch]$IncludeAnalysis
     )
 
@@ -973,7 +973,7 @@ function Show-TestTrends {
     # This is a simplified version - real implementation would aggregate historical data
     $resultsPath = Join-Path $script:ProjectRoot "tests/results"
     $cutoffDate = (Get-Date).AddDays(-$Days)
-    
+
     $summaryFiles = Get-ChildItem -Path $resultsPath -Filter "*-Summary.json" -ErrorAction SilentlyContinue |
         Where-Object { $_.LastWriteTime -ge $cutoffDate } |
         Sort-Object LastWriteTime
@@ -982,18 +982,18 @@ function Show-TestTrends {
         Write-Host "No test results found in the specified period" -ForegroundColor Yellow
         return
     }
-    
+
     Write-Host "`nDate`t`t`tTotal`tPassed`tFailed`tRate" -ForegroundColor Yellow
     Write-Host ("-" * 60) -ForegroundColor Gray
-    
+
     foreach ($file in $summaryFiles) {
         $data = Get-Content $file.FullName | ConvertFrom-Json
-        $rate = if ($data.TotalTests -gt 0) { 
-            [Math]::Round(($data.Passed / $data.TotalTests) * 100, 1) 
+        $rate = if ($data.TotalTests -gt 0) {
+            [Math]::Round(($data.Passed / $data.TotalTests) * 100, 1)
         } else { 0 }
-        
+
         $rateColor = if ($rate -ge 80) { 'Green' } elseif ($rate -ge 60) { 'Yellow' } else { 'Red' }
-        
+
         Write-Host "$($file.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))`t$($data.TotalTests)`t$($data.Passed)`t$($data.Failed)`t" -NoNewline
         Write-Host "$rate%" -ForegroundColor $rateColor
     }
@@ -1007,19 +1007,19 @@ function Export-MetricsReport {
     [CmdletBinding()]
     param(
         [string]$OutputPath,
-        
+
         [ValidateSet('CSV', 'JSON', 'HTML')]
         [string]$Format = 'CSV',
-        
+
         [datetime]$StartDate,
-        
+
         [datetime]$EndDate = (Get-Date),
-        
+
         [string[]]$MetricTypes = @('Tests', 'Coverage', 'Performance', 'Quality')
     )
 
     Write-ReportLog "Exporting metrics report in $Format format"
-    
+
     $metrics = @{
         Period = @{
             Start = $StartDate
@@ -1063,7 +1063,7 @@ function Export-MetricsReport {
     if (-not (Test-Path $OutputPath)) {
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $filename = "Metrics-$timestamp.$($Format.ToLower())"
     $reportPath = Join-Path $OutputPath $filename
@@ -1097,7 +1097,7 @@ function Export-MetricsReport {
             $html += "<h1>Metrics Report</h1>"
             $html += "<p>Generated: $($metrics.CollectedAt)</p>"
             $html += "<table border='1'><tr><th>Category</th><th>Metric</th><th>Value</th></tr>"
-            
+
             foreach ($category in $metrics.Metrics.Keys) {
                 $categoryData = $metrics.Metrics[$category]
                 if ($categoryData -is [hashtable]) {
@@ -1106,12 +1106,12 @@ function Export-MetricsReport {
                     }
                 }
             }
-            
+
             $html += "</table></body></html>"
             $html | Set-Content -Path $reportPath
         }
     }
-    
+
     Write-ReportLog "Metrics report exported to: $reportPath"
     return $reportPath
 }
@@ -1136,9 +1136,9 @@ function Test-EnvironmentValidation {
         [switch]$Detailed,
         [string]$OutputPath = (Join-Path $script:ProjectRoot "reports")
     )
-    
+
     Write-ReportLog "Running environment validation"
-    
+
     $validation = @{
         Timestamp = Get-Date
         Overall = $true
@@ -1149,7 +1149,7 @@ function Test-EnvironmentValidation {
         Configuration = @{}
         Issues = @()
     }
-    
+
     # PowerShell validation
     $validation.PowerShell = @{
         Version = $PSVersionTable.PSVersion
@@ -1157,12 +1157,12 @@ function Test-EnvironmentValidation {
         Edition = $PSVersionTable.PSEdition
         OS = $PSVersionTable.OS
     }
-    
+
     if (-not $validation.PowerShell.Compatible) {
         $validation.Issues += "PowerShell 7+ required, found $($PSVersionTable.PSVersion)"
         $validation.Overall = $false
     }
-    
+
     # Module validation
     $requiredModules = @('Pester', 'PSScriptAnalyzer')
     foreach ($moduleName in $requiredModules) {
@@ -1171,13 +1171,13 @@ function Test-EnvironmentValidation {
             Available = $null -ne $module
             Version = if ($module) { $module.Version } else { $null }
         }
-        
+
         if (-not $module) {
             $validation.Issues += "Required module missing: $moduleName"
             $validation.Overall = $false
         }
     }
-    
+
     # Directory structure validation
     $requiredDirs = @('logs', 'test-results', 'reports', 'domains')
     foreach ($dir in $requiredDirs) {
@@ -1186,13 +1186,13 @@ function Test-EnvironmentValidation {
             Exists = Test-Path $dirPath
             Path = $dirPath
         }
-        
+
         if (-not (Test-Path $dirPath)) {
             $validation.Issues += "Missing directory: $dir"
             $validation.Overall = $false
         }
     }
-    
+
     # External tools validation
     $tools = @('git', 'node', 'python', 'docker')
     foreach ($tool in $tools) {
@@ -1202,9 +1202,9 @@ function Test-EnvironmentValidation {
             Path = if ($command) { $command.Source } else { $null }
         }
     }
-    
+
     Write-ReportLog "Environment validation completed. Overall status: $($validation.Overall)"
-    
+
     return $validation
 }
 
@@ -1222,9 +1222,9 @@ function Get-SystemInformation {
         [switch]$IncludeNetwork,
         [switch]$IncludeProcesses
     )
-    
+
     Write-ReportLog "Gathering system information"
-    
+
     $systemInfo = @{
         Timestamp = Get-Date
         Environment = @{
@@ -1245,13 +1245,13 @@ function Get-SystemInformation {
         }
         AitherZero = @{
             ProjectRoot = $script:ProjectRoot
-            Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) { 
-                Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw 
+            Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) {
+                Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw
             } else { "Unknown" }
             ModulesLoaded = (Get-Module | Where-Object { $_.Path -like "*$script:ProjectRoot*" }).Count
         }
     }
-    
+
     if ($IncludeHardware) {
         $systemInfo.Hardware = @{
             TotalMemory = [System.GC]::GetTotalMemory($true)
@@ -1262,23 +1262,23 @@ function Get-SystemInformation {
             } else { "N/A" }
         }
     }
-    
+
     if ($IncludeNetwork) {
         $systemInfo.Network = @{
             HostName = [System.Net.Dns]::GetHostName()
             IPAddresses = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) | ForEach-Object { $_.IPAddressToString }
         }
     }
-    
+
     if ($IncludeProcesses) {
         $systemInfo.Processes = @{
             Total = (Get-Process | Measure-Object).Count
             PowerShellProcesses = (Get-Process -Name pwsh, powershell -ErrorAction SilentlyContinue | Measure-Object).Count
         }
     }
-    
+
     Write-ReportLog "System information gathered successfully"
-    
+
     return $systemInfo
 }
 
@@ -1298,17 +1298,17 @@ function New-ProjectReport {
         [string]$Format = 'HTML',
         [switch]$ShowAll
     )
-    
+
     Write-ReportLog "Generating $ReportType project report"
-    
+
     $report = @{
         GeneratedAt = Get-Date
         ReportType = $ReportType
         ProjectInfo = @{
             Name = "AitherZero"
             Root = $script:ProjectRoot
-            Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) { 
-                Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw 
+            Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) {
+                Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw
             } else { "Unknown" }
         }
         Environment = Get-SystemInformation
@@ -1317,7 +1317,7 @@ function New-ProjectReport {
         TestResults = @{}
         CodeMetrics = @{}
     }
-    
+
     # Gather project statistics
     $report.Statistics = @{
         TotalFiles = (Get-ChildItem -Path $script:ProjectRoot -Recurse -File | Measure-Object).Count
@@ -1328,17 +1328,17 @@ function New-ProjectReport {
             (Get-ChildItem -Path (Join-Path $script:ProjectRoot "tests") -Recurse -Filter "*.Tests.ps1" | Measure-Object).Count
         } else { 0 }
     }
-    
+
     # Export report
     if (-not (Test-Path $OutputPath)) {
         if ($PSCmdlet.ShouldProcess($OutputPath, "Create reports directory")) {
             New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $reportFileName = "ProjectReport-$ReportType-$timestamp"
-    
+
     if ($Format -eq 'HTML') {
         $htmlPath = Join-Path $OutputPath "$reportFileName.html"
         $htmlContent = ConvertTo-ProjectReportHTML -Report $report
@@ -1370,22 +1370,22 @@ function Show-ProjectDashboard {
         [switch]$Continuous,
         [int]$RefreshSeconds = 30
     )
-    
+
     Write-ReportLog "Launching project dashboard"
-    
+
     do {
         Clear-Host
-        
+
         # Header
         Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
         Write-Host "║                    AitherZero Dashboard                      ║" -ForegroundColor Cyan
         Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
-        
+
         # Get current status
         $validation = Test-EnvironmentValidation
         $systemInfo = Get-SystemInformation
-        
+
         # Environment Status
         Write-Host "🔧 Environment Status" -ForegroundColor Yellow
         $statusIcon = if ($validation.Overall) { "✅" } else { "❌" }
@@ -1393,13 +1393,13 @@ function Show-ProjectDashboard {
         Write-Host "   PowerShell: $($systemInfo.PowerShell.Version) ($($systemInfo.PowerShell.Edition))"
         Write-Host "   OS: $($systemInfo.Environment.OS) $($systemInfo.Environment.Architecture)"
         Write-Host ""
-        
+
         # Project Info
         Write-Host "📊 Project Information" -ForegroundColor Yellow
         Write-Host "   Root: $($script:ProjectRoot)"
         Write-Host "   Modules Loaded: $($systemInfo.AitherZero.ModulesLoaded)"
         Write-Host ""
-        
+
         # Issues
         if ($validation.Issues.Count -gt 0) {
             Write-Host "⚠️  Issues Found:" -ForegroundColor Red
@@ -1408,12 +1408,12 @@ function Show-ProjectDashboard {
             }
             Write-Host ""
         }
-        
+
         if ($Continuous) {
             Write-Host "Dashboard refreshing every $RefreshSeconds seconds. Press Ctrl+C to exit." -ForegroundColor Gray
             Start-Sleep -Seconds $RefreshSeconds
         }
-        
+
     } while ($Continuous)
 }
 
@@ -1423,7 +1423,7 @@ function ConvertTo-ProjectReportHTML {
         Convert project report to HTML format
     #>
     param([hashtable]$Report)
-    
+
     $html = @"
 <!DOCTYPE html>
 <html>
@@ -1446,7 +1446,7 @@ function ConvertTo-ProjectReportHTML {
         <p>Generated: $($Report.GeneratedAt)</p>
         <p>Type: $($Report.ReportType)</p>
     </div>
-    
+
     <div class="section">
         <h2>Project Information</h2>
         <table>
@@ -1455,7 +1455,7 @@ function ConvertTo-ProjectReportHTML {
             <tr><td><strong>Root Path</strong></td><td>$($Report.ProjectInfo.Root)</td></tr>
         </table>
     </div>
-    
+
     <div class="section">
         <h2>Environment Status</h2>
         <p class="$($Report.Validation.Overall ? 'success' : 'error')">
@@ -1465,7 +1465,7 @@ function ConvertTo-ProjectReportHTML {
 </body>
 </html>
 "@
-    
+
     return $html
 }
 
@@ -1481,7 +1481,7 @@ Export-ModuleMember -Function @(
     'New-TestReport',
     'Show-TestTrends',
     'Export-MetricsReport',
-    
+
     # New consolidated exports (from automation scripts 0500-0599)
     'Test-EnvironmentValidation',
     'Get-SystemInformation',

@@ -77,7 +77,7 @@ try {
         Write-ScriptLog "npm is required but not found. Please ensure Node.js is properly installed" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Prerequisites satisfied"
 
     # Check if Claude Code is already installed
@@ -85,7 +85,7 @@ try {
 
     if ($claudeCmd) {
         Write-ScriptLog "Claude Code is already installed"
-        
+
         # Get version
         try {
             $version = & claude-code --version 2>&1
@@ -101,10 +101,10 @@ try {
         } catch {
             Write-ScriptLog "Could not determine version" -Level 'Debug'
         }
-        
+
         exit 0
     }
-    
+
     Write-ScriptLog "Installing Claude Code CLI..."
 
     # Install via npm
@@ -116,7 +116,7 @@ try {
             } else {
                 "claude-code@latest"
             }
-            
+
             Write-ScriptLog "Installing package: $packageName"
 
             # Run npm install
@@ -127,7 +127,7 @@ try {
             if ($LASTEXITCODE -ne 0) {
                 throw "npm install failed with exit code: $LASTEXITCODE"
             }
-            
+
         } catch {
             Write-ScriptLog "Failed to install Claude Code via npm: $_" -Level 'Error'
             throw
@@ -141,7 +141,7 @@ try {
         Write-ScriptLog "Claude Code command not found after installation" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Claude Code installed successfully at: $($claudeCmd.Source)"
 
     # Test Claude Code
@@ -155,7 +155,7 @@ try {
     # Configure Claude Code if settings provided
     if ($claudeConfig.Settings) {
         Write-ScriptLog "Configuring Claude Code..."
-        
+
         foreach ($setting in $claudeConfig.Settings.GetEnumerator()) {
             if ($PSCmdlet.ShouldProcess("Claude Code config $($setting.Key)", 'Configure')) {
                 try {
@@ -185,7 +185,7 @@ try {
         Write-ScriptLog "Configuring WSL integration..."
         # WSL integration would be handled here if needed
     }
-    
+
     Write-ScriptLog "Claude Code installation completed successfully"
     Write-ScriptLog ""
     Write-ScriptLog "Next steps:"
@@ -193,9 +193,9 @@ try {
     Write-ScriptLog "2. Run: claude-code --help"
     Write-ScriptLog "3. Set API key if not already done: claude-code config set api-key YOUR_API_KEY"
     Write-ScriptLog "4. Start using Claude Code for development!"
-    
+
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during Claude Code installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

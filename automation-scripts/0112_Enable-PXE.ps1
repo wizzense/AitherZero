@@ -73,7 +73,7 @@ try {
         Write-ScriptLog "Administrator privileges required to configure firewall rules" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Configuring PXE boot firewall rules..."
 
     # Define PXE-related firewall rules
@@ -120,9 +120,9 @@ try {
             }
         }
     }
-    
+
     $failedRules = @()
-    
+
     foreach ($rule in $firewallRules) {
         try {
             # Check if rule already exists
@@ -130,7 +130,7 @@ try {
 
             if ($existingRule) {
                 Write-ScriptLog "Firewall rule '$($rule.DisplayName)' already exists" -Level 'Debug'
-                
+
                 # Update rule if configuration specifies it
                 if ($pxeConfig.UpdateExistingRules -eq $true) {
                     if ($PSCmdlet.ShouldProcess($rule.DisplayName, 'Update firewall rule')) {
@@ -150,14 +150,14 @@ try {
                         Action = 'Allow'
                         Description = $rule.Description
                     }
-                    
+
                     # Add remote address restrictions if configured
                     if ($pxeConfig.AllowedRemoteAddresses) {
                         $ruleParams['RemoteAddress'] = $pxeConfig.AllowedRemoteAddresses
                     } else {
                         $ruleParams['RemoteAddress'] = 'Any'
                     }
-                    
+
                     New-NetFirewallRule @ruleParams
                     Write-ScriptLog "Created firewall rule: $($rule.DisplayName) (Port: $($rule.LocalPort), Protocol: $($rule.Protocol))"
                 }
@@ -183,10 +183,10 @@ try {
         Write-ScriptLog "Failed to configure the following rules: $($failedRules -join ', ')" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "PXE boot configuration completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during PXE configuration: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

@@ -15,37 +15,37 @@
 param(
     [Parameter(Mandatory)]
     [string]$Title,
-    
+
     [string]$Body,
-    
+
     [string]$Base,
-    
+
     [ValidateSet('feature', 'bugfix', 'hotfix', 'docs', 'refactor')]
     [string]$Template,
-    
+
     [string[]]$Reviewers,
-    
+
     [string[]]$Assignees,
-    
+
     [string[]]$Labels,
-    
+
     [switch]$Draft,
-    
+
     [switch]$AutoMerge,
-    
+
     [ValidateSet('merge', 'squash', 'rebase')]
     [string]$MergeMethod = 'squash',
-    
+
     [switch]$LinkIssue,
-    
+
     [int[]]$Closes,
-    
+
     [switch]$RunChecks,
-    
+
     [switch]$OpenInBrowser,
-    
+
     [switch]$NonInteractive,
-    
+
     [switch]$Force
 )
 
@@ -81,10 +81,10 @@ if (-not $gitStatus.Branch -or $gitStatus.Branch -eq 'main' -or $gitStatus.Branc
 if (-not $gitStatus.Clean) {
     if (-not $NonInteractive -and -not $Force) {
         Write-Warning "You have uncommitted changes:"
-        $gitStatus.Modified + $gitStatus.Untracked | ForEach-Object { 
+        $gitStatus.Modified + $gitStatus.Untracked | ForEach-Object {
             Write-Host "  $($_.Path)" -ForegroundColor Yellow
         }
-        
+
         $response = Read-Host "Continue without committing? (y/N)"
         if ($response -ne 'y') {
             Write-Host "Commit your changes first with: az 0702" -ForegroundColor Yellow
@@ -202,13 +202,13 @@ try {
     if ($AutoMerge -and -not $Draft) {
         $prParams.AutoMerge = $true
     }
-    
+
     $pr = New-PullRequest @prParams
-    
+
     Write-Host "✓ Created pull request #$($pr.Number)" -ForegroundColor Green
     Write-Host "  Title: $Title" -ForegroundColor Gray
     Write-Host "  URL: $($pr.Url)" -ForegroundColor Gray
-    
+
 } catch {
     Write-Error "Failed to create pull request: $_"
     exit 1
@@ -223,7 +223,7 @@ if ($RunChecks -and -not $Draft) {
 
     # Run linting
     & (Join-Path $PSScriptRoot "0404_Run-PSScriptAnalyzer.ps1") -Fix:$false
-    
+
     Write-Host "✓ Checks completed" -ForegroundColor Green
 }
 

@@ -61,12 +61,12 @@ try {
     if ($config.Infrastructure -and $config.Infrastructure.Repositories -and $config.Infrastructure.Repositories.RepoUrl) {
         $repoUrl = $config.Infrastructure.Repositories.RepoUrl
         $repoName = ($repoUrl -split '/')[-1] -replace '\.git$', ''
-        
+
         if ($repoName) {
             # Only clean up if the path is properly set and not the current project
             if ($localBase -and (Test-Path $localBase)) {
                 $repoPath = Join-Path $localBase $repoName
-                
+
                 # Safety check: Don't delete the current AitherZero project!
                 $currentProject = Split-Path $PSScriptRoot -Parent
                 if ($repoPath -eq $currentProject) {
@@ -119,10 +119,10 @@ try {
             }
         }
     }
-    
+
     Write-ScriptLog "Environment cleanup completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Environment cleanup failed: $_" -Level 'Error'
     exit 1

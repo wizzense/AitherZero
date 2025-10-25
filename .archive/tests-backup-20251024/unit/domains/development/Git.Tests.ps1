@@ -19,13 +19,13 @@ BeforeAll {
     # Mock Write-CustomLog and Write-AuditLog to prevent dependency issues
     Mock Write-CustomLog { } -ModuleName GitAutomation
     Mock Write-AuditLog { } -ModuleName GitAutomation
-    
+
     # Common test data
     $script:TestRepoPath = "/test/repo"
     $script:TestBranch = "main"
     $script:TestCommitHash = "abc123def456"
     $script:TestRemoteUrl = "https://github.com/user/repo.git"
-    
+
     # Mock Push-Location and Pop-Location to avoid path errors
     Mock Push-Location { } -ModuleName GitAutomation
     Mock Pop-Location { } -ModuleName GitAutomation
@@ -37,18 +37,18 @@ Describe "GitAutomation Module" {
         It "Should import without errors" {
             { Import-Module (Join-Path $PSScriptRoot "../../../../domains/development/GitAutomation.psm1") -Force } | Should -Not -Throw
         }
-        
+
         It "Should export expected functions" {
             $ExportedFunctions = Get-Command -Module GitAutomation -CommandType Function
             $ExpectedFunctions = @(
                 'Get-GitRepository',
-                'New-GitBranch', 
+                'New-GitBranch',
                 'Invoke-GitCommit',
                 'Sync-GitRepository',
                 'Get-GitStatus',
                 'Set-GitConfiguration'
             )
-            
+
             foreach ($Function in $ExpectedFunctions) {
                 $ExportedFunctions.Name | Should -Contain $Function
             }
@@ -57,13 +57,13 @@ Describe "GitAutomation Module" {
 
     Context "Get-GitRepository" {
         BeforeEach {
-            Mock git { 
+            Mock git {
                 switch -Regex ($arguments -join " ") {
-                    "rev-parse --git-dir" { 
+                    "rev-parse --git-dir" {
                         $global:LASTEXITCODE = 0
                         return ".git"
                     }
-                    "branch --show-current" { 
+                    "branch --show-current" {
                         return $script:TestBranch
                     }
                     "config --get remote.origin.url" {
@@ -81,55 +81,55 @@ Describe "GitAutomation Module" {
                             "origin	$script:TestRemoteUrl (push)"
                         )
                     }
-                    default { 
+                    default {
                         $global:LASTEXITCODE = 0
                         return ""
                     }
                 }
             } -ModuleName GitAutomation
         }
-        
+
         It "Should retrieve repository information successfully" {
             $Result = Get-GitRepository
-            
+
             $Result | Should -Not -BeNullOrEmpty
             $Result.Path | Should -Be $script:TestRepoPath
             $Result.GitDir | Should -Be ".git"
             $Result.Branch | Should -Be $script:TestBranch
             $Result.RemoteUrl | Should -Be $script:TestRemoteUrl
         }
-        
+
         It "Should parse last commit information correctly" {
             $Result = Get-GitRepository
-            
+
             $Result.LastCommit | Should -Not -BeNullOrEmpty
             $Result.LastCommit.Hash | Should -Be $script:TestCommitHash
             $Result.LastCommit.Message | Should -Be "Initial commit"
             $Result.LastCommit.Author | Should -Be "John Doe"
             $Result.LastCommit.Email | Should -Be "john@example.com"
         }
-        
+
         It "Should parse remotes correctly" {
             $Result = Get-GitRepository
-            
+
             $Result.Remotes | Should -HaveCount 2
             $Result.Remotes[0].Name | Should -Be "origin"
             $Result.Remotes[0].Url | Should -Be $script:TestRemoteUrl
             $Result.Remotes[0].Type | Should -Be "fetch"
         }
-        
+
         It "Should throw when not in a Git repository" {
-            Mock git { 
+            Mock git {
                 $global:LASTEXITCODE = 1
                 return ""
             } -ModuleName GitAutomation -ParameterFilter { $arguments -contains "rev-parse" }
-            
+
             { Get-GitRepository } | Should -Throw "*Not in a Git repository*"
         }
-        
+
         It "Should call git commands with correct parameters" {
             Get-GitRepository
-            
+
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "rev-parse" -and $arguments -contains "--git-dir" }
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "branch" -and $arguments -contains "--show-current" }
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "config" }
@@ -140,7 +140,7 @@ Describe "GitAutomation Module" {
         BeforeEach {
             Mock git {
                 switch -Regex ($arguments -join " ") {
-                    "branch --show-current" { 
+                    "branch --show-current" {
                         return "main"
                     }
                     "branch --list.*existing-branch" {
@@ -167,52 +167,52 @@ Describe "GitAutomation Module" {
                 }
             } -ModuleName GitAutomation
         }
-        
+
         It "Should create a new branch successfully" {
             $Result = New-GitBranch -Name "feature/test"
-            
+
             $Result | Should -Not -BeNullOrEmpty
             $Result.Name | Should -Be "feature/test"
             $Result.Created | Should -Be $true
             $Result.CheckedOut | Should -Be $false
             $Result.Pushed | Should -Be $false
         }
-        
+
         It "Should create and checkout branch when Checkout switch is used" {
             $Result = New-GitBranch -Name "feature/test" -Checkout
-            
+
             $Result.CheckedOut | Should -Be $true
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "checkout" }
         }
-        
+
         It "Should create and push branch when Push switch is used" {
             $Result = New-GitBranch -Name "feature/test" -Push
-            
+
             $Result.Pushed | Should -Be $true
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "push" -and $arguments -contains "-u" }
         }
-        
+
         It "Should create branch from specified base" {
             New-GitBranch -Name "feature/test" -From "develop"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "branch" -and $arguments -contains "feature/test" -and $arguments -contains "develop"
             }
         }
-        
+
         It "Should validate branch name format" {
             { New-GitBranch -Name "invalid name!" } | Should -Throw "*Invalid branch name*"
             { New-GitBranch -Name "feature@test" } | Should -Throw "*Invalid branch name*"
         }
-        
+
         It "Should handle existing branch without Force" {
             $Result = New-GitBranch -Name "existing-branch" -Checkout
-            
+
             $Result.Created | Should -Be $false
             $Result.Existed | Should -Be $true
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "checkout" }
         }
-        
+
         It "Should throw when git branch command fails" {
             Mock git {
                 if ($arguments -contains "branch" -and $arguments -notcontains "--show-current" -and $arguments -notcontains "--list") {
@@ -222,7 +222,7 @@ Describe "GitAutomation Module" {
                 $global:LASTEXITCODE = 0
                 return "main"
             } -ModuleName GitAutomation
-            
+
             { New-GitBranch -Name "test-branch" } | Should -Throw "*Failed to create branch*"
         }
     }
@@ -245,58 +245,58 @@ Describe "GitAutomation Module" {
                 }
             } -ModuleName GitAutomation
         }
-        
+
         It "Should create a simple commit" {
             $Result = Invoke-GitCommit -Message "Test commit"
-            
+
             $Result | Should -Not -BeNullOrEmpty
             $Result.Success | Should -Be $true
             $Result.Hash | Should -Be $script:TestCommitHash
             $Result.Message | Should -Be "Test commit"
         }
-        
+
         It "Should create conventional commit with type and scope" {
             $Result = Invoke-GitCommit -Message "add new feature" -Type "feat" -Scope "auth"
-            
+
             $Result.Message | Should -Be "feat(auth): add new feature"
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "commit" -and $arguments -contains "-m"
             }
         }
-        
+
         It "Should auto-stage changes when AutoStage is specified" {
             # Mock Write-AuditLog to handle the EventType validation error
             Mock Write-AuditLog { } -ModuleName GitAutomation
-            
+
             $Result = Invoke-GitCommit -Message "Test commit" -AutoStage
-            
+
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "add" -and $arguments -contains "-A" }
             $Result | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should add sign-off when SignOff is specified" {
             Invoke-GitCommit -Message "Test commit" -SignOff
-            
+
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "--signoff" }
         }
-        
+
         It "Should add commit body when specified" {
             Invoke-GitCommit -Message "Test commit" -Body "Extended description of changes"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 ($arguments -join " ") -match "Extended description"
             }
         }
-        
+
         It "Should add co-authors when specified" {
             $CoAuthors = @("Jane Doe <jane@example.com>", "Bob Smith <bob@example.com>")
             Invoke-GitCommit -Message "Test commit" -CoAuthors $CoAuthors
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 ($arguments -join " ") -match "Co-authored-by"
             }
         }
-        
+
         It "Should warn when no changes to commit" {
             Mock git {
                 if (($arguments -join " ") -match "status --porcelain") {
@@ -305,15 +305,15 @@ Describe "GitAutomation Module" {
                 $global:LASTEXITCODE = 0
                 return ""
             } -ModuleName GitAutomation
-            
+
             Mock Write-Warning { } -ModuleName GitAutomation
-            
+
             $Result = Invoke-GitCommit -Message "Test commit"
-            
+
             $Result | Should -BeNullOrEmpty
             Should -Invoke Write-Warning -ModuleName GitAutomation
         }
-        
+
         It "Should throw when commit fails" {
             Mock git {
                 if ($arguments -contains "commit") {
@@ -326,10 +326,10 @@ Describe "GitAutomation Module" {
                 $global:LASTEXITCODE = 0
                 return ""
             } -ModuleName GitAutomation
-            
+
             { Invoke-GitCommit -Message "Test commit" } | Should -Throw "*Failed to create commit*"
         }
-        
+
         It "Should validate conventional commit types" {
             { Invoke-GitCommit -Message "Test" -Type "invalid" } | Should -Throw
         }
@@ -339,7 +339,7 @@ Describe "GitAutomation Module" {
         BeforeEach {
             Mock git {
                 switch -Regex ($arguments -join " ") {
-                    "branch --show-current" { 
+                    "branch --show-current" {
                         return $script:TestBranch
                     }
                     default {
@@ -349,77 +349,77 @@ Describe "GitAutomation Module" {
                 }
             } -ModuleName GitAutomation
         }
-        
+
         It "Should perform fetch operation" {
             Sync-GitRepository -Operation "Fetch"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "fetch" -and $arguments -contains "origin"
             }
         }
-        
+
         It "Should perform fetch with prune operation" {
             Sync-GitRepository -Operation "FetchPrune"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "fetch" -and $arguments -contains "--prune"
             }
         }
-        
+
         It "Should perform pull operation" {
             Sync-GitRepository -Operation "Pull"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "pull"
             }
         }
-        
+
         It "Should perform pull with rebase operation" {
             Sync-GitRepository -Operation "PullRebase"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "pull" -and $arguments -contains "--rebase"
             }
         }
-        
+
         It "Should perform push operation" {
             Sync-GitRepository -Operation "Push"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "push"
             }
         }
-        
+
         It "Should perform force push with --force-with-lease" {
             Sync-GitRepository -Operation "Push" -Force
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "--force-with-lease"
             }
         }
-        
+
         It "Should perform full sync operation" {
             Sync-GitRepository -Operation "SyncAll"
-            
+
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "fetch" -and $arguments -contains "--all" }
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "pull" }
             Should -Invoke git -ModuleName GitAutomation -ParameterFilter { $arguments -contains "push" }
         }
-        
+
         It "Should use custom remote and branch" {
             Sync-GitRepository -Operation "Pull" -Remote "upstream" -Branch "develop"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "pull" -and $arguments -contains "upstream" -and $arguments -contains "develop"
             }
         }
-        
+
         It "Should throw when git operation fails" {
             Mock git {
                 $global:LASTEXITCODE = 1
                 return ""
             } -ModuleName GitAutomation
-            
+
             { Sync-GitRepository -Operation "Fetch" } | Should -Throw "*Git operation failed*"
         }
     }
@@ -428,7 +428,7 @@ Describe "GitAutomation Module" {
         BeforeEach {
             Mock git {
                 switch -Regex ($arguments -join " ") {
-                    "branch --show-current" { 
+                    "branch --show-current" {
                         return $script:TestBranch
                     }
                     "rev-parse --abbrev-ref" {
@@ -437,7 +437,7 @@ Describe "GitAutomation Module" {
                     "status --porcelain=v1" {
                         $output = @(
                             "M  modified.txt",
-                            "A  added.txt", 
+                            "A  added.txt",
                             "D  deleted.txt",
                             "?? untracked.txt",
                             " M workspace-modified.txt"
@@ -454,36 +454,36 @@ Describe "GitAutomation Module" {
                 }
             } -ModuleName GitAutomation
         }
-        
+
         It "Should retrieve comprehensive status information" {
             $Result = Get-GitStatus
-            
+
             $Result | Should -Not -BeNullOrEmpty
             $Result.Branch | Should -Be $script:TestBranch
             $Result.UpstreamBranch | Should -Be "origin/main"
             $Result.Clean | Should -Be $false
         }
-        
+
         It "Should categorize files correctly" {
             $Result = Get-GitStatus
-            
+
             # Check that files were categorized (exact counts may vary due to regex matching)
             $Result.Staged.Count | Should -BeGreaterThan 0
             $Result.Modified.Count | Should -BeGreaterThan 0
             $Result.Untracked.Count | Should -BeGreaterThan 0
         }
-        
+
         It "Should parse ahead/behind information" {
             $Result = Get-GitStatus
-            
+
             $Result.Ahead | Should -Be 2
             $Result.Behind | Should -Be 1
         }
-        
+
         It "Should handle clean repository" {
             Mock git {
                 switch -Regex ($arguments -join " ") {
-                    "branch --show-current" { 
+                    "branch --show-current" {
                         return $script:TestBranch
                     }
                     "status --porcelain=v1" {
@@ -495,19 +495,19 @@ Describe "GitAutomation Module" {
                     }
                 }
             } -ModuleName GitAutomation
-            
+
             $Result = Get-GitStatus
-            
+
             $Result.Clean | Should -Be $true
             $Result.Staged | Should -HaveCount 0
             $Result.Modified | Should -HaveCount 0
             $Result.Untracked | Should -HaveCount 0
         }
-        
+
         It "Should handle merge conflicts" {
             Mock git {
                 switch -Regex ($arguments -join " ") {
-                    "branch --show-current" { 
+                    "branch --show-current" {
                         return $script:TestBranch
                     }
                     "status --porcelain=v1" {
@@ -519,9 +519,9 @@ Describe "GitAutomation Module" {
                     }
                 }
             } -ModuleName GitAutomation
-            
+
             $Result = Get-GitStatus
-            
+
             $Result.Conflicts | Should -HaveCount 2
             $Result.Conflicts[0].Path | Should -Be "conflict.txt"
             $Result.Conflicts[1].Path | Should -Be "both-added.txt"
@@ -530,42 +530,42 @@ Describe "GitAutomation Module" {
 
     Context "Set-GitConfiguration" {
         BeforeEach {
-            Mock git { 
+            Mock git {
                 $global:LASTEXITCODE = 0
                 return ""
             } -ModuleName GitAutomation
         }
-        
+
         It "Should set local configuration by default" {
             Set-GitConfiguration -Key "user.name" -Value "Test User"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "config" -and $arguments -contains "--local" -and $arguments -contains "user.name"
             }
         }
-        
+
         It "Should set global configuration when specified" {
             Set-GitConfiguration -Key "user.email" -Value "test@example.com" -Level "Global"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "config" -and $arguments -contains "--global" -and $arguments -contains "user.email"
             }
         }
-        
+
         It "Should set system configuration when specified" {
             Set-GitConfiguration -Key "core.editor" -Value "vim" -Level "System"
-            
-            Should -Invoke git -ModuleName GitAutomation -ParameterFilter { 
+
+            Should -Invoke git -ModuleName GitAutomation -ParameterFilter {
                 $arguments -contains "config" -and $arguments -contains "--system" -and $arguments -contains "core.editor"
             }
         }
-        
+
         It "Should throw when git config fails" {
             Mock git {
                 $global:LASTEXITCODE = 1
                 return ""
             } -ModuleName GitAutomation
-            
+
             { Set-GitConfiguration -Key "user.name" -Value "Test User" } | Should -Throw "*Failed to set Git configuration*"
         }
     }
@@ -573,15 +573,15 @@ Describe "GitAutomation Module" {
     Context "Error Handling and Edge Cases" {
         It "Should handle git command not found" {
             Mock git { throw "Command not found" } -ModuleName GitAutomation
-            
+
             { Get-GitRepository } | Should -Throw
             { Get-GitStatus } | Should -Throw
             { New-GitBranch -Name "test" } | Should -Throw
         }
-        
+
         It "Should handle empty git output gracefully" {
             Mock git { return @() } -ModuleName GitAutomation
-            
+
             # This may still fail due to the module implementation, but we can test it doesn't crash completely
             try {
                 $Result = Get-GitStatus
@@ -593,7 +593,7 @@ Describe "GitAutomation Module" {
                 $_.Exception.Message | Should -Match "Count"
             }
         }
-        
+
         It "Should handle malformed git output" {
             Mock git {
                 if (($arguments -join " ") -match "status --porcelain=v1") {
@@ -602,10 +602,10 @@ Describe "GitAutomation Module" {
                 $global:LASTEXITCODE = 0
                 return ""
             } -ModuleName GitAutomation
-            
+
             { Get-GitStatus } | Should -Not -Throw
         }
-        
+
         It "Should handle network failures during sync operations" {
             Mock git {
                 if ($arguments -contains "fetch" -or $arguments -contains "pull" -or $arguments -contains "push") {
@@ -615,7 +615,7 @@ Describe "GitAutomation Module" {
                 $global:LASTEXITCODE = 0
                 return ""
             } -ModuleName GitAutomation
-            
+
             { Sync-GitRepository -Operation "Fetch" } | Should -Throw "*Git operation failed*"
             { Sync-GitRepository -Operation "Pull" } | Should -Throw "*Git operation failed*"
             { Sync-GitRepository -Operation "Push" } | Should -Throw "*Git operation failed*"
@@ -626,28 +626,28 @@ Describe "GitAutomation Module" {
         BeforeEach {
             Mock git { $global:LASTEXITCODE = 0; return "main" } -ModuleName GitAutomation
         }
-        
+
         It "Should support WhatIf for New-GitBranch" {
             New-GitBranch -Name "test-branch" -WhatIf
             # Note: Some git calls still happen for branch validation
         }
-        
+
         It "Should support WhatIf for Invoke-GitCommit" {
             Mock git {
                 if (($arguments -join " ") -match "status") { return @("M  file.txt") }
                 $global:LASTEXITCODE = 0
                 return ""
             } -ModuleName GitAutomation
-            
+
             Invoke-GitCommit -Message "test" -WhatIf
             # The commit command itself should not be invoked
         }
-        
+
         It "Should support WhatIf for Sync-GitRepository" {
             Sync-GitRepository -Operation "Push" -WhatIf
             # The actual push should not happen
         }
-        
+
         It "Should support WhatIf for Set-GitConfiguration" {
             Set-GitConfiguration -Key "user.name" -Value "Test" -WhatIf
             # The config should not actually be set
@@ -669,31 +669,31 @@ Describe "GitAutomation Module" {
                 }
             } -ModuleName GitAutomation
         }
-        
+
         It "Should handle complete git workflow" {
             # Create branch
             $Branch = New-GitBranch -Name "feature/integration-test"
             $Branch.Created | Should -Be $true
-            
+
             # Make commit
             $Commit = Invoke-GitCommit -Message "Integration test" -Type "test"
             $Commit.Success | Should -Be $true
-            
+
             # Sync repository
             { Sync-GitRepository -Operation "Push" } | Should -Not -Throw
-            
+
             # Get status
             $Status = Get-GitStatus
             $Status | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should handle errors gracefully in workflow" {
             # Test error handling throughout the workflow
-            Mock git { 
+            Mock git {
                 $global:LASTEXITCODE = 1
                 return ""
             } -ModuleName GitAutomation
-            
+
             { New-GitBranch -Name "error-test" } | Should -Throw
             { Invoke-GitCommit -Message "error test" } | Should -Throw
             { Sync-GitRepository -Operation "Push" } | Should -Throw

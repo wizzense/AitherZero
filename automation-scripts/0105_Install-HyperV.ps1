@@ -86,7 +86,7 @@ try {
 
     # Check if Hyper-V is already enabled
     Write-ScriptLog "Checking Hyper-V status..."
-    
+
     try {
         $hyperVFeatures = @(
             'Microsoft-Hyper-V',
@@ -95,7 +95,7 @@ try {
             'Microsoft-Hyper-V-Hypervisor',
             'Microsoft-Hyper-V-Services'
         )
-    
+
         $allEnabled = $true
         foreach ($feature in $hyperVFeatures) {
             $state = Get-WindowsOptionalFeature -Online -FeatureName $feature -ErrorAction SilentlyContinue
@@ -104,7 +104,7 @@ try {
                 Write-ScriptLog "Feature $feature is not enabled" -Level 'Debug'
             }
         }
-        
+
         if ($allEnabled) {
             Write-ScriptLog "Hyper-V is already fully enabled"
 
@@ -115,7 +115,7 @@ try {
             } else {
                 Write-ScriptLog "Hyper-V is enabled but the management service is not running" -Level 'Warning'
             }
-            
+
             exit 0
         }
     } catch {
@@ -124,13 +124,13 @@ try {
 
     # Enable Hyper-V
     Write-ScriptLog "Enabling Hyper-V features..."
-    
+
     try {
         # Enable all Hyper-V features
         $result = Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -All -NoRestart
-        
+
         if ($result.RestartNeeded) {
-            Write-ScriptLog "Hyper-V has been enabled successfully" 
+            Write-ScriptLog "Hyper-V has been enabled successfully"
             Write-ScriptLog "IMPORTANT: A system restart is required to complete the installation" -Level 'Warning'
 
             # Set a flag or exit code to indicate restart is needed
@@ -138,13 +138,13 @@ try {
         } else {
             Write-ScriptLog "Hyper-V has been enabled successfully"
         }
-        
+
         # Enable Hyper-V PowerShell module if needed
         if (-not (Get-Module -ListAvailable -Name Hyper-V)) {
             Write-ScriptLog "Installing Hyper-V PowerShell module..."
             Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-Management-PowerShell -All -NoRestart
         }
-        
+
     } catch {
         Write-ScriptLog "Failed to enable Hyper-V: $_" -Level 'Error'
         throw
@@ -153,7 +153,7 @@ try {
     # Prepare Hyper-V host if configured
     if ($config.InstallationOptions.HyperV.PrepareHost -eq $true) {
         Write-ScriptLog "Preparing Hyper-V host settings..."
-        
+
         try {
             # Import and verify Hyper-V module availability
             Import-Module Hyper-V -ErrorAction SilentlyContinue
@@ -161,7 +161,7 @@ try {
             # Verify module loaded successfully
             if (Get-Module -Name Hyper-V) {
                 Write-ScriptLog "Hyper-V PowerShell module is loaded and available"
-                
+
                 # Test basic Hyper-V cmdlet functionality
                 try {
                     $null = Get-VMHost -ErrorAction Stop
@@ -197,15 +197,15 @@ try {
                 }
                 Write-ScriptLog "Default VHD path set to: $vhdPath"
             }
-            
+
         } catch {
             Write-ScriptLog "Could not prepare Hyper-V host settings: $_" -Level 'Warning'
         }
     }
-    
+
     Write-ScriptLog "Hyper-V installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Hyper-V installation failed: $_" -Level 'Error'
     exit 1

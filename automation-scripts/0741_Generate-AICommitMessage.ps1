@@ -8,25 +8,25 @@ param(
     [Parameter()]
     [ValidateSet('feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf', 'ci', 'build', 'revert')]
     [string]$Type,
-    
+
     [Parameter()]
     [string]$Scope,
-    
+
     [Parameter()]
     [switch]$IncludeBody,
-    
+
     [Parameter()]
     [switch]$IncludeStats,
-    
+
     [Parameter()]
     [switch]$BreakingChange,
-    
+
     [Parameter()]
     [switch]$ShowDiff,
-    
+
     [Parameter()]
     [switch]$CopyToClipboard,
-    
+
     [Parameter()]
     [switch]$ApplyDirectly
 )
@@ -45,7 +45,7 @@ function Write-ScriptLog {
         [string]$Message,
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message "[AICommit] $Message" -Level $Level
     } else {
@@ -67,12 +67,12 @@ function Get-StagedChanges {
     #>
     [CmdletBinding()]
     param()
-    
+
     $staged = git diff --cached --name-status
     if (-not $staged) {
         return $null
     }
-    
+
     $changes = @{
         Added = @()
         Modified = @()
@@ -80,12 +80,12 @@ function Get-StagedChanges {
         Renamed = @()
         Total = 0
     }
-    
+
     foreach ($line in $staged) {
         if ($line -match '^([AMDR])\s+(.+)') {
             $status = $Matches[1]
             $file = $Matches[2]
-            
+
             switch ($status) {
                 'A' { $changes.Added += $file }
                 'M' { $changes.Modified += $file }
@@ -95,7 +95,7 @@ function Get-StagedChanges {
             $changes.Total++
         }
     }
-    
+
     return $changes
 }
 
@@ -108,17 +108,17 @@ function Analyze-Changes {
     param(
         [hashtable]$Changes
     )
-    
+
     $analysis = @{
         Type = 'chore'
         Scope = ''
         Breaking = $false
         Components = @()
     }
-    
+
     # Analyze all changed files
     $allFiles = $Changes.Added + $Changes.Modified + $Changes.Deleted + $Changes.Renamed
-    
+
     foreach ($file in $allFiles) {
         # Determine component/scope
         $component = switch -Regex ($file) {
@@ -132,12 +132,12 @@ function Analyze-Changes {
             '^infrastructure/' { 'infra' }
             default { 'core' }
         }
-        
+
         if ($component -and $component -notin $analysis.Components) {
             $analysis.Components += $component
         }
     }
-    
+
     # Determine type based on changes
     if ($Changes.Added.Count -gt $Changes.Modified.Count) {
         $analysis.Type = 'feat'
@@ -152,26 +152,26 @@ function Analyze-Changes {
             $analysis.Type = 'test'
         }
     }
-    
+
     # Special case for CI/CD files
     if ($allFiles | Where-Object { $_ -match '\.yml$|\.yaml$|workflow' }) {
         $analysis.Type = 'ci'
     }
-    
+
     # Special case for documentation
     if ($allFiles | Where-Object { $_ -match '\.md$|docs/' }) {
         if ($Changes.Total -eq ($allFiles | Where-Object { $_ -match '\.md$|docs/' }).Count) {
             $analysis.Type = 'docs'
         }
     }
-    
+
     # Check for breaking changes
     $diff = git diff --cached
-    if ($diff -match 'BREAKING CHANGE:|BREAKING:|BC:' -or 
+    if ($diff -match 'BREAKING CHANGE:|BREAKING:|BC:' -or
         $diff -match 'Remove-|Delete-|Deprecated') {
         $analysis.Breaking = $true
     }
-    
+
     # Set scope
     if ($analysis.Components.Count -eq 1) {
         $analysis.Scope = $analysis.Components[0]
@@ -180,7 +180,7 @@ function Analyze-Changes {
     } else {
         $analysis.Scope = 'multiple'
     }
-    
+
     return $analysis
 }
 
@@ -199,59 +199,59 @@ function Generate-CommitMessage {
         [switch]$IncludeStats,
         [switch]$BreakingChange
     )
-    
+
     # Use provided type/scope or auto-detected
     $commitType = if ($Type) { $Type } else { $Analysis.Type }
     $commitScope = if ($Scope) { $Scope } else { $Analysis.Scope }
-    
+
     # Generate summary based on changes
     $summary = switch ($commitType) {
-        'feat' { 
+        'feat' {
             if ($Changes.Added.Count -gt 0) {
                 "add $(($Changes.Added | Select-Object -First 1 | Split-Path -Leaf)) and related functionality"
             } else {
                 "enhance $commitScope functionality"
             }
         }
-        'fix' { 
+        'fix' {
             "resolve issues in $commitScope"
         }
-        'docs' { 
+        'docs' {
             "update documentation"
         }
-        'test' { 
+        'test' {
             "add/update tests for $commitScope"
         }
-        'ci' { 
+        'ci' {
             "update CI/CD workflows"
         }
-        'refactor' { 
+        'refactor' {
             "improve $commitScope implementation"
         }
-        'chore' { 
+        'chore' {
             "update $commitScope configuration"
         }
-        default { 
+        default {
             "update $commitScope"
         }
     }
-    
+
     # Build commit message
     $message = if ($commitScope) {
         "$commitType($commitScope): $summary"
     } else {
         "${commitType}: $summary"
     }
-    
+
     # Add breaking change indicator
     if ($BreakingChange -or $Analysis.Breaking) {
         $message = "$message [BREAKING]"
     }
-    
+
     # Add body if requested
     if ($IncludeBody) {
         $body = @()
-        
+
         # Add file changes summary
         if ($Changes.Added.Count -gt 0) {
             $body += "Added:"
@@ -262,7 +262,7 @@ function Generate-CommitMessage {
                 $body += "- ... and $($Changes.Added.Count - 3) more"
             }
         }
-        
+
         if ($Changes.Modified.Count -gt 0) {
             $body += "`nModified:"
             $Changes.Modified | Select-Object -First 3 | ForEach-Object {
@@ -272,19 +272,19 @@ function Generate-CommitMessage {
                 $body += "- ... and $($Changes.Modified.Count - 3) more"
             }
         }
-        
+
         if ($Changes.Deleted.Count -gt 0) {
             $body += "`nDeleted:"
             $Changes.Deleted | Select-Object -First 3 | ForEach-Object {
                 $body += "- $_"
             }
         }
-        
+
         if ($body) {
             $message += "`n`n" + ($body -join "`n")
         }
     }
-    
+
     # Add statistics if requested
     if ($IncludeStats) {
         $stats = git diff --cached --shortstat
@@ -292,10 +292,10 @@ function Generate-CommitMessage {
             $message += "`n`n📊 Statistics: $stats"
         }
     }
-    
+
     # Add AI attribution
     $message += "`n`n🤖 Generated by AitherZero AI Commit Assistant"
-    
+
     return $message
 }
 
@@ -307,23 +307,23 @@ try {
     if (-not (Test-Path .git)) {
         throw "Not in a git repository"
     }
-    
+
     # Get staged changes
     $changes = Get-StagedChanges
     if (-not $changes -or $changes.Total -eq 0) {
         Write-Warning "No staged changes found. Stage files first with 'git add' or use 'az 0704'"
         exit 0
     }
-    
+
     Write-Host "`n📊 Analyzing staged changes..." -ForegroundColor Cyan
     Write-Host "  Added: $($changes.Added.Count) files" -ForegroundColor Green
     Write-Host "  Modified: $($changes.Modified.Count) files" -ForegroundColor Yellow
     Write-Host "  Deleted: $($changes.Deleted.Count) files" -ForegroundColor Red
     Write-Host "  Total: $($changes.Total) changes" -ForegroundColor White
-    
+
     # Analyze changes
     $analysis = Analyze-Changes -Changes $changes
-    
+
     Write-Host "`n🤖 AI Analysis Results:" -ForegroundColor Cyan
     Write-Host "  Type: $($analysis.Type)" -ForegroundColor White
     Write-Host "  Scope: $($analysis.Scope)" -ForegroundColor White
@@ -331,7 +331,7 @@ try {
     if ($analysis.Breaking) {
         Write-Host "  ⚠️  BREAKING CHANGES DETECTED" -ForegroundColor Red
     }
-    
+
     # Generate commit message
     $commitMessage = Generate-CommitMessage `
         -Changes $changes `
@@ -341,19 +341,19 @@ try {
         -IncludeBody:$IncludeBody `
         -IncludeStats:$IncludeStats `
         -BreakingChange:$BreakingChange
-    
+
     # Display the message
     Write-Host "`n📝 Generated Commit Message:" -ForegroundColor Green
     Write-Host "────────────────────────────────────────" -ForegroundColor DarkGray
     Write-Host $commitMessage -ForegroundColor White
     Write-Host "────────────────────────────────────────" -ForegroundColor DarkGray
-    
+
     # Show diff if requested
     if ($ShowDiff) {
         Write-Host "`n📄 Staged Changes:" -ForegroundColor Cyan
         git diff --cached --stat
     }
-    
+
     # Copy to clipboard if requested
     if ($CopyToClipboard) {
         if ($PSCmdlet.ShouldProcess("clipboard", "Copy commit message")) {
@@ -373,21 +373,21 @@ try {
             }
         }
     }
-    
+
     # Apply directly if requested
     if ($ApplyDirectly) {
         if ($PSCmdlet.ShouldProcess("repository", "Create git commit with generated message")) {
             Write-Host "`n🚀 Creating commit..." -ForegroundColor Yellow
-            
+
             $tempFile = [System.IO.Path]::GetTempFileName()
             $commitMessage | Set-Content -Path $tempFile -Encoding UTF8
-            
+
             git commit -F $tempFile
             Remove-Item $tempFile -Force
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✅ Commit created successfully!" -ForegroundColor Green
-                
+
                 # Show the commit
                 git log -1 --oneline
             } else {
@@ -400,9 +400,9 @@ try {
         Write-Host "  2. Run: git commit -m `"<paste message>`"" -ForegroundColor Gray
         Write-Host "  Or use: az 0741 -ApplyDirectly" -ForegroundColor Gray
     }
-    
+
     Write-ScriptLog "AI commit message generation completed successfully"
-    
+
 } catch {
     Write-ScriptLog "Error generating commit message: $_" -Level 'Error'
     Write-Error $_

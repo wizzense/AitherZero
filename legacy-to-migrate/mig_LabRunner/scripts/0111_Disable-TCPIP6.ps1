@@ -21,8 +21,8 @@ Invoke-LabStep -Config $Config -Body {
             Write-CustomLog 'Disabling IPv6 bindings on all adapters'
 
             if ($PSCmdlet.ShouldProcess('IPv6 bindings', 'Disable on all adapters')) {
-                Get-NetAdapterBinding -ComponentID 'ms_tcpip6' | 
-                    Where-Object { $_.Enabled -eq $true } | 
+                Get-NetAdapterBinding -ComponentID 'ms_tcpip6' |
+                    Where-Object { $_.Enabled -eq $true } |
                     Disable-NetAdapterBinding -ComponentID 'ms_tcpip6'
             }
             Write-CustomLog 'IPv6 bindings disabled'

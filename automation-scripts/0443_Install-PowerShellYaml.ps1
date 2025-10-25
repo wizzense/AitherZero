@@ -26,12 +26,12 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [switch]$Force,
-    
+
     [ValidateSet('CurrentUser', 'AllUsers')]
     [string]$Scope = 'CurrentUser',
-    
+
     [switch]$CI,
-    
+
     [string]$MinimumVersion = '0.4.7'
 )
 
@@ -51,7 +51,7 @@ function Write-InstallLog {
         [string]$Message,
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message $Message -Level $Level -Source "PowerShellYamlInstall"
     } else {
@@ -72,13 +72,13 @@ function Test-PowerShellYamlInstalled {
     .SYNOPSIS
         Check if powershell-yaml module is installed
     #>
-    
+
     try {
         $module = Get-Module -ListAvailable -Name powershell-yaml -ErrorAction SilentlyContinue
         if ($module) {
             $currentVersion = $module.Version | Sort-Object -Descending | Select-Object -First 1
             Write-InstallLog "Found powershell-yaml version: $currentVersion" -Level Debug
-            
+
             # Check if version meets minimum requirement
             if ($currentVersion -ge [version]$MinimumVersion) {
                 return $true
@@ -100,15 +100,15 @@ function Install-PowerShellYamlModule {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-InstallLog "Installing powershell-yaml module..." -Level Information
-    
+
     try {
         # Check if we have PowerShellGet
         if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
             throw "PowerShellGet module is required but not installed"
         }
-        
+
         # Set repository as trusted temporarily in CI
         $repoTrusted = $false
         if ($CI) {
@@ -120,7 +120,7 @@ function Install-PowerShellYamlModule {
                 }
             }
         }
-        
+
         try {
             # Install parameters
             $installParams = @{
@@ -131,17 +131,17 @@ function Install-PowerShellYamlModule {
                 AllowClobber = $true
                 ErrorAction = 'Stop'
             }
-            
+
             # Add -AcceptLicense if available (PS 7+)
             if ($PSVersionTable.PSVersion.Major -ge 7) {
                 $installParams['AcceptLicense'] = $true
             }
-            
+
             # Skip publisher check in CI
             if ($CI) {
                 $installParams['SkipPublisherCheck'] = $true
             }
-            
+
             if ($PSCmdlet.ShouldProcess("powershell-yaml", "Install module")) {
                 Install-Module @installParams
                 Write-InstallLog "powershell-yaml module installed successfully" -Level Information
@@ -153,12 +153,12 @@ function Install-PowerShellYamlModule {
                 Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted
             }
         }
-        
+
         # Verify installation
         if (Test-PowerShellYamlInstalled) {
             # Import the module to verify it works
             Import-Module powershell-yaml -ErrorAction Stop
-            
+
             # Test basic functionality
             $testYaml = "test: value"
             $parsed = ConvertFrom-Yaml $testYaml
@@ -181,21 +181,21 @@ function Install-PowerShellYamlModule {
 # Main execution
 try {
     Write-InstallLog "Checking for powershell-yaml module..." -Level Information
-    
+
     $isInstalled = Test-PowerShellYamlInstalled
-    
+
     if ($isInstalled -and -not $Force) {
         Write-InstallLog "powershell-yaml module is already installed with required version" -Level Information
-        
+
         # Import module to make it available
         Import-Module powershell-yaml -ErrorAction SilentlyContinue
-        
+
         if ($CI) {
             exit 0
         }
         return $true
     }
-    
+
     if ($WhatIfPreference) {
         if ($isInstalled) {
             Write-InstallLog "What if: Would update powershell-yaml module to version $MinimumVersion or higher" -Level Information
@@ -205,14 +205,14 @@ try {
         Write-InstallLog "What if: Installation scope would be: $Scope" -Level Information
         return
     }
-    
+
     # Install or update the module
     if ($PSCmdlet.ShouldProcess("powershell-yaml", "Install or update module")) {
         $result = Install-PowerShellYamlModule
-        
+
         if ($result) {
             Write-InstallLog "powershell-yaml module ready for use" -Level Information
-            
+
             # Show usage examples
             if (-not $CI) {
                 Write-Host ""
@@ -221,7 +221,7 @@ try {
                 Write-Host "  Get-Content file.yml | ConvertFrom-Yaml"
                 Write-Host "  @{key='value'} | ConvertTo-Yaml"
             }
-            
+
             if ($CI) {
                 exit 0
             }

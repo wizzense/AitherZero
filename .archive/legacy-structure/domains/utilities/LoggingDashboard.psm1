@@ -37,11 +37,11 @@ function Show-LogDashboard {
     [CmdletBinding()]
     param(
         [switch]$AutoRefresh,
-        
+
         [int]$RefreshInterval = 5,
-        
+
         [switch]$ShowTranscript,
-        
+
         [switch]$FollowTail
     )
 
@@ -56,11 +56,11 @@ function Show-LogDashboard {
     do {
         Show-LogSummary
         Show-LogMenu
-        
+
         if ($FollowTail) {
             Show-LogTail -Lines 20
         }
-        
+
         if ($AutoRefresh) {
             Write-Host "`nAuto-refresh in $RefreshInterval seconds... (Press 'q' to stop)" -ForegroundColor DarkGray
             $timer = [System.Diagnostics.Stopwatch]::StartNew()
@@ -86,29 +86,29 @@ function Show-LogDashboard {
 function Show-LogSummary {
     Write-Host "`n📊 LOG SUMMARY" -ForegroundColor Yellow
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-    
+
     # Get log files
     $logFiles = Get-ChildItem -Path $script:LogPath -Filter "*.log" -ErrorAction SilentlyContinue
     $transcriptFiles = Get-ChildItem -Path $script:LogPath -Filter "transcript-*.log" -ErrorAction SilentlyContinue
-    
+
     # Display log file info
     Write-Host "📁 Log Directory: " -NoNewline -ForegroundColor Cyan
     Write-Host $script:LogPath
-    
+
     Write-Host "📝 Log Files: " -NoNewline -ForegroundColor Cyan
     Write-Host "$($logFiles.Count) files found"
-    
+
     if ($logFiles) {
         $totalSize = ($logFiles | Measure-Object -Property Length -Sum).Sum / 1MB
         Write-Host "💾 Total Size: " -NoNewline -ForegroundColor Cyan
         Write-Host "$([Math]::Round($totalSize, 2)) MB"
-        
+
         # Get today's log
         $todayLog = $logFiles | Where-Object { $_.Name -match (Get-Date -Format 'yyyy-MM-dd') } | Select-Object -First 1
         if ($todayLog) {
             Write-Host "📅 Today's Log: " -NoNewline -ForegroundColor Cyan
             Write-Host "$($todayLog.Name) ($([Math]::Round($todayLog.Length / 1KB, 2)) KB)"
-            
+
             # Count log levels
             $content = Get-Content $todayLog.FullName -ErrorAction SilentlyContinue
             if ($content) {
@@ -120,7 +120,7 @@ function Show-LogSummary {
                     Debug = ($content | Select-String '\[DEBUG\s*\]').Count
                     Trace = ($content | Select-String '\[TRACE\s*\]').Count
                 }
-                
+
                 Write-Host "`n📈 Log Level Distribution:" -ForegroundColor Yellow
                 foreach ($level in $levels.GetEnumerator() | Sort-Object Name) {
                     $color = @{
@@ -131,13 +131,13 @@ function Show-LogSummary {
                         Debug = 'Gray'
                         Trace = 'DarkGray'
                     }[$level.Key]
-                    
+
                     if ($level.Value -gt 0) {
                         Write-Host "   $($level.Key): " -NoNewline -ForegroundColor $color
                         Write-Host $level.Value
                     }
                 }
-                
+
                 # Recent activity
                 $recentLogs = $content | Select-Object -Last 5
                 if ($recentLogs) {
@@ -146,14 +146,14 @@ function Show-LogSummary {
                         if ($log -match '^\[([\d-\s:.]+)\]\s+\[(\w+)\s*\]\s+\[([^\]]+)\]\s+(.*)$') {
                             $time = [DateTime]::Parse($Matches[1])
                             $timeDiff = (Get-Date) - $time
-                            $timeAgo = if ($timeDiff.TotalMinutes -lt 1) { 
-                                "$([int]$timeDiff.TotalSeconds)s ago" 
-                            } elseif ($timeDiff.TotalHours -lt 1) { 
-                                "$([int]$timeDiff.TotalMinutes)m ago" 
-                            } else { 
-                                "$([int]$timeDiff.TotalHours)h ago" 
+                            $timeAgo = if ($timeDiff.TotalMinutes -lt 1) {
+                                "$([int]$timeDiff.TotalSeconds)s ago"
+                            } elseif ($timeDiff.TotalHours -lt 1) {
+                                "$([int]$timeDiff.TotalMinutes)m ago"
+                            } else {
+                                "$([int]$timeDiff.TotalHours)h ago"
                             }
-                            
+
                             Write-Host "   [$timeAgo] " -NoNewline -ForegroundColor DarkGray
                             Write-Host "$($Matches[3]): " -NoNewline -ForegroundColor Cyan
                             Write-Host $($Matches[4].Substring(0, [Math]::Min(50, $Matches[4].Length))) -ForegroundColor White
@@ -163,7 +163,7 @@ function Show-LogSummary {
             }
         }
     }
-    
+
     # Transcript info
     if ($transcriptFiles) {
         Write-Host "`n📜 Transcripts: " -NoNewline -ForegroundColor Cyan
@@ -187,7 +187,7 @@ function Show-LogMenu {
 
 function Process-MenuChoice {
     param([string]$Choice)
-    
+
     switch ($Choice) {
         '1' { Show-TodayLog }
         '2' { Show-LogTail }
@@ -207,13 +207,13 @@ function Process-MenuChoice {
 
 function Show-TodayLog {
     param([int]$Lines = 50)
-    
+
     $logFile = Join-Path $script:LogPath "aitherzero-$(Get-Date -Format 'yyyy-MM-dd').log"
-    
+
     if (Test-Path $logFile) {
         Write-Host "`n📋 TODAY'S LOG (Last $Lines lines)" -ForegroundColor Yellow
         Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-        
+
         Get-Content $logFile -Tail $Lines | ForEach-Object {
             if ($_ -match '^\[([\d-\s:.]+)\]\s+\[(\w+)\s*\]\s+\[([^\]]+)\]\s+(.*)$') {
                 $level = $Matches[2].Trim()
@@ -225,7 +225,7 @@ function Show-TodayLog {
                     'DEBUG' = 'Gray'
                     'TRACE' = 'DarkGray'
                 }[$level] ?? 'White'
-                
+
                 Write-Host $_ -ForegroundColor $color
             } else {
                 Write-Host $_
@@ -234,19 +234,19 @@ function Show-TodayLog {
     } else {
         Write-Host "No log file found for today" -ForegroundColor Yellow
     }
-    
+
     Read-Host "`nPress Enter to continue"
 }
 
 function Show-LogTail {
     param([int]$Lines = 20)
-    
+
     $logFile = Join-Path $script:LogPath "aitherzero-$(Get-Date -Format 'yyyy-MM-dd').log"
-    
+
     if (Test-Path $logFile) {
         Write-Host "`n📜 LOG TAIL (Last $Lines lines)" -ForegroundColor Yellow
         Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-        
+
         Get-Content $logFile -Tail $Lines -Wait | ForEach-Object {
             if ($_ -match '\[ERROR\s*\]') {
                 Write-Host $_ -ForegroundColor Red
@@ -257,7 +257,7 @@ function Show-LogTail {
             } else {
                 Write-Host $_
             }
-            
+
             # Check for key press to stop
             if ([Console]::KeyAvailable) {
                 $key = [Console]::ReadKey($true)
@@ -268,19 +268,19 @@ function Show-LogTail {
 }
 
 function Show-Transcript {
-    $transcriptFile = Get-ChildItem -Path $script:LogPath -Filter "transcript-*.log" | 
-        Sort-Object LastWriteTime -Descending | 
+    $transcriptFile = Get-ChildItem -Path $script:LogPath -Filter "transcript-*.log" |
+        Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
-    
+
     if ($transcriptFile) {
         Write-Host "`n📜 POWERSHELL TRANSCRIPT" -ForegroundColor Yellow
         Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
         Write-Host "File: $($transcriptFile.Name)" -ForegroundColor Cyan
         Write-Host "Size: $([Math]::Round($transcriptFile.Length / 1KB, 2)) KB" -ForegroundColor Cyan
         Write-Host "`nLast 50 lines:" -ForegroundColor Yellow
-        
+
         Get-Content $transcriptFile.FullName -Tail 50 | Write-Host
-        
+
         Read-Host "`nPress Enter to continue"
     } else {
         Write-Host "No transcript file found" -ForegroundColor Yellow
@@ -290,37 +290,37 @@ function Show-Transcript {
 function Set-LogFilter {
     Write-Host "`n🔍 LOG FILTER SETTINGS" -ForegroundColor Yellow
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-    
+
     Write-Host "Current Filters:" -ForegroundColor Cyan
     Write-Host "  Level: $($script:FilterSettings.Level ?? 'All')"
     Write-Host "  Source: $($script:FilterSettings.Source ?? 'All')"
     Write-Host "  Pattern: $($script:FilterSettings.Pattern ?? 'None')"
     Write-Host "  Time Range: $($script:FilterSettings.TimeRange)"
-    
+
     Write-Host "`nSet new filters (press Enter to keep current):" -ForegroundColor Yellow
-    
+
     $newLevel = Read-Host "Level (Trace/Debug/Information/Warning/Error/Critical)"
     if ($newLevel) { $script:FilterSettings.Level = $newLevel }
-    
+
     $newSource = Read-Host "Source filter"
     if ($newSource) { $script:FilterSettings.Source = $newSource }
-    
+
     $newPattern = Read-Host "Search pattern"
     if ($newPattern) { $script:FilterSettings.Pattern = $newPattern }
-    
+
     Write-Host "`nFilters updated!" -ForegroundColor Green
 }
 
 function Search-InteractiveLogs {
     $searchTerm = Read-Host "`nEnter search term"
-    
+
     if ($searchTerm) {
         Write-Host "`n🔍 SEARCH RESULTS" -ForegroundColor Yellow
         Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-        
+
         $logFiles = Get-ChildItem -Path $script:LogPath -Filter "*.log"
         $results = @()
-        
+
         foreach ($file in $logFiles) {
             $matchResults = Select-String -Path $file.FullName -Pattern $searchTerm
             if ($matchResults) {
@@ -331,7 +331,7 @@ function Search-InteractiveLogs {
                 }
             }
         }
-        
+
         Write-Host "`nTotal matches: $($results.Count)" -ForegroundColor Green
         Read-Host "`nPress Enter to continue"
     }
@@ -340,22 +340,22 @@ function Search-InteractiveLogs {
 function Export-InteractiveReport {
     Write-Host "`n📊 EXPORT LOG REPORT" -ForegroundColor Yellow
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-    
+
     Write-Host "[1] HTML Report"
     Write-Host "[2] JSON Export"
     Write-Host "[3] CSV Summary"
-    
+
     $format = Read-Host "`nSelect format"
-    
+
     if (Get-Command Export-LogReport -ErrorAction SilentlyContinue) {
         $reportPath = Export-LogReport -Format @{
             '1' = 'HTML'
             '2' = 'JSON'
             '3' = 'CSV'
         }[$format] ?? 'HTML'
-        
+
         Write-Host "`n✅ Report exported to: $reportPath" -ForegroundColor Green
-        
+
         if ($format -eq '1' -and $IsWindows) {
             $open = Read-Host "Open in browser? (Y/N)"
             if ($open -eq 'Y') {
@@ -363,22 +363,22 @@ function Export-InteractiveReport {
             }
         }
     }
-    
+
     Read-Host "`nPress Enter to continue"
 }
 
 function Clear-OldLogs {
     Write-Host "`n🗑️ CLEAR OLD LOGS" -ForegroundColor Yellow
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-    
+
     $days = Read-Host "Keep logs from last how many days? (default: 7)"
     if (-not $days) { $days = 7 }
-    
+
     if (Get-Command Clear-Logs -ErrorAction SilentlyContinue) {
         Clear-Logs -DaysToKeep $days -Confirm
         Write-Host "✅ Old logs cleared" -ForegroundColor Green
     }
-    
+
     Read-Host "`nPress Enter to continue"
 }
 
@@ -391,29 +391,29 @@ function Toggle-AutoRefresh {
 function Show-Settings {
     Write-Host "`n⚙️ LOGGING SETTINGS" -ForegroundColor Yellow
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-    
+
     if (Get-Module -Name Logging) {
         $loggingModule = Get-Module -Name Logging
-        
+
         Write-Host "Module Version: $($loggingModule.Version)" -ForegroundColor Cyan
         Write-Host "Module Path: $($loggingModule.Path)" -ForegroundColor Cyan
-        
+
         # Get current settings using reflection if available
         Write-Host "`nCurrent Configuration:" -ForegroundColor Yellow
-        
+
         if (Get-Command Get-LogPath -ErrorAction SilentlyContinue) {
             Write-Host "  Log Path: $(Get-LogPath)" -ForegroundColor White
         }
-        
+
         Write-Host "`nActions:" -ForegroundColor Yellow
         Write-Host "[1] Change Log Level"
         Write-Host "[2] Change Log Targets"
         Write-Host "[3] Enable/Disable Rotation"
         Write-Host "[4] Enable/Disable Audit Logging"
         Write-Host "[5] Toggle Transcript Logging"
-        
+
         $action = Read-Host "`nSelect action (or Enter to go back)"
-        
+
         switch ($action) {
             '1' {
                 $level = Read-Host "Enter log level (Trace/Debug/Information/Warning/Error/Critical)"
@@ -463,24 +463,24 @@ function Show-Settings {
             }
         }
     }
-    
+
     Read-Host "`nPress Enter to continue"
 }
 
 function Show-AuditLogs {
     Write-Host "`n🔒 AUDIT LOGS" -ForegroundColor Yellow
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-    
+
     $auditPath = Join-Path $script:LogPath "audit"
     if (Test-Path $auditPath) {
         $auditFiles = Get-ChildItem -Path $auditPath -Filter "*.jsonl"
-        
+
         if ($auditFiles) {
             Write-Host "Found $($auditFiles.Count) audit log files" -ForegroundColor Cyan
-            
+
             if (Get-Command Get-AuditLogs -ErrorAction SilentlyContinue) {
                 $recent = Get-AuditLogs -StartTime (Get-Date).AddHours(-24)
-                
+
                 if ($recent) {
                     Write-Host "`nLast 24 hours activity:" -ForegroundColor Yellow
                     $recent | Select-Object -First 20 | ForEach-Object {
@@ -497,13 +497,13 @@ function Show-AuditLogs {
     } else {
         Write-Host "Audit logging not configured" -ForegroundColor Yellow
     }
-    
+
     Read-Host "`nPress Enter to continue"
 }
 
 function Toggle-TranscriptLogging {
     $transcriptFile = Join-Path $script:LogPath "transcript-$(Get-Date -Format 'yyyy-MM-dd').log"
-    
+
     try {
         Stop-Transcript -ErrorAction SilentlyContinue
         Write-Host "✅ Transcript logging stopped" -ForegroundColor Green
@@ -523,7 +523,7 @@ function Get-LogStatistics {
         [datetime]$StartTime = (Get-Date).AddDays(-7),
         [datetime]$EndTime = (Get-Date)
     )
-    
+
     $stats = @{
         TotalEntries = 0
         ByLevel = @{}
@@ -533,40 +533,40 @@ function Get-LogStatistics {
         Warnings = @()
         TopSources = @()
     }
-    
-    $logFiles = Get-ChildItem -Path $script:LogPath -Filter "*.log" | 
+
+    $logFiles = Get-ChildItem -Path $script:LogPath -Filter "*.log" |
         Where-Object { $_.LastWriteTime -ge $StartTime -and $_.LastWriteTime -le $EndTime }
-    
+
     foreach ($file in $logFiles) {
         $content = Get-Content $file.FullName
         $stats.TotalEntries += $content.Count
-        
+
         foreach ($line in $content) {
             if ($line -match '^\[([\d-\s:.]+)\]\s+\[(\w+)\s*\]\s+\[([^\]]+)\]\s+(.*)$') {
                 $timestamp = [DateTime]::Parse($Matches[1])
                 $level = $Matches[2].Trim()
                 $source = $Matches[3]
                 $message = $Matches[4]
-                
+
                 # Count by level
                 if (-not $stats.ByLevel.ContainsKey($level)) {
                     $stats.ByLevel[$level] = 0
                 }
                 $stats.ByLevel[$level]++
-                
+
                 # Count by source
                 if (-not $stats.BySource.ContainsKey($source)) {
                     $stats.BySource[$source] = 0
                 }
                 $stats.BySource[$source]++
-                
+
                 # Count by hour
                 $hour = $timestamp.Hour
                 if (-not $stats.ByHour.ContainsKey($hour)) {
                     $stats.ByHour[$hour] = 0
                 }
                 $stats.ByHour[$hour]++
-                
+
                 # Collect errors and warnings
                 if ($level -eq 'ERROR') {
                     $stats.Errors += [PSCustomObject]@{
@@ -584,12 +584,12 @@ function Get-LogStatistics {
             }
         }
     }
-    
+
     # Get top sources
-    $stats.TopSources = $stats.BySource.GetEnumerator() | 
-        Sort-Object Value -Descending | 
+    $stats.TopSources = $stats.BySource.GetEnumerator() |
+        Sort-Object Value -Descending |
         Select-Object -First 10
-    
+
     return $stats
 }
 

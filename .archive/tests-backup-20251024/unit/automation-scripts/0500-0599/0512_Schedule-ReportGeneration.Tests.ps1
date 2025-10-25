@@ -3,7 +3,7 @@
 Describe "0512_Schedule-ReportGeneration" {
     BeforeAll {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0512_Schedule-ReportGeneration.ps1"
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-CustomLog -MockWith { param($Message, $Level) Write-Host "[$Level] $Message" }

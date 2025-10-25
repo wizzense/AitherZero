@@ -62,7 +62,7 @@ try {
     if ($config.DevelopmentTools -and $config.DevelopmentTools.PowerShellProfile) {
         $psProfileConfig = $config.DevelopmentTools.PowerShellProfile
         $shouldSetup = $psProfileConfig.Enable -eq $true
-        
+
         # Override defaults with config
         if ($psProfileConfig.ProfileScope) { $ProfileNameConfig.ProfileScope = $psProfileConfig.ProfileScope }
         if ($null -ne $psProfileConfig.IncludeAliases) { $ProfileNameConfig.IncludeAliases = $psProfileConfig.IncludeAliases }
@@ -85,7 +85,7 @@ try {
         'AllUsersCurrentHost' { $ProfileName.AllUsersCurrentHost }
         default { $ProfileName.CurrentUserAllHosts }
     }
-    
+
     Write-ScriptLog "Profile path: $ProfileNamePath"
     Write-ScriptLog "Profile scope: $($ProfileNameConfig.ProfileScope)"
 
@@ -164,7 +164,7 @@ function Enter-AitherProject {
 Set-Alias -Name acd -Value Enter-AitherProject
 
 function Get-AitherModules {
-    Get-ChildItem -Path (Join-Path `$env:AITHERZERO_ROOT 'domains') -Directory | 
+    Get-ChildItem -Path (Join-Path `$env:AITHERZERO_ROOT 'domains') -Directory |
         Where-Object { Test-Path (Join-Path `$_.FullName '*.psm1') }
 }
 
@@ -205,7 +205,7 @@ function prompt {
     } else {
         Write-Host `$currentPath -NoNewline
     }
-    
+
     Write-Host " PS>" -NoNewline
     return " "
 }
@@ -227,7 +227,7 @@ $($config.DevelopmentTools.PowerShellProfile.CustomContent)
     if ($PSCmdlet.ShouldProcess($ProfileNamePath, 'Create/Update PowerShell profile')) {
         Set-Content -Path $ProfileNamePath -Value $ProfileNameContent -Encoding UTF8
         Write-ScriptLog "PowerShell profile created/updated successfully"
-        
+
         # Display summary
         Write-ScriptLog ""
         Write-ScriptLog "Profile configuration summary:"
@@ -240,9 +240,9 @@ $($config.DevelopmentTools.PowerShellProfile.CustomContent)
         Write-ScriptLog "To activate the profile, run: . `$ProfileName"
         Write-ScriptLog "Or start a new PowerShell session"
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during PowerShell profile setup: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

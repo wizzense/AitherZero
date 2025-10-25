@@ -66,7 +66,7 @@ try {
 
     if ($packerCmd) {
         Write-ScriptLog "Packer is already installed at: $($packerCmd.Source)"
-        
+
         # Get version
         try {
             $version = & packer version 2>&1 | Select-Object -First 1
@@ -99,7 +99,7 @@ try {
             '/usr/local/bin'
         }
     }
-    
+
     Write-ScriptLog "Installing Packer to: $installPath"
 
     # Create installation directory
@@ -123,7 +123,7 @@ try {
             '1.10.0'  # Fallback version
         }
     }
-    
+
     Write-ScriptLog "Installing Packer version: $version"
 
     # Platform-specific download
@@ -134,7 +134,7 @@ try {
     } elseif ($IsMacOS) {
         'darwin'
     }
-    
+
     $arch = if ([System.Environment]::Is64BitOperatingSystem) {
         'amd64'
     } else {
@@ -145,21 +145,21 @@ try {
     if ($IsMacOS -and [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq 'Arm64') {
         $arch = 'arm64'
     }
-    
+
     $downloadUrl = "https://releases.hashicorp.com/packer/${version}/packer_${version}_${platform}_${arch}.zip"
     $tempZip = Join-Path $env:TEMP "packer_$(Get-Date -Format 'yyyyMMddHHmmss').zip"
-    
+
     try {
         if ($PSCmdlet.ShouldProcess($downloadUrl, 'Download Packer')) {
             Write-ScriptLog "Downloading from: $downloadUrl"
-            
+
             $ProgressPreference = 'SilentlyContinue'
             Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing
             $ProgressPreference = 'Continue'
-            
+
             Write-ScriptLog "Downloaded to: $tempZip"
         }
-        
+
         # Extract archive
         if ($PSCmdlet.ShouldProcess($tempZip, 'Extract archive')) {
             Write-ScriptLog "Extracting archive..."
@@ -169,18 +169,18 @@ try {
             } else {
                 # Use unzip on Unix-like systems
                 & unzip -o $tempZip -d $installPath
-                
+
                 # Make executable
                 $packerExe = Join-Path $installPath 'packer'
                 & chmod +x $packerExe
             }
-            
+
             Write-ScriptLog "Extraction completed"
         }
-        
+
         # Clean up
         Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
-        
+
     } catch {
         # Clean up on failure
         if (Test-Path $tempZip) {
@@ -195,7 +195,7 @@ try {
             $env:PATH = "$env:PATH;$installPath"
             Write-ScriptLog "Added Packer to current session PATH"
         }
-        
+
         # Add to system PATH if configured
         if ($packerConfig.AddToPath -eq $true) {
             try {
@@ -235,7 +235,7 @@ try {
     # Install plugins if specified
     if ($packerConfig.Plugins) {
         Write-ScriptLog "Installing Packer plugins..."
-        
+
         foreach ($plugin in $packerConfig.Plugins) {
             if ($PSCmdlet.ShouldProcess($plugin, 'Install Packer plugin')) {
                 Write-ScriptLog "Installing plugin: $plugin"
@@ -243,10 +243,10 @@ try {
             }
         }
     }
-    
+
     Write-ScriptLog "Packer installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during Packer installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

@@ -60,7 +60,7 @@ $issues = @()
 try {
     # Get configuration
     $config = if ($Configuration) { $Configuration } else { @{} }
-    
+
     Write-ScriptLog "Validating core dependencies..."
 
     # Check PowerShell version
@@ -103,13 +103,13 @@ try {
         if ($config.InstallationOptions -and $config.InstallationOptions.HyperV -and $config.InstallationOptions.HyperV.Install -eq $true) {
             $hypervRequired = $true
         }
-        
+
         try {
             $hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue
             if ($hyperv.State -eq 'Enabled') {
                 $validationResults.HyperV = $true
                 Write-ScriptLog "✓ Hyper-V: Enabled" -Level 'Debug'
-                
+
                 # Check Hyper-V service
                 $vmms = Get-Service -Name vmms -ErrorAction SilentlyContinue
                 if ($vmms.Status -ne 'Running') {
@@ -138,7 +138,7 @@ try {
     if ($config.InstallationOptions -and $config.InstallationOptions.Node -and $config.InstallationOptions.Node.Install -eq $true) {
         $nodeRequired = $true
     }
-    
+
     try {
         $nodeVersion = & node --version 2>&1
         if ($LASTEXITCODE -eq 0) {
@@ -167,7 +167,7 @@ try {
     if ($config.InstallationOptions -and $config.InstallationOptions.DockerDesktop -and $config.InstallationOptions.DockerDesktop.Install -eq $true) {
         $dockerRequired = $true
     }
-    
+
     try {
         $dockerVersion = & docker --version 2>&1
         if ($LASTEXITCODE -eq 0) {
@@ -192,7 +192,7 @@ try {
 
     if ($config.Infrastructure -and $config.Infrastructure.Directories) {
         $validationResults.Directories = $true  # Assume success unless we can't create
-        
+
         foreach ($dirKey in $config.Infrastructure.Directories.Keys) {
             $dirPath = [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories[$dirKey])
             if (-not (Test-Path $dirPath)) {
@@ -214,7 +214,7 @@ try {
 
     # Check network connectivity
     Write-ScriptLog "Validating network connectivity..."
-    
+
     $testUrls = @(
         'https://github.com',
         'https://registry.npmjs.org',
@@ -234,16 +234,16 @@ try {
     # Summary
     Write-ScriptLog "`nValidation Summary:"
     Write-ScriptLog "=================="
-    
+
     $passCount = ($validationResults.Values | Where-Object { $_ -eq $true }).Count
     $totalCount = $validationResults.Count
-    
+
     foreach ($key in $validationResults.Keys | Sort-Object) {
         $status = if ($validationResults[$key]) { "✓ PASS" } else { "✗ FAIL" }
         $color = if ($validationResults[$key]) { 'Debug' } else { 'Warning' }
         Write-ScriptLog "$status - $key" -Level $color
     }
-    
+
     Write-ScriptLog "`nResult: $passCount/$totalCount checks passed"
 
     if ($issues.Count -gt 0) {
@@ -251,14 +251,14 @@ try {
         foreach ($issue in $issues) {
             Write-ScriptLog "  - $issue" -Level 'Warning'
         }
-        
+
         # Exit with warning code
         exit 2
     } else {
         Write-ScriptLog "`nAll validations passed successfully!" -Level 'Information'
         exit 0
     }
-    
+
 } catch {
     Write-ScriptLog "Validation failed with error: $_" -Level 'Error'
     exit 1

@@ -60,13 +60,13 @@ function Get-GitRepository {
 
     try {
         Push-Location $Path
-        
+
         # Check if in a git repository
         $gitDir = git rev-parse --git-dir 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Not in a Git repository"
         }
-        
+
         $repoInfo = @{
             Path = $Path
             GitDir = $gitDir
@@ -74,13 +74,13 @@ function Get-GitRepository {
             RemoteUrl = git config --get remote.origin.url
             Status = git status --porcelain
             LastCommit = git log -1 --format="%H|%s|%an|%ae|%ad" --date=iso
-            Remotes = @(git remote -v | ForEach-Object { 
+            Remotes = @(git remote -v | ForEach-Object {
                 if ($_ -match '^(\S+)\s+(\S+)\s+\((\w+)\)$') {
                     @{ Name = $Matches[1]; Url = $Matches[2]; Type = $Matches[3] }
                 }
             })
         }
-        
+
         # Parse last commit
         if ($repoInfo.LastCommit) {
             $parts = $repoInfo.LastCommit -split '\|'
@@ -92,10 +92,10 @@ function Get-GitRepository {
                 Date = $parts[4]
             }
         }
-        
+
         Write-GitLog "Retrieved repository information" -Data @{ Branch = $repoInfo.Branch }
         return $repoInfo
-        
+
     } finally {
         Pop-Location
     }
@@ -123,13 +123,13 @@ function New-GitBranch {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [string]$From,
-        
+
         [switch]$Checkout,
-        
+
         [switch]$Push,
-        
+
         [switch]$Force
     )
 
@@ -138,38 +138,38 @@ function New-GitBranch {
         if ($Name -match '[^a-zA-Z0-9/_-]') {
             throw "Invalid branch name. Use only letters, numbers, /, _, and -"
         }
-        
+
         # Get current state
         $currentBranch = git branch --show-current
-        
+
         # Check if branch already exists
         $existingBranch = git branch --list $Name 2>$null
         $remoteBranch = git branch -r --list "origin/$Name" 2>$null
-        
+
         if ($existingBranch -or $remoteBranch) {
             if ($Force) {
                 Write-GitLog "Branch '$Name' exists, force overwriting" -Level Warning
-                
+
                 # Delete existing branch
                 if ($currentBranch -eq $Name) {
                     git checkout main 2>$null || git checkout master 2>$null
                 }
                 git branch -D $Name 2>$null
-                
+
                 if ($remoteBranch) {
                     git push origin --delete $Name 2>$null
                 }
             } else {
                 # Branch exists but not forcing - just checkout
                 Write-GitLog "Branch '$Name' already exists, checking out"
-                
+
                 if ($Checkout) {
                     git checkout $Name
                     if ($LASTEXITCODE -ne 0) {
                         throw "Failed to checkout existing branch"
                     }
                 }
-                
+
                 return @{
                     Name = $Name
                     Created = $false
@@ -179,22 +179,22 @@ function New-GitBranch {
                 }
             }
         }
-        
+
         # Create branch
         $createArgs = @('branch', $Name)
         if ($From) {
             $createArgs += $From
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Create branch '$Name'")) {
             git @createArgs
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to create branch"
             }
-            
+
             Write-GitLog "Created branch: $Name" -Data @{ From = $From; Current = $currentBranch }
         }
-        
+
         # Checkout if requested
         if ($Checkout) {
             git checkout $Name
@@ -203,7 +203,7 @@ function New-GitBranch {
             }
             Write-GitLog "Checked out branch: $Name"
         }
-        
+
         # Push if requested
         if ($Push) {
             git push -u origin $Name
@@ -212,14 +212,14 @@ function New-GitBranch {
             }
             Write-GitLog "Pushed branch to remote: $Name"
         }
-        
+
         return @{
             Name = $Name
             Created = $true
             CheckedOut = $Checkout
             Pushed = $Push
         }
-        
+
     } catch {
         Write-GitLog "Failed to create branch: $_" -Level Error
         throw
@@ -250,18 +250,18 @@ function Invoke-GitCommit {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [string]$Body,
-        
+
         [ValidateSet('feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf', 'ci', 'build', 'revert')]
         [string]$Type,
-        
+
         [string]$Scope,
-        
+
         [switch]$AutoStage,
-        
+
         [switch]$SignOff,
-        
+
         [string[]]$CoAuthors
     )
 
@@ -272,7 +272,7 @@ function Invoke-GitCommit {
             Write-Warning "No changes to commit"
             return
         }
-        
+
         # Auto-stage if requested
         if ($AutoStage) {
             git add -A
@@ -281,7 +281,7 @@ function Invoke-GitCommit {
             }
             Write-GitLog "Auto-staged all changes"
         }
-        
+
         # Build commit message
         $fullMessage = $Message
         if ($Type) {
@@ -291,24 +291,24 @@ function Invoke-GitCommit {
             }
             $fullMessage += ": $Message"
         }
-        
+
         # Build commit command
         $commitArgs = @('commit', '-m', $fullMessage)
-        
+
         if ($Body) {
             $commitArgs += '-m', $Body
         }
-        
+
         if ($SignOff) {
             $commitArgs += '--signoff'
         }
-        
+
         # Add co-authors
         if ($CoAuthors) {
             $coAuthorLines = $CoAuthors | ForEach-Object { "Co-authored-by: $_" }
             $commitArgs += '-m', ($coAuthorLines -join "`n")
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Commit with message: $fullMessage")) {
             git @commitArgs
             if ($LASTEXITCODE -ne 0) {
@@ -317,7 +317,7 @@ function Invoke-GitCommit {
 
             # Get commit hash
             $commitHash = git rev-parse HEAD
-            
+
             Write-GitLog "Created commit: $commitHash" -Data @{
                 Message = $fullMessage
                 Type = $Type
@@ -331,14 +331,14 @@ function Invoke-GitCommit {
                     AutoStaged = $AutoStage
                 }
             }
-            
+
             return @{
                 Hash = $commitHash
                 Message = $fullMessage
                 Success = $true
             }
         }
-        
+
     } catch {
         Write-GitLog "Failed to create commit: $_" -Level Error
         throw
@@ -365,11 +365,11 @@ function Sync-GitRepository {
     param(
         [ValidateSet('Fetch', 'Pull', 'Push', 'FetchPrune', 'PullRebase', 'SyncAll')]
         [string]$Operation = 'Pull',
-        
+
         [string]$Remote = 'origin',
-        
+
         [string]$Branch,
-        
+
         [switch]$Force
     )
 
@@ -377,7 +377,7 @@ function Sync-GitRepository {
         if (-not $Branch) {
             $Branch = git branch --show-current
         }
-        
+
         switch ($Operation) {
             'Fetch' {
                 if ($PSCmdlet.ShouldProcess("Fetch from $Remote")) {
@@ -385,60 +385,60 @@ function Sync-GitRepository {
                     Write-GitLog "Fetched from remote: $Remote"
                 }
             }
-            
+
             'FetchPrune' {
                 if ($PSCmdlet.ShouldProcess("Fetch and prune from $Remote")) {
                     git fetch --prune $Remote
                     Write-GitLog "Fetched and pruned from remote: $Remote"
                 }
             }
-            
+
             'Pull' {
                 if ($PSCmdlet.ShouldProcess("Pull from $Remote/$Branch")) {
                     git pull $Remote $Branch
                     Write-GitLog "Pulled from remote: $Remote/$Branch"
                 }
             }
-            
+
             'PullRebase' {
                 if ($PSCmdlet.ShouldProcess("Pull with rebase from $Remote/$Branch")) {
                     git pull --rebase $Remote $Branch
                     Write-GitLog "Pulled with rebase from remote: $Remote/$Branch"
                 }
             }
-            
+
             'Push' {
                 $pushArgs = @('push', $Remote, $Branch)
                 if ($Force) {
                     $pushArgs += '--force-with-lease'
                 }
-                
+
                 if ($PSCmdlet.ShouldProcess("Push to $Remote/$Branch" + $(if ($Force) { " (force)" } else { "" }))) {
                     git @pushArgs
                     Write-GitLog "Pushed to remote: $Remote/$Branch" -Data @{ Forced = $Force }
                 }
             }
-            
+
             'SyncAll' {
                 if ($PSCmdlet.ShouldProcess("Full sync with $Remote")) {
                     # Fetch all
                     git fetch --all --prune
-                    
+
                     # Pull current branch
                     git pull --rebase $Remote $Branch
-                    
+
                     # Push current branch
                     git push $Remote $Branch
-                    
+
                     Write-GitLog "Completed full sync with remote: $Remote"
                 }
             }
         }
-        
+
         if ($LASTEXITCODE -ne 0) {
             throw "Git operation failed"
         }
-        
+
     } catch {
         Write-GitLog "Sync operation failed: $_" -Level Error
         throw
@@ -455,7 +455,7 @@ function Get-GitStatus {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         $status = @{
             Branch = git branch --show-current
@@ -467,23 +467,23 @@ function Get-GitStatus {
             Conflicts = @()
             Clean = $true
         }
-        
+
         # Get detailed status
         $statusOutput = git status --porcelain=v1
-        
+
         foreach ($line in $statusOutput) {
             if ($line) {
                 $status.Clean = $false
                 $indexStatus = $line[0]
                 $workTreeStatus = $line[1]
                 $file = $line.Substring(3)
-                
+
                 $fileInfo = @{
                     Path = $file
                     IndexStatus = $indexStatus
                     WorkTreeStatus = $workTreeStatus
                 }
-                
+
                 # Categorize files
                 switch -Regex ($line.Substring(0, 2)) {
                     '^[AMD]' { $status.Staged += $fileInfo }
@@ -494,7 +494,7 @@ function Get-GitStatus {
                 }
             }
         }
-        
+
         # Get ahead/behind info
         if ($status.UpstreamBranch) {
             $aheadBehind = git rev-list --left-right --count "HEAD...$($status.UpstreamBranch)" 2>$null
@@ -504,15 +504,15 @@ function Get-GitStatus {
                 $status.Behind = [int]$parts[1]
             }
         }
-        
+
         Write-GitLog "Retrieved Git status" -Data @{
             Branch = $status.Branch
             Clean = $status.Clean
             FileCount = $statusOutput.Count
         }
-        
+
         return $status
-        
+
     } catch {
         Write-GitLog "Failed to get Git status: $_" -Level Error
         throw
@@ -534,10 +534,10 @@ function Set-GitConfiguration {
     param(
         [Parameter(Mandatory)]
         [string]$Key,
-        
+
         [Parameter(Mandatory)]
         [string]$Value,
-        
+
         [ValidateSet('Local', 'Global', 'System')]
         [string]$Level = 'Local'
     )
@@ -548,20 +548,20 @@ function Set-GitConfiguration {
             'Global' { '--global' }
             'System' { '--system' }
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Set Git config $Key = $Value at $Level level")) {
             git config $levelFlag $Key $Value
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to set Git configuration"
             }
-            
+
             Write-GitLog "Set Git configuration" -Data @{
                 Key = $Key
                 Value = $Value
                 Level = $Level
             }
         }
-        
+
     } catch {
         Write-GitLog "Failed to set Git configuration: $_" -Level Error
         throw

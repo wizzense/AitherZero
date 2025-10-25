@@ -61,7 +61,7 @@ try {
     if ($config.Maintenance -and $config.Maintenance.MachineReset) {
         $machineResetConfig = $config.Maintenance.MachineReset
         $shouldReset = $machineResetConfig.Enable -eq $true
-        
+
         # Override defaults with config
         if ($null -ne $machineResetConfig.AllowReset) { $resetConfig.AllowReset = $machineResetConfig.AllowReset }
         if ($null -ne $machineResetConfig.PrepareForRemoteAccess) { $resetConfig.PrepareForRemoteAccess = $machineResetConfig.PrepareForRemoteAccess }
@@ -85,7 +85,7 @@ try {
     # Platform-specific reset
     if ($IsWindows) {
         Write-ScriptLog "Detected Windows platform"
-        
+
         # Create restore point if configured
         if ($resetConfig.CreateRestorePoint) {
             Write-ScriptLog "Creating system restore point..."
@@ -98,7 +98,7 @@ try {
                 Write-ScriptLog "Failed to create restore point: $_" -Level 'Warning'
             }
         }
-        
+
         # Prepare for remote access if configured
         if ($resetConfig.PrepareForRemoteAccess) {
             Write-ScriptLog "Preparing for remote access..."
@@ -117,10 +117,10 @@ try {
                 New-NetFirewallRule -DisplayName "AitherZero-RDP" -Direction Inbound -Protocol TCP -LocalPort 3389 -Action Allow -ErrorAction SilentlyContinue
             }
         }
-        
+
         # Run sysprep
         $sysprepPath = Join-Path $env:SystemRoot 'System32\Sysprep\Sysprep.exe'
-        
+
         if (Test-Path $sysprepPath) {
             Write-ScriptLog "Found sysprep at: $sysprepPath"
 
@@ -144,7 +144,7 @@ try {
                     $sysprepArgs += '/shutdown'
                 }
             }
-            
+
             Write-ScriptLog "WARNING: System will be generalized and shut down!" -Level 'Warning'
             Write-ScriptLog "Executing sysprep with arguments: $($sysprepArgs -join ' ')"
 
@@ -155,14 +155,14 @@ try {
             Write-ScriptLog "Sysprep not found at expected location" -Level 'Error'
             throw "Sysprep not found"
         }
-        
+
     } elseif ($IsLinux -or $IsMacOS) {
         $platform = if ($IsLinux) { "Linux" } else { "macOS" }
         Write-ScriptLog "Detected $platform platform"
-        
+
         # For Unix-like systems, perform a clean reboot
         Write-ScriptLog "Preparing for system reboot..."
-        
+
         # Clear temporary files
         if ($PSCmdlet.ShouldProcess('/tmp', 'Clear temporary files')) {
             try {
@@ -172,7 +172,7 @@ try {
                 Write-ScriptLog "Failed to clear some temporary files: $_" -Level 'Warning'
             }
         }
-        
+
         # Clear package manager cache
         if ($IsLinux) {
             if (Get-Command apt-get -ErrorAction SilentlyContinue) {
@@ -194,11 +194,11 @@ try {
                 }
             }
         }
-        
+
         # Initiate reboot
         Write-ScriptLog "WARNING: System will reboot in 1 minute!" -Level 'Warning'
         Write-ScriptLog "Use 'shutdown -c' to cancel if needed"
-        
+
         if ($PSCmdlet.ShouldProcess($env:HOSTNAME, 'Reboot system')) {
             if ($IsLinux) {
                 & sudo shutdown -r +1 "AitherZero machine reset - system will reboot in 1 minute"
@@ -206,15 +206,15 @@ try {
                 & sudo shutdown -r +1
             }
         }
-        
+
     } else {
         Write-ScriptLog "Unknown platform - cannot perform reset" -Level 'Error'
         throw "Unsupported platform for machine reset"
     }
-    
+
     Write-ScriptLog "Machine reset initiated successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during machine reset: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

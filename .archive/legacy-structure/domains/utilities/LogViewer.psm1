@@ -16,7 +16,7 @@ function Write-ModuleLog {
         [string]$Message,
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message "[$script:ModuleName] $Message" -Level $Level
     } else {
@@ -38,30 +38,30 @@ function Get-LogFiles {
         [ValidateSet('Application', 'Transcript', 'All')]
         [string]$Type = 'All'
     )
-    
+
     $logPath = Join-Path $script:ProjectRoot 'logs'
-    
+
     if (-not (Test-Path $logPath)) {
         Write-ModuleLog "Log directory not found: $logPath" -Level 'Warning'
         return @()
     }
-    
+
     $files = @()
-    
+
     if ($Type -in @('Application', 'All')) {
-        $files += Get-ChildItem -Path $logPath -Filter "aitherzero-*.log" | 
-            Select-Object Name, FullName, Length, LastWriteTime, 
+        $files += Get-ChildItem -Path $logPath -Filter "aitherzero-*.log" |
+            Select-Object Name, FullName, Length, LastWriteTime,
                 @{Name='Type'; Expression={'Application'}},
                 @{Name='SizeKB'; Expression={[Math]::Round($_.Length / 1KB, 2)}}
     }
-    
+
     if ($Type -in @('Transcript', 'All')) {
         $files += Get-ChildItem -Path $logPath -Filter "transcript-*.log" |
             Select-Object Name, FullName, Length, LastWriteTime,
                 @{Name='Type'; Expression={'Transcript'}},
                 @{Name='SizeKB'; Expression={[Math]::Round($_.Length / 1KB, 2)}}
     }
-    
+
     return $files | Sort-Object LastWriteTime -Descending
 }
 
@@ -84,34 +84,34 @@ function Show-LogContent {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [int]$Tail = 30,
-        
+
         [switch]$Follow,
-        
+
         [ValidateSet('Trace', 'Debug', 'Information', 'Warning', 'Error', 'Critical')]
         [string]$Level,
-        
+
         [switch]$NoColor
     )
-    
+
     if (-not (Test-Path $Path)) {
         Write-ModuleLog "Log file not found: $Path" -Level 'Error'
         return
     }
-    
+
     $content = if ($Follow) {
         Write-Host "Following log (press Ctrl+C to stop)..." -ForegroundColor Yellow
         Get-Content $Path -Tail $Tail -Wait
     } else {
         Get-Content $Path -Tail $Tail
     }
-    
+
     # Apply level filter
     if ($Level) {
         $content = $content | Where-Object { $_ -match "\[$Level\s*\]" }
     }
-    
+
     # Colorize output
     $content | ForEach-Object {
         if ($NoColor) {
@@ -145,20 +145,20 @@ function Get-LogStatistics {
     param(
         [string]$Path
     )
-    
+
     if (-not $Path) {
         $logFiles = Get-LogFiles -Type Application
         if ($logFiles) {
             $Path = $logFiles[0].FullName
         }
     }
-    
+
     if (-not (Test-Path $Path)) {
         return $null
     }
-    
+
     $content = Get-Content $Path
-    
+
     $stats = @{
         FilePath = $Path
         FileName = Split-Path $Path -Leaf
@@ -175,7 +175,7 @@ function Get-LogStatistics {
         FirstEntry = $null
         LastEntry = $null
     }
-    
+
     if ($content.Count -gt 0) {
         # Extract timestamps
         if ($content[0] -match '^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})') {
@@ -185,7 +185,7 @@ function Get-LogStatistics {
             $stats.LastEntry = $Matches[1]
         }
     }
-    
+
     return [PSCustomObject]$stats
 }
 
@@ -200,16 +200,16 @@ function Show-LogDashboard {
     param(
         [switch]$AutoRefresh
     )
-    
+
     # Check if we're in non-interactive mode
-    $isNonInteractive = -not [Environment]::UserInteractive -or 
+    $isNonInteractive = -not [Environment]::UserInteractive -or
                         $env:AITHERZERO_NONINTERACTIVE -eq 'true'
-    
+
     if ($isNonInteractive) {
         # Non-interactive mode - just show summary and exit
         Write-Host "`n  LOG DASHBOARD (Non-Interactive)" -ForegroundColor Cyan
         Write-Host "  ═══════════════════════════════════════════════════════" -ForegroundColor DarkGray
-        
+
         $logFiles = Get-LogFiles -Type All
         if ($logFiles) {
             Write-Host "`n  Available Logs: $($logFiles.Count) files" -ForegroundColor White
@@ -217,7 +217,7 @@ function Show-LogDashboard {
                 $icon = if ($file.Type -eq 'Application') { '📋' } else { '📜' }
                 Write-Host "    $icon $($file.Name) ($($file.SizeKB) KB)" -ForegroundColor Gray
             }
-            
+
             $appLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
             if ($appLog) {
                 $stats = Get-LogStatistics -Path $appLog.FullName
@@ -227,49 +227,49 @@ function Show-LogDashboard {
                 }
             }
         }
-        
+
         Write-Host "`n  ℹ️  Run interactively for full dashboard features" -ForegroundColor DarkGray
         return
     }
-    
+
     do {
         Clear-Host
-        
+
         Write-Host "`n  AITHERZERO LOG DASHBOARD" -ForegroundColor Cyan
         Write-Host "  ═══════════════════════════════════════════════════════" -ForegroundColor DarkGray
-        
+
         # Get log files
         $logFiles = Get-LogFiles -Type All
-        
+
         if ($logFiles.Count -eq 0) {
             Write-Host "`n  No log files found" -ForegroundColor Yellow
         } else {
             Write-Host "`n  📁 AVAILABLE LOG FILES:" -ForegroundColor White
             Write-Host "  ─────────────────────────────────────────────────────────" -ForegroundColor DarkGray
-            
+
             $i = 1
             foreach ($file in $logFiles | Select-Object -First 10) {
                 $icon = if ($file.Type -eq 'Application') { '📋' } else { '📜' }
                 Write-Host "  [$i] $icon $($file.Name) ($($file.SizeKB) KB) - $($file.LastWriteTime)" -ForegroundColor Gray
                 $i++
             }
-            
+
             # Get statistics for the latest log
             if ($logFiles.Count -gt 0) {
                 $latestLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
                 if ($latestLog) {
                     $stats = Get-LogStatistics -Path $latestLog.FullName
-                    
+
                     if ($stats) {
                         Write-Host "`n  📊 CURRENT LOG STATISTICS:" -ForegroundColor White
                         Write-Host "  ─────────────────────────────────────────────────────────" -ForegroundColor DarkGray
                         Write-Host "  File: $($stats.FileName)" -ForegroundColor Gray
                         Write-Host "  Size: $($stats.SizeKB) KB | Lines: $($stats.TotalLines)" -ForegroundColor Gray
-                        
+
                         if ($stats.FirstEntry -and $stats.LastEntry) {
                             Write-Host "  Period: $($stats.FirstEntry) → $($stats.LastEntry)" -ForegroundColor Gray
                         }
-                        
+
                         Write-Host "`n  LOG LEVELS:" -ForegroundColor White
                         if ($stats.LogLevels.Critical -gt 0) {
                             Write-Host "    ⚠️  Critical: $($stats.LogLevels.Critical)" -ForegroundColor Magenta
@@ -287,7 +287,7 @@ function Show-LogDashboard {
                 }
             }
         }
-        
+
         Write-Host "`n  ⚡ QUICK ACTIONS:" -ForegroundColor White
         Write-Host "  ─────────────────────────────────────────────────────────" -ForegroundColor DarkGray
         Write-Host "  [V] View latest log     [T] View transcript" -ForegroundColor Gray
@@ -295,10 +295,10 @@ function Show-LogDashboard {
         Write-Host "  [S] Search logs         [C] Clear old logs" -ForegroundColor Gray
         Write-Host "  [R] Refresh             [Q] Quit" -ForegroundColor Gray
         Write-Host ""
-        
+
         if (-not $AutoRefresh) {
             $choice = Read-Host "Select action"
-            
+
             switch ($choice.ToUpper()) {
                 'V' {
                     $latest = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
@@ -343,7 +343,7 @@ function Show-LogDashboard {
         } else {
             Start-Sleep -Seconds 5
         }
-        
+
     } while ($true)
 }
 
@@ -358,14 +358,14 @@ function Search-Logs {
     param(
         [Parameter(Mandatory)]
         [string]$Pattern,
-        
+
         [ValidateSet('Application', 'Transcript', 'All')]
         [string]$Type = 'All'
     )
-    
+
     $logFiles = Get-LogFiles -Type $Type
     $results = @()
-    
+
     foreach ($file in $logFiles) {
         $matchResults = Select-String -Path $file.FullName -Pattern $Pattern
         if ($matchResults) {
@@ -376,7 +376,7 @@ function Search-Logs {
             }
         }
     }
-    
+
     if ($results) {
         Write-Host "`n🔍 SEARCH RESULTS FOR: '$Pattern'" -ForegroundColor Cyan
         foreach ($result in $results) {
@@ -401,16 +401,16 @@ function Clear-OldLogs {
     param(
         [int]$DaysToKeep = 7
     )
-    
+
     $logPath = Join-Path $script:ProjectRoot 'logs'
     $cutoffDate = (Get-Date).AddDays(-$DaysToKeep)
-    
-    $oldFiles = Get-ChildItem -Path $logPath -Filter "*.log" | 
+
+    $oldFiles = Get-ChildItem -Path $logPath -Filter "*.log" |
         Where-Object { $_.LastWriteTime -lt $cutoffDate }
-    
+
     if ($oldFiles) {
         Write-Host "Found $($oldFiles.Count) log files older than $DaysToKeep days" -ForegroundColor Yellow
-        
+
         if ($PSCmdlet.ShouldProcess("$($oldFiles.Count) old log files", "Remove")) {
             $oldFiles | Remove-Item -Force
             Write-Host "Removed $($oldFiles.Count) old log files" -ForegroundColor Green
@@ -429,7 +429,7 @@ function Get-LoggingStatus {
     #>
     [CmdletBinding()]
     param()
-    
+
     $status = @{
         ModuleLoaded = $null -ne (Get-Module -Name Logging)
         LogPath = $null
@@ -438,7 +438,7 @@ function Get-LoggingStatus {
         CurrentLogFile = $null
         Configuration = $null
     }
-    
+
     if ($status.ModuleLoaded) {
         if (Get-Command Get-LogPath -ErrorAction SilentlyContinue) {
             $status.LogPath = Get-LogPath
@@ -447,12 +447,12 @@ function Get-LoggingStatus {
                 $status.FileLoggingEnabled = $true
             }
         }
-        
+
         if (Get-Command Get-LoggingConfiguration -ErrorAction SilentlyContinue) {
             $status.Configuration = Get-LoggingConfiguration
         }
     }
-    
+
     # Check for active transcript
     try {
         Stop-Transcript -ErrorAction SilentlyContinue | Out-Null
@@ -461,7 +461,7 @@ function Get-LoggingStatus {
     } catch {
         $status.TranscriptActive = $false
     }
-    
+
     return [PSCustomObject]$status
 }
 

@@ -21,7 +21,7 @@ function Write-GeneratorLog {
         [string]$Message,
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message $Message -Level $Level -Source 'TestGenerator'
     } else {
@@ -53,34 +53,34 @@ function New-AutomationScriptTest {
         [Parameter(Mandatory, ValueFromPipeline)]
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$ScriptPath,
-        
+
         [string]$OutputPath,
-        
+
         [switch]$IncludeMocks,
-        
+
         [switch]$IncludeIntegration
     )
-    
+
     begin {
         Write-GeneratorLog "Starting test generation for automation scripts"
     }
-    
+
     process {
         try {
             $scriptFile = Get-Item $ScriptPath
             $scriptName = [System.IO.Path]::GetFileNameWithoutExtension($scriptFile.Name)
-            
+
             Write-GeneratorLog "Analyzing script: $scriptName"
-            
+
             # Parse script AST
             $scriptAst = Get-ScriptAST -Path $ScriptPath
-            
+
             # Extract script metadata
             $metadata = Get-ScriptTestMetadata -AST $scriptAst -ScriptPath $ScriptPath
-            
+
             # Generate test structure
             $testContent = New-TestStructure -Metadata $metadata -IncludeMocks:$IncludeMocks
-            
+
             # Determine output path
             if (-not $OutputPath) {
                 $testDir = Join-Path $script:TestsPath "unit/automation-scripts"
@@ -89,11 +89,11 @@ function New-AutomationScriptTest {
                 }
                 $OutputPath = Join-Path $testDir "$scriptName.Tests.ps1"
             }
-            
+
             # Write test file
             $testContent | Set-Content -Path $OutputPath -Encoding UTF8
             Write-GeneratorLog "Generated test file: $OutputPath" -Level 'Information'
-            
+
             # Generate integration tests if requested
             if ($IncludeIntegration) {
                 $integrationDir = Join-Path $script:TestsPath "integration/automation-scripts"
@@ -105,14 +105,14 @@ function New-AutomationScriptTest {
                 $integrationContent | Set-Content -Path $integrationPath -Encoding UTF8
                 Write-GeneratorLog "Generated integration test file: $integrationPath"
             }
-            
+
             return [PSCustomObject]@{
                 ScriptName = $scriptName
                 TestPath = $OutputPath
                 IntegrationPath = if ($IncludeIntegration) { $integrationPath } else { $null }
                 Success = $true
             }
-            
+
         } catch {
             Write-GeneratorLog "Failed to generate tests for $ScriptPath : $_" -Level 'Error'
             throw
@@ -122,7 +122,7 @@ function New-AutomationScriptTest {
 
 function Get-ScriptAST {
     param([string]$Path)
-    
+
     $tokens = $null
     $errors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile(
@@ -130,11 +130,11 @@ function Get-ScriptAST {
         [ref]$tokens,
         [ref]$errors
     )
-    
+
     if ($errors.Count -gt 0) {
         throw "Script contains syntax errors: $($errors -join '; ')"
     }
-    
+
     return $ast
 }
 
@@ -143,7 +143,7 @@ function Get-ScriptTestMetadata {
         $AST,
         [string]$ScriptPath
     )
-    
+
     $metadata = @{
         ScriptPath = $ScriptPath
         ScriptName = [System.IO.Path]::GetFileNameWithoutExtension($ScriptPath)
@@ -156,7 +156,7 @@ function Get-ScriptTestMetadata {
         Dependencies = @()
         Description = ''
     }
-    
+
     # Extract script header comments for metadata
     $content = Get-Content $ScriptPath -First 20
     foreach ($line in $content) {
@@ -170,7 +170,7 @@ function Get-ScriptTestMetadata {
             $metadata.Description = $Matches[1].Trim()
         }
     }
-    
+
     # Extract parameters
     $paramBlock = $AST.ParamBlock
     if ($paramBlock) {
@@ -181,7 +181,7 @@ function Get-ScriptTestMetadata {
                 Mandatory = $false
                 DefaultValue = $null
             }
-            
+
             # Check for mandatory attribute
             foreach ($attr in $param.Attributes) {
                 if ($attr -is [System.Management.Automation.Language.AttributeAst]) {
@@ -194,25 +194,25 @@ function Get-ScriptTestMetadata {
                     }
                 }
             }
-            
+
             # Get default value if present
             if ($param.DefaultValue) {
                 $paramInfo.DefaultValue = $param.DefaultValue.Extent.Text
             }
-            
+
             $metadata.Parameters += $paramInfo
         }
     }
-    
+
     # Extract functions
     $functionAsts = $AST.FindAll({
         $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
     }, $true)
-    
+
     foreach ($func in $functionAsts) {
         $funcParams = @()
         if ($func.Parameters) {
-            $funcParams = $func.Parameters | ForEach-Object { 
+            $funcParams = $func.Parameters | ForEach-Object {
                 if ($_.Name -and $_.Name.VariablePath) {
                     $_.Name.VariablePath.UserPath
                 } else {
@@ -220,18 +220,18 @@ function Get-ScriptTestMetadata {
                 }
             }
         }
-        
+
         $metadata.Functions += @{
             Name = $func.Name
             Parameters = $funcParams
         }
     }
-    
+
     # Extract external commands
     $commandAsts = $AST.FindAll({
         $arguments[0] -is [System.Management.Automation.Language.CommandAst]
     }, $true)
-    
+
     $externalCommands = @()
     foreach ($cmd in $commandAsts) {
         $cmdName = $cmd.GetCommandName()
@@ -243,7 +243,7 @@ function Get-ScriptTestMetadata {
         }
     }
     $metadata.ExternalCommands = $externalCommands | Select-Object -Unique | Sort-Object
-    
+
     # Extract #Requires statements
     $requiresStatements = $AST.ScriptRequirements
     if ($requiresStatements) {
@@ -251,7 +251,7 @@ function Get-ScriptTestMetadata {
             $metadata.RequiresModules += $req.Name
         }
     }
-    
+
     return $metadata
 }
 
@@ -260,9 +260,9 @@ function New-TestStructure {
         [hashtable]$Metadata,
         [switch]$IncludeMocks
     )
-    
+
     $sb = [System.Text.StringBuilder]::new()
-    
+
     # Header
     $null = $sb.AppendLine("#Requires -Version 7.0")
     $null = $sb.AppendLine("#Requires -Module Pester")
@@ -278,14 +278,14 @@ function New-TestStructure {
     $null = $sb.AppendLine("    Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
     $null = $sb.AppendLine("#>")
     $null = $sb.AppendLine()
-    
+
     # Test structure
     $null = $sb.AppendLine("Describe '$($Metadata.ScriptName)' -Tag 'Unit', 'AutomationScript' {")
     $null = $sb.AppendLine()
     $null = $sb.AppendLine("    BeforeAll {")
     $null = $sb.AppendLine("        `$script:ScriptPath = '$($Metadata.ScriptPath)'")
     $null = $sb.AppendLine("        `$script:ScriptName = '$($Metadata.ScriptName)'")
-    
+
     if ($IncludeMocks) {
         $null = $sb.AppendLine()
         $null = $sb.AppendLine("        # Mock external commands")
@@ -296,10 +296,10 @@ function New-TestStructure {
             }
         }
     }
-    
+
     $null = $sb.AppendLine("    }")
     $null = $sb.AppendLine()
-    
+
     # Test script existence
     $null = $sb.AppendLine("    Context 'Script Validation' {")
     $null = $sb.AppendLine("        It 'Script file should exist' {")
@@ -317,36 +317,36 @@ function New-TestStructure {
     $null = $sb.AppendLine("        }")
     $null = $sb.AppendLine("    }")
     $null = $sb.AppendLine()
-    
+
     # Parameter tests
     if ($Metadata.Parameters.Count -gt 0) {
         $null = $sb.AppendLine("    Context 'Parameter Validation' {")
-        
+
         foreach ($param in $Metadata.Parameters) {
             $null = $sb.AppendLine("        It 'Should accept -$($param.Name) parameter' {")
             $null = $sb.AppendLine("            `$scriptInfo = Get-Command `$script:ScriptPath")
             $null = $sb.AppendLine("            `$scriptInfo.Parameters.ContainsKey('$($param.Name)') | Should -Be `$true")
-            
+
             if ($param.Type -ne 'Object') {
                 $null = $sb.AppendLine("            `$scriptInfo.Parameters['$($param.Name)'].ParameterType.Name | Should -Be '$($param.Type)'")
             }
-            
+
             if ($param.Mandatory) {
                 $null = $sb.AppendLine("            `$scriptInfo.Parameters['$($param.Name)'].Attributes.Mandatory | Should -Contain `$true")
             }
-            
+
             $null = $sb.AppendLine("        }")
             $null = $sb.AppendLine()
         }
-        
+
         $null = $sb.AppendLine("    }")
         $null = $sb.AppendLine()
     }
-    
+
     # Function tests
     if ($Metadata.Functions.Count -gt 0) {
         $null = $sb.AppendLine("    Context 'Function Tests' {")
-        
+
         foreach ($func in $Metadata.Functions) {
             $null = $sb.AppendLine("        It 'Function $($func.Name) should be defined' {")
             $null = $sb.AppendLine("            # This test would require sourcing the script")
@@ -356,27 +356,27 @@ function New-TestStructure {
             $null = $sb.AppendLine("        }")
             $null = $sb.AppendLine()
         }
-        
+
         $null = $sb.AppendLine("    }")
         $null = $sb.AppendLine()
     }
-    
+
     # Execution tests
     $null = $sb.AppendLine("    Context 'Script Execution' {")
     $null = $sb.AppendLine("        It 'Should not throw when executed with WhatIf' {")
     $null = $sb.AppendLine("            {")
     $null = $sb.AppendLine("                `$params = @{}")
-    
+
     # Add default parameters for testing
     if ($Metadata.Parameters | Where-Object { $_.Name -eq 'Configuration' }) {
         $null = $sb.AppendLine("                `$params['Configuration'] = @{}")
     }
-    
+
     $null = $sb.AppendLine("                `$params['WhatIf'] = `$true")
     $null = $sb.AppendLine("                & `$script:ScriptPath @params")
     $null = $sb.AppendLine("            } | Should -Not -Throw")
     $null = $sb.AppendLine("        }")
-    
+
     if ($Metadata.Stage) {
         $null = $sb.AppendLine()
         $null = $sb.AppendLine("        It 'Should be in stage: $($Metadata.Stage)' {")
@@ -384,7 +384,7 @@ function New-TestStructure {
         $null = $sb.AppendLine("            (`$content -join \" \") | Should -Match 'Stage:[\\s:]*$($Metadata.Stage)'")
         $null = $sb.AppendLine("        }")
     }
-    
+
     if ($Metadata.Dependencies.Count -gt 0) {
         $null = $sb.AppendLine()
         $null = $sb.AppendLine("        It 'Should declare dependencies: $($Metadata.Dependencies -join ", ")' {")
@@ -392,10 +392,10 @@ function New-TestStructure {
         $null = $sb.AppendLine("            `$content -join ' ' | Should -Match 'Dependencies:'")
         $null = $sb.AppendLine("        }")
     }
-    
+
     $null = $sb.AppendLine("    }")
     $null = $sb.AppendLine()
-    
+
     # Mock verification
     if ($IncludeMocks -and $Metadata.ExternalCommands.Count -gt 0) {
         $null = $sb.AppendLine("    AfterAll {")
@@ -404,17 +404,17 @@ function New-TestStructure {
         $null = $sb.AppendLine("    }")
         $null = $sb.AppendLine()
     }
-    
+
     $null = $sb.AppendLine("}")
-    
+
     return $sb.ToString()
 }
 
 function New-IntegrationTestStructure {
     param([hashtable]$Metadata)
-    
+
     $sb = [System.Text.StringBuilder]::new()
-    
+
     # Header
     $null = $sb.AppendLine("#Requires -Version 7.0")
     $null = $sb.AppendLine("#Requires -Module Pester")
@@ -427,7 +427,7 @@ function New-IntegrationTestStructure {
     $null = $sb.AppendLine("    Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
     $null = $sb.AppendLine("#>")
     $null = $sb.AppendLine()
-    
+
     $null = $sb.AppendLine("Describe '$($Metadata.ScriptName) Integration' -Tag 'Integration', 'AutomationScript' {")
     $null = $sb.AppendLine()
     $null = $sb.AppendLine("    BeforeAll {")
@@ -445,7 +445,7 @@ function New-IntegrationTestStructure {
     $null = $sb.AppendLine("        }")
     $null = $sb.AppendLine("    }")
     $null = $sb.AppendLine()
-    
+
     if ($Metadata.Dependencies.Count -gt 0) {
         $null = $sb.AppendLine("    Context 'Dependency Verification' {")
         foreach ($dep in $Metadata.Dependencies) {
@@ -457,9 +457,9 @@ function New-IntegrationTestStructure {
         $null = $sb.AppendLine("    }")
         $null = $sb.AppendLine()
     }
-    
+
     $null = $sb.AppendLine("}")
-    
+
     return $sb.ToString()
 }
 
@@ -481,29 +481,29 @@ function New-AllAutomationTests {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [string]$Filter = "*.ps1",
-        
+
         [switch]$IncludeMocks,
-        
+
         [switch]$Force
     )
-    
+
     Write-GeneratorLog "Starting batch test generation"
-    
+
     $scripts = Get-ChildItem -Path $script:AutomationScriptsPath -Filter $Filter -File |
         Where-Object { $_.Name -match '^\d{4}_' }
-    
+
     Write-GeneratorLog "Found $($scripts.Count) scripts to process"
-    
+
     $results = @()
-    
+
     foreach ($script in $scripts) {
         $testPath = Join-Path $script:TestsPath "unit/automation-scripts/$([System.IO.Path]::GetFileNameWithoutExtension($script.Name)).Tests.ps1"
-        
+
         if ((Test-Path $testPath) -and -not $Force) {
             Write-GeneratorLog "Skipping $($script.Name) - test already exists" -Level 'Warning'
             continue
         }
-        
+
         if ($PSCmdlet.ShouldProcess($script.Name, "Generate unit test")) {
             try {
                 $result = New-AutomationScriptTest -ScriptPath $script.FullName -IncludeMocks:$IncludeMocks
@@ -520,23 +520,23 @@ function New-AllAutomationTests {
             }
         }
     }
-    
+
     # Summary
     $successful = $results | Where-Object Success
     $failed = $results | Where-Object { -not $_.Success }
-    
+
     Write-Host "`nTest Generation Summary:" -ForegroundColor Cyan
     Write-Host "  Total Scripts: $($scripts.Count)"
     Write-Host "  Tests Generated: $($successful.Count)" -ForegroundColor Green
     Write-Host "  Failed: $($failed.Count)" -ForegroundColor $(if ($failed.Count -gt 0) { 'Red' } else { 'Green' })
-    
+
     if ($failed.Count -gt 0) {
         Write-Host "`nFailed scripts:" -ForegroundColor Red
         $failed | ForEach-Object {
             Write-Host "  - $($_.ScriptName): $($_.Error)" -ForegroundColor Red
         }
     }
-    
+
     return $results
 }
 

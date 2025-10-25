@@ -40,7 +40,7 @@ function Write-MonitorLog {
 if ($Action -eq 'Status') {
     Write-Host "`nContinuous Reporting Status" -ForegroundColor Cyan
     Write-Host "===========================" -ForegroundColor Cyan
-    
+
     # Check for running watchers
     $watchers = Get-Job | Where-Object { $_.Name -like "AitherZero-*Watcher" }
     if ($watchers) {
@@ -51,15 +51,15 @@ if ($Action -eq 'Status') {
     } else {
         Write-Host "`nNo active watchers found" -ForegroundColor Yellow
     }
-    
+
     # Check git hooks
     $preCommitHook = Join-Path $ProjectPath ".git/hooks/pre-commit"
     $postCommitHook = Join-Path $ProjectPath ".git/hooks/post-commit"
-    
+
     Write-Host "`nGit Hooks:" -ForegroundColor Green
     Write-Host "  - Pre-commit: $(if (Test-Path $preCommitHook) { 'Installed' } else { 'Not installed' })" -ForegroundColor White
     Write-Host "  - Post-commit: $(if (Test-Path $postCommitHook) { 'Installed' } else { 'Not installed' })" -ForegroundColor White
-    
+
     # Check scheduled tasks
     $scheduledReports = Get-ScheduledTask -TaskName "AitherZero-*" -ErrorAction SilentlyContinue
     if ($scheduledReports) {
@@ -68,13 +68,13 @@ if ($Action -eq 'Status') {
             Write-Host "  - $($task.TaskName): $($task.State)" -ForegroundColor White
         }
     }
-    
+
     # Check last report generation
     $reportsPath = Join-Path $ProjectPath "tests/reports"
     $latestReport = Get-ChildItem -Path $reportsPath -Filter "ProjectReport-*.html" -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
-    
+
     if ($latestReport) {
         $age = New-TimeSpan -Start $latestReport.LastWriteTime -End (Get-Date)
         Write-Host "`nLast Report Generated:" -ForegroundColor Green
@@ -82,20 +82,20 @@ if ($Action -eq 'Status') {
         Write-Host "  - Time: $($latestReport.LastWriteTime)" -ForegroundColor White
         Write-Host "  - Age: $($age.Hours)h $($age.Minutes)m ago" -ForegroundColor $(if ($age.TotalHours -gt 24) { 'Yellow' } else { 'White' })
     }
-    
+
     return
 }
 
 # Disable monitoring
 if ($Action -eq 'Disable') {
     Write-MonitorLog "Disabling continuous reporting..."
-    
+
     # Stop watchers
     if ($PSCmdlet.ShouldProcess("AitherZero file watchers", "Stop and remove background jobs")) {
         Get-Job | Where-Object { $_.Name -like "AitherZero-*Watcher" } | Stop-Job -PassThru | Remove-Job
         Write-MonitorLog "Stopped all file watchers"
     }
-    
+
     # Remove monitoring state file
     $stateFile = Join-Path $ProjectPath ".aitherzero/monitoring-state.json"
     if (Test-Path $stateFile) {
@@ -103,7 +103,7 @@ if ($Action -eq 'Disable') {
             Remove-Item $stateFile -Force
         }
     }
-    
+
     Write-Host "`n✅ Continuous reporting disabled" -ForegroundColor Green
     return
 }
@@ -133,31 +133,31 @@ $monitoringState = @{
 # Setup file watcher for PowerShell files
 if ($IncludeFileWatcher) {
     Write-MonitorLog "Setting up file watcher for PowerShell files..."
-    
+
     $fileWatcherScript = {
         param($ProjectPath, $ReportInterval)
-        
+
         $watcher = New-Object System.IO.FileSystemWatcher
         $watcher.Path = $ProjectPath
         $watcher.Filter = "*.ps*"
         $watcher.IncludeSubdirectories = $true
         $watcher.NotifyFilter = [System.IO.NotifyFilters]::LastWrite
-        
+
         $lastReport = Get-Date
         $changedFiles = @{}
-        
+
         $action = {
             $path = $EventName.SourceEventArgs.FullPath
             $changeType = $EventName.SourceEventArgs.ChangeType
-            
+
             # Skip test results and reports
             if ($path -match 'tests/(results|reports)' -or $path -match '\.git') {
                 return
             }
-            
+
             # Track changed files
             $changedFiles[$path] = Get-Date
-            
+
             # Check if enough time has passed for a report
             $timeSinceLastReport = (Get-Date) - $lastReport
             if ($timeSinceLastReport.TotalMinutes -ge $ReportInterval) {
@@ -167,21 +167,21 @@ if ($IncludeFileWatcher) {
                     Set-Location $ProjectPath
                     & pwsh -File "./automation-scripts/0510_Generate-ProjectReport.ps1" -Format JSON
                 } -ArgumentList $ProjectPath | Out-Null
-                
+
                 $lastReport = Get-Date
                 $changedFiles.Clear()
-                
+
                 Write-Host "📊 Auto-generated report due to file changes" -ForegroundColor Cyan
             }
         }
-        
+
         Register-ObjectEvent -InputObject $watcher -EventName "Changed" -Action $action
         $watcher.EnableRaisingEvents = $true
-        
+
         # Keep the watcher alive
         while ($true) {
             Start-Sleep -Seconds 60
-            
+
             # Periodic check for stale changes
             if ($changedFiles.Count -gt 0) {
                 $oldestChange = ($changedFiles.Values | Measure-Object -Minimum).Minimum
@@ -191,14 +191,14 @@ if ($IncludeFileWatcher) {
                         Set-Location $ProjectPath
                         & pwsh -File "./automation-scripts/0510_Generate-ProjectReport.ps1" -Format JSON
                     } -ArgumentList $ProjectPath | Out-Null
-                    
+
                     $lastReport = Get-Date
                     $changedFiles.Clear()
                 }
             }
         }
     }
-    
+
     if ($PSCmdlet.ShouldProcess("File watcher background job", "Start monitoring PowerShell files")) {
         $watcherJob = Start-Job -Name "AitherZero-FileWatcher" -ScriptBlock $fileWatcherScript -ArgumentList $ProjectPath, $ReportIntervalMinutes
         Write-MonitorLog "File watcher started (Job ID: $($watcherJob.Id))"
@@ -208,22 +208,22 @@ if ($IncludeFileWatcher) {
 # Setup test result watcher
 if ($IncludeTestWatcher) {
     Write-MonitorLog "Setting up test result watcher..."
-    
+
     $testWatcherScript = {
         param($ProjectPath)
-        
+
         $testResultsPath = Join-Path $ProjectPath "tests/results"
         $watcher = New-Object System.IO.FileSystemWatcher
         $watcher.Path = $testResultsPath
         $watcher.Filter = "*.xml"
         $watcher.NotifyFilter = [System.IO.NotifyFilters]::LastWrite
-        
+
         $action = {
             $path = $EventName.SourceEventArgs.FullPath
-            
+
             # Wait a moment for file to be written completely
             Start-Sleep -Seconds 2
-            
+
             # Generate report after test completion
             Start-Job -ScriptBlock {
                 param($ProjectPath)
@@ -231,19 +231,19 @@ if ($IncludeTestWatcher) {
                 & pwsh -File "./automation-scripts/0510_Generate-ProjectReport.ps1" -Format All
                 & pwsh -File "./automation-scripts/0511_Show-ProjectDashboard.ps1" -ShowMetrics -Export
             } -ArgumentList $ProjectPath | Out-Null
-            
+
             Write-Host "📊 Auto-generated report after test completion" -ForegroundColor Green
         }
-        
+
         Register-ObjectEvent -InputObject $watcher -EventName "Created" -Action $action
         $watcher.EnableRaisingEvents = $true
-        
+
         # Keep the watcher alive
         while ($true) {
             Start-Sleep -Seconds 60
         }
     }
-    
+
     if ($PSCmdlet.ShouldProcess("Test watcher background job", "Start monitoring test results")) {
         $testWatcherJob = Start-Job -Name "AitherZero-TestWatcher" -ScriptBlock $testWatcherScript -ArgumentList $ProjectPath
         Write-MonitorLog "Test watcher started (Job ID: $($testWatcherJob.Id))"
@@ -253,17 +253,17 @@ if ($IncludeTestWatcher) {
 # Setup git hooks integration
 if ($IncludeGitHooks) {
     Write-MonitorLog "Setting up git hooks integration..."
-    
+
     # Ensure hooks are installed
     $hooksPath = Join-Path $ProjectPath ".git/hooks"
-    
+
     # Install pre-commit hook if not present
     $preCommitHook = Join-Path $hooksPath "pre-commit"
     if (-not (Test-Path $preCommitHook)) {
         Write-MonitorLog "Installing pre-commit hook..."
         # Hook is already created by previous script
     }
-    
+
     # Install post-merge hook for report generation
     $postMergeHook = Join-Path $hooksPath "post-merge"
     if ($PSCmdlet.ShouldProcess($postMergeHook, "Install post-merge git hook")) {
@@ -278,7 +278,7 @@ Write-Host "📊 Generated post-merge report" -ForegroundColor Green
         $postMergeContent | Set-Content $postMergeHook
         chmod +x $postMergeHook 2>$null
     }
-    
+
     Write-MonitorLog "Git hooks configured"
 }
 
@@ -287,29 +287,29 @@ Write-MonitorLog "Setting up periodic report generation..."
 
 $periodicReportScript = {
     param($ProjectPath, $IntervalMinutes)
-    
+
     while ($true) {
         Start-Sleep -Seconds ($IntervalMinutes * 60)
-        
+
         # Check if project is active (files modified in last hour)
         $recentChanges = Get-ChildItem -Path $ProjectPath -Filter "*.ps*" -Recurse -ErrorAction SilentlyContinue |
             Where-Object { $_.LastWriteTime -gt (Get-Date).AddHours(-1) }
-        
+
         if ($recentChanges) {
             Start-Job -ScriptBlock {
                 param($ProjectPath)
                 Set-Location $ProjectPath
-                
+
                 # Generate comprehensive report
                 & pwsh -File "./automation-scripts/0510_Generate-ProjectReport.ps1" -Format All
-                
+
                 # Run tech debt analysis
                 & pwsh -File "./automation-scripts/0520_Analyze-TechDebt.ps1" -GenerateReport
-                
+
                 # Update dashboard
                 & pwsh -File "./automation-scripts/0511_Show-ProjectDashboard.ps1" -ShowAll -Export
             } -ArgumentList $ProjectPath | Out-Null
-            
+
             Write-Host "📊 Periodic report generated (active development detected)" -ForegroundColor Cyan
         }
     }

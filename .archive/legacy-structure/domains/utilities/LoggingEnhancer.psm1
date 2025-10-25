@@ -34,12 +34,12 @@ function Start-LoggedOperation {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [hashtable]$Details = @{},
-        
+
         [string]$Source = "Operation"
     )
-    
+
     $operation = @{
         Id = [Guid]::NewGuid().ToString()
         Name = $Name
@@ -48,10 +48,10 @@ function Start-LoggedOperation {
         Source = $Source
         Steps = @()
     }
-    
+
     $script:ExecutionContext.CurrentOperation = $operation
     $script:ExecutionContext.Operations += $operation
-    
+
     # Log operation start with full context
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level 'Information' -Message "Starting operation: $Name" -Source $Source -Data @{
@@ -64,7 +64,7 @@ function Start-LoggedOperation {
             MemoryUsage = [Math]::Round((Get-Process -Id $PID).WorkingSet64 / 1MB, 2)
         }
     }
-    
+
     return $operation.Id
 }
 
@@ -83,33 +83,33 @@ function Add-LoggedStep {
     param(
         [Parameter(Mandatory)]
         [string]$StepName,
-        
+
         [hashtable]$Details = @{},
-        
+
         [ValidateSet('Started', 'InProgress', 'Completed', 'Failed', 'Skipped')]
         [string]$Status = 'Started'
     )
-    
+
     if (-not $script:ExecutionContext.CurrentOperation) {
         Start-LoggedOperation -Name "Ad-hoc Operation" -Source "System"
     }
-    
+
     $step = @{
         Name = $StepName
         Timestamp = Get-Date
         Status = $Status
         Details = $Details
     }
-    
+
     $script:ExecutionContext.CurrentOperation.Steps += $step
-    
+
     # Determine log level based on status
     $level = switch ($Status) {
         'Failed' { 'Error' }
         'Skipped' { 'Warning' }
         default { 'Information' }
     }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $level -Message "Step: $StepName [$Status]" -Source $script:ExecutionContext.CurrentOperation.Source -Data @{
             OperationId = $script:ExecutionContext.CurrentOperation.Id
@@ -132,23 +132,23 @@ function Stop-LoggedOperation {
     [CmdletBinding()]
     param(
         [bool]$Success = $true,
-        
+
         [string]$ErrorMessage,
-        
+
         [hashtable]$Results = @{}
     )
-    
+
     if (-not $script:ExecutionContext.CurrentOperation) {
         return
     }
-    
+
     $operation = $script:ExecutionContext.CurrentOperation
     $operation.EndTime = Get-Date
     $operation.Duration = $operation.EndTime - $operation.StartTime
     $operation.Success = $Success
     $operation.Error = $ErrorMessage
     $operation.Results = $Results
-    
+
     # Calculate statistics
     $stats = @{
         TotalSteps = $operation.Steps.Count
@@ -156,9 +156,9 @@ function Stop-LoggedOperation {
         FailedSteps = ($operation.Steps | Where-Object { $_.Status -eq 'Failed' }).Count
         SkippedSteps = ($operation.Steps | Where-Object { $_.Status -eq 'Skipped' }).Count
     }
-    
+
     $level = if ($Success) { 'Information' } else { 'Error' }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $level -Message "Completed operation: $($operation.Name)" -Source $operation.Source -Data @{
             OperationId = $operation.Id
@@ -169,7 +169,7 @@ function Stop-LoggedOperation {
             Error = $ErrorMessage
         }
     }
-    
+
     # Write performance metrics if available
     if (Get-Command Write-StructuredLog -ErrorAction SilentlyContinue) {
         Write-StructuredLog -Message "Operation metrics" -Properties @{
@@ -185,9 +185,9 @@ function Stop-LoggedOperation {
             memory_mb = [Math]::Round((Get-Process -Id $PID).WorkingSet64 / 1MB, 2)
         } -Source "Metrics"
     }
-    
+
     $script:ExecutionContext.CurrentOperation = $null
-    
+
     return $operation
 }
 
@@ -206,21 +206,21 @@ function Write-DetailedLog {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [ValidateSet('Trace', 'Debug', 'Information', 'Warning', 'Error', 'Critical')]
         [string]$Level = 'Information',
-        
+
         [hashtable]$Data = @{},
-        
+
         [string]$Source
     )
-    
+
     # Get calling context
     $caller = Get-PSCallStack | Select-Object -Skip 1 -First 1
     if (-not $Source) {
         $Source = if ($caller.Command) { $caller.Command } else { 'Script' }
     }
-    
+
     # Add automatic context (merge, don't overwrite)
     $contextData = @{
         SessionId = $script:ExecutionContext.SessionId
@@ -228,19 +228,19 @@ function Write-DetailedLog {
         Location = "$($caller.ScriptName):$($caller.ScriptLineNumber)"
         StackDepth = (Get-PSCallStack).Count
     }
-    
+
     # Merge with provided data
     foreach ($key in $Data.Keys) {
         if (-not $contextData.ContainsKey($key)) {
             $contextData[$key] = $Data[$key]
         }
     }
-    
+
     if ($script:ExecutionContext.CurrentOperation) {
         $contextData['OperationId'] = $script:ExecutionContext.CurrentOperation.Id
         $contextData['OperationName'] = $script:ExecutionContext.CurrentOperation.Name
     }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $Level -Message $Message -Source $Source -Data $contextData
     } else {
@@ -254,7 +254,7 @@ function Write-DetailedLog {
             'Debug' = 'Gray'
             'Trace' = 'DarkGray'
         }[$Level]
-        
+
         Write-Host "[$timestamp] [$Level] [$Source] $Message $(if ($contextData.Count) { "| $($contextData | ConvertTo-Json -Compress)" })" -ForegroundColor $color
     }
 }
@@ -266,7 +266,7 @@ function Get-OperationSummary {
     #>
     [CmdletBinding()]
     param()
-    
+
     $summary = @{
         SessionId = $script:ExecutionContext.SessionId
         SessionDuration = (Get-Date) - $script:ExecutionContext.StartTime
@@ -275,7 +275,7 @@ function Get-OperationSummary {
         FailedOperations = ($script:ExecutionContext.Operations | Where-Object { -not $_.Success }).Count
         Operations = @()
     }
-    
+
     foreach ($op in $script:ExecutionContext.Operations) {
         $summary.Operations += @{
             Name = $op.Name
@@ -286,7 +286,7 @@ function Get-OperationSummary {
             EndTime = $op.EndTime
         }
     }
-    
+
     return $summary
 }
 
@@ -297,13 +297,13 @@ function Enable-VerboseLogging {
     #>
     [CmdletBinding()]
     param()
-    
+
     if (Get-Command Set-LogLevel -ErrorAction SilentlyContinue) {
         Set-LogLevel -Level 'Debug'
     }
-    
+
     $script:VerboseLogging = $true
-    
+
     Write-DetailedLog -Message "Verbose logging enabled" -Level 'Information' -Data @{
         PreviousLevel = $script:LogLevel
         NewLevel = 'Debug'
@@ -317,13 +317,13 @@ function Disable-VerboseLogging {
     #>
     [CmdletBinding()]
     param()
-    
+
     if (Get-Command Set-LogLevel -ErrorAction SilentlyContinue) {
         Set-LogLevel -Level 'Information'
     }
-    
+
     $script:VerboseLogging = $false
-    
+
     Write-DetailedLog -Message "Verbose logging disabled" -Level 'Information'
 }
 
@@ -341,7 +341,7 @@ function Write-FunctionEntry {
         [string]$FunctionName,
         [hashtable]$BoundParameters = @{}
     )
-    
+
     if ($script:VerboseLogging) {
         Write-DetailedLog -Message "Entering function: $FunctionName" -Level 'Debug' -Data @{
             Parameters = $BoundParameters
@@ -364,7 +364,7 @@ function Write-FunctionExit {
         [string]$FunctionName,
         $Result
     )
-    
+
     if ($script:VerboseLogging) {
         Write-DetailedLog -Message "Exiting function: $FunctionName" -Level 'Debug' -Data @{
             HasResult = ($null -ne $Result)

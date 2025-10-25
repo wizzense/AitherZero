@@ -61,7 +61,7 @@ try {
     if ($config.Testing -and $config.Testing.CoverageGeneration) {
         $coverageConfig = $config.Testing.CoverageGeneration
         $shouldGenerate = $coverageConfig.Enable -eq $true
-        
+
         # Override defaults with config
         if ($coverageConfig.TargetCoverage) { $testConfig.TargetCoverage = $coverageConfig.TargetCoverage }
         if ($coverageConfig.OutputPath) { $testConfig.OutputPath = [System.Environment]::ExpandEnvironmentVariables($coverageConfig.OutputPath) }
@@ -101,9 +101,9 @@ try {
     # Discover modules
     $modulesPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains"
     Write-ScriptLog "Discovering modules in: $modulesPath"
-    
-    $allModules = Get-ChildItem -Path $modulesPath -Directory -Recurse -Depth 2 | 
-        Where-Object { 
+
+    $allModules = Get-ChildItem -Path $modulesPath -Directory -Recurse -Depth 2 |
+        Where-Object {
             Test-Path (Join-Path $_.FullName "*.psm1") -or
             Test-Path (Join-Path $_.FullName "*.psd1")
         }
@@ -118,16 +118,16 @@ try {
     if ($testConfig.ExcludeModules.Count -gt 0) {
         $modulesToTest = $modulesToTest | Where-Object { $_.Name -notin $testConfig.ExcludeModules }
     }
-    
+
     Write-ScriptLog "Found $($modulesToTest.Count) modules to process"
 
     # Generate baseline tests if enabled
     if ($testConfig.GenerateBaseline) {
         Write-ScriptLog "Generating baseline tests..."
-        
+
         $generatedCount = 0
         $skippedCount = 0
-        
+
         foreach ($module in $modulesToTest) {
             $moduleName = $module.Name
             $testFileName = "$moduleName.Generated.Tests.ps1"
@@ -144,7 +144,7 @@ try {
                 try {
                     # Generate test content
                     $testContent = New-BaselineTestContent -ModulePath $module.FullName -ModuleName $moduleName
-                    
+
                     # Write test file
                     Set-Content -Path $testFilePath -Value $testContent -Encoding UTF8
                     $generatedCount++
@@ -154,26 +154,26 @@ try {
                 }
             }
         }
-        
+
         Write-ScriptLog "Baseline generation complete: $generatedCount generated, $skippedCount skipped"
     }
 
     # Run coverage analysis if enabled
     if ($testConfig.RunCoverageAnalysis) {
         Write-ScriptLog "Running test coverage analysis..."
-        
+
         # Configure Pester for coverage
         $pesterConfig = New-PesterConfiguration
         $pesterConfig.Run.Path = Join-Path (Split-Path $PSScriptRoot -Parent) "tests"
         $pesterConfig.Run.PassThru = $true
         $pesterConfig.Output.Verbosity = 'Minimal'
-        
+
         # Enable code coverage
         $pesterConfig.CodeCoverage.Enabled = $true
         $pesterConfig.CodeCoverage.Path = $modulesToTest.FullName
         $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'
         $pesterConfig.CodeCoverage.OutputPath = Join-Path $testConfig.OutputPath "coverage.xml"
-        
+
         # Run tests with coverage
         if ($PSCmdlet.ShouldProcess('Pester tests', 'Run with coverage analysis')) {
             $testResults = Invoke-Pester -Configuration $pesterConfig
@@ -190,7 +190,7 @@ try {
                 $coverage = [math]::Round(($testResults.CodeCoverage.CoveragePercent), 2)
                 Write-ScriptLog ""
                 Write-ScriptLog "Code Coverage: $coverage%"
-                
+
                 if ($coverage -ge $testConfig.TargetCoverage) {
                     Write-ScriptLog "✅ Target coverage of $($testConfig.TargetCoverage)% achieved!" -Level 'Information'
                 } else {
@@ -206,10 +206,10 @@ try {
             }
         }
     }
-    
+
     Write-ScriptLog "Test coverage generation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during test coverage generation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'
@@ -236,38 +236,38 @@ BeforeAll {
 }
 
 Describe '$ModuleName Module Tests' {
-    
+
     Context 'Module Loading' {
         It 'Should import without errors' {
             { Import-Module `$modulePath -Force } | Should -Not -Throw
         }
-        
+
         It 'Should be loaded' {
             Get-Module $ModuleName | Should -Not -BeNullOrEmpty
         }
     }
-    
+
     Context 'Module Structure' {
         It 'Should have a module file' {
             `$moduleFile = Get-ChildItem -Path `$modulePath -Filter '*.psm1' -File
             `$moduleFile | Should -Not -BeNullOrEmpty
         }
-        
+
         It 'Should export functions' {
             `$module = Get-Module $ModuleName
             `$module.ExportedFunctions.Count | Should -BeGreaterThan 0
         }
     }
-    
+
     Context 'Function Tests' {
         `$exportedFunctions = (Get-Module $ModuleName).ExportedFunctions.Keys
-        
+
         foreach (`$functionName in `$exportedFunctions) {
             It "Should have help for `$functionName" {
                 `$help = Get-Help `$functionName
                 `$help | Should -Not -BeNullOrEmpty
             }
-            
+
             It "`$functionName should have a synopsis" {
                 `$help = Get-Help `$functionName
                 `$help.Synopsis | Should -Not -BeNullOrEmpty
@@ -280,6 +280,6 @@ AfterAll {
     Remove-Module $ModuleName -Force -ErrorAction SilentlyContinue
 }
 "@
-    
+
     return $testContent
 }

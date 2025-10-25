@@ -11,7 +11,7 @@
 BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0405_Validate-AST.ps1"
-    
+
     # Mock AST parser and other functions
     Mock Test-PowerShellSyntax {
         return @(
@@ -74,7 +74,7 @@ BeforeAll {
     Mock Set-Content {}
     Mock ConvertTo-Json { return '{}' }
     Mock Write-Host {}
-    Mock Group-Object { 
+    Mock Group-Object {
         return @(
             [PSCustomObject]@{ Name = 'Error'; Count = 2 }
             [PSCustomObject]@{ Name = 'Warning'; Count = 3 }
@@ -83,7 +83,7 @@ BeforeAll {
 }
 
 Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
-    
+
     Context "Script Metadata" {
         It "Should have correct metadata structure" {
             $scriptContent = Get-Content $scriptPath -Raw
@@ -97,7 +97,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
         It "Should preview validation without executing when DryRun is specified" {
             $result = & $scriptPath -DryRun -Path "/test/path"
             $LASTEXITCODE | Should -Be 0
-            
+
             Assert-MockCalled Test-PowerShellSyntax -Times 0
             Assert-MockCalled Test-ParameterDefinitions -Times 0
             Assert-MockCalled Test-CommandUsage -Times 0
@@ -108,22 +108,22 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
     Context "File Discovery" {
         It "Should find PowerShell files for validation" {
             & $scriptPath -Path "/test/path"
-            
-            Assert-MockCalled Get-ChildItem -ParameterFilter { 
-                $Include -contains '*.ps1' -and $Include -contains '*.psm1' -and $Include -contains '*.psd1' 
+
+            Assert-MockCalled Get-ChildItem -ParameterFilter {
+                $Include -contains '*.ps1' -and $Include -contains '*.psm1' -and $Include -contains '*.psd1'
             }
         }
 
         It "Should exclude specified paths from validation" {
             & $scriptPath -Path "/test/path" -ExcludePaths @('tests', 'legacy')
-            
+
             # Should filter files based on exclusion paths
             Assert-MockCalled Get-ChildItem
         }
 
         It "Should exit gracefully when no files are found" {
             Mock Get-ChildItem { return @() }
-            
+
             $result = & $scriptPath -Path "/test/path"
             $LASTEXITCODE | Should -Be 0
         }
@@ -140,31 +140,31 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
 
         It "Should perform syntax validation by default" {
             & $scriptPath -Path "/test/path"
-            
+
             Assert-MockCalled Test-PowerShellSyntax -Times 3  # For 3 mocked files
         }
 
         It "Should perform parameter validation by default" {
             & $scriptPath -Path "/test/path"
-            
+
             Assert-MockCalled Test-ParameterDefinitions -Times 3
         }
 
         It "Should perform command validation by default" {
             & $scriptPath -Path "/test/path"
-            
+
             Assert-MockCalled Test-CommandUsage -Times 3
         }
 
         It "Should perform module dependency validation by default" {
             & $scriptPath -Path "/test/path"
-            
+
             Assert-MockCalled Test-ModuleDependencies -Times 3
         }
 
         It "Should only perform syntax validation when CheckSyntax is specified" {
             & $scriptPath -Path "/test/path" -CheckSyntax
-            
+
             Assert-MockCalled Test-PowerShellSyntax -Times 3
             Assert-MockCalled Test-ParameterDefinitions -Times 0
             Assert-MockCalled Test-CommandUsage -Times 0
@@ -173,7 +173,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
 
         It "Should only perform parameter validation when CheckParameters is specified" {
             & $scriptPath -Path "/test/path" -CheckParameters
-            
+
             Assert-MockCalled Test-PowerShellSyntax -Times 0
             Assert-MockCalled Test-ParameterDefinitions -Times 3
             Assert-MockCalled Test-CommandUsage -Times 0
@@ -182,7 +182,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
 
         It "Should only perform command validation when CheckCommands is specified" {
             & $scriptPath -Path "/test/path" -CheckCommands
-            
+
             Assert-MockCalled Test-PowerShellSyntax -Times 0
             Assert-MockCalled Test-ParameterDefinitions -Times 0
             Assert-MockCalled Test-CommandUsage -Times 3
@@ -191,7 +191,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
 
         It "Should only perform module dependency validation when CheckModuleDependencies is specified" {
             & $scriptPath -Path "/test/path" -CheckModuleDependencies
-            
+
             Assert-MockCalled Test-PowerShellSyntax -Times 0
             Assert-MockCalled Test-ParameterDefinitions -Times 0
             Assert-MockCalled Test-CommandUsage -Times 0
@@ -211,9 +211,9 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
                     }
                 )
             }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             # Other validations should be skipped for files with syntax errors
             Assert-MockCalled Test-PowerShellSyntax
         }
@@ -222,17 +222,17 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
     Context "Progress Reporting" {
         It "Should show progress during validation" {
             & $scriptPath -Path "/test/path"
-            
-            Assert-MockCalled Write-Progress -ParameterFilter { 
-                $Activity -eq 'Validating AST' 
+
+            Assert-MockCalled Write-Progress -ParameterFilter {
+                $Activity -eq 'Validating AST'
             }
         }
 
         It "Should complete progress when validation is done" {
             & $scriptPath -Path "/test/path"
-            
-            Assert-MockCalled Write-Progress -ParameterFilter { 
-                $Completed -eq $true 
+
+            Assert-MockCalled Write-Progress -ParameterFilter {
+                $Completed -eq $true
             }
         }
     }
@@ -245,9 +245,9 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
                     [PSCustomObject]@{ Severity = 'Warning'; Message = 'Warning 1' }
                 )
             }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             # Should process and group results
             Assert-MockCalled Write-Host -Times 1
         }
@@ -263,9 +263,9 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
                     [PSCustomObject]@{ Type = 'MissingParameterType'; Message = 'Parameter issue' }
                 )
             }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             # Should display results by type
             Assert-MockCalled Write-Host -Times 1
         }
@@ -281,11 +281,11 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
                     }
                 )
             }
-            
+
             & $scriptPath -Path "/test/path" -OutputPath "/output/path"
-            
-            Assert-MockCalled Set-Content -ParameterFilter { 
-                $Path -like "*AST-Validation-*.json" 
+
+            Assert-MockCalled Set-Content -ParameterFilter {
+                $Path -like "*AST-Validation-*.json"
             }
         }
 
@@ -294,11 +294,11 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
             Mock Test-PowerShellSyntax {
                 return @([PSCustomObject]@{ Severity = 'Error'; Message = 'Test error' })
             }
-            
+
             & $scriptPath -Path "/test/path" -OutputPath "/output/path"
-            
-            Assert-MockCalled New-Item -ParameterFilter { 
-                $Path -eq "/output/path" -and $ItemType -eq 'Directory' 
+
+            Assert-MockCalled New-Item -ParameterFilter {
+                $Path -eq "/output/path" -and $ItemType -eq 'Directory'
             }
         }
     }
@@ -309,7 +309,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
             Mock Test-ParameterDefinitions { return @() }
             Mock Test-CommandUsage { return @() }
             Mock Test-ModuleDependencies { return @() }
-            
+
             $result = & $scriptPath -Path "/test/path"
             $LASTEXITCODE | Should -Be 0
         }
@@ -323,7 +323,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
             }
             Mock Test-CommandUsage { return @() }
             Mock Test-ModuleDependencies { return @() }
-            
+
             $result = & $scriptPath -Path "/test/path"
             $LASTEXITCODE | Should -Be 0
         }
@@ -337,7 +337,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
             Mock Test-ParameterDefinitions { return @() }
             Mock Test-CommandUsage { return @() }
             Mock Test-ModuleDependencies { return @() }
-            
+
             $result = & $scriptPath -Path "/test/path"
             $LASTEXITCODE | Should -Be 1
         }
@@ -346,7 +346,7 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
     Context "Error Handling" {
         It "Should handle validation errors gracefully" {
             Mock Test-PowerShellSyntax { throw "Validation failed" }
-            
+
             $result = & $scriptPath -Path "/test/path" 2>$null
             $LASTEXITCODE | Should -Be 2
         }
@@ -363,12 +363,12 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
             Mock Test-ParameterDefinitions { return @() }
             Mock Test-CommandUsage { return @() }
             Mock Test-ModuleDependencies { return @() }
-            
+
             $result = & $scriptPath -Path "/test/path"
-            
+
             # Should display AST validation summary
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*AST Validation Summary*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*AST Validation Summary*"
             }
         }
 
@@ -387,12 +387,12 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
             Mock Test-ParameterDefinitions { return @() }
             Mock Test-CommandUsage { return @() }
             Mock Test-ModuleDependencies { return @() }
-            
+
             $result = & $scriptPath -Path "/test/path"
-            
+
             # Should display error details
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Errors:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Errors:*"
             }
         }
 
@@ -401,12 +401,12 @@ Describe "0405_Validate-AST" -Tag @('Unit', 'Testing', 'AST') {
             Mock Test-ParameterDefinitions { return @() }
             Mock Test-CommandUsage { return @() }
             Mock Test-ModuleDependencies { return @() }
-            
+
             $result = & $scriptPath -Path "/test/path"
-            
+
             # Should display success message
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*All AST validations passed*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*All AST validations passed*"
             }
         }
     }

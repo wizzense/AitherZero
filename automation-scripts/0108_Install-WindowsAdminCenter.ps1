@@ -107,7 +107,7 @@ try {
     if ($wacService) {
         $wacInstalled = $true
         Write-ScriptLog "Windows Admin Center service found: $($wacService.Status)"
-        
+
         if ($wacService.Status -eq 'Running') {
             Write-ScriptLog "Windows Admin Center is already installed and running"
 
@@ -120,44 +120,44 @@ try {
             } catch {
                 Write-Warning "Failed to get WAC service status: $($_.Exception.Message)"
             }
-            
+
             exit 0
         }
     }
 
     # Download Windows Admin Center
     Write-ScriptLog "Downloading Windows Admin Center..."
-    
+
     $downloadUrl = "https://aka.ms/WACDownload"
     $tempDir = if ($config.Infrastructure -and $config.Infrastructure.Directories -and $config.Infrastructure.Directories.LocalPath) {
         [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories.LocalPath)
     } else {
         $env:TEMP
     }
-    
+
     $installerPath = Join-Path $tempDir "WindowsAdminCenter.msi"
-    
+
     try {
         $ProgressPreference = 'SilentlyContinue'
-        
+
         # Get the actual download URL (aka.ms redirects)
         $response = Invoke-WebRequest -Uri $downloadUrl -MaximumRedirection 0 -ErrorAction SilentlyContinue
         $actualUrl = $response.Headers.Location
         if (-not $actualUrl) {
             $actualUrl = $downloadUrl
         }
-        
+
         Write-ScriptLog "Downloading from: $actualUrl" -Level 'Debug'
         Invoke-WebRequest -Uri $actualUrl -OutFile $installerPath -UseBasicParsing
         $ProgressPreference = 'Continue'
-        
+
         if (-not (Test-Path $installerPath)) {
             throw "Download failed - installer not found"
         }
-        
+
         $fileSize = (Get-Item $installerPath).Length / 1MB
         Write-ScriptLog "Downloaded Windows Admin Center installer ($([Math]::Round($fileSize, 2)) MB)"
-        
+
     } catch {
         Write-ScriptLog "Failed to download Windows Admin Center: $_" -Level 'Error'
         throw
@@ -166,7 +166,7 @@ try {
     # Install Windows Admin Center
     if ($PSCmdlet.ShouldProcess("Windows Admin Center", "Install")) {
         Write-ScriptLog "Installing Windows Admin Center..."
-        
+
         # Build MSI arguments
         $msiArgs = @(
             '/i', "`"$installerPath`"",
@@ -176,26 +176,26 @@ try {
             "SME_PORT=$($wacConfig.InstallPort)",
             "SSL_CERTIFICATE_OPTION=$(if ($wacConfig.GenerateSslCertificate) { 'generate' } else { 'installed' })"
         )
-    
+
         # Add product key if provided
         if ($wacConfig.ProductKey) {
             $msiArgs += "PRODUCTKEY=$($wacConfig.ProductKey)"
         }
-        
+
         # Add CredSSP option
         if ($wacConfig.UseCredSSP) {
             $msiArgs += "USE_CREDSSP=1"
         }
-        
+
         # Add trusted hosts if specified
         if ($wacConfig.TrustedHosts) {
             $msiArgs += "TRUSTED_HOSTS=$($wacConfig.TrustedHosts)"
         }
-        
+
         Write-ScriptLog "Running installer with arguments: msiexec.exe $($msiArgs -join ' ')" -Level 'Debug'
-        
+
         $process = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru -NoNewWindow
-        
+
         if ($process.ExitCode -eq 0) {
             Write-ScriptLog "Windows Admin Center installed successfully"
         } elseif ($process.ExitCode -eq 3010) {
@@ -209,7 +209,7 @@ try {
                 Write-ScriptLog "Installation log tail:" -Level 'Debug'
                 $logTail | ForEach-Object { Write-ScriptLog $_ -Level 'Debug' }
             }
-            
+
             Write-ScriptLog "Windows Admin Center installation failed with exit code: $($process.ExitCode)" -Level 'Error'
             throw "Installation failed"
         }
@@ -223,7 +223,7 @@ try {
     # Configure firewall if needed
     if ($wacConfig.ConfigureFirewall -ne $false) {
         Write-ScriptLog "Configuring firewall for Windows Admin Center..."
-        
+
         try {
             New-NetFirewallRule -DisplayName "Windows Admin Center" `
                 -Direction Inbound `
@@ -231,7 +231,7 @@ try {
                 -Protocol TCP `
                 -Action Allow `
                 -ErrorAction Stop
-            
+
             Write-ScriptLog "Firewall rule created for port $($wacConfig.InstallPort)"
         } catch {
             if ($_.Exception.Message -notlike '*already exists*') {
@@ -247,31 +247,31 @@ try {
             Start-Service -Name ServerManagementGateway
             Write-ScriptLog "Windows Admin Center service started"
         }
-        
+
         # Wait for service to be ready
         Start-Sleep -Seconds 5
-        
+
         # Get access URL
         $hostname = $env:COMPUTERNAME
         $url = "https://${hostname}:$($wacConfig.InstallPort)"
-        
+
         Write-ScriptLog "Windows Admin Center is available at: $url"
-        
+
         # Add desktop shortcut if requested
         if ($wacConfig.CreateDesktopShortcut) {
             $desktopPath = [Environment]::GetFolderPath('Desktop')
             $shortcutPath = Join-Path $desktopPath "Windows Admin Center.url"
-            
+
             @"
 [InternetShortcut]
 URL=$url
 IconIndex=0
 IconFile=%ProgramFiles%\Windows Admin Center\PowerShell\Modules\Microsoft.SME.PowerShell\Microsoft.SME.PowerShell.dll
 "@ | Set-Content -Path $shortcutPath
-            
+
             Write-ScriptLog "Created desktop shortcut"
         }
-        
+
     } catch {
         Write-ScriptLog "Failed to start Windows Admin Center service: $_" -Level 'Warning'
     }
@@ -280,10 +280,10 @@ IconFile=%ProgramFiles%\Windows Admin Center\PowerShell\Modules\Microsoft.SME.Po
         Write-ScriptLog "System restart required to complete installation" -Level 'Warning'
         exit 3010
     }
-    
+
     Write-ScriptLog "Windows Admin Center installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Windows Admin Center installation failed: $_" -Level 'Error'
     exit 1

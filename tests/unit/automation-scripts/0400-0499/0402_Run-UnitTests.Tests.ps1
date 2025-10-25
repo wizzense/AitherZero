@@ -11,7 +11,7 @@
 BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0402_Run-UnitTests.ps1"
-    
+
     # Mock Pester and other functions
     Mock Invoke-Pester {
         return [PSCustomObject]@{
@@ -68,18 +68,18 @@ BeforeAll {
         }
     }
     Mock Import-Module {}
-    Mock Get-Module { 
+    Mock Get-Module {
         return @([PSCustomObject]@{
             Version = [Version]'5.3.0'
-        }) 
+        })
     }
     Mock Get-ChildItem { return @() }
     Mock Test-Path { return $true }
     Mock New-Item {}
-    Mock Get-Content { 
+    Mock Get-Content {
         return '{"Testing":{"Framework":"Pester","MinVersion":"5.0.0","CodeCoverage":{"Enabled":true,"MinimumPercent":80}}}'
     } -ParameterFilter { $Path -like "*config*" }
-    Mock ConvertFrom-Json { 
+    Mock ConvertFrom-Json {
         return @{
             Testing = @{
                 Framework = 'Pester'
@@ -97,7 +97,7 @@ BeforeAll {
 }
 
 Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
-    
+
     Context "Script Metadata" {
         It "Should have correct metadata structure" {
             $scriptContent = Get-Content $scriptPath -Raw
@@ -115,13 +115,13 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
                     [PSCustomObject]@{ Name = 'Test2.Tests.ps1' }
                 )
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             $result = & $scriptPath -DryRun -Path "/test/path"
             $LASTEXITCODE | Should -Be 0
-            
+
             Assert-MockCalled Invoke-Pester -Times 0
         }
-        
+
         It "Should list test files in DryRun mode" {
             Mock Get-ChildItem {
                 return @(
@@ -129,9 +129,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
                     [PSCustomObject]@{ Name = 'Logging.Tests.ps1' }
                 )
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -DryRun -Path "/test/path"
-            
+
             # Should have checked for test files
             Assert-MockCalled Get-ChildItem -ParameterFilter { $Filter -eq '*.Tests.ps1' }
         }
@@ -140,7 +140,7 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
     Context "WhatIf Support" {
         It "Should support WhatIf parameter without executing tests" {
             { & $scriptPath -WhatIf -Path "/test/path" } | Should -Not -Throw
-            
+
             Assert-MockCalled Invoke-Pester -Times 0
         }
     }
@@ -148,17 +148,17 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
     Context "Test Path Handling" {
         It "Should create test directory if it doesn't exist" {
             Mock Test-Path { return $false } -ParameterFilter { $Path -eq "/nonexistent/path" }
-            
+
             & $scriptPath -Path "/nonexistent/path"
-            
-            Assert-MockCalled New-Item -ParameterFilter { 
-                $Path -eq "/nonexistent/path" -and $ItemType -eq 'Directory' 
+
+            Assert-MockCalled New-Item -ParameterFilter {
+                $Path -eq "/nonexistent/path" -and $ItemType -eq 'Directory'
             }
         }
 
         It "Should exit gracefully if no test files found" {
             Mock Get-ChildItem { return @() } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             $result = & $scriptPath -Path "/empty/path"
             $LASTEXITCODE | Should -Be 0
         }
@@ -169,9 +169,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             Assert-MockCalled New-PesterConfiguration
             Assert-MockCalled Invoke-Pester
         }
@@ -180,9 +180,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             Assert-MockCalled Invoke-Pester
         }
 
@@ -190,9 +190,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path" -NoCoverage
-            
+
             Assert-MockCalled Invoke-Pester
         }
 
@@ -200,9 +200,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path" -CI
-            
+
             Assert-MockCalled Invoke-Pester
         }
     }
@@ -213,9 +213,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             Assert-MockCalled Get-Content -ParameterFilter { $Path -like "*config.psd1" }
         }
 
@@ -224,9 +224,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             # Should still run with defaults
             Assert-MockCalled Invoke-Pester
         }
@@ -234,21 +234,21 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
 
     Context "Module Dependencies" {
         It "Should check for Pester availability" {
-            Mock Get-Module { return $null } -ParameterFilter { 
-                $ListAvailable -and $Name -eq 'Pester' 
+            Mock Get-Module { return $null } -ParameterFilter {
+                $ListAvailable -and $Name -eq 'Pester'
             }
-            
+
             $result = & $scriptPath -Path "/test/path" 2>$null
             $LASTEXITCODE | Should -Be 2
         }
 
         It "Should require minimum Pester version" {
-            Mock Get-Module { 
+            Mock Get-Module {
                 return @([PSCustomObject]@{
                     Version = [Version]'4.10.1'
-                }) 
+                })
             } -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' }
-            
+
             $result = & $scriptPath -Path "/test/path" 2>$null
             $LASTEXITCODE | Should -Be 2
         }
@@ -257,11 +257,11 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path"
-            
-            Assert-MockCalled Import-Module -ParameterFilter { 
-                $Name -eq 'Pester' -and $MinimumVersion -eq '5.0.0' 
+
+            Assert-MockCalled Import-Module -ParameterFilter {
+                $Name -eq 'Pester' -and $MinimumVersion -eq '5.0.0'
             }
         }
     }
@@ -275,15 +275,15 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
 
         It "Should save test summary as JSON" {
             & $scriptPath -Path "/test/path"
-            
-            Assert-MockCalled Set-Content -ParameterFilter { 
-                $Path -like "*UnitTests-Summary-*.json" 
+
+            Assert-MockCalled Set-Content -ParameterFilter {
+                $Path -like "*UnitTests-Summary-*.json"
             }
         }
 
         It "Should return Pester result when PassThru is specified" {
             $result = & $scriptPath -Path "/test/path" -PassThru
-            
+
             $result | Should -Not -BeNullOrEmpty
             $result.TotalCount | Should -Be 10
             $result.PassedCount | Should -Be 8
@@ -300,7 +300,7 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
                     Duration = [TimeSpan]::FromSeconds(10)
                 }
             }
-            
+
             $result = & $scriptPath -Path "/test/path"
             $LASTEXITCODE | Should -Be 0
         }
@@ -315,7 +315,7 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
                     Duration = [TimeSpan]::FromSeconds(10)
                 }
             }
-            
+
             $result = & $scriptPath -Path "/test/path"
             $LASTEXITCODE | Should -Be 1
         }
@@ -338,10 +338,10 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
                     }
                 }
             }
-            
+
             $result = & $scriptPath -Path "/test/path" -UseCache
             $LASTEXITCODE | Should -Be 1  # Based on 2 failed tests
-            
+
             Assert-MockCalled Invoke-Pester -Times 0
         }
 
@@ -349,9 +349,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path" -UseCache -ForceRun
-            
+
             Assert-MockCalled Invoke-Pester -Times 1
         }
     }
@@ -362,7 +362,7 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             $result = & $scriptPath -Path "/test/path" 2>$null
             $LASTEXITCODE | Should -Be 2
         }
@@ -373,12 +373,12 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             # Should display coverage results
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Code Coverage*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Code Coverage*"
             } -Times 1
         }
 
@@ -398,9 +398,9 @@ Describe "0402_Run-UnitTests" -Tag @('Unit', 'Testing', 'Pester') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Test.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/test/path"
-            
+
             # Should log warning about low coverage
             Assert-MockCalled Write-Host -Times 1
         }

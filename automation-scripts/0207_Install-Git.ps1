@@ -76,19 +76,19 @@ try {
     # Use PackageManager if available
     if ($script:PackageManagerAvailable) {
         Write-ScriptLog "Using PackageManager module for Git installation"
-        
+
         # Try package manager installation
         try {
             $preferredPackageManager = $gitConfig.PreferredPackageManager
             $installResult = Install-SoftwarePackage -SoftwareName 'git' -PreferredPackageManager $preferredPackageManager
-            
+
             if ($installResult.Success) {
                 Write-ScriptLog "Git installed successfully via $($installResult.PackageManager)"
-                
+
                 # Verify installation
                 $version = Get-SoftwareVersion -SoftwareName 'git'
                 Write-ScriptLog "Git version: $version"
-                
+
                 Write-ScriptLog "Git installation completed successfully"
                 exit 0
             }
@@ -103,7 +103,7 @@ try {
 
     # Check if Git is already installed
     $gitCommand = if ($IsWindows) { 'git.exe' } else { 'git' }
-    
+
     try {
         $gitVersion = & $gitCommand --version 2>&1
         if ($LASTEXITCODE -eq 0) {
@@ -114,7 +114,7 @@ try {
                 $requiredVersion = $config.InstallationOptions.Git.Version
                 Write-ScriptLog "Required version: $requiredVersion" -Level 'Debug'
             }
-            
+
             exit 0
         }
     } catch {
@@ -124,18 +124,18 @@ try {
     # Install Git based on platform
     if ($IsWindows) {
         Write-ScriptLog "Installing Git for Windows..."
-        
+
         # Download URL - could be updated to use configuration
         $downloadUrl = 'https://github.com/git-for-windows/git/releases/download/v2.48.1.windows.1/Git-2.48.1-64-bit.exe'
-        
+
         $tempDir = if ($config.Infrastructure -and $config.Infrastructure.Directories -and $config.Infrastructure.Directories.LocalPath) {
             [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories.LocalPath)
         } else {
             $env:TEMP
         }
-        
+
         $installerPath = Join-Path $tempDir 'git-installer.exe'
-        
+
         # Download installer
         Write-ScriptLog "Downloading Git installer from $downloadUrl"
         try {
@@ -146,12 +146,12 @@ try {
             Write-ScriptLog "Failed to download Git installer: $_" -Level 'Error'
             throw
         }
-        
+
         # Install Git
         if ($PSCmdlet.ShouldProcess($installerPath, 'Install Git')) {
             Write-ScriptLog "Running Git installer..."
             $installArgs = @('/VERYSILENT', '/NORESTART', '/NOCANCEL', '/SP-', '/CLOSEAPPLICATIONS', '/RESTARTAPPLICATIONS')
-            
+
             $process = Start-Process -FilePath $installerPath -ArgumentList $installArgs -Wait -PassThru -NoNewWindow
 
             if ($process.ExitCode -ne 0) {
@@ -162,15 +162,15 @@ try {
             # Refresh PATH
             $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH', 'User')
         }
-        
+
         # Clean up installer
         if (Test-Path $installerPath) {
             Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
         }
-        
+
     } elseif ($IsLinux) {
         Write-ScriptLog "Installing Git for Linux..."
-        
+
         # Detect package manager and install
         if (Get-Command apt-get -ErrorAction SilentlyContinue) {
             sudo apt-get update
@@ -183,10 +183,10 @@ try {
             Write-ScriptLog "Unsupported Linux distribution - no known package manager found" -Level 'Error'
             throw "Cannot install Git on this Linux distribution"
         }
-        
+
     } elseif ($IsMacOS) {
         Write-ScriptLog "Installing Git for macOS..."
-        
+
         # Check for Homebrew
         if (Get-Command brew -ErrorAction SilentlyContinue) {
             brew install git
@@ -211,10 +211,10 @@ try {
         Write-ScriptLog "Git installation verification failed: $_" -Level 'Error'
         throw
     }
-    
+
     Write-ScriptLog "Git installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Git installation failed: $_" -Level 'Error'
     exit 1

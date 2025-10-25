@@ -23,7 +23,7 @@ Invoke-LabStep -Config $Config -Body {
 
             if ($Config.ComputerName -and $CurrentName -ne $Config.ComputerName) {
                 Write-CustomLog "Changing computer name from '$CurrentName' to '$($Config.ComputerName)'"
-                
+
                 if ($IsWindows) {
                     Rename-Computer -NewName $Config.ComputerName -Force
                     Write-CustomLog "Computer name changed. Restart required."

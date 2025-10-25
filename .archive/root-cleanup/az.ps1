@@ -67,7 +67,7 @@ try {
         $exitCode = & $scriptPath
         $actualExitCode = $LASTEXITCODE
     }
-    
+
     # Exit with the same code as the script
     exit $actualExitCode
 } catch {

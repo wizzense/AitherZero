@@ -20,7 +20,7 @@
 
 .EXAMPLE
     ./0220_Setup-ClaudeRequirements.ps1
-    
+
     Sets up the Claude Requirements System in the current project.
 
 .NOTES
@@ -32,10 +32,10 @@
 param(
     [Parameter()]
     [string]$ProjectRoot,
-    
+
     [Parameter()]
     [switch]$Force,
-    
+
     [Parameter()]
     [switch]$WhatIf
 )
@@ -55,12 +55,12 @@ try {
     # Import Logging module
     Import-Module (Join-Path $ProjectRoot "aither-core/modules/Logging") -Force -ErrorAction Stop
 
-    # Import DevEnvironment module  
+    # Import DevEnvironment module
     Import-Module (Join-Path $ProjectRoot "aither-core/modules/DevEnvironment") -Force -ErrorAction Stop
-    
+
     Write-CustomLog -Message "Starting $scriptName v$scriptVersion" -Level "INFO"
     Write-CustomLog -Message "Project Root: $ProjectRoot" -Level "INFO"
-    
+
 } catch {
     Write-Host "Failed to import required modules: $_" -ForegroundColor Red
     exit 1
@@ -103,15 +103,15 @@ try {
             Write-CustomLog -Message "3. Example: /requirements-start add user authentication system" -Level "INFO"
             Write-CustomLog -Message "" -Level "INFO"
             Write-CustomLog -Message "For more information, see claude-requirements/README.md" -Level "INFO"
-            
+
         } else {
             Write-CustomLog -Message "⚠️ Installation completed but verification failed" -Level "WARN"
             Write-CustomLog -Message "Please check the installation manually" -Level "INFO"
         }
     }
-    
+
     Write-CustomLog -Message "$scriptName completed successfully" -Level "SUCCESS"
-    
+
 } catch {
     Write-CustomLog -Message "Failed to set up Claude Requirements System: $_" -Level "ERROR"
     Write-CustomLog -Message "Stack Trace: $($_.ScriptStackTrace)" -Level "ERROR"

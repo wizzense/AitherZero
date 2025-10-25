@@ -14,43 +14,43 @@
     FunctionsToExport = @(
         # From RootModule (AitherZero.psm1)
         'Invoke-AitherScript',
-        
+
         # From Logging modules
         'Write-CustomLog', 'Write-ConfigLog', 'Write-UILog', 'Write-TestingLog',
         'Write-InfraLog', 'Write-AuditLog', 'Enable-AuditLogging',
-        
+
         # From Configuration
         'Get-Configuration', 'Set-Configuration', 'Get-ModuleConfiguration',
-        
+
         # From BetterMenu
         'Show-BetterMenu',
-        
+
         # From UserInterface
         'Show-UIMenu', 'Show-UIProgress', 'Show-UINotification', 'Show-UIWizard',
         'Initialize-AitherUI', 'Show-UIBorder', 'Write-UIText',
-        
+
         # From GitAutomation
         'New-FeatureBranch', 'New-ConventionalCommit', 'Sync-GitRepository',
-        
+
         # From TestingFramework (Legacy)
         'Invoke-BulletproofTest', 'New-TestReport', 'Show-TestTrends',
-        
+
         # From AitherTestFramework (New)
         'Initialize-TestFramework', 'Register-TestSuite', 'Invoke-TestCategory', 'Clear-TestCache',
-        
+
         # From ReportingEngine
         'New-ExecutionDashboard', 'Update-ExecutionDashboard', 'Export-MetricsReport',
-        
+
         # From OrchestrationEngine
         'Invoke-OrchestrationSequence', 'Invoke-Sequence', 'Get-OrchestrationPlaybook',
-        
+
         # From Infrastructure
         'Initialize-Infrastructure', 'Get-InfrastructureProvider',
-        
+
         # Wildcard for any additional functions
         '*'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @('az', 'seq')

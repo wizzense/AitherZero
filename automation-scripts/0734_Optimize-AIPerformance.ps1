@@ -23,10 +23,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
-    
+
     [ValidateSet('Speed', 'Memory', 'Efficiency', 'All')]
     [string]$OptimizationType = 'All',
-    
+
     [switch]$GenerateBenchmark
 )
 
@@ -69,7 +69,7 @@ if ($GenerateBenchmark -and $PSCmdlet.ShouldProcess("Performance benchmark files
     if (-not (Test-Path "./reports")) {
         New-Item -ItemType Directory -Path "./reports" -Force | Out-Null
     }
-    
+
     # In full implementation, benchmark files would be created here
     # Set-Content -Path "$benchmarkPath.json" -Value $benchmarkResults
     Write-Host "✓ Performance benchmarks generated" -ForegroundColor Green
@@ -81,7 +81,7 @@ if ($PSCmdlet.ShouldProcess("Performance optimization report", "Generate report"
     if (-not (Test-Path "./reports")) {
         New-Item -ItemType Directory -Path "./reports" -Force | Out-Null
     }
-    
+
     # In full implementation, optimization report would be created here
     # Set-Content -Path $reportPath -Value $optimizationReport
     Write-Host "✓ Optimization report generated" -ForegroundColor Green

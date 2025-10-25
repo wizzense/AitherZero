@@ -53,7 +53,7 @@ function Get-SecurityPatterns {
                 @{ Pattern = 'PSCredential.*\(.*,.*\)'; Description = 'PSCredential with potential plain text' }
             )
     }
-        
+
         InsecureProtocols = @{
             High = @(
                 @{ Pattern = 'http://(?!localhost|127\.0\.0\.1)'; Description = 'HTTP protocol (non-local)' }
@@ -66,7 +66,7 @@ function Get-SecurityPatterns {
                 @{ Pattern = 'ValidateCertificate\s*=\s*\$false'; Description = 'Certificate validation disabled' }
             )
     }
-        
+
         UnsafeCommands = @{
             Critical = @(
                 @{ Pattern = 'Invoke-Expression|iex\s+'; Description = 'Dynamic code execution' }
@@ -80,7 +80,7 @@ function Get-SecurityPatterns {
                 @{ Pattern = 'Invoke-Command.*-ScriptBlock.*\$'; Description = 'Remote execution with variable' }
             )
     }
-        
+
         InputValidation = @{
             High = @(
                 @{ Pattern = '\[string\]\s*\$.*path|file(?!\s*=)'; Description = 'Path parameter without validation' }
@@ -93,7 +93,7 @@ function Get-SecurityPatterns {
                 @{ Pattern = 'Where-Object.*-match.*\$'; Description = 'Regex injection risk' }
             )
     }
-        
+
         CryptographicIssues = @{
             High = @(
                 @{ Pattern = 'MD5|SHA1(?![\d])'; Description = 'Weak hashing algorithm' }
@@ -101,7 +101,7 @@ function Get-SecurityPatterns {
                 @{ Pattern = 'Random(?!Byte)'; Description = 'Weak random number generation' }
             )
     }
-        
+
         PrivilegeEscalation = @{
             Critical = @(
                 @{ Pattern = 'SeDebugPrivilege|SeTakeOwnershipPrivilege'; Description = 'Dangerous privilege request' }
@@ -135,7 +135,7 @@ function Test-ParameterValidation {
             }
         }
     }
-    
+
     return @{
         HasValidation = $hasValidation
         ValidationTypes = $validationTypes
@@ -174,7 +174,7 @@ function Analyze-SecurityIssues {
     # Process files in parallel
     $fileResults = Start-ParallelAnalysis -ScriptBlock {
         param($File)
-        
+
         $result = @{
             Path = $File.FullName
             SecurityIssues = @{
@@ -187,7 +187,7 @@ function Analyze-SecurityIssues {
             ParameterValidation = @()
             Errors = @()
         }
-        
+
         try {
             $content = Get-Content $File.FullName -Raw
 
@@ -229,11 +229,11 @@ function Analyze-SecurityIssues {
                 foreach ($severity in $category.Value.GetEnumerator()) {
                     foreach ($patternInfo in $severity.Value) {
                         $matchResults = [regex]::Matches($content, $patternInfo.Pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-                        
+
                         foreach ($match in $matchResults) {
                             $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
                             $line = ($content -split "`n")[$lineNumber - 1].Trim()
-                            
+
                             $result.SecurityIssues[$category.Key] += @{
                                 Severity = $severity.Key
                                 Line = $lineNumber
@@ -252,16 +252,16 @@ function Analyze-SecurityIssues {
 
             if (-not $parseErrors -or $parseErrors.Count -eq 0) {
                 $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-                
+
                 foreach ($function in $functions) {
                     if ($function.Body -and $function.Body.ParamBlock -and $function.Body.ParamBlock.Parameters) {
                         foreach ($param in $function.Body.ParamBlock.Parameters) {
                             $paramName = $param.Name.VariablePath.UserPath
-                            
+
                             # Check if parameter needs validation
                             if ($paramName -match 'path|file|url|email|password|sql|query|script|command') {
                                 $hasValidation = $false
-                                
+
                                 if ($param.Attributes) {
                                     foreach ($attr in $param.Attributes) {
                                         if ($attr -is [System.Management.Automation.Language.AttributeAst] -and
@@ -271,7 +271,7 @@ function Analyze-SecurityIssues {
                                         }
                                     }
                                 }
-                                
+
                                 if (-not $hasValidation) {
                                     $result.ParameterValidation += @{
                                         Function = $function.Name
@@ -296,14 +296,14 @@ function Analyze-SecurityIssues {
         } catch {
             $result.Errors += "Analysis error: $_"
         }
-        
+
         return $result
     } -InputObject $files -MaxConcurrency 8 -JobName "SecurityAnalysis"
 
     # Process results
     foreach ($fileResult in $fileResults) {
         $relativePath = $fileResult.Path.Replace($script:ProjectRoot, '.')
-        
+
         # Aggregate security issues
         foreach ($category in @('PlainTextCredentials', 'InsecureProtocols', 'UnsafeCommands', 'CryptographicIssues', 'PrivilegeEscalation')) {
             foreach ($issue in $fileResult.SecurityIssues[$category]) {
@@ -315,14 +315,14 @@ function Analyze-SecurityIssues {
                     Context = $issue.Context
                     Description = $issue.Description
                 }
-                
+
                 $security[$category] += $issueRecord
-                
+
                 # Update severity counts
                 $security.Summary[$issue.Severity]++
             }
         }
-        
+
         # Aggregate parameter validation issues
         foreach ($validation in $fileResult.ParameterValidation) {
             $security.MissingParameterValidation += @{
@@ -335,7 +335,7 @@ function Analyze-SecurityIssues {
             }
             $security.Summary.Medium++
         }
-        
+
         if ($fileResult.Errors.Count -gt 0 -and $Detailed) {
             Write-AnalysisLog "Errors in $relativePath`: $($fileResult.Errors -join '; ')" -Component "Security" -Level Warning
         }
@@ -343,7 +343,7 @@ function Analyze-SecurityIssues {
 
     # Search for exposed secrets patterns
     Write-AnalysisLog "Searching for exposed secrets..." -Component "Security"
-    
+
     $secretPatterns = @(
         @{ Pattern = '[A-Z0-9]{20}'; Description = 'AWS Access Key' }
         @{ Pattern = '[a-z0-9]{40}'; Description = 'GitHub Token' }
@@ -356,17 +356,17 @@ function Analyze-SecurityIssues {
     $security.SecurityScore = if ($totalIssues -eq 0) { 100 } else {
         [Math]::Max(0, 100 - ($security.Summary.Critical * 10) - ($security.Summary.High * 5) - ($security.Summary.Medium * 2))
     }
-    
+
     $security.ScanEndTime = Get-Date
     $security.Duration = $security.ScanEndTime - $security.ScanStartTime
-    
+
     return $security
 }
 
 # Main execution
 try {
     Write-AnalysisLog "=== Security Analysis ===" -Component "Security"
-    
+
     $results = Analyze-SecurityIssues
 
     # Save results
@@ -376,13 +376,13 @@ try {
 
     # Display summary
     Write-Host "`nSecurity Analysis Summary:" -ForegroundColor Cyan
-    
+
     Write-Host "`n  Issue Severity Breakdown:" -ForegroundColor Yellow
     Write-Host "    Critical: $($results.Summary.Critical)" -ForegroundColor $(if ($results.Summary.Critical -eq 0) { 'Green' } else { 'Red' })
     Write-Host "    High: $($results.Summary.High)" -ForegroundColor $(if ($results.Summary.High -eq 0) { 'Green' } else { 'Red' })
     Write-Host "    Medium: $($results.Summary.Medium)" -ForegroundColor $(if ($results.Summary.Medium -eq 0) { 'Green' } else { 'Yellow' })
     Write-Host "    Low: $($results.Summary.Low)" -ForegroundColor $(if ($results.Summary.Low -eq 0) { 'Green' } else { 'Gray' })
-    
+
     Write-Host "`n  Issue Categories:" -ForegroundColor Yellow
     Write-Host "    Plain Text Credentials: $($results.PlainTextCredentials.Count)" -ForegroundColor $(if ($results.PlainTextCredentials.Count -eq 0) { 'Green' } else { 'Red' })
     Write-Host "    Insecure Protocols: $($results.InsecureProtocols.Count)" -ForegroundColor $(if ($results.InsecureProtocols.Count -eq 0) { 'Green' } else { 'Red' })
@@ -390,7 +390,7 @@ try {
     Write-Host "    Missing Parameter Validation: $($results.MissingParameterValidation.Count)" -ForegroundColor $(if ($results.MissingParameterValidation.Count -eq 0) { 'Green' } else { 'Yellow' })
     Write-Host "    Cryptographic Issues: $($results.CryptographicIssues.Count)" -ForegroundColor $(if ($results.CryptographicIssues.Count -eq 0) { 'Green' } else { 'Red' })
     Write-Host "    Privilege Escalation: $($results.PrivilegeEscalation.Count)" -ForegroundColor $(if ($results.PrivilegeEscalation.Count -eq 0) { 'Green' } else { 'Red' })
-    
+
     Write-Host "`n  Security Score: $($results.SecurityScore)/100" -ForegroundColor $(
         if ($results.SecurityScore -ge 90) { 'Green' }
         elseif ($results.SecurityScore -ge 70) { 'Yellow' }
@@ -402,13 +402,13 @@ try {
     if ($Detailed -and $results.Summary.Critical -gt 0) {
         Write-Host "`nCritical Security Issues:" -ForegroundColor Red
         $criticalIssues = @()
-        $criticalIssues += $results.PlainTextCredentials | Where-Object { $_.Severity -eq 'Critical' } | 
+        $criticalIssues += $results.PlainTextCredentials | Where-Object { $_.Severity -eq 'Critical' } |
             ForEach-Object { "$($_.File):$($_.Line) - $($_.Description)" }
-        $criticalIssues += $results.UnsafeCommands | Where-Object { $_.Severity -eq 'Critical' } | 
+        $criticalIssues += $results.UnsafeCommands | Where-Object { $_.Severity -eq 'Critical' } |
             ForEach-Object { "$($_.File):$($_.Line) - $($_.Description)" }
         $criticalIssues | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
     }
-    
+
     Write-Host "`nDetailed results saved to: $outputFile" -ForegroundColor Green
 
     # Exit with error if critical issues found
@@ -416,7 +416,7 @@ try {
         Write-Host "`n⚠️  Critical security issues found!" -ForegroundColor Red
         exit 1
     }
-    
+
     exit 0
 } catch {
     Write-AnalysisLog "Security analysis failed: $_" -Component "Security" -Level Error

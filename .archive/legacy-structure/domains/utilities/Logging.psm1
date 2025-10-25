@@ -43,14 +43,14 @@ function Write-CustomLog {
         [Parameter(Mandatory)]
         [ValidateSet('Trace', 'Debug', 'Information', 'Warning', 'Error', 'Critical')]
         [string]$Level,
-        
+
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [string]$Source = "General",
-        
+
         [hashtable]$Data = @{},
-        
+
         [System.Exception]$Exception
     )
 
@@ -61,7 +61,7 @@ function Write-CustomLog {
     if ($messageLevel -lt $currentLevel) {
         return
     }
-    
+
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
 
     # Create structured log entry
@@ -103,9 +103,9 @@ function Clear-LogBuffer {
     param(
         [switch]$Flush
     )
-    
+
     if ($script:LogBuffer.Count -eq 0) { return }
-    
+
     try {
         if ($Flush) {
             # Write all buffered entries to file before clearing
@@ -115,7 +115,7 @@ function Clear-LogBuffer {
                 }
             }
         }
-        
+
         # Clear the buffer
         $script:LogBuffer = @()
     }
@@ -127,7 +127,7 @@ function Clear-LogBuffer {
 # Console logging
 function Write-LogToConsole {
     param($Entry)
-    
+
     $colors = @{
         'Trace' = 'DarkGray'
         'Debug' = 'Gray'
@@ -136,13 +136,13 @@ function Write-LogToConsole {
         'Error' = 'Red'
         'Critical' = 'Magenta'
     }
-    
+
     $logMessage = "[$($Entry.Timestamp)] [$($Entry.Level.ToUpper().PadRight(11))] [$($Entry.Source)] $($Entry.Message)"
 
     if ($Entry.Data.Count -gt 0) {
         $logMessage += " | Data: $($Entry.Data | ConvertTo-Json -Compress)"
     }
-    
+
     Write-Host $logMessage -ForegroundColor $colors[$Entry.Level]
 }
 
@@ -153,16 +153,16 @@ function Write-LogToFile {
     if (-not (Test-Path $script:LogPath)) {
         New-Item -ItemType Directory -Path $script:LogPath -Force | Out-Null
     }
-    
+
     $logFile = Join-Path $script:LogPath "aitherzero-$(Get-Date -Format 'yyyy-MM-dd').log"
 
     # Check rotation
     if ($script:LogRotation.Enabled) {
         Invoke-LogRotation -LogFile $logFile
     }
-    
+
     $logMessage = "[$($Entry.Timestamp)] [$($Entry.Level.ToUpper().PadRight(11))] [$($Entry.Source)] $($Entry.Message)"
-    
+
     # Add data if present
     if ($Entry.Data -and $Entry.Data.Count -gt 0) {
         $logMessage += " | Data: $($Entry.Data | ConvertTo-Json -Compress)"
@@ -171,7 +171,7 @@ function Write-LogToFile {
     if ($Entry.Exception) {
         $logMessage += "`n  Exception: $($Entry.Exception)"
     }
-    
+
     Add-Content -Path $logFile -Value $logMessage
 }
 
@@ -182,9 +182,9 @@ function Write-LogToJson {
     if (-not (Test-Path $script:LogPath)) {
         New-Item -ItemType Directory -Path $script:LogPath -Force | Out-Null
     }
-    
+
     $jsonFile = Join-Path $script:LogPath "aitherzero-$(Get-Date -Format 'yyyy-MM-dd').json"
-    
+
     $jsonEntry = $Entry | ConvertTo-Json -Compress
     Add-Content -Path $jsonFile -Value $jsonEntry
 }
@@ -199,7 +199,7 @@ function Write-LogToEventLog {
         if (-not [System.Diagnostics.EventLog]::SourceExists($source)) {
             [System.Diagnostics.EventLog]::CreateEventSource($source, "Application")
         }
-        
+
         $EventNameType = switch ($Entry.Level) {
             'Trace' { 'Information' }
             'Debug' { 'Information' }
@@ -208,7 +208,7 @@ function Write-LogToEventLog {
             'Error' { 'Error' }
             'Critical' { 'Error' }
         }
-        
+
         Write-EventLog -LogName Application -Source $source -EventId 1000 -EntryType $EventNameType -Message $Entry.Message
     }
 }
@@ -224,7 +224,7 @@ function Invoke-LogRotation {
     if (-not (Test-Path $LogFile)) {
         return
     }
-    
+
     $fileInfo = Get-Item $LogFile
     $sizeMB = $fileInfo.Length / 1MB
 
@@ -233,7 +233,7 @@ function Invoke-LogRotation {
         $baseName = [System.IO.Path]::GetFileNameWithoutExtension($LogFile)
         $extension = [System.IO.Path]::GetExtension($LogFile)
         $directory = [System.IO.Path]::GetDirectoryName($LogFile)
-        
+
         # Shift existing rotated files
         for ($i = $script:LogRotation.MaxFiles - 1; $i -ge 1; $i--) {
             $oldFile = Join-Path $directory "$baseName.$i$extension"
@@ -247,7 +247,7 @@ function Invoke-LogRotation {
                 }
             }
         }
-        
+
         # Rotate current file
         Move-Item $LogFile (Join-Path $directory "$baseName.1$extension") -Force
     }
@@ -286,7 +286,7 @@ function Enable-LogRotation {
     $script:LogRotation.Enabled = $true
     $script:LogRotation.MaxSizeMB = $MaxSizeMB
     $script:LogRotation.MaxFiles = $MaxFiles
-    
+
     Write-CustomLog -Level 'Information' -Message "Log rotation enabled (MaxSize: ${MaxSizeMB}MB, MaxFiles: $MaxFiles)" -Source "Logging"
 }
 
@@ -301,7 +301,7 @@ function Start-PerformanceTrace {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [string]$Description = ""
     )
 
@@ -309,7 +309,7 @@ function Start-PerformanceTrace {
         StartTime = Get-Date
         Description = $Description
     }
-    
+
     Write-CustomLog -Level 'Debug' -Message "Performance trace started: $Name" -Source "Performance" -Data @{
         Description = $Description
     }
@@ -326,18 +326,18 @@ function Stop-PerformanceTrace {
         Write-CustomLog -Level 'Warning' -Message "Performance trace not found: $Name" -Source "Performance"
         return
     }
-    
+
     $tracker = $script:PerformanceTrackers[$Name]
     $duration = New-TimeSpan -Start $tracker.StartTime -End (Get-Date)
-    
+
     Write-CustomLog -Level 'Information' -Message "Performance trace completed: $Name" -Source "Performance" -Data @{
         DurationMs = $duration.TotalMilliseconds
         DurationFormatted = $duration.ToString("hh\:mm\:ss\.fff")
         Description = $tracker.Description
     }
-    
+
     $script:PerformanceTrackers.Remove($Name)
-    
+
     return $duration
 }
 
@@ -358,7 +358,7 @@ function Get-Logs {
         Write-Warning "No log file found for today"
         return
     }
-    
+
     $logs = Get-Content $logFile | ForEach-Object {
         if ($_ -match '^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\] \[(\w+)\s*\] \[(\w+)\] (.*)$') {
             [PSCustomObject]@{
@@ -386,7 +386,7 @@ function Get-Logs {
     if ($Pattern) {
         $logs = $logs | Where-Object { $_.Message -match $Pattern }
     }
-    
+
     return $logs
 }
 
@@ -398,7 +398,7 @@ function Clear-Logs {
     )
 
     $cutoffDate = (Get-Date).AddDays(-$DaysToKeep)
-    
+
     Get-ChildItem -Path $script:LogPath -Filter "*.log" | Where-Object {
         $_.LastWriteTime -lt $cutoffDate
     } | ForEach-Object {
@@ -431,31 +431,31 @@ function Initialize-Logging {
     }
 
     $configDetails = @{}
-    
+
     if ($Configuration.Logging) {
         if ($Configuration.Logging.Level) {
             $script:LogLevel = $Configuration.Logging.Level
             $configDetails['Level'] = $Configuration.Logging.Level
         }
-        
+
         if ($Configuration.Logging.Targets) {
             $script:LogTargets = $Configuration.Logging.Targets
             $configDetails['Targets'] = $Configuration.Logging.Targets -join ', '
         }
-        
+
         if ($Configuration.Logging.Path) {
             $script:LogPath = $Configuration.Logging.Path
             $configDetails['Path'] = $Configuration.Logging.Path
         }
-        
+
         if ($Configuration.Logging.AuditLogging.Enabled) {
             $script:AuditEnabled = $true
             $configDetails['AuditEnabled'] = $true
         }
     }
-    
+
     $script:IsInitialized = $true
-    
+
     # Only log initialization once per PowerShell session (use global variable)
     if (-not $global:AitherZeroLoggingInitialized) {
         Write-CustomLog -Level 'Information' -Message "Logging system initialized with configuration" -Source "Logging" -Data $configDetails
@@ -476,24 +476,24 @@ function Write-AuditLog {
         [Parameter(Mandatory)]
         [ValidateSet('ScriptExecution', 'ConfigurationChange', 'AccessControl', 'DataModification', 'SystemChange', 'SecurityEvent')]
         [string]$EventNameType,
-        
+
         [Parameter(Mandatory)]
         [string]$Action,
-        
+
         [string]$Target,
-        
+
         [hashtable]$Details = @{},
-        
+
         [ValidateSet('Success', 'Failure', 'Warning')]
         [string]$Result = 'Success',
-        
+
         [string]$UserOverride
     )
 
     if (-not $script:AuditEnabled) {
         return
     }
-    
+
     $auditEntry = [PSCustomObject]@{
         AuditId = [Guid]::NewGuid().ToString()
         Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
@@ -517,7 +517,7 @@ function Write-AuditLog {
     if (-not (Test-Path $auditPath)) {
         New-Item -ItemType Directory -Path $auditPath -Force | Out-Null
     }
-    
+
     $auditFile = Join-Path $auditPath "audit-$(Get-Date -Format 'yyyy-MM').jsonl"
     $auditEntry | ConvertTo-Json -Compress | Add-Content -Path $auditFile -Encoding UTF8
 
@@ -551,7 +551,7 @@ function Disable-AuditLogging {
     #>
     [CmdletBinding()]
     param()
-    
+
     Write-AuditLog -EventType 'SystemChange' -Action 'DisableAuditLogging' -Result 'Success'
     $script:AuditEnabled = $false
     $script:CurrentCorrelationId = $null
@@ -579,57 +579,57 @@ function Get-AuditLogs {
         Write-Warning "No audit logs found"
         return
     }
-    
+
     $logs = @()
 
     # Get relevant audit files based on date range
-    $files = Get-ChildItem -Path $auditPath -Filter "audit-*.jsonl" | 
-        Where-Object { 
+    $files = Get-ChildItem -Path $auditPath -Filter "audit-*.jsonl" |
+        Where-Object {
             $dateMatch = $_.Name -match 'audit-(\d{4}-\d{2})\.jsonl'
             if ($dateMatch) {
                 $fileMonth = [DateTime]::ParseExact($Matches[1], 'yyyy-MM', $null)
-                $fileMonth -ge [DateTime]::new($StartTime.Year, $StartTime.Month, 1) -and 
+                $fileMonth -ge [DateTime]::new($StartTime.Year, $StartTime.Month, 1) -and
                 $fileMonth -le $EndTime.Date
             }
         }
-    
+
     foreach ($file in $files) {
         $entries = Get-Content $file.FullName | ForEach-Object {
             $_ | ConvertFrom-Json
         }
-        
+
         # Apply filters
         if ($StartTime) {
             $entries = $entries | Where-Object { [DateTime]$_.Timestamp -ge $StartTime }
         }
-        
+
         if ($EndTime) {
             $entries = $entries | Where-Object { [DateTime]$_.Timestamp -le $EndTime }
         }
-        
+
         if ($EventNameType) {
             $entries = $entries | Where-Object { $_.EventType -eq $EventNameType }
         }
-        
+
         if ($User) {
             $entries = $entries | Where-Object { $_.User -like "*$User*" }
         }
-        
+
         if ($Action) {
             $entries = $entries | Where-Object { $_.Action -like "*$Action*" }
         }
-        
+
         if ($Result) {
             $entries = $entries | Where-Object { $_.Result -eq $Result }
         }
-        
+
         if ($CorrelationId) {
             $entries = $entries | Where-Object { $_.CorrelationId -eq $CorrelationId }
         }
-        
+
         $logs += $entries
     }
-    
+
     return $logs | Sort-Object Timestamp
 }
 
@@ -642,19 +642,19 @@ function Write-StructuredLog {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [hashtable]$Properties = @{},
-        
+
         [string]$Level = 'Information',
-        
+
         [string]$Source = 'Application',
-        
+
         [string[]]$Tags = @(),
-        
+
         [string]$CorrelationId,
-        
+
         [string]$OperationId,
-        
+
         [hashtable]$Metrics = @{}
     )
 
@@ -684,7 +684,7 @@ function Write-StructuredLog {
     if (-not (Test-Path $structuredPath)) {
         New-Item -ItemType Directory -Path $structuredPath -Force | Out-Null
     }
-    
+
     $structuredFile = Join-Path $structuredPath "structured-$(Get-Date -Format 'yyyy-MM-dd').jsonl"
     $structuredEntry | ConvertTo-Json -Compress -Depth 10 | Add-Content -Path $structuredFile -Encoding UTF8
 
@@ -700,15 +700,15 @@ function Search-Logs {
     [CmdletBinding()]
     param(
         [string]$Query,
-        
+
         [string[]]$LogTypes = @('standard', 'structured', 'audit'),
-        
+
         [datetime]$StartTime = (Get-Date).AddDays(-1),
-        
+
         [datetime]$EndTime = (Get-Date),
-        
+
         [int]$MaxResults = 1000,
-        
+
         [switch]$IncludeArchived
     )
 
@@ -737,7 +737,7 @@ function Search-Logs {
                 }
                 $results += $logs | Select-Object -First $MaxResults
             }
-            
+
             'structured' {
                 $structuredPath = Join-Path $script:LogPath "structured"
                 if (Test-Path $structuredPath) {
@@ -746,13 +746,13 @@ function Search-Logs {
                         $entries = Get-Content $file.FullName | ForEach-Object {
                             $_ | ConvertFrom-Json
                         }
-                        
+
                         # Apply time filter
                         $entries = $entries | Where-Object {
                             $timestamp = [DateTime]$_.'@timestamp'
                             $timestamp -ge $StartTime -and $timestamp -le $EndTime
                         }
-                        
+
                         # Apply query filters
                         if ($filters.Count -gt 0) {
                             foreach ($filter in $filters.GetEnumerator()) {
@@ -763,27 +763,27 @@ function Search-Logs {
                                 }
                             }
                         }
-                        
+
                         $results += $entries | Select-Object -First ($MaxResults - $results.Count)
                         if ($results.Count -ge $MaxResults) { break }
                     }
                 }
             }
-            
+
             'audit' {
                 $auditFilters = @{}
                 if ($filters.ContainsKey('EventType')) { $auditFilters['EventType'] = $filters['EventType'] }
                 if ($filters.ContainsKey('User')) { $auditFilters['User'] = $filters['User'] }
                 if ($filters.ContainsKey('Action')) { $auditFilters['Action'] = $filters['Action'] }
-                
+
                 $auditLogs = Get-AuditLogs -StartTime $StartTime -EndTime $EndTime @auditFilters
                 $results += $auditLogs | Select-Object -First ($MaxResults - $results.Count)
             }
         }
-        
+
         if ($results.Count -ge $MaxResults) { break }
     }
-    
+
     return $results | Sort-Object Timestamp -Descending | Select-Object -First $MaxResults
 }
 
@@ -795,18 +795,18 @@ function Export-LogReport {
     [CmdletBinding()]
     param(
         [datetime]$StartTime = (Get-Date).AddDays(-7),
-        
+
         [datetime]$EndTime = (Get-Date),
-        
+
         [ValidateSet('HTML', 'CSV', 'JSON', 'PDF')]
         [string]$Format = 'HTML',
-        
+
         [string]$OutputPath = (Join-Path $script:LogPath "reports"),
-        
+
         [switch]$IncludeAudit,
-        
+
         [switch]$IncludeMetrics,
-        
+
         [switch]$GroupBySource
     )
 
@@ -828,12 +828,12 @@ function Export-LogReport {
     # Generate report filename
     $reportName = "LogReport_$(Get-Date -Format 'yyyyMMdd_HHmmss').$($Format.ToLower())"
     $reportPath = Join-Path $OutputPath $reportName
-    
+
     switch ($Format) {
         'JSON' {
             $logData | ConvertTo-Json -Depth 10 | Set-Content -Path $reportPath
         }
-        
+
         'CSV' {
             # Flatten and export as CSV
             $allLogs = @()
@@ -844,7 +844,7 @@ function Export-LogReport {
             }
             $allLogs | Export-Csv -Path $reportPath -NoTypeInformation
         }
-        
+
         'HTML' {
             # Generate HTML report
             $html = @"
@@ -890,17 +890,17 @@ function Export-LogReport {
                 }
                 $html += "</table>"
             }
-            
+
             $html += "</body></html>"
             $html | Set-Content -Path $reportPath
         }
-        
+
         'PDF' {
             Write-Warning "PDF export not yet implemented"
             return $null
         }
     }
-    
+
     Write-CustomLog -Level 'Information' -Message "Log report exported to: $reportPath" -Source "Logging"
     return $reportPath
 }

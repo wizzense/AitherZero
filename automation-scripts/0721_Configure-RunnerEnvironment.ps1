@@ -75,7 +75,7 @@ function Get-TargetPlatform {
 
 function Get-ProfileConfiguration {
     param([string]$ProfileNameName)
-    
+
     $ProfileNames = @{
         'Minimal' = @{
             Tools = @('PowerShell7', 'Git')
@@ -98,26 +98,26 @@ function Get-ProfileConfiguration {
             Features = @('FullLogging', 'TestingFramework', 'CodeAnalysis', 'Documentation', 'CloudTools', 'Infrastructure')
         }
     }
-    
+
     return $ProfileNames[$ProfileNameName]
 }
 
 function Test-RunnerEnvironment {
     Write-RunnerLog "Testing runner environment..." -Level Information
-    
+
     $issues = @()
     $targetPlatform = Get-TargetPlatform
-    
+
     # Check PowerShell version
     if ($PSVersionTable.PSVersion.Major -lt 7) {
         $issues += "PowerShell 7+ required (current: $($PSVersionTable.PSVersion))"
     }
-    
+
     # Check Git
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         $issues += "Git is not installed or not in PATH"
     }
-    
+
     # Platform-specific checks
     switch ($targetPlatform) {
         'Windows' {
@@ -139,13 +139,13 @@ function Test-RunnerEnvironment {
             }
         }
     }
-    
+
     if ($issues.Count -gt 0) {
         Write-RunnerLog "Environment issues found:" -Level Warning
         $issues | ForEach-Object { Write-RunnerLog "  - $_" -Level Warning }
         return $false
     }
-    
+
     Write-RunnerLog "Environment validation passed" -Level Success
     return $true
 }
@@ -155,15 +155,15 @@ function Install-RequiredTools {
         [string[]]$Tools,
         [string]$TargetPlatform
     )
-    
+
     Write-RunnerLog "Installing required tools for $ProfileName profile..." -Level Information
-    
+
     foreach ($tool in $Tools) {
         Write-RunnerLog "Checking tool: $tool" -Level Information
-        
+
         $installScript = $null
         $isInstalled = $false
-        
+
         switch ($tool) {
             'PowerShell7' {
                 $isInstalled = (Get-Command pwsh -ErrorAction SilentlyContinue) -and ($PSVersionTable.PSVersion.Major -ge 7)
@@ -206,29 +206,29 @@ function Install-RequiredTools {
                 $installScript = '0214'
             }
         }
-        
+
         if ($isInstalled) {
             Write-RunnerLog "✓ $tool is already installed" -Level Success
             continue
         }
-        
+
         if (-not $InstallDependencies) {
             Write-RunnerLog "⚠ $tool is not installed (use -InstallDependencies to install)" -Level Warning
             continue
         }
-        
+
         if ($installScript -and (Test-Path "$PSScriptRoot/$installScript*.ps1")) {
             Write-RunnerLog "Installing $tool..." -Level Information
-            
+
             if ($DryRun) {
                 Write-RunnerLog "[DRY RUN] Would install $tool using script $installScript" -Level Information
                 continue
             }
-            
+
             try {
                 $scriptPath = Get-ChildItem "$PSScriptRoot/$installScript*.ps1" | Select-Object -First 1
                 & $scriptPath.FullName -CI:$CI
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-RunnerLog "✓ $tool installed successfully" -Level Success
                 } else {
@@ -245,28 +245,28 @@ function Install-RequiredTools {
 
 function Install-PowerShellModules {
     param([string[]]$Modules)
-    
+
     Write-RunnerLog "Installing PowerShell modules..." -Level Information
-    
+
     # Ensure PSGallery is trusted
     if (-not $DryRun) {
         Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
     }
-    
+
     foreach ($module in $Modules) {
         Write-RunnerLog "Checking module: $module" -Level Information
-        
+
         $installed = Get-Module -ListAvailable -Name $module -ErrorAction SilentlyContinue
         if ($installed) {
             Write-RunnerLog "✓ $module is already installed (version: $($installed.Version -join ', '))" -Level Success
             continue
         }
-        
+
         if ($DryRun) {
             Write-RunnerLog "[DRY RUN] Would install module $module" -Level Information
             continue
         }
-        
+
         try {
             Write-RunnerLog "Installing module $module..." -Level Information
             Install-Module -Name $module -Force -SkipPublisherCheck -AllowClobber -ErrorAction Stop
@@ -279,9 +279,9 @@ function Install-PowerShellModules {
 
 function Set-RunnerEnvironmentVariables {
     param([string]$TargetPlatform)
-    
+
     Write-RunnerLog "Setting runner environment variables..." -Level Information
-    
+
     $envVars = @{
         'AITHERZERO_RUNNER' = 'true'
         'AITHERZERO_PLATFORM' = $TargetPlatform
@@ -289,7 +289,7 @@ function Set-RunnerEnvironmentVariables {
         'CI' = 'true'
         'RUNNER_ENVIRONMENT' = 'GitHub-Actions'
     }
-    
+
     # Add platform-specific variables
     switch ($TargetPlatform) {
         'Windows' {
@@ -305,19 +305,19 @@ function Set-RunnerEnvironmentVariables {
             $envVars['RUNNER_ARCH'] = & uname -m
         }
     }
-    
+
     foreach ($key in $envVars.Keys) {
         $value = $envVars[$key]
         Write-RunnerLog "Setting $key = $value" -Level Information
-        
+
         if ($DryRun) {
             Write-RunnerLog "[DRY RUN] Would set environment variable $key = $value" -Level Information
             continue
         }
-        
+
         # Set for current session
         [Environment]::SetEnvironmentVariable($key, $value, 'Process')
-        
+
         # Set persistently
         if ($IsWindows) {
             [Environment]::SetEnvironmentVariable($key, $value, 'Machine')
@@ -341,14 +341,14 @@ function Set-RunnerEnvironmentVariables {
 
 function Configure-RunnerSecurity {
     param([string]$TargetPlatform)
-    
+
     Write-RunnerLog "Configuring runner security settings..." -Level Information
-    
+
     if ($DryRun) {
         Write-RunnerLog "[DRY RUN] Would configure security settings" -Level Information
         return
     }
-    
+
     switch ($TargetPlatform) {
         'Windows' {
             # Configure Windows security
@@ -356,21 +356,21 @@ function Configure-RunnerSecurity {
                 # Set execution policy for runner
                 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force
                 Write-RunnerLog "✓ Set PowerShell execution policy to RemoteSigned" -Level Success
-                
+
                 # Configure Windows Defender exclusions for runner directories
                 $runnerDirs = @(
                     "$env:ProgramFiles\GitHub-Runner",
                     "$env:RUNNER_TOOL_CACHE",
                     "C:\hostedtoolcache"
                 )
-                
+
                 foreach ($dir in $runnerDirs) {
                     if ($dir -and (Test-Path $dir)) {
                         Add-MpPreference -ExclusionPath $dir -ErrorAction SilentlyContinue
                         Write-RunnerLog "Added Windows Defender exclusion: $dir" -Level Information
                     }
                 }
-                
+
             } catch {
                 Write-RunnerLog "Warning: Could not configure all security settings: $($_.Exception.Message)" -Level Warning
             }
@@ -392,7 +392,7 @@ function Configure-RunnerSecurity {
 
 function Test-RunnerConfiguration {
     Write-RunnerLog "Testing runner configuration..." -Level Information
-    
+
     $tests = @(
         @{
             Name = 'PowerShell Version'
@@ -410,10 +410,10 @@ function Test-RunnerConfiguration {
             Expected = 'Runner environment variables set'
         }
     )
-    
+
     $passed = 0
     $total = $tests.Count
-    
+
     foreach ($test in $tests) {
         try {
             $result = & $test.Test
@@ -427,7 +427,7 @@ function Test-RunnerConfiguration {
             Write-RunnerLog "✗ $($test.Name): Error - $($_.Exception.Message)" -Level Warning
         }
     }
-    
+
     Write-RunnerLog "Configuration test results: $passed/$total passed" -Level Information
     return $passed -eq $total
 }
@@ -435,16 +435,16 @@ function Test-RunnerConfiguration {
 # Main execution
 try {
     $targetPlatform = Get-TargetPlatform
-    
+
     Write-RunnerLog "Configuring GitHub Actions runner environment..." -Level Information
     Write-RunnerLog "Profile: $ProfileName" -Level Information
     Write-RunnerLog "Platform: $targetPlatform" -Level Information
     Write-RunnerLog "Runner User: $RunnerUser" -Level Information
-    
+
     if ($DryRun) {
         Write-RunnerLog "Running in DRY RUN mode - no changes will be made" -Level Warning
     }
-    
+
     # Test current environment
     if (-not (Test-RunnerEnvironment)) {
         if ($InstallDependencies) {
@@ -453,51 +453,51 @@ try {
             Write-RunnerLog "Environment issues found. Use -InstallDependencies to fix automatically." -Level Warning
         }
     }
-    
+
     # Get profile configuration
     $ProfileNameConfig = Get-ProfileConfiguration -ProfileName $ProfileName
-    
+
     # Install required tools
     if ($ProfileNameConfig.Tools) {
         Install-RequiredTools -Tools $ProfileNameConfig.Tools -TargetPlatform $targetPlatform
     }
-    
+
     # Install PowerShell modules
     if ($ProfileNameConfig.Modules) {
         Install-PowerShellModules -Modules $ProfileNameConfig.Modules
     }
-    
+
     # Set environment variables
     Set-RunnerEnvironmentVariables -TargetPlatform $targetPlatform
-    
+
     # Configure security
     Configure-RunnerSecurity -TargetPlatform $targetPlatform
-    
+
     # Final configuration test
     if (-not $DryRun) {
         Start-Sleep -Seconds 2
         $configSuccess = Test-RunnerConfiguration
-        
+
         if ($configSuccess) {
             Write-RunnerLog "Runner environment configured successfully!" -Level Success
         } else {
             Write-RunnerLog "Runner environment configured with some issues" -Level Warning
         }
     }
-    
+
     if (-not $CI) {
         Write-Host "`nRunner environment setup complete!" -ForegroundColor Green
         Write-Host "Profile: $ProfileName" -ForegroundColor Cyan
         Write-Host "Platform: $targetPlatform" -ForegroundColor Cyan
-        
+
         Write-Host "`nNext steps:" -ForegroundColor Yellow
         Write-Host "1. Test the runner with a simple workflow" -ForegroundColor White
         Write-Host "2. Run 'az 0722' to install additional runner services" -ForegroundColor White
         Write-Host "3. Monitor runner performance in GitHub Actions" -ForegroundColor White
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-RunnerLog "Runner environment configuration failed: $($_.Exception.Message)" -Level Error
     exit 1

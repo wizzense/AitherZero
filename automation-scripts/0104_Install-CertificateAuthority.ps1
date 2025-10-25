@@ -81,13 +81,13 @@ try {
 
     if ($edition -notmatch 'Server') {
         Write-ScriptLog "Certificate Authority requires Windows Server edition. Current: $edition" -Level 'Warning'
-        
+
         # On non-server Windows, we can create a self-signed root certificate instead
         Write-ScriptLog "Creating self-signed root certificate for development use..."
-        
+
         try {
             # Check if certificate already exists
-            $existingCert = Get-ChildItem -Path Cert:\LocalMachine\Root | 
+            $existingCert = Get-ChildItem -Path Cert:\LocalMachine\Root |
                 Where-Object { $_.Subject -like "*$($caConfig.CommonName)*" }
 
             if ($existingCert) {
@@ -107,7 +107,7 @@ try {
                 -KeyUsageProperty Sign `
                 -KeyUsage CertSign, CRLSign `
                 -NotAfter (Get-Date).AddYears($caConfig.ValidityYears)
-            
+
             Write-ScriptLog "Created self-signed root certificate: $($cert.Subject)"
 
             # Move to Trusted Root store
@@ -115,11 +115,11 @@ try {
                 [System.Security.Cryptography.X509Certificates.StoreName]::Root,
                 [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine
             )
-        
+
             $rootStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
             $rootStore.Add($cert)
             $rootStore.Close()
-            
+
             Write-ScriptLog "Installed root certificate to Trusted Root Certification Authorities"
 
             # Export certificate for distribution
@@ -127,16 +127,16 @@ try {
             if (-not (Test-Path $certPath)) {
                 New-Item -ItemType Directory -Path $certPath -Force | Out-Null
             }
-            
+
             $exportPath = Join-Path $certPath "$($caConfig.CommonName).cer"
             Export-Certificate -Cert $cert -FilePath $exportPath -Type CERT
             Write-ScriptLog "Exported root certificate to: $exportPath"
-            
+
         } catch {
             Write-ScriptLog "Failed to create self-signed certificate: $_" -Level 'Error'
             throw
         }
-        
+
         exit 0
     }
 
@@ -150,7 +150,7 @@ try {
     # Check if ADCS is already installed
     try {
         $adcs = Get-WindowsFeature -Name ADCS-Cert-Authority -ErrorAction SilentlyContinue
-        
+
         if ($adcs -and $adcs.InstallState -eq "Installed") {
             Write-ScriptLog "Certificate Authority role is already installed"
 
@@ -168,13 +168,13 @@ try {
     } catch {
         Write-ScriptLog "Cannot check ADCS feature status: $_" -Level 'Warning'
     }
-    
+
     Write-ScriptLog "Installing Certificate Authority role..."
-    
+
     try {
         # Install ADCS role
         $result = Install-WindowsFeature -Name ADCS-Cert-Authority -IncludeManagementTools
-        
+
         if ($result.Success) {
             Write-ScriptLog "Certificate Authority role installed successfully"
 
@@ -188,7 +188,7 @@ try {
             } else {
                 'StandaloneRootCA'
             }
-            
+
             Write-ScriptLog "Configuring as $caType"
 
             # Configure CA parameters
@@ -205,9 +205,9 @@ try {
                 $caParams['KeyLength'] = 2048
                 $caParams['HashAlgorithmName'] = 'SHA256'
             }
-            
+
             Install-AdcsCertificationAuthority @caParams
-            
+
             Write-ScriptLog "Certificate Authority configured successfully"
 
             # Start the service
@@ -217,13 +217,13 @@ try {
             # Configure CA settings
             if ($caConfig.Settings) {
                 Write-ScriptLog "Applying additional CA settings..."
-                
+
                 # Example: Set CRL publication interval
                 if ($caConfig.Settings.CRLPeriod) {
                     certutil -setreg CA\CRLPeriod $caConfig.Settings.CRLPeriod
                     certutil -setreg CA\CRLPeriodUnits $caConfig.Settings.CRLPeriodUnits
                 }
-                
+
                 # Restart service to apply settings
                 Restart-Service -Name CertSvc
             }
@@ -231,7 +231,7 @@ try {
             # Create certificate templates if specified
             if ($caConfig.Templates -and $caType -eq 'EnterpriseRootCA') {
                 Write-ScriptLog "Creating certificate templates..."
-                
+
                 foreach ($template in $caConfig.Templates) {
                     try {
                         # This would require AD CS management tools
@@ -241,21 +241,21 @@ try {
                     }
                 }
             }
-            
+
             Write-ScriptLog "Certificate Authority installation completed successfully"
-            
+
         } else {
             Write-ScriptLog "Failed to install Certificate Authority role" -Level 'Error'
             throw "Installation failed"
         }
-        
+
     } catch {
         Write-ScriptLog "Failed to install Certificate Authority: $_" -Level 'Error'
         throw
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Certificate Authority installation failed: $_" -Level 'Error'
     exit 1
