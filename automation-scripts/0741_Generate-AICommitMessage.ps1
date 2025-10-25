@@ -35,7 +35,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Initialize logging
-$loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
+$loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/core/Logging.psm1"
 if (Test-Path $loggingPath) {
     Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
 }

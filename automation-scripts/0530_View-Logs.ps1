@@ -39,7 +39,7 @@ if (Test-Path $logViewerPath) {
 }
 
 # Import Logging module for Write-CustomLog
-$loggingPath = Join-Path $ProjectRoot "domains/utilities/Logging.psm1"
+$loggingPath = Join-Path $ProjectRoot "domains/core/Logging.psm1"
 if (Test-Path $loggingPath) {
     Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
 }

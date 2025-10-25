@@ -74,7 +74,7 @@ $ErrorActionPreference = 'Stop'
 
 # Import required modules
 $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
-$script:LoggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
+$script:LoggingModule = Join-Path $script:ProjectRoot "domains/core/Logging.psm1"
 if (Test-Path $script:LoggingModule) {
     Import-Module $script:LoggingModule -Force -ErrorAction SilentlyContinue
 }

@@ -251,7 +251,7 @@ if ($PSCmdlet.ShouldProcess("Test orchestration ($Profile profile)", "Execute te
         
         # Use AitherZero's orchestration capabilities
         try {
-            Import-Module (Join-Path $projectRoot "domains/automation/OrchestrationEngine.psm1") -Force
+            Import-Module (Join-Path $projectRoot "domains/automation/Orchestration.psm1") -Force
             
             $orchestrationResult = Invoke-OrchestrationSequence -Sequence ($testSequences -join ',') -Parallel:$selectedProfile.Parallel -ContinueOnError:(-not $selectedProfile.FastFail) -DryRun:$DryRun
             

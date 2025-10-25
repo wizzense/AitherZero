@@ -52,7 +52,7 @@ $scriptMetadata = @{
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$loggingModule = Join-Path $projectRoot "domains/core/Logging.psm1"
 
 if (Test-Path $testCacheModule) {
     Import-Module $testCacheModule -Force

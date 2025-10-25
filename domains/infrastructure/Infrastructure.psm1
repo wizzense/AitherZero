@@ -254,21 +254,142 @@ function Invoke-InfrastructureDestroy {
 
 #region Security Management
 
+function Test-SecurityRequirements {
+    <#
+    .SYNOPSIS
+        Test that security infrastructure is properly configured
+    #>
+    [CmdletBinding()]
+    param()
+
+    $result = @{
+        Valid = $true
+        Errors = @()
+        EncryptionAvailable = $false
+        AuditingAvailable = $false
+        AccessControls = @{}
+        CertificateManagement = @{}
+    }
+
+    # Test encryption capabilities
+    try {
+        if ($IsWindows) {
+            # Test Data Protection API availability
+            $testData = "test"
+            $encrypted = [System.Security.Cryptography.ProtectedData]::Protect(
+                [System.Text.Encoding]::UTF8.GetBytes($testData),
+                $null,
+                [System.Security.Cryptography.DataProtectionScope]::CurrentUser
+            )
+            if ($encrypted) {
+                $result.EncryptionAvailable = $true
+            }
+        } else {
+            # Test OpenSSL availability on Unix systems
+            $opensslPath = Get-Command openssl -ErrorAction SilentlyContinue
+            if ($opensslPath) {
+                $result.EncryptionAvailable = $true
+            }
+        }
+    } catch {
+        $result.Errors += "Encryption validation failed: $($_.Exception.Message)"
+    }
+
+    # Test audit logging capabilities
+    try {
+        $auditLogPath = Join-Path $env:AITHERZERO_ROOT "logs/audit"
+        if (-not (Test-Path $auditLogPath)) {
+            New-Item -ItemType Directory -Path $auditLogPath -Force -ErrorAction Stop | Out-Null
+        }
+        
+        $testLogFile = Join-Path $auditLogPath "test-audit.log"
+        "Test audit entry: $(Get-Date)" | Out-File -FilePath $testLogFile -Append -ErrorAction Stop
+        
+        if (Test-Path $testLogFile) {
+            $result.AuditingAvailable = $true
+            Remove-Item $testLogFile -ErrorAction SilentlyContinue
+        }
+    } catch {
+        $result.Errors += "Audit logging validation failed: $($_.Exception.Message)"
+    }
+
+    # Initialize access controls with role-based structure
+    $result.AccessControls = @{
+        Roles = @{
+            Administrator = @{
+                Permissions = @('Read', 'Write', 'Execute', 'Manage')
+                Users = @()
+            }
+            Developer = @{
+                Permissions = @('Read', 'Write', 'Execute')
+                Users = @()
+            }
+            ReadOnly = @{
+                Permissions = @('Read')
+                Users = @()
+            }
+        }
+        CurrentUser = @{
+            Name = $env:USERNAME ?? $env:USER
+            Role = 'Administrator'  # Default to admin for initial setup
+        }
+    }
+
+    # Initialize certificate management
+    $result.CertificateManagement = @{
+        Store = if ($IsWindows) { 'Cert:\CurrentUser\My' } else { "$HOME/.aitherzero/certs" }
+        ValidCertificates = @()
+        ExpiringCertificates = @()
+        CreateSelfSignedCerts = $true
+    }
+
+    # Test certificate store access
+    try {
+        if ($IsWindows) {
+            $certs = Get-ChildItem -Path $result.CertificateManagement.Store -ErrorAction Stop
+            $result.CertificateManagement.ValidCertificates = @($certs | Where-Object { $_.NotAfter -gt (Get-Date) })
+            $result.CertificateManagement.ExpiringCertificates = @($certs | Where-Object { 
+                $_.NotAfter -gt (Get-Date) -and $_.NotAfter -lt (Get-Date).AddDays(30) 
+            })
+        } else {
+            $certDir = $result.CertificateManagement.Store
+            if (-not (Test-Path $certDir)) {
+                New-Item -ItemType Directory -Path $certDir -Force -ErrorAction Stop | Out-Null
+            }
+        }
+    } catch {
+        $result.Errors += "Certificate store validation failed: $($_.Exception.Message)"
+    }
+
+    # Final validation
+    if ($result.Errors.Count -gt 0) {
+        $result.Valid = $false
+    }
+
+    return $result
+}
+
 function Initialize-SecurityConfiguration {
     <#
     .SYNOPSIS
-        Initialize security settings
+        Initialize security settings with validated infrastructure
     #>
     [CmdletBinding()]
     param(
         [hashtable]$Configuration = @{}
     )
 
+    # Validate security requirements first
+    $securityValidation = Test-SecurityRequirements
+    if (-not $securityValidation.Valid) {
+        throw "Security requirements not met: $($securityValidation.Errors -join '; ')"
+    }
+
     $script:SecuritySettings = @{
-        EncryptionEnabled = $true
-        AuditLogging = $true
-        AccessControls = @{}
-        CertificateManagement = @{}
+        EncryptionEnabled = $securityValidation.EncryptionAvailable
+        AuditLogging = $securityValidation.AuditingAvailable
+        AccessControls = $securityValidation.AccessControls
+        CertificateManagement = $securityValidation.CertificateManagement
     }
 
     # Merge with provided configuration
@@ -587,6 +708,7 @@ Export-ModuleMember -Function @(
     'Invoke-InfrastructureDestroy',
     
     # Security
+    'Test-SecurityRequirements',
     'Initialize-SecurityConfiguration',
     'Test-SecurityCompliance',
     

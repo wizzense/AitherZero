@@ -12,7 +12,7 @@ param(
 # Initialize logging
 $script:LoggingAvailable = $false
 try {
-    $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
+    $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/core/Logging.psm1"
     if (Test-Path $loggingPath) {
         Import-Module $loggingPath -Force -Global
         $script:LoggingAvailable = $true

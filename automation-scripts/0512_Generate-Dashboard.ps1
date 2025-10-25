@@ -46,7 +46,7 @@ $scriptMetadata = @{
 }
 
 # Import modules
-$loggingModule = Join-Path $ProjectPath "domains/utilities/Logging.psm1"
+$loggingModule = Join-Path $ProjectPath "domains/core/Logging.psm1"
 $configModule = Join-Path $ProjectPath "domains/configuration/Configuration.psm1"
 
 if (Test-Path $loggingModule) {
