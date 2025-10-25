@@ -4,24 +4,24 @@ Describe "0524_Generate-TechDebtReport" {
     BeforeAll {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0524_Generate-TechDebtReport.ps1"
         $script:TempOutputPath = Join-Path ([System.IO.Path]::GetTempPath()) "analysis"
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-AnalysisLog -MockWith { param($Message, $Component, $Level) Write-Host "[$Level] $Message" }
         Mock -CommandName Initialize-TechDebtAnalysis -MockWith { }
         Mock -CommandName Save-AnalysisResults -MockWith { "analysis-results.json" }
         Mock -CommandName Write-Host -MockWith { }
-        
+
         # Script-specific mocks
         if ("0524_Generate-TechDebtReport" -eq "0522_Analyze-CodeQuality") {
-            Mock -CommandName Get-FilesToAnalyze -MockWith { 
+            Mock -CommandName Get-FilesToAnalyze -MockWith {
                 @(@{ FullName = "TestScript.ps1" })
             }
             Mock -CommandName Get-Content -MockWith {
                 @("# TODO: Implement feature", "# FIXME: Bug fix needed", "function Test-Function { }")
             }
         } elseif ("0524_Generate-TechDebtReport" -eq "0523_Analyze-SecurityIssues") {
-            Mock -CommandName Get-FilesToAnalyze -MockWith { 
+            Mock -CommandName Get-FilesToAnalyze -MockWith {
                 @(@{ FullName = "TestScript.ps1" })
             }
             Mock -CommandName Get-Content -MockWith {
@@ -50,12 +50,12 @@ Describe "0524_Generate-TechDebtReport" {
         It "Should accept basic parameters" {
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
-        
+
         if ("0524_Generate-TechDebtReport" -eq "0524_Generate-TechDebtReport") {
             It "Should accept Format parameter" {
                 { & $script:ScriptPath -Format @("HTML", "JSON") -WhatIf } | Should -Not -Throw
             }
-            
+
             It "Should accept RunAnalysis switch" {
                 { & $script:ScriptPath -RunAnalysis -WhatIf } | Should -Not -Throw
             }
@@ -63,7 +63,7 @@ Describe "0524_Generate-TechDebtReport" {
             It "Should accept OutputPath parameter" {
                 { & $script:ScriptPath -OutputPath $script:TempOutputPath -WhatIf } | Should -Not -Throw
             }
-            
+
             It "Should accept UseCache switch" {
                 { & $script:ScriptPath -UseCache -WhatIf } | Should -Not -Throw
             }
@@ -75,7 +75,7 @@ Describe "0524_Generate-TechDebtReport" {
             $result = & $script:ScriptPath -WhatIf 2>&1
             $result | Should -Not -BeNullOrEmpty
         }
-        
+
         if ("0524_Generate-TechDebtReport" -ne "0524_Generate-TechDebtReport") {
             It "Should initialize tech debt analysis" {
                 & $script:ScriptPath -OutputPath $script:TempOutputPath -WhatIf 2>&1
@@ -99,7 +99,7 @@ Describe "0524_Generate-TechDebtReport" {
     Context "Error Handling" {
         It "Should handle module import failures" {
             Mock -CommandName Import-Module -MockWith { throw "Module not found" }
-            
+
             $result = & $script:ScriptPath -WhatIf 2>&1
             # Should complete even with import failures in WhatIf mode
             $result | Should -Not -BeNullOrEmpty

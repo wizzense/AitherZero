@@ -47,7 +47,7 @@ function Write-DevToolsLog {
         [string]$Level = 'Information',
         [hashtable]$Data = @{}
     )
-    
+
     if ($script:LoggingAvailable) {
         Write-CustomLog -Message $Message -Level $Level -Source 'DeveloperTools' -Data $Data
     } else {
@@ -80,35 +80,35 @@ function Install-DevelopmentEnvironment {
     param(
         [ValidateSet('Minimal', 'Standard', 'Full', 'Custom')]
         [string]$Profile = 'Standard',
-        
+
         [string[]]$Tools = @(),
-        
+
         [switch]$Force,
-        
+
         [hashtable]$Configuration = @{}
     )
-    
+
     Write-DevToolsLog "Installing development environment - Profile: $Profile"
-    
+
     # Define tool sets for each profile
     $profileTools = @{
         Minimal = @('Git', 'Node', 'Python', 'VSCode')
-        Standard = @('Git', 'Node', 'Python', 'VSCode', 'Docker', 'AzureCLI', '7Zip')  
-        Full = @('Git', 'Node', 'Python', 'VSCode', 'Docker', 'AzureCLI', 'AWSCLI', 
+        Standard = @('Git', 'Node', 'Python', 'VSCode', 'Docker', 'AzureCLI', '7Zip')
+        Full = @('Git', 'Node', 'Python', 'VSCode', 'Docker', 'AzureCLI', 'AWSCLI',
                 'Packer', '7Zip', 'VSBuildTools', 'Poetry', 'Sysinternals', 'ClaudeCode', 'GeminiCLI')
         Custom = $Tools
     }
-    
+
     $toolsToInstall = $profileTools[$Profile]
     if ($Tools.Count -gt 0) {
         $toolsToInstall = $Tools
     }
-    
+
     Write-DevToolsLog "Installing tools: $($toolsToInstall -join ', ')"
-    
+
     # Ensure package managers are available first
     Initialize-PackageManagers
-    
+
     # Install each tool
     $results = @{}
     foreach ($tool in $toolsToInstall) {
@@ -122,12 +122,12 @@ function Install-DevelopmentEnvironment {
             $results[$tool] = @{ Success = $false; Error = $_.Exception.Message }
         }
     }
-    
+
     # Configure PowerShell profile
     if ('PowerShellProfile' -in $toolsToInstall -or $Profile -ne 'Minimal') {
         Set-PowerShellDevelopmentProfile
     }
-    
+
     Write-DevToolsLog "Development environment installation completed" -Level Success
     return $results
 }
@@ -143,23 +143,23 @@ function Install-DeveloperTool {
     param(
         [Parameter(Mandatory)]
         [ValidateSet('Git', 'Node', 'Python', 'VSCode', 'Docker', 'AzureCLI', 'AWSCLI',
-                    'Packer', '7Zip', 'VSBuildTools', 'Poetry', 'Sysinternals', 'ClaudeCode', 
+                    'Packer', '7Zip', 'VSBuildTools', 'Poetry', 'Sysinternals', 'ClaudeCode',
                     'GeminiCLI', 'Chocolatey')]
         [string]$Tool,
-        
+
         [switch]$Force,
-        
+
         [hashtable]$Configuration = @{}
     )
-    
+
     Write-DevToolsLog "Installing developer tool: $Tool"
-    
+
     # Check if already installed (unless forced)
     if (-not $Force -and (Test-ToolInstalled -Tool $Tool)) {
         Write-DevToolsLog "$Tool is already installed"
         return $true
     }
-    
+
     # Install the specific tool
     switch ($Tool) {
         'Git' { return Install-Git -Configuration $Configuration }
@@ -171,23 +171,23 @@ function Install-DeveloperTool {
         'AWSCLI' { return Install-AWSCLI -Configuration $Configuration }
         'Packer' { return Install-Packer -Configuration $Configuration }
         '7Zip' { return Install-7Zip -Configuration $Configuration }
-        'VSBuildTools' { 
+        'VSBuildTools' {
             Write-DevToolsLog "VS Build Tools installation not yet implemented"
-            return $false 
-        }
-        'Poetry' { 
-            Write-DevToolsLog "Poetry installation not yet implemented"  
             return $false
         }
-        'Sysinternals' { 
+        'Poetry' {
+            Write-DevToolsLog "Poetry installation not yet implemented"
+            return $false
+        }
+        'Sysinternals' {
             Write-DevToolsLog "Sysinternals installation not yet implemented"
             return $false
         }
-        'ClaudeCode' { 
+        'ClaudeCode' {
             Write-DevToolsLog "Claude Code installation not yet implemented"
             return $false
         }
-        'GeminiCLI' { 
+        'GeminiCLI' {
             Write-DevToolsLog "Gemini CLI installation not yet implemented"
             return $false
         }
@@ -205,9 +205,9 @@ function Initialize-PackageManagers {
     #>
     [CmdletBinding()]
     param()
-    
+
     Write-DevToolsLog "Initializing package managers"
-    
+
     if ($IsWindows) {
         # Check for winget
         $winget = Get-Command winget -ErrorAction SilentlyContinue
@@ -215,7 +215,7 @@ function Initialize-PackageManagers {
             $script:DeveloperToolsState.PackageManagers['winget'] = $true
             Write-DevToolsLog "Windows Package Manager (winget) available"
         }
-        
+
         # Check for Chocolatey
         $choco = Get-Command choco -ErrorAction SilentlyContinue
         if ($choco) {
@@ -224,14 +224,14 @@ function Initialize-PackageManagers {
         } else {
             Write-DevToolsLog "Chocolatey not found - will install if needed"
         }
-        
+
         # Check for Scoop
         $scoop = Get-Command scoop -ErrorAction SilentlyContinue
         if ($scoop) {
             $script:DeveloperToolsState.PackageManagers['scoop'] = $true
             Write-DevToolsLog "Scoop available"
         }
-        
+
     } elseif ($IsLinux) {
         # Check for common Linux package managers
         $managers = @('apt', 'yum', 'dnf', 'pacman', 'zypper', 'snap')
@@ -242,7 +242,7 @@ function Initialize-PackageManagers {
                 Write-DevToolsLog "Package manager available: $manager"
             }
         }
-        
+
     } elseif ($IsMacOS) {
         # Check for Homebrew
         $brew = Get-Command brew -ErrorAction SilentlyContinue
@@ -250,7 +250,7 @@ function Initialize-PackageManagers {
             $script:DeveloperToolsState.PackageManagers['homebrew'] = $true
             Write-DevToolsLog "Homebrew available"
         }
-        
+
         # Check for MacPorts
         $port = Get-Command port -ErrorAction SilentlyContinue
         if ($port) {
@@ -267,13 +267,13 @@ function Install-Git {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing Git"
-    
+
     if ($script:PackageManagerAvailable -and (Get-Command Install-Package -Module PackageManager -ErrorAction SilentlyContinue)) {
         return Install-Package -Name 'git' -DisplayName 'Git' -WhatIf:$WhatIfPreference
     }
-    
+
     # Fallback to direct installation
     if ($IsWindows) {
         if ($script:DeveloperToolsState.PackageManagers.ContainsKey('winget')) {
@@ -302,7 +302,7 @@ function Install-Git {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -313,15 +313,15 @@ function Install-NodeJS {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing Node.js"
-    
+
     $nodeVersion = $Configuration.NodeVersion ?? "lts"
-    
+
     if ($script:PackageManagerAvailable -and (Get-Command Install-Package -Module PackageManager -ErrorAction SilentlyContinue)) {
         return Install-Package -Name 'nodejs' -DisplayName 'Node.js' -WhatIf:$WhatIfPreference
     }
-    
+
     # Fallback to direct installation
     if ($IsWindows) {
         if ($script:DeveloperToolsState.PackageManagers.ContainsKey('winget')) {
@@ -346,7 +346,7 @@ function Install-NodeJS {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -357,11 +357,11 @@ function Install-Python {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing Python"
-    
+
     $pythonVersion = $Configuration.PythonVersion ?? "3.11"
-    
+
     if ($IsWindows) {
         if ($script:DeveloperToolsState.PackageManagers.ContainsKey('winget')) {
             if ($PSCmdlet.ShouldProcess("Python", "Install via winget")) {
@@ -385,7 +385,7 @@ function Install-Python {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -396,9 +396,9 @@ function Install-VSCode {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing Visual Studio Code"
-    
+
     if ($IsWindows) {
         if ($script:DeveloperToolsState.PackageManagers.ContainsKey('winget')) {
             if ($PSCmdlet.ShouldProcess("VS Code", "Install via winget")) {
@@ -423,7 +423,7 @@ function Install-VSCode {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -434,9 +434,9 @@ function Install-Docker {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing Docker"
-    
+
     if ($IsWindows) {
         if ($script:DeveloperToolsState.PackageManagers.ContainsKey('winget')) {
             if ($PSCmdlet.ShouldProcess("Docker Desktop", "Install via winget")) {
@@ -461,7 +461,7 @@ function Install-Docker {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -472,9 +472,9 @@ function Install-AzureCLI {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing Azure CLI"
-    
+
     if ($IsWindows) {
         if ($script:DeveloperToolsState.PackageManagers.ContainsKey('winget')) {
             if ($PSCmdlet.ShouldProcess("Azure CLI", "Install via winget")) {
@@ -492,7 +492,7 @@ function Install-AzureCLI {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -503,9 +503,9 @@ function Install-AWSCLI {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing AWS CLI"
-    
+
     if ($IsWindows) {
         if ($PSCmdlet.ShouldProcess("AWS CLI", "Download and install")) {
             $installerUrl = "https://awscli.amazonaws.com/AWSCLIV2.msi"
@@ -528,7 +528,7 @@ function Install-AWSCLI {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -539,9 +539,9 @@ function Install-7Zip {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     Write-DevToolsLog "Installing 7-Zip"
-    
+
     if ($IsWindows) {
         if ($script:DeveloperToolsState.PackageManagers.ContainsKey('winget')) {
             if ($PSCmdlet.ShouldProcess("7-Zip", "Install via winget")) {
@@ -565,7 +565,7 @@ function Install-7Zip {
             }
         }
     }
-    
+
     return $true
 }
 
@@ -576,23 +576,23 @@ function Install-Chocolatey {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Configuration = @{})
-    
+
     if (-not $IsWindows) {
         Write-DevToolsLog "Chocolatey is only available on Windows" -Level Warning
         return $false
     }
-    
+
     Write-DevToolsLog "Installing Chocolatey"
-    
+
     if ($PSCmdlet.ShouldProcess("Chocolatey", "Install via PowerShell")) {
         Set-ExecutionPolicy Bypass -Scope Process -Force
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
         Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-        
+
         # Update package manager state
         $script:DeveloperToolsState.PackageManagers['chocolatey'] = $true
     }
-    
+
     return $true
 }
 
@@ -605,16 +605,16 @@ function Set-PowerShellDevelopmentProfile {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-DevToolsLog "Configuring PowerShell development profile"
-    
+
     $profilePath = $PROFILE.AllUsersAllHosts
     if (-not (Test-Path (Split-Path $profilePath -Parent))) {
         if ($PSCmdlet.ShouldProcess((Split-Path $profilePath -Parent), "Create profile directory")) {
             New-Item -Path (Split-Path $profilePath -Parent) -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     $profileContent = @'
 # AitherZero Development Profile
 # Auto-generated by DeveloperTools module
@@ -654,7 +654,7 @@ function desktop { Set-Location "$HOME/Desktop" }
 function prompt {
     $location = Get-Location
     $gitBranch = ""
-    
+
     # Show git branch if in git repo
     if (Test-Path .git) {
         try {
@@ -664,7 +664,7 @@ function prompt {
             }
         } catch { }
     }
-    
+
     # Show PowerShell version and path
     $psVersion = $PSVersionTable.PSVersion.Major
     Write-Host "PS$psVersion " -NoNewline -ForegroundColor Cyan
@@ -675,12 +675,12 @@ function prompt {
 
 Write-Host "AitherZero Development Environment Loaded" -ForegroundColor Green
 '@
-    
+
     if ($PSCmdlet.ShouldProcess($profilePath, "Create PowerShell profile")) {
         Set-Content -Path $profilePath -Value $profileContent -Encoding UTF8
         Write-DevToolsLog "PowerShell profile configured at: $profilePath" -Level Success
     }
-    
+
     return $true
 }
 
@@ -694,7 +694,7 @@ function Test-ToolInstalled {
         [Parameter(Mandatory)]
         [string]$Tool
     )
-    
+
     $commands = @{
         'Git' = 'git'
         'Node' = 'node'
@@ -707,13 +707,13 @@ function Test-ToolInstalled {
         'Packer' = 'packer'
         'Chocolatey' = 'choco'
     }
-    
+
     $commandName = $commands[$Tool]
     if ($commandName) {
         $command = Get-Command $commandName -ErrorAction SilentlyContinue
         return $null -ne $command
     }
-    
+
     return $false
 }
 
@@ -726,10 +726,10 @@ function Get-DeveloperToolsStatus {
     #>
     [CmdletBinding()]
     param()
-    
-    $tools = @('Git', 'Node', 'Python', 'VSCode', 'Docker', 'AzureCLI', 'AWSCLI', 
+
+    $tools = @('Git', 'Node', 'Python', 'VSCode', 'Docker', 'AzureCLI', 'AWSCLI',
                '7Zip', 'Packer', 'Chocolatey')
-    
+
     $status = @{
         InstalledTools = @{}
         PackageManagers = $script:DeveloperToolsState.PackageManagers.Clone()
@@ -738,12 +738,12 @@ function Get-DeveloperToolsStatus {
             PowerShellVersion = $PSVersionTable.PSVersion
         }
     }
-    
+
     foreach ($tool in $tools) {
         $isInstalled = Test-ToolInstalled -Tool $tool
         $status.InstalledTools[$tool] = @{
             Installed = $isInstalled
-            Command = if ($isInstalled) { 
+            Command = if ($isInstalled) {
                 $commands = @{
                     'Git' = 'git'; 'Node' = 'node'; 'Python' = 'python'; 'VSCode' = 'code'
                     'Docker' = 'docker'; 'AzureCLI' = 'az'; 'AWSCLI' = 'aws'
@@ -755,7 +755,7 @@ function Get-DeveloperToolsStatus {
             } else { $null }
         }
     }
-    
+
     return $status
 }
 
@@ -765,7 +765,7 @@ Export-ModuleMember -Function @(
     'Install-DeveloperTool',
     'Initialize-PackageManagers',
     'Install-Git',
-    'Install-NodeJS', 
+    'Install-NodeJS',
     'Install-Python',
     'Install-VSCode',
     'Install-Docker',

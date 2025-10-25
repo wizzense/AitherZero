@@ -26,11 +26,11 @@ if ($inputValue.Count -eq 0) {
 
 try {
     $hookData = $inputValue -join "`n" | ConvertFrom-Json
-    
+
     # Initialize logging
     $logPath = "$env:CLAUDE_PROJECT_DIR/logs/claude-hooks.log"
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    
+
     function Write-HookLog {
         param([string]$Message, [string]$Level = "INFO")
         $logEntry = "[$timestamp] [$Level] PostToolUse: $Message"
@@ -39,25 +39,25 @@ try {
         }
         Write-Host $logEntry
     }
-    
+
     # Get tool information
     $toolName = $hookData.tool_name
     $toolArgs = $hookData.arguments
     $success = $hookData.success ?? $true
-    
+
     Write-HookLog "Tool completed: $toolName (Success: $success)"
-    
+
     # Tool-specific post-processing
     switch ($toolName) {
         { $_ -in @("Edit", "MultiEdit", "Write") } {
             $filePath = $toolArgs.file_path ?? $toolArgs.path
             Write-HookLog "File modified: $filePath"
-            
+
             if ($success) {
                 # Trigger validation for PowerShell files
                 if ($filePath -match '\.ps1$' -or $filePath -match '\.psm1$') {
                     Write-HookLog "PowerShell file modified, consider running syntax validation"
-                    
+
                     # Auto-trigger syntax validation in the background
                     if ($env:CLAUDE_PROJECT_DIR -and $env:AITHERZERO_AUTO_VALIDATE) {
                         try {
@@ -75,29 +75,29 @@ try {
                         }
                     }
                 }
-                
+
                 # Trigger documentation update for modules
                 if ($filePath -match 'domains/.*\.psm1$' -or $filePath -match 'automation-scripts/.*\.ps1$') {
                     Write-HookLog "Module/script modified, documentation may need updating"
                 }
-                
+
                 # Update version info for critical files
                 if ($filePath -match 'AitherZero\.psd1$' -or $filePath -match 'config\.json$') {
                     Write-HookLog "Critical configuration file modified"
                 }
             }
         }
-        
+
         "Bash" {
             $command = $toolArgs.command
             Write-HookLog "Command executed: $command"
-            
+
             if ($success) {
                 # Check for specific command patterns
                 if ($command -match '^(\./)?az\s+(\d+)') {
                     $scriptNumber = $Matches[2]
                     Write-HookLog "AitherZero script $scriptNumber executed successfully"
-                    
+
                     # Trigger follow-up actions for specific scripts
                     switch ($scriptNumber) {
                         { $_ -in @("0404", "0407") } {
@@ -105,7 +105,7 @@ try {
                         }
                         { $_ -in @("0402", "0403", "0411") } {
                             Write-HookLog "Tests completed, consider reviewing coverage and results"
-                            
+
                             # Generate project report after test runs
                             try {
                                 if ($env:CLAUDE_PROJECT_DIR) {
@@ -122,27 +122,27 @@ try {
                             } catch {
                                 Write-HookLog "Auto-report generation failed: $_" "DEBUG"
                             }
-                            
+
                             # Cache test results for future use
                             try {
                                 $testCacheModule = "$env:CLAUDE_PROJECT_DIR/domains/testing/TestCacheManager.psm1"
                                 if (Test-Path $testCacheModule) {
                                     Import-Module $testCacheModule -Force
-                                    
+
                                     # Find most recent test summary
                                     $resultsPath = "$env:CLAUDE_PROJECT_DIR/tests/results"
                                     if (Test-Path $resultsPath) {
                                         $latestSummary = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
                                             Sort-Object LastWriteTime -Descending |
                                             Select-Object -First 1
-                                        
+
                                         if ($latestSummary -and $latestSummary.LastWriteTime -gt (Get-Date).AddSeconds(-30)) {
                                             $summary = Get-Content $latestSummary.FullName -Raw | ConvertFrom-Json
-                                            
+
                                             # Generate cache key
                                             $testType = if ($scriptNumber -eq "0402") { "Unit" } elseif ($scriptNumber -eq "0403") { "Integration" } else { "Smart" }
                                             $cacheKey = Get-TestCacheKey -TestPath "$env:CLAUDE_PROJECT_DIR/tests" -TestType $testType
-                                            
+
                                             # Cache the result
                                             Set-CachedTestResult -CacheKey $cacheKey -Result $summary -SourcePath "$env:CLAUDE_PROJECT_DIR/domains"
                                             Write-HookLog "Test results cached for future use (key: $cacheKey)" "INFO"
@@ -161,26 +161,26 @@ try {
                         }
                     }
                 }
-                
+
                 # Git operations
                 if ($command -match '^git\s+') {
                     Write-HookLog "Git operation completed"
-                    
+
                     if ($command -match 'git\s+commit') {
                         Write-HookLog "Commit created, consider running CI validation"
-                        
+
                         # Auto-trigger CI tests if enabled
                         if ($env:AITHERZERO_AUTO_CI) {
                             Write-HookLog "Triggering automated CI validation"
                             # This would trigger CI pipeline or local validation
                         }
                     }
-                    
+
                     if ($command -match 'git\s+(checkout|switch).*-b') {
                         Write-HookLog "New branch created, consider setting up tracking"
                     }
                 }
-                
+
                 # Package installations
                 if ($command -match 'Install-Module|npm\s+install|pip\s+install') {
                     Write-HookLog "Package installation completed, consider updating dependencies documentation"
@@ -189,12 +189,12 @@ try {
                 Write-HookLog "Command failed: $command" "ERROR"
             }
         }
-        
+
         "Task" {
             $agentType = $toolArgs.subagent_type
             $description = $toolArgs.description
             Write-HookLog "Subagent task completed: $agentType - $description"
-            
+
             if ($success) {
                 # Agent-specific post-processing
                 switch ($agentType) {
@@ -213,10 +213,10 @@ try {
                 }
             }
         }
-        
+
         "TodoWrite" {
             Write-HookLog "Todo list updated, tracking development progress"
-            
+
             if ($success) {
                 # Check for completed todos and suggest next actions
                 try {
@@ -224,9 +224,9 @@ try {
                     $completed = @($todos | Where-Object { $_.status -eq 'completed' })
                     $inProgress = @($todos | Where-Object { $_.status -eq 'in_progress' })
                     $pending = @($todos | Where-Object { $_.status -eq 'pending' })
-                    
+
                     Write-HookLog "Todo status: $($completed.Count) completed, $($inProgress.Count) in progress, $($pending.Count) pending"
-                    
+
                     if ($completed.Count -gt 0 -and $pending.Count -gt 0) {
                         Write-HookLog "Consider starting next pending task"
                     }
@@ -236,7 +236,7 @@ try {
             }
         }
     }
-    
+
     # Global post-processing
     if ($success) {
         # Update project activity log
@@ -251,47 +251,47 @@ try {
                         arguments = $toolArgs
                     }
                 }
-                
+
                 $activityEntry = $activity | ConvertTo-Json -Compress
                 $activityEntry | Add-Content -Path $activityLogPath -Force
             } catch {
                 Write-HookLog "Could not update activity log: $_" "WARN"
             }
         }
-        
+
         # Trigger periodic maintenance
         $lastMaintenance = Get-Variable -Name "CLAUDE_LAST_MAINTENANCE" -Scope Global -ErrorAction SilentlyContinue
         $now = Get-Date
-        
+
         if (-not $lastMaintenance -or ($now - $lastMaintenance.Value).Hours -gt 4) {
             Write-HookLog "Triggering periodic maintenance"
             Set-Variable -Name "CLAUDE_LAST_MAINTENANCE" -Value $now -Scope Global -Force
-            
+
             # Background maintenance tasks
             if ($env:CLAUDE_PROJECT_DIR) {
                 Start-Job -ScriptBlock {
                     param($ProjectDir)
                     Set-Location $ProjectDir
-                    
+
                     # Clean up old log files
-                    Get-ChildItem "./logs" -Filter "*.log" -ErrorAction SilentlyContinue | 
+                    Get-ChildItem "./logs" -Filter "*.log" -ErrorAction SilentlyContinue |
                         Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } |
                         Remove-Item -Force -ErrorAction SilentlyContinue
-                    
+
                     # Clean up test results
                     Get-ChildItem "./tests/results" -ErrorAction SilentlyContinue |
                         Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-3) } |
                         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-                        
+
                 } -ArgumentList $env:CLAUDE_PROJECT_DIR | Out-Null
             }
         }
     }
-    
+
     Write-HookLog "Post-tool processing completed"
     @{ action = "continue" } | ConvertTo-Json -Compress | Write-Host
     exit 0
-    
+
 } catch {
     Write-Error "Post-tool hook execution failed: $_"
     # On error, don't block anything

@@ -47,11 +47,11 @@ function Invoke-OrchestrationSequence {
     <#
     .SYNOPSIS
     Execute automation scripts based on number sequences
-    
+
     .DESCRIPTION
     A high-level orchestration language using numbers to execute complex workflows.
     Supports ranges, wildcards, exclusions, and conditional execution.
-    
+
     .PARAMETER Sequence
     Number sequence(s) to execute. Supports multiple formats:
     - Single: "0001"
@@ -61,50 +61,50 @@ function Invoke-OrchestrationSequence {
     - Exclusion: "0001-0099,!0050"
     - Stage prefix: "stage:Core"
     - Tag prefix: "tag:database"
-    
+
     .PARAMETER Configuration
     Configuration hashtable or path to configuration file
-    
+
     .PARAMETER Variables
     Variables to pass to scripts for conditional execution
-    
+
     .PARAMETER DryRun
     Show what would be executed without running
-    
+
     .PARAMETER Parallel
     Enable parallel execution (default: true)
-    
+
     .PARAMETER MaxConcurrency
     Maximum concurrent executions
-    
+
     .PARAMETER ContinueOnError
     Continue executing sequence even if a script fails
-    
+
     .PARAMETER Profile
     Execution profile (Minimal, Standard, Developer, Full, Custom)
-    
+
     .PARAMETER SavePlaybook
     Save the execution sequence as a reusable playbook
-    
+
     .PARAMETER LoadPlaybook
     Load and execute a saved playbook
-    
+
     .EXAMPLE
     # Run environment setup
     Invoke-OrchestrationSequence -Sequence "0000-0099"
-    
+
     .EXAMPLE
     # Run specific tools installation
     Invoke-OrchestrationSequence -Sequence "0201,0207,0208"
-    
+
     .EXAMPLE
     # Run all development tools except Docker
     Invoke-OrchestrationSequence -Sequence "02*,!0208"
-    
+
     .EXAMPLE
     # Run by stage
     Invoke-OrchestrationSequence -Sequence "stage:Infrastructure,stage:Development"
-    
+
     .EXAMPLE
     # Complex orchestration with variables
     Invoke-OrchestrationSequence -Sequence "0000-0299" -Variables @{
@@ -112,11 +112,11 @@ function Invoke-OrchestrationSequence {
         SkipTests = $false
         Features = @("HyperV", "Kubernetes")
     }
-    
+
     .EXAMPLE
     # Save as playbook
     Invoke-OrchestrationSequence -Sequence "0001,0207,0201,0105" -SavePlaybook "dev-setup"
-    
+
     .EXAMPLE
     # Execute saved playbook
     Invoke-OrchestrationSequence -LoadPlaybook "dev-setup"
@@ -125,72 +125,72 @@ function Invoke-OrchestrationSequence {
     param(
         [Parameter(Mandatory, Position = 0, ParameterSetName = 'Sequence')]
         [string[]]$Sequence,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'Playbook')]
         [string]$LoadPlaybook,
-        
+
         [Parameter(ParameterSetName = 'Playbook')]
         [string]$PlaybookProfile,
-        
+
         [Parameter()]
         [object]$Configuration,
-        
+
         [Parameter()]
         [hashtable]$Variables = @{},
-        
+
         [Parameter()]
         [switch]$DryRun,
-        
+
         [Parameter()]
         [bool]$Parallel,
-        
+
         [Parameter()]
         [int]$MaxConcurrency,
-        
+
         [Parameter()]
         [switch]$ContinueOnError,
-        
+
         [Parameter()]
         [ValidateSet('Minimal', 'Standard', 'Developer', 'Full', 'Custom')]
         [string]$ExecutionProfile,
-        
+
         [Parameter(ParameterSetName = 'Sequence')]
         [string]$SavePlaybook,
-        
+
         [Parameter()]
         [switch]$Interactive,
-        
+
         [Parameter()]
         [hashtable]$Conditions = @{}
     )
 
     begin {
         Write-OrchestrationLog "Starting orchestration engine"
-        
+
         # Load configuration
         $config = Get-OrchestrationConfiguration -Configuration $Configuration
-        
+
         # Apply default from config if not specified
         if (-not $PSBoundParameters.ContainsKey('Parallel')) {
             $Parallel = $config.Automation.DefaultMode -eq 'Parallel'
         }
-        
+
         # Override with parameters
         if ($PSBoundParameters.ContainsKey('MaxConcurrency')) {
             $config.Automation.MaxConcurrency = $MaxConcurrency
         }
-        
+
         # Handle SkipConfirmation from config
         if ($config.Automation.SkipConfirmation -and -not $Interactive) {
             $Interactive = $false
         }
-        
+
         # Apply ValidateBeforeRun from config
         if ($config.Automation.ValidateBeforeRun -and -not $DryRun) {
             Write-OrchestrationLog "Running validation before execution (ValidateBeforeRun is enabled)"
             # Could add validation logic here
         }
-        
+
         # Load playbook if specified
         if ($LoadPlaybook) {
             $playbook = Get-OrchestrationPlaybook -Name $LoadPlaybook
@@ -203,7 +203,7 @@ function Invoke-OrchestrationSequence {
                 if ($playbook.options.profiles.ContainsKey($PlaybookProfile)) {
                     $ProfileNameConfig = $playbook.options.profiles[$PlaybookProfile]
                     Write-OrchestrationLog "Applying playbook profile: $PlaybookProfile - $($ProfileNameConfig.description)"
-                    
+
                     # Apply profile variables
                     if ($ProfileNameConfig.variables) {
                         foreach ($key in $ProfileNameConfig.variables.Keys) {
@@ -220,12 +220,12 @@ function Invoke-OrchestrationSequence {
             if ($playbook.Sequence) {
                 $Sequence = $playbook.Sequence
             }
-            
+
             # Also check for stages (playbook can have both Sequence and Stages)
             if ($playbook.stages -or $playbook.Stages) {
                 # Store stages for proper variable handling (check both cases)
                 $script:PlaybookStages = if ($playbook.Stages) { $playbook.Stages } else { $playbook.stages }
-                
+
                 # Flatten all stage sequences for compatibility
                 $Sequence = @()
                 foreach ($stage in $script:PlaybookStages) {
@@ -250,20 +250,20 @@ function Invoke-OrchestrationSequence {
                     $defaultVars[$key] = $playbook.Variables[$key]
                 }
             }
-            
+
             # Debug: Show what we have before merging
             Write-OrchestrationLog "User Variables before merge: $($Variables | ConvertTo-Json -Compress)" -Level 'Information'
             Write-OrchestrationLog "Playbook default variables: $($defaultVars | ConvertTo-Json -Compress)" -Level 'Information'
-            
+
             # Apply defaults only if not provided by user
             foreach ($key in $defaultVars.Keys) {
                 if (-not $Variables.ContainsKey($key)) {
                     $Variables[$key] = $defaultVars[$key]
                 }
             }
-            
+
             Write-OrchestrationLog "Variables after merge: $($Variables | ConvertTo-Json -Compress)" -Level 'Information'
-            
+
             # Now expand any variable references in the merged variables
             $expandedVars = @{}
             foreach ($key in $Variables.Keys) {
@@ -278,9 +278,9 @@ function Invoke-OrchestrationSequence {
             if ($playbook.Profile) {
                 $ExecutionProfile = $playbook.Profile
             }
-            
+
             Write-OrchestrationLog "Loaded playbook: $LoadPlaybook with sequences: $($Sequence -join ', ')"
-            
+
             # Force sequential for playbooks with stages to maintain stage order
             if ($script:PlaybookStages) {
                 Write-OrchestrationLog "Forcing sequential execution for staged playbook"
@@ -288,47 +288,47 @@ function Invoke-OrchestrationSequence {
             }
         }
     }
-    
+
     process {
         # Parse sequences into script numbers
         $scriptNumbers = ConvertTo-ScriptNumbers -Sequence $Sequence -Profile $ExecutionProfile -Configuration $config
-        
+
         if ($scriptNumbers.Count -eq 0) {
             Write-OrchestrationLog "No scripts match the specified sequence" -Level 'Warning'
             return
         }
-        
+
         Write-OrchestrationLog "Resolved to $($scriptNumbers.Count) scripts: $($scriptNumbers -join ', ')"
-        
+
         # Get script metadata
         $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions
-        
+
         # Save playbook if requested
         if ($SavePlaybook) {
             Save-OrchestrationPlaybook -Name $SavePlaybook -Sequence $Sequence -Variables $Variables -Profile $ExecutionProfile
             Write-OrchestrationLog "Saved playbook: $SavePlaybook"
         }
-        
+
         # Dry run mode
         if ($DryRun) {
             Write-OrchestrationLog "DRY RUN MODE - No scripts will be executed"
             Show-OrchestrationPlan -Scripts $scripts
             return
         }
-        
+
         # Interactive confirmation
         if ($Interactive -and -not $PSCmdlet.ShouldProcess("Execute $($scripts.Count) scripts", "Orchestration")) {
             Write-OrchestrationLog "Execution cancelled by user"
             return
         }
-        
+
         # Execute orchestration
         $result = if ($Parallel) {
             Invoke-ParallelOrchestration -Scripts $scripts -Configuration $config -Variables $Variables -ContinueOnError:$ContinueOnError
         } else {
             Invoke-SequentialOrchestration -Scripts $scripts -Configuration $config -Variables $Variables -ContinueOnError:$ContinueOnError
         }
-        
+
         # Return execution result
         $result
     }
@@ -349,7 +349,7 @@ function ConvertTo-ScriptNumbers {
         $ProfileNameScripts = $Configuration.Automation.Profiles.$ExecutionProfile.Scripts
         $Sequence = $ProfileNameScripts
     }
-    
+
     foreach ($seq in $Sequence) {
         if ($seq.StartsWith('!')) {
             # Exclusion
@@ -363,50 +363,50 @@ function ConvertTo-ScriptNumbers {
             # Range - only include scripts that actually exist
             $start = [int]$Matches[1]
             $end = [int]$Matches[2]
-            
+
             # Get all scripts in range that actually exist
-            $existingScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "*.ps1" -File | 
-                Where-Object { 
+            $existingScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "*.ps1" -File |
+                Where-Object {
                     $_.Name -match '^(\d{4})_' | Out-Null
                     $num = [int]$Matches[1]
                     $num -ge $start -and $num -le $end
-                } | ForEach-Object { 
+                } | ForEach-Object {
                     $_.Name -match '^(\d{4})_' | Out-Null
-                    $Matches[1] 
+                    $Matches[1]
                 }
-            
+
             $numbers += $existingScripts
         }
         elseif ($seq -match '^(\d{1,2})\*$') {
             # Wildcard (e.g., "02*" for all 0200-0299)
             $prefix = $Matches[1].PadLeft(2, '0')
             $pattern = "$prefix*"
-            
+
             $matchingScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "${pattern}_*.ps1" -File |
                 ForEach-Object { $_.Name -match '^(\d{4})_' | Out-Null; $Matches[1] }
-            
+
             $numbers += $matchingScripts
         }
         elseif ($seq.StartsWith('stage:')) {
             # Stage-based selection
             $stage = $seq.Substring(6)
-            
+
             $stageScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "*.ps1" -File | Where-Object {
                 $content = Get-Content $_.FullName -First 10
                 $content -match "# Stage: $stage"
             } | ForEach-Object { $_.Name -match '^(\d{4})_' | Out-Null; $Matches[1] }
-            
+
             $numbers += $stageScripts
         }
         elseif ($seq.StartsWith('tag:')) {
             # Tag-based selection
             $tag = $seq.Substring(4)
-            
+
             $taggedScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "*.ps1" -File | Where-Object {
                 $content = Get-Content $_.FullName -First 20
                 $content -match "# Tags:.*\b$tag\b"
             } | ForEach-Object { $_.Name -match '^(\d{4})_' | Out-Null; $Matches[1] }
-            
+
             $numbers += $taggedScripts
         }
         elseif ($seq -match ',') {
@@ -417,7 +417,7 @@ function ConvertTo-ScriptNumbers {
 
     # Remove duplicates and exclusions
     $numbers = $numbers | Select-Object -Unique | Where-Object { $_ -notin $exclusions } | Sort-Object
-    
+
     return $numbers
 }
 
@@ -426,16 +426,16 @@ function Expand-PlaybookVariables {
         [string]$Value,
         [hashtable]$Variables
     )
-    
+
     if (-not $Value) { return $Value }
-    
+
     # Replace {{variable}} patterns with actual values
     $pattern = '\{\{([^}:]+)(?::=([^}]+))?\}\}'
     $result = [regex]::Replace($Value, $pattern, {
         param($match)
         $varName = $match.Groups[1].Value
         $defaultValue = $match.Groups[2].Value
-        
+
         if ($Variables.ContainsKey($varName)) {
             return $Variables[$varName]
         } elseif ($defaultValue) {
@@ -444,7 +444,7 @@ function Expand-PlaybookVariables {
             return ''  # Return empty string for undefined variables without defaults
         }
     })
-    
+
     return $result
 }
 
@@ -456,23 +456,23 @@ function Get-OrchestrationScripts {
     )
 
     $scripts = @()
-    
+
     foreach ($number in $Numbers) {
         $scriptFile = Get-ChildItem -Path $script:ScriptsPath -Filter "${number}_*.ps1" -File | Select-Object -First 1
-        
+
         if (-not $scriptFile) {
             Write-OrchestrationLog "Script not found for number: $number" -Level 'Warning'
             continue
         }
-        
+
         # Parse script metadata
         $metadata = Get-ScriptMetadata -Path $scriptFile.FullName
-        
+
         # Check if this script has stage-specific variables
         # Use stage-specific variables if defined, otherwise use global variables
         $stageVariables = @{}
         $foundStageVars = $false
-        
+
         if ($script:PlaybookStages) {
             foreach ($stage in $script:PlaybookStages) {
                 # Check both lowercase and uppercase for compatibility
@@ -494,12 +494,12 @@ function Get-OrchestrationScripts {
                 }
             }
         }
-        
+
         # Only use global variables if no stage-specific variables were defined
         if (-not $foundStageVars) {
             $stageVariables = $Variables.Clone()
         }
-        
+
         # Check conditions
         if ($metadata.Condition -and $Conditions.Count -gt 0) {
             $shouldRun = Test-OrchestrationCondition -Condition $metadata.Condition -Variables $Variables -Conditions $Conditions
@@ -508,7 +508,7 @@ function Get-OrchestrationScripts {
                 continue
             }
         }
-        
+
         $scripts += [PSCustomObject]@{
             Number = $number
             Name = $scriptFile.Name
@@ -522,7 +522,7 @@ function Get-OrchestrationScripts {
             Variables = $stageVariables  # Include stage-specific variables
         }
     }
-    
+
     return $scripts
 }
 
@@ -541,7 +541,7 @@ function Get-ScriptMetadata {
 
     # Read first 20 lines for metadata
     $content = Get-Content $Path -First 20
-    
+
     foreach ($line in $content) {
         if ($line -match '^# Stage:\s*(.+)$') {
             $metadata.Stage = $Matches[1].Trim()
@@ -559,7 +559,7 @@ function Get-ScriptMetadata {
             $metadata.Tags = $Matches[1].Trim() -split ',\s*'
         }
     }
-    
+
     return $metadata
 }
 
@@ -575,21 +575,21 @@ function Test-OrchestrationCondition {
     # - "Environment -eq 'Production'"
     # - "Features -contains 'HyperV'"
     # - "SkipTests -ne $true"
-    
+
     try {
         $combinedVars = $Variables + $Conditions
-        
+
         # Create a safe evaluation context
         $scriptBlock = [ScriptBlock]::Create($Condition)
-        
+
         # Inject variables into scope
         foreach ($key in $combinedVars.Keys) {
             Set-Variable -Name $key -Value $combinedVars[$key] -Scope Local
         }
-        
+
         # Evaluate condition
         $result = & $scriptBlock
-        
+
         return [bool]$result
     } catch {
         Write-OrchestrationLog "Failed to evaluate condition: $Condition - $_" -Level 'Warning'
@@ -607,10 +607,10 @@ function Show-OrchestrationPlan {
 
     # Group by stage
     $stages = $Scripts | Group-Object Stage | Sort-Object Name
-    
+
     foreach ($stage in $stages) {
         Write-Host "`nStage: $($stage.Name)" -ForegroundColor Yellow
-        
+
         foreach ($script in $stage.Group | Sort-Object Priority) {
             $status = "  [$($script.Number)] $($script.Name)"
             if ($script.Description) {
@@ -627,7 +627,7 @@ function Show-OrchestrationPlan {
             }
         }
     }
-    
+
     Write-Host "`nTotal scripts: $($Scripts.Count)" -ForegroundColor Green
 }
 
@@ -649,7 +649,7 @@ function Invoke-ParallelOrchestration {
     $completed = @{}
     $failed = @{}
     $startTime = Get-Date  # Initialize start time for duration calculation
-    
+
     while ($completed.Count -lt $Scripts.Count -and (-not $failed.Count -or $ContinueOnError)) {
         # Find scripts ready to run
         $ready = $Scripts | Where-Object {
@@ -658,40 +658,40 @@ function Invoke-ParallelOrchestration {
             $_.Number -notin $jobs.Keys -and
             (Test-DependenciesMet -Script $_ -Completed $completed -Graph $graph)
         }
-        
+
         # Start new jobs up to concurrency limit
         foreach ($script in $ready) {
             if ($jobs.Count -ge $Configuration.Automation.MaxConcurrency) {
                 break
             }
-            
+
             Write-OrchestrationLog "Starting: [$($script.Number)] $($script.Name)" -Level 'Information' -Data @{
                 ScriptPath = $script.Path
                 Stage = $script.Stage
                 Dependencies = ($script.Dependencies -join ', ')
                 HasVariables = ($scriptVars.Count -gt 0)
             }
-            
+
             # Use script-specific variables if available, otherwise use global variables
             $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
-            
+
             $job = Start-ThreadJob -ScriptBlock {
                 param($ScriptPath, $Config, $Vars)
-                
+
                 try {
                     # Validate script path exists
                     if (-not $ScriptPath -or -not (Test-Path $ScriptPath)) {
                         throw "Script path is invalid or does not exist: $ScriptPath"
                     }
-                    
+
                     $params = @{}
-                    
+
                     # Only add Configuration if the script accepts it
                     $scriptInfo = Get-Command $ScriptPath -ErrorAction SilentlyContinue
                     if ($scriptInfo -and $scriptInfo.Parameters.ContainsKey('Configuration')) {
                         if ($Config) { $params['Configuration'] = $Config }
                     }
-                    
+
                     # Add any variables as individual parameters, but only if the script accepts them
                     foreach ($key in $Vars.Keys) {
                         # Skip null or empty values
@@ -702,10 +702,10 @@ function Invoke-ParallelOrchestration {
                             }
                         }
                     }
-                    
+
                     # Set non-interactive environment flag for child scripts
                     $env:AITHERZERO_NONINTERACTIVE = 'true'
-                    
+
                     try {
                         # Execute the script
                         $result = & $ScriptPath @params
@@ -718,22 +718,22 @@ function Invoke-ParallelOrchestration {
                     return @{ Success = $false; Error = $_.ToString(); ExitCode = 1 }
                 }
             } -ArgumentList $script.Path, $Configuration, $scriptVars
-            
+
             $jobs[$script.Number] = @{
                 Job = $job
                 Script = $script
                 StartTime = Get-Date
             }
         }
-        
+
         # Check for completed jobs
         $completedJobs = $jobs.GetEnumerator() | Where-Object { $_.Value.Job.State -eq 'Completed' }
-        
+
         foreach ($entry in $completedJobs) {
             $number = $entry.Key
             $jobInfo = $entry.Value
             $result = Receive-Job -Job $jobInfo.Job
-            
+
             $duration = New-TimeSpan -Start $jobInfo.StartTime -End (Get-Date)
 
             if ($result.Success -and $result.ExitCode -eq 0) {
@@ -742,7 +742,7 @@ function Invoke-ParallelOrchestration {
             } else {
                 Write-OrchestrationLog "Failed: [$number] $($jobInfo.Script.Name) - $($result.Error)" -Level 'Error'
                 $failed[$number] = $result
-                
+
                 if (-not $ContinueOnError) {
                     # Cancel remaining jobs
                     foreach ($activeJob in $jobs.Values) {
@@ -751,11 +751,11 @@ function Invoke-ParallelOrchestration {
                     break
                 }
             }
-            
+
             Remove-Job -Job $jobInfo.Job
             $jobs.Remove($number)
         }
-        
+
         # Brief pause to prevent CPU spinning
         if ($jobs.Count -gt 0) {
             Start-Sleep -Milliseconds 100
@@ -784,20 +784,20 @@ function Invoke-SequentialOrchestration {
     )
 
     Write-OrchestrationLog "Starting sequential orchestration"
-    
+
     $completed = @{}
     $failed = @{}
     $startTime = Get-Date
-    
+
     foreach ($script in $Scripts | Sort-Object Priority) {
         Write-OrchestrationLog "Executing: [$($script.Number)] $($script.Name)"
-        
+
         $retryCount = 0
         $maxRetries = 0  # Disabled retries per user request
         $retryDelay = 0
         $succeeded = $false
         $scriptStart = Get-Date  # Initialize before the try block to avoid null reference
-        
+
         # Execute at least once, then retry up to maxRetries times
         while ($retryCount -eq 0 -or ($retryCount -le $maxRetries -and -not $succeeded)) {
             try {
@@ -805,9 +805,9 @@ function Invoke-SequentialOrchestration {
                     Write-OrchestrationLog "Retry attempt $retryCount/$maxRetries for [$($script.Number)] $($script.Name)"
                     Start-Sleep -Seconds $retryDelay
                 }
-                
+
                 $scriptStart = Get-Date  # Update for each retry
-                
+
                 # Write audit log for script execution
                 if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
                     Write-AuditLog -EventNameType 'ScriptExecution' -Action 'StartScript' -Target $script.Path -Details @{
@@ -818,28 +818,28 @@ function Invoke-SequentialOrchestration {
                         RetryAttempt = $retryCount
                     }
                 }
-                
+
                 # Use script-specific variables if available, otherwise use global variables
                 $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
-                
+
                 # Validate script path exists
                 if (-not $script.Path -or -not (Test-Path $script.Path)) {
                     throw "Script path is invalid or does not exist: $($script.Path)"
                 }
-                
+
                 # Filter variables to only include parameters the script accepts
                 $scriptInfo = Get-Command $script.Path -ErrorAction SilentlyContinue
                 $params = @{}
-                
+
                 # Debug logging
                 Write-OrchestrationLog "Script: $($script.Number) - Variables available: $($scriptVars.Keys -join ', ')" -Level 'Debug'
-                
+
                 if ($scriptInfo) {
                     # Only add Configuration if the script accepts it
                     if ($scriptInfo.Parameters.ContainsKey('Configuration')) {
                         if ($Configuration) { $params['Configuration'] = $Configuration }
                     }
-                    
+
                     # Only add variables that match script parameters
                     foreach ($key in $scriptVars.Keys) {
                         if ($scriptInfo.Parameters.ContainsKey($key)) {
@@ -858,19 +858,19 @@ function Invoke-SequentialOrchestration {
                         }
                     }
                 }
-                
+
                 Write-OrchestrationLog "Script: $($script.Number) - Parameters being passed: $($params.Keys -join ', ')" -Level 'Debug'
                 & $script.Path @params
-                
+
                 if ($LASTEXITCODE -ne 0) {
                     throw "Script exited with code: $LASTEXITCODE"
                 }
-                
+
                 $succeeded = $true
-                
+
                 $duration = New-TimeSpan -Start $scriptStart -End (Get-Date)
                 Write-OrchestrationLog "Completed: [$($script.Number)] $($script.Name) (Duration: $($duration.TotalSeconds)s)"
-                
+
                 # Write audit log for successful completion
                 if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
                     Write-AuditLog -EventNameType 'ScriptExecution' -Action 'CompleteScript' -Target $script.Path -Result 'Success' -Details @{
@@ -881,19 +881,19 @@ function Invoke-SequentialOrchestration {
                         RetryAttempt = $retryCount
                     }
                 }
-                
+
                 $completed[$script.Number] = @{
                     Success = $true
                     ExitCode = 0
                     Duration = $duration
                     RetryCount = $retryCount
                 }
-                
+
             } catch {
                 $retryCount++
                 if ($retryCount -gt $maxRetries) {
                     Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $maxRetries retries)" -Level 'Error'
-                    
+
                     # Write audit log for failure
                     if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
                         Write-AuditLog -EventNameType 'ScriptExecution' -Action 'FailScript' -Target $script.Path -Result 'Failure' -Details @{
@@ -904,14 +904,14 @@ function Invoke-SequentialOrchestration {
                             RetryAttempts = $maxRetries
                         }
                     }
-                    
+
                     $failed[$script.Number] = @{
                         Success = $false
                         Error = $_.ToString()
                         ExitCode = if ($LASTEXITCODE) { $LASTEXITCODE } else { 1 }
                         RetryAttempts = $maxRetries
                     }
-                    
+
                     if (-not $ContinueOnError) {
                         break
                     }
@@ -921,7 +921,7 @@ function Invoke-SequentialOrchestration {
             }
         }
     }
-    
+
     return [PSCustomObject]@{
         Total = $Scripts.Count
         Completed = $completed.Count
@@ -936,9 +936,9 @@ function Invoke-SequentialOrchestration {
 
 function Build-DependencyGraph {
     param([array]$Scripts)
-    
+
     $graph = @{}
-    
+
     foreach ($script in $Scripts) {
         $graph[$script.Number] = @{
             Script = $script
@@ -959,7 +959,7 @@ function Build-DependencyGraph {
             }
         }
     }
-    
+
     return $graph
 }
 
@@ -972,13 +972,13 @@ function Test-DependenciesMet {
 
     $node = $Graph[$Script.Number]
     if (-not $node) { return $true }
-    
+
     foreach ($dep in $node.Dependencies) {
         if ($dep -notin $Completed.Keys) {
             return $false
         }
     }
-    
+
     return $true
 }
 
@@ -1068,7 +1068,7 @@ function Get-OrchestrationConfiguration {
     if (-not $Configuration.Automation.Profiles) {
         $Configuration.Automation.Profiles = @{}
     }
-    
+
     return $Configuration
 }
 
@@ -1085,18 +1085,18 @@ function Save-OrchestrationPlaybook {
     if (-not (Test-Path $playbookDir)) {
         New-Item -ItemType Directory -Path $playbookDir -Force | Out-Null
     }
-    
+
     # Extract description from Variables if passed there (for backward compatibility)
     if (-not $Description -and $Variables -and $Variables.ContainsKey('Description')) {
         $Description = $Variables['Description']
         $Variables.Remove('Description')
     }
-    
+
     # Use default description if none provided
     if (-not $Description) {
         $Description = "Orchestration playbook created $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
     }
-    
+
     $playbook = @{
         Name = $Name
         Description = $Description
@@ -1106,31 +1106,31 @@ function Save-OrchestrationPlaybook {
         Created = Get-Date -Format 'o'
         Version = '1.0'
     }
-    
+
     $playbookPath = Join-Path $playbookDir "$Name.json"
     $playbook | ConvertTo-Json -Depth 10 | Set-Content -Path $playbookPath
-    
+
     Write-OrchestrationLog "Saved playbook: $playbookPath"
 }
 
 function Get-OrchestrationPlaybook {
     param([string]$Name)
-    
+
     # First try direct path in playbooks root
     $playbookPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
-    
+
     if (Test-Path $playbookPath) {
         return Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
     }
-    
+
     # Then search in subdirectories
     $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
     $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-    
+
     if ($foundPlaybook) {
         return Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
     }
-    
+
     return $null
 }
 
@@ -1139,7 +1139,7 @@ function Invoke-Sequence {
     <#
     .SYNOPSIS
     Simplified orchestration using number sequences
-    
+
     .EXAMPLE
     # Quick setup
     seq 0000-0099

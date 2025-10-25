@@ -48,7 +48,7 @@ function Initialize-TechDebtAnalysis {
     }
 
     # Clean old cache files
-    Get-ChildItem -Path $CachePath -Filter "*.cache.json" | 
+    Get-ChildItem -Path $CachePath -Filter "*.cache.json" |
         Where-Object { $_.LastWriteTime -lt (Get-Date).Subtract($MaxCacheAge) } |
         Remove-Item -Force
 }
@@ -67,7 +67,7 @@ function Get-FileHash {
     if (-not (Test-Path $Path)) {
         return $null
     }
-    
+
     $hash = Get-FileHash -Path $Path
     return $hash.Hash
 }
@@ -89,7 +89,7 @@ function Test-CacheValid {
     if (-not (Test-Path $cachePath)) {
         return $false
     }
-    
+
     $cacheData = Get-Content $cachePath -Raw | ConvertFrom-Json
 
     # Check age
@@ -102,12 +102,12 @@ function Test-CacheValid {
     foreach ($file in $DependentFiles) {
         $currentHash = Get-FileHash -Path $file
         $cachedHash = $cacheData.FileHashes | Where-Object { $_.Path -eq $file } | Select-Object -ExpandProperty Hash
-        
+
         if ($currentHash -ne $cachedHash) {
             return $false
         }
     }
-    
+
     return $true
 }
 
@@ -128,7 +128,7 @@ function Get-CachedResults {
         $cacheData = Get-Content $cachePath -Raw | ConvertFrom-Json
         return $cacheData.Results
     }
-    
+
     return $null
 }
 
@@ -155,14 +155,14 @@ function Set-CachedResults {
             }
         }
     }
-    
+
     $cacheData = @{
         Timestamp = (Get-Date).ToString('o')
         CacheKey = $CacheKey
         FileHashes = $fileHashes
         Results = $Results
     }
-    
+
     $cachePath = Join-Path $script:AnalysisState.CachePath "$CacheKey.cache.json"
     $cacheData | ConvertTo-Json -Depth 10 | Set-Content -Path $cachePath -Force
 }
@@ -211,19 +211,19 @@ function Save-AnalysisResults {
 
     # Also save a "latest" version
     $latestPath = Join-Path $OutputPath "$AnalysisType-latest.json"
-    
+
     $resultData = @{
         AnalysisType = $AnalysisType
         Timestamp = (Get-Date).ToString('o')
         Duration = if ($Results.Duration) { $Results.Duration } else { $null }
         Results = $Results
     }
-    
+
     $resultData | ConvertTo-Json -Depth 10 | Set-Content -Path $filepath -Force
     $resultData | ConvertTo-Json -Depth 10 | Set-Content -Path $latestPath -Force
-    
+
     Write-AnalysisLog "Saved $AnalysisType results to $filename" -Level Information
-    
+
     return $filepath
 }
 
@@ -245,15 +245,15 @@ function Get-AnalysisResults {
     } else {
         # Get most recent file
         $pattern = "$AnalysisType-*.json"
-        $files = Get-ChildItem -Path $ResultsPath -Filter $pattern | 
+        $files = Get-ChildItem -Path $ResultsPath -Filter $pattern |
             Sort-Object LastWriteTime -Descending |
             Select-Object -First 1
-            
+
         if (-not $files) {
             Write-AnalysisLog "No results found for $AnalysisType" -Level Warning
             return $null
         }
-        
+
         $filepath = $files.FullName
     }
 
@@ -261,7 +261,7 @@ function Get-AnalysisResults {
         Write-AnalysisLog "Results file not found: $filepath" -Level Warning
         return $null
     }
-    
+
     $data = Get-Content $filepath -Raw | ConvertFrom-Json
     return $data.Results
 }
@@ -281,7 +281,7 @@ function Merge-AnalysisResults {
         Timestamp = (Get-Date).ToString('o')
         Analyses = @{}
     }
-    
+
     foreach ($type in $AnalysisTypes) {
         $results = Get-AnalysisResults -AnalysisType $type -ResultsPath $ResultsPath -Latest
         if ($results) {
@@ -290,7 +290,7 @@ function Merge-AnalysisResults {
             Write-AnalysisLog "No results found for $type" -Level Warning
         }
     }
-    
+
     return $mergedResults
 }
 
@@ -309,9 +309,9 @@ function Get-FilesToAnalyze {
     )
 
     $excludePattern = $Exclude | ForEach-Object { "*\$_\*" }
-    
+
     $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File |
-        Where-Object { 
+        Where-Object {
             $fullName = $_.FullName
             -not ($excludePattern | Where-Object { $fullName -like $_ })
         }
@@ -319,7 +319,7 @@ function Get-FilesToAnalyze {
     if ($ChangedOnly) {
         $files = $files | Where-Object { $_.LastWriteTime -gt $Since }
     }
-    
+
     return $files
 }
 
@@ -342,20 +342,20 @@ function Start-ParallelAnalysis {
     $results = @()
     $completed = 0
     $total = $inputValueObject.Count
-    
+
     Write-AnalysisLog "Starting parallel analysis of $total items with max concurrency $MaxConcurrency"
 
     # Start jobs in batches
     for ($i = 0; $i -lt $total; $i += $MaxConcurrency) {
         $batch = $inputValueObject[$i..[Math]::Min($i + $MaxConcurrency - 1, $total - 1)]
-        
+
         foreach ($item in $batch) {
             $jobs += Start-ThreadJob -ScriptBlock $ScriptBlock -ArgumentList $item -Name "$JobName-$i"
         }
-        
+
         # Wait for batch to complete
         $jobs | Wait-Job | Out-Null
-        
+
         # Collect results
         foreach ($job in $jobs) {
             if ($job.State -eq 'Completed') {
@@ -366,15 +366,15 @@ function Start-ParallelAnalysis {
             }
             Remove-Job -Job $job
         }
-        
+
         # Progress update
         Write-Progress -Activity "Parallel Analysis" -Status "$completed of $total completed" -PercentComplete (($completed / $total) * 100)
         $jobs = @()
     }
-    
+
     Write-Progress -Activity "Parallel Analysis" -Completed
     Write-AnalysisLog "Parallel analysis completed: $completed of $total items processed" -Level Information
-    
+
     return $results
 }
 

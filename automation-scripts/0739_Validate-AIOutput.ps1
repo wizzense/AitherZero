@@ -23,10 +23,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
-    
+
     [ValidateSet('Syntax', 'Security', 'BestPractices', 'Performance', 'All')]
     [string]$ValidationType = 'All',
-    
+
     [switch]$StrictMode
 )
 
@@ -85,12 +85,12 @@ if ($PSCmdlet.ShouldProcess("$Path", "Perform AI output validation and analysis"
 
     Write-Host ""
     Write-Host "Validation complete (stub)" -ForegroundColor Cyan
-    
+
     # Generate validation report file (state-changing operation)
     if ($PSCmdlet.ShouldProcess("validation report", "Generate and save validation report file")) {
         Write-Host "✓ Validation report generated (stub)" -ForegroundColor Green
     }
-    
+
     # Trigger human review workflow if enabled and issues found (state-changing operation)
     if ($validationConfig.HumanReviewWorkflow -and $results.Values -match '⚠' -and $PSCmdlet.ShouldProcess("human review workflow", "Initiate human review process for flagged issues")) {
         Write-Host "✓ Human review workflow initiated (stub)" -ForegroundColor Yellow

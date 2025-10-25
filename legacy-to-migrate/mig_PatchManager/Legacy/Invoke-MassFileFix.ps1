@@ -3,10 +3,10 @@ function Invoke-MassFileFix {
     param(
         [Parameter(Mandatory = $true)]
         [string[]]$FilePaths,
-        
+
         [Parameter(Mandatory = $true)]
         [scriptblock]$FixOperation,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Description,
 
@@ -27,17 +27,17 @@ function Invoke-MassFileFix {
             if ($CreateBackup) {
                 # Create backup directory
                 New-Item -ItemType Directory -Force -Path $backupPath
-                
+
                 # Backup files
                 foreach ($file in $FilePaths) {
                     $relativePath = $file -replace [regex]::Escape($PWD.Path + '\'), ''
                     $backupFilePath = Join-Path $backupPath $relativePath
                     $backupDir = Split-Path $backupFilePath -Parent
-                    
+
                     if (-not (Test-Path $backupDir)) {
                         New-Item -ItemType Directory -Force -Path $backupDir
                     }
-                    
+
                     Copy-Item $file $backupFilePath -Force
                 }
             }

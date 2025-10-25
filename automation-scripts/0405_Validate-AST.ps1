@@ -5,12 +5,12 @@
     Validate PowerShell Abstract Syntax Tree (AST) for AitherZero
 .DESCRIPTION
     Performs deep syntax validation, parameter checking, and command verification
-    
+
     Exit Codes:
     0   - All validations passed
     1   - Validation issues found
     2   - Validation error
-    
+
 .NOTES
     Stage: Testing
     Order: 0405
@@ -80,7 +80,7 @@ function Test-PowerShellSyntax {
     )
 
     $issues = @()
-    
+
     try {
         $tokens = $null
         $parseErrors = $null
@@ -89,7 +89,7 @@ function Test-PowerShellSyntax {
             [ref]$tokens,
             [ref]$parseErrors
         )
-    
+
         if ($parseErrors.Count -gt 0) {
             foreach ($parseError in $parseErrors) {
                 $issues += [PSCustomObject]@{
@@ -102,7 +102,7 @@ function Test-PowerShellSyntax {
                 }
             }
         }
-        
+
         return $issues
     }
     catch {
@@ -129,7 +129,7 @@ function Test-ParameterDefinitions {
     $paramAsts = $Ast.FindAll({
         $arguments[0] -is [System.Management.Automation.Language.ParameterAst]
     }, $true)
-    
+
     foreach ($param in $paramAsts) {
         # Check for missing parameter types
         if (-not $param.StaticType -and -not $param.Attributes -and $param.Name.VariablePath.UserPath -ne 'args') {
@@ -142,7 +142,7 @@ function Test-ParameterDefinitions {
                 Message = "Parameter '$($param.Name)' has no type declaration"
             }
         }
-        
+
         # Check for ValidateScript without ErrorMessage
         $validateScript = $param.Attributes | Where-Object { $_ -is [System.Management.Automation.Language.AttributeAst] -and $_.TypeName.Name -eq 'ValidateScript' }
         if ($validateScript -and -not ($validateScript.NamedArguments | Where-Object { $_.ArgumentName -eq 'ErrorMessage' })) {
@@ -156,7 +156,7 @@ function Test-ParameterDefinitions {
             }
         }
     }
-    
+
     return $issues
 }
 
@@ -173,10 +173,10 @@ function Test-CommandUsage {
     $commandAsts = $Ast.FindAll({
         $arguments[0] -is [System.Management.Automation.Language.CommandAst]
     }, $true)
-    
+
     foreach ($cmd in $commandAsts) {
         $cmdName = $cmd.GetCommandName()
-        
+
         if ($cmdName -and $cmdName -notmatch '^\$' -and $cmdName -notmatch '^&' -and $cmdName -notmatch '^\[') {
             # Skip if already checked
             if ($knownCommands.ContainsKey($cmdName)) {
@@ -203,7 +203,7 @@ function Test-CommandUsage {
                     $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
                     $arguments[0].Name -eq $cmdName
                 }, $true)
-                
+
                 if ($functionDefs.Count -eq 0) {
                     $issues += [PSCustomObject]@{
                         File = $FilePath
@@ -217,7 +217,7 @@ function Test-CommandUsage {
             }
         }
     }
-    
+
     return $issues
 }
 
@@ -236,7 +236,7 @@ function Test-ModuleDependencies {
         foreach ($module in $requiresStatements.RequiredModules) {
             $moduleName = if ($module -is [hashtable]) { $module.ModuleName } else { $module }
             $moduleVersion = if ($module -is [hashtable]) { $module.ModuleVersion } else { $null }
-            
+
             $availableModule = Get-Module -ListAvailable -Name $moduleName | Sort-Object Version -Descending | Select-Object -First 1
 
             if (-not $availableModule) {
@@ -266,10 +266,10 @@ function Test-ModuleDependencies {
         $arguments[0] -is [System.Management.Automation.Language.CommandAst] -and
         $arguments[0].GetCommandName() -eq 'Import-Module'
     }, $true)
-    
+
     foreach ($import in $importModuleAsts) {
         $moduleArg = $import.CommandElements | Where-Object { $_ -isnot [System.Management.Automation.Language.CommandAst] } | Select-Object -First 1
-        
+
         if ($moduleArg -and $moduleArg -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
             $modulePath = $moduleArg.Value
 
@@ -290,7 +290,7 @@ function Test-ModuleDependencies {
             }
         }
     }
-    
+
     return $issues
 }
 
@@ -310,12 +310,12 @@ try {
 
     # Get all PowerShell files
     Write-ScriptLog -Message "Scanning for PowerShell files..."
-    $files = Get-ChildItem -Path $Path -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
-        Where-Object { 
+    $files = Get-ChildItem -Path $Path -Include "*.ps1", "*.psm1", "*.psd1" -Recurse |
+        Where-Object {
             $file = $_
             -not ($ExcludePaths | Where-Object { $file.FullName -like "*\$_\*" })
         }
-    
+
     Write-ScriptLog -Message "Found $($files.Count) PowerShell files to validate"
 
     if ($files.Count -eq 0) {
@@ -327,7 +327,7 @@ try {
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Start-PerformanceTrace -Name "ASTValidation" -Description "AST validation of PowerShell files"
     }
-    
+
     $allIssues = @()
     $fileCount = 0
 
@@ -335,9 +335,9 @@ try {
     foreach ($file in $files) {
         $fileCount++
         Write-Progress -Activity "Validating AST" -Status "Processing $($file.Name)" -PercentComplete (($fileCount / $files.Count) * 100)
-        
+
         Write-ScriptLog -Level Debug -Message "Validating: $($file.FullName)"
-        
+
         # Parse the file
         $tokens = $null
         $parseErrors = $null
@@ -346,13 +346,13 @@ try {
             [ref]$tokens,
             [ref]$parseErrors
         )
-    
+
         # Syntax check
         if ($CheckSyntax -or $parseErrors.Count -gt 0) {
             $syntaxIssues = Test-PowerShellSyntax -FilePath $file.FullName
             $allIssues += $syntaxIssues
         }
-        
+
         # Skip other checks if there are syntax errors
         if ($parseErrors.Count -eq 0) {
             # Parameter checks
@@ -374,7 +374,7 @@ try {
             }
         }
     }
-    
+
     Write-Progress -Activity "Validating AST" -Completed
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
@@ -387,19 +387,19 @@ try {
     $allIssues | Group-Object Severity | ForEach-Object {
         $severityGroups[$_.Name] = $_.Count
     }
-    
+
     $typeGroups = @{}
     $allIssues | Group-Object Type | ForEach-Object {
         $typeGroups[$_.Name] = $_.Count
     }
-    
+
     $summary = @{
         TotalFiles = $files.Count
         TotalIssues = $allIssues.Count
         BySeverity = $severityGroups
         ByType = $typeGroups
     }
-    
+
     Write-ScriptLog -Message "AST validation completed" -Data $summary
 
     # Display results
@@ -417,13 +417,13 @@ try {
                 Write-Host "    $severity : $count" -ForegroundColor $color
             }
         }
-        
+
         # By type
         Write-Host "`n  By Type:" -ForegroundColor Yellow
         $allIssues | Group-Object Type | Sort-Object Count -Descending | ForEach-Object {
             Write-Host "    $($_.Name): $($_.Count)"
         }
-        
+
         # Show errors
         $errors = $allIssues | Where-Object { $_.Severity -eq 'Error' }
         if ($errors) {
@@ -446,16 +446,16 @@ try {
         if (-not $OutputPath) {
             $OutputPath = Join-Path $projectRoot "tests/analysis"
         }
-        
+
         if (-not (Test-Path $OutputPath)) {
             if ($PSCmdlet.ShouldProcess($OutputPath, "Create validation output directory")) {
                 New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
             }
         }
-        
+
         $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         $outputFile = Join-Path $OutputPath "AST-Validation-$timestamp.json"
-        
+
         if ($PSCmdlet.ShouldProcess($outputFile, "Save AST validation results")) {
             @{
                 Timestamp = Get-Date
@@ -471,7 +471,7 @@ try {
                     }
                 }
             } | ConvertTo-Json -Depth 5 | Set-Content -Path $outputFile
-            
+
             Write-ScriptLog -Message "Validation results saved to: $outputFile"
         }
     }
@@ -491,8 +491,8 @@ try {
     }
 }
 catch {
-    Write-ScriptLog -Level Error -Message "AST validation failed: $_" -Data @{ 
-        Exception = $_.Exception.Message 
+    Write-ScriptLog -Level Error -Message "AST validation failed: $_" -Data @{
+        Exception = $_.Exception.Message
         ScriptStackTrace = $_.ScriptStackTrace
     }
     exit 2

@@ -25,7 +25,7 @@ Invoke-LabStep -Config $Config -Body {
     try {
         # Check if ADCS is already installed
         $adcs = Get-WindowsFeature -Name ADCS-Cert-Authority -ErrorAction SilentlyContinue
-        
+
         if ($adcs -and $adcs.InstallState -eq "Installed") {
             Write-CustomLog "Certificate Authority is already installed"
         } else {
@@ -36,7 +36,7 @@ Invoke-LabStep -Config $Config -Body {
 
             # Configure CA
             Install-AdcsCertificationAuthority -CAType EnterpriseRootCA -Force
-            
+
             Write-CustomLog "Certificate Authority installed successfully"
         }
     } catch {

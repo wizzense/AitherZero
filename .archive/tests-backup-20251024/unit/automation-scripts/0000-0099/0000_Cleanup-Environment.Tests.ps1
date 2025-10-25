@@ -2,7 +2,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0000_Cleanup-Environment.ps1"
-    
+
     # Mock external dependencies
     Mock Write-Host { }
     Mock Write-Warning { }
@@ -35,7 +35,7 @@ Describe "0000_Cleanup-Environment" {
     Context "WhatIf Functionality" {
         It "Should not make changes in WhatIf mode" {
             Mock Remove-Item { throw "Remove-Item should not be called in WhatIf mode" }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Not -Invoke Remove-Item
         }
@@ -49,11 +49,11 @@ Describe "0000_Cleanup-Environment" {
                     Repositories = @{ RepoUrl = "https://github.com/user/AitherZero.git" }
                 }
             }
-            
+
             Mock Split-Path { "/workspaces/AitherZero" }
             Mock Test-Path { $true }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -62,7 +62,7 @@ Describe "0000_Cleanup-Environment" {
         It "Should handle missing directories gracefully" {
             Mock Test-Path { $false }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -71,7 +71,7 @@ Describe "0000_Cleanup-Environment" {
         It "Should use Write-CustomLog when available" {
             Mock Get-Command { @{ Name = "Write-CustomLog" } } -ParameterFilter { $Name -eq "Write-CustomLog" }
             Mock Write-CustomLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Write-CustomLog -AtLeast 1
         }

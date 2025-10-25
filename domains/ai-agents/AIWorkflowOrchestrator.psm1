@@ -41,13 +41,13 @@ function Initialize-AIWorkflowOrchestrator {
         [hashtable]$Configuration = @{},
         [string[]]$EnabledAgents = @("claude", "gemini", "codex")
     )
-    
+
     Write-WorkflowLog "Initializing AI Workflow Orchestrator" -Level Information
-    
+
     try {
         # Initialize agent pool
         $script:AgentPool = @{}
-        
+
         foreach ($agent in $EnabledAgents) {
             switch ($agent.ToLower()) {
                 "claude" {
@@ -85,10 +85,10 @@ function Initialize-AIWorkflowOrchestrator {
                 }
             }
         }
-        
+
         Write-WorkflowLog "AI Workflow Orchestrator initialized with $($script:AgentPool.Count) agents" -Level Success
         return $true
-        
+
     } catch {
         Write-WorkflowLog "Failed to initialize orchestrator: $_" -Level Error
         return $false
@@ -117,11 +117,11 @@ function Start-AIWorkflow {
         [ValidateSet("Low", "Normal", "High", "Critical")]
         [string]$Priority = "Normal"
     )
-    
+
     $workflowId = [System.Guid]::NewGuid().ToString("N")[0..7] -join ""
-    
+
     Write-WorkflowLog "Starting AI workflow: $WorkflowType (ID: $workflowId)" -Level Information
-    
+
     try {
         # Define workflow templates
         $workflowTemplates = @{
@@ -181,12 +181,12 @@ function Start-AIWorkflow {
                 Aggregation = "security_report"
             }
         }
-        
+
         $template = $workflowTemplates[$WorkflowType]
         if (-not $template) {
             throw "Unknown workflow type: $WorkflowType"
         }
-        
+
         # Create workflow instance
         $workflow = @{
             Id = $workflowId
@@ -200,7 +200,7 @@ function Start-AIWorkflow {
             Results = @{}
             Progress = 0
         }
-        
+
         # Queue tasks for execution
         foreach ($taskDef in $template.Agents) {
             $task = @{
@@ -212,31 +212,31 @@ function Start-AIWorkflow {
                 Parameters = $Parameters
                 Dependencies = @()
             }
-            
+
             $workflow.Tasks += $task
         }
-        
+
         $script:ActiveWorkflows[$workflowId] = $workflow
-        
+
         # Execute workflow asynchronously
         Start-Job -ScriptBlock {
             param($WorkflowId, $Workflow, $ModulePath)
-            
+
             # Re-import module in job context
             Import-Module $ModulePath -Force
-            
+
             Execute-WorkflowTasks -WorkflowId $WorkflowId -Workflow $Workflow
-            
+
         } -ArgumentList $workflowId, $workflow, $PSScriptRoot
-        
+
         Write-WorkflowLog "Workflow started: $workflowId" -Level Success
-        
+
         return @{
             WorkflowId = $workflowId
             Status = "Running"
             EstimatedDuration = Get-EstimatedDuration -WorkflowType $WorkflowType
         }
-        
+
     } catch {
         Write-WorkflowLog "Failed to start workflow: $_" -Level Error
         throw
@@ -256,21 +256,21 @@ function Get-WorkflowStatus {
     param(
         [string]$WorkflowId
     )
-    
+
     if ($WorkflowId) {
         $workflow = $script:ActiveWorkflows[$WorkflowId]
         if (-not $workflow) {
             Write-WorkflowLog "Workflow not found: $WorkflowId" -Level Warning
             return $null
         }
-        
+
         # Calculate progress
         $completedTasks = @($workflow.Tasks | Where-Object { $_.Status -eq "Completed" }).Count
         $totalTasks = $workflow.Tasks.Count
         $workflow.Progress = if ($totalTasks -gt 0) { [math]::Round(($completedTasks / $totalTasks) * 100, 1) } else { 0 }
-        
+
         return $workflow
-        
+
     } else {
         # Return all workflows
         return $script:ActiveWorkflows.Values | ForEach-Object {
@@ -299,28 +299,28 @@ function Wait-AIWorkflow {
         [string]$WorkflowId,
         [int]$TimeoutMinutes = 30
     )
-    
+
     Write-WorkflowLog "Waiting for workflow completion: $WorkflowId" -Level Information
-    
+
     $startTime = Get-Date
     $timeout = $startTime.AddMinutes($TimeoutMinutes)
-    
+
     do {
         $workflow = Get-WorkflowStatus -WorkflowId $WorkflowId
-        
+
         if (-not $workflow) {
             throw "Workflow not found: $WorkflowId"
         }
-        
+
         if ($workflow.Status -in @("Completed", "Failed", "Cancelled")) {
             Write-WorkflowLog "Workflow finished with status: $($workflow.Status)" -Level Information
             return $workflow
         }
-        
+
         Start-Sleep -Seconds 5
-        
+
     } while ((Get-Date) -lt $timeout)
-    
+
     Write-WorkflowLog "Workflow timeout reached: $WorkflowId" -Level Warning
     throw "Workflow timed out after $TimeoutMinutes minutes"
 }
@@ -339,15 +339,15 @@ function Stop-AIWorkflow {
         [Parameter(Mandatory)]
         [string]$WorkflowId
     )
-    
+
     Write-WorkflowLog "Stopping workflow: $WorkflowId" -Level Information
-    
+
     $workflow = $script:ActiveWorkflows[$WorkflowId]
     if (-not $workflow) {
         Write-WorkflowLog "Workflow not found: $WorkflowId" -Level Warning
         return
     }
-    
+
     try {
         # Cancel running tasks
         foreach ($task in $workflow.Tasks) {
@@ -355,12 +355,12 @@ function Stop-AIWorkflow {
                 $task.Status = "Cancelled"
             }
         }
-        
+
         $workflow.Status = "Cancelled"
         $workflow.EndTime = Get-Date
-        
+
         Write-WorkflowLog "Workflow stopped: $WorkflowId" -Level Success
-        
+
     } catch {
         Write-WorkflowLog "Failed to stop workflow: $_" -Level Error
         throw
@@ -369,7 +369,7 @@ function Stop-AIWorkflow {
 
 function Get-EstimatedDuration {
     param([string]$WorkflowType)
-    
+
     $estimates = @{
         code_review = 5  # minutes
         feature_development = 15
@@ -378,42 +378,42 @@ function Get-EstimatedDuration {
         optimization = 12
         security_analysis = 7
     }
-    
+
     return $estimates[$WorkflowType] ?? 10
 }
 
 function Execute-WorkflowTasks {
     param([string]$WorkflowId, [hashtable]$Workflow)
-    
+
     try {
         # Execute tasks in priority order
         $sortedTasks = $Workflow.Tasks | Sort-Object Priority
-        
+
         foreach ($task in $sortedTasks) {
             $task.Status = "Running"
             $task.StartTime = Get-Date
-            
+
             try {
                 # Execute task based on agent and task type
                 $result = Invoke-AgentTask -AgentType $task.Agent -TaskType $task.Task -Parameters $task.Parameters
-                
+
                 $task.Status = "Completed"
                 $task.EndTime = Get-Date
                 $task.Result = $result
                 $Workflow.Results[$task.Task] = $result
-                
+
             } catch {
                 $task.Status = "Failed"
                 $task.EndTime = Get-Date
                 $task.Error = $_.Exception.Message
             }
         }
-        
+
         # Aggregate results
         $Workflow.FinalResult = Invoke-ResultAggregation -WorkflowType $Workflow.Type -Results $Workflow.Results
         $Workflow.Status = "Completed"
         $Workflow.EndTime = Get-Date
-        
+
     } catch {
         $Workflow.Status = "Failed"
         $Workflow.EndTime = Get-Date
@@ -423,7 +423,7 @@ function Execute-WorkflowTasks {
 
 function Invoke-AgentTask {
     param([string]$AgentType, [string]$TaskType, [hashtable]$Parameters)
-    
+
     # This would delegate to specific agent modules
     # For now, return mock results for development
     return @{
@@ -436,7 +436,7 @@ function Invoke-AgentTask {
 
 function Invoke-ResultAggregation {
     param([string]$WorkflowType, [hashtable]$Results)
-    
+
     # Aggregate results based on workflow type
     return @{
         WorkflowType = $WorkflowType

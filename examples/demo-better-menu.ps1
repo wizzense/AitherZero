@@ -22,7 +22,7 @@ Write-Host @"
 The menu system has been fixed with REAL keyboard navigation:
 
 ✓ Arrow Keys (↑/↓) - Navigate up and down
-✓ j/k - Vim-style navigation  
+✓ j/k - Vim-style navigation
 ✓ Enter - Select item (SINGLE press!)
 ✓ Numbers - Jump to item (1-99)
 ✓ Letters - Jump to first item with that letter

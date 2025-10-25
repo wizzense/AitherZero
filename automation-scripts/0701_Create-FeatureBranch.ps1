@@ -16,22 +16,22 @@ param(
     [Parameter(Mandatory)]
     [ValidateSet('feature', 'fix', 'docs', 'refactor', 'test', 'chore')]
     [string]$Type,
-    
+
     [Parameter(Mandatory)]
     [string]$Name,
-    
+
     [string]$Description,
-    
+
     [switch]$CreateIssue,
-    
+
     [string[]]$Labels,
-    
+
     [switch]$Checkout,
-    
+
     [switch]$Push,
-    
+
     [switch]$Force,
-    
+
     [switch]$NonInteractive
 )
 
@@ -55,7 +55,7 @@ if (-not $status.Clean -and -not $Force -and -not $NonInteractive) {
     Write-Warning "You have uncommitted changes. Please commit or stash them first."
     Write-Host "Changed files:" -ForegroundColor Yellow
     $status.Modified + $status.Staged | ForEach-Object { Write-Host "  $($_.Path)" }
-    
+
     $response = Read-Host "Continue anyway? (y/N)"
     if ($response -ne 'y') {
         Write-Host "Aborted." -ForegroundColor Yellow
@@ -78,10 +78,10 @@ $remoteBranch = git branch -r --list "origin/$branchName" 2>$null
 
 if ($existingBranch -or $remoteBranch) {
     Write-Host "Branch '$branchName' already exists" -ForegroundColor Yellow
-    
+
     # Get branch conflict resolution preference from config or parameters
-    $conflictResolution = if ($Force) { 
-        'checkout' 
+    $conflictResolution = if ($Force) {
+        'checkout'
     } elseif ($NonInteractive) {
         # In non-interactive mode, check config for preference
         $config = if (Get-Command Get-AitherConfiguration -ErrorAction SilentlyContinue) {
@@ -97,7 +97,7 @@ if ($existingBranch -or $remoteBranch) {
         Write-Host "  2. Create new branch with suffix (e.g., -2)"
         Write-Host "  3. Delete and recreate branch"
         Write-Host "  4. Abort"
-        
+
         $choice = Read-Host "Choose option (1-4)"
         switch ($choice) {
             '1' { 'checkout' }
@@ -107,18 +107,18 @@ if ($existingBranch -or $remoteBranch) {
             default { 'abort' }
         }
     }
-    
+
     switch ($conflictResolution) {
         'checkout' {
             Write-Host "Checking out existing branch..." -ForegroundColor Cyan
             git checkout $branchName 2>$null
-            
+
             # Pull latest if remote exists
             if ($remoteBranch) {
                 Write-Host "Pulling latest changes..." -ForegroundColor Cyan
                 git pull origin $branchName 2>$null
             }
-            
+
             Write-Host "✓ Using existing branch: $branchName" -ForegroundColor Green
         }
         'suffix' {
@@ -137,7 +137,7 @@ if ($existingBranch -or $remoteBranch) {
                     exit 1
                 }
             }
-            
+
             Write-Host "Creating new branch: $branchName" -ForegroundColor Cyan
             if ($PSCmdlet.ShouldProcess($branchName, "Create new Git branch")) {
                 $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
@@ -146,21 +146,21 @@ if ($existingBranch -or $remoteBranch) {
         }
         'recreate' {
             Write-Host "Deleting existing branch..." -ForegroundColor Yellow
-            
+
             # Switch to main/master first if we're on the branch to delete
             $currentBranch = git rev-parse --abbrev-ref HEAD 2>$null
             if ($currentBranch -eq $branchName) {
                 git checkout main 2>$null || git checkout master 2>$null
             }
-            
+
             # Delete local branch
             git branch -D $branchName 2>$null
-            
+
             # Delete remote branch if exists
             if ($remoteBranch) {
                 git push origin --delete $branchName 2>$null
             }
-            
+
             # Create fresh branch
             if ($PSCmdlet.ShouldProcess($branchName, "Recreate Git branch")) {
                 $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
@@ -228,7 +228,7 @@ TODO: Define acceptance criteria
     if ($Labels) {
         $defaultLabels += $Labels
     }
-    
+
     try {
         if ($PSCmdlet.ShouldProcess("GitHub issue", "Create issue for $issueTitle")) {
             $issue = New-GitHubIssue -Title $issueTitle -Body $issueBody -Labels $defaultLabels
@@ -258,13 +258,13 @@ TODO: Add implementation notes
 ## Testing
 TODO: Describe testing approach
 "@
-    
+
     if ($PSCmdlet.ShouldProcess($readmePath, "Create initial README and commit")) {
         $readmeContent | Set-Content $readmePath
 
         # Stage and commit
         git add $readmePath
-    
+
     # Map branch type to commit type
     $commitType = switch ($Type) {
         'feature' { 'feat' }
@@ -275,12 +275,12 @@ TODO: Describe testing approach
         'chore' { 'chore' }
         default { 'feat' }
     }
-    
+
     $commitMessage = "Initial commit for $Name"
     if ($issueNumber) {
         $commitMessage += "`n`nRefs #$issueNumber"
     }
-    
+
         Invoke-GitCommit -Message $commitMessage -Type $commitType -Scope "init"
         Write-Host "✓ Created initial commit" -ForegroundColor Green
 

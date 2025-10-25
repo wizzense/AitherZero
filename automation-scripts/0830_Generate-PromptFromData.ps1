@@ -18,33 +18,33 @@
 param(
     [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
     [string]$inputValuePath,
-    
+
     [Parameter(Mandatory = $false)]
     [ValidateSet('Auto', 'JSON', 'XML', 'CSV', 'YAML', 'Tanium', 'TestResults', 'Configuration', 'Orchestration')]
     [string]$DataType = 'Auto',
-    
+
     [Parameter(Mandatory = $false)]
     [ValidateSet('Analysis', 'Implementation', 'Conversion', 'Documentation', 'Testing', 'Custom')]
     [string]$PromptTemplate = 'Analysis',
-    
+
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "./.claude/generated-prompt.md",
-    
+
     [Parameter(Mandatory = $false)]
     [string]$CustomTemplate = $null,
-    
+
     [Parameter(Mandatory = $false)]
     [int]$MaxTokens = 4000,
-    
+
     [Parameter(Mandatory = $false)]
     [hashtable]$Context = @{},
-    
+
     [switch]$IncludeExamples,
-    
+
     [switch]$GenerateCode,
-    
+
     [switch]$Interactive,
-    
+
     [switch]$CopyToClipboard
 )
 
@@ -68,17 +68,17 @@ if (Test-Path $modulePath) {
 # Helper function to detect data type
 function Get-DataType {
     param([string]$Path)
-    
+
     if (-not (Test-Path $Path)) {
         throw "File not found: $Path"
     }
-    
+
     $extension = [System.IO.Path]::GetExtension($Path).ToLower()
     $content = Get-Content $Path -Raw -ErrorAction SilentlyContinue | Select-Object -First 1000
-    
+
     # Check by extension first
     switch ($extension) {
-        '.json' { 
+        '.json' {
             # Check if it's a Tanium export
             if ($content -match '"object_list".*"package_specs"') {
                 return 'Tanium'
@@ -97,7 +97,7 @@ function Get-DataType {
         '.csv' { return 'CSV' }
         '.yaml' { return 'YAML' }
         '.yml' { return 'YAML' }
-        '.ps1' { 
+        '.ps1' {
             if ($content -match 'seq |Invoke-OrchestrationSequence') {
                 return 'Orchestration'
             }
@@ -105,13 +105,13 @@ function Get-DataType {
         }
         '.psd1' { return 'Configuration' }
     }
-    
+
     # Try to detect by content
     if ($content -match '^\s*<\?xml') { return 'XML' }
     if ($content -match '^\s*\{[\s\S]*\}\s*$') { return 'JSON' }
     if ($content -match '^\s*---\s*$') { return 'YAML' }
     if ($content -contains ',') { return 'CSV' }
-    
+
     return 'Unknown'
 }
 
@@ -121,19 +121,19 @@ function Parse-StructuredData {
         [string]$Path,
         [string]$Type
     )
-    
+
     $data = @{
         Type = $Type
         Source = $Path
         Content = $null
         Metadata = @{}
     }
-    
+
     switch ($Type) {
         'JSON' {
             $data.Content = Get-Content $Path | ConvertFrom-Json
         }
-        
+
         'Tanium' {
             $json = Get-Content $Path | ConvertFrom-Json
             $data.Content = $json
@@ -143,21 +143,21 @@ function Parse-StructuredData {
                 PackageCount = $json.object_list.package_specs.Count
             }
         }
-        
+
         'XML' {
             [xml]$data.Content = Get-Content $Path
         }
-        
+
         'CSV' {
             $data.Content = Import-Csv $Path
         }
-        
+
         'YAML' {
             # Would need a YAML parser module
             $data.Content = Get-Content $Path -Raw
             $data.Metadata.Format = 'YAML'
         }
-        
+
         'TestResults' {
             $json = Get-Content $Path | ConvertFrom-Json
             $data.Content = $json
@@ -167,7 +167,7 @@ function Parse-StructuredData {
                 Failed = $json.FailedCount ?? ($json.Tests | Where-Object Result -eq 'Failed').Count
             }
         }
-        
+
         'Configuration' {
             if ($Path -match '\.psd1$') {
                 $data.Content = Import-PowerShellDataFile $Path
@@ -175,7 +175,7 @@ function Parse-StructuredData {
                 $data.Content = Get-Content $Path | ConvertFrom-Json
             }
         }
-        
+
         'Orchestration' {
             $content = Get-Content $Path -Raw
             if ($Path -match '\.json$') {
@@ -191,25 +191,25 @@ function Parse-StructuredData {
                 $data.Content = @{ Sequences = $sequences }
             }
         }
-        
+
         default {
             $data.Content = Get-Content $Path -Raw
         }
     }
-    
+
     return $data
 }
 
 # Generate analysis prompt
 function New-AnalysisPrompt {
     param($Data)
-    
+
     $prompt = @()
     $prompt += "# Data Analysis Request"
     $prompt += ""
     $prompt += "Please analyze the following $($Data.Type) data and provide insights:"
     $prompt += ""
-    
+
     if ($Data.Type -eq 'Tanium') {
         $prompt += "## Tanium Package Export Analysis"
         $prompt += ""
@@ -219,7 +219,7 @@ function New-AnalysisPrompt {
         $prompt += "- Packages: $($Data.Metadata.PackageCount)"
         $prompt += ""
         $prompt += "## Package Details"
-        
+
         foreach ($package in $Data.Content.object_list.package_specs | Select-Object -First 5) {
             $prompt += ""
             $prompt += "### $($package.display_name)"
@@ -227,7 +227,7 @@ function New-AnalysisPrompt {
             $prompt += "- **Content Set:** $($package.content_set.name)"
             $prompt += "- **Files:** $($package.files.Count)"
             $prompt += "- **Command Timeout:** $($package.command_timeout) seconds"
-            
+
             if ($package.parameter_definition) {
                 $paramDef = $package.parameter_definition | ConvertFrom-Json -ErrorAction SilentlyContinue
                 if ($paramDef.parameters) {
@@ -235,7 +235,7 @@ function New-AnalysisPrompt {
                 }
             }
         }
-        
+
         $prompt += ""
         $prompt += "## Analysis Tasks"
         $prompt += "1. Review the package configuration for security concerns"
@@ -251,7 +251,7 @@ function New-AnalysisPrompt {
         $prompt += "- Passed: $($Data.Metadata.Passed)"
         $prompt += "- Failed: $($Data.Metadata.Failed)"
         $prompt += ""
-        
+
         if ($Data.Content.Tests) {
             $failedTests = $Data.Content.Tests | Where-Object Result -eq 'Failed' | Select-Object -First 5
             if ($failedTests) {
@@ -261,7 +261,7 @@ function New-AnalysisPrompt {
                 }
             }
         }
-        
+
         $prompt += ""
         $prompt += "## Analysis Tasks"
         $prompt += "1. Identify patterns in test failures"
@@ -271,14 +271,14 @@ function New-AnalysisPrompt {
     elseif ($Data.Type -eq 'Orchestration') {
         $prompt += "## Orchestration Analysis"
         $prompt += ""
-        
+
         if ($Data.Content.stages) {
             $prompt += "**Stages:** $($Data.Content.stages.Count)"
             foreach ($stage in $Data.Content.stages | Select-Object -First 3) {
                 $prompt += "- $($stage.name): $($stage.description)"
             }
         }
-        
+
         if ($Data.Content.Sequences) {
             $prompt += "**Sequences Found:** $($Data.Content.Sequences.Count)"
             $prompt += '```'
@@ -287,7 +287,7 @@ function New-AnalysisPrompt {
             }
             $prompt += '```'
         }
-        
+
         $prompt += ""
         $prompt += "## Analysis Tasks"
         $prompt += "1. Review orchestration flow for efficiency"
@@ -306,26 +306,26 @@ function New-AnalysisPrompt {
         $prompt += "2. Suggest optimizations"
         $prompt += "3. Highlight potential issues"
     }
-    
+
     return $prompt -join "`n"
 }
 
 # Generate implementation prompt
 function New-ImplementationPrompt {
     param($Data)
-    
+
     $prompt = @()
     $prompt += "# Implementation Request"
     $prompt += ""
     $prompt += "Based on the following $($Data.Type) data, please implement the required functionality:"
     $prompt += ""
-    
+
     if ($Data.Type -eq 'Tanium') {
         $prompt += "## Convert Tanium Package to PowerShell"
         $prompt += ""
         $prompt += "Convert the following Tanium packages to native PowerShell implementations:"
         $prompt += ""
-        
+
         foreach ($package in $Data.Content.object_list.package_specs | Select-Object -First 3) {
             $prompt += "### Package: $($package.display_name)"
             $prompt += ""
@@ -334,7 +334,7 @@ function New-ImplementationPrompt {
             $prompt += $package.command
             $prompt += '```'
             $prompt += ""
-            
+
             if ($package.files) {
                 $prompt += "**Required Files:**"
                 foreach ($file in $package.files) {
@@ -342,7 +342,7 @@ function New-ImplementationPrompt {
                 }
                 $prompt += ""
             }
-            
+
             $prompt += "**Requirements:**"
             $prompt += "1. Convert to pure PowerShell 7+"
             $prompt += "2. Add proper error handling"
@@ -355,7 +355,7 @@ function New-ImplementationPrompt {
     elseif ($Data.Type -eq 'Orchestration') {
         $prompt += "## Implement Orchestration Workflow"
         $prompt += ""
-        
+
         if ($Data.Content.stages) {
             $prompt += "Create PowerShell functions to implement these stages:"
             $prompt += ""
@@ -367,7 +367,7 @@ function New-ImplementationPrompt {
                 $prompt += ""
             }
         }
-        
+
         $prompt += "**Implementation Requirements:**"
         $prompt += "1. Use AitherZero orchestration patterns"
         $prompt += "2. Support both parallel and sequential execution"
@@ -400,23 +400,23 @@ function New-ImplementationPrompt {
         $prompt += ($Data.Content | ConvertTo-Json -Depth 2 -Compress | Select-Object -First 1000)
         $prompt += '```'
     }
-    
+
     return $prompt -join "`n"
 }
 
 # Generate conversion prompt
 function New-ConversionPrompt {
     param($Data)
-    
+
     $prompt = @()
     $prompt += "# Data Conversion Request"
     $prompt += ""
     $prompt += "Convert the following $($Data.Type) data to the requested format:"
     $prompt += ""
-    
+
     $prompt += "## Source Data"
     $prompt += '```' + $Data.Type.ToLower()
-    
+
     if ($Data.Type -eq 'Tanium') {
         # Show first package as example
         $firstPackage = $Data.Content.object_list.package_specs | Select-Object -First 1
@@ -424,7 +424,7 @@ function New-ConversionPrompt {
     } else {
         $prompt += ($Data.Content | ConvertTo-Json -Depth 3 -Compress | Select-Object -First 2000)
     }
-    
+
     $prompt += '```'
     $prompt += ""
     $prompt += "## Conversion Requirements"
@@ -434,7 +434,7 @@ function New-ConversionPrompt {
     $prompt += "4. Include error handling"
     $prompt += "5. Make idempotent"
     $prompt += ""
-    
+
     if ($IncludeExamples) {
         $prompt += "## Example Output Format"
         $prompt += '```powershell'
@@ -472,20 +472,20 @@ catch {
 '@
         $prompt += '```'
     }
-    
+
     return $prompt -join "`n"
 }
 
 # Generate documentation prompt
 function New-DocumentationPrompt {
     param($Data)
-    
+
     $prompt = @()
     $prompt += "# Documentation Generation Request"
     $prompt += ""
     $prompt += "Generate comprehensive documentation for the following $($Data.Type) data:"
     $prompt += ""
-    
+
     if ($Data.Type -eq 'Tanium') {
         $prompt += "## Tanium Package Documentation"
         $prompt += ""
@@ -496,7 +496,7 @@ function New-DocumentationPrompt {
         $prompt += "4. **Security Considerations**"
         $prompt += "5. **Examples and Best Practices**"
         $prompt += ""
-        
+
         foreach ($package in $Data.Content.object_list.package_specs | Select-Object -First 2) {
             $prompt += "### $($package.display_name)"
             $prompt += "- Command: ``$($package.command.Substring(0, [Math]::Min(100, $package.command.Length)))...``"
@@ -515,7 +515,7 @@ function New-DocumentationPrompt {
         $prompt += "4. **Error Handling**"
         $prompt += "5. **Usage Examples**"
         $prompt += ""
-        
+
         if ($Data.Content.stages) {
             $prompt += "### Stages"
             foreach ($stage in $Data.Content.stages | Select-Object -First 5) {
@@ -531,7 +531,7 @@ function New-DocumentationPrompt {
         $prompt += "4. **Examples**: Common use cases"
         $prompt += "5. **API Reference**: If applicable"
     }
-    
+
     $prompt += ""
     $prompt += "## Documentation Format"
     $prompt += "Please generate documentation in Markdown format with:"
@@ -539,20 +539,20 @@ function New-DocumentationPrompt {
     $prompt += "- Code examples"
     $prompt += "- Tables for parameters/options"
     $prompt += "- Diagrams where helpful (Mermaid format)"
-    
+
     return $prompt -join "`n"
 }
 
 # Generate testing prompt
 function New-TestingPrompt {
     param($Data)
-    
+
     $prompt = @()
     $prompt += "# Test Generation Request"
     $prompt += ""
     $prompt += "Generate comprehensive tests for the following $($Data.Type) data/implementation:"
     $prompt += ""
-    
+
     $prompt += "## Test Requirements"
     $prompt += "1. **Unit Tests**: Test individual functions/components"
     $prompt += "2. **Integration Tests**: Test component interactions"
@@ -560,13 +560,13 @@ function New-TestingPrompt {
     $prompt += "4. **Error Conditions**: Test failure scenarios"
     $prompt += "5. **Performance Tests**: If applicable"
     $prompt += ""
-    
+
     $prompt += "## Data to Test"
     $prompt += '```json'
     $prompt += ($Data.Content | ConvertTo-Json -Depth 2 -Compress | Select-Object -First 1000)
     $prompt += '```'
     $prompt += ""
-    
+
     $prompt += "## Test Framework"
     $prompt += "Use Pester 5.0+ with:"
     $prompt += "- Proper test structure (Describe/Context/It)"
@@ -574,7 +574,7 @@ function New-TestingPrompt {
     $prompt += "- Assert all critical paths"
     $prompt += "- Include performance benchmarks"
     $prompt += "- Generate code coverage"
-    
+
     return $prompt -join "`n"
 }
 
@@ -584,29 +584,29 @@ function Apply-CustomTemplate {
         $Data,
         [string]$Template
     )
-    
+
     # Replace tokens in template
     $result = $Template
-    
+
     # Standard replacements
     $result = $result -replace '\{DataType\}', $Data.Type
     $result = $result -replace '\{Source\}', $Data.Source
     $result = $result -replace '\{Timestamp\}', (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-    
+
     # Data content as JSON
     $jsonContent = $Data.Content | ConvertTo-Json -Depth 3 -Compress
     $result = $result -replace '\{Content\}', $jsonContent
-    
+
     # Metadata replacements
     foreach ($key in $Data.Metadata.Keys) {
         $result = $result -replace "\{Metadata\.$key\}", $Data.Metadata[$key]
     }
-    
+
     # Context replacements
     foreach ($key in $Context.Keys) {
         $result = $result -replace "\{Context\.$key\}", $Context[$key]
     }
-    
+
     return $result
 }
 
@@ -616,56 +616,56 @@ function Compress-Prompt {
         [string]$Prompt,
         [int]$MaxTokens
     )
-    
+
     $tokens = [math]::Ceiling($Prompt.Length / 4)
-    
+
     if ($tokens -le $MaxTokens) {
         return $Prompt
     }
-    
+
     Write-Warning "Prompt exceeds token limit ($tokens > $MaxTokens). Compressing..."
-    
+
     # Compression strategies
     # 1. Remove code examples
     $compressed = $Prompt -replace '```[\s\S]*?```', '[Code removed for brevity]'
-    
+
     # 2. Truncate long lists
     $compressed = $compressed -replace '(\n- [^\n]+){6,}', '$1`n- ... [Additional items truncated]'
-    
+
     # 3. Remove extra whitespace
     $compressed = $compressed -replace '\n{3,}', "`n`n"
-    
+
     $newTokens = [math]::Ceiling($compressed.Length / 4)
     Write-Host "Compressed from $tokens to $newTokens tokens" -ForegroundColor Gray
-    
+
     return $compressed
 }
 
 # Main execution
 try {
     Write-Host "🤖 Generating AI prompt from data..." -ForegroundColor Cyan
-    
+
     # Validate input
     if (-not (Test-Path $inputValuePath)) {
         throw "Input path not found: $inputValuePath"
     }
-    
+
     # Detect or validate data type
     if ($DataType -eq 'Auto') {
         $DataType = Get-DataType -Path $inputValuePath
         Write-Host "   Detected data type: $DataType" -ForegroundColor Gray
     }
-    
+
     # Parse the data
     Write-Host "   Parsing $DataType data..." -ForegroundColor Gray
     $parsedData = Parse-StructuredData -Path $inputValuePath -Type $DataType
-    
+
     # Add context
     $parsedData.Context = $Context
-    
+
     # Generate prompt based on template
     Write-Host "   Generating $PromptTemplate prompt..." -ForegroundColor Gray
-    
+
     $generatedPrompt = switch ($PromptTemplate) {
         'Analysis' { New-AnalysisPrompt -Data $parsedData }
         'Implementation' { New-ImplementationPrompt -Data $parsedData }
@@ -679,24 +679,24 @@ try {
             Apply-CustomTemplate -Data $parsedData -Template $CustomTemplate
         }
     }
-    
+
     # Add footer with metadata
     $generatedPrompt += "`n`n---`n"
     $generatedPrompt += "*Generated from: $inputValuePath*`n"
     $generatedPrompt += "*Data Type: $DataType*`n"
     $generatedPrompt += "*Template: $PromptTemplate*`n"
     $generatedPrompt += "*Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*"
-    
+
     # Compress if needed
     $generatedPrompt = Compress-Prompt -Prompt $generatedPrompt -MaxTokens $MaxTokens
-    
+
     # Interactive mode - allow editing
     if ($Interactive) {
         Write-Host "`n📝 Generated Prompt Preview:" -ForegroundColor Cyan
         Write-Host ("=" * 80) -ForegroundColor DarkGray
         Write-Host ($generatedPrompt | Select-Object -First 50)
         Write-Host ("=" * 80) -ForegroundColor DarkGray
-        
+
         $response = Read-Host "`nEdit prompt before saving? (Y/N)"
         if ($response -eq 'Y') {
             # Open in default editor
@@ -704,18 +704,18 @@ try {
             if ($PSCmdlet.ShouldProcess($tempFile, 'Create Temporary File')) {
                 $generatedPrompt | Set-Content $tempFile
             }
-            
+
             if ($IsWindows) {
                 Start-Process notepad.exe -ArgumentList $tempFile -Wait
             } else {
                 Start-Process ${env:EDITOR:-nano} -ArgumentList $tempFile -Wait
             }
-            
+
             $generatedPrompt = Get-Content $tempFile -Raw
             Remove-Item $tempFile
         }
     }
-    
+
     # Save prompt
     $outputDir = Split-Path $OutputPath -Parent
     if ($outputDir -and -not (Test-Path $outputDir)) {
@@ -723,11 +723,11 @@ try {
             New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
         }
     }
-    
+
     if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Generated Prompt')) {
         $generatedPrompt | Set-Content $OutputPath -Encoding UTF8
     }
-    
+
     # Copy to clipboard if requested
     if ($CopyToClipboard) {
         if ($IsWindows) {
@@ -743,13 +743,13 @@ try {
             Write-Host "   📋 Copied to clipboard!" -ForegroundColor Green
         }
     }
-    
+
     # Summary
     Write-Host "`n✅ Prompt generated successfully!" -ForegroundColor Green
     Write-Host "   Output: $OutputPath" -ForegroundColor Gray
     Write-Host "   Size: $('{0:N0}' -f (Get-Item $OutputPath).Length) bytes" -ForegroundColor Gray
     Write-Host "   Tokens: ~$([math]::Ceiling($generatedPrompt.Length / 4))" -ForegroundColor Gray
-    
+
     # Show usage examples
     if ($GenerateCode) {
         Write-Host "`n📌 Example Usage:" -ForegroundColor Cyan
@@ -759,7 +759,7 @@ try {
         Write-Host "   # Chain with other tools:" -ForegroundColor Gray
         Write-Host "   seq 0830 -InputPath ./data.json | seq 0821" -ForegroundColor DarkGray
     }
-    
+
     exit 0
 }
 catch {

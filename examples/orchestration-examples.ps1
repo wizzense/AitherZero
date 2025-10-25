@@ -59,11 +59,11 @@ Write-Host "`n=== Example 7: CI/CD Pipeline ===" -ForegroundColor Cyan
       # Setup environment
       $env:AITHERZERO_PROFILE = "Production"
       $env:AITHERZERO_SEQUENCE = "0000-0299,0300,0500"
-      
+
       # Import and run
       Import-Module ./domains/automation/OrchestrationEngine.psm1
       $result = seq $env:AITHERZERO_SEQUENCE -Profile $env:AITHERZERO_PROFILE
-      
+
       # Check results
       if ($result.Failed -gt 0) {
           throw "Deployment failed: $($result.Failed) scripts failed"

@@ -35,7 +35,7 @@ if (-not (Get-Variable -Name "AitherZeroInfrastructureInitialized" -Scope Global
 
 function Test-OpenTofu {
     Write-InfraLog -Level Debug -Message "Testing infrastructure tool availability"
-    
+
     try {
         $null = Get-Command tofu -ErrorAction Stop
         Write-InfraLog -Message "OpenTofu found and available"
@@ -77,9 +77,9 @@ function Invoke-InfrastructureToolCommand {
         [string]$Tool,
         [string[]]$Arguments
     )
-    
+
     Write-InfraLog -Level Debug -Message "Executing $Tool with arguments: $($Arguments -join ' ')"
-    
+
     try {
         & $Tool @Arguments
         Write-InfraLog -Level Debug -Message "Successfully executed: $Tool $($Arguments -join ' ')"
@@ -102,10 +102,10 @@ function Invoke-InfrastructurePlan {
         Write-Host "Infrastructure directory not found: $WorkingDirectory" -ForegroundColor Red
         return
     }
-    
+
     $tool = Get-InfrastructureTool
     Write-Host "Using $tool for infrastructure planning..." -ForegroundColor Cyan
-    
+
     Push-Location $WorkingDirectory
     try {
         Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('init')
@@ -126,10 +126,10 @@ function Invoke-InfrastructureApply {
         Write-Host "Infrastructure directory not found: $WorkingDirectory" -ForegroundColor Red
         return
     }
-    
+
     $tool = Get-InfrastructureTool
     Write-Host "Using $tool for infrastructure deployment..." -ForegroundColor Cyan
-    
+
     Push-Location $WorkingDirectory
     try {
         Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('init')
@@ -154,7 +154,7 @@ function Invoke-InfrastructureDestroy {
         Write-Host "Infrastructure directory not found: $WorkingDirectory" -ForegroundColor Red
         return
     }
-    
+
     $tool = Get-InfrastructureTool
     Write-Host "Using $tool for infrastructure destruction..." -ForegroundColor Red
 
@@ -165,7 +165,7 @@ function Invoke-InfrastructureDestroy {
             return
         }
     }
-    
+
     Push-Location $WorkingDirectory
     try {
         if ($AutoApprove) {

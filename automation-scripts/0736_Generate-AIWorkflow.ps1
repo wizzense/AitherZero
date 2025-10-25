@@ -23,10 +23,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Requirements,
-    
+
     [ValidateSet('Deployment', 'Testing', 'Monitoring', 'Custom')]
     [string]$WorkflowType = 'Custom',
-    
+
     [string]$OutputPath = "./orchestration/playbooks/generated"
 )
 
@@ -69,12 +69,12 @@ Write-Host ""
 if ($PSCmdlet.ShouldProcess("$OutputPath", "Generate AI workflow and playbooks")) {
     Start-Sleep -Seconds 1
     Write-Host "✓ Workflow generated (stub)" -ForegroundColor Green
-    
+
     # Additional state-changing operations for file creation
     if ($PSCmdlet.ShouldProcess("playbook files", "Create orchestration playbook files in $OutputPath")) {
         Write-Host "✓ Playbook files created (stub)" -ForegroundColor Green
     }
-    
+
     # Visualization file generation if enabled
     if ($workflowConfig.VisualizationEnabled -and $PSCmdlet.ShouldProcess("visualization files", "Generate workflow visualization diagrams")) {
         Write-Host "✓ Workflow visualization generated (stub)" -ForegroundColor Green

@@ -44,20 +44,20 @@ try {
     if ($IsWindows -or [System.Environment]::OSVersion.Platform -eq 'Win32NT') {
         # Windows
         $pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-        
+
         if (-not $pwshPath) {
             Write-ScriptLog "Installing PowerShell 7 for Windows..."
 
             # Download and install
             $installerUrl = 'https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.msi'
             $installerPath = Join-Path $env:TEMP 'PowerShell-7.msi'
-            
+
             Write-ScriptLog "Downloading PowerShell 7 installer..."
             Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath -UseBasicParsing
-            
+
             Write-ScriptLog "Running PowerShell 7 installer..."
             $installArgs = @('/i', $installerPath, '/quiet', 'ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1', 'ENABLE_PSREMOTING=1', 'REGISTER_MANIFEST=1')
-            
+
             $process = Start-Process -FilePath 'msiexec.exe' -ArgumentList $installArgs -Wait -PassThru -NoNewWindow
 
             if ($process.ExitCode -ne 0) {
@@ -73,7 +73,7 @@ try {
                 $pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
             }
         }
-        
+
     } else {
         # Linux/macOS - this script shouldn't normally run there as bootstrap.sh handles it
         Write-ScriptLog "Non-Windows platform detected. PowerShell 7 should be installed by bootstrap.sh" -Level 'Warning'
@@ -83,14 +83,14 @@ try {
     if ($pwshPath -and (Test-Path $pwshPath)) {
         Write-ScriptLog "PowerShell 7 is installed at: $pwshPath"
         Write-ScriptLog "IMPORTANT: This script needs to be re-run with PowerShell 7"
-        
+
         # Signal to the automation engine that we need to restart with pwsh
         Write-Host "RESTART_WITH_PWSH"
         exit 200  # Special exit code to indicate restart needed
     } else {
         throw "PowerShell 7 installation completed but pwsh not found"
     }
-    
+
 } catch {
     Write-ScriptLog "Failed to install PowerShell 7: $_" -Level 'Error'
     exit 1

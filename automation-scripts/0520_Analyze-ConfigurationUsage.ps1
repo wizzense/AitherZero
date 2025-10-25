@@ -43,7 +43,7 @@ function Analyze-ConfigurationUsage {
     if ($UseCache) {
         $cacheKey = "config-usage-$(Get-FileHash -Path $ConfigPath)"
         $cachedResults = Get-CachedResults -CacheKey $cacheKey
-        
+
         if ($cachedResults) {
             Write-AnalysisLog "Using cached results" -Component "ConfigUsage" -Level Success
             return $cachedResults
@@ -56,7 +56,7 @@ function Analyze-ConfigurationUsage {
         Write-AnalysisLog "Configuration file not found: $ConfigPath" -Component "ConfigUsage" -Level Error
         return @{ Error = "config.psd1 not found"; Path = $configFullPath }
     }
-    
+
     $config = Import-PowerShellDataFile $configFullPath
 
     # Initialize results
@@ -83,7 +83,7 @@ function Analyze-ConfigurationUsage {
             Unused = @()
             Usage = @{}
         }
-        
+
         # Analyze each setting in the section
         foreach ($setting in $section.Value.PSObject.Properties) {
             $settingPath = "$sectionName.$($setting.Name)"
@@ -99,7 +99,7 @@ function Analyze-ConfigurationUsage {
                 [regex]::Escape("`$config.$settingPath")
                 [regex]::Escape("`$$sectionName.$($setting.Name)")
             )
-        
+
             $found = $false
             $locations = @()
 
@@ -107,13 +107,13 @@ function Analyze-ConfigurationUsage {
             $maxConcurrency = 8
             $batchSize = [Math]::Ceiling($files.Count / $maxConcurrency)
             $searchJobs = @()
-            
+
             for ($i = 0; $i -lt $files.Count; $i += $batchSize) {
                 $batch = $files[$i..([Math]::Min($i + $batchSize - 1, $files.Count - 1))]
                 $searchJobs += Start-ThreadJob -ScriptBlock {
                     param($FileBatch, $Patterns)
                     $foundMatches = @()
-                    
+
                     foreach ($file in $FileBatch) {
                         try {
                             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
@@ -131,7 +131,7 @@ function Analyze-ConfigurationUsage {
                             Write-Debug "Skipping file $($file.FullName): $_"
                         }
                     }
-                    
+
                     return $foundMatches
                 } -ArgumentList $batch, $searchPatterns
             }
@@ -150,7 +150,7 @@ function Analyze-ConfigurationUsage {
                     Remove-Job $job -Force -ErrorAction SilentlyContinue
                 }
             }
-            
+
             $locations = $searchResults | Where-Object { $_ } | ForEach-Object { $_.Replace($script:ProjectRoot, '.') }
 
             if ($locations.Count -gt 0) {
@@ -176,11 +176,11 @@ function Analyze-ConfigurationUsage {
                 Write-AnalysisLog "  $settingPath`: $(if ($found) { "Used in $($locations.Count) files" } else { "Not used" })" -Component "ConfigUsage"
             }
         }
-        
+
         $sectionUsage.UsagePercentage = if ($sectionUsage.Total -gt 0) {
             [Math]::Round(($sectionUsage.Used / $sectionUsage.Total) * 100, 2)
         } else { 0 }
-        
+
         $usage.BySection[$sectionName] = $sectionUsage
     }
 
@@ -188,7 +188,7 @@ function Analyze-ConfigurationUsage {
     $usage.UsagePercentage = if ($usage.TotalSettings -gt 0) {
         [Math]::Round(($usage.UsedSettings / $usage.TotalSettings) * 100, 2)
     } else { 0 }
-    
+
     $usage.ScanEndTime = Get-Date
     $usage.Duration = $usage.ScanEndTime - $usage.ScanStartTime
 
@@ -198,14 +198,14 @@ function Analyze-ConfigurationUsage {
             Set-CachedResults -CacheKey $cacheKey -Results $usage -DependentFiles @($configFullPath)
         }
     }
-    
+
     return $usage
 }
 
 # Main execution
 try {
     Write-AnalysisLog "=== Configuration Usage Analysis ===" -Component "ConfigUsage"
-    
+
     $results = Analyze-ConfigurationUsage
 
     # Save results
@@ -225,18 +225,18 @@ try {
             else { 'Red' }
         )
     Write-Host "  Analysis Duration: $($results.Duration.TotalSeconds.ToString('F2')) seconds"
-        
+
         if ($results.UnusedSettings.Count -gt 0 -and $Detailed) {
             Write-Host "`nUnused Settings:" -ForegroundColor Yellow
             $results.UnusedSettings | ForEach-Object { Write-Host "  - $_" }
         }
-        
+
         Write-Host "`nDetailed results saved to: $outputFile" -ForegroundColor Green
     } else {
         Write-Host "Analysis failed: $($results.Error)" -ForegroundColor Red
         exit 1
     }
-    
+
     exit 0
 } catch {
     Write-AnalysisLog "Configuration usage analysis failed: $_" -Component "ConfigUsage" -Level Error

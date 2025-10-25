@@ -22,15 +22,15 @@
 .EXAMPLE
     # Interactive mode
     .\Start-AitherZero.ps1
-    
+
 .EXAMPLE
     # Run specific sequence
     .\Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0000-0099"
-    
+
 .EXAMPLE
     # Non-interactive with profile
     .\Start-AitherZero.ps1 -NonInteractive -Profile Developer
-    
+
 .EXAMPLE
     # Run playbook with specific profile
     .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook tech-debt-analysis -PlaybookProfile quick
@@ -39,34 +39,34 @@
 param(
     [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test')]
     [string]$Mode = 'Interactive',
-    
+
     [string[]]$Sequence,
-    
+
     [string]$ConfigPath,
-    
+
     [switch]$NonInteractive,
-    
+
     [ValidateSet('Minimal', 'Standard', 'Developer', 'Full')]
     [string]$ProfileName,
-    
+
     [string]$Playbook,
-    
+
     [string]$PlaybookProfile,
-    
+
     [switch]$DryRun,
-    
+
     [switch]$Version,
-    
+
     [switch]$Help,
-    
+
     [switch]$CI,
-    
+
     [hashtable]$Variables,
-    
+
     [switch]$Sequential,
-    
+
     [switch]$Parallel,
-    
+
     # Catch any extra arguments that might come from shell redirection
     [Parameter(ValueFromRemainingArguments)]
     [object[]]$RemainingArguments
@@ -122,7 +122,7 @@ function Show-Banner {
         "        Aitherium™ Automation Platform v1.0",
         "        PowerShell 7 | Cross-Platform | Orchestrated"
     )
-    
+
     # Define gradient colors from light blue to light pink
     $gradientColors = @(
         "`e[38;2;173;216;230m",  # Light Blue
@@ -134,7 +134,7 @@ function Show-Banner {
         "`e[38;2;245;174;254m",  # Pink-Purple
         "`e[38;2;255;182;193m"   # Light Pink
     )
-    
+
     # Display each line with gradient color
     for ($i = 0; $i -lt $bannerLines.Count; $i++) {
         Write-Host "$($gradientColors[$i])$($bannerLines[$i])`e[0m"
@@ -145,24 +145,24 @@ function Show-Banner {
 # Show help information
 function Show-Help {
     if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
-        try { Clear-Host } catch { }
+        try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
     }
     Show-UIBorder -Title "AitherZero Help" -Style 'Double'
-    
+
     Write-UIText "Quick Commands:" -Color 'Primary'
     Write-UIText "  seq 0000-0099        # Run scripts 0000 through 0099" -Color 'Info'
     Write-UIText "  seq 02*              # Run all 0200-0299 scripts" -Color 'Info'
     Write-UIText "  seq stage:Core       # Run all Core stage scripts" -Color 'Info'
     Write-UIText "  seq 0001,0207,0210   # Run specific scripts" -Color 'Info'
     Write-UIText "" -Color 'Info'
-    
+
     Write-UIText "Profiles:" -Color 'Primary'
     Write-UIText "  Minimal    - Core infrastructure only" -Color 'Info'
     Write-UIText "  Standard   - Production-ready setup" -Color 'Info'
     Write-UIText "  Developer  - Full development environment" -Color 'Info'
     Write-UIText "  Full       - Everything including optional components" -Color 'Info'
     Write-UIText "" -Color 'Info'
-    
+
     Write-UIText "Command Line Usage:" -Color 'Primary'
     Write-UIText "  -Mode Orchestrate -Sequence '0000-0099'" -Color 'Info'
     Write-UIText "  -Mode Orchestrate -Playbook 'infrastructure-lab'" -Color 'Info'
@@ -190,12 +190,12 @@ function Initialize-CoreModules {
         # Check if already loaded and avoid repeated imports in CI
         $moduleLoaded = Get-Module -Name "AitherZero"
         $shouldReload = -not $moduleLoaded -or (-not $env:AITHERZERO_CI -and -not $global:AitherZeroModuleLoaded)
-        
+
         if ($shouldReload) {
             Import-Module (Join-Path $script:ProjectRoot "AitherZero.psd1") -Force -Global
             $global:AitherZeroModuleLoaded = $true
         }
-        
+
         # Initialize UI if available (without re-loading config)
         if (Get-Command Initialize-AitherUI -ErrorAction SilentlyContinue) {
             # Only initialize if not already done
@@ -204,7 +204,7 @@ function Initialize-CoreModules {
                 $global:AitherUIInitialized = $true
             }
         }
-    
+
         return @{
             Logging = (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) -ne $null
             Configuration = (Get-Command Get-Configuration -ErrorAction SilentlyContinue) -ne $null
@@ -248,15 +248,15 @@ function Get-AitherConfiguration {
 # Main Interactive Menu using Core UI
 function Show-InteractiveMenu {
     param($Config)
-    
+
     # Interactive menus are now always enabled unless in non-interactive mode
-    
+
     # Show banner only once at the start
     if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
-        try { Clear-Host } catch { }
+        try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
     }
     Show-Banner
-    
+
     while ($true) {
         # Build menu items
         $menuItems = @(
@@ -309,7 +309,7 @@ function Show-InteractiveMenu {
                     'H' = 'Help'
                 }
             }
-            
+
             $selection = Show-UIMenu @menuParams
         }
         catch {
@@ -318,12 +318,12 @@ function Show-InteractiveMenu {
             # Don't clear screen, just continue to menu
             continue
         }
-    
+
         # Handle null selection
         if (-not $selection) {
             continue
         }
-        
+
         # Handle selection
         if ($selection.Action -eq 'Q') {
             Show-UINotification -Message "Thank you for using AitherZero!" -Type 'Success'
@@ -362,7 +362,7 @@ function Show-InteractiveMenu {
 # Quick Setup
 function Invoke-QuickSetup {
     param($Config)
-    
+
     $ProfileNameSequence = switch ($Config.Core.Profile) {
         'Minimal' { "0000-0099,0207" }
         'Standard' { "0000-0199,0207,0201" }
@@ -371,7 +371,7 @@ function Invoke-QuickSetup {
     }
 
     Show-UINotification -Message "Starting $($Config.Core.Profile) profile setup" -Type 'Info' -Title "Quick Setup"
-    
+
     # Call directly instead of in scriptblock to avoid scope issues
     $result = Invoke-OrchestrationSequence -Sequence $ProfileNameSequence -Configuration $Config
 
@@ -387,19 +387,19 @@ function Invoke-QuickSetup {
 # Orchestration Menu
 function Invoke-OrchestrationMenu {
     param($Config)
-    
+
     $sequence = Show-UIPrompt -Message "Enter orchestration sequence (e.g., 0001-0099,0201,stage:Core)"
 
     if ($sequence) {
         $dryRun = Show-UIPrompt -Message "Perform dry run first?" -ValidateSet @('Yes', 'No') -DefaultValue 'Yes'
-        
+
         $variables = @{}
         if ($CI) { $variables['CI'] = $true }
-        
+
         if ($dryRun -eq 'Yes') {
             Show-UINotification -Message "Running dry run..." -Type 'Info'
             $result = Invoke-OrchestrationSequence -Sequence $sequence -Configuration $Config -Variables $variables -DryRun
-            
+
             $proceed = Show-UIPrompt -Message "Dry run complete. Proceed with execution?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
             if ($proceed -eq 'Yes') {
                 $result = Invoke-OrchestrationSequence -Sequence $sequence -Configuration $Config -Variables $variables
@@ -408,14 +408,14 @@ function Invoke-OrchestrationMenu {
             $result = Invoke-OrchestrationSequence -Sequence $sequence -Configuration $Config -Variables $variables
         }
 }
-    
+
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Playbook Menu
 function Invoke-PlaybookMenu {
     param($Config)
-    
+
     $playbookDir = Join-Path $script:ProjectRoot "orchestration/playbooks"
     if (-not (Test-Path $playbookDir)) {
         Show-UINotification -Message "No playbooks directory found" -Type 'Error'
@@ -427,10 +427,10 @@ function Invoke-PlaybookMenu {
     $playbooks = Get-ChildItem $playbookDir -Filter "*.json" -Recurse | ForEach-Object {
         $pb = Get-Content $_.FullName | ConvertFrom-Json
         # Get category from parent directory if in a subdirectory
-        $category = if ($_.Directory.Name -ne 'playbooks') { 
-            $_.Directory.Name 
-        } else { 
-            'general' 
+        $category = if ($_.Directory.Name -ne 'playbooks') {
+            $_.Directory.Name
+        } else {
+            'general'
         }
         [PSCustomObject]@{
             Name = if ($category -ne 'general' -and $category -ne 'archive') { "[$category] $($pb.Name)" } else { $pb.Name }
@@ -454,21 +454,21 @@ function Invoke-PlaybookMenu {
         $variables = @{}
         if ($CI) { $variables['CI'] = $true }
         $result = Invoke-OrchestrationSequence -LoadPlaybook $selection.Name -Configuration $Config -Variables $variables
-        
+
         if ($result.Failed -eq 0) {
             Show-UINotification -Message "Playbook completed successfully!" -Type 'Success'
         } else {
             Show-UINotification -Message "Playbook completed with errors" -Type 'Error'
         }
 }
-    
+
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Testing Menu
 function Invoke-TestingMenu {
     param($Config)
-    
+
     $testItems = @(
         [PSCustomObject]@{
             Name = "Run Unit Tests"
@@ -506,13 +506,13 @@ function Invoke-TestingMenu {
 
     if ($selection) {
         Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
-        
+
         if ($selection.Sequence) {
             $result = Invoke-OrchestrationSequence -Sequence $selection.Sequence -Configuration $Config
         } elseif ($selection.Playbook) {
             $result = Invoke-OrchestrationSequence -LoadPlaybook $selection.Playbook -Configuration $Config
         }
-        
+
         # Only prompt if successful (errors already prompt)
         if (-not $result -or $result.Failed -eq 0) {
             Show-UIPrompt -Message "Press Enter to continue" | Out-Null
@@ -523,7 +523,7 @@ function Invoke-TestingMenu {
 # Infrastructure Menu
 function Invoke-InfrastructureMenu {
     param($Config)
-    
+
     $infraItems = @(
         [PSCustomObject]@{
             Name = "Install Hyper-V"
@@ -551,7 +551,7 @@ function Invoke-InfrastructureMenu {
 
     if ($selection) {
         $confirm = Show-UIPrompt -Message "This may modify your system. Continue?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
-        
+
         if ($confirm -eq 'Yes') {
             Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
 
@@ -562,14 +562,14 @@ function Invoke-InfrastructureMenu {
             }
     }
 }
-    
+
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Development Menu
 function Invoke-DevelopmentMenu {
     param($Config)
-    
+
     $devItems = @(
         [PSCustomObject]@{
             Name = "Git Status"
@@ -579,7 +579,7 @@ function Invoke-DevelopmentMenu {
         [PSCustomObject]@{
             Name = "Create Feature Branch"
             Description = "Create a new feature branch"
-            Command = { 
+            Command = {
                 $name = Show-UIPrompt -Message "Feature name"
                 if ($name) { git checkout -b "feature/$name" }
             }
@@ -605,20 +605,20 @@ function Invoke-DevelopmentMenu {
             $result = Invoke-OrchestrationSequence -Sequence $selection.Sequence -Configuration $Config
         }
 }
-    
+
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Reports & Logs Menu
 function Invoke-ReportsAndLogsMenu {
     param($Config)
-    
+
     # Import LogViewer module if not already loaded
     $logViewerPath = Join-Path $script:ProjectRoot "domains/utilities/LogViewer.psm1"
     if (Test-Path $logViewerPath) {
         Import-Module $logViewerPath -Force -ErrorAction SilentlyContinue
     }
-    
+
     $reportItems = @(
         [PSCustomObject]@{
             Name = "View Latest Logs"
@@ -677,12 +677,12 @@ function Invoke-ReportsAndLogsMenu {
             Parameters = @{ Mode = 'Status' }
         }
     )
-    
+
     $selection = Show-UIMenu -Title "Reports & Logs" -Items $reportItems -ShowNumbers
-    
+
     if ($selection) {
         Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
-        
+
         if ($selection.Sequence) {
             # Build parameters for the script
             $scriptParams = $Config.Clone()
@@ -691,18 +691,18 @@ function Invoke-ReportsAndLogsMenu {
                     $scriptParams[$key] = $selection.Parameters[$key]
                 }
             }
-            
+
             $result = Invoke-OrchestrationSequence -Sequence $selection.Sequence -Configuration $scriptParams
         }
     }
-    
+
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Advanced menu using UI module
 function Show-AdvancedMenu {
     param($Config)
-    
+
     while ($true) {
         $advancedItems = @(
             [PSCustomObject]@{
@@ -732,11 +732,11 @@ function Show-AdvancedMenu {
     )
 
         $selection = Show-UIMenu -Title "Advanced Options" -Items $advancedItems -ShowNumbers -CustomActions @{ 'B' = 'Back to Main Menu' }
-        
+
         if ($selection.Action -eq 'B') {
             return
         }
-    
+
         switch ($selection.Name) {
             'Change Profile' {
                 $ProfileNames = @(
@@ -745,14 +745,14 @@ function Show-AdvancedMenu {
                     [PSCustomObject]@{ Name = 'Developer'; Description = 'Full development environment' },
                     [PSCustomObject]@{ Name = 'Full'; Description = 'Everything including optional components' }
                 )
-        
+
                 $newProfile = Show-UIMenu -Title "Select Profile" -Items $ProfileNames -ShowNumbers
                 if ($newProfile) {
                     $Config.Core.Profile = $newProfile.Name
                     Show-UINotification -Message "Profile changed to: $($newProfile.Name)" -Type 'Success'
                 }
         }
-        
+
             'Edit Configuration' {
                 $configPath = Join-Path $script:ProjectRoot 'config.psd1'
                 if ($IsWindows) {
@@ -763,7 +763,7 @@ function Show-AdvancedMenu {
                 }
             Show-UINotification -Message "Configuration may have changed. Restart to apply changes." -Type 'Info'
             }
-        
+
             'Create Playbook' {
                 # Use wizard for playbook creation
                 $wizardSteps = @(
@@ -800,21 +800,21 @@ function Show-AdvancedMenu {
                         }
                 }
             )
-        
+
                 $result = Show-UIWizard -Steps $wizardSteps -Title "Create Playbook"
-                
+
                 if ($result) {
                     Save-OrchestrationPlaybook -Name $result.Name -Sequence $result.Sequence -Variables ($result.Variables + @{Description = $result.Description})
                     Show-UINotification -Message "Playbook '$($result.Name)' created successfully!" -Type 'Success'
                 }
         }
-        
+
             'System Information' {
                 if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
-                    try { Clear-Host } catch { }
+                    try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
                 }
                 Show-UIBorder -Title "System Information" -Style 'Double'
-                
+
                 $sysInfo = @(
                     [PSCustomObject]@{ Property = "PowerShell"; Value = $PSVersionTable.PSVersion },
                     [PSCustomObject]@{ Property = "OS"; Value = $PSVersionTable.OS },
@@ -822,13 +822,13 @@ function Show-AdvancedMenu {
                     [PSCustomObject]@{ Property = "Project Root"; Value = $script:ProjectRoot },
                     [PSCustomObject]@{ Property = "Current Profile"; Value = $Config.Core.Profile }
                 )
-        
+
                 Show-UITable -Data $sysInfo -Title "System Details"
-                
+
                 Write-UIText "`nChecking Dependencies..." -Color 'Info'
                 $deps = @('git', 'node', 'tofu', 'docker', 'pwsh')
                 $depStatus = @()
-                
+
                 foreach ($dep in $deps) {
                     try {
                         $version = & $dep --version 2>&1 | Select-Object -First 1
@@ -845,11 +845,11 @@ function Show-AdvancedMenu {
                         }
                 }
             }
-            
+
                 Show-UITable -Data $depStatus -Title "Dependencies"
                 Show-UIPrompt -Message "Press Enter to continue" | Out-Null
             }
-        
+
             'Run Single Script' {
                 # Allow direct 4-digit script number input or category selection
                 Write-UIText "Script Execution Options:" -Color 'Cyan'
@@ -857,12 +857,12 @@ function Show-AdvancedMenu {
                 Write-UIText "2. Browse by category" -Color 'Info'
                 Write-UIText "3. Search by keyword" -Color 'Info'
                 Write-UIText ""
-                
+
                 $scriptInput = Show-UIPrompt -Message "Enter script number, keyword, or press Enter for categories"
-                
+
                 $scriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
                 $selected = $null
-                
+
                 if ($scriptInput -match '^\d{4}$') {
                     # Direct script number entered
                     $scriptFile = Get-ChildItem $scriptsPath -Filter "${scriptInput}_*.ps1" | Select-Object -First 1
@@ -876,7 +876,7 @@ function Show-AdvancedMenu {
                     }
                 } elseif ($scriptInput -and $scriptInput -notmatch '^\d{4}$') {
                     # Search by keyword
-                    $scripts = Get-ChildItem $scriptsPath -Filter "*.ps1" | 
+                    $scripts = Get-ChildItem $scriptsPath -Filter "*.ps1" |
                         Where-Object { $_.Name -match '^\d{4}_' -and $_.Name -like "*$scriptInput*" } |
                         ForEach-Object {
                             [PSCustomObject]@{
@@ -884,7 +884,7 @@ function Show-AdvancedMenu {
                                 Description = $_.Name -replace '^\d{4}_' -replace '\.ps1$' -replace '-', ' '
                             }
                         }
-                    
+
                     if ($scripts.Count -eq 0) {
                         Show-UINotification -Message "No scripts found matching '$scriptInput'" -Type 'Warning'
                     } elseif ($scripts.Count -eq 1) {
@@ -907,25 +907,25 @@ function Show-AdvancedMenu {
                         [PSCustomObject]@{ Name = "9000-9999 - Maintenance"; Range = "9" }
                         [PSCustomObject]@{ Name = "Show All Scripts"; Range = "all" }
                     )
-                    
+
                     $categorySelection = Show-UIMenu -Title "Select Category" -Items $categories -ShowNumbers
-                    
+
                     if ($categorySelection) {
                         $scripts = if ($categorySelection.Range -eq "all") {
-                            Get-ChildItem $scriptsPath -Filter "*.ps1" | 
+                            Get-ChildItem $scriptsPath -Filter "*.ps1" |
                                 Where-Object { $_.Name -match '^\d{4}_' }
                         } else {
-                            Get-ChildItem $scriptsPath -Filter "*.ps1" | 
+                            Get-ChildItem $scriptsPath -Filter "*.ps1" |
                                 Where-Object { $_.Name -match "^$($categorySelection.Range)\d{2}_" }
                         }
-                        
+
                         $scripts = $scripts | ForEach-Object {
                             [PSCustomObject]@{
                                 Name = $_.Name
                                 Description = $_.Name -replace '^\d{4}_' -replace '\.ps1$' -replace '-', ' '
                             }
                         }
-                        
+
                         if ($scripts.Count -eq 0) {
                             Show-UINotification -Message "No scripts found in this category" -Type 'Warning'
                         } else {
@@ -933,7 +933,7 @@ function Show-AdvancedMenu {
                         }
                     }
                 }
-                
+
                 if ($selected) {
                     $confirm = Show-UIPrompt -Message "Execute $($selected.Name)?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
                     if ($confirm -eq 'Yes') {
@@ -945,10 +945,10 @@ function Show-AdvancedMenu {
                 }
             }
         }
-        
+
             'Module Manager' {
                 Show-UINotification -Message "Scanning for modules..." -Type 'Info'
-                
+
                 $modules = Get-ChildItem (Join-Path $script:ProjectRoot "domains") -Recurse -Filter "*.psm1" |
                     ForEach-Object {
                         $loaded = Get-Module -Name $_.BaseName -ErrorAction SilentlyContinue
@@ -958,11 +958,11 @@ function Show-AdvancedMenu {
                             Status = if ($loaded) { "Loaded" } else { "Not Loaded" }
                         }
                 }
-            
+
                 Show-UITable -Data $modules -Title "Domain Modules"
-                
+
                 $action = Show-UIPrompt -Message "Action" -ValidateSet @('Import All', 'Reload All', 'Cancel') -DefaultValue 'Cancel'
-                
+
                 if ($action -ne 'Cancel') {
                     $modules | ForEach-Object {
                         try {
@@ -975,7 +975,7 @@ function Show-AdvancedMenu {
             }
         }
     }
-    
+
         Show-UIPrompt -Message "Press Enter to continue" | Out-Null
     }
 }
@@ -992,7 +992,7 @@ try {
     # Check if UI module loaded successfully
     if (-not $modules.UI) {
         $errorMsg = "Failed to load UI module. Cannot continue in interactive mode."
-        
+
         # Log the error if logging is available
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'Error' -Message $errorMsg -Source "Start-AitherZero" -Data @{
@@ -1000,13 +1000,13 @@ try {
                 ModulesLoaded = $modules
             }
         }
-        
+
         Write-Error $errorMsg
         if ($Mode -eq 'Interactive') {
             exit 1
         }
     }
-    
+
     $config = Get-AitherConfiguration -Path $ConfigPath
 
     # Handle different modes
@@ -1018,7 +1018,7 @@ try {
             }
         Show-InteractiveMenu -Config $config
         }
-    
+
         'Orchestrate' {
             if (-not $Sequence -and -not $Playbook) {
                 Write-Error "Orchestrate mode requires -Sequence or -Playbook parameter"
@@ -1030,7 +1030,7 @@ try {
                 Write-Error "Orchestration module not loaded. Environment initialization may have failed."
                 exit 1
             }
-        
+
             # Use passed Variables parameter or create empty hashtable
             if (-not $Variables) {
                 $variables = @{}
@@ -1065,39 +1065,39 @@ try {
                 exit 1
             }
     }
-    
+
         'Validate' {
             & (Join-Path $script:ProjectRoot "automation-scripts/0500_Validate-Environment.ps1") -Configuration $config
         }
-    
+
         'Deploy' {
             # Ensure orchestration module is loaded
             if (-not (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue)) {
                 Write-Error "Orchestration module not loaded. Environment initialization may have failed."
                 exit 1
             }
-        
+
             $result = Invoke-OrchestrationSequence -Sequence "0105,0008,0300" -Configuration $config -DryRun:$DryRun
 
             if ($result.Failed -gt 0) {
                 exit 1
             }
         }
-        
+
         'Test' {
             # Ensure orchestration module is loaded
             if (-not (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue)) {
                 Write-Error "Orchestration module not loaded. Environment initialization may have failed."
                 exit 1
             }
-            
+
             # Default test sequence - unit tests, PSScriptAnalyzer, and syntax validation
             $testSequence = if ($Sequence) { $Sequence } else { @("0402", "0404", "0407") }
-            
+
             Write-Host "Running tests with sequence: $($testSequence -join ',')" -ForegroundColor Cyan
-            
+
             $result = Invoke-OrchestrationSequence -Sequence $testSequence -Configuration $config -DryRun:$DryRun
-            
+
             if ($result.Failed -gt 0) {
                 Write-Host "`nTest run completed with $($result.Failed) failures" -ForegroundColor Red
                 exit 1
@@ -1106,7 +1106,7 @@ try {
             }
         }
     }
-    
+
 } catch {
     $errorMessage = "Fatal error in Start-AitherZero"
     $errorDetails = @{
@@ -1116,22 +1116,22 @@ try {
         InvocationInfo = $_.InvocationInfo | ConvertTo-Json -Compress
         TargetObject = $_.TargetObject
     }
-    
+
     # Try to log if logging is available
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level 'Critical' -Message $errorMessage -Source "Start-AitherZero" -Data $errorDetails
     }
-    
+
     # Always write to console
     Write-Host "`n[CRITICAL ERROR]" -ForegroundColor Red
     Write-Host "Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "Type: $($_.Exception.GetType().FullName)" -ForegroundColor Red
     Write-Host "Location: $($_.InvocationInfo.PositionMessage)" -ForegroundColor Red
-    
+
     if ($VerbosePreference -eq 'Continue' -or $DebugPreference -eq 'Continue') {
         Write-Host "`nStack Trace:" -ForegroundColor Yellow
         Write-Host $_.ScriptStackTrace -ForegroundColor Yellow
     }
-    
+
     exit 1
 }

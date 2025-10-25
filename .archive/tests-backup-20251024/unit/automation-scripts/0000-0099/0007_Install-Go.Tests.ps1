@@ -2,7 +2,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0007_Install-Go.ps1"
-    
+
     # Mock external dependencies
     Mock Write-Host { }
     Mock Write-Warning { }
@@ -38,13 +38,13 @@ Describe "0007_Install-Go" {
         It "Should skip installation when not enabled in configuration" {
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $false } } }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
         It "Should skip installation when configuration is missing" {
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Not -Throw
         }
 
@@ -52,7 +52,7 @@ Describe "0007_Install-Go" {
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             Mock Write-ScriptLog { }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "go" }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -61,7 +61,7 @@ Describe "0007_Install-Go" {
         It "Should exit early if Go is already installed" {
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "go" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -69,7 +69,7 @@ Describe "0007_Install-Go" {
         It "Should check GOPATH when Go is installed" {
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "go" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -80,11 +80,11 @@ Describe "0007_Install-Go" {
             Mock Invoke-WebRequest { throw "Should not download in WhatIf mode" }
             Mock Start-Process { throw "Should not install in WhatIf mode" }
             Mock Expand-Archive { throw "Should not extract in WhatIf mode" }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "go" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
             Should -Not -Invoke Invoke-WebRequest
             Should -Not -Invoke Start-Process
@@ -102,10 +102,10 @@ Describe "0007_Install-Go" {
                     }
                 }
             }
-            
+
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "go" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -118,11 +118,11 @@ Describe "0007_Install-Go" {
                     }
                 }
             }
-            
+
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "go" }
             Mock Invoke-WebRequest { @{ Content = "go1.22.0" } } -ParameterFilter { $Uri -like "*VERSION*" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -135,11 +135,11 @@ Describe "0007_Install-Go" {
                     }
                 }
             }
-            
+
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "go" }
             Mock Invoke-WebRequest { throw "Network error" } -ParameterFilter { $Uri -like "*VERSION*" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -153,7 +153,7 @@ Describe "0007_Install-Go" {
             Mock Start-Process { @{ ExitCode = 0 } }
             Mock [Environment]::SetEnvironmentVariable { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -163,7 +163,7 @@ Describe "0007_Install-Go" {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "go" }
             Mock Start-Process { @{ ExitCode = 1 } }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -174,7 +174,7 @@ Describe "0007_Install-Go" {
             Mock [Environment]::GetEnvironmentVariable { "C:\\existing\\path" }
             Mock [Environment]::SetEnvironmentVariable { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -191,7 +191,7 @@ Describe "0007_Install-Go" {
             Mock Get-Content { 'export PATH=$PATH:/usr/local/go/bin' }
             Mock Add-Content { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -200,7 +200,7 @@ Describe "0007_Install-Go" {
             Mock Get-Variable { @{ Value = $true } } -ParameterFilter { $Name -eq "IsLinux" }
             Mock [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture { "Arm64" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -212,7 +212,7 @@ Describe "0007_Install-Go" {
             Mock Get-Command { @{ Name = "brew" } } -ParameterFilter { $Name -eq "brew" }
             Mock Start-Process { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -223,7 +223,7 @@ Describe "0007_Install-Go" {
             Mock [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture { "Arm64" }
             Mock Start-Process { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -236,7 +236,7 @@ Describe "0007_Install-Go" {
             Mock Test-Path { $false } -ParameterFilter { $Path -like "*\\go\\*" -or $Path -like "*/go/*" }
             Mock New-Item { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -250,11 +250,11 @@ Describe "0007_Install-Go" {
                     }
                 }
             }
-            
+
             Mock Test-Path { $true }
             Mock Start-Process { @{ ExitCode = 0 } }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -265,7 +265,7 @@ Describe "0007_Install-Go" {
             Mock Get-Variable { @{ Value = $false } } -ParameterFilter { $Name -eq "IsLinux" }
             Mock Get-Variable { @{ Value = $false } } -ParameterFilter { $Name -eq "IsMacOS" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -276,7 +276,7 @@ Describe "0007_Install-Go" {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "go" }
             Mock Invoke-WebRequest { throw "Network error" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -287,7 +287,7 @@ Describe "0007_Install-Go" {
             Mock Test-Path { $false } -ParameterFilter { $Path -like "*go.exe" }
             Mock Start-Process { @{ ExitCode = 1 } }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -299,7 +299,7 @@ Describe "0007_Install-Go" {
             Mock Get-Command { @{ Name = "Write-CustomLog" } } -ParameterFilter { $Name -eq "Write-CustomLog" }
             Mock Write-CustomLog { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ Go = @{ Install = $false } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
             Should -Invoke Write-CustomLog -AtLeast 1

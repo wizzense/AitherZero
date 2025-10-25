@@ -2,7 +2,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0009_Initialize-OpenTofu.ps1"
-    
+
     # Mock external dependencies
     Mock Write-Host { }
     Mock Write-Warning { }
@@ -38,14 +38,14 @@ Describe "0009_Initialize-OpenTofu" {
         It "Should check if OpenTofu is available" {
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
         It "Should exit with error if OpenTofu is not available" {
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             $result = try { & $script:ScriptPath 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
         }
@@ -53,7 +53,7 @@ Describe "0009_Initialize-OpenTofu" {
         It "Should handle tofu command not found" {
             Mock Get-Command { throw "Command not found" } -ParameterFilter { $Name -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             $result = try { & $script:ScriptPath 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
         }
@@ -62,7 +62,7 @@ Describe "0009_Initialize-OpenTofu" {
     Context "WhatIf Functionality" {
         It "Should not run tofu commands in WhatIf mode" {
             Mock Start-Process { throw "Should not run tofu in WhatIf mode" }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Not -Invoke Start-Process
         }
@@ -75,12 +75,12 @@ Describe "0009_Initialize-OpenTofu" {
                     WorkingDirectory = "./infrastructure"
                 }
             }
-            
+
             Mock Test-Path { $true } -ParameterFilter { $Path -eq "./infrastructure" }
             Mock Get-ChildItem { @(@{ FullName = "./infrastructure/main.tf" }) } -ParameterFilter { $Filter -eq "*.tf" -and $File }
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -91,7 +91,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Get-ChildItem { @(@{ FullName = "./infrastructure/modules/vpc.tf" }) } -ParameterFilter { $Filter -eq "*.tf" -and $File -and $Path -like "*modules*" }
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -103,21 +103,21 @@ Describe "0009_Initialize-OpenTofu" {
                     }
                 }
             }
-            
+
             Mock Test-Path { $false } -ParameterFilter { $Path -eq "./infrastructure" }
             Mock Test-Path { $true } -ParameterFilter { $Path -like "*base-infra*opentofu*" }
             Mock [System.Environment]::ExpandEnvironmentVariables { param($Path) $Path -replace "%TEMP%", "C:\\temp" }
             Mock Get-ChildItem { @(@{ FullName = "C:\\temp\\base-infra\\opentofu\\main.tf" }) }
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
         It "Should exit gracefully when no Terraform files are found" {
             Mock Test-Path { $false }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -128,7 +128,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Test-Path { $true } -ParameterFilter { $Path -eq "./infrastructure" }
             Mock Get-ChildItem { @() }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -142,7 +142,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -153,7 +153,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -168,7 +168,7 @@ Describe "0009_Initialize-OpenTofu" {
                     }
                 }
             }
-            
+
             Mock Test-Path { $true } -ParameterFilter { $Path -ne ".terraform" }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq ".terraform" }
             Mock Get-ChildItem { @(@{ FullName = "./infrastructure/main.tf" }) }
@@ -176,7 +176,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -188,7 +188,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -203,7 +203,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -216,7 +216,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -228,7 +228,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -243,7 +243,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -252,7 +252,7 @@ Describe "0009_Initialize-OpenTofu" {
         It "Should handle directory access errors" {
             Mock Test-Path { throw "Access denied" }
             Mock Write-ScriptLog { }
-            
+
             $result = try { & $script:ScriptPath 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
         }
@@ -265,7 +265,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Pop-Location { }
             Mock Start-Process { throw "Command execution failed" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -277,7 +277,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Pop-Location { }
             Mock Start-Process { throw "Error during execution" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Pop-Location
         }
@@ -289,7 +289,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Write-CustomLog { }
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Write-CustomLog -AtLeast 1
         }
@@ -299,7 +299,7 @@ Describe "0009_Initialize-OpenTofu" {
             Mock Write-Host { }
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Write-Host -AtLeast 1
         }

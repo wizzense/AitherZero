@@ -95,7 +95,9 @@ function Show-BetterMenu {
         if ($host.UI.RawUI -and $host.UI.RawUI.WindowSize -and $host.UI.RawUI.WindowSize.Height) {
             $terminalHeight = $host.UI.RawUI.WindowSize.Height
         }
-    } catch {}
+    } catch {
+        Write-Verbose "Unable to determine terminal height: $_"
+    }
 
     # Leave room for title, help text, and scroll indicators (about 10 lines)
     $maxPageSize = [Math]::Max(5, $terminalHeight - 10)
@@ -117,7 +119,7 @@ function Show-BetterMenu {
         $needsClear = $true
         if ($simpleRedraw) { $needsClear = $true }
         if ($needsClear -and -not $env:CI -and -not $env:GITHUB_ACTIONS) {
-            try { Clear-Host } catch { }
+            try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
         }
         $firstDraw = $false
 

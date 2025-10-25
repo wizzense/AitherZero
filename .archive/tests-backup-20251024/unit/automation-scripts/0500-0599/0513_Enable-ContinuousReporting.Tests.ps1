@@ -3,7 +3,7 @@
 Describe "0513_Enable-ContinuousReporting" {
     BeforeAll {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0513_Enable-ContinuousReporting.ps1"
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-CustomLog -MockWith { param($Message, $Level) Write-Host "[$Level] $Message" }
@@ -13,8 +13,8 @@ Describe "0513_Enable-ContinuousReporting" {
         Mock -CommandName Remove-Job -MockWith { }
         Mock -CommandName Register-EngineEvent -MockWith { }
         Mock -CommandName Unregister-Event -MockWith { }
-        Mock -CommandName New-Object -ParameterFilter { $TypeName -like "*FileSystemWatcher*" } -MockWith { 
-            @{ 
+        Mock -CommandName New-Object -ParameterFilter { $TypeName -like "*FileSystemWatcher*" } -MockWith {
+            @{
                 Path = "C:\test"
                 Filter = "*.ps1"
                 EnableRaisingEvents = $true
@@ -53,7 +53,7 @@ Describe "0513_Enable-ContinuousReporting" {
 
         It "Should stop continuous reporting" {
             Mock -CommandName Get-Job -MockWith { @(@{ Id = 1; Name = "ContinuousReporting"; State = "Running" }) }
-            
+
             & $script:ScriptPath -Action "Stop" -WhatIf 2>&1
             Should -Not -Invoke Stop-Job  # WhatIf mode
         }
@@ -101,13 +101,13 @@ Describe "0513_Enable-ContinuousReporting" {
     Context "Error Handling" {
         It "Should handle job creation failures" {
             Mock -CommandName Start-Job -MockWith { throw "Job creation failed" }
-            
+
             { & $script:ScriptPath -Action "Start" } | Should -Not -Throw
         }
 
         It "Should handle missing paths gracefully" {
             Mock -CommandName Test-Path -MockWith { $false }
-            
+
             { & $script:ScriptPath -Action "Start" -WatchPaths @("nonexistent") } | Should -Not -Throw
         }
     }

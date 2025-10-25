@@ -48,15 +48,15 @@ try {
     Import-Module "$script:ProjectRoot/domains/experience/Core/UIComponent.psm1" -Force
     Import-Module "$script:ProjectRoot/domains/experience/Core/UIContext.psm1" -Force
     Import-Module "$script:ProjectRoot/domains/experience/Components/InteractiveMenu.psm1" -Force
-    
+
     # Create a component
     $component = New-UIComponent -Name "TestComponent" -X 10 -Y 5 -Width 40 -Height 10
     Write-Host "✓ Created component: $($component.Name)" -ForegroundColor Green
-    
+
     # Create context
     $context = New-UIContext
     Write-Host "✓ Created UI context" -ForegroundColor Green
-    
+
     # Create interactive menu
     $menu = New-InteractiveMenu -Items @("Option 1", "Option 2", "Option 3") -Title "Test Menu"
     Write-Host "✓ Created interactive menu" -ForegroundColor Green
@@ -70,12 +70,12 @@ Write-Host "`nTest 4: Testing theme system..." -ForegroundColor Yellow
 try {
     $themes = Get-UIThemeList
     Write-Host "✓ Found $($themes.Count) themes" -ForegroundColor Green
-    
+
     # Test theme switching
     Set-UITheme -Name "Dark"
     $activeTheme = Get-UITheme
     Write-Host "✓ Switched to theme: $($activeTheme.Name)" -ForegroundColor Green
-    
+
     # Test theme colors
     $primaryColor = Get-UIThemeColor -ColorKey "Primary"
     Write-Host "✓ Got theme color: Primary = $primaryColor" -ForegroundColor Green
@@ -89,12 +89,12 @@ Write-Host "`nTest 5: Testing layout system..." -ForegroundColor Yellow
 try {
     $layout = New-UILayout -Type "Grid" -Columns 3 -Rows 2
     Write-Host "✓ Created grid layout" -ForegroundColor Green
-    
+
     $container = @{ X = 0; Y = 0; Width = 80; Height = 24 }
-    $components = 1..6 | ForEach-Object { 
-        New-UIComponent -Name "Item$_" -Width 20 -Height 5 
+    $components = 1..6 | ForEach-Object {
+        New-UIComponent -Name "Item$_" -Width 20 -Height 5
     }
-    
+
     $positions = Calculate-UILayout -Layout $layout -Container $container -Components $components
     Write-Host "✓ Calculated layout for $($positions.Count) components" -ForegroundColor Green
 } catch {
@@ -107,14 +107,14 @@ Write-Host "`nTest 6: Testing backward compatibility..." -ForegroundColor Yellow
 try {
     # Enable interactive mode
     $env:AITHERZERO_USE_INTERACTIVE_UI = 'true'
-    
+
     # This should work with both old and new systems
     Write-Host "Testing Show-UIMenu (will use classic mode in non-interactive terminal)..." -ForegroundColor Gray
-    
+
     # Note: In a non-interactive context, this will fall back to classic mode
     # The important thing is that it doesn't error
     $items = @("Test 1", "Test 2", "Test 3")
-    
+
     # We can't actually test the interactive menu in a script context
     # but we can verify the function exists and accepts parameters
     $functionExists = Get-Command Show-UIMenu -ErrorAction SilentlyContinue

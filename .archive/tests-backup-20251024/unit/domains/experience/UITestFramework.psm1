@@ -12,12 +12,12 @@ function New-MockTerminal {
         [int]$Width = 80,
         [int]$Height = 24
     )
-    
+
     $buffer = @()
     for ($i = 0; $i -lt $Height; $i++) {
         $buffer += ," " * $Width -join ""
     }
-    
+
     return [PSCustomObject]@{
         Width = $Width
         Height = $Height
@@ -36,7 +36,7 @@ function Set-MockCursorPosition {
         [int]$X,
         [int]$Y
     )
-    
+
     $Terminal.CursorX = [Math]::Max(0, [Math]::Min($X, $Terminal.Width - 1))
     $Terminal.CursorY = [Math]::Max(0, [Math]::Min($Y, $Terminal.Height - 1))
 }
@@ -50,18 +50,18 @@ function Write-MockTerminal {
         [string]$ForegroundColor = "White",
         [string]$BackgroundColor = "Black"
     )
-    
+
     if ($X -ge 0) { $Terminal.CursorX = $X }
     if ($Y -ge 0) { $Terminal.CursorY = $Y }
-    
+
     $line = $Terminal.Buffer[$Terminal.CursorY]
     $chars = $line.ToCharArray()
-    
+
     for ($i = 0; $i -lt $Text.Length; $i++) {
         $pos = $Terminal.CursorX + $i
         if ($pos -lt $Terminal.Width) {
             $chars[$pos] = $Text[$i]
-            
+
             # Store attributes
             $attrKey = "$($Terminal.CursorY),$pos"
             $Terminal.Attributes[$attrKey] = @{
@@ -70,7 +70,7 @@ function Write-MockTerminal {
             }
         }
     }
-    
+
     $Terminal.Buffer[$Terminal.CursorY] = -join $chars
     $Terminal.CursorX += $Text.Length
 }
@@ -80,7 +80,7 @@ function Get-MockTerminalLine {
         [Parameter(Mandatory)]$Terminal,
         [Parameter(Mandatory)][int]$Line
     )
-    
+
     if ($Line -ge 0 -and $Line -lt $Terminal.Height) {
         return $Terminal.Buffer[$Line]
     }
@@ -93,7 +93,7 @@ function Get-MockTerminalAttributes {
         [int]$X,
         [int]$Y
     )
-    
+
     $key = "$Y,$X"
     if ($Terminal.Attributes.ContainsKey($key)) {
         return $Terminal.Attributes[$key]
@@ -106,7 +106,7 @@ function Get-MockTerminalAttributes {
 
 function Clear-MockTerminal {
     param([Parameter(Mandatory)]$Terminal)
-    
+
     for ($i = 0; $i -lt $Terminal.Height; $i++) {
         $Terminal.Buffer[$i] = " " * $Terminal.Width
     }
@@ -132,7 +132,7 @@ function Add-MockKeyPress {
         [switch]$Alt,
         [switch]$Shift
     )
-    
+
     $keyPress = @{
         Key = $Key
         Char = if ($Key.Length -eq 1) { $Key } else { $null }
@@ -143,7 +143,7 @@ function Add-MockKeyPress {
         }
         Timestamp = [DateTime]::Now
     }
-    
+
     [void]$Keyboard.Queue.Add($keyPress)
 }
 
@@ -152,7 +152,7 @@ function Add-MockKeySequence {
         [Parameter(Mandatory)]$Keyboard,
         [Parameter(Mandatory)][string[]]$Sequence
     )
-    
+
     foreach ($key in $Sequence) {
         Add-MockKeyPress -Keyboard $Keyboard -Key $key
     }
@@ -163,7 +163,7 @@ function Add-MockTextInput {
         [Parameter(Mandatory)]$Keyboard,
         [Parameter(Mandatory)][string]$Text
     )
-    
+
     foreach ($char in $Text.ToCharArray()) {
         Add-MockKeyPress -Keyboard $Keyboard -Key $char.ToString()
     }
@@ -171,7 +171,7 @@ function Add-MockTextInput {
 
 function Get-MockKeyPress {
     param([Parameter(Mandatory)]$Keyboard)
-    
+
     if ($Keyboard.Queue.Count -gt 0) {
         $key = $Keyboard.Queue[0]
         $Keyboard.Queue.RemoveAt(0)
@@ -199,15 +199,15 @@ function Invoke-UIComponentLifecycle {
         [Parameter(Mandatory)]$Component,
         [Parameter(Mandatory)][string]$EventName
     )
-    
+
     $EventNameName = "$($Component.Name):$EventName"
     [void]$Context.Events.Add($EventNameName)
-    
+
     # Update component state
     if ($Component.PSObject.Properties["State"]) {
         $Component.State = $EventName
     }
-    
+
     # Trigger event on bus
     Invoke-MockEvent -EventBus $Context.EventBus -EventName $EventNameName -Sender $Component
 }
@@ -217,13 +217,13 @@ function Test-UIMenuNavigation {
         [Parameter(Mandatory)]$Context,
         [Parameter(Mandatory)][array]$Items
     )
-    
+
     $selectedIndex = 0
     $done = $false
-    
+
     while (-not $done -and $Context.Keyboard.Queue.Count -gt 0) {
         $key = Get-MockKeyPress -Keyboard $Context.Keyboard
-        
+
         switch ($key.Key) {
             "UpArrow" {
                 $selectedIndex = [Math]::Max(0, $selectedIndex - 1)
@@ -240,7 +240,7 @@ function Test-UIMenuNavigation {
             }
         }
     }
-    
+
     return @{
         SelectedIndex = $selectedIndex
         SelectedItem = if ($selectedIndex -ge 0) { $Items[$selectedIndex] } else { $null }
@@ -261,11 +261,11 @@ function Register-MockEventHandler {
         [Parameter(Mandatory)][string]$EventNameName,
         [Parameter(Mandatory)][scriptblock]$Handler
     )
-    
+
     if (-not $EventNameBus.Handlers.ContainsKey($EventNameName)) {
         $EventNameBus.Handlers[$EventNameName] = [System.Collections.ArrayList]::new()
     }
-    
+
     [void]$EventNameBus.Handlers[$EventNameName].Add($Handler)
 }
 
@@ -276,16 +276,16 @@ function Invoke-MockEvent {
         $Sender = $null,
         [hashtable]$Data = @{}
     )
-    
+
     $EventName = @{
         Name = $EventNameName
         Sender = $Sender
         Data = $Data
         Timestamp = [DateTime]::Now
     }
-    
+
     [void]$EventNameBus.History.Add($EventName)
-    
+
     if ($EventNameBus.Handlers.ContainsKey($EventNameName)) {
         foreach ($handler in $EventNameBus.Handlers[$EventNameName]) {
             & $handler $Sender $Data
@@ -300,12 +300,12 @@ function Get-ComponentBounds {
         [Parameter(Mandatory)]$Component,
         [string]$Alignment = "TopLeft"
     )
-    
+
     $bounds = @{
         Width = $Component.PreferredWidth
         Height = $Component.PreferredHeight
     }
-    
+
     switch ($Alignment) {
         "Center" {
             $bounds.X = [Math]::Floor(($Container.Width - $bounds.Width) / 2)
@@ -328,7 +328,7 @@ function Get-ComponentBounds {
             $bounds.Y = $Container.Height - $bounds.Height
         }
     }
-    
+
     return $bounds
 }
 
@@ -339,7 +339,7 @@ function New-MockLayout {
         [int]$Rows = 1,
         [int]$Gap = 0
     )
-    
+
     return @{
         Type = $Type
         Columns = $Columns
@@ -355,20 +355,20 @@ function Test-LayoutArrangement {
         [int]$ContainerWidth,
         [int]$ContainerHeight
     )
-    
+
     $result = @{
         Components = [System.Collections.ArrayList]::new()
     }
-    
+
     switch ($Layout.Type) {
         "Grid" {
             $cellWidth = [Math]::Floor($ContainerWidth / $Layout.Columns)
             $cellHeight = [Math]::Floor($ContainerHeight / $Layout.Rows)
-            
+
             for ($i = 0; $i -lt $Components.Count; $i++) {
                 $row = [Math]::Floor($i / $Layout.Columns)
                 $col = $i % $Layout.Columns
-                
+
                 $component = @{
                     Id = $Components[$i].Id
                     X = $col * $cellWidth + $Layout.Gap
@@ -376,7 +376,7 @@ function Test-LayoutArrangement {
                     Width = [Math]::Min($Components[$i].Width, $cellWidth - 2 * $Layout.Gap)
                     Height = [Math]::Min($Components[$i].Height, $cellHeight - 2 * $Layout.Gap)
                 }
-                
+
                 [void]$result.Components.Add($component)
             }
         }
@@ -384,14 +384,14 @@ function Test-LayoutArrangement {
             $x = $Layout.Gap
             $y = $Layout.Gap
             $maxHeight = 0
-            
+
             foreach ($comp in $Components) {
                 if ($x + $comp.Width + $Layout.Gap > $ContainerWidth) {
                     $x = $Layout.Gap
                     $y += $maxHeight + $Layout.Gap
                     $maxHeight = 0
                 }
-                
+
                 $component = @{
                     Id = $comp.Id
                     X = $x
@@ -399,15 +399,15 @@ function Test-LayoutArrangement {
                     Width = $comp.Width
                     Height = $comp.Height
                 }
-                
+
                 [void]$result.Components.Add($component)
-                
+
                 $x += $comp.Width + $Layout.Gap
                 $maxHeight = [Math]::Max($maxHeight, $comp.Height)
             }
         }
     }
-    
+
     return $result
 }
 
@@ -423,24 +423,24 @@ Export-ModuleMember -Function @(
     'Get-MockTerminalLine'
     'Get-MockTerminalAttributes'
     'Clear-MockTerminal'
-    
+
     # Keyboard
     'New-MockKeyboard'
     'Add-MockKeyPress'
     'Add-MockKeySequence'
     'Add-MockTextInput'
     'Get-MockKeyPress'
-    
+
     # Context
     'New-UITestContext'
     'Invoke-UIComponentLifecycle'
     'Test-UIMenuNavigation'
-    
+
     # Events
     'New-MockEventBus'
     'Register-MockEventHandler'
     'Invoke-MockEvent'
-    
+
     # Layout
     'Get-ComponentBounds'
     'New-MockLayout'

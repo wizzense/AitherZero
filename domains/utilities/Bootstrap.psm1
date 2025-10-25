@@ -36,7 +36,7 @@ function Write-BootstrapLog {
         [string]$Level = 'Information',
         [hashtable]$Data = @{}
     )
-    
+
     if ($script:LoggingAvailable) {
         Write-CustomLog -Message $Message -Level $Level -Source 'Bootstrap' -Data $Data
     } else {
@@ -72,38 +72,38 @@ function Initialize-AitherEnvironment {
         [switch]$Clean,
         [hashtable]$Configuration = @{}
     )
-    
+
     Write-BootstrapLog "Initializing AitherZero environment"
-    
+
     try {
         # Clean environment if requested
         if ($Clean) {
             Clear-AitherEnvironment -Force:$Force
         }
-        
+
         # Ensure PowerShell 7+
         if (-not (Test-PowerShell7)) {
             Install-PowerShell7
         }
-        
+
         # Setup directory structure
         Initialize-DirectoryStructure
-        
+
         # Install validation tools
         Install-ValidationTools
-        
+
         # Install development tools if requested
         if ($IncludeTools) {
             Install-DevelopmentTools -Configuration $Configuration
         }
-        
+
         # Mark as initialized
         $script:BootstrapState.Initialized = $true
         $script:BootstrapState.EnvironmentStatus = Get-EnvironmentStatus
-        
+
         Write-BootstrapLog "Environment initialization completed successfully" -Level Success
         return $true
-        
+
     } catch {
         Write-BootstrapLog "Environment initialization failed: $($_.Exception.Message)" -Level Error
         throw
@@ -119,23 +119,23 @@ function Test-PowerShell7 {
     #>
     [CmdletBinding()]
     param()
-    
+
     # Check current PowerShell version
     $currentVersion = $PSVersionTable.PSVersion
     Write-BootstrapLog "Current PowerShell version: $currentVersion"
-    
+
     if ($currentVersion.Major -ge 7) {
         Write-BootstrapLog "PowerShell 7+ is available" -Level Success
         return $true
     }
-    
+
     # Check if pwsh is available
     $pwshPath = Get-Command pwsh -ErrorAction SilentlyContinue
     if ($pwshPath) {
         Write-BootstrapLog "PowerShell 7 (pwsh) found at: $($pwshPath.Source)"
         return $true
     }
-    
+
     Write-BootstrapLog "PowerShell 7 is required but not available" -Level Warning
     return $false
 }
@@ -151,14 +151,14 @@ function Install-PowerShell7 {
     param(
         [switch]$Force
     )
-    
+
     Write-BootstrapLog "Installing PowerShell 7"
-    
+
     if (-not $Force -and (Test-PowerShell7)) {
         Write-BootstrapLog "PowerShell 7 is already available"
         return $true
     }
-    
+
     try {
         if ($IsWindows) {
             Install-PowerShell7Windows
@@ -169,10 +169,10 @@ function Install-PowerShell7 {
         } else {
             throw "Unsupported operating system"
         }
-        
+
         Write-BootstrapLog "PowerShell 7 installation completed" -Level Success
         return $true
-        
+
     } catch {
         Write-BootstrapLog "PowerShell 7 installation failed: $($_.Exception.Message)" -Level Error
         throw
@@ -186,9 +186,9 @@ function Install-PowerShell7Windows {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Installing PowerShell 7 for Windows"
-    
+
     # Try winget first
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if ($winget) {
@@ -198,7 +198,7 @@ function Install-PowerShell7Windows {
         }
         return
     }
-    
+
     # Try Chocolatey
     $choco = Get-Command choco -ErrorAction SilentlyContinue
     if ($choco) {
@@ -208,12 +208,12 @@ function Install-PowerShell7Windows {
         }
         return
     }
-    
+
     # Download and install MSI
     Write-BootstrapLog "Downloading PowerShell 7 MSI installer"
     $downloadUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7-win-x64.msi"
     $installerPath = Join-Path $env:TEMP "PowerShell-7-win-x64.msi"
-    
+
     if ($PSCmdlet.ShouldProcess("PowerShell 7", "Download and install MSI")) {
         Invoke-WebRequest -Uri $downloadUrl -OutFile $installerPath
         Start-Process msiexec.exe -ArgumentList "/i", $installerPath, "/quiet" -Wait
@@ -228,14 +228,14 @@ function Install-PowerShell7Linux {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Installing PowerShell 7 for Linux"
-    
+
     # Detect Linux distribution
     if (Test-Path '/etc/os-release') {
         $osInfo = Get-Content '/etc/os-release' | ConvertFrom-StringData
         $distro = $osInfo.ID
-        
+
         switch ($distro) {
             'ubuntu' { Install-PowerShell7Ubuntu }
             'debian' { Install-PowerShell7Debian }
@@ -258,9 +258,9 @@ function Install-PowerShell7MacOS {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Installing PowerShell 7 for macOS"
-    
+
     # Try Homebrew
     $brew = Get-Command brew -ErrorAction SilentlyContinue
     if ($brew) {
@@ -270,12 +270,12 @@ function Install-PowerShell7MacOS {
         }
         return
     }
-    
+
     # Download and install PKG
     Write-BootstrapLog "Downloading PowerShell 7 PKG installer"
     $downloadUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-7-osx-x64.pkg"
     $installerPath = "/tmp/powershell-7-osx-x64.pkg"
-    
+
     if ($PSCmdlet.ShouldProcess("PowerShell 7", "Download and install PKG")) {
         Invoke-WebRequest -Uri $downloadUrl -OutFile $installerPath
         & sudo installer -pkg $installerPath -target /
@@ -292,14 +292,14 @@ function Initialize-DirectoryStructure {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Initializing directory structure"
-    
+
     $projectRoot = $script:BootstrapState.ProjectRoot
     $directories = @(
         'logs',
         'temp',
-        'cache', 
+        'cache',
         'reports',
         'reports/tech-debt',
         'reports/coverage',
@@ -308,7 +308,7 @@ function Initialize-DirectoryStructure {
         'backups',
         'downloads'
     )
-    
+
     foreach ($dir in $directories) {
         $dirPath = Join-Path $projectRoot $dir
         if (-not (Test-Path $dirPath)) {
@@ -318,7 +318,7 @@ function Initialize-DirectoryStructure {
             }
         }
     }
-    
+
     Write-BootstrapLog "Directory structure initialized" -Level Success
 }
 
@@ -331,22 +331,22 @@ function Install-ValidationTools {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Installing validation tools"
-    
+
     $tools = @(
         @{ Name = 'Pester'; MinVersion = '5.0.0'; Repository = 'PSGallery' },
         @{ Name = 'PSScriptAnalyzer'; MinVersion = '1.20.0'; Repository = 'PSGallery' },
         @{ Name = 'platyPS'; MinVersion = '0.14.0'; Repository = 'PSGallery' }
     )
-    
+
     foreach ($tool in $tools) {
         try {
-            $installed = Get-Module -Name $tool.Name -ListAvailable | 
-                Where-Object { $_.Version -ge [Version]$tool.MinVersion } | 
-                Sort-Object Version -Descending | 
+            $installed = Get-Module -Name $tool.Name -ListAvailable |
+                Where-Object { $_.Version -ge [Version]$tool.MinVersion } |
+                Sort-Object Version -Descending |
                 Select-Object -First 1
-            
+
             if (-not $installed) {
                 Write-BootstrapLog "Installing $($tool.Name)"
                 if ($PSCmdlet.ShouldProcess($tool.Name, "Install module")) {
@@ -355,14 +355,14 @@ function Install-ValidationTools {
             } else {
                 Write-BootstrapLog "$($tool.Name) v$($installed.Version) is already installed"
             }
-            
+
             $script:BootstrapState.InstalledTools[$tool.Name] = $true
-            
+
         } catch {
             Write-BootstrapLog "Failed to install $($tool.Name): $($_.Exception.Message)" -Level Warning
         }
     }
-    
+
     Write-BootstrapLog "Validation tools installation completed" -Level Success
 }
 
@@ -377,20 +377,20 @@ function Install-DevelopmentTools {
     param(
         [hashtable]$Configuration = @{}
     )
-    
+
     Write-BootstrapLog "Installing development tools"
-    
+
     # Install Go if requested
     if ($Configuration.ContainsKey('InstallGo') -and $Configuration.InstallGo) {
         Install-GoLanguage
     }
-    
-    # Install OpenTofu if requested  
+
+    # Install OpenTofu if requested
     if ($Configuration.ContainsKey('InstallOpenTofu') -and $Configuration.InstallOpenTofu) {
         Install-OpenTofu
         Initialize-OpenTofu
     }
-    
+
     Write-BootstrapLog "Development tools installation completed" -Level Success
 }
 
@@ -401,9 +401,9 @@ function Install-GoLanguage {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Installing Go programming language"
-    
+
     # Check if Go is already installed
     $go = Get-Command go -ErrorAction SilentlyContinue
     if ($go) {
@@ -411,7 +411,7 @@ function Install-GoLanguage {
         Write-BootstrapLog "Go is already installed: $version"
         return
     }
-    
+
     try {
         if ($IsWindows) {
             # Use Chocolatey or winget
@@ -428,20 +428,20 @@ function Install-GoLanguage {
             $goVersion = "1.21.0"  # Update as needed
             $downloadUrl = "https://golang.org/dl/go$goVersion.linux-amd64.tar.gz"
             $installPath = "/usr/local/go"
-            
+
             if ($PSCmdlet.ShouldProcess("Go $goVersion", "Download and install")) {
                 Write-BootstrapLog "Downloading Go $goVersion"
                 $tempFile = "/tmp/go$goVersion.linux-amd64.tar.gz"
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile
-                
+
                 Write-BootstrapLog "Installing Go to $installPath"
                 & sudo rm -rf $installPath
                 & sudo tar -C /usr/local -xzf $tempFile
-                
+
                 # Add to PATH
                 $profileLine = 'export PATH=$PATH:/usr/local/go/bin'
                 Add-Content -Path ~/.profile -Value $profileLine
-                
+
                 Remove-Item $tempFile -Force
             }
         } elseif ($IsMacOS) {
@@ -453,10 +453,10 @@ function Install-GoLanguage {
                 }
             }
         }
-        
+
         $script:BootstrapState.InstalledTools['Go'] = $true
         Write-BootstrapLog "Go installation completed" -Level Success
-        
+
     } catch {
         Write-BootstrapLog "Go installation failed: $($_.Exception.Message)" -Level Error
         throw
@@ -470,9 +470,9 @@ function Install-OpenTofu {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Installing OpenTofu"
-    
+
     # Check if OpenTofu is already installed
     $tofu = Get-Command tofu -ErrorAction SilentlyContinue
     if ($tofu) {
@@ -480,43 +480,43 @@ function Install-OpenTofu {
         Write-BootstrapLog "OpenTofu is already installed: $version"
         return
     }
-    
+
     try {
         $tofuVersion = "1.6.0"  # Update as needed
-        
+
         if ($IsWindows) {
             $downloadUrl = "https://github.com/opentofu/opentofu/releases/download/v$tofuVersion/tofu_${tofuVersion}_windows_amd64.zip"
             $installPath = "$env:ProgramFiles\OpenTofu"
-            
+
             if ($PSCmdlet.ShouldProcess("OpenTofu $tofuVersion", "Download and install")) {
                 Write-BootstrapLog "Downloading OpenTofu for Windows"
                 $tempZip = Join-Path $env:TEMP "opentofu.zip"
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip
-                
+
                 Write-BootstrapLog "Installing OpenTofu to $installPath"
                 Expand-Archive -Path $tempZip -DestinationPath $installPath -Force
-                
+
                 # Add to PATH
                 $currentPath = [Environment]::GetEnvironmentVariable("PATH", "Machine")
                 if ($currentPath -notlike "*$installPath*") {
                     [Environment]::SetEnvironmentVariable("PATH", "$currentPath;$installPath", "Machine")
                 }
-                
+
                 Remove-Item $tempZip -Force
             }
         } elseif ($IsLinux) {
             $downloadUrl = "https://github.com/opentofu/opentofu/releases/download/v$tofuVersion/tofu_${tofuVersion}_linux_amd64.tar.gz"
-            
+
             if ($PSCmdlet.ShouldProcess("OpenTofu $tofuVersion", "Download and install")) {
                 Write-BootstrapLog "Downloading OpenTofu for Linux"
                 $tempFile = "/tmp/opentofu.tar.gz"
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile
-                
+
                 Write-BootstrapLog "Installing OpenTofu to /usr/local/bin"
                 & tar -xzf $tempFile -C /tmp
                 & sudo mv /tmp/tofu /usr/local/bin/
                 & sudo chmod +x /usr/local/bin/tofu
-                
+
                 Remove-Item $tempFile -Force
             }
         } elseif ($IsMacOS) {
@@ -528,10 +528,10 @@ function Install-OpenTofu {
                 }
             }
         }
-        
+
         $script:BootstrapState.InstalledTools['OpenTofu'] = $true
         Write-BootstrapLog "OpenTofu installation completed" -Level Success
-        
+
     } catch {
         Write-BootstrapLog "OpenTofu installation failed: $($_.Exception.Message)" -Level Error
         throw
@@ -547,19 +547,19 @@ function Initialize-OpenTofu {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-BootstrapLog "Initializing OpenTofu configuration"
-    
+
     $projectRoot = $script:BootstrapState.ProjectRoot
     $infraPath = Join-Path $projectRoot "infrastructure"
-    
+
     if (-not (Test-Path $infraPath)) {
         Write-BootstrapLog "Creating infrastructure directory"
         if ($PSCmdlet.ShouldProcess($infraPath, "Create directory")) {
             New-Item -Path $infraPath -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     # Create basic main.tf if it doesn't exist
     $mainTfPath = Join-Path $infraPath "main.tf"
     if (-not (Test-Path $mainTfPath)) {
@@ -567,7 +567,7 @@ function Initialize-OpenTofu {
 # AitherZero Infrastructure Configuration
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     local = {
       source  = "hashicorp/local"
@@ -582,13 +582,13 @@ resource "local_file" "aitherzero_marker" {
   filename = "${path.module}/../temp/infrastructure-initialized.txt"
 }
 '@
-        
+
         Write-BootstrapLog "Creating basic main.tf configuration"
         if ($PSCmdlet.ShouldProcess($mainTfPath, "Create Terraform configuration")) {
             Set-Content -Path $mainTfPath -Value $mainTfContent -Encoding UTF8
         }
     }
-    
+
     # Initialize OpenTofu
     $tofu = Get-Command tofu -ErrorAction SilentlyContinue
     if ($tofu) {
@@ -618,9 +618,9 @@ function Clear-AitherEnvironment {
     param(
         [switch]$Force
     )
-    
+
     Write-BootstrapLog "Cleaning AitherZero environment"
-    
+
     $projectRoot = $script:BootstrapState.ProjectRoot
     $cleanupPaths = @(
         'temp/*',
@@ -628,11 +628,11 @@ function Clear-AitherEnvironment {
         'logs/*.log',
         'test-results/*'
     )
-    
+
     foreach ($path in $cleanupPaths) {
         $fullPath = Join-Path $projectRoot $path
         $items = Get-ChildItem -Path $fullPath -Force -ErrorAction SilentlyContinue
-        
+
         if ($items) {
             Write-BootstrapLog "Cleaning: $path"
             if ($PSCmdlet.ShouldProcess($fullPath, "Remove items")) {
@@ -640,12 +640,12 @@ function Clear-AitherEnvironment {
             }
         }
     }
-    
+
     # Reset state
     $script:BootstrapState.Initialized = $false
     $script:BootstrapState.EnvironmentStatus = @{}
     $script:BootstrapState.InstalledTools = @{}
-    
+
     Write-BootstrapLog "Environment cleanup completed" -Level Success
 }
 
@@ -658,7 +658,7 @@ function Get-EnvironmentStatus {
     #>
     [CmdletBinding()]
     param()
-    
+
     $status = @{
         PowerShellVersion = $PSVersionTable.PSVersion
         PowerShell7Available = Test-PowerShell7
@@ -671,7 +671,7 @@ function Get-EnvironmentStatus {
             DotNetVersion = [System.Runtime.InteropServices.RuntimeInformation]::FrameworkDescription
         }
     }
-    
+
     # Check directories
     $expectedDirectories = @('logs', 'temp', 'cache', 'reports', 'test-results')
     foreach ($dir in $expectedDirectories) {
@@ -680,20 +680,20 @@ function Get-EnvironmentStatus {
             $status.DirectoriesCreated += $dir
         }
     }
-    
+
     # Check for external tools
     $externalTools = @('git', 'go', 'tofu', 'terraform', 'docker', 'node', 'npm')
     $status.ExternalTools = @{}
-    
+
     foreach ($tool in $externalTools) {
         $command = Get-Command $tool -ErrorAction SilentlyContinue
-        $status.ExternalTools[$tool] = if ($command) { 
+        $status.ExternalTools[$tool] = if ($command) {
             @{ Available = $true; Path = $command.Source }
-        } else { 
+        } else {
             @{ Available = $false; Path = $null }
         }
     }
-    
+
     return $status
 }
 
@@ -701,7 +701,7 @@ function Get-EnvironmentStatus {
 Export-ModuleMember -Function @(
     'Initialize-AitherEnvironment',
     'Test-PowerShell7',
-    'Install-PowerShell7', 
+    'Install-PowerShell7',
     'Initialize-DirectoryStructure',
     'Install-ValidationTools',
     'Install-DevelopmentTools',

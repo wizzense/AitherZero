@@ -14,7 +14,7 @@
 [CmdletBinding()]
 param(
     [string]$Operation = "General",
-    [string]$Stage = "Unknown", 
+    [string]$Stage = "Unknown",
     [int]$TotalSteps = 100,
     [int]$CurrentStep = 0,
     [string]$Message = "",
@@ -48,19 +48,19 @@ function Write-CIProgress {
         [string]$Status = "Running",
         [hashtable]$Metrics = @{}
     )
-    
+
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $elapsed = (Get-Date) - $script:ProgressState.StartTime
-    
+
     # Calculate progress percentage
     $percentage = if ($TotalSteps -gt 0) { [math]::Round(($CurrentStep / $TotalSteps) * 100, 1) } else { 0 }
-    
+
     # Create progress bar
     $barWidth = 40
     $filled = [math]::Floor(($percentage / 100) * $barWidth)
     $empty = $barWidth - $filled
     $progressBar = "[$('█' * $filled)$('░' * $empty)]"
-    
+
     # Status emoji
     $statusEmoji = switch ($Status) {
         "Running" { "🔄" }
@@ -69,27 +69,27 @@ function Write-CIProgress {
         "Warning" { "⚠️" }
         default { "📋" }
     }
-    
+
     # Format output
     $progressLine = "$statusEmoji $Operation - $Stage"
     $detailLine = "$progressBar $percentage% ($CurrentStep/$TotalSteps)"
     $messageLine = if ($Message) { "💬 $Message" } else { "" }
     $timeLine = "⏱️ Elapsed: $($elapsed.ToString('hh\:mm\:ss'))"
-    
+
     # Output to console with colors
     Write-Host $progressLine -ForegroundColor Cyan
     Write-Host $detailLine -ForegroundColor Yellow
     if ($messageLine) { Write-Host $messageLine -ForegroundColor White }
     Write-Host $timeLine -ForegroundColor Gray
-    
+
     # Add metrics if provided
     if ($Metrics.Count -gt 0) {
         $metricsLine = "📊 " + (($Metrics.GetEnumerator() | ForEach-Object { "$($_.Key): $($_.Value)" }) -join " | ")
         Write-Host $metricsLine -ForegroundColor Magenta
     }
-    
+
     Write-Host "" # Empty line for spacing
-    
+
     # Log to file
     $logEntry = @{
         Timestamp = $timestamp
@@ -101,31 +101,31 @@ function Write-CIProgress {
         ElapsedSeconds = $elapsed.TotalSeconds
         Metrics = $Metrics
     }
-    
+
     $logEntry | ConvertTo-Json -Compress | Add-Content -Path $LogPath -Force
-    
+
     # GitHub Actions integration
     if ($env:GITHUB_ACTIONS -eq 'true') {
         # Set GitHub Actions step summary
         $githubSummary = @"
 ## $statusEmoji $Operation Progress
 
-**Stage:** $Stage  
-**Progress:** $percentage% ($CurrentStep/$TotalSteps)  
-**Status:** $Status  
+**Stage:** $Stage
+**Progress:** $percentage% ($CurrentStep/$TotalSteps)
+**Status:** $Status
 **Elapsed:** $($elapsed.ToString('hh\:mm\:ss'))
 
 $progressBar
 
 $(if ($Message) { "**Message:** $Message" })
 
-$(if ($Metrics.Count -gt 0) { 
+$(if ($Metrics.Count -gt 0) {
     "**Metrics:**" + "`n" + (($Metrics.GetEnumerator() | ForEach-Object { "- **$($_.Key):** $($_.Value)" }) -join "`n")
 })
 "@
-        
+
         $githubSummary | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Force
-        
+
         # Set GitHub Actions outputs
         Write-Host "::set-output name=progress::$percentage"
         Write-Host "::set-output name=status::$Status"
@@ -136,7 +136,7 @@ $(if ($Metrics.Count -gt 0) {
 # Resource monitoring function
 function Get-SystemMetrics {
     $metrics = @{}
-    
+
     try {
         # Memory usage
         if ($IsWindows) {
@@ -154,11 +154,11 @@ function Get-SystemMetrics {
                 }
             }
         }
-        
+
         # CPU usage (simplified)
         $cpuProcess = Get-Process -Id $PID
         $metrics.CPUTimeSeconds = [math]::Round($cpuProcess.CPU, 2)
-        
+
         # Disk usage for current directory
         $currentDrive = Get-Item . | Select-Object -ExpandProperty Root
         if ($currentDrive -and (Get-Command Get-Volume -ErrorAction SilentlyContinue)) {
@@ -168,18 +168,18 @@ function Get-SystemMetrics {
                 $metrics.DiskFreeGB = [math]::Round($volume.SizeRemaining / 1GB, 2)
             }
         }
-        
+
     } catch {
         # Metrics collection failed, continue without them
     }
-    
+
     return $metrics
 }
 
 # Main execution
 try {
     $metrics = Get-SystemMetrics
-    
+
     if ($Complete) {
         Write-CIProgress -Operation $Operation -Stage "Completed" -Progress 100 -Message $Message -Status "Complete" -Metrics $metrics
     } elseif ($Failed) {
@@ -194,7 +194,7 @@ try {
         $status = if ($Message -imatch "(warning|warn)") { "Warning" } else { "Running" }
         Write-CIProgress -Operation $Operation -Stage $Stage -Progress $CurrentStep -Message $Message -Status $status -Metrics $metrics
     }
-    
+
 } catch {
     Write-Host "❌ Progress reporting failed: $_" -ForegroundColor Red
     exit 1

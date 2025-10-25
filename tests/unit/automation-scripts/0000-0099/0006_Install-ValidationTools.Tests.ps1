@@ -2,7 +2,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0006_Install-ValidationTools.ps1"
-    
+
     # Mock external dependencies
     Mock Write-Host { }
     Mock Write-Warning { }
@@ -35,7 +35,7 @@ Describe "0006_Install-ValidationTools" {
         It "Should not install modules in WhatIf mode" {
             Mock Install-Module { throw "Should not install in WhatIf mode" }
             Mock Update-Module { throw "Should not update in WhatIf mode" }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Not -Invoke Install-Module
             Should -Not -Invoke Update-Module
@@ -47,7 +47,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Module { $null } -ParameterFilter { $Name -eq "PSScriptAnalyzer" }
             Mock Install-Module { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -55,7 +55,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Module { $null } -ParameterFilter { $Name -eq "Pester" }
             Mock Install-Module { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -63,7 +63,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } } -ParameterFilter { $Name -eq "PSScriptAnalyzer" }
             Mock Get-Module { @{ Name = "Pester"; Version = "5.3.0" } } -ParameterFilter { $Name -eq "Pester" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Not -Invoke Install-Module
         }
@@ -77,11 +77,11 @@ Describe "0006_Install-ValidationTools" {
                     }
                 }
             }
-            
+
             Mock Get-Module { $null }
             Mock Install-Module { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -90,7 +90,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } } -ParameterFilter { $ListAvailable -and $Name -eq "PSScriptAnalyzer" }
             Mock Install-Module { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -100,12 +100,12 @@ Describe "0006_Install-ValidationTools" {
             $testConfig = @{
                 Validation = @{ CheckForUpdates = $true }
             }
-            
+
             Mock Get-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.19.0" } }
             Mock Find-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } }
             Mock Update-Module { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -113,11 +113,11 @@ Describe "0006_Install-ValidationTools" {
             $testConfig = @{
                 Validation = @{ CheckForUpdates = $true }
             }
-            
+
             Mock Get-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } }
             Mock Find-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
             Should -Not -Invoke Update-Module
         }
@@ -130,11 +130,11 @@ Describe "0006_Install-ValidationTools" {
                     AdditionalTools = @("PSCodeHealth", "Plaster")
                 }
             }
-            
+
             Mock Get-Module { $null }
             Mock Install-Module { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -144,12 +144,12 @@ Describe "0006_Install-ValidationTools" {
                     AdditionalTools = @("NonExistentTool")
                 }
             }
-            
+
             Mock Get-Module { $null }
             Mock Install-Module { throw "Module not found" } -ParameterFilter { $Name -eq "NonExistentTool" }
             Mock Install-Module { } -ParameterFilter { $Name -ne "NonExistentTool" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -159,7 +159,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Module { $null }
             Mock Install-Module { throw "Installation failed" } -ParameterFilter { $Name -eq "PSScriptAnalyzer" }
             Mock Write-ScriptLog { }
-            
+
             $result = try { & $script:ScriptPath 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
         }
@@ -168,7 +168,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Module { $null } -ParameterFilter { $ListAvailable }
             Mock Install-Module { }
             Mock Write-ScriptLog { }
-            
+
             $result = try { & $script:ScriptPath 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
         }
@@ -176,7 +176,7 @@ Describe "0006_Install-ValidationTools" {
         It "Should handle empty configuration gracefully" {
             Mock Get-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Not -Throw
         }
     }
@@ -186,7 +186,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Command { @{ Name = "Write-CustomLog" } } -ParameterFilter { $Name -eq "Write-CustomLog" }
             Mock Write-CustomLog { }
             Mock Get-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Write-CustomLog -AtLeast 1
         }
@@ -195,7 +195,7 @@ Describe "0006_Install-ValidationTools" {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "Write-CustomLog" }
             Mock Write-Host { }
             Mock Get-Module { @{ Name = "PSScriptAnalyzer"; Version = "1.20.0" } }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Write-Host -AtLeast 1
         }
