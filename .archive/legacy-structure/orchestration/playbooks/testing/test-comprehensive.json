@@ -1,0 +1,207 @@
+{
+  "name": "test-comprehensive",
+  "description": "Complete test suite with validation, unit, integration, analysis, and coverage",
+  "version": "2.0.0",
+  "author": "AitherZero Testing Framework",
+  "tags": ["testing", "comprehensive", "quality", "validation"],
+  "requirements": {
+    "modules": ["Pester", "PSScriptAnalyzer"],
+    "minimumVersion": "7.0",
+    "estimatedDuration": "30-45 minutes"
+  },
+  "variables": {
+    "testPath": "./tests",
+    "outputPath": "./tests/results",
+    "minimumCoverage": 80,
+    "failFast": false,
+    "generateReports": true,
+    "continueOnError": true
+  },
+  "stages": [
+    {
+      "name": "Environment Setup",
+      "description": "Ensure all testing tools are installed",
+      "sequence": ["0400"],
+      "continueOnError": false
+    },
+    {
+      "name": "Syntax Validation",
+      "description": "Validate PowerShell syntax before running tests",
+      "sequence": ["0407"],
+      "variables": {
+        "CheckSyntax": true,
+        "CheckParameters": true,
+        "CheckCommands": true,
+        "CheckModuleDependencies": true,
+        "ExcludePaths": ["legacy-to-migrate"]
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "Unit Tests",
+      "description": "Execute all unit tests with coverage",
+      "sequence": ["0402"],
+      "variables": {
+        "NoCoverage": false,
+        "OutputFormat": "NUnitXml,JaCoCo"
+      },
+      "continueOnError": "{{continueOnError:=true}}"
+    },
+    {
+      "name": "Integration Tests",
+      "description": "Execute integration and E2E tests",
+      "sequence": ["0403"],
+      "variables": {
+        "IncludeE2E": true
+      },
+      "continueOnError": "{{continueOnError:=true}}"
+    },
+    {
+      "name": "Code Analysis",
+      "description": "Complete PSScriptAnalyzer analysis",
+      "sequence": ["0404"],
+      "variables": {
+        "IncludeSuppressed": true,
+        "ExcludePaths": ["tests", "legacy-to-migrate", "examples"],
+        "FailOnWarning": false
+      },
+      "continueOnError": "{{continueOnError:=true}}"
+    },
+    {
+      "name": "AST Validation",
+      "description": "Full AST validation including all checks",
+      "sequence": ["0405"],
+      "variables": {
+        "CheckSyntax": true,
+        "CheckParameters": true,
+        "CheckCommands": true,
+        "CheckModuleDependencies": true
+      },
+      "continueOnError": "{{continueOnError:=true}}"
+    },
+    {
+      "name": "Coverage Report",
+      "description": "Generate comprehensive coverage reports",
+      "sequence": ["0406"],
+      "variables": {
+        "Format": "All",
+        "RunTests": false
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Test Summary",
+      "description": "Generate comprehensive test report",
+      "sequence": ["0408"],
+      "variables": {
+        "IncludeCoverage": true,
+        "IncludeAnalysis": true,
+        "IncludeTests": true,
+        "Format": "HTML"
+      },
+      "continueOnError": false
+    }
+  ],
+  "profiles": {
+    "quick": {
+      "description": "Quick validation - skip integration tests",
+      "variables": {
+        "skipIntegration": true,
+        "minimumCoverage": 60
+      },
+      "excludeStages": ["Integration Tests", "AST Validation"]
+    },
+    "ci": {
+      "description": "CI/CD optimized - fail fast on errors",
+      "variables": {
+        "failFast": true,
+        "continueOnError": false,
+        "generateReports": true
+      }
+    },
+    "development": {
+      "description": "Development mode - continue on errors",
+      "variables": {
+        "continueOnError": true,
+        "failFast": false,
+        "openReports": true
+      }
+    }
+  },
+  "parallelization": {
+    "enabled": false,
+    "maxConcurrency": 1,
+    "strategy": "sequential"
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "JUnit", "Markdown"],
+    "aggregateResults": true,
+    "publishPath": "./tests/reports",
+    "includeMetrics": true
+  },
+  "notifications": {
+    "onSuccess": {
+      "message": "✅ Comprehensive test suite completed successfully!",
+      "level": "Information",
+      "includeMetrics": true
+    },
+    "onFailure": {
+      "message": "❌ Test suite completed with failures",
+      "level": "Warning",
+      "includeFailures": true
+    },
+    "onCoverageFailure": {
+      "message": "⚠️ Code coverage below threshold",
+      "level": "Warning",
+      "threshold": "{{minimumCoverage:=80}}"
+    }
+  },
+  "postActions": [
+    {
+      "description": "Generate consolidated report",
+      "type": "module",
+      "command": "New-TestReport",
+      "parameters": {
+        "IncludeTests": true,
+        "IncludeAnalysis": true,
+        "IncludeCoverage": true,
+        "Format": "HTML"
+      }
+    },
+    {
+      "description": "Display test metrics",
+      "type": "script",
+      "inline": "@('\nTest Suite Metrics:', '==================') | Write-Host -ForegroundColor Cyan; Get-ChildItem './tests/results' -Filter '*Summary*.json' | ForEach-Object { $data = Get-Content $_.FullName | ConvertFrom-Json; Write-Host \"`n$($_.Name -replace '-Summary.*', ''):\"; $data | Format-List }"
+    },
+    {
+      "description": "Generate project report",
+      "type": "script",
+      "command": "0510",
+      "parameters": {
+        "Format": "All"
+      }
+    },
+    {
+      "description": "Open coverage report",
+      "type": "conditional",
+      "condition": "$env:AITHERZERO_OPEN_REPORTS -eq 'true' -or '{{openReports}}' -eq 'true'",
+      "action": {
+        "type": "script",
+        "inline": "if (Test-Path './tests/coverage/coverage-report.html') { Start-Process (Join-Path './tests/coverage' 'coverage-report.html') }"
+      }
+    }
+  ],
+  "integrations": {
+    "claudeCode": {
+      "enabled": true,
+      "autoAnalyze": true,
+      "suggestFixes": true
+    },
+    "github": {
+      "enabled": true,
+      "uploadArtifacts": true,
+      "commentOnPR": true
+    }
+  }
+}

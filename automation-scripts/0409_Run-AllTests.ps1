@@ -43,8 +43,8 @@ $scriptMetadata = @{
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$testingModule = Join-Path $projectRoot "domains/development/DevTools.psm1"
+$loggingModule = Join-Path $projectRoot "domains/core/Logging.psm1"
 
 if (Test-Path $testingModule) {
     Import-Module $testingModule -Force

@@ -44,7 +44,7 @@ $scriptMetadata = @{
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$loggingModule = Join-Path $projectRoot "domains/core/Logging.psm1"
 $configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
 
 if (Test-Path $loggingModule) {
@@ -347,7 +347,7 @@ function Get-ChangedFiles {
         switch -Regex ($file) {
             '^domains/configuration' { $analysis.ImpactAreas += "Configuration" }
             '^domains/infrastructure' { $analysis.ImpactAreas += "Infrastructure" }
-            '^domains/security' { $analysis.ImpactAreas += "Security" }
+            '^domains/infrastructure/Infrastructure.psm1' { $analysis.ImpactAreas += "Security" }
             '^automation-scripts' { $analysis.ImpactAreas += "Automation" }
             '^\.github/workflows' { $analysis.ImpactAreas += "CI/CD" }
             '\.Tests\.ps1$' { $analysis.ImpactAreas += "Testing" }
@@ -574,7 +574,7 @@ function New-IssueManagementConfig {
             HighRiskPaths = @(
                 'bootstrap.*',
                 'config.psd1',
-                'domains/security/*',
+                'domains/infrastructure/Infrastructure.psm1/*',
                 'domains/infrastructure/*'
             )
             ReviewerGroups = @{

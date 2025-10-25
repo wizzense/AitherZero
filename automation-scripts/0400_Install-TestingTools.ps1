@@ -38,7 +38,7 @@ $scriptMetadata = @{
 }
 
 # Import logging if available
-$loggingModule = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
+$loggingModule = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/core/Logging.psm1"
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force
     $script:LoggingAvailable = $true

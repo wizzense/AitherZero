@@ -1,0 +1,100 @@
+{
+  "name": "Environment Setup - Complete",
+  "version": "1.0.0",
+  "tags": [
+    "environment",
+    "setup",
+    "preparation"
+  ],
+  "workflow": {
+    "steps": [
+      {
+        "name": "Cleanup-Environment",
+        "timeout": 300,
+        "description": "Execute 0000_Cleanup-Environment",
+        "continueOnError": false,
+        "id": "step_0000",
+        "script": "0000"
+      },
+      {
+        "name": "Ensure-PowerShell7",
+        "timeout": 300,
+        "description": "Execute 0001_Ensure-PowerShell7",
+        "continueOnError": false,
+        "id": "step_0001",
+        "script": "0001"
+      },
+      {
+        "name": "Setup-Directories",
+        "timeout": 300,
+        "description": "Execute 0002_Setup-Directories",
+        "continueOnError": false,
+        "id": "step_0002",
+        "script": "0002"
+      },
+      {
+        "name": "Install-ValidationTools",
+        "timeout": 300,
+        "description": "Execute 0006_Install-ValidationTools",
+        "continueOnError": false,
+        "id": "step_0006",
+        "script": "0006"
+      },
+      {
+        "name": "Install-Go",
+        "timeout": 300,
+        "description": "Execute 0007_Install-Go",
+        "continueOnError": false,
+        "id": "step_0007",
+        "script": "0007"
+      },
+      {
+        "name": "Install-OpenTofu",
+        "timeout": 300,
+        "description": "Execute 0008_Install-OpenTofu",
+        "continueOnError": false,
+        "id": "step_0008",
+        "script": "0008"
+      },
+      {
+        "name": "Initialize-OpenTofu",
+        "timeout": 300,
+        "description": "Execute 0009_Initialize-OpenTofu",
+        "continueOnError": false,
+        "id": "step_0009",
+        "script": "0009"
+      },
+      {
+        "name": "Deploy-Infrastructure",
+        "timeout": 300,
+        "description": "Execute 0300_Deploy-Infrastructure",
+        "continueOnError": false,
+        "id": "step_0300",
+        "script": "0300"
+      },
+      {
+        "name": "Create-TestIssues",
+        "timeout": 300,
+        "description": "Execute 0800_Create-TestIssues",
+        "continueOnError": false,
+        "id": "step_0800",
+        "script": "0800"
+      },
+      {
+        "name": "Parse-PesterResults",
+        "timeout": 300,
+        "description": "Execute 0801_Parse-PesterResults",
+        "continueOnError": false,
+        "id": "step_0801",
+        "script": "0801"
+      }
+    ]
+  },
+  "description": "Complete environment setup and preparation",
+  "category": "setup",
+  "variables": {
+    "ValidateAfterInstall": true,
+    "ForceReinstall": false,
+    "SkipOptional": false
+  }
+}

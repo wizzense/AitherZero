@@ -1,0 +1,21 @@
+{
+  "Name": "dev-environment",
+  "Description": "Complete development environment setup",
+  "Sequence": [
+    "stage:Prepare",
+    "stage:Core",
+    "0201",
+    "0207",
+    "0208",
+    "0210",
+    "stage:Development"
+  ],
+  "Variables": {
+    "Profile": "Developer",
+    "Environment": "Development",
+    "Features": ["Git", "Node", "Docker", "VSCode"]
+  },
+  "Profile": "Developer",
+  "Created": "2024-01-01T00:00:00Z",
+  "Version": "1.0"
+}

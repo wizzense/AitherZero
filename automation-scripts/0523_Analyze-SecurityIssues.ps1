@@ -29,12 +29,12 @@ $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
 $script:StartTime = Get-Date
 
 # Import modules
-Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/TechDebtAnalysis.psm1') -Force
-Import-Module (Join-Path $script:ProjectRoot 'domains/utilities/Logging.psm1') -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $script:ProjectRoot 'domains/infrastructure/Infrastructure.psm1') -Force
+Import-Module (Join-Path $script:ProjectRoot 'domains/core/Logging.psm1') -Force -ErrorAction SilentlyContinue
 
 # Initialize analysis
 if ($PSCmdlet.ShouldProcess($OutputPath, "Initialize tech debt analysis results directory")) {
-    Initialize-TechDebtAnalysis -ResultsPath $OutputPath
+    Initialize-SecurityConfiguration -ResultsPath $OutputPath
 }
 
 function Get-SecurityPatterns {
@@ -423,3 +423,4 @@ try {
     Write-AnalysisLog "Stack trace: $($_.ScriptStackTrace)" -Component "Security" -Level Error
     exit 1
 }
+

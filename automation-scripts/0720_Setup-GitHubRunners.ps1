@@ -56,8 +56,8 @@ $script:Condition = '$IsAdmin -and (Get-Command gh -ErrorAction SilentlyContinue
 #endregion
 
 # Import required modules and functions
-if (Test-Path "$PSScriptRoot/../domains/utilities/Logging.psm1") {
-    Import-Module "$PSScriptRoot/../domains/utilities/Logging.psm1" -Force
+if (Test-Path "$PSScriptRoot/../domains/core/Logging.psm1") {
+    Import-Module "$PSScriptRoot/../domains/core/Logging.psm1" -Force
 }
 
 function Write-RunnerLog {

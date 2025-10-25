@@ -30,13 +30,12 @@ $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
 $script:StartTime = Get-Date
 
 # Import modules
-Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/TechDebtAnalysis.psm1') -Force
-Import-Module (Join-Path $script:ProjectRoot 'domains/utilities/Logging.psm1') -Force -ErrorAction SilentlyContinue
-Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/ReportingEngine.psm1') -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $script:ProjectRoot 'domains/infrastructure/Infrastructure.psm1') -Force
+Import-Module (Join-Path $script:ProjectRoot 'domains/core/Logging.psm1') -Force -ErrorAction SilentlyContinue
 
 # Initialize
 if ($PSCmdlet.ShouldProcess($AnalysisPath, "Initialize tech debt analysis results directory")) {
-    Initialize-TechDebtAnalysis -ResultsPath $AnalysisPath
+    Initialize-SecurityConfiguration -ResultsPath $AnalysisPath
 }
 
 function Invoke-AnalysisIfNeeded {
@@ -861,3 +860,4 @@ try {
     Write-AnalysisLog "Stack trace: $($_.ScriptStackTrace)" -Component "TechDebtReport" -Level Error
     exit 1
 }
+

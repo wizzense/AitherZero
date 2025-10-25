@@ -14,7 +14,7 @@
 .EXAMPLE
     Get-ChildItem *.ps1 -Recurse | ForEach-Object { ./0407_Validate-Syntax.ps1 -FilePath $_.FullName }
 .EXAMPLE
-    seq 0407 -Variables @{FilePath="./domains/utilities/Logging.psm1"; Detailed=$true}
+    seq 0407 -Variables @{FilePath="./domains/core/Logging.psm1"; Detailed=$true}
 #>
 
 # Script metadata

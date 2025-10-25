@@ -1,0 +1,31 @@
+{
+  "Name": "full-development",
+  "Description": "Complete development environment with all tools",
+  "Sequence": [
+    "0000",
+    "0001",
+    "0002",
+    "0006",
+    "0207",
+    "0206",
+    "0201",
+    "0210",
+    "0208",
+    "0216"
+  ],
+  "Variables": {
+    "Profile": "Developer",
+    "Environment": "Development",
+    "Features": ["Git", "Python", "Node", "Docker", "VSCode", "ValidationTools"],
+    "InstallAITools": false
+  },
+  "Profile": "Developer",
+  "Created": "2025-01-08T00:00:00Z",
+  "Version": "1.0",
+  "Tags": ["development", "complete", "tools"],
+  "Prerequisites": {
+    "Platform": "Windows",
+    "MinPowerShellVersion": "7.0",
+    "RequiredSpace": "20GB"
+  }
+}

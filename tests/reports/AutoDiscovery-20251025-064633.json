@@ -1,0 +1,681 @@
+{
+  "TotalScripts": 101,
+  "GeneratedAt": "2025-10-25 06:46:33",
+  "Categories": {
+    "0000-0099": {
+      "Scripts": [
+        {
+          "Description": [],
+          "Number": "0000",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0000_Cleanup-Environment.ps1",
+          "Name": "0000_Cleanup-Environment"
+        },
+        {
+          "Description": [],
+          "Number": "0001",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0001_Ensure-PowerShell7.ps1",
+          "Name": "0001_Ensure-PowerShell7"
+        },
+        {
+          "Description": [],
+          "Number": "0002",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0002_Setup-Directories.ps1",
+          "Name": "0002_Setup-Directories"
+        },
+        {
+          "Description": [],
+          "Number": "0006",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0006_Install-ValidationTools.ps1",
+          "Name": "0006_Install-ValidationTools"
+        },
+        {
+          "Description": [],
+          "Number": "0007",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0007_Install-Go.ps1",
+          "Name": "0007_Install-Go"
+        },
+        {
+          "Description": [],
+          "Number": "0008",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0008_Install-OpenTofu.ps1",
+          "Name": "0008_Install-OpenTofu"
+        },
+        {
+          "Description": [],
+          "Number": "0009",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0009_Initialize-OpenTofu.ps1",
+          "Name": "0009_Initialize-OpenTofu"
+        },
+        {
+          "Description": [],
+          "Number": "0300",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0300_Deploy-Infrastructure.ps1",
+          "Name": "0300_Deploy-Infrastructure"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0800",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0800_Create-TestIssues.ps1",
+          "Name": "0800_Create-TestIssues"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0801",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0801_Parse-PesterResults.ps1",
+          "Name": "0801_Parse-PesterResults"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0805",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0805_Analyze-OpenIssues.ps1",
+          "Name": "0805_Analyze-OpenIssues"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0810",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0810_Create-IssueFromTestFailure.ps1",
+          "Name": "0810_Create-IssueFromTestFailure"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0815",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0815_Setup-IssueManagement.ps1",
+          "Name": "0815_Setup-IssueManagement"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0820",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0820_Save-WorkContext.ps1",
+          "Name": "0820_Save-WorkContext"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0821",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0821_Generate-ContinuationPrompt.ps1",
+          "Name": "0821_Generate-ContinuationPrompt"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0830",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0830_Generate-PromptFromData.ps1",
+          "Name": "0830_Generate-PromptFromData"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0831",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0831_Prompt-Templates.ps1",
+          "Name": "0831_Prompt-Templates"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0900",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0900_Test-SelfDeployment.ps1",
+          "Name": "0900_Test-SelfDeployment"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0901",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0901_Test-LocalDeployment.ps1",
+          "Name": "0901_Test-LocalDeployment"
+        }
+      ],
+      "Name": "Environment Setup"
+    },
+    "9000-9999": {
+      "Scripts": [
+        {
+          "Description": [],
+          "Number": "9999",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/9999_Reset-Machine.ps1",
+          "Name": "9999_Reset-Machine"
+        }
+      ],
+      "Name": "Maintenance & Cleanup"
+    },
+    "0700-0799": {
+      "Scripts": [
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0700",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0700_Setup-GitEnvironment.ps1",
+          "Name": "0700_Setup-GitEnvironment"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0701",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0701_Create-FeatureBranch.ps1",
+          "Name": "0701_Create-FeatureBranch"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0702",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0702_Create-Commit.ps1",
+          "Name": "0702_Create-Commit"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0703",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0703_Create-PullRequest.ps1",
+          "Name": "0703_Create-PullRequest"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0704",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0704_Stage-Files.ps1",
+          "Name": "0704_Stage-Files"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0705",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0705_Push-Branch.ps1",
+          "Name": "0705_Push-Branch"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0709",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0709_Post-PRComment.ps1",
+          "Name": "0709_Post-PRComment"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0720",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0720_Setup-GitHubRunners.ps1",
+          "Name": "0720_Setup-GitHubRunners"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0721",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0721_Configure-RunnerEnvironment.ps1",
+          "Name": "0721_Configure-RunnerEnvironment"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0722",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0722_Install-RunnerServices.ps1",
+          "Name": "0722_Install-RunnerServices"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0723",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0723_Setup-MatrixRunners.ps1",
+          "Name": "0723_Setup-MatrixRunners"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0730",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0730_Setup-AIAgents.ps1",
+          "Name": "0730_Setup-AIAgents"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0731",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0731_Invoke-AICodeReview.ps1",
+          "Name": "0731_Invoke-AICodeReview"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0732",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0732_Generate-AITests.ps1",
+          "Name": "0732_Generate-AITests"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0733",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0733_Create-AIDocs.ps1",
+          "Name": "0733_Create-AIDocs"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0734",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0734_Optimize-AIPerformance.ps1",
+          "Name": "0734_Optimize-AIPerformance"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0735",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0735_Analyze-AISecurity.ps1",
+          "Name": "0735_Analyze-AISecurity"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0736",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0736_Generate-AIWorkflow.ps1",
+          "Name": "0736_Generate-AIWorkflow"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0737",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0737_Monitor-AIUsage.ps1",
+          "Name": "0737_Monitor-AIUsage"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0738",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0738_Train-AIContext.ps1",
+          "Name": "0738_Train-AIContext"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0739",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0739_Validate-AIOutput.ps1",
+          "Name": "0739_Validate-AIOutput"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0740",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0740_Integrate-AITools.ps1",
+          "Name": "0740_Integrate-AITools"
+        },
+        {
+          "Description": [],
+          "Number": "0741",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1",
+          "Name": "0741_Generate-AICommitMessage"
+        },
+        {
+          "Description": [],
+          "Number": "0742",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0742_Create-AIPoweredPR.ps1",
+          "Name": "0742_Create-AIPoweredPR"
+        }
+      ],
+      "Name": "Git & AI Automation"
+    },
+    "0100-0199": {
+      "Scripts": [
+        {
+          "Description": [],
+          "Number": "0100",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0100_Configure-System.ps1",
+          "Name": "0100_Configure-System"
+        },
+        {
+          "Description": [],
+          "Number": "0104",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0104_Install-CertificateAuthority.ps1",
+          "Name": "0104_Install-CertificateAuthority"
+        },
+        {
+          "Description": [],
+          "Number": "0105",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0105_Install-HyperV.ps1",
+          "Name": "0105_Install-HyperV"
+        },
+        {
+          "Description": [],
+          "Number": "0106",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0106_Install-WSL2.ps1",
+          "Name": "0106_Install-WSL2"
+        },
+        {
+          "Description": [],
+          "Number": "0108",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0108_Install-WindowsAdminCenter.ps1",
+          "Name": "0108_Install-WindowsAdminCenter"
+        },
+        {
+          "Description": [],
+          "Number": "0112",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0112_Enable-PXE.ps1",
+          "Name": "0112_Enable-PXE"
+        }
+      ],
+      "Name": "Infrastructure"
+    },
+    "0400-0499": {
+      "Scripts": [
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0400",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0400_Install-TestingTools.ps1",
+          "Name": "0400_Install-TestingTools"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0402",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0402_Run-UnitTests.ps1",
+          "Name": "0402_Run-UnitTests"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0403",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0403_Run-IntegrationTests.ps1",
+          "Name": "0403_Run-IntegrationTests"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0404",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+          "Name": "0404_Run-PSScriptAnalyzer"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0405",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0405_Validate-AST.ps1",
+          "Name": "0405_Validate-AST"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0406",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0406_Generate-Coverage.ps1",
+          "Name": "0406_Generate-Coverage"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0407",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0407_Validate-Syntax.ps1",
+          "Name": "0407_Validate-Syntax"
+        },
+        {
+          "Description": [],
+          "Number": "0408",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0408_Generate-TestCoverage.ps1",
+          "Name": "0408_Generate-TestCoverage"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0409",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0409_Run-AllTests.ps1",
+          "Name": "0409_Run-AllTests"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0411",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0411_Test-Smart.ps1",
+          "Name": "0411_Test-Smart"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0440",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0440_Validate-Workflows.ps1",
+          "Name": "0440_Validate-Workflows"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0441",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0441_Test-WorkflowsLocally.ps1",
+          "Name": "0441_Test-WorkflowsLocally"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0442",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0442_Install-Act.ps1",
+          "Name": "0442_Install-Act"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0443",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0443_Install-PowerShellYaml.ps1",
+          "Name": "0443_Install-PowerShellYaml"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0450",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0450_Publish-TestResults.ps1",
+          "Name": "0450_Publish-TestResults"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0451",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0451_Test-Optimized.ps1",
+          "Name": "0451_Test-Optimized"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0460",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0460_Orchestrate-Tests.ps1",
+          "Name": "0460_Orchestrate-Tests"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0470",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0470_Orchestrate-SimpleTesting.ps1",
+          "Name": "0470_Orchestrate-SimpleTesting"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0480",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0480_Test-Simple.ps1",
+          "Name": "0480_Test-Simple"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0490",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0490_AI-TestRunner.ps1",
+          "Name": "0490_AI-TestRunner"
+        }
+      ],
+      "Name": "Testing & Validation"
+    },
+    "0200-0299": {
+      "Scripts": [
+        {
+          "Description": [],
+          "Number": "0201",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0201_Install-Node.ps1",
+          "Name": "0201_Install-Node"
+        },
+        {
+          "Description": [],
+          "Number": "0204",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0204_Install-Poetry.ps1",
+          "Name": "0204_Install-Poetry"
+        },
+        {
+          "Description": [],
+          "Number": "0205",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0205_Install-Sysinternals.ps1",
+          "Name": "0205_Install-Sysinternals"
+        },
+        {
+          "Description": [],
+          "Number": "0206",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0206_Install-Python.ps1",
+          "Name": "0206_Install-Python"
+        },
+        {
+          "Description": [],
+          "Number": "0207",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0207_Install-Git.ps1",
+          "Name": "0207_Install-Git"
+        },
+        {
+          "Description": [],
+          "Number": "0208",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0208_Install-Docker.ps1",
+          "Name": "0208_Install-Docker"
+        },
+        {
+          "Description": [],
+          "Number": "0209",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0209_Install-7Zip.ps1",
+          "Name": "0209_Install-7Zip"
+        },
+        {
+          "Description": [],
+          "Number": "0210",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0210_Install-VSCode.ps1",
+          "Name": "0210_Install-VSCode"
+        },
+        {
+          "Description": [],
+          "Number": "0211",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0211_Install-VSBuildTools.ps1",
+          "Name": "0211_Install-VSBuildTools"
+        },
+        {
+          "Description": [],
+          "Number": "0212",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0212_Install-AzureCLI.ps1",
+          "Name": "0212_Install-AzureCLI"
+        },
+        {
+          "Description": [],
+          "Number": "0213",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0213_Install-AWSCLI.ps1",
+          "Name": "0213_Install-AWSCLI"
+        },
+        {
+          "Description": [],
+          "Number": "0214",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0214_Install-Packer.ps1",
+          "Name": "0214_Install-Packer"
+        },
+        {
+          "Description": [],
+          "Number": "0215",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0215_Install-Chocolatey.ps1",
+          "Name": "0215_Install-Chocolatey"
+        },
+        {
+          "Description": [],
+          "Number": "0216",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0216_Set-PowerShellProfile.ps1",
+          "Name": "0216_Set-PowerShellProfile"
+        },
+        {
+          "Description": [],
+          "Number": "0217",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0217_Install-ClaudeCode.ps1",
+          "Name": "0217_Install-ClaudeCode"
+        },
+        {
+          "Description": [],
+          "Number": "0218",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0218_Install-GeminiCLI.ps1",
+          "Name": "0218_Install-GeminiCLI"
+        }
+      ],
+      "Name": "Development Tools"
+    },
+    "0500-0599": {
+      "Scripts": [
+        {
+          "Description": [],
+          "Number": "0500",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0500_Validate-Environment.ps1",
+          "Name": "0500_Validate-Environment"
+        },
+        {
+          "Description": [],
+          "Number": "0501",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0501_Get-SystemInfo.ps1",
+          "Name": "0501_Get-SystemInfo"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0510",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0510_Generate-ProjectReport.ps1",
+          "Name": "0510_Generate-ProjectReport"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0511",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0511_Show-ProjectDashboard.ps1",
+          "Name": "0511_Show-ProjectDashboard"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0512",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0512_Generate-Dashboard.ps1",
+          "Name": "0512_Generate-Dashboard"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0513",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0513_Enable-ContinuousReporting.ps1",
+          "Name": "0513_Enable-ContinuousReporting"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0514",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0514_Schedule-ReportGeneration.ps1",
+          "Name": "0514_Schedule-ReportGeneration"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0520",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0520_Analyze-ConfigurationUsage.ps1",
+          "Name": "0520_Analyze-ConfigurationUsage"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0521",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0521_Analyze-DocumentationCoverage.ps1",
+          "Name": "0521_Analyze-DocumentationCoverage"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0522",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0522_Analyze-CodeQuality.ps1",
+          "Name": "0522_Analyze-CodeQuality"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0523",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0523_Analyze-SecurityIssues.ps1",
+          "Name": "0523_Analyze-SecurityIssues"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0524",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0524_Generate-TechDebtReport.ps1",
+          "Name": "0524_Generate-TechDebtReport"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0525",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0525_Deploy-Documentation.ps1",
+          "Name": "0525_Deploy-Documentation"
+        },
+        {
+          "Description": [],
+          "Number": "0530",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0530_View-Logs.ps1",
+          "Name": "0530_View-Logs"
+        },
+        {
+          "Description": "SYNOPSIS",
+          "Number": "0599",
+          "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0599_CI-ProgressReporter.ps1",
+          "Name": "0599_CI-ProgressReporter"
+        }
+      ],
+      "Name": "Reporting & Metrics"
+    }
+  },
+  "OrchestrationStructure": [
+    {
+      "Playbooks": [
+        "ai-assisted-deployment",
+        "infrastructure-lab"
+      ],
+      "Category": "deployment"
+    },
+    {
+      "Playbooks": [
+        "ai-complete-workflow",
+        "ai-git-workflow",
+        "claude-development-workflow"
+      ],
+      "Category": "development"
+    },
+    {
+      "Playbooks": [
+        "dev-environment",
+        "full-development",
+        "minimal-setup"
+      ],
+      "Category": "setup"
+    },
+    {
+      "Playbooks": [
+        "test-ci",
+        "test-comprehensive",
+        "test-full",
+        "test-quick"
+      ],
+      "Category": "testing"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "Name": "claude-development-workflow",
+  "Description": "Complete AI-assisted development lifecycle workflow",
+  "Version": "1.0",
+  "Created": "2025-01-08T00:00:00Z",
+  "Tags": ["claude-code", "development", "ai-assisted", "workflow"],
+  "Triggers": {
+    "claude_hooks": ["user-prompt-submit", "session-start"],
+    "git_events": ["branch_created", "commit_made"],
+    "development_context": true
+  },
+  "Stages": [
+    {
+      "Name": "Environment Preparation",
+      "Description": "Ensure development environment is properly configured",
+      "Sequence": ["0001", "0002", "0500"],
+      "ContinueOnError": false,
+      "Variables": {
+        "Profile": "Developer",
+        "ValidationLevel": "Standard"
+      }
+    },
+    {
+      "Name": "Pre-Development Validation",
+      "Description": "Validate current state before development work",
+      "Sequence": ["0404", "0407"],
+      "ContinueOnError": true,
+      "Variables": {
+        "QuickScan": true,
+        "OutputFormat": "JSON"
+      }
+    },
+    {
+      "Name": "Development Tools Setup", 
+      "Description": "Ensure required development tools are available",
+      "Sequence": ["0207", "0201", "0206", "0210"],
+      "Conditional": "$(Profile) -eq 'Developer' -or $(Profile) -eq 'Full'",
+      "ContinueOnError": true,
+      "Variables": {
+        "InstallIfMissing": true
+      }
+    },
+    {
+      "Name": "AI Development Environment",
+      "Description": "Setup AI coding assistants and hooks",
+      "Sequence": ["0217", "0218"],
+      "ContinueOnError": true,
+      "Variables": {
+        "ConfigureHooks": true,
+        "EnableAutoAssistance": true
+      }
+    },
+    {
+      "Name": "Git Workflow Setup",
+      "Description": "Configure Git environment and development branch",
+      "Sequence": ["0700"],
+      "Variables": {
+        "SetupHooks": true,
+        "ConventionalCommits": true
+      }
+    }
+  ],
+  "PostExecution": {
+    "Notifications": [
+      {
+        "Type": "console",
+        "Message": "Claude Code development environment ready! Use 'az' commands for automation."
+      }
+    ],
+    "SetEnvironmentVariables": {
+      "AITHERZERO_DEV_WORKFLOW": "active",
+      "AITHERZERO_AI_ASSISTANCE": "enabled"
+    },
+    "TriggerScripts": ["0511"]
+  },
+  "Profile": "Developer",
+  "Prerequisites": {
+    "MinPowerShellVersion": "7.0",
+    "RequiredSpace": "5GB",
+    "InternetConnection": true,
+    "Permissions": "User"
+  },
+  "OnError": {
+    "Rollback": false,
+    "ContinueWithWarnings": true,
+    "LogLevel": "Detailed",
+    "NotifyUser": true
+  }
+}

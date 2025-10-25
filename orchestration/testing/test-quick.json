@@ -1,0 +1,25 @@
+{
+  "name": "test-quick",
+  "description": "Fast validation for development - runs unit tests and syntax analysis",
+  "category": "testing",
+  "scripts": [
+    "0400",
+    "0402",
+    "0404",
+    "0407"
+  ],
+  "variables": {
+    "NoCoverage": true,
+    "FailFast": true,
+    "Parallel": true
+  },
+  "options": {
+    "continueOnError": true,
+    "parallel": true,
+    "timeout": 300
+  },
+  "notifications": {
+    "onSuccess": "✅ Quick validation passed - ready for development!",
+    "onFailure": "❌ Quick validation failed - check test results"
+  }
+}

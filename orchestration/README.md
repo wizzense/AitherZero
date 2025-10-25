@@ -1,307 +1,113 @@
-# AitherZero Orchestration Engine
+# AitherZero Orchestration System
+
+*Auto-generated on 2025-10-25 06:48:43*
+
+## Overview
+
+The AitherZero orchestration system provides automated workflow execution using a collection of 101 automation scripts organized into logical categories.
+
+## Script Categories
+
+### 0000-0099: Environment Setup
+**Scripts:** 19
+- 0000 - Cleanup-Environment
+- 0001 - Ensure-PowerShell7
+- 0002 - Setup-Directories
+- 0006 - Install-ValidationTools
+- 0007 - Install-Go
+- ... and 14 more scripts
+
+### 9000-9999: Maintenance & Cleanup
+**Scripts:** 1
+- 9999 - Reset-Machine
+
+### 0700-0799: Git & AI Automation
+**Scripts:** 24
+- 0700 - Setup-GitEnvironment
+- 0701 - Create-FeatureBranch
+- 0702 - Create-Commit
+- 0703 - Create-PullRequest
+- 0704 - Stage-Files
+- ... and 19 more scripts
+
+### 0100-0199: Infrastructure
+**Scripts:** 6
+- 0100 - Configure-System
+- $(@{Description=System.Object[]; Number=0104; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0104_Install-CertificateAuthority.ps1; Name=0104_Install-CertificateAuthority}.Number) - Install-CertificateAuthority
+- $(@{Description=System.Object[]; Number=0105; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0105_Install-HyperV.ps1; Name=0105_Install-HyperV}.Number) - Install-HyperV
+- $(@{Description=System.Object[]; Number=0106; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0106_Install-WSL2.ps1; Name=0106_Install-WSL2}.Number) - Install-WSL2
+- $(@{Description=System.Object[]; Number=0108; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0108_Install-WindowsAdminCenter.ps1; Name=0108_Install-WindowsAdminCenter}.Number) - Install-WindowsAdminCenter
+- ... and 1 more scripts
+
+### 0400-0499: Testing & Validation
+**Scripts:** 20
+- $(@{Description=SYNOPSIS; Number=0400; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0400_Install-TestingTools.ps1; Name=0400_Install-TestingTools}.Number) - Install-TestingTools
+- $(@{Description=SYNOPSIS; Number=0402; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0402_Run-UnitTests.ps1; Name=0402_Run-UnitTests}.Number) - Run-UnitTests
+- $(@{Description=SYNOPSIS; Number=0403; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0403_Run-IntegrationTests.ps1; Name=0403_Run-IntegrationTests}.Number) - Run-IntegrationTests
+- $(@{Description=SYNOPSIS; Number=0404; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0404_Run-PSScriptAnalyzer.ps1; Name=0404_Run-PSScriptAnalyzer}.Number) - Run-PSScriptAnalyzer
+- $(@{Description=SYNOPSIS; Number=0405; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0405_Validate-AST.ps1; Name=0405_Validate-AST}.Number) - Validate-AST
+- ... and 15 more scripts
+
+### 0200-0299: Development Tools
+**Scripts:** 16
+- $(@{Description=System.Object[]; Number=0201; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0201_Install-Node.ps1; Name=0201_Install-Node}.Number) - Install-Node
+- $(@{Description=System.Object[]; Number=0204; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0204_Install-Poetry.ps1; Name=0204_Install-Poetry}.Number) - Install-Poetry
+- $(@{Description=System.Object[]; Number=0205; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0205_Install-Sysinternals.ps1; Name=0205_Install-Sysinternals}.Number) - Install-Sysinternals
+- $(@{Description=System.Object[]; Number=0206; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0206_Install-Python.ps1; Name=0206_Install-Python}.Number) - Install-Python
+- $(@{Description=System.Object[]; Number=0207; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0207_Install-Git.ps1; Name=0207_Install-Git}.Number) - Install-Git
+- ... and 11 more scripts
+
+### 0500-0599: Reporting & Metrics
+**Scripts:** 15
+- $(@{Description=System.Object[]; Number=0500; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0500_Validate-Environment.ps1; Name=0500_Validate-Environment}.Number) - Validate-Environment
+- $(@{Description=System.Object[]; Number=0501; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0501_Get-SystemInfo.ps1; Name=0501_Get-SystemInfo}.Number) - Get-SystemInfo
+- $(@{Description=SYNOPSIS; Number=0510; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0510_Generate-ProjectReport.ps1; Name=0510_Generate-ProjectReport}.Number) - Generate-ProjectReport
+- $(@{Description=SYNOPSIS; Number=0511; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0511_Show-ProjectDashboard.ps1; Name=0511_Show-ProjectDashboard}.Number) - Show-ProjectDashboard
+- $(@{Description=SYNOPSIS; Number=0512; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0512_Generate-Dashboard.ps1; Name=0512_Generate-Dashboard}.Number) - Generate-Dashboard
+- ... and 10 more scripts
+
+## Available Playbooks
+
+### SETUP (4 playbooks)
+- **dev-environment** - Complete development environment setup
+- **Environment Setup - Complete** - Complete environment setup and preparation
+- **full-development** - Complete development environment with all tools
+- **minimal-setup** - Minimal environment setup with core dependencies
+
+### TESTING (5 playbooks)
+- **Comprehensive Testing Suite** - Run all validation and testing scripts
+- **test-ci** - Continuous Integration test suite optimized for CI/CD pipelines
+- **test-comprehensive** - Complete test suite with validation, unit, integration, analysis, and coverage
+- **test-full** - Complete test suite including unit, integration, analysis, and coverage
+- **test-quick** - Fast validation for development - runs unit tests and syntax analysis
+
+### DEVELOPMENT (4 playbooks)
+- **ai-complete-workflow** - Complete AI-enhanced workflow: branch, commit, push, and PR with intelligent descriptions
+- **ai-git-workflow** - AI-driven Git workflow for consistent development practices
+- **claude-development-workflow** - Complete AI-assisted development lifecycle workflow
+- **Development Environment Setup** - Setup complete development environment with tools and AI integration
+
+### DEPLOYMENT (2 playbooks)
+- **ai-assisted-deployment** - AI-guided infrastructure deployment with validation and rollback
+- **infrastructure-lab** - Infrastructure lab setup with OpenTofu and Hyper-V
+
+## Usage
+
+`powershell
+# Run a specific playbook
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook setup/environment-complete
+
+# List available playbooks
+./Start-AitherZero.ps1 -Mode CLI help
 
-A powerful number-based orchestration language for automating complex deployments and configurations.
+# Update orchestration index
+./Update-OrchestrationIndex.ps1 -UpdateIndex -GeneratePlaybooks
+`
 
-## Quick Start
+## Auto-Discovery
 
-```powershell
-# Import the orchestration engine
-Import-Module ./domains/automation/OrchestrationEngine.psm1
+This orchestration system automatically discovers and catalogs automation scripts. The index is updated each time you run system validation or orchestration cleanup.
 
-# Run setup using number sequences
-seq 0000-0099  # Environment preparation
-seq 0201,0207  # Install Node.js and Git
-seq stage:Core # Run all core stage scripts
-```
+**Last Updated:** 2025-10-25 06:48:43  
+**Total Scripts Discovered:** 101
 
-## Number Sequence Language
-
-### Basic Syntax
-
-- **Single Script**: `0001` - Run script 0001
-- **Range**: `0001-0099` - Run scripts 0001 through 0099
-- **List**: `0001,0005,0201` - Run specific scripts
-- **Wildcard**: `02*` - Run all 0200-0299 scripts
-- **Exclusion**: `0000-0099,!0050` - Run range except 0050
-- **Stage**: `stage:Infrastructure` - Run all scripts in stage
-- **Tags**: `tag:database` - Run all scripts with tag
-
-### Examples
-
-```powershell
-# Minimal setup
-seq 0000-0002,0001,0207
-
-# Development environment
-seq stage:Prepare,stage:Core,02*
-
-# Infrastructure deployment
-seq 0000-0099,0105,0008,0300
-
-# Everything except Docker
-seq 0000-0299,!0208
-
-# Complex orchestration
-Invoke-OrchestrationSequence -Sequence "0000-0299,stage:Infrastructure" -Variables @{
-    Environment = "Production"
-    Features = @("HyperV", "Kubernetes")
-} -MaxConcurrency 8
-```
-
-## Playbooks
-
-Save and reuse common sequences:
-
-```powershell
-# Save current sequence as playbook
-seq 0001,0207,0201,0105 -SavePlaybook "my-setup"
-
-# Load and run playbook
-seq -LoadPlaybook "my-setup"
-
-# Run predefined playbooks
-seq -LoadPlaybook "minimal-setup"
-seq -LoadPlaybook "dev-environment"
-seq -LoadPlaybook "hyperv-lab"
-```
-
-## Script Metadata
-
-Scripts can include metadata for advanced orchestration:
-
-```powershell
-#Requires -Version 7.0
-# Stage: Infrastructure
-# Dependencies: Git, PowerShell7
-# Description: Deploy infrastructure
-# Tags: deployment, infrastructure
-# Condition: Environment -eq 'Production'
-```
-
-### Metadata Fields
-
-- **Stage**: Logical grouping (Prepare, Core, Infrastructure, Development, Services, Configuration, Validation)
-- **Dependencies**: Required tools or other scripts
-- **Description**: Brief description shown in plans
-- **Tags**: Labels for tag-based selection
-- **Condition**: PowerShell expression for conditional execution
-
-## Conditional Execution
-
-```powershell
-# Run with conditions
-seq 0000-0299 -Variables @{
-    Environment = "Development"
-    SkipTests = $false
-} -Conditions @{
-    Features = @("HyperV", "Docker")
-}
-
-# Scripts with conditions only run when true
-# Condition: Environment -eq 'Production'
-# Condition: Features -contains 'Docker'
-# Condition: SkipTests -ne $true
-```
-
-## Execution Modes
-
-### Parallel Execution (Default)
-```powershell
-seq 0000-0099 -Parallel $true -MaxConcurrency 4
-```
-
-### Sequential Execution
-```powershell
-seq 0000-0099 -Parallel $false
-```
-
-### Dry Run
-```powershell
-seq 0000-0099 -DryRun
-```
-
-### Continue on Error
-```powershell
-seq 0000-0099 -ContinueOnError
-```
-
-## Non-Interactive Automation
-
-Perfect for CI/CD and automated deployments:
-
-```powershell
-# Full automated setup
-./bootstrap.ps1 -Mode New -NonInteractive
-
-# Run specific profile
-Invoke-OrchestrationSequence -Profile "Developer" -Configuration ./config.json
-
-# Load from environment
-$env:AITHERZERO_SEQUENCE = "0000-0299"
-$env:AITHERZERO_PROFILE = "Production"
-seq $env:AITHERZERO_SEQUENCE
-```
-
-## Creating Custom Scripts
-
-1. **Name Format**: `NNNN_ScriptName.ps1`
-   - NNNN: 4-digit number (execution order)
-   - ScriptName: Descriptive name
-
-2. **Required Structure**:
-```powershell
-#Requires -Version 7.0
-# Stage: YourStage
-# Dependencies: Dep1, Dep2
-# Description: What this script does
-
-[CmdletBinding()]
-param(
-    [Parameter()]
-    [hashtable]$Configuration
-)
-
-# Your script logic here
-exit 0  # Success
-exit 1  # Failure
-```
-
-3. **Exit Codes**:
-   - 0: Success
-   - 1: General failure
-   - 2: Warning/partial success
-   - 3010: Success but restart required
-   - 200: Special handling needed
-
-## Integration Examples
-
-### PowerShell Profile
-```powershell
-# Add to $ProfileName
-Import-Module C:\AitherZero\domains\automation\OrchestrationEngine.psm1
-```
-
-### CI/CD Pipeline
-```yaml
-# Azure DevOps
-- task: PowerShell@2
-  inputs:
-    targetType: 'inline'
-    script: |
-      Import-Module ./domains/automation/OrchestrationEngine.psm1
-      seq 0000-0299 -Profile "Production" -NonInteractive
-
-# GitHub Actions
-- name: Deploy Infrastructure
-  shell: pwsh
-  run: |
-    Import-Module ./domains/automation/OrchestrationEngine.psm1
-    seq -LoadPlaybook "production-deploy"
-```
-
-### Docker
-```dockerfile
-FROM mcr.microsoft.com/powershell:latest
-COPY . /aitherzero
-WORKDIR /aitherzero
-RUN pwsh -c "Import-Module ./domains/automation/OrchestrationEngine.psm1; seq 0000-0099"
-```
-
-## Advanced Usage
-
-### Custom Profiles
-```powershell
-# Define in config.json
-"Profiles": {
-  "CustomProfile": {
-    "Description": "My custom setup",
-    "Scripts": ["0001", "0207", "stage:Development", "!0208"]
-  }
-}
-
-# Use profile
-seq -Profile "CustomProfile"
-```
-
-### Programmatic Access
-```powershell
-# Get orchestration results
-$result = Invoke-OrchestrationSequence -Sequence "0000-0099" -PassThru
-
-# Check results
-$result.Completed  # Number of successful scripts
-$result.Failed     # Number of failed scripts
-$result.Duration   # Total execution time
-
-# Access individual results
-foreach ($scriptNum in $result.Results.Completed.Keys) {
-    $scriptResult = $result.Results.Completed[$scriptNum]
-    Write-Host "$scriptNum completed in $($scriptResult.Duration.TotalSeconds)s"
-}
-```
-
-### Dynamic Sequence Generation
-```powershell
-# Build sequence based on system
-$sequence = @("0000-0099")  # Always run prep
-
-if ($IsWindows) {
-    $sequence += "0105"  # Hyper-V
-}
-
-if (Test-Path "./infrastructure") {
-    $sequence += "0300"  # Deploy infrastructure
-}
-
-seq $sequence
-```
-
-## Troubleshooting
-
-### View Execution Plan
-```powershell
-seq 0000-0099 -DryRun
-```
-
-### Enable Verbose Logging
-```powershell
-$VerbosePreference = 'Continue'
-seq 0000-0099
-```
-
-### Debug Specific Script
-```powershell
-# Run single script with full output
-& ./automation-scripts/0201_Install-Node.ps1 -Configuration $config -Verbose
-```
-
-### Check Dependencies
-```powershell
-seq 0500  # Run validation script
-```
-
-## Best Practices
-
-1. **Use Stages**: Group related scripts into logical stages
-2. **Define Dependencies**: Ensure proper execution order
-3. **Make Idempotent**: Scripts should be safe to run multiple times
-4. **Handle Errors**: Use proper exit codes and error messages
-5. **Test First**: Always dry-run before actual execution
-6. **Use Playbooks**: Save common sequences for reuse
-7. **Document Scripts**: Use metadata for clarity
-
-## Security Considerations
-
-- Scripts run with current user privileges
-- Use `-WhatIf` for safety in production
-- Review scripts before execution
-- Store sensitive data in secure configuration
-- Use conditions to prevent accidental execution
-
-## Performance Tips
-
-- Use parallel execution for independent scripts
-- Set appropriate MaxConcurrency based on system
-- Group related operations in single scripts
-- Use exclusions to skip unnecessary scripts
-- Monitor system resources during execution
