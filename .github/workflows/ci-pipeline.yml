@@ -99,15 +99,15 @@ jobs:
             { & pwsh -File "./az.ps1" 0407 }
           )
           
-          foreach ($method in $methods) {
+          for ($i = 0; $i -lt $methods.Count; $i++) {
             try {
-              Write-Host "Attempting syntax validation..." -ForegroundColor Cyan
-              & $method
+              Write-Host "Attempting syntax validation with method $($i + 1)..." -ForegroundColor Cyan
+              $methods[$i].Invoke()
               $success = $true
               break
             } catch {
               $errorMsg = $_.ToString()
-              Write-Host "Method failed: $errorMsg" -ForegroundColor Yellow
+              Write-Host "Method $($i + 1) failed: $errorMsg" -ForegroundColor Yellow
               continue
             }
           }
@@ -243,16 +243,16 @@ jobs:
             { & pwsh -File "./az.ps1" $scriptNumber }
           )
           
-          foreach ($method in $methods) {
+          for ($i = 0; $i -lt $methods.Count; $i++) {
             try {
-              Write-Host "Attempting test execution with method $(($methods.IndexOf($method)) + 1)..." -ForegroundColor Cyan
-              $result = & $method
+              Write-Host "Attempting test execution with method $($i + 1)..." -ForegroundColor Cyan
+              $result = $methods[$i].Invoke()
               $testExitCode = $LASTEXITCODE
               $testSuccess = $true
               break
             } catch {
               $errorMsg = $_.ToString()
-              Write-Host "Method failed: $errorMsg" -ForegroundColor Yellow
+              Write-Host "Method $($i + 1) failed: $errorMsg" -ForegroundColor Yellow
               continue
             }
           }
@@ -297,16 +297,16 @@ jobs:
             { & pwsh -File "./az.ps1" 0404 }
           )
           
-          foreach ($method in $methods) {
+          for ($i = 0; $i -lt $methods.Count; $i++) {
             try {
-              Write-Host "Attempting code analysis..." -ForegroundColor Cyan
-              $result = & $method
+              Write-Host "Attempting code analysis with method $($i + 1)..." -ForegroundColor Cyan
+              $result = $methods[$i].Invoke()
               $analysisExitCode = $LASTEXITCODE
               $analysisSuccess = $true
               break
             } catch {
               $errorMsg = $_.ToString()
-              Write-Host "Method failed: $errorMsg" -ForegroundColor Yellow
+              Write-Host "Method $($i + 1) failed: $errorMsg" -ForegroundColor Yellow
               continue
             }
           }
@@ -333,35 +333,41 @@ jobs:
           Write-Host "📊 Generating comprehensive reports..." -ForegroundColor Yellow
           
           $reportMethods = @(
-            { & ./az },
-            { & "$(Join-Path $PWD 'az')" },
-            { & pwsh -File "./az.ps1" }
+            { & ./az 0510 },
+            { & "$(Join-Path $PWD 'az')" 0510 },
+            { & pwsh -File "./az.ps1" 0510 }
+          )
+          
+          $coverageMethods = @(
+            { & ./az 0408 },
+            { & "$(Join-Path $PWD 'az')" 0408 },
+            { & pwsh -File "./az.ps1" 0408 }
           )
           
           $reportSuccess = 0
           
           # Generate project report
-          foreach ($method in $reportMethods) {
+          for ($i = 0; $i -lt $reportMethods.Count; $i++) {
             try {
-              Write-Host "Attempting project report generation..." -ForegroundColor Cyan
-              & $method 0510
+              Write-Host "Attempting project report generation with method $($i + 1)..." -ForegroundColor Cyan
+              $reportMethods[$i].Invoke()
               $reportSuccess++
               break
             } catch {
-              Write-Host "Project report method failed: $_" -ForegroundColor Yellow
+              Write-Host "Project report method $($i + 1) failed: $_" -ForegroundColor Yellow
               continue
             }
           }
           
           # Generate coverage report if available
-          foreach ($method in $reportMethods) {
+          for ($i = 0; $i -lt $coverageMethods.Count; $i++) {
             try {
-              Write-Host "Attempting coverage report generation..." -ForegroundColor Cyan
-              & $method 0408
+              Write-Host "Attempting coverage report generation with method $($i + 1)..." -ForegroundColor Cyan
+              $coverageMethods[$i].Invoke()
               $reportSuccess++
               break
             } catch {
-              Write-Host "Coverage report method failed: $_" -ForegroundColor Yellow
+              Write-Host "Coverage report method $($i + 1) failed: $_" -ForegroundColor Yellow
               continue
             }
           }
