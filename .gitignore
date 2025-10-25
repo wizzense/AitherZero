@@ -53,6 +53,17 @@ build-output/
 *.egg-info/
 kicker-git-backup.ps1
 
+# CI/CD artifacts
+AitherZero-v*.zip
+AitherZero-v*.tar.gz
+build-info.json
+pr-analysis.json
+release-notes.md
+
+# Legacy files
+*.old
+*-legacy.*
+
 # Claude Requirements System
 
 # PowerShell Security Scripts (Private - Never Commit)

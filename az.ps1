@@ -27,7 +27,7 @@ try {
 }
 
 # Now run the requested script
-if ($arguments.Count -eq 0) {
+if ($args.Count -eq 0) {
     Write-Host "Usage: az <script-number> [arguments]" -ForegroundColor Yellow
     Write-Host "Examples:" -ForegroundColor Gray
     Write-Host "  az 0402              # Run unit tests" -ForegroundColor White
@@ -37,12 +37,40 @@ if ($arguments.Count -eq 0) {
 }
 
 # Pass the first argument as ScriptNumber and rest as additional parameters
-$scriptNumber = [string]$arguments[0]
-$remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count-1)] } else { @() }
+$scriptNumber = [string]$args[0]
+$remainingArgs = if ($args.Count -gt 1) { $args[1..($args.Count-1)] } else { @() }
 
-# Call Invoke-AitherScript with remaining arguments
-if ($remainingArgs.Count -gt 0) {
-    Invoke-AitherScript -ScriptNumber $scriptNumber @remainingArgs
-} else {
-    Invoke-AitherScript -ScriptNumber $scriptNumber
+# Call the automation script directly as a more robust approach
+$automationScriptsPath = Join-Path $PSScriptRoot "automation-scripts"
+$scriptPattern = "${scriptNumber}_*.ps1"
+$matchingScripts = Get-ChildItem -Path $automationScriptsPath -Filter $scriptPattern -ErrorAction SilentlyContinue
+
+if ($matchingScripts.Count -eq 0) {
+    Write-Error "No script found matching pattern: $scriptPattern in $automationScriptsPath"
+    exit 1
+} elseif ($matchingScripts.Count -gt 1) {
+    Write-Host "Multiple scripts found:" -ForegroundColor Yellow
+    $matchingScripts | ForEach-Object { Write-Host "  $($_.Name)" }
+    Write-Host "Please use a more specific script number." -ForegroundColor Yellow
+    exit 1
+}
+
+# Execute the script directly with parameters
+$scriptPath = $matchingScripts[0].FullName
+Write-Host "Executing: $($matchingScripts[0].Name)" -ForegroundColor Cyan
+
+try {
+    if ($remainingArgs.Count -gt 0) {
+        $exitCode = & $scriptPath @remainingArgs
+        $actualExitCode = $LASTEXITCODE
+    } else {
+        $exitCode = & $scriptPath
+        $actualExitCode = $LASTEXITCODE
+    }
+    
+    # Exit with the same code as the script
+    exit $actualExitCode
+} catch {
+    Write-Error "Script execution failed: $_"
+    exit 1
 }

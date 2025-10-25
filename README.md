@@ -18,34 +18,100 @@
 
 ---
 
-## Quick Install
+## 🚀 Quick Install
 
-### Windows/Linux/macOS (PowerShell 7+)
+### One-Liner Installation (Recommended)
+
+**Windows/Linux/macOS (PowerShell 5.1+)**
 ```powershell
-irm https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
 ```
 
-### Linux/macOS (Bash)
+**Linux/macOS (Bash)**
 ```bash
 curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 ```
 
-## Requirements
+### Download Latest Release Package
 
-- PowerShell 7.0+
-- OpenTofu or Terraform
+**Option 1: Direct Download (Latest Release)**
+```powershell
+# Download latest release ZIP
+$latest = (Invoke-RestMethod "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | Where-Object {$_.name -like "*.zip"}
+Invoke-WebRequest -Uri $latest.browser_download_url -OutFile "AitherZero-latest.zip"
+Expand-Archive -Path "AitherZero-latest.zip" -DestinationPath ./
+cd AitherZero-*
+./bootstrap.ps1 -Mode New -NonInteractive
+```
 
-## Quick Start
-
+**Option 2: GitHub CLI**
 ```bash
-# Run the application
+# Using GitHub CLI (gh)
+gh repo clone wizzense/AitherZero
+cd AitherZero
+./bootstrap.sh
+```
+
+**Option 3: Git Clone**
+```bash
+# Traditional git clone
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+./bootstrap.ps1  # Windows/PowerShell
+# OR
+./bootstrap.sh   # Linux/macOS
+```
+
+## 📋 Requirements
+
+**Automatically Installed:**
+- PowerShell 7.0+ (auto-installed if missing)
+- Git (auto-installed if missing)
+
+**Optional:**
+- OpenTofu or Terraform (for infrastructure automation)
+- Docker (for containerized workflows)
+
+## 🎯 Quick Start
+
+```powershell
+# After installation, start AitherZero
 ./Start-AitherZero.ps1
+
+# Or use the command runner
+./az 0511           # Show project dashboard
+./az 0402           # Run unit tests  
+./az 0510           # Generate project report
 
 # Get help
 ./Start-AitherZero.ps1 -Help
 
 # Check version
 ./Start-AitherZero.ps1 -Version
+```
+
+## 📦 What's Included
+
+The AitherZero package includes:
+- **Complete PowerShell module** with all domains and functions
+- **200+ automation scripts** (numbered 0000-9999) for systematic execution
+- **Cross-platform bootstrap scripts** for automatic dependency installation  
+- **Comprehensive test suite** with validation tools
+- **CI/CD workflow templates** for GitHub Actions
+- **Documentation and examples** for all features
+
+## 🔧 Verify Installation
+
+```powershell
+# Test basic functionality
+Import-Module ./AitherZero.psd1
+Get-Module AitherZero
+
+# Run syntax validation
+./az 0407
+
+# Generate and view project report
+./az 0510 -ShowAll
 ```
 
 ## Features
