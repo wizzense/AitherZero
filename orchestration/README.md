@@ -10,29 +10,29 @@ The AitherZero orchestration system provides automated workflow execution using 
 
 ### 0000-0099: Environment Setup
 **Scripts:** 19
-- $(@{Description=System.Object[]; Number=0000; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0000_Cleanup-Environment.ps1; Name=0000_Cleanup-Environment}.Number) - Cleanup-Environment
-- $(@{Description=System.Object[]; Number=0001; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0001_Ensure-PowerShell7.ps1; Name=0001_Ensure-PowerShell7}.Number) - Ensure-PowerShell7
-- $(@{Description=System.Object[]; Number=0002; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0002_Setup-Directories.ps1; Name=0002_Setup-Directories}.Number) - Setup-Directories
-- $(@{Description=System.Object[]; Number=0006; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0006_Install-ValidationTools.ps1; Name=0006_Install-ValidationTools}.Number) - Install-ValidationTools
-- $(@{Description=System.Object[]; Number=0007; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0007_Install-Go.ps1; Name=0007_Install-Go}.Number) - Install-Go
+- 0000 - Cleanup-Environment
+- 0001 - Ensure-PowerShell7
+- 0002 - Setup-Directories
+- 0006 - Install-ValidationTools
+- 0007 - Install-Go
 - ... and 14 more scripts
 
 ### 9000-9999: Maintenance & Cleanup
 **Scripts:** 1
-- $(@{Description=System.Object[]; Number=9999; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/9999_Reset-Machine.ps1; Name=9999_Reset-Machine}.Number) - Reset-Machine
+- 9999 - Reset-Machine
 
 ### 0700-0799: Git & AI Automation
 **Scripts:** 24
-- $(@{Description=SYNOPSIS; Number=0700; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0700_Setup-GitEnvironment.ps1; Name=0700_Setup-GitEnvironment}.Number) - Setup-GitEnvironment
-- $(@{Description=SYNOPSIS; Number=0701; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0701_Create-FeatureBranch.ps1; Name=0701_Create-FeatureBranch}.Number) - Create-FeatureBranch
-- $(@{Description=SYNOPSIS; Number=0702; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0702_Create-Commit.ps1; Name=0702_Create-Commit}.Number) - Create-Commit
-- $(@{Description=SYNOPSIS; Number=0703; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0703_Create-PullRequest.ps1; Name=0703_Create-PullRequest}.Number) - Create-PullRequest
-- $(@{Description=SYNOPSIS; Number=0704; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0704_Stage-Files.ps1; Name=0704_Stage-Files}.Number) - Stage-Files
+- 0700 - Setup-GitEnvironment
+- 0701 - Create-FeatureBranch
+- 0702 - Create-Commit
+- 0703 - Create-PullRequest
+- 0704 - Stage-Files
 - ... and 19 more scripts
 
 ### 0100-0199: Infrastructure
 **Scripts:** 6
-- $(@{Description=System.Object[]; Number=0100; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0100_Configure-System.ps1; Name=0100_Configure-System}.Number) - Configure-System
+- 0100 - Configure-System
 - $(@{Description=System.Object[]; Number=0104; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0104_Install-CertificateAuthority.ps1; Name=0104_Install-CertificateAuthority}.Number) - Install-CertificateAuthority
 - $(@{Description=System.Object[]; Number=0105; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0105_Install-HyperV.ps1; Name=0105_Install-HyperV}.Number) - Install-HyperV
 - $(@{Description=System.Object[]; Number=0106; Path=/home/runner/work/AitherZero/AitherZero/automation-scripts/0106_Install-WSL2.ps1; Name=0106_Install-WSL2}.Number) - Install-WSL2
