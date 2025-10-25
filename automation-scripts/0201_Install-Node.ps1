@@ -58,21 +58,42 @@ function Write-ScriptLog {
 Write-ScriptLog "Starting Node.js installation using package managers"
 
 try {
-    # Get configuration
-    $config = if ($Configuration) { $Configuration } else { @{} }
+    # Import Configuration module for manifest-driven configuration
+    $configModule = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/configuration/Configuration.psm1"
+    if (Test-Path $configModule) {
+        Import-Module $configModule -Force -ErrorAction SilentlyContinue
+    }
 
-    # Check if Node installation is enabled
+    # Check if Node installation is enabled using new manifest-driven approach
     $shouldInstall = $false
     $nodeConfig = $null
 
-    if ($config.InstallationOptions -and $config.InstallationOptions.Node) {
-        $nodeConfig = $config.InstallationOptions.Node
-        $shouldInstall = $nodeConfig.Install -eq $true
-    }
+    if (Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue) {
+        # Use new configuration system
+        $shouldInstall = Test-FeatureEnabled -FeatureName 'Node' -Category 'Development'
+        if ($shouldInstall) {
+            $nodeConfig = Get-FeatureConfiguration -FeatureName 'Node' -Category 'Development'
+            Write-ScriptLog "Node.js installation enabled via Features.Development.Node configuration"
+        } else {
+            Write-ScriptLog "Node.js installation is not enabled for current profile/platform"
+            exit 0
+        }
+    } else {
+        # Fallback to legacy configuration for backwards compatibility
+        $config = if ($Configuration) { $Configuration } else { @{} }
+        
+        if ($config.InstallationOptions -and $config.InstallationOptions.Node) {
+            $nodeConfig = $config.InstallationOptions.Node
+            $shouldInstall = $nodeConfig.Install -eq $true
+        } elseif ($config.Features -and $config.Features.Development -and $config.Features.Development.Node) {
+            $nodeConfig = $config.Features.Development.Node
+            $shouldInstall = $nodeConfig.Enabled -eq $true
+        }
 
-    if (-not $shouldInstall) {
-        Write-ScriptLog "Node.js installation is not enabled in configuration"
-        exit 0
+        if (-not $shouldInstall) {
+            Write-ScriptLog "Node.js installation is not enabled in configuration"
+            exit 0
+        }
     }
 
     # Use PackageManager if available
@@ -151,18 +172,23 @@ try {
     if ($IsWindows) {
         Write-ScriptLog "Installing Node.js for Windows..."
 
-        # Use configured URL or default
-        $downloadUrl = if ($nodeConfig.InstallerUrl) {
-            $nodeConfig.InstallerUrl
-        } else {
-            # Get latest v20 LTS version
-            'https://nodejs.org/dist/v20.18.1/node-v20.18.1-x64.msi'
+        # Use configured URL from new configuration structure
+        $downloadUrl = 'https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi'  # Default
+        
+        if ($nodeConfig -and $nodeConfig.Installer -and $nodeConfig.Installer.Windows) {
+            $downloadUrl = $nodeConfig.Installer.Windows
+        } elseif ($nodeConfig -and $nodeConfig.InstallerUrl) {
+            # Legacy support
+            $downloadUrl = $nodeConfig.InstallerUrl
         }
-
-        $tempDir = if ($config.Infrastructure -and $config.Infrastructure.Directories -and $config.Infrastructure.Directories.LocalPath) {
-            [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories.LocalPath)
-        } else {
-            $env:TEMP
+        
+        # Get temp directory from Infrastructure configuration
+        $tempDir = $env:TEMP
+        if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
+            $infraConfig = Get-Configuration -Section Infrastructure -ErrorAction SilentlyContinue
+            if ($infraConfig -and $infraConfig.Directories -and $infraConfig.Directories.LocalPath) {
+                $tempDir = [System.Environment]::ExpandEnvironmentVariables($infraConfig.Directories.LocalPath)
+            }
         }
 
         $installerPath = Join-Path $tempDir 'node-installer.msi'
