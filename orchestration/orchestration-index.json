@@ -1,0 +1,741 @@
+{
+  "playbooks": {
+    "deployment": [
+      {
+        "name": "ai-assisted-deployment",
+        "file": "ai-assisted-deployment.json",
+        "version": "1.0.0",
+        "tags": [
+          "ai",
+          "deployment",
+          "infrastructure",
+          "validation"
+        ],
+        "description": "AI-guided infrastructure deployment with validation and rollback",
+        "stepCount": 0
+      },
+      {
+        "name": "infrastructure-lab",
+        "file": "infrastructure-lab.json",
+        "version": "1.0",
+        "tags": [
+          "infrastructure",
+          "lab",
+          "opentofu",
+          "hyperv"
+        ],
+        "description": "Infrastructure lab setup with OpenTofu and Hyper-V",
+        "stepCount": 0
+      }
+    ],
+    "setup": [
+      {
+        "name": "dev-environment",
+        "file": "dev-environment.json",
+        "version": "1.0",
+        "tags": null,
+        "description": "Complete development environment setup",
+        "stepCount": 0
+      },
+      {
+        "name": "Environment Setup - Complete",
+        "file": "environment-complete.json",
+        "version": "1.0.0",
+        "tags": [
+          "environment",
+          "setup",
+          "preparation"
+        ],
+        "description": "Complete environment setup and preparation",
+        "stepCount": 10
+      },
+      {
+        "name": "full-development",
+        "file": "full-development.json",
+        "version": "1.0",
+        "tags": [
+          "development",
+          "complete",
+          "tools"
+        ],
+        "description": "Complete development environment with all tools",
+        "stepCount": 0
+      },
+      {
+        "name": "minimal-setup",
+        "file": "minimal-setup.json",
+        "version": null,
+        "tags": null,
+        "description": "Minimal environment setup with core dependencies",
+        "stepCount": 0
+      }
+    ],
+    "development": [
+      {
+        "name": "ai-complete-workflow",
+        "file": "ai-complete-workflow.json",
+        "version": "2.0.0",
+        "tags": [
+          "git",
+          "ai",
+          "automation",
+          "complete",
+          "pr"
+        ],
+        "description": "Complete AI-enhanced workflow: branch, commit, push, and PR with intelligent descriptions",
+        "stepCount": 0
+      },
+      {
+        "name": "ai-git-workflow",
+        "file": "ai-git-workflow.json",
+        "version": "1.0.0",
+        "tags": [
+          "git",
+          "ai",
+          "automation",
+          "development"
+        ],
+        "description": "AI-driven Git workflow for consistent development practices",
+        "stepCount": 0
+      },
+      {
+        "name": "claude-development-workflow",
+        "file": "claude-development-workflow.json",
+        "version": "1.0",
+        "tags": [
+          "claude-code",
+          "development",
+          "ai-assisted",
+          "workflow"
+        ],
+        "description": "Complete AI-assisted development lifecycle workflow",
+        "stepCount": 0
+      },
+      {
+        "name": "Development Environment Setup",
+        "file": "development-complete.json",
+        "version": "1.0.0",
+        "tags": [
+          "development",
+          "tools",
+          "ai",
+          "git"
+        ],
+        "description": "Setup complete development environment with tools and AI integration",
+        "stepCount": 9
+      }
+    ],
+    "testing": [
+      {
+        "name": "Comprehensive Testing Suite",
+        "file": "comprehensive-testing.json",
+        "version": "1.0.0",
+        "tags": [
+          "testing",
+          "validation",
+          "quality"
+        ],
+        "description": "Run all validation and testing scripts",
+        "stepCount": 8
+      },
+      {
+        "name": "test-ci",
+        "file": "test-ci.json",
+        "version": "1.0.0",
+        "tags": [
+          "testing",
+          "ci",
+          "automation",
+          "pipeline"
+        ],
+        "description": "Continuous Integration test suite optimized for CI/CD pipelines",
+        "stepCount": 0
+      },
+      {
+        "name": "test-comprehensive",
+        "file": "test-comprehensive.json",
+        "version": "2.0.0",
+        "tags": [
+          "testing",
+          "comprehensive",
+          "quality",
+          "validation"
+        ],
+        "description": "Complete test suite with validation, unit, integration, analysis, and coverage",
+        "stepCount": 0
+      },
+      {
+        "name": "test-full",
+        "file": "test-full.json",
+        "version": "1.0.0",
+        "tags": [
+          "testing",
+          "full",
+          "comprehensive",
+          "quality"
+        ],
+        "description": "Complete test suite including unit, integration, analysis, and coverage",
+        "stepCount": 0
+      },
+      {
+        "name": "test-quick",
+        "file": "test-quick.json",
+        "version": null,
+        "tags": null,
+        "description": "Fast validation for development - runs unit tests and syntax analysis",
+        "stepCount": 0
+      }
+    ]
+  },
+  "lastUpdated": "2025-10-25 06:48:43",
+  "totalScripts": 101,
+  "categories": {
+    "9000-9999": {
+      "name": "Maintenance & Cleanup",
+      "scripts": [
+        {
+          "number": "9999",
+          "name": "9999_Reset-Machine",
+          "description": "Automation script"
+        }
+      ],
+      "scriptCount": 1
+    },
+    "0700-0799": {
+      "name": "Git & AI Automation",
+      "scripts": [
+        {
+          "number": "0700",
+          "name": "0700_Setup-GitEnvironment",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0701",
+          "name": "0701_Create-FeatureBranch",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0702",
+          "name": "0702_Create-Commit",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0703",
+          "name": "0703_Create-PullRequest",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0704",
+          "name": "0704_Stage-Files",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0705",
+          "name": "0705_Push-Branch",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0709",
+          "name": "0709_Post-PRComment",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0720",
+          "name": "0720_Setup-GitHubRunners",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0721",
+          "name": "0721_Configure-RunnerEnvironment",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0722",
+          "name": "0722_Install-RunnerServices",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0723",
+          "name": "0723_Setup-MatrixRunners",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0730",
+          "name": "0730_Setup-AIAgents",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0731",
+          "name": "0731_Invoke-AICodeReview",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0732",
+          "name": "0732_Generate-AITests",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0733",
+          "name": "0733_Create-AIDocs",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0734",
+          "name": "0734_Optimize-AIPerformance",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0735",
+          "name": "0735_Analyze-AISecurity",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0736",
+          "name": "0736_Generate-AIWorkflow",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0737",
+          "name": "0737_Monitor-AIUsage",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0738",
+          "name": "0738_Train-AIContext",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0739",
+          "name": "0739_Validate-AIOutput",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0740",
+          "name": "0740_Integrate-AITools",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0741",
+          "name": "0741_Generate-AICommitMessage",
+          "description": "Automation script"
+        },
+        {
+          "number": "0742",
+          "name": "0742_Create-AIPoweredPR",
+          "description": "Automation script"
+        }
+      ],
+      "scriptCount": 24
+    },
+    "0100-0199": {
+      "name": "Infrastructure",
+      "scripts": [
+        {
+          "number": "0100",
+          "name": "0100_Configure-System",
+          "description": "Automation script"
+        },
+        {
+          "number": "0104",
+          "name": "0104_Install-CertificateAuthority",
+          "description": "Automation script"
+        },
+        {
+          "number": "0105",
+          "name": "0105_Install-HyperV",
+          "description": "Automation script"
+        },
+        {
+          "number": "0106",
+          "name": "0106_Install-WSL2",
+          "description": "Automation script"
+        },
+        {
+          "number": "0108",
+          "name": "0108_Install-WindowsAdminCenter",
+          "description": "Automation script"
+        },
+        {
+          "number": "0112",
+          "name": "0112_Enable-PXE",
+          "description": "Automation script"
+        }
+      ],
+      "scriptCount": 6
+    },
+    "0400-0499": {
+      "name": "Testing & Validation",
+      "scripts": [
+        {
+          "number": "0400",
+          "name": "0400_Install-TestingTools",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0402",
+          "name": "0402_Run-UnitTests",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0403",
+          "name": "0403_Run-IntegrationTests",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0404",
+          "name": "0404_Run-PSScriptAnalyzer",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0405",
+          "name": "0405_Validate-AST",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0406",
+          "name": "0406_Generate-Coverage",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0407",
+          "name": "0407_Validate-Syntax",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0408",
+          "name": "0408_Generate-TestCoverage",
+          "description": "Automation script"
+        },
+        {
+          "number": "0409",
+          "name": "0409_Run-AllTests",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0411",
+          "name": "0411_Test-Smart",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0440",
+          "name": "0440_Validate-Workflows",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0441",
+          "name": "0441_Test-WorkflowsLocally",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0442",
+          "name": "0442_Install-Act",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0443",
+          "name": "0443_Install-PowerShellYaml",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0450",
+          "name": "0450_Publish-TestResults",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0451",
+          "name": "0451_Test-Optimized",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0460",
+          "name": "0460_Orchestrate-Tests",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0470",
+          "name": "0470_Orchestrate-SimpleTesting",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0480",
+          "name": "0480_Test-Simple",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0490",
+          "name": "0490_AI-TestRunner",
+          "description": "SYNOPSIS"
+        }
+      ],
+      "scriptCount": 20
+    },
+    "0000-0099": {
+      "name": "Environment Setup",
+      "scripts": [
+        {
+          "number": "0000",
+          "name": "0000_Cleanup-Environment",
+          "description": "Automation script"
+        },
+        {
+          "number": "0001",
+          "name": "0001_Ensure-PowerShell7",
+          "description": "Automation script"
+        },
+        {
+          "number": "0002",
+          "name": "0002_Setup-Directories",
+          "description": "Automation script"
+        },
+        {
+          "number": "0006",
+          "name": "0006_Install-ValidationTools",
+          "description": "Automation script"
+        },
+        {
+          "number": "0007",
+          "name": "0007_Install-Go",
+          "description": "Automation script"
+        },
+        {
+          "number": "0008",
+          "name": "0008_Install-OpenTofu",
+          "description": "Automation script"
+        },
+        {
+          "number": "0009",
+          "name": "0009_Initialize-OpenTofu",
+          "description": "Automation script"
+        },
+        {
+          "number": "0300",
+          "name": "0300_Deploy-Infrastructure",
+          "description": "Automation script"
+        },
+        {
+          "number": "0800",
+          "name": "0800_Create-TestIssues",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0801",
+          "name": "0801_Parse-PesterResults",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0805",
+          "name": "0805_Analyze-OpenIssues",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0810",
+          "name": "0810_Create-IssueFromTestFailure",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0815",
+          "name": "0815_Setup-IssueManagement",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0820",
+          "name": "0820_Save-WorkContext",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0821",
+          "name": "0821_Generate-ContinuationPrompt",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0830",
+          "name": "0830_Generate-PromptFromData",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0831",
+          "name": "0831_Prompt-Templates",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0900",
+          "name": "0900_Test-SelfDeployment",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0901",
+          "name": "0901_Test-LocalDeployment",
+          "description": "SYNOPSIS"
+        }
+      ],
+      "scriptCount": 19
+    },
+    "0500-0599": {
+      "name": "Reporting & Metrics",
+      "scripts": [
+        {
+          "number": "0500",
+          "name": "0500_Validate-Environment",
+          "description": "Automation script"
+        },
+        {
+          "number": "0501",
+          "name": "0501_Get-SystemInfo",
+          "description": "Automation script"
+        },
+        {
+          "number": "0510",
+          "name": "0510_Generate-ProjectReport",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0511",
+          "name": "0511_Show-ProjectDashboard",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0512",
+          "name": "0512_Generate-Dashboard",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0513",
+          "name": "0513_Enable-ContinuousReporting",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0514",
+          "name": "0514_Schedule-ReportGeneration",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0520",
+          "name": "0520_Analyze-ConfigurationUsage",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0521",
+          "name": "0521_Analyze-DocumentationCoverage",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0522",
+          "name": "0522_Analyze-CodeQuality",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0523",
+          "name": "0523_Analyze-SecurityIssues",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0524",
+          "name": "0524_Generate-TechDebtReport",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0525",
+          "name": "0525_Deploy-Documentation",
+          "description": "SYNOPSIS"
+        },
+        {
+          "number": "0530",
+          "name": "0530_View-Logs",
+          "description": "Automation script"
+        },
+        {
+          "number": "0599",
+          "name": "0599_CI-ProgressReporter",
+          "description": "SYNOPSIS"
+        }
+      ],
+      "scriptCount": 15
+    },
+    "0200-0299": {
+      "name": "Development Tools",
+      "scripts": [
+        {
+          "number": "0201",
+          "name": "0201_Install-Node",
+          "description": "Automation script"
+        },
+        {
+          "number": "0204",
+          "name": "0204_Install-Poetry",
+          "description": "Automation script"
+        },
+        {
+          "number": "0205",
+          "name": "0205_Install-Sysinternals",
+          "description": "Automation script"
+        },
+        {
+          "number": "0206",
+          "name": "0206_Install-Python",
+          "description": "Automation script"
+        },
+        {
+          "number": "0207",
+          "name": "0207_Install-Git",
+          "description": "Automation script"
+        },
+        {
+          "number": "0208",
+          "name": "0208_Install-Docker",
+          "description": "Automation script"
+        },
+        {
+          "number": "0209",
+          "name": "0209_Install-7Zip",
+          "description": "Automation script"
+        },
+        {
+          "number": "0210",
+          "name": "0210_Install-VSCode",
+          "description": "Automation script"
+        },
+        {
+          "number": "0211",
+          "name": "0211_Install-VSBuildTools",
+          "description": "Automation script"
+        },
+        {
+          "number": "0212",
+          "name": "0212_Install-AzureCLI",
+          "description": "Automation script"
+        },
+        {
+          "number": "0213",
+          "name": "0213_Install-AWSCLI",
+          "description": "Automation script"
+        },
+        {
+          "number": "0214",
+          "name": "0214_Install-Packer",
+          "description": "Automation script"
+        },
+        {
+          "number": "0215",
+          "name": "0215_Install-Chocolatey",
+          "description": "Automation script"
+        },
+        {
+          "number": "0216",
+          "name": "0216_Set-PowerShellProfile",
+          "description": "Automation script"
+        },
+        {
+          "number": "0217",
+          "name": "0217_Install-ClaudeCode",
+          "description": "Automation script"
+        },
+        {
+          "number": "0218",
+          "name": "0218_Install-GeminiCLI",
+          "description": "Automation script"
+        }
+      ],
+      "scriptCount": 16
+    }
+  }
+}

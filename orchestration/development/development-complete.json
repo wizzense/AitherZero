@@ -1,0 +1,93 @@
+{
+  "name": "Development Environment Setup",
+  "version": "1.0.0",
+  "tags": [
+    "development",
+    "tools",
+    "ai",
+    "git"
+  ],
+  "workflow": {
+    "steps": [
+      {
+        "name": "Install-Node",
+        "timeout": 300,
+        "description": "Execute 0201_Install-Node",
+        "continueOnError": false,
+        "id": "dev_0201",
+        "script": "0201"
+      },
+      {
+        "name": "Install-Python",
+        "timeout": 300,
+        "description": "Execute 0206_Install-Python",
+        "continueOnError": false,
+        "id": "dev_0206",
+        "script": "0206"
+      },
+      {
+        "name": "Install-Git",
+        "timeout": 300,
+        "description": "Execute 0207_Install-Git",
+        "continueOnError": false,
+        "id": "dev_0207",
+        "script": "0207"
+      },
+      {
+        "name": "Install-Docker",
+        "timeout": 300,
+        "description": "Execute 0208_Install-Docker",
+        "continueOnError": false,
+        "id": "dev_0208",
+        "script": "0208"
+      },
+      {
+        "name": "Setup-GitEnvironment",
+        "timeout": 300,
+        "description": "Execute 0700_Setup-GitEnvironment",
+        "continueOnError": false,
+        "id": "dev_0700",
+        "script": "0700"
+      },
+      {
+        "name": "Setup-GitHubRunners",
+        "timeout": 300,
+        "description": "Execute 0720_Setup-GitHubRunners",
+        "continueOnError": false,
+        "id": "dev_0720",
+        "script": "0720"
+      },
+      {
+        "name": "Setup-AIAgents",
+        "timeout": 300,
+        "description": "Execute 0730_Setup-AIAgents",
+        "continueOnError": false,
+        "id": "dev_0730",
+        "script": "0730"
+      },
+      {
+        "name": "Invoke-AICodeReview",
+        "timeout": 300,
+        "description": "Execute 0731_Invoke-AICodeReview",
+        "continueOnError": false,
+        "id": "dev_0731",
+        "script": "0731"
+      },
+      {
+        "name": "Generate-AITests",
+        "timeout": 300,
+        "description": "Execute 0732_Generate-AITests",
+        "continueOnError": false,
+        "id": "dev_0732",
+        "script": "0732"
+      }
+    ]
+  },
+  "description": "Setup complete development environment with tools and AI integration",
+  "category": "development",
+  "variables": {
+    "SetupGitHooks": true,
+    "ConfigureAI": true,
+    "InstallOptional": true
+  }
+}

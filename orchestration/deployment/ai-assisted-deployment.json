@@ -1,0 +1,106 @@
+{
+  "Name": "ai-assisted-deployment",
+  "Description": "AI-guided infrastructure deployment with validation and rollback",
+  "Version": "1.0.0",
+  "Author": "AitherZero AI Team",
+  "Tags": ["ai", "deployment", "infrastructure", "validation"],
+  "Requirements": {
+    "MinimumPowerShellVersion": "7.0",
+    "RequiredModules": ["AIWorkflowOrchestrator", "Infrastructure"],
+    "RequiredAPIKeys": ["ANTHROPIC_API_KEY"]
+  },
+  "Variables": {
+    "Environment": "staging",
+    "InfrastructurePath": "./infrastructure",
+    "RollbackEnabled": true,
+    "SecurityScan": true
+  },
+  "Stages": [
+    {
+      "Name": "Pre-Deployment Analysis",
+      "Description": "AI analyzes deployment configuration for risks",
+      "Scripts": ["0735", "0734"],
+      "Variables": {
+        "Path": "{{InfrastructurePath}}",
+        "ComplianceFramework": "SOC2",
+        "OptimizationType": "Efficiency"
+      },
+      "ContinueOnError": false,
+      "Timeout": 600
+    },
+    {
+      "Name": "Risk Assessment",
+      "Description": "Generate risk assessment and recommendations",
+      "Scripts": ["0736"],
+      "Variables": {
+        "Requirements": "Assess deployment risks for {{Environment}}",
+        "WorkflowType": "Deployment"
+      },
+      "ContinueOnError": false,
+      "Timeout": 300
+    },
+    {
+      "Name": "Deployment Plan",
+      "Description": "Generate optimized deployment plan",
+      "Scripts": ["0736"],
+      "Variables": {
+        "Requirements": "Create deployment plan with rollback strategy",
+        "WorkflowType": "Deployment",
+        "OutputPath": "./deployment-plan.json"
+      },
+      "ContinueOnError": false,
+      "Timeout": 300
+    },
+    {
+      "Name": "Infrastructure Deployment",
+      "Description": "Execute deployment with monitoring",
+      "Scripts": ["0300-0399"],
+      "Parallel": false,
+      "ContinueOnError": false,
+      "Timeout": 1800
+    },
+    {
+      "Name": "Post-Deployment Validation",
+      "Description": "Validate deployment success",
+      "Scripts": ["0739", "0735"],
+      "Variables": {
+        "Path": "{{InfrastructurePath}}",
+        "ValidationType": "All",
+        "ComplianceFramework": "All"
+      },
+      "ContinueOnError": false,
+      "Timeout": 600
+    },
+    {
+      "Name": "Performance Baseline",
+      "Description": "Establish performance baseline",
+      "Scripts": ["0734"],
+      "Variables": {
+        "Path": "{{InfrastructurePath}}",
+        "OptimizationType": "All",
+        "GenerateBenchmark": true
+      },
+      "ContinueOnError": true,
+      "Timeout": 300
+    }
+  ],
+  "Rollback": {
+    "Enabled": "{{RollbackEnabled}}",
+    "AutoTrigger": true,
+    "Conditions": ["ValidationFailure", "PerformanceDegradation"],
+    "Scripts": ["0736"],
+    "Variables": {
+      "Requirements": "Execute rollback for {{Environment}}",
+      "WorkflowType": "Deployment"
+    }
+  },
+  "Monitoring": {
+    "Enabled": true,
+    "Interval": 60,
+    "Scripts": ["0737"],
+    "Alerts": {
+      "Threshold": 80,
+      "Channels": ["Console", "Log"]
+    }
+  }
+}

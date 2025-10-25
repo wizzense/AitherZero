@@ -1,0 +1,84 @@
+{
+  "name": "Comprehensive Testing Suite",
+  "version": "1.0.0",
+  "tags": [
+    "testing",
+    "validation",
+    "quality"
+  ],
+  "workflow": {
+    "steps": [
+      {
+        "name": "Install-TestingTools",
+        "timeout": 600,
+        "description": "Execute 0400_Install-TestingTools",
+        "continueOnError": true,
+        "id": "test_0400",
+        "script": "0400"
+      },
+      {
+        "name": "Run-UnitTests",
+        "timeout": 600,
+        "description": "Execute 0402_Run-UnitTests",
+        "continueOnError": true,
+        "id": "test_0402",
+        "script": "0402"
+      },
+      {
+        "name": "Run-IntegrationTests",
+        "timeout": 600,
+        "description": "Execute 0403_Run-IntegrationTests",
+        "continueOnError": true,
+        "id": "test_0403",
+        "script": "0403"
+      },
+      {
+        "name": "Run-PSScriptAnalyzer",
+        "timeout": 600,
+        "description": "Execute 0404_Run-PSScriptAnalyzer",
+        "continueOnError": true,
+        "id": "test_0404",
+        "script": "0404"
+      },
+      {
+        "name": "Validate-AST",
+        "timeout": 600,
+        "description": "Execute 0405_Validate-AST",
+        "continueOnError": true,
+        "id": "test_0405",
+        "script": "0405"
+      },
+      {
+        "name": "Generate-Coverage",
+        "timeout": 600,
+        "description": "Execute 0406_Generate-Coverage",
+        "continueOnError": true,
+        "id": "test_0406",
+        "script": "0406"
+      },
+      {
+        "name": "Validate-Syntax",
+        "timeout": 600,
+        "description": "Execute 0407_Validate-Syntax",
+        "continueOnError": true,
+        "id": "test_0407",
+        "script": "0407"
+      },
+      {
+        "name": "Generate-TestCoverage",
+        "timeout": 600,
+        "description": "Execute 0408_Generate-TestCoverage",
+        "continueOnError": true,
+        "id": "test_0408",
+        "script": "0408"
+      }
+    ]
+  },
+  "description": "Run all validation and testing scripts",
+  "category": "testing",
+  "variables": {
+    "GenerateReports": true,
+    "CoverageTarget": 80,
+    "FailFast": false
+  }
+}
