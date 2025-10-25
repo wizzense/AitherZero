@@ -1,0 +1,161 @@
+{
+  "Tests": {
+    "Logging": {
+      "FunctionCount": 17,
+      "TestFile": "/home/runner/work/AitherZero/AitherZero/tests/generated/Generated.Logging.Tests.ps1",
+      "ModuleName": "Logging",
+      "Generated": "2025-10-25T06:30:13.0653466+00:00"
+    },
+    "UserInterface": {
+      "FunctionCount": 11,
+      "TestFile": "/home/runner/work/AitherZero/AitherZero/tests/generated/Generated.UserInterface.Tests.ps1",
+      "ModuleName": "UserInterface",
+      "Generated": "2025-10-25T06:30:12.8218838+00:00"
+    },
+    "Configuration": {
+      "FunctionCount": 8,
+      "TestFile": "/home/runner/work/AitherZero/AitherZero/tests/generated/Generated.Configuration.Tests.ps1",
+      "ModuleName": "Configuration",
+      "Generated": "2025-10-25T06:30:12.9486581+00:00"
+    },
+    "DevTools": {
+      "FunctionCount": 14,
+      "TestFile": "/home/runner/work/AitherZero/AitherZero/tests/generated/Generated.DevTools.Tests.ps1",
+      "ModuleName": "DevTools",
+      "Generated": "2025-10-25T06:30:13.2236826+00:00"
+    },
+    "Orchestration": {
+      "FunctionCount": 8,
+      "TestFile": "/home/runner/work/AitherZero/AitherZero/tests/generated/Generated.Orchestration.Tests.ps1",
+      "ModuleName": "Orchestration",
+      "Generated": "2025-10-25T06:30:12.9009502+00:00"
+    },
+    "Infrastructure": {
+      "FunctionCount": 10,
+      "TestFile": "/home/runner/work/AitherZero/AitherZero/tests/generated/Generated.Infrastructure.Tests.ps1",
+      "ModuleName": "Infrastructure",
+      "Generated": "2025-10-25T06:30:13.1363373+00:00"
+    }
+  },
+  "Timestamp": "2025-10-25T06:30:12.5650962+00:00",
+  "Configuration": {
+    "Sections": null,
+    "IsValid": false,
+    "Issues": [
+      "Failed to parse configuration: You cannot call a method on a null-valued expression."
+    ],
+    "Configuration": null
+  },
+  "Modules": {
+    "Logging": {
+      "IsValid": false,
+      "Issues": [
+        "Function 'Initialize-Logging' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-CustomLog' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-LogToConsole' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-AuditLog' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Enable-AuditLogging' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Disable-AuditLogging' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Get-LogFiles' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Search-Logs' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Export-LogReport' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-ConfigLog' lacks proper help documentation",
+        "Function 'Write-ConfigLog' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-UILog' lacks proper help documentation",
+        "Function 'Write-UILog' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-TestingLog' lacks proper help documentation",
+        "Function 'Write-TestingLog' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-InfraLog' lacks proper help documentation",
+        "Function 'Write-InfraLog' lacks error handling (try/catch or ErrorAction)"
+      ],
+      "Metrics": {
+        "FunctionCount": 17
+      }
+    },
+    "UserInterface": {
+      "IsValid": false,
+      "Issues": [
+        "Function 'Show-BetterMenu' is too long: 181 lines (max: 100)",
+        "Function 'Show-BetterMenu' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Show-UIMenu' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Write-UIText' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Show-UIHeader' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Show-UIProgress' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Show-UINotification' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Show-UIPrompt' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Show-UITable' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Show-UIWizard' lacks error handling (try/catch or ErrorAction)"
+      ],
+      "Metrics": {
+        "FunctionCount": 11
+      }
+    },
+    "Configuration": {
+      "IsValid": false,
+      "Issues": [
+        "Function 'Write-ConfigLog' lacks proper help documentation",
+        "Function 'Get-Configuration' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Set-Configuration' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Get-ModuleConfiguration' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Test-ConfigurationKey' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Get-EnvironmentInfo' lacks error handling (try/catch or ErrorAction)"
+      ],
+      "Metrics": {
+        "FunctionCount": 8
+      }
+    },
+    "DevTools": {
+      "IsValid": false,
+      "Issues": [
+        "Function 'New-GitBranch' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Invoke-GitCommit' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Sync-GitRepository' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Get-GitStatus' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Clear-TestCache' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Enable-AIIntegration' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Invoke-AICodeReview' lacks error handling (try/catch or ErrorAction)",
+        "Function 'New-AICommitMessage' lacks error handling (try/catch or ErrorAction)",
+        "Function 'New-DevelopmentIssue' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Get-DevelopmentMetrics' lacks error handling (try/catch or ErrorAction)"
+      ],
+      "Metrics": {
+        "FunctionCount": 14
+      }
+    },
+    "Orchestration": {
+      "IsValid": false,
+      "Issues": [
+        "Function 'Save-OrchestrationPlaybook' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Invoke-Sequence' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Get-ExecutionHistory' lacks error handling (try/catch or ErrorAction)",
+        "Function 'New-SimplePlaybook' lacks error handling (try/catch or ErrorAction)"
+      ],
+      "Metrics": {
+        "FunctionCount": 8
+      }
+    },
+    "Infrastructure": {
+      "IsValid": false,
+      "Issues": [
+        "Function 'Get-InfrastructureTool' lacks error handling (try/catch or ErrorAction)",
+        "Function 'New-ExecutionDashboard' lacks error handling (try/catch or ErrorAction)",
+        "Function 'Export-MetricsReport' lacks error handling (try/catch or ErrorAction)"
+      ],
+      "Metrics": {
+        "FunctionCount": 10
+      }
+    }
+  },
+  "Overall": {
+    "Issues": [
+      "Module UserInterface has issues: Function 'Show-BetterMenu' is too long: 181 lines (max: 100), Function 'Show-BetterMenu' lacks error handling (try/catch or ErrorAction), Function 'Show-UIMenu' lacks error handling (try/catch or ErrorAction), Function 'Write-UIText' lacks error handling (try/catch or ErrorAction), Function 'Show-UIHeader' lacks error handling (try/catch or ErrorAction), Function 'Show-UIProgress' lacks error handling (try/catch or ErrorAction), Function 'Show-UINotification' lacks error handling (try/catch or ErrorAction), Function 'Show-UIPrompt' lacks error handling (try/catch or ErrorAction), Function 'Show-UITable' lacks error handling (try/catch or ErrorAction), Function 'Show-UIWizard' lacks error handling (try/catch or ErrorAction)",
+      "Module Orchestration has issues: Function 'Save-OrchestrationPlaybook' lacks error handling (try/catch or ErrorAction), Function 'Invoke-Sequence' lacks error handling (try/catch or ErrorAction), Function 'Get-ExecutionHistory' lacks error handling (try/catch or ErrorAction), Function 'New-SimplePlaybook' lacks error handling (try/catch or ErrorAction)",
+      "Module Configuration has issues: Function 'Write-ConfigLog' lacks proper help documentation, Function 'Get-Configuration' lacks error handling (try/catch or ErrorAction), Function 'Set-Configuration' lacks error handling (try/catch or ErrorAction), Function 'Get-ModuleConfiguration' lacks error handling (try/catch or ErrorAction), Function 'Test-ConfigurationKey' lacks error handling (try/catch or ErrorAction), Function 'Get-EnvironmentInfo' lacks error handling (try/catch or ErrorAction)",
+      "Module Logging has issues: Function 'Initialize-Logging' lacks error handling (try/catch or ErrorAction), Function 'Write-CustomLog' lacks error handling (try/catch or ErrorAction), Function 'Write-LogToConsole' lacks error handling (try/catch or ErrorAction), Function 'Write-AuditLog' lacks error handling (try/catch or ErrorAction), Function 'Enable-AuditLogging' lacks error handling (try/catch or ErrorAction), Function 'Disable-AuditLogging' lacks error handling (try/catch or ErrorAction), Function 'Get-LogFiles' lacks error handling (try/catch or ErrorAction), Function 'Search-Logs' lacks error handling (try/catch or ErrorAction), Function 'Export-LogReport' lacks error handling (try/catch or ErrorAction), Function 'Write-ConfigLog' lacks proper help documentation, Function 'Write-ConfigLog' lacks error handling (try/catch or ErrorAction), Function 'Write-UILog' lacks proper help documentation, Function 'Write-UILog' lacks error handling (try/catch or ErrorAction), Function 'Write-TestingLog' lacks proper help documentation, Function 'Write-TestingLog' lacks error handling (try/catch or ErrorAction), Function 'Write-InfraLog' lacks proper help documentation, Function 'Write-InfraLog' lacks error handling (try/catch or ErrorAction)",
+      "Module Infrastructure has issues: Function 'Get-InfrastructureTool' lacks error handling (try/catch or ErrorAction), Function 'New-ExecutionDashboard' lacks error handling (try/catch or ErrorAction), Function 'Export-MetricsReport' lacks error handling (try/catch or ErrorAction)",
+      "Module DevTools has issues: Function 'New-GitBranch' lacks error handling (try/catch or ErrorAction), Function 'Invoke-GitCommit' lacks error handling (try/catch or ErrorAction), Function 'Sync-GitRepository' lacks error handling (try/catch or ErrorAction), Function 'Get-GitStatus' lacks error handling (try/catch or ErrorAction), Function 'Clear-TestCache' lacks error handling (try/catch or ErrorAction), Function 'Enable-AIIntegration' lacks error handling (try/catch or ErrorAction), Function 'Invoke-AICodeReview' lacks error handling (try/catch or ErrorAction), Function 'New-AICommitMessage' lacks error handling (try/catch or ErrorAction), Function 'New-DevelopmentIssue' lacks error handling (try/catch or ErrorAction), Function 'Get-DevelopmentMetrics' lacks error handling (try/catch or ErrorAction)",
+      "Configuration issues: Failed to parse configuration: You cannot call a method on a null-valued expression."
+    ],
+    "Success": false
+  }
+}
