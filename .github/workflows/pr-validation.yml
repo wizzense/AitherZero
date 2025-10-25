@@ -17,7 +17,7 @@ permissions:
   security-events: none
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: pr-validation-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:

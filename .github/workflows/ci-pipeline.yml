@@ -29,7 +29,7 @@ on:
         default: false
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.sha }}
+  group: ci-pipeline-${{ github.event.pull_request.number || github.run_id }}-${{ github.ref_name }}
   cancel-in-progress: true
 
 permissions:
