@@ -10,7 +10,7 @@
     - Hooks implementation
     - MCP Server integration
     - GitHub Actions workflows
-    
+
     Following Test-Driven Development (TDD) methodology.
 
 .NOTES
@@ -25,11 +25,11 @@ BeforeAll {
     # Import shared test utilities
     . "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
     $script:ProjectRoot = Find-ProjectRoot
-    
+
     # Import required modules
     Import-Module "$script:ProjectRoot/aither-core/modules/TestingFramework" -Force
     Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force
-    
+
     # Setup test environment
     $script:TestResults = @{
         SubAgents = @()
@@ -37,7 +37,7 @@ BeforeAll {
         MCPServer = @{}
         GitHubActions = @()
     }
-    
+
     # Mock functions for testing
     function Write-TestLog {
         param([string]$Message, [string]$Level = 'INFO')
@@ -46,22 +46,22 @@ BeforeAll {
 }
 
 Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integration', 'ClaudeCode', 'TDD') {
-    
+
     Context "Sub Agents Implementation Tests" {
-        
+
         BeforeEach {
             $script:AgentsDirectory = Join-Path $script:ProjectRoot ".claude/agents"
         }
-        
+
         It "Should create .claude/agents directory structure" {
             # Arrange
             $expectedPath = $script:AgentsDirectory
-            
+
             # Act & Assert
             $expectedPath | Should -Not -BeNullOrEmpty
             # Test will fail until implementation exists
         }
-        
+
         It "Should validate AitherZero Infrastructure Manager sub-agent configuration" {
             # Arrange
             $agentFile = Join-Path $script:AgentsDirectory "aitherzero-infrastructure-manager.md"
@@ -71,7 +71,7 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 "tools: Bash, Read, Edit, Write, Grep, Glob",
                 "LabRunner, OpenTofuProvider, DevEnvironment"
             )
-            
+
             # Act
             if (Test-Path $agentFile) {
                 $content = Get-Content $agentFile -Raw
@@ -85,15 +85,15 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             } else {
                 $validAgent = $false
             }
-            
+
             # Assert
             $validAgent | Should -Be $true -Because "Infrastructure Manager agent should be properly configured"
         }
-        
+
         It "Should validate PowerShell DevOps Specialist sub-agent" {
             # Arrange
             $agentFile = Join-Path $script:AgentsDirectory "powershell-devops-specialist.md"
-            
+
             # Act & Assert
             Test-Path $agentFile | Should -Be $true
             if (Test-Path $agentFile) {
@@ -104,11 +104,11 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 $content | Should -Match "Pester"
             }
         }
-        
+
         It "Should validate Security & Compliance Guardian sub-agent" {
             # Arrange
             $agentFile = Join-Path $script:AgentsDirectory "security-compliance-guardian.md"
-            
+
             # Act & Assert
             Test-Path $agentFile | Should -Be $true
             if (Test-Path $agentFile) {
@@ -118,11 +118,11 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 $content | Should -Match "SecureCredentials"
             }
         }
-        
+
         It "Should validate Release Management Orchestrator sub-agent" {
             # Arrange
             $agentFile = Join-Path $script:AgentsDirectory "release-management-orchestrator.md"
-            
+
             # Act & Assert
             Test-Path $agentFile | Should -Be $true
             if (Test-Path $agentFile) {
@@ -132,11 +132,11 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 $content | Should -Match "bulletproof validation"
             }
         }
-        
+
         It "Should validate Testing & Quality Assurance Expert sub-agent" {
             # Arrange
             $agentFile = Join-Path $script:AgentsDirectory "testing-qa-expert.md"
-            
+
             # Act & Assert
             Test-Path $agentFile | Should -Be $true
             if (Test-Path $agentFile) {
@@ -147,18 +147,18 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             }
         }
     }
-    
+
     Context "Hooks Implementation Tests" {
-        
+
         BeforeEach {
             $script:SettingsFile = Join-Path $script:ProjectRoot ".claude/settings.json"
         }
-        
+
         It "Should have .claude/settings.json file" {
             # Act & Assert
             Test-Path $script:SettingsFile | Should -Be $true
         }
-        
+
         It "Should validate Pre-Commit Code Quality Hook configuration" {
             # Arrange
             $expectedHookStructure = @{
@@ -176,12 +176,12 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                     )
                 }
             }
-            
+
             # Act
             if (Test-Path $script:SettingsFile) {
                 $settings = Get-Content $script:SettingsFile | ConvertFrom-Json
                 $hasCodeQualityHook = $false
-                
+
                 if ($settings.hooks -and $settings.hooks.PreToolUse) {
                     foreach ($hookConfig in $settings.hooks.PreToolUse) {
                         if ($hookConfig.hooks) {
@@ -197,17 +197,17 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             } else {
                 $hasCodeQualityHook = $false
             }
-            
+
             # Assert
             $hasCodeQualityHook | Should -Be $true -Because "Code quality hook should be configured"
         }
-        
+
         It "Should validate Security Validation Hook configuration" {
             # Arrange & Act
             if (Test-Path $script:SettingsFile) {
                 $settings = Get-Content $script:SettingsFile | ConvertFrom-Json
                 $hasSecurityHook = $false
-                
+
                 if ($settings.hooks -and $settings.hooks.PreToolUse) {
                     foreach ($hookConfig in $settings.hooks.PreToolUse) {
                         if ($hookConfig.hooks) {
@@ -223,17 +223,17 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             } else {
                 $hasSecurityHook = $false
             }
-            
+
             # Assert
             $hasSecurityHook | Should -Be $true -Because "Security validation hook should be configured"
         }
-        
+
         It "Should validate Automated Testing Hook configuration" {
             # Arrange & Act
             if (Test-Path $script:SettingsFile) {
                 $settings = Get-Content $script:SettingsFile | ConvertFrom-Json
                 $hasTestingHook = $false
-                
+
                 if ($settings.hooks -and $settings.hooks.PostToolUse) {
                     foreach ($hookConfig in $settings.hooks.PostToolUse) {
                         if ($hookConfig.hooks) {
@@ -249,29 +249,29 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             } else {
                 $hasTestingHook = $false
             }
-            
+
             # Assert
             $hasTestingHook | Should -Be $true -Because "Automated testing hook should be configured"
         }
     }
-    
+
     Context "MCP Server Integration Tests" {
-        
+
         BeforeEach {
             $script:MCPServerPath = Join-Path $script:ProjectRoot "src/tools/ProjectManager/mcp-server"
             $script:MCPConfigFile = Join-Path $script:ProjectRoot ".mcp.json"
         }
-        
+
         It "Should have MCP server directory structure" {
             # Act & Assert
             Test-Path $script:MCPServerPath | Should -Be $true
             Test-Path (Join-Path $script:MCPServerPath "package.json") | Should -Be $true
         }
-        
+
         It "Should validate MCP server package configuration" {
             # Arrange
             $packageFile = Join-Path $script:MCPServerPath "package.json"
-            
+
             # Act
             if (Test-Path $packageFile) {
                 $package = Get-Content $packageFile | ConvertFrom-Json
@@ -281,11 +281,11 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             } else {
                 $validConfig = $false
             }
-            
+
             # Assert
             $validConfig | Should -Be $true -Because "MCP server should have valid package.json"
         }
-        
+
         It "Should validate AitherZero-specific MCP tools implementation" {
             # Arrange
             $toolsFile = Join-Path $script:MCPServerPath "src/tools.ts"
@@ -294,7 +294,7 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 "run_bulletproof_validation",
                 "deploy_lab_environment"
             )
-            
+
             # Act
             if (Test-Path $toolsFile) {
                 $content = Get-Content $toolsFile -Raw
@@ -308,40 +308,40 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             } else {
                 $validTools = $false
             }
-            
+
             # Assert
             $validTools | Should -Be $true -Because "MCP server should implement AitherZero-specific tools"
         }
-        
+
         It "Should validate MCP configuration file" {
             # Act
             $mcpConfigExists = Test-Path $script:MCPConfigFile
-            
+
             if ($mcpConfigExists) {
                 $config = Get-Content $script:MCPConfigFile | ConvertFrom-Json
                 $validConfig = $config.servers -and $config.servers."aitherzero-pm"
             } else {
                 $validConfig = $false
             }
-            
+
             # Assert
             $validConfig | Should -Be $true -Because "MCP configuration should be properly set up"
         }
     }
-    
+
     Context "GitHub Actions Integration Tests" {
-        
+
         BeforeEach {
             $script:WorkflowsPath = Join-Path $script:ProjectRoot ".github/workflows"
         }
-        
+
         It "Should validate Claude-Enhanced CI/CD Pipeline workflow" {
             # Arrange
             $workflowFile = Join-Path $script:WorkflowsPath "claude-enhanced-ci.yml"
-            
+
             # Act & Assert
             Test-Path $workflowFile | Should -Be $true
-            
+
             if (Test-Path $workflowFile) {
                 $content = Get-Content $workflowFile -Raw
                 $content | Should -Match "Claude-Enhanced CI/CD Pipeline"
@@ -349,14 +349,14 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 $content | Should -Match "Run-Tests-Unified.ps1"
             }
         }
-        
+
         It "Should validate Intelligent PR Management workflow" {
             # Arrange
             $workflowFile = Join-Path $script:WorkflowsPath "claude-pr-automation.yml"
-            
+
             # Act & Assert
             Test-Path $workflowFile | Should -Be $true
-            
+
             if (Test-Path $workflowFile) {
                 $content = Get-Content $workflowFile -Raw
                 $content | Should -Match "Claude PR Automation"
@@ -364,18 +364,18 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 $content | Should -Match "issue_comment"
             }
         }
-        
+
         It "Should validate GitHub Actions secrets configuration" {
             # This test checks for required secrets in a safe way
             # (actual secrets should not be in code)
-            
+
             # Arrange
             $requiredSecrets = @("ANTHROPIC_API_KEY")
-            
+
             # Act - We can only check if workflow files reference the secrets
             $workflowFiles = Get-ChildItem $script:WorkflowsPath -Filter "claude-*.yml" -ErrorAction SilentlyContinue
             $secretsReferenced = $false
-            
+
             foreach ($file in $workflowFiles) {
                 $content = Get-Content $file.FullName -Raw
                 if ($content -match "secrets\.ANTHROPIC_API_KEY") {
@@ -383,14 +383,14 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                     break
                 }
             }
-            
+
             # Assert
             $secretsReferenced | Should -Be $true -Because "Workflows should reference required secrets"
         }
     }
-    
+
     Context "Integration Testing - End-to-End Scenarios" {
-        
+
         It "Should validate complete Claude Code integration setup" {
             # Arrange
             $integrationComponents = @{
@@ -399,29 +399,29 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                 MCPConfig = Join-Path $script:ProjectRoot ".mcp.json"
                 WorkflowsDirectory = Join-Path $script:ProjectRoot ".github/workflows"
             }
-            
+
             # Act
             $integrationComplete = $true
             $missingComponents = @()
-            
+
             foreach ($component in $integrationComponents.GetEnumerator()) {
                 if (-not (Test-Path $component.Value)) {
                     $integrationComplete = $false
                     $missingComponents += $component.Key
                 }
             }
-            
+
             # Assert
             $integrationComplete | Should -Be $true -Because "All integration components should be present. Missing: $($missingComponents -join ', ')"
         }
-        
+
         It "Should validate PatchManager integration with Claude Code workflows" {
             # Arrange
             $patchManagerModule = Join-Path $script:ProjectRoot "aither-core/modules/PatchManager"
-            
+
             # Act
             $integrationValid = $false
-            
+
             if (Test-Path $patchManagerModule) {
                 try {
                     Import-Module $patchManagerModule -Force
@@ -433,18 +433,18 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                     Write-TestLog "Error importing PatchManager: $($_.Exception.Message)" -Level 'WARN'
                 }
             }
-            
+
             # Assert
             $integrationValid | Should -Be $true -Because "PatchManager should be available for Claude Code integration"
         }
-        
+
         It "Should validate TestingFramework integration with validation hooks" {
             # Arrange
             $testingFramework = Join-Path $script:ProjectRoot "aither-core/modules/TestingFramework"
-            
+
             # Act
             $frameworkValid = $false
-            
+
             if (Test-Path $testingFramework) {
                 try {
                     Import-Module $testingFramework -Force
@@ -456,32 +456,32 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                     Write-TestLog "Error importing TestingFramework: $($_.Exception.Message)" -Level 'WARN'
                 }
             }
-            
+
             # Assert
             $frameworkValid | Should -Be $true -Because "TestingFramework should be available for hook validation"
         }
     }
-    
+
     Context "Security and Compliance Validation" {
-        
+
         It "Should validate no hardcoded secrets in configuration files" {
             # Arrange
             $configFiles = @(
                 Join-Path $script:ProjectRoot ".claude/settings.json",
                 Join-Path $script:ProjectRoot ".mcp.json"
             )
-            
+
             $dangerousPatterns = @(
                 'password\s*=\s*["''][^"'']*["'']',
                 'secret\s*=\s*["''][^"'']*["'']',
                 'key\s*=\s*["''][^"'']*["'']',
                 'token\s*=\s*["''][^"'']*["'']'
             )
-            
+
             # Act
             $securityValid = $true
             $violationFiles = @()
-            
+
             foreach ($file in $configFiles) {
                 if (Test-Path $file) {
                     $content = Get-Content $file -Raw
@@ -494,11 +494,11 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                     }
                 }
             }
-            
+
             # Assert
             $securityValid | Should -Be $true -Because "Configuration files should not contain hardcoded secrets. Violations in: $($violationFiles -join ', ')"
         }
-        
+
         It "Should validate cross-platform compatibility" {
             # Arrange
             $crossPlatformElements = @{
@@ -507,11 +507,11 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                     Pattern = '[\\][^\\]'  # Looking for hardcoded backslashes
                 }
             }
-            
+
             # Act
             $compatibilityValid = $true
             $issues = @()
-            
+
             foreach ($element in $crossPlatformElements.GetEnumerator()) {
                 foreach ($file in $element.Value.Files) {
                     if (Test-Path $file) {
@@ -523,7 +523,7 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                     }
                 }
             }
-            
+
             # Assert
             $compatibilityValid | Should -Be $true -Because "All components should be cross-platform compatible. Issues: $($issues -join ', ')"
         }
@@ -532,13 +532,13 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
 
 AfterAll {
     Write-TestLog "Claude Code Integration tests completed"
-    
+
     # Generate test summary
     $summary = @{
         TestsRun = (Get-Variable -Name "TestResults" -Scope Script -ErrorAction SilentlyContinue).Value
         ProjectRoot = $script:ProjectRoot
         Timestamp = Get-Date
     }
-    
+
     Write-TestLog "Test Summary: $($summary | ConvertTo-Json -Depth 2)"
 }

@@ -62,20 +62,20 @@ try {
             $tools += @{ Name = $tool; Required = $false }
         }
     }
-    
+
     $failedInstalls = @()
-    
+
     foreach ($toolInfo in $tools) {
         $toolName = $toolInfo.Name
         $isRequired = $toolInfo.Required
-        
+
         try {
             # Check if already installed
             $installed = Get-Module -ListAvailable -Name $toolName -ErrorAction SilentlyContinue
 
             if ($installed) {
                 Write-ScriptLog "$toolName is already installed (version: $($installed.Version))"
-                
+
                 # Check for updates if configured
                 if ($validationConfig.CheckForUpdates -eq $true) {
                     Write-ScriptLog "Checking for updates to $toolName"
@@ -88,7 +88,7 @@ try {
                 }
             } else {
                 Write-ScriptLog "Installing $toolName..."
-                
+
                 # Install parameters
                 $installParams = @{
                     Name = $toolName
@@ -97,16 +97,16 @@ try {
                     Scope = 'CurrentUser'
                     ErrorAction = 'Stop'
                 }
-                
+
                 # Add specific version if configured
                 if ($validationConfig.ToolVersions -and $validationConfig.ToolVersions.$toolName) {
                     $installParams['RequiredVersion'] = $validationConfig.ToolVersions.$toolName
                     Write-ScriptLog "Installing specific version: $($validationConfig.ToolVersions.$toolName)"
                 }
-                
+
                 Install-Module @installParams
                 Write-ScriptLog "Successfully installed $toolName"
-                
+
                 # Verify installation
                 $verifyInstall = Get-Module -ListAvailable -Name $toolName -ErrorAction SilentlyContinue
                 if ($verifyInstall) {
@@ -135,10 +135,10 @@ try {
         Write-ScriptLog -Level 'Error' -Message "Failed to install required tools: $($failedInstalls -join ', ')"
         exit 1
     }
-    
+
     Write-ScriptLog "Validation tools installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog -Level 'Error' -Message "Critical error during validation tools installation: $($_.Exception.Message)"
     Write-ScriptLog -Level 'Error' -Message $_.ScriptStackTrace

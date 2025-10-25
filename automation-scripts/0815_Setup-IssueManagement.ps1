@@ -7,12 +7,12 @@
     Configures automated issue creation from test failures, change impact analysis,
     automated PR descriptions, and release note generation for comprehensive
     change management and auditing.
-    
+
     Exit Codes:
     0   - Issue management configured successfully
     1   - Configuration failed
     2   - Setup error
-    
+
 .NOTES
     Stage: Issue Management
     Order: 0815
@@ -75,7 +75,7 @@ function New-IssueTemplate {
         [string]$Type,
         [string]$OutputPath
     )
-    
+
     $templates = @{
         'bug' = @"
 ---
@@ -118,7 +118,7 @@ Add any other context about the problem here.
 - Stack Trace: {{ STACK_TRACE }}
 - CI Run: {{ CI_RUN_URL }}
 "@
-        
+
         'feature' = @"
 ---
 name: Feature Request
@@ -146,7 +146,7 @@ Add any other context or screenshots about the feature request here.
 - [ ] Requires documentation updates
 - [ ] Requires tests
 "@
-        
+
         'task' = @"
 ---
 name: Task
@@ -177,11 +177,11 @@ Clear description of what needs to be done.
 
 ## Estimated Effort
 - [ ] Small (< 2 hours)
-- [ ] Medium (2-8 hours)  
+- [ ] Medium (2-8 hours)
 - [ ] Large (> 8 hours)
 "@
     }
-    
+
     $template = $templates[$Type]
     if ($template) {
         $templatePath = Join-Path $OutputPath "$Type.md"
@@ -194,7 +194,7 @@ Clear description of what needs to be done.
 
 function New-AutoIssueScript {
     Write-ScriptLog -Message "Creating automated issue creation script"
-    
+
     $autoIssueScript = @'
 #!/usr/bin/env pwsh
 # Automated issue creation from test failures
@@ -213,7 +213,7 @@ function New-IssueFromTestFailure {
         [string]$StackTrace = "",
         [string]$CIRunUrl = ""
     )
-    
+
     $issueTitle = "[AUTO] Test Failure: $TestName"
     $issueBody = @"
 ## Automated Issue from Test Failure
@@ -257,9 +257,9 @@ $StackTrace
         if (Get-Command gh -ErrorAction SilentlyContinue) {
             $tempFile = New-TemporaryFile
             $issueBody | Set-Content $tempFile.FullName
-            
+
             gh issue create --title $issueTitle --body-file $tempFile.FullName --label "bug,automated,test-failure"
-            
+
             Remove-Item $tempFile.FullName -Force
             Write-Host "Created issue: $issueTitle"
         } else {
@@ -271,26 +271,26 @@ $StackTrace
 # Parse test results and create issues
 if (Test-Path $TestResultsPath) {
     Write-Host "Processing test results from: $TestResultsPath"
-    
+
     # Look for JUnit XML or other test result formats
     $testFiles = Get-ChildItem -Path $TestResultsPath -Filter "*.xml" -Recurse
-    
+
     foreach ($testFile in $testFiles) {
         try {
             [xml]$testXml = Get-Content $testFile.FullName
-            
+
             # Process failed tests (JUnit format)
             $failedTests = $testXml.SelectNodes("//testcase[failure or error]")
-            
+
             foreach ($test in $failedTests) {
                 $testName = $test.name
                 $className = $test.classname
                 $failure = $test.failure
                 $error = $test.error
-                
+
                 $errorMessage = if ($failure) { $failure.message } elseif ($error) { $error.message } else { "Unknown error" }
                 $stackTrace = if ($failure) { $failure.InnerText } elseif ($error) { $error.InnerText } else { "" }
-                
+
                 New-IssueFromTestFailure -TestName "$className.$testName" -ErrorMessage $errorMessage -TestFile $testFile.Name -StackTrace $stackTrace -CIRunUrl $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
             }
         } catch {
@@ -303,7 +303,7 @@ if (Test-Path $TestResultsPath) {
 '@
 
     $scriptPath = Join-Path $projectRoot "tools/create-issues-from-tests.ps1"
-    
+
     if ($PSCmdlet.ShouldProcess($scriptPath, "Create auto-issue script")) {
         $autoIssueScript | Set-Content -Path $scriptPath
         Write-ScriptLog -Message "Auto-issue script created: $scriptPath"
@@ -312,7 +312,7 @@ if (Test-Path $TestResultsPath) {
 
 function New-ChangeImpactAnalysis {
     Write-ScriptLog -Message "Creating change impact analysis script"
-    
+
     $analysisScript = @'
 #!/usr/bin/env pwsh
 # Change impact analysis for pull requests
@@ -325,16 +325,16 @@ param(
 
 function Get-ChangedFiles {
     param($Base, $Head)
-    
+
     $changedFiles = @(git diff --name-only $Base...$Head)
-    
+
     $analysis = @{
         TotalFiles = $changedFiles.Count
         FileTypes = @{}
         ImpactAreas = @()
         RiskLevel = "Low"
     }
-    
+
     foreach ($file in $changedFiles) {
         $extension = [System.IO.Path]::GetExtension($file)
         if ($analysis.FileTypes.ContainsKey($extension)) {
@@ -342,7 +342,7 @@ function Get-ChangedFiles {
         } else {
             $analysis.FileTypes[$extension] = 1
         }
-        
+
         # Analyze impact areas
         switch -Regex ($file) {
             '^domains/configuration' { $analysis.ImpactAreas += "Configuration" }
@@ -355,22 +355,22 @@ function Get-ChangedFiles {
             'bootstrap\.(ps1|sh)$' { $analysis.RiskLevel = "High" }
         }
     }
-    
+
     # Remove duplicates and assess overall risk
     $analysis.ImpactAreas = @($analysis.ImpactAreas | Sort-Object -Unique)
-    
+
     if ($analysis.ImpactAreas -contains "Security" -or $analysis.ImpactAreas -contains "Infrastructure") {
         $analysis.RiskLevel = "High"
     } elseif ($analysis.ImpactAreas.Count -gt 3) {
         $analysis.RiskLevel = "Medium"
     }
-    
+
     return $analysis
 }
 
 function New-PRDescription {
     param($Analysis)
-    
+
     $description = @"
 ## Change Impact Analysis
 
@@ -394,7 +394,7 @@ $($Analysis.FileTypes.Keys | ForEach-Object { "- $_`: $($Analysis.FileTypes[$_])
 
 ### Testing Strategy
 Based on the impact areas, the following tests should be prioritized:
-$($Analysis.ImpactAreas | ForEach-Object { 
+$($Analysis.ImpactAreas | ForEach-Object {
     switch ($_) {
         "Configuration" { "- [ ] Configuration loading and validation tests" }
         "Infrastructure" { "- [ ] Infrastructure deployment tests" }
@@ -423,7 +423,7 @@ if ($OutputJson) {
 '@
 
     $scriptPath = Join-Path $projectRoot "tools/analyze-change-impact.ps1"
-    
+
     if ($PSCmdlet.ShouldProcess($scriptPath, "Create change impact analysis script")) {
         $analysisScript | Set-Content -Path $scriptPath
         Write-ScriptLog -Message "Change impact analysis script created: $scriptPath"
@@ -432,7 +432,7 @@ if ($OutputJson) {
 
 function New-ReleaseNotesGenerator {
     Write-ScriptLog -Message "Creating release notes generator"
-    
+
     $generatorScript = @'
 #!/usr/bin/env pwsh
 # Automated release notes generation
@@ -445,10 +445,10 @@ param(
 
 function Get-CommitsSinceTag {
     param($From, $To)
-    
+
     $commits = @()
     $gitLog = git log "$From..$To" --pretty=format:"%H|%s|%an|%ad" --date=short
-    
+
     foreach ($line in $gitLog) {
         $parts = $line -split '\|', 4
         if ($parts.Count -eq 4) {
@@ -461,13 +461,13 @@ function Get-CommitsSinceTag {
             }
         }
     }
-    
+
     return $commits
 }
 
 function Get-CommitType {
     param([string]$Subject)
-    
+
     switch -Regex ($Subject) {
         '^feat(\(.*\))?:' { return "Features" }
         '^fix(\(.*\))?:' { return "Bug Fixes" }
@@ -485,10 +485,10 @@ function Get-CommitType {
 
 function New-MarkdownReleaseNotes {
     param($Commits, $FromTag, $ToTag)
-    
+
     $groupedCommits = $Commits | Group-Object Type
     $date = Get-Date -Format "yyyy-MM-dd"
-    
+
     $notes = @"
 # Release Notes - $ToTag
 
@@ -503,7 +503,7 @@ function New-MarkdownReleaseNotes {
             $notes += "- $($commit.Subject) ($(($commit.Hash).Substring(0,7)))`n"
         }
     }
-    
+
     $notes += @"
 
 ## Contributors
@@ -550,7 +550,7 @@ switch ($OutputFormat.ToLower()) {
 '@
 
     $scriptPath = Join-Path $projectRoot "tools/generate-release-notes.ps1"
-    
+
     if ($PSCmdlet.ShouldProcess($scriptPath, "Create release notes generator")) {
         $generatorScript | Set-Content -Path $scriptPath
         Write-ScriptLog -Message "Release notes generator created: $scriptPath"
@@ -559,7 +559,7 @@ switch ($OutputFormat.ToLower()) {
 
 function New-IssueManagementConfig {
     Write-ScriptLog -Message "Creating issue management configuration"
-    
+
     $config = @{
         AutoIssueCreation = @{
             Enabled = $EnableAutoIssues
@@ -579,7 +579,7 @@ function New-IssueManagementConfig {
             )
             ReviewerGroups = @{
                 Security = @('security-team')
-                Infrastructure = @('infra-team')  
+                Infrastructure = @('infra-team')
                 Configuration = @('config-team')
             }
         }
@@ -607,15 +607,15 @@ function New-IssueManagementConfig {
             }
         }
     }
-    
+
     $configPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $projectRoot "config/issue-management.json" }
-    
+
     # Ensure config directory exists
     $configDir = Split-Path $configPath -Parent
     if (-not (Test-Path $configDir)) {
         New-Item -ItemType Directory -Path $configDir -Force | Out-Null
     }
-    
+
     if ($PSCmdlet.ShouldProcess($configPath, "Create issue management configuration")) {
         $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
         Write-ScriptLog -Message "Issue management configuration created: $configPath"
@@ -624,42 +624,42 @@ function New-IssueManagementConfig {
 
 try {
     Write-ScriptLog -Message "Starting issue management setup"
-    
+
     # Create .github/ISSUE_TEMPLATE directory
     $templateDir = Join-Path $projectRoot ".github/ISSUE_TEMPLATE"
     if (-not (Test-Path $templateDir)) {
         New-Item -ItemType Directory -Path $templateDir -Force | Out-Null
     }
-    
+
     # Create issue templates
     New-IssueTemplate -Type "bug" -OutputPath $templateDir
-    New-IssueTemplate -Type "feature" -OutputPath $templateDir  
+    New-IssueTemplate -Type "feature" -OutputPath $templateDir
     New-IssueTemplate -Type "task" -OutputPath $templateDir
-    
+
     # Create tools directory
     $toolsDir = Join-Path $projectRoot "tools"
     if (-not (Test-Path $toolsDir)) {
         New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
     }
-    
+
     # Create automation scripts
     New-AutoIssueScript
     New-ChangeImpactAnalysis
     New-ReleaseNotesGenerator
-    
+
     # Create configuration
     New-IssueManagementConfig
-    
+
     # Test mode - validate all scripts
     if ($TestMode) {
         Write-Host "`nValidating created scripts..." -ForegroundColor Cyan
-        
+
         $scripts = @(
             Join-Path $projectRoot "tools/create-issues-from-tests.ps1"
             Join-Path $projectRoot "tools/analyze-change-impact.ps1"
             Join-Path $projectRoot "tools/generate-release-notes.ps1"
         )
-        
+
         foreach ($script in $scripts) {
             if (Test-Path $script) {
                 try {
@@ -671,7 +671,7 @@ try {
             }
         }
     }
-    
+
     # Create GitHub Actions workflow integration
     $workflowIntegration = @'
 # Add this to your GitHub Actions workflow for full issue management integration
@@ -681,7 +681,7 @@ try {
         shell: pwsh
         run: |
           ./tools/create-issues-from-tests.ps1 -TestResultsPath ./test-results -Repository ${{ github.repository }}
-      
+
       - name: Generate Change Impact Analysis
         if: github.event_name == 'pull_request'
         shell: pwsh
@@ -690,7 +690,7 @@ try {
           echo "CHANGE_IMPACT<<EOF" >> $env:GITHUB_ENV
           ./tools/analyze-change-impact.ps1 >> $env:GITHUB_ENV
           echo "EOF" >> $env:GITHUB_ENV
-      
+
       - name: Update PR Description
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -703,7 +703,7 @@ try {
               pull_number: context.issue.number,
               body: body
             });
-      
+
       - name: Generate Release Notes
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         shell: pwsh
@@ -719,23 +719,23 @@ try {
         $workflowIntegration | Set-Content -Path $integrationPath
         Write-ScriptLog -Message "Workflow integration guide created: $integrationPath"
     }
-    
+
     # Summary
     Write-Host "`nIssue Management Setup Complete!" -ForegroundColor Green
     Write-Host "✅ Issue templates created" -ForegroundColor Green
     Write-Host "✅ Automation scripts generated" -ForegroundColor Green
     Write-Host "✅ Configuration files created" -ForegroundColor Green
     Write-Host "✅ GitHub Actions integration provided" -ForegroundColor Green
-    
+
     Write-Host "`nNext Steps:" -ForegroundColor Cyan
     Write-Host "1. Review and customize issue templates in .github/ISSUE_TEMPLATE/" -ForegroundColor White
     Write-Host "2. Configure settings in config/issue-management.json" -ForegroundColor White
     Write-Host "3. Integrate with GitHub Actions using docs/github-actions-integration.yml" -ForegroundColor White
     Write-Host "4. Test with: ./automation-scripts/0815_Setup-IssueManagement.ps1 -TestMode" -ForegroundColor White
-    
+
     Write-ScriptLog -Message "Issue management setup completed successfully"
     exit 0
-    
+
 } catch {
     $errorMsg = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
     Write-ScriptLog -Level Error -Message "Issue management setup failed: $_" -Data @{ Exception = $errorMsg }

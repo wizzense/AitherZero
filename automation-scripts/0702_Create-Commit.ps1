@@ -16,30 +16,30 @@ param(
     [Parameter(Mandatory, Position = 0)]
     [ValidateSet('feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf', 'ci', 'build', 'revert')]
     [string]$Type,
-    
+
     [Parameter(Mandatory, Position = 1)]
     [string]$Message,
-    
+
     [string]$Scope,
-    
+
     [string]$Body,
-    
+
     [string[]]$CoAuthors,
-    
+
     [switch]$Breaking,
-    
+
     [int[]]$Closes,
-    
+
     [int[]]$Refs,
-    
+
     [switch]$AutoStage,
-    
+
     [switch]$Push,
-    
+
     [switch]$SignOff,
-    
+
     [switch]$NonInteractive,
-    
+
     [switch]$Force
 )
 
@@ -67,7 +67,7 @@ if ($status.Clean -and -not $AutoStage) {
 # Show what will be committed
 if ($AutoStage) {
     Write-Host "Files to be staged:" -ForegroundColor Yellow
-    $status.Modified + $status.Untracked | ForEach-Object { 
+    $status.Modified + $status.Untracked | ForEach-Object {
         Write-Host "  $($_.Path)" -ForegroundColor Gray
     }
 } else {
@@ -80,9 +80,9 @@ if ($AutoStage) {
             exit 0
         }
     }
-    
+
     Write-Host "Staged files:" -ForegroundColor Yellow
-    $status.Staged | ForEach-Object { 
+    $status.Staged | ForEach-Object {
         Write-Host "  $($_.Path)" -ForegroundColor Green
     }
 }
@@ -153,17 +153,17 @@ try {
     if ($CoAuthors) {
         $commitParams.CoAuthors = $CoAuthors
     }
-    
+
     if ($PSCmdlet.ShouldProcess("Git repository", "Create commit: $commitMessage")) {
         $result = Invoke-GitCommit @commitParams
-        
+
         Write-Host "✓ Created commit: $($result.Hash.Substring(0, 7))" -ForegroundColor Green
         Write-Host "  $($result.Message)" -ForegroundColor Gray
     } else {
         Write-Host "WhatIf: Would create commit: $commitMessage" -ForegroundColor Yellow
         return
     }
-    
+
 } catch {
     Write-Error "Failed to create commit: $_"
     exit 1

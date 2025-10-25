@@ -91,11 +91,11 @@ try {
                 throw "OpenTofu init failed"
             }
         }
-        
+
         # Create tfvars from configuration
         if ($config.Infrastructure) {
             Write-ScriptLog "Creating terraform.tfvars from configuration..."
-            
+
             $tfvars = @"
 # Generated from AitherZero configuration
 hyperv_host = "$($config.Infrastructure.HyperV.Host)"
@@ -106,21 +106,21 @@ vm_path = "$($config.Infrastructure.DefaultVMPath)"
 default_memory = "$($config.Infrastructure.DefaultMemory)"
 default_cpu = $($config.Infrastructure.DefaultCPU)
 "@
-            
+
             $tfvars | Set-Content -Path 'terraform.tfvars'
         }
-        
+
         # Plan deployment
         Write-ScriptLog "Planning infrastructure deployment..."
         & tofu plan -out=tfplan
-        
+
         if ($LASTEXITCODE -ne 0) {
             throw "OpenTofu plan failed"
         }
-        
+
         # Show plan summary
         Write-ScriptLog "Infrastructure plan created successfully"
-        
+
         # Auto-apply if in non-interactive mode
         if ($config.Automation -and $config.Automation.AutoRun -eq $true) {
             Write-ScriptLog "Auto-applying infrastructure..."
@@ -134,14 +134,14 @@ default_cpu = $($config.Infrastructure.DefaultCPU)
         } else {
             Write-ScriptLog "Run 'tofu apply tfplan' to deploy infrastructure" -Level 'Warning'
         }
-        
+
     } finally {
         Pop-Location
     }
-    
+
     Write-ScriptLog "Infrastructure deployment completed"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Infrastructure deployment failed: $_" -Level 'Error'
     exit 1

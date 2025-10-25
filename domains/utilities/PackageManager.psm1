@@ -3,7 +3,7 @@
 <#
 .SYNOPSIS
     Package Manager Utilities for AitherZero
-.DESCRIPTION  
+.DESCRIPTION
     Provides centralized package manager functions with automatic detection,
     prioritization, and fallback strategies for software installation across platforms.
 .NOTES
@@ -21,7 +21,7 @@ $script:WindowsPackageManagers = @{
     }
     'chocolatey' = @{
         Command = 'choco'
-        Priority = 2 
+        Priority = 2
         InstallArgs = @('install', '{0}', '-y')
         CheckArgs = @('list', '{0}', '--exact', '--local-only')
     }
@@ -36,7 +36,7 @@ $script:LinuxPackageManagers = @{
         UpdateArgs = @('update')
     }
     'yum' = @{
-        Command = 'yum'  
+        Command = 'yum'
         Priority = 2
         InstallArgs = @('install', '-y', '{0}')
         CheckArgs = @('list', 'installed', '{0}')
@@ -70,7 +70,7 @@ $script:SoftwarePackages = @{
     'git' = @{
         winget = 'Git.Git'
         chocolatey = 'git'
-        apt = 'git' 
+        apt = 'git'
         yum = 'git'
         dnf = 'git'
         pacman = 'git'
@@ -80,7 +80,7 @@ $script:SoftwarePackages = @{
         winget = 'OpenJS.NodeJS'
         chocolatey = 'nodejs'
         apt = 'nodejs'
-        yum = 'nodejs' 
+        yum = 'nodejs'
         dnf = 'nodejs'
         pacman = 'nodejs'
         brew = 'node'
@@ -90,7 +90,7 @@ $script:SoftwarePackages = @{
         chocolatey = 'vscode'
         apt = 'code'
         yum = 'code'
-        dnf = 'code'  
+        dnf = 'code'
         pacman = 'code'
         brew = 'visual-studio-code'
         brew_cask = $true
@@ -117,7 +117,7 @@ $script:SoftwarePackages = @{
         winget = 'Microsoft.AzureCLI'
         chocolatey = 'azure-cli'
         apt = 'azure-cli'
-        yum = 'azure-cli' 
+        yum = 'azure-cli'
         dnf = 'azure-cli'
         pacman = 'azure-cli'
         brew = 'azure-cli'
@@ -159,7 +159,7 @@ function Write-PackageLog {
         [ValidateSet('Debug', 'Information', 'Warning', 'Error')]
         [string]$Level = 'Information'
     )
-    
+
     try {
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message $Message -Level $Level
@@ -189,9 +189,9 @@ function Get-AvailablePackageManagers {
     #>
     [CmdletBinding()]
     param()
-    
+
     $available = @()
-    
+
     if ($IsWindows) {
         foreach ($pm in ($script:WindowsPackageManagers.GetEnumerator() | Sort-Object { $_.Value.Priority })) {
             if (Get-Command $pm.Value.Command -ErrorAction SilentlyContinue) {
@@ -208,7 +208,7 @@ function Get-AvailablePackageManagers {
             if (Get-Command $pm.Value.Command -ErrorAction SilentlyContinue) {
                 $available += @{
                     Name = $pm.Key
-                    Config = $pm.Value  
+                    Config = $pm.Value
                     Platform = 'Linux'
                 }
                 Write-PackageLog "Found package manager: $($pm.Key)" -Level Debug
@@ -222,11 +222,11 @@ function Get-AvailablePackageManagers {
                     Config = $pm.Value
                     Platform = 'macOS'
                 }
-                Write-PackageLog "Found package manager: $($pm.Key)" -Level Debug  
+                Write-PackageLog "Found package manager: $($pm.Key)" -Level Debug
             }
         }
     }
-    
+
     return $available
 }
 
@@ -236,30 +236,30 @@ function Get-PackageId {
         Gets the package ID for a software package on a specific package manager
     .PARAMETER SoftwareName
         The standard name of the software (e.g., 'git', 'nodejs', 'vscode')
-    .PARAMETER PackageManagerName  
+    .PARAMETER PackageManagerName
         The name of the package manager (e.g., 'winget', 'chocolatey', 'apt')
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string]$SoftwareName,
-        
+
         [Parameter(Mandatory)]
         [string]$PackageManagerName
     )
-    
+
     $packageInfo = $script:SoftwarePackages[$SoftwareName.ToLower()]
     if (-not $packageInfo) {
         Write-PackageLog "No package mapping found for software: $SoftwareName" -Level Warning
         return $null
     }
-    
+
     $packageId = $packageInfo[$PackageManagerName.ToLower()]
     if (-not $packageId) {
-        Write-PackageLog "No package ID found for $SoftwareName on $PackageManagerName" -Level Warning  
+        Write-PackageLog "No package ID found for $SoftwareName on $PackageManagerName" -Level Warning
         return $null
     }
-    
+
     return $packageId
 }
 
@@ -270,33 +270,33 @@ function Test-PackageInstalled {
     .PARAMETER SoftwareName
         The standard name of the software to check
     .PARAMETER PackageManager
-        The package manager configuration object  
+        The package manager configuration object
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string]$SoftwareName,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$PackageManager
     )
-    
+
     $packageId = Get-PackageId -SoftwareName $SoftwareName -PackageManagerName $PackageManager.Name
     if (-not $packageId) {
         return $false
     }
-    
+
     try {
         $checkArgs = $PackageManager.Config.CheckArgs | ForEach-Object { $_ -f $packageId }
         $result = & $PackageManager.Config.Command @checkArgs 2>&1
-        
+
         # Different package managers have different success indicators
         switch ($PackageManager.Name) {
-            'winget' { 
+            'winget' {
                 return $LASTEXITCODE -eq 0 -and $result -match $packageId
             }
             'chocolatey' {
-                return $LASTEXITCODE -eq 0 -and $result -match $packageId  
+                return $LASTEXITCODE -eq 0 -and $result -match $packageId
             }
             'apt' {
                 return $LASTEXITCODE -eq 0 -and $result -match 'installed'
@@ -308,7 +308,7 @@ function Test-PackageInstalled {
                 return $LASTEXITCODE -eq 0
             }
             'brew' {
-                return $LASTEXITCODE -eq 0  
+                return $LASTEXITCODE -eq 0
             }
             default {
                 return $LASTEXITCODE -eq 0
@@ -322,12 +322,12 @@ function Test-PackageInstalled {
 
 function Install-SoftwarePackage {
     <#
-    .SYNOPSIS  
+    .SYNOPSIS
         Installs a software package using the best available package manager
     .PARAMETER SoftwareName
         The standard name of the software to install
     .PARAMETER PreferredPackageManager
-        Optional preferred package manager name  
+        Optional preferred package manager name
     .PARAMETER Force
         Force installation even if package appears to be installed
     .PARAMETER WhatIf
@@ -337,22 +337,22 @@ function Install-SoftwarePackage {
     param(
         [Parameter(Mandatory)]
         [string]$SoftwareName,
-        
+
         [string]$PreferredPackageManager,
-        
+
         [switch]$Force,
-        
+
         [switch]$WhatIf
     )
-    
+
     Write-PackageLog "Starting installation of $SoftwareName"
-    
+
     # Get available package managers in priority order
     $packageManagers = Get-AvailablePackageManagers
     if ($packageManagers.Count -eq 0) {
         throw "No package managers found on this system"
     }
-    
+
     # If preferred package manager specified, try it first
     if ($PreferredPackageManager) {
         $preferred = $packageManagers | Where-Object { $_.Name -eq $PreferredPackageManager }
@@ -362,7 +362,7 @@ function Install-SoftwarePackage {
             Write-PackageLog "Preferred package manager '$PreferredPackageManager' not available" -Level Warning
         }
     }
-    
+
     # Check if already installed (unless Force is specified)
     if (-not $Force) {
         foreach ($pm in $packageManagers) {
@@ -372,44 +372,44 @@ function Install-SoftwarePackage {
             }
         }
     }
-    
+
     # Try installing with each package manager until one succeeds
     foreach ($pm in $packageManagers) {
-        $packageId = Get-PackageId -SoftwareName $SoftwareName -PackageManagerName $pm.Name  
+        $packageId = Get-PackageId -SoftwareName $SoftwareName -PackageManagerName $pm.Name
         if (-not $packageId) {
             Write-PackageLog "Skipping $($pm.Name) - no package mapping for $SoftwareName" -Level Debug
             continue
         }
-        
+
         Write-PackageLog "Attempting to install $SoftwareName ($packageId) via $($pm.Name)"
-        
+
         try {
             # Handle special cases (e.g., brew cask)
             $installArgs = $pm.Config.InstallArgs
             if ($pm.Name -eq 'brew' -and $script:SoftwarePackages[$SoftwareName.ToLower()].brew_cask) {
                 $installArgs = $pm.Config.CaskArgs
             }
-            
+
             $args = $installArgs | ForEach-Object { $_ -f $packageId }
-            
+
             if ($WhatIf) {
                 Write-PackageLog "Would run: $($pm.Config.Command) $($args -join ' ')" -Level Information
                 return @{ Success = $true; PackageManager = $pm.Name; Status = 'WhatIf' }
             }
-            
+
             if ($PSCmdlet.ShouldProcess("$SoftwareName via $($pm.Name)", "Install Package")) {
                 # Update package manager cache for Linux systems
                 if ($pm.Platform -eq 'Linux' -and $pm.Config.UpdateArgs -and $pm.Name -eq 'apt') {
                     Write-PackageLog "Updating package cache for $($pm.Name)"
                     & sudo $pm.Config.Command @($pm.Config.UpdateArgs) 2>&1 | Out-Null
                 }
-                
+
                 # Run installation
                 $output = & $pm.Config.Command @args 2>&1
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-PackageLog "$SoftwareName installed successfully via $($pm.Name)"
-                    
+
                     # Verify installation
                     Start-Sleep -Seconds 2
                     if (Test-PackageInstalled -SoftwareName $SoftwareName -PackageManager $pm) {
@@ -422,10 +422,10 @@ function Install-SoftwarePackage {
                 }
             }
         } catch {
-            Write-PackageLog "Error installing $SoftwareName via $($pm.Name): $_" -Level Warning  
+            Write-PackageLog "Error installing $SoftwareName via $($pm.Name): $_" -Level Warning
         }
     }
-    
+
     throw "Failed to install $SoftwareName with any available package manager"
 }
 
@@ -433,7 +433,7 @@ function Get-SoftwareVersion {
     <#
     .SYNOPSIS
         Gets the installed version of a software package
-    .PARAMETER SoftwareName  
+    .PARAMETER SoftwareName
         The standard name of the software
     .PARAMETER Command
         Optional custom command to check version (defaults to common patterns)
@@ -442,14 +442,14 @@ function Get-SoftwareVersion {
     param(
         [Parameter(Mandatory)]
         [string]$SoftwareName,
-        
+
         [string]$Command
     )
-    
+
     # Common version check patterns
     $versionChecks = @{
         'git' = @('git', '--version')
-        'nodejs' = @('node', '--version')  
+        'nodejs' = @('node', '--version')
         'python' = @('python', '--version')
         'golang' = @('go', 'version')
         'docker' = @('docker', '--version')
@@ -457,7 +457,7 @@ function Get-SoftwareVersion {
         'vscode' = @('code', '--version')
         'azure-cli' = @('az', '--version')
     }
-    
+
     try {
         if ($Command) {
             $versionOutput = Invoke-Expression $Command 2>&1
@@ -469,7 +469,7 @@ function Get-SoftwareVersion {
                 return "Version check not available for $SoftwareName"
             }
         }
-        
+
         if ($LASTEXITCODE -eq 0) {
             return $versionOutput.ToString().Trim()
         } else {
@@ -483,7 +483,7 @@ function Get-SoftwareVersion {
 # Export functions
 Export-ModuleMember -Function @(
     'Get-AvailablePackageManagers',
-    'Get-PackageId', 
+    'Get-PackageId',
     'Test-PackageInstalled',
     'Install-SoftwarePackage',
     'Get-SoftwareVersion'

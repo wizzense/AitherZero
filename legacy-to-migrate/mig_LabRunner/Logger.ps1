@@ -40,7 +40,7 @@ function Read-LoggedInput {
     )
 
     # Check if we're in non-interactive mode (test environment, etc.)
-    $IsNonInteractive = ($Host.Name -eq 'Default Host') -or 
+    $IsNonInteractive = ($Host.Name -eq 'Default Host') -or
                       ([Environment]::UserInteractive -eq $false) -or
                       ($env:PESTER_RUN -eq 'true')
 
@@ -57,7 +57,7 @@ function Read-LoggedInput {
         Write-CustomLog "$Prompt (secure input)"
         return Read-Host -Prompt $Prompt -AsSecureString
     }
-    
+
     $answer = Read-Host -Prompt $Prompt
     Write-CustomLog "$($Prompt): $answer"
     return $answer

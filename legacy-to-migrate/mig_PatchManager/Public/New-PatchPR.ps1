@@ -80,7 +80,7 @@ function New-PatchPR {
                 $parentProgressId = (Get-Variable -Name 'progressId' -Scope 1).Value
                 $hasProgressContext = $true
             }
-            
+
             # Check GitHub CLI availability
             if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
                 throw "GitHub CLI (gh) not found. Please install and authenticate with GitHub CLI."
@@ -208,12 +208,12 @@ $(if ($IssueNumber) {
             $gitStatus = git status --porcelain 2>&1
             if ($gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })) {
                 Write-PRLog "Committing pending changes..." -Level "INFO"
-                
+
                 # Update parent progress if in context
                 if ($hasProgressContext -and $parentProgressId -and (Get-Command Write-PatchProgressLog -ErrorAction SilentlyContinue)) {
                     Write-PatchProgressLog -Message "Committing final changes for PR" -Level 'Info'
                 }
-                
+
                 git add . 2>&1 | Out-Null
                 git commit -m "PatchManager: $Description" 2>&1 | Out-Null
 
@@ -224,12 +224,12 @@ $(if ($IssueNumber) {
 
             # Push branch
             Write-PRLog "Pushing branch: $BranchName" -Level "INFO"
-            
+
             # Update parent progress if in context
             if ($hasProgressContext -and $parentProgressId -and (Get-Command Write-PatchProgressLog -ErrorAction SilentlyContinue)) {
                 Write-PatchProgressLog -Message "Pushing branch to remote" -Level 'Info'
             }
-            
+
             git push origin $BranchName 2>&1 | Out-Null
 
             if ($LASTEXITCODE -ne 0) {
@@ -241,12 +241,12 @@ $(if ($IssueNumber) {
                 gh label create "patch" --repo $repoInfo.GitHubRepo --color "0366d6" --description "Auto-created by PatchManager" 2>&1 | Out-Null
             }            # Create PR with robust error handling
             Write-PRLog "Creating pull request: $prTitle" -Level "INFO"
-            
+
             # Update parent progress if in context
             if ($hasProgressContext -and $parentProgressId -and (Get-Command Write-PatchProgressLog -ErrorAction SilentlyContinue)) {
                 Write-PatchProgressLog -Message "Submitting pull request to GitHub" -Level 'Info'
             }
-            
+
             $result = gh pr create --repo $repoInfo.GitHubRepo --title $prTitle --body $prBody --head $BranchName --label "patch" 2>&1
 
             # Handle any remaining label errors gracefully

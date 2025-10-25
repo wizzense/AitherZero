@@ -26,10 +26,10 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
-    
+
     [ValidateSet('Unit', 'Integration', 'E2E', 'All')]
     [string]$TestType = 'Unit',
-    
+
     [string]$OutputPath = "./tests/generated"
 )
 
@@ -98,7 +98,7 @@ if ($PSCmdlet.ShouldProcess($OutputPath, "Create test files")) {
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
         Write-Host "✓ Created output directory: $OutputPath" -ForegroundColor Green
     }
-    
+
     # In full implementation, generated test files would be written here
     # Example: Set-Content -Path "$OutputPath/TestFile.Tests.ps1" -Value $generatedTestContent
     Write-Host "Tests would be saved to: $OutputPath" -ForegroundColor Cyan

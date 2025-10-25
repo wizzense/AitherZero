@@ -78,25 +78,25 @@ function New-PullRequest {
     param(
         [Parameter(Mandatory)]
         [string]$Title,
-        
+
         [string]$Body,
-        
+
         [string]$Base,
-        
+
         [string]$Head,
-        
+
         [switch]$Draft,
-        
+
         [string[]]$Reviewers,
-        
+
         [string[]]$Assignees,
-        
+
         [string[]]$Labels,
-        
+
         [string]$Milestone,
-        
+
         [switch]$AutoMerge,
-        
+
         [switch]$OpenInBrowser
     )
 
@@ -106,20 +106,20 @@ function New-PullRequest {
         if (-not $ghPath) {
             throw "GitHub CLI (gh) is not installed"
         }
-        
+
         # Get current branch if head not specified
         if (-not $Head) {
             $Head = git branch --show-current
         }
-        
+
         # Get default branch if base not specified
         if (-not $Base) {
             $Base = gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
         }
-        
+
         # Build gh command
         $ghArgs = @('pr', 'create', '--title', $Title)
-        
+
         if ($Body) {
             $ghArgs += '--body', $Body
         } else {
@@ -130,36 +130,36 @@ function New-PullRequest {
                 $ghArgs += '--body', $Body
             }
         }
-        
+
         $ghArgs += '--base', $Base, '--head', $Head
-        
+
         if ($Draft) {
             $ghArgs += '--draft'
         }
-        
+
         if ($Reviewers) {
             $ghArgs += '--reviewer', ($Reviewers -join ',')
         }
-        
+
         if ($Assignees) {
             $ghArgs += '--assignee', ($Assignees -join ',')
         }
-        
+
         if ($Labels) {
             $ghArgs += '--label', ($Labels -join ',')
         }
-        
+
         if ($Milestone) {
             $ghArgs += '--milestone', $Milestone
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Create PR: $Title from $Head to $Base")) {
             $result = gh @ghArgs
 
             # Extract PR number from output
             if ($result -match '#(\d+)') {
                 $prNumber = $Matches[1]
-                
+
                 Write-PRLog "Created pull request #$prNumber" -Data @{
                     Number = $prNumber
                     Title = $Title
@@ -167,7 +167,7 @@ function New-PullRequest {
                     Head = $Head
                     Draft = $Draft
                 }
-                
+
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-AuditLog -EventType "GitHubPR" -Action "CreatePR" -Target "#$prNumber" -Result "Success" -Details @{
                         Title = $Title
@@ -175,16 +175,16 @@ function New-PullRequest {
                         Head = $Head
                     }
                 }
-                
+
                 # Enable auto-merge if requested
                 if ($AutoMerge -and -not $Draft) {
                     Enable-PullRequestAutoMerge -Number $prNumber
                 }
-                
+
                 if ($OpenInBrowser) {
                     gh pr view $prNumber --web
                 }
-                
+
                 return @{
                     Number = $prNumber
                     Title = $Title
@@ -193,7 +193,7 @@ function New-PullRequest {
                 }
             }
         }
-        
+
     } catch {
         Write-PRLog "Failed to create pull request: $_" -Level Error
         throw
@@ -209,23 +209,23 @@ function Update-PullRequest {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [string]$Title,
-        
+
         [string]$Body,
-        
+
         [string]$Base,
-        
+
         [string[]]$AddLabels,
-        
+
         [string[]]$RemoveLabels,
-        
+
         [string[]]$AddReviewers,
-        
+
         [string[]]$RemoveReviewers,
-        
+
         [switch]$MarkReady,
-        
+
         [switch]$ConvertToDraft
     )
 
@@ -233,47 +233,47 @@ function Update-PullRequest {
         # Build gh command
         $ghArgs = @('pr', 'edit', $Number)
         $hasChanges = $false
-        
+
         if ($Title) {
             $ghArgs += '--title', $Title
             $hasChanges = $true
         }
-        
+
         if ($Body) {
             $ghArgs += '--body', $Body
             $hasChanges = $true
         }
-        
+
         if ($Base) {
             $ghArgs += '--base', $Base
             $hasChanges = $true
         }
-        
+
         if ($AddLabels) {
             $ghArgs += '--add-label', ($AddLabels -join ',')
             $hasChanges = $true
         }
-        
+
         if ($RemoveLabels) {
             $ghArgs += '--remove-label', ($RemoveLabels -join ',')
             $hasChanges = $true
         }
-        
+
         if ($AddReviewers) {
             $ghArgs += '--add-reviewer', ($AddReviewers -join ',')
             $hasChanges = $true
         }
-        
+
         if ($RemoveReviewers) {
             $ghArgs += '--remove-reviewer', ($RemoveReviewers -join ',')
             $hasChanges = $true
         }
-        
+
         if (-not $hasChanges -and -not $MarkReady -and -not $ConvertToDraft) {
             Write-Warning "No changes specified for PR #$Number"
             return
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Update PR #$Number")) {
             if ($hasChanges) {
                 gh @ghArgs
@@ -296,7 +296,7 @@ function Update-PullRequest {
                 }
             }
         }
-        
+
     } catch {
         Write-PRLog "Failed to update pull request: $_" -Level Error
         throw
@@ -312,65 +312,65 @@ function Get-PullRequests {
     param(
         [ValidateSet('open', 'closed', 'merged', 'all')]
         [string]$State = 'open',
-        
+
         [string]$Base,
-        
+
         [string]$Head,
-        
+
         [string[]]$Labels,
-        
+
         [string]$Author,
-        
+
         [string]$Assignee,
-        
+
         [int]$Limit = 30,
-        
+
         [switch]$IncludeDrafts
     )
 
     try {
         # Build gh command
         $ghArgs = @('pr', 'list', '--limit', $Limit)
-        
+
         if ($State -ne 'all') {
             $ghArgs += '--state', $State
         }
-        
+
         if ($Base) {
             $ghArgs += '--base', $Base
         }
-        
+
         if ($Head) {
             $ghArgs += '--head', $Head
         }
-        
+
         if ($Labels) {
             $ghArgs += '--label', ($Labels -join ',')
         }
-        
+
         if ($Author) {
             $ghArgs += '--author', $Author
         }
-        
+
         if ($Assignee) {
             $ghArgs += '--assignee', $Assignee
         }
-        
+
         # Get JSON output
         $ghArgs += '--json', 'number,title,state,author,assignees,labels,headRefName,baseRefName,createdAt,updatedAt,url,isDraft,mergeable,mergeStateStatus'
-        
+
         $prs = gh @ghArgs | ConvertFrom-Json
-        
+
         # Filter drafts if needed
         if (-not $IncludeDrafts) {
             $prs = $prs | Where-Object { -not $_.isDraft }
         }
-        
+
         Write-PRLog "Retrieved $($prs.Count) pull requests" -Data @{
             State = $State
             Count = $prs.Count
         }
-        
+
         # Transform to consistent format
         $formattedPRs = $prs | ForEach-Object {
             @{
@@ -390,9 +390,9 @@ function Get-PullRequests {
                 MergeStatus = $_.mergeStateStatus
             }
         }
-        
+
         return $formattedPRs
-        
+
     } catch {
         Write-PRLog "Failed to get pull requests: $_" -Level Error
         throw
@@ -418,23 +418,23 @@ function Merge-PullRequest {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [ValidateSet('merge', 'squash', 'rebase')]
         [string]$Method = 'merge',
-        
+
         [switch]$DeleteBranch,
-        
+
         [string]$Message
     )
 
     try {
         # Check PR status first
         $pr = gh pr view $Number --json mergeable,mergeStateStatus,headRefName | ConvertFrom-Json
-        
+
         if ($pr.mergeStateStatus -ne 'CLEAN') {
             throw "PR #$Number is not ready to merge. Status: $($pr.mergeStateStatus)"
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Merge PR #$Number using $Method")) {
             # Build merge command
             $ghArgs = @('pr', 'merge', $Number, "--$Method")
@@ -456,14 +456,14 @@ function Merge-PullRequest {
                     Method = $Method
                     DeletedBranch = $DeleteBranch
                 }
-                
+
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-AuditLog -EventType "GitHubPR" -Action "MergePR" -Target "#$Number" -Result "Success" -Details @{
                         Method = $Method
                         Branch = $pr.headRefName
                     }
                 }
-                
+
                 return @{
                     Number = $Number
                     Method = $Method
@@ -471,7 +471,7 @@ function Merge-PullRequest {
                 }
             }
         }
-        
+
     } catch {
         Write-PRLog "Failed to merge pull request: $_" -Level Error
         throw
@@ -487,7 +487,7 @@ function Enable-PullRequestAutoMerge {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [ValidateSet('merge', 'squash', 'rebase')]
         [string]$Method = 'squash'
     )
@@ -501,21 +501,21 @@ function Enable-PullRequestAutoMerge {
                     Number = $Number
                     Method = $Method
                 }
-                
+
                 # Add to tracking queue
                 $script:PRState.AutoMergeQueue += @{
                     Number = $Number
                     Method = $Method
                     EnabledAt = Get-Date
                 }
-                
+
                 return @{
                     Number = $Number
                     Success = $true
                 }
             }
         }
-        
+
     } catch {
         Write-PRLog "Failed to enable auto-merge: $_" -Level Error
         throw
@@ -531,7 +531,7 @@ function Add-PullRequestComment {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [Parameter(Mandatory)]
         [string]$Body
     )
@@ -548,7 +548,7 @@ function Add-PullRequestComment {
                 }
             }
         }
-        
+
     } catch {
         Write-PRLog "Failed to add comment: $_" -Level Error
         throw
@@ -564,9 +564,9 @@ function Close-PullRequest {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [string]$Comment,
-        
+
         [switch]$DeleteBranch
     )
 
@@ -582,21 +582,21 @@ function Close-PullRequest {
 
             if ($LASTEXITCODE -eq 0) {
                 Write-PRLog "Closed pull request #$Number"
-                
+
                 # Delete branch if requested
                 if ($DeleteBranch) {
                     $pr = gh pr view $Number --json headRefName | ConvertFrom-Json
                     git push origin --delete $pr.headRefName
                     Write-PRLog "Deleted branch: $($pr.headRefName)"
                 }
-                
+
                 return @{
                     Number = $Number
                     Success = $true
                 }
             }
         }
-        
+
     } catch {
         Write-PRLog "Failed to close pull request: $_" -Level Error
         throw
@@ -616,7 +616,7 @@ function Get-PullRequestReviews {
 
     try {
         $reviews = gh pr review list $Number --json author,state,submittedAt,body | ConvertFrom-Json
-        
+
         $formattedReviews = $reviews | ForEach-Object {
             @{
                 Author = $_.author.login
@@ -625,10 +625,10 @@ function Get-PullRequestReviews {
                 Body = $_.body
             }
         }
-        
+
         Write-PRLog "Retrieved $($reviews.Count) reviews for PR #$Number"
         return $formattedReviews
-        
+
     } catch {
         Write-PRLog "Failed to get reviews: $_" -Level Error
         throw

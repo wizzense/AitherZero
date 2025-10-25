@@ -5,12 +5,12 @@
     Run PSScriptAnalyzer on AitherZero codebase
 .DESCRIPTION
     Performs static code analysis to identify potential issues and ensure code quality
-    
+
     Exit Codes:
     0   - No issues found
     1   - Issues found
     2   - Analysis error
-    
+
 .NOTES
     Stage: Testing
     Order: 0404
@@ -90,10 +90,10 @@ try {
         Write-ScriptLog -Message "Analysis path: $Path"
         Write-ScriptLog -Message "Fix mode: $Fix"
         Write-ScriptLog -Message "Excluded paths: $($ExcludePaths -join ', ')"
-        
+
         # List PowerShell files that would be analyzed
-        $psFiles = @(Get-ChildItem -Path $Path -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
-            Where-Object { 
+        $psFiles = @(Get-ChildItem -Path $Path -Include "*.ps1", "*.psm1", "*.psd1" -Recurse |
+            Where-Object {
                 $file = $_
                 -not ($ExcludePaths | Where-Object { $file.FullName -like "*\$_\*" })
             })
@@ -106,12 +106,12 @@ try {
         Write-ScriptLog -Level Error -Message "PSScriptAnalyzer is required. Run 0400_Install-TestingTools.ps1 first."
         exit 2
     }
-    
+
     Import-Module PSScriptAnalyzer
 
     # Load configuration from config.psd1
     $analysisConfig = @{}
-    
+
     # Try to get configuration from config.psd1
     if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
         $config = Get-Configuration
@@ -119,7 +119,7 @@ try {
             $analysisConfig = $config.Testing.PSScriptAnalyzer
         }
     }
-    
+
     # Apply parameter overrides or use config defaults
     if (-not $PSBoundParameters.ContainsKey('Severity')) {
         $Severity = if ($analysisConfig.Severity) {
@@ -128,7 +128,7 @@ try {
             @('Error', 'Warning', 'Information')
         }
     }
-    
+
     if (-not $PSBoundParameters.ContainsKey('ExcludeRules')) {
         $ExcludeRules = if ($analysisConfig.ExcludeRules) {
             $analysisConfig.ExcludeRules
@@ -136,7 +136,7 @@ try {
             @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
         }
     }
-    
+
     if (-not $PSBoundParameters.ContainsKey('IncludeRules')) {
         $IncludeRules = if ($analysisConfig.IncludeRules) {
             $analysisConfig.IncludeRules
@@ -152,12 +152,12 @@ try {
         Severity = $Severity
         ExcludeRule = $ExcludeRules
     }
-    
+
     # Add IncludeRule if not all rules
     if ($IncludeRules -and $IncludeRules -ne @('*')) {
         $analyzerParams['IncludeRule'] = $IncludeRules
     }
-    
+
     # Add rule-specific settings if available
     if ($analysisConfig.Rules) {
         # Create settings object if we have rule-specific settings
@@ -184,10 +184,10 @@ try {
             $settingsContent += "`n    }"
         }
         $settingsContent += "`n}"
-        
+
         # Write settings file temporarily
         $settingsContent | Out-File -FilePath $settingsPath -Encoding UTF8
-        
+
         # Use settings file instead of individual parameters
         $analyzerParams = @{
             Path = $Path
@@ -249,7 +249,7 @@ try {
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Start-PerformanceTrace -Name "PSScriptAnalyzer" -Description "Static code analysis"
     }
-    
+
     Write-ScriptLog -Message "Analyzing PowerShell files..."
     Write-Host "`nRunning PSScriptAnalyzer. This may take a few minutes..." -ForegroundColor Yellow
 
@@ -270,7 +270,7 @@ try {
                     }
                 }
                 $singleFileParams['Path'] = $file
-                
+
                 try {
                     $fileResults = Invoke-ScriptAnalyzer @singleFileParams
                     if ($fileResults) {
@@ -316,20 +316,20 @@ try {
         foreach ($group in $severityGroups) {
             $resultSummary.BySeverity[$group.Name] = $group.Count
         }
-        
+
         $ruleGroups = $results | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 10
         $resultSummary.ByRule = @{}
         foreach ($group in $ruleGroups) {
             $resultSummary.ByRule[$group.Name] = $group.Count
         }
-        
+
         $scriptGroups = $results | Group-Object ScriptName | Sort-Object Count -Descending | Select-Object -First 10
         $resultSummary.ByScript = @{}
         foreach ($group in $scriptGroups) {
             $resultSummary.ByScript[$group.Name] = $group.Count
         }
     }
-    
+
     Write-ScriptLog -Message "PSScriptAnalyzer analysis completed" -Data $resultSummary
 
     # Display summary
@@ -347,20 +347,20 @@ try {
                 Write-Host "    $severity : $count" -ForegroundColor $color
             }
         }
-        
+
         # Top rules
         Write-Host "`n  Top Rules Violated:" -ForegroundColor Yellow
         $results | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 5 | ForEach-Object {
             Write-Host "    $($_.Name): $($_.Count)"
         }
-        
+
         # Top files
         Write-Host "`n  Files with Most Issues:" -ForegroundColor Yellow
         $results | Group-Object ScriptName | Sort-Object Count -Descending | Select-Object -First 5 | ForEach-Object {
             $fileName = Split-Path $_.Name -Leaf
             Write-Host "    $fileName : $($_.Count)"
         }
-        
+
         # Show errors if any
         $errors = $results | Where-Object { $_.Severity -eq 'Error' }
         if ($errors) {
@@ -385,22 +385,22 @@ try {
         if (-not $OutputPath) {
             $OutputPath = Join-Path $projectRoot "tests/analysis"
         }
-        
+
         if (-not (Test-Path $OutputPath)) {
             if ($PSCmdlet.ShouldProcess($OutputPath, "Create analysis output directory")) {
                 New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
             }
         }
-        
+
         $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-        
+
         # Save as CSV for easy analysis
         $csvPath = Join-Path $OutputPath "PSScriptAnalyzer-$timestamp.csv"
         if ($PSCmdlet.ShouldProcess($csvPath, "Export analysis results to CSV")) {
             $results | Export-Csv -Path $csvPath -NoTypeInformation
             Write-ScriptLog -Message "Analysis results saved to: $csvPath"
         }
-        
+
         # Save as JSON with summary
         $jsonPath = Join-Path $OutputPath "PSScriptAnalyzer-Summary-$timestamp.json"
         if ($PSCmdlet.ShouldProcess($jsonPath, "Save analysis summary as JSON")) {
@@ -411,7 +411,7 @@ try {
             } | ConvertTo-Json -Depth 5 | Set-Content -Path $jsonPath
             Write-ScriptLog -Message "Analysis summary saved to: $jsonPath"
         }
-        
+
         # Generate SARIF format for integration with other tools
         if (Get-Command -Name ConvertTo-SarifReport -ErrorAction SilentlyContinue) {
             $sarifPath = Join-Path $OutputPath "PSScriptAnalyzer-$timestamp.sarif"
@@ -438,8 +438,8 @@ try {
     }
 }
 catch {
-    Write-ScriptLog -Level Error -Message "PSScriptAnalyzer analysis failed: $_" -Data @{ 
-        Exception = $_.Exception.Message 
+    Write-ScriptLog -Level Error -Message "PSScriptAnalyzer analysis failed: $_" -Data @{
+        Exception = $_.Exception.Message
         ScriptStackTrace = $_.ScriptStackTrace
     }
     exit 2

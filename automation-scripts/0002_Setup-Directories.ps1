@@ -55,7 +55,7 @@ try {
     # Infrastructure directories
     if ($config.Infrastructure -and $config.Infrastructure.Directories) {
         $dirs = $config.Infrastructure.Directories
-        
+
         if ($dirs.HyperVPath) {
             $directoriesToCreate += $dirs.HyperVPath
         }
@@ -68,7 +68,7 @@ try {
         if ($dirs.InfraRepoPath) {
             $directoriesToCreate += $dirs.InfraRepoPath
         }
-        
+
         # Legacy paths that might still be referenced
         if ($dirs.HyperVDisks) {
             $directoriesToCreate += $dirs.HyperVDisks
@@ -81,7 +81,7 @@ try {
     # Default directories if none specified
     if ($directoriesToCreate.Count -eq 0) {
         Write-ScriptLog "No directories specified in configuration, using defaults" -Level 'Warning'
-        
+
         if ($IsWindows) {
             $directoriesToCreate = @(
                 'C:/HyperV',
@@ -104,9 +104,9 @@ try {
         if ([string]::IsNullOrWhiteSpace($dir)) {
             continue
         }
-        
+
         $expandedDir = [System.Environment]::ExpandEnvironmentVariables($dir)
-        
+
         if (-not (Test-Path $expandedDir)) {
             Write-ScriptLog "Creating directory: $expandedDir"
             try {
@@ -127,7 +127,7 @@ try {
     } else {
         './logs'
     }
-    
+
     $expandedLogsPath = if ([System.IO.Path]::IsPathRooted($logsPath)) {
         $logsPath
     } else {
@@ -138,10 +138,10 @@ try {
         Write-ScriptLog "Creating logs directory: $expandedLogsPath"
         New-Item -ItemType Directory -Path $expandedLogsPath -Force | Out-Null
     }
-    
+
     Write-ScriptLog "Directory setup completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Directory setup failed: $_" -Level 'Error'
     exit 1

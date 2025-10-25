@@ -10,11 +10,11 @@
 BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0407_Validate-Syntax.ps1"
-    
+
     # Create test files
     $testScriptValid = Join-Path $TestDrive "ValidScript.ps1"
     $testScriptInvalid = Join-Path $TestDrive "InvalidScript.ps1"
-    
+
     # Valid PowerShell script
     Set-Content -Path $testScriptValid -Value @'
 param([string]$Name = "World")
@@ -34,7 +34,7 @@ function Get-Greeting { return "Hello"  # Missing closing brace
 }
 
 Describe "0407_Validate-Syntax" -Tag @('Unit', 'Testing', 'Syntax') {
-    
+
     Context "Script Metadata" {
         It "Should have correct metadata structure" {
             $scriptContent = Get-Content $scriptPath -Raw
@@ -62,39 +62,39 @@ Describe "0407_Validate-Syntax" -Tag @('Unit', 'Testing', 'Syntax') {
         It "Should validate syntax successfully for valid script" {
             $result = & $scriptPath -FilePath $testScriptValid
             $LASTEXITCODE | Should -Be 0
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Script syntax is valid*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Script syntax is valid*"
             }
         }
 
         It "Should show detailed statistics when Detailed is specified" {
             $result = & $scriptPath -FilePath $testScriptValid -Detailed
             $LASTEXITCODE | Should -Be 0
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Script Statistics*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Script Statistics*"
             }
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Functions:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Functions:*"
             }
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Commands:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Commands:*"
             }
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Total Lines:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Total Lines:*"
             }
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Tokens:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Tokens:*"
             }
         }
 
         It "Should not show statistics when Detailed is not specified" {
             $result = & $scriptPath -FilePath $testScriptValid
             $LASTEXITCODE | Should -Be 0
-            
-            Assert-MockCalled Write-Host -Times 0 -ParameterFilter { 
-                $Object -like "*Script Statistics*" 
+
+            Assert-MockCalled Write-Host -Times 0 -ParameterFilter {
+                $Object -like "*Script Statistics*"
             }
         }
     }
@@ -103,36 +103,36 @@ Describe "0407_Validate-Syntax" -Tag @('Unit', 'Testing', 'Syntax') {
         It "Should detect syntax errors in invalid script" {
             $result = & $scriptPath -FilePath $testScriptInvalid 2>$null
             $LASTEXITCODE | Should -Be 1
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Syntax errors found*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Syntax errors found*"
             }
         }
 
         It "Should show error details for syntax errors" {
             $result = & $scriptPath -FilePath $testScriptInvalid 2>$null
             $LASTEXITCODE | Should -Be 1
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Line*Column*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Line*Column*"
             }
         }
 
         It "Should show error context when Detailed is specified" {
             $result = & $scriptPath -FilePath $testScriptInvalid -Detailed 2>$null
             $LASTEXITCODE | Should -Be 1
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Context:*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Context:*"
             }
         }
 
         It "Should not show error context when Detailed is not specified" {
             $result = & $scriptPath -FilePath $testScriptInvalid 2>$null
             $LASTEXITCODE | Should -Be 1
-            
-            Assert-MockCalled Write-Host -Times 0 -ParameterFilter { 
-                $Object -like "*Context:*" 
+
+            Assert-MockCalled Write-Host -Times 0 -ParameterFilter {
+                $Object -like "*Context:*"
             }
         }
     }
@@ -145,37 +145,37 @@ Describe "0407_Validate-Syntax" -Tag @('Unit', 'Testing', 'Syntax') {
 
         It "Should detect function definitions in detailed mode" {
             $result = & $scriptPath -FilePath $testScriptValid -Detailed
-            
+
             # Should find the Get-Greeting function
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Functions: 1*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Functions: 1*"
             }
         }
 
         It "Should count commands in detailed mode" {
             $result = & $scriptPath -FilePath $testScriptValid -Detailed
-            
+
             # Should count Write-Host and other commands
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Commands:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Commands:*"
             }
         }
 
         It "Should count total lines in detailed mode" {
             $result = & $scriptPath -FilePath $testScriptValid -Detailed
-            
+
             # Should show line count
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Total Lines:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Total Lines:*"
             }
         }
 
         It "Should count tokens in detailed mode" {
             $result = & $scriptPath -FilePath $testScriptValid -Detailed
-            
+
             # Should show token count
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Tokens:*" 
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Tokens:*"
             }
         }
     }
@@ -191,17 +191,17 @@ Describe "0407_Validate-Syntax" -Tag @('Unit', 'Testing', 'Syntax') {
         It "Should handle file parsing errors gracefully" {
             $result = & $scriptPath -FilePath $testScriptCorrupt 2>$null
             $LASTEXITCODE | Should -Be 1
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Error parsing file*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Error parsing file*"
             }
         }
 
         It "Should show parsing error message" {
             $result = & $scriptPath -FilePath $testScriptCorrupt 2>$null
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $ForegroundColor -eq 'Red' 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $ForegroundColor -eq 'Red'
             }
         }
     }
@@ -211,7 +211,7 @@ Describe "0407_Validate-Syntax" -Tag @('Unit', 'Testing', 'Syntax') {
             # Create different PowerShell file types
             $testModule = Join-Path $TestDrive "TestModule.psm1"
             $testManifest = Join-Path $TestDrive "TestManifest.psd1"
-            
+
             Set-Content -Path $testModule -Value @'
 function Get-TestFunction {
     param([string]$Parameter)
@@ -242,9 +242,9 @@ Export-ModuleMember -Function Get-TestFunction
 
         It "Should show module function count in detailed mode" {
             $result = & $scriptPath -FilePath $testModule -Detailed
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $Object -like "*Functions: 1*" 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Functions: 1*"
             }
         }
     }
@@ -263,7 +263,7 @@ Export-ModuleMember -Function Get-TestFunction
         It "Should exit with code 1 for parsing errors" {
             $testScriptCorrupt = Join-Path $TestDrive "CorruptScript.ps1"
             [System.IO.File]::WriteAllBytes($testScriptCorrupt, @(0x00, 0x00, 0x00))
-            
+
             $result = & $scriptPath -FilePath $testScriptCorrupt 2>$null
             $LASTEXITCODE | Should -Be 1
         }
@@ -272,33 +272,33 @@ Export-ModuleMember -Function Get-TestFunction
     Context "Output Formatting" {
         It "Should use green color for success messages" {
             $result = & $scriptPath -FilePath $testScriptValid
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
                 $ForegroundColor -eq 'Green' -and $Object -like "*Script syntax is valid*"
             }
         }
 
         It "Should use red color for error messages" {
             $result = & $scriptPath -FilePath $testScriptInvalid 2>$null
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $ForegroundColor -eq 'Red' 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $ForegroundColor -eq 'Red'
             }
         }
 
         It "Should use cyan color for statistics header" {
             $result = & $scriptPath -FilePath $testScriptValid -Detailed
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
                 $ForegroundColor -eq 'Cyan' -and $Object -like "*Script Statistics*"
             }
         }
 
         It "Should use yellow color for syntax error details" {
             $result = & $scriptPath -FilePath $testScriptInvalid 2>$null
-            
-            Assert-MockCalled Write-Host -ParameterFilter { 
-                $ForegroundColor -eq 'Yellow' 
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $ForegroundColor -eq 'Yellow'
             }
         }
     }

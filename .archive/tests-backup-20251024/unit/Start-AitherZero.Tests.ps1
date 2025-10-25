@@ -4,7 +4,7 @@ BeforeAll {
     # Setup test environment
     $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
     $script:EntryScript = Join-Path $script:ProjectRoot "Start-AitherZero.ps1"
-    
+
     # Mock functions that would be loaded by the script
     function Get-Configuration { return @{ Core = @{ Name = "Test" } } }
     function Initialize-AitherModules { return $true }
@@ -23,22 +23,22 @@ AfterAll {
 }
 
 Describe "Start-AitherZero Script" -Tag 'Unit' {
-    
+
     Context "Script Validation" {
         It "Should have a valid script file" {
             Test-Path $script:EntryScript | Should -Be $true
         }
-        
+
         It "Should have valid PowerShell syntax" {
             $errors = $null
             $null = [System.Management.Automation.Language.Parser]::ParseFile(
-                $script:EntryScript, 
-                [ref]$null, 
+                $script:EntryScript,
+                [ref]$null,
                 [ref]$errors
             )
             $errors | Should -BeNullOrEmpty
         }
-        
+
         It "Should have proper script metadata" {
             $content = Get-Content $script:EntryScript -Raw
             $content | Should -Match "\.SYNOPSIS"
@@ -46,7 +46,7 @@ Describe "Start-AitherZero Script" -Tag 'Unit' {
             $content | Should -Match "\.PARAMETER"
         }
     }
-    
+
     Context "Parameter Validation" {
         BeforeEach {
             # Create a test version of the script that we can invoke
@@ -54,24 +54,24 @@ Describe "Start-AitherZero Script" -Tag 'Unit' {
 param(
     [Parameter(ParameterSetName = 'Interactive')]
     [switch]$Interactive,
-    
+
     [Parameter(ParameterSetName = 'Orchestrate')]
     [string]$Mode,
-    
+
     [Parameter(ParameterSetName = 'Orchestrate')]
     [string]$Sequence,
-    
+
     [Parameter(ParameterSetName = 'Orchestrate')]
     [string]$Playbook,
-    
+
     [hashtable]$Variables = @{},
-    
+
     [string]$ConfigPath,
-    
+
     [switch]$DryRun,
-    
+
     [switch]$Verbose,
-    
+
     [switch]$Help
 )
 
@@ -81,54 +81,54 @@ return $PSBoundParameters
             $script:TestScriptPath = Join-Path $TestDrive "test-start.ps1"
             $script:TestScript | Set-Content $script:TestScriptPath
         }
-        
+
         It "Should accept Interactive mode" {
             $result = & $script:TestScriptPath -Interactive
             $result.Interactive | Should -Be $true
         }
-        
+
         It "Should accept Orchestrate mode with sequence" {
             $result = & $script:TestScriptPath -Mode Orchestrate -Sequence "0400-0499"
             $result.Mode | Should -Be "Orchestrate"
             $result.Sequence | Should -Be "0400-0499"
         }
-        
+
         It "Should accept Orchestrate mode with playbook" {
             $result = & $script:TestScriptPath -Mode Orchestrate -Playbook "test-playbook"
             $result.Mode | Should -Be "Orchestrate"
             $result.Playbook | Should -Be "test-playbook"
         }
-        
+
         It "Should accept Variables parameter" {
             $vars = @{ Key1 = "Value1"; Key2 = "Value2" }
             $result = & $script:TestScriptPath -Mode Orchestrate -Sequence "0400" -Variables $vars
             $result.Variables.Key1 | Should -Be "Value1"
             $result.Variables.Key2 | Should -Be "Value2"
         }
-        
+
         It "Should accept ConfigPath parameter" {
             $result = & $script:TestScriptPath -ConfigPath "/custom/config.psd1"
             $result.ConfigPath | Should -Be "/custom/config.psd1"
         }
-        
+
         It "Should accept DryRun switch" {
             $result = & $script:TestScriptPath -Mode Orchestrate -Sequence "0400" -DryRun
             $result.DryRun | Should -Be $true
         }
-        
+
         It "Should accept Help switch" {
             $result = & $script:TestScriptPath -Help
             $result.Help | Should -Be $true
         }
     }
-    
+
     Context "Mode Execution" {
         BeforeEach {
             Mock Write-Host {}
             Mock Write-Error {}
             Mock Exit {}
         }
-        
+
         It "Should show help when Help parameter is provided" {
             # Create a simplified test for help display
             $helpScript = @'
@@ -141,12 +141,12 @@ if ($Help) {
 '@
             $helpScriptPath = Join-Path $TestDrive "help-test.ps1"
             $helpScript | Set-Content $helpScriptPath
-            
+
             & $helpScriptPath -Help
-            
+
             Should -Invoke Write-Host -Times 2
         }
-        
+
         It "Should validate required parameters for Orchestrate mode" {
             # Test that orchestrate mode requires either Sequence or Playbook
             $validateScript = @'
@@ -163,21 +163,21 @@ Write-Host "Valid"
 '@
             $validateScriptPath = Join-Path $TestDrive "validate-test.ps1"
             $validateScript | Set-Content $validateScriptPath
-            
+
             # Should error without sequence or playbook
             $errorOutput = & $validateScriptPath -Mode Orchestrate 2>&1
             $errorOutput | Should -Match "requires either"
-            
+
             # Should succeed with sequence
             $output = & $validateScriptPath -Mode Orchestrate -Sequence "0400"
             $output | Should -Be "Valid"
         }
     }
-    
+
     Context "Configuration Loading" {
         It "Should load configuration from default path if not specified" {
             Mock Get-Configuration { return @{ Core = @{ Name = "MockedConfig" } } }
-            
+
             # Simplified config loading test
             $configScript = @'
 function Get-Configuration { return @{ Core = @{ Name = "DefaultConfig" } } }
@@ -186,15 +186,15 @@ Write-Host $config.Core.Name
 '@
             $configScriptPath = Join-Path $TestDrive "config-test.ps1"
             $configScript | Set-Content $configScriptPath
-            
+
             $output = & $configScriptPath
             $output | Should -Be "DefaultConfig"
         }
-        
+
         It "Should load configuration from custom path when specified" {
             $customConfigPath = Join-Path $TestDrive "custom-config.psd1"
             @{ Core = @{ Name = "CustomConfig" } } | ConvertTo-Json | Set-Content $customConfigPath
-            
+
             $configScript = @'
 param([string]$ConfigPath)
 if ($ConfigPath -and (Test-Path $ConfigPath)) {
@@ -204,12 +204,12 @@ if ($ConfigPath -and (Test-Path $ConfigPath)) {
 '@
             $configScriptPath = Join-Path $TestDrive "custom-config-test.ps1"
             $configScript | Set-Content $configScriptPath
-            
+
             $output = & $configScriptPath -ConfigPath $customConfigPath
             $output | Should -Be "CustomConfig"
         }
     }
-    
+
     Context "Error Handling" {
         It "Should handle missing configuration file gracefully" {
             $errorScript = @'
@@ -225,11 +225,11 @@ try {
 '@
             $errorScriptPath = Join-Path $TestDrive "error-test.ps1"
             $errorScript | Set-Content $errorScriptPath
-            
+
             $output = & $errorScriptPath -ConfigPath "/nonexistent/config.psd1" 2>&1
             $output | Should -Match "Configuration file not found"
         }
-        
+
         It "Should handle module loading failures" {
             $moduleScript = @'
 try {
@@ -241,16 +241,16 @@ try {
 '@
             $moduleScriptPath = Join-Path $TestDrive "module-test.ps1"
             $moduleScript | Set-Content $moduleScriptPath
-            
+
             $output = & $moduleScriptPath 2>&1
             $output | Should -Match "Failed to load required module"
         }
     }
-    
+
     Context "Interactive Mode" {
         It "Should display menu in interactive mode" {
             Mock Show-InteractiveMenu { return "Exit" }
-            
+
             $interactiveScript = @'
 function Show-InteractiveMenu {
     Write-Host "1. Option 1"
@@ -264,12 +264,12 @@ Write-Host "Selected: $choice"
 '@
             $interactiveScriptPath = Join-Path $TestDrive "interactive-test.ps1"
             $interactiveScript | Set-Content $interactiveScriptPath
-            
+
             $output = & $interactiveScriptPath
             $output[-1] | Should -Be "Selected: Exit"
         }
     }
-    
+
     Context "Orchestration Mode" {
         It "Should execute orchestration sequence" {
             $orchScript = @'
@@ -287,19 +287,19 @@ if ($Sequence) {
 '@
             $orchScriptPath = Join-Path $TestDrive "orch-test.ps1"
             $orchScript | Set-Content $orchScriptPath
-            
+
             $output = & $orchScriptPath -Sequence "0400-0499"
             $output | Should -Contain "Executing sequence: 0400-0499"
             $output | Should -Contain "Success: True"
         }
-        
+
         It "Should load and execute playbook" {
             $playbookPath = Join-Path $TestDrive "test-playbook.json"
             @{
                 Name = "TestPlaybook"
                 Sequence = @("0402", "0404")
             } | ConvertTo-Json | Set-Content $playbookPath
-            
+
             $playbookScript = @'
 param([string]$Playbook)
 if ($Playbook) {
@@ -309,12 +309,12 @@ if ($Playbook) {
 '@
             $playbookScriptPath = Join-Path $TestDrive "playbook-test.ps1"
             $playbookScript | Set-Content $playbookScriptPath
-            
+
             $output = & $playbookScriptPath -Playbook "test-playbook"
             $output | Should -Contain "Loading playbook: test-playbook"
         }
     }
-    
+
     Context "DryRun Mode" {
         It "Should not execute actions in DryRun mode" {
             $dryRunScript = @'
@@ -327,7 +327,7 @@ if ($DryRun) {
 '@
             $dryRunScriptPath = Join-Path $TestDrive "dryrun-test.ps1"
             $dryRunScript | Set-Content $dryRunScriptPath
-            
+
             $output = & $dryRunScriptPath -DryRun
             $output | Should -Be "[DryRun] Would execute action"
         }

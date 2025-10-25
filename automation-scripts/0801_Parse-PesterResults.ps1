@@ -15,18 +15,18 @@
 param(
     [Parameter(Mandatory)]
     [string]$ResultsFile,
-    
+
     [ValidateSet('XML', 'JSON', 'Auto')]
     [string]$Format = 'Auto',
-    
+
     [switch]$FailuresOnly,
-    
+
     [switch]$IncludeCoverage,
-    
+
     [switch]$IncludePerformance,
-    
+
     [switch]$GroupByDescribe,
-    
+
     [ValidateSet('Summary', 'Detailed', 'Full')]
     [string]$OutputFormat = 'Summary'
 )
@@ -70,7 +70,7 @@ $results = @{
 if ($Format -eq 'XML') {
     # Parse NUnit XML format
     $xml = [xml](Get-Content $ResultsFile)
-    
+
     # Get summary
     $testRun = $xml.SelectSingleNode('//test-run')
     if ($testRun) {
@@ -80,12 +80,12 @@ if ($Format -eq 'XML') {
         $results.Skipped = [int]$testRun.GetAttribute('skipped')
         $results.Duration = [double]$testRun.GetAttribute('duration')
     }
-    
+
     # Get failures
     $failedTests = $xml.SelectNodes("//test-case[@result='Failed']")
     foreach ($test in $failedTests) {
         $failure = $test.SelectSingleNode('failure')
-        
+
         $results.Failures += [PSCustomObject]@{
             Describe = $test.GetAttribute('classname')
             Context = $test.GetAttribute('methodname')
@@ -97,15 +97,15 @@ if ($Format -eq 'XML') {
             Line = $null
         }
     }
-    
+
     # Get skipped/pending
     $skippedTests = $xml.SelectNodes("//test-case[@result='Skipped']")
     $results.Skipped = $skippedTests.Count
-    
+
 } else {
     # Parse JSON format (Pester 5+)
     $json = Get-Content $ResultsFile | ConvertFrom-Json
-    
+
     # Get summary
     $results.TotalTests = $json.TotalCount
     $results.Passed = $json.PassedCount
@@ -113,11 +113,11 @@ if ($Format -eq 'XML') {
     $results.Skipped = $json.SkippedCount
     $results.Pending = $json.PendingCount
     $results.Duration = $json.Duration.TotalSeconds
-    
+
     # Recursive function to extract tests
     function Get-Tests {
         param($Container)
-        
+
         foreach ($block in $Container.Blocks) {
             foreach ($test in $block.Tests) {
                 if ($test.Result -eq 'Failed' -or -not $FailuresOnly) {
@@ -134,21 +134,21 @@ if ($Format -eq 'XML') {
                     }
                 }
             }
-            
+
             # Recurse into nested blocks
             if ($block.Blocks) {
                 Get-Tests -Container $block
             }
         }
     }
-    
+
     # Extract all tests
     $allTests = foreach ($container in $json.Containers) {
         Get-Tests -Container $container
     }
-    
+
     $results.Failures = $allTests | Where-Object { $_.Result -eq 'Failed' }
-    
+
     # Get coverage if available
     if ($json.CodeCoverage -and $IncludeCoverage) {
         $results.Coverage = [PSCustomObject]@{
@@ -164,7 +164,7 @@ if ($Format -eq 'XML') {
 # Group by Describe if requested
 if ($GroupByDescribe -and $results.Failures.Count -gt 0) {
     $grouped = $results.Failures | Group-Object Describe
-    
+
     Write-Host "`nFailures by test suite:" -ForegroundColor Yellow
     foreach ($group in $grouped | Sort-Object Count -Descending) {
         Write-Host "  $($group.Name): $($group.Count) failures" -ForegroundColor Gray
@@ -174,7 +174,7 @@ if ($GroupByDescribe -and $results.Failures.Count -gt 0) {
 # Performance analysis
 if ($IncludePerformance -and $results.Failures.Count -gt 0) {
     $slowTests = $results.Failures | Where-Object { $_.Duration -gt 1 } | Sort-Object Duration -Descending
-    
+
     if ($slowTests) {
         Write-Host "`nSlow tests (>1 second):" -ForegroundColor Yellow
         foreach ($test in $slowTests | Select-Object -First 5) {
@@ -192,13 +192,13 @@ switch ($OutputFormat) {
         Write-Host "  Failed: $($results.Failed)" -ForegroundColor Red
         Write-Host "  Skipped: $($results.Skipped)" -ForegroundColor Yellow
         Write-Host "  Duration: $([Math]::Round($results.Duration, 2))s" -ForegroundColor Gray
-        
+
         if ($results.Coverage) {
             Write-Host "`nCode Coverage:" -ForegroundColor Cyan
             Write-Host "  Coverage: $($results.Coverage.CoveragePercent)%" -ForegroundColor $(if ($results.Coverage.CoveragePercent -ge 80) { 'Green' } elseif ($results.Coverage.CoveragePercent -ge 60) { 'Yellow' } else { 'Red' })
             Write-Host "  Commands: $($results.Coverage.CommandsExecuted)/$($results.Coverage.CommandsTotal)" -ForegroundColor Gray
         }
-        
+
         if ($results.Failed -gt 0) {
             Write-Host "`nTop Failures:" -ForegroundColor Red
             foreach ($failure in $results.Failures | Select-Object -First 5) {
@@ -209,12 +209,12 @@ switch ($OutputFormat) {
             }
         }
     }
-    
+
     'Detailed' {
         # Output detailed results
         $results | ConvertTo-Json -Depth 3
     }
-    
+
     'Full' {
         # Output full parsed data
         [PSCustomObject]@{

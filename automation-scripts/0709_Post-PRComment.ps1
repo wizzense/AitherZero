@@ -75,8 +75,8 @@ $apiUrl = "https://api.github.com/repos/$Repository/issues/$PRNumber/comments"
 
 # Check for existing comment
 $existingComments = Invoke-RestMethod -Uri $apiUrl -Headers $headers -Method Get
-$botComment = $existingComments | Where-Object { 
-    $_.body -like "*AitherZero PR Validation*" 
+$botComment = $existingComments | Where-Object {
+    $_.body -like "*AitherZero PR Validation*"
 } | Select-Object -First 1
 
 if ($botComment) {

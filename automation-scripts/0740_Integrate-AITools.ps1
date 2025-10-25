@@ -4,15 +4,15 @@
 .SYNOPSIS
     Integrate AI tools for code review and analysis
 .DESCRIPTION
-    Sets up and configures AI tools including Claude Code CLI, Gemini CLI, 
+    Sets up and configures AI tools including Claude Code CLI, Gemini CLI,
     OpenAI Codex CLI, and GitHub Copilot CLI for automated code reviews,
     test generation, and code analysis.
-    
+
     Exit Codes:
     0   - AI tools configured successfully
     1   - Configuration failed
     2   - Tool installation error
-    
+
 .NOTES
     Stage: AI Integration
     Order: 0740
@@ -24,7 +24,7 @@
 param(
     [ValidateSet('claude', 'gemini', 'openai', 'copilot', 'all')]
     [string]$Tool = 'all',
-    
+
     [string]$ConfigPath,
     [switch]$SkipInstallation,
     [switch]$TestConnection,
@@ -84,7 +84,7 @@ function Test-AITool {
         [string]$Command,
         [string]$TestArgs = '--version'
     )
-    
+
     try {
         Write-ScriptLog -Message "Testing $ToolName availability"
         $result = & $Command $TestArgs 2>$null
@@ -103,9 +103,9 @@ function Install-ClaudeCodeCLI {
         Write-ScriptLog -Message "Skipping Claude Code CLI installation"
         return
     }
-    
+
     Write-ScriptLog -Message "Installing Claude Code CLI"
-    
+
     if ($PSCmdlet.ShouldProcess("Claude Code CLI", "Install")) {
         try {
             # Check if npm is available
@@ -113,10 +113,10 @@ function Install-ClaudeCodeCLI {
                 Write-ScriptLog -Level Warning -Message "npm not found. Install Node.js first."
                 return $false
             }
-            
+
             # Install claude-dev CLI (popular Claude integration)
             npm install -g @anthropic-ai/claude-cli 2>$null
-            
+
             if (Test-AITool -ToolName "Claude CLI" -Command "claude" -TestArgs "--help") {
                 Write-ScriptLog -Message "Claude Code CLI installed successfully"
                 return $true
@@ -136,22 +136,22 @@ function Install-GeminiCLI {
         Write-ScriptLog -Message "Skipping Gemini CLI installation"
         return
     }
-    
+
     Write-ScriptLog -Message "Installing Gemini CLI"
-    
+
     if ($PSCmdlet.ShouldProcess("Gemini CLI", "Install")) {
         try {
             # Check if Python is available
-            if (-not (Get-Command python -ErrorAction SilentlyContinue) -and 
+            if (-not (Get-Command python -ErrorAction SilentlyContinue) -and
                 -not (Get-Command python3 -ErrorAction SilentlyContinue)) {
                 Write-ScriptLog -Level Warning -Message "Python not found. Install Python first."
                 return $false
             }
-            
+
             # Install Google AI CLI
             $pythonCmd = if (Get-Command python3 -ErrorAction SilentlyContinue) { 'python3' } else { 'python' }
             & $pythonCmd -m pip install google-generativeai 2>$null
-            
+
             Write-ScriptLog -Message "Gemini CLI components installed"
             return $true
         } catch {
@@ -166,9 +166,9 @@ function Install-OpenAICodex {
         Write-ScriptLog -Message "Skipping OpenAI Codex CLI installation"
         return
     }
-    
+
     Write-ScriptLog -Message "Installing OpenAI CLI"
-    
+
     if ($PSCmdlet.ShouldProcess("OpenAI CLI", "Install")) {
         try {
             # Install OpenAI CLI
@@ -180,7 +180,7 @@ function Install-OpenAICodex {
                 Write-ScriptLog -Level Warning -Message "Neither pip nor npm found for OpenAI CLI installation"
                 return $false
             }
-            
+
             Write-ScriptLog -Message "OpenAI CLI installed"
             return $true
         } catch {
@@ -195,15 +195,15 @@ function Install-GitHubCopilotCLI {
         Write-ScriptLog -Message "Skipping GitHub Copilot CLI installation"
         return
     }
-    
+
     Write-ScriptLog -Message "Installing GitHub Copilot CLI"
-    
+
     if ($PSCmdlet.ShouldProcess("GitHub Copilot CLI", "Install")) {
         try {
             # Install GitHub CLI extension for Copilot
             if (Get-Command gh -ErrorAction SilentlyContinue) {
                 gh extension install github/gh-copilot 2>$null
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-ScriptLog -Message "GitHub Copilot CLI installed successfully"
                     return $true
@@ -221,7 +221,7 @@ function Install-GitHubCopilotCLI {
 
 function New-AIConfigFile {
     Write-ScriptLog -Message "Creating AI tools configuration"
-    
+
     $aiConfig = @{
         Tools = @{
             Claude = @{
@@ -261,15 +261,15 @@ function New-AIConfigFile {
             TimeoutSeconds = 30
         }
     }
-    
+
     $configPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $projectRoot "config/ai-tools.json" }
-    
+
     # Ensure config directory exists
     $configDir = Split-Path $configPath -Parent
     if (-not (Test-Path $configDir)) {
         New-Item -ItemType Directory -Path $configDir -Force | Out-Null
     }
-    
+
     if ($PSCmdlet.ShouldProcess($configPath, "Create AI tools configuration")) {
         $aiConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
         Write-ScriptLog -Message "AI configuration created: $configPath"
@@ -278,24 +278,24 @@ function New-AIConfigFile {
 
 function Test-AIConnections {
     Write-ScriptLog -Message "Testing AI tool connections"
-    
+
     $results = @{}
-    
+
     # Test Claude CLI
     if (Test-AITool -ToolName "Claude CLI" -Command "claude" -TestArgs "--help") {
         $results.Claude = $true
     }
-    
-    # Test GitHub Copilot CLI  
+
+    # Test GitHub Copilot CLI
     if (Test-AITool -ToolName "GitHub Copilot CLI" -Command "gh" -TestArgs "copilot --version") {
         $results.Copilot = $true
     }
-    
+
     # Test OpenAI CLI
     if (Test-AITool -ToolName "OpenAI CLI" -Command "openai" -TestArgs "--version") {
         $results.OpenAI = $true
     }
-    
+
     # Test Python for Gemini
     if (Get-Command python -ErrorAction SilentlyContinue) {
         try {
@@ -307,9 +307,9 @@ function Test-AIConnections {
             $results.Gemini = $false
         }
     }
-    
+
     Write-ScriptLog -Message "AI connection test results" -Data $results
-    
+
     # Display results
     Write-Host "`nAI Tools Status:" -ForegroundColor Cyan
     foreach ($tool in $results.Keys) {
@@ -317,13 +317,13 @@ function Test-AIConnections {
         $color = if ($results[$tool]) { 'Green' } else { 'Red' }
         Write-Host "  $tool`: $status" -ForegroundColor $color
     }
-    
+
     return $results
 }
 
 function New-AICodeReviewScript {
     Write-ScriptLog -Message "Creating AI code review automation script"
-    
+
     $reviewScript = @'
 #!/usr/bin/env pwsh
 # AI-powered code review script
@@ -336,9 +336,9 @@ param(
 
 function Invoke-AICodeReview {
     param($FilePath, $AITool)
-    
+
     Write-Host "Reviewing: $FilePath" -ForegroundColor Cyan
-    
+
     switch ($AITool) {
         'copilot' {
             if (Get-Command gh -ErrorAction SilentlyContinue) {
@@ -370,13 +370,13 @@ foreach ($file in $Files) {
 '@
 
     $scriptPath = Join-Path $projectRoot "tools/ai-code-review.ps1"
-    
+
     # Ensure tools directory exists
     $toolsDir = Split-Path $scriptPath -Parent
     if (-not (Test-Path $toolsDir)) {
         New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
     }
-    
+
     if ($PSCmdlet.ShouldProcess($scriptPath, "Create AI code review script")) {
         $reviewScript | Set-Content -Path $scriptPath
         Write-ScriptLog -Message "AI code review script created: $scriptPath"
@@ -385,37 +385,37 @@ foreach ($file in $Files) {
 
 try {
     Write-ScriptLog -Message "Starting AI tools integration"
-    
+
     $installResults = @{}
-    
+
     # Install tools based on selection
     if ($Tool -eq 'all' -or $Tool -eq 'claude') {
         $installResults.Claude = Install-ClaudeCodeCLI
     }
-    
+
     if ($Tool -eq 'all' -or $Tool -eq 'gemini') {
         $installResults.Gemini = Install-GeminiCLI
     }
-    
+
     if ($Tool -eq 'all' -or $Tool -eq 'openai') {
         $installResults.OpenAI = Install-OpenAICodex
     }
-    
+
     if ($Tool -eq 'all' -or $Tool -eq 'copilot') {
         $installResults.Copilot = Install-GitHubCopilotCLI
     }
-    
+
     # Create configuration file
     New-AIConfigFile
-    
+
     # Create AI automation scripts
     New-AICodeReviewScript
-    
+
     # Test connections if requested
     if ($TestConnection) {
         $connectionResults = Test-AIConnections
     }
-    
+
     # Create setup instructions
     $instructions = @"
 # AI Tools Setup Instructions
@@ -425,7 +425,7 @@ try {
 Add these to your environment:
 ```bash
 export ANTHROPIC_API_KEY="your-claude-api-key"
-export GOOGLE_AI_API_KEY="your-gemini-api-key"  
+export GOOGLE_AI_API_KEY="your-gemini-api-key"
 export OPENAI_API_KEY="your-openai-api-key"
 ```
 
@@ -436,7 +436,7 @@ export OPENAI_API_KEY="your-openai-api-key"
 gh copilot explain ./script.ps1
 ```
 
-### AI-powered Git Commit Messages  
+### AI-powered Git Commit Messages
 ```powershell
 gh copilot suggest "git commit message for bug fix in authentication module"
 ```
@@ -462,13 +462,13 @@ Configure API keys in GitHub repository secrets for full automation.
         $instructions | Set-Content -Path $instructionsPath
         Write-ScriptLog -Message "Setup instructions created: $instructionsPath"
     }
-    
+
     # Summary
     Write-Host "`nAI Tools Integration Summary:" -ForegroundColor Green
     Write-Host "✅ Configuration files created" -ForegroundColor Green
     Write-Host "✅ Automation scripts generated" -ForegroundColor Green
     Write-Host "✅ Setup instructions documented" -ForegroundColor Green
-    
+
     if ($installResults.Count -gt 0) {
         Write-Host "`nInstallation Results:" -ForegroundColor Cyan
         foreach ($tool in $installResults.Keys) {
@@ -477,15 +477,15 @@ Configure API keys in GitHub repository secrets for full automation.
             Write-Host "  $tool`: $status" -ForegroundColor $color
         }
     }
-    
+
     Write-Host "`nNext Steps:" -ForegroundColor Cyan
     Write-Host "1. Configure API keys in environment variables" -ForegroundColor White
     Write-Host "2. Test tool connections with: ./automation-scripts/0740_Integrate-AITools.ps1 -TestConnection" -ForegroundColor White
     Write-Host "3. Review setup instructions: docs/ai-tools-setup.md" -ForegroundColor White
-    
+
     Write-ScriptLog -Message "AI tools integration completed successfully"
     exit 0
-    
+
 } catch {
     $errorMsg = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
     Write-ScriptLog -Level Error -Message "AI tools integration failed: $_" -Data @{ Exception = $errorMsg }

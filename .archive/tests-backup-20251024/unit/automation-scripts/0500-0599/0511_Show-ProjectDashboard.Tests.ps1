@@ -5,14 +5,14 @@ Describe "0511_Show-ProjectDashboard" {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0511_Show-ProjectDashboard.ps1"
         $script:TempDir = [System.IO.Path]::GetTempPath()
         $script:TestProjectPath = Join-Path $script:TempDir "TestProject"
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Clear-Host -MockWith { }
         Mock -CommandName Write-Host -MockWith { }
-        Mock -CommandName Get-Content -MockWith { 
+        Mock -CommandName Get-Content -MockWith {
             if ($Path -like "*ProjectReport*.json") {
-                @{ 
+                @{
                     FileAnalysis = @{ TotalFiles = 100 }
                     Coverage = @{ TotalFiles = 50; FunctionCount = 25; CodeLines = 1000; CommentRatio = 15 }
                     Documentation = @{ HelpCoverage = 75 }
@@ -26,7 +26,7 @@ Describe "0511_Show-ProjectDashboard" {
             }
         }
         Mock -CommandName Get-ChildItem -MockWith {
-            if ($Filter -like "*ProjectReport*.json") { 
+            if ($Filter -like "*ProjectReport*.json") {
                 @(@{ FullName = "ProjectReport.json"; LastWriteTime = (Get-Date) })
             } elseif ($Filter -like "*Summary*.json") {
                 @(@{ FullName = "TestSummary.json"; BaseName = "TestSummary-20240101-120000"; LastWriteTime = (Get-Date) })
@@ -105,14 +105,14 @@ Describe "0511_Show-ProjectDashboard" {
     Context "Data Sources" {
         It "Should handle missing project report gracefully" {
             Mock -CommandName Get-ChildItem -ParameterFilter { $Filter -like "*ProjectReport*.json" } -MockWith { @() }
-            
+
             & $script:ScriptPath -ShowMetrics -ProjectPath $script:TestProjectPath 2>&1
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*No project report found*" }
         }
 
         It "Should handle missing log file gracefully" {
             Mock -CommandName Test-Path -ParameterFilter { $Path -like "*aitherzero.log" } -MockWith { $false }
-            
+
             & $script:ScriptPath -ShowLogs -ProjectPath $script:TestProjectPath 2>&1
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*Log file not found*" }
         }
@@ -145,13 +145,13 @@ Describe "0511_Show-ProjectDashboard" {
     Context "Error Handling" {
         It "Should handle git command failures gracefully" {
             Mock -CommandName git -MockWith { throw "Git not available" }
-            
+
             { & $script:ScriptPath -ProjectPath $script:TestProjectPath } | Should -Not -Throw
         }
 
         It "Should handle module import failures" {
             Mock -CommandName Import-Module -MockWith { throw "Module not found" }
-            
+
             { & $script:ScriptPath -ProjectPath $script:TestProjectPath } | Should -Not -Throw
         }
     }

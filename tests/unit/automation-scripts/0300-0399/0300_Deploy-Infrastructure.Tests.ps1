@@ -16,9 +16,9 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
         $script:ScriptPath = './automation-scripts/0300_Deploy-Infrastructure.ps1'
         $script:ScriptName = '0300_Deploy-Infrastructure'
         $script:TestInfraDir = './test-infrastructure'
-        
+
         # Mock external commands
-        Mock -CommandName 'tofu' -MockWith { 
+        Mock -CommandName 'tofu' -MockWith {
             param([string]$Command)
             switch ($Command) {
                 'version' { return 'OpenTofu v1.6.0'; $global:LASTEXITCODE = 0 }
@@ -28,8 +28,8 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 default { return 'Unknown command'; $global:LASTEXITCODE = 1 }
             }
         }
-        
-        Mock -CommandName 'Test-Path' -MockWith { 
+
+        Mock -CommandName 'Test-Path' -MockWith {
             param([string]$Path)
             switch ($Path) {
                 { $_ -like '*Logging.psm1' } { return $true }
@@ -38,30 +38,30 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 default { return $false }
             }
         }
-        
+
         Mock -CommandName 'Import-Module' -MockWith { return $null }
-        Mock -CommandName 'New-Item' -MockWith { 
+        Mock -CommandName 'New-Item' -MockWith {
             return @{ FullName = $Path; ItemType = 'Directory' }
         }
         Mock -CommandName 'Push-Location' -MockWith { return $null }
         Mock -CommandName 'Pop-Location' -MockWith { return $null }
         Mock -CommandName 'Set-Content' -MockWith { return $null }
-        Mock -CommandName 'Join-Path' -MockWith { 
+        Mock -CommandName 'Join-Path' -MockWith {
             param([string]$Path, [string]$ChildPath)
             return "$Path/$ChildPath"
         }
-        Mock -CommandName 'Split-Path' -MockWith { 
+        Mock -CommandName 'Split-Path' -MockWith {
             param([string]$Path, [switch]$Parent)
             if ($Parent) { return '/workspaces/AitherZero' }
             return 'AitherZero'
         }
-        
+
         # Mock logging functions
-        Mock -CommandName 'Write-CustomLog' -MockWith { 
+        Mock -CommandName 'Write-CustomLog' -MockWith {
             param([string]$Message, [string]$Level = 'Information')
-            return $null 
+            return $null
         }
-        Mock -CommandName 'Get-Command' -MockWith { 
+        Mock -CommandName 'Get-Command' -MockWith {
             param([string]$Name, [switch]$ErrorAction)
             if ($Name -eq 'Write-CustomLog') {
                 return @{ Name = 'Write-CustomLog' }
@@ -126,7 +126,7 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
 
     Context 'Configuration Handling' {
         It 'Should handle empty configuration' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 param([string]$Command, [string]$Arguments)
                 if ($Command -eq 'tofu' -and $Arguments -eq 'version') {
                     $global:LASTEXITCODE = 0
@@ -135,19 +135,19 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Not -Throw
         }
 
         It 'Should use default infrastructure directory when not configured' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration @{} -WhatIf
-            Assert-MockCalled -CommandName 'Join-Path' -ParameterFilter { 
-                $ChildPath -eq './infrastructure' 
+            Assert-MockCalled -CommandName 'Join-Path' -ParameterFilter {
+                $ChildPath -eq './infrastructure'
             }
         }
 
@@ -157,12 +157,12 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                     WorkingDirectory = '/custom/infra'
                 }
             }
-            
-            Mock -CommandName '&' -MockWith { 
+
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration $config -WhatIf
             # Should use the custom directory
             $config.Infrastructure.WorkingDirectory | Should -Be '/custom/infra'
@@ -171,7 +171,7 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
 
     Context 'OpenTofu Operations' {
         BeforeEach {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 param([string]$Command, [string]$Arguments)
                 $global:LASTEXITCODE = 0
                 switch ("$Command $Arguments") {
@@ -186,27 +186,27 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
 
         It 'Should check for OpenTofu availability' {
             & $script:ScriptPath -Configuration @{} -WhatIf
-            Assert-MockCalled -CommandName '&' -ParameterFilter { 
-                $Command -eq 'tofu' -and $Arguments -eq 'version' 
+            Assert-MockCalled -CommandName '&' -ParameterFilter {
+                $Command -eq 'tofu' -and $Arguments -eq 'version'
             }
         }
 
         It 'Should initialize OpenTofu when .terraform directory missing' {
             & $script:ScriptPath -Configuration @{} -WhatIf
-            Assert-MockCalled -CommandName '&' -ParameterFilter { 
-                $Command -eq 'tofu' -and $Arguments -eq 'init' 
+            Assert-MockCalled -CommandName '&' -ParameterFilter {
+                $Command -eq 'tofu' -and $Arguments -eq 'init'
             }
         }
 
         It 'Should create terraform plan' {
             & $script:ScriptPath -Configuration @{} -WhatIf
-            Assert-MockCalled -CommandName '&' -ParameterFilter { 
-                $Command -eq 'tofu' -and $Arguments -like 'plan -out=tfplan*' 
+            Assert-MockCalled -CommandName '&' -ParameterFilter {
+                $Command -eq 'tofu' -and $Arguments -like 'plan -out=tfplan*'
             }
         }
 
         It 'Should handle OpenTofu not found error' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 param([string]$Command, [string]$Arguments)
                 if ($Command -eq 'tofu' -and $Arguments -eq 'version') {
                     $global:LASTEXITCODE = 1
@@ -215,7 +215,7 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Throw
         }
     }
@@ -235,14 +235,14 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 }
             }
 
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration $config -WhatIf
-            Assert-MockCalled -CommandName 'Set-Content' -ParameterFilter { 
-                $Path -eq 'terraform.tfvars' 
+            Assert-MockCalled -CommandName 'Set-Content' -ParameterFilter {
+                $Path -eq 'terraform.tfvars'
             }
         }
 
@@ -260,20 +260,20 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 }
             }
 
-            Mock -CommandName 'Set-Content' -MockWith { 
+            Mock -CommandName 'Set-Content' -MockWith {
                 param([string]$Path, [string]$Value)
                 $Value | Should -Match 'hyperv_host = "test-hyperv"'
                 $Value | Should -Match 'hyperv_user = "testuser"'
                 $Value | Should -Match 'hyperv_port = 5986'
                 $Value | Should -Match 'vm_path = "D:\\TestVMs"'
-                return $null 
+                return $null
             }
-            
-            Mock -CommandName '&' -MockWith { 
+
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration $config -WhatIf
             Assert-MockCalled -CommandName 'Set-Content' -Times 1
         }
@@ -287,14 +287,14 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 }
             }
 
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration $config -WhatIf
-            Assert-MockCalled -CommandName '&' -ParameterFilter { 
-                $Command -eq 'tofu' -and $Arguments -like 'apply -auto-approve*' 
+            Assert-MockCalled -CommandName '&' -ParameterFilter {
+                $Command -eq 'tofu' -and $Arguments -like 'apply -auto-approve*'
             }
         }
 
@@ -305,21 +305,21 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 }
             }
 
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration $config -WhatIf
-            Assert-MockCalled -CommandName '&' -ParameterFilter { 
-                $Command -eq 'tofu' -and $Arguments -like 'apply -auto-approve*' 
+            Assert-MockCalled -CommandName '&' -ParameterFilter {
+                $Command -eq 'tofu' -and $Arguments -like 'apply -auto-approve*'
             } -Times 0
         }
     }
 
     Context 'Error Handling' {
         It 'Should handle OpenTofu init failure' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 param([string]$Command, [string]$Arguments)
                 if ($Command -eq 'tofu' -and $Arguments -eq 'init') {
                     $global:LASTEXITCODE = 1
@@ -328,12 +328,12 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Throw
         }
 
         It 'Should handle OpenTofu plan failure' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 param([string]$Command, [string]$Arguments)
                 if ($Command -eq 'tofu' -and $Arguments -like 'plan*') {
                     $global:LASTEXITCODE = 1
@@ -342,7 +342,7 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Throw
         }
 
@@ -353,7 +353,7 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 }
             }
 
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 param([string]$Command, [string]$Arguments)
                 if ($Command -eq 'tofu' -and $Arguments -like 'apply*') {
                     $global:LASTEXITCODE = 1
@@ -362,36 +362,36 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             { & $script:ScriptPath -Configuration $config -WhatIf } | Should -Throw
         }
     }
 
     Context 'Directory Management' {
         It 'Should create infrastructure directory if missing' {
-            Mock -CommandName 'Test-Path' -MockWith { 
+            Mock -CommandName 'Test-Path' -MockWith {
                 param([string]$Path)
                 if ($Path -like '*infrastructure*') { return $false }
                 return $true
             }
-            
-            Mock -CommandName '&' -MockWith { 
+
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration @{} -WhatIf
-            Assert-MockCalled -CommandName 'New-Item' -ParameterFilter { 
-                $ItemType -eq 'Directory' -and $Force -eq $true 
+            Assert-MockCalled -CommandName 'New-Item' -ParameterFilter {
+                $ItemType -eq 'Directory' -and $Force -eq $true
             }
         }
 
         It 'Should push and pop location correctly' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration @{} -WhatIf
             Assert-MockCalled -CommandName 'Push-Location' -Times 1
             Assert-MockCalled -CommandName 'Pop-Location' -Times 1
@@ -400,40 +400,40 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
 
     Context 'Logging Integration' {
         It 'Should attempt to import logging module' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration @{} -WhatIf
-            Assert-MockCalled -CommandName 'Import-Module' -ParameterFilter { 
-                $Path -like '*Logging.psm1*' 
+            Assert-MockCalled -CommandName 'Import-Module' -ParameterFilter {
+                $Path -like '*Logging.psm1*'
             }
         }
 
         It 'Should use Write-CustomLog when available' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration @{} -WhatIf
-            Assert-MockCalled -CommandName 'Get-Command' -ParameterFilter { 
-                $Name -eq 'Write-CustomLog' 
+            Assert-MockCalled -CommandName 'Get-Command' -ParameterFilter {
+                $Name -eq 'Write-CustomLog'
             }
         }
 
         It 'Should fallback to Write-Host when logging unavailable' {
-            Mock -CommandName 'Get-Command' -MockWith { 
+            Mock -CommandName 'Get-Command' -MockWith {
                 param([string]$Name, [switch]$ErrorAction)
                 return $null  # Simulate Write-CustomLog not available
             }
-            
-            Mock -CommandName '&' -MockWith { 
+
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             & $script:ScriptPath -Configuration @{} -WhatIf
             # Should still work without throwing
         }
@@ -446,11 +446,11 @@ Describe '0300_Deploy-Infrastructure' -Tag 'Unit', 'AutomationScript', 'Infrastr
         }
 
         It 'Should not make changes in WhatIf mode' {
-            Mock -CommandName '&' -MockWith { 
+            Mock -CommandName '&' -MockWith {
                 $global:LASTEXITCODE = 0
                 return 'Success'
             }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Not -Throw
             # In a real scenario, we would verify no actual changes were made
         }

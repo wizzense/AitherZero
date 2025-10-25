@@ -11,7 +11,7 @@
 BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0403_Run-IntegrationTests.ps1"
-    
+
     # Mock Pester and other functions
     Mock Invoke-Pester {
         return [PSCustomObject]@{
@@ -60,12 +60,12 @@ BeforeAll {
         }
     }
     Mock Import-Module {}
-    Mock Get-Module { 
+    Mock Get-Module {
         return @([PSCustomObject]@{
             Version = [Version]'5.3.0'
-        }) 
+        })
     }
-    Mock Get-ChildItem { 
+    Mock Get-ChildItem {
         param($Path, $Filter, $Recurse)
         if ($Filter -eq '*.Tests.ps1') {
             return @()
@@ -82,7 +82,7 @@ BeforeAll {
     Mock New-Item {}
     Mock Remove-Item {}
     Mock Get-Content { return '{"Testing":{"Framework":"Pester","MinVersion":"5.0.0","Parallel":false}}' }
-    Mock ConvertFrom-Json { 
+    Mock ConvertFrom-Json {
         return @{
             Testing = @{
                 Framework = 'Pester'
@@ -94,14 +94,14 @@ BeforeAll {
     Mock Set-Content {}
     Mock ConvertTo-Json { return '{}' }
     Mock Write-Host {}
-    Mock Join-Path { 
+    Mock Join-Path {
         param($Path, $ChildPath)
         return "$Path/$ChildPath"
     }
 }
 
 Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
-    
+
     Context "Script Metadata" {
         It "Should have correct metadata structure" {
             $scriptContent = Get-Content $scriptPath -Raw
@@ -119,20 +119,20 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
                     [PSCustomObject]@{ Name = 'Integration2.Tests.ps1' }
                 )
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             $result = & $scriptPath -DryRun -Path "/integration/tests"
             $LASTEXITCODE | Should -Be 0
-            
+
             Assert-MockCalled Invoke-Pester -Times 0
         }
-        
+
         It "Should display E2E inclusion status in DryRun mode" {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'E2E.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -DryRun -Path "/integration/tests" -IncludeE2E
-            
+
             # Should check for test files
             Assert-MockCalled Get-ChildItem -ParameterFilter { $Filter -eq '*.Tests.ps1' }
         }
@@ -141,7 +141,7 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
     Context "WhatIf Support" {
         It "Should support WhatIf parameter without executing tests" {
             { & $scriptPath -WhatIf -Path "/integration/tests" } | Should -Not -Throw
-            
+
             Assert-MockCalled Invoke-Pester -Times 0
         }
     }
@@ -149,14 +149,14 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
     Context "Test Path Handling" {
         It "Should exit gracefully if test path doesn't exist" {
             Mock Test-Path { return $false } -ParameterFilter { $Path -eq "/nonexistent/path" }
-            
+
             $result = & $scriptPath -Path "/nonexistent/path"
             $LASTEXITCODE | Should -Be 0
         }
 
         It "Should exit gracefully if no test files found" {
             Mock Get-ChildItem { return @() } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             $result = & $scriptPath -Path "/empty/path"
             $LASTEXITCODE | Should -Be 0
         }
@@ -167,9 +167,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
+
             # Should load domain modules
             Assert-MockCalled Get-ChildItem -ParameterFilter { $Filter -eq '*.psm1' }
             Assert-MockCalled Import-Module -Times 2  # For the 2 mocked modules
@@ -181,9 +181,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
+
             Assert-MockCalled New-PesterConfiguration
             Assert-MockCalled Invoke-Pester
         }
@@ -192,9 +192,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
+
             Assert-MockCalled Invoke-Pester
         }
 
@@ -202,9 +202,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'E2E.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests" -IncludeE2E
-            
+
             Assert-MockCalled Invoke-Pester
         }
     }
@@ -214,10 +214,10 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
-            Assert-MockCalled New-Item -ParameterFilter { 
+
+            Assert-MockCalled New-Item -ParameterFilter {
                 $ItemType -eq 'Directory' -and $Path -like "*AitherZero-IntegrationTest-*"
             }
         }
@@ -226,9 +226,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
+
             # Environment setup happens, but we can't easily test env vars in mocks
             Assert-MockCalled Invoke-Pester
         }
@@ -237,10 +237,10 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
-            Assert-MockCalled Remove-Item -ParameterFilter { 
+
+            Assert-MockCalled Remove-Item -ParameterFilter {
                 $Path -like "*AitherZero-IntegrationTest-*" -and $Recurse -eq $true
             }
         }
@@ -252,9 +252,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
+
             Assert-MockCalled Get-Content -ParameterFilter { $Path -like "*config.psd1" }
         }
 
@@ -263,9 +263,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests"
-            
+
             # Should still run with defaults
             Assert-MockCalled Invoke-Pester
         }
@@ -273,21 +273,21 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
 
     Context "Module Dependencies" {
         It "Should check for Pester availability" {
-            Mock Get-Module { return $null } -ParameterFilter { 
-                $ListAvailable -and $Name -eq 'Pester' 
+            Mock Get-Module { return $null } -ParameterFilter {
+                $ListAvailable -and $Name -eq 'Pester'
             }
-            
+
             $result = & $scriptPath -Path "/integration/tests" 2>$null
             $LASTEXITCODE | Should -Be 2
         }
 
         It "Should require minimum Pester version" {
-            Mock Get-Module { 
+            Mock Get-Module {
                 return @([PSCustomObject]@{
                     Version = [Version]'4.10.1'
-                }) 
+                })
             } -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' }
-            
+
             $result = & $scriptPath -Path "/integration/tests" 2>$null
             $LASTEXITCODE | Should -Be 2
         }
@@ -302,15 +302,15 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
 
         It "Should save test summary as JSON with extended information" {
             & $scriptPath -Path "/integration/tests"
-            
-            Assert-MockCalled Set-Content -ParameterFilter { 
-                $Path -like "*IntegrationTests-Summary-*.json" 
+
+            Assert-MockCalled Set-Content -ParameterFilter {
+                $Path -like "*IntegrationTests-Summary-*.json"
             }
         }
 
         It "Should return Pester result when PassThru is specified" {
             $result = & $scriptPath -Path "/integration/tests" -PassThru
-            
+
             $result | Should -Not -BeNullOrEmpty
             $result.TotalCount | Should -Be 8
             $result.PassedCount | Should -Be 6
@@ -328,7 +328,7 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
                     Tests = @()
                 }
             }
-            
+
             $result = & $scriptPath -Path "/integration/tests"
             $LASTEXITCODE | Should -Be 0
         }
@@ -355,9 +355,9 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
                     )
                 }
             }
-            
+
             $result = & $scriptPath -Path "/integration/tests"
-            
+
             # Should detect critical failure
             $LASTEXITCODE | Should -Be 1
         }
@@ -369,7 +369,7 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             $result = & $scriptPath -Path "/integration/tests" 2>$null
             $LASTEXITCODE | Should -Be 2
         }
@@ -379,11 +379,11 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             $result = & $scriptPath -Path "/integration/tests" 2>$null
-            
+
             # Should still cleanup
-            Assert-MockCalled Remove-Item -ParameterFilter { 
+            Assert-MockCalled Remove-Item -ParameterFilter {
                 $Path -like "*AitherZero-IntegrationTest-*"
             }
         }
@@ -408,11 +408,11 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
-            
+
             & $scriptPath -Path "/integration/tests" -IncludeE2E
-            
-            Assert-MockCalled Set-Content -ParameterFilter { 
-                $Path -like "*IntegrationTests-Summary-*.json" 
+
+            Assert-MockCalled Set-Content -ParameterFilter {
+                $Path -like "*IntegrationTests-Summary-*.json"
             }
         }
     }

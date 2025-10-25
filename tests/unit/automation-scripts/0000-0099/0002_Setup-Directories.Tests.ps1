@@ -2,7 +2,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0002_Setup-Directories.ps1"
-    
+
     # Mock external dependencies
     Mock Write-Host { }
     Mock Write-Warning { }
@@ -33,7 +33,7 @@ Describe "0002_Setup-Directories" {
     Context "WhatIf Functionality" {
         It "Should not create directories in WhatIf mode" {
             Mock New-Item { throw "Should not create directories in WhatIf mode" }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Not -Invoke New-Item
         }
@@ -50,11 +50,11 @@ Describe "0002_Setup-Directories" {
                     }
                 }
             }
-            
+
             Mock Test-Path { $false }
             Mock New-Item { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -63,7 +63,7 @@ Describe "0002_Setup-Directories" {
             Mock Test-Path { $false }
             Mock New-Item { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Not -Throw
         }
 
@@ -72,14 +72,14 @@ Describe "0002_Setup-Directories" {
             Mock Test-Path { $false }
             Mock New-Item { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Not -Throw
         }
 
         It "Should skip existing directories" {
             Mock Test-Path { $true }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Not -Invoke New-Item
         }
@@ -89,7 +89,7 @@ Describe "0002_Setup-Directories" {
             Mock Test-Path { $false }
             Mock New-Item { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -101,7 +101,7 @@ Describe "0002_Setup-Directories" {
             Mock Join-Path { "./logs" }
             Mock Split-Path { "/workspaces/AitherZero" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
         }
 
@@ -109,12 +109,12 @@ Describe "0002_Setup-Directories" {
             $testConfig = @{
                 Logging = @{ Path = "/custom/logs" }
             }
-            
+
             Mock Test-Path { $false }
             Mock New-Item { }
             Mock [System.IO.Path]::IsPathRooted { $true }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -123,7 +123,7 @@ Describe "0002_Setup-Directories" {
         It "Should handle directory creation failures" {
             Mock Test-Path { $false }
             Mock New-Item { throw "Access denied" }
-            
+
             $result = try { & $script:ScriptPath 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
         }
@@ -137,9 +137,9 @@ Describe "0002_Setup-Directories" {
                     }
                 }
             }
-            
+
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -149,7 +149,7 @@ Describe "0002_Setup-Directories" {
             Mock Get-Command { @{ Name = "Write-CustomLog" } } -ParameterFilter { $Name -eq "Write-CustomLog" }
             Mock Write-CustomLog { }
             Mock Test-Path { $true }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Write-CustomLog -AtLeast 1
         }
@@ -158,7 +158,7 @@ Describe "0002_Setup-Directories" {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq "Write-CustomLog" }
             Mock Write-Host { }
             Mock Test-Path { $true }
-            
+
             { & $script:ScriptPath -WhatIf } | Should -Not -Throw
             Should -Invoke Write-Host -AtLeast 1
         }

@@ -85,7 +85,7 @@ try {
             '1.8.0'  # Fallback version
         }
     }
-    
+
     Write-ScriptLog "Installing OpenTofu version: $version"
 
     # Install based on platform
@@ -93,16 +93,16 @@ try {
         # Windows installation
         $arch = if ([System.Environment]::Is64BitOperatingSystem) { 'amd64' } else { '386' }
         $downloadUrl = "https://github.com/opentofu/opentofu/releases/download/v$version/tofu_${version}_windows_${arch}.zip"
-        
+
         $tempDir = if ($config.Infrastructure -and $config.Infrastructure.Directories -and $config.Infrastructure.Directories.LocalPath) {
             [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories.LocalPath)
         } else {
             $env:TEMP
         }
-        
+
         $tempFile = Join-Path $tempDir "opentofu_${version}.zip"
         $installPath = Join-Path $env:ProgramFiles 'OpenTofu'
-        
+
         # Download
         Write-ScriptLog "Downloading OpenTofu from: $downloadUrl"
         try {
@@ -113,21 +113,21 @@ try {
             Write-ScriptLog "Failed to download OpenTofu: $_" -Level 'Error'
             throw
         }
-        
+
         # Extract
         Write-ScriptLog "Extracting OpenTofu to: $installPath"
         if (Test-Path $installPath) {
             Remove-Item -Path $installPath -Recurse -Force
         }
         New-Item -ItemType Directory -Path $installPath -Force | Out-Null
-        
+
         try {
             Expand-Archive -Path $tempFile -DestinationPath $installPath -Force
         } catch {
             Write-ScriptLog "Failed to extract OpenTofu: $_" -Level 'Error'
             throw
         }
-        
+
         # Add to PATH
         $currentPath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
         if ($currentPath -notlike "*$installPath*") {
@@ -135,10 +135,10 @@ try {
             [Environment]::SetEnvironmentVariable('PATH', "$currentPath;$installPath", 'Machine')
             $env:PATH = "$env:PATH;$installPath"
         }
-        
+
         # Clean up
         Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
-        
+
     } elseif ($IsLinux) {
         # Linux installation
         $arch = switch ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) {
@@ -147,21 +147,21 @@ try {
             'Arm' { 'arm' }
             default { 'amd64' }
         }
-        
+
         $downloadUrl = "https://github.com/opentofu/opentofu/releases/download/v$version/tofu_${version}_linux_${arch}.zip"
         $tempFile = "/tmp/opentofu_${version}.zip"
-        
+
         # Download
         Write-ScriptLog "Downloading OpenTofu from: $downloadUrl"
         Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile -UseBasicParsing
-        
+
         # Extract and install
         sudo unzip -o $tempFile -d /usr/local/bin/
         sudo chmod +x /usr/local/bin/tofu
-        
+
         # Clean up
         Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
-        
+
     } elseif ($IsMacOS) {
         # macOS installation
         if (Get-Command brew -ErrorAction SilentlyContinue) {
@@ -175,7 +175,7 @@ try {
                 'Arm64' { 'arm64' }
                 default { 'amd64' }
             }
-            
+
             $downloadUrl = "https://github.com/opentofu/opentofu/releases/download/v$version/tofu_${version}_darwin_${arch}.zip"
             $tempFile = "/tmp/opentofu_${version}.zip"
 
@@ -211,13 +211,13 @@ try {
     # Initialize OpenTofu if configured
     if ($config.InstallationOptions.OpenTofu.Initialize -eq $true) {
         Write-ScriptLog "Initializing OpenTofu working directory..."
-        
+
         $workingDir = if ($config.Infrastructure -and $config.Infrastructure.WorkingDirectory) {
             $config.Infrastructure.WorkingDirectory
         } else {
             './infrastructure'
         }
-        
+
         if (Test-Path $workingDir) {
             Push-Location $workingDir
             try {
@@ -232,10 +232,10 @@ try {
             Write-ScriptLog "Working directory not found: $workingDir" -Level 'Warning'
         }
     }
-    
+
     Write-ScriptLog "OpenTofu installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "OpenTofu installation failed: $_" -Level 'Error'
     exit 1

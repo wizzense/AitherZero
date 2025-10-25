@@ -50,19 +50,19 @@ function Test-GitHubCLI {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         $ghPath = Get-Command gh -ErrorAction SilentlyContinue
         if (-not $ghPath) {
             throw "GitHub CLI (gh) is not installed. Install from: https://cli.github.com/"
         }
-        
+
         # Check authentication
         $authStatus = gh auth status 2>&1
         if ($LASTEXITCODE -ne 0) {
             throw "GitHub CLI is not authenticated. Run: gh auth login"
         }
-        
+
         return $true
     } catch {
         Write-IssueLog "GitHub CLI check failed: $_" -Level Error
@@ -77,11 +77,11 @@ function Get-GitHubRepository {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         # Get repo info from gh
         $repoInfo = gh repo view --json name,owner,defaultBranchRef,isPrivate,url | ConvertFrom-Json
-        
+
         $script:IssueState.Repository = @{
             Owner = $repoInfo.owner.login
             Name = $repoInfo.name
@@ -90,10 +90,10 @@ function Get-GitHubRepository {
             IsPrivate = $repoInfo.isPrivate
             Url = $repoInfo.url
         }
-        
+
         Write-IssueLog "Retrieved repository information" -Data $script:IssueState.Repository
         return $script:IssueState.Repository
-        
+
     } catch {
         Write-IssueLog "Failed to get repository information: $_" -Level Error
         throw
@@ -123,70 +123,70 @@ function New-GitHubIssue {
     param(
         [Parameter(Mandatory)]
         [string]$Title,
-        
+
         [Parameter(Mandatory)]
         [string]$Body,
-        
+
         [string[]]$Labels,
-        
+
         [string[]]$Assignees,
-        
+
         [string]$Milestone,
-        
+
         [string]$Project,
-        
+
         [switch]$OpenInBrowser
     )
 
     try {
         Test-GitHubCLI
-        
+
         # Build gh command
         $ghArgs = @('issue', 'create', '--title', $Title, '--body', $Body)
-        
+
         if ($Labels) {
             $ghArgs += '--label'
             $ghArgs += ($Labels -join ',')
         }
-        
+
         if ($Assignees) {
             $ghArgs += '--assignee'
             $ghArgs += ($Assignees -join ',')
         }
-        
+
         if ($Milestone) {
             $ghArgs += '--milestone', $Milestone
         }
-        
+
         if ($Project) {
             $ghArgs += '--project', $Project
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Create issue: $Title")) {
             $result = gh @ghArgs
 
             # Extract issue number from output
             if ($result -match '#(\d+)') {
                 $issueNumber = $Matches[1]
-                
+
                 Write-IssueLog "Created issue #$issueNumber" -Data @{
                     Number = $issueNumber
                     Title = $Title
                     Labels = $Labels
                     Assignees = $Assignees
                 }
-                
+
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-AuditLog -EventType "GitHubIssue" -Action "CreateIssue" -Target "#$issueNumber" -Result "Success" -Details @{
                         Title = $Title
                         Labels = $Labels
                     }
                 }
-                
+
                 if ($OpenInBrowser) {
                     gh issue view $issueNumber --web
                 }
-                
+
                 return @{
                     Number = $issueNumber
                     Title = $Title
@@ -195,7 +195,7 @@ function New-GitHubIssue {
                 }
             }
         }
-        
+
     } catch {
         Write-IssueLog "Failed to create issue: $_" -Level Error
         throw
@@ -213,65 +213,65 @@ function Update-GitHubIssue {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [string]$Title,
-        
+
         [string]$Body,
-        
+
         [string[]]$AddLabels,
-        
+
         [string[]]$RemoveLabels,
-        
+
         [string[]]$Assignees,
-        
+
         [ValidateSet('open', 'closed')]
         [string]$State,
-        
+
         [string]$Milestone
     )
 
     try {
         Test-GitHubCLI
-        
+
         # Build gh command
         $ghArgs = @('issue', 'edit', $Number)
         $hasChanges = $false
-        
+
         if ($Title) {
             $ghArgs += '--title', $Title
             $hasChanges = $true
         }
-        
+
         if ($Body) {
             $ghArgs += '--body', $Body
             $hasChanges = $true
         }
-        
+
         if ($AddLabels) {
             $ghArgs += '--add-label', ($AddLabels -join ',')
             $hasChanges = $true
         }
-        
+
         if ($RemoveLabels) {
             $ghArgs += '--remove-label', ($RemoveLabels -join ',')
             $hasChanges = $true
         }
-        
+
         if ($Assignees) {
             $ghArgs += '--assignee', ($Assignees -join ',')
             $hasChanges = $true
         }
-        
+
         if ($Milestone) {
             $ghArgs += '--milestone', $Milestone
             $hasChanges = $true
         }
-        
+
         if (-not $hasChanges) {
             Write-Warning "No changes specified for issue #$Number"
             return
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Update issue #$Number")) {
             gh @ghArgs
 
@@ -280,7 +280,7 @@ function Update-GitHubIssue {
                     Number = $Number
                     UpdatedFields = $ghArgs | Where-Object { $_ -match '^--' }
                 }
-                
+
                 # Handle state change separately
                 if ($State) {
                     if ($State -eq 'closed') {
@@ -290,14 +290,14 @@ function Update-GitHubIssue {
                     }
                     Write-IssueLog "Changed issue #$Number state to: $State"
                 }
-                
+
                 return @{
                     Number = $Number
                     Success = $true
                 }
             }
         }
-        
+
     } catch {
         Write-IssueLog "Failed to update issue: $_" -Level Error
         throw
@@ -315,56 +315,56 @@ function Get-GitHubIssues {
     param(
         [ValidateSet('open', 'closed', 'all')]
         [string]$State = 'open',
-        
+
         [string[]]$Labels,
-        
+
         [string]$Assignee,
-        
+
         [string]$Author,
-        
+
         [string]$Milestone,
-        
+
         [int]$Limit = 30,
-        
+
         [string]$Search
     )
 
     try {
         Test-GitHubCLI
-        
+
         # Build gh command
         $ghArgs = @('issue', 'list', '--state', $State, '--limit', $Limit)
-        
+
         if ($Labels) {
             $ghArgs += '--label', ($Labels -join ',')
         }
-        
+
         if ($Assignee) {
             $ghArgs += '--assignee', $Assignee
         }
-        
+
         if ($Author) {
             $ghArgs += '--author', $Author
         }
-        
+
         if ($Milestone) {
             $ghArgs += '--milestone', $Milestone
         }
-        
+
         if ($Search) {
             $ghArgs += '--search', $Search
         }
-        
+
         # Get JSON output
         $ghArgs += '--json', 'number,title,state,author,assignees,labels,createdAt,updatedAt,url'
-        
+
         $issues = gh @ghArgs | ConvertFrom-Json
-        
+
         Write-IssueLog "Retrieved $($issues.Count) issues" -Data @{
             State = $State
             Count = $issues.Count
         }
-        
+
         # Transform to consistent format
         $formattedIssues = $issues | ForEach-Object {
             @{
@@ -379,9 +379,9 @@ function Get-GitHubIssues {
                 Url = $_.url
             }
         }
-        
+
         return $formattedIssues
-        
+
     } catch {
         Write-IssueLog "Failed to get issues: $_" -Level Error
         throw
@@ -397,27 +397,27 @@ function Add-GitHubIssueComment {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [Parameter(Mandatory)]
         [string]$Body
     )
 
     try {
         Test-GitHubCLI
-        
+
         if ($PSCmdlet.ShouldProcess("Add comment to issue #$Number")) {
             gh issue comment $Number --body $Body
 
             if ($LASTEXITCODE -eq 0) {
                 Write-IssueLog "Added comment to issue #$Number"
-                
+
                 return @{
                     Number = $Number
                     Success = $true
                 }
             }
         }
-        
+
     } catch {
         Write-IssueLog "Failed to add comment: $_" -Level Error
         throw
@@ -433,16 +433,16 @@ function Close-GitHubIssue {
     param(
         [Parameter(Mandatory)]
         [int]$Number,
-        
+
         [string]$Comment,
-        
+
         [ValidateSet('completed', 'not_planned')]
         [string]$Reason = 'completed'
     )
 
     try {
         Test-GitHubCLI
-        
+
         if ($PSCmdlet.ShouldProcess("Close issue #$Number")) {
             # Add comment if provided
             if ($Comment) {
@@ -454,7 +454,7 @@ function Close-GitHubIssue {
             if ($Reason -eq 'not_planned') {
                 $ghArgs += '--reason', 'not planned'
             }
-            
+
             gh @ghArgs
 
             if ($LASTEXITCODE -eq 0) {
@@ -462,20 +462,20 @@ function Close-GitHubIssue {
                     Number = $Number
                     Reason = $Reason
                 }
-                
+
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-AuditLog -EventType "GitHubIssue" -Action "CloseIssue" -Target "#$Number" -Result "Success" -Details @{
                         Reason = $Reason
                     }
                 }
-                
+
                 return @{
                     Number = $Number
                     Success = $true
                 }
             }
         }
-        
+
     } catch {
         Write-IssueLog "Failed to close issue: $_" -Level Error
         throw
@@ -489,12 +489,12 @@ function Get-GitHubLabels {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         Test-GitHubCLI
-        
+
         $labels = gh label list --json name,description,color | ConvertFrom-Json
-        
+
         $script:IssueState.Labels = $labels | ForEach-Object {
             @{
                 Name = $_.name
@@ -502,10 +502,10 @@ function Get-GitHubLabels {
                 Color = $_.color
             }
         }
-        
+
         Write-IssueLog "Retrieved $($labels.Count) labels"
         return $script:IssueState.Labels
-        
+
     } catch {
         Write-IssueLog "Failed to get labels: $_" -Level Error
         throw

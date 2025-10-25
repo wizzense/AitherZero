@@ -25,14 +25,14 @@ Invoke-LabStep -Config $Config -Body {
     try {
         # Enable Remote Desktop
         Write-CustomLog "Enabling Remote Desktop..."
-        
+
         # Enable RDP through registry
         Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
-        
+
         # Enable RDP through WMI
         $rdp = Get-WmiObject -Class Win32_TerminalServiceSetting -Namespace root\cimv2\TerminalServices
         $rdp.SetAllowTSConnections(1, 1)
-        
+
         Write-CustomLog "Remote Desktop enabled successfully"
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to enable Remote Desktop: $($_.Exception.Message)"

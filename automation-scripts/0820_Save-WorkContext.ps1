@@ -16,11 +16,11 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "./.claude/session-context.json",
-    
+
     [switch]$IncludeHistory,
-    
+
     [switch]$CompressContext,
-    
+
     [int]$HistoryCount = 50
 )
 
@@ -61,10 +61,10 @@ function Get-GitContext {
         StagedFiles = & git diff --cached --name-only 2>$null
         UntrackedFiles = & git ls-files --others --exclude-standard 2>$null
     }
-    
+
     # Get recent commits
     $gitContext.RecentCommits = @(& git log --oneline -10 2>$null)
-    
+
     # Get modified files with line counts
     $modifiedFiles = @{}
     $gitStatus = & git status --porcelain 2>$null
@@ -72,7 +72,7 @@ function Get-GitContext {
         if ($line -match '^(..) (.+)$') {
             $status = $Matches[1].Trim()
             $file = $Matches[2]
-            
+
             if (Test-Path $file) {
                 if (Test-Path $file -PathType Leaf) {
                     $lineCount = (Get-Content $file | Measure-Object -Line).Lines
@@ -87,7 +87,7 @@ function Get-GitContext {
         }
     }
     $gitContext.ModifiedFiles = $modifiedFiles
-    
+
     return $gitContext
 }
 
@@ -99,25 +99,25 @@ function Get-PowerShellContext {
         EnvironmentVariables = @{}
         ErrorCount = $Error.Count
     }
-    
+
     # Get relevant environment variables
     $relevantVars = @(
         'AITHERZERO_*',
         'PSModulePath',
         'PATH'
     )
-    
+
     foreach ($pattern in $relevantVars) {
         Get-ChildItem env: | Where-Object Name -like $pattern | ForEach-Object {
             $psContext.EnvironmentVariables[$_.Name] = $_.Value
         }
     }
-    
+
     # Get command history if requested
     if ($IncludeHistory) {
         $psContext.CommandHistory = @(Get-History -Count $HistoryCount | Select-Object CommandLine, StartExecutionTime, EndExecutionTime)
     }
-    
+
     # Get recent errors
     if ($Error.Count -gt 0) {
         $psContext.RecentErrors = @($Error | Select-Object -First 5 | ForEach-Object {
@@ -130,7 +130,7 @@ function Get-PowerShellContext {
             }
         })
     }
-    
+
     return $psContext
 }
 
@@ -142,14 +142,14 @@ function Get-TestContext {
         Coverage = $null
         AnalyzerResults = $null
     }
-    
+
     # Check for recent test results
     $testResultsPath = "./tests/results"
     if (Test-Path $testResultsPath) {
-        $latestResults = Get-ChildItem $testResultsPath -Filter "*.json" | 
-            Sort-Object LastWriteTime -Descending | 
+        $latestResults = Get-ChildItem $testResultsPath -Filter "*.json" |
+            Sort-Object LastWriteTime -Descending |
             Select-Object -First 1
-        
+
         if ($latestResults) {
             $testContext.LastTestRun = $latestResults.LastWriteTime
             try {
@@ -160,7 +160,7 @@ function Get-TestContext {
             }
         }
     }
-    
+
     # Check for PSScriptAnalyzer results
     $analyzerPath = "./tests/results/psscriptanalyzer-results.json"
     if (Test-Path $analyzerPath) {
@@ -177,7 +177,7 @@ function Get-TestContext {
             $testContext.AnalyzerResults = "Failed to parse analyzer results"
         }
     }
-    
+
     return $testContext
 }
 
@@ -189,19 +189,19 @@ function Get-ProjectContext {
         TodoList = @()
         OpenIssues = @()
     }
-    
+
     # Get recently modified files
     $recentFiles = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1', '.json', '.md' } |
         Where-Object { $_.LastWriteTime -gt (Get-Date).AddHours(-24) } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 20
-    
+
     foreach ($file in $recentFiles) {
         $relativePath = Resolve-Path $file.FullName -Relative
         $projectContext.LastModified[$relativePath] = $file.LastWriteTime
     }
-    
+
     # Get TODO items from code
     $todoPattern = 'TODO:|FIXME:|HACK:|NOTE:'
     Get-ChildItem -Recurse -Include "*.ps1", "*.psm1" -ErrorAction SilentlyContinue | ForEach-Object {
@@ -218,7 +218,7 @@ function Get-ProjectContext {
             }
         }
     }
-    
+
     # Get open GitHub issues if gh CLI is available
     if (Get-Command gh -ErrorAction SilentlyContinue) {
         try {
@@ -229,37 +229,37 @@ function Get-ProjectContext {
             # Ignore if not in a GitHub repo
         }
     }
-    
+
     return $projectContext
 }
 
 # Helper function to compress context
 function Compress-Context {
     param([hashtable]$Context)
-    
+
     # Remove verbose/redundant information
     if ($Context.Git.DiffSummary -and $Context.Git.DiffSummary.Count -gt 20) {
         $Context.Git.DiffSummary = $Context.Git.DiffSummary | Select-Object -First 20
         $Context.Git.DiffSummaryTruncated = $true
     }
-    
+
     if ($Context.PowerShell.CommandHistory -and $Context.PowerShell.CommandHistory.Count -gt 20) {
         $Context.PowerShell.CommandHistory = $Context.PowerShell.CommandHistory | Select-Object -Last 20
         $Context.PowerShell.CommandHistoryTruncated = $true
     }
-    
+
     if ($Context.Project.TodoList.Count -gt 10) {
         $Context.Project.TodoList = $Context.Project.TodoList | Select-Object -First 10
         $Context.Project.TodoListTruncated = $true
     }
-    
+
     return $Context
 }
 
 # Main execution
 try {
     Write-Host "📸 Capturing work context..." -ForegroundColor Cyan
-    
+
     $context = @{
         Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         SessionId = [guid]::NewGuid().ToString()
@@ -267,33 +267,33 @@ try {
         User = if ($IsWindows) { [System.Security.Principal.WindowsIdentity]::GetCurrent().Name } else { $env:USER }
         Platform = if ($IsWindows) { "Windows" } elseif ($IsLinux) { "Linux" } elseif ($IsMacOS) { "macOS" } else { "Unknown" }
     }
-    
+
     Write-Host "  Getting Git context..." -ForegroundColor Gray
     $context.Git = Get-GitContext
-    
+
     Write-Host "  Getting PowerShell context..." -ForegroundColor Gray
     $context.PowerShell = Get-PowerShellContext
-    
+
     Write-Host "  Getting test context..." -ForegroundColor Gray
     $context.Test = Get-TestContext
-    
+
     Write-Host "  Getting project context..." -ForegroundColor Gray
     $context.Project = Get-ProjectContext
-    
+
     if ($CompressContext) {
         Write-Host "  Compressing context..." -ForegroundColor Gray
         $context = Compress-Context -Context $context
     }
-    
+
     # Save context to file
     if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Context File')) {
         $context | ConvertTo-Json -Depth 10 | Set-Content $OutputPath -Encoding UTF8
     }
-    
+
     # Calculate context size
     $contextSize = (Get-Item $OutputPath).Length
     $contextSizeKB = [math]::Round($contextSize / 1KB, 2)
-    
+
     Write-Host "✅ Work context saved successfully!" -ForegroundColor Green
     Write-Host "   File: $OutputPath" -ForegroundColor Gray
     Write-Host "   Size: $contextSizeKB KB" -ForegroundColor Gray
@@ -304,11 +304,11 @@ try {
     Write-Host "   Loaded Modules: $($context.PowerShell.LoadedModules.Count)" -ForegroundColor Gray
     Write-Host "   TODO Items: $($context.Project.TodoList.Count)" -ForegroundColor Gray
     Write-Host "   Open Issues: $($context.Project.OpenIssues.Count)" -ForegroundColor Gray
-    
+
     if ($IncludeHistory) {
         Write-Host "   Command History: $($context.PowerShell.CommandHistory.Count) commands" -ForegroundColor Gray
     }
-    
+
     # Also create a markdown version for easy reading
     $mdPath = $OutputPath -replace '\.json$', '.md'
     $mdContent = @(
@@ -343,12 +343,12 @@ try {
             "PSScriptAnalyzer Issues: $($context.Test.AnalyzerResults.TotalIssues)"
         }
     )
-    
+
     if ($PSCmdlet.ShouldProcess($mdPath, 'Save Markdown File')) {
         $mdContent -join "`n" | Set-Content $mdPath -Encoding UTF8
     }
     Write-Host "   Markdown version: $mdPath" -ForegroundColor Gray
-    
+
     exit 0
 }
 catch {

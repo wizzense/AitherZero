@@ -23,10 +23,10 @@
 param(
     [ValidateSet('Usage', 'Cost', 'RateLimits', 'All')]
     [string]$ReportType = 'All',
-    
+
     [ValidateSet('Daily', 'Weekly', 'Monthly')]
     [string]$Period = 'Daily',
-    
+
     [switch]$SendAlert
 )
 

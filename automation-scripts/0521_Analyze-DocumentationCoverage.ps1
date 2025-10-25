@@ -62,14 +62,14 @@ function Analyze-DocumentationCoverage {
     # Process files in parallel
     $fileResults = Start-ParallelAnalysis -ScriptBlock {
         param($File)
-        
+
         $result = @{
             Path = $File.FullName
             HasFileDoc = $false
             Functions = @()
             Errors = @()
         }
-        
+
         try {
             $content = Get-Content $File.FullName -Raw
 
@@ -89,7 +89,7 @@ function Analyze-DocumentationCoverage {
 
             # Find functions
             $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-            
+
             foreach ($function in $functions) {
                 $funcInfo = @{
                     Name = $function.Name
@@ -98,20 +98,20 @@ function Analyze-DocumentationCoverage {
                     StartLine = $function.Extent.StartLineNumber
                     EndLine = $function.Extent.EndLineNumber
                 }
-                
+
                 # Extract function content
                 $funcContent = $content.Substring($function.Extent.StartOffset, $function.Extent.EndOffset - $function.Extent.StartOffset)
-                
+
                 # Check for comment-based help
                 if ($funcContent -match '<#[\s\S]*?\.SYNOPSIS[\s\S]*?#>' -or $funcContent -match '\.SYNOPSIS') {
                     $funcInfo.HasDoc = $true
-                    
+
                     # Check parameter documentation
                     if ($function.Body -and $function.Body.ParamBlock -and $function.Body.ParamBlock.Parameters) {
                         $params = $function.Body.ParamBlock.Parameters
                         $docParams = [regex]::Matches($funcContent, '\.PARAMETER\s+(\w+)')
                         $docParamNames = $docParams | ForEach-Object { $_.Groups[1].Value }
-                        
+
                         foreach ($param in $params) {
                             $paramName = $param.Name.VariablePath.UserPath
                             if ($docParamNames -notcontains $paramName) {
@@ -120,13 +120,13 @@ function Analyze-DocumentationCoverage {
                         }
                     }
                 }
-                
+
                 $result.Functions += $funcInfo
             }
         } catch {
             $result.Errors += "Analysis error: $_"
         }
-        
+
         return $result
     } -InputObject $files -MaxConcurrency 8 -JobName "DocAnalysis"
 
@@ -134,7 +134,7 @@ function Analyze-DocumentationCoverage {
     foreach ($fileResult in $fileResults) {
         $coverage.TotalFiles++
         $relativePath = $fileResult.Path.Replace($script:ProjectRoot, '.')
-        
+
         if ($fileResult.HasFileDoc) {
             $coverage.DocumentedFiles++
         } else {
@@ -144,13 +144,13 @@ function Analyze-DocumentationCoverage {
                 Issue = 'No file-level documentation'
             }
         }
-        
+
         foreach ($func in $fileResult.Functions) {
             $coverage.TotalFunctions++
 
             if ($func.HasDoc) {
                 $coverage.DocumentedFunctions++
-                
+
                 if ($func.MissingParams.Count -gt 0) {
                     $coverage.OutdatedDocs += @{
                         Type = 'Function'
@@ -170,7 +170,7 @@ function Analyze-DocumentationCoverage {
                 }
             }
         }
-        
+
         if ($fileResult.Errors.Count -gt 0 -and $Detailed) {
             Write-AnalysisLog "Errors in $relativePath`: $($fileResult.Errors -join '; ')" -Component "DocCoverage" -Level Warning
         }
@@ -178,16 +178,16 @@ function Analyze-DocumentationCoverage {
 
     # Check for README files in each domain/module directory
     Write-AnalysisLog "Checking for README files..." -Component "DocCoverage"
-    
+
     $moduleDirectories = @()
     $moduleDirectories += Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Directory -ErrorAction SilentlyContinue
     $moduleDirectories += Get-ChildItem -Path (Join-Path $script:ProjectRoot "modules") -Directory -ErrorAction SilentlyContinue
     $moduleDirectories += Get-ChildItem -Path (Join-Path $script:ProjectRoot "automation-scripts") -Directory -ErrorAction SilentlyContinue
-    
+
     foreach ($dir in $moduleDirectories) {
         $readmePath = Join-Path $dir.FullName "README.md"
         $relativeDirPath = $dir.FullName.Replace($script:ProjectRoot, '.')
-        
+
         if (-not (Test-Path $readmePath)) {
             $coverage.MissingDocs += @{
                 Type = 'README'
@@ -211,7 +211,7 @@ function Analyze-DocumentationCoverage {
                 # Check if README is outdated compared to module files
                 $moduleFiles = Get-ChildItem $dir.FullName -Filter "*.psm1" -File
                 $newerFiles = $moduleFiles | Where-Object { $_.LastWriteTime -gt $readmeInfo.LastModified }
-                
+
                 if ($newerFiles) {
                     $readmeInfo.Status = 'Outdated'
                     $coverage.OutdatedDocs += @{
@@ -223,7 +223,7 @@ function Analyze-DocumentationCoverage {
                     }
                 }
             }
-            
+
             $coverage.READMEStatus += $readmeInfo
         }
     }
@@ -232,25 +232,25 @@ function Analyze-DocumentationCoverage {
     $coverage.FileCoveragePercentage = if ($coverage.TotalFiles -gt 0) {
         [Math]::Round(($coverage.DocumentedFiles / $coverage.TotalFiles) * 100, 2)
     } else { 0 }
-    
+
     $coverage.FunctionCoveragePercentage = if ($coverage.TotalFunctions -gt 0) {
         [Math]::Round(($coverage.DocumentedFunctions / $coverage.TotalFunctions) * 100, 2)
     } else { 0 }
-    
+
     $coverage.OverallCoveragePercentage = if (($coverage.TotalFiles + $coverage.TotalFunctions) -gt 0) {
         [Math]::Round((($coverage.DocumentedFiles + $coverage.DocumentedFunctions) / ($coverage.TotalFiles + $coverage.TotalFunctions)) * 100, 2)
     } else { 0 }
-    
+
     $coverage.ScanEndTime = Get-Date
     $coverage.Duration = $coverage.ScanEndTime - $coverage.ScanStartTime
-    
+
     return $coverage
 }
 
 # Main execution
 try {
     Write-AnalysisLog "=== Documentation Coverage Analysis ===" -Component "DocCoverage"
-    
+
     $results = Analyze-DocumentationCoverage
 
     # Save results
@@ -278,10 +278,10 @@ Write-Host "  Overall Coverage: $($results.OverallCoveragePercentage)%" -Foregro
 
     Write-Host "`n  Missing Documentation: $($results.MissingDocs.Count) items" -ForegroundColor $(if ($results.MissingDocs.Count -eq 0) { 'Green' } else { 'Yellow' })
     Write-Host "  Outdated Documentation: $($results.OutdatedDocs.Count) items" -ForegroundColor $(if ($results.OutdatedDocs.Count -eq 0) { 'Green' } else { 'Yellow' })
-    
+
     $missingReadmes = $results.READMEStatus | Where-Object { $_.Status -eq 'Missing' }
     Write-Host "  Missing READMEs: $($missingReadmes.Count)" -ForegroundColor $(if ($missingReadmes.Count -eq 0) { 'Green' } else { 'Yellow' })
-    
+
     Write-Host "  Analysis Duration: $($results.Duration.TotalSeconds.ToString('F2')) seconds"
 
     if ($Detailed -and $results.MissingDocs.Count -gt 0) {
@@ -290,9 +290,9 @@ Write-Host "  Overall Coverage: $($results.OverallCoveragePercentage)%" -Foregro
             Write-Host "  - $($_.Type): $(if ($_.Name) { $_.Name + ' in ' })$($_.Path)"
         }
     }
-    
+
     Write-Host "`nDetailed results saved to: $outputFile" -ForegroundColor Green
-    
+
     exit 0
 } catch {
     Write-AnalysisLog "Documentation coverage analysis failed: $_" -Component "DocCoverage" -Level Error

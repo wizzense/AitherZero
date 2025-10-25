@@ -226,7 +226,7 @@ $pipelineExample = @'
         -DataType "TestResults" `
         -PromptTemplate "Implementation" `
         -OutputPath "./ai-fix-prompt.md"
-    
+
     # Upload as artifact
     echo "::set-output name=prompt_path::./ai-fix-prompt.md"
 
@@ -237,7 +237,7 @@ $pipelineExample = @'
     script: |
       const fs = require("fs");
       const prompt = fs.readFileSync("./ai-fix-prompt.md", "utf8");
-      
+
       await github.rest.issues.create({
         owner: context.repo.owner,
         repo: context.repo.repo,

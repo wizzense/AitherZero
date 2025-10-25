@@ -73,7 +73,7 @@ function Write-TestLog {
         [string]$Level = 'Information',
         [hashtable]$Data = @{}
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message $Message -Level $Level -Source 'AitherTestFramework' -Data $Data
     } else {
@@ -102,15 +102,15 @@ function Initialize-TestFramework {
         [string]$CachePath = '',
         [switch]$ClearCache
     )
-    
+
     # Set default cache path if not provided
     if ([string]::IsNullOrEmpty($CachePath)) {
         $tempPath = if ($IsWindows) { $env:TEMP } else { '/tmp' }
         $CachePath = Join-Path $tempPath 'AitherZero-TestCache'
     }
-    
+
     Write-TestLog "Initializing AitherZero Testing Framework v$($script:TestFramework.Version)"
-    
+
     # Set up configuration
     $projectRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { Split-Path (Split-Path $PSScriptRoot -Parent) -Parent }
     $parallelExecution = if ($Configuration.ContainsKey('ParallelExecution')) { $Configuration.ParallelExecution } else { $true }
@@ -118,7 +118,7 @@ function Initialize-TestFramework {
     $cacheMaxAge = if ($Configuration.ContainsKey('CacheMaxAge')) { $Configuration.CacheMaxAge } else { New-TimeSpan -Hours 1 }
     $testTimeout = if ($Configuration.ContainsKey('TestTimeout')) { $Configuration.TestTimeout } else { 300 }
     $logLevel = if ($Configuration.ContainsKey('LogLevel')) { $Configuration.LogLevel } else { 'Information' }
-    
+
     $script:TestFramework.Config = @{
         ProjectRoot = $projectRoot
         CachePath = $CachePath
@@ -128,24 +128,24 @@ function Initialize-TestFramework {
         TestTimeout = $testTimeout
         LogLevel = $logLevel
     }
-    
+
     # Create cache directory
     if (-not (Test-Path $script:TestFramework.Config.CachePath)) {
         New-Item -Path $script:TestFramework.Config.CachePath -ItemType Directory -Force | Out-Null
     }
-    
+
     # Clear cache if requested
     if ($ClearCache) {
         Clear-TestCache
     }
-    
+
     Write-TestLog "Framework initialized" -Data @{
         ProjectRoot = $script:TestFramework.Config.ProjectRoot
         CachePath = $script:TestFramework.Config.CachePath
         ParallelExecution = $script:TestFramework.Config.ParallelExecution
         UseCache = $script:TestFramework.Config.UseCache
     }
-    
+
     return $script:TestFramework
 }
 
@@ -160,10 +160,10 @@ function Register-TestSuite {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter(Mandatory)]
         [scriptblock]$TestScript,
-        
+
         [string[]]$Categories = @('Unit'),
         [string[]]$Tags = @(),
         [string[]]$Dependencies = @(),
@@ -171,7 +171,7 @@ function Register-TestSuite {
         [string]$Description = '',
         [hashtable]$Configuration = @{}
     )
-    
+
     $testSuite = @{
         Name = $Name
         TestScript = $TestScript
@@ -186,10 +186,10 @@ function Register-TestSuite {
         LastResult = $null
         CacheKey = (Get-StringHash "$Name-$($TestScript.ToString())")
     }
-    
+
     $script:TestFramework.TestSuites[$Name] = $testSuite
     Write-TestLog "Registered test suite: $Name" -Data @{ Categories = $Categories; Tags = $Tags }
-    
+
     return $testSuite
 }
 
@@ -205,23 +205,23 @@ function Invoke-TestCategory {
         [Parameter(Mandatory)]
         [ValidateSet('Smoke', 'Unit', 'Integration', 'Full')]
         [string]$Category,
-        
+
         [string[]]$IncludeTags = @(),
         [string[]]$ExcludeTags = @(),
         [switch]$Force,
         [switch]$NoCache
     )
-    
+
     $categoryConfig = $script:TestCategories[$Category]
     Write-TestLog "Starting $Category tests" -Data $categoryConfig
-    
+
     # Get applicable test suites
     $testSuites = $script:TestFramework.TestSuites.Values | Where-Object {
         $suite = $_
-        
+
         # Category filter
         $categoryMatch = $suite.Categories -contains $Category
-        
+
         # Tag filters
         $tagMatch = $true
         if ($IncludeTags.Count -gt 0) {
@@ -230,21 +230,21 @@ function Invoke-TestCategory {
         if ($ExcludeTags.Count -gt 0) {
             $tagMatch = $tagMatch -and ($suite.Tags | Where-Object { $_ -in $ExcludeTags }).Count -eq 0
         }
-        
+
         return $categoryMatch -and $tagMatch
     } | Sort-Object Priority
-    
+
     if ($testSuites.Count -eq 0) {
         Write-TestLog "No test suites found for category: $Category" -Level Warning
         return @{ Success = $true; Results = @(); Message = "No tests to run" }
     }
-    
+
     Write-TestLog "Found $($testSuites.Count) test suites for $Category tests"
-    
+
     # Execute tests
     $startTime = Get-Date
     $results = @()
-    
+
     if ($categoryConfig.Parallel -and $script:TestFramework.Config.ParallelExecution) {
         Write-TestLog "Running tests in parallel (max $($categoryConfig.MaxJobs) jobs)"
         $results = Invoke-TestsParallel -TestSuites $testSuites -MaxJobs $categoryConfig.MaxJobs -Timeout $categoryConfig.Timeout -Force:$Force -NoCache:$NoCache
@@ -252,10 +252,10 @@ function Invoke-TestCategory {
         Write-TestLog "Running tests sequentially"
         $results = Invoke-TestsSequential -TestSuites $testSuites -Timeout $categoryConfig.Timeout -Force:$Force -NoCache:$NoCache
     }
-    
+
     $endTime = Get-Date
     $duration = $endTime - $startTime
-    
+
     # Compile results
     $summary = @{
         Category = $Category
@@ -267,9 +267,9 @@ function Invoke-TestCategory {
         Duration = $duration
         Success = ($results | Where-Object { $_.Result -eq 'Failed' }).Count -eq 0
     }
-    
+
     Write-TestLog "$Category tests completed" -Data $summary
-    
+
     return @{
         Success = $summary.Success
         Results = $results
@@ -292,18 +292,18 @@ function Invoke-TestsParallel {
         [switch]$Force,
         [switch]$NoCache
     )
-    
+
     $results = $TestSuites | ForEach-Object -ThrottleLimit $MaxJobs -Parallel {
         $suite = $_
         $Force = $using:Force
         $NoCache = $using:NoCache
         $framework = $using:script:TestFramework
-        
+
         # Import required modules in parallel runspace
         if ($env:AITHERZERO_ROOT) {
             Import-Module (Join-Path $env:AITHERZERO_ROOT "domains/testing/AitherTestFramework.psm1") -Force
         }
-        
+
         try {
             $result = Invoke-SingleTestSuite -TestSuite $suite -Timeout $using:Timeout -Force:$Force -NoCache:$NoCache
             return $result
@@ -317,7 +317,7 @@ function Invoke-TestsParallel {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -333,7 +333,7 @@ function Invoke-TestsSequential {
         [switch]$Force,
         [switch]$NoCache
     )
-    
+
     $results = @()
     foreach ($suite in $TestSuites) {
         try {
@@ -349,7 +349,7 @@ function Invoke-TestsSequential {
             }
         }
     }
-    
+
     return $results
 }
 
@@ -365,12 +365,12 @@ function Invoke-SingleTestSuite {
         [switch]$Force,
         [switch]$NoCache
     )
-    
+
     $startTime = Get-Date
     $suiteName = $TestSuite.Name
-    
+
     Write-TestLog "Executing test suite: $suiteName"
-    
+
     # Check cache unless forced or cache disabled
     if (-not $Force -and -not $NoCache -and $script:TestFramework.Config.UseCache) {
         $cachedResult = Get-CachedTestResult -CacheKey $TestSuite.CacheKey
@@ -379,18 +379,18 @@ function Invoke-SingleTestSuite {
             return $cachedResult
         }
     }
-    
+
     try {
         # Execute the test script
         $testJob = Start-Job -ScriptBlock $TestSuite.TestScript -ArgumentList $TestSuite.Configuration
-        
+
         # Wait with timeout
         $completed = Wait-Job -Job $testJob -Timeout $Timeout
-        
+
         if ($completed) {
             $jobResult = Receive-Job -Job $testJob -ErrorAction Continue
             $jobError = Receive-Job -Job $testJob -ErrorAction Continue 2>&1 | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
-            
+
             $result = @{
                 SuiteName = $suiteName
                 Result = if ($jobError) { 'Failed' } else { 'Passed' }
@@ -412,16 +412,16 @@ function Invoke-SingleTestSuite {
                 TestSuite = $TestSuite.Name
             }
         }
-        
+
         Remove-Job -Job $testJob -Force -ErrorAction SilentlyContinue
-        
+
         # Cache successful results
         if ($result.Result -eq 'Passed' -and $script:TestFramework.Config.UseCache) {
             Set-CachedTestResult -CacheKey $TestSuite.CacheKey -Result $result
         }
-        
+
         return $result
-        
+
     } catch {
         return @{
             SuiteName = $suiteName
@@ -441,14 +441,14 @@ function Get-CachedTestResult {
     #>
     [CmdletBinding()]
     param([string]$CacheKey)
-    
+
     $cacheFile = Join-Path $script:TestFramework.Config.CachePath "$CacheKey.json"
-    
+
     if (Test-Path $cacheFile) {
         try {
             $cached = Get-Content $cacheFile -Raw | ConvertFrom-Json
             $cacheAge = (Get-Date) - [DateTime]$cached.Timestamp
-            
+
             if ($cacheAge -lt $script:TestFramework.Config.CacheMaxAge) {
                 $cached.Result.FromCache = $true
                 return $cached.Result
@@ -457,7 +457,7 @@ function Get-CachedTestResult {
             # Invalid cache file, ignore
         }
     }
-    
+
     return $null
 }
 
@@ -471,14 +471,14 @@ function Set-CachedTestResult {
         [string]$CacheKey,
         [hashtable]$Result
     )
-    
+
     try {
         $cacheData = @{
             Timestamp = Get-Date
             CacheKey = $CacheKey
             Result = $Result
         }
-        
+
         $cacheFile = Join-Path $script:TestFramework.Config.CachePath "$CacheKey.json"
         $cacheData | ConvertTo-Json -Depth 10 | Set-Content $cacheFile -Encoding UTF8
     } catch {
@@ -494,7 +494,7 @@ function Clear-TestCache {
     #>
     [CmdletBinding()]
     param()
-    
+
     if (Test-Path $script:TestFramework.Config.CachePath) {
         Get-ChildItem -Path $script:TestFramework.Config.CachePath -Filter "*.json" | Remove-Item -Force
         Write-TestLog "Test cache cleared"
@@ -507,7 +507,7 @@ function Get-StringHash {
         Generate hash string for caching
     #>
     param([string]$InputString)
-    
+
     $hasher = [System.Security.Cryptography.SHA256]::Create()
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($InputString)
     $hash = $hasher.ComputeHash($bytes)
@@ -517,7 +517,7 @@ function Get-StringHash {
 # Export functions
 Export-ModuleMember -Function @(
     'Initialize-TestFramework',
-    'Register-TestSuite', 
+    'Register-TestSuite',
     'Invoke-TestCategory',
     'Invoke-TestsParallel',
     'Invoke-TestsSequential',

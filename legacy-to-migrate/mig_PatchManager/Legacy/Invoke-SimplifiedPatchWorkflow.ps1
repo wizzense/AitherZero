@@ -107,10 +107,10 @@ $(if ($AffectedFiles.Count -gt 0) {
                 }
             }            # Create the issue with robust label handling
             Write-CustomLog "Creating GitHub issue: $issueTitle" -Level INFO
-            
+
             # Try with full labels first, fallback to minimal if needed
             $result = gh issue create --title $issueTitle --body $issueBody --label "patch" 2>&1
-            
+
             # If label fails, try without any labels
             if ($LASTEXITCODE -ne 0 -and $result -match "not found") {
                 Write-CustomLog "Label issue detected, creating without labels" -Level WARN
@@ -265,7 +265,7 @@ This patch follows the PatchManager workflow:
             }            # Create PR with robust label handling
             Write-CustomLog "Creating pull request: $prTitle" -Level INFO
             $result = gh pr create --title $prTitle --body $prBody --head $BranchName --label "patch,tracking,$Priority" 2>&1
-            
+
             # If label fails, fallback to using only the "patch" label
             if ($LASTEXITCODE -ne 0 -and $result -match "not found") {
                 Write-CustomLog "Label issue detected, creating PR with only the 'patch' label" -Level WARN

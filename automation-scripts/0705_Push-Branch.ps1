@@ -14,21 +14,21 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Branch,
-    
+
     [string]$Remote = 'origin',
-    
+
     [switch]$SetUpstream,
-    
+
     [switch]$Force,
-    
+
     [switch]$ForceWithLease,
-    
+
     [switch]$Tags,
-    
+
     [switch]$All,
-    
+
     [switch]$DryRun,
-    
+
     [switch]$NonInteractive
 )
 
@@ -66,14 +66,14 @@ if (-not $status.Clean -and -not $NonInteractive -and -not $Force) {
     $allChanges = @()
     if ($status.Modified) { $allChanges += $status.Modified }
     if ($status.Untracked) { $allChanges += $status.Untracked }
-    
-    $allChanges | ForEach-Object { 
+
+    $allChanges | ForEach-Object {
         if ($_) {
             $filePath = if ($_.Path) { $_.Path } elseif ($_ -is [string]) { $_ } else { $_.ToString() }
             Write-Host "  $filePath" -ForegroundColor Yellow
         }
     }
-    
+
     $response = Read-Host "Continue with push? (y/N)"
     if ($response -ne 'y') {
         Write-Host "Push cancelled." -ForegroundColor Yellow
@@ -134,11 +134,11 @@ Write-Host "`nExecuting: git push $($pushArgs -join ' ')" -ForegroundColor Gray
 # Execute push
 try {
     $output = git push @pushArgs 2>&1
-    
+
     # Parse output for important information
     $output | ForEach-Object {
         $line = $_.ToString()
-        
+
         if ($line -match 'Everything up-to-date') {
             Write-Host "✓ Already up-to-date" -ForegroundColor Green
         }
@@ -155,28 +155,28 @@ try {
             Write-Host "  $line" -ForegroundColor Gray
         }
     }
-    
+
     if (-not $DryRun) {
         Write-Host "✓ Successfully pushed $Branch to $Remote" -ForegroundColor Green
-        
+
         # Show remote branch info
         if ($needsUpstream) {
             Write-Host "  Branch '$Branch' set up to track '$Remote/$Branch'" -ForegroundColor Gray
         }
-        
+
         # Get commit info
         $localCommit = git rev-parse HEAD 2>$null
         $remoteCommit = git rev-parse "$Remote/$Branch" 2>$null
-        
+
         if ($localCommit -eq $remoteCommit -and $localCommit) {
             $shortCommit = if ($localCommit.Length -ge 7) { $localCommit.Substring(0, 7) } else { $localCommit }
             Write-Host "  Local and remote are in sync at $shortCommit" -ForegroundColor Gray
         }
     }
-    
+
 } catch {
     $errorMessage = $_.Exception.Message
-    
+
     # Provide helpful error messages
     if ($errorMessage -match 'failed to push') {
         Write-Error "Push failed. The remote may have changes you don't have locally."
@@ -184,7 +184,7 @@ try {
         Write-Host "  1. Pull changes: git pull" -ForegroundColor Gray
         Write-Host "  2. Resolve conflicts if any" -ForegroundColor Gray
         Write-Host "  3. Push again: az 0705" -ForegroundColor Gray
-        
+
         if (-not $Force -and -not $ForceWithLease) {
             Write-Host "`nOr use -ForceWithLease for safer force push" -ForegroundColor Yellow
         }
@@ -196,18 +196,18 @@ try {
     else {
         Write-Error "Failed to push: $_"
     }
-    
+
     exit 1
 }
 
 # Show next steps
 if (-not $DryRun) {
     Write-Host "`nNext steps:" -ForegroundColor Yellow
-    
+
     if ($Branch -ne 'main' -and $Branch -ne 'master') {
         Write-Host "  Create a pull request: az 0703 -Title 'Your PR title'" -ForegroundColor Gray
     }
-    
+
     # Check if there are unpushed tags
     $unpushedTags = git tag --contains HEAD --no-contains "$Remote/$Branch" 2>$null
     if ($unpushedTags -and -not $Tags) {

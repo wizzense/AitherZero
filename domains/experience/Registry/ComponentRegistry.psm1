@@ -30,18 +30,18 @@ function Register-UIComponent {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter(Mandatory)]
         [string]$Type,
-        
+
         [Parameter(Mandatory)]
         [scriptblock]$Factory,
-        
+
         [string[]]$Aliases = @(),
-        
+
         [hashtable]$Metadata = @{}
     )
-    
+
     # Register component
     $script:RegisteredComponents[$Name] = @{
         Name = $Name
@@ -51,15 +51,15 @@ function Register-UIComponent {
         Metadata = $Metadata
         RegisteredAt = [DateTime]::Now
     }
-    
+
     # Register aliases
     foreach ($alias in $Aliases) {
         $script:ComponentAliases[$alias] = $Name
     }
-    
+
     # Store metadata
     $script:ComponentMetadata[$Name] = $Metadata
-    
+
     Write-Verbose "Registered component: $Name (Type: $Type)"
 }
 
@@ -75,12 +75,12 @@ function Get-UIComponent {
         [Parameter(Mandatory)]
         [string]$Name
     )
-    
+
     # Check if it's an alias
     if ($script:ComponentAliases.ContainsKey($Name)) {
         $Name = $script:ComponentAliases[$Name]
     }
-    
+
     # Return component registration
     return $script:RegisteredComponents[$Name]
 }
@@ -98,25 +98,25 @@ function New-UIComponentInstance {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [hashtable]$Parameters = @{}
     )
-    
+
     $component = Get-UIComponent -Name $Name
-    
+
     if (-not $component) {
         throw "Component '$Name' is not registered"
     }
-    
+
     # Call factory with parameters
     $instance = & $component.Factory @Parameters
-    
+
     # Add registry metadata
     if ($instance -is [PSCustomObject]) {
         Add-Member -InputObject $instance -MemberType NoteProperty -Name "__ComponentType" -Value $component.Type -Force
         Add-Member -InputObject $instance -MemberType NoteProperty -Name "__ComponentName" -Value $component.Name -Force
     }
-    
+
     return $instance
 }
 
@@ -134,19 +134,19 @@ function Get-UIComponentList {
         [string]$Type,
         [string]$Tag
     )
-    
+
     $components = $script:RegisteredComponents.Values
-    
+
     if ($Type) {
         $components = $components | Where-Object { $_.Type -eq $Type }
     }
-    
+
     if ($Tag) {
-        $components = $components | Where-Object { 
-            $_.Metadata.Tags -and $Tag -in $_.Metadata.Tags 
+        $components = $components | Where-Object {
+            $_.Metadata.Tags -and $Tag -in $_.Metadata.Tags
         }
     }
-    
+
     return $components
 }
 
@@ -162,21 +162,21 @@ function Unregister-UIComponent {
         [Parameter(Mandatory)]
         [string]$Name
     )
-    
+
     if ($script:RegisteredComponents.ContainsKey($Name)) {
         $component = $script:RegisteredComponents[$Name]
-        
+
         # Remove aliases
         foreach ($alias in $component.Aliases) {
             $script:ComponentAliases.Remove($alias)
         }
-        
+
         # Remove metadata
         $script:ComponentMetadata.Remove($Name)
-        
+
         # Remove component
         $script:RegisteredComponents.Remove($Name)
-        
+
         Write-Verbose "Unregistered component: $Name"
     }
 }
@@ -194,33 +194,33 @@ function Import-UIComponentModule {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [string]$Prefix = ""
     )
-    
+
     if (-not (Test-Path $Path)) {
         throw "Module path not found: $Path"
     }
-    
+
     # Import module
     $module = Import-Module $Path -PassThru -Force
-    
+
     # Look for exported functions that match component pattern
-    $componentFunctions = $module.ExportedFunctions.Keys | Where-Object { 
+    $componentFunctions = $module.ExportedFunctions.Keys | Where-Object {
         $_ -match '^New-.*Component$' -or $_ -match '^New-UI.*'
     }
-    
+
     foreach ($funcName in $componentFunctions) {
         # Extract component name
         $componentName = $funcName -replace '^New-' -replace 'Component$' -replace '^UI'
-        
+
         if ($Prefix) {
             $componentName = "$Prefix$componentName"
         }
-        
+
         # Create factory
         $factory = [scriptblock]::Create("param(`$Parameters) & $funcName @Parameters")
-        
+
         # Register component
         Register-UIComponent -Name $componentName -Type "Module:$($module.Name)" -Factory $factory -Metadata @{
             Module = $module.Name
@@ -228,7 +228,7 @@ function Import-UIComponentModule {
             Path = $Path
         }
     }
-    
+
     Write-Verbose "Imported $($componentFunctions.Count) components from $($module.Name)"
 }
 
@@ -239,18 +239,18 @@ function Initialize-UIComponentRegistry {
     #>
     [CmdletBinding()]
     param()
-    
+
     # Register built-in components
     $componentsPath = Join-Path (Split-Path $PSScriptRoot -Parent) "Components"
-    
+
     # InteractiveMenu
     if (Test-Path (Join-Path $componentsPath "InteractiveMenu.psm1")) {
         Register-UIComponent -Name "InteractiveMenu" -Type "BuiltIn" -Factory {
             param($Items, $Title, $MultiSelect, $ShowNumbers)
-            
+
             $menuModule = Join-Path $componentsPath "InteractiveMenu.psm1"
             Import-Module $menuModule -Force
-            
+
             New-InteractiveMenu -Items $Items -Title $Title `
                 -MultiSelect:$MultiSelect -ShowNumbers:$ShowNumbers
         } -Aliases @("Menu", "IMenu") -Metadata @{
@@ -259,10 +259,10 @@ function Initialize-UIComponentRegistry {
             Version = "1.0.0"
         }
     }
-    
+
     # Register other built-in components as they're created
     # TextField, SelectList, ProgressBar, Table, Dialog, etc.
-    
+
     Write-Verbose "Component registry initialized with built-in components"
 }
 
@@ -278,13 +278,13 @@ function Export-UIComponentRegistry {
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     $export = @{
         Components = @()
         Aliases = $script:ComponentAliases
         ExportedAt = [DateTime]::Now
     }
-    
+
     foreach ($component in $script:RegisteredComponents.Values) {
         $export.Components += @{
             Name = $component.Name
@@ -294,7 +294,7 @@ function Export-UIComponentRegistry {
             RegisteredAt = $component.RegisteredAt
         }
     }
-    
+
     $export | ConvertTo-Json -Depth 10 | Set-Content -Path $Path
     Write-Verbose "Exported component registry to: $Path"
 }
@@ -311,24 +311,24 @@ function Import-UIComponentRegistry {
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     if (-not (Test-Path $Path)) {
         throw "Registry file not found: $Path"
     }
-    
+
     $import = Get-Content $Path -Raw | ConvertFrom-Json
-    
+
     # Note: This only imports metadata, not the actual factories
     # Factories need to be re-registered from their source modules
-    
+
     foreach ($component in $import.Components) {
         $script:ComponentMetadata[$component.Name] = $component.Metadata
-        
+
         foreach ($alias in $component.Aliases) {
             $script:ComponentAliases[$alias] = $component.Name
         }
     }
-    
+
     Write-Verbose "Imported component registry from: $Path"
 }
 
@@ -346,18 +346,18 @@ function Discover-UIComponents {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [switch]$Recursive
     )
-    
-    $searchPath = if ($Recursive) { 
-        Join-Path $Path "**/*.psm1" 
-    } else { 
-        Join-Path $Path "*.psm1" 
+
+    $searchPath = if ($Recursive) {
+        Join-Path $Path "**/*.psm1"
+    } else {
+        Join-Path $Path "*.psm1"
     }
-    
+
     $modules = Get-ChildItem -Path $searchPath -File
-    
+
     foreach ($module in $modules) {
         try {
             Import-UIComponentModule -Path $module.FullName
@@ -366,7 +366,7 @@ function Discover-UIComponents {
             Write-Warning "Failed to import component module: $($module.Name) - $_"
         }
     }
-    
+
     Write-Verbose "Discovered components in: $Path"
 }
 

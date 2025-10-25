@@ -145,7 +145,7 @@ function New-MockBootstrapEnvironment {
     }
 }
 '@ | Set-Content (Join-Path $Path "config.psd1")
-        
+
         # Create dummy module files
         "# Existing module" | Set-Content (Join-Path $Path "AitherZero.psm1")
         "# Existing launcher" | Set-Content (Join-Path $Path "Start-AitherZero.ps1")
@@ -171,7 +171,7 @@ function Test-ModuleFunction {
     param(
         [Parameter(Mandatory)]
         [string]$FunctionName,
-        
+
         [string]$ModuleName
     )
 
@@ -198,7 +198,7 @@ function Invoke-TestWithRetry {
     param(
         [Parameter(Mandatory)]
         [scriptblock]$ScriptBlock,
-        
+
         [int]$MaxRetries = 3,
         [int]$DelaySeconds = 1
     )
@@ -240,7 +240,7 @@ function Clear-TestEnvironment {
 
     # Clean module path
     if ($env:PSModulePath) {
-        $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator | 
+        $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator |
             Where-Object { $_ -notlike "*Conflict*" -and $_ -notlike "*TestDrive*" }
         $env:PSModulePath = $cleanPaths -join [IO.Path]::PathSeparator
     }
@@ -260,10 +260,10 @@ function Assert-FileContent {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter(Mandatory)]
         [string[]]$ExpectedContent,
-        
+
         [switch]$Exact
     )
 
@@ -289,7 +289,7 @@ function Get-TestCoverageReport {
     param(
         [Parameter(Mandatory)]
         $PesterResult,
-        
+
         [string]$OutputPath
     )
 
@@ -304,7 +304,7 @@ function Get-TestCoverageReport {
         $coverage.TotalLines = $PesterResult.CodeCoverage.NumberOfCommandsAnalyzed
         $coverage.CoveredLines = $PesterResult.CodeCoverage.NumberOfCommandsExecuted
         $coverage.MissedLines = $coverage.TotalLines - $coverage.CoveredLines
-        
+
         foreach ($file in $PesterResult.CodeCoverage.AnalyzedFiles) {
             $fileName = Split-Path $file -Leaf
             $coverage.Files[$fileName] = @{
