@@ -36,10 +36,10 @@ function Show-BetterMenu {
     # Check if we can use interactive mode
     $canUseInteractive = $false
     $isNonInteractive = $env:AITHERZERO_NONINTERACTIVE -eq '1' -or 
-                       $env:CI -eq 'true' -or 
-                       $env:GITHUB_ACTIONS -eq 'true' -or 
-                       $env:TF_BUILD -eq 'True' -or
-                       -not [Environment]::UserInteractive
+                        $env:CI -eq 'true' -or 
+                        $env:GITHUB_ACTIONS -eq 'true' -or 
+                        $env:TF_BUILD -eq 'True' -or 
+                        -not [Environment]::UserInteractive
     
     if (-not $isNonInteractive) {
         try {

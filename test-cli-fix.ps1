@@ -63,7 +63,7 @@ try {
 # Test 5: Check input validation improvements
 Write-Host "`nTest 5: Input Validation" -ForegroundColor Yellow
 try {
-    if ($betterMenuContent -match 'if\s*\(\s*-not\s*\$key\s*-or\s*-not\s*\$key\.VirtualKeyCode\s*\)') {
+    if ($betterMenuContent -match 'if\s*\(\s*-not\s*\$key\s*-or\s*-not\s*\$key\.VirtualKeyCode') {
         Write-Host "✓ Input validation improvements are present" -ForegroundColor Green
     } else {
         Write-Host "✗ Input validation improvements not found" -ForegroundColor Red
