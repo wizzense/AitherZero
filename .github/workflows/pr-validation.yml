@@ -169,7 +169,7 @@ jobs:
           
           # Test syntax
           try {
-            ./az 0407
+            & "./az.ps1" 0407
             echo "SYNTAX_STATUS=✅ PASSED" >> $env:GITHUB_ENV
           } catch {
             echo "SYNTAX_STATUS=❌ FAILED" >> $env:GITHUB_ENV
