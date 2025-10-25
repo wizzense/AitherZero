@@ -16,8 +16,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# Import logging module
-$loggingModule = Join-Path $ProjectPath "domains/utilities/Logging.psm1"
+# Import logging module from consolidated location
+$loggingModule = Join-Path $ProjectPath "domains/core/Logging.psm1"
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force
     $script:LoggingAvailable = $true

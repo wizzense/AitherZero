@@ -40,8 +40,8 @@ function Test-ModuleLoading {
     
     try {
         # Test new consolidated module system
-        Import-Module "./AitherZero-New.psm1" -Force -ErrorAction Stop
-        $test.Details += "✅ AitherZero-New.psm1 loaded successfully"
+        Import-Module "./AitherZero.psm1" -Force -ErrorAction Stop
+        $test.Details += "✅ AitherZero.psm1 loaded successfully"
         
         # Test critical functions are available
         $criticalFunctions = @(
@@ -129,13 +129,13 @@ function Test-PlaybookSystem {
     }
     
     try {
-        # Test new playbook structure
-        if (Test-Path "./orchestration-new") {
-            $test.Details += "✅ New orchestration structure exists"
+        # Test consolidated playbook structure
+        if (Test-Path "./orchestration") {
+            $test.Details += "✅ Consolidated orchestration structure exists"
             
             $categories = @("setup", "testing", "development", "deployment")
             foreach ($category in $categories) {
-                $categoryPath = "./orchestration-new/$category"
+                $categoryPath = "./orchestration/$category"
                 if (Test-Path $categoryPath) {
                     $test.Details += "✅ Category exists: $category"
                     
@@ -148,7 +148,7 @@ function Test-PlaybookSystem {
                 }
             }
         } else {
-            $test.Errors += "❌ New orchestration structure not found"
+            $test.Errors += "❌ Consolidated orchestration structure not found"
         }
         
         # Test orchestration function
@@ -179,9 +179,9 @@ function Test-ConsolidatedDomains {
     }
     
     try {
-        # Test new domain structure
-        if (Test-Path "./domains-new") {
-            $test.Details += "✅ New domains structure exists"
+        # Test consolidated domain structure
+        if (Test-Path "./domains") {
+            $test.Details += "✅ Consolidated domains structure exists"
             
             $expectedDomains = @{
                 "core" = @("Configuration.psm1", "Logging.psm1")
@@ -192,7 +192,7 @@ function Test-ConsolidatedDomains {
             }
             
             foreach ($domain in $expectedDomains.Keys) {
-                $domainPath = "./domains-new/$domain"
+                $domainPath = "./domains/$domain"
                 if (Test-Path $domainPath) {
                     $test.Details += "✅ Domain exists: $domain"
                     
@@ -209,7 +209,7 @@ function Test-ConsolidatedDomains {
                 }
             }
         } else {
-            $test.Errors += "❌ New domains structure not found"
+            $test.Errors += "❌ Consolidated domains structure not found"
         }
         
         $test.Status = if ($test.Errors.Count -eq 0) { "Passed" } else { "Failed" }
