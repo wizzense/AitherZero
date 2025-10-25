@@ -90,7 +90,7 @@ jobs:
         run: |
           Write-Host "📝 Running syntax validation..." -ForegroundColor Yellow
           try {
-            ./az 0407
+            & "./az.ps1" 0407
             Write-Host "✅ Syntax validation passed" -ForegroundColor Green
             echo "status=success" >> $env:GITHUB_OUTPUT
           } catch {
@@ -210,11 +210,11 @@ jobs:
           try {
             if ($testScope -eq "full") {
               # Run all tests (comprehensive suite)
-              $result = & ./az 0409
+              $result = & "./az.ps1" 0409
               $testExitCode = $LASTEXITCODE
             } else {
               # Quick unit tests (essential validation)  
-              $result = & ./az 0402
+              $result = & "./az.ps1" 0402
               $testExitCode = $LASTEXITCODE
             }
             
@@ -251,7 +251,7 @@ jobs:
           
           $analysisExitCode = 0
           try {
-            $result = & ./az 0404  # PSScriptAnalyzer
+            $result = & "./az.ps1" 0404  # PSScriptAnalyzer
             $analysisExitCode = $LASTEXITCODE
             
             if ($analysisExitCode -eq 0) {
@@ -278,9 +278,9 @@ jobs:
           Write-Host "📊 Generating comprehensive reports..." -ForegroundColor Yellow
           try {
             # Generate project report
-            ./az 0510
+            & "./az.ps1" 0510
             # Generate coverage report if available
-            ./az 0408
+            & "./az.ps1" 0408
             Write-Host "✅ Reports generated" -ForegroundColor Green
           } catch {
             Write-Host "⚠️ Report generation issues: $_" -ForegroundColor Yellow

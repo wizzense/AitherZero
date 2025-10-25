@@ -68,7 +68,7 @@ jobs:
           # Syntax validation
           try {
             Write-Host "  📝 Syntax validation..." -ForegroundColor Cyan
-            ./az 0407
+            & "./az.ps1" 0407
             Write-Host "  ✅ Syntax validation passed" -ForegroundColor Green
           } catch {
             $errors += "Syntax validation failed: $_"
@@ -89,7 +89,7 @@ jobs:
           # Core tests
           try {
             Write-Host "  🧪 Core functionality tests..." -ForegroundColor Cyan
-            ./az 0402
+            & "./az.ps1" 0402
             Write-Host "  ✅ Core tests passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Core tests had issues (not blocking): $_" -ForegroundColor Yellow
@@ -98,7 +98,7 @@ jobs:
           # Code analysis
           try {
             Write-Host "  🔬 Code quality analysis..." -ForegroundColor Cyan
-            ./az 0404
+            & "./az.ps1" 0404
             Write-Host "  ✅ Code analysis passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Code analysis had issues (not blocking): $_" -ForegroundColor Yellow
