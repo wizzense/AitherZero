@@ -123,16 +123,16 @@ function Invoke-SequentialSequence {
         $scriptFiles = Get-ChildItem -Path $scriptsPath -Filter "${scriptId}*.ps1" -ErrorAction SilentlyContinue
         
         if ($scriptFiles.Count -eq 0) {
-            $error = "Script not found: ${scriptId}*.ps1"
-            Write-Host "   ❌ $error" -ForegroundColor Red
+            $errorMsg = "Script not found: ${scriptId}*.ps1"
+            Write-Host "   ❌ $errorMsg" -ForegroundColor Red
             $results[$scriptId] = @{
                 ExitCode = 1
-                Output = $error
+                Output = $errorMsg
                 Duration = [TimeSpan]::Zero
             }
             
             if (-not $ContinueOnError) {
-                throw $error
+                throw $errorMsg
             }
             continue
         }
