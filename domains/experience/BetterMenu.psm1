@@ -388,15 +388,18 @@ function Show-BetterMenu {
                         }
                     } catch {}
 
-                    if ([int]::TryParse($number, [ref]$null)) {
-                        $index = [int]$number - 1
-                        if ($index -ge 0 -and $index -lt $Items.Count) {
-                            $selectedIndex = $index
-                            # Adjust scroll to show selected item
-                            if ($selectedIndex -lt $scrollOffset) {
-                                $scrollOffset = $selectedIndex
-                            } elseif ($selectedIndex -gt $scrollOffset + $pageSize - 1) {
-                                $scrollOffset = [Math]::Max(0, $selectedIndex - $pageSize + 1)
+                    if (-not [string]::IsNullOrEmpty($number)) {
+                        $parsedNumber = 0
+                        if ([int]::TryParse($number, [ref]$parsedNumber)) {
+                            $index = $parsedNumber - 1
+                            if ($index -ge 0 -and $index -lt $Items.Count) {
+                                $selectedIndex = $index
+                                # Adjust scroll to show selected item
+                                if ($selectedIndex -lt $scrollOffset) {
+                                    $scrollOffset = $selectedIndex
+                                } elseif ($selectedIndex -gt $scrollOffset + $pageSize - 1) {
+                                    $scrollOffset = [Math]::Max(0, $selectedIndex - $pageSize + 1)
+                                }
                             }
                         }
                     }

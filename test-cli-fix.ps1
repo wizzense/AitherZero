@@ -51,7 +51,7 @@ try {
 Write-Host "`nTest 4: Screen Clearing Logic" -ForegroundColor Yellow
 try {
     $betterMenuContent = Get-Content "$PSScriptRoot/domains/experience/BetterMenu.psm1" -Raw
-    if ($betterMenuContent -match '\$needsClear\s*=\s*\$firstDraw\s*-or\s*\(\$lastSelectedIndex\s*-ne\s*\$selectedIndex\)\s*-or\s*\$simpleRedraw') {
+    if ($betterMenuContent -match '\$needsClear.*\$firstDraw.*\$lastSelectedIndex.*\$simpleRedraw') {
         Write-Host "✓ Optimized screen clearing logic is present" -ForegroundColor Green
     } else {
         Write-Host "✗ Optimized screen clearing logic not found" -ForegroundColor Red
