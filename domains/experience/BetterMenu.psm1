@@ -35,16 +35,25 @@ function Show-BetterMenu {
 
     # Check if we can use interactive mode
     $canUseInteractive = $false
-    try {
-        # Test if we can read keys
-        if ($host.UI.RawUI.KeyAvailable) {}  # Just test the property
-        $canUseInteractive = $true
-    } catch {
-        $canUseInteractive = $false
+    $isNonInteractive = $env:AITHERZERO_NONINTERACTIVE -eq '1' -or 
+                        $env:CI -eq 'true' -or 
+                        $env:GITHUB_ACTIONS -eq 'true' -or 
+                        $env:TF_BUILD -eq 'True' -or 
+                        -not [Environment]::UserInteractive
+    
+    if (-not $isNonInteractive) {
+        try {
+            # Test if we can read keys and have a proper console
+            if ($host.UI -and $host.UI.RawUI -and $host.UI.RawUI.KeyAvailable -ne $null) {
+                $canUseInteractive = $true
+            }
+        } catch {
+            $canUseInteractive = $false
+        }
     }
 
     # If we can't use interactive mode, fall back to simple prompt
-    if (-not $canUseInteractive -or $env:AITHERZERO_NONINTERACTIVE) {
+    if (-not $canUseInteractive -or $isNonInteractive) {
         # Simple numbered menu
         if ($Title) {
             Write-Host "`n$Title" -ForegroundColor Cyan
@@ -69,7 +78,14 @@ function Show-BetterMenu {
         }
 
         Write-Host "`nSelect an option: " -ForegroundColor Yellow -NoNewline
-        $selection = Read-Host
+        
+        # Don't wait indefinitely for input in CI environments
+        try {
+            $selection = Read-Host
+        } catch {
+            # If Read-Host fails in automation, return null to exit gracefully
+            return $null
+        }
 
         if ($CustomActions -and $selection -and $CustomActions.ContainsKey($selection.ToUpper())) {
             return @{ Action = $selection.ToUpper() }
@@ -113,14 +129,13 @@ function Show-BetterMenu {
     while ($true) {
         # Only clear screen on first draw or when explicitly needed
         # To prevent duplicated / overlapping menu artifacts observed on some hosts (especially
-        # Windows Terminal + certain VS Code integrated scenarios), we default to a full Clear-Host
-        # redraw each loop. The previous cursor reposition approach left stale text when line lengths
-        # shrank, producing garbled combined lines.
-        $needsClear = $true
-        if ($simpleRedraw) { $needsClear = $true }
+        # Windows Terminal + certain VS Code integrated scenarios), we use smart screen clearing.
+        # Only clear when the selection changes or on first draw to prevent rapid refresh issues.
+        $needsClear = $firstDraw -or ($lastSelectedIndex -ne $selectedIndex) -or $simpleRedraw
         if ($needsClear -and -not $env:CI -and -not $env:GITHUB_ACTIONS) {
             try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
         }
+        $lastSelectedIndex = $selectedIndex
         $firstDraw = $false
 
         # Draw title
@@ -205,6 +220,11 @@ function Show-BetterMenu {
         # Read key - blocking is actually better for menus
         try {
             $key = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+            
+            # Validate key object
+            if (-not $key -or -not $key.VirtualKeyCode) {
+                continue  # Skip invalid key presses
+            }
         } catch {
             # If ReadKey fails, we can't use interactive mode
             # Return to non-interactive fallback
@@ -226,7 +246,14 @@ function Show-BetterMenu {
             }
 
             Write-Host "`nSelect option: " -ForegroundColor Yellow -NoNewline
-            $inputValue = Read-Host
+            
+            # Don't wait indefinitely for input in CI environments
+            try {
+                $inputValue = Read-Host
+            } catch {
+                # If Read-Host fails in automation, return null to exit gracefully
+                return $null
+            }
 
             if ([string]::IsNullOrWhiteSpace($inputValue)) {
                 return $null
@@ -313,8 +340,11 @@ function Show-BetterMenu {
             }
 
             default {
-                # Check for character input
+                # Check for character input - validate to prevent processing corrupted characters
                 $char = $key.Character
+                if (-not $char -or [char]::IsControl($char)) {
+                    continue  # Skip invalid or control characters
+                }
 
                 # Handle vim-style navigation
                 if ($char -eq 'j') {
@@ -341,31 +371,36 @@ function Show-BetterMenu {
                     # Otherwise quit
                     return $null
                 } elseif ($char -match '[0-9]') {
-                    # Number jump - collect digits
+                    # Number jump - collect digits without printing to avoid menu corruption
                     $number = $char
-                    Write-Host "  Jump to: $number" -ForegroundColor Yellow -NoNewline
 
-                    # Try to read another digit for two-digit numbers
+                    # Try to read another digit for two-digit numbers, with timeout
                     try {
-                        $nextKey = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown,AllowCtrlC')
-                        if ($nextKey.Character -match '[0-9]') {
-                            $number += $nextKey.Character
-                            Write-Host $nextKey.Character -ForegroundColor Yellow -NoNewline
-                        } elseif ($nextKey.VirtualKeyCode -eq 13) {
-                            # Enter pressed, process number
-                        } else {
-                            # Not a digit, process single digit
+                        if ($host.UI.RawUI.KeyAvailable) {
+                            $nextKey = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+                            if ($nextKey.Character -match '[0-9]') {
+                                $number += $nextKey.Character
+                            } elseif ($nextKey.VirtualKeyCode -eq 13) {
+                                # Enter pressed, process number
+                            } else {
+                                # Not a digit, process single digit
+                            }
                         }
                     } catch {}
 
-                    $index = [int]$number - 1
-                    if ($index -ge 0 -and $index -lt $Items.Count) {
-                        $selectedIndex = $index
-                        # Adjust scroll to show selected item
-                        if ($selectedIndex -lt $scrollOffset) {
-                            $scrollOffset = $selectedIndex
-                        } elseif ($selectedIndex -gt $scrollOffset + $pageSize - 1) {
-                            $scrollOffset = [Math]::Max(0, $selectedIndex - $pageSize + 1)
+                    if (-not [string]::IsNullOrEmpty($number)) {
+                        $parsedNumber = 0
+                        if ([int]::TryParse($number, [ref]$parsedNumber)) {
+                            $index = $parsedNumber - 1
+                            if ($index -ge 0 -and $index -lt $Items.Count) {
+                                $selectedIndex = $index
+                                # Adjust scroll to show selected item
+                                if ($selectedIndex -lt $scrollOffset) {
+                                    $scrollOffset = $selectedIndex
+                                } elseif ($selectedIndex -gt $scrollOffset + $pageSize - 1) {
+                                    $scrollOffset = [Math]::Max(0, $selectedIndex - $pageSize + 1)
+                                }
+                            }
                         }
                     }
                 } elseif ($CustomActions -and ($CustomActions.ContainsKey($char.ToString().ToUpper()) -or $CustomActions.ContainsKey($char.ToString()))) {
