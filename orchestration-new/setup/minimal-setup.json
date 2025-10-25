@@ -1,0 +1,24 @@
+{
+  "name": "minimal-setup",
+  "description": "Minimal environment setup with core dependencies",
+  "category": "setup",
+  "scripts": [
+    "0000",
+    "0001", 
+    "0002",
+    "0207"
+  ],
+  "variables": {
+    "Profile": "Minimal",
+    "SkipOptional": true
+  },
+  "options": {
+    "continueOnError": false,
+    "parallel": false,
+    "timeout": 600
+  },
+  "notifications": {
+    "onSuccess": "✅ Minimal setup completed successfully!",
+    "onFailure": "❌ Minimal setup failed - check logs for details"
+  }
+}
