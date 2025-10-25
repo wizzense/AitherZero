@@ -37,7 +37,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test')]
+    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'CLI')]
     [string]$Mode = 'Interactive',
     
     [string[]]$Sequence,
