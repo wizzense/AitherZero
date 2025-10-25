@@ -96,7 +96,7 @@ try {
     # Check current WSL status
     $wslInstalled = $false
     $wslVersion = 1
-    
+
     try {
         $wslStatus = & wsl --status 2>&1
         if ($LASTEXITCODE -eq 0) {
@@ -106,7 +106,7 @@ try {
             if ($wslStatus -match 'Default Version:\s*(\d+)') {
                 $wslVersion = [int]$Matches[1]
             }
-            
+
             Write-ScriptLog "WSL is already installed (default version: $wslVersion)"
         }
     } catch {
@@ -116,7 +116,7 @@ try {
     # Enable WSL feature if not already enabled
     if (-not $wslInstalled) {
         Write-ScriptLog "Enabling Windows Subsystem for Linux..."
-        
+
         $wslFeature = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
         if ($wslFeature.State -ne 'Enabled') {
             if ($PSCmdlet.ShouldProcess("Windows Subsystem for Linux", "Enable Feature")) {
@@ -131,7 +131,7 @@ try {
     # Enable Virtual Machine Platform for WSL2
     if ($wslConfig.Version -eq '2' -or $wslConfig.Version -eq 2) {
         Write-ScriptLog "Enabling Virtual Machine Platform for WSL2..."
-        
+
         $vmFeature = Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform
         if ($vmFeature.State -ne 'Enabled') {
             if ($PSCmdlet.ShouldProcess("Virtual Machine Platform", "Enable Feature")) {
@@ -141,32 +141,32 @@ try {
         } else {
             Write-ScriptLog "Virtual Machine Platform already enabled"
         }
-        
+
         # Download and install WSL2 kernel update if needed
         if ($build -lt 19041) {
             Write-ScriptLog "Installing WSL2 Linux kernel update..."
-            
+
             $kernelUrl = 'https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi'
             $tempDir = if ($config.Infrastructure -and $config.Infrastructure.Directories -and $config.Infrastructure.Directories.LocalPath) {
                 [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories.LocalPath)
             } else {
                 $env:TEMP
             }
-            
+
             $kernelPath = Join-Path $tempDir 'wsl_update_x64.msi'
-            
+
             try {
                 $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $kernelUrl -OutFile $kernelPath -UseBasicParsing
                 $ProgressPreference = 'Continue'
-                
+
                 Write-ScriptLog "Installing WSL2 kernel update..."
                 $process = Start-Process -FilePath 'msiexec.exe' -ArgumentList "/i `"$kernelPath`" /quiet" -Wait -PassThru
-                
+
                 if ($process.ExitCode -ne 0) {
                     Write-ScriptLog "WSL2 kernel update failed with exit code: $($process.ExitCode)" -Level 'Warning'
                 }
-                
+
                 Remove-Item $kernelPath -Force -ErrorAction SilentlyContinue
             } catch {
                 Write-ScriptLog "Failed to install WSL2 kernel update: $_" -Level 'Warning'
@@ -177,7 +177,7 @@ try {
     # Simple installation on newer Windows versions
     if ($build -ge 19041 -and -not $wslInstalled) {
         Write-ScriptLog "Using simplified WSL installation (Windows 10 version 2004+)"
-        
+
         if ($PSCmdlet.ShouldProcess("WSL", "Install")) {
             # Install WSL with default distribution
             & wsl --install --no-distribution
@@ -193,7 +193,7 @@ try {
     if ($wslConfig.Version -eq '2' -or $wslConfig.Version -eq 2) {
         Write-ScriptLog "Setting WSL default version to 2..."
         & wsl --set-default-version 2
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-ScriptLog "WSL default version set to 2"
         } else {
@@ -218,15 +218,15 @@ try {
         Write-Warning "Failed to get WSL list: $($_.Exception.Message)"
         $wslList = @()
     }
-    
+
     foreach ($distro in $distrosToInstall) {
         if ($distro -in $installedDistros) {
             Write-ScriptLog "Distribution already installed: $distro"
             continue
         }
-        
+
         Write-ScriptLog "Installing distribution: $distro"
-        
+
         if ($PSCmdlet.ShouldProcess($distro, "Install WSL Distribution")) {
             # Map common distribution names to their official names
             $distroName = switch ($distro.ToLower()) {
@@ -247,11 +247,11 @@ try {
 
             if ($LASTEXITCODE -eq 0) {
                 Write-ScriptLog "Successfully installed: $distro"
-                
+
                 # Set up default user if specified
                 if ($wslConfig.DefaultUser -and $distro -eq $wslConfig.Distribution) {
                     Write-ScriptLog "Setting default user for $distro to: $($wslConfig.DefaultUser)"
-                    
+
                     # Different distros have different config commands
                     switch ($distro.ToLower()) {
                         'ubuntu' { & ubuntu config --default-user $wslConfig.DefaultUser }
@@ -272,12 +272,12 @@ try {
     $wslConfigPath = "$env:USERPROFILE\.wslconfig"
     if ($wslConfig.Settings) {
         Write-ScriptLog "Configuring WSL2 settings..."
-        
+
         $configContent = @"
 [wsl2]
 # Settings configured by AitherZero
 "@
-        
+
         if ($wslConfig.Settings.Memory) {
             $configContent += "`nmemory=$($wslConfig.Settings.Memory)"
         }
@@ -290,7 +290,7 @@ try {
         if ($wslConfig.Settings.LocalhostForwarding -ne $null) {
             $configContent += "`nlocalhostForwarding=$($wslConfig.Settings.LocalhostForwarding.ToString().ToLower())"
         }
-        
+
         $configContent | Set-Content -Path $wslConfigPath -Force
         Write-ScriptLog "WSL2 configuration saved to: $wslConfigPath"
     }
@@ -298,7 +298,7 @@ try {
     # Install additional tools in WSL if specified
     if ($wslConfig.InstallTools -and $wslConfig.Distribution) {
         Write-ScriptLog "Installing tools in WSL distribution: $($wslConfig.Distribution)"
-        
+
         $tools = @(
             'curl',
             'wget',
@@ -307,15 +307,15 @@ try {
             'python3',
             'python3-pip'
         )
-    
+
         if ($wslConfig.Tools) {
             $tools = $wslConfig.Tools
         }
-        
+
         $installCmd = "sudo apt-get update && sudo apt-get install -y $($tools -join ' ')"
-        
+
         & wsl -d $wslConfig.Distribution -e bash -c $installCmd
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-ScriptLog "Tools installed successfully in WSL"
         } else {
@@ -325,7 +325,7 @@ try {
 
     # Check if restart is needed
     $restartNeeded = $false
-    
+
     $wslFeature = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
     if ($wslFeature.RestartNeeded) {
         $restartNeeded = $true
@@ -353,10 +353,10 @@ try {
     } catch {
         Write-ScriptLog "WSL installed but may require a restart to function properly" -Level 'Warning'
     }
-    
+
     Write-ScriptLog "WSL2 installation completed"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "WSL2 installation failed: $_" -Level 'Error'
     exit 1

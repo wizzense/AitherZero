@@ -55,9 +55,9 @@ function Initialize-ClaudeCodeIntegration {
         [string]$APIKey,
         [string]$CLIPath
     )
-    
+
     Write-ClaudeLog "Initializing Claude Code integration" -Level Information
-    
+
     try {
         # Auto-detect Claude Code CLI
         if (-not $CLIPath) {
@@ -66,9 +66,9 @@ function Initialize-ClaudeCodeIntegration {
                 Write-ClaudeLog "Claude Code CLI not found in PATH" -Level Warning
             }
         }
-        
+
         $script:ClaudeCodePath = $CLIPath
-        
+
         # Load configuration
         $configPathExpanded = [Environment]::ExpandEnvironmentVariables($ConfigPath)
         if (Test-Path $configPathExpanded) {
@@ -83,7 +83,7 @@ function Initialize-ClaudeCodeIntegration {
                 }
             }
         }
-        
+
         # Set up API key
         if ($APIKey) {
             $env:ANTHROPIC_API_KEY = $APIKey
@@ -93,17 +93,17 @@ function Initialize-ClaudeCodeIntegration {
         } else {
             Write-ClaudeLog "No API key configured - CLI-only mode" -Level Warning
         }
-        
+
         # Initialize session context
         $script:SessionContext = @{
             ProjectRoot = $env:CLAUDE_PROJECT_DIR ?? (Get-Location).Path
             InitializedAt = Get-Date
             Configuration = $script:ClaudeCodeConfig
         }
-        
+
         Write-ClaudeLog "Claude Code integration initialized successfully" -Level Success
         return $true
-        
+
     } catch {
         Write-ClaudeLog "Failed to initialize Claude Code integration: $_" -Level Error
         return $false
@@ -132,14 +132,14 @@ function Invoke-ClaudeCodeCLI {
         [string[]]$Arguments = @(),
         [string]$WorkingDirectory = $script:SessionContext.ProjectRoot
     )
-    
+
     if (-not $script:ClaudeCodePath) {
         Write-ClaudeLog "Claude Code CLI not available" -Level Error
         throw "Claude Code CLI not initialized"
     }
-    
+
     Write-ClaudeLog "Executing CLI command: $Command $($Arguments -join ' ')" -Level Information
-    
+
     try {
         $startInfo = New-Object System.Diagnostics.ProcessStartInfo
         $startInfo.FileName = $script:ClaudeCodePath
@@ -149,36 +149,36 @@ function Invoke-ClaudeCodeCLI {
         $startInfo.RedirectStandardError = $true
         $startInfo.UseShellExecute = $false
         $startInfo.CreateNoWindow = $true
-        
+
         $process = New-Object System.Diagnostics.Process
         $process.StartInfo = $startInfo
-        
+
         $stdout = New-Object System.Text.StringBuilder
         $stderr = New-Object System.Text.StringBuilder
-        
+
         $process.add_OutputDataReceived({
             if ($_.Data) { [void]$stdout.AppendLine($_.Data) }
         })
         $process.add_ErrorDataReceived({
             if ($_.Data) { [void]$stderr.AppendLine($_.Data) }
         })
-        
+
         [void]$process.Start()
         $process.BeginOutputReadLine()
         $process.BeginErrorReadLine()
-        
+
         if (-not $process.WaitForExit(30000)) {  # 30 second timeout
             $process.Kill()
             throw "CLI command timed out"
         }
-        
+
         $result = @{
             ExitCode = $process.ExitCode
             Output = $stdout.ToString().Trim()
             Error = $stderr.ToString().Trim()
             Success = $process.ExitCode -eq 0
         }
-        
+
         if ($result.Success) {
             Write-ClaudeLog "CLI command completed successfully" -Level Success
         } else {
@@ -187,9 +187,9 @@ function Invoke-ClaudeCodeCLI {
                 Write-ClaudeLog "CLI error: $($result.Error)" -Level Error
             }
         }
-        
+
         return $result
-        
+
     } catch {
         Write-ClaudeLog "CLI execution failed: $_" -Level Error
         throw
@@ -229,41 +229,41 @@ function Invoke-ClaudeCodeAPI {
         [hashtable]$Body = @{},
         [hashtable]$Headers = @{}
     )
-    
+
     if (-not $env:ANTHROPIC_API_KEY) {
         Write-ClaudeLog "Anthropic API key not available" -Level Error
         throw "API key not configured"
     }
-    
+
     Write-ClaudeLog "Making API call to: $Endpoint" -Level Information
-    
+
     try {
         $uri = "$script:APIEndpoint/$Endpoint"
-        
+
         $defaultHeaders = @{
             "Content-Type" = "application/json"
             "x-api-key" = $env:ANTHROPIC_API_KEY
             "anthropic-version" = "2023-06-01"
         }
-        
+
         $allHeaders = $defaultHeaders + $Headers
-        
+
         $requestParams = @{
             Uri = $uri
             Method = $Method
             Headers = $allHeaders
             UseBasicParsing = $true
         }
-        
+
         if ($Body.Count -gt 0 -and $Method -in @("POST", "PUT", "PATCH")) {
             $requestParams.Body = $Body | ConvertTo-Json -Depth 10
         }
-        
+
         $response = Invoke-RestMethod @requestParams
-        
+
         Write-ClaudeLog "API call completed successfully" -Level Success
         return $response
-        
+
     } catch {
         Write-ClaudeLog "API call failed: $_" -Level Error
         throw
@@ -298,61 +298,61 @@ function Send-ClaudeMessage {
         [int]$MaxTokens = 4096,
         [switch]$UseAPI
     )
-    
+
     Write-ClaudeLog "Sending message to Claude (length: $($Message.Length))" -Level Information
-    
+
     try {
         if ($UseAPI -or (-not $script:ClaudeCodePath -and $env:ANTHROPIC_API_KEY)) {
             # Use API
             Write-ClaudeLog "Using Claude API" -Level Information
-            
+
             $messages = @(
                 @{
                     role = "user"
                     content = $Message
                 }
             )
-            
+
             $requestBody = @{
                 model = $Model
                 max_tokens = $MaxTokens
                 messages = $messages
             }
-            
+
             if ($SystemPrompt) {
                 $requestBody.system = $SystemPrompt
             }
-            
+
             $response = Invoke-ClaudeCodeAPI -Endpoint "messages" -Body $requestBody
-            
+
             return @{
                 Content = $response.content[0].text
                 Model = $response.model
                 Usage = $response.usage
                 Success = $true
             }
-            
+
         } elseif ($script:ClaudeCodePath) {
             # Use CLI
             Write-ClaudeLog "Using Claude Code CLI" -Level Information
-            
+
             $arguments = @("ask", $Message)
             if ($SystemPrompt) {
                 $arguments += @("--system", $SystemPrompt)
             }
-            
+
             $result = Invoke-ClaudeCodeCLI -Command "" -Arguments $arguments
-            
+
             return @{
                 Content = $result.Output
                 Success = $result.Success
                 Error = $result.Error
             }
-            
+
         } else {
             throw "No Claude Code integration available (neither CLI nor API)"
         }
-        
+
     } catch {
         Write-ClaudeLog "Failed to send message to Claude: $_" -Level Error
         throw
@@ -384,20 +384,20 @@ function Get-ClaudeCodeAnalysis {
         [string]$AnalysisType = "quality",
         [switch]$IncludeContext
     )
-    
+
     Write-ClaudeLog "Performing $AnalysisType analysis" -Level Information
-    
+
     try {
         # Get content to analyze
         if ($FilePath -and (Test-Path $FilePath)) {
             $Content = Get-Content $FilePath -Raw
             Write-ClaudeLog "Analyzing file: $FilePath" -Level Information
         }
-        
+
         if (-not $Content) {
             throw "No content provided for analysis"
         }
-        
+
         # Build analysis prompt based on type
         $prompts = @{
             security = @"
@@ -467,9 +467,9 @@ Analyze this PowerShell code for refactoring opportunities:
 Suggest specific refactoring steps.
 "@
         }
-        
+
         $systemPrompt = @"
-You are an expert PowerShell developer and DevOps engineer working with the AitherZero infrastructure automation platform. 
+You are an expert PowerShell developer and DevOps engineer working with the AitherZero infrastructure automation platform.
 
 Context:
 - This is part of a comprehensive PowerShell-based automation system
@@ -479,11 +479,11 @@ Context:
 
 Focus on practical, actionable advice that fits the AitherZero architecture and patterns.
 "@
-        
+
         if ($IncludeContext -and $script:SessionContext.ProjectRoot) {
             # Add project context
             $contextInfo = @()
-            
+
             # Recent files
             try {
                 $recentFiles = Get-ChildItem $script:SessionContext.ProjectRoot -Recurse -Filter "*.ps1" |
@@ -496,17 +496,17 @@ Focus on practical, actionable advice that fits the AitherZero architecture and 
             } catch {
                 # Ignore context gathering errors
             }
-            
+
             if ($contextInfo.Count -gt 0) {
                 $systemPrompt += "`n`nProject Context: $($contextInfo -join '; ')"
             }
         }
-        
+
         $analysisPrompt = $prompts[$AnalysisType]
         $fullMessage = "$analysisPrompt`n`nCode to analyze:`n```powershell`n$Content`n```"
-        
+
         $response = Send-ClaudeMessage -Message $fullMessage -SystemPrompt $systemPrompt
-        
+
         if ($response.Success) {
             Write-ClaudeLog "$($AnalysisType) analysis completed successfully" -Level Success
             return @{
@@ -519,7 +519,7 @@ Focus on practical, actionable advice that fits the AitherZero architecture and 
         } else {
             throw "Analysis failed: $($response.Error)"
         }
-        
+
     } catch {
         Write-ClaudeLog "$AnalysisType analysis failed: $_" -Level Error
         throw
@@ -548,9 +548,9 @@ function Get-ClaudeCodeSuggestions {
         [string]$Context,
         [string]$ProjectType = "infrastructure-automation"
     )
-    
+
     Write-ClaudeLog "Getting suggestions for task: $Task" -Level Information
-    
+
     try {
         $systemPrompt = @"
 You are an expert software architect and PowerShell developer working with AitherZero, a comprehensive infrastructure automation platform.
@@ -566,7 +566,7 @@ Project characteristics:
 
 Provide practical, implementable suggestions that fit the AitherZero patterns and architecture.
 "@
-        
+
         $message = @"
 Development Task: $Task
 
@@ -582,9 +582,9 @@ Please provide:
 
 Format your response with clear sections and actionable advice.
 "@
-        
+
         $response = Send-ClaudeMessage -Message $message -SystemPrompt $systemPrompt
-        
+
         if ($response.Success) {
             Write-ClaudeLog "Development suggestions generated successfully" -Level Success
             return @{
@@ -596,7 +596,7 @@ Format your response with clear sections and actionable advice.
         } else {
             throw "Failed to get suggestions: $($response.Error)"
         }
-        
+
     } catch {
         Write-ClaudeLog "Failed to get development suggestions: $_" -Level Error
         throw
@@ -621,38 +621,38 @@ function Start-ClaudeCodeSession {
         [string]$InitialPrompt,
         [switch]$ProjectContext
     )
-    
+
     Write-ClaudeLog "Starting Claude Code interactive session" -Level Information
-    
+
     try {
         if (-not $script:ClaudeCodePath) {
             Write-ClaudeLog "Interactive sessions require Claude Code CLI" -Level Warning
             throw "Claude Code CLI not available for interactive sessions"
         }
-        
+
         $sessionArgs = @("chat")
-        
+
         if ($ProjectContext -and $script:SessionContext.ProjectRoot) {
             $sessionArgs += @("--project", $script:SessionContext.ProjectRoot)
         }
-        
+
         if ($InitialPrompt) {
             $sessionArgs += @("--initial", $InitialPrompt)
         }
-        
+
         Write-ClaudeLog "Starting interactive session with Claude Code CLI" -Level Information
-        
+
         # Start interactive process
         $processInfo = New-Object System.Diagnostics.ProcessStartInfo
         $processInfo.FileName = $script:ClaudeCodePath
         $processInfo.Arguments = $sessionArgs -join " "
         $processInfo.WorkingDirectory = $script:SessionContext.ProjectRoot
         $processInfo.UseShellExecute = $true
-        
+
         [System.Diagnostics.Process]::Start($processInfo)
-        
+
         Write-ClaudeLog "Interactive session started" -Level Success
-        
+
     } catch {
         Write-ClaudeLog "Failed to start interactive session: $_" -Level Error
         throw
@@ -670,7 +670,7 @@ function Get-ClaudeCodeStatus {
     #>
     [CmdletBinding()]
     param()
-    
+
     return @{
         CLIAvailable = $null -ne $script:ClaudeCodePath
         CLIPath = $script:ClaudeCodePath
@@ -697,7 +697,7 @@ Export-ModuleMember -Function @(
     'Invoke-ClaudeCodeCLI',
     'Invoke-ClaudeCodeAPI',
     'Send-ClaudeMessage',
-    'Get-ClaudeCodeAnalysis', 
+    'Get-ClaudeCodeAnalysis',
     'Get-ClaudeCodeSuggestions',
     'Start-ClaudeCodeSession',
     'Get-ClaudeCodeStatus'

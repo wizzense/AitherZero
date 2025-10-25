@@ -48,21 +48,21 @@
 param(
     [ValidateSet('Console', 'Json', 'Html')]
     [string]$OutputFormat = 'Console',
-    
+
     [switch]$ShowUntested,
-    
+
     [switch]$ShowTested,
-    
+
     [ValidateSet('Environment', 'Infrastructure', 'Development', 'Testing', 'Reporting', 'Git', 'Issues', 'Maintenance', 'All')]
     [string[]]$Category = @('All'),
-    
+
     [string]$OutputPath = './tests/results/coverage'
 )
 
 # Category mappings to script number ranges
 $CategoryRanges = @{
     'Environment'    = @(0, 99)
-    'Infrastructure' = @(100, 199) 
+    'Infrastructure' = @(100, 199)
     'Development'    = @(200, 299)
     'Testing'        = @(400, 499)
     'Reporting'      = @(500, 599)
@@ -73,7 +73,7 @@ $CategoryRanges = @{
 
 function Get-CategoryFromScriptNumber {
     param([int]$ScriptNumber)
-    
+
     foreach ($cat in $CategoryRanges.Keys) {
         $range = $CategoryRanges[$cat]
         if ($ScriptNumber -ge $range[0] -and $ScriptNumber -le $range[1]) {
@@ -85,50 +85,50 @@ function Get-CategoryFromScriptNumber {
 
 function Get-ScriptCoverageData {
     param([string[]]$Categories)
-    
+
     Write-Host "Analyzing automation scripts and test coverage..." -ForegroundColor Cyan
-    
+
     # Get all automation scripts
     $automationScripts = Get-ChildItem -Path './automation-scripts' -Filter '*.ps1'
-    
+
     if (-not $automationScripts) {
         Write-Warning "No automation scripts found in ./automation-scripts/"
         return $null
     }
-    
+
     # Get all test files
     $testFiles = Get-ChildItem -Path './tests/unit/automation-scripts' -Include '*.Tests.ps1' -Recurse
-    
+
     Write-Host "Found $($automationScripts.Count) automation scripts and $($testFiles.Count) test files" -ForegroundColor Green
-    
+
     # Parse scripts and tests
     $scriptData = @()
     $testedScripts = @{}
-    
+
     # Build lookup of tested scripts
     foreach ($testFile in $testFiles) {
         $testName = $testFile.Name -replace '\.Tests\.ps1$', ''
         $testedScripts[$testName] = $testFile
     }
-    
+
     # Analyze each automation script
     foreach ($script in $automationScripts) {
         $scriptName = $script.BaseName
         $hasTest = $testedScripts.ContainsKey($scriptName)
-        
+
         # Extract script number
         $scriptNumber = $null
         if ($scriptName -match '^(\d{4})_') {
             $scriptNumber = [int]$Matches[1]
         }
-        
+
         $scriptCategory = if ($scriptNumber) { Get-CategoryFromScriptNumber -ScriptNumber $scriptNumber } else { 'Unknown' }
-        
+
         # Filter by category if specified
         if ($Categories -notcontains 'All' -and $Categories -notcontains $scriptCategory) {
             continue
         }
-        
+
         # Get script description from file header
         $description = "No description available"
         try {
@@ -146,7 +146,7 @@ function Get-ScriptCoverageData {
         catch {
             # Ignore errors reading file
         }
-        
+
         $scriptData += @{
             Name = $scriptName
             FullPath = $script.FullName
@@ -159,7 +159,7 @@ function Get-ScriptCoverageData {
             LastModified = $script.LastWriteTime
         }
     }
-    
+
     # Calculate statistics by category
     $categoryStats = @{}
     foreach ($cat in ($scriptData | Select-Object -ExpandProperty Category -Unique | Sort-Object)) {
@@ -167,7 +167,7 @@ function Get-ScriptCoverageData {
         $testedCount = ($categoryScripts | Where-Object { $_.HasTest }).Count
         $totalCount = $categoryScripts.Count
         $coverage = if ($totalCount -gt 0) { [Math]::Round(($testedCount / $totalCount) * 100, 2) } else { 0 }
-        
+
         $categoryStats[$cat] = @{
             Category = $cat
             TotalScripts = $totalCount
@@ -177,13 +177,13 @@ function Get-ScriptCoverageData {
             Scripts = $categoryScripts
         }
     }
-    
+
     # Overall statistics
     $totalScripts = $scriptData.Count
     $totalTested = ($scriptData | Where-Object { $_.HasTest }).Count
     $totalUntested = $totalScripts - $totalTested
     $overallCoverage = if ($totalScripts -gt 0) { [Math]::Round(($totalTested / $totalScripts) * 100, 2) } else { 0 }
-    
+
     return @{
         OverallStats = @{
             TotalScripts = $totalScripts
@@ -200,19 +200,19 @@ function Get-ScriptCoverageData {
 
 function Write-ConsoleReport {
     param($CoverageData)
-    
+
     $overall = $CoverageData.OverallStats
-    
+
     Write-Host "`n=== Automation Script Test Coverage Analysis ===" -ForegroundColor Yellow
     Write-Host "Generated: $($CoverageData.GeneratedAt.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor Gray
     Write-Host "Categories: $($CoverageData.Categories -join ', ')" -ForegroundColor Gray
-    
+
     Write-Host "`n=== Overall Statistics ===" -ForegroundColor Cyan
     Write-Host "Total Scripts:    $($overall.TotalScripts)" -ForegroundColor White
     Write-Host "Tested Scripts:   $($overall.TestedScripts)" -ForegroundColor Green
     Write-Host "Untested Scripts: $($overall.UntestedScripts)" -ForegroundColor Red
     Write-Host "Test Coverage:    $($overall.CoveragePercent)%" -ForegroundColor $(if ($overall.CoveragePercent -ge 80) { 'Green' } elseif ($overall.CoveragePercent -ge 50) { 'Yellow' } else { 'Red' })
-    
+
     Write-Host "`n=== Coverage by Category ===" -ForegroundColor Cyan
     $table = $CoverageData.CategoryStats.Values | Sort-Object Category | ForEach-Object {
         [PSCustomObject]@{
@@ -224,7 +224,7 @@ function Write-ConsoleReport {
         }
     }
     $table | Format-Table -AutoSize
-    
+
     if ($ShowTested) {
         Write-Host "`n=== Scripts WITH Tests ===" -ForegroundColor Green
         $tested = $CoverageData.Scripts | Where-Object { $_.HasTest } | Sort-Object Number, Name
@@ -237,7 +237,7 @@ function Write-ConsoleReport {
             Write-Host "  No tested scripts found for the specified categories." -ForegroundColor Yellow
         }
     }
-    
+
     if ($ShowUntested) {
         Write-Host "`n=== Scripts WITHOUT Tests ===" -ForegroundColor Red
         $untested = $CoverageData.Scripts | Where-Object { -not $_.HasTest } | Sort-Object Number, Name
@@ -246,7 +246,7 @@ function Write-ConsoleReport {
                 $categoryPadded = $script.Category.PadRight(12)
                 Write-Host "  [$categoryPadded] $($script.Name) - $($script.Description)" -ForegroundColor Red
             }
-            
+
             Write-Host "`n=== Test Generation Recommendations ===" -ForegroundColor Yellow
             Write-Host "To create test files for untested scripts, run:" -ForegroundColor Yellow
             Write-Host ""
@@ -260,7 +260,7 @@ function Write-ConsoleReport {
             Write-Host "  All scripts have corresponding test files\!" -ForegroundColor Green
         }
     }
-    
+
     Write-Host "`n=== Summary ===" -ForegroundColor Yellow
     if ($overall.CoveragePercent -eq 100) {
         Write-Host "Excellent\! All automation scripts have corresponding test files." -ForegroundColor Green
@@ -276,33 +276,33 @@ function Write-ConsoleReport {
 
 function Export-JsonReport {
     param($CoverageData, $OutputPath)
-    
+
     if (-not (Test-Path $OutputPath)) {
         New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
     }
-    
+
     $timestamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
     $jsonPath = Join-Path $OutputPath "automation-test-coverage_$timestamp.json"
-    
+
     $CoverageData | ConvertTo-Json -Depth 4 | Out-File -Path $jsonPath -Encoding UTF8
-    
+
     Write-Host "JSON report saved to: $jsonPath" -ForegroundColor Green
     return $jsonPath
 }
 
 function Export-HtmlReport {
     param($CoverageData, $OutputPath)
-    
+
     if (-not (Test-Path $OutputPath)) {
         New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
     }
-    
+
     $timestamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
     $htmlPath = Join-Path $OutputPath "automation-test-coverage_$timestamp.html"
-    
+
     $overall = $CoverageData.OverallStats
     $coverageColor = if ($overall.CoveragePercent -ge 80) { '#28a745' } elseif ($overall.CoveragePercent -ge 50) { '#ffc107' } else { '#dc3545' }
-    
+
     # Create HTML content
     $html = @"
 <\!DOCTYPE html>
@@ -335,7 +335,7 @@ function Export-HtmlReport {
             <p>Generated on $($CoverageData.GeneratedAt.ToString('yyyy-MM-dd HH:mm:ss'))</p>
             <p>Categories: $($CoverageData.Categories -join ', ')</p>
         </div>
-        
+
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-value">$($overall.TotalScripts)</div>
@@ -354,7 +354,7 @@ function Export-HtmlReport {
                 <div class="stat-label">Test Coverage</div>
             </div>
         </div>
-        
+
         <h2>Coverage by Category</h2>
         <table class="category-table">
             <thead>
@@ -368,7 +368,7 @@ function Export-HtmlReport {
             </thead>
             <tbody>
 "@
-    
+
     foreach ($category in ($CoverageData.CategoryStats.Values | Sort-Object Category)) {
         $html += @"
                 <tr>
@@ -380,12 +380,12 @@ function Export-HtmlReport {
                 </tr>
 "@
     }
-    
+
     $html += @"
             </tbody>
         </table>
 "@
-    
+
     # Add tested scripts if requested
     if ($ShowTested) {
         $tested = $CoverageData.Scripts | Where-Object { $_.HasTest } | Sort-Object Number, Name
@@ -405,7 +405,7 @@ function Export-HtmlReport {
             $html += "        </div>`n"
         }
     }
-    
+
     # Add untested scripts if requested
     if ($ShowUntested) {
         $untested = $CoverageData.Scripts | Where-Object { -not $_.HasTest } | Sort-Object Number, Name
@@ -425,7 +425,7 @@ function Export-HtmlReport {
             $html += "        </div>`n"
         }
     }
-    
+
     $html += @"
         <div style="text-align: center; color: #666; margin-top: 30px; font-size: 0.9em;">
             Report generated by Get-AutomationTestCoverage.ps1
@@ -434,9 +434,9 @@ function Export-HtmlReport {
 </body>
 </html>
 "@
-    
+
     $html | Out-File -Path $htmlPath -Encoding UTF8
-    
+
     Write-Host "HTML report saved to: $htmlPath" -ForegroundColor Green
     return $htmlPath
 }
@@ -445,15 +445,15 @@ function Export-HtmlReport {
 try {
     Write-Host "Automation Script Test Coverage Analyzer" -ForegroundColor Yellow
     Write-Host "=========================================`n" -ForegroundColor Yellow
-    
+
     # Get coverage data
     $coverageData = Get-ScriptCoverageData -Categories $Category
-    
+
     if (-not $coverageData) {
         Write-Error "Failed to analyze script coverage. No data available."
         exit 1
     }
-    
+
     # Output results based on format
     switch ($OutputFormat) {
         'Console' {
@@ -468,7 +468,7 @@ try {
             Write-Host "Coverage report exported to HTML: $htmlPath"
         }
     }
-    
+
     # Set exit code based on coverage
     $exitCode = if ($coverageData.OverallStats.CoveragePercent -lt 50) { 1 } else { 0 }
     exit $exitCode

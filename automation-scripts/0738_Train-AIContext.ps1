@@ -23,9 +23,9 @@
 param(
     [ValidateSet('Index', 'Train', 'Update', 'All')]
     [string]$Action = 'All',
-    
+
     [string]$Path = ".",
-    
+
     [switch]$Force
 )
 

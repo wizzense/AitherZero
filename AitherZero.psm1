@@ -5,7 +5,7 @@
 .DESCRIPTION
     Aitherium™ Enterprise Infrastructure Automation Platform
     AitherZero - Imports all modules and re-exports their functions
-    
+
 .NOTES
     Copyright © 2025 Aitherium Corporation
     Version: 1.0.0
@@ -46,32 +46,32 @@ if ($env:PATH -notlike "*$automationPath*") {
 $modulesToLoad = @(
     # Core utilities first
     './domains/utilities/Logging.psm1',
-    
+
     # Configuration
     './domains/configuration/Configuration.psm1',
-    
+
     # User interface (BetterMenu first, then UserInterface)
     './domains/experience/BetterMenu.psm1',
     './domains/experience/UserInterface.psm1',
-    
+
     # Development tools
     './domains/development/GitAutomation.psm1',
     './domains/development/IssueTracker.psm1',
     './domains/development/PullRequestManager.psm1',
-    
+
     # Testing (Legacy and New)
     './domains/testing/TestingFramework.psm1',
     './domains/testing/AitherTestFramework.psm1',
     './domains/testing/CoreTestSuites.psm1',
-    
+
     # Reporting
     './domains/reporting/ReportingEngine.psm1',
     './domains/reporting/TechDebtAnalysis.psm1',
-    
+
     # Automation (exports Invoke-OrchestrationSequence)
     './domains/automation/OrchestrationEngine.psm1',
     './domains/automation/DeploymentAutomation.psm1',
-    
+
     # Infrastructure
     './domains/infrastructure/Infrastructure.psm1'
 )
@@ -122,10 +122,10 @@ function global:Invoke-AitherScript {
         [Parameter(Position = 0, Mandatory = $true)]
         [string]$ScriptNumber
     )
-    
+
     DynamicParam {
         $paramDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-        
+
         # Common parameters that many scripts accept
         $commonParams = @{
             'Path' = [string]
@@ -160,22 +160,22 @@ function global:Invoke-AitherScript {
             'VerboseOutput' = [switch]
             'NoCache' = [switch]
         }
-        
+
         foreach ($paramName in $commonParams.Keys) {
             $paramType = $commonParams[$paramName]
             $paramAttribute = New-Object System.Management.Automation.ParameterAttribute
             $paramAttribute.Mandatory = $false
-            
+
             $attributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
             $attributeCollection.Add($paramAttribute)
-            
+
             $param = New-Object System.Management.Automation.RuntimeDefinedParameter($paramName, $paramType, $attributeCollection)
             $paramDictionary.Add($paramName, $param)
         }
-        
+
         return $paramDictionary
     }
-    
+
     Process {
         # Capture all parameters including dynamic ones
         $allParams = @{}
@@ -184,12 +184,12 @@ function global:Invoke-AitherScript {
                 $allParams[$key] = $PSBoundParameters[$key]
             }
         }
-        
+
         # Pass global Config as Configuration if it exists and not already specified
         if ($global:Config -and -not $allParams.ContainsKey('Configuration')) {
             $allParams['Configuration'] = $global:Config
         }
-        
+
         $scriptPath = Join-Path $env:AITHERZERO_ROOT "automation-scripts"
         $scripts = Get-ChildItem -Path $scriptPath -Filter "${ScriptNumber}*.ps1" -ErrorAction SilentlyContinue
 
@@ -204,7 +204,7 @@ function global:Invoke-AitherScript {
 
         # Execute the script with all parameters
         $scriptFile = $scripts[0].FullName
-        
+
         if ($allParams.Count -gt 0) {
             & $scriptFile @allParams
         } else {

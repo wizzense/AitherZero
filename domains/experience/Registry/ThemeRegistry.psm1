@@ -24,21 +24,21 @@ $script:BuiltInThemes = @{
             Info = "White"
             Muted = "DarkGray"
             Highlight = "Magenta"
-            
+
             # Component specific
             MenuBorder = "Cyan"
             MenuText = "White"
             MenuSelected = "Yellow"
             MenuDisabled = "DarkGray"
-            
+
             ProgressBar = "Green"
             ProgressBackground = "DarkGray"
-            
+
             InputBorder = "Blue"
             InputText = "White"
             InputPlaceholder = "DarkGray"
             InputFocus = "Cyan"
-            
+
             ButtonNormal = "Blue"
             ButtonHover = "Cyan"
             ButtonPressed = "DarkCyan"
@@ -57,7 +57,7 @@ $script:BuiltInThemes = @{
             ProgressFormat = "{0}% [{1}] {2}/{3}"
         }
     }
-    
+
     Dark = @{
         Name = "Dark"
         Colors = @{
@@ -69,20 +69,20 @@ $script:BuiltInThemes = @{
             Info = "Gray"
             Muted = "DarkGray"
             Highlight = "DarkMagenta"
-            
+
             MenuBorder = "DarkGray"
             MenuText = "Gray"
             MenuSelected = "White"
             MenuDisabled = "Black"
-            
+
             ProgressBar = "DarkGreen"
             ProgressBackground = "Black"
-            
+
             InputBorder = "DarkGray"
             InputText = "Gray"
             InputPlaceholder = "DarkGray"
             InputFocus = "White"
-            
+
             ButtonNormal = "DarkBlue"
             ButtonHover = "Blue"
             ButtonPressed = "DarkBlue"
@@ -101,7 +101,7 @@ $script:BuiltInThemes = @{
             ProgressFormat = "[{1}] {0}%"
         }
     }
-    
+
     Light = @{
         Name = "Light"
         Colors = @{
@@ -113,20 +113,20 @@ $script:BuiltInThemes = @{
             Info = "Black"
             Muted = "Gray"
             Highlight = "Magenta"
-            
+
             MenuBorder = "Blue"
             MenuText = "Black"
             MenuSelected = "Blue"
             MenuDisabled = "Gray"
-            
+
             ProgressBar = "Blue"
             ProgressBackground = "Gray"
-            
+
             InputBorder = "Black"
             InputText = "Black"
             InputPlaceholder = "Gray"
             InputFocus = "Blue"
-            
+
             ButtonNormal = "White"
             ButtonHover = "Cyan"
             ButtonPressed = "Blue"
@@ -145,7 +145,7 @@ $script:BuiltInThemes = @{
             ProgressFormat = "{2} of {3} ({0}%)"
         }
     }
-    
+
     Matrix = @{
         Name = "Matrix"
         Colors = @{
@@ -157,20 +157,20 @@ $script:BuiltInThemes = @{
             Info = "Green"
             Muted = "DarkGreen"
             Highlight = "Green"
-            
+
             MenuBorder = "Green"
             MenuText = "Green"
             MenuSelected = "Green"
             MenuDisabled = "DarkGreen"
-            
+
             ProgressBar = "Green"
             ProgressBackground = "DarkGreen"
-            
+
             InputBorder = "Green"
             InputText = "Green"
             InputPlaceholder = "DarkGreen"
             InputFocus = "Green"
-            
+
             ButtonNormal = "DarkGreen"
             ButtonHover = "Green"
             ButtonPressed = "Green"
@@ -206,13 +206,13 @@ function Register-UITheme {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Theme,
-        
+
         [switch]$SetActive
     )
-    
+
     # Validate theme structure
     $requiredKeys = @("Colors", "Styles")
     foreach ($key in $requiredKeys) {
@@ -220,19 +220,19 @@ function Register-UITheme {
             throw "Theme must contain '$key' section"
         }
     }
-    
+
     # Add theme name if not present
     if (-not $Theme.ContainsKey("Name")) {
         $Theme.Name = $Name
     }
-    
+
     # Register theme
     $script:RegisteredThemes[$Name] = $Theme
-    
+
     if ($SetActive) {
         Set-UITheme -Name $Name
     }
-    
+
     Write-Verbose "Registered theme: $Name"
 }
 
@@ -247,18 +247,18 @@ function Get-UITheme {
     param(
         [string]$Name
     )
-    
+
     if ($Name) {
         # Check registered themes first
         if ($script:RegisteredThemes.ContainsKey($Name)) {
             return $script:RegisteredThemes[$Name]
         }
-        
+
         # Check built-in themes
         if ($script:BuiltInThemes.ContainsKey($Name)) {
             return $script:BuiltInThemes[$Name]
         }
-        
+
         return $null
     }
     else {
@@ -266,7 +266,7 @@ function Get-UITheme {
         if ($script:ActiveTheme) {
             return $script:ActiveTheme
         }
-        
+
         # Return default theme
         return $script:BuiltInThemes[$script:DefaultTheme]
     }
@@ -284,20 +284,20 @@ function Set-UITheme {
         [Parameter(Mandatory)]
         [string]$Name
     )
-    
+
     $theme = Get-UITheme -Name $Name
-    
+
     if (-not $theme) {
         throw "Theme '$Name' not found"
     }
-    
+
     $script:ActiveTheme = $theme
-    
+
     # Notify all components of theme change
     if (Get-Command Invoke-UIEvent -ErrorAction SilentlyContinue) {
         Invoke-UIEvent -EventName "ThemeChanged" -Data @{ Theme = $theme }
     }
-    
+
     Write-Verbose "Set active theme: $Name"
 }
 
@@ -312,17 +312,17 @@ function Get-UIThemeList {
     param(
         [switch]$IncludeBuiltIn = $true
     )
-    
+
     $themes = @()
-    
+
     # Add registered themes
     $themes += $script:RegisteredThemes.Values
-    
+
     # Add built-in themes
     if ($IncludeBuiltIn) {
         $themes += $script:BuiltInThemes.Values
     }
-    
+
     return $themes
 }
 
@@ -339,16 +339,16 @@ function Get-UIThemeColor {
     param(
         [Parameter(Mandatory)]
         [string]$ColorKey,
-        
+
         [string]$Default = "White"
     )
-    
+
     $theme = Get-UITheme
-    
+
     if ($theme -and $theme.Colors -and $theme.Colors.ContainsKey($ColorKey)) {
         return $theme.Colors[$ColorKey]
     }
-    
+
     return $Default
 }
 
@@ -365,16 +365,16 @@ function Get-UIThemeStyle {
     param(
         [Parameter(Mandatory)]
         [string]$StyleKey,
-        
+
         [string]$Default = ""
     )
-    
+
     $theme = Get-UITheme
-    
+
     if ($theme -and $theme.Styles -and $theme.Styles.ContainsKey($StyleKey)) {
         return $theme.Styles[$StyleKey]
     }
-    
+
     return $Default
 }
 
@@ -391,17 +391,17 @@ function Export-UITheme {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     $theme = Get-UITheme -Name $Name
-    
+
     if (-not $theme) {
         throw "Theme '$Name' not found"
     }
-    
+
     $theme | ConvertTo-Json -Depth 10 | Set-Content -Path $Path
     Write-Verbose "Exported theme '$Name' to: $Path"
 }
@@ -419,25 +419,25 @@ function Import-UITheme {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [string]$Name
     )
-    
+
     if (-not (Test-Path $Path)) {
         throw "Theme file not found: $Path"
     }
-    
+
     $theme = Get-Content $Path -Raw | ConvertFrom-Json -AsHashtable
-    
+
     if ($Name) {
         $theme.Name = $Name
     }
     elseif (-not $theme.Name) {
         $theme.Name = [System.IO.Path]::GetFileNameWithoutExtension($Path)
     }
-    
+
     Register-UITheme -Name $theme.Name -Theme $theme
-    
+
     Write-Verbose "Imported theme '$($theme.Name)' from: $Path"
 }
 
@@ -458,44 +458,44 @@ function New-UITheme {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [string]$BasedOn = "Default",
-        
+
         [hashtable]$Colors = @{},
-        
+
         [hashtable]$Styles = @{}
     )
-    
+
     # Get base theme
     $baseTheme = Get-UITheme -Name $BasedOn
-    
+
     if (-not $baseTheme) {
         throw "Base theme '$BasedOn' not found"
     }
-    
+
     # Clone base theme
     $newTheme = @{
         Name = $Name
         Colors = $baseTheme.Colors.Clone()
         Styles = $baseTheme.Styles.Clone()
     }
-    
+
     if ($baseTheme.Typography) {
         $newTheme.Typography = $baseTheme.Typography.Clone()
     }
-    
+
     # Apply overrides
     foreach ($key in $Colors.Keys) {
         $newTheme.Colors[$key] = $Colors[$key]
     }
-    
+
     foreach ($key in $Styles.Keys) {
         $newTheme.Styles[$key] = $Styles[$key]
     }
-    
+
     # Register new theme
     Register-UITheme -Name $Name -Theme $newTheme
-    
+
     return $newTheme
 }
 
@@ -506,10 +506,10 @@ function Initialize-UIThemeRegistry {
     #>
     [CmdletBinding()]
     param()
-    
+
     # Set default theme
     $script:ActiveTheme = $script:BuiltInThemes[$script:DefaultTheme]
-    
+
     Write-Verbose "Theme registry initialized with $($script:BuiltInThemes.Count) built-in themes"
 }
 

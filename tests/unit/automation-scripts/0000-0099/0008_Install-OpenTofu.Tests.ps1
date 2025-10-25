@@ -2,7 +2,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0008_Install-OpenTofu.ps1"
-    
+
     # Mock external dependencies
     Mock Write-Host { }
     Mock Write-Warning { }
@@ -39,13 +39,13 @@ Describe "0008_Install-OpenTofu" {
         It "Should skip installation when not enabled in configuration" {
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $false } } }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
         It "Should skip installation when configuration is missing" {
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration @{} -WhatIf } | Should -Not -Throw
         }
 
@@ -53,7 +53,7 @@ Describe "0008_Install-OpenTofu" {
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             Mock Write-ScriptLog { }
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -62,7 +62,7 @@ Describe "0008_Install-OpenTofu" {
         It "Should exit early if OpenTofu is already installed" {
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -73,11 +73,11 @@ Describe "0008_Install-OpenTofu" {
             Mock Invoke-WebRequest { throw "Should not download in WhatIf mode" }
             Mock Expand-Archive { throw "Should not extract in WhatIf mode" }
             Mock [Environment]::SetEnvironmentVariable { throw "Should not modify environment in WhatIf mode" }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
             Should -Not -Invoke Invoke-WebRequest
             Should -Not -Invoke Expand-Archive
@@ -95,10 +95,10 @@ Describe "0008_Install-OpenTofu" {
                     }
                 }
             }
-            
+
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -111,11 +111,11 @@ Describe "0008_Install-OpenTofu" {
                     }
                 }
             }
-            
+
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Invoke-RestMethod { @{ tag_name = "v1.8.0" } } -ParameterFilter { $Uri -like "*github.com/repos/opentofu*" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -128,11 +128,11 @@ Describe "0008_Install-OpenTofu" {
                     }
                 }
             }
-            
+
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Invoke-RestMethod { throw "API rate limit" } -ParameterFilter { $Uri -like "*github.com/repos/opentofu*" }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -150,7 +150,7 @@ Describe "0008_Install-OpenTofu" {
             Mock [Environment]::GetEnvironmentVariable { "C:\\existing\\path" }
             Mock [Environment]::SetEnvironmentVariable { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -159,7 +159,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Get-Variable { @{ Value = $true } } -ParameterFilter { $Name -eq "IsWindows" }
             Mock [System.Environment]::Is64BitOperatingSystem { $false }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -169,7 +169,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Test-Path { $true } -ParameterFilter { $Path -like "*OpenTofu*" }
             Mock Remove-Item { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -183,7 +183,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Invoke-WebRequest { }
             Mock Start-Process { } -ParameterFilter { $FilePath -eq "sudo" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -192,7 +192,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Get-Variable { @{ Value = $true } } -ParameterFilter { $Name -eq "IsLinux" }
             Mock [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture { "Arm64" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -204,7 +204,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Get-Command { @{ Name = "brew" } } -ParameterFilter { $Name -eq "brew" }
             Mock Start-Process { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -215,7 +215,7 @@ Describe "0008_Install-OpenTofu" {
             Mock [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture { "Arm64" }
             Mock Start-Process { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -226,7 +226,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" -and $ArgumentList -notcontains "version" }
             Mock Start-Process { @{ ExitCode = 0 } } -ParameterFilter { $FilePath -eq "tofu" -and $ArgumentList -contains "version" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
@@ -234,7 +234,7 @@ Describe "0008_Install-OpenTofu" {
         It "Should handle verification failure" {
             Mock Start-Process { @{ ExitCode = 1 } }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -254,13 +254,13 @@ Describe "0008_Install-OpenTofu" {
                     WorkingDirectory = "./infrastructure"
                 }
             }
-            
+
             Mock Start-Process { @{ ExitCode = 0 } }
             Mock Test-Path { $true } -ParameterFilter { $Path -eq "./infrastructure" }
             Mock Push-Location { }
             Mock Pop-Location { }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
 
@@ -273,11 +273,11 @@ Describe "0008_Install-OpenTofu" {
                     }
                 }
             }
-            
+
             Mock Start-Process { @{ ExitCode = 0 } }
             Mock Test-Path { $false }
             Mock Write-ScriptLog { }
-            
+
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
         }
     }
@@ -288,7 +288,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Get-Variable { @{ Value = $false } } -ParameterFilter { $Name -eq "IsLinux" }
             Mock Get-Variable { @{ Value = $false } } -ParameterFilter { $Name -eq "IsMacOS" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -299,7 +299,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Start-Process { @{ ExitCode = 1 } } -ParameterFilter { $FilePath -eq "tofu" }
             Mock Invoke-WebRequest { throw "Network error" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -311,7 +311,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Invoke-WebRequest { }
             Mock Expand-Archive { throw "Extraction failed" }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $true } } }
             $result = try { & $script:ScriptPath -Configuration $testConfig 2>&1 } catch { $_.Exception }
             $LASTEXITCODE | Should -Be 1
@@ -323,7 +323,7 @@ Describe "0008_Install-OpenTofu" {
             Mock Get-Command { @{ Name = "Write-CustomLog" } } -ParameterFilter { $Name -eq "Write-CustomLog" }
             Mock Write-CustomLog { }
             Mock Write-ScriptLog { }
-            
+
             $testConfig = @{ InstallationOptions = @{ OpenTofu = @{ Install = $false } } }
             { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
             Should -Invoke Write-CustomLog -AtLeast 1

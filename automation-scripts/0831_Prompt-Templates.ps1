@@ -14,17 +14,17 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$TemplateName = 'List',
-    
+
     [Parameter(Mandatory = $false)]
     [hashtable]$Variables = @{},
-    
+
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = $null,
-    
+
     [switch]$ShowTemplate,
-    
+
     [switch]$CopyToClipboard,
-    
+
     [switch]$ReturnObject
 )
 
@@ -90,7 +90,7 @@ Please review the following code for:
 5. Suggested refactoring
 '@
     }
-    
+
     'BugAnalysis' = @{
         Name = 'Bug Analysis'
         Description = 'Template for analyzing bug reports'
@@ -136,7 +136,7 @@ Please review the following code for:
 5. Test cases needed
 '@
     }
-    
+
     'TestGeneration' = @{
         Name = 'Test Generation'
         Description = 'Generate tests for code'
@@ -178,7 +178,7 @@ Generate tests using {Framework} that:
 5. Document test purpose
 '@
     }
-    
+
     # Conversion Templates
     'LanguageConversion' = @{
         Name = 'Language Conversion'
@@ -215,7 +215,7 @@ Generate tests using {Framework} that:
 {Dependencies}
 '@
     }
-    
+
     'DataTransformation' = @{
         Name = 'Data Transformation'
         Description = 'Transform data between formats'
@@ -257,7 +257,7 @@ Generate tests using {Framework} that:
 - Include transformation metadata
 '@
     }
-    
+
     # Implementation Templates
     'FeatureImplementation' = @{
         Name = 'Feature Implementation'
@@ -308,7 +308,7 @@ So that {Benefit}
 5. Usage examples
 '@
     }
-    
+
     'APIEndpoint' = @{
         Name = 'API Endpoint'
         Description = 'Create API endpoint implementation'
@@ -363,7 +363,7 @@ So that {Benefit}
 {ExternalCalls}
 '@
     }
-    
+
     # Documentation Templates
     'SystemDocumentation' = @{
         Name = 'System Documentation'
@@ -421,7 +421,7 @@ So that {Benefit}
 - Quick start guide
 '@
     }
-    
+
     'ReleaseNotes' = @{
         Name = 'Release Notes'
         Description = 'Generate release notes'
@@ -482,7 +482,7 @@ Format: {Format}
 Tone: {Tone}
 '@
     }
-    
+
     # Troubleshooting Templates
     'ErrorDiagnosis' = @{
         Name = 'Error Diagnosis'
@@ -533,7 +533,7 @@ Tone: {Tone}
 ```
 '@
     }
-    
+
     'PerformanceAnalysis' = @{
         Name = 'Performance Analysis'
         Description = 'Analyze performance issues'
@@ -600,75 +600,75 @@ function Get-PromptTemplate {
         [string]$Name,
         [hashtable]$Variables = @{}
     )
-    
+
     if (-not $Templates.ContainsKey($Name)) {
         throw "Template '$Name' not found. Available templates: $($Templates.Keys -join ', ')"
     }
-    
+
     $template = $Templates[$Name].Template
-    
+
     # Replace variables
     foreach ($key in $Variables.Keys) {
         $template = $template -replace "\{$key\}", $Variables[$key]
     }
-    
+
     # Highlight unreplaced variables
     $unreplaced = [regex]::Matches($template, '\{(\w+)\}') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
     if ($unreplaced) {
         Write-Warning "Unreplaced variables: $($unreplaced -join ', ')"
     }
-    
+
     return $template
 }
 
 # Main execution
 if ($PSCmdlet.MyInvocation.InvocationName -ne '&') {
     # Script is being run directly, not dot-sourced
-    
+
     if ($TemplateName -eq 'List') {
         Write-Host "📋 Available Prompt Templates" -ForegroundColor Cyan
         Write-Host ""
-        
+
         Get-PromptTemplates | Format-Table -AutoSize
-        
+
         Write-Host "`n💡 Usage Examples:" -ForegroundColor Yellow
         Write-Host "   # Get a specific template:" -ForegroundColor Gray
         Write-Host "   ./0831_Prompt-Templates.ps1 -TemplateName CodeReview -ShowTemplate" -ForegroundColor DarkGray
         Write-Host ""
         Write-Host "   # Use with variables:" -ForegroundColor Gray
         Write-Host "   ./0831_Prompt-Templates.ps1 -TemplateName BugAnalysis -Variables @{BugId='123'; Severity='High'}" -ForegroundColor DarkGray
-        
+
         exit 0
     }
-    
+
     try {
         $result = Get-PromptTemplate -Name $TemplateName -Variables $Variables
-        
+
         if ($ShowTemplate) {
             Write-Host "📄 Template: $($Templates[$TemplateName].Name)" -ForegroundColor Cyan
             Write-Host "=" * 80 -ForegroundColor DarkGray
             Write-Host $result
             Write-Host "=" * 80 -ForegroundColor DarkGray
         }
-        
+
         if ($OutputPath) {
             if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Template')) {
                 $result | Set-Content $OutputPath -Encoding UTF8
                 Write-Host "✅ Template saved to: $OutputPath" -ForegroundColor Green
             }
         }
-        
+
         if ($CopyToClipboard) {
             if ($IsWindows) {
                 $result | Set-Clipboard
                 Write-Host "📋 Copied to clipboard!" -ForegroundColor Green
             }
         }
-        
+
         if ($ReturnObject) {
             return $result
         }
-        
+
         if (-not $ShowTemplate -and -not $OutputPath -and -not $CopyToClipboard) {
             # Default: show the template
             Write-Output $result

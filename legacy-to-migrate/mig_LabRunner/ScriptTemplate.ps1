@@ -13,7 +13,7 @@ function Invoke-LabStep {
         }
     }
     if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    
+
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
 

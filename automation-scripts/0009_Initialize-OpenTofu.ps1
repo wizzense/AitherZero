@@ -90,7 +90,7 @@ try {
         if ($tfFiles) {
             $tofuDirectories += $infraPath
         }
-        
+
         # Check subdirectories
         $subDirs = Get-ChildItem -Path $infraPath -Directory -ErrorAction SilentlyContinue
         foreach ($dir in $subDirs) {
@@ -125,7 +125,7 @@ try {
     # Initialize each directory
     foreach ($tofuDir in $tofuDirectories) {
         Write-ScriptLog "Initializing OpenTofu in: $tofuDir"
-        
+
         Push-Location $tofuDir
         try {
             # Check if already initialized
@@ -149,13 +149,13 @@ try {
 
             # Run init
             Write-ScriptLog "Running: tofu $($initArgs -join ' ')" -Level 'Debug'
-            
+
             # Check if tofu is available
             if (-not (Get-Command tofu -ErrorAction SilentlyContinue)) {
                 Write-ScriptLog "OpenTofu (tofu) command not found. Please install OpenTofu first." -Level 'Warning'
                 continue
             }
-            
+
             # Execute tofu with proper argument handling
             try {
                 if ($initArgs.Count -gt 0) {
@@ -164,7 +164,7 @@ try {
                     $result = & tofu init 2>&1
                 }
                 $exitCode = $LASTEXITCODE
-                
+
                 if ($result) {
                     Write-ScriptLog "$result" -Level 'Debug'
                 }
@@ -175,17 +175,17 @@ try {
 
             if ($exitCode -eq 0) {
                 Write-ScriptLog "Successfully initialized: $tofuDir"
-                
+
                 # Validate configuration
                 Write-ScriptLog "Validating configuration..." -Level 'Debug'
                 try {
                     $validateResult = & tofu validate 2>&1
                     $validateExitCode = $LASTEXITCODE
-                    
+
                     if ($validateResult) {
                         Write-ScriptLog "$validateResult" -Level 'Debug'
                     }
-                    
+
                     if ($validateExitCode -eq 0) {
                         Write-ScriptLog "Configuration is valid"
                     } else {
@@ -197,17 +197,17 @@ try {
             } else {
                 Write-ScriptLog "Failed to initialize: $tofuDir" -Level 'Error'
             }
-            
+
         } catch {
             Write-ScriptLog "Error during initialization: $_" -Level 'Error'
         } finally {
             Pop-Location
         }
     }
-    
+
     Write-ScriptLog "OpenTofu initialization completed"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "OpenTofu initialization failed: $_" -Level 'Error'
     exit 1

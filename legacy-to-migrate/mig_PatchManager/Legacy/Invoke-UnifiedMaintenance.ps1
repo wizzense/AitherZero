@@ -21,7 +21,7 @@ function Invoke-UnifiedMaintenance {
     )
 
     Write-Host "Starting unified maintenance in $Mode mode..." -ForegroundColor Cyan
-    
+
     try {
         switch ($Mode) {
             "Quick" {
@@ -37,7 +37,7 @@ function Invoke-UnifiedMaintenance {
                 # Full maintenance logic
             }
         }
-        
+
         Write-Host "Unified maintenance completed successfully." -ForegroundColor Green
         return @{
             Success = $true

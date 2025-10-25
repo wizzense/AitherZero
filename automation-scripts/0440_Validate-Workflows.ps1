@@ -33,26 +33,26 @@
 param(
     [Parameter(Position = 0)]
     [string]$Path = ".github/workflows",
-    
+
     [switch]$Strict,
-    
+
     [switch]$AutoFix,
-    
+
     [ValidateSet('Console', 'JSON', 'HTML', 'Markdown')]
     [string]$OutputFormat = 'Console',
-    
+
     [string]$OutputPath = "./tests/results",
-    
+
     [switch]$CI,
-    
+
     [switch]$CheckDependencies,
-    
+
     [switch]$CheckSecrets,
-    
+
     [switch]$CheckDeprecated,
-    
+
     [switch]$CheckBestPractices,
-    
+
     [switch]$All
 )
 
@@ -78,7 +78,7 @@ function Write-ValidationLog {
         [string]$Message,
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message $Message -Level $Level -Source "WorkflowValidation"
     } else {
@@ -144,7 +144,7 @@ function Test-YamlSyntax {
     param(
         [string]$FilePath
     )
-    
+
     try {
         # Try to use PowerShell-Yaml if available
         if (Get-Module -ListAvailable -Name powershell-yaml -ErrorAction SilentlyContinue) {
@@ -156,25 +156,25 @@ function Test-YamlSyntax {
                 Data = $yaml
             }
         }
-        
+
         # Fallback to basic validation
         $content = Get-Content $FilePath -Raw
-        
+
         # Check for basic YAML structure
         if ($content -match '^\s*$' -or -not $content) {
             throw "File is empty"
         }
-        
+
         # Check for tab characters (YAML doesn't allow tabs for indentation)
         if ($content -match '\t') {
             throw "YAML files must use spaces for indentation, not tabs"
         }
-        
+
         # Basic structure validation
         if ($content -notmatch '(?m)^name:' -and $content -notmatch '(?m)^on:') {
             throw "Missing required top-level keys (name, on)"
         }
-        
+
         return @{
             Valid = $true
             Data = $null
@@ -194,26 +194,26 @@ function Test-WorkflowSchema {
         [string]$FilePath,
         [object]$YamlData
     )
-    
+
     $errors = @()
     $warnings = @()
-    
+
     # If we couldn't parse YAML, do basic text validation
     if (-not $YamlData) {
         $content = Get-Content $FilePath -Raw
-        
+
         # Check for required keys
         foreach ($key in $script:GitHubActionsSchema.RequiredKeys) {
             if ($content -notmatch "(?m)^${key}:") {
                 $errors += "Missing required key: $key"
             }
         }
-        
+
         # Check for common issues
         if ($content -match 'actions/[^@]+@master') {
             $warnings += "Using @master is not recommended. Pin to a specific version or SHA"
         }
-        
+
         if ($content -match '\$\{\{.*github\.token.*\}\}') {
             $warnings += "Consider using secrets.GITHUB_TOKEN instead of github.token"
         }
@@ -225,7 +225,7 @@ function Test-WorkflowSchema {
                 $errors += "Missing required key: $key"
             }
         }
-        
+
         # Validate triggers
         if ($YamlData.on) {
             $triggers = if ($YamlData.on -is [string]) { @($YamlData.on) } else { $YamlData.on.Keys }
@@ -235,33 +235,33 @@ function Test-WorkflowSchema {
                 }
             }
         }
-        
+
         # Validate permissions
         if ($YamlData.permissions) {
-            $permissions = if ($YamlData.permissions -is [string]) { 
-                @($YamlData.permissions) 
-            } else { 
-                $YamlData.permissions.Keys 
+            $permissions = if ($YamlData.permissions -is [string]) {
+                @($YamlData.permissions)
+            } else {
+                $YamlData.permissions.Keys
             }
-            
+
             foreach ($perm in $permissions) {
-                if ($perm -ne 'write-all' -and $perm -ne 'read-all' -and 
+                if ($perm -ne 'write-all' -and $perm -ne 'read-all' -and
                     $perm -notin $script:GitHubActionsSchema.ValidPermissions) {
                     $warnings += "Unknown permission: $perm"
                 }
             }
         }
-        
+
         # Validate jobs
         if ($YamlData.jobs) {
             foreach ($jobName in $YamlData.jobs.Keys) {
                 $job = $YamlData.jobs[$jobName]
-                
+
                 # Check runs-on
                 if (-not $job.'runs-on') {
                     $errors += "Job '$jobName' missing 'runs-on'"
                 }
-                
+
                 # Check for matrix strategy issues
                 if ($job.strategy -and $job.strategy.matrix) {
                     if ($job.'runs-on' -match '\$\{\{.*matrix.*\}\}') {
@@ -273,7 +273,7 @@ function Test-WorkflowSchema {
             }
         }
     }
-    
+
     return @{
         Errors = $errors
         Warnings = $warnings
@@ -284,34 +284,34 @@ function Test-DeprecatedFeatures {
     param(
         [string]$FilePath
     )
-    
+
     $content = Get-Content $FilePath -Raw
     $warnings = @()
-    
+
     # Check for deprecated actions
     foreach ($deprecated in $script:GitHubActionsSchema.DeprecatedActions.GetEnumerator()) {
         if ($content -match [regex]::Escape($deprecated.Key)) {
             $warnings += "Deprecated action: $($deprecated.Key). $($deprecated.Value)"
         }
     }
-    
+
     # Check for deprecated syntax
     if ($content -match 'set-output') {
         $warnings += "set-output is deprecated. Use >> \$env:GITHUB_OUTPUT instead"
     }
-    
+
     if ($content -match 'set-state') {
         $warnings += "set-state is deprecated. Use >> \$env:GITHUB_STATE instead"
     }
-    
+
     if ($content -match 'add-path') {
         $warnings += "add-path is deprecated. Use >> \$env:GITHUB_PATH instead"
     }
-    
+
     if ($content -match 'set-env') {
         $warnings += "set-env is deprecated. Use >> \$env:GITHUB_ENV instead"
     }
-    
+
     return $warnings
 }
 
@@ -319,39 +319,39 @@ function Test-SecretReferences {
     param(
         [string]$FilePath
     )
-    
+
     $content = Get-Content $FilePath -Raw
     $errors = @()
     $warnings = @()
-    
+
     # Find all secret references
     $secretRefs = [regex]::Matches($content, '\$\{\{\s*secrets\.([A-Z_]+)\s*\}\}')
-    
+
     foreach ($ref in $secretRefs) {
         $secretName = $ref.Groups[1].Value
-        
+
         # Check for common required secrets
         if ($secretName -eq 'GITHUB_TOKEN') {
             # This is automatically provided
             continue
         }
-        
+
         # Flag potentially missing secrets
         if ($secretName -match '^(AZURE|AWS|GCP)_') {
             $warnings += "Cloud provider secret referenced: $secretName - ensure it's configured in repository settings"
         }
-        
+
         if ($secretName -match 'PASSWORD|KEY|TOKEN|SECRET') {
             $warnings += "Sensitive secret referenced: $secretName - ensure it's properly secured"
         }
     }
-    
+
     # Check for hardcoded secrets
-    if ($content -match '(api[_-]?key|password|token|secret)\s*[:=]\s*["''][^"'']+["'']' -and 
+    if ($content -match '(api[_-]?key|password|token|secret)\s*[:=]\s*["''][^"'']+["'']' -and
         $content -notmatch '\$\{\{') {
         $errors += "Potential hardcoded secret detected. Use GitHub secrets instead"
     }
-    
+
     return @{
         Errors = $errors
         Warnings = $warnings
@@ -362,40 +362,40 @@ function Test-BestPractices {
     param(
         [string]$FilePath
     )
-    
+
     $content = Get-Content $FilePath -Raw
     $warnings = @()
-    
+
     # Check for timeout-minutes
     if ($content -notmatch 'timeout-minutes:') {
         $warnings += "Consider setting timeout-minutes for jobs to prevent hanging workflows"
     }
-    
+
     # Check for concurrency control
     if ($content -notmatch 'concurrency:') {
         $warnings += "Consider using concurrency to prevent duplicate workflow runs"
     }
-    
+
     # Check for conditional steps
     if ($content -match 'if:\s*always\(\)' -and $content -notmatch 'if:\s*always\(\)\s*&&') {
         $warnings += "Using 'if: always()' without additional conditions can be dangerous"
     }
-    
+
     # Check for artifact retention
     if ($content -match 'upload-artifact' -and $content -notmatch 'retention-days') {
         $warnings += "Consider setting retention-days for uploaded artifacts to manage storage"
     }
-    
+
     # Check for checkout depth
     if ($content -match 'actions/checkout' -and $content -notmatch 'fetch-depth') {
         $warnings += "Consider setting fetch-depth for checkout to improve performance"
     }
-    
+
     # Check for caching
     if ($content -match 'npm install|pip install|bundle install' -and $content -notmatch 'actions/cache') {
         $warnings += "Consider using actions/cache to speed up dependency installation"
     }
-    
+
     return $warnings
 }
 
@@ -403,9 +403,9 @@ function Invoke-WorkflowValidation {
     param(
         [string]$FilePath
     )
-    
+
     Write-ValidationLog "Validating: $FilePath" -Level Information
-    
+
     $fileResult = @{
         File = $FilePath
         Valid = $true
@@ -413,7 +413,7 @@ function Invoke-WorkflowValidation {
         Warnings = @()
         Info = @()
     }
-    
+
     # 1. YAML Syntax validation
     $yamlResult = Test-YamlSyntax -FilePath $FilePath
     if (-not $yamlResult.Valid) {
@@ -422,41 +422,41 @@ function Invoke-WorkflowValidation {
     } elseif ($yamlResult.ContainsKey('Warning') -and $yamlResult.Warning) {
         $fileResult.Warnings += $yamlResult.Warning
     }
-    
+
     # 2. Schema validation
     $schemaResult = Test-WorkflowSchema -FilePath $FilePath -YamlData $yamlResult.Data
     $fileResult.Errors += $schemaResult.Errors
     $fileResult.Warnings += $schemaResult.Warnings
-    
+
     # 3. Check deprecated features
     if ($CheckDeprecated -or $All) {
         $deprecatedWarnings = Test-DeprecatedFeatures -FilePath $FilePath
         $fileResult.Warnings += $deprecatedWarnings
     }
-    
+
     # 4. Check secret references
     if ($CheckSecrets -or $All) {
         $secretResult = Test-SecretReferences -FilePath $FilePath
         $fileResult.Errors += $secretResult.Errors
         $fileResult.Warnings += $secretResult.Warnings
     }
-    
+
     # 5. Check best practices
     if ($CheckBestPractices -or $All) {
         $bestPracticeWarnings = Test-BestPractices -FilePath $FilePath
         $fileResult.Warnings += $bestPracticeWarnings
     }
-    
+
     # Update file validity based on errors
     if ($fileResult.Errors -and $fileResult.Errors.Count -gt 0) {
         $fileResult.Valid = $false
     }
-    
+
     # In strict mode, warnings also fail validation
     if ($Strict -and $fileResult.Warnings -and $fileResult.Warnings.Count -gt 0) {
         $fileResult.Valid = $false
     }
-    
+
     return $fileResult
 }
 
@@ -465,43 +465,43 @@ function Format-ValidationOutput {
         [object]$Results,
         [string]$Format
     )
-    
+
     switch ($Format) {
         'Console' {
             Write-Host ""
             Write-Host "=== GitHub Actions Workflow Validation Results ===" -ForegroundColor Cyan
             Write-Host "Timestamp: $($Results.Timestamp)" -ForegroundColor Gray
             Write-Host ""
-            
+
             Write-Host "Summary:" -ForegroundColor Yellow
             Write-Host "  Total Files: $($Results.TotalFiles)"
             Write-Host "  Valid Files: $($Results.ValidFiles)" -ForegroundColor Green
             Write-Host "  Invalid Files: $($Results.InvalidFiles)" -ForegroundColor Red
             Write-Host ""
-            
+
             foreach ($file in $Results.FileResults.Keys) {
                 $result = $Results.FileResults[$file]
                 $fileName = Split-Path $file -Leaf
-                
+
                 if ($result.Valid) {
                     Write-Host "✓ $fileName" -ForegroundColor Green
                 } else {
                     Write-Host "✗ $fileName" -ForegroundColor Red
                 }
-                
+
                 foreach ($err in $result.Errors) {
                     Write-Host "    ERROR: $err" -ForegroundColor Red
                 }
-                
+
                 foreach ($warning in $result.Warnings) {
                     Write-Host "    WARNING: $warning" -ForegroundColor Yellow
                 }
-                
+
                 foreach ($info in $result.Info) {
                     Write-Host "    INFO: $info" -ForegroundColor Cyan
                 }
             }
-            
+
             Write-Host ""
             if ($Results.InvalidFiles -gt 0) {
                 Write-Host "Validation FAILED" -ForegroundColor Red
@@ -509,11 +509,11 @@ function Format-ValidationOutput {
                 Write-Host "Validation PASSED" -ForegroundColor Green
             }
         }
-        
+
         'JSON' {
             $Results | ConvertTo-Json -Depth 10
         }
-        
+
         'Markdown' {
             $md = @"
 # GitHub Actions Workflow Validation Report
@@ -535,23 +535,23 @@ function Format-ValidationOutput {
                 $result = $Results.FileResults[$file]
                 $fileName = Split-Path $file -Leaf
                 $status = if ($result.Valid) { "✅" } else { "❌" }
-                
+
                 $md += "`n### $status $fileName`n`n"
-                
+
                 if ($result.Errors -and $result.Errors.Count -gt 0) {
                     $md += "**Errors:**`n"
                     foreach ($err in $result.Errors) {
                         $md += "- $err`n"
                     }
                 }
-                
+
                 if ($result.Warnings -and $result.Warnings.Count -gt 0) {
                     $md += "`n**Warnings:**`n"
                     foreach ($warning in $result.Warnings) {
                         $md += "- $warning`n"
                     }
                 }
-                
+
                 if ($result.Info -and $result.Info.Count -gt 0) {
                     $md += "`n**Info:**`n"
                     foreach ($info in $result.Info) {
@@ -559,10 +559,10 @@ function Format-ValidationOutput {
                     }
                 }
             }
-            
+
             $md
         }
-        
+
         'HTML' {
             @"
 <!DOCTYPE html>
@@ -592,7 +592,7 @@ function Format-ValidationOutput {
     <div class="container">
         <h1>GitHub Actions Workflow Validation Report</h1>
         <p class="timestamp">Generated: $($Results.Timestamp)</p>
-        
+
         <div class="summary">
             <div class="summary-card total">
                 <h3>Total Files</h3>
@@ -607,14 +607,14 @@ function Format-ValidationOutput {
                 <div style="font-size: 2em; color: #dc3545;">$($Results.InvalidFiles)</div>
             </div>
         </div>
-        
+
         <h2>File Results</h2>
 "@
             foreach ($file in $Results.FileResults.Keys) {
                 $result = $Results.FileResults[$file]
                 $fileName = Split-Path $file -Leaf
                 $validClass = if ($result.Valid) { "valid" } else { "invalid" }
-                
+
                 $html += @"
         <div class="file-result $validClass">
             <div class="file-name">$(if ($result.Valid) { "✓" } else { "✗" }) $fileName</div>
@@ -630,7 +630,7 @@ function Format-ValidationOutput {
                 }
                 $html += "        </div>`n"
             }
-            
+
             $html += @"
     </div>
 </body>
@@ -644,7 +644,7 @@ function Format-ValidationOutput {
 # Main execution
 try {
     Write-ValidationLog "Starting GitHub Actions workflow validation..." -Level Information
-    
+
     # Check for powershell-yaml module and auto-install if configured
     if (-not (Get-Module -ListAvailable -Name powershell-yaml -ErrorAction SilentlyContinue)) {
         $autoInstall = if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
@@ -652,16 +652,16 @@ try {
         } else {
             $false
         }
-        
+
         if ($autoInstall -or $CheckDependencies) {
             Write-ValidationLog "powershell-yaml module not found. Installing for full YAML validation..." -Level Information
-            
+
             # Install using the dedicated script
             $installScript = Join-Path $PSScriptRoot "0443_Install-PowerShellYaml.ps1"
             if (Test-Path $installScript) {
                 try {
                     & $installScript -CI:$CI -Force:$false
-                    
+
                     # Import the newly installed module
                     Import-Module powershell-yaml -ErrorAction SilentlyContinue
                     Write-ValidationLog "powershell-yaml module installed and loaded successfully" -Level Information
@@ -677,12 +677,12 @@ try {
             Write-ValidationLog "Run with -CheckDependencies or enable AutoInstallDependencies in config" -Level Information
         }
     }
-    
+
     # Check if path exists
     if (-not (Test-Path $Path)) {
         throw "Path not found: $Path"
     }
-    
+
     # Get workflow files
     $workflowFiles = @(if (Test-Path $Path -PathType Container) {
         Get-ChildItem -Path $Path -Filter "*.yml" -File
@@ -690,37 +690,37 @@ try {
     } else {
         Get-Item $Path
     })
-    
+
     if ($workflowFiles.Count -eq 0) {
         Write-ValidationLog "No workflow files found in: $Path" -Level Warning
         exit 0
     }
-    
+
     Write-ValidationLog "Found $($workflowFiles.Count) workflow file(s)" -Level Information
-    
+
     # Validate each file
     foreach ($file in $workflowFiles) {
         if ($PSCmdlet.ShouldProcess($file.FullName, "Validate workflow")) {
             $result = Invoke-WorkflowValidation -FilePath $file.FullName
             $script:ValidationResults.FileResults[$file.FullName] = $result
             $script:ValidationResults.TotalFiles++
-            
+
             if ($result.Valid) {
                 $script:ValidationResults.ValidFiles++
             } else {
                 $script:ValidationResults.InvalidFiles++
             }
-            
+
             # Add to global lists
             $script:ValidationResults.Errors += $result.Errors
             $script:ValidationResults.Warnings += $result.Warnings
             $script:ValidationResults.Info += $result.Info
         }
     }
-    
+
     # Output results
     $output = Format-ValidationOutput -Results $script:ValidationResults -Format $OutputFormat
-    
+
     if ($OutputFormat -eq 'Console') {
         # Already output to console
     } else {
@@ -728,19 +728,19 @@ try {
         if (-not (Test-Path $OutputPath)) {
             New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
         }
-        
+
         $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         $extension = switch ($OutputFormat) {
             'JSON' { 'json' }
             'HTML' { 'html' }
             'Markdown' { 'md' }
         }
-        
+
         $outputFile = Join-Path $OutputPath "workflow-validation-$timestamp.$extension"
         $output | Set-Content -Path $outputFile
         Write-ValidationLog "Results saved to: $outputFile" -Level Information
     }
-    
+
     # Exit with appropriate code
     if ($script:ValidationResults.InvalidFiles -gt 0) {
         if ($CI) {

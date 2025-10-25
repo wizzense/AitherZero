@@ -5,12 +5,12 @@
     Install testing and validation tools for AitherZero
 .DESCRIPTION
     Installs Pester, PSScriptAnalyzer, and other testing dependencies
-    
+
     Exit Codes:
     0   - Success
     1   - General failure
     3010 - Success, restart required
-    
+
 .NOTES
     Stage: Testing
     Order: 0400
@@ -128,7 +128,7 @@ try {
                 }
             }
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Pester module", "Install version $($testingConfig.MinVersion)+")) {
             Install-Module -Name Pester -MinimumVersion $testingConfig.MinVersion -Force -SkipPublisherCheck -Scope CurrentUser
         }
@@ -165,23 +165,23 @@ try {
 
     # Verify installations
     Write-ScriptLog -Message "Verifying installations"
-    
+
     $verificationResults = @{
         Pester = (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge $testingConfig.MinVersion }) -ne $null
         PSScriptAnalyzer = (Get-Module -ListAvailable -Name PSScriptAnalyzer) -ne $null
         Plaster = (Get-Module -ListAvailable -Name Plaster) -ne $null
     }
-    
+
     $allInstalled = $verificationResults.Values -notcontains $false
 
     if ($allInstalled) {
         Write-ScriptLog -Message "All testing tools installed successfully" -Data $verificationResults
-        
+
         # Import modules to verify they work
         Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
         Import-Module PSScriptAnalyzer -Force
         Import-Module Plaster -Force
-        
+
         Write-ScriptLog -Message "Testing tools verified and loaded"
     } else {
         Write-ScriptLog -Level Error -Message "Some tools failed to install" -Data $verificationResults
@@ -192,7 +192,7 @@ try {
     $psaSettingsPath = Join-Path (Split-Path $PSScriptRoot -Parent) "PSScriptAnalyzerSettings.psd1"
     if (-not (Test-Path $psaSettingsPath)) {
         Write-ScriptLog -Message "Creating PSScriptAnalyzer settings file"
-        
+
         $psaSettings = @'
 @{
     # Select which rules to run
@@ -212,7 +212,7 @@ try {
             BlockComment = $true
             Placement = "begin"
         }
-        
+
         PSUseCompatibleSyntax = @{
             Enable = $true
             TargetVersions = @('7.0')
@@ -231,13 +231,13 @@ try {
     }
 }
 '@
-        
+
         if ($PSCmdlet.ShouldProcess($psaSettingsPath, "Create PSScriptAnalyzer settings file")) {
             $psaSettings | Set-Content -Path $psaSettingsPath -Force
         }
         Write-ScriptLog -Message "PSScriptAnalyzer settings created at: $psaSettingsPath"
     }
-    
+
     Write-ScriptLog -Message "Testing tools installation completed successfully"
     exit 0
 }

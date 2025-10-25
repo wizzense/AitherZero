@@ -22,12 +22,12 @@ function Get-FileHashSignature {
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     if (Test-Path $Path -PathType Container) {
         # For directories, combine hashes of all relevant files
         $files = Get-ChildItem -Path $Path -Recurse -File -Include "*.ps1", "*.psm1", "*.psd1" |
                  Where-Object { $_.FullName -notmatch 'test-results|\.cache|logs' }
-        
+
         $combinedHash = ""
         foreach ($file in $files | Sort-Object FullName) {
             if (-not $script:FileHashCache.ContainsKey($file.FullName)) {
@@ -46,14 +46,14 @@ function Get-FileHashSignature {
             }
             $combinedHash += $script:FileHashCache[$file.FullName].Hash
         }
-        
+
         if ($combinedHash) {
             return (Get-FileHash -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($combinedHash))) -Algorithm SHA256).Hash
         }
     } elseif (Test-Path $Path -PathType Leaf) {
         return (Get-FileHash -Path $Path -Algorithm SHA256).Hash
     }
-    
+
     return $null
 }
 
@@ -67,13 +67,13 @@ function Get-TestCacheKey {
         [string]$TestType = 'Unit',
         [hashtable]$Parameters = @{}
     )
-    
+
     $keyComponents = @(
         $TestType
         $TestPath
         ($Parameters.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ';'
     )
-    
+
     $keyString = $keyComponents -join '|'
     return (Get-FileHash -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($keyString))) -Algorithm SHA256).Hash.Substring(0, 16)
 }
@@ -82,7 +82,7 @@ function Get-CachedTestResult {
     <#
     .SYNOPSIS
     Retrieve cached test results if valid
-    
+
     .DESCRIPTION
     Returns cached test results if:
     - Cache entry exists
@@ -94,28 +94,28 @@ function Get-CachedTestResult {
         [string]$CacheKey,
         [string]$SourcePath
     )
-    
+
     # Load cache index
     $cacheIndex = if (Test-Path $script:CacheIndexFile) {
         Get-Content $script:CacheIndexFile -Raw | ConvertFrom-Json -AsHashtable
     } else {
         @{}
     }
-    
+
     if (-not $cacheIndex.ContainsKey($CacheKey)) {
         Write-Verbose "No cache entry found for key: $CacheKey"
         return $null
     }
-    
+
     $cacheEntry = $cacheIndex[$CacheKey]
-    
+
     # Check age
     $cacheTime = [DateTime]::Parse($cacheEntry.Timestamp)
     if ((Get-Date) - $cacheTime -gt $script:MaxCacheAge) {
         Write-Verbose "Cache entry expired for key: $CacheKey"
         return $null
     }
-    
+
     # Check source hash if provided
     if ($SourcePath) {
         $currentHash = Get-FileHashSignature -Path $SourcePath
@@ -124,7 +124,7 @@ function Get-CachedTestResult {
             return $null
         }
     }
-    
+
     # Load and return cached result
     $resultFile = Join-Path $script:CachePath "$CacheKey.json"
     if (Test-Path $resultFile) {
@@ -132,7 +132,7 @@ function Get-CachedTestResult {
         Write-Verbose "Returning cached test result for key: $CacheKey"
         return $result
     }
-    
+
     return $null
 }
 
@@ -148,23 +148,23 @@ function Set-CachedTestResult {
         [PSCustomObject]$Result,
         [string]$SourcePath
     )
-    
+
     # Ensure cache directory exists
     if (-not (Test-Path $script:CachePath)) {
         New-Item -Path $script:CachePath -ItemType Directory -Force | Out-Null
     }
-    
+
     # Save result file
     $resultFile = Join-Path $script:CachePath "$CacheKey.json"
     $Result | ConvertTo-Json -Depth 10 | Set-Content -Path $resultFile
-    
+
     # Update cache index
     $cacheIndex = if (Test-Path $script:CacheIndexFile) {
         Get-Content $script:CacheIndexFile -Raw | ConvertFrom-Json -AsHashtable
     } else {
         @{}
     }
-    
+
     $cacheEntry = @{
         Timestamp = (Get-Date).ToString('o')
         SourceHash = if ($SourcePath) { Get-FileHashSignature -Path $SourcePath } else { $null }
@@ -176,10 +176,10 @@ function Set-CachedTestResult {
             Duration = $Result.Duration
         }
     }
-    
+
     $cacheIndex[$CacheKey] = $cacheEntry
     $cacheIndex | ConvertTo-Json -Depth 10 | Set-Content -Path $script:CacheIndexFile
-    
+
     Write-Verbose "Cached test result with key: $CacheKey"
 }
 
@@ -193,46 +193,46 @@ function Clear-TestCache {
         [switch]$All,
         [switch]$Expired
     )
-    
+
     if ($All) {
         Remove-Item -Path "$script:CachePath/*" -Force -ErrorAction SilentlyContinue
         Write-Verbose "Cleared all test cache entries"
         return
     }
-    
+
     $cacheIndex = if (Test-Path $script:CacheIndexFile) {
         Get-Content $script:CacheIndexFile -Raw | ConvertFrom-Json -AsHashtable
     } else {
         @{}
     }
-    
+
     $keysToRemove = @()
-    
+
     foreach ($key in $cacheIndex.Keys) {
         $remove = $false
-        
+
         if ($Expired) {
             $cacheTime = [DateTime]::Parse($cacheIndex[$key].Timestamp)
             if ((Get-Date) - $cacheTime -gt $script:MaxCacheAge) {
                 $remove = $true
             }
         }
-        
+
         if ($Pattern -and $key -like $Pattern) {
             $remove = $true
         }
-        
+
         if ($remove) {
             $keysToRemove += $key
             $resultFile = Join-Path $script:CachePath "$key.json"
             Remove-Item -Path $resultFile -Force -ErrorAction SilentlyContinue
         }
     }
-    
+
     foreach ($key in $keysToRemove) {
         $cacheIndex.Remove($key)
     }
-    
+
     if ($keysToRemove.Count -gt 0) {
         $cacheIndex | ConvertTo-Json -Depth 10 | Set-Content -Path $script:CacheIndexFile
         Write-Verbose "Removed $($keysToRemove.Count) cache entries"
@@ -244,13 +244,13 @@ function Get-TestCacheStatistics {
     .SYNOPSIS
     Get statistics about test cache usage
     #>
-    
+
     $cacheIndex = if (Test-Path $script:CacheIndexFile) {
         Get-Content $script:CacheIndexFile -Raw | ConvertFrom-Json -AsHashtable
     } else {
         @{}
     }
-    
+
     $stats = @{
         TotalEntries = $cacheIndex.Count
         TotalSize = 0
@@ -259,36 +259,36 @@ function Get-TestCacheStatistics {
         ExpiredEntries = 0
         ValidEntries = 0
     }
-    
+
     if ($cacheIndex.Count -gt 0) {
         $now = Get-Date
         $timestamps = @()
-        
+
         foreach ($entry in $cacheIndex.Values) {
             $timestamp = [DateTime]::Parse($entry.Timestamp)
             $timestamps += $timestamp
-            
+
             if (($now - $timestamp) -gt $script:MaxCacheAge) {
                 $stats.ExpiredEntries++
             } else {
                 $stats.ValidEntries++
             }
-            
+
             if (Test-Path $entry.ResultFile) {
                 $stats.TotalSize += (Get-Item $entry.ResultFile).Length
             }
         }
-        
+
         $stats.OldestEntry = ($timestamps | Sort-Object)[0]
         $stats.NewestEntry = ($timestamps | Sort-Object -Descending)[0]
     }
-    
+
     # Add cache directory size
     if (Test-Path $script:CachePath) {
         $stats.TotalSize = (Get-ChildItem $script:CachePath -Recurse -File | Measure-Object -Property Length -Sum).Sum
         $stats.TotalSizeMB = [Math]::Round($stats.TotalSize / 1MB, 2)
     }
-    
+
     return [PSCustomObject]$stats
 }
 
@@ -296,7 +296,7 @@ function Test-ShouldRunTests {
     <#
     .SYNOPSIS
     Determine if tests should be run based on recent changes
-    
+
     .DESCRIPTION
     Analyzes recent file changes and test history to determine if tests need to run
     #>
@@ -305,15 +305,15 @@ function Test-ShouldRunTests {
         [string]$SourcePath,
         [int]$MinutesSinceLastRun = 5
     )
-    
+
     # Check if source files changed
     if ($SourcePath -and (Test-Path $SourcePath)) {
         $recentChanges = Get-ChildItem -Path $SourcePath -Recurse -File -Include "*.ps1", "*.psm1", "*.psd1" |
-                        Where-Object { 
+                        Where-Object {
                             $_.LastWriteTime -gt (Get-Date).AddMinutes(-$MinutesSinceLastRun) -and
                             $_.FullName -notmatch 'test-results|\.cache|logs'
                         }
-        
+
         if ($recentChanges) {
             return @{
                 ShouldRun = $true
@@ -322,18 +322,18 @@ function Test-ShouldRunTests {
             }
         }
     }
-    
+
     # Check last test run time
     $cacheIndex = if (Test-Path $script:CacheIndexFile) {
         Get-Content $script:CacheIndexFile -Raw | ConvertFrom-Json -AsHashtable
     } else {
         @{}
     }
-    
+
     $recentRuns = $cacheIndex.Values | Where-Object {
         [DateTime]::Parse($_.Timestamp) -gt (Get-Date).AddMinutes(-$MinutesSinceLastRun)
     }
-    
+
     if ($recentRuns -and -not $recentRuns.Where({ $_.Summary.Failed -gt 0 })) {
         return @{
             ShouldRun = $false
@@ -341,7 +341,7 @@ function Test-ShouldRunTests {
             LastRun = ($recentRuns | Sort-Object { [DateTime]::Parse($_.Timestamp) } -Descending)[0]
         }
     }
-    
+
     return @{
         ShouldRun = $true
         Reason = "No recent successful test runs found"
@@ -357,21 +357,21 @@ function Get-IncrementalTestScope {
         [string]$BasePath,
         [string[]]$ChangedFiles
     )
-    
+
     $testScope = @{
         All = $false
         Modules = @()
         Scripts = @()
         TestFiles = @()
     }
-    
+
     foreach ($file in $ChangedFiles) {
         # If core files changed, run all tests
         if ($file -match 'AitherZero\.ps[md]1$' -or $file -match 'Initialize-.*\.ps1$') {
             $testScope.All = $true
             return $testScope
         }
-        
+
         # Map changed files to test scopes
         if ($file -match 'domains[/\\]([^/\\]+)[/\\]') {
             $module = $Matches[1]
@@ -379,17 +379,17 @@ function Get-IncrementalTestScope {
                 $testScope.Modules += $module
             }
         }
-        
+
         if ($file -match 'automation-scripts[/\\](\d{4}_.+\.ps1)$') {
             $testScope.Scripts += $Matches[1]
         }
-        
+
         # If test file changed, run it
         if ($file -match '\.Tests\.ps1$') {
             $testScope.TestFiles += $file
         }
     }
-    
+
     return $testScope
 }
 

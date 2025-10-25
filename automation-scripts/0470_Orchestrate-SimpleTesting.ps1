@@ -11,14 +11,14 @@
     - Automatically selects the best testing strategy
     - Easy for AI agents to understand and extend
     - Zero configuration reloading during execution
-    
+
 .PARAMETER Profile
     Testing profile: lightning (fastest), development (balanced), validation (thorough)
 .PARAMETER TestType
-    Override test type selection: unit, integration, all, smart, changed  
+    Override test type selection: unit, integration, all, smart, changed
 .PARAMETER MaxTime
     Maximum time to spend on testing (auto-adjusts strategy)
-    
+
 .NOTES
     Stage: Testing
     Order: 0470
@@ -30,10 +30,10 @@
 param(
     [ValidateSet('lightning', 'development', 'validation', 'ai')]
     [string]$Profile = 'development',
-    
+
     [ValidateSet('unit', 'integration', 'all', 'smart', 'changed')]
     [string]$TestType,
-    
+
     [int]$MaxTime = 300,  # 5 minutes
     [switch]$AI,
     [switch]$Learn,
@@ -53,7 +53,7 @@ $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 function Write-SimpleLog {
     param([string]$Message, [string]$Level = 'INFO')
     if ($Quiet) { return }
-    
+
     $time = (Get-Date).ToString("HH:mm:ss")
     $emoji = @{ 'INFO' = '🎯'; 'SUCCESS' = '✅'; 'ERROR' = '❌'; 'WARNING' = '⚠️' }[$Level]
     Write-Host "[$time] $emoji $Message" -ForegroundColor $(
@@ -77,9 +77,9 @@ $profiles = @{
         }
         MaxTime = 60
     }
-    
+
     'development' = @{
-        Description = 'Balanced testing for development workflow' 
+        Description = 'Balanced testing for development workflow'
         TestType = 'fast'
         Runner = '0480_Test-Simple.ps1'
         Parameters = @{
@@ -90,7 +90,7 @@ $profiles = @{
         }
         MaxTime = 180
     }
-    
+
     'validation' = @{
         Description = 'Comprehensive testing for validation'
         TestType = 'all'
@@ -103,7 +103,7 @@ $profiles = @{
         }
         MaxTime = 600
     }
-    
+
     'ai' = @{
         Description = 'AI-powered adaptive testing with learning'
         TestType = 'smart'
@@ -172,34 +172,34 @@ $argumentString = $arguments -join ' '
 Write-SimpleLog "🚀 Executing: $($profileConfig.Runner) $argumentString"
 
 if ($PSCmdlet.ShouldProcess("Test execution via $($profileConfig.Runner)", "Run tests")) {
-    
+
     $startTime = Get-Date
-    
+
     try {
         # Execute the test runner with timeout
         $job = Start-Job -ScriptBlock {
             param($RunnerPath, $Arguments)
             & $RunnerPath @Arguments
         } -ArgumentList $runnerPath, $profileConfig.Parameters
-        
+
         # Wait with timeout
         $completed = Wait-Job $job -Timeout $profileConfig.MaxTime
-        
+
         if (-not $completed) {
             Write-SimpleLog "⏰ Test execution timed out after $($profileConfig.MaxTime)s" "WARNING"
             Stop-Job $job
             Remove-Job $job
             exit 3
         }
-        
+
         # Get results
         $result = Receive-Job $job
         $exitCode = $job.State -eq 'Completed' ? 0 : 1
         Remove-Job $job
-        
+
         $endTime = Get-Date
         $duration = ($endTime - $startTime).TotalSeconds
-        
+
         # Create simple execution summary
         $summary = @{
             Profile = $Profile
@@ -210,7 +210,7 @@ if ($PSCmdlet.ShouldProcess("Test execution via $($profileConfig.Runner)", "Run 
             Timestamp = Get-Date
             Parameters = $profileConfig.Parameters
         }
-        
+
         # Save summary
         $summaryFile = Join-Path $projectRoot "tests/results/orchestration-summary-$timestamp.json"
         $resultsDir = [System.IO.Path]::GetDirectoryName($summaryFile)
@@ -218,14 +218,14 @@ if ($PSCmdlet.ShouldProcess("Test execution via $($profileConfig.Runner)", "Run 
             New-Item -Path $resultsDir -ItemType Directory -Force | Out-Null
         }
         $summary | ConvertTo-Json -Depth 10 | Set-Content $summaryFile
-        
+
         # Display orchestration summary
         if ($summary.Success) {
             Write-SimpleLog "🎉 Test orchestration completed successfully!" "SUCCESS"
         } else {
             Write-SimpleLog "❌ Test orchestration completed with failures" "ERROR"
         }
-        
+
         Write-Host @"
 
 🎯 Simple Test Orchestration Summary
@@ -241,14 +241,14 @@ Success:        $($summary.Success)
 "@
 
         Write-SimpleLog "📊 Orchestration summary saved to: $summaryFile"
-        
+
         exit $exitCode
-        
+
     } catch {
         Write-SimpleLog "Test orchestration failed: $_" "ERROR"
         exit 2
     }
-    
+
 } else {
     Write-SimpleLog "👀 DryRun: Would execute $($profileConfig.Runner) with profile '$Profile'"
     Write-SimpleLog "   Parameters: $argumentString"

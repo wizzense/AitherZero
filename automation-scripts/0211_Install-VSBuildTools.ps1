@@ -107,24 +107,24 @@ try {
         Write-ScriptLog "Visual Studio Build Tools is already installed"
         exit 0
     }
-    
+
     Write-ScriptLog "Installing Visual Studio Build Tools..."
 
     # Download URL - VS 2022 Build Tools
     $downloadUrl = 'https://aka.ms/vs/17/release/vs_BuildTools.exe'
     $tempInstaller = Join-Path $env:TEMP "vs_BuildTools_$(Get-Date -Format 'yyyyMMddHHmmss').exe"
-    
+
     try {
         if ($PSCmdlet.ShouldProcess($downloadUrl, 'Download VS Build Tools installer')) {
             Write-ScriptLog "Downloading from: $downloadUrl"
-            
+
             $ProgressPreference = 'SilentlyContinue'
             Invoke-WebRequest -Uri $downloadUrl -OutFile $tempInstaller -UseBasicParsing
             $ProgressPreference = 'Continue'
-            
+
             Write-ScriptLog "Downloaded to: $tempInstaller"
         }
-        
+
         # Prepare installation arguments
         $installArgs = @(
             '--quiet',
@@ -133,10 +133,10 @@ try {
             '--nocache',
             "--installPath", $installPath
         )
-    
+
         # Add workloads based on configuration
         $workloads = @()
-        
+
         if ($vsBuildConfig.Workloads) {
             $workloads = $vsBuildConfig.Workloads
         } else {
@@ -146,46 +146,46 @@ try {
                 'Microsoft.VisualStudio.Workload.NetCoreBuildTools'
             )
     }
-        
+
         foreach ($workload in $workloads) {
             $installArgs += '--add', $workload
         }
-        
+
         # Add components if specified
         if ($vsBuildConfig.Components) {
             foreach ($component in $vsBuildConfig.Components) {
                 $installArgs += '--add', $component
             }
         }
-        
+
         # Include recommended components by default
         if ($vsBuildConfig.IncludeRecommended -ne $false) {
             $installArgs += '--includeRecommended'
         }
-        
+
         # Run installer
         if ($PSCmdlet.ShouldProcess('VS Build Tools', "Install with workloads: $($workloads -join ', ')")) {
             Write-ScriptLog "Running installer with arguments..."
             Write-ScriptLog "Workloads: $($workloads -join ', ')" -Level 'Debug'
-            
+
             $process = Start-Process -FilePath $tempInstaller -ArgumentList $installArgs -Wait -PassThru
 
             # Check exit code
             switch ($process.ExitCode) {
                 0 { Write-ScriptLog "Installation completed successfully" }
-                3010 { 
+                3010 {
                     Write-ScriptLog "Installation completed successfully but requires restart" -Level 'Warning'
                     exit 3010
                 }
-                default { 
+                default {
                     throw "Installer exited with code: $($process.ExitCode)"
                 }
             }
         }
-        
+
         # Clean up
         Remove-Item $tempInstaller -Force -ErrorAction SilentlyContinue
-        
+
     } catch {
         # Clean up on failure
         if (Test-Path $tempInstaller) {
@@ -201,7 +201,7 @@ try {
         Write-ScriptLog "VS Build Tools installation could not be verified" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "VS Build Tools installed successfully"
     Write-ScriptLog "Developer command prompt available at: $($vsDevCmd.FullName)"
 
@@ -214,10 +214,10 @@ try {
             Write-ScriptLog "Could not set environment variables: $_" -Level 'Warning'
         }
     }
-    
+
     Write-ScriptLog "Visual Studio Build Tools installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during VS Build Tools installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

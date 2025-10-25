@@ -20,7 +20,7 @@ Invoke-LabStep -Config $Config -Body {
         if (-not (Get-Command code.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing Visual Studio Code..."
             $url = 'https://update.code.visualstudio.com/latest/win32-x64-user/stable'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'vscode' -Extension '.exe' -Action {
                 param($installer)
                 if ($PSCmdlet.ShouldProcess($installer, 'Install VS Code')) {

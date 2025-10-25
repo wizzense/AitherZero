@@ -23,7 +23,7 @@ try {
     # Initialize logging
     $logPath = "$env:CLAUDE_PROJECT_DIR/logs/claude-hooks.log"
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    
+
     function Write-HookLog {
         param([string]$Message, [string]$Level = "INFO")
         $logEntry = "[$timestamp] [$Level] SessionStart: $Message"
@@ -32,12 +32,12 @@ try {
         }
         Write-Host $logEntry
     }
-    
+
     Write-HookLog "Claude Code session starting for AitherZero project"
-    
+
     # Initialize project context
     $contextSections = @()
-    
+
     # Project overview
     $contextSections += @"
 # AitherZero Project Overview
@@ -59,21 +59,21 @@ AitherZero is a comprehensive infrastructure automation platform with AI-native 
 - ``./Start-AitherZero.ps1`` - Main interactive UI
 - ``Initialize-AitherModules.ps1`` - Initialize environment
 "@
-    
+
     # Environment status
     if ($env:CLAUDE_PROJECT_DIR) {
         try {
             Push-Location $env:CLAUDE_PROJECT_DIR
-            
+
             # Check AitherZero initialization
-            $envStatus = if ($env:AITHERZERO_INITIALIZED) { 
-                "✅ Initialized" 
+            $envStatus = if ($env:AITHERZERO_INITIALIZED) {
+                "✅ Initialized"
             } elseif (Test-Path "./Initialize-AitherModules.ps1") {
                 "⚠️ Not initialized (run Initialize-AitherModules.ps1)"
             } else {
                 "❌ Scripts not found"
             }
-            
+
             # Git information
             $gitInfo = ""
             try {
@@ -81,7 +81,7 @@ AitherZero is a comprehensive infrastructure automation platform with AI-native 
                 $lastCommit = git log -1 --pretty=format:"%h %s" 2>$null
                 $gitStatus = git status --porcelain 2>$null
                 $changedFiles = if ($gitStatus) { ($gitStatus | Measure-Object).Count } else { 0 }
-                
+
                 $gitInfo = @"
 - **Branch:** $currentBranch
 - **Last commit:** $lastCommit
@@ -90,7 +90,7 @@ AitherZero is a comprehensive infrastructure automation platform with AI-native 
             } catch {
                 $gitInfo = "- Git information unavailable"
             }
-            
+
             # Recent activity
             $recentActivity = ""
             $activityLog = "./logs/activity.json"
@@ -105,7 +105,7 @@ AitherZero is a comprehensive infrastructure automation platform with AI-native 
                     $recentActivity = "Recent activity log unavailable"
                 }
             }
-            
+
             $contextSections += @"
 
 ## Current Environment Status
@@ -119,7 +119,7 @@ $gitInfo
 
 $recentActivity
 "@
-            
+
             Pop-Location
         } catch {
             $contextSections += @"
@@ -137,34 +137,34 @@ $recentActivity
 - Consider setting CLAUDE_PROJECT_DIR environment variable
 "@
     }
-    
+
     # Available automation scripts
     if ($env:CLAUDE_PROJECT_DIR -and (Test-Path "$env:CLAUDE_PROJECT_DIR/automation-scripts")) {
         try {
             Push-Location "$env:CLAUDE_PROJECT_DIR/automation-scripts"
             $scriptCategories = @{
                 "Environment & Dependencies (0000-0099)" = @(0..99)
-                "Infrastructure & System (0100-0199)" = @(100..199) 
+                "Infrastructure & System (0100-0199)" = @(100..199)
                 "Development Tools (0200-0299)" = @(200..299)
                 "Deployment & Services (0300-0399)" = @(300..399)
                 "Testing & Validation (0400-0499)" = @(400..499)
                 "Reporting & Analytics (0500-0599)" = @(500..599)
                 "Development Workflow (0700-0799)" = @(700..799)
             }
-            
+
             $availableScripts = @()
             foreach ($category in $scriptCategories.Keys) {
                 $range = $scriptCategories[$category]
-                $scripts = Get-ChildItem -Filter "*.ps1" | Where-Object { 
+                $scripts = Get-ChildItem -Filter "*.ps1" | Where-Object {
                     $name = $_.BaseName
                     if ($name -match '^(\d{4})') {
                         $num = [int]$Matches[1]
                         $num -in $range
                     }
                 } | Select-Object -First 5
-                
+
                 if ($scripts.Count -gt 0) {
-                    $scriptList = $scripts | ForEach-Object { 
+                    $scriptList = $scripts | ForEach-Object {
                         $num = $_.BaseName.Substring(0,4)
                         $desc = $_.BaseName.Substring(5) -replace '_', ' '
                         "  - ``az $num`` - $desc"
@@ -172,7 +172,7 @@ $recentActivity
                     $availableScripts += "**$category**`n" + ($scriptList -join "`n")
                 }
             }
-            
+
             if ($availableScripts.Count -gt 0) {
                 $contextSections += @"
 
@@ -182,19 +182,19 @@ $($availableScripts -join "`n`n")
 *Use ``az <number>`` to run any script, or ``seq <pattern>`` for sequences*
 "@
             }
-            
+
             Pop-Location
         } catch {
             # Ignore automation script discovery errors
         }
     }
-    
+
     # Available orchestration playbooks
     if ($env:CLAUDE_PROJECT_DIR -and (Test-Path "$env:CLAUDE_PROJECT_DIR/orchestration/playbooks")) {
         try {
-            $playbooks = Get-ChildItem "$env:CLAUDE_PROJECT_DIR/orchestration/playbooks" -Filter "*.json" | 
+            $playbooks = Get-ChildItem "$env:CLAUDE_PROJECT_DIR/orchestration/playbooks" -Filter "*.json" |
                         Select-Object -First 10
-            
+
             if ($playbooks.Count -gt 0) {
                 $playbookList = $playbooks | ForEach-Object {
                     $name = $_.BaseName
@@ -205,7 +205,7 @@ $($availableScripts -join "`n`n")
                         "  - ``$name`` - Playbook configuration"
                     }
                 }
-                
+
                 $contextSections += @"
 
 ## Available Orchestration Playbooks
@@ -218,21 +218,21 @@ $($playbookList -join "`n")
             # Ignore playbook discovery errors
         }
     }
-    
+
     # Development tips based on current context
     $tips = @()
-    
+
     if (-not $env:AITHERZERO_INITIALIZED) {
         $tips += "🚀 **Get Started:** Run ``Initialize-AitherModules.ps1`` to set up the environment"
     }
-    
+
     if ($env:CLAUDE_PROJECT_DIR) {
         $tips += "📊 **Project Dashboard:** Use ``az 0511`` for real-time project status"
         $tips += "🧪 **Quick Test:** Use ``az 0402`` for unit tests or ``seq test-quick`` for full validation"
         $tips += "🔍 **Code Quality:** Use ``az 0404`` for PSScriptAnalyzer or ``az 0407`` for syntax validation"
         $tips += "📈 **Tech Debt:** Use ``seq 0520-0524`` for comprehensive analysis"
     }
-    
+
     if ($tips.Count -gt 0) {
         $contextSections += @"
 
@@ -240,7 +240,7 @@ $($playbookList -join "`n")
 $($tips -join "`n")
 "@
     }
-    
+
     # Add current development focus (if any active todos)
     if ($env:CLAUDE_PROJECT_DIR) {
         try {
@@ -266,18 +266,18 @@ This project includes Claude Code hooks that provide context-aware assistance:
             # Ignore if we can't read project state
         }
     }
-    
+
     # Generate the response
     $fullContext = $contextSections -join "`n"
-    
+
     $response = @{
-        action = "add_context" 
+        action = "add_context"
         context = $fullContext
     } | ConvertTo-Json -Compress
-    
+
     Write-Host $response
     Write-HookLog "Session context provided to Claude Code"
-    
+
     # Optional: Auto-initialize environment if not initialized
     if ($env:CLAUDE_PROJECT_DIR -and -not $env:AITHERZERO_INITIALIZED) {
         if (Test-Path "$env:CLAUDE_PROJECT_DIR/Initialize-AitherModules.ps1") {
@@ -293,9 +293,9 @@ This project includes Claude Code hooks that provide context-aware assistance:
             }
         }
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-Error "Session start hook execution failed: $_"
     # On error, don't block the session

@@ -6,7 +6,7 @@ Describe "0520_Analyze-ConfigurationUsage" {
         $script:TempDir = [System.IO.Path]::GetTempPath()
         $script:TestConfigPath = Join-Path $script:TempDir "config.psd1"
         $script:TestOutputPath = Join-Path $script:TempDir "analysis"
-        
+
         # Create test config file
         @{
             Core = @{
@@ -18,12 +18,12 @@ Describe "0520_Analyze-ConfigurationUsage" {
                 ValidateBeforeRun = $true
             }
         } | ConvertTo-Json -Depth 3 | Set-Content -Path $script:TestConfigPath
-        
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-AnalysisLog -MockWith { param($Message, $Component, $Level) Write-Host "[$Level] $Message" }
         Mock -CommandName Initialize-TechDebtAnalysis -MockWith { }
-        Mock -CommandName Get-FilesToAnalyze -MockWith { 
+        Mock -CommandName Get-FilesToAnalyze -MockWith {
             @(
                 @{ FullName = "TestScript1.ps1" }
                 @{ FullName = "TestScript2.ps1" }
@@ -32,14 +32,14 @@ Describe "0520_Analyze-ConfigurationUsage" {
         Mock -CommandName Get-CachedResults -MockWith { $null }
         Mock -CommandName Set-CachedResults -MockWith { }
         Mock -CommandName Save-AnalysisResults -MockWith { "analysis-results.json" }
-        Mock -CommandName Start-ThreadJob -MockWith { 
+        Mock -CommandName Start-ThreadJob -MockWith {
             @{ Id = 1 }
         }
-        Mock -CommandName Wait-Job -MockWith { 
+        Mock -CommandName Wait-Job -MockWith {
             @{ State = "Completed" }
         }
-        Mock -CommandName Receive-Job -MockWith { 
-            @("TestScript1.ps1") 
+        Mock -CommandName Receive-Job -MockWith {
+            @("TestScript1.ps1")
         }
         Mock -CommandName Remove-Job -MockWith { }
         Mock -CommandName Get-Content -MockWith {
@@ -104,7 +104,7 @@ Describe "0520_Analyze-ConfigurationUsage" {
 
     Context "Cache Functionality" {
         It "Should use cache when UseCache is specified" {
-            Mock -CommandName Get-CachedResults -MockWith { 
+            Mock -CommandName Get-CachedResults -MockWith {
                 @{
                     TotalSettings = 4
                     UsedSettings = 2
@@ -112,7 +112,7 @@ Describe "0520_Analyze-ConfigurationUsage" {
                     UsagePercentage = 50
                 }
             }
-            
+
             & $script:ScriptPath -ConfigPath $script:TestConfigPath -OutputPath $script:TestOutputPath -UseCache 2>&1
             Should -Invoke Get-CachedResults -Times 1
         }
@@ -133,7 +133,7 @@ Describe "0520_Analyze-ConfigurationUsage" {
 
         It "Should handle job timeouts gracefully" {
             Mock -CommandName Wait-Job -MockWith { throw "Timeout" }
-            
+
             { & $script:ScriptPath -ConfigPath $script:TestConfigPath -OutputPath $script:TestOutputPath } | Should -Not -Throw
         }
     }
@@ -175,14 +175,14 @@ Describe "0520_Analyze-ConfigurationUsage" {
     Context "Error Handling" {
         It "Should handle analysis failures gracefully" {
             Mock -CommandName Get-FilesToAnalyze -MockWith { throw "File access error" }
-            
+
             $result = & $script:ScriptPath -ConfigPath $script:TestConfigPath -OutputPath $script:TestOutputPath 2>&1
             $LASTEXITCODE | Should -Be 1
         }
 
         It "Should handle module import failures" {
             Mock -CommandName Import-Module -MockWith { throw "Module not found" }
-            
+
             $result = & $script:ScriptPath -ConfigPath $script:TestConfigPath -OutputPath $script:TestOutputPath 2>&1
             $LASTEXITCODE | Should -Be 1
         }

@@ -68,7 +68,7 @@ try {
         if (-not $awsCmd) {
             $awsCmd = Get-Command aws.exe -ErrorAction SilentlyContinue
         }
-        
+
         if ($awsCmd) {
             Write-ScriptLog "AWS CLI is already installed at: $($awsCmd.Source)"
 
@@ -79,49 +79,49 @@ try {
             } catch {
                 Write-ScriptLog "Could not determine version" -Level 'Debug'
             }
-            
+
             exit 0
         }
-        
+
         Write-ScriptLog "Installing AWS CLI v2 for Windows..."
-        
+
         # Download URL for AWS CLI v2
         $downloadUrl = 'https://awscli.amazonaws.com/AWSCLIV2.msi'
         $tempInstaller = Join-Path $env:TEMP "AWSCLIV2_$(Get-Date -Format 'yyyyMMddHHmmss').msi"
-        
+
         try {
             if ($PSCmdlet.ShouldProcess($downloadUrl, 'Download AWS CLI installer')) {
                 Write-ScriptLog "Downloading from: $downloadUrl"
-                
+
                 $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempInstaller -UseBasicParsing
                 $ProgressPreference = 'Continue'
-                
+
                 Write-ScriptLog "Downloaded to: $tempInstaller"
             }
 
             # Run MSI installer
             if ($PSCmdlet.ShouldProcess('AWS CLI', 'Install')) {
                 Write-ScriptLog "Running installer..."
-                
+
                 $msiArgs = @(
                     '/i', "`"$tempInstaller`"",
                     '/quiet',
                     '/norestart'
                 )
-            
+
                 $process = Start-Process -FilePath 'msiexec.exe' -ArgumentList $msiArgs -Wait -PassThru
-                
+
                 if ($process.ExitCode -ne 0) {
                     throw "MSI installer exited with code: $($process.ExitCode)"
                 }
-                
+
                 Write-ScriptLog "Installation completed"
             }
 
             # Clean up
             Remove-Item $tempInstaller -Force -ErrorAction SilentlyContinue
-            
+
         } catch {
             # Clean up on failure
             if (Test-Path $tempInstaller) {
@@ -129,43 +129,43 @@ try {
             }
             throw
         }
-        
+
     } elseif ($IsLinux) {
         # Linux installation
         Write-ScriptLog "Installing AWS CLI v2 for Linux..."
-        
+
         # Check if already installed
         if (Get-Command aws -ErrorAction SilentlyContinue) {
             Write-ScriptLog "AWS CLI is already installed"
-            
+
             try {
                 $version = & aws --version 2>&1
                 Write-ScriptLog "Current version: $version"
             } catch {
                 Write-ScriptLog "Could not determine version" -Level 'Debug'
             }
-            
+
             exit 0
         }
-        
+
         # Download and install AWS CLI v2
         if ($PSCmdlet.ShouldProcess('AWS CLI v2', 'Download and install')) {
             $tempDir = Join-Path $env:TEMP "awscli_$(Get-Date -Format 'yyyyMMddHHmmss')"
             New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-            
+
             try {
                 $downloadUrl = 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip'
                 $zipPath = Join-Path $tempDir 'awscliv2.zip'
-                
+
                 Write-ScriptLog "Downloading AWS CLI v2..."
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath -UseBasicParsing
-                
+
                 Write-ScriptLog "Extracting..."
                 & unzip -q $zipPath -d $tempDir
-                
+
                 Write-ScriptLog "Installing..."
                 & sudo "$tempDir/aws/install"
-                
+
                 # Clean up
                 Remove-Item $tempDir -Recurse -Force
             } catch {
@@ -175,17 +175,17 @@ try {
                 throw
             }
         }
-        
+
     } elseif ($IsMacOS) {
         # macOS installation
         Write-ScriptLog "Installing AWS CLI for macOS..."
-        
+
         # Check if already installed
         if (Get-Command aws -ErrorAction SilentlyContinue) {
             Write-ScriptLog "AWS CLI is already installed"
             exit 0
         }
-        
+
         # Install using Homebrew
         if (Get-Command brew -ErrorAction SilentlyContinue) {
             if ($PSCmdlet.ShouldProcess('awscli', 'Install via Homebrew')) {
@@ -195,14 +195,14 @@ try {
             # Install using pkg installer
             $downloadUrl = 'https://awscli.amazonaws.com/AWSCLIV2.pkg'
             $tempInstaller = Join-Path $env:TMPDIR "AWSCLIV2_$(Get-Date -Format 'yyyyMMddHHmmss').pkg"
-            
+
             try {
                 Write-ScriptLog "Downloading installer..."
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempInstaller -UseBasicParsing
-                
+
                 Write-ScriptLog "Running installer..."
                 & sudo installer -pkg $tempInstaller -target /
-                
+
                 Remove-Item $tempInstaller -Force
             } catch {
                 if (Test-Path $tempInstaller) {
@@ -219,7 +219,7 @@ try {
         Write-ScriptLog "AWS CLI command not found after installation" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "AWS CLI installed successfully"
 
     # Test AWS CLI
@@ -233,17 +233,17 @@ try {
     # Configure if settings provided
     if ($awsCliConfig.DefaultSettings) {
         Write-ScriptLog "Configuring AWS CLI defaults..."
-        
+
         foreach ($setting in $awsCliConfig.DefaultSettings.GetEnumerator()) {
             if ($PSCmdlet.ShouldProcess("aws configure set $($setting.Key)", 'Configure')) {
                 & aws configure set $setting.Key $setting.Value 2>&1 | ForEach-Object { Write-ScriptLog $_ -Level 'Debug' }
             }
         }
     }
-    
+
     Write-ScriptLog "AWS CLI installation completed successfully"
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during AWS CLI installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

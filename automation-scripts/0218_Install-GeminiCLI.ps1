@@ -79,7 +79,7 @@ try {
         Write-ScriptLog "npm is required but not found. Please ensure Node.js is properly installed" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Prerequisites satisfied"
 
     # Check if Gemini CLI is already installed
@@ -87,7 +87,7 @@ try {
 
     if ($geminiCmd) {
         Write-ScriptLog "Gemini CLI is already installed"
-        
+
         # Get version
         try {
             # Check if command exists and is executable
@@ -108,10 +108,10 @@ try {
         } catch {
             Write-ScriptLog "Could not determine version" -Level 'Debug'
         }
-        
+
         exit 0
     }
-    
+
     Write-ScriptLog "Installing Gemini CLI..."
 
     # Install via npm
@@ -123,7 +123,7 @@ try {
             } else {
                 "@google/generative-ai-cli@latest"
             }
-            
+
             Write-ScriptLog "Installing package: $packageName"
 
             # Run npm install
@@ -134,7 +134,7 @@ try {
             if ($LASTEXITCODE -ne 0) {
                 throw "npm install failed with exit code: $LASTEXITCODE"
             }
-            
+
         } catch {
             Write-ScriptLog "Failed to install Gemini CLI via npm: $_" -Level 'Error'
             throw
@@ -148,7 +148,7 @@ try {
         Write-ScriptLog "Gemini CLI command not found after installation" -Level 'Error'
         exit 1
     }
-    
+
     Write-ScriptLog "Gemini CLI installed successfully at: $($geminiCmd.Source)"
 
     # Test Gemini CLI
@@ -166,7 +166,7 @@ try {
             try {
                 # Set for current session
                 $env:GEMINI_API_KEY = $geminiConfig.ApiKey
-                
+
                 # Persist based on platform
                 if ($IsWindows) {
                     [Environment]::SetEnvironmentVariable('GEMINI_API_KEY', $geminiConfig.ApiKey, 'User')
@@ -177,7 +177,7 @@ try {
                         "~/.zshrc",
                         "~/.profile"
                     )
-                
+
                     foreach ($ProfileNamePath in $ProfileNamePaths) {
                         $expandedPath = [System.Environment]::ExpandEnvironmentVariables($ProfileNamePath)
                         if (Test-Path $expandedPath) {
@@ -189,7 +189,7 @@ try {
                         }
                     }
                 }
-                
+
                 Write-ScriptLog "API key configured successfully"
             } catch {
                 Write-ScriptLog "Failed to configure API key: $_" -Level 'Warning'
@@ -202,7 +202,7 @@ try {
         Write-ScriptLog "Configuring WSL integration..."
         # WSL integration would be handled here if needed
     }
-    
+
     Write-ScriptLog "Gemini CLI installation completed successfully"
     Write-ScriptLog ""
     Write-ScriptLog "Next steps:"
@@ -214,9 +214,9 @@ try {
         Write-ScriptLog "4. Set GEMINI_API_KEY environment variable"
         Write-ScriptLog "5. Get API key from: https://aistudio.google.com/app/apikey"
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-ScriptLog "Critical error during Gemini CLI installation: $_" -Level 'Error'
     Write-ScriptLog $_.ScriptStackTrace -Level 'Error'

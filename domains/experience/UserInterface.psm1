@@ -109,7 +109,7 @@ if (-not (Get-Variable -Name 'AitherZeroUIInitialized' -Scope Global -ErrorActio
         if ($script:UIState.ContainsKey('EnableEmoji')) { $logData.EnableEmoji = $script:UIState.EnableEmoji }
         if ($script:UIState.ContainsKey('MenuStyle')) { $logData.MenuStyle = $script:UIState.MenuStyle }
         if ($script:UIState.ContainsKey('ProgressBarStyle')) { $logData.ProgressBarStyle = $script:UIState.ProgressBarStyle }
-        
+
         Write-UILog -Message "User interface module initialized" -Data $logData
     } else {
         Write-UILog -Message "User interface module initialized"
@@ -173,7 +173,7 @@ function Initialize-AitherUI {
 
     # Load configuration (lazy-load configuration module first)
     Import-ConfigurationModule
-    
+
     $uiConfig = $null
     if ($Configuration) {
         $uiConfig = if ($Configuration.UI) { $Configuration.UI } else { $null }
@@ -184,14 +184,14 @@ function Initialize-AitherUI {
     }
 
     # Safe property access helper (defined outside to be available always)
-    $getProp = { param($name, $default, $config) 
+    $getProp = { param($name, $default, $config)
         if (-not $config) { return $default }
-        if ($config -is [hashtable] -and $config.ContainsKey($name)) { 
-            return $config[$name] 
-        } elseif ($config.PSObject -and $config.PSObject.Properties[$name]) { 
-            return $config.$name 
-        } 
-        return $default 
+        if ($config -is [hashtable] -and $config.ContainsKey($name)) {
+            return $config[$name]
+        } elseif ($config.PSObject -and $config.PSObject.Properties[$name]) {
+            return $config.$name
+        }
+        return $default
     }
 
     # Apply configuration settings
@@ -205,10 +205,10 @@ function Initialize-AitherUI {
             $enableColors = & $getProp 'EnableColors' $true $uiConfig
             if ($enableColors -eq $false) { $DisableColors = $true }
         }
-        
+
         # Store UI configuration in state
         $script:UIState.Config = $uiConfig
-        
+
         $script:UIState.EnableEmoji = & $getProp 'EnableEmoji' $true $uiConfig
         $script:UIState.MenuStyle = & $getProp 'MenuStyle' 'Interactive' $uiConfig
         $script:UIState.ProgressBarStyle = & $getProp 'ProgressBarStyle' 'Classic' $uiConfig
@@ -225,7 +225,7 @@ function Initialize-AitherUI {
         $script:UIState.ClearScreenOnStart = & $getProp 'ClearScreenOnStart' $true $uiConfig
         $script:UIState.ShowExecutionTime = & $getProp 'ShowExecutionTime' $true $uiConfig
         $script:UIState.ShowMemoryUsage = & $getProp 'ShowMemoryUsage' $false $uiConfig
-        
+
         # Load custom themes from config (safe property access)
         $themes = & $getProp 'Themes' $null $uiConfig
         if ($themes -and $themes.PSObject -and $themes.PSObject.Properties) {
@@ -292,11 +292,11 @@ function Write-UIText {
         [Parameter(Mandatory, Position = 0)]
         [AllowEmptyString()]
         [string]$Message,
-        
+
         [string]$Color = 'Info',
-        
+
         [switch]$NoNewline,
-        
+
         [int]$Indent = 0
     )
 
@@ -309,18 +309,18 @@ function Write-UIText {
 
     # Resolve color from theme
     $resolvedColor = 'White'  # Safe default
-    
+
     try {
         # Debug output
         if ($Color -eq 'MenuBorder' -or $Color -eq 'MenuText' -or $Color -eq 'MenuSelected') {
             Write-Debug "Resolving color: $Color"
             Write-Debug "Colors available: $($script:UIState.Colors.Keys -join ', ')"
         }
-        
+
         if ($script:UIState.Colors -and $script:UIState.Colors.ContainsKey($Color)) {
             $colorValue = $script:UIState.Colors[$Color]
             Write-Debug "Found color mapping: $Color -> $colorValue"
-            
+
             # Validate it's a valid ConsoleColor
             if ([System.Enum]::GetNames([System.ConsoleColor]) -contains $colorValue) {
                 $resolvedColor = $colorValue
@@ -342,7 +342,7 @@ function Write-UIText {
     if ($Indent -gt 0) {
         $Message = (' ' * $Indent) + $Message
     }
-    
+
     try {
         Write-Host $Message -ForegroundColor $resolvedColor -NoNewline:$NoNewline
     }
@@ -374,40 +374,40 @@ function Show-UIMenu {
     [CmdletBinding()]
     param(
         [string]$Title,
-        
+
         [Parameter(Mandatory)]
         [array]$Items,
-        
+
         [switch]$MultiSelect,
-        
+
         [switch]$ShowNumbers,
-        
+
         [switch]$ReturnIndex,
-        
+
         [string]$Prompt = "Select an option",
-        
+
         [hashtable]$CustomActions = @{},
-        
+
         [switch]$NonInteractive
     )
-    
+
     # Always use better menu system unless in non-interactive mode
     $betterMenuModule = Join-Path $PSScriptRoot "BetterMenu.psm1"
-    
+
     # Check if we're in non-interactive mode
     $isNonInteractive = $NonInteractive -or $env:CI -or $env:GITHUB_ACTIONS -or $env:TF_BUILD -or $env:AITHERZERO_NONINTERACTIVE
-    
+
     if (-not $isNonInteractive) {
         if (Test-Path $betterMenuModule) {
             # Import BetterMenu module if not already loaded
             if (-not (Get-Module -Name BetterMenu)) {
                 Import-Module $betterMenuModule -Force -Global -ErrorAction Stop
             }
-            
+
             $result = Show-BetterMenu -Title $Title -Items $Items `
                 -MultiSelect:$MultiSelect -ShowNumbers:$ShowNumbers `
                 -CustomActions $CustomActions
-            
+
             if ($ReturnIndex -and $result -and $result -isnot [hashtable]) {
                 # Convert item back to index
                 for ($i = 0; $i -lt $Items.Count; $i++) {
@@ -416,35 +416,35 @@ function Show-UIMenu {
                     }
                 }
             }
-            
+
             return $result
         } else {
             throw "BetterMenu.psm1 not found at $betterMenuModule. Interactive menu system is required."
         }
     }
-    
+
     # Non-interactive mode - simple numbered prompt for automation/CI
     if ($isNonInteractive) {
         Write-UILog -Level Debug -Message "Using non-interactive mode"
-        
+
         # Display menu items
         if ($Title) {
             Write-Host "`n$Title" -ForegroundColor Cyan
             Write-Host ("=" * $Title.Length) -ForegroundColor DarkCyan
         }
-        
+
         for ($i = 0; $i -lt $Items.Count; $i++) {
             $item = $Items[$i]
             $displayText = if ($item -is [string]) { $item } else { $item.Name }
             $prefix = "[$($i + 1)]"
-            
+
             Write-Host "$prefix $displayText" -ForegroundColor White
-            
+
             if ($item -isnot [string] -and $item.PSObject.Properties['Description'] -and $item.Description) {
                 Write-Host "    $($item.Description)" -ForegroundColor DarkGray
             }
         }
-        
+
         # Show custom actions
         if ($CustomActions.Count -gt 0) {
             Write-Host ""
@@ -452,16 +452,16 @@ function Show-UIMenu {
                 Write-Host "[$($action.Key)] $($action.Value)" -ForegroundColor Cyan
             }
         }
-        
+
         Write-Host "`n$Prompt" -ForegroundColor Yellow -NoNewline
         Write-Host ": " -NoNewline
         $selection = Read-Host
-        
+
         # Process selection
         if ($CustomActions -and $selection -and $CustomActions.ContainsKey($selection.ToUpper())) {
             return @{ Action = $selection.ToUpper() }
         }
-        
+
         if ($selection -match '^\d+$') {
             $index = [int]$selection - 1
             if ($index -ge 0 -and $index -lt $Items.Count) {
@@ -472,7 +472,7 @@ function Show-UIMenu {
                 }
             }
         }
-        
+
         return $null
     }
 }
@@ -499,7 +499,7 @@ function Show-UIBorder {
     if (-not $Width) {
         $Width = Get-TerminalWidth
     }
-    
+
     $borders = @{
         Single = @{
             TopLeft = '┌'
@@ -534,7 +534,7 @@ function Show-UIBorder {
             Vertical = '|'
         }
     }
-    
+
     $b = $borders[$Style]
     $innerWidth = $Width - 2
 
@@ -545,14 +545,14 @@ function Show-UIBorder {
         $titlePadded = " $Title "
         $titleStart = [Math]::Floor(($innerWidth - $titlePadded.Length) / 2)
         if ($titleStart -gt 0) {
-            $top = $b.TopLeft + 
-                   ($b.Horizontal * $titleStart) + 
-                   $titlePadded + 
-                   ($b.Horizontal * ($innerWidth - $titleStart - $titlePadded.Length)) + 
+            $top = $b.TopLeft +
+                   ($b.Horizontal * $titleStart) +
+                   $titlePadded +
+                   ($b.Horizontal * ($innerWidth - $titleStart - $titlePadded.Length)) +
                    $b.TopRight
         }
     }
-    
+
     # Always use Cyan for borders to avoid issues
     Write-Host $top -ForegroundColor Cyan
 }
@@ -574,15 +574,15 @@ function Show-UIProgress {
     param(
         [Parameter(Mandatory)]
         [string]$Activity,
-        
+
         [string]$Status = '',
-        
+
         [Parameter(Mandatory)]
         [ValidateRange(0, 100)]
         [int]$PercentComplete,
-        
+
         [int]$Id = 1,
-        
+
         [switch]$Completed
     )
 
@@ -612,13 +612,13 @@ function Show-UIProgress {
         $elapsed.TotalSeconds * (100 / $PercentComplete)
     } else { 0 }
     $remaining = $estimatedTotal - $elapsed.TotalSeconds
-    
+
     $statusText = $Status
     if ($remaining -gt 0 -and $PercentComplete -gt 0) {
         $remainingTime = [TimeSpan]::FromSeconds($remaining)
         $statusText += " (ETA: $($remainingTime.ToString('mm\:ss')))"
     }
-    
+
     Write-Progress -Activity $Activity -Status $statusText -PercentComplete $PercentComplete -Id $Id
 }
 
@@ -639,12 +639,12 @@ function Show-UINotification {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [ValidateSet('Info', 'Success', 'Warning', 'Error')]
         [string]$Type = 'Info',
-        
+
         [string]$Title,
-        
+
         [int]$Duration = 0
     )
 
@@ -654,7 +654,7 @@ function Show-UINotification {
         Warning = '⚠️ '
         Error = '❌'
     }
-    
+
     $icon = if ($script:UIState.EnableEmoji -and (Test-EmojiSupport)) { $icons[$Type] } else { "[$Type]" }
     $color = $Type
 
@@ -687,13 +687,13 @@ function Show-UIPrompt {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [string]$DefaultValue,
-        
+
         [string[]]$ValidateSet,
-        
+
         [switch]$Secret,
-        
+
         [switch]$Required
     )
 
@@ -704,11 +704,11 @@ function Show-UIPrompt {
     if ($ValidateSet) {
         $promptText += " ($(($ValidateSet -join '/'))))"
     }
-    
+
     do {
         Write-UIText "$promptText" -Color 'Primary' -NoNewline
         Write-Host ": " -NoNewline
-        
+
         if ($Secret) {
             $response = Read-Host -AsSecureString
             $response = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
@@ -717,24 +717,24 @@ function Show-UIPrompt {
     } else {
             $response = Read-Host
         }
-        
+
         if (-not $response -and $DefaultValue) {
             $response = $DefaultValue
         }
-        
+
         if ($ValidateSet -and $response -and $response -notin $ValidateSet) {
             Write-UIText "Invalid value. Please choose from: $($ValidateSet -join ', ')" -Color 'Error'
             continue
         }
-        
+
         if ($Required -and -not $response) {
             Write-UIText "This field is required." -Color 'Error'
             continue
         }
-        
+
         break
     } while ($true)
-    
+
     return $response
 }
 
@@ -753,9 +753,9 @@ function Show-UITable {
     param(
         [Parameter(Mandatory)]
         [array]$Data,
-        
+
         [string[]]$Properties,
-        
+
         [string]$Title
     )
 
@@ -786,15 +786,15 @@ function Show-UISpinner {
     param(
         [Parameter(Mandatory)]
         [scriptblock]$ScriptBlock,
-        
+
         [string]$Message = "Processing",
-        
+
         [object[]]$ArgumentList = @()
     )
 
     $spinChars = '|/-\'
     $i = 0
-    
+
     # Pass arguments to the job if provided
     $jobParams = @{
         ScriptBlock = $ScriptBlock
@@ -802,21 +802,21 @@ function Show-UISpinner {
     if ($ArgumentList.Count -gt 0) {
         $jobParams['ArgumentList'] = $ArgumentList
     }
-    
+
     $job = Start-Job @jobParams
-    
+
     while ($job.State -eq 'Running') {
         $spinner = $spinChars[$i % $spinChars.Length]
         Write-Host "`r$Message $spinner" -NoNewline -ForegroundColor $script:UIState.Colors.Primary
         Start-Sleep -Milliseconds 100
         $i++
     }
-    
+
     Write-Host "`r$Message Done" -ForegroundColor $script:UIState.Colors.Success
-    
+
     $result = Receive-Job -Job $job
     Remove-Job -Job $job
-    
+
     return $result
 }
 
@@ -829,7 +829,7 @@ function Get-TerminalWidth {
     if (-not $script:UIState) {
         Initialize-UIState
     }
-    
+
     # Use cached value if available
     if ($script:UIState -and $script:UIState.ContainsKey('TerminalWidth') -and $null -ne $script:UIState.TerminalWidth) {
         return $script:UIState.TerminalWidth
@@ -842,7 +842,7 @@ function Get-TerminalWidth {
             return $script:UIState.TerminalWidth
         }
     } catch {}
-    
+
     $script:UIState.TerminalWidth = 80  # Default fallback
     return $script:UIState.TerminalWidth
 }
@@ -856,7 +856,7 @@ function Test-EmojiSupport {
     if (-not $script:UIState) {
         Initialize-UIState
     }
-    
+
     # Use cached value if available
     if ($script:UIState -and $script:UIState.ContainsKey('SupportsEmoji') -and $null -ne $script:UIState.SupportsEmoji) {
         return $script:UIState.SupportsEmoji
@@ -887,7 +887,7 @@ function Show-UIWizard {
         $steps = @(
             @{
                 Name = "Welcome"
-                Script = { 
+                Script = {
                     Show-UINotification -Message "Welcome to the setup wizard" -Type Info
                     return $true
                 }
@@ -906,7 +906,7 @@ function Show-UIWizard {
     param(
         [Parameter(Mandatory)]
         [array]$Steps,
-        
+
         [string]$Title = "Wizard"
     )
 
@@ -915,40 +915,40 @@ function Show-UIWizard {
         Results = @{}
         Cancelled = $false
     }
-    
+
     while ($wizardState.CurrentStep -lt $Steps.Count -and -not $wizardState.Cancelled) {
         $step = $Steps[$wizardState.CurrentStep]
-        
+
         if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
             try { Clear-Host } catch { }
         }
         Show-UIBorder -Title "$Title - Step $($wizardState.CurrentStep + 1) of $($Steps.Count): $($step.Name)" -Style 'Double'
-        
+
         # Show progress
         $percentComplete = ($wizardState.CurrentStep / $Steps.Count) * 100
         Show-UIProgress -Activity $Title -Status $step.Name -PercentComplete $percentComplete
-        
+
         # Execute step
         $stepResult = & $step.Script
-        
+
         if ($stepResult -eq $false) {
             # Step failed or user cancelled
             $wizardState.Cancelled = $true
             break
         }
-        
+
         # Store result if it's a hashtable
         if ($stepResult -is [hashtable]) {
             foreach ($key in $stepResult.Keys) {
                 $wizardState.Results[$key] = $stepResult[$key]
             }
         }
-        
+
         # Navigation
         if ($wizardState.CurrentStep -lt ($Steps.Count - 1)) {
             Write-UIText "`n" -Color 'Info'
             $nav = Show-UIPrompt -Message "Continue to next step?" -ValidateSet @('Yes', 'No', 'Back') -DefaultValue 'Yes'
-            
+
             switch ($nav) {
                 'Yes' { $wizardState.CurrentStep++ }
                 'Back' { if ($wizardState.CurrentStep -gt 0) { $wizardState.CurrentStep-- } }
@@ -958,14 +958,14 @@ function Show-UIWizard {
             $wizardState.CurrentStep++
         }
     }
-    
+
     Show-UIProgress -Activity $Title -Status "Complete" -PercentComplete 100 -Completed
 
     if ($wizardState.Cancelled) {
         Show-UINotification -Message "Wizard cancelled" -Type Warning
         return $null
     }
-    
+
     return $wizardState.Results
 }
 
@@ -982,9 +982,9 @@ function Show-UIWelcome {
     if (-not $script:UIState.ShowWelcomeMessage) {
         return
     }
-    
+
     $emoji = if ($script:UIState.EnableEmoji -and (Test-EmojiSupport)) { "🚀 " } else { "" }
-    
+
     Write-UIText "$($emoji)Welcome to AitherZero!" -Color 'Primary'
 
     # Load version info if available
@@ -992,7 +992,7 @@ function Show-UIWelcome {
     if (Get-Command Get-ConfigValue -ErrorAction SilentlyContinue) {
         $version = Get-ConfigValue -Path 'Core.Version' -ErrorAction SilentlyContinue
         $environment = Get-ConfigValue -Path 'Core.Environment' -ErrorAction SilentlyContinue
-        
+
         if ($version) { Write-UIText "Version: $version" -Color 'Muted' }
         if ($environment) { Write-UIText "Environment: $environment" -Color 'Muted' }
     }

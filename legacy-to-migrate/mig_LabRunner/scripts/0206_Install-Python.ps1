@@ -20,12 +20,12 @@ Invoke-LabStep -Config $Config -Body {
         if (-not (Get-Command python.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing Python..."
             $url = 'https://www.python.org/ftp/python/3.12.3/python-3.12.3-amd64.exe'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'python-installer' -Extension '.exe' -Action {
                 param($installer)
                 if ($PSCmdlet.ShouldProcess($installer, 'Install Python')) {
                     Start-Process -FilePath $installer -ArgumentList '/quiet InstallAllUsers=1 PrependPath=1' -Wait
-                    
+
                     # Refresh PATH for the current session
                     $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
                     $machinePath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')

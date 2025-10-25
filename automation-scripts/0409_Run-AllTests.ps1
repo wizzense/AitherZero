@@ -5,12 +5,12 @@
     Execute all tests for AitherZero (unit, integration, E2E)
 .DESCRIPTION
     Runs all test suites without tag filtering
-    
+
     Exit Codes:
     0   - All tests passed
     1   - One or more tests failed
     2   - Test execution error
-    
+
 .NOTES
     Stage: Testing
     Order: 0409
@@ -86,7 +86,7 @@ try {
         Write-ScriptLog -Message "DRY RUN: Would execute all tests"
         Write-ScriptLog -Message "Test path: $Path"
         Write-ScriptLog -Message "Coverage enabled: $(-not $NoCoverage)"
-        
+
         # List test files that would be run
         if (Test-Path $Path) {
             $testFiles = @(Get-ChildItem -Path $Path -Filter "*.Tests.ps1" -Recurse)
@@ -112,7 +112,7 @@ try {
         Write-ScriptLog -Level Warning -Message "No test files found in: $Path"
         exit 0
     }
-    
+
     Write-ScriptLog -Message "Found $($testFiles.Count) test files"
 
     # Load configuration
@@ -133,12 +133,12 @@ try {
 
     # Ensure Pester is available
     $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]$testingConfig.MinVersion } | Sort-Object Version -Descending | Select-Object -First 1
-    
+
     if (-not $pesterModule) {
         Write-ScriptLog -Level Error -Message "Pester $($testingConfig.MinVersion) or higher is required. Run 0400_Install-TestingTools.ps1 first."
         exit 2
     }
-    
+
     Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
     Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
 
@@ -169,7 +169,7 @@ try {
             New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $pesterConfig.TestResult.Enabled = $true
     $pesterConfig.TestResult.OutputPath = Join-Path $OutputPath "AllTests-$timestamp.xml"
@@ -192,7 +192,7 @@ try {
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Start-PerformanceTrace -Name "AllTests" -Description "All tests execution"
     }
-    
+
     Write-ScriptLog -Message "Executing all tests..."
     if ($PSCmdlet.ShouldProcess("All tests", "Execute test suite")) {
         $result = Invoke-Pester -Configuration $pesterConfig
@@ -219,7 +219,7 @@ try {
         Skipped = $result.SkippedCount
         Duration = if ($duration) { $duration.TotalSeconds } else { $result.Duration.TotalSeconds }
     }
-    
+
     Write-ScriptLog -Message "All tests execution completed" -Data $testSummary
 
     # Display summary
@@ -236,7 +236,7 @@ try {
         Write-Host "  Coverage: $($coveragePercent)%" -ForegroundColor $(
             if ($coveragePercent -ge $testingConfig.CodeCoverage.MinimumPercent) { 'Green' } else { 'Yellow' }
         )
-    
+
         # Handle different Pester versions
         if ($result.CodeCoverage.PSObject.Properties['CommandsAnalyzedCount']) {
             # Pester 5.5+
@@ -251,7 +251,7 @@ try {
             # Fallback for other versions
             Write-Host "  Files Covered: $($result.CodeCoverage.FilesAnalyzedCount ?? 'N/A')"
         }
-        
+
         if ($coveragePercent -lt $testingConfig.CodeCoverage.MinimumPercent) {
             Write-ScriptLog -Level Warning -Message "Code coverage below minimum threshold ($($testingConfig.CodeCoverage.MinimumPercent)%)"
         }

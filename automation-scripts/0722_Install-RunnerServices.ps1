@@ -69,7 +69,7 @@ function Get-ServiceType {
     if ($ServiceType -ne 'Auto') {
         return $ServiceType
     }
-    
+
     if ($IsWindows) {
         return 'WindowsService'
     } elseif (Get-Command systemctl -ErrorAction SilentlyContinue) {
@@ -83,9 +83,9 @@ function Get-ServiceType {
 
 function Find-RunnerDirectory {
     param([string]$Name)
-    
+
     $searchPaths = @()
-    
+
     if ($IsWindows) {
         $searchPaths += "$env:ProgramFiles\GitHub-Runner"
         $searchPaths += "$env:ProgramFiles\actions-runner"
@@ -95,7 +95,7 @@ function Find-RunnerDirectory {
         $searchPaths += "/opt/actions-runner"
         $searchPaths += "/usr/local/actions-runner"
     }
-    
+
     foreach ($path in $searchPaths) {
         if (Test-Path $path) {
             # Check if this is the right runner by looking for config files
@@ -114,7 +114,7 @@ function Find-RunnerDirectory {
             }
         }
     }
-    
+
     throw "Could not find runner directory for: $Name"
 }
 
@@ -123,23 +123,23 @@ function Test-ServicePrerequisites {
         [string]$ServiceTypeToUse,
         [string]$RunnerDirectory
     )
-    
+
     Write-ServiceLog "Testing service prerequisites..." -Level Information
-    
+
     $issues = @()
-    
+
     # Check runner directory exists
     if (-not (Test-Path $RunnerDirectory)) {
         $issues += "Runner directory does not exist: $RunnerDirectory"
     }
-    
+
     # Check service-specific prerequisites
     switch ($ServiceTypeToUse) {
         'WindowsService' {
             if (-not $IsWindows) {
                 $issues += "WindowsService type requires Windows platform"
             }
-            
+
             if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
                 $issues += "Administrator privileges required for Windows services"
             }
@@ -148,7 +148,7 @@ function Test-ServicePrerequisites {
             if (-not (Get-Command systemctl -ErrorAction SilentlyContinue)) {
                 $issues += "systemctl command not available (SystemD not installed)"
             }
-            
+
             if (-not (Get-Command sudo -ErrorAction SilentlyContinue)) {
                 $issues += "sudo command required for SystemD service management"
             }
@@ -157,19 +157,19 @@ function Test-ServicePrerequisites {
             if (-not $IsMacOS) {
                 $issues += "LaunchD type requires macOS platform"
             }
-            
+
             if (-not (Get-Command launchctl -ErrorAction SilentlyContinue)) {
                 $issues += "launchctl command not available"
             }
         }
     }
-    
+
     if ($issues.Count -gt 0) {
         Write-ServiceLog "Prerequisites not met:" -Level Error
         $issues | ForEach-Object { Write-ServiceLog "  - $_" -Level Error }
         return $false
     }
-    
+
     Write-ServiceLog "Prerequisites validated successfully" -Level Success
     return $true
 }
@@ -181,16 +181,16 @@ function Install-WindowsService {
         [string]$StartupTypeValue,
         [string]$User
     )
-    
+
     Write-ServiceLog "Installing Windows service for runner: $Name" -Level Information
-    
+
     Push-Location $RunnerDirectory
     try {
         # Check if service already exists
         $existingService = Get-Service -Name $Name -ErrorAction SilentlyContinue
         if ($existingService) {
             Write-ServiceLog "Service already exists, stopping and removing..." -Level Information
-            
+
             if ($DryRun) {
                 Write-ServiceLog "[DRY RUN] Would stop and remove existing service: $Name" -Level Information
             } else {
@@ -198,35 +198,35 @@ function Install-WindowsService {
                 & .\svc.sh uninstall $Name
             }
         }
-        
+
         if ($DryRun) {
             Write-ServiceLog "[DRY RUN] Would install Windows service: $Name" -Level Information
             return
         }
-        
+
         # Install the service
         & .\svc.sh install $Name
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to install Windows service (exit code: $LASTEXITCODE)"
         }
-        
+
         Write-ServiceLog "Windows service installed: $Name" -Level Success
-        
+
         # Configure service startup type
         $startupMap = @{
             'Automatic' = 'Automatic'
             'Manual' = 'Manual'
             'Disabled' = 'Disabled'
         }
-        
+
         Set-Service -Name $Name -StartupType $startupMap[$StartupTypeValue]
         Write-ServiceLog "Service startup type set to: $StartupTypeValue" -Level Information
-        
+
         # Start the service if startup type is Automatic
         if ($StartupTypeValue -eq 'Automatic') {
             Start-Service -Name $Name
             Write-ServiceLog "Service started: $Name" -Level Success
-            
+
             # Verify service is running
             Start-Sleep -Seconds 3
             $service = Get-Service -Name $Name
@@ -236,7 +236,7 @@ function Install-WindowsService {
                 Write-ServiceLog "Warning: Service status is $($service.Status)" -Level Warning
             }
         }
-        
+
     } catch {
         Write-ServiceLog "Failed to install Windows service: $($_.Exception.Message)" -Level Error
         throw
@@ -252,19 +252,19 @@ function Install-SystemDService {
         [string]$StartupTypeValue,
         [string]$User
     )
-    
+
     Write-ServiceLog "Installing SystemD service for runner: $Name" -Level Information
-    
+
     # Create systemd service file
     $serviceName = "actions-runner-$Name"
     $serviceFile = "/etc/systemd/system/$serviceName.service"
-    
+
     $startupMap = @{
         'Automatic' = 'enabled'
         'Manual' = 'disabled'
         'Disabled' = 'disabled'
     }
-    
+
     $serviceContent = @"
 [Unit]
 Description=GitHub Actions Runner ($Name)
@@ -282,31 +282,31 @@ TimeoutStopSec=30
 [Install]
 WantedBy=multi-user.target
 "@
-    
+
     if ($DryRun) {
         Write-ServiceLog "[DRY RUN] Would create SystemD service file: $serviceFile" -Level Information
         Write-ServiceLog "[DRY RUN] Service content:" -Level Information
         Write-ServiceLog $serviceContent -Level Information
         return
     }
-    
+
     try {
         # Create service file
         $serviceContent | sudo tee $serviceFile > $null
         Write-ServiceLog "Created SystemD service file: $serviceFile" -Level Success
-        
+
         # Reload systemd
         sudo systemctl daemon-reload
         Write-ServiceLog "Reloaded SystemD daemon" -Level Information
-        
+
         # Configure service
         if ($StartupTypeValue -eq 'Automatic') {
             sudo systemctl enable $serviceName
             Write-ServiceLog "Service enabled for automatic startup" -Level Success
-            
+
             sudo systemctl start $serviceName
             Write-ServiceLog "Service started: $serviceName" -Level Success
-            
+
             # Verify service is running
             Start-Sleep -Seconds 3
             $status = & sudo systemctl is-active $serviceName
@@ -319,7 +319,7 @@ WantedBy=multi-user.target
             sudo systemctl disable $serviceName
             Write-ServiceLog "Service configured for manual startup" -Level Information
         }
-        
+
     } catch {
         Write-ServiceLog "Failed to install SystemD service: $($_.Exception.Message)" -Level Error
         throw
@@ -333,12 +333,12 @@ function Install-LaunchDService {
         [string]$StartupTypeValue,
         [string]$User
     )
-    
+
     Write-ServiceLog "Installing LaunchD service for runner: $Name" -Level Information
-    
+
     $serviceName = "com.github.actions.runner.$Name"
     $plistFile = "/Library/LaunchDaemons/$serviceName.plist"
-    
+
     $plistContent = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -365,33 +365,33 @@ function Install-LaunchDService {
 </dict>
 </plist>
 "@
-    
+
     if ($DryRun) {
         Write-ServiceLog "[DRY RUN] Would create LaunchD plist file: $plistFile" -Level Information
         Write-ServiceLog "[DRY RUN] Plist content:" -Level Information
         Write-ServiceLog $plistContent -Level Information
         return
     }
-    
+
     try {
         # Create plist file
         $plistContent | sudo tee $plistFile > $null
         Write-ServiceLog "Created LaunchD plist file: $plistFile" -Level Success
-        
+
         # Set proper permissions
         sudo chown root:wheel $plistFile
         sudo chmod 644 $plistFile
-        
+
         # Load the service
         sudo launchctl load $plistFile
         Write-ServiceLog "Loaded LaunchD service: $serviceName" -Level Success
-        
+
         # Start the service if automatic startup
         if ($StartupTypeValue -eq 'Automatic') {
             sudo launchctl start $serviceName
             Write-ServiceLog "Started LaunchD service: $serviceName" -Level Success
         }
-        
+
     } catch {
         Write-ServiceLog "Failed to install LaunchD service: $($_.Exception.Message)" -Level Error
         throw
@@ -403,19 +403,19 @@ function Install-ServiceMonitoring {
         [string]$Name,
         [string]$ServiceTypeUsed
     )
-    
+
     if (-not $EnableMonitoring) {
         Write-ServiceLog "Service monitoring disabled" -Level Information
         return
     }
-    
+
     Write-ServiceLog "Setting up service monitoring for: $Name" -Level Information
-    
+
     if ($DryRun) {
         Write-ServiceLog "[DRY RUN] Would set up service monitoring" -Level Information
         return
     }
-    
+
     # Create monitoring configuration
     $monitoringConfig = @{
         ServiceName = $Name
@@ -429,22 +429,22 @@ function Install-ServiceMonitoring {
             Log = $true
         }
     }
-    
+
     # Save monitoring configuration
     $configPath = if ($IsWindows) {
         "$env:ProgramData\GitHub-Runner\monitoring.json"
     } else {
         "/etc/github-runner/monitoring.json"
     }
-    
+
     $configDir = Split-Path $configPath -Parent
     if (-not (Test-Path $configDir)) {
         New-Item -ItemType Directory -Path $configDir -Force | Out-Null
     }
-    
+
     $monitoringConfig | ConvertTo-Json -Depth 3 | Set-Content -Path $configPath
     Write-ServiceLog "Created monitoring configuration: $configPath" -Level Success
-    
+
     # Set up log rotation (platform-specific)
     switch ($ServiceTypeUsed) {
         'SystemD' {
@@ -467,12 +467,12 @@ function Test-ServiceInstallation {
         [string]$Name,
         [string]$ServiceTypeUsed
     )
-    
+
     Write-ServiceLog "Testing service installation..." -Level Information
-    
+
     $isRunning = $false
     $statusMessage = ""
-    
+
     try {
         switch ($ServiceTypeUsed) {
             'WindowsService' {
@@ -497,15 +497,15 @@ function Test-ServiceInstallation {
                 $statusMessage = if ($isRunning) { "LaunchD service is loaded" } else { "LaunchD service not loaded" }
             }
         }
-        
+
         if ($isRunning) {
             Write-ServiceLog "✓ Service installation successful: $statusMessage" -Level Success
         } else {
             Write-ServiceLog "⚠ Service installed but not running: $statusMessage" -Level Warning
         }
-        
+
         return $isRunning
-        
+
     } catch {
         Write-ServiceLog "Service installation test failed: $($_.Exception.Message)" -Level Error
         return $false
@@ -515,25 +515,25 @@ function Test-ServiceInstallation {
 # Main execution
 try {
     $serviceTypeToUse = Get-ServiceType
-    
+
     Write-ServiceLog "Installing GitHub Actions runner service..." -Level Information
     Write-ServiceLog "Runner Name: $RunnerName" -Level Information
     Write-ServiceLog "Service Type: $serviceTypeToUse" -Level Information
     Write-ServiceLog "Startup Type: $StartupType" -Level Information
     Write-ServiceLog "Run As User: $RunAsUser" -Level Information
-    
+
     if ($DryRun) {
         Write-ServiceLog "Running in DRY RUN mode - no changes will be made" -Level Warning
     }
-    
+
     # Find runner directory
     $runnerDirectory = Find-RunnerDirectory -Name $RunnerName
-    
+
     # Test prerequisites
     if (-not (Test-ServicePrerequisites -ServiceTypeToUse $serviceTypeToUse -RunnerDirectory $runnerDirectory)) {
         throw "Prerequisites not met"
     }
-    
+
     # Install service based on type
     switch ($serviceTypeToUse) {
         'WindowsService' {
@@ -546,28 +546,28 @@ try {
             Install-LaunchDService -Name $RunnerName -RunnerDirectory $runnerDirectory -StartupTypeValue $StartupType -User $RunAsUser
         }
     }
-    
+
     # Install monitoring
     Install-ServiceMonitoring -Name $RunnerName -ServiceTypeUsed $serviceTypeToUse
-    
+
     # Test installation
     if (-not $DryRun) {
         Start-Sleep -Seconds 5
         $testResult = Test-ServiceInstallation -Name $RunnerName -ServiceTypeUsed $serviceTypeToUse
-        
+
         if ($testResult) {
             Write-ServiceLog "Runner service installation completed successfully!" -Level Success
         } else {
             Write-ServiceLog "Runner service installed but may need manual intervention" -Level Warning
         }
     }
-    
+
     if (-not $CI) {
         Write-Host "`nRunner service installation complete!" -ForegroundColor Green
         Write-Host "Service Name: $RunnerName" -ForegroundColor Cyan
         Write-Host "Service Type: $serviceTypeToUse" -ForegroundColor Cyan
         Write-Host "Startup Type: $StartupType" -ForegroundColor Cyan
-        
+
         Write-Host "`nService Management Commands:" -ForegroundColor Yellow
         switch ($serviceTypeToUse) {
             'WindowsService' {
@@ -589,9 +589,9 @@ try {
             }
         }
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-ServiceLog "Runner service installation failed: $($_.Exception.Message)" -Level Error
     exit 1

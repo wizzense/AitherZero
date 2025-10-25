@@ -8,7 +8,7 @@
     Enhanced to consolidate functionality from automation scripts 0400-0499.
 .NOTES
     Copyright © 2025 Aitherium Corporation
-    Consolidates: 0400_Install-TestingTools.ps1, 0402_Run-UnitTests.ps1, 
+    Consolidates: 0400_Install-TestingTools.ps1, 0402_Run-UnitTests.ps1,
                   0403_Run-IntegrationTests.ps1, 0404_Run-PSScriptAnalyzer.ps1,
                   0405_Validate-AST.ps1, 0406_Generate-Coverage.ps1, 0407_Validate-Syntax.ps1,
                   0408_Generate-TestCoverage.ps1, 0409_Run-AllTests.ps1, plus workflow testing
@@ -92,7 +92,7 @@ function Get-TestingConfiguration {
         try {
             Write-TestingLog -Level Debug -Message "Loading configuration directly from file"
             $config = Import-PowerShellDataFile $ConfigPath
-            
+
             # Check for local overrides
             $localConfigPath = $ConfigPath -replace '\.psd1$', '.local.psd1'
             if (Test-Path $localConfigPath) {
@@ -107,7 +107,7 @@ function Get-TestingConfiguration {
                     }
                 }
             }
-            
+
             $testingConfig = $config.Testing ?? @{
                 Framework = 'Pester'
                 MinVersion = '5.0.0'
@@ -128,7 +128,7 @@ function Get-TestingConfiguration {
             throw
         }
     }
-    
+
     Write-TestingLog -Message "Using default testing configuration (no config file found)"
     return @{}
 }
@@ -154,15 +154,15 @@ function Invoke-TestSuite {
     param(
         [ValidateSet('Quick', 'Standard', 'Full', 'CI')]
         [string]$ProfileName = 'Standard',
-        
+
         [string[]]$Categories,
-        
+
         [string]$Path = (Join-Path $script:ProjectRoot 'tests'),
-        
+
         [string]$OutputPath,
-        
+
         [hashtable]$Configuration,
-        
+
         [switch]$PassThru
     )
 
@@ -173,14 +173,14 @@ function Invoke-TestSuite {
         OutputPath = $OutputPath
         HasCustomConfiguration = ($null -ne $Configuration)
     }
-    
+
     try {
         $testConfig = Get-TestingConfiguration
         if ($Configuration) {
             Write-TestingLog -Level Debug -Message "Applying custom configuration override"
             $testConfig = $testConfig + $Configuration
         }
-        
+
         # Get profile settings
         $ProfileNameConfig = if ($testConfig -and $testConfig.ContainsKey('Profiles') -and $testConfig.Profiles -and $testConfig.Profiles.ContainsKey($ProfileName)) {
             $testConfig.Profiles[$ProfileName]
@@ -190,7 +190,7 @@ function Invoke-TestSuite {
                 Timeout = 900
             }
         }
-        
+
         # Override with explicit categories
         if ($Categories) {
             Write-TestingLog -Level Debug -Message "Overriding profile categories" -Data @{
@@ -199,42 +199,42 @@ function Invoke-TestSuite {
             }
             $ProfileNameConfig.Categories = $Categories
         }
-        
+
         Write-TestingLog -Message "Test profile configuration loaded" -Data @{
             Profile = $ProfileName
             Categories = ($ProfileNameConfig.Categories -join ', ')
             Timeout = $ProfileNameConfig.Timeout
         }
-        
+
         Write-Verbose "Executing test profile: $ProfileName"
         Write-Verbose "Categories: $($ProfileNameConfig.Categories -join ', ')"
-        
+
         # Ensure Pester is available
         Write-TestingLog -Level Debug -Message "Checking Pester availability" -Data @{
             RequiredVersion = $testConfig.MinVersion
         }
-        
+
         if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge $testConfig.MinVersion })) {
             Write-TestingLog -Level Error -Message "Required Pester version not available" -Data @{
                 RequiredVersion = $testConfig.MinVersion
             }
             throw "Pester $($testConfig.MinVersion) or higher is required"
         }
-        
+
         Write-TestingLog -Message "Pester module available and compatible"
-    
+
         Import-Module Pester -MinimumVersion $testConfig.MinVersion
         Write-TestingLog -Message "Pester module imported successfully" -Data @{
             Version = (Get-Module Pester).Version.ToString()
         }
-        
+
         # Build Pester configuration
         Write-TestingLog -Level Debug -Message "Building Pester configuration"
         $pesterConfig = New-PesterConfiguration
         $pesterConfig.Run.Path = $Path
         $pesterConfig.Run.PassThru = $true
         $pesterConfig.Run.Exit = $false
-        
+
         # Filter by categories
         if ($ProfileNameConfig.Categories -and $ProfileNameConfig.Categories[0] -ne '*') {
             Write-TestingLog -Level Debug -Message "Applying test category filters" -Data @{
@@ -242,7 +242,7 @@ function Invoke-TestSuite {
             }
             $pesterConfig.Filter.Tag = $ProfileNameConfig.Categories
         }
-        
+
         # Output configuration
         if ($OutputPath) {
             $testResultPath = Join-Path $OutputPath "TestResults-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
@@ -254,7 +254,7 @@ function Invoke-TestSuite {
             $pesterConfig.TestResult.OutputPath = $testResultPath
             $pesterConfig.TestResult.OutputFormat = 'NUnitXml'
         }
-        
+
         # Code coverage
         if ($testConfig.CodeCoverage.Enabled) {
             $coveragePath = Join-Path ($OutputPath ?? './tests/coverage') "Coverage-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
@@ -267,7 +267,7 @@ function Invoke-TestSuite {
             $pesterConfig.CodeCoverage.OutputPath = $coveragePath
             $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'
         }
-        
+
         # Execute tests
         Write-TestingLog -Message "Starting Pester test execution" -Data @{
             TestPath = $Path
@@ -275,10 +275,10 @@ function Invoke-TestSuite {
             CoverageEnabled = $testConfig.CodeCoverage.Enabled
         }
         $result = Invoke-Pester -Configuration $pesterConfig
-        
+
         # Store results
         $script:TestingState.Results += $result
-        
+
         # Log test execution results
         Write-TestingLog -Message "Test execution completed" -Data @{
             Profile = $ProfileName
@@ -289,7 +289,7 @@ function Invoke-TestSuite {
             Duration = $result.Duration
             Success = ($result.FailedCount -eq 0)
         }
-        
+
         # Check minimum coverage
         if ($testConfig.CodeCoverage.Enabled) {
             $coveragePercent = $result.CodeCoverage.CoveragePercent
@@ -307,7 +307,7 @@ function Invoke-TestSuite {
                 Write-Warning "Code coverage ($($coveragePercent)%) is below minimum ($($testConfig.CodeCoverage.MinimumPercent)%)"
             }
         }
-        
+
         # Log failed tests if any
         if ($result.FailedCount -gt 0) {
             Write-TestingLog -Level Warning -Message "Test failures detected" -Data @{
@@ -315,27 +315,27 @@ function Invoke-TestSuite {
                 FailedTests = ($result.Tests | Where-Object Result -eq 'Failed' | Select-Object -ExpandProperty Name)
             }
         }
-        
+
         # Display summary
         Write-Host "`nTest Summary:" -ForegroundColor Cyan
         Write-Host "  Total Tests: $($result.TotalCount)"
         Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
         Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
         Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-        
+
         if ($testConfig.CodeCoverage.Enabled) {
             Write-Host "  Coverage: $($result.CodeCoverage.CoveragePercent)%" -ForegroundColor $(
                 if ($result.CodeCoverage.CoveragePercent -ge $testConfig.CodeCoverage.MinimumPercent) { 'Green' } else { 'Yellow' }
             )
     }
-        
+
         if ($PassThru) {
             return $result
         }
-        
+
         # Return success/failure
         return $result.FailedCount -eq 0
-        
+
     } catch {
         Write-TestingLog -Level Error -Message "Test suite execution failed" -Data @{
             Profile = $ProfileName
@@ -365,13 +365,13 @@ function Invoke-ScriptAnalysis {
     [CmdletBinding()]
     param(
         [string]$Path = $script:ProjectRoot,
-        
+
         [switch]$Recurse,
-        
+
         [string]$SettingsPath,
-        
+
         [switch]$Fix,
-        
+
         [string]$OutputPath
     )
 
@@ -387,7 +387,7 @@ function Invoke-ScriptAnalysis {
     if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
         throw "PSScriptAnalyzer module is required"
     }
-    
+
     Import-Module PSScriptAnalyzer
 
     # Build parameters
@@ -424,7 +424,7 @@ function Invoke-ScriptAnalysis {
     # Display summary
     $grouped = $results | Group-Object Severity
     Write-Host "`nAnalysis Summary:" -ForegroundColor Cyan
-    
+
     foreach ($group in $grouped) {
         $color = switch ($group.Name) {
             'Error' { 'Red' }
@@ -438,7 +438,7 @@ function Invoke-ScriptAnalysis {
     if ($results.Count -eq 0) {
         Write-Host "  No issues found!" -ForegroundColor Green
     }
-    
+
     return $results
 }
 
@@ -459,11 +459,11 @@ function Test-ASTValidation {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [switch]$CheckSyntax,
-        
+
         [switch]$CheckParameters,
-        
+
         [switch]$CheckCommands
     )
 
@@ -475,10 +475,10 @@ function Test-ASTValidation {
     } else {
         Get-Item $Path
     }
-    
+
     foreach ($file in $files) {
         Write-Verbose "Validating: $($file.FullName)"
-        
+
         try {
             # Parse the file
             $tokens = $null
@@ -507,7 +507,7 @@ function Test-ASTValidation {
                 $paramAsts = $ast.FindAll({
                     $arguments[0] -is [System.Management.Automation.Language.ParameterAst]
                 }, $true)
-                
+
                 foreach ($param in $paramAsts) {
                     # Check for missing parameter types
                     if (-not $param.StaticType -and -not $param.Attributes) {
@@ -527,7 +527,7 @@ function Test-ASTValidation {
                 $commandAsts = $ast.FindAll({
                     $arguments[0] -is [System.Management.Automation.Language.CommandAst]
                 }, $true)
-                
+
                 foreach ($cmd in $commandAsts) {
                     $cmdName = $cmd.GetCommandName()
                     if ($cmdName -and -not (Get-Command $cmdName -ErrorAction SilentlyContinue)) {
@@ -565,7 +565,7 @@ function Test-ASTValidation {
             Write-Host "  $($_.Name): $($_.Count)" -ForegroundColor Yellow
         }
     }
-    
+
     return $issues
 }
 
@@ -587,13 +587,13 @@ function New-TestReport {
     [CmdletBinding()]
     param(
         [switch]$IncludeTests,
-        
+
         [switch]$IncludeAnalysis,
-        
+
         [switch]$IncludeCoverage,
-        
+
         [string]$OutputPath = './tests/reports',
-        
+
         [ValidateSet('HTML', 'Markdown', 'JSON')]
         [string]$Format = 'HTML'
     )
@@ -651,16 +651,16 @@ function New-TestReport {
     if (-not (Test-Path $OutputPath)) {
         New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $filename = "TestReport-$timestamp"
-    
+
     switch ($Format) {
         'JSON' {
             $outputFile = Join-Path $OutputPath "$filename.json"
             $report | ConvertTo-Json -Depth 10 | Set-Content $outputFile
         }
-        
+
         'Markdown' {
             $outputFile = Join-Path $OutputPath "$filename.md"
             $markdown = @"
@@ -685,10 +685,10 @@ Generated: $($report.Generated)
                     $markdown += "| $($result.Timestamp) | $($result.TotalTests) | $($result.Passed) | $($result.Failed) | $($result.Skipped) | $($result.Duration) |`n"
                 }
             }
-            
+
             $markdown | Set-Content $outputFile
         }
-        
+
         'HTML' {
             $outputFile = Join-Path $OutputPath "$filename.html"
             # Generate HTML report (simplified version)
@@ -725,12 +725,12 @@ Generated: $($report.Generated)
                 }
                 $html += "</table>"
             }
-            
+
             $html += "</body></html>"
             $html | Set-Content $outputFile
         }
     }
-    
+
     Write-Host "Report generated: $outputFile" -ForegroundColor Green
     return $outputFile
 }
@@ -752,23 +752,23 @@ function Install-TestingTools {
         [switch]$Force,
         [string[]]$AdditionalTools = @()
     )
-    
+
     Write-TestingLog "Installing testing tools"
-    
+
     $tools = @(
         @{ Name = 'Pester'; MinVersion = '5.0.0'; Repository = 'PSGallery' },
         @{ Name = 'PSScriptAnalyzer'; MinVersion = '1.20.0'; Repository = 'PSGallery' },
         @{ Name = 'PSCodeCovIo'; MinVersion = '1.0.0'; Repository = 'PSGallery' },
         @{ Name = 'PowerShellYaml'; MinVersion = '0.4.0'; Repository = 'PSGallery' }
     ) + $AdditionalTools
-    
+
     foreach ($tool in $tools) {
         try {
-            $installed = Get-Module -Name $tool.Name -ListAvailable | 
-                Where-Object { $_.Version -ge [Version]$tool.MinVersion } | 
-                Sort-Object Version -Descending | 
+            $installed = Get-Module -Name $tool.Name -ListAvailable |
+                Where-Object { $_.Version -ge [Version]$tool.MinVersion } |
+                Sort-Object Version -Descending |
                 Select-Object -First 1
-            
+
             if (-not $installed -or $Force) {
                 Write-TestingLog "Installing $($tool.Name)"
                 if ($PSCmdlet.ShouldProcess($tool.Name, "Install module")) {
@@ -781,7 +781,7 @@ function Install-TestingTools {
             Write-TestingLog "Failed to install $($tool.Name): $($_.Exception.Message)" -Level Warning
         }
     }
-    
+
     Write-TestingLog "Testing tools installation completed"
 }
 
@@ -804,21 +804,21 @@ function Invoke-UnitTestSuite {
         [string[]]$Tags = @(),
         [string[]]$ExcludeTags = @()
     )
-    
+
     Write-TestingLog "Executing unit test suite"
-    
+
     # Use new AitherTestFramework if available
     if (Get-Command Invoke-TestCategory -ErrorAction SilentlyContinue) {
         Write-TestingLog "Using AitherTestFramework for unit tests"
-        
+
         $params = @{ Category = 'Unit' }
         if ($Tags.Count -gt 0) { $params['IncludeTags'] = $Tags }
         if ($ExcludeTags.Count -gt 0) { $params['ExcludeTags'] = $ExcludeTags }
         if ($CI) { $params['Force'] = $true }
-        
+
         return Invoke-TestCategory @params
     }
-    
+
     # Fallback to legacy Pester execution
     return Invoke-LegacyPesterTests -Path $Path -OutputPath $OutputPath -NoCoverage:$NoCoverage -CI:$CI
 }
@@ -839,32 +839,32 @@ function Invoke-PSScriptAnalyzerSuite {
         [string[]]$ExcludeRules = @('PSAvoidUsingWriteHost'),
         [switch]$Fix
     )
-    
+
     Write-TestingLog "Running PSScriptAnalyzer static analysis"
-    
+
     # Ensure PSScriptAnalyzer is available
     if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
         Write-TestingLog "PSScriptAnalyzer not found, installing..."
         Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
     }
-    
+
     Import-Module PSScriptAnalyzer
-    
+
     $analyzerParams = @{
         Path = $Path
         Recurse = $true
         Severity = $Severity
         ExcludeRule = $ExcludeRules
     }
-    
+
     if ($Fix) {
         $analyzerParams['Fix'] = $true
         Write-TestingLog "Running with auto-fix enabled" -Level Warning
     }
-    
+
     if ($PSCmdlet.ShouldProcess($Path, "Run PSScriptAnalyzer")) {
         $results = Invoke-ScriptAnalyzer @analyzerParams
-        
+
         # Export results
         if ($results) {
             $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -872,7 +872,7 @@ function Invoke-PSScriptAnalyzerSuite {
             $results | Export-Csv -Path $csvPath -NoTypeInformation
             Write-TestingLog "Analysis results saved to: $csvPath"
         }
-        
+
         return @{
             Success = $results.Count -eq 0
             Results = $results
@@ -896,23 +896,23 @@ function Test-SyntaxValidation {
         [string[]]$Include = @('*.ps1', '*.psm1', '*.psd1'),
         [string[]]$Exclude = @('tests/*', 'legacy-to-migrate/*')
     )
-    
+
     Write-TestingLog "Validating PowerShell syntax"
-    
-    $files = Get-ChildItem -Path $Path -Include $Include -Recurse | 
-        Where-Object { 
+
+    $files = Get-ChildItem -Path $Path -Include $Include -Recurse |
+        Where-Object {
             $file = $_
             -not ($Exclude | Where-Object { $file.FullName -like "*$_*" })
         }
-    
+
     $results = @()
     $errorCount = 0
-    
+
     foreach ($file in $files) {
         try {
             $errors = $null
             $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$errors)
-            
+
             if ($errors.Count -gt 0) {
                 $errorCount += $errors.Count
                 $results += @{
@@ -938,9 +938,9 @@ function Test-SyntaxValidation {
             Write-TestingLog "Failed to parse $($file.Name): $($_.Exception.Message)" -Level Error
         }
     }
-    
+
     Write-TestingLog "Syntax validation completed. Files: $($files.Count), Errors: $errorCount"
-    
+
     return @{
         Success = $errorCount -eq 0
         TotalFiles = $files.Count
@@ -963,23 +963,23 @@ function Invoke-AllTestSuites {
         [switch]$NoCoverage,
         [string]$OutputPath = (Join-Path $script:ProjectRoot "test-results")
     )
-    
+
     Write-TestingLog "Executing all test suites"
-    
+
     # Use new AitherTestFramework if available for comprehensive testing
     if (Get-Command Invoke-TestCategory -ErrorAction SilentlyContinue) {
         Write-TestingLog "Using AitherTestFramework for comprehensive testing"
-        
+
         # Run Full category tests which includes everything
         $params = @{ Category = 'Full' }
         if ($CI) { $params['Force'] = $true }
-        
+
         return Invoke-TestCategory @params
     }
-    
+
     # Fallback to individual legacy test execution
     Write-TestingLog "Using legacy individual test execution"
-    
+
     $overallResults = @{
         StartTime = Get-Date
         UnitTests = $null
@@ -987,34 +987,34 @@ function Invoke-AllTestSuites {
         SyntaxValidation = $null
         OverallSuccess = $true
     }
-    
+
     try {
         # Unit tests
         Write-TestingLog "Running unit tests..."
         $overallResults.UnitTests = Invoke-UnitTestSuite -CI:$CI -NoCoverage:$NoCoverage -OutputPath $OutputPath
-        
-        # Static analysis  
+
+        # Static analysis
         Write-TestingLog "Running static analysis..."
         $overallResults.StaticAnalysis = Invoke-PSScriptAnalyzerSuite -OutputPath $OutputPath
-        
+
         # Syntax validation
         Write-TestingLog "Running syntax validation..."
         $overallResults.SyntaxValidation = Test-SyntaxValidation
-        
+
         # Determine overall success
         $overallResults.OverallSuccess = (
             $overallResults.UnitTests.Success -and
             $overallResults.StaticAnalysis.Success -and
             $overallResults.SyntaxValidation.Success
         )
-        
+
         $overallResults.EndTime = Get-Date
         $overallResults.Duration = $overallResults.EndTime - $overallResults.StartTime
-        
+
         Write-TestingLog "All test suites completed. Overall success: $($overallResults.OverallSuccess)"
-        
+
         return $overallResults
-        
+
     } catch {
         Write-TestingLog "Test suite execution failed: $($_.Exception.Message)" -Level Error
         throw
@@ -1033,36 +1033,36 @@ function Invoke-LegacyPesterTests {
         [switch]$NoCoverage,
         [switch]$CI
     )
-    
+
     # Ensure Pester is available
     $pesterModule = Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1
     if (-not $pesterModule -or $pesterModule.Version -lt [Version]"5.0.0") {
         throw "Pester 5.0+ is required"
     }
-    
+
     Import-Module Pester -MinimumVersion 5.0.0 -Force
-    
+
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
     $pesterConfig.Run.PassThru = $true
     $pesterConfig.Run.Exit = $false
-    
+
     if ($CI) {
         $pesterConfig.Output.Verbosity = 'Normal'
         $pesterConfig.Should.ErrorAction = 'Continue'
     }
-    
+
     # Configure test results output
     if (-not (Test-Path $OutputPath)) {
         New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
     }
-    
+
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $pesterConfig.TestResult.Enabled = $true
     $pesterConfig.TestResult.OutputPath = Join-Path $OutputPath "TestResults-$timestamp.xml"
     $pesterConfig.TestResult.OutputFormat = 'NUnitXml'
-    
+
     # Configure code coverage if not disabled
     if (-not $NoCoverage) {
         $pesterConfig.CodeCoverage.Enabled = $true
@@ -1073,10 +1073,10 @@ function Invoke-LegacyPesterTests {
         $pesterConfig.CodeCoverage.OutputPath = Join-Path $OutputPath "Coverage-$timestamp.xml"
         $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'
     }
-    
+
     # Execute tests
     $result = Invoke-Pester -Configuration $pesterConfig
-    
+
     return @{
         Success = $result.FailedCount -eq 0
         TotalCount = $result.TotalCount
@@ -1095,7 +1095,7 @@ Export-ModuleMember -Function @(
     'Test-ASTValidation',
     'New-TestReport',
     'Get-TestingConfiguration',
-    
+
     # New consolidated exports (from automation scripts 0400-0499)
     'Install-TestingTools',
     'Invoke-UnitTestSuite',

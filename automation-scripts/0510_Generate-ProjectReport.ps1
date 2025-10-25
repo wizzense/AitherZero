@@ -84,13 +84,13 @@ $projectReport.TestResults.TestFiles = $testScripts | ForEach-Object { $_.FullNa
 
 # 3. Calculate Code Coverage
 Write-ReportLog "Calculating code coverage..."
-$psFiles = Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse | Where-Object { 
-    $_.FullName -notlike "*\tests\*" -and 
+$psFiles = Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse | Where-Object {
+    $_.FullName -notlike "*\tests\*" -and
     $_.FullName -notlike "*\legacy-to-migrate\*" -and
     $_.FullName -notlike "*\examples\*"
 }
-$psmFiles = Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object { 
-    $_.FullName -notlike "*\tests\*" -and 
+$psmFiles = Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object {
+    $_.FullName -notlike "*\tests\*" -and
     $_.FullName -notlike "*\legacy-to-migrate\*"
 }
 
@@ -102,7 +102,7 @@ $functionCount = 0
 foreach ($file in ($psFiles + $psmFiles)) {
     $content = Get-Content $file.FullName
     $totalLines += $content.Count
-    
+
     foreach ($line in $content) {
         $trimmed = $line.Trim()
         if ($trimmed -match '^#' -or $trimmed -match '^<#') {
@@ -184,9 +184,9 @@ $projectReport.FileAnalysis = @{
     PowerShellFiles = @($psFiles).Count + @($psmFiles).Count
     TestFiles = @($testScripts).Count
     ConfigFiles = $configFiles.Count
-    LargestFiles = Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue | 
-        Sort-Object Length -Descending | 
-        Select-Object -First 10 | 
+    LargestFiles = Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue |
+        Sort-Object Length -Descending |
+        Select-Object -First 10 |
         ForEach-Object { @{
             Path = $_.FullName.Replace($ProjectPath, '.')
             SizeMB = [math]::Round($_.Length / 1MB, 2)
@@ -232,7 +232,7 @@ if ($Format -eq 'HTML' -or $Format -eq 'All') {
     <div class="container">
         <h1>AitherZero Project Report</h1>
         <p>Generated: $($projectReport.Timestamp) | Platform: $($projectReport.Platform) | PS Version: $($projectReport.PSVersion)</p>
-        
+
         <div class="section">
             <h2>Project Overview</h2>
             <div class="metric">
@@ -307,7 +307,7 @@ if ($Format -eq 'Markdown' -or $Format -eq 'All') {
     $markdown = @"
 # AitherZero Project Report
 
-Generated: $($projectReport.Timestamp)  
+Generated: $($projectReport.Timestamp)
 Platform: $($projectReport.Platform) | PowerShell: $($projectReport.PSVersion)
 
 ## Project Metrics
@@ -332,7 +332,7 @@ Platform: $($projectReport.Platform) | PowerShell: $($projectReport.PSVersion)
     foreach ($domain in $projectReport.ModuleStatus.Keys) {
         $markdown += "| $domain | $($projectReport.ModuleStatus[$domain].ModuleCount) | $($projectReport.ModuleStatus[$domain].HasReadme) |`n"
     }
-    
+
     $markdown += @"
 
 ## Code Quality Issues
@@ -344,7 +344,7 @@ Platform: $($projectReport.Platform) | PowerShell: $($projectReport.PSVersion)
             $markdown += "- **$analysis**: $($analysisData.TotalIssues) issues`n"
         }
     }
-    
+
     if ($PSCmdlet.ShouldProcess($mdPath, "Save Markdown report")) {
         $markdown | Set-Content $mdPath
         Write-ReportLog "Markdown report saved to: $mdPath"

@@ -27,7 +27,7 @@ function Test-Component {
         [string]$Name,
         [scriptblock]$TestScript
     )
-    
+
     Write-Host "`n🧪 Testing $Name..." -ForegroundColor Cyan
     try {
         $result = & $TestScript
@@ -84,7 +84,7 @@ if (-not $SkipTests) {
     }
 }
 
-# Test 4: Static Analysis  
+# Test 4: Static Analysis
 if (-not $SkipAnalysis) {
     Test-Component -Name 'Analysis' -TestScript {
         $output = pwsh -c "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -ExcludePaths tests,examples -WhatIf" 2>&1

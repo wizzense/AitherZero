@@ -43,9 +43,9 @@ BeforeAll {
 }
 
 Describe "Bootstrap to Infrastructure Deployment Flow" {
-    
+
     Context "Phase 1: Initial Bootstrap" {
-        
+
         It "Should detect and validate system requirements" {
             # Test bootstrap.ps1 logic
             $bootstrapPath = Join-Path $script:ProjectRoot "bootstrap.ps1"
@@ -58,11 +58,11 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 AdminRights = $false  # Assume non-admin for tests
                 RequiredSpace = $true
             }
-            
+
             $systemChecks.PowerShellVersion | Should -BeTrue
             $systemChecks.OSPlatform | Should -BeTrue
         }
-        
+
         It "Should initialize AitherZero core module" {
             # Test core module initialization
             $coreModule = Get-Module -Name AitherZero
@@ -71,7 +71,7 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
             # Verify core functions are available
             Get-Command -Module AitherZero | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should create initial directory structure" {
             # Test directory creation logic (mocked)
             $requiredDirs = @(
@@ -81,14 +81,14 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 "infrastructure/state",
                 "orchestration/playbooks"
             )
-        
+
             foreach ($dir in $requiredDirs) {
                 $testPath = Join-Path $TestDrive $dir
                 New-Item -Path $testPath -ItemType Directory -Force | Out-Null
                 Test-Path $testPath | Should -BeTrue
             }
         }
-        
+
         It "Should load and validate initial configuration" {
             # Test configuration loading
             $config = @{
@@ -106,14 +106,14 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                     Infrastructure = $true
                 }
             }
-            
+
             $config.Project.Name | Should -Be "AitherZero"
             $config.Features.Orchestration | Should -BeTrue
         }
     }
-    
+
     Context "Phase 2: Environment Preparation (0000-0099)" {
-        
+
         It "Should execute environment cleanup sequence" {
             # Test REAL orchestration sequence in DryRun mode
             $result = Invoke-OrchestrationSequence -Sequence "0000" -DryRun -Configuration $script:TestConfig
@@ -125,13 +125,13 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
             # In DryRun mode, scripts should be identified but not executed
             # The engine should still return a valid result structure
         }
-        
+
         It "Should ensure PowerShell 7 is available" {
             # Test script 0001_Ensure-PowerShell7.ps1
             $ps7Check = $PSVersionTable.PSVersion.Major -ge 7
             $ps7Check | Should -BeTrue
         }
-        
+
         It "Should setup project directories" {
             # Test script 0002_Setup-Directories.ps1
             $dirSetup = @{
@@ -143,11 +143,11 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 )
             Success = $true
             }
-            
+
             $dirSetup.Success | Should -BeTrue
             $dirSetup.ProjectDirs.Count | Should -BeGreaterThan 0
         }
-        
+
         It "Should install validation tools" {
             # Test script 0006_Install-ValidationTools.ps1
             $validationTools = @{
@@ -155,14 +155,14 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 Pester = $true
                 Success = $true
             }
-            
+
             $validationTools.PSScriptAnalyzer | Should -BeTrue
             $validationTools.Pester | Should -BeTrue
         }
     }
-    
+
     Context "Phase 3: Infrastructure Prerequisites (0007-0009)" {
-        
+
         It "Should install Go for OpenTofu provider" {
             # Test script 0007_Install-Go.ps1
             $goInstall = @{
@@ -170,11 +170,11 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 Path = "C:/tools/go"
                 Success = $true
             }
-            
+
             $goInstall.Success | Should -BeTrue
             $goInstall.Version | Should -Match "^\d+\.\d+\.\d+$"
         }
-        
+
         It "Should install OpenTofu" {
             # Test script 0008_Install-OpenTofu.ps1
             $tofuInstall = @{
@@ -182,11 +182,11 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 Provider = "taliesins/hyperv"
                 Success = $true
             }
-            
+
             $tofuInstall.Success | Should -BeTrue
             $tofuInstall.Provider | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should initialize OpenTofu configuration" {
             # Test script 0009_Initialize-OpenTofu.ps1
             $tofuInit = @{
@@ -195,15 +195,15 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 StateInitialized = $true
                 Success = $true
             }
-            
+
             $tofuInit.BackendConfigured | Should -BeTrue
             $tofuInit.ProvidersDownloaded | Should -BeTrue
             $tofuInit.StateInitialized | Should -BeTrue
         }
     }
-    
+
     Context "Phase 4: Orchestration Engine Execution" {
-        
+
         It "Should load and parse infrastructure playbook" {
             # Test REAL playbook loading
             $playbook = Get-OrchestrationPlaybook -Name "infrastructure-lab"
@@ -212,15 +212,15 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
             if (-not $playbook) {
                 # Save a test playbook
                 Save-OrchestrationPlaybook -Name "test-infrastructure" -Sequence @("0000", "0001", "0002") -Variables @{ Test = $true }
-                
+
                 # Load it back
                 $playbook = Get-OrchestrationPlaybook -Name "test-infrastructure"
             }
-            
+
             $playbook | Should -Not -BeNullOrEmpty
             $playbook.Sequence | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should expand playbook sequences correctly" {
             # Test sequence expansion
             $sequences = @(
@@ -229,7 +229,7 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 @{ Input = "02*"; Expected = @("0201", "0204", "0205", "0206", "0207", "0208", "0209", "0210") }
                 @{ Input = "stage:Core"; Expected = @("0001", "0002", "0006", "0007") }
             )
-        
+
             foreach ($test in $sequences) {
                 # Mock expansion result
                 $expanded = switch ($test.Input) {
@@ -238,11 +238,11 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                     "02*" { @("0201", "0204", "0205", "0206", "0207", "0208", "0209", "0210") }
                     "stage:Core" { @("0001", "0002", "0006", "0007") }
                 }
-                
+
                 $expanded.Count | Should -Be $test.Expected.Count
             }
         }
-        
+
         It "Should handle script dependencies" {
             # Test dependency resolution
             $dependencies = @{
@@ -265,7 +265,7 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 }
             }
         }
-        
+
         It "Should execute scripts in parallel respecting dependencies" {
             # Test REAL parallel execution with DryRun
             $testSequence = @(
@@ -285,9 +285,9 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
             # In a real run, dependencies would be respected
         }
     }
-    
+
     Context "Phase 5: Infrastructure Components (0100-0199)" {
-        
+
         It "Should install Hyper-V" {
             # Test script 0105_Install-HyperV.ps1
             $hyperVInstall = @{
@@ -297,12 +297,12 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 RestartRequired = $true
                 ExitCode = 3010  # Restart required
             }
-            
+
             $hyperVInstall.Feature | Should -Be "Microsoft-Hyper-V"
             $hyperVInstall.RestartRequired | Should -BeTrue
             $hyperVInstall.ExitCode | Should -Be 3010
         }
-        
+
         It "Should handle restart requirements" {
             # Test restart handling
             $restartScripts = @("0105")
@@ -311,14 +311,14 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 RestartScripts = $restartScripts
                 ContinueAfterRestart = $true
             }
-            
+
             $executionResult.RestartRequired | Should -BeTrue
             $executionResult.RestartScripts | Should -Contain "0105"
         }
     }
-    
+
     Context "Phase 6: Infrastructure Deployment (0300)" {
-        
+
         It "Should prepare OpenTofu deployment configuration" {
             # Test deployment preparation
             $deployConfig = @{
@@ -332,12 +332,12 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                     @{ Name = "WEB01"; Memory = 2GB; CPU = 2 }
                 )
         }
-            
+
             $deployConfig.Provider | Should -Be "hyperv"
             $deployConfig.Networks.Count | Should -Be 2
             $deployConfig.VMs.Count | Should -Be 2
         }
-        
+
         It "Should generate OpenTofu plan" {
             # Test tofu plan generation
             $tofuPlan = @{
@@ -353,12 +353,12 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 }
                 Success = $true
             }
-            
+
             $tofuPlan.Resources.ToCreate | Should -BeGreaterThan 0
             $tofuPlan.Validation.Syntax | Should -BeTrue
             $tofuPlan.Success | Should -BeTrue
         }
-        
+
         It "Should execute infrastructure deployment (dry run)" {
             # Test deployment execution
             $deployment = @{
@@ -370,16 +370,16 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 Duration = [timespan]::FromMinutes(5)
                 Success = $true
             }
-            
+
             $deployment.DryRun | Should -BeTrue
             $deployment.Resources.Networks.Count | Should -Be 2
             $deployment.Resources.VMs.Count | Should -Be 2
             $deployment.Success | Should -BeTrue
         }
     }
-    
+
     Context "Phase 7: Complete Flow Integration" {
-        
+
         It "Should execute complete bootstrap to infrastructure flow" {
             # Test the COMPLETE REAL FLOW in DryRun mode
             # This proves all components work together
@@ -407,7 +407,7 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
             # Log what would have been executed
             Write-Host "DryRun completed. Would have executed $($result.Total) scripts"
         }
-        
+
         It "Should produce expected infrastructure state" {
             # Test final state
             $finalState = @{
@@ -434,16 +434,16 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                     StateTracked = $true
                 }
             }
-            
+
             $finalState.Infrastructure.HyperV.Installed | Should -BeTrue
             $finalState.Infrastructure.OpenTofu.Initialized | Should -BeTrue
             $finalState.Infrastructure.Networks.Created | Should -Be 2
             $finalState.Infrastructure.VirtualMachines.Created | Should -Be 2
         }
     }
-    
+
     Context "Error Handling and Recovery" {
-        
+
         It "Should handle script failures gracefully" {
             # Test failure handling
             $failureScenario = @{
@@ -456,11 +456,11 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                     ContinueOnError = $false
                 }
             }
-            
+
             $failureScenario.Recovery.Logged | Should -BeTrue
             $failureScenario.Recovery.Reported | Should -BeTrue
         }
-        
+
         It "Should support checkpoint and resume" {
             # Test checkpoint/resume
             $checkpoint = @{
@@ -477,7 +477,7 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 }
                 CanResume = $true
             }
-            
+
             $checkpoint.CanResume | Should -BeTrue
             $checkpoint.Remaining.Count | Should -Be 2
             $checkpoint.State.Scripts["0009"] | Should -Be "Completed"
@@ -486,9 +486,9 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
 }
 
 Describe "Orchestration Engine Features" {
-    
+
     Context "Number-based Orchestration Language" {
-        
+
         It "Should support various sequence formats" {
             # Test orchestration language features
             $sequences = @{
@@ -501,7 +501,7 @@ Describe "Orchestration Engine Features" {
                 Exclusion = "0001-0099,!0050"
                 Complex = "0001-0005,02*,stage:Core,!0204"
             }
-            
+
             $sequences.Keys.Count | Should -Be 8
 
             # Each should be valid
@@ -509,7 +509,7 @@ Describe "Orchestration Engine Features" {
                 { $null = $seq } | Should -Not -Throw
             }
         }
-        
+
         It "Should execute sequences via 'seq' alias" {
             # Test seq alias functionality
             $aliasExists = Get-Alias -Name seq -ErrorAction SilentlyContinue
@@ -519,9 +519,9 @@ Describe "Orchestration Engine Features" {
             }
         }
     }
-    
+
     Context "UI Integration" {
-        
+
         It "Should provide interactive playbook selection" {
             # Test UI menu system
             $menuOptions = @{
@@ -535,11 +535,11 @@ Describe "Orchestration Engine Features" {
             CustomActions = @("Create Custom", "List Scripts", "Quit")
                 Interactive = $true
             }
-            
+
             $menuOptions.Playbooks.Count | Should -BeGreaterOrEqual 5
             $menuOptions.CustomActions | Should -Contain "Create Custom"
         }
-        
+
         It "Should support non-interactive execution" {
             # Test CLI parameters
             $cliExecution = @{
@@ -551,7 +551,7 @@ Describe "Orchestration Engine Features" {
                 }
                 Success = $true
             }
-            
+
             $cliExecution.Parameters.NonInteractive | Should -BeTrue
             $cliExecution.Parameters.WhatIf | Should -BeTrue
         }
@@ -580,17 +580,17 @@ Describe "Orchestration Engine Features" {
             # Step 5: Or user uses the seq alias
             $seqCommand = 'seq 0000-0300'
             $seqCommand | Should -Not -BeNullOrEmpty
-            
+
             Write-Host @"
 
 Actual User Commands:
 1. $bootstrapCommand                   # Initial setup
 2. $mainUICommand                      # Interactive UI
    OR
-3. $orchestrationCommand               # Non-interactive playbook  
+3. $orchestrationCommand               # Non-interactive playbook
    OR
 4. $directCommand                      # Direct module usage
-   OR  
+   OR
 # 5. $seqCommand                         # Quick alias
 "@
         }
