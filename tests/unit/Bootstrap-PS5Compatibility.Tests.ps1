@@ -125,6 +125,18 @@ Describe "Relaunch Parameter Preservation" {
             $script:BootstrapContent | Should -BeLike "*PSBoundParameters*"
             $script:BootstrapContent | Should -BeLike "*switch*"
         }
+
+        It "Should filter out invalid parameters during relaunch" {
+            # Verify the fix for the "parameter cannot be found that matches parameter name 'Missing'" error
+            $script:BootstrapContent | Should -BeLike "*validParameters*"
+            $script:BootstrapContent | Should -BeLike "*notcontains*param.Key*"
+            $script:BootstrapContent | Should -BeLike "*Skipping invalid parameter for re-launch*"
+        }
+
+        It "Should define valid parameters for main script" {
+            # Ensure the bootstrap script defines which parameters are valid
+            $script:BootstrapContent | Should -BeLike "*Mode*InstallProfile*InstallPath*Branch*NonInteractive*AutoInstallDeps*SkipAutoStart*IsRelaunch*"
+        }
     }
 }
 

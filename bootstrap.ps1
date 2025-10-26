@@ -366,8 +366,17 @@ function Install-Dependencies {
         $argumentList = @()
         $argumentList += "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath
 
-        # Preserve all bound parameters and add IsRelaunch flag
+        # Define valid parameters for the main bootstrap script
+        $validParameters = @('Mode', 'InstallProfile', 'InstallPath', 'Branch', 'NonInteractive', 'AutoInstallDeps', 'SkipAutoStart', 'IsRelaunch')
+
+        # Preserve only valid bound parameters and add IsRelaunch flag
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            # Skip parameters that are not valid for the main script (like internal function parameters)
+            if ($param.Key -notin $validParameters) {
+                Write-BootstrapLog "Skipping invalid parameter for re-launch: $($param.Key)" -Level Info
+                continue
+            }
+
             if ($param.Value -is [switch]) {
                 if ($param.Value) {
                     $argumentList += "-$($param.Key)"
@@ -913,56 +922,7 @@ if ($PWD.Path -like "*AitherZero*") {
         }
     }
 
-    # 2. Create convenient shell scripts
-    # For Unix-like systems
-    if (-not (Test-IsWindows)) {
-        # Create az command
-        $azScript = @'
-#!/usr/bin/env pwsh
-$root = $PSScriptRoot
-if (-not $env:AITHERZERO_INITIALIZED) {
-    Import-Module "$root/AitherZero.psd1" -Force -Global
-}
-& "$root/az.ps1" $arguments
-'@
-        $azScript | Set-Content "./az" -Force
-        chmod +x ./az 2>$null
-
-        # Create shell activation script
-        $activateScript = @'
-#!/bin/bash
-# AitherZero environment activation
-export AITHERZERO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export PATH="$AITHERZERO_ROOT/automation-scripts:$PATH"
-alias az="pwsh $AITHERZERO_ROOT/az.ps1"
-alias aither="pwsh $AITHERZERO_ROOT/Start-AitherZero.ps1"
-echo "✓ AitherZero environment activated"
-echo "  Commands: az <num>, aither"
-'@
-        $activateScript | Set-Content "./activate.sh" -Force
-        chmod +x ./activate.sh 2>$null
-
-        Write-BootstrapLog "Created Unix shell helpers (./az, ./activate.sh)" -Level Success
-    }
-
-    # 3. Create Windows batch files
-    if (Test-IsWindows) {
-        # az.cmd
-        @'
-@echo off
-pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0az.ps1" %*
-'@ | Set-Content "./az.cmd" -Force
-
-        # aither.cmd
-        @'
-@echo off
-pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AitherZero.ps1" %*
-'@ | Set-Content "./aither.cmd" -Force
-
-        Write-BootstrapLog "Created Windows command helpers (az.cmd, aither.cmd)" -Level Success
-    }
-
-    # 4. Set up VS Code integration
+    # 2. Set up VS Code integration
     $vscodeDir = ".vscode"
     if (-not (Test-Path $vscodeDir)) {
         New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
@@ -1259,12 +1219,6 @@ try {
                 Write-Host "- Launch interactive UI"
                 Write-Host "  seq <pattern>  " -NoNewline -ForegroundColor Cyan
                 Write-Host "- Run orchestration sequence"
-
-                if (-not (Test-IsWindows)) {
-                    Write-Host "`nFor bash/zsh users:" -ForegroundColor Yellow
-                    Write-Host "  source ./activate.sh  " -NoNewline -ForegroundColor Cyan
-                    Write-Host "- Activate in current shell"
-                }
 
                 Write-Host "`nNext steps:" -ForegroundColor Magenta
                 Write-Host "  cd $installPath" -ForegroundColor White
