@@ -364,7 +364,7 @@ jobs:
             let comment = '## 🎯 QA Lifecycle Report ' + statusEmoji + '\n\n';
             comment += '**Overall Status:** ' + status + '\n';
             comment += '**Total Issues:** ' + qaResults.TotalIssues + '\n';
-            comment += '**QA Scope:** \\${{ github.event.inputs.qa_scope || \'standard\' }}\n\n';
+            comment += '**QA Scope:** ${{ github.event.inputs.qa_scope || \'standard\' }}\n\n';
             comment += '### 📊 Quality Analysis Results\n\n';
             comment += '| Phase | Status | Details |\n';
             comment += '|-------|--------|---------|\n';
@@ -390,8 +390,8 @@ jobs:
             comment += './az 0402  # Run unit tests\n';
             comment += '```\n\n';
             comment += '**Resources:**\n';
-            comment += '- 📊 [QA Dashboard](https://github.com/\\${{ github.repository }}/actions/runs/\\${{ github.run_id }})\n';
-            comment += '- 🔍 [Detailed Artifacts](https://github.com/\\${{ github.repository }}/actions/runs/\\${{ github.run_id }})\n';
+            comment += '- 📊 [QA Dashboard](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';
+            comment += '- 🔍 [Detailed Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';
             comment += '- 📚 [AitherZero Docs](https://github.com/wizzense/AitherZero#automation-scripts)\n\n';
             comment += '---\n';
             comment += '*🤖 Automated QA lifecycle powered by AitherZero\'s comprehensive testing framework*';
