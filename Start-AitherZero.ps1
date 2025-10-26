@@ -13,6 +13,8 @@
     Path to configuration file
 .PARAMETER NonInteractive
     Run without user prompts
+.PARAMETER ForceInteractive
+    Force Interactive mode even in CI environments (overrides automatic NonInteractive detection)
 .PARAMETER Profile
     Execution profile to use
 .PARAMETER Playbook
@@ -60,6 +62,8 @@ param(
     [switch]$Help,
 
     [switch]$CI,
+
+    [switch]$ForceInteractive,
 
     [hashtable]$Variables,
 
@@ -1053,10 +1057,22 @@ try {
 
     $config = Get-AitherConfiguration -Path $ConfigPath
 
+    # Handle ForceInteractive override
+    if ($ForceInteractive) {
+        Write-CustomLog "ForceInteractive flag detected - overriding CI NonInteractive settings" -Level 'Information'
+        $NonInteractive = $false
+    }
+
     # Auto-adjust mode for CI/Non-Interactive environments
-    if ($NonInteractive -and $Mode -eq 'Interactive') {
-        Write-CustomLog "NonInteractive mode detected, switching from Interactive to Validate mode" -Level 'Information'
-        $Mode = 'Validate'
+    # Only auto-switch if Mode was not explicitly specified by user AND NonInteractive is from CI detection
+    if ($NonInteractive -and $Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
+        # Check if NonInteractive was auto-detected by CI (not explicitly passed by user)
+        if (-not $PSBoundParameters.ContainsKey('NonInteractive')) {
+            Write-CustomLog "CI environment detected with default Interactive mode, switching to Validate mode" -Level 'Information'
+            $Mode = 'Validate'
+        } else {
+            Write-CustomLog "NonInteractive flag explicitly provided with Interactive mode - this combination is not supported" -Level 'Warning'
+        }
     }
 
     # Handle different modes
