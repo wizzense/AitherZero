@@ -89,14 +89,36 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "📝 Running syntax validation..." -ForegroundColor Yellow
-          try {
-            ./az 0407
+          $success = $false
+          $errorMsg = ""
+          
+          # Try multiple methods to ensure robust execution across environments
+          $methods = @(
+            { & ./az 0407 },
+            { & "$(Join-Path $PWD 'az')" 0407 },
+            { & pwsh -File "./az.ps1" 0407 }
+          )
+          
+          for ($i = 0; $i -lt $methods.Count; $i++) {
+            try {
+              Write-Host "Attempting syntax validation with method $($i + 1)..." -ForegroundColor Cyan
+              $methods[$i].Invoke()
+              $success = $true
+              break
+            } catch {
+              $errorMsg = $_.ToString()
+              Write-Host "Method $($i + 1) failed: $errorMsg" -ForegroundColor Yellow
+              continue
+            }
+          }
+          
+          if ($success) {
             Write-Host "✅ Syntax validation passed" -ForegroundColor Green
             echo "status=success" >> $env:GITHUB_OUTPUT
-          } catch {
-            Write-Host "❌ Syntax validation failed: $_" -ForegroundColor Red
+          } else {
+            Write-Host "❌ Syntax validation failed: $errorMsg" -ForegroundColor Red
             echo "status=failed" >> $env:GITHUB_OUTPUT
-            echo "error=$_" >> $env:GITHUB_OUTPUT
+            echo "error=$errorMsg" >> $env:GITHUB_OUTPUT
             # Don't exit 1 - let build continue for debugging
             Write-Host "⚠️ Continuing build for debugging purposes..." -ForegroundColor Yellow
           }
@@ -207,17 +229,35 @@ jobs:
           }
           
           $testExitCode = 0
-          try {
-            if ($testScope -eq "full") {
-              # Run all tests (comprehensive suite)
-              $result = & ./az 0409
+          $testSuccess = $false
+          $errorMsg = ""
+          
+          # Determine which test script to run
+          $scriptNumber = if ($testScope -eq "full") { "0409" } else { "0402" }
+          Write-Host "Running $testScope tests using script $scriptNumber..." -ForegroundColor Cyan
+          
+          # Try multiple methods to ensure robust execution
+          $methods = @(
+            { & ./az $scriptNumber },
+            { & "$(Join-Path $PWD 'az')" $scriptNumber },
+            { & pwsh -File "./az.ps1" $scriptNumber }
+          )
+          
+          for ($i = 0; $i -lt $methods.Count; $i++) {
+            try {
+              Write-Host "Attempting test execution with method $($i + 1)..." -ForegroundColor Cyan
+              $result = $methods[$i].Invoke()
               $testExitCode = $LASTEXITCODE
-            } else {
-              # Quick unit tests (essential validation)  
-              $result = & ./az 0402
-              $testExitCode = $LASTEXITCODE
+              $testSuccess = $true
+              break
+            } catch {
+              $errorMsg = $_.ToString()
+              Write-Host "Method $($i + 1) failed: $errorMsg" -ForegroundColor Yellow
+              continue
             }
-            
+          }
+          
+          if ($testSuccess) {
             Write-Host "Test execution completed with exit code: $testExitCode" -ForegroundColor Cyan
             
             if ($testExitCode -eq 0) {
@@ -226,16 +266,13 @@ jobs:
               Write-Host "⚠️ Tests completed with issues (exit code: $testExitCode)" -ForegroundColor Yellow
               echo "TESTS_ISSUES=true" >> $env:GITHUB_ENV
             }
-            
-            # Always exit 0 for CI (never fail builds)
-            exit 0
-            
-          } catch {
-            Write-Host "⚠️ Tests encountered exception: $_" -ForegroundColor Yellow
-            Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Yellow
+          } else {
+            Write-Host "⚠️ Tests encountered exception: $errorMsg" -ForegroundColor Yellow
             echo "TESTS_ISSUES=true" >> $env:GITHUB_ENV
-            # Always exit 0 for CI (never fail builds)
-            exit 0
+          }
+          
+          # Always exit 0 for CI (never fail builds)
+          exit 0
           }
 
       - name: 🔬 Code Analysis
@@ -250,40 +287,95 @@ jobs:
           }
           
           $analysisExitCode = 0
-          try {
-            $result = & ./az 0404  # PSScriptAnalyzer
-            $analysisExitCode = $LASTEXITCODE
-            
+          $analysisSuccess = $false
+          $errorMsg = ""
+          
+          # Try multiple methods to ensure robust execution
+          $methods = @(
+            { & ./az 0404 },
+            { & "$(Join-Path $PWD 'az')" 0404 },
+            { & pwsh -File "./az.ps1" 0404 }
+          )
+          
+          for ($i = 0; $i -lt $methods.Count; $i++) {
+            try {
+              Write-Host "Attempting code analysis with method $($i + 1)..." -ForegroundColor Cyan
+              $result = $methods[$i].Invoke()
+              $analysisExitCode = $LASTEXITCODE
+              $analysisSuccess = $true
+              break
+            } catch {
+              $errorMsg = $_.ToString()
+              Write-Host "Method $($i + 1) failed: $errorMsg" -ForegroundColor Yellow
+              continue
+            }
+          }
+          
+          if ($analysisSuccess) {
             if ($analysisExitCode -eq 0) {
               Write-Host "✅ Code analysis completed successfully" -ForegroundColor Green
             } else {
               Write-Host "⚠️ Code analysis found issues (exit code: $analysisExitCode)" -ForegroundColor Yellow
               echo "ANALYSIS_ISSUES=true" >> $env:GITHUB_ENV
             }
-            
-            # Always exit 0 for CI (never fail builds)
-            exit 0
-            
-          } catch {
-            Write-Host "⚠️ Code analysis encountered exception: $_" -ForegroundColor Yellow
+          } else {
+            Write-Host "⚠️ Code analysis encountered exception: $errorMsg" -ForegroundColor Yellow
             echo "ANALYSIS_ISSUES=true" >> $env:GITHUB_ENV
-            # Always exit 0 for CI (never fail builds)
-            exit 0
           }
+          
+          # Always exit 0 for CI (never fail builds)
+          exit 0
 
       - name: 📊 Generate Reports
         if: matrix.generate-reports == true
         shell: pwsh
         run: |
           Write-Host "📊 Generating comprehensive reports..." -ForegroundColor Yellow
-          try {
-            # Generate project report
-            ./az 0510
-            # Generate coverage report if available
-            ./az 0408
-            Write-Host "✅ Reports generated" -ForegroundColor Green
-          } catch {
-            Write-Host "⚠️ Report generation issues: $_" -ForegroundColor Yellow
+          
+          $reportMethods = @(
+            { & ./az 0510 },
+            { & "$(Join-Path $PWD 'az')" 0510 },
+            { & pwsh -File "./az.ps1" 0510 }
+          )
+          
+          $coverageMethods = @(
+            { & ./az 0408 },
+            { & "$(Join-Path $PWD 'az')" 0408 },
+            { & pwsh -File "./az.ps1" 0408 }
+          )
+          
+          $reportSuccess = 0
+          
+          # Generate project report
+          for ($i = 0; $i -lt $reportMethods.Count; $i++) {
+            try {
+              Write-Host "Attempting project report generation with method $($i + 1)..." -ForegroundColor Cyan
+              $reportMethods[$i].Invoke()
+              $reportSuccess++
+              break
+            } catch {
+              Write-Host "Project report method $($i + 1) failed: $_" -ForegroundColor Yellow
+              continue
+            }
+          }
+          
+          # Generate coverage report if available
+          for ($i = 0; $i -lt $coverageMethods.Count; $i++) {
+            try {
+              Write-Host "Attempting coverage report generation with method $($i + 1)..." -ForegroundColor Cyan
+              $coverageMethods[$i].Invoke()
+              $reportSuccess++
+              break
+            } catch {
+              Write-Host "Coverage report method $($i + 1) failed: $_" -ForegroundColor Yellow
+              continue
+            }
+          }
+          
+          if ($reportSuccess -gt 0) {
+            Write-Host "✅ Reports generated successfully ($reportSuccess/2)" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️ Report generation failed for all methods" -ForegroundColor Yellow
           }
 
       - name: 📋 Generate Build Audit Log

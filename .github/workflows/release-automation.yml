@@ -68,7 +68,7 @@ jobs:
           # Syntax validation
           try {
             Write-Host "  📝 Syntax validation..." -ForegroundColor Cyan
-            ./az 0407
+            & "./az.ps1" 0407
             Write-Host "  ✅ Syntax validation passed" -ForegroundColor Green
           } catch {
             $errors += "Syntax validation failed: $_"
@@ -89,7 +89,7 @@ jobs:
           # Core tests
           try {
             Write-Host "  🧪 Core functionality tests..." -ForegroundColor Cyan
-            ./az 0402
+            & "./az.ps1" 0402
             Write-Host "  ✅ Core tests passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Core tests had issues (not blocking): $_" -ForegroundColor Yellow
@@ -98,7 +98,7 @@ jobs:
           # Code analysis
           try {
             Write-Host "  🔬 Code quality analysis..." -ForegroundColor Cyan
-            ./az 0404
+            & "./az.ps1" 0404
             Write-Host "  ✅ Code analysis passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Code analysis had issues (not blocking): $_" -ForegroundColor Yellow
@@ -207,13 +207,13 @@ jobs:
           # Create multiple archive formats
           Write-Host "📁 Creating archive formats..." -ForegroundColor Cyan
           
-          # ZIP for Windows compatibility
-          Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip" -Force
+          # ZIP for Windows compatibility - compress contents, not the directory itself
+          Compress-Archive -Path "./$packageName/*" -DestinationPath "./$packageName.zip" -Force
           Write-Host "  ✅ Created: $packageName.zip" -ForegroundColor Green
           
-          # TAR.GZ for Unix systems
+          # TAR.GZ for Unix systems - use -C to change directory and avoid nested structure
           if (Get-Command tar -ErrorAction SilentlyContinue) {
-            tar -czf "./$packageName.tar.gz" "./$packageName/"
+            tar -czf "./$packageName.tar.gz" -C "./$packageName" .
             Write-Host "  ✅ Created: $packageName.tar.gz" -ForegroundColor Green
           }
           
