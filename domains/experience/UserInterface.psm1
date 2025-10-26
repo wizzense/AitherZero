@@ -139,10 +139,10 @@ function Import-ConfigurationModule {
     }
 }
 
-function Ensure-UIInitialized {
+function Initialize-UIState {
     <#
     .SYNOPSIS
-        Ensure UI is initialized before use
+        Initialize UI state before use
     #>
     if (-not $script:UIInitialized) {
         # Initialize colors if not already done
@@ -300,7 +300,7 @@ function Write-UIText {
         [int]$Indent = 0
     )
 
-    Ensure-UIInitialized
+    Initialize-UIState
 
     # Ensure Color is not null
     if ([string]::IsNullOrEmpty($Color)) {
