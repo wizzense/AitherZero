@@ -148,13 +148,24 @@ $projectReport.Coverage = @{
 
 # 4. Code Quality Analysis
 Write-ReportLog "Analyzing code quality..."
-$analysisResultsPath = Join-Path $OutputPath "../analysis"
-if (Test-Path $analysisResultsPath) {
-    $analysisFiles = Get-ChildItem -Path $analysisResultsPath -Filter "*Summary*.json" -ErrorAction SilentlyContinue
-    foreach ($analysisFile in $analysisFiles) {
-        $analysisData = Get-Content $analysisFile.FullName | ConvertFrom-Json
-        $projectReport.CodeQuality[$analysisFile.BaseName] = $analysisData
+try {
+    $analysisResultsPath = Join-Path $OutputPath "../analysis"
+    if (Test-Path $analysisResultsPath) {
+        $analysisFiles = Get-ChildItem -Path $analysisResultsPath -Filter "*Summary*.json" -ErrorAction SilentlyContinue | Select-Object -First 10  # Limit to avoid timeout
+        foreach ($analysisFile in $analysisFiles) {
+            try {
+                $analysisData = Get-Content $analysisFile.FullName | ConvertFrom-Json -ErrorAction SilentlyContinue
+                if ($analysisData) {
+                    $projectReport.CodeQuality[$analysisFile.BaseName] = $analysisData
+                }
+            } catch {
+                Write-ReportLog "Failed to process analysis file $($analysisFile.Name): $($_.Exception.Message)" -Level Warning
+            }
+        }
     }
+} catch {
+    Write-ReportLog "Failed to analyze code quality: $($_.Exception.Message)" -Level Warning
+    $projectReport.CodeQuality = @{}
 }
 
 # 5. Documentation Analysis
@@ -195,22 +206,40 @@ foreach ($domain in $domains) {
     }
 }
 
-# 7. File Analysis
+# 7. File Analysis (optimized for performance)
 Write-ReportLog "Performing file analysis..."
-$allFiles = @(Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue)
-$configFiles = @(Get-ChildItem -Path $ProjectPath -Filter "*.json" -Recurse -ErrorAction SilentlyContinue)
-$projectReport.FileAnalysis = @{
-    TotalFiles = $allFiles.Count
-    PowerShellFiles = @($psFiles).Count + @($psmFiles).Count
-    TestFiles = @($testScripts).Count
-    ConfigFiles = $configFiles.Count
-    LargestFiles = Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue |
-        Sort-Object Length -Descending |
-        Select-Object -First 10 |
-        ForEach-Object { @{
+try {
+    # Use efficient file counting with filtering during discovery
+    $allFiles = @(Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue | Where-Object {
+        $_.FullName -notlike "*\.git\*" -and 
+        $_.FullName -notlike "*\node_modules\*" -and
+        $_.FullName -notlike "*\logs\*" -and
+        $_.FullName -notlike "*\temp\*"
+    })
+    
+    $configFiles = @(Get-ChildItem -Path $ProjectPath -Filter "*.json" -Recurse -ErrorAction SilentlyContinue | Where-Object {
+        $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*\.git\*"
+    })
+    
+    $projectReport.FileAnalysis = @{
+        TotalFiles = $allFiles.Count
+        PowerShellFiles = @($psFiles).Count + @($psmFiles).Count
+        TestFiles = @($testScripts).Count
+        ConfigFiles = $configFiles.Count
+        LargestFiles = $allFiles | Sort-Object Length -Descending | Select-Object -First 10 | ForEach-Object { @{
             Path = $_.FullName.Replace($ProjectPath, '.')
             SizeMB = [math]::Round($_.Length / 1MB, 2)
         }}
+    }
+} catch {
+    Write-ReportLog "Failed to perform file analysis: $($_.Exception.Message)" -Level Warning
+    $projectReport.FileAnalysis = @{
+        TotalFiles = 0
+        PowerShellFiles = @($psFiles).Count + @($psmFiles).Count
+        TestFiles = @($testScripts).Count
+        ConfigFiles = 0
+        LargestFiles = @()
+    }
 }
 
 # Generate Reports

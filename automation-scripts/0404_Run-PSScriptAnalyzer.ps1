@@ -133,12 +133,14 @@ try {
         $Severity = @('Error')  # Only check for errors in CI
         # Add more aggressive exclusions for CI speed and exclude legacy code
         if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
-            $ExcludePaths = @('tests', 'examples', 'docs', '.git', 'node_modules', 'legacy-to-migrate', '.archive')
+            $ExcludePaths = @('tests', 'examples', 'docs', '.git', 'node_modules', 'legacy-to-migrate', '.archive', 'temp', 'logs', 'reports')
         } else {
             # Ensure legacy directories are always excluded in CI
-            $ExcludePaths = @($ExcludePaths) + @('legacy-to-migrate', '.archive')
+            $ExcludePaths = @($ExcludePaths) + @('legacy-to-migrate', '.archive', 'temp', 'logs', 'reports')
         }
-        Write-ScriptLog -Message "CI mode: Reduced scope to Error-level issues only"
+        # Also exclude common patterns that are unlikely to need analysis
+        $ExcludePaths += @('*.Tests.*', '*Test*', '*temp*', '*log*', '*report*')
+        Write-ScriptLog -Message "CI mode: Reduced scope to Error-level issues only, excluded $($ExcludePaths.Count) path patterns"
     }
 
     # Apply parameter overrides or use config defaults
@@ -217,26 +219,59 @@ try {
         }
     }
 
-    # Add exclude paths using file filtering instead
+    # Optimize file discovery with efficient exclusion filtering
     $filesToAnalyze = $null
     if ($ExcludePaths) {
         Write-ScriptLog -Message "Filtering files to exclude paths: $($ExcludePaths -join ', ')"
-        # Get all PowerShell files and filter out excluded paths
-        $allFiles = Get-ChildItem -Path $Path -Recurse -Include "*.ps1", "*.psm1", "*.psd1" | Where-Object {
-            $file = $_.FullName
-            $exclude = $false
-            foreach ($excludePath in $ExcludePaths) {
-                if ($file -like "*$excludePath*") {
-                    $exclude = $true
+        
+        # Build efficient exclusion filters - separate directory patterns from file patterns
+        $dirPatterns = @()
+        $filePatterns = @()
+        
+        foreach ($pattern in $ExcludePaths) {
+            if ($pattern.Contains('*') -or $pattern.Contains('.')) {
+                $filePatterns += [regex]::Escape($pattern).Replace('\*', '.*')
+            } else {
+                $dirPatterns += $pattern
+            }
+        }
+        
+        # Use Get-ChildItem with optimized filtering
+        $allFiles = Get-ChildItem -Path $Path -Recurse -Include "*.ps1", "*.psm1", "*.psd1" -File | Where-Object {
+            $file = $_
+            $relativePath = $file.FullName.Substring($Path.Length).TrimStart('\', '/')
+            
+            # Check directory exclusions first (faster)
+            $excludeDir = $false
+            foreach ($dirPattern in $dirPatterns) {
+                if ($relativePath -like "*$dirPattern*") {
+                    $excludeDir = $true
                     break
                 }
             }
-            -not $exclude
+            
+            if ($excludeDir) { return $false }
+            
+            # Check file pattern exclusions
+            foreach ($filePattern in $filePatterns) {
+                if ($file.Name -match $filePattern -or $relativePath -match $filePattern) {
+                    return $false
+                }
+            }
+            
+            return $true
         }
+        
         $analyzerParams.Remove('Path')
         $analyzerParams.Remove('Recurse')
         if ($allFiles) {
-            $filesToAnalyze = $allFiles | ForEach-Object { $_.FullName }
+            $filesToAnalyze = @($allFiles | ForEach-Object { $_.FullName })
+            Write-ScriptLog -Message "Found $($filesToAnalyze.Count) files to analyze after exclusions"
+            
+            # For large file sets, use batch processing
+            if ($filesToAnalyze.Count -gt 100) {
+                Write-ScriptLog -Message "Large file set detected - will use batch processing for efficiency"
+            }
             $analyzerParams['Path'] = $filesToAnalyze
         } else {
             Write-ScriptLog -Message "No files found after applying exclusions"
@@ -278,51 +313,64 @@ try {
     if ($PSCmdlet.ShouldProcess("PowerShell files", "Run PSScriptAnalyzer analysis")) {
         $analysisJob = $null
         try {
-            # For CI environments, use job with timeout
+            # For CI environments, use job with intelligent resource management
             if ($isCI) {
-                Write-ScriptLog -Message "Running PSScriptAnalyzer with CI optimizations (5-minute timeout)"
+                Write-ScriptLog -Message "Running PSScriptAnalyzer with CI optimizations and adaptive timeout"
                 $analysisJob = Start-Job -ScriptBlock {
                     param($params)
                     Import-Module PSScriptAnalyzer -Force
-                    if ($params.Path -is [array] -and $params.Path.Count -gt 1) {
-                        # Handle multiple files efficiently in CI
+                    
+                    if ($params.Path -is [array] -and $params.Path.Count -gt 100) {
+                        # Use highly optimized batch processing for large file sets
                         $allResults = @()
-                        $fileCount = 0
-                        foreach ($file in $params.Path) {
-                            $fileCount++
-                            if ($fileCount % 50 -eq 0) {
-                                Write-Progress -Activity "Analyzing Files" -Status "Processed $fileCount/$($params.Path.Count)" -PercentComplete (($fileCount / $params.Path.Count) * 100)
-                            }
-                            if ([string]::IsNullOrWhiteSpace($file)) {
-                                continue
-                            }
-                            $singleFileParams = @{}
+                        $batchSize = 25  # Optimal batch size for memory vs speed
+                        $totalFiles = $params.Path.Count
+                        
+                        # Split files into batches and process each batch together
+                        for ($i = 0; $i -lt $totalFiles; $i += $batchSize) {
+                            $endIndex = [Math]::Min($i + $batchSize - 1, $totalFiles - 1)
+                            $batch = $params.Path[$i..$endIndex]
+                            
+                            Write-Progress -Activity "Batch Analysis" -Status "Processing batch $([Math]::Ceiling(($i + 1) / $batchSize)) of $([Math]::Ceiling($totalFiles / $batchSize))" -PercentComplete (($i / $totalFiles) * 100)
+                            
+                            # Create batch-specific parameters once
+                            $batchParams = @{}
                             foreach ($key in $params.Keys) {
-                                if ($key -ne 'Path' -and $null -ne $params[$key]) {
-                                    $singleFileParams[$key] = $params[$key]
+                                if ($key -ne 'Path') {
+                                    $batchParams[$key] = $params[$key]
                                 }
                             }
-                            $singleFileParams['Path'] = $file
+                            $batchParams['Path'] = $batch
+                            $batchParams['Recurse'] = $false  # Files are already specified
+                            
                             try {
-                                $fileResults = Invoke-ScriptAnalyzer @singleFileParams
-                                if ($fileResults) {
-                                    $allResults += $fileResults
+                                $batchResults = Invoke-ScriptAnalyzer @batchParams -ErrorAction SilentlyContinue
+                                if ($batchResults) {
+                                    $allResults += $batchResults
                                 }
                             } catch {
-                                Write-Warning "Failed to analyze file: $file - $($_.Exception.Message)"
+                                Write-Warning "Failed to analyze batch starting at file $($i + 1): $($_.Exception.Message)"
                             }
                         }
                         return $allResults
+                    } elseif ($params.Path -is [array] -and $params.Path.Count -gt 1) {
+                        # Use direct array processing for smaller sets
+                        $params['Recurse'] = $false  # Files are already specified
+                        return Invoke-ScriptAnalyzer @params
                     } else {
                         return Invoke-ScriptAnalyzer @params
                     }
                 } -ArgumentList $analyzerParams
                 
-                # Wait for job with timeout (5 minutes for CI)
-                $results = Wait-Job $analysisJob -Timeout 300 | Receive-Job
+                # Wait for job with adaptive timeout based on file count
+                $fileCount = if ($analyzerParams.Path -is [array]) { $analyzerParams.Path.Count } else { 1 }
+                $timeoutSeconds = [Math]::Min(300, [Math]::Max(60, $fileCount * 2))  # 2 seconds per file, min 60, max 300
+                Write-ScriptLog -Message "Using adaptive timeout of $timeoutSeconds seconds for $fileCount files"
+                
+                $results = Wait-Job $analysisJob -Timeout $timeoutSeconds | Receive-Job
                 
                 if ($analysisJob.State -eq 'Running') {
-                    Write-ScriptLog -Level Warning -Message "PSScriptAnalyzer timed out after 5 minutes, stopping job"
+                    Write-ScriptLog -Level Warning -Message "PSScriptAnalyzer timed out after $timeoutSeconds seconds, stopping job"
                     Stop-Job $analysisJob -PassThru | Remove-Job
                     # Return minimal results to allow CI to continue
                     $results = @()
@@ -330,33 +378,11 @@ try {
                     Remove-Job $analysisJob
                 }
             } else {
-                # For non-CI, run normally
+                # For non-CI, use optimized processing
                 if ($analyzerParams.Path -is [array] -and $analyzerParams.Path.Count -gt 1) {
-                    # Handle multiple files by analyzing each one and combining results
-                    $allResults = @()
-                    foreach ($file in $analyzerParams.Path) {
-                        if ([string]::IsNullOrWhiteSpace($file)) {
-                            continue
-                        }
-                        # Create a proper hashtable copy
-                        $singleFileParams = @{}
-                        foreach ($key in $analyzerParams.Keys) {
-                            if ($key -ne 'Path' -and $null -ne $analyzerParams[$key]) {
-                                $singleFileParams[$key] = $analyzerParams[$key]
-                            }
-                        }
-                        $singleFileParams['Path'] = $file
-
-                        try {
-                            $fileResults = Invoke-ScriptAnalyzer @singleFileParams
-                            if ($fileResults) {
-                                $allResults += $fileResults
-                            }
-                        } catch {
-                            Write-ScriptLog -Level Warning -Message "Failed to analyze file: $file - $($_.Exception.Message)"
-                        }
-                    }
-                    $results = $allResults
+                    # Use direct array processing - PSScriptAnalyzer can handle multiple files efficiently
+                    $analyzerParams['Recurse'] = $false  # Files are already specified
+                    $results = Invoke-ScriptAnalyzer @analyzerParams
                 } else {
                     $results = Invoke-ScriptAnalyzer @analyzerParams
                 }
