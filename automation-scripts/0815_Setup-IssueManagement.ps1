@@ -186,8 +186,11 @@ function Get-TestFindings {
     
     $findings = @()
     
-    # Look for test report files
-    $testFiles = Get-ChildItem -Path $Path -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | Sort-Object CreationTime -Descending | Select-Object -First 1
+    # Look for test report files  
+    $testFiles = Get-ChildItem -Path $Path -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | Sort-Object CreationTime -Descending | Select-Object -First 3
+    
+    # Also check for Pester test results
+    $pesterResults = Get-ChildItem -Path "." -Filter "*TestResults*.xml" -ErrorAction SilentlyContinue | Sort-Object CreationTime -Descending | Select-Object -First 1
     
     foreach ($testFile in $testFiles) {
         try {
@@ -203,7 +206,7 @@ function Get-TestFindings {
                         Priority = "P1-High"
                         Type = "test-failure"
                         Count = $failedTests.Count
-                        Details = $failedTests | Select-Object -First 3
+                        Details = $failedTests | Select-Object -First 5
                         ReportFile = $testFile.Name
                     }
                 }
@@ -211,6 +214,35 @@ function Get-TestFindings {
         }
         catch {
             Write-Status "Error parsing test report $($testFile.Name): $_" "Warning"
+        }
+    }
+    
+    # Check Pester XML results for failures
+    if ($pesterResults) {
+        try {
+            [xml]$pesterXml = Get-Content $pesterResults.FullName
+            $failedTests = $pesterXml.SelectNodes("//test-case[@result='Failed']")
+            
+            if ($failedTests.Count -gt 0) {
+                $findings += @{
+                    Title = "🔴 [PESTER] Unit Test Failures ($($failedTests.Count) tests failed)"
+                    Priority = "P1-High"
+                    Type = "pester-failure"
+                    Count = $failedTests.Count
+                    Details = $failedTests | Select-Object -First 5 | ForEach-Object {
+                        @{
+                            Name = $_.name
+                            Result = $_.result
+                            Message = $_.failure.message
+                            File = $_.classname
+                        }
+                    }
+                    ReportFile = $pesterResults.Name
+                }
+            }
+        }
+        catch {
+            Write-Status "Error parsing Pester results $($pesterResults.Name): $_" "Warning"
         }
     }
     
@@ -319,7 +351,7 @@ function New-IssueBody {
         'test-failure' {
             $body += "## 🧪 Test Failure Analysis"
             $body += ""
-            $body += "Automated testing has detected failures that require attention."
+            $body += "Automated testing has detected **$($Finding.Count) test failures** that require attention."
             $body += ""
             if ($Finding.ReportFile) {
                 $body += "**Report File:** ``$($Finding.ReportFile)``"
@@ -329,6 +361,9 @@ function New-IssueBody {
             $body += "### 📋 Failed Tests"
             foreach ($test in $Finding.Details) {
                 $body += "- **$($test.Name)**: $($test.Result)"
+                if ($test.Error) {
+                    $body += "  - **Error**: $($test.Error)"
+                }
             }
             $body += ""
             $body += "### 🔧 Fix Instructions"
@@ -340,6 +375,50 @@ function New-IssueBody {
             $body += "3. **Fix underlying issues** in code or tests"
             $body += "4. **Verify fixes** with full test suite"
             $body += "5. **Update tests** if requirements have changed"
+        }
+        
+        'pester-failure' {
+            $body += "## 🔴 Pester Unit Test Failures"
+            $body += ""
+            $body += "**$($Finding.Count) unit tests are currently failing** and need immediate attention."
+            $body += ""
+            if ($Finding.ReportFile) {
+                $body += "**Test Results File:** ``$($Finding.ReportFile)``"
+                $body += ""
+            }
+            
+            $body += "### ❌ Failed Tests Details"
+            foreach ($test in $Finding.Details) {
+                $body += "- **$($test.Name)** in ``$($test.File)``"
+                if ($test.Message) {
+                    $body += "  - **Error**: $($test.Message)"
+                }
+                $body += ""
+            }
+            
+            $body += "### 🚨 Critical Action Required"
+            $body += ""
+            $body += "@copilot **URGENT**: These test failures indicate broken functionality:"
+            $body += ""
+            $body += "1. **🔍 INVESTIGATE** each failing test immediately"
+            $body += "2. **🏃 RUN LOCALLY**: ``Invoke-Pester -Path ./tests/unit -Output Detailed``"  
+            $body += "3. **🔧 FIX ROOT CAUSE** - don't just update tests"
+            $body += "4. **✅ VERIFY ALL PASS**: ``./automation-scripts/0402_Run-UnitTests.ps1``"
+            $body += "5. **📝 DOCUMENT** what was broken and how it was fixed"
+            $body += ""
+            $body += "### 🎯 Testing Commands"
+            $body += '```powershell'
+            $body += "# Run all unit tests"
+            $body += "Invoke-Pester -Path ./tests/unit -Output Detailed"
+            $body += ""
+            $body += "# Run specific failed tests"
+            foreach ($test in ($Finding.Details | Select-Object -First 3)) {
+                $body += "# Test: $($test.Name)"
+            }
+            $body += ""
+            $body += "# Full test suite validation"
+            $body += "./automation-scripts/0409_Run-AllTests.ps1"
+            $body += '```'
         }
     }
     
@@ -388,7 +467,8 @@ function New-GitHubIssue {
         'security' { $labels += @('security', 'vulnerability') }
         'credentials' { $labels += @('security', 'credentials', 'urgent') }
         'code-quality' { $labels += @('code-quality', 'psscriptanalyzer') }
-        'test-failure' { $labels += @('tests', 'ci-failure') }
+        'test-failure' { $labels += @('tests', 'ci-failure', 'bug') }
+        'pester-failure' { $labels += @('tests', 'pester', 'unit-tests', 'failure', 'bug') }
     }
     
     if ($DryRun) {

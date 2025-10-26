@@ -28,6 +28,27 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
+      - name: 🧪 Run Tests and Check for Failures
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running tests to detect current failures..." -ForegroundColor Cyan
+          
+          # Run unit tests and capture results
+          try {
+            ./automation-scripts/0402_Run-UnitTests.ps1 -OutputPath "./test-results" -ContinueOnError
+          } catch {
+            Write-Warning "Some tests may have failed - this is expected for issue detection"
+          }
+          
+          # Run PSScriptAnalyzer
+          try {
+            ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -OutputPath "./reports/psscriptanalyzer-results.json"
+          } catch {
+            Write-Warning "PSScriptAnalyzer analysis completed with findings"
+          }
+          
+          Write-Host "✅ Test execution completed" -ForegroundColor Green
+
       - name: 🔍 Run Issue Analysis and Creation
         shell: pwsh
         run: |
@@ -42,7 +63,7 @@ jobs:
             exit 1
           }
           
-          # Run the issue management script
+          # Run the enhanced issue management script (now includes tests and bugs)
           if ("${{ github.event.inputs.create_actual_issues }}" -eq "true") {
             Write-Host "🔥 CREATING ACTUAL GITHUB ISSUES..." -ForegroundColor Red
             ./automation-scripts/0815_Setup-IssueManagement.ps1 -CreateIssues -AnalysisPath "./reports"
@@ -74,5 +95,8 @@ jobs:
           Write-Host "• 🚨 Critical Security Vulnerabilities" -ForegroundColor Red
           Write-Host "• 🔐 Exposed Credentials" -ForegroundColor Red  
           Write-Host "• 🌐 Insecure Protocol Usage" -ForegroundColor Yellow
+          Write-Host "• 🧪 Test Failures" -ForegroundColor Red
+          Write-Host "• 🔴 Pester Unit Test Failures" -ForegroundColor Red
+          Write-Host "• 🐛 System Errors and Bugs" -ForegroundColor Yellow
           Write-Host "• ❌ PSScriptAnalyzer Errors" -ForegroundColor Yellow
           Write-Host "• ⚠️ Code Quality Warnings" -ForegroundColor Gray

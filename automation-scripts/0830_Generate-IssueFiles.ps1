@@ -201,6 +201,135 @@ function New-IssueContent {
             $body += "3. **Use secure communication channels** for sensitive data"
             $body += "4. **Implement proper TLS/SSL configuration**"
         }
+        
+        'test-failure' {
+            $body += "## 🧪 Test Failure Analysis"
+            $body += ""
+            $body += "Automated testing has detected **$($Finding.Count) test failures** that require immediate attention."
+            $body += ""
+            if ($Finding.ReportFile) {
+                $body += "**Report File:** ``$($Finding.ReportFile)``"
+                $body += ""
+            }
+            
+            $body += "### ❌ Failed Tests Details"
+            foreach ($test in $Finding.Details) {
+                $body += "- **$($test.Name)**: $($test.Result)"
+                if ($test.Error) {
+                    $body += "  - **Error**: $($test.Error)"
+                }
+            }
+            $body += ""
+            $body += "### 🔧 Critical Fix Instructions"
+            $body += ""
+            $body += "@$($Finding.Assignee) **URGENT**: These test failures indicate broken functionality:"
+            $body += ""
+            $body += "1. **🔍 RUN LOCALLY**: ``./automation-scripts/0402_Run-UnitTests.ps1``"
+            $body += "2. **🧪 ANALYZE PATTERNS**: Look for common failure causes"
+            $body += "3. **🛠️ FIX ROOT CAUSE**: Don't just update tests without fixing code"
+            $body += "4. **✅ VERIFY ALL PASS**: Run full test suite before committing"
+            $body += "5. **📝 UPDATE TESTS**: Only if requirements have legitimately changed"
+        }
+        
+        'pester-failure' {
+            $body += "## 🔴 Pester Unit Test Failures"
+            $body += ""
+            $body += "**$($Finding.Count) unit tests are currently failing** and need immediate attention."
+            $body += ""
+            if ($Finding.ReportFile) {
+                $body += "**Test Results File:** ``$($Finding.ReportFile)``"
+                $body += ""
+            }
+            
+            $body += "### ❌ Failed Tests Details"
+            foreach ($test in $Finding.Details) {
+                $body += "- **$($test.Name)** in ``$($test.File)``"
+                if ($test.Message) {
+                    $body += "  - **Error**: $($test.Message)"
+                }
+                $body += ""
+            }
+            
+            $body += "### 🚨 Critical Action Required"
+            $body += ""
+            $body += "@$($Finding.Assignee) **URGENT**: These test failures indicate broken functionality:"
+            $body += ""
+            $body += "1. **🔍 INVESTIGATE** each failing test immediately"
+            $body += "2. **🏃 RUN LOCALLY**: ``Invoke-Pester -Path ./tests/unit -Output Detailed``"  
+            $body += "3. **🔧 FIX ROOT CAUSE** - don't just update tests"
+            $body += "4. **✅ VERIFY ALL PASS**: ``./automation-scripts/0402_Run-UnitTests.ps1``"
+            $body += "5. **📝 DOCUMENT** what was broken and how it was fixed"
+            $body += ""
+            $body += "### 🎯 Testing Commands"
+            $body += "```powershell"
+            $body += "# Run all unit tests with detailed output"
+            $body += "Invoke-Pester -Path ./tests/unit -Output Detailed"
+            $body += ""
+            $body += "# Run full test suite validation"
+            $body += "./automation-scripts/0409_Run-AllTests.ps1"
+            $body += ""
+            $body += "# Check test coverage"
+            $body += "./automation-scripts/0408_Generate-TestCoverage.ps1"
+            $body += "```"
+        }
+        
+        'bugs' {
+            $body += "## 🐛 System Errors and Bug Analysis"
+            $body += ""
+            $body += "**$($Finding.Count) system errors** have been detected in logs and need investigation."
+            $body += ""
+            $body += "### 🔥 Error Details"
+            foreach ($error in $Finding.Details) {
+                $body += "- **$($error.Pattern)** in ``$($error.File):$($error.Line)``"
+                $body += "  - **Error**: ``$($error.Content)``"
+                $body += ""
+            }
+            
+            $body += "### 🚨 Bug Fix Protocol"
+            $body += ""
+            $body += "@$($Finding.Assignee) **CRITICAL**: System errors require immediate investigation:"
+            $body += ""
+            $body += "1. **📋 REPRODUCE** the error conditions"
+            $body += "2. **🔍 ANALYZE** error patterns and stack traces"
+            $body += "3. **🛠️ IMPLEMENT** proper error handling"
+            $body += "4. **🧪 TEST** error scenarios thoroughly"
+            $body += "5. **📊 MONITOR** for error recurrence"
+            $body += ""
+            $body += "### 🎯 Debugging Commands"
+            $body += "```powershell"
+            $body += "# Check recent error logs"
+            $body += "Get-Content ./logs/transcript-*.log | Select-String -Pattern 'ERROR|Exception'"
+            $body += ""
+            $body += "# Run system validation"
+            $body += "./automation-scripts/0409_Run-AllTests.ps1"
+            $body += ""
+            $body += "# Check application logs"
+            $body += "Get-ChildItem ./logs/*.log | ForEach-Object { Select-String -Path $_ -Pattern 'FATAL|CRASH' }"
+            $body += "```"
+        }
+        
+        'ci-analysis' {
+            $body += "## ⚙️ CI/CD Analysis Required"
+            $body += ""
+            $body += "GitHub Actions environment detected - automated analysis needed for CI/CD pipeline."
+            $body += ""
+            $body += "### 🔍 Analysis Scope"
+            foreach ($detail in $Finding.Details) {
+                $body += "- **$($detail.Description)**"
+                $body += "  - **Context**: $($detail.Context)"
+                $body += ""
+            }
+            
+            $body += "### 🎯 CI/CD Optimization Tasks"
+            $body += ""
+            $body += "@$($Finding.Assignee) Please analyze and optimize the CI/CD pipeline:"
+            $body += ""
+            $body += "1. **📊 REVIEW** workflow execution times and success rates"
+            $body += "2. **🔍 IDENTIFY** bottlenecks and failure points"  
+            $body += "3. **⚡ OPTIMIZE** slow or unreliable steps"
+            $body += "4. **🛡️ ENHANCE** error handling and retry logic"
+            $body += "5. **📈 MONITOR** improvements and track metrics"
+        }
     }
     
     $body += ""
@@ -239,6 +368,152 @@ function New-IssueContent {
     }
 }
 
+function Get-TestFindings {
+    param([string]$Path)
+    
+    $findings = @()
+    
+    # Look for test report files  
+    $testFiles = Get-ChildItem -Path $Path -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | Sort-Object CreationTime -Descending | Select-Object -First 2
+    
+    foreach ($testFile in $testFiles) {
+        try {
+            $testReport = Get-Content $testFile.FullName | ConvertFrom-Json
+            
+            # Check if there are test failures
+            if ($testReport.TestResults -and $testReport.TestResults.Details) {
+                $failedTests = $testReport.TestResults.Details | Where-Object { $_.Result -eq 'Failed' }
+                
+                if ($failedTests.Count -gt 0) {
+                    $findings += @{
+                        Title = "🧪 [TESTS] Test Failures Detected ($($failedTests.Count) failures)"
+                        Priority = "P1-High"
+                        Type = "test-failure"
+                        Count = $failedTests.Count
+                        Labels = @('P1-High', 'tests', 'ci-failure', 'bug', 'automated-issue')
+                        Details = $failedTests | Select-Object -First 5
+                        ReportFile = $testFile.Name
+                        Assignee = "copilot"
+                    }
+                }
+            }
+        }
+        catch {
+            Write-GenStatus "Error parsing test report $($testFile.Name): $_" "Warning"
+        }
+    }
+    
+    # Check for Pester XML results
+    $pesterResults = Get-ChildItem -Path "." -Filter "*TestResults*.xml" -ErrorAction SilentlyContinue | Sort-Object CreationTime -Descending | Select-Object -First 1
+    
+    if ($pesterResults) {
+        try {
+            [xml]$pesterXml = Get-Content $pesterResults.FullName
+            $failedTests = $pesterXml.SelectNodes("//test-case[@result='Failed']")
+            
+            if ($failedTests.Count -gt 0) {
+                $findings += @{
+                    Title = "🔴 [PESTER] Unit Test Failures ($($failedTests.Count) tests failed)"
+                    Priority = "P1-High"
+                    Type = "pester-failure"
+                    Count = $failedTests.Count
+                    Labels = @('P1-High', 'tests', 'pester', 'unit-tests', 'failure', 'bug', 'automated-issue')
+                    Details = $failedTests | Select-Object -First 5 | ForEach-Object {
+                        @{
+                            Name = $_.name
+                            Result = $_.result
+                            Message = $_.failure.message
+                            File = $_.classname
+                        }
+                    }
+                    ReportFile = $pesterResults.Name
+                    Assignee = "copilot"
+                }
+            }
+        }
+        catch {
+            Write-GenStatus "Error parsing Pester results $($pesterResults.Name): $_" "Warning"
+        }
+    }
+    
+    return $findings
+}
+
+function Get-BugFindings {
+    param([string]$Path)
+    
+    $findings = @()
+    
+    # Check for error logs and crash dumps
+    $errorPatterns = @(
+        @{ Path = "logs/*.log"; Pattern = "ERROR|FATAL|EXCEPTION|CRASH"; Description = "Application errors" }
+        @{ Path = "*.log"; Pattern = "ERROR|Exception|Failed"; Description = "System errors" }
+        @{ Path = "logs/transcript-*.log"; Pattern = "ERROR|Exception|terminating error"; Description = "PowerShell errors" }
+    )
+    
+    $errorCount = 0
+    $criticalErrors = @()
+    
+    foreach ($errorPattern in $errorPatterns) {
+        try {
+            $logFiles = Get-ChildItem -Path $errorPattern.Path -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 3
+            
+            foreach ($logFile in $logFiles) {
+                if (Test-Path $logFile.FullName) {
+                    $errorLines = Select-String -Path $logFile.FullName -Pattern $errorPattern.Pattern -ErrorAction SilentlyContinue | Select-Object -First 5
+                    
+                    if ($errorLines.Count -gt 0) {
+                        $errorCount += $errorLines.Count
+                        $criticalErrors += $errorLines | ForEach-Object {
+                            @{
+                                File = $logFile.Name
+                                Line = $_.LineNumber
+                                Content = $_.Line.Trim()
+                                Pattern = $errorPattern.Description
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch {
+            # Silently continue if log files can't be read
+        }
+    }
+    
+    # Create bug issue if errors found
+    if ($errorCount -gt 0) {
+        $findings += @{
+            Title = "🐛 [BUGS] System Errors Detected ($errorCount errors)"
+            Priority = "P1-High"
+            Type = "bugs"
+            Count = $errorCount
+            Labels = @('P1-High', 'bug', 'error', 'system', 'automated-issue')
+            Details = $criticalErrors | Select-Object -First 5
+            Assignee = "copilot"
+        }
+    }
+    
+    # Check for GitHub Actions failures (if available)
+    if ($env:GITHUB_ACTIONS) {
+        # In GitHub Actions, check for workflow failures
+        $findings += @{
+            Title = "⚙️ [CI] GitHub Actions Analysis Required"
+            Priority = "P2-Medium"
+            Type = "ci-analysis"
+            Count = 1
+            Labels = @('P2-Medium', 'ci', 'github-actions', 'automated-issue')
+            Details = @(@{
+                Description = "Automated analysis of GitHub Actions workflow needed"
+                Context = "Running in GitHub Actions environment"
+            })
+            Assignee = "copilot"
+        }
+    }
+    
+    return $findings
+}
+
 # Main execution
 try {
     Write-GenStatus "🚀 Starting GitHub Issue File Generation..." "Critical"
@@ -254,10 +529,24 @@ try {
     Get-ChildItem -Path $OutputPath -Filter "*.md" | Remove-Item -Force
     Get-ChildItem -Path $OutputPath -Filter "*.json" | Remove-Item -Force
     
-    # Get findings
+    # Get all findings
     Write-GenStatus "Analyzing security findings..." "Info"
-    $findings = Get-SecurityFindings -Path $AnalysisPath
-    Write-GenStatus "Found $($findings.Count) security issue categories" "Success"
+    $securityFindings = Get-SecurityFindings -Path $AnalysisPath
+    Write-GenStatus "Found $($securityFindings.Count) security issue categories" "Success"
+    
+    Write-GenStatus "Analyzing test failures..." "Info"
+    $testFindings = Get-TestFindings -Path $AnalysisPath
+    Write-GenStatus "Found $($testFindings.Count) test failure categories" "Success"
+    
+    Write-GenStatus "Analyzing system errors and bugs..." "Info"
+    $bugFindings = Get-BugFindings -Path $AnalysisPath
+    Write-GenStatus "Found $($bugFindings.Count) bug/error categories" "Success"
+    
+    # Combine all findings
+    $findings = @()
+    $findings += $securityFindings
+    $findings += $testFindings  
+    $findings += $bugFindings
     
     if ($findings.Count -eq 0) {
         Write-GenStatus "❌ No security issues found to generate!" "Error"
