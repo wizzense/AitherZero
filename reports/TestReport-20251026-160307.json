@@ -1,0 +1,11 @@
+{
+  "Title": "AitherZero Test Report",
+  "Environment": {
+    "PowerShellVersion": "7.4.12",
+    "Platform": "Unix",
+    "Computer": null,
+    "User": "runner"
+  },
+  "Generated": "2025-10-26T16:03:07.9624556+00:00",
+  "Format": "JSON"
+}

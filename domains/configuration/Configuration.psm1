@@ -540,21 +540,46 @@ function Test-Configuration {
     return $true
 }
 
-# Helper function to convert object to PSD1 string
+# Helper function to convert object to PSD1 string using native PowerShell capabilities
 function ConvertTo-Psd1String {
     param(
-        [Parameter(Mandatory)]
+        $InputObject
+    )
+
+    if ($null -eq $InputObject) {
+        return '@{}'
+    }
+
+    # Use PowerShell's native conversion capabilities
+    # Convert to JSON first then parse back to create a clean structure
+    try {
+        # Use depth of 10 to match the original function's MaxDepth parameter and prevent excessive nesting
+        $json = $InputObject | ConvertTo-Json -Depth 10 -Compress
+        $cleanObject = $json | ConvertFrom-Json -AsHashtable
+        
+        # Now convert the clean hashtable to PSD1 format
+        return ConvertTo-Psd1Format -InputObject $cleanObject -Depth 0
+    }
+    catch {
+        Write-Warning "Failed to convert object to PSD1 format: $($_.Exception.Message)"
+        return '@{}'
+    }
+}
+
+# Helper function for actual PSD1 formatting
+function ConvertTo-Psd1Format {
+    param(
         $InputObject,
         [int]$Depth = 0
     )
-
+    
     $indent = '    ' * $Depth
-
+    
     if ($null -eq $InputObject) {
         return '$null'
     }
     elseif ($InputObject -is [bool]) {
-        return "$" + $InputObject.ToString()
+        return '$' + $InputObject.ToString().ToLower()
     }
     elseif ($InputObject -is [string]) {
         return "'" + ($InputObject -replace "'", "''") + "'"
@@ -562,32 +587,28 @@ function ConvertTo-Psd1String {
     elseif ($InputObject -is [int] -or $InputObject -is [long] -or $InputObject -is [double]) {
         return $InputObject.ToString()
     }
-    elseif ($InputObject -is [array] -or $InputObject -is [System.Collections.IEnumerable]) {
+    elseif ($InputObject -is [System.Collections.IEnumerable] -and 
+            -not ($InputObject -is [string]) -and 
+            -not ($InputObject -is [hashtable])) {
+        if ($InputObject.Count -eq 0) {
+            return '@()'
+        }
         $items = @()
         foreach ($item in $InputObject) {
-            $items += ConvertTo-Psd1String -InputObject $item -Depth ($Depth + 1)
-        }
-        if ($items.Count -eq 0) {
-            return '@()'
+            $items += ConvertTo-Psd1Format -InputObject $item -Depth ($Depth + 1)
         }
         return "@(`n$indent    " + ($items -join "`n$indent    ") + "`n$indent)"
     }
     elseif ($InputObject -is [hashtable]) {
-        $pairs = @()
-        foreach ($key in $InputObject.Keys) {
-            $pairs += "$indent    $key = " + (ConvertTo-Psd1String -InputObject $InputObject[$key] -Depth ($Depth + 1))
-        }
-        if ($pairs.Count -eq 0) {
+        if ($InputObject.Count -eq 0) {
             return '@{}'
         }
-        return "@{`n" + ($pairs -join "`n") + "`n$indent}"
-    }
-    elseif ($InputObject -is [PSCustomObject]) {
-        $hash = @{}
-        foreach ($prop in $InputObject.PSObject.Properties) {
-            $hash[$prop.Name] = $prop.Value
+        $pairs = @()
+        foreach ($key in $InputObject.Keys | Sort-Object) {
+            $value = ConvertTo-Psd1Format -InputObject $InputObject[$key] -Depth ($Depth + 1)
+            $pairs += "$indent    $key = $value"
         }
-        return ConvertTo-Psd1String -InputObject $hash -Depth $Depth
+        return "@{`n" + ($pairs -join "`n") + "`n$indent}"
     }
     else {
         return "'" + $InputObject.ToString() + "'"
@@ -610,15 +631,13 @@ function Export-Configuration {
 
     try {
         $config = Get-Configuration
-
-        # Convert to hashtable if it's a PSCustomObject
-        if ($config -is [PSCustomObject]) {
-            $configHash = @{}
-            foreach ($prop in $config.PSObject.Properties) {
-                $configHash[$prop.Name] = $prop.Value
-            }
-            $config = $configHash
+        
+        if ($null -eq $config) {
+            Write-ConfigLog -Level Error -Message "No configuration available to export"
+            throw "No configuration available to export. Initialize configuration system first."
         }
+
+        # The configuration is already in the correct format (hashtable), no conversion needed
 
         # Export as PowerShell Data File
         $psd1Content = ConvertTo-Psd1String -InputObject $config
