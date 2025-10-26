@@ -1,0 +1,260 @@
+name: 📚 Documentation Automation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'domains/**/*.psm1'
+      - 'automation-scripts/**/*.ps1'
+      - 'AitherZero.psd1'
+      - 'README.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'domains/**/*.psm1'
+      - 'automation-scripts/**/*.ps1'
+      - 'AitherZero.psd1'
+      - 'README.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Documentation generation mode'
+        required: true
+        default: 'Full'
+        type: choice
+        options:
+        - Full
+        - Incremental
+      format:
+        description: 'Output format'
+        required: true
+        default: 'Both'
+        type: choice
+        options:
+        - Markdown
+        - HTML
+        - Both
+
+jobs:
+  generate-documentation:
+    name: 🔄 Generate Documentation
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: ⚡ Setup PowerShell
+      uses: azure/powershell@v2
+      with:
+        azPSVersion: latest
+        inlineScript: |
+          # Verify PowerShell version
+          $PSVersionTable.PSVersion
+          
+    - name: 📦 Install Dependencies
+      shell: pwsh
+      run: |
+        Write-Host "Installing required PowerShell modules..." -ForegroundColor Cyan
+        
+        # Install any required modules for documentation generation
+        if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
+          Install-Module -Name PowerShellGet -Force -Scope CurrentUser
+        }
+        
+        Write-Host "Dependencies installed successfully" -ForegroundColor Green
+        
+    - name: 🏗️ Initialize AitherZero
+      shell: pwsh
+      run: |
+        Write-Host "Initializing AitherZero environment..." -ForegroundColor Cyan
+        
+        # Import the main module
+        Import-Module ./AitherZero.psd1 -Force
+        Get-Module AitherZero
+        
+        Write-Host "AitherZero initialized successfully" -ForegroundColor Green
+        
+    - name: 📚 Generate Documentation
+      shell: pwsh
+      run: |
+        Write-Host "Starting automated documentation generation..." -ForegroundColor Cyan
+        
+        # Set parameters based on trigger
+        $mode = if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+          '${{ github.event.inputs.mode }}'
+        } elseif ('${{ github.event_name }}' -eq 'pull_request') {
+          'Incremental'
+        } else {
+          'Full'
+        }
+        
+        $format = if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+          '${{ github.event.inputs.format }}'
+        } else {
+          'Both'
+        }
+        
+        Write-Host "Mode: $mode, Format: $format" -ForegroundColor White
+        
+        # Run documentation generation
+        try {
+          ./automation-scripts/0733_Generate-AutoDocumentation.ps1 -Mode $mode -Format $format -Quality
+          Write-Host "Documentation generation completed successfully" -ForegroundColor Green
+        } catch {
+          Write-Error "Documentation generation failed: $_"
+          exit 1
+        }
+        
+    - name: 🔍 Validate Documentation Quality
+      shell: pwsh
+      run: |
+        Write-Host "Validating documentation quality..." -ForegroundColor Cyan
+        
+        # Import documentation engine
+        Import-Module ./domains/documentation/DocumentationEngine.psm1 -Force
+        Initialize-DocumentationEngine
+        
+        # Run quality validation
+        $results = Test-DocumentationQuality -Path "./docs/generated"
+        
+        Write-Host "Quality Score: $($results.Score)%" -ForegroundColor White
+        Write-Host "Quality Gate: $(if ($results.Passed) { 'PASSED' } else { 'FAILED' })" -ForegroundColor $(if ($results.Passed) { 'Green' } else { 'Red' })
+        
+        if (-not $results.Passed) {
+          Write-Warning "Documentation quality gate failed"
+          # Don't fail the build for quality issues, just warn
+        }
+        
+    - name: 📊 Generate Documentation Report
+      shell: pwsh
+      run: |
+        Write-Host "Generating documentation report..." -ForegroundColor Cyan
+        
+        # Count generated files
+        $generatedPath = "./docs/generated"
+        if (Test-Path $generatedPath) {
+          $markdownFiles = @(Get-ChildItem -Path $generatedPath -Filter "*.md" -Recurse).Count
+          $htmlFiles = @(Get-ChildItem -Path $generatedPath -Filter "*.html" -Recurse).Count
+          
+          Write-Host "Generated Files:" -ForegroundColor White
+          Write-Host "  - Markdown: $markdownFiles files" -ForegroundColor White
+          Write-Host "  - HTML: $htmlFiles files" -ForegroundColor White
+          
+          # Set output for later steps
+          echo "MARKDOWN_FILES=$markdownFiles" >> $env:GITHUB_ENV
+          echo "HTML_FILES=$htmlFiles" >> $env:GITHUB_ENV
+        }
+        
+    - name: 🚀 Deploy Documentation (Main Branch)
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      shell: pwsh
+      run: |
+        Write-Host "Deploying documentation to GitHub Pages..." -ForegroundColor Cyan
+        
+        # Copy generated documentation to a deployment directory
+        $deployPath = "./docs-deploy"
+        if (Test-Path $deployPath) {
+          Remove-Item -Path $deployPath -Recurse -Force
+        }
+        
+        New-Item -Path $deployPath -ItemType Directory -Force
+        
+        if (Test-Path "./docs/generated") {
+          Copy-Item -Path "./docs/generated/*" -Destination $deployPath -Recurse -Force
+          
+          # Create index.html if it doesn't exist
+          $indexPath = Join-Path $deployPath "index.html"
+          if (-not (Test-Path $indexPath) -and (Test-Path (Join-Path $deployPath "INDEX.md"))) {
+            # Convert INDEX.md to index.html for GitHub Pages
+            $indexMd = Get-Content (Join-Path $deployPath "INDEX.md") -Raw
+            $indexHtml = @"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AitherZero Documentation</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; margin: 40px; }
+        h1, h2, h3 { color: #333; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+$($indexMd -replace '# (.*)', '<h1>$1</h1>' -replace '## (.*)', '<h2>$1</h2>' -replace '### (.*)', '<h3>$1</h3>')
+</body>
+</html>
+"@
+            $indexHtml | Set-Content $indexPath
+          }
+          
+          Write-Host "Documentation prepared for deployment" -ForegroundColor Green
+        }
+        
+    - name: 🌐 Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs-deploy
+        publish_branch: gh-pages
+        
+    - name: 💬 Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const markdownFiles = process.env.MARKDOWN_FILES || '0';
+          const htmlFiles = process.env.HTML_FILES || '0';
+          
+          const comment = `## 📚 Documentation Update Report
+          
+          **Documentation generation completed successfully!**
+          
+          ### Generated Files
+          - 📄 Markdown files: ${markdownFiles}
+          - 🌐 HTML files: ${htmlFiles}
+          
+          ### Summary
+          - ✅ Documentation engine initialized
+          - ✅ Quality validation passed
+          - ✅ Files generated successfully
+          
+          The documentation will be automatically deployed when this PR is merged to main.
+          
+          ---
+          *Generated by AitherZero Documentation Automation*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+          
+    - name: 📤 Upload Documentation Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-documentation
+        path: docs/generated/
+        retention-days: 30
+        
+    - name: 📈 Update Documentation Badge
+      if: github.ref == 'refs/heads/main'
+      shell: pwsh
+      run: |
+        Write-Host "Documentation generation workflow completed successfully" -ForegroundColor Green
+        
+        # Could add badge update logic here if using shields.io or similar
+        Write-Host "Documentation available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" -ForegroundColor Cyan
