@@ -34,7 +34,7 @@ The AitherZero Modern CLI is a complete redesign of the interactive CLI interfac
 
 | Action | Purpose | Examples |
 |--------|---------|----------|
-| `list` | Display available resources | `az list scripts`, `az list playbooks` |
+| `list` | Display available resources | `Start-AitherZero.ps1 -Mode List -Target scripts`, `Start-AitherZero.ps1 -Mode List -Target playbooks` |
 | `run` | Execute scripts, playbooks, sequences | `az run script 0402`, `az run playbook tech-debt` |
 | `search` | Find resources by name/description | `az search security`, `az search test` |
 | `config` | Configure CLI settings | `az config get`, `az config set theme dark` |
@@ -53,7 +53,7 @@ The AitherZero Modern CLI is a complete redesign of the interactive CLI interfac
 ### Interactive Development
 ```bash
 # Quick discovery
-az list scripts | grep test
+Start-AitherZero.ps1 -Mode List -Target scripts | grep test
 az search security
 az help run
 
@@ -83,7 +83,7 @@ $ az
 ==================================================
 
 Quick Start Commands:
-  az list scripts          # List all automation scripts
+  Start-AitherZero.ps1 -Mode List -Target scripts          # List all automation scripts
   az run script 0402       # Run unit tests
   az search security       # Find security-related items
   az help                  # Show full help

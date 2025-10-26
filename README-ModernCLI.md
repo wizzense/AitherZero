@@ -1,45 +1,45 @@
 # 🚀 AitherZero Modern CLI
 
-> **Transform your workflow with a smooth, intuitive, and scriptable CLI interface**
+> **Transform your workflow with smooth, intuitive CLI modes in Start-AitherZero.ps1**
 
-The AitherZero Modern CLI is a complete redesign of the interactive interface, addressing the "clunky and buggy" issues with the original UI. It provides an intuitive command-line experience that works seamlessly in both interactive development and CI/CD environments.
+The AitherZero Modern CLI integrates new command modes directly into Start-AitherZero.ps1, addressing the "clunky and buggy" issues with nested menus. It provides intuitive command-line modes that work seamlessly in both interactive development and CI/CD environments.
 
 ## ✨ Key Features
 
-- **🎯 Intuitive Commands**: Simple `az <action> <target>` pattern
+- **🎯 Integrated Modes**: New List, Search, and Run modes in Start-AitherZero.ps1
 - **🔍 Powerful Search**: Find scripts and playbooks instantly  
 - **⚡ CI/CD Ready**: Perfect for automation workflows
 - **🎨 Rich Output**: Color-coded, structured display
-- **🔄 Backward Compatible**: Works with existing orchestration
+- **🔄 Fully Compatible**: Uses existing orchestration engine
 - **⚙️ Zero Config**: Works out of the box
 
 ## 🚀 Quick Start
 
 ```bash
-# Interactive mode
-./az-simple.ps1
+# Interactive mode (traditional menu)
+.\Start-AitherZero.ps1
 
-# Direct commands
-./az-simple.ps1 list scripts           # List all automation scripts
-./az-simple.ps1 run script 0402        # Run unit tests
-./az-simple.ps1 search security        # Find security-related items
-./az-simple.ps1 help                   # Show help
+# Modern CLI modes
+.\Start-AitherZero.ps1 -Mode List -Target scripts                    # List all automation scripts
+.\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402   # Run unit tests
+.\Start-AitherZero.ps1 -Mode Search -Query security                  # Find security-related items
+.\Start-AitherZero.ps1 -Help                                         # Show help
 ```
 
-## 📋 Available Commands
+## 📋 Available Modes
 
-### Core Actions
-| Command | Description | Examples |
-|---------|-------------|----------|
-| `list` | Show available resources | `az list scripts`, `az list playbooks` |
-| `run` | Execute scripts/playbooks | `az run script 0402`, `az run playbook tech-debt` |
-| `search` | Find by name/description | `az search test`, `az search security` |
-| `help` | Show help information | `az help`, `az help run` |
+### New CLI Modes
+| Mode | Description | Examples |
+|------|-------------|----------|
+| `List` | Show available resources | `-Mode List -Target scripts`, `-Mode List -Target playbooks` |
+| `Run` | Execute scripts/playbooks | `-Mode Run -Target script -ScriptNumber 0402`, `-Mode Run -Target playbook -Playbook tech-debt` |
+| `Search` | Find by name/description | `-Mode Search -Query test`, `-Mode Search -Query security` |
+| `Interactive` | Traditional menu interface | `-Mode Interactive` (default) |
 
 ### Quick Examples
 ```bash
 # Development workflow
-az list scripts | grep test        # Find test scripts
+Start-AitherZero.ps1 -Mode List -Target scripts | grep test        # Find test scripts
 az run script 0402                 # Run unit tests  
 az run playbook test-quick         # Fast validation
 az search deploy                   # Find deployment tools
@@ -47,7 +47,7 @@ az search deploy                   # Find deployment tools
 # CI/CD integration  
 az run sequence 0400-0499          # Run all test scripts
 az run playbook automated-security # Security analysis
-az list playbooks                  # List orchestration options
+Start-AitherZero.ps1 -Mode List -Target playbooks                  # List orchestration options
 ```
 
 ## 🎯 Interactive Mode
@@ -61,7 +61,7 @@ $ ./az-simple.ps1
 ==================================================
 
 Quick Start Commands:
-  az list scripts          # List all automation scripts
+  Start-AitherZero.ps1 -Mode List -Target scripts          # List all automation scripts
   az run script 0402       # Run unit tests  
   az search security       # Find security-related items
   az help                  # Show full help
@@ -142,15 +142,17 @@ $ az run script 0402
 ✓ Unit tests completed successfully
 ```
 
-## 📁 File Structure
+## 📁 Implementation
 
 ```
-az-simple.ps1                    # Main CLI entry point (working demo)
-az-modern.ps1                   # Advanced CLI with full features
-domains/experience/
-  ModernCLI.psm1               # Full implementation module
+Start-AitherZero.ps1            # Main entry point with integrated modern CLI modes
+  ├── -Mode Interactive         # Traditional menu interface (default)
+  ├── -Mode List               # List scripts/playbooks  
+  ├── -Mode Search             # Search functionality
+  └── -Mode Run                # Execute scripts/playbooks/sequences
+
 demos/
-  modern-cli-demo.ps1          # Comprehensive demo
+  modern-cli-demo.ps1          # Comprehensive demonstration
 docs/
   modern-cli-design.md         # Detailed design documentation
 ```
@@ -175,7 +177,7 @@ The modern CLI works alongside the existing interface:
 | Aspect | Original UI | Modern CLI | Improvement |
 |--------|-------------|------------|-------------|
 | Startup time | 3-5 seconds | < 1 second | **5x faster** |
-| Command discovery | Navigate menus | `az list/search` | **Instant** |
+| Command discovery | Navigate menus | `Start-AitherZero.ps1 -Mode List -Target/search` | **Instant** |
 | CI/CD integration | Manual/complex | Native support | **Seamless** |
 | Scriptability | Limited | Full support | **Complete** |
 | Learning curve | Steep | Intuitive | **Much easier** |

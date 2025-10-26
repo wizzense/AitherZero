@@ -14,7 +14,7 @@ param(
 
 # Setup
 $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
-$script:ModernCLI = Join-Path $script:ProjectRoot "az-modern.ps1"
+$script:StartAither = Join-Path $script:ProjectRoot "Start-AitherZero.ps1"
 
 function Write-DemoHeader {
     param([string]$Title)
@@ -63,10 +63,10 @@ try {
     Write-DemoHeader "Demo 1: Command Discovery & Help"
     
     Write-Host "Let's start with basic help:" -ForegroundColor White
-    Write-Host "> az-modern help" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Help" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI help
+    & ".\Start-AitherZero.ps1" -Help
     
     Wait-ForUser
     
@@ -74,18 +74,18 @@ try {
     Write-DemoHeader "Demo 2: Discovering Available Resources"
     
     Write-Host "List all automation scripts:" -ForegroundColor White
-    Write-Host "> az-modern list scripts" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Mode List -Target scripts" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI list scripts
+    & ".\Start-AitherZero.ps1" -Mode List -Target scripts -NonInteractive
     
     Wait-ForUser "`nPress Enter to see playbooks..."
     
     Write-Host "List all playbooks (organized by category):" -ForegroundColor White
-    Write-Host "> az-modern list playbooks" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Mode List -Target playbooks" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI list playbooks
+    & $script:ModernCLI $script:StartAither -NonInteractive -Mode List -Target playbooks
     
     Wait-ForUser
     
@@ -93,18 +93,18 @@ try {
     Write-DemoHeader "Demo 3: Powerful Search"
     
     Write-Host "Search for test-related items:" -ForegroundColor White
-    Write-Host "> az-modern search test" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Mode Search -Query test" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI search test
+    & $script:ModernCLI $script:StartAither -NonInteractive -Mode Search -Query test
     
     Wait-ForUser "`nPress Enter to search for security items..."
     
     Write-Host "Search for security-related items:" -ForegroundColor White
-    Write-Host "> az-modern search security" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Mode Search -Query security" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI search security
+    & $script:ModernCLI $script:StartAither -NonInteractive -Mode Search -Query security
     
     Wait-ForUser
     
@@ -112,18 +112,18 @@ try {
     Write-DemoHeader "Demo 4: Configuration Management"
     
     Write-Host "Show current configuration:" -ForegroundColor White
-    Write-Host "> az-modern config get" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Mode Config -Action get" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI config get
+    & $script:ModernCLI $script:StartAither -NonInteractive -Mode Config -Action get
     
     Wait-ForUser "`nPress Enter to change theme..."
     
     Write-Host "Change theme to dark mode:" -ForegroundColor White
-    Write-Host "> az-modern config set theme dark" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Mode config set theme dark" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI config set theme dark
+    & $script:ModernCLI $script:StartAither -NonInteractive -Mode config set theme dark
     
     Wait-ForUser
     
@@ -132,7 +132,7 @@ try {
         Write-DemoHeader "Demo 5: Direct Script Execution"
         
         Write-Host "Execute a script directly (simulated):" -ForegroundColor White
-        Write-Host "> az-modern run script 0402" -ForegroundColor Gray
+        Write-Host "> Start-AitherZero.ps1 -Mode run script 0402" -ForegroundColor Gray
         Write-Host ""
         Write-Host "[In a real environment, this would run the unit tests]" -ForegroundColor Yellow
         Write-Host "✓ Script 0402 executed successfully" -ForegroundColor Green
@@ -145,7 +145,7 @@ try {
         Write-DemoHeader "Demo 6: Interactive Playbook Selection"
         
         Write-Host "Interactive playbook selection with fuzzy search:" -ForegroundColor White
-        Write-Host "> az-modern run playbook" -ForegroundColor Gray
+        Write-Host "> Start-AitherZero.ps1 -Mode run playbook" -ForegroundColor Gray
         Write-Host ""
         Write-Host "This would open an interactive fuzzy search menu where you can:" -ForegroundColor Yellow
         Write-Host "  • Type to filter playbooks in real-time" -ForegroundColor White
@@ -179,7 +179,7 @@ try {
     Write-DemoHeader "Demo 8: Legacy Menu Compatibility"
     
     Write-Host "Full backward compatibility with existing menu system:" -ForegroundColor White
-    Write-Host "> az-modern menu" -ForegroundColor Gray
+    Write-Host "> Start-AitherZero.ps1 -Mode menu" -ForegroundColor Gray
     Write-Host ""
     Write-Host "[This would launch the existing Start-AitherZero.ps1 interactive menu]" -ForegroundColor Yellow
     Write-Host "✓ Legacy menu mode available for transition period" -ForegroundColor Green
@@ -213,7 +213,7 @@ try {
     Write-Host ""
     
     Write-Host "Ready to try it? Run: " -ForegroundColor Cyan -NoNewline
-    Write-Host "./az-modern.ps1" -ForegroundColor White -NoNewline
+    Write-Host ".Start-AitherZero.ps1" -ForegroundColor White -NoNewline
     Write-Host " in interactive mode!" -ForegroundColor Cyan
     
 } catch {

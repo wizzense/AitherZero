@@ -28,8 +28,16 @@
     .\Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0000-0099"
 
 .EXAMPLE
-    # Non-interactive with profile
-    .\Start-AitherZero.ps1 -NonInteractive -Profile Developer
+    # Modern CLI - List all scripts
+    .\Start-AitherZero.ps1 -Mode List -Target scripts
+
+.EXAMPLE
+    # Modern CLI - Run a specific script
+    .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402
+
+.EXAMPLE
+    # Modern CLI - Search for security tools
+    .\Start-AitherZero.ps1 -Mode Search -Query security
 
 .EXAMPLE
     # Run playbook with specific profile
@@ -37,7 +45,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test')]
+    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
     [string]$Mode = 'Interactive',
 
     [string[]]$Sequence,
@@ -58,6 +66,11 @@ param(
     [switch]$Version,
 
     [switch]$Help,
+
+    # Modern CLI parameters
+    [string]$Target,
+    [string]$Query,
+    [string]$ScriptNumber,
 
     [switch]$CI,
 
@@ -334,6 +347,268 @@ function Get-AitherConfiguration {
             Profile = $ProfileName
         }
 }
+}
+
+# Modern CLI Functions
+function Write-ModernCLI {
+    param(
+        [string]$Message,
+        [string]$Type = 'Info',
+        [string]$Icon = '',
+        [switch]$NoNewline
+    )
+    
+    # Color mapping
+    $colors = if ($env:CI -eq 'true') {
+        @{ Info='White'; Success='White'; Warning='White'; Error='White'; Accent='White'; Muted='White' }
+    } else {
+        @{ Info='White'; Success='Green'; Warning='Yellow'; Error='Red'; Accent='Cyan'; Muted='DarkGray' }
+    }
+    
+    $color = $colors[$Type]
+    
+    if ($Icon) {
+        $prefix = "$Icon "
+    } else {
+        $prefix = switch ($Type) {
+            'Success' { '✓ ' }
+            'Warning' { '⚠ ' }
+            'Error' { '✗ ' }
+            'Accent' { '➤ ' }
+            default { '' }
+        }
+    }
+    
+    Write-Host "$prefix$Message" -ForegroundColor $color -NoNewline:$NoNewline
+}
+
+function Show-ModernHelp {
+    param([string]$ActionHelp)
+    
+    if ($ActionHelp) {
+        switch ($ActionHelp) {
+            'run' {
+                Write-ModernCLI "Start-AitherZero.ps1 -Mode Run - Execute scripts, playbooks, or sequences" -Type 'Accent'
+                Write-Host ""
+                Write-ModernCLI "Examples:" -Type 'Info'
+                Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402" -Type 'Muted'
+                Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target playbook -Playbook tech-debt-analysis" -Type 'Muted'
+                Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target sequence -Sequence 0400-0499" -Type 'Muted'
+            }
+            default {
+                Write-ModernCLI "Unknown action: $ActionHelp" -Type 'Error'
+            }
+        }
+        return
+    }
+    
+    Write-ModernCLI "AitherZero Modern CLI" -Type 'Accent'
+    Write-ModernCLI "Usage: .\Start-AitherZero.ps1 -Mode <action> [options]" -Type 'Info'
+    Write-Host ""
+    
+    Write-ModernCLI "Available Modes:" -Type 'Info'
+    Write-ModernCLI "  List" -Type 'Accent' -NoNewline
+    Write-ModernCLI " - List available resources (scripts, playbooks)" -Type 'Muted'
+    Write-ModernCLI "  Run" -Type 'Accent' -NoNewline  
+    Write-ModernCLI " - Execute scripts, playbooks, or sequences" -Type 'Muted'
+    Write-ModernCLI "  Search" -Type 'Accent' -NoNewline
+    Write-ModernCLI " - Find resources by name or description" -Type 'Muted'
+    Write-ModernCLI "  Interactive" -Type 'Accent' -NoNewline
+    Write-ModernCLI " - Traditional menu interface" -Type 'Muted'
+    
+    Write-Host ""
+    Write-ModernCLI "Examples:" -Type 'Info'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode List -Target scripts" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Search -Query security" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Muted'
+}
+
+function Invoke-ModernListAction {
+    param([string]$ListTarget)
+    
+    switch ($ListTarget) {
+        'scripts' {
+            if (Test-Path "automation-scripts") {
+                $scripts = Get-ChildItem "automation-scripts" -Filter "*.ps1" | Sort-Object Name
+                Write-ModernCLI "Available Scripts ($($scripts.Count)):" -Type 'Accent'
+                Write-Host ""
+                
+                foreach ($script in $scripts) {
+                    if ($script.Name -match '^(\d{4})_(.+)\.ps1$') {
+                        $number = $matches[1]
+                        $name = $matches[2].Replace('_', ' ').Replace('-', ' ')
+                        Write-ModernCLI "  $number" -Type 'Accent' -NoNewline
+                        Write-ModernCLI " - $name" -Type 'Info'
+                    }
+                }
+            } else {
+                Write-ModernCLI "Scripts directory not found" -Type 'Warning'
+            }
+        }
+        'playbooks' {
+            if (Test-Path "orchestration/playbooks") {
+                $playbooks = Get-ChildItem "orchestration/playbooks" -Filter "*.json" -Recurse | Sort-Object Directory,Name
+                Write-ModernCLI "Available Playbooks ($($playbooks.Count)):" -Type 'Accent'
+                Write-Host ""
+                
+                $currentCategory = ""
+                foreach ($playbook in $playbooks) {
+                    try {
+                        $pb = Get-Content $playbook.FullName | ConvertFrom-Json
+                        $name = if ($pb.Name) { $pb.Name } else { $pb.name }
+                        $desc = if ($pb.Description) { $pb.Description } else { $pb.description }
+                        $category = $playbook.Directory.Name
+                        
+                        if ($category -ne $currentCategory -and $category -ne 'playbooks') {
+                            if ($currentCategory) { Write-Host "" }
+                            Write-ModernCLI "[$($category.ToUpper())]" -Type 'Accent'
+                            $currentCategory = $category
+                        }
+                        
+                        Write-ModernCLI "  $name" -Type 'Info' -NoNewline
+                        if ($desc) {
+                            Write-ModernCLI " - $desc" -Type 'Muted'
+                        } else {
+                            Write-Host ""
+                        }
+                    } catch {
+                        Write-ModernCLI "  [Error reading: $($playbook.Name)]" -Type 'Warning'
+                    }
+                }
+            } else {
+                Write-ModernCLI "Playbooks directory not found" -Type 'Warning'
+            }
+        }
+        'all' {
+            Invoke-ModernListAction -ListTarget 'scripts'
+            Write-Host ""
+            Invoke-ModernListAction -ListTarget 'playbooks'
+        }
+        default {
+            Write-ModernCLI "Unknown target: $ListTarget" -Type 'Error'
+            Write-ModernCLI "Valid targets: scripts, playbooks, all" -Type 'Info'
+        }
+    }
+}
+
+function Invoke-ModernSearchAction {
+    param([string]$Query)
+    
+    if (-not $Query) {
+        Write-ModernCLI "Search query required: -Query <term>" -Type 'Error'
+        return
+    }
+    
+    Write-ModernCLI "Searching for: $Query" -Type 'Info'
+    Write-Host ""
+    
+    # Search scripts
+    if (Test-Path "automation-scripts") {
+        $matchingScripts = Get-ChildItem "automation-scripts" -Filter "*.ps1" | Where-Object {
+            $_.Name -like "*$Query*"
+        } | Sort-Object Name
+        
+        if ($matchingScripts) {
+            Write-ModernCLI "Scripts:" -Type 'Accent'
+            foreach ($script in $matchingScripts) {
+                if ($script.Name -match '^(\d{4})_(.+)\.ps1$') {
+                    $number = $matches[1]
+                    $name = $matches[2].Replace('_', ' ').Replace('-', ' ')
+                    Write-ModernCLI "  $number - $name" -Type 'Info'
+                }
+            }
+            Write-Host ""
+        }
+    }
+    
+    # Search playbooks
+    if (Test-Path "orchestration/playbooks") {
+        $matchingPlaybooks = Get-ChildItem "orchestration/playbooks" -Filter "*.json" -Recurse | ForEach-Object {
+            try {
+                $pb = Get-Content $_.FullName | ConvertFrom-Json
+                $name = if ($pb.Name) { $pb.Name } else { $pb.name }
+                $desc = if ($pb.Description) { $pb.Description } else { $pb.description }
+                
+                if ($name -like "*$Query*" -or ($desc -and $desc -like "*$Query*")) {
+                    [PSCustomObject]@{
+                        Name = $name
+                        Description = $desc
+                        Category = $_.Directory.Name
+                    }
+                }
+            } catch {
+                $null
+            }
+        } | Where-Object { $_ }
+        
+        if ($matchingPlaybooks) {
+            Write-ModernCLI "Playbooks:" -Type 'Accent'
+            foreach ($playbook in $matchingPlaybooks) {
+                Write-ModernCLI "  [$($playbook.Category)] $($playbook.Name)" -Type 'Info'
+                if ($playbook.Description) {
+                    Write-ModernCLI "    $($playbook.Description)" -Type 'Muted'
+                }
+            }
+        }
+    }
+    
+    if (-not $matchingScripts -and -not $matchingPlaybooks) {
+        Write-ModernCLI "No results found for: $Query" -Type 'Warning'
+    }
+}
+
+function Invoke-ModernRunAction {
+    param([string]$RunTarget, [string]$ScriptNum, [string]$PlaybookName, [string[]]$SequenceRange)
+    
+    switch ($RunTarget) {
+        'script' {
+            if (-not $ScriptNum) {
+                Write-ModernCLI "Script number required: -ScriptNumber <number>" -Type 'Error'
+                return
+            }
+            
+            Write-ModernCLI "Running script $ScriptNum..." -Type 'Info'
+            
+            # Use existing az.ps1 functionality
+            if (Test-Path "./az.ps1") {
+                Write-ModernCLI "Executing: ./az.ps1 $ScriptNum" -Type 'Success'
+                & "./az.ps1" $ScriptNum
+            } else {
+                Write-ModernCLI "Script runner not found: ./az.ps1" -Type 'Error'
+            }
+        }
+        'playbook' {
+            if (-not $PlaybookName) {
+                Write-ModernCLI "Playbook name required: -Playbook <name>" -Type 'Error'
+                return
+            }
+            
+            Write-ModernCLI "Running playbook: $PlaybookName" -Type 'Info'
+            if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
+                Invoke-OrchestrationSequence -LoadPlaybook $PlaybookName
+            } else {
+                Write-ModernCLI "Orchestration engine not available" -Type 'Error'
+            }
+        }
+        'sequence' {
+            if (-not $SequenceRange) {
+                Write-ModernCLI "Sequence required: -Sequence <range>" -Type 'Error'
+                return
+            }
+            
+            Write-ModernCLI "Running sequence: $($SequenceRange -join ',')" -Type 'Info'
+            if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
+                Invoke-OrchestrationSequence -Sequence $SequenceRange
+            } else {
+                Write-ModernCLI "Orchestration engine not available" -Type 'Error'
+            }
+        }
+        default {
+            Write-ModernCLI "Unknown target: $RunTarget" -Type 'Error'
+            Write-ModernCLI "Valid targets: script, playbook, sequence" -Type 'Info'
+        }
+    }
 }
 
 # Main Interactive Menu using Core UI
@@ -1248,6 +1523,29 @@ try {
             } else {
                 Write-Host "`nAll tests passed successfully!" -ForegroundColor Green
             }
+        }
+
+        'List' {
+            if (-not $Target) {
+                $Target = 'all'
+            }
+            Invoke-ModernListAction -ListTarget $Target
+        }
+
+        'Search' {
+            if (-not $Query) {
+                Write-ModernCLI "Search query required. Use -Query <term>" -Type 'Error'
+                exit 1
+            }
+            Invoke-ModernSearchAction -Query $Query
+        }
+
+        'Run' {
+            if (-not $Target) {
+                Write-ModernCLI "Run target required. Use -Target <script|playbook|sequence>" -Type 'Error'
+                exit 1
+            }
+            Invoke-ModernRunAction -RunTarget $Target -ScriptNum $ScriptNumber -PlaybookName $Playbook -SequenceRange $Sequence
         }
     }
 
