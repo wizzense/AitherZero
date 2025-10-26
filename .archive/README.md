@@ -13,6 +13,8 @@ This directory contains files that were cleaned up from the main repository to r
 - `activate.sh` - Shell activation script
 - `aither` - Development CLI wrapper with hardcoded paths
 - `aitherlabs.code-workspace` - VS Code workspace with legacy folder references
+- `az` - Unix/Linux wrapper script for AitherZero automation
+- `az.ps1` - PowerShell wrapper script for AitherZero automation
 - `.tools/` - Directory containing temporary development tools
 
 ### documentation/
@@ -25,7 +27,7 @@ This directory contains files that were cleaned up from the main repository to r
 - `test-multiplatform.ps1` - Temporary multi-platform test script
 
 ### claude-files/
-- `.claude/` - Complete Claude configuration directory with agents, commands, and hooks
+- **Restored to root** - .claude directory was moved back to repository root per feedback
 
 ### obsolete-files/
 - `.current-requirement` - Temporary requirement tracking file
