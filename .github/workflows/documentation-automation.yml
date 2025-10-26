@@ -53,13 +53,12 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: ⚡ Setup PowerShell
-      uses: azure/powershell@v2
-      with:
-        azPSVersion: latest
-        inlineScript: |
-          # Verify PowerShell version
-          $PSVersionTable.PSVersion
+    - name: ⚡ Verify PowerShell
+      shell: pwsh
+      run: |
+        # Verify PowerShell version
+        Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+        Write-Host "OS: $($PSVersionTable.OS)" -ForegroundColor Green
           
     - name: 📦 Install Dependencies
       shell: pwsh

@@ -468,13 +468,21 @@ function Update-MainDocumentation {
             Write-DocLog "Updated functionality index"
         }
         
-        # Update documentation index
+        # Update documentation index if function is available
         $indexPath = Join-Path $script:OutputPath "INDEX.md"
         if (Test-Path $indexPath) {
-            # Regenerate index with current documentation
-            $projectInfo = Get-ProjectAnalysis
-            New-DocumentationIndex -OutputPath $script:OutputPath -ProjectInfo $projectInfo
-            Write-DocLog "Updated documentation index"
+            try {
+                # Try to regenerate index with current documentation
+                if (Get-Command Get-ProjectAnalysis -ErrorAction SilentlyContinue) {
+                    $projectInfo = Get-ProjectAnalysis
+                    New-DocumentationIndex -OutputPath $script:OutputPath -ProjectInfo $projectInfo
+                    Write-DocLog "Updated documentation index"
+                } else {
+                    Write-DocLog "Get-ProjectAnalysis function not available, skipping index update" -Level Warning
+                }
+            } catch {
+                Write-DocLog "Failed to update documentation index: $_" -Level Warning
+            }
         }
         
     } catch {

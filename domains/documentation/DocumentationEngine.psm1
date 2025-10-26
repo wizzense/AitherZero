@@ -95,7 +95,7 @@ function Initialize-DocumentationEngine {
             $script:DocumentationState.Config = Merge-Configuration $script:DocumentationState.Config $fileConfig
             Write-DocLog "Loaded configuration from $ConfigPath"
         } catch {
-            Write-DocLog "Failed to load configuration from $ConfigPath`: $_" -Level Warning
+            Write-DocLog "Failed to load configuration from $ConfigPath: $_" -Level Warning
         }
     }
     
@@ -634,13 +634,13 @@ function Get-FunctionHelp {
     $functionStart = $FunctionAst.Extent.StartOffset
     $functionContent = $Content.Substring($functionStart, $FunctionAst.Extent.EndOffset - $functionStart)
     
-    $synopsis = if ($functionContent -match '\.SYNOPSIS\s+(.*?)(?=\s*\.|\s*#>|\s*param)') {
+    $synopsis = if ($functionContent -match '(?s)\.SYNOPSIS\s+(.*?)(?=\s*\.|\s*#>|\s*param)') {
         $Matches[1].Trim()
     } else {
         "No synopsis available"
     }
     
-    $description = if ($functionContent -match '\.DESCRIPTION\s+(.*?)(?=\s*\.|\s*#>|\s*param)') {
+    $description = if ($functionContent -match '(?s)\.DESCRIPTION\s+(.*?)(?=\s*\.|\s*#>|\s*param)') {
         $Matches[1].Trim()
     } else {
         "No description available"
@@ -1017,8 +1017,8 @@ function Expand-Template {
         }
     }
     
-    # Clean up any remaining template markers
-    $result = $result -replace '{{#\w+}}.*?{{/\w+}}', ''
+    # Clean up any remaining template markers with proper matching
+    $result = $result -replace '{{#(\w+)}}.*?{{/\1}}', ''
     $result = $result -replace '{{\w+}}', ''
     
     return $result
@@ -1030,7 +1030,23 @@ function ConvertTo-Html {
         [string]$OutputPath
     )
     
-    # Simple Markdown to HTML conversion
+    # Enhanced Markdown to HTML conversion with proper escaping
+    $escapedContent = $InputObject -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
+    
+    # Convert Markdown elements to HTML
+    $htmlContent = $escapedContent `
+        -replace '(?m)^# (.*)', '<h1>$1</h1>' `
+        -replace '(?m)^## (.*)', '<h2>$1</h2>' `
+        -replace '(?m)^### (.*)', '<h3>$1</h3>' `
+        -replace '(?m)^#### (.*)', '<h4>$1</h4>' `
+        -replace '(?s)```(\w+)?\s*(.*?)```', '<pre><code class="language-$1">$2</code></pre>' `
+        -replace '`([^`]+)`', '<code>$1</code>' `
+        -replace '\*\*(.*?)\*\*', '<strong>$1</strong>' `
+        -replace '\*(.*?)\*', '<em>$1</em>' `
+        -replace '(?m)^- (.*)', '<li>$1</li>' `
+        -replace '(?s)(<li>.*</li>)', '<ul>$1</ul>' `
+        -replace '\n', '<br>'
+    
     $html = @"
 <!DOCTYPE html>
 <html lang="en">
@@ -1040,14 +1056,19 @@ function ConvertTo-Html {
     <title>AitherZero Documentation</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; margin: 40px; }
-        h1, h2, h3, h4, h5, h6 { color: #333; }
-        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
-        pre { background-color: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }
-        blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 20px; }
+        h1, h2, h3, h4, h5, h6 { color: #333; margin-top: 2em; margin-bottom: 1em; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Consolas', monospace; }
+        pre { background-color: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 20px; color: #666; }
+        ul { margin: 1em 0; padding-left: 2em; }
+        li { margin: 0.5em 0; }
+        strong { font-weight: 600; }
+        em { font-style: italic; }
     </style>
 </head>
 <body>
-$($InputObject -replace '# (.*)', '<h1>$1</h1>' -replace '## (.*)', '<h2>$1</h2>' -replace '### (.*)', '<h3>$1</h3>')
+$htmlContent
 </body>
 </html>
 "@
