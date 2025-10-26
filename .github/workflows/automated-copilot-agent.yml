@@ -266,10 +266,10 @@ jobs:
               ### 🚀 Automated Commands:
               \`\`\`powershell
               # Analyze issues
-              ./az 0404
+              ./az.ps1 0404
               
               # Validate fixes  
-              ./az 0407
+              ./az.ps1 0407
               \`\`\``;
               
               await createIssueIfNeeded(
@@ -295,7 +295,7 @@ jobs:
               ).join('\n')}
               
               ### 🎯 Action Plan for @copilot:
-              1. Run unit tests locally: \`./az 0402\`
+              1. Run unit tests locally: \`./az.ps1 0402\`
               2. Analyze failing test patterns and root causes
               3. Fix underlying code issues or update tests as needed
               4. Ensure all tests pass before submitting PR
@@ -307,7 +307,7 @@ jobs:
               Invoke-Pester -Path "./tests/unit" -Output Detailed
               
               # Validate all tests pass
-              ./az 0402
+              ./az.ps1 0402
               \`\`\``;
               
               await createIssueIfNeeded(
