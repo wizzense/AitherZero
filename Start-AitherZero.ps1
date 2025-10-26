@@ -12,7 +12,7 @@
 .PARAMETER ConfigPath
     Path to configuration file
 .PARAMETER NonInteractive
-    Run without user prompts
+    Run without user prompts (automatically detected in CI environments)
 .PARAMETER Profile
     Execution profile to use
 .PARAMETER Playbook
@@ -1099,6 +1099,44 @@ try {
     }
 
     $config = Get-AitherConfiguration -Path $ConfigPath
+
+    # Smart execution mode detection based on environment context
+    if (-not $PSBoundParameters.ContainsKey('NonInteractive')) {
+        # Detect CI environment using standard CI environment variables
+        $isCI = ($env:CI -eq 'true') -or 
+                ($env:GITHUB_ACTIONS -eq 'true') -or 
+                ($env:TF_BUILD -eq 'true') -or
+                ($env:GITLAB_CI -eq 'true') -or
+                ($env:JENKINS_URL) -or
+                ($env:TRAVIS -eq 'true') -or
+                ($env:CIRCLECI -eq 'true')
+        
+        if ($isCI) {
+            # CI environment detected
+            if ($PSBoundParameters.ContainsKey('Mode') -and $Mode -eq 'Interactive') {
+                # User explicitly requested Interactive mode in CI - allow it for testing
+                $NonInteractive = $false
+                Write-CustomLog "CI environment detected, but Interactive mode explicitly requested - allowing interactive mode" -Level 'Information'
+            } else {
+                # Default CI behavior: Non-interactive with validation mode for automated logging
+                $NonInteractive = $true
+                if ($Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
+                    $Mode = 'Validate'
+                    Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
+                }
+            }
+        } else {
+            # Manual execution: Interactive by default for user experience  
+            $NonInteractive = $false
+            Write-CustomLog "Manual execution detected - starting interactive mode" -Level 'Information'
+        }
+    }
+
+    # Validate mode compatibility
+    if ($NonInteractive -and $Mode -eq 'Interactive') {
+        Write-Warning "Interactive mode is not compatible with NonInteractive flag. Use -Mode Validate, Orchestrate, or Test instead."
+        exit 1
+    }
 
     # Handle different modes
     switch ($Mode) {
