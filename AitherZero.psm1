@@ -73,7 +73,10 @@ $modulesToLoad = @(
     './domains/automation/DeploymentAutomation.psm1',
 
     # Infrastructure
-    './domains/infrastructure/Infrastructure.psm1'
+    './domains/infrastructure/Infrastructure.psm1',
+    
+    # Documentation
+    './domains/documentation/DocumentationEngine.psm1'
 )
 
 # Parallel module loading for better performance
