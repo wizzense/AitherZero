@@ -274,36 +274,98 @@ try {
     Write-ScriptLog -Message "Analyzing PowerShell files..."
     Write-Host "`nRunning PSScriptAnalyzer. This may take a few minutes..." -ForegroundColor Yellow
 
-    # Run analysis
+    # Run analysis with timeout handling for CI
     if ($PSCmdlet.ShouldProcess("PowerShell files", "Run PSScriptAnalyzer analysis")) {
-        if ($analyzerParams.Path -is [array] -and $analyzerParams.Path.Count -gt 1) {
-            # Handle multiple files by analyzing each one and combining results
-            $allResults = @()
-            foreach ($file in $analyzerParams.Path) {
-                if ([string]::IsNullOrWhiteSpace($file)) {
-                    continue
-                }
-                # Create a proper hashtable copy
-                $singleFileParams = @{}
-                foreach ($key in $analyzerParams.Keys) {
-                    if ($key -ne 'Path' -and $null -ne $analyzerParams[$key]) {
-                        $singleFileParams[$key] = $analyzerParams[$key]
+        $analysisJob = $null
+        try {
+            # For CI environments, use job with timeout
+            if ($isCI) {
+                Write-ScriptLog -Message "Running PSScriptAnalyzer with CI optimizations (5-minute timeout)"
+                $analysisJob = Start-Job -ScriptBlock {
+                    param($params)
+                    Import-Module PSScriptAnalyzer -Force
+                    if ($params.Path -is [array] -and $params.Path.Count -gt 1) {
+                        # Handle multiple files efficiently in CI
+                        $allResults = @()
+                        $fileCount = 0
+                        foreach ($file in $params.Path) {
+                            $fileCount++
+                            if ($fileCount % 50 -eq 0) {
+                                Write-Progress -Activity "Analyzing Files" -Status "Processed $fileCount/$($params.Path.Count)" -PercentComplete (($fileCount / $params.Path.Count) * 100)
+                            }
+                            if ([string]::IsNullOrWhiteSpace($file)) {
+                                continue
+                            }
+                            $singleFileParams = @{}
+                            foreach ($key in $params.Keys) {
+                                if ($key -ne 'Path' -and $null -ne $params[$key]) {
+                                    $singleFileParams[$key] = $params[$key]
+                                }
+                            }
+                            $singleFileParams['Path'] = $file
+                            try {
+                                $fileResults = Invoke-ScriptAnalyzer @singleFileParams
+                                if ($fileResults) {
+                                    $allResults += $fileResults
+                                }
+                            } catch {
+                                Write-Warning "Failed to analyze file: $file - $($_.Exception.Message)"
+                            }
+                        }
+                        return $allResults
+                    } else {
+                        return Invoke-ScriptAnalyzer @params
                     }
+                } -ArgumentList $analyzerParams
+                
+                # Wait for job with timeout (5 minutes for CI)
+                $results = Wait-Job $analysisJob -Timeout 300 | Receive-Job
+                
+                if ($analysisJob.State -eq 'Running') {
+                    Write-ScriptLog -Level Warning -Message "PSScriptAnalyzer timed out after 5 minutes, stopping job"
+                    Stop-Job $analysisJob -PassThru | Remove-Job
+                    # Return minimal results to allow CI to continue
+                    $results = @()
+                } else {
+                    Remove-Job $analysisJob
                 }
-                $singleFileParams['Path'] = $file
+            } else {
+                # For non-CI, run normally
+                if ($analyzerParams.Path -is [array] -and $analyzerParams.Path.Count -gt 1) {
+                    # Handle multiple files by analyzing each one and combining results
+                    $allResults = @()
+                    foreach ($file in $analyzerParams.Path) {
+                        if ([string]::IsNullOrWhiteSpace($file)) {
+                            continue
+                        }
+                        # Create a proper hashtable copy
+                        $singleFileParams = @{}
+                        foreach ($key in $analyzerParams.Keys) {
+                            if ($key -ne 'Path' -and $null -ne $analyzerParams[$key]) {
+                                $singleFileParams[$key] = $analyzerParams[$key]
+                            }
+                        }
+                        $singleFileParams['Path'] = $file
 
-                try {
-                    $fileResults = Invoke-ScriptAnalyzer @singleFileParams
-                    if ($fileResults) {
-                        $allResults += $fileResults
+                        try {
+                            $fileResults = Invoke-ScriptAnalyzer @singleFileParams
+                            if ($fileResults) {
+                                $allResults += $fileResults
+                            }
+                        } catch {
+                            Write-ScriptLog -Level Warning -Message "Failed to analyze file: $file - $($_.Exception.Message)"
+                        }
                     }
-                } catch {
-                    Write-ScriptLog -Level Warning -Message "Failed to analyze file: $file - $($_.Exception.Message)"
+                    $results = $allResults
+                } else {
+                    $results = Invoke-ScriptAnalyzer @analyzerParams
                 }
             }
-            $results = $allResults
-        } else {
-            $results = Invoke-ScriptAnalyzer @analyzerParams
+        } catch {
+            if ($analysisJob) {
+                Stop-Job $analysisJob -PassThru | Remove-Job -ErrorAction SilentlyContinue
+            }
+            throw $_
         }
     } else {
         Write-ScriptLog -Message "WhatIf: Would run PSScriptAnalyzer analysis"

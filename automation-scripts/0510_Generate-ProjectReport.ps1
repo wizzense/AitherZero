@@ -36,6 +36,12 @@ function Write-ReportLog {
 
 Write-ReportLog "Starting comprehensive project report generation"
 
+# Create output directory if needed
+if (-not (Test-Path $OutputPath)) {
+    New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+    Write-ReportLog "Created output directory: $OutputPath"
+}
+
 # Initialize report structure
 $projectReport = @{
     Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
@@ -70,17 +76,31 @@ foreach ($moduleFile in $moduleFiles) {
 
 # 2. Collect Test Results
 Write-ReportLog "Collecting test results..."
-$testResultsPath = Join-Path $OutputPath "*.json"
-$testFiles = Get-ChildItem -Path $testResultsPath -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*Summary*.json" }
-foreach ($testFile in $testFiles) {
-    $testData = Get-Content $testFile.FullName | ConvertFrom-Json
-    $projectReport.TestResults[$testFile.BaseName] = $testData
+try {
+    $testResultsPath = Join-Path $OutputPath "*.json"
+    $testFiles = Get-ChildItem -Path $testResultsPath -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*Summary*.json" }
+    foreach ($testFile in $testFiles) {
+        try {
+            $testData = Get-Content $testFile.FullName | ConvertFrom-Json
+            $projectReport.TestResults[$testFile.BaseName] = $testData
+        } catch {
+            Write-ReportLog "Failed to parse test results from: $($testFile.Name)" -Level Warning
+        }
+    }
+} catch {
+    Write-ReportLog "Failed to collect test results: $($_.Exception.Message)" -Level Warning
 }
 
 # Also analyze test files
-$testScripts = Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
-$projectReport.TestResults.TestFileCount = @($testScripts).Count
-$projectReport.TestResults.TestFiles = $testScripts | ForEach-Object { $_.FullName.Replace($ProjectPath, '.') }
+try {
+    $testScripts = Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+    $projectReport.TestResults.TestFileCount = @($testScripts).Count
+    $projectReport.TestResults.TestFiles = $testScripts | ForEach-Object { $_.FullName.Replace($ProjectPath, '.') }
+} catch {
+    Write-ReportLog "Failed to analyze test files: $($_.Exception.Message)" -Level Warning
+    $projectReport.TestResults.TestFileCount = 0
+    $projectReport.TestResults.TestFiles = @()
+}
 
 # 3. Calculate Code Coverage
 Write-ReportLog "Calculating code coverage..."

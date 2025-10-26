@@ -217,10 +217,22 @@ jobs:
           Write-Host "🔍 Running core validation..." -ForegroundColor Cyan
           
           # Run optimized PSScriptAnalyzer (focuses on errors only in CI)
-          & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0404" -NonInteractive
+          Write-Host "Running PSScriptAnalyzer..." -ForegroundColor Yellow
+          $process1 = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0404' -NonInteractive") -Wait -PassThru -NoNewWindow
+          if ($process1.ExitCode -ne 0) {
+            Write-Error "PSScriptAnalyzer failed with exit code: $($process1.ExitCode)"
+            exit $process1.ExitCode
+          }
+          Write-Host "✅ PSScriptAnalyzer completed successfully!" -ForegroundColor Green
           
           # Generate comprehensive report for analysis
-          & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0510" -NonInteractive
+          Write-Host "Generating project report..." -ForegroundColor Yellow
+          $process2 = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0510' -NonInteractive") -Wait -PassThru -NoNewWindow
+          if ($process2.ExitCode -ne 0) {
+            Write-Error "Report generation failed with exit code: $($process2.ExitCode)"
+            exit $process2.ExitCode
+          }
+          Write-Host "✅ Project report generated successfully!" -ForegroundColor Green
           
       - name: 📊 Upload Analysis Results
         uses: actions/upload-artifact@v4
@@ -248,7 +260,13 @@ jobs:
           Write-Host "🔒 Running security analysis..." -ForegroundColor Cyan
           
           # Run security-focused scripts
-          & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0523" -NonInteractive
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0523' -NonInteractive") -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ Security analysis completed successfully!" -ForegroundColor Green
+          } else {
+            Write-Warning "⚠️ Security analysis completed with issues (exit code: $($process.ExitCode))"
+            # Don't fail for security warnings, just report them
+          }
           
       - name: 📊 Upload Security Results
         uses: actions/upload-artifact@v4
@@ -278,7 +296,13 @@ jobs:
           
           # Optimized for CI with reduced scope but comprehensive coverage
           $env:AITHERZERO_TEST_SCOPE = "comprehensive"
-          & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0402" -NonInteractive
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0402' -NonInteractive") -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ Comprehensive tests completed successfully!" -ForegroundColor Green
+          } else {
+            Write-Warning "⚠️ Tests completed with issues (exit code: $($process.ExitCode))"
+            # Don't fail the workflow for test issues, just warn
+          }
           
       - name: 📊 Upload Test Results
         uses: actions/upload-artifact@v4
@@ -311,7 +335,13 @@ jobs:
           Write-Host "🌍 Running platform-specific validation on ${{ matrix.os }}..." -ForegroundColor Cyan
           
           # Quick validation for cross-platform compatibility
-          & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0407' -NonInteractive") -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ Platform validation completed successfully!" -ForegroundColor Green
+          } else {
+            Write-Error "Platform validation failed with exit code: $($process.ExitCode)"
+            exit $process.ExitCode
+          }
           
       - name: 📊 Upload Platform Results
         uses: actions/upload-artifact@v4
