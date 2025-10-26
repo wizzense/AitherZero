@@ -1053,6 +1053,12 @@ try {
 
     $config = Get-AitherConfiguration -Path $ConfigPath
 
+    # Auto-adjust mode for CI/Non-Interactive environments
+    if ($NonInteractive -and $Mode -eq 'Interactive') {
+        Write-CustomLog "NonInteractive mode detected, switching from Interactive to Validate mode" -Level 'Information'
+        $Mode = 'Validate'
+    }
+
     # Handle different modes
     switch ($Mode) {
         'Interactive' {
