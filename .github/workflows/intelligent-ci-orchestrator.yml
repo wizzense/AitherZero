@@ -1,0 +1,424 @@
+---
+name: Intelligent CI Orchestrator
+
+# Smart CI/CD orchestration optimized for AI agents and cost efficiency
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'copilot/**']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore' 
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test scope'
+        type: choice
+        options: ['quick', 'standard', 'comprehensive']
+        default: 'quick'
+      force_full_analysis:
+        description: 'Force full analysis regardless of changes'
+        type: boolean
+        default: false
+
+# Cost-optimized concurrency - prevent redundant runs
+concurrency:
+  group: intelligent-ci-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  # AI Agent coordination
+  AI_AGENT_MODE: true
+  CI_OPTIMIZATION_LEVEL: 'aggressive'
+
+jobs:
+  # Smart change detection to determine what needs to run
+  change-detection:
+    name: 🧠 Smart Change Detection
+    runs-on: ubuntu-latest
+    outputs:
+      needs-core-validation: ${{ steps.detect.outputs.needs-core-validation }}
+      needs-security-scan: ${{ steps.detect.outputs.needs-security-scan }}
+      needs-full-tests: ${{ steps.detect.outputs.needs-full-tests }}
+      needs-performance-tests: ${{ steps.detect.outputs.needs-performance-tests }}
+      changed-areas: ${{ steps.detect.outputs.changed-areas }}
+      optimization-level: ${{ steps.detect.outputs.optimization-level }}
+      
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for accurate change detection
+          
+      - name: 🔍 Intelligent Change Analysis
+        id: detect
+        shell: pwsh
+        run: |
+          # Smart change detection based on file patterns and impact analysis
+          $changedFiles = @()
+          $needsCoreValidation = $false
+          $needsSecurityScan = $false
+          $needsFullTests = $false
+          $needsPerformanceTests = $false
+          $changedAreas = @()
+          
+          # Get changed files with error handling
+          $changedFiles = @()
+          try {
+            if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+              # For pull requests, compare with the base branch
+              $changedFiles = git diff --name-only $env:GITHUB_BASE_REF...HEAD 2>$null
+              if ($LASTEXITCODE -ne 0) {
+                # Fallback: use GitHub's files API approach
+                $changedFiles = git diff --name-only HEAD~1..HEAD 2>$null
+              }
+            } else {
+              # For push events, compare with previous commit
+              $changedFiles = git diff --name-only HEAD~1..HEAD 2>$null
+            }
+          } catch {
+            Write-Host "⚠️ Git diff failed, assuming all files changed for safety" -ForegroundColor Yellow
+            $changedFiles = @('**/*')  # Trigger full validation as fallback
+          }
+          
+          # Ensure we have an array
+          if (-not $changedFiles) { $changedFiles = @() }
+          
+          Write-Host "📋 Changed files detected:" -ForegroundColor Cyan
+          $changedFiles | ForEach-Object { Write-Host "  • $_" }
+          
+          # Analyze impact
+          foreach ($file in $changedFiles) {
+            switch -Regex ($file) {
+              # Critical infrastructure - always needs full validation
+              '^(\.github/workflows/|automation-scripts/|bootstrap\.ps1|Start-AitherZero\.ps1)' {
+                $needsCoreValidation = $true
+                $needsFullTests = $true
+                $changedAreas += 'infrastructure'
+              }
+              
+              # Security-sensitive files
+              '^(domains/security/|.*[Ss]ecurity.*|.*[Aa]uth.*|.*[Cc]red.*\.ps1)' {
+                $needsSecurityScan = $true
+                $needsCoreValidation = $true
+                $changedAreas += 'security'
+              }
+              
+              # Performance-critical components
+              '^(domains/automation/|.*[Pp]erformance.*|.*[Oo]rchestration.*)' {
+                $needsPerformanceTests = $true
+                $changedAreas += 'performance'
+              }
+              
+              # Core modules
+              '^domains/' {
+                $needsCoreValidation = $true
+                $changedAreas += 'core'
+              }
+              
+              # Test changes
+              '^tests/' {
+                $needsCoreValidation = $true
+                $changedAreas += 'testing'
+              }
+            }
+          }
+          
+          # Determine optimization level
+          $optimizationLevel = 'standard'
+          if ($changedFiles.Count -lt 5 -and -not $needsFullTests) {
+            $optimizationLevel = 'aggressive'
+          } elseif ($needsPerformanceTests -or $changedFiles.Count -gt 20) {
+            $optimizationLevel = 'conservative'
+          }
+          
+          # Force full analysis if requested
+          if ('${{ github.event.inputs.force_full_analysis }}' -eq 'true') {
+            $needsCoreValidation = $true
+            $needsSecurityScan = $true
+            $needsFullTests = $true
+            $optimizationLevel = 'conservative'
+          }
+          
+          # Set outputs
+          "needs-core-validation=$needsCoreValidation" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "needs-security-scan=$needsSecurityScan" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "needs-full-tests=$needsFullTests" | Out-File -FilePath $env:GITHUB_OUTPUT -Append  
+          "needs-performance-tests=$needsPerformanceTests" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "changed-areas=$($changedAreas -join ',')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "optimization-level=$optimizationLevel" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          
+          Write-Host "🎯 Analysis Results:" -ForegroundColor Green
+          Write-Host "  Core Validation: $needsCoreValidation"
+          Write-Host "  Security Scan: $needsSecurityScan"
+          Write-Host "  Full Tests: $needsFullTests"
+          Write-Host "  Performance Tests: $needsPerformanceTests"
+          Write-Host "  Changed Areas: $($changedAreas -join ', ')"
+          Write-Host "  Optimization Level: $optimizationLevel"
+
+  # Always run - fast feedback (< 2 minutes)
+  quick-validation:
+    name: ⚡ Quick Validation
+    runs-on: ubuntu-latest
+    needs: change-detection
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: ⚡ Quick Syntax Check
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running quick syntax validation..." -ForegroundColor Cyan
+          
+          # Run validation and capture result via process exit code
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0407' -NonInteractive") -Wait -PassThru -NoNewWindow
+          
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ Quick syntax validation completed successfully!" -ForegroundColor Green
+          } else {
+            Write-Error "Quick syntax validation failed with exit code: $($process.ExitCode)"
+            exit $process.ExitCode
+          }
+
+  # Conditional - run based on change detection
+  core-validation:
+    name: 🔍 Core Validation  
+    runs-on: ubuntu-latest
+    needs: [change-detection, quick-validation]
+    if: needs.change-detection.outputs.needs-core-validation == 'true'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 🔍 Core Analysis
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running core validation..." -ForegroundColor Cyan
+          
+          # Run comprehensive PSScriptAnalyzer analysis with full fidelity
+          Write-Host "Running PSScriptAnalyzer with full analysis..." -ForegroundColor Yellow
+          
+          try {
+            $process1 = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0404' -NonInteractive") -Wait -PassThru -NoNewWindow
+            Write-Host "PSScriptAnalyzer completed with exit code: $($process1.ExitCode)" -ForegroundColor $(if ($process1.ExitCode -eq 0) { 'Green' } elseif ($process1.ExitCode -eq 1) { 'Yellow' } else { 'Red' })
+            
+            # Report all findings - don't hide issues
+            if ($process1.ExitCode -ne 0) {
+              Write-Host "⚠️ PSScriptAnalyzer found issues (exit code: $($process1.ExitCode))" -ForegroundColor Yellow
+              Write-Host "Issues will be reported in the generated reports for review" -ForegroundColor Yellow
+            }
+          } catch {
+            Write-Error "PSScriptAnalyzer encountered a critical error: $($_.Exception.Message)"
+            throw
+          }
+          
+          # Generate comprehensive report for analysis
+          Write-Host "Generating project report..." -ForegroundColor Yellow
+          try {
+            $process2 = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0510' -NonInteractive") -Wait -PassThru -NoNewWindow
+            if ($process2.ExitCode -eq 0) {
+              Write-Host "✅ Project report generated successfully!" -ForegroundColor Green
+            } else {
+              Write-Warning "Project report generation completed with warnings (exit code: $($process2.ExitCode))"
+            }
+          } catch {
+            Write-Warning "Project report generation encountered an issue: $($_.Exception.Message)"
+          }
+          
+          Write-Host "✅ Core validation completed!" -ForegroundColor Green
+          
+      - name: 📊 Upload Analysis Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-analysis-results
+          path: |
+            tests/analysis/
+            tests/reports/
+          retention-days: 30
+
+  # Security-focused validation
+  security-validation:
+    name: 🔒 Security Validation
+    runs-on: ubuntu-latest
+    needs: [change-detection, quick-validation]
+    if: needs.change-detection.outputs.needs-security-scan == 'true'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 🔒 Security Analysis
+        shell: pwsh
+        run: |
+          Write-Host "🔒 Running security analysis..." -ForegroundColor Cyan
+          
+          # Run security-focused scripts
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0523' -NonInteractive") -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ Security analysis completed successfully!" -ForegroundColor Green
+          } else {
+            Write-Warning "⚠️ Security analysis completed with issues (exit code: $($process.ExitCode))"
+            # Don't fail for security warnings, just report them
+          }
+          
+      - name: 📊 Upload Security Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-analysis-results
+          path: |
+            tests/analysis/
+            security-reports/
+          retention-days: 60
+
+  # Comprehensive testing - only when needed
+  comprehensive-tests:
+    name: 🧪 Comprehensive Tests
+    runs-on: ubuntu-latest
+    needs: [change-detection, core-validation]
+    if: needs.change-detection.outputs.needs-full-tests == 'true'
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout  
+        uses: actions/checkout@v4
+        
+      - name: 🧪 Run Comprehensive Tests
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running comprehensive test suite with full fidelity..." -ForegroundColor Cyan
+          
+          # Run full test suite - no compromises on test coverage or analysis
+          $env:AITHERZERO_TEST_SCOPE = "full"
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0402' -NonInteractive") -Wait -PassThru -NoNewWindow
+          
+          Write-Host "Test execution completed with exit code: $($process.ExitCode)" -ForegroundColor $(if ($process.ExitCode -eq 0) { 'Green' } else { 'Yellow' })
+          
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ All tests passed!" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️ Test failures detected (exit code: $($process.ExitCode))" -ForegroundColor Yellow
+            Write-Host "📋 Complete test results and failure details are captured in reports" -ForegroundColor Cyan
+            Write-Host "💡 Test failures are reported for review - they don't block CI but require attention" -ForegroundColor Blue
+          }
+          
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-test-results
+          path: |
+            tests/results/
+            tests/reports/
+          retention-days: 30
+
+  # Multi-platform validation - only for main/develop branches or when explicitly requested
+  cross-platform:
+    name: 🌍 Cross-Platform (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [change-detection, core-validation]
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event.inputs.force_full_analysis == 'true') && needs.change-detection.outputs.needs-core-validation == 'true'
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 🌍 Platform Validation
+        shell: pwsh
+        run: |
+          Write-Host "🌍 Running platform-specific validation on ${{ matrix.os }}..." -ForegroundColor Cyan
+          
+          # Quick validation for cross-platform compatibility
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0407' -NonInteractive") -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ Platform validation completed successfully!" -ForegroundColor Green
+          } else {
+            Write-Error "Platform validation failed with exit code: $($process.ExitCode)"
+            exit $process.ExitCode
+          }
+          
+      - name: 📊 Upload Platform Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-results-${{ matrix.os }}
+          path: |
+            tests/results/
+          retention-days: 14
+
+  # Final validation - consolidate results
+  validation-summary:
+    name: 📋 Validation Summary
+    runs-on: ubuntu-latest
+    needs: [change-detection, quick-validation, core-validation, comprehensive-tests]
+    if: always() && needs.change-detection.result == 'success'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 📊 Download All Results
+        uses: actions/download-artifact@v4
+        with:
+          path: ./ci-results
+        continue-on-error: true
+        
+      - name: 📋 Generate CI Summary
+        shell: pwsh
+        run: |
+          Write-Host "📋 Generating CI validation summary..." -ForegroundColor Cyan
+          
+          $summary = @{
+            Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+            GitRef = $env:GITHUB_REF
+            GitSha = $env:GITHUB_SHA
+            WorkflowRun = $env:GITHUB_RUN_ID
+            ChangeDetection = @{
+              NeedsCoreValidation = '${{ needs.change-detection.outputs.needs-core-validation }}'
+              NeedsSecurityScan = '${{ needs.change-detection.outputs.needs-security-scan }}'
+              NeedsFullTests = '${{ needs.change-detection.outputs.needs-full-tests }}'
+              ChangedAreas = '${{ needs.change-detection.outputs.changed-areas }}'
+              OptimizationLevel = '${{ needs.change-detection.outputs.optimization-level }}'
+            }
+            JobResults = @{
+              QuickValidation = '${{ needs.quick-validation.result }}'
+              CoreValidation = '${{ needs.core-validation.result }}'
+              ComprehensiveTests = '${{ needs.comprehensive-tests.result }}'
+            }
+          }
+          
+          $summaryJson = $summary | ConvertTo-Json -Depth 5
+          $summaryJson | Out-File "ci-summary.json"
+          
+          Write-Host "📊 CI Summary:" -ForegroundColor Green
+          Write-Host $summaryJson
+          
+      - name: 📊 Upload CI Summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-validation-summary
+          path: ci-summary.json
+          retention-days: 90

@@ -96,9 +96,9 @@ function Install-PowerShell7 {
 
     # Check if already installed
     $pwsh7Path = $null
-    $isWindows = $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSVersion.Major -le 5
+    $isWindowsPlatform = $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSVersion.Major -le 5
 
-    if ($isWindows) {
+    if ($isWindowsPlatform) {
         $pwsh7Path = "$env:ProgramFiles\PowerShell\7\pwsh.exe"
     } elseif ($IsMacOS) {
         $pwsh7Path = "/usr/local/bin/pwsh"
@@ -114,7 +114,7 @@ function Install-PowerShell7 {
     Write-Host "[~] Installing PowerShell 7 for your platform..." -ForegroundColor Cyan
 
     # Download and install based on platform
-    if ($isWindows) {
+    if ($isWindowsPlatform) {
         # Try winget first as it's more reliable
         Write-Host "[~] Checking for winget..." -ForegroundColor Yellow
         if (Get-Command winget -ErrorAction SilentlyContinue) {

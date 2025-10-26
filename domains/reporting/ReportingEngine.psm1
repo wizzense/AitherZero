@@ -74,22 +74,22 @@ function Initialize-ReportingEngine {
         $script:ReportingState.Config = $reportConfig
 
         # Update state with config values
-        $script:ReportingState.DefaultFormat = if ($reportConfig.DefaultFormat) { $reportConfig.DefaultFormat } else { 'HTML' }
-        $script:ReportingState.AutoGenerateReports = if ($null -ne $reportConfig.AutoGenerateReports) { $reportConfig.AutoGenerateReports } else { $true }
-        $script:ReportingState.ReportPath = if ($reportConfig.ReportPath) { $reportConfig.ReportPath } else { './reports' }
-        $script:ReportingState.IncludeSystemInfo = if ($null -ne $reportConfig.IncludeSystemInfo) { $reportConfig.IncludeSystemInfo } else { $true }
-        $script:ReportingState.IncludeExecutionLogs = if ($null -ne $reportConfig.IncludeExecutionLogs) { $reportConfig.IncludeExecutionLogs } else { $true }
-        $script:ReportingState.IncludeScreenshots = if ($null -ne $reportConfig.IncludeScreenshots) { $reportConfig.IncludeScreenshots } else { $false }
-        $script:ReportingState.CompressReports = if ($null -ne $reportConfig.CompressReports) { $reportConfig.CompressReports } else { $false }
-        $script:ReportingState.EmailReports = if ($null -ne $reportConfig.EmailReports) { $reportConfig.EmailReports } else { $false }
-        $script:ReportingState.UploadToCloud = if ($null -ne $reportConfig.UploadToCloud) { $reportConfig.UploadToCloud } else { $false }
-        $script:ReportingState.DashboardEnabled = if ($null -ne $reportConfig.DashboardEnabled) { $reportConfig.DashboardEnabled } else { $true }
-        $script:ReportingState.DashboardPort = if ($null -ne $reportConfig.DashboardPort) { $reportConfig.DashboardPort } else { 8080 }
-        $script:ReportingState.DashboardAutoOpen = if ($null -ne $reportConfig.DashboardAutoOpen) { $reportConfig.DashboardAutoOpen } else { $false }
-        $script:ReportingState.MetricsCollection = if ($null -ne $reportConfig.MetricsCollection) { $reportConfig.MetricsCollection } else { $true }
-        $script:ReportingState.MetricsRetentionDays = if ($null -ne $reportConfig.MetricsRetentionDays) { $reportConfig.MetricsRetentionDays } else { 90 }
-        $script:ReportingState.ExportFormats = if ($reportConfig.ExportFormats) { $reportConfig.ExportFormats } else { @('HTML', 'JSON', 'CSV', 'PDF', 'Markdown') }
-        $script:ReportingState.TemplateEngine = if ($reportConfig.TemplateEngine) { $reportConfig.TemplateEngine } else { 'Default' }
+        $script:ReportingState.DefaultFormat = if ($reportConfig.PSObject.Properties['DefaultFormat'] -and $reportConfig.DefaultFormat) { $reportConfig.DefaultFormat } else { 'HTML' }
+        $script:ReportingState.AutoGenerateReports = if ($reportConfig.PSObject.Properties['AutoGenerateReports'] -and $null -ne $reportConfig.AutoGenerateReports) { $reportConfig.AutoGenerateReports } else { $true }
+        $script:ReportingState.ReportPath = if ($reportConfig.PSObject.Properties['ReportPath'] -and $reportConfig.ReportPath) { $reportConfig.ReportPath } else { './reports' }
+        $script:ReportingState.IncludeSystemInfo = if ($reportConfig.PSObject.Properties['IncludeSystemInfo'] -and $null -ne $reportConfig.IncludeSystemInfo) { $reportConfig.IncludeSystemInfo } else { $true }
+        $script:ReportingState.IncludeExecutionLogs = if ($reportConfig.PSObject.Properties['IncludeExecutionLogs'] -and $null -ne $reportConfig.IncludeExecutionLogs) { $reportConfig.IncludeExecutionLogs } else { $true }
+        $script:ReportingState.IncludeScreenshots = if ($reportConfig.PSObject.Properties['IncludeScreenshots'] -and $null -ne $reportConfig.IncludeScreenshots) { $reportConfig.IncludeScreenshots } else { $false }
+        $script:ReportingState.CompressReports = if ($reportConfig.PSObject.Properties['CompressReports'] -and $null -ne $reportConfig.CompressReports) { $reportConfig.CompressReports } else { $false }
+        $script:ReportingState.EmailReports = if ($reportConfig.PSObject.Properties['EmailReports'] -and $null -ne $reportConfig.EmailReports) { $reportConfig.EmailReports } else { $false }
+        $script:ReportingState.UploadToCloud = if ($reportConfig.PSObject.Properties['UploadToCloud'] -and $null -ne $reportConfig.UploadToCloud) { $reportConfig.UploadToCloud } else { $false }
+        $script:ReportingState.DashboardEnabled = if ($reportConfig.PSObject.Properties['DashboardEnabled'] -and $null -ne $reportConfig.DashboardEnabled) { $reportConfig.DashboardEnabled } else { $true }
+        $script:ReportingState.DashboardPort = if ($reportConfig.PSObject.Properties['DashboardPort'] -and $null -ne $reportConfig.DashboardPort) { $reportConfig.DashboardPort } else { 8080 }
+        $script:ReportingState.DashboardAutoOpen = if ($reportConfig.PSObject.Properties['DashboardAutoOpen'] -and $null -ne $reportConfig.DashboardAutoOpen) { $reportConfig.DashboardAutoOpen } else { $false }
+        $script:ReportingState.MetricsCollection = if ($reportConfig.PSObject.Properties['MetricsCollection'] -and $null -ne $reportConfig.MetricsCollection) { $reportConfig.MetricsCollection } else { $true }
+        $script:ReportingState.MetricsRetentionDays = if ($reportConfig.PSObject.Properties['MetricsRetentionDays'] -and $null -ne $reportConfig.MetricsRetentionDays) { $reportConfig.MetricsRetentionDays } else { 90 }
+        $script:ReportingState.ExportFormats = if ($reportConfig.PSObject.Properties['ExportFormats'] -and $reportConfig.ExportFormats) { $reportConfig.ExportFormats } else { @('HTML', 'JSON', 'CSV', 'PDF', 'Markdown') }
+        $script:ReportingState.TemplateEngine = if ($reportConfig.PSObject.Properties['TemplateEngine'] -and $reportConfig.TemplateEngine) { $reportConfig.TemplateEngine } else { 'Default' }
 
         # Create report directory if it doesn't exist
         if (-not (Test-Path $script:ReportingState.ReportPath)) {

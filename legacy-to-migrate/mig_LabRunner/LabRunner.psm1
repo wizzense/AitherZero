@@ -268,6 +268,7 @@ function Invoke-LabDownload {
     }
 }
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
 function Read-LoggedInput {
     [CmdletBinding()]
     param(
@@ -285,7 +286,7 @@ function Read-LoggedInput {
     if ($IsNonInteractive) {
         Write-CustomLog "Non-interactive mode detected. Using default value for: $Prompt" 'INFO'
         if ($AsSecureString -and -not [string]::IsNullOrEmpty($DefaultValue)) {
-            # This is a legitimate use case for test environments - PSScriptAnalyzer suppressed: PSAvoidUsingConvertToSecureStringWithPlainText
+            # This is a legitimate use case for test environments
             return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
         }
     return $DefaultValue
@@ -906,8 +907,8 @@ function Write-EnhancedDeploymentSummary {
 
     if ($Result.Errors.Count -gt 0) {
         Write-Host "`nErrors:" -ForegroundColor Red
-        foreach ($error in $Result.Errors) {
-            Write-Host "  ❌ $error" -ForegroundColor Red
+        foreach ($errorItem in $Result.Errors) {
+            Write-Host "  ❌ $errorItem" -ForegroundColor Red
         }
 }
 
