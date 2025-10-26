@@ -107,11 +107,11 @@ Describe "Configuration Module" -Tag 'Unit' {
             $updated.Core.Version | Should -Be "2.0.0"
         }
 
-        It "Should save configuration to file when SaveToFile is specified" {
+        It "Should save configuration to file automatically" {
             $config = Get-Configuration
             $config.Core.Version = "3.0.0"
 
-            Set-Configuration -Configuration $config -SaveToFile
+            Set-Configuration -Configuration $config
 
             # Reload from file
             $fileContent = Import-PowerShellDataFile $script:TestConfigPath
