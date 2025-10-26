@@ -313,9 +313,17 @@ try {
         $pesterConfig.Output.Verbosity = 'Minimal'  # Reduce output for speed
         $pesterConfig.Should.ErrorAction = 'Continue'
         
+        # Enable parallel execution in CI for better performance
+        if (-not $pesterSettings.Parallel) {
+            $pesterSettings.Parallel = @{}
+        }
+        $pesterSettings.Parallel.Enabled = $true
+        $pesterSettings.Parallel.Workers = 4  # Optimize for CI runners
+        $pesterSettings.Parallel.BlockSize = 3  # Smaller chunks for CI
+        
         # CI adjustments: Enable full testing with optimized reporting
         # Run all tests but optimize output for CI
-        Write-ScriptLog -Message "CI mode: Running full test suite with optimized reporting"
+        Write-ScriptLog -Message "CI mode: Running full test suite with optimized reporting and parallel execution"
     }
 
     # Apply filter settings from config or use defaults for unit tests

@@ -113,10 +113,11 @@ jobs:
               '^(\.github/workflows/|automation-scripts/|bootstrap\.ps1|Start-AitherZero\.ps1)' {
                 $needsCoreValidation = $true
                 $needsFullTests = $true
+                $needsSecurityScan = $true  # Infrastructure changes need security review
                 $changedAreas += 'infrastructure'
               }
               
-              # Security-sensitive files
+              # Security-sensitive files - always need security scan
               '^(domains/security/|.*[Ss]ecurity.*|.*[Aa]uth.*|.*[Cc]red.*\.ps1)' {
                 $needsSecurityScan = $true
                 $needsCoreValidation = $true
@@ -126,19 +127,36 @@ jobs:
               # Performance-critical components
               '^(domains/automation/|.*[Pp]erformance.*|.*[Oo]rchestration.*)' {
                 $needsPerformanceTests = $true
+                $needsSecurityScan = $true  # Automation code needs security review
                 $changedAreas += 'performance'
               }
               
-              # Core modules
-              '^domains/' {
+              # Core modules - need security scan for PowerShell code
+              '^domains/.*\.(ps1|psm1)$' {
                 $needsCoreValidation = $true
+                $needsSecurityScan = $true  # All PowerShell code needs security review
                 $changedAreas += 'core'
+              }
+              
+              # Automation scripts - need security scan
+              '^automation-scripts/.*\.ps1$' {
+                $needsCoreValidation = $true
+                $needsSecurityScan = $true  # All automation scripts need security review
+                $changedAreas += 'automation'
               }
               
               # Test changes
               '^tests/' {
                 $needsCoreValidation = $true
                 $changedAreas += 'testing'
+              }
+              
+              # Any PowerShell file - needs basic security scan
+              '\.(ps1|psm1|psd1)$' {
+                $needsSecurityScan = $true  # All PowerShell files need security review
+                if (-not ($changedAreas -contains 'powershell')) {
+                  $changedAreas += 'powershell'
+                }
               }
             }
           }
@@ -275,11 +293,25 @@ jobs:
           
           # Run security-focused scripts
           $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0523' -NonInteractive") -Wait -PassThru -NoNewWindow
+          
+          Write-Host "Security analysis completed with exit code: $($process.ExitCode)" -ForegroundColor $(if ($process.ExitCode -eq 0) { 'Green' } else { 'Yellow' })
+          
           if ($process.ExitCode -eq 0) {
-            Write-Host "✅ Security analysis completed successfully!" -ForegroundColor Green
+            Write-Host "✅ No critical security issues found!" -ForegroundColor Green
+          } elseif ($process.ExitCode -eq 1) {
+            Write-Host "⚠️ Security issues detected - see detailed report" -ForegroundColor Yellow
+            Write-Host "📋 Security findings are captured in reports for review" -ForegroundColor Cyan
+            Write-Host "💡 Security issues are reported for attention - they don't block CI but require review" -ForegroundColor Blue
           } else {
-            Write-Warning "⚠️ Security analysis completed with issues (exit code: $($process.ExitCode))"
-            # Don't fail for security warnings, just report them
+            Write-Host "❌ Security analysis encountered errors (exit code: $($process.ExitCode))" -ForegroundColor Red
+            exit $process.ExitCode
+          }
+          
+          # Always exit 0 for security findings (exit code 1), only fail on actual errors (exit code > 1)
+          if ($process.ExitCode -le 1) {
+            exit 0
+          } else {
+            exit $process.ExitCode
           }
           
       - name: 📊 Upload Security Results
@@ -287,8 +319,10 @@ jobs:
         with:
           name: security-analysis-results
           path: |
+            reports/tech-debt/analysis/
             tests/analysis/
             security-reports/
+            *.json
           retention-days: 60
 
   # Comprehensive testing - only when needed

@@ -333,7 +333,7 @@ function Start-ParallelAnalysis {
         [Parameter(Mandatory)]
         [scriptblock]$ScriptBlock,
         [Parameter(Mandatory)]
-        [object[]]$inputValueObject,
+        [object[]]$InputObject,
         [int]$MaxConcurrency = 4,
         [string]$JobName = 'TechDebtAnalysis'
     )
@@ -341,13 +341,13 @@ function Start-ParallelAnalysis {
     $jobs = @()
     $results = @()
     $completed = 0
-    $total = $inputValueObject.Count
+    $total = $InputObject.Count
 
     Write-AnalysisLog "Starting parallel analysis of $total items with max concurrency $MaxConcurrency"
 
     # Start jobs in batches
     for ($i = 0; $i -lt $total; $i += $MaxConcurrency) {
-        $batch = $inputValueObject[$i..[Math]::Min($i + $MaxConcurrency - 1, $total - 1)]
+        $batch = $InputObject[$i..[Math]::Min($i + $MaxConcurrency - 1, $total - 1)]
 
         foreach ($item in $batch) {
             $jobs += Start-ThreadJob -ScriptBlock $ScriptBlock -ArgumentList $item -Name "$JobName-$i"

@@ -1,0 +1,1926 @@
+{
+  "AnalysisType": "SecurityIssues",
+  "Timestamp": "2025-10-26T14:33:10.2161431+00:00",
+  "Results": {
+    "UnsafeCommands": [
+      {
+        "Severity": "Critical",
+        "Line": 141,
+        "File": "./automation-scripts/0215_Install-Chocolatey.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Invoke-Expression $installScript",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 117,
+        "File": "./automation-scripts/0405_Validate-ModuleManifests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $validationScript @validationArgs 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 72,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "@{ Pattern = 'Invoke-Expression|iex\\s+'; Description = 'Dynamic code execution' }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 211,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "@{ Pattern = 'Invoke-Expression|iex\\s+'; Description = 'Dynamic code execution' }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 165,
+        "File": "./automation-scripts/0731_Invoke-AICodeReview.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "if ($content -match 'Invoke-Expression|iex') {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 169,
+        "File": "./automation-scripts/0731_Invoke-AICodeReview.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Line = ($content | Select-String 'Invoke-Expression|iex').LineNumber",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 171,
+        "File": "./automation-scripts/0731_Invoke-AICodeReview.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Recommendation = 'Avoid Invoke-Expression; use safer alternatives'",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 590,
+        "File": "./domains/development/DeveloperTools.psm1",
+        "Match": "Invoke-Expression",
+        "Context": "Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 588,
+        "File": "./domains/development/DeveloperTools.psm1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "Set-ExecutionPolicy Bypass -Scope Process -Force",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 463,
+        "File": "./domains/utilities/PackageManager.psm1",
+        "Match": "Invoke-Expression",
+        "Context": "$versionOutput = Invoke-Expression $Command 2>&1",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 284,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "<CommandLine>powershell.exe -ExecutionPolicy Bypass -File C:\\Windows\\bootstrap.ps1</CommandLine>",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 5,
+        "File": "./legacy-to-migrate/ISOCustomizer/Templates/bootstrap.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "Set-ExecutionPolicy -ExecutionPolicy Bypass",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 44,
+        "File": "./legacy-to-migrate/mig_LabRunner/scripts/0204_Install-Poetry.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Invoke-Expression $installScript",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./legacy-to-migrate/mig_LabRunner/scripts/0215_Install-Chocolatey.ps1",
+        "Match": "iex ",
+        "Context": "$command = \"Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\"",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./legacy-to-migrate/mig_LabRunner/scripts/0215_Install-Chocolatey.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$command = \"Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\"",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 24,
+        "File": "./legacy-to-migrate/mig_LabRunner/scripts/0215_Install-Chocolatey.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "Start-Process powershell.exe -ArgumentList \"-NoProfile -ExecutionPolicy Bypass -Command $command\" -Wait",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 428,
+        "File": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-SimplifiedPatchWorkflow.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "$testResult = Invoke-Expression $testCmd",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 93,
+        "File": "./legacy-to-migrate/mig_PatchManager/Public/Enable-AutoMerge.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "$result = Invoke-Expression $autoMergeCommand 2>&1",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 231,
+        "File": "./legacy-to-migrate/mig_PatchManager/Public/Enable-EnhancedAutoMerge.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "$result = Invoke-Expression $mergeCommand",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 300,
+        "File": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PatchWorkflow.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "$output = Invoke-Expression $cmd 2>&1",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 2,
+        "File": "./legacy-to-migrate/mig_PatchManager/bootstrap.ps1",
+        "Match": "iex ",
+        "Context": "# Usage: iex (irm \"https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1\")",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 900,
+        "File": "./legacy-to-migrate/mig_PatchManager/bootstrap.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "Write-Host \"    powershell.exe -ExecutionPolicy Bypass -File .\\Start-AitherZero.ps1 -Setup\" -ForegroundColor White",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 913,
+        "File": "./legacy-to-migrate/mig_PatchManager/bootstrap.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "Write-Host \"    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process\" -ForegroundColor White",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 84,
+        "File": "./tests/domains/infrastructure/Infrastructure.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 114,
+        "File": "./tests/domains/infrastructure/Infrastructure.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 129,
+        "File": "./tests/domains/infrastructure/Infrastructure.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 153,
+        "File": "./tests/domains/infrastructure/Infrastructure.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 170,
+        "File": "./tests/domains/infrastructure/Infrastructure.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 403,
+        "File": "./tests/integration/Bootstrap.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "It \"Should be executable via Invoke-Expression\" {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 123,
+        "File": "./tests/integration/Bootstrap.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$script:BootstrapContent | Should -BeLike \"*pwsh*-NoProfile*-ExecutionPolicy Bypass*\"",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 341,
+        "File": "./tests/integration/Bootstrap.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$script:BootstrapContent | Should -BeLike \"*-ExecutionPolicy Bypass*\"",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 36,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 134,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 146,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 262,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 282,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 301,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 305,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 346,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 366,
+        "File": "./tests/unit/automation-scripts/0100-0199/0106_Install-WSL2.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 72,
+        "File": "./tests/unit/automation-scripts/0200-0299/0201_Install-Node.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 177,
+        "File": "./tests/unit/automation-scripts/0200-0299/0201_Install-Node.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 191,
+        "File": "./tests/unit/automation-scripts/0200-0299/0201_Install-Node.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 225,
+        "File": "./tests/unit/automation-scripts/0200-0299/0201_Install-Node.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0201_Install-Node.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 23,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 107,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { return \"Poetry (version 1.6.1)\" } -ParameterFilter { $Command -like \"*poetry --version*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 121,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 143,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 165,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 185,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { throw \"pipx installation failed\" } -ParameterFilter { $Command -like \"*pipx install*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 202,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 226,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 242,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 275,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 299,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 316,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 332,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 368,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 386,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 408,
+        "File": "./tests/unit/automation-scripts/0200-0299/0204_Install-Poetry.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Should -Invoke Invoke-Expression -Times 0 -Scope It",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 64,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 83,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 213,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 227,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 241,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 274,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 287,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 319,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 341,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 362,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 381,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 406,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 434,
+        "File": "./tests/unit/automation-scripts/0200-0299/0206_Install-Python.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 20,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 62,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 80,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 96,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 201,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 215,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 229,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 262,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 317,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 334,
+        "File": "./tests/unit/automation-scripts/0200-0299/0207_Install-Git.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0208_Install-Docker.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0208_Install-Docker.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0208_Install-Docker.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0208_Install-Docker.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0208_Install-Docker.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0208_Install-Docker.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0209_Install-7Zip.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0209_Install-7Zip.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0209_Install-7Zip.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0209_Install-7Zip.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0209_Install-7Zip.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0209_Install-7Zip.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0210_Install-VSCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0210_Install-VSCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0210_Install-VSCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0210_Install-VSCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0210_Install-VSCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0210_Install-VSCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0211_Install-VSBuildTools.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0211_Install-VSBuildTools.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0211_Install-VSBuildTools.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0211_Install-VSBuildTools.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0211_Install-VSBuildTools.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0211_Install-VSBuildTools.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0212_Install-AzureCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0212_Install-AzureCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0212_Install-AzureCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0212_Install-AzureCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0212_Install-AzureCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0212_Install-AzureCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0213_Install-AWSCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0213_Install-AWSCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0213_Install-AWSCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0213_Install-AWSCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0213_Install-AWSCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0213_Install-AWSCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0214_Install-Packer.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0214_Install-Packer.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0214_Install-Packer.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0214_Install-Packer.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0214_Install-Packer.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0214_Install-Packer.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 16,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 128,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { return \"1.4.0\" } -ParameterFilter { $Command -like \"*choco --version*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 141,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 160,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { throw \"Version check failed\" } -ParameterFilter { $Command -like \"*choco --version*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 213,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { return \"Chocolatey installed successfully\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 244,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { throw \"Installation failed\" } -ParameterFilter { $Command -like \"*Chocolatey installer script*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 258,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { return \"Chocolatey installed\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 274,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 291,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { return \"Installation completed\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 305,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 324,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 348,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 377,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 406,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Should -Invoke Invoke-Expression -Times 0 -Scope It",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0216_Set-PowerShellProfile.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0216_Set-PowerShellProfile.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0216_Set-PowerShellProfile.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0216_Set-PowerShellProfile.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0216_Set-PowerShellProfile.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0216_Set-PowerShellProfile.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 22,
+        "File": "./tests/unit/automation-scripts/0200-0299/0217_Install-ClaudeCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 70,
+        "File": "./tests/unit/automation-scripts/0200-0299/0217_Install-ClaudeCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 174,
+        "File": "./tests/unit/automation-scripts/0200-0299/0217_Install-ClaudeCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 192,
+        "File": "./tests/unit/automation-scripts/0200-0299/0217_Install-ClaudeCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 218,
+        "File": "./tests/unit/automation-scripts/0200-0299/0217_Install-ClaudeCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/automation-scripts/0200-0299/0217_Install-ClaudeCode.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 21,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 103,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 135,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 160,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 185,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 210,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 234,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 252,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 270,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 299,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 317,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 344,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 360,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { $Global:LASTEXITCODE = 0 }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 381,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Should -Invoke Invoke-Expression -Times 0 -Scope It",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 47,
+        "File": "./tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 68,
+        "File": "./tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 91,
+        "File": "./tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 116,
+        "File": "./tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath -Fix 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 144,
+        "File": "./tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath -Fix 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 202,
+        "File": "./tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$unicodeResult = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $unicodePath 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 213,
+        "File": "./tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $nonExistentPath 2>&1",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 28,
+        "File": "./tests/unit/automation-scripts/0500-0599/0522_Analyze-CodeQuality.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "@(\"param([string]$Password)\", \"Invoke-Expression $userInput\", \"$cred = 'admin:password123'\")",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 28,
+        "File": "./tests/unit/automation-scripts/0500-0599/0523_Analyze-SecurityIssues.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "@(\"param([string]$Password)\", \"Invoke-Expression $userInput\", \"$cred = 'admin:password123'\")",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 28,
+        "File": "./tests/unit/automation-scripts/0500-0599/0524_Generate-TechDebtReport.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "@(\"param([string]$Password)\", \"Invoke-Expression $userInput\", \"$cred = 'admin:password123'\")",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 91,
+        "File": "./tests/unit/automation-scripts/0700-0799/0703_Create-PullRequest.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 101,
+        "File": "./tests/unit/automation-scripts/0700-0799/0703_Create-PullRequest.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { } -ParameterFilter { $Command -like \"*0402_Run-UnitTests.ps1*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 102,
+        "File": "./tests/unit/automation-scripts/0700-0799/0703_Create-PullRequest.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { } -ParameterFilter { $Command -like \"*0404_Run-PSScriptAnalyzer.ps1*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 460,
+        "File": "./tests/unit/automation-scripts/0700-0799/0703_Create-PullRequest.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { return $null } -ParameterFilter { $arguments[0] -like \"*0805_Analyze-OpenIssues.ps1*\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 82,
+        "File": "./tests/unit/domains/utilities/PackageManager.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "# Mock the actual command execution instead of Invoke-Expression",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 119,
+        "File": "./tests/unit/domains/utilities/PackageManager.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression {",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./tests/unit/AitherZero.Tests.ps1",
+        "Match": "Invoke-Expression",
+        "Context": "Mock Invoke-Expression { \"Mock execution\" }",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 59,
+        "File": "./tests/unit/Bootstrap-PS5Compatibility.Tests.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "$script:BootstrapContent | Should -BeLike \"*pwsh*-NoProfile*-ExecutionPolicy Bypass*\"",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 25,
+        "File": "./bootstrap.ps1",
+        "Match": "iex\n\n    ",
+        "Context": "iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex",
+        "Description": "Dynamic code execution"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 953,
+        "File": "./bootstrap.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "pwsh -NoProfile -ExecutionPolicy Bypass -File \"%~dp0az.ps1\" %*",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 959,
+        "File": "./bootstrap.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "pwsh -NoProfile -ExecutionPolicy Bypass -File \"%~dp0Start-AitherZero.ps1\" %*",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 1231,
+        "File": "./bootstrap.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command \"& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -NonInteractive }\"",
+        "Description": "Execution policy bypass"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 1233,
+        "File": "./bootstrap.ps1",
+        "Match": "-ExecutionPolicy Bypass",
+        "Context": "pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command \"& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -Setup }\"",
+        "Description": "Execution policy bypass"
+      }
+    ],
+    "Summary": {
+      "Medium": 0,
+      "Low": 0,
+      "Info": 0,
+      "High": 30,
+      "Critical": 203
+    },
+    "PrivilegeEscalation": [
+      {
+        "Severity": "High",
+        "Line": 286,
+        "File": "./legacy-to-migrate/mig_LabRunner/OpenTofuInstaller.ps1",
+        "Match": "-Verb RunAs",
+        "Context": "# On Linux and macOS there is no built-in equivalent of Start-Process -Verb RunAs.",
+        "Description": "UAC elevation"
+      },
+      {
+        "Severity": "High",
+        "Line": 541,
+        "File": "./legacy-to-migrate/mig_LabRunner/OpenTofuInstaller.ps1",
+        "Match": "-Verb RunAs",
+        "Context": "-Verb RunAs `",
+        "Description": "UAC elevation"
+      },
+      {
+        "Severity": "High",
+        "Line": 89,
+        "File": "./tests/unit/Bootstrap-PS5Compatibility.Tests.ps1",
+        "Match": "-Verb RunAs",
+        "Context": "$script:BootstrapContent | Should -BeLike \"*-Verb RunAs*\"",
+        "Description": "UAC elevation"
+      },
+      {
+        "Severity": "High",
+        "Line": 502,
+        "File": "./bootstrap.ps1",
+        "Match": "-Verb RunAs",
+        "Context": "Start-Process -FilePath $gitInstaller -ArgumentList \"/SILENT\" -Verb RunAs -Wait",
+        "Description": "UAC elevation"
+      },
+      {
+        "Severity": "High",
+        "Line": 617,
+        "File": "./bootstrap.ps1",
+        "Match": "-Verb RunAs",
+        "Context": "Start-Process msiexec.exe -ArgumentList $arguments -Verb RunAs -Wait",
+        "Description": "UAC elevation"
+      }
+    ],
+    "MissingParameterValidation": [],
+    "ExposedSecrets": [],
+    "ScanEndTime": "2025-10-26T14:33:10.2082175+00:00",
+    "InsecureProtocols": [
+      {
+        "Severity": "High",
+        "Line": 99,
+        "File": "./automation-scripts/0520_Deploy-Documentation.ps1",
+        "Match": "http://",
+        "Context": "<link rel=\"icon\" href=\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 59,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "http://",
+        "Context": "@{ Pattern = 'http://(?!localhost|127\\.0\\.0\\.1)'; Description = 'HTTP protocol (non-local)' }",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 205,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "http://",
+        "Context": "@{ Pattern = 'http://(?!localhost|127\\.0\\.0\\.1)'; Description = 'HTTP protocol (non-local)' }",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 60,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "-SkipCertificateCheck",
+        "Context": "@{ Pattern = '-SkipCertificateCheck'; Description = 'Certificate validation disabled' }",
+        "Description": "Certificate validation disabled"
+      },
+      {
+        "Severity": "High",
+        "Line": 206,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "-SkipCertificateCheck",
+        "Context": "@{ Pattern = '-SkipCertificateCheck'; Description = 'Certificate validation disabled' }",
+        "Description": "Certificate validation disabled"
+      },
+      {
+        "Severity": "High",
+        "Line": 344,
+        "File": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Match": "http://",
+        "Context": "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 129,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-International-Core-WinPE\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 129,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-International-Core-WinPE\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 135,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-Setup\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 135,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-Setup\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 205,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-Shell-Setup\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 205,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-Shell-Setup\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 214,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-TerminalServices-LocalSessionManager\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 214,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-TerminalServices-LocalSessionManager\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 217,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-TerminalServices-RDP-WinStationExtensions\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 217,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-TerminalServices-RDP-WinStationExtensions\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 226,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Networking-MPSSVC-Svc\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 226,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Networking-MPSSVC-Svc\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 237,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-Shell-Setup\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 237,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "http://",
+        "Context": "<component name=\"Microsoft-Windows-Shell-Setup\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+        "Description": "HTTP protocol (non-local)"
+      },
+      {
+        "Severity": "High",
+        "Line": 197,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "http://",
+        "Context": "Url = \"http://proxy.company.com:8080\"",
+        "Description": "HTTP protocol (non-local)"
+      }
+    ],
+    "ScanStartTime": "2025-10-26T14:32:52.84808+00:00",
+    "Duration": {
+      "Ticks": 173601375,
+      "Days": 0,
+      "Hours": 0,
+      "Milliseconds": 360,
+      "Microseconds": 137,
+      "Nanoseconds": 500,
+      "Minutes": 0,
+      "Seconds": 17,
+      "TotalDays": 0.00020092751736111111,
+      "TotalHours": 0.0048222604166666665,
+      "TotalMilliseconds": 17360.1375,
+      "TotalMicroseconds": 17360137.5,
+      "TotalNanoseconds": 17360137500.0,
+      "TotalMinutes": 0.289335625,
+      "TotalSeconds": 17.3601375
+    },
+    "PlainTextCredentials": [
+      {
+        "Severity": "Critical",
+        "Line": 230,
+        "File": "./automation-scripts/0740_Integrate-AITools.ps1",
+        "Match": "ApiKey = '$env:ANTHROPIC_API_KEY'",
+        "Context": "ApiKey = '$env:ANTHROPIC_API_KEY'",
+        "Description": "Hardcoded API key"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 238,
+        "File": "./automation-scripts/0740_Integrate-AITools.ps1",
+        "Match": "ApiKey = '$env:GOOGLE_AI_API_KEY'",
+        "Context": "ApiKey = '$env:GOOGLE_AI_API_KEY'",
+        "Description": "Hardcoded API key"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 245,
+        "File": "./automation-scripts/0740_Integrate-AITools.ps1",
+        "Match": "ApiKey = '$env:OPENAI_API_KEY'",
+        "Context": "ApiKey = '$env:OPENAI_API_KEY'",
+        "Description": "Hardcoded API key"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 60,
+        "File": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Match": "Password = 'P@ssw0rd123!'",
+        "Context": "AdminPassword = 'P@ssw0rd123!'",
+        "Description": "Hardcoded password"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 25,
+        "File": "./legacy-to-migrate/mig_LabRunner/Expand-All.ps1",
+        "Match": "ConvertTo-SecureString -String $DefaultValue -AsPlainText",
+        "Context": "return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force",
+        "Description": "Plain text password conversion"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 290,
+        "File": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Match": "ConvertTo-SecureString -String $DefaultValue -AsPlainText",
+        "Context": "return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force",
+        "Description": "Plain text password conversion"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 52,
+        "File": "./legacy-to-migrate/mig_LabRunner/Logger.ps1",
+        "Match": "ConvertTo-SecureString -String $DefaultValue -AsPlainText",
+        "Context": "return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force",
+        "Description": "Plain text password conversion"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 199,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Password = \"proxypass\"",
+        "Context": "Password = \"proxypass\"",
+        "Description": "Hardcoded password"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 364,
+        "File": "./tests/unit/automation-scripts/0200-0299/0215_Install-Chocolatey.Tests.ps1",
+        "Match": "Password = \"pass\"",
+        "Context": "Password = \"pass\"",
+        "Description": "Hardcoded password"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 241,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "ApiKey = \"test-api-key-12345\"",
+        "Context": "ApiKey = \"test-api-key-12345\"",
+        "Description": "Hardcoded API key"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 259,
+        "File": "./tests/unit/automation-scripts/0200-0299/0218_Install-GeminiCLI.Tests.ps1",
+        "Match": "ApiKey = \"test-api-key-12345\"",
+        "Context": "ApiKey = \"test-api-key-12345\"",
+        "Description": "Hardcoded API key"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 56,
+        "File": "./tests/unit/automation-scripts/0700-0799/0730_Setup-AIAgents.Tests.ps1",
+        "Match": "apiKey = 'existing-key'",
+        "Context": "claude = @{ apiKey = 'existing-key'; enabled = $true }",
+        "Description": "Hardcoded API key"
+      },
+      {
+        "Severity": "Critical",
+        "Line": 57,
+        "File": "./tests/unit/automation-scripts/0700-0799/0730_Setup-AIAgents.Tests.ps1",
+        "Match": "apiKey = 'gemini-key'",
+        "Context": "gemini = @{ apiKey = 'gemini-key'; enabled = $false }",
+        "Description": "Hardcoded API key"
+      }
+    ],
+    "CryptographicIssues": [
+      {
+        "Severity": "High",
+        "Line": 99,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "MD5",
+        "Context": "@{ Pattern = 'MD5|SHA1(?![\\d])'; Description = 'Weak hashing algorithm' }",
+        "Description": "Weak hashing algorithm"
+      },
+      {
+        "Severity": "High",
+        "Line": 99,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "SHA1",
+        "Context": "@{ Pattern = 'MD5|SHA1(?![\\d])'; Description = 'Weak hashing algorithm' }",
+        "Description": "Weak hashing algorithm"
+      },
+      {
+        "Severity": "High",
+        "Line": 217,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "MD5",
+        "Context": "@{ Pattern = 'MD5|SHA1(?![\\d])'; Description = 'Weak hashing algorithm' }",
+        "Description": "Weak hashing algorithm"
+      },
+      {
+        "Severity": "High",
+        "Line": 217,
+        "File": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Match": "SHA1",
+        "Context": "@{ Pattern = 'MD5|SHA1(?![\\d])'; Description = 'Weak hashing algorithm' }",
+        "Description": "Weak hashing algorithm"
+      }
+    ],
+    "SecurityScore": 0
+  },
+  "Duration": {
+    "Ticks": 173601375,
+    "Days": 0,
+    "Hours": 0,
+    "Milliseconds": 360,
+    "Microseconds": 137,
+    "Nanoseconds": 500,
+    "Minutes": 0,
+    "Seconds": 17,
+    "TotalDays": 0.00020092751736111111,
+    "TotalHours": 0.0048222604166666665,
+    "TotalMilliseconds": 17360.1375,
+    "TotalMicroseconds": 17360137.5,
+    "TotalNanoseconds": 17360137500.0,
+    "TotalMinutes": 0.289335625,
+    "TotalSeconds": 17.3601375
+  }
+}
