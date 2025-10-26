@@ -122,7 +122,7 @@ try {
 
     # Apply parameter overrides or use config defaults
     if (-not $PSBoundParameters.ContainsKey('Severity')) {
-        $Severity = if ($analysisConfig.Severity) {
+        $Severity = if ($analysisConfig -and $analysisConfig.PSObject.Properties['Severity'] -ne $null -and $analysisConfig.Severity) {
             $analysisConfig.Severity
         } else {
             @('Error', 'Warning', 'Information')
@@ -130,7 +130,7 @@ try {
     }
 
     if (-not $PSBoundParameters.ContainsKey('ExcludeRules')) {
-        $ExcludeRules = if ($analysisConfig.ExcludeRules) {
+        $ExcludeRules = if ($analysisConfig -and $analysisConfig.PSObject.Properties['ExcludeRules'] -ne $null -and $analysisConfig.ExcludeRules) {
             $analysisConfig.ExcludeRules
         } else {
             @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
@@ -138,7 +138,7 @@ try {
     }
 
     if (-not $PSBoundParameters.ContainsKey('IncludeRules')) {
-        $IncludeRules = if ($analysisConfig.IncludeRules) {
+        $IncludeRules = if ($analysisConfig -and $analysisConfig.PSObject.Properties['IncludeRules'] -ne $null -and $analysisConfig.IncludeRules) {
             $analysisConfig.IncludeRules
         } else {
             @('*')
@@ -159,14 +159,14 @@ try {
     }
 
     # Add rule-specific settings if available
-    if ($analysisConfig.Rules) {
+    if ($analysisConfig -and $analysisConfig.PSObject.Properties['Rules'] -ne $null -and $analysisConfig.Rules) {
         # Create settings object if we have rule-specific settings
         $tempPath = if ($IsWindows) { $env:TEMP } else { '/tmp' }
         $settingsPath = Join-Path $tempPath "PSScriptAnalyzer-Settings-$(Get-Random).psd1"
         $settingsContent = "@{"
         $settingsContent += "`n    IncludeRules = @($($IncludeRules | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
         $settingsContent += "`n    ExcludeRules = @($($ExcludeRules | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
-        if ($analysisConfig.Rules) {
+        if ($analysisConfig.PSObject.Properties['Rules'] -ne $null -and $analysisConfig.Rules) {
             $settingsContent += "`n    Rules = @{"
             foreach ($rule in $analysisConfig.Rules.GetEnumerator()) {
                 $settingsContent += "`n        '$($rule.Key)' = @{"
