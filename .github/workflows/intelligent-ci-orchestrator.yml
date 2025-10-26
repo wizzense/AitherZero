@@ -403,64 +403,125 @@ jobs:
         run: |
           Write-Host "🧪 Running ${{ matrix.category }} (Priority ${{ matrix.priority }})..." -ForegroundColor Cyan
           Write-Host "📁 Test Path: ${{ matrix.test_path }}" -ForegroundColor Gray
-          Write-Host "🎯 Scope: ${{ matrix.test_scope }}" -ForegroundColor Gray
-          
-          # Set environment variables for this test category
-          $env:AITHERZERO_TEST_SCOPE = "${{ matrix.test_scope }}"
-          $env:AITHERZERO_TEST_CATEGORY = "${{ matrix.category }}"
-          $env:AITHERZERO_TEST_PRIORITY = "${{ matrix.priority }}"
           
           # Determine test execution strategy
           $testPath = "${{ matrix.test_path }}"
+          $totalTests = 0
+          $totalPassed = 0
+          $totalFailed = 0
           
-          # Check if this is a comma-separated list of specific test files
+          # Simple direct Pester execution for cleaner output
           if ($testPath -match ',') {
             $testFiles = $testPath -split ',' | ForEach-Object { $_.Trim() }
-            Write-Host "🔍 Running specific test files/paths: $($testFiles.Count)" -ForegroundColor Yellow
+            Write-Host "🔍 Running $($testFiles.Count) test file(s)/path(s)" -ForegroundColor Yellow
             
-            $overallResult = 0
             foreach ($path in $testFiles) {
               if (Test-Path $path) {
-                Write-Host "  ▶️ Testing: $path" -ForegroundColor Cyan
-                $process = Start-Process -FilePath "pwsh" -ArgumentList @(
-                  "-Command", 
-                  "& './automation-scripts/0402_Run-UnitTests.ps1' -CI -Path '$path' -NoCoverage"
-                ) -Wait -PassThru -NoNewWindow
+                Write-Host "`n  ▶️ Testing: $path" -ForegroundColor Cyan
                 
-                if ($process.ExitCode -ne 0) {
-                  $overallResult = $process.ExitCode
-                  Write-Host "  ❌ Failed: $path (Exit: $($process.ExitCode))" -ForegroundColor Red
-                } else {
-                  Write-Host "  ✅ Passed: $path" -ForegroundColor Green
+                try {
+                  # Direct Pester execution with minimal overhead
+                  Import-Module Pester -Force -MinimumVersion 5.0
+                  $config = New-PesterConfiguration
+                  $config.Run.Path = $path
+                  $config.Run.PassThru = $true
+                  $config.Output.Verbosity = 'Normal'
+                  $config.Should.ErrorAction = 'Continue'
+                  
+                  $result = Invoke-Pester -Configuration $config
+                  
+                  Write-Host "     📊 Found: $($result.TotalCount) tests, Passed: $($result.PassedCount), Failed: $($result.FailedCount)" -ForegroundColor Gray
+                  
+                  if ($result.FailedCount -eq 0) {
+                    Write-Host "     ✅ PASSED" -ForegroundColor Green
+                    $totalPassed++
+                  } else {
+                    Write-Host "     ❌ FAILED ($($result.FailedCount) failures)" -ForegroundColor Red
+                    $totalFailed++
+                    
+                    # Show failed test names
+                    if ($result.Failed.Count -gt 0) {
+                      Write-Host "     Failed Tests:" -ForegroundColor Red
+                      $result.Failed | Select-Object -First 3 | ForEach-Object {
+                        Write-Host "       - $($_.ExpandedName)" -ForegroundColor DarkRed
+                      }
+                      if ($result.Failed.Count -gt 3) {
+                        Write-Host "       ... and $($result.Failed.Count - 3) more" -ForegroundColor DarkRed
+                      }
+                    }
+                  }
+                  $totalTests++
+                } catch {
+                  Write-Host "     ❌ ERROR: $_" -ForegroundColor Red
+                  $totalFailed++
+                  $totalTests++
                 }
+                
               } else {
                 Write-Host "  ⏭️ Skipped: $path (not found)" -ForegroundColor Yellow
               }
             }
             
-            $finalResult = $overallResult
           } else {
             # Single path execution
             if (Test-Path $testPath) {
               Write-Host "🔍 Running test directory: $testPath" -ForegroundColor Yellow
-              $process = Start-Process -FilePath "pwsh" -ArgumentList @(
-                "-Command",
-                "& './automation-scripts/0402_Run-UnitTests.ps1' -CI -Path '$testPath' -NoCoverage" 
-              ) -Wait -PassThru -NoNewWindow
-              $finalResult = $process.ExitCode
+              
+              try {
+                # Direct Pester execution
+                Import-Module Pester -Force -MinimumVersion 5.0
+                $config = New-PesterConfiguration
+                $config.Run.Path = $testPath
+                $config.Run.PassThru = $true
+                $config.Output.Verbosity = 'Normal'
+                $config.Should.ErrorAction = 'Continue'
+                
+                $result = Invoke-Pester -Configuration $config
+                
+                Write-Host "  📊 Found: $($result.TotalCount) tests, Passed: $($result.PassedCount), Failed: $($result.FailedCount)" -ForegroundColor Gray
+                
+                if ($result.FailedCount -eq 0) {
+                  $totalPassed = 1
+                  $totalFailed = 0
+                } else {
+                  $totalPassed = 0
+                  $totalFailed = 1
+                  
+                  # Show failed test names
+                  if ($result.Failed.Count -gt 0) {
+                    Write-Host "  Failed Tests:" -ForegroundColor Red
+                    $result.Failed | Select-Object -First 5 | ForEach-Object {
+                      Write-Host "    - $($_.ExpandedName)" -ForegroundColor DarkRed
+                    }
+                    if ($result.Failed.Count -gt 5) {
+                      Write-Host "    ... and $($result.Failed.Count - 5) more" -ForegroundColor DarkRed
+                    }
+                  }
+                }
+                $totalTests = 1
+              } catch {
+                Write-Host "  ❌ ERROR: $_" -ForegroundColor Red
+                $totalFailed = 1
+                $totalTests = 1
+              }
+              
             } else {
-              Write-Host "⏭️ Test path not found: $testPath - creating placeholder result" -ForegroundColor Yellow
-              $finalResult = 0  # Don't fail if category doesn't exist yet
+              Write-Host "⏭️ Test path not found: $testPath - no tests to run" -ForegroundColor Yellow
             }
           }
           
-          Write-Host "Test execution completed with exit code: $finalResult" -ForegroundColor $(if ($finalResult -eq 0) { 'Green' } else { 'Yellow' })
+          # Display final summary
+          Write-Host "`n📊 ${{ matrix.category }} Summary:" -ForegroundColor Cyan
+          Write-Host "   Test Paths: $totalTests" -ForegroundColor White
+          Write-Host "   Passed: $totalPassed" -ForegroundColor Green
+          Write-Host "   Failed: $totalFailed" -ForegroundColor $(if ($totalFailed -eq 0) { 'Green' } else { 'Red' })
           
-          if ($finalResult -eq 0) {
-            Write-Host "✅ ${{ matrix.category }} tests passed!" -ForegroundColor Green
+          if ($totalFailed -eq 0 -and $totalTests -gt 0) {
+            Write-Host "✅ All ${{ matrix.category }} tests passed!" -ForegroundColor Green
+          } elseif ($totalTests -eq 0) {
+            Write-Host "⏭️ No tests found for ${{ matrix.category }}" -ForegroundColor Yellow
           } else {
-            Write-Host "⚠️ ${{ matrix.category }} tests had issues (exit code: $finalResult)" -ForegroundColor Yellow
-            Write-Host "📋 Results captured for review - not blocking CI" -ForegroundColor Cyan
+            Write-Host "⚠️ Some ${{ matrix.category }} tests failed - check details above" -ForegroundColor Yellow
           }
           
           # Always exit 0 to not block CI - test failures are reported via artifacts

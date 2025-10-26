@@ -312,20 +312,23 @@ try {
     # CI mode adjustments (override config if in CI)
     if ($CI) {
         Write-ScriptLog -Message "Running in CI mode - applying performance optimizations"
-        $pesterConfig.Output.Verbosity = 'Minimal'  # Reduce output for speed
+        $pesterConfig.Output.Verbosity = 'Normal'  # Show meaningful test output in CI
         $pesterConfig.Should.ErrorAction = 'Continue'
+        
+        # Reduce excessive logging from modules during test execution
+        $env:AITHERZERO_LOG_LEVEL = 'Warning'  # Only show warnings and errors
+        $env:AITHERZERO_QUIET_MODE = 'true'   # Suppress verbose module initialization
         
         # Enable parallel execution in CI for better performance
         if (-not $pesterSettings.Parallel) {
             $pesterSettings.Parallel = @{}
         }
         $pesterSettings.Parallel.Enabled = $true
-        $pesterSettings.Parallel.Workers = 4  # Optimize for CI runners
-        $pesterSettings.Parallel.BlockSize = 3  # Smaller chunks for CI
+        $pesterSettings.Parallel.Workers = 2  # Reduce to avoid resource contention
+        $pesterSettings.Parallel.BlockSize = 5  # Larger chunks for fewer overhead
         
         # CI adjustments: Enable full testing with optimized reporting
-        # Run all tests but optimize output for CI
-        Write-ScriptLog -Message "CI mode: Running full test suite with optimized reporting and parallel execution"
+        Write-ScriptLog -Message "CI mode: Running full test suite with clear output and parallel execution"
     }
 
     # Apply filter settings from config or use defaults for unit tests
