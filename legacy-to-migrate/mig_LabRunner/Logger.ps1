@@ -30,6 +30,7 @@ $levelIdx = @{ INFO = 1; WARN = 0; ERROR = 0 }[$Level]
     }
 }
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
 function Read-LoggedInput {
     [CmdletBinding()]
     param(
@@ -47,7 +48,7 @@ function Read-LoggedInput {
     if ($IsNonInteractive) {
         Write-CustomLog "Non-interactive mode detected. Using default value for: $Prompt" 'INFO'
         if ($AsSecureString -and -not [string]::IsNullOrEmpty($DefaultValue)) {
-            # This is a legitimate use case for test environments - PSScriptAnalyzer suppressed: PSAvoidUsingConvertToSecureStringWithPlainText
+            # This is a legitimate use case for test environments
             return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
         }
         return $DefaultValue

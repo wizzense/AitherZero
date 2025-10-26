@@ -1,0 +1,43 @@
+{
+  "Summary": {
+    "TotalIssues": 3,
+    "ByRule": {
+      "PSAvoidUsingConvertToSecureStringWithPlainText": 3
+    },
+    "ByScript": {
+      "LabRunner.psm1": 1,
+      "Expand-All.ps1": 1,
+      "Logger.ps1": 1
+    },
+    "BySeverity": {
+      "Error": 3
+    }
+  },
+  "Details": [
+    {
+      "RuleName": "PSAvoidUsingConvertToSecureStringWithPlainText",
+      "Severity": 2,
+      "ScriptName": "Expand-All.ps1",
+      "Line": 25,
+      "Column": 32,
+      "Message": "File 'Expand-All.ps1' uses ConvertTo-SecureString with plaintext. This will expose secure information. Encrypted standard strings should be used instead."
+    },
+    {
+      "RuleName": "PSAvoidUsingConvertToSecureStringWithPlainText",
+      "Severity": 2,
+      "ScriptName": "LabRunner.psm1",
+      "Line": 290,
+      "Column": 20,
+      "Message": "File 'LabRunner.psm1' uses ConvertTo-SecureString with plaintext. This will expose secure information. Encrypted standard strings should be used instead."
+    },
+    {
+      "RuleName": "PSAvoidUsingConvertToSecureStringWithPlainText",
+      "Severity": 2,
+      "ScriptName": "Logger.ps1",
+      "Line": 52,
+      "Column": 20,
+      "Message": "File 'Logger.ps1' uses ConvertTo-SecureString with plaintext. This will expose secure information. Encrypted standard strings should be used instead."
+    }
+  ],
+  "Timestamp": "2025-10-26T02:02:11.1563832+00:00"
+}

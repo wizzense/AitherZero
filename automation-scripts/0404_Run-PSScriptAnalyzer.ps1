@@ -131,9 +131,12 @@ try {
         Write-ScriptLog -Message "CI environment detected - applying performance optimizations"
         # In CI, focus on critical issues only for faster execution
         $Severity = @('Error')  # Only check for errors in CI
-        # Add more aggressive exclusions for CI speed
+        # Add more aggressive exclusions for CI speed and exclude legacy code
         if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
-            $ExcludePaths = @('tests', 'examples', 'docs', '.git', 'node_modules')
+            $ExcludePaths = @('tests', 'examples', 'docs', '.git', 'node_modules', 'legacy-to-migrate', '.archive')
+        } else {
+            # Ensure legacy directories are always excluded in CI
+            $ExcludePaths = @($ExcludePaths) + @('legacy-to-migrate', '.archive')
         }
         Write-ScriptLog -Message "CI mode: Reduced scope to Error-level issues only"
     }

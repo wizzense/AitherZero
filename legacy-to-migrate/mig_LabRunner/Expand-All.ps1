@@ -1,4 +1,5 @@
 # ...existing code from /pwsh/modules/CodeFixerExpand-All.ps1...
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '')]
 function Expand-All {
     # Expand-All -ZipFile "C:\path\to\your\archive.zip"
     param(
@@ -20,7 +21,7 @@ function Expand-All {
                 if ($IsNonInteractive) {
                     Write-Verbose "Non-interactive mode detected. Using default value for: $Prompt"
                     if ($AsSecureString -and -not [string]::IsNullOrEmpty($DefaultValue)) {
-                        # This is a legitimate use case for test environments - PSScriptAnalyzer suppressed: PSAvoidUsingConvertToSecureStringWithPlainText
+                        # This is a legitimate use case for test environments
                         return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
                     }
                     return $DefaultValue
