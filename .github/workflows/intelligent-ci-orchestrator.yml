@@ -726,22 +726,17 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: context.payload.pull_request.number,
-                  body: `## 🤖 AI Agent Coordination Triggered
-
-The Intelligent CI detected issues and has automatically triggered the AI Agent Coordinator for advanced analysis and issue resolution.
-
-**Priority Level:** ${priority}
-**Focus Area:** ${agentType === 'testing' ? 'Test Failures' : 'Code Quality Issues'}
-
-The AI Agent Coordinator will:
-- Run detailed analysis of the detected issues
-- Create specific GitHub issues for problems found
-- Provide actionable recommendations for fixes
-
-📊 [View CI Results](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
-
----
-*This coordination was automatically triggered by the Intelligent CI Orchestrator*`
+                  body: "## 🤖 AI Agent Coordination Triggered\n\n" +
+                        "The Intelligent CI detected issues and has automatically triggered the AI Agent Coordinator for advanced analysis and issue resolution.\n\n" +
+                        "**Priority Level:** " + priority + "\n" +
+                        "**Focus Area:** " + (agentType === 'testing' ? 'Test Failures' : 'Code Quality Issues') + "\n\n" +
+                        "The AI Agent Coordinator will:\n" +
+                        "- Run detailed analysis of the detected issues\n" +
+                        "- Create specific GitHub issues for problems found\n" +
+                        "- Provide actionable recommendations for fixes\n\n" +
+                        "📊 [View CI Results](https://github.com/" + context.repo.owner + "/" + context.repo.repo + "/actions/runs/" + context.runId + ")\n\n" +
+                        "---\n" +
+                        "*This coordination was automatically triggered by the Intelligent CI Orchestrator*"
                 });
               }
             } catch (error) {
