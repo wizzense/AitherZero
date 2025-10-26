@@ -219,7 +219,7 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
         BeforeEach {
             Import-Module $script:RootModule -Force -DisableNameChecking
 
-            # Setup mock automation scripts with clean directory
+            # Setup mock automation scripts with a clean directory
             $script:MockScriptPath = Join-Path $TestDrive "automation-scripts"
             if (Test-Path $script:MockScriptPath) {
                 Remove-Item $script:MockScriptPath -Recurse -Force
