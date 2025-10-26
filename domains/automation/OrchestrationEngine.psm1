@@ -198,10 +198,17 @@ function Invoke-OrchestrationSequence {
                 throw "Playbook not found: $LoadPlaybook"
             }
 
-            # Handle playbook profiles
-            if ($PlaybookProfile -and $playbook.options -and $playbook.options.profiles) {
-                if ($playbook.options.profiles.ContainsKey($PlaybookProfile)) {
-                    $ProfileNameConfig = $playbook.options.profiles[$PlaybookProfile]
+            # Handle playbook profiles (support both v1 and v2 formats)
+            $profilesSource = $null
+            if ($playbook.Profiles) {
+                $profilesSource = $playbook.Profiles  # v2.0 format
+            } elseif ($playbook.options -and $playbook.options.profiles) {
+                $profilesSource = $playbook.options.profiles  # v1 format
+            }
+            
+            if ($PlaybookProfile -and $profilesSource) {
+                if ($profilesSource.ContainsKey($PlaybookProfile)) {
+                    $ProfileNameConfig = $profilesSource[$PlaybookProfile]
                     Write-OrchestrationLog "Applying playbook profile: $PlaybookProfile - $($ProfileNameConfig.description)"
 
                     # Apply profile variables
@@ -210,8 +217,15 @@ function Invoke-OrchestrationSequence {
                             $Variables[$key] = $ProfileNameConfig.variables[$key]
                         }
                     }
+                    
+                    # Apply profile overrides (v2.0 feature)
+                    if ($ProfileNameConfig.overrides) {
+                        foreach ($key in $ProfileNameConfig.overrides.Keys) {
+                            $Variables[$key] = $ProfileNameConfig.overrides[$key]
+                        }
+                    }
                 } else {
-                    $availableProfiles = $playbook.options.profiles.Keys -join ', '
+                    $availableProfiles = $profilesSource.Keys -join ', '
                     throw "Invalid playbook profile: $PlaybookProfile. Available profiles: $availableProfiles"
                 }
             }
@@ -316,6 +330,34 @@ function Invoke-OrchestrationSequence {
             return
         }
 
+        # Pre-execution validation for v2.0 playbooks
+        if ($LoadPlaybook -and $playbook.Validation -and $playbook.Validation.preConditions) {
+            Write-OrchestrationLog "Running pre-condition validation..." -Level 'Information'
+            
+            if (-not (Test-PlaybookConditions -Conditions $playbook.Validation.preConditions -Type 'pre-condition' -Variables $Variables)) {
+                $errorMsg = "Pre-condition validation failed. Aborting execution."
+                Write-OrchestrationLog $errorMsg -Level 'Error'
+                
+                # Send failure notification
+                if ($playbook.Notifications) {
+                    Send-PlaybookNotification -NotificationConfig $playbook.Notifications -Type 'onFailure' -Context @{
+                        reason = 'Pre-condition validation failed'
+                        playbook = $playbook.Name
+                    }
+                }
+                
+                throw $errorMsg
+            }
+        }
+
+        # Send start notification
+        if ($LoadPlaybook -and $playbook.Notifications) {
+            Send-PlaybookNotification -NotificationConfig $playbook.Notifications -Type 'onStart' -Context @{
+                playbook = $playbook.Name
+                scriptCount = $scripts.Count
+            }
+        }
+
         # Interactive confirmation
         if ($Interactive -and -not $PSCmdlet.ShouldProcess("Execute $($scripts.Count) scripts", "Orchestration")) {
             Write-OrchestrationLog "Execution cancelled by user"
@@ -323,14 +365,54 @@ function Invoke-OrchestrationSequence {
         }
 
         # Execute orchestration
-        $result = if ($Parallel) {
-            Invoke-ParallelOrchestration -Scripts $scripts -Configuration $config -Variables $Variables -ContinueOnError:$ContinueOnError
-        } else {
-            Invoke-SequentialOrchestration -Scripts $scripts -Configuration $config -Variables $Variables -ContinueOnError:$ContinueOnError
-        }
+        try {
+            $result = if ($Parallel) {
+                Invoke-ParallelOrchestration -Scripts $scripts -Configuration $config -Variables $Variables -ContinueOnError:$ContinueOnError
+            } else {
+                Invoke-SequentialOrchestration -Scripts $scripts -Configuration $config -Variables $Variables -ContinueOnError:$ContinueOnError
+            }
 
-        # Return execution result
-        $result
+            # Post-execution validation for v2.0 playbooks
+            if ($LoadPlaybook -and $playbook.Validation -and $playbook.Validation.postConditions) {
+                Write-OrchestrationLog "Running post-condition validation..." -Level 'Information'
+                
+                if (-not (Test-PlaybookConditions -Conditions $playbook.Validation.postConditions -Type 'post-condition' -Variables $Variables)) {
+                    Write-OrchestrationLog "Post-condition validation failed" -Level 'Warning'
+                    
+                    # Send warning notification
+                    if ($playbook.Notifications) {
+                        Send-PlaybookNotification -NotificationConfig $playbook.Notifications -Type 'onWarning' -Context @{
+                            reason = 'Post-condition validation failed'
+                            playbook = $playbook.Name
+                        }
+                    }
+                }
+            }
+
+            # Send success notification
+            if ($LoadPlaybook -and $playbook.Notifications) {
+                Send-PlaybookNotification -NotificationConfig $playbook.Notifications -Type 'onSuccess' -Context @{
+                    playbook = $playbook.Name
+                    duration = if ($result.Duration) { $result.Duration.ToString() } else { 'Unknown' }
+                    completed = if ($result.Completed) { $result.Completed } else { $scripts.Count }
+                }
+            }
+
+            # Return execution result
+            $result
+        }
+        catch {
+            # Send failure notification
+            if ($LoadPlaybook -and $playbook.Notifications) {
+                Send-PlaybookNotification -NotificationConfig $playbook.Notifications -Type 'onFailure' -Context @{
+                    playbook = $playbook.Name
+                    error = $_.Exception.Message
+                }
+            }
+            
+            # Re-throw the error
+            throw
+        }
     }
 }
 
@@ -594,6 +676,107 @@ function Test-OrchestrationCondition {
     } catch {
         Write-OrchestrationLog "Failed to evaluate condition: $Condition - $_" -Level 'Warning'
         return $true  # Default to running if condition fails
+    }
+}
+
+function Test-PlaybookConditions {
+    <#
+    .SYNOPSIS
+    Test pre-conditions and post-conditions for v2.0 playbooks
+    #>
+    param(
+        [array]$Conditions,
+        [string]$Type = 'pre-condition',
+        [hashtable]$Variables = @{}
+    )
+
+    if (-not $Conditions -or $Conditions.Count -eq 0) {
+        return $true
+    }
+
+    $allPassed = $true
+    
+    foreach ($condition in $Conditions) {
+        try {
+            Write-OrchestrationLog "Testing ${Type}: $($condition.name)" -Level 'Information'
+            
+            # Create evaluation context
+            $scriptBlock = [ScriptBlock]::Create($condition.condition)
+            
+            # Inject variables into scope
+            foreach ($key in $Variables.Keys) {
+                Set-Variable -Name $key -Value $Variables[$key] -Scope Local
+            }
+            
+            # Evaluate condition
+            $result = & $scriptBlock
+            
+            if (-not $result) {
+                $message = if ($condition.message) { $condition.message } else { "$Type '$($condition.name)' failed" }
+                Write-OrchestrationLog $message -Level 'Error'
+                $allPassed = $false
+            } else {
+                Write-OrchestrationLog "$Type '$($condition.name)' passed" -Level 'Information'
+            }
+        } catch {
+            $message = if ($condition.message) { $condition.message } else { "$Type '$($condition.name)' failed with error: $_" }
+            Write-OrchestrationLog $message -Level 'Error'
+            $allPassed = $false
+        }
+    }
+    
+    return $allPassed
+}
+
+function Send-PlaybookNotification {
+    <#
+    .SYNOPSIS
+    Send notifications based on playbook configuration
+    #>
+    param(
+        [hashtable]$NotificationConfig,
+        [string]$Type,
+        [hashtable]$Context = @{}
+    )
+
+    if (-not $NotificationConfig -or -not $NotificationConfig.ContainsKey($Type)) {
+        return
+    }
+
+    $notification = $NotificationConfig[$Type]
+    
+    # Expand variables in message
+    $message = $notification.message
+    foreach ($key in $Context.Keys) {
+        $message = $message -replace "\{\{$key\}\}", $Context[$key]
+    }
+    
+    # Determine channels (default to console and log)
+    $channels = if ($notification.channels) { $notification.channels } else { @('console', 'log') }
+    
+    # Send to each channel
+    foreach ($channel in $channels) {
+        switch ($channel) {
+            'console' {
+                $color = switch ($notification.level) {
+                    'Success' { 'Green' }
+                    'Warning' { 'Yellow' }
+                    'Error' { 'Red' }
+                    default { 'White' }
+                }
+                Write-Host $message -ForegroundColor $color
+            }
+            'log' {
+                Write-OrchestrationLog $message -Level $notification.level
+            }
+            'github' {
+                # Could integrate with GitHub API for PR comments, etc.
+                Write-OrchestrationLog "GitHub notification: $message" -Level $notification.level
+            }
+            default {
+                Write-OrchestrationLog "Unsupported notification channel: $channel" -Level 'Warning'
+            }
+        }
     }
 }
 
@@ -1113,6 +1296,97 @@ function Save-OrchestrationPlaybook {
     Write-OrchestrationLog "Saved playbook: $playbookPath"
 }
 
+function ConvertTo-StandardPlaybookFormat {
+    <#
+    .SYNOPSIS
+    Converts playbooks from different versions to a standardized format
+    .DESCRIPTION
+    Handles both legacy v1 playbooks and new v2.0 schema playbooks,
+    converting them to a consistent internal format for execution.
+    #>
+    param(
+        [hashtable]$Playbook
+    )
+
+    # Check if this is a v2.0 playbook (has metadata and orchestration sections)
+    if ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
+        Write-OrchestrationLog "Loading v2.0 playbook: $($Playbook.metadata.name)" -Level 'Information'
+        
+        # Convert v2.0 format to internal format
+        $standardPlaybook = @{
+            # Metadata
+            Name = $Playbook.metadata.name
+            Description = $Playbook.metadata.description
+            Version = $Playbook.metadata.version
+            Category = $Playbook.metadata.category
+            Author = $Playbook.metadata.author
+            Tags = $Playbook.metadata.tags
+            EstimatedDuration = $Playbook.metadata.estimatedDuration
+            
+            # Requirements
+            Requirements = $Playbook.requirements
+            
+            # Variables and profiles from orchestration section
+            Variables = $Playbook.orchestration.defaultVariables
+            Profiles = $Playbook.orchestration.profiles
+            
+            # Convert stages to internal format
+            Stages = @()
+            
+            # Validation and notifications
+            Validation = $Playbook.validation
+            Notifications = $Playbook.notifications
+            Reporting = $Playbook.reporting
+        }
+        
+        # Convert stages format
+        if ($Playbook.orchestration.stages) {
+            foreach ($stage in $Playbook.orchestration.stages) {
+                $convertedStage = @{
+                    Name = $stage.name
+                    Description = $stage.description
+                    Sequence = $stage.sequences  # Note: v2.0 uses 'sequences' (plural)
+                    Variables = $stage.variables
+                    Condition = $stage.condition
+                    ContinueOnError = $stage.continueOnError
+                    Parallel = $stage.parallel
+                    Timeout = $stage.timeout
+                    Retries = $stage.retries
+                }
+                $standardPlaybook.Stages += $convertedStage
+            }
+        }
+        
+        return $standardPlaybook
+    }
+    
+    # Handle legacy v1 playbook formats
+    else {
+        Write-OrchestrationLog "Loading legacy v1 playbook" -Level 'Information'
+        
+        # Return as-is for legacy playbooks, but normalize key cases
+        $standardPlaybook = @{}
+        
+        # Handle different naming conventions in legacy playbooks
+        $standardPlaybook.Name = if ($Playbook.Name) { $Playbook.Name } else { $Playbook.name }
+        $standardPlaybook.Description = if ($Playbook.Description) { $Playbook.Description } else { $Playbook.description }
+        $standardPlaybook.Version = if ($Playbook.Version) { $Playbook.Version } else { $Playbook.version }
+        $standardPlaybook.Sequence = if ($Playbook.Sequence) { $Playbook.Sequence } else { $Playbook.sequence }
+        $standardPlaybook.Variables = if ($Playbook.Variables) { $Playbook.Variables } else { $Playbook.variables }
+        $standardPlaybook.Stages = if ($Playbook.Stages) { $Playbook.Stages } else { $Playbook.stages }
+        
+        # Copy other properties as-is
+        foreach ($key in $Playbook.Keys) {
+            if ($key -notin @('Name', 'name', 'Description', 'description', 'Version', 'version', 
+                             'Sequence', 'sequence', 'Variables', 'variables', 'Stages', 'stages')) {
+                $standardPlaybook[$key] = $Playbook[$key]
+            }
+        }
+        
+        return $standardPlaybook
+    }
+}
+
 function Get-OrchestrationPlaybook {
     param([string]$Name)
 
@@ -1120,7 +1394,8 @@ function Get-OrchestrationPlaybook {
     $playbookPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
 
     if (Test-Path $playbookPath) {
-        return Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
+        $playbook = Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
+        return ConvertTo-StandardPlaybookFormat $playbook
     }
 
     # Then search in subdirectories
@@ -1128,7 +1403,8 @@ function Get-OrchestrationPlaybook {
     $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
 
     if ($foundPlaybook) {
-        return Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
+        $playbook = Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
+        return ConvertTo-StandardPlaybookFormat $playbook
     }
 
     return $null
@@ -1167,4 +1443,7 @@ Export-ModuleMember -Function @(
     'Invoke-Sequence'
     'Get-OrchestrationPlaybook'
     'Save-OrchestrationPlaybook'
+    'ConvertTo-StandardPlaybookFormat'
+    'Test-PlaybookConditions'
+    'Send-PlaybookNotification'
 ) -Alias @('seq')
