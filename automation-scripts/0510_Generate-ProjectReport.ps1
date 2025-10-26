@@ -209,16 +209,17 @@ foreach ($domain in $domains) {
 # 7. File Analysis (optimized for performance)
 Write-ReportLog "Performing file analysis..."
 try {
-    # Use efficient file counting with filtering during discovery
+    # Use efficient file counting with filtering during discovery (cross-platform paths)
     $allFiles = @(Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue | Where-Object {
-        $_.FullName -notlike "*\.git\*" -and 
-        $_.FullName -notlike "*\node_modules\*" -and
-        $_.FullName -notlike "*\logs\*" -and
-        $_.FullName -notlike "*\temp\*"
+        $_.FullName -notlike "*\.git\*" -and $_.FullName -notlike "*/.git/*" -and
+        $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*/node_modules/*" -and
+        $_.FullName -notlike "*\logs\*" -and $_.FullName -notlike "*/logs/*" -and
+        $_.FullName -notlike "*\temp\*" -and $_.FullName -notlike "*/temp/*"
     })
     
     $configFiles = @(Get-ChildItem -Path $ProjectPath -Filter "*.json" -Recurse -ErrorAction SilentlyContinue | Where-Object {
-        $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*\.git\*"
+        $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*/node_modules/*" -and 
+        $_.FullName -notlike "*\.git\*" -and $_.FullName -notlike "*/.git/*"
     })
     
     $projectReport.FileAnalysis = @{
