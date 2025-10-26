@@ -92,11 +92,10 @@ jobs:
           $success = $false
           $errorMsg = ""
           
-          # Try multiple methods to ensure robust execution across environments
+          # Execute syntax validation using Start-AitherZero orchestration
           $methods = @(
-            { & ./az 0407 },
-            { & "$(Join-Path $PWD 'az')" 0407 },
-            { & pwsh -File "./az.ps1" 0407 }
+            { & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive },
+            { & pwsh -File "./Start-AitherZero.ps1" -Mode Orchestrate -Sequence "0407" -NonInteractive }
           )
           
           for ($i = 0; $i -lt $methods.Count; $i++) {
@@ -236,11 +235,10 @@ jobs:
           $scriptNumber = if ($testScope -eq "full") { "0409" } else { "0402" }
           Write-Host "Running $testScope tests using script $scriptNumber..." -ForegroundColor Cyan
           
-          # Try multiple methods to ensure robust execution
+          # Execute tests using Start-AitherZero orchestration
           $methods = @(
-            { & ./az $scriptNumber },
-            { & "$(Join-Path $PWD 'az')" $scriptNumber },
-            { & pwsh -File "./az.ps1" $scriptNumber }
+            { & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence $scriptNumber -NonInteractive },
+            { & pwsh -File "./Start-AitherZero.ps1" -Mode Orchestrate -Sequence $scriptNumber -NonInteractive }
           )
           
           for ($i = 0; $i -lt $methods.Count; $i++) {
@@ -289,11 +287,10 @@ jobs:
           $analysisSuccess = $false
           $errorMsg = ""
           
-          # Try multiple methods to ensure robust execution
+          # Execute code analysis using Start-AitherZero orchestration
           $methods = @(
-            { & ./az 0404 },
-            { & "$(Join-Path $PWD 'az')" 0404 },
-            { & pwsh -File "./az.ps1" 0404 }
+            { & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0404" -NonInteractive },
+            { & pwsh -File "./Start-AitherZero.ps1" -Mode Orchestrate -Sequence "0404" -NonInteractive }
           )
           
           for ($i = 0; $i -lt $methods.Count; $i++) {
@@ -332,15 +329,13 @@ jobs:
           Write-Host "📊 Generating comprehensive reports..." -ForegroundColor Yellow
           
           $reportMethods = @(
-            { & ./az 0510 },
-            { & "$(Join-Path $PWD 'az')" 0510 },
-            { & pwsh -File "./az.ps1" 0510 }
+            { & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0510" -NonInteractive },
+            { & pwsh -File "./Start-AitherZero.ps1" -Mode Orchestrate -Sequence "0510" -NonInteractive }
           )
           
           $coverageMethods = @(
-            { & ./az 0408 },
-            { & "$(Join-Path $PWD 'az')" 0408 },
-            { & pwsh -File "./az.ps1" 0408 }
+            { & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0408" -NonInteractive },
+            { & pwsh -File "./Start-AitherZero.ps1" -Mode Orchestrate -Sequence "0408" -NonInteractive }
           )
           
           $reportSuccess = 0
