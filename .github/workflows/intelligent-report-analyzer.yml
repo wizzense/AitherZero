@@ -32,7 +32,13 @@ jobs:
   analyze-reports:
     name: 🤖 Intelligent Report Analysis
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion != 'cancelled' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: |
+      github.event_name == 'schedule' || 
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && 
+       (github.event.workflow_run.conclusion == 'success' || 
+        github.event.workflow_run.conclusion == 'failure' || 
+        github.event.workflow_run.conclusion == 'action_required'))
     
     outputs:
       critical-issues-found: ${{ steps.analysis.outputs.critical-issues-found }}
@@ -42,6 +48,18 @@ jobs:
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        
+      - name: 🔍 Debug Trigger Context
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Workflow Trigger Debug Info:" -ForegroundColor Cyan
+          Write-Host "  Event Name: ${{ github.event_name }}"
+          Write-Host "  Workflow Run ID: ${{ github.event.workflow_run.id }}"
+          Write-Host "  Workflow Run Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          Write-Host "  Workflow Run Status: ${{ github.event.workflow_run.status }}"
+          Write-Host "  Actor: ${{ github.actor }}"
+          Write-Host "  Repository: ${{ github.repository }}"
+          Write-Host ""
         
       - name: 📊 Download Latest Reports
         if: github.event.workflow_run
@@ -58,6 +76,9 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🤖 Starting intelligent report analysis..." -ForegroundColor Cyan
+          Write-Host "  Analysis Mode: ${{ github.event.inputs.analysis_mode || 'standard' }}"
+          Write-Host "  Current Directory: $(Get-Location)"
+          Write-Host "  Available Files: $(Get-ChildItem -Recurse | Select-Object -First 10 | ForEach-Object { $_.Name })"
           
           # Initialize analysis results
           $analysisResults = @{
@@ -166,6 +187,36 @@ jobs:
                 Severity = "Medium"
                 Title = "Documentation Gaps"
                 Description = "Help coverage is $($projectReport.HelpCoverage * 100)% (target: 50%)"
+                AutoFixable = $false
+                Priority = "P2"
+                RequiresHumanInput = $true
+              }
+            }
+          }
+          
+          # Add baseline analysis if no issues found or in comprehensive mode
+          $comprehensiveMode = "${{ github.event.inputs.analysis_mode }}" -eq "comprehensive"
+          if ($analysisResults.CriticalIssues.Count -eq 0 -and $analysisResults.OptimizationOpportunities.Count -eq 0) {
+            Write-Host "📋 No critical issues found in reports. Running baseline analysis..." -ForegroundColor Yellow
+            
+            # Always check for potential workflow improvements
+            $analysisResults.OptimizationOpportunities += @{
+              Type = "WorkflowOptimization"
+              Severity = "Low"
+              Title = "Workflow Performance Review"
+              Description = "Regular review of GitHub Actions workflow performance and efficiency"
+              AutoFixable = $false
+              Priority = "P3"
+              RequiresHumanInput = $true
+            }
+            
+            # Check if this is part of comprehensive analysis
+            if ($comprehensiveMode) {
+              $analysisResults.OptimizationOpportunities += @{
+                Type = "ComprehensiveReview"
+                Severity = "Medium"  
+                Title = "Comprehensive System Analysis"
+                Description = "Scheduled comprehensive review of system architecture and performance"
                 AutoFixable = $false
                 Priority = "P2"
                 RequiresHumanInput = $true
