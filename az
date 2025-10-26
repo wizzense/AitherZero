@@ -1,0 +1,6 @@
+#!/usr/bin/env pwsh
+$root = $PSScriptRoot
+if (-not $env:AITHERZERO_INITIALIZED) {
+    Import-Module "$root/AitherZero.psd1" -Force -Global
+}
+& "$root/az.ps1" $arguments

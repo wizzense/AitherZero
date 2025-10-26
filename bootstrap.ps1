@@ -366,8 +366,17 @@ function Install-Dependencies {
         $argumentList = @()
         $argumentList += "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath
 
-        # Preserve all bound parameters and add IsRelaunch flag
+        # Define valid parameters for the main bootstrap script
+        $validParameters = @('Mode', 'InstallProfile', 'InstallPath', 'Branch', 'NonInteractive', 'AutoInstallDeps', 'SkipAutoStart', 'IsRelaunch')
+
+        # Preserve only valid bound parameters and add IsRelaunch flag
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            # Skip parameters that are not valid for the main script (like internal function parameters)
+            if ($validParameters -notcontains $param.Key) {
+                Write-BootstrapLog "Skipping invalid parameter for re-launch: $($param.Key)" -Level Info
+                continue
+            }
+
             if ($param.Value -is [switch]) {
                 if ($param.Value) {
                     $argumentList += "-$($param.Key)"
