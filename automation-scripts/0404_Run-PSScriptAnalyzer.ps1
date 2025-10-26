@@ -128,19 +128,16 @@ try {
     }
              
     if ($isCI) {
-        Write-ScriptLog -Message "CI environment detected - applying performance optimizations"
-        # In CI, focus on critical issues only for faster execution
-        $Severity = @('Error')  # Only check for errors in CI
-        # Add more aggressive exclusions for CI speed and exclude legacy code
+        Write-ScriptLog -Message "CI environment detected - applying performance optimizations while maintaining full fidelity"
+        # In CI, maintain full analysis but optimize for performance
+        # Exclude legacy directories and temp files for cleaner analysis
         if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
-            $ExcludePaths = @('tests', 'examples', 'docs', '.git', 'node_modules', 'legacy-to-migrate', '.archive', 'temp', 'logs', 'reports')
+            $ExcludePaths = @('legacy-to-migrate', '.archive', 'temp', 'logs', 'reports', '.git', 'node_modules')
         } else {
             # Ensure legacy directories are always excluded in CI
             $ExcludePaths = @($ExcludePaths) + @('legacy-to-migrate', '.archive', 'temp', 'logs', 'reports')
         }
-        # Also exclude common patterns that are unlikely to need analysis
-        $ExcludePaths += @('*.Tests.*', '*Test*', '*temp*', '*log*', '*report*')
-        Write-ScriptLog -Message "CI mode: Reduced scope to Error-level issues only, excluded $($ExcludePaths.Count) path patterns"
+        Write-ScriptLog -Message "CI mode: Full analysis with performance optimizations, excluded $($ExcludePaths.Count) path patterns"
     }
 
     # Apply parameter overrides or use config defaults

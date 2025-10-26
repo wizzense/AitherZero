@@ -372,6 +372,10 @@ function Install-Dependencies {
                 if ($param.Value) {
                     $argumentList += "-$($param.Key)"
                 }
+            } elseif ($param.Value -is [array]) {
+                # Handle array parameters properly
+                $argumentList += "-$($param.Key)"
+                $argumentList += ($param.Value -join ',')
             } else {
                 $argumentList += "-$($param.Key)", $param.Value
             }

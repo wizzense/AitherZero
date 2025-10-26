@@ -79,6 +79,10 @@ if (-not $PSBoundParameters.ContainsKey('NoCoverage')) {
         $runCoverage = Get-ConfiguredValue -Name 'RunCoverage' -Section 'Testing' -Default $true
         $NoCoverage = -not $runCoverage
     }
+    # In CI, maintain code coverage for quality assurance
+    if ($CI -and -not $PSBoundParameters.ContainsKey('NoCoverage')) {
+        Write-ScriptLog -Message "CI mode: Code coverage maintained for quality assurance"
+    }
 }
 
 if (Test-Path $testingModule) {
@@ -309,14 +313,9 @@ try {
         $pesterConfig.Output.Verbosity = 'Minimal'  # Reduce output for speed
         $pesterConfig.Should.ErrorAction = 'Continue'
         
-        # CI Performance optimization: Reduce test scope for faster execution
-        # Focus on critical/core tests only in CI environment
-        $pesterConfig.Filter.Tag = @('Unit', 'Critical', 'Core')
-        $pesterConfig.Filter.ExcludeTag = @('Integration', 'E2E', 'Performance', 'Slow')
-        
-        # Disable expensive features in CI
-        $NoCoverage = $true  # Force disable coverage in CI for speed
-        Write-ScriptLog -Message "CI mode: Disabled code coverage for performance"
+        # CI adjustments: Enable full testing with optimized reporting
+        # Run all tests but optimize output for CI
+        Write-ScriptLog -Message "CI mode: Running full test suite with optimized reporting"
     }
 
     # Apply filter settings from config or use defaults for unit tests
