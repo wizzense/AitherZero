@@ -47,6 +47,10 @@
         # From Infrastructure
         'Initialize-Infrastructure', 'Get-InfrastructureProvider',
 
+        # From DocumentationEngine
+        'Initialize-DocumentationEngine', 'New-ModuleDocumentation', 'New-ProjectDocumentation',
+        'Test-DocumentationQuality', 'Get-DocumentationCoverage',
+
         # Wildcard for any additional functions
         '*'
     )
