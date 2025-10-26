@@ -1065,11 +1065,18 @@ try {
                 ($env:CIRCLECI -eq 'true')
         
         if ($isCI) {
-            # CI environment: Non-interactive by default with validation mode for automated logging
-            $NonInteractive = $true
-            if ($Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
-                $Mode = 'Validate'
-                Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
+            # CI environment detected
+            if ($PSBoundParameters.ContainsKey('Mode') -and $Mode -eq 'Interactive') {
+                # User explicitly requested Interactive mode in CI - allow it for testing
+                $NonInteractive = $false
+                Write-CustomLog "CI environment detected, but Interactive mode explicitly requested - allowing interactive mode" -Level 'Information'
+            } else {
+                # Default CI behavior: Non-interactive with validation mode for automated logging
+                $NonInteractive = $true
+                if ($Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
+                    $Mode = 'Validate'
+                    Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
+                }
             }
         } else {
             # Manual execution: Interactive by default for user experience  
