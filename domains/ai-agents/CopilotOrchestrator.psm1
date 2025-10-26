@@ -273,8 +273,15 @@ function Start-AutomatedCopilotWorkflow {
 
         # Handle timeout
         if ($stopwatch.Elapsed -ge $timeout -and $runningJobs.Count -gt 0) {
-            Write-CopilotLog "⏱️ Workflow execution timeout reached. Stopping remaining jobs." -Level Warning
-            $runningJobs | ForEach-Object { Stop-Job $_ -PassThru | Remove-Job }
+            Write-CopilotLog "⏱️ Workflow execution timeout reached. Collecting partial results and stopping remaining jobs." -Level Warning
+            foreach ($job in $runningJobs) {
+                try {
+                    $results += Get-WorkflowResult -Job $job
+                } catch {
+                    Write-CopilotLog "⚠️ Failed to collect partial result from job: $($_.Exception.Message)" -Level Warning
+                }
+                Stop-Job $job -PassThru | Remove-Job
+            }
         }
 
         # Process and report results
