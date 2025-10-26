@@ -210,12 +210,12 @@ jobs:
                 $content = Get-Content $testFile -Raw
                 
                 # Check if our previous fix is not applied
-                if ($content -match 'switch\]\$Verbose' -and $content -notmatch '\[CmdletBinding\(\)\]') {
+                if ($content -match 'switch.*Verbose' -and $content -notmatch 'CmdletBinding') {
                   Write-Host "🔧 Applying test parameter fix..." -ForegroundColor Green
                   
-                  # Apply the same fix we did manually
+                  # Apply the same fix we did manually  
                   $content = $content -replace 'param\(', '[CmdletBinding()]`nparam('
-                  $content = $content -replace '\s+\[switch\]\$Verbose,\s*', "`n"
+                  $content = $content -replace '\s+\[switch\].*Verbose.*,\s*', "`n"
                   
                   Set-Content $testFile -Value $content -Encoding UTF8
                   $fixSummary += "Fixed parameter conflicts in Start-AitherZero.Tests.ps1"

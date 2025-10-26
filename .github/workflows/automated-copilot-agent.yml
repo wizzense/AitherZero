@@ -126,9 +126,9 @@ jobs:
           Write-Host "🔒 Scanning for security issues..." -ForegroundColor Cyan
           try {
             $securityPatterns = @(
-              'password\s*=\s*["\']',
-              'secret\s*=\s*["\']',
-              'token\s*=\s*["\']',
+              'password\s*=\s*[\x22\x27]',
+              'secret\s*=\s*[\x22\x27]',
+              'token\s*=\s*[\x22\x27]',
               'ConvertTo-SecureString.*-AsPlainText',
               'Invoke-Expression'
             )
@@ -178,9 +178,13 @@ jobs:
           Write-Output "overall_health=$($analysisResults.Summary.OverallHealth)" >> $env:GITHUB_OUTPUT
           
           Write-Host "📊 Analysis complete:" -ForegroundColor Green
-          Write-Host "  Critical PSScriptAnalyzer Issues: $($analysisResults.PSScriptAnalyzerIssues.Critical)" -ForegroundColor $(if($analysisResults.PSScriptAnalyzerIssues.Critical -gt 0) {'Red'} else {'Green'})
-          Write-Host "  Test Failures: $($analysisResults.TestFailures.Failed)" -ForegroundColor $(if($analysisResults.TestFailures.Failed -gt 0) {'Red'} else {'Green'})  
-          Write-Host "  Security Issues: $($analysisResults.SecurityIssues.Count)" -ForegroundColor $(if($analysisResults.SecurityIssues.Count -gt 0) {'Red'} else {'Green'})
+          $criticalColor = if($analysisResults.PSScriptAnalyzerIssues.Critical -gt 0) { 'Red' } else { 'Green' }
+          $testColor = if($analysisResults.TestFailures.Failed -gt 0) { 'Red' } else { 'Green' }
+          $securityColor = if($analysisResults.SecurityIssues.Count -gt 0) { 'Red' } else { 'Green' }
+          
+          Write-Host "  Critical PSScriptAnalyzer Issues: $($analysisResults.PSScriptAnalyzerIssues.Critical)" -ForegroundColor $criticalColor
+          Write-Host "  Test Failures: $($analysisResults.TestFailures.Failed)" -ForegroundColor $testColor  
+          Write-Host "  Security Issues: $($analysisResults.SecurityIssues.Count)" -ForegroundColor $securityColor
 
       - name: 🎯 Create Targeted Issues for Copilot
         id: create_issues
