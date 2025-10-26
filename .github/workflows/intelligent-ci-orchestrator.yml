@@ -336,7 +336,7 @@ jobs:
     name: 🌍 Cross-Platform (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: [change-detection, core-validation]
-    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event.inputs.force_full_analysis == 'true') && needs.change-detection.outputs.needs-core-validation == 'true'
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/copilot/') || github.event.inputs.force_full_analysis == 'true') && needs.change-detection.outputs.needs-core-validation == 'true'
     
     strategy:
       fail-fast: false
