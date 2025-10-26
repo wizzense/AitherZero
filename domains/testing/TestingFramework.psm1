@@ -37,17 +37,32 @@ function Write-TestingLog {
         [hashtable]$Data = @{}
     )
 
+    # Respect quiet mode - only show warnings and errors
+    if ($env:AITHERZERO_QUIET_MODE -eq 'true' -and $Level -notin @('Warning', 'Error')) {
+        return
+    }
+    
+    # Respect log level override
+    $logLevels = @{ 'Debug' = 0; 'Information' = 1; 'Warning' = 2; 'Error' = 3 }
+    $minLevel = if ($env:AITHERZERO_LOG_LEVEL) { $env:AITHERZERO_LOG_LEVEL } else { 'Information' }
+    if ($logLevels[$Level] -lt $logLevels[$minLevel]) {
+        return
+    }
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $Level -Message $Message -Source "TestingFramework" -Data $Data
     } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = @{
-            'Error' = 'Red'
-            'Warning' = 'Yellow'
-            'Information' = 'White'
-            'Debug' = 'Gray'
-        }[$Level]
-        Write-Host "[$timestamp] [$Level] [TestingFramework] $Message" -ForegroundColor $color
+        # Only output to console if not in quiet mode
+        if ($env:AITHERZERO_QUIET_MODE -ne 'true') {
+            $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+            $color = @{
+                'Error' = 'Red'
+                'Warning' = 'Yellow'
+                'Information' = 'White'
+                'Debug' = 'Gray'
+            }[$Level]
+            Write-Host "[$timestamp] [$Level] [TestingFramework] $Message" -ForegroundColor $color
+        }
     }
 }
 

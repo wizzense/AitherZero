@@ -432,13 +432,26 @@ function Initialize-Logging {
 
     $configDetails = @{}
 
+    # Check for environment variable overrides first
+    if ($env:AITHERZERO_LOG_LEVEL) {
+        $script:LogLevel = $env:AITHERZERO_LOG_LEVEL
+        $configDetails['Level'] = $env:AITHERZERO_LOG_LEVEL + " (env override)"
+    }
+    
+    # Apply quiet mode for CI/testing environments
+    if ($env:AITHERZERO_QUIET_MODE -eq 'true') {
+        $script:LogLevel = 'Error'  # Only show errors in quiet mode
+        $script:LogTargets = @('File')  # Only log to file, not console
+        $configDetails['QuietMode'] = $true
+    }
+
     if ($Configuration.Logging) {
-        if ($Configuration.Logging.Level) {
+        if ($Configuration.Logging.Level -and -not $env:AITHERZERO_LOG_LEVEL) {
             $script:LogLevel = $Configuration.Logging.Level
             $configDetails['Level'] = $Configuration.Logging.Level
         }
 
-        if ($Configuration.Logging.Targets) {
+        if ($Configuration.Logging.Targets -and $env:AITHERZERO_QUIET_MODE -ne 'true') {
             $script:LogTargets = $Configuration.Logging.Targets
             $configDetails['Targets'] = $Configuration.Logging.Targets -join ', '
         }
@@ -456,8 +469,8 @@ function Initialize-Logging {
 
     $script:IsInitialized = $true
 
-    # Only log initialization once per PowerShell session (use global variable)
-    if (-not $global:AitherZeroLoggingInitialized) {
+    # Only log initialization once per PowerShell session and not in quiet mode
+    if (-not $global:AitherZeroLoggingInitialized -and $env:AITHERZERO_QUIET_MODE -ne 'true') {
         Write-CustomLog -Level 'Information' -Message "Logging system initialized with configuration" -Source "Logging" -Data $configDetails
         $global:AitherZeroLoggingInitialized = $true
     }
