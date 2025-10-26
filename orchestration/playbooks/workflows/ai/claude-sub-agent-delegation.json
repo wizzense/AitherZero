@@ -1,0 +1,294 @@
+{
+  "metadata": {
+    "name": "claude-sub-agent-delegation",
+    "description": "Advanced sub-agent delegation system with hierarchical task management",
+    "version": "2.0.0",
+    "category": "ai", 
+    "author": "AitherZero AI Team",
+    "tags": ["claude", "sub-agents", "delegation", "hierarchy", "task-management", "coordination"],
+    "estimatedDuration": "25-40 minutes",
+    "lastUpdated": "2025-10-26T23:06:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["AIWorkflowOrchestrator", "ClaudeIntegration", "TaskManager"],
+    "requiredTools": ["claude"],
+    "platforms": ["CrossPlatform"],
+    "permissions": ["ReadCode", "WriteCode", "ExecuteAI", "ManageAgents", "CoordinateTasks"],
+    "apiKeys": ["ANTHROPIC_API_KEY"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "MasterAgent": "coordinator",
+      "SubAgentCount": 4,
+      "TaskComplexity": "complex",
+      "DelegationStrategy": "capability-based",
+      "OutputPath": "./ai-delegation",
+      "EnableHierarchy": true,
+      "TaskPriority": "balanced",
+      "MaxDepth": 3
+    },
+    "profiles": {
+      "development-pipeline": {
+        "description": "Sub-agent delegation for complex development projects",
+        "variables": {
+          "MasterAgent": "senior-architect",
+          "SubAgentCount": 5,
+          "AgentRoles": ["requirements-analyst", "backend-developer", "frontend-developer", "tester", "devops"],
+          "DelegationStrategy": "expertise-based",
+          "TaskTypes": ["analysis", "development", "testing", "deployment"],
+          "EnableCrossValidation": true
+        }
+      },
+      "research-project": {
+        "description": "Sub-agent delegation for comprehensive research tasks",
+        "variables": {
+          "MasterAgent": "research-lead",
+          "SubAgentCount": 4,
+          "AgentRoles": ["data-collector", "analyst", "technical-writer", "reviewer"],
+          "DelegationStrategy": "phase-based",
+          "TaskTypes": ["research", "analysis", "documentation", "validation"],
+          "EnableIterativeRefinement": true
+        }
+      },
+      "security-audit": {
+        "description": "Sub-agent delegation for security assessment and remediation",
+        "variables": {
+          "MasterAgent": "security-lead",
+          "SubAgentCount": 4,
+          "AgentRoles": ["vulnerability-scanner", "threat-analyst", "compliance-checker", "remediation-planner"],
+          "DelegationStrategy": "risk-based",
+          "TaskTypes": ["scanning", "analysis", "compliance", "remediation"],
+          "EnableSecurityValidation": true
+        }
+      },
+      "problem-solving": {
+        "description": "Sub-agent delegation for complex problem solving",
+        "variables": {
+          "MasterAgent": "problem-solver",
+          "SubAgentCount": 6,
+          "AgentRoles": ["problem-analyzer", "solution-architect", "feasibility-assessor", "risk-analyst", "implementer", "validator"],
+          "DelegationStrategy": "systematic",
+          "TaskTypes": ["analysis", "design", "assessment", "implementation"],
+          "EnableConsensusBuilding": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Master Agent Initialization",
+        "description": "Initialize master coordinator agent with delegation capabilities",
+        "sequences": ["0217", "0730"],
+        "variables": {
+          "Provider": "Claude",
+          "AgentRole": "{{MasterAgent}}",
+          "EnableDelegation": true,
+          "HierarchicalMode": true
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Sub-Agent Ecosystem Setup",
+        "description": "Create and configure specialized sub-agents for delegation",
+        "sequences": ["0730", "0738"],
+        "variables": {
+          "SubAgentCount": "{{SubAgentCount}}",
+          "AgentRoles": "{{AgentRoles:=@('analyst', 'executor', 'validator', 'reporter')}}",
+          "SpecializationLevel": "high",
+          "EnableCommunication": true
+        },
+        "continueOnError": false,
+        "timeout": 900
+      },
+      {
+        "name": "Task Hierarchy Design",
+        "description": "Design hierarchical task structure and delegation patterns",
+        "sequences": ["0736"],
+        "variables": {
+          "Requirements": "Hierarchical task delegation for {{TaskComplexity}} {{TaskTypes:=@('general')}} tasks",
+          "WorkflowType": "Custom",
+          "EnableHierarchy": "{{EnableHierarchy}}",
+          "MaxDepth": "{{MaxDepth}}",
+          "DelegationStrategy": "{{DelegationStrategy}}"
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Delegation Protocol Configuration",
+        "description": "Configure communication and coordination protocols between agents",
+        "sequences": ["0740"],
+        "variables": {
+          "EnableInterAgentComm": true,
+          "DelegationProtocol": "structured",
+          "TaskPriority": "{{TaskPriority}}",
+          "ConflictResolution": "escalation",
+          "ResultAggregation": "hierarchical"
+        },
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Sub-Agent Task Distribution",
+        "description": "Distribute tasks to specialized sub-agents based on capabilities",
+        "sequences": ["0731", "0736"],
+        "variables": {
+          "TaskDistribution": "automatic",
+          "CapabilityMatching": true,
+          "LoadBalancing": true,
+          "TaskTracking": true,
+          "EnableFeedback": true
+        },
+        "parallel": false,
+        "continueOnError": true,
+        "timeout": 1200
+      },
+      {
+        "name": "Parallel Sub-Agent Execution",
+        "description": "Execute delegated tasks in parallel with coordination",
+        "sequences": ["0731", "0732", "0733"],
+        "variables": {
+          "ParallelExecution": true,
+          "SubAgentMode": true,
+          "CoordinationEnabled": true,
+          "ProgressTracking": true,
+          "IntermediateReporting": true
+        },
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 1800
+      },
+      {
+        "name": "Sub-Agent Coordination",
+        "description": "Coordinate sub-agent activities and resolve dependencies",
+        "sequences": ["0737", "0740"],
+        "variables": {
+          "CoordinationMode": "active",
+          "DependencyResolution": true,
+          "ConflictManagement": true,
+          "ProgressSynchronization": true
+        },
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "Result Aggregation",
+        "description": "Aggregate and validate results from all sub-agents",
+        "sequences": ["0739"],
+        "variables": {
+          "Path": "{{OutputPath}}/results",
+          "ValidationType": "Hierarchical",
+          "CrossValidation": "{{EnableCrossValidation:=true}}",
+          "QualityAssurance": true,
+          "ResultIntegration": true
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Performance Analytics",
+        "description": "Analyze delegation performance and sub-agent effectiveness",
+        "sequences": ["0737", "0734"],
+        "variables": {
+          "AnalyzeDelegation": true,
+          "SubAgentMetrics": true,
+          "EfficiencyAnalysis": true,
+          "ImprovementSuggestions": true
+        },
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Delegation Report Generation",
+        "description": "Generate comprehensive delegation and coordination report",
+        "sequences": ["0733"],
+        "variables": {
+          "DocType": "Delegation-Report",
+          "OutputPath": "{{OutputPath}}/reports",
+          "IncludeHierarchy": true,
+          "IncludeMetrics": true,
+          "IncludeSubAgentInsights": true,
+          "GenerateVisualization": true
+        },
+        "continueOnError": true,
+        "timeout": 300
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "Claude API Access",
+        "condition": "$env:ANTHROPIC_API_KEY -and $env:ANTHROPIC_API_KEY.Length -gt 0",
+        "message": "ANTHROPIC_API_KEY is required for sub-agent delegation"
+      },
+      {
+        "name": "Valid Sub-Agent Count",
+        "condition": "$SubAgentCount -ge 2 -and $SubAgentCount -le 10",
+        "message": "Sub-agent count must be between 2 and 10 for effective delegation"
+      },
+      {
+        "name": "Valid Hierarchy Depth",
+        "condition": "$MaxDepth -ge 1 -and $MaxDepth -le 5",
+        "message": "Maximum hierarchy depth must be between 1 and 5"
+      }
+    ],
+    "postConditions": [
+      {
+        "name": "Delegation Structure Created",
+        "condition": "Test-Path '{{OutputPath}}/hierarchy' -and (Get-ChildItem '{{OutputPath}}/hierarchy').Count -gt 0",
+        "message": "Delegation hierarchy structure should be created"
+      },
+      {
+        "name": "Sub-Agent Results Available",
+        "condition": "Test-Path '{{OutputPath}}/results' -and (Get-ChildItem '{{OutputPath}}/results').Count -ge $SubAgentCount",
+        "message": "Results from all sub-agents should be available"
+      }
+    ],
+    "thresholds": {
+      "DelegationEfficiency": {
+        "maxCount": 75,
+        "action": "continue"
+      },
+      "SubAgentFailures": {
+        "maxCount": 2,
+        "action": "warn"
+      },
+      "CoordinationScore": {
+        "maxCount": 80,
+        "action": "continue"
+      }
+    }
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🎯 Starting sub-agent delegation with {{SubAgentCount}} specialized agents under {{MasterAgent}} coordination...",
+      "level": "Information",
+      "channels": ["console", "log"]
+    },
+    "onSuccess": {
+      "message": "✅ Sub-agent delegation completed successfully! {{SubAgentCount}} agents coordinated effectively.",
+      "level": "Success",
+      "channels": ["console", "log"]
+    },
+    "onFailure": {
+      "message": "❌ Sub-agent delegation failed. Check agent coordination and task complexity.",
+      "level": "Error",
+      "channels": ["console", "log"]
+    },
+    "onWarning": {
+      "message": "⚠️ Some sub-agents had coordination issues. Review delegation strategy and agent capabilities.",
+      "level": "Warning",
+      "channels": ["console", "log"]
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "Markdown"],
+    "outputPath": "./reports/delegation",
+    "includeMetrics": true,
+    "includeLogs": true
+  }
+}

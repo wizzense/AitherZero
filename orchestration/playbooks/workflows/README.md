@@ -12,7 +12,8 @@ workflows/
 ├── deployment/     # CI/CD pipelines and deployment automation
 ├── maintenance/    # System maintenance and cleanup operations
 ├── security/       # Security scanning and compliance workflows
-└── analysis/       # Code analysis and reporting workflows
+├── analysis/       # Code analysis and reporting workflows
+└── ai/             # Claude Code CLI and AI-powered workflows
 ```
 
 ## Playbook Categories
@@ -40,6 +41,13 @@ workflows/
 ### Maintenance Workflows
 - **system-cleanup**: System optimization and maintenance operations
 - Environment reset and performance tuning
+
+### AI Workflows
+- **claude-multi-agent-orchestration**: Advanced multi-agent collaboration with specialized personas
+- **claude-custom-agent-personas**: Create and deploy custom Claude agent personas
+- **claude-sub-agent-delegation**: Hierarchical task delegation with sub-agent coordination
+- **claude-custom-commands**: Create and deploy custom Claude CLI commands
+- **claude-intelligent-automation**: End-to-end intelligent workflow automation
 
 ## Usage Examples
 
