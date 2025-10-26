@@ -271,7 +271,7 @@ jobs:
           echo "" >> coordination-report.md
           echo "- **Max Concurrent Agents:** ${{ steps.set-priority.outputs.max-agents }}" >> coordination-report.md
           echo "- **Timeout:** ${{ steps.set-priority.outputs.timeout }} seconds" >> coordination-report.md
-          echo "- **Target Branch:** ${{ inputs.target_branch || github.ref_name }}" >> coordination-report.md
+          echo "- **Target Branch:** ${{ inputs.target_branch || 'main' }}" >> coordination-report.md
           echo "" >> coordination-report.md
           echo "## Agent Requirements Analysis" >> coordination-report.md
           echo "" >> coordination-report.md
@@ -352,7 +352,7 @@ jobs:
           echo "🔍 Monitoring AI Agent Coordination..."
           echo "Status: ${{ needs.coordinate-agents.outputs.coordination-status }}"
           echo "Priority: ${{ needs.coordinate-agents.outputs.priority-level }}"
-          echo "Active Agents: ${{ needs.coordinate-agents.outputs.active-agents || '0' }}"
+          echo "Active Agents: ${{ needs.coordinate-agents.outputs.active-agents || 0 }}"
           
           # In a real implementation, this would check the status of activated agents
           echo "✅ All coordinated agents are operating within normal parameters"
