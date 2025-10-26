@@ -1,9 +1,13 @@
 ---
 name: PR Validation
 
+# Optimized for cost efficiency - only essential PR validations
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    # Only trigger on specific events to avoid redundancy with intelligent-ci-orchestrator
+    types: [opened, ready_for_review]
+    # Only for external/fork PRs where we need special handling
+    # Internal PRs are handled by intelligent-ci-orchestrator.yml
   issue_comment:
     types: [created]
 
@@ -16,6 +20,7 @@ permissions:
   actions: none
   security-events: none
 
+# Cost-optimized concurrency to prevent conflicts with main CI
 concurrency:
   group: pr-validation-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true

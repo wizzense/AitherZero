@@ -1,21 +1,17 @@
 ---
 name: CI Pipeline
 
+# DEPRECATED: This workflow is being replaced by intelligent-ci-orchestrator.yml
+# Kept for backward compatibility - will be removed in future version
 on:
+  # Only run on main/develop for now to avoid conflicts with new intelligent orchestrator
   push:
-    branches: [main, develop, 'feature/**', 'copilot/**']
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
+    branches: [main, develop]
+    paths:
+      - 'legacy-to-migrate/**'  # Only for legacy code that new orchestrator doesn't handle
+  # Disable PR triggers to avoid conflicts
+  # pull_request:
+  #   types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       test_scope:
