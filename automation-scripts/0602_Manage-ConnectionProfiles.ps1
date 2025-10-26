@@ -54,9 +54,12 @@ param(
 )
 
 # Import required functions
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Write-CustomLog {
-        param([string]$Level = 'Information', [string]$Message, [string]$Source = 'Script', [hashtable]$Data = @{})
+function Write-ScriptLog {
+    param([string]$Level = 'Information', [string]$Message, [string]$Source = 'Script', [hashtable]$Data = @{})
+    
+    if (Get-Command Write-ScriptLog -ErrorAction SilentlyContinue) {
+        Write-ScriptLog -Level $Level -Message $Message -Source $Source -Data $Data
+    } else {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Host "[$timestamp] [$Level] [$Source] $Message"
     }
@@ -66,14 +69,14 @@ if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
 $config = if ($Configuration.Count -gt 0) { $Configuration } else { @{} }
 
 try {
-    Write-CustomLog -Message "Starting connection profile management" -Data @{
+    Write-ScriptLog -Message "Starting connection profile management" -Data @{
         Action = $Action
         ProfileName = $ProfileName
     }
     
     # Check if Security module is available
     if (-not (Get-Command New-ConnectionProfile -ErrorAction SilentlyContinue)) {
-        Write-CustomLog -Level Warning -Message "Security module not loaded, attempting to import"
+        Write-ScriptLog -Level Warning -Message "Security module not loaded, attempting to import"
         
         $securityModulePath = Join-Path $PSScriptRoot "../domains/security/Security.psm1"
         if (Test-Path $securityModulePath) {
@@ -89,7 +92,7 @@ try {
                 throw "ProfileName and Hostname are required for creating profiles"
             }
             
-            Write-CustomLog -Message "Creating connection profile" -Data @{
+            Write-ScriptLog -Message "Creating connection profile" -Data @{
                 ProfileName = $ProfileName
                 Hostname = $Hostname
                 Username = $Username
@@ -130,7 +133,7 @@ try {
         }
         
         'list' {
-            Write-CustomLog -Message "Listing connection profiles"
+            Write-ScriptLog -Message "Listing connection profiles"
             
             $profiles = Get-ConnectionProfile -ListAll
             
@@ -180,7 +183,7 @@ try {
                 throw "ProfileName is required for removing profiles"
             }
             
-            Write-CustomLog -Message "Removing connection profile" -Data @{ ProfileName = $ProfileName }
+            Write-ScriptLog -Message "Removing connection profile" -Data @{ ProfileName = $ProfileName }
             
             $result = Remove-ConnectionProfile -ProfileName $ProfileName -Confirm:$false
             
@@ -213,7 +216,7 @@ try {
                 throw "ProfileName is required for testing connections"
             }
             
-            Write-CustomLog -Message "Testing connection profile" -Data @{ ProfileName = $ProfileName }
+            Write-ScriptLog -Message "Testing connection profile" -Data @{ ProfileName = $ProfileName }
             
             # Get profile details first
             $profile = Get-ConnectionProfile -ProfileName $ProfileName
@@ -256,7 +259,7 @@ try {
     }
 }
 catch {
-    Write-CustomLog -Level Error -Message "Connection profile management failed: $_"
+    Write-ScriptLog -Level Error -Message "Connection profile management failed: $_"
     
     Write-Host ""
     Write-Host "Connection Profile Management Failed!" -ForegroundColor Red

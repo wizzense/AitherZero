@@ -34,9 +34,12 @@ param(
 )
 
 # Import required functions
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Write-CustomLog {
-        param([string]$Level = 'Information', [string]$Message, [string]$Source = 'Script', [hashtable]$Data = @{})
+function Write-ScriptLog {
+    param([string]$Level = 'Information', [string]$Message, [string]$Source = 'Script', [hashtable]$Data = @{})
+    
+    if (Get-Command Write-ScriptLog -ErrorAction SilentlyContinue) {
+        Write-ScriptLog -Level $Level -Message $Message -Source $Source -Data $Data
+    } else {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Host "[$timestamp] [$Level] [$Source] $Message"
     }
@@ -51,7 +54,7 @@ $defaultKeyType = if ($sshConfig.DefaultKeyType) { $sshConfig.DefaultKeyType } e
 $keyComment = "$env:USERNAME@$(hostname) - AitherZero $(Get-Date -Format 'yyyy-MM-dd')"
 
 try {
-    Write-CustomLog -Message "Starting SSH key setup" -Data @{
+    Write-ScriptLog -Message "Starting SSH key setup" -Data @{
         KeyName = $KeyName
         KeyType = $defaultKeyType
         Force = $Force.IsPresent
@@ -59,7 +62,7 @@ try {
     
     # Check if Security module is available
     if (-not (Get-Command New-SSHKeyPair -ErrorAction SilentlyContinue)) {
-        Write-CustomLog -Level Warning -Message "Security module not loaded, attempting to import"
+        Write-ScriptLog -Level Warning -Message "Security module not loaded, attempting to import"
         
         $securityModulePath = Join-Path $PSScriptRoot "../domains/security/Security.psm1"
         if (Test-Path $securityModulePath) {
@@ -77,7 +80,7 @@ try {
     # Check if key already exists
     $existingKey = Get-SSHKey -KeyName $KeyName
     if ($existingKey -and -not $Force) {
-        Write-CustomLog -Level Warning -Message "SSH key '$KeyName' already exists. Use -Force to overwrite or choose a different name."
+        Write-ScriptLog -Level Warning -Message "SSH key '$KeyName' already exists. Use -Force to overwrite or choose a different name."
         
         Write-Host ""
         Write-Host "Existing key details:" -ForegroundColor Cyan
@@ -95,7 +98,7 @@ try {
     }
     
     # Generate new SSH key pair
-    Write-CustomLog -Message "Generating SSH key pair" -Data @{
+    Write-ScriptLog -Message "Generating SSH key pair" -Data @{
         KeyName = $KeyName
         KeyType = $defaultKeyType
         Comment = $keyComment
@@ -104,7 +107,7 @@ try {
     $keyResult = New-SSHKeyPair -KeyName $KeyName -KeyType $defaultKeyType -Comment $keyComment -Force:$Force
     
     if ($keyResult) {
-        Write-CustomLog -Message "SSH key pair generated successfully" -Data @{
+        Write-ScriptLog -Message "SSH key pair generated successfully" -Data @{
             KeyName = $keyResult.KeyName
             KeyType = $keyResult.KeyType
             PrivateKeyPath = $keyResult.PrivateKeyPath
@@ -144,7 +147,7 @@ try {
     }
 }
 catch {
-    Write-CustomLog -Level Error -Message "SSH key setup failed: $_"
+    Write-ScriptLog -Level Error -Message "SSH key setup failed: $_"
     
     Write-Host ""
     Write-Host "SSH Key Setup Failed!" -ForegroundColor Red

@@ -49,8 +49,8 @@ param(
 )
 
 # Import required functions
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Write-CustomLog {
+if (-not (Get-Command Write-ScriptLog -ErrorAction SilentlyContinue)) {
+    function Write-ScriptLog {
         param([string]$Level = 'Information', [string]$Message, [string]$Source = 'Script', [hashtable]$Data = @{})
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Host "[$timestamp] [$Level] [$Source] $Message"
@@ -67,7 +67,7 @@ if ($deploymentConfig.ScriptDeployment -and $deploymentConfig.ScriptDeployment.R
 }
 
 try {
-    Write-CustomLog -Message "Starting remote script deployment" -Data @{
+    Write-ScriptLog -Message "Starting remote script deployment" -Data @{
         ProfileName = $ProfileName
         ScriptPath = $ScriptPath
         Arguments = $Arguments -join " "
@@ -81,7 +81,7 @@ try {
     
     # Check if Security module is available
     if (-not (Get-Command Invoke-RemoteScript -ErrorAction SilentlyContinue)) {
-        Write-CustomLog -Level Warning -Message "Security module not loaded, attempting to import"
+        Write-ScriptLog -Level Warning -Message "Security module not loaded, attempting to import"
         
         $securityModulePath = Join-Path $PSScriptRoot "../domains/security/Security.psm1"
         if (Test-Path $securityModulePath) {
@@ -123,7 +123,7 @@ try {
     $prepareDirResult = Invoke-SSHCommand -ProfileName $ProfileName -Command $prepareDirCommand
     
     if (-not $prepareDirResult.Success) {
-        Write-CustomLog -Level Warning -Message "Failed to prepare remote directory, continuing anyway"
+        Write-ScriptLog -Level Warning -Message "Failed to prepare remote directory, continuing anyway"
     }
     
     # Deploy and execute script
@@ -160,7 +160,7 @@ try {
             Write-Host ""
         }
         
-        Write-CustomLog -Message "Remote script execution completed successfully" -Data @{
+        Write-ScriptLog -Message "Remote script execution completed successfully" -Data @{
             ProfileName = $ProfileName
             ScriptPath = $ScriptPath
             ExitCode = $result.ExitCode
@@ -186,7 +186,7 @@ try {
             Write-Host ""
         }
         
-        Write-CustomLog -Level Error -Message "Remote script execution failed" -Data @{
+        Write-ScriptLog -Level Error -Message "Remote script execution failed" -Data @{
             ProfileName = $ProfileName
             ScriptPath = $ScriptPath
             ExitCode = $result.ExitCode
@@ -202,7 +202,7 @@ try {
     }
 }
 catch {
-    Write-CustomLog -Level Error -Message "Remote script deployment failed: $_"
+    Write-ScriptLog -Level Error -Message "Remote script deployment failed: $_"
     
     Write-Host ""
     Write-Host "Remote Script Deployment Failed!" -ForegroundColor Red
