@@ -372,7 +372,7 @@ function Install-Dependencies {
         # Preserve only valid bound parameters and add IsRelaunch flag
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             # Skip parameters that are not valid for the main script (like internal function parameters)
-            if ($validParameters -notcontains $param.Key) {
+            if ($param.Key -notin $validParameters) {
                 Write-BootstrapLog "Skipping invalid parameter for re-launch: $($param.Key)" -Level Info
                 continue
             }
