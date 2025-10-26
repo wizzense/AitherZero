@@ -95,7 +95,12 @@ function Show-BetterMenu {
             $index = [int]$selection - 1
             if ($index -ge 0 -and $index -lt $Items.Count) {
                 return $Items[$index]
+            } else {
+                Write-Host "Invalid selection. Please choose a number between 1 and $($Items.Count)." -ForegroundColor Red
+                return $null
             }
+        } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
+            Write-Host "Invalid input '$selection'. Please enter a number." -ForegroundColor Red
         }
 
         return $null

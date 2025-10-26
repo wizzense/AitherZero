@@ -564,7 +564,9 @@ function Invoke-PlaybookMenu {
             Show-UINotification -Message "Failed to execute playbook '$playbookName': $($_.Exception.Message)" -Type 'Error'
             Write-Host "ERROR: $($_.Exception)" -ForegroundColor Red
         }
-}
+    } else {
+        Show-UINotification -Message "No playbook selected" -Type 'Info'
+    }
 
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
