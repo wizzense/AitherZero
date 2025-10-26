@@ -273,7 +273,6 @@ jobs:
           
           # Always exit 0 for CI (never fail builds)
           exit 0
-          }
 
       - name: 🔬 Code Analysis
         if: matrix.scope == 'full'
