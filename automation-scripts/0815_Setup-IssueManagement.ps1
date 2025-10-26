@@ -130,7 +130,7 @@ function Get-CodeQualityFindings {
         # Run analyzer directly with Invoke-ScriptAnalyzer
         Write-Status "Running PSScriptAnalyzer to get current results..."
         $rootPath = Split-Path $PSScriptRoot -Parent
-        $results = Invoke-ScriptAnalyzer -Path $rootPath -Recurse -ExcludeRule 'PSUseSingularNouns' -ErrorAction SilentlyContinue
+        $results = Invoke-ScriptAnalyzer -Path $rootPath -Recurse -ExcludeRule @('PSUseSingularNouns') -ErrorAction SilentlyContinue
         
         if ($results) {
                 $errorCount = ($results | Where-Object { $_.Severity -eq 'Error' }).Count
