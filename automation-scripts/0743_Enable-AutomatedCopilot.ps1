@@ -228,7 +228,11 @@ exit 0
         
         # Make executable on Unix systems
         if (-not $IsWindows) {
-            chmod +x $preCommitHook 2>$null
+            if (Get-Command chmod -ErrorAction SilentlyContinue) {
+                Start-Process -FilePath 'chmod' -ArgumentList '+x', $preCommitHook -NoNewWindow -Wait
+            } else {
+                Write-CopilotSetupLog "⚠️ 'chmod' command not found. Unable to make pre-commit hook executable." -Level Warning
+            }
         }
         
         Write-CopilotSetupLog "✅ Pre-commit hook created" -Level Success
