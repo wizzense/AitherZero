@@ -79,10 +79,7 @@ if (-not $PSBoundParameters.ContainsKey('NoCoverage')) {
         $runCoverage = Get-ConfiguredValue -Name 'RunCoverage' -Section 'Testing' -Default $true
         $NoCoverage = -not $runCoverage
     }
-    # In CI, maintain code coverage for quality assurance
-    if ($CI -and -not $PSBoundParameters.ContainsKey('NoCoverage')) {
-        Write-ScriptLog -Message "CI mode: Code coverage maintained for quality assurance"
-    }
+    # In CI, maintain code coverage for quality assurance (note logged after module loading)
 }
 
 if (Test-Path $testingModule) {
@@ -126,6 +123,11 @@ function Write-ScriptLog {
 
 try {
     Write-ScriptLog -Message "Starting unit test execution"
+    
+    # Log CI mode coverage message now that Write-ScriptLog is available
+    if ($CI -and -not $PSBoundParameters.ContainsKey('NoCoverage')) {
+        Write-ScriptLog -Message "CI mode: Code coverage maintained for quality assurance"
+    }
 
     # Check cache if enabled and not forced
     if ($UseCache -and -not $ForceRun -and $script:CacheAvailable) {
