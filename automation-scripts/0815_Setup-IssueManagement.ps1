@@ -1,743 +1,510 @@
 #Requires -Version 7.0
-
 <#
 .SYNOPSIS
-    Setup comprehensive issue management and change control
+    Sets up automated issue management based on analysis findings
 .DESCRIPTION
-    Configures automated issue creation from test failures, change impact analysis,
-    automated PR descriptions, and release note generation for comprehensive
-    change management and auditing.
-
-    Exit Codes:
-    0   - Issue management configured successfully
-    1   - Configuration failed
-    2   - Setup error
-
-.NOTES
-    Stage: Issue Management
-    Order: 0815
-    Dependencies: 0800, 0700
-    Tags: issues, change-management, automation, github
+    Bridges the gap between analysis results and GitHub issue creation
+    Processes security findings, test failures, and code quality issues
+.PARAMETER AnalysisPath
+    Path to analysis results directory
+.PARAMETER CreateIssues
+    Actually create GitHub issues (requires gh CLI and authentication)
+.PARAMETER DryRun
+    Show what issues would be created without actually creating them
 #>
-
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [switch]$EnableAutoIssues,
-    [switch]$EnableChangeTracking,
-    [switch]$EnableReleaseNotes,
-    [switch]$TestMode,
-    [string]$ConfigPath
-)
+    [Parameter(Mandatory = $false)]
+    [string]$AnalysisPath = "./reports",
 
-$ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
+    [switch]$CreateIssues,
 
-# Script metadata
-$scriptMetadata = @{
-    Stage = 'Issue Management'
-    Order = 0815
-    Dependencies = @('0800', '0700')
-    Tags = @('issues', 'change-management', 'automation')
-    RequiresAdmin = $false
-    SupportsWhatIf = $true
-}
-
-# Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
-$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
-
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force
-}
-
-if (Test-Path $configModule) {
-    Import-Module $configModule -Force
-}
-
-function Write-ScriptLog {
-    param(
-        [string]$Level = 'Information',
-        [string]$Message,
-        [hashtable]$Data = @{}
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0815_Setup-IssueManagement" -Data $Data
-    } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        Write-Host "[$timestamp] [$Level] $Message"
-    }
-}
-
-function New-IssueTemplate {
-    param(
-        [string]$Type,
-        [string]$OutputPath
-    )
-
-    $templates = @{
-        'bug' = @"
----
-name: Bug Report
-about: Create a report to help us improve
-title: '[BUG] '
-labels: 'bug'
-assignees: ''
----
-
-## Bug Description
-A clear and concise description of what the bug is.
-
-## To Reproduce
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-## Expected Behavior
-A clear and concise description of what you expected to happen.
-
-## Screenshots
-If applicable, add screenshots to help explain your problem.
-
-## Environment Information
-- OS: [e.g. Windows 10, Ubuntu 20.04]
-- PowerShell Version: [e.g. 7.3.0]
-- AitherZero Version: [e.g. 1.0.0]
-
-## Additional Context
-Add any other context about the problem here.
-
-## Automated Information
-<!-- This section is filled by automation -->
-- Test Suite: {{ TEST_SUITE }}
-- Test File: {{ TEST_FILE }}
-- Error Message: {{ ERROR_MESSAGE }}
-- Stack Trace: {{ STACK_TRACE }}
-- CI Run: {{ CI_RUN_URL }}
-"@
-
-        'feature' = @"
----
-name: Feature Request
-about: Suggest an idea for this project
-title: '[FEATURE] '
-labels: 'enhancement'
-assignees: ''
----
-
-## Is your feature request related to a problem?
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
-
-## Describe the solution you'd like
-A clear and concise description of what you want to happen.
-
-## Describe alternatives you've considered
-A clear and concise description of any alternative solutions or features you've considered.
-
-## Additional context
-Add any other context or screenshots about the feature request here.
-
-## Implementation Notes
-- [ ] Requires new automation scripts
-- [ ] Requires configuration changes
-- [ ] Requires documentation updates
-- [ ] Requires tests
-"@
-
-        'task' = @"
----
-name: Task
-about: Track work items and improvements
-title: '[TASK] '
-labels: 'task'
-assignees: ''
----
-
-## Task Description
-Clear description of what needs to be done.
-
-## Acceptance Criteria
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
-
-## Technical Requirements
-- [ ] Code changes required
-- [ ] Tests need to be added/updated
-- [ ] Documentation needs update
-- [ ] Configuration changes needed
-
-## Priority
-- [ ] High
-- [ ] Medium
-- [ ] Low
-
-## Estimated Effort
-- [ ] Small (< 2 hours)
-- [ ] Medium (2-8 hours)
-- [ ] Large (> 8 hours)
-"@
-    }
-
-    $template = $templates[$Type]
-    if ($template) {
-        $templatePath = Join-Path $OutputPath "$Type.md"
-        if ($PSCmdlet.ShouldProcess($templatePath, "Create issue template")) {
-            $template | Set-Content -Path $templatePath
-            Write-ScriptLog -Message "Created issue template: $templatePath"
-        }
-    }
-}
-
-function New-AutoIssueScript {
-    Write-ScriptLog -Message "Creating automated issue creation script"
-
-    $autoIssueScript = @'
-#!/usr/bin/env pwsh
-# Automated issue creation from test failures
-
-param(
-    [string]$TestResultsPath,
-    [string]$Repository,
     [switch]$DryRun
 )
 
-function New-IssueFromTestFailure {
-    param(
-        [string]$TestName,
-        [string]$ErrorMessage,
-        [string]$TestFile,
-        [string]$StackTrace = "",
-        [string]$CIRunUrl = ""
-    )
+# Script metadata
+$scriptInfo = @{
+    Stage = 'Analysis'
+    Number = '0815'
+    Name = 'Setup-IssueManagement'
+    Description = 'Creates GitHub issues from analysis findings'
+    Dependencies = @('gh', 'git')
+    Tags = @('analysis', 'github', 'automation', 'issues')
+    RequiresAdmin = $false
+}
 
-    $issueTitle = "[AUTO] Test Failure: $TestName"
-    $issueBody = @"
-## Automated Issue from Test Failure
+# Import required modules
+$modulePath = Join-Path $PSScriptRoot ".." "Initialize-AitherModules.ps1"
+if (Test-Path $modulePath) {
+    . $modulePath
+}
 
-**Test Name:** $TestName
-**Test File:** $TestFile
-**Status:** Failed
-**Created:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+function Write-Status {
+    param([string]$Message, [string]$Level = "Info")
+    $color = switch ($Level) {
+        "Error" { "Red" }
+        "Warning" { "Yellow" }
+        "Success" { "Green" }
+        default { "Cyan" }
+    }
+    Write-Host "🤖 $Message" -ForegroundColor $color
+}
 
-### Error Message
-```
-$ErrorMessage
-```
+function Get-SecurityFindings {
+    param([string]$Path)
+    
+    $securityFile = Join-Path $Path "tech-debt/analysis/SecurityIssues-latest.json"
+    if (-not (Test-Path $securityFile)) {
+        Write-Status "No security analysis found at: $securityFile" "Warning"
+        return @()
+    }
 
-### Stack Trace
-```
-$StackTrace
-```
+    try {
+        $analysis = Get-Content $securityFile | ConvertFrom-Json
+        $findings = @()
 
-### CI Information
-- **Run URL:** $CIRunUrl
-- **Repository:** $Repository
-- **Branch:** $env:GITHUB_REF_NAME
-- **Commit:** $env:GITHUB_SHA
-
-### Next Steps
-- [ ] Investigate root cause
-- [ ] Fix the failing test
-- [ ] Verify fix with test run
-- [ ] Close this issue
-
-**Note:** This issue was created automatically from CI/CD pipeline.
-"@
-
-    if ($DryRun) {
-        Write-Host "Would create issue:"
-        Write-Host "Title: $issueTitle"
-        Write-Host "Body: $issueBody"
-    } else {
-        # Create issue using GitHub CLI
-        if (Get-Command gh -ErrorAction SilentlyContinue) {
-            $tempFile = New-TemporaryFile
-            $issueBody | Set-Content $tempFile.FullName
-
-            gh issue create --title $issueTitle --body-file $tempFile.FullName --label "bug,automated,test-failure"
-
-            Remove-Item $tempFile.FullName -Force
-            Write-Host "Created issue: $issueTitle"
-        } else {
-            Write-Warning "GitHub CLI not available - cannot create issue"
+        # Critical security issues
+        if ($analysis.Results.UnsafeCommands.Count -gt 0) {
+            $criticalCount = ($analysis.Results.UnsafeCommands | Where-Object { $_.Severity -eq 'Critical' }).Count
+            $highCount = ($analysis.Results.UnsafeCommands | Where-Object { $_.Severity -eq 'High' }).Count
+            
+            if ($criticalCount -gt 0) {
+                $findings += @{
+                    Title = "🚨 [SECURITY] Critical Security Vulnerabilities Detected ($criticalCount issues)"
+                    Priority = "P0-Critical"
+                    Type = "security"
+                    Count = $criticalCount
+                    Details = $analysis.Results.UnsafeCommands | Where-Object { $_.Severity -eq 'Critical' } | Select-Object -First 5
+                }
+            }
+            
+            if ($highCount -gt 0) {
+                $findings += @{
+                    Title = "⚠️ [SECURITY] High-Severity Security Issues ($highCount issues)"
+                    Priority = "P1-High"
+                    Type = "security"
+                    Count = $highCount
+                    Details = $analysis.Results.UnsafeCommands | Where-Object { $_.Severity -eq 'High' } | Select-Object -First 5
+                }
+            }
         }
+
+        # Credential issues
+        if ($analysis.Results.PlainTextCredentials.Count -gt 0) {
+            $findings += @{
+                Title = "🔐 [SECURITY] Exposed Credentials Detected ($($analysis.Results.PlainTextCredentials.Count) instances)"
+                Priority = "P0-Critical"
+                Type = "credentials"
+                Count = $analysis.Results.PlainTextCredentials.Count
+                Details = $analysis.Results.PlainTextCredentials | Select-Object -First 5
+            }
+        }
+
+        # Insecure protocols
+        if ($analysis.Results.InsecureProtocols.Count -gt 0) {
+            $findings += @{
+                Title = "🌐 [SECURITY] Insecure Protocol Usage ($($analysis.Results.InsecureProtocols.Count) instances)"
+                Priority = "P1-High"
+                Type = "protocols"
+                Count = $analysis.Results.InsecureProtocols.Count
+                Details = $analysis.Results.InsecureProtocols | Select-Object -First 5
+            }
+        }
+
+        return $findings
+    }
+    catch {
+        Write-Status "Error parsing security analysis: $_" "Error"
+        return @()
     }
 }
 
-# Parse test results and create issues
-if (Test-Path $TestResultsPath) {
-    Write-Host "Processing test results from: $TestResultsPath"
+function Get-CodeQualityFindings {
+    param([string]$Path)
+    
+    # Look for PSScriptAnalyzer results
+    $analyzerResults = @()
+    
+    # Try to get recent analyzer results
+    try {
+        # Run analyzer directly with Invoke-ScriptAnalyzer
+        Write-Status "Running PSScriptAnalyzer to get current results..."
+        $rootPath = Split-Path $PSScriptRoot -Parent
+        $results = Invoke-ScriptAnalyzer -Path $rootPath -Recurse -ExcludeRule 'PSUseSingularNouns' -ErrorAction SilentlyContinue
+        
+        if ($results) {
+                $errorCount = ($results | Where-Object { $_.Severity -eq 'Error' }).Count
+                $warningCount = ($results | Where-Object { $_.Severity -eq 'Warning' }).Count
+                
+                $findings = @()
+                
+                if ($errorCount -gt 0) {
+                    $findings += @{
+                        Title = "❌ [CODE-QUALITY] PSScriptAnalyzer Errors ($errorCount violations)"
+                        Priority = "P1-High"
+                        Type = "code-quality"
+                        Count = $errorCount
+                        Details = $results | Where-Object { $_.Severity -eq 'Error' } | Select-Object -First 5
+                    }
+                }
+                
+                if ($warningCount -gt 50) { # Only create issue for significant warning counts
+                    $findings += @{
+                        Title = "⚠️ [CODE-QUALITY] High Warning Count ($warningCount violations)"
+                        Priority = "P2-Medium"
+                        Type = "code-quality"
+                        Count = $warningCount
+                        Details = $results | Where-Object { $_.Severity -eq 'Warning' } | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 5
+                    }
+                }
+                
+            return $findings
+        }
+    }
+    catch {
+        Write-Status "Error running PSScriptAnalyzer: $_" "Warning"
+    }
+    
+    return @()
+}
 
-    # Look for JUnit XML or other test result formats
-    $testFiles = Get-ChildItem -Path $TestResultsPath -Filter "*.xml" -Recurse
-
+function Get-TestFindings {
+    param([string]$Path)
+    
+    $findings = @()
+    
+    # Look for test report files
+    $testFiles = Get-ChildItem -Path $Path -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | Sort-Object CreationTime -Descending | Select-Object -First 1
+    
     foreach ($testFile in $testFiles) {
         try {
-            [xml]$testXml = Get-Content $testFile.FullName
-
-            # Process failed tests (JUnit format)
-            $failedTests = $testXml.SelectNodes("//testcase[failure or error]")
-
-            foreach ($test in $failedTests) {
-                $testName = $test.name
-                $className = $test.classname
-                $failure = $test.failure
-                $error = $test.error
-
-                $errorMessage = if ($failure) { $failure.message } elseif ($error) { $error.message } else { "Unknown error" }
-                $stackTrace = if ($failure) { $failure.InnerText } elseif ($error) { $error.InnerText } else { "" }
-
-                New-IssueFromTestFailure -TestName "$className.$testName" -ErrorMessage $errorMessage -TestFile $testFile.Name -StackTrace $stackTrace -CIRunUrl $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
+            $testReport = Get-Content $testFile.FullName | ConvertFrom-Json
+            
+            # Check if there are test failures
+            if ($testReport.TestResults -and $testReport.TestResults.Details) {
+                $failedTests = $testReport.TestResults.Details | Where-Object { $_.Result -eq 'Failed' }
+                
+                if ($failedTests.Count -gt 0) {
+                    $findings += @{
+                        Title = "🧪 [TESTS] Test Failures Detected ($($failedTests.Count) failures)"
+                        Priority = "P1-High"
+                        Type = "test-failure"
+                        Count = $failedTests.Count
+                        Details = $failedTests | Select-Object -First 3
+                        ReportFile = $testFile.Name
+                    }
+                }
             }
-        } catch {
-            Write-Warning "Failed to process test file $($testFile.Name): $_"
+        }
+        catch {
+            Write-Status "Error parsing test report $($testFile.Name): $_" "Warning"
         }
     }
-} else {
-    Write-Warning "Test results path not found: $TestResultsPath"
-}
-'@
-
-    $scriptPath = Join-Path $projectRoot "tools/create-issues-from-tests.ps1"
-
-    if ($PSCmdlet.ShouldProcess($scriptPath, "Create auto-issue script")) {
-        $autoIssueScript | Set-Content -Path $scriptPath
-        Write-ScriptLog -Message "Auto-issue script created: $scriptPath"
-    }
+    
+    return $findings
 }
 
-function New-ChangeImpactAnalysis {
-    Write-ScriptLog -Message "Creating change impact analysis script"
-
-    $analysisScript = @'
-#!/usr/bin/env pwsh
-# Change impact analysis for pull requests
-
-param(
-    [string]$BaseBranch = "main",
-    [string]$HeadBranch = "HEAD",
-    [switch]$OutputJson
-)
-
-function Get-ChangedFiles {
-    param($Base, $Head)
-
-    $changedFiles = @(git diff --name-only $Base...$Head)
-
-    $analysis = @{
-        TotalFiles = $changedFiles.Count
-        FileTypes = @{}
-        ImpactAreas = @()
-        RiskLevel = "Low"
+function New-IssueBody {
+    param(
+        [hashtable]$Finding,
+        [string]$Context = "Automated Analysis"
+    )
+    
+    $body = @()
+    $body += "## 🤖 Automated Issue - $($Finding.Type.ToUpper()) Analysis"
+    $body += ""
+    $body += "**Generated by:** AitherZero Issue Management System"
+    $body += "**Analysis Date:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    $body += "**Priority:** $($Finding.Priority)"
+    $body += "**Issue Count:** $($Finding.Count)"
+    $body += ""
+    
+    switch ($Finding.Type) {
+        'security' {
+            $body += "## 🔒 Security Analysis Summary"
+            $body += ""
+            $body += "Automated security analysis has identified critical security vulnerabilities that require immediate attention."
+            $body += ""
+            $body += "### 📊 Finding Details"
+            foreach ($detail in $Finding.Details) {
+                $body += "- **$($detail.Severity)**: Line $($detail.Line) in ``$($detail.File)``"
+                $body += "  - **Issue**: $($detail.Description)"
+                $body += "  - **Context**: ``$($detail.Context)``"
+                $body += ""
+            }
+            
+            $body += "### 🛠️ Recommended Actions"
+            $body += ""
+            $body += "@copilot Please address these security vulnerabilities:"
+            $body += ""
+            $body += "1. **Review each identified location** for security implications"
+            $body += "2. **Replace unsafe patterns** with secure alternatives:"
+            $body += "   - Replace `Invoke-Expression` with direct command execution"
+            $body += "   - Use `SecureString` for credential handling"
+            $body += "   - Implement proper input validation"
+            $body += "3. **Test security fixes** to ensure functionality is maintained"
+            $body += "4. **Run security analysis** again to verify resolution"
+            $body += ""
+            $body += "### 🎯 Security Best Practices"
+            $body += "- Avoid dynamic code execution (`Invoke-Expression`)"
+            $body += "- Use secure credential storage mechanisms"
+            $body += "- Implement input validation and sanitization"
+            $body += "- Follow principle of least privilege"
+        }
+        
+        'credentials' {
+            $body += "## 🔐 Credential Security Issue"
+            $body += ""
+            $body += "**CRITICAL**: Exposed credentials detected in source code."
+            $body += ""
+            $body += "### 📍 Locations Found"
+            foreach ($detail in $Finding.Details) {
+                $body += "- ``$($detail.File):$($detail.Line)`` - $($detail.Description)"
+            }
+            $body += ""
+            $body += "### ⚡ Immediate Actions Required"
+            $body += ""
+            $body += "@copilot **URGENT**: Please address exposed credentials immediately:"
+            $body += ""
+            $body += "1. **Remove hardcoded credentials** from source code"
+            $body += "2. **Use environment variables** or secure credential stores"
+            $body += "3. **Rotate any exposed credentials** if they're real"
+            $body += "4. **Implement `SecureString` patterns** for PowerShell"
+            $body += "5. **Add `.gitignore` entries** for credential files"
+        }
+        
+        'code-quality' {
+            $body += "## 📊 Code Quality Analysis"
+            $body += ""
+            $body += "PSScriptAnalyzer has identified code quality issues that should be addressed."
+            $body += ""
+            $body += "### 🔍 Top Issues"
+            if ($Finding.Details[0].RuleName) {
+                # Grouped format
+                foreach ($group in $Finding.Details) {
+                    $body += "- **$($group.Name)**: $($group.Count) violations"
+                }
+            } else {
+                # Individual format
+                foreach ($detail in $Finding.Details) {
+                    $body += "- **$($detail.RuleName)**: $($detail.Message)"
+                    $body += "  - File: ``$($detail.ScriptName):$($detail.Line)``"
+                }
+            }
+            $body += ""
+            $body += "### 🛠️ Resolution Steps"
+            $body += ""
+            $body += "@copilot Please address these code quality issues:"
+            $body += ""
+            $body += "1. **Run PSScriptAnalyzer** locally: ``./automation-scripts/0404_Run-PSScriptAnalyzer.ps1``"
+            $body += "2. **Fix high-priority violations** first (Errors, then Warnings)"
+            $body += "3. **Follow PowerShell best practices** for consistent code style"
+            $body += "4. **Test changes** to ensure no functional regression"
+            $body += "5. **Re-run analysis** to verify fixes"
+        }
+        
+        'test-failure' {
+            $body += "## 🧪 Test Failure Analysis"
+            $body += ""
+            $body += "Automated testing has detected failures that require attention."
+            $body += ""
+            if ($Finding.ReportFile) {
+                $body += "**Report File:** ``$($Finding.ReportFile)``"
+                $body += ""
+            }
+            
+            $body += "### 📋 Failed Tests"
+            foreach ($test in $Finding.Details) {
+                $body += "- **$($test.Name)**: $($test.Result)"
+            }
+            $body += ""
+            $body += "### 🔧 Fix Instructions"
+            $body += ""
+            $body += "@copilot Please investigate and fix these test failures:"
+            $body += ""
+            $body += "1. **Run tests locally**: ``./automation-scripts/0402_Run-UnitTests.ps1``"
+            $body += "2. **Analyze failure patterns** and root causes"
+            $body += "3. **Fix underlying issues** in code or tests"
+            $body += "4. **Verify fixes** with full test suite"
+            $body += "5. **Update tests** if requirements have changed"
+        }
     }
+    
+    $body += ""
+    $body += "---"
+    $body += "### 📈 Impact & Priority"
+    
+    switch ($Finding.Priority) {
+        'P0-Critical' { 
+            $body += "**🚨 CRITICAL**: Requires immediate attention - security risk or blocking issue"
+            $body += "**Expected Resolution Time**: < 4 hours"
+        }
+        'P1-High' { 
+            $body += "**⚡ HIGH**: Should be resolved within 1-2 days"
+            $body += "**Expected Resolution Time**: 1-2 days"
+        }
+        'P2-Medium' { 
+            $body += "**🔧 MEDIUM**: Should be addressed in current sprint"
+            $body += "**Expected Resolution Time**: 1 week"
+        }
+    }
+    
+    $body += ""
+    $body += "**Automation**: This issue was automatically created by AitherZero analysis system"
+    $body += "**Next Analysis**: Will run again after changes are made"
+    
+    return $body -join "`n"
+}
 
-    foreach ($file in $changedFiles) {
-        $extension = [System.IO.Path]::GetExtension($file)
-        if ($analysis.FileTypes.ContainsKey($extension)) {
-            $analysis.FileTypes[$extension]++
+function New-GitHubIssue {
+    param(
+        [hashtable]$Finding,
+        [switch]$DryRun
+    )
+    
+    $title = $Finding.Title
+    $body = New-IssueBody -Finding $Finding
+    
+    $labels = @('automated-issue', $Finding.Type)
+    
+    # Add priority label
+    $labels += $Finding.Priority.ToLower()
+    
+    # Add specific labels based on type
+    switch ($Finding.Type) {
+        'security' { $labels += @('security', 'vulnerability') }
+        'credentials' { $labels += @('security', 'credentials', 'urgent') }
+        'code-quality' { $labels += @('code-quality', 'psscriptanalyzer') }
+        'test-failure' { $labels += @('tests', 'ci-failure') }
+    }
+    
+    if ($DryRun) {
+        Write-Status "DRY RUN: Would create issue..." "Info"
+        Write-Host "Title: $title" -ForegroundColor Yellow
+        Write-Host "Labels: $($labels -join ', ')" -ForegroundColor Gray
+        Write-Host "Priority: $($Finding.Priority)" -ForegroundColor Magenta
+        Write-Host "Body Preview:" -ForegroundColor Gray
+        $bodyLines = $body -split "`n" | Select-Object -First 10
+        Write-Host ($bodyLines -join "`n") -ForegroundColor DarkGray
+        Write-Host "..." -ForegroundColor DarkGray
+        Write-Host ""
+        return $true
+    }
+    
+    # Check if gh CLI is available
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        Write-Status "GitHub CLI (gh) not available. Cannot create issues." "Error"
+        return $false
+    }
+    
+    try {
+        # Check if similar issue already exists
+        $existingIssues = & gh issue list --state open --label "automated-issue" --json title,number 2>$null | ConvertFrom-Json
+        
+        $similarIssue = $existingIssues | Where-Object { 
+            $_.title -like "*$($Finding.Type.ToUpper())*" -and 
+            $_.title -like "*$($Finding.Count)*" 
+        }
+        
+        if ($similarIssue) {
+            Write-Status "Similar issue already exists: #$($similarIssue.number) - $($similarIssue.title)" "Warning"
+            
+            # Add a comment instead of creating new issue
+            $updateComment = "## 🔄 Analysis Update - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n`nThis issue is still present with $($Finding.Count) occurrences. Please prioritize resolution."
+            
+            & gh issue comment $similarIssue.number --body $updateComment
+            Write-Status "Added update comment to existing issue #$($similarIssue.number)" "Success"
+            return $true
+        }
+        
+        # Create the issue
+        $labelString = $labels -join ','
+        $result = & gh issue create --title $title --body $body --label $labelString --assignee '@me' 2>&1
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Status "Created issue: $result" "Success"
+            return $true
         } else {
-            $analysis.FileTypes[$extension] = 1
-        }
-
-        # Analyze impact areas
-        switch -Regex ($file) {
-            '^domains/configuration' { $analysis.ImpactAreas += "Configuration" }
-            '^domains/infrastructure' { $analysis.ImpactAreas += "Infrastructure" }
-            '^domains/security' { $analysis.ImpactAreas += "Security" }
-            '^automation-scripts' { $analysis.ImpactAreas += "Automation" }
-            '^\.github/workflows' { $analysis.ImpactAreas += "CI/CD" }
-            '\.Tests\.ps1$' { $analysis.ImpactAreas += "Testing" }
-            'config\.psd1$' { $analysis.ImpactAreas += "Configuration"; $analysis.RiskLevel = "Medium" }
-            'bootstrap\.(ps1|sh)$' { $analysis.RiskLevel = "High" }
+            Write-Status "Failed to create issue: $result" "Error"
+            return $false
         }
     }
-
-    # Remove duplicates and assess overall risk
-    $analysis.ImpactAreas = @($analysis.ImpactAreas | Sort-Object -Unique)
-
-    if ($analysis.ImpactAreas -contains "Security" -or $analysis.ImpactAreas -contains "Infrastructure") {
-        $analysis.RiskLevel = "High"
-    } elseif ($analysis.ImpactAreas.Count -gt 3) {
-        $analysis.RiskLevel = "Medium"
-    }
-
-    return $analysis
-}
-
-function New-PRDescription {
-    param($Analysis)
-
-    $description = @"
-## Change Impact Analysis
-
-### Files Changed
-- **Total Files:** $($Analysis.TotalFiles)
-- **Risk Level:** $($Analysis.RiskLevel)
-
-### Impact Areas
-$($Analysis.ImpactAreas | ForEach-Object { "- $_" } | Join-String -Separator "`n")
-
-### File Types
-$($Analysis.FileTypes.Keys | ForEach-Object { "- $_`: $($Analysis.FileTypes[$_])" } | Join-String -Separator "`n")
-
-### Review Checklist
-- [ ] Code follows project standards
-- [ ] Tests are included for new functionality
-- [ ] Documentation is updated
-- [ ] Security implications reviewed
-- [ ] Breaking changes documented
-- [ ] CI/CD pipeline passes
-
-### Testing Strategy
-Based on the impact areas, the following tests should be prioritized:
-$($Analysis.ImpactAreas | ForEach-Object {
-    switch ($_) {
-        "Configuration" { "- [ ] Configuration loading and validation tests" }
-        "Infrastructure" { "- [ ] Infrastructure deployment tests" }
-        "Security" { "- [ ] Security and permissions tests" }
-        "Automation" { "- [ ] Automation script execution tests" }
-        "CI/CD" { "- [ ] Pipeline and workflow tests" }
-        "Testing" { "- [ ] Test framework and coverage validation" }
-    }
-} | Join-String -Separator "`n")
-
-*This analysis was generated automatically based on changed files.*
-"@
-
-    return $description
-}
-
-# Perform analysis
-$analysis = Get-ChangedFiles -Base $BaseBranch -Head $HeadBranch
-
-if ($OutputJson) {
-    $analysis | ConvertTo-Json -Depth 10
-} else {
-    $description = New-PRDescription -Analysis $analysis
-    Write-Host $description
-}
-'@
-
-    $scriptPath = Join-Path $projectRoot "tools/analyze-change-impact.ps1"
-
-    if ($PSCmdlet.ShouldProcess($scriptPath, "Create change impact analysis script")) {
-        $analysisScript | Set-Content -Path $scriptPath
-        Write-ScriptLog -Message "Change impact analysis script created: $scriptPath"
+    catch {
+        Write-Status "Error creating GitHub issue: $_" "Error"
+        return $false
     }
 }
 
-function New-ReleaseNotesGenerator {
-    Write-ScriptLog -Message "Creating release notes generator"
-
-    $generatorScript = @'
-#!/usr/bin/env pwsh
-# Automated release notes generation
-
-param(
-    [string]$FromTag,
-    [string]$ToTag = "HEAD",
-    [string]$OutputFormat = "markdown"
-)
-
-function Get-CommitsSinceTag {
-    param($From, $To)
-
-    $commits = @()
-    $gitLog = git log "$From..$To" --pretty=format:"%H|%s|%an|%ad" --date=short
-
-    foreach ($line in $gitLog) {
-        $parts = $line -split '\|', 4
-        if ($parts.Count -eq 4) {
-            $commits += @{
-                Hash = $parts[0]
-                Subject = $parts[1]
-                Author = $parts[2]
-                Date = $parts[3]
-                Type = Get-CommitType -Subject $parts[1]
-            }
-        }
-    }
-
-    return $commits
-}
-
-function Get-CommitType {
-    param([string]$Subject)
-
-    switch -Regex ($Subject) {
-        '^feat(\(.*\))?:' { return "Features" }
-        '^fix(\(.*\))?:' { return "Bug Fixes" }
-        '^docs(\(.*\))?:' { return "Documentation" }
-        '^style(\(.*\))?:' { return "Style" }
-        '^refactor(\(.*\))?:' { return "Refactoring" }
-        '^perf(\(.*\))?:' { return "Performance" }
-        '^test(\(.*\))?:' { return "Tests" }
-        '^chore(\(.*\))?:' { return "Chores" }
-        '^ci(\(.*\))?:' { return "CI/CD" }
-        '^build(\(.*\))?:' { return "Build" }
-        default { return "Other" }
-    }
-}
-
-function New-MarkdownReleaseNotes {
-    param($Commits, $FromTag, $ToTag)
-
-    $groupedCommits = $Commits | Group-Object Type
-    $date = Get-Date -Format "yyyy-MM-dd"
-
-    $notes = @"
-# Release Notes - $ToTag
-
-**Release Date:** $date
-**Previous Version:** $FromTag
-
-"@
-
-    foreach ($group in $groupedCommits) {
-        $notes += "`n## $($group.Name)`n`n"
-        foreach ($commit in $group.Group) {
-            $notes += "- $($commit.Subject) ($(($commit.Hash).Substring(0,7)))`n"
-        }
-    }
-
-    $notes += @"
-
-## Contributors
-
-$($Commits | Select-Object -ExpandProperty Author -Unique | ForEach-Object { "- $_" } | Join-String -Separator "`n")
-
-## Statistics
-
-- **Total Commits:** $($Commits.Count)
-- **Contributors:** $($Commits | Select-Object -ExpandProperty Author -Unique | Measure-Object).Count
-- **Files Changed:** $(git diff --name-only $FromTag..$ToTag | Measure-Object).Count
-
----
-*Generated automatically by AitherZero CI/CD Pipeline*
-"@
-
-    return $notes
-}
-
-# Generate release notes
-if (-not $FromTag) {
-    # Get the previous tag
-    $FromTag = git describe --tags --abbrev=0 HEAD^ 2>$null
-    if (-not $FromTag) {
-        $FromTag = "HEAD~20"  # Fallback to last 20 commits
-    }
-}
-
-$commits = Get-CommitsSinceTag -From $FromTag -To $ToTag
-
-switch ($OutputFormat.ToLower()) {
-    "json" {
-        @{
-            FromTag = $FromTag
-            ToTag = $ToTag
-            Commits = $commits
-            GeneratedAt = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        } | ConvertTo-Json -Depth 10
-    }
-    default {
-        New-MarkdownReleaseNotes -Commits $commits -FromTag $FromTag -ToTag $ToTag
-    }
-}
-'@
-
-    $scriptPath = Join-Path $projectRoot "tools/generate-release-notes.ps1"
-
-    if ($PSCmdlet.ShouldProcess($scriptPath, "Create release notes generator")) {
-        $generatorScript | Set-Content -Path $scriptPath
-        Write-ScriptLog -Message "Release notes generator created: $scriptPath"
-    }
-}
-
-function New-IssueManagementConfig {
-    Write-ScriptLog -Message "Creating issue management configuration"
-
-    $config = @{
-        AutoIssueCreation = @{
-            Enabled = $EnableAutoIssues
-            TestFailureThreshold = 3
-            IgnorePatterns = @('*.tmp', 'test-*')
-            Labels = @('bug', 'automated', 'test-failure')
-            AssignToAuthor = $true
-        }
-        ChangeTracking = @{
-            Enabled = $EnableChangeTracking
-            RequireApproval = $true
-            HighRiskPaths = @(
-                'bootstrap.*',
-                'config.psd1',
-                'domains/security/*',
-                'domains/infrastructure/*'
-            )
-            ReviewerGroups = @{
-                Security = @('security-team')
-                Infrastructure = @('infra-team')
-                Configuration = @('config-team')
-            }
-        }
-        ReleaseNotes = @{
-            Enabled = $EnableReleaseNotes
-            AutoGenerate = $true
-            IncludeContributors = $true
-            IncludeStatistics = $true
-            CommitConventions = $true
-        }
-        Notifications = @{
-            Slack = @{
-                Enabled = $false
-                WebhookUrl = '$env:SLACK_WEBHOOK_URL'
-                Channels = @{
-                    Issues = '#issues'
-                    Releases = '#releases'
-                    Changes = '#changes'
-                }
-            }
-            Email = @{
-                Enabled = $false
-                SmtpServer = 'smtp.company.com'
-                Recipients = @('team@company.com')
-            }
-        }
-    }
-
-    $configPath = if ($ConfigPath) { $ConfigPath } else { Join-Path $projectRoot "config/issue-management.json" }
-
-    # Ensure config directory exists
-    $configDir = Split-Path $configPath -Parent
-    if (-not (Test-Path $configDir)) {
-        New-Item -ItemType Directory -Path $configDir -Force | Out-Null
-    }
-
-    if ($PSCmdlet.ShouldProcess($configPath, "Create issue management configuration")) {
-        $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
-        Write-ScriptLog -Message "Issue management configuration created: $configPath"
-    }
-}
-
+# Main execution
 try {
-    Write-ScriptLog -Message "Starting issue management setup"
-
-    # Create .github/ISSUE_TEMPLATE directory
-    $templateDir = Join-Path $projectRoot ".github/ISSUE_TEMPLATE"
-    if (-not (Test-Path $templateDir)) {
-        New-Item -ItemType Directory -Path $templateDir -Force | Out-Null
+    Write-Status "🔍 Starting Issue Management Analysis..." "Info"
+    Write-Status "Analysis Path: $AnalysisPath" "Info"
+    
+    if ($DryRun) {
+        Write-Status "DRY RUN MODE - No issues will be created" "Warning"
     }
-
-    # Create issue templates
-    New-IssueTemplate -Type "bug" -OutputPath $templateDir
-    New-IssueTemplate -Type "feature" -OutputPath $templateDir
-    New-IssueTemplate -Type "task" -OutputPath $templateDir
-
-    # Create tools directory
-    $toolsDir = Join-Path $projectRoot "tools"
-    if (-not (Test-Path $toolsDir)) {
-        New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
+    
+    $allFindings = @()
+    
+    # Gather security findings
+    Write-Status "Analyzing security findings..." "Info"
+    $securityFindings = Get-SecurityFindings -Path $AnalysisPath
+    $allFindings += $securityFindings
+    Write-Status "Found $($securityFindings.Count) security issue categories" "Info"
+    
+    # Gather code quality findings
+    Write-Status "Analyzing code quality..." "Info"
+    $qualityFindings = Get-CodeQualityFindings -Path $AnalysisPath
+    $allFindings += $qualityFindings
+    Write-Status "Found $($qualityFindings.Count) code quality issue categories" "Info"
+    
+    # Gather test findings
+    Write-Status "Analyzing test results..." "Info"
+    $testFindings = Get-TestFindings -Path $AnalysisPath
+    $allFindings += $testFindings
+    Write-Status "Found $($testFindings.Count) test failure categories" "Info"
+    
+    # Summary
+    Write-Status "Total issue categories to process: $($allFindings.Count)" "Info"
+    
+    if ($allFindings.Count -eq 0) {
+        Write-Status "✅ No issues found - system is healthy!" "Success"
+        exit 0
     }
-
-    # Create automation scripts
-    New-AutoIssueScript
-    New-ChangeImpactAnalysis
-    New-ReleaseNotesGenerator
-
-    # Create configuration
-    New-IssueManagementConfig
-
-    # Test mode - validate all scripts
-    if ($TestMode) {
-        Write-Host "`nValidating created scripts..." -ForegroundColor Cyan
-
-        $scripts = @(
-            Join-Path $projectRoot "tools/create-issues-from-tests.ps1"
-            Join-Path $projectRoot "tools/analyze-change-impact.ps1"
-            Join-Path $projectRoot "tools/generate-release-notes.ps1"
-        )
-
-        foreach ($script in $scripts) {
-            if (Test-Path $script) {
-                try {
-                    $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $script -Raw), [ref]$null)
-                    Write-Host "✅ $script - Syntax OK" -ForegroundColor Green
-                } catch {
-                    Write-Host "❌ $script - Syntax Error: $_" -ForegroundColor Red
-                }
-            }
+    
+    # Process findings
+    $created = 0
+    $skipped = 0
+    
+    foreach ($finding in $allFindings) {
+        Write-Status "Processing: $($finding.Title)" "Info"
+        
+        if ($CreateIssues -or $DryRun) {
+            $result = New-GitHubIssue -Finding $finding -DryRun:$DryRun
+            if ($result) { $created++ } else { $skipped++ }
+        } else {
+            Write-Host "  - $($finding.Title) [$($finding.Priority)]" -ForegroundColor Yellow
+            Write-Host "    Count: $($finding.Count) issues" -ForegroundColor Gray
         }
     }
-
-    # Create GitHub Actions workflow integration
-    $workflowIntegration = @'
-# Add this to your GitHub Actions workflow for full issue management integration
-
-      - name: Create Issues from Test Failures
-        if: failure() && github.event_name == 'push'
-        shell: pwsh
-        run: |
-          ./tools/create-issues-from-tests.ps1 -TestResultsPath ./test-results -Repository ${{ github.repository }}
-
-      - name: Generate Change Impact Analysis
-        if: github.event_name == 'pull_request'
-        shell: pwsh
-        run: |
-          $analysis = ./tools/analyze-change-impact.ps1 -OutputJson | ConvertFrom-Json
-          echo "CHANGE_IMPACT<<EOF" >> $env:GITHUB_ENV
-          ./tools/analyze-change-impact.ps1 >> $env:GITHUB_ENV
-          echo "EOF" >> $env:GITHUB_ENV
-
-      - name: Update PR Description
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = process.env.CHANGE_IMPACT;
-            github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              body: body
-            });
-
-      - name: Generate Release Notes
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: |
-          $releaseNotes = ./tools/generate-release-notes.ps1
-          echo "RELEASE_NOTES<<EOF" >> $env:GITHUB_ENV
-          echo $releaseNotes >> $env:GITHUB_ENV
-          echo "EOF" >> $env:GITHUB_ENV
-'@
-
-    $integrationPath = Join-Path $projectRoot "docs/github-actions-integration.yml"
-    if ($PSCmdlet.ShouldProcess($integrationPath, "Create workflow integration guide")) {
-        $workflowIntegration | Set-Content -Path $integrationPath
-        Write-ScriptLog -Message "Workflow integration guide created: $integrationPath"
+    
+    # Final summary
+    Write-Host ""
+    Write-Status "📋 Issue Management Summary:" "Success"
+    Write-Host "  Total Findings: $($allFindings.Count)" -ForegroundColor Cyan
+    Write-Host "  Issues Created: $created" -ForegroundColor Green
+    Write-Host "  Issues Skipped: $skipped" -ForegroundColor Yellow
+    
+    if (-not $CreateIssues -and -not $DryRun) {
+        Write-Host ""
+        Write-Status "To create GitHub issues, run with -CreateIssues flag" "Info"
+        Write-Status "To preview issues, run with -DryRun flag" "Info"
     }
-
-    # Summary
-    Write-Host "`nIssue Management Setup Complete!" -ForegroundColor Green
-    Write-Host "✅ Issue templates created" -ForegroundColor Green
-    Write-Host "✅ Automation scripts generated" -ForegroundColor Green
-    Write-Host "✅ Configuration files created" -ForegroundColor Green
-    Write-Host "✅ GitHub Actions integration provided" -ForegroundColor Green
-
-    Write-Host "`nNext Steps:" -ForegroundColor Cyan
-    Write-Host "1. Review and customize issue templates in .github/ISSUE_TEMPLATE/" -ForegroundColor White
-    Write-Host "2. Configure settings in config/issue-management.json" -ForegroundColor White
-    Write-Host "3. Integrate with GitHub Actions using docs/github-actions-integration.yml" -ForegroundColor White
-    Write-Host "4. Test with: ./automation-scripts/0815_Setup-IssueManagement.ps1 -TestMode" -ForegroundColor White
-
-    Write-ScriptLog -Message "Issue management setup completed successfully"
+    
     exit 0
-
-} catch {
-    $errorMsg = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
-    Write-ScriptLog -Level Error -Message "Issue management setup failed: $_" -Data @{ Exception = $errorMsg }
+}
+catch {
+    Write-Status "Error in issue management: $_" "Error"
+    Write-Status $_.ScriptStackTrace "Error"
     exit 1
 }
