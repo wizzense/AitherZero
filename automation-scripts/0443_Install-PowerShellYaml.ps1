@@ -38,6 +38,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Auto-detect CI environment if not explicitly set
+if (-not $CI) {
+    $CI = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true') -or ($env:TF_BUILD -eq 'true')
+}
+
 # Import required modules
 $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
 $script:LoggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
@@ -127,7 +132,7 @@ function Install-PowerShellYamlModule {
                 Name = 'powershell-yaml'
                 MinimumVersion = $MinimumVersion
                 Scope = $Scope
-                Force = $Force
+                Force = ($Force -or $CI)  # Force install in CI or when explicitly requested
                 AllowClobber = $true
                 ErrorAction = 'Stop'
             }
@@ -169,6 +174,18 @@ function Install-PowerShellYamlModule {
                 throw "Module installed but verification failed"
             }
         } else {
+            # In CI, be more lenient with verification failures
+            if ($CI) {
+                Write-InstallLog "Module installation verification failed, but continuing in CI mode" -Level Warning
+                # Try to import anyway in case it's a detection issue
+                try {
+                    Import-Module powershell-yaml -ErrorAction Stop
+                    Write-InstallLog "Module imported successfully despite verification failure" -Level Information
+                    return $true
+                } catch {
+                    Write-InstallLog "Module import also failed: $_" -Level Warning
+                }
+            }
             throw "Module installation verification failed"
         }
     }
