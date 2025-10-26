@@ -189,17 +189,15 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Running quick syntax validation..." -ForegroundColor Cyan
-          try {
-            & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
-            $exitCode = $LASTEXITCODE
-            Write-Host "✅ Syntax validation completed with exit code: $exitCode" -ForegroundColor Green
-            if ($exitCode -ne 0) {
-              Write-Error "Syntax validation failed with exit code: $exitCode"
-              exit $exitCode
-            }
-          } catch {
-            Write-Error "Syntax validation failed with exception: $($_.Exception.Message)"
-            exit 1
+          
+          # Run validation and capture result via process exit code
+          $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0407' -NonInteractive") -Wait -PassThru -NoNewWindow
+          
+          if ($process.ExitCode -eq 0) {
+            Write-Host "✅ Quick syntax validation completed successfully!" -ForegroundColor Green
+          } else {
+            Write-Error "Quick syntax validation failed with exit code: $($process.ExitCode)"
+            exit $process.ExitCode
           }
 
   # Conditional - run based on change detection

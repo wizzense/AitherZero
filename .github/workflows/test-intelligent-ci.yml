@@ -97,14 +97,16 @@ jobs:
           if (Test-Path $startScript) {
             Write-Host "Testing syntax validation..." -ForegroundColor Yellow
             try {
-              & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
-              $exitCode = $LASTEXITCODE
-              Write-Host "Exit code: $exitCode" -ForegroundColor Yellow
-              if ($exitCode -eq 0) {
-                Write-Host "✅ Syntax validation passed!" -ForegroundColor Green
+              Write-Host "Running syntax validation test..." -ForegroundColor Yellow
+              
+              # Run validation and capture result via process exit code
+              $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0407' -NonInteractive") -Wait -PassThru -NoNewWindow
+              
+              if ($process.ExitCode -eq 0) {
+                Write-Host "✅ Syntax validation test passed!" -ForegroundColor Green
               } else {
-                Write-Host "❌ Syntax validation failed with exit code: $exitCode" -ForegroundColor Red
-                exit 1
+                Write-Host "❌ Syntax validation test failed with exit code: $($process.ExitCode)" -ForegroundColor Red
+                exit $process.ExitCode
               }
             } catch {
               Write-Host "❌ Script execution failed: $_" -ForegroundColor Red
