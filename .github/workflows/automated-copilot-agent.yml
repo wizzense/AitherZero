@@ -1,0 +1,463 @@
+---
+name: 🤖 Automated Copilot Agent - Iterative Issue Resolution
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_analyze:
+        description: 'Force new analysis and issue creation'
+        type: boolean
+        default: false
+      max_iterations:
+        description: 'Maximum iterations for automated resolution'
+        type: number
+        default: 3
+        
+  schedule:
+    # Run every hour during business hours (9 AM - 5 PM UTC, Monday-Friday)
+    - cron: '0 9-17 * * 1-5'
+    
+  issues:
+    types: [opened, labeled]
+    
+  pull_request:
+    types: [opened, synchronize, closed]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: write
+  checks: write
+
+jobs:
+  analyze-and-create-issues:
+    name: 🔍 Analyze Repository & Create Targeted Issues
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    outputs:
+      issues_created: ${{ steps.create_issues.outputs.issues_created }}
+      critical_issues: ${{ steps.create_issues.outputs.critical_issues }}
+      
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup PowerShell Environment
+        shell: pwsh
+        run: |
+          Write-Host "🔧 Setting up PowerShell environment for analysis..." -ForegroundColor Cyan
+          
+          # Install required modules
+          if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+            Install-Module PSScriptAnalyzer -Force -AllowClobber -Scope CurrentUser
+          }
+          
+          # Import AitherZero modules for analysis
+          if (Test-Path "./AitherZero.psd1") {
+            Import-Module "./AitherZero.psd1" -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: 🚨 Run Comprehensive Analysis
+        id: analysis
+        shell: pwsh
+        run: |
+          Write-Host "🚨 Running comprehensive repository analysis..." -ForegroundColor Yellow
+          
+          # Initialize analysis results
+          $analysisResults = @{
+            TestFailures = @()
+            PSScriptAnalyzerIssues = @()
+            SecurityIssues = @()
+            PerformanceIssues = @()
+            DocumentationGaps = @()
+            Summary = @{}
+          }
+          
+          # 1. Run PSScriptAnalyzer analysis
+          Write-Host "📊 Running PSScriptAnalyzer..." -ForegroundColor Cyan
+          try {
+            $psaResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -ErrorAction SilentlyContinue
+            $criticalIssues = $psaResults | Where-Object { $_.Severity -eq 'Error' }
+            $warningIssues = $psaResults | Where-Object { $_.Severity -eq 'Warning' }
+            
+            $analysisResults.PSScriptAnalyzerIssues = @{
+              Critical = $criticalIssues.Count
+              Warnings = $warningIssues.Count
+              Details = $criticalIssues | Select-Object -First 10 | ForEach-Object {
+                @{
+                  Rule = $_.RuleName
+                  File = $_.ScriptPath
+                  Line = $_.Line
+                  Message = $_.Message
+                }
+              }
+            }
+          } catch {
+            Write-Warning "PSScriptAnalyzer analysis failed: $($_.Exception.Message)"
+          }
+          
+          # 2. Run unit tests and capture failures
+          Write-Host "🧪 Running unit tests..." -ForegroundColor Cyan
+          try {
+            if (Get-Command Invoke-Pester -ErrorAction SilentlyContinue) {
+              $testResults = Invoke-Pester -Path "./tests/unit" -PassThru -Output None -ErrorAction SilentlyContinue
+              if ($testResults) {
+                $analysisResults.TestFailures = @{
+                  Total = $testResults.TotalCount
+                  Passed = $testResults.PassedCount
+                  Failed = $testResults.FailedCount
+                  FailedTests = $testResults.Failed | Select-Object -First 5 | ForEach-Object {
+                    @{
+                      Name = $_.Name
+                      File = $_.Block.File
+                      Error = $_.ErrorRecord.Exception.Message
+                    }
+                  }
+                }
+              }
+            }
+          } catch {
+            Write-Warning "Unit test analysis failed: $($_.Exception.Message)"
+          }
+          
+          # 3. Check for security patterns
+          Write-Host "🔒 Scanning for security issues..." -ForegroundColor Cyan
+          try {
+            $securityPatterns = @(
+              'password\s*=\s*["\']',
+              'secret\s*=\s*["\']',
+              'token\s*=\s*["\']',
+              'ConvertTo-SecureString.*-AsPlainText',
+              'Invoke-Expression'
+            )
+            
+            $securityIssues = @()
+            $psFiles = Get-ChildItem -Path . -Filter "*.ps1" -Recurse | Where-Object { $_.FullName -notmatch "tests|legacy" }
+            
+            foreach ($file in $psFiles) {
+              $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+              if ($content) {
+                foreach ($pattern in $securityPatterns) {
+                  if ($content -match $pattern) {
+                    $securityIssues += @{
+                      File = $file.Name
+                      Pattern = $pattern
+                      Path = $file.FullName
+                    }
+                  }
+                }
+              }
+            }
+            
+            $analysisResults.SecurityIssues = @{
+              Count = $securityIssues.Count
+              Issues = $securityIssues | Select-Object -First 5
+            }
+          } catch {
+            Write-Warning "Security analysis failed: $($_.Exception.Message)"
+          }
+          
+          # 4. Generate summary
+          $analysisResults.Summary = @{
+            Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+            CriticalIssues = $analysisResults.PSScriptAnalyzerIssues.Critical
+            TestFailures = $analysisResults.TestFailures.Failed
+            SecurityIssues = $analysisResults.SecurityIssues.Count
+            OverallHealth = if ($analysisResults.PSScriptAnalyzerIssues.Critical -eq 0 -and $analysisResults.TestFailures.Failed -eq 0) { "Good" } else { "NeedsAttention" }
+          }
+          
+          # Save results for issue creation
+          $analysisResults | ConvertTo-Json -Depth 5 | Set-Content "analysis-results.json"
+          
+          # Output for GitHub Actions
+          Write-Output "critical_issues=$($analysisResults.PSScriptAnalyzerIssues.Critical)" >> $env:GITHUB_OUTPUT
+          Write-Output "test_failures=$($analysisResults.TestFailures.Failed)" >> $env:GITHUB_OUTPUT
+          Write-Output "security_issues=$($analysisResults.SecurityIssues.Count)" >> $env:GITHUB_OUTPUT
+          Write-Output "overall_health=$($analysisResults.Summary.OverallHealth)" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "📊 Analysis complete:" -ForegroundColor Green
+          Write-Host "  Critical PSScriptAnalyzer Issues: $($analysisResults.PSScriptAnalyzerIssues.Critical)" -ForegroundColor $(if($analysisResults.PSScriptAnalyzerIssues.Critical -gt 0) {'Red'} else {'Green'})
+          Write-Host "  Test Failures: $($analysisResults.TestFailures.Failed)" -ForegroundColor $(if($analysisResults.TestFailures.Failed -gt 0) {'Red'} else {'Green'})  
+          Write-Host "  Security Issues: $($analysisResults.SecurityIssues.Count)" -ForegroundColor $(if($analysisResults.SecurityIssues.Count -gt 0) {'Red'} else {'Green'})
+
+      - name: 🎯 Create Targeted Issues for Copilot
+        id: create_issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Load analysis results
+            let analysisResults = {};
+            try {
+              analysisResults = JSON.parse(fs.readFileSync('analysis-results.json', 'utf8'));
+            } catch (error) {
+              console.log('Could not load analysis results, using defaults');
+              analysisResults = { Summary: { OverallHealth: 'Unknown' } };
+            }
+            
+            // Get existing copilot issues to avoid duplicates
+            const { data: existingIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              assignee: 'copilot',
+              state: 'open',
+              labels: 'auto-created'
+            });
+            
+            const issuesCreated = [];
+            const criticalIssues = [];
+            
+            // Helper function to create issue if it doesn't exist
+            async function createIssueIfNeeded(title, body, labels, priority = 'medium') {
+              const existing = existingIssues.find(issue => 
+                issue.title.toLowerCase().includes(title.toLowerCase().slice(0, 20))
+              );
+              
+              if (existing) {
+                console.log(`Issue already exists: ${existing.title}`);
+                return existing.number;
+              }
+              
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🤖 ${title}`,
+                body: `${body}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Priority:** ${priority}\n**Assignee:** @copilot\n\n@copilot Please address this issue following the automated resolution process.`,
+                labels: ['auto-created', 'copilot-task', `priority-${priority}`, ...labels],
+                assignees: ['copilot']
+              });
+              
+              issuesCreated.push(issue.data.number);
+              if (priority === 'critical') {
+                criticalIssues.push(issue.data.number);
+              }
+              
+              console.log(`Created issue #${issue.data.number}: ${title}`);
+              return issue.data.number;
+            }
+            
+            // 1. Create PSScriptAnalyzer issues
+            if (analysisResults.PSScriptAnalyzerIssues?.Critical > 0) {
+              const issueBody = `## 🚨 Critical PSScriptAnalyzer Issues Detected
+              
+              **Analysis Results:**
+              - **Critical Issues:** ${analysisResults.PSScriptAnalyzerIssues.Critical}
+              - **Warning Issues:** ${analysisResults.PSScriptAnalyzerIssues.Warnings || 0}
+              
+              ### 🔧 Issues Found:
+              ${(analysisResults.PSScriptAnalyzerIssues.Details || []).map(issue => 
+                `- **${issue.Rule}** in \`${issue.File}\` (Line ${issue.Line})\n  ${issue.Message}`
+              ).join('\n')}
+              
+              ### 🎯 Action Plan for @copilot:
+              1. Run \`./automation-scripts/0404_Run-PSScriptAnalyzer.ps1\` to see full details
+              2. Fix critical errors first (blocking issues)
+              3. Address warnings that affect maintainability  
+              4. Submit PR with fixes
+              5. Update this issue with resolution summary
+              
+              ### 🚀 Automated Commands:
+              \`\`\`powershell
+              # Analyze issues
+              ./az 0404
+              
+              # Validate fixes  
+              ./az 0407
+              \`\`\``;
+              
+              await createIssueIfNeeded(
+                'Fix Critical PSScriptAnalyzer Issues',
+                issueBody,
+                ['code-quality', 'psscriptanalyzer', 'critical-fix'],
+                'critical'
+              );
+            }
+            
+            // 2. Create test failure issues
+            if (analysisResults.TestFailures?.Failed > 0) {
+              const issueBody = `## 🧪 Unit Test Failures Detected
+              
+              **Test Results:**
+              - **Total Tests:** ${analysisResults.TestFailures.Total || 0}
+              - **Passed:** ${analysisResults.TestFailures.Passed || 0}  
+              - **Failed:** ${analysisResults.TestFailures.Failed}
+              
+              ### ❌ Failed Tests:
+              ${(analysisResults.TestFailures.FailedTests || []).map(test => 
+                `- **${test.Name}** in \`${test.File}\`\n  Error: ${test.Error}`
+              ).join('\n')}
+              
+              ### 🎯 Action Plan for @copilot:
+              1. Run unit tests locally: \`./az 0402\`
+              2. Analyze failing test patterns and root causes
+              3. Fix underlying code issues or update tests as needed
+              4. Ensure all tests pass before submitting PR
+              5. Update this issue with findings
+              
+              ### 🚀 Automated Commands:
+              \`\`\`powershell
+              # Run specific failing tests
+              Invoke-Pester -Path "./tests/unit" -Output Detailed
+              
+              # Validate all tests pass
+              ./az 0402
+              \`\`\``;
+              
+              await createIssueIfNeeded(
+                'Fix Failing Unit Tests',
+                issueBody,
+                ['testing', 'unit-tests', 'failure'],
+                'high'
+              );
+            }
+            
+            // 3. Create security issues
+            if (analysisResults.SecurityIssues?.Count > 0) {
+              const issueBody = `## 🔒 Security Issues Detected
+              
+              **Security Analysis:**
+              - **Issues Found:** ${analysisResults.SecurityIssues.Count}
+              
+              ### 🚨 Security Concerns:
+              ${(analysisResults.SecurityIssues.Issues || []).map(issue => 
+                `- **Pattern:** \`${issue.Pattern}\` in \`${issue.File}\`\n  Path: ${issue.Path}`
+              ).join('\n')}
+              
+              ### 🎯 Action Plan for @copilot:
+              1. Review each flagged file for security implications
+              2. Replace plain-text credentials with secure alternatives
+              3. Add appropriate security suppressions for test code
+              4. Implement SecureString usage where needed
+              5. Submit PR with security improvements
+              
+              ### 🛡️ Security Guidelines:
+              - Use SecureString for sensitive data
+              - Add PSScriptAnalyzer suppressions for test-only code  
+              - Implement proper credential management
+              - Follow enterprise security standards`;
+              
+              await createIssueIfNeeded(
+                'Address Security Vulnerabilities',
+                issueBody,
+                ['security', 'vulnerability', 'credentials'],
+                'high'
+              );
+            }
+            
+            // 4. Create maintenance issue for overall health
+            if (analysisResults.Summary?.OverallHealth === 'NeedsAttention') {
+              const issueBody = `## 🔧 Repository Health Maintenance Required
+              
+              **Health Assessment:** Needs Attention
+              **Analysis Date:** ${analysisResults.Summary?.Timestamp || new Date().toISOString()}
+              
+              ### 📊 Summary:
+              - PSScriptAnalyzer Critical Issues: ${analysisResults.PSScriptAnalyzerIssues?.Critical || 0}
+              - Test Failures: ${analysisResults.TestFailures?.Failed || 0}  
+              - Security Issues: ${analysisResults.SecurityIssues?.Count || 0}
+              
+              ### 🎯 Maintenance Tasks for @copilot:
+              1. **Priority 1:** Address critical PSScriptAnalyzer errors
+              2. **Priority 2:** Fix failing unit tests  
+              3. **Priority 3:** Resolve security issues
+              4. **Priority 4:** Update documentation gaps
+              5. **Priority 5:** Performance optimizations
+              
+              This meta-issue tracks overall repository health and coordinates with specific issue resolution.
+              
+              ### 📈 Success Criteria:
+              - [ ] All critical PSScriptAnalyzer issues resolved
+              - [ ] All unit tests passing
+              - [ ] Security vulnerabilities addressed  
+              - [ ] Documentation updated
+              - [ ] Repository health status: "Good"`;
+              
+              await createIssueIfNeeded(
+                'Repository Health Maintenance',
+                issueBody,
+                ['maintenance', 'health-check', 'coordination'],
+                'medium'
+              );
+            }
+            
+            // Output results
+            core.setOutput('issues_created', issuesCreated.join(','));
+            core.setOutput('critical_issues', criticalIssues.join(','));
+            
+            console.log(`Created ${issuesCreated.length} issues for automated resolution`);
+            console.log(`Critical issues: ${criticalIssues.length}`);
+
+  trigger-copilot-resolution:
+    name: 🎯 Trigger Automated Copilot Resolution
+    needs: analyze-and-create-issues
+    runs-on: ubuntu-latest
+    if: needs.analyze-and-create-issues.outputs.issues_created != ''
+    
+    steps:
+      - name: 🚀 Initiate Copilot Agent Resolution Cycle
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issuesCreated = '${{ needs.analyze-and-create-issues.outputs.issues_created }}';
+            const criticalIssues = '${{ needs.analyze-and-create-issues.outputs.critical_issues }}';
+            
+            if (issuesCreated) {
+              const issues = issuesCreated.split(',').filter(id => id);
+              console.log(`Triggering resolution for ${issues.length} issues`);
+              
+              // Comment on each issue to trigger copilot attention
+              for (const issueId of issues) {
+                if (issueId) {
+                  try {
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: parseInt(issueId),
+                      body: `🤖 **Automated Resolution Triggered**\n\n@copilot This issue has been automatically created and assigned to you for resolution.\n\n**Resolution Process:**\n1. Analyze the issue details and requirements\n2. Create a focused PR with minimal changes to address the issue\n3. Ensure all tests pass and no new issues are introduced\n4. Request review and merge when ready\n5. Close this issue with a summary of changes made\n\n**Automated Validation:** This issue will be automatically validated once resolved.\n\n⚡ **Priority:** ${criticalIssues.includes(issueId) ? 'CRITICAL - Address immediately' : 'Normal - Address in development cycle'}`
+                    });
+                  } catch (error) {
+                    console.log(`Failed to comment on issue ${issueId}: ${error.message}`);
+                  }
+                }
+              }
+              
+              // Create summary comment with coordination info
+              if (criticalIssues) {
+                const criticalIds = criticalIssues.split(',').filter(id => id);
+                if (criticalIds.length > 0) {
+                  console.log(`🚨 ${criticalIds.length} critical issues require immediate attention`);
+                }
+              }
+            }
+
+  schedule-followup:
+    name: ⏰ Schedule Automated Follow-up
+    needs: [analyze-and-create-issues, trigger-copilot-resolution]
+    runs-on: ubuntu-latest
+    if: always() && needs.analyze-and-create-issues.outputs.issues_created != ''
+    
+    steps:
+      - name: 📅 Schedule Resolution Validation
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // This step could trigger additional workflows or schedule follow-up checks
+            // For now, we'll create a tracking comment for transparency
+            
+            const issueCount = '${{ needs.analyze-and-create-issues.outputs.issues_created }}'.split(',').filter(id => id).length;
+            const criticalCount = '${{ needs.analyze-and-create-issues.outputs.critical_issues }}'.split(',').filter(id => id).length;
+            
+            console.log(`✅ Automated issue resolution cycle initiated:`);
+            console.log(`   📝 Total Issues Created: ${issueCount}`);
+            console.log(`   🚨 Critical Issues: ${criticalCount}`);
+            console.log(`   ⏰ Next Analysis: Scheduled for next workflow run`);
+            console.log(`   🤖 Copilot: Notified and assigned for resolution`);
+            
+            // The system is now fully automated:
+            // 1. Issues are created based on real analysis
+            // 2. Copilot is automatically notified and assigned  
+            // 3. Resolution process is documented and guided
+            // 4. Follow-up validation will occur on next cycle
