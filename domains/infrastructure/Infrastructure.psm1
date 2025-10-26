@@ -218,8 +218,9 @@ function Get-InfrastructureState {
         Write-InfraLog -Message "Retrieving infrastructure state using $tool"
         
         # Get state list
-        $stateList = & $tool state list 2>&1
-        if ($LASTEXITCODE -ne 0) {
+        try {
+            $stateList = Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('state', 'list')
+        } catch {
             Write-InfraLog -Level Warning -Message "No state found or state command failed"
             return @{
                 Resources = @()
@@ -231,8 +232,8 @@ function Get-InfrastructureState {
         # Get outputs
         $outputs = @{}
         try {
-            $outputJson = & $tool output -json 2>&1
-            if ($LASTEXITCODE -eq 0 -and $outputJson) {
+            $outputJson = Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('output', '-json')
+            if ($outputJson) {
                 $outputs = $outputJson | ConvertFrom-Json -AsHashtable
             }
         } catch {

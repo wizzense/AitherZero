@@ -159,9 +159,10 @@ Describe "Automation Scripts Validation" {
                 $scriptPath = Join-Path $rootPath "automation-scripts" $script
                 $scriptPath | Should -Exist -Because "$script should exist"
                 
-                # Test syntax
+                # Test syntax using modern AST parser
                 $errors = $null
-                $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $scriptPath -Raw), [ref]$errors)
+                $tokens = $null
+                $null = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
                 $errors | Should -BeNullOrEmpty -Because "$script should have valid PowerShell syntax"
             }
         }
