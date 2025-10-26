@@ -342,13 +342,13 @@ jobs:
           - category: "Core Domain Tests"
             priority: 1
             test_path: "tests/domains"
-            test_scope: "core"
+            test_scope: "core-domains"
             timeout: 10
             
           - category: "Core Unit Tests" 
             priority: 1
             test_path: "tests/unit/AitherZero.Tests.ps1,tests/unit/Configuration.Tests.ps1,tests/unit/Start-AitherZero.Tests.ps1"
-            test_scope: "core"
+            test_scope: "core-unit"
             timeout: 10
             
           # Priority 2: Infrastructure & Setup (0000-0199)
