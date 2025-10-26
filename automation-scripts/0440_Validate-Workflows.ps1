@@ -59,6 +59,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Auto-detect CI environment if not explicitly set
+if (-not $CI) {
+    $CI = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true') -or ($env:TF_BUILD -eq 'true')
+}
+
 # Import required modules
 $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
 $script:LoggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
