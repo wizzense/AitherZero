@@ -523,12 +523,16 @@ function Invoke-PlaybookMenu {
         } else {
             'general'
         }
+        # Handle case-sensitive property names in JSON
+        $name = if ($pb.Name) { $pb.Name } else { $pb.name }
+        $description = if ($pb.Description) { $pb.Description } else { $pb.description }
+        
         [PSCustomObject]@{
-            Name = if ($category -ne 'general' -and $category -ne 'archive') { "[$category] $($pb.Name)" } else { $pb.Name }
-            Description = $pb.Description
+            Name = if ($category -ne 'general' -and $category -ne 'archive') { "[$category] $name" } else { $name }
+            Description = $description
             Path = $_.FullName
             Category = $category
-            OriginalName = $pb.Name
+            OriginalName = $name
         }
     } | Sort-Object Category, Name
 
@@ -544,12 +548,21 @@ function Invoke-PlaybookMenu {
         Show-UINotification -Message "Executing playbook: $($selection.Name)" -Type 'Info'
         $variables = @{}
         if ($CI) { $variables['CI'] = $true }
-        $result = Invoke-OrchestrationSequence -LoadPlaybook $selection.Name -Configuration $Config -Variables $variables
+        # Use OriginalName to avoid category prefix issues like "[analysis] name"
+        $playbookName = if ($selection.OriginalName) { $selection.OriginalName } else { $selection.Name }
+        
+        try {
+            Write-Host "DEBUG: Attempting to load playbook '$playbookName' (Display: '$($selection.Name)')" -ForegroundColor Yellow
+            $result = Invoke-OrchestrationSequence -LoadPlaybook $playbookName -Configuration $Config -Variables $variables
 
-        if ($result.Failed -eq 0) {
-            Show-UINotification -Message "Playbook completed successfully!" -Type 'Success'
-        } else {
-            Show-UINotification -Message "Playbook completed with errors" -Type 'Error'
+            if ($result.Failed -eq 0) {
+                Show-UINotification -Message "Playbook completed successfully!" -Type 'Success'
+            } else {
+                Show-UINotification -Message "Playbook completed with errors" -Type 'Error'
+            }
+        } catch {
+            Show-UINotification -Message "Failed to execute playbook '$playbookName': $($_.Exception.Message)" -Type 'Error'
+            Write-Host "ERROR: $($_.Exception)" -ForegroundColor Red
         }
 }
 
