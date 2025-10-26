@@ -201,7 +201,17 @@ function Get-InfrastructureState {
         return $null
     }
 
-    $tool = Get-InfrastructureTool
+    try {
+        $tool = Get-InfrastructureTool
+    } catch {
+        Write-InfraLog -Level Warning -Message "Infrastructure tool not available: $_"
+        return @{
+            Resources = @()
+            Outputs = @{}
+            Status = "Tool not available"
+            ResourceCount = 0
+        }
+    }
     
     Push-Location $WorkingDirectory
     try {
