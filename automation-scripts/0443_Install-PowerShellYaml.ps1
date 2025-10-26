@@ -116,11 +116,18 @@ function Install-PowerShellYamlModule {
 
         # Set repository as trusted temporarily in CI
         $repoTrusted = $false
+        $originalPolicy = $null
         if ($CI) {
             $psGallery = Get-PSRepository -Name PSGallery
+            $originalPolicy = $psGallery.InstallationPolicy
             if ($psGallery.InstallationPolicy -ne 'Trusted') {
+                Write-InstallLog "Setting PSGallery as trusted for CI installation" -Level Debug
                 if ($PSCmdlet.ShouldProcess("PSGallery", "Set as Trusted")) {
                     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+                    $repoTrusted = $true
+                } elseif ($WhatIfPreference) {
+                    # In WhatIf mode, simulate the trust setting for proper testing
+                    Write-InstallLog "What if: Would set PSGallery InstallationPolicy to Trusted" -Level Information
                     $repoTrusted = $true
                 }
             }
@@ -132,7 +139,7 @@ function Install-PowerShellYamlModule {
                 Name = 'powershell-yaml'
                 MinimumVersion = $MinimumVersion
                 Scope = $Scope
-                Force = ($Force -or $CI)  # Force install in CI or when explicitly requested
+                Force = $Force  # Use original Force parameter value
                 AllowClobber = $true
                 ErrorAction = 'Stop'
             }
@@ -153,9 +160,10 @@ function Install-PowerShellYamlModule {
             }
         }
         finally {
-            # Restore repository trust setting
-            if ($repoTrusted) {
-                Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted
+            # Restore repository trust setting to original policy
+            if ($repoTrusted -and $originalPolicy -and -not $WhatIfPreference) {
+                Write-InstallLog "Restoring PSGallery InstallationPolicy to $originalPolicy" -Level Debug
+                Set-PSRepository -Name PSGallery -InstallationPolicy $originalPolicy
             }
         }
 
@@ -174,17 +182,10 @@ function Install-PowerShellYamlModule {
                 throw "Module installed but verification failed"
             }
         } else {
-            # In CI, be more lenient with verification failures
+            # Installation verification failed
             if ($CI) {
-                Write-InstallLog "Module installation verification failed, but continuing in CI mode" -Level Warning
-                # Try to import anyway in case it's a detection issue
-                try {
-                    Import-Module powershell-yaml -ErrorAction Stop
-                    Write-InstallLog "Module imported successfully despite verification failure" -Level Information
-                    return $true
-                } catch {
-                    Write-InstallLog "Module import also failed: $_" -Level Warning
-                }
+                Write-InstallLog "Module installation verification failed in CI mode" -Level Warning
+                Write-InstallLog "This suggests the module installation itself may have failed due to trust issues" -Level Warning
             }
             throw "Module installation verification failed"
         }
