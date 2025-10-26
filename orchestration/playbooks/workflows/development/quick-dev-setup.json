@@ -1,0 +1,114 @@
+{
+  "metadata": {
+    "name": "quick-dev-setup",
+    "description": "Minimal development environment with essential tools",
+    "version": "2.0.0",
+    "category": "development",
+    "author": "AitherZero DevOps Team",
+    "tags": ["development", "setup", "minimal", "quick"],
+    "estimatedDuration": "5-10 minutes",
+    "lastUpdated": "2025-10-26T22:25:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["OrchestrationEngine"],
+    "requiredTools": [],
+    "platforms": ["CrossPlatform"],
+    "permissions": ["InstallSoftware"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "Profile": "Minimal",
+      "Environment": "Development",
+      "SkipOptional": true
+    },
+    "profiles": {
+      "fast": {
+        "description": "Super fast setup - absolute minimum",
+        "variables": {
+          "SkipDocker": true,
+          "SkipVSCode": true
+        }
+      },
+      "standard": {
+        "description": "Standard development setup",
+        "variables": {
+          "SkipDocker": false,
+          "SkipVSCode": false
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Environment Preparation",
+        "description": "Clean and prepare environment",
+        "sequences": ["0000-0002"],
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Core Dependencies", 
+        "description": "Install PowerShell 7 and Git",
+        "sequences": ["0001", "0207"],
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Development Tools",
+        "description": "Install Node.js and optional tools",
+        "sequences": ["0201"],
+        "condition": "$true",
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "Editor Setup",
+        "description": "Install VS Code if not skipped",
+        "sequences": ["0210"],
+        "condition": "-not $SkipVSCode",
+        "variables": {
+          "Extensions": "ms-vscode.powershell,GitHub.copilot"
+        },
+        "continueOnError": true,
+        "timeout": 300
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "PowerShell Version",
+        "condition": "$PSVersionTable.PSVersion -ge [version]'7.0'",
+        "message": "PowerShell 7.0 or higher is required"
+      }
+    ],
+    "postConditions": [
+      {
+        "name": "Git Available",
+        "condition": "Get-Command git -ErrorAction SilentlyContinue",
+        "message": "Git should be available after installation"
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🚀 Starting quick development environment setup...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ Development environment ready! You can now start coding.",
+      "level": "Success"
+    },
+    "onFailure": {
+      "message": "❌ Setup failed. Check logs for details.",
+      "level": "Error"
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["JSON", "Markdown"],
+    "outputPath": "./reports/dev-setup",
+    "includeMetrics": true,
+    "includeLogs": false
+  }
+}
