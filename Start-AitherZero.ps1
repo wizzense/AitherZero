@@ -91,6 +91,45 @@ if ([string]::IsNullOrEmpty($ProfileName)) {
     }
 }
 
+# Smart execution mode detection
+function Get-SmartExecutionMode {
+    param($CurrentMode, $CI, $NonInteractive)
+    
+    # If mode is explicitly set, respect it
+    if ($CurrentMode -ne 'Interactive') {
+        return $CurrentMode
+    }
+    
+    # Detect CI environments
+    $isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
+    $isHeadless = $env:SSH_TTY -or $env:SSH_CLIENT -or (-not [Environment]::UserInteractive)
+    
+    # Check for automation indicators
+    $isAutomated = $NonInteractive -or $CI -or $isCI -or $isHeadless
+    
+    # Check for specific scenarios
+    if ($isCI) {
+        # CI environment - likely running tests or deployment
+        if ($env:GITHUB_ACTION_PATH -or $env:GITHUB_WORKFLOW) {
+            return 'Validate'  # GitHub Actions typically validate
+        }
+        return 'Test'  # Default CI mode
+    }
+    
+    if ($isHeadless -or $NonInteractive) {
+        # Headless environment - likely server deployment
+        return 'Deploy'
+    }
+    
+    # Check if this looks like a testing session
+    if ($PSCommandPath -match 'test' -or $MyInvocation.InvocationName -match 'test') {
+        return 'Test'
+    }
+    
+    # Default to interactive for user sessions
+    return 'Interactive'
+}
+
 # Auto-detect CI if not explicitly set
 if (-not $CI -and -not $NonInteractive) {
     if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
@@ -100,6 +139,14 @@ if (-not $CI -and -not $NonInteractive) {
             $NonInteractive = $true
         }
     }
+}
+
+# Apply smart mode detection
+$originalMode = $Mode
+$Mode = Get-SmartExecutionMode -CurrentMode $Mode -CI $CI -NonInteractive $NonInteractive
+
+if ($Mode -ne $originalMode) {
+    Write-Verbose "Smart execution mode detection: $originalMode -> $Mode"
 }
 
 # CRITICAL: Block any conflicting systems

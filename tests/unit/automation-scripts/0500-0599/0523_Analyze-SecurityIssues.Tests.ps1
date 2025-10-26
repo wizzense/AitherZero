@@ -5,12 +5,20 @@ Describe "0523_Analyze-SecurityIssues" {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0523_Analyze-SecurityIssues.ps1"
         $script:TempOutputPath = Join-Path ([System.IO.Path]::GetTempPath()) "analysis"
 
+        # Import required modules first
+        $techDebtModule = Join-Path $PSScriptRoot "../../../../domains/reporting/TechDebtAnalysis.psm1"
+        if (Test-Path $techDebtModule) {
+            Import-Module $techDebtModule -Force -ErrorAction SilentlyContinue
+        }
+
         # Mock external dependencies
         Mock -CommandName Import-Module -MockWith { }
         Mock -CommandName Write-AnalysisLog -MockWith { param($Message, $Component, $Level) Write-Host "[$Level] $Message" }
         Mock -CommandName Initialize-TechDebtAnalysis -MockWith { }
         Mock -CommandName Save-AnalysisResults -MockWith { "analysis-results.json" }
         Mock -CommandName Write-Host -MockWith { }
+        Mock -CommandName Get-FilesToAnalyze -MockWith { @(@{ FullName = "TestScript.ps1" }) }
+        Mock -CommandName Start-ParallelAnalysis -MockWith { @() }
 
         # Script-specific mocks
         if ("0523_Analyze-SecurityIssues" -eq "0522_Analyze-CodeQuality") {
