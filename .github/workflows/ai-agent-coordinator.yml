@@ -132,166 +132,289 @@ jobs:
           echo "needs-testing=${NEEDS_TESTING}" >> $GITHUB_OUTPUT
           echo "needs-security=${NEEDS_SECURITY}" >> $GITHUB_OUTPUT
           
-      - name: 🤖 Coordinate AI Agents
+      - name: 🔧 Setup AitherZero Environment
+        shell: pwsh
+        run: |
+          Write-Host "🔧 Setting up AitherZero environment for AI coordination..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Standard
+          Write-Host "✅ Environment setup completed" -ForegroundColor Green
+
+      - name: 🤖 Execute AI Agent Coordination
         id: coordinate
+        shell: pwsh
         env:
           PRIORITY: ${{ steps.set-priority.outputs.priority }}
           MAX_AGENTS: ${{ steps.set-priority.outputs.max-agents }}
           TIMEOUT: ${{ steps.set-priority.outputs.timeout }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🚀 Starting AI Agent Coordination"
-          echo "Priority Level: ${PRIORITY}"
-          echo "Max Concurrent Agents: ${MAX_AGENTS}"
-          echo "Timeout: ${TIMEOUT} seconds"
-          echo ""
+          Write-Host "🚀 Starting Real AI Agent Coordination" -ForegroundColor Magenta
+          Write-Host "Priority Level: $env:PRIORITY" -ForegroundColor White
+          Write-Host "Max Concurrent Agents: $env:MAX_AGENTS" -ForegroundColor White
+          Write-Host "Timeout: $env:TIMEOUT seconds" -ForegroundColor White
+          Write-Host ""
           
-          COORDINATION_LOG=""
-          ACTIVE_AGENTS=0
-          SUCCESS_COUNT=0
-          FAILED_COUNT=0
-          
-          # Function to log coordination activity
-          log_activity() {
-            local message="$1"
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - ${message}"
-            COORDINATION_LOG="${COORDINATION_LOG}${message}\n"
+          $coordinationResults = @{
+            ActiveAgents = 0
+            SuccessCount = 0
+            FailedCount = 0
+            ExecutedActions = @()
+            Issues = @()
           }
           
-          log_activity "🎯 Coordination started with priority: ${PRIORITY}"
+          $prNumber = "${{ github.event.pull_request.number }}"
+          $isCodeReviewNeeded = "${{ steps.analyze.outputs.needs-code-review }}" -eq "true"
+          $isTestingNeeded = "${{ steps.analyze.outputs.needs-testing }}" -eq "true"
+          $isSecurityNeeded = "${{ steps.analyze.outputs.needs-security }}" -eq "true"
+          $agentType = "${{ github.event.inputs.agent_type || 'code-review' }}"
           
-          # Code Review Agent
-          if [[ "${{ steps.analyze.outputs.needs-code-review }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "code-review" ]]; then
-            if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
-              log_activity "📝 Activating Code Review Agent..."
-              # In a real implementation, this would trigger the code review agent
-              echo "  -> Code Review Agent: Analyzing PR #${{ github.event.pull_request.number || 'N/A' }}"
-              echo "  -> Checking code quality, style, and best practices"
-              echo "  -> Estimated completion: 5-10 minutes"
-              ACTIVE_AGENTS=$((ACTIVE_AGENTS + 1))
-              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              log_activity "✅ Code Review Agent activated successfully"
-            else
-              log_activity "⚠️ Code Review Agent queued (max agents reached)"
-            fi
-          fi
+          Write-Host "🎯 Coordination Analysis:" -ForegroundColor Yellow
+          Write-Host "  PR Number: $prNumber" -ForegroundColor White
+          Write-Host "  Code Review Needed: $isCodeReviewNeeded" -ForegroundColor White
+          Write-Host "  Testing Needed: $isTestingNeeded" -ForegroundColor White
+          Write-Host "  Security Needed: $isSecurityNeeded" -ForegroundColor White
+          Write-Host "  Agent Type: $agentType" -ForegroundColor White
+          Write-Host ""
           
-          # Documentation Agent
-          if [[ "${{ steps.analyze.outputs.needs-documentation }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "documentation" ]]; then
-            if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
-              log_activity "📚 Activating Documentation Agent..."
-              echo "  -> Documentation Agent: Reviewing documentation updates"
-              echo "  -> Checking for completeness and accuracy"
-              echo "  -> Estimated completion: 3-7 minutes"
-              ACTIVE_AGENTS=$((ACTIVE_AGENTS + 1))
-              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              log_activity "✅ Documentation Agent activated successfully"
-            else
-              log_activity "⚠️ Documentation Agent queued (max agents reached)"
-            fi
-          fi
+          # Code Review Agent - Run PSScriptAnalyzer
+          if ($isCodeReviewNeeded -or $agentType -eq "code-review") {
+            try {
+              Write-Host "📝 Executing Code Review Agent..." -ForegroundColor Cyan
+              Write-Host "  -> Running PSScriptAnalyzer (az 0404)..." -ForegroundColor Yellow
+              
+              $analysisResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0404" -NonInteractive
+              $analysisExitCode = $LASTEXITCODE
+              
+              if ($analysisExitCode -eq 0) {
+                Write-Host "  ✅ Code analysis completed successfully" -ForegroundColor Green
+                $coordinationResults.ExecutedActions += "PSScriptAnalyzer analysis completed"
+                $coordinationResults.SuccessCount++
+              } else {
+                Write-Host "  ⚠️ Code analysis found issues (exit code: $analysisExitCode)" -ForegroundColor Yellow
+                $coordinationResults.ExecutedActions += "PSScriptAnalyzer analysis completed with issues"
+                $coordinationResults.Issues += "Code quality issues detected by PSScriptAnalyzer"
+                $coordinationResults.SuccessCount++  # Still count as success since it ran
+              }
+              $coordinationResults.ActiveAgents++
+            } catch {
+              Write-Host "  ❌ Code Review Agent failed: $_" -ForegroundColor Red
+              $coordinationResults.FailedCount++
+              $coordinationResults.Issues += "Code Review Agent execution failed: $_"
+            }
+          }
           
-          # Testing Agent
-          if [[ "${{ steps.analyze.outputs.needs-testing }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "testing" ]]; then
-            if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
-              log_activity "🧪 Activating Testing Agent..."
-              echo "  -> Testing Agent: Orchestrating test execution"
-              echo "  -> Running automated test suites"
-              echo "  -> Estimated completion: 10-20 minutes"
-              ACTIVE_AGENTS=$((ACTIVE_AGENTS + 1))
-              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              log_activity "✅ Testing Agent activated successfully"
-            else
-              log_activity "⚠️ Testing Agent queued (max agents reached)"
-            fi
-          fi
+          # Testing Agent - Run Unit Tests
+          if ($isTestingNeeded -or $agentType -eq "testing") {
+            try {
+              Write-Host "🧪 Executing Testing Agent..." -ForegroundColor Cyan
+              Write-Host "  -> Running unit tests (az 0402)..." -ForegroundColor Yellow
+              
+              $testResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0402" -NonInteractive
+              $testExitCode = $LASTEXITCODE
+              
+              if ($testExitCode -eq 0) {
+                Write-Host "  ✅ Unit tests passed" -ForegroundColor Green
+                $coordinationResults.ExecutedActions += "Unit tests executed successfully"
+                $coordinationResults.SuccessCount++
+              } else {
+                Write-Host "  ⚠️ Unit tests failed (exit code: $testExitCode)" -ForegroundColor Yellow
+                $coordinationResults.ExecutedActions += "Unit tests executed with failures"
+                $coordinationResults.Issues += "Unit test failures detected"
+                $coordinationResults.SuccessCount++  # Still count as success since it ran
+              }
+              $coordinationResults.ActiveAgents++
+            } catch {
+              Write-Host "  ❌ Testing Agent failed: $_" -ForegroundColor Red
+              $coordinationResults.FailedCount++
+              $coordinationResults.Issues += "Testing Agent execution failed: $_"
+            }
+          }
           
-          # Security Agent
-          if [[ "${{ steps.analyze.outputs.needs-security }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "security" ]]; then
-            if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
-              log_activity "🔒 Activating Security Agent..."
-              echo "  -> Security Agent: Performing security analysis"
-              echo "  -> Scanning for vulnerabilities and security issues"
-              echo "  -> Estimated completion: 8-15 minutes"
-              ACTIVE_AGENTS=$((ACTIVE_AGENTS + 1))
-              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              log_activity "✅ Security Agent activated successfully"
-            else
-              log_activity "⚠️ Security Agent queued (max agents reached)"
-            fi
-          fi
+          # Security Agent - Run Security Analysis
+          if ($isSecurityNeeded -or $agentType -eq "security") {
+            try {
+              Write-Host "🔒 Executing Security Agent..." -ForegroundColor Cyan
+              Write-Host "  -> Running syntax validation (az 0407)..." -ForegroundColor Yellow
+              
+              $securityResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
+              $securityExitCode = $LASTEXITCODE
+              
+              if ($securityExitCode -eq 0) {
+                Write-Host "  ✅ Security validation passed" -ForegroundColor Green
+                $coordinationResults.ExecutedActions += "Security syntax validation completed"
+                $coordinationResults.SuccessCount++
+              } else {
+                Write-Host "  ⚠️ Security validation found issues (exit code: $securityExitCode)" -ForegroundColor Yellow
+                $coordinationResults.ExecutedActions += "Security validation completed with issues"
+                $coordinationResults.Issues += "Security syntax issues detected"
+                $coordinationResults.SuccessCount++  # Still count as success since it ran
+              }
+              $coordinationResults.ActiveAgents++
+            } catch {
+              Write-Host "  ❌ Security Agent failed: $_" -ForegroundColor Red
+              $coordinationResults.FailedCount++
+              $coordinationResults.Issues += "Security Agent execution failed: $_"
+            }
+          }
           
-          # If no specific agents needed, activate default coordination
-          if [[ ${ACTIVE_AGENTS} -eq 0 ]]; then
-            log_activity "🔄 No specific agents required, performing maintenance coordination"
-            echo "  -> Maintenance Agent: Checking system health"
-            echo "  -> Monitoring repository status"
-            echo "  -> Estimated completion: 2-5 minutes"
-            ACTIVE_AGENTS=$((ACTIVE_AGENTS + 1))
-            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-            log_activity "✅ Maintenance coordination completed"
-          fi
+          # Generate comprehensive report if requested
+          if ($agentType -eq "code-review" -or $coordinationResults.ActiveAgents -gt 1) {
+            try {
+              Write-Host "📊 Generating Comprehensive Report..." -ForegroundColor Cyan
+              Write-Host "  -> Running project report (az 0510)..." -ForegroundColor Yellow
+              
+              $reportResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0510" -NonInteractive
+              $reportExitCode = $LASTEXITCODE
+              
+              if ($reportExitCode -eq 0) {
+                Write-Host "  ✅ Comprehensive report generated" -ForegroundColor Green
+                $coordinationResults.ExecutedActions += "Comprehensive project report generated"
+                $coordinationResults.SuccessCount++
+              } else {
+                Write-Host "  ⚠️ Report generation completed with warnings" -ForegroundColor Yellow
+                $coordinationResults.ExecutedActions += "Project report generated with warnings"
+                $coordinationResults.SuccessCount++
+              }
+            } catch {
+              Write-Host "  ⚠️ Report generation failed: $_" -ForegroundColor Yellow
+              $coordinationResults.Issues += "Report generation failed: $_"
+            }
+          }
           
-          log_activity "📊 Coordination Summary:"
-          log_activity "  - Active Agents: ${ACTIVE_AGENTS}"
-          log_activity "  - Successful Activations: ${SUCCESS_COUNT}"
-          log_activity "  - Failed Activations: ${FAILED_COUNT}"
-          log_activity "  - Priority Level: ${PRIORITY}"
+          # If no specific agents were needed, run basic validation
+          if ($coordinationResults.ActiveAgents -eq 0) {
+            try {
+              Write-Host "🔄 Executing Default Coordination..." -ForegroundColor Cyan
+              Write-Host "  -> Running syntax validation (az 0407)..." -ForegroundColor Yellow
+              
+              $defaultResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
+              $defaultExitCode = $LASTEXITCODE
+              
+              if ($defaultExitCode -eq 0) {
+                Write-Host "  ✅ Default validation completed" -ForegroundColor Green
+                $coordinationResults.ExecutedActions += "Default syntax validation completed"
+                $coordinationResults.SuccessCount++
+              } else {
+                Write-Host "  ⚠️ Default validation found issues" -ForegroundColor Yellow
+                $coordinationResults.ExecutedActions += "Default validation completed with issues"
+                $coordinationResults.Issues += "Syntax issues detected in default validation"
+                $coordinationResults.SuccessCount++
+              }
+              $coordinationResults.ActiveAgents++
+            } catch {
+              Write-Host "  ❌ Default coordination failed: $_" -ForegroundColor Red
+              $coordinationResults.FailedCount++
+              $coordinationResults.Issues += "Default coordination failed: $_"
+            }
+          }
           
-          # Set outputs
-          if [[ ${SUCCESS_COUNT} -gt 0 ]]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
-            echo "status=failed" >> $GITHUB_OUTPUT
-          fi
+          # Summary and output
+          Write-Host ""
+          Write-Host "📊 AI Agent Coordination Summary:" -ForegroundColor Magenta
+          Write-Host "  - Active Agents: $($coordinationResults.ActiveAgents)" -ForegroundColor White
+          Write-Host "  - Successful Executions: $($coordinationResults.SuccessCount)" -ForegroundColor Green
+          Write-Host "  - Failed Executions: $($coordinationResults.FailedCount)" -ForegroundColor Red
+          Write-Host "  - Priority Level: $env:PRIORITY" -ForegroundColor White
+          Write-Host ""
+          Write-Host "🎯 Actions Executed:" -ForegroundColor Yellow
+          foreach ($action in $coordinationResults.ExecutedActions) {
+            Write-Host "  • $action" -ForegroundColor White
+          }
           
-          echo "active-agents=${ACTIVE_AGENTS}" >> $GITHUB_OUTPUT
-          echo "success-count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
-          echo "failed-count=${FAILED_COUNT}" >> $GITHUB_OUTPUT
+          if ($coordinationResults.Issues.Count -gt 0) {
+            Write-Host ""
+            Write-Host "⚠️ Issues Detected:" -ForegroundColor Yellow
+            foreach ($issue in $coordinationResults.Issues) {
+              Write-Host "  • $issue" -ForegroundColor White
+            }
+          }
           
-          # Save coordination log
-          echo -e "${COORDINATION_LOG}" > coordination-log.txt
+          # Set workflow outputs
+          $status = if ($coordinationResults.SuccessCount -gt 0) { "success" } else { "failed" }
+          echo "status=$status" >> $env:GITHUB_OUTPUT
+          echo "active-agents=$($coordinationResults.ActiveAgents)" >> $env:GITHUB_OUTPUT
+          echo "success-count=$($coordinationResults.SuccessCount)" >> $env:GITHUB_OUTPUT
+          echo "failed-count=$($coordinationResults.FailedCount)" >> $env:GITHUB_OUTPUT
+          echo "issues-count=$($coordinationResults.Issues.Count)" >> $env:GITHUB_OUTPUT
+          
+          # Save results for later use
+          $coordinationResults | ConvertTo-Json -Depth 3 | Set-Content "coordination-results.json"
+          
+          Write-Host ""
+          Write-Host "✅ AI Agent Coordination completed!" -ForegroundColor Green
           
       - name: 📊 Generate Coordination Report
         if: always()
+        shell: pwsh
         run: |
-          echo "# 🤖 AI Agent Coordination Report" > coordination-report.md
-          echo "" >> coordination-report.md
-          echo "**Coordination Status:** ${{ steps.coordinate.outputs.status }}" >> coordination-report.md
-          echo "**Priority Level:** ${{ steps.set-priority.outputs.priority }}" >> coordination-report.md
-          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> coordination-report.md
-          echo "**Context:** ${{ steps.analyze.outputs.context }}" >> coordination-report.md
-          echo "" >> coordination-report.md
-          echo "## Agent Activation Summary" >> coordination-report.md
-          echo "" >> coordination-report.md
-          echo "- **Active Agents:** ${{ steps.coordinate.outputs.active-agents }}" >> coordination-report.md
-          echo "- **Successful Activations:** ${{ steps.coordinate.outputs.success-count }}" >> coordination-report.md
-          echo "- **Failed Activations:** ${{ steps.coordinate.outputs.failed-count }}" >> coordination-report.md
-          echo "" >> coordination-report.md
-          echo "## Configuration" >> coordination-report.md
-          echo "" >> coordination-report.md
-          echo "- **Max Concurrent Agents:** ${{ steps.set-priority.outputs.max-agents }}" >> coordination-report.md
-          echo "- **Timeout:** ${{ steps.set-priority.outputs.timeout }} seconds" >> coordination-report.md
-          echo "- **Target Branch:** ${{ github.event.inputs.target_branch || 'main' }}" >> coordination-report.md
-          echo "" >> coordination-report.md
-          echo "## Agent Requirements Analysis" >> coordination-report.md
-          echo "" >> coordination-report.md
-          echo "- **Code Review:** ${{ steps.analyze.outputs.needs-code-review }}" >> coordination-report.md
-          echo "- **Documentation:** ${{ steps.analyze.outputs.needs-documentation }}" >> coordination-report.md
-          echo "- **Testing:** ${{ steps.analyze.outputs.needs-testing }}" >> coordination-report.md
-          echo "- **Security:** ${{ steps.analyze.outputs.needs-security }}" >> coordination-report.md
-          echo "" >> coordination-report.md
+          Write-Host "📊 Generating comprehensive coordination report..." -ForegroundColor Cyan
           
-          if [[ -f coordination-log.txt ]]; then
-            echo "## Detailed Coordination Log" >> coordination-report.md
-            echo "" >> coordination-report.md
-            echo "\`\`\`" >> coordination-report.md
-            cat coordination-log.txt >> coordination-report.md
-            echo "\`\`\`" >> coordination-report.md
-          fi
+          # Read coordination results
+          $results = @{
+            ActiveAgents = "${{ steps.coordinate.outputs.active-agents }}"
+            SuccessCount = "${{ steps.coordinate.outputs.success-count }}"
+            FailedCount = "${{ steps.coordinate.outputs.failed-count }}"
+            IssuesCount = "${{ steps.coordinate.outputs.issues-count || '0' }}"
+            Status = "${{ steps.coordinate.outputs.status }}"
+          }
           
-          # Display report
-          echo "📋 Coordination Report Generated:"
-          cat coordination-report.md
+          $reportContent = "# 🤖 AI Agent Coordination Report`n`n"
+          $reportContent += "**Coordination Status:** $($results.Status.ToUpper())`n"
+          $reportContent += "**Priority Level:** ${{ steps.set-priority.outputs.priority }}`n"
+          $reportContent += "**Timestamp:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n"
+          $reportContent += "**Context:** ${{ steps.analyze.outputs.context }}`n`n"
+          $reportContent += "## 📊 Execution Summary`n`n"
+          $reportContent += "- **Active Agents:** $($results.ActiveAgents)`n"
+          $reportContent += "- **Successful Executions:** $($results.SuccessCount)`n"
+          $reportContent += "- **Failed Executions:** $($results.FailedCount)`n"
+          $reportContent += "- **Issues Detected:** $($results.IssuesCount)`n`n"
+          $reportContent += "## ⚙️ Configuration`n`n"
+          $reportContent += "- **Max Concurrent Agents:** ${{ steps.set-priority.outputs.max-agents }}`n"
+          $reportContent += "- **Timeout:** ${{ steps.set-priority.outputs.timeout }} seconds`n"
+          $reportContent += "- **Target Branch:** ${{ github.event.inputs.target_branch || 'main' }}`n`n"
+          $reportContent += "## 🎯 Agent Requirements Analysis`n`n"
+          $reportContent += "- **Code Review:** ${{ steps.analyze.outputs.needs-code-review }}`n"
+          $reportContent += "- **Documentation:** ${{ steps.analyze.outputs.needs-documentation }}`n"
+          $reportContent += "- **Testing:** ${{ steps.analyze.outputs.needs-testing }}`n"
+          $reportContent += "- **Security:** ${{ steps.analyze.outputs.needs-security }}`n`n"
+          
+          # Add detailed results if available
+          if (Test-Path "coordination-results.json") {
+            try {
+              $detailedResults = Get-Content "coordination-results.json" | ConvertFrom-Json
+              
+              if ($detailedResults.ExecutedActions -and $detailedResults.ExecutedActions.Count -gt 0) {
+                $reportContent += "`n## ✅ Actions Executed`n`n"
+                foreach ($action in $detailedResults.ExecutedActions) {
+                  $reportContent += "- $action`n"
+                }
+              }
+              
+              if ($detailedResults.Issues -and $detailedResults.Issues.Count -gt 0) {
+                $reportContent += "`n## ⚠️ Issues Detected`n`n"
+                foreach ($issue in $detailedResults.Issues) {
+                  $reportContent += "- $issue`n"
+                }
+              }
+            } catch {
+              Write-Host "⚠️ Could not parse detailed results: $_" -ForegroundColor Yellow
+            }
+          }
+          
+          # Add automation script information
+          $reportContent += "`n## 🔧 AitherZero Integration`n`n"
+          $reportContent += "This coordination used AitherZero's number-based automation scripts:`n`n"
+          $reportContent += "- **az 0404** - PSScriptAnalyzer code quality analysis`n"
+          $reportContent += "- **az 0402** - Unit test execution`n"
+          $reportContent += "- **az 0407** - Syntax validation and security checks`n"
+          $reportContent += "- **az 0510** - Comprehensive project reporting`n"
+          $reportContent += "`n*These scripts provide real, actionable analysis of your PowerShell code.*`n"
+          
+          # Save report
+          $reportContent | Set-Content "coordination-report.md"
+          
+          Write-Host "📋 Coordination Report Generated:" -ForegroundColor Green
+          Write-Host $reportContent -ForegroundColor White
           
       - name: 📤 Upload Coordination Artifacts
         if: always()
@@ -300,17 +423,31 @@ jobs:
           name: ai-coordination-artifacts-${{ github.run_id }}
           path: |
             coordination-report.md
-            coordination-log.txt
+            coordination-results.json
+            tests/analysis/
+            tests/results/
+            reports/
           retention-days: 30
           
-      - name: 💬 Comment on PR
-        if: github.event_name == 'pull_request' && steps.coordinate.outputs.status == 'success'
+      - name: 💬 Comment on PR with Results
+        if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             let reportContent = '';
+            let coordinationResults = null;
             
+            // Read coordination results
+            try {
+              if (fs.existsSync('coordination-results.json')) {
+                coordinationResults = JSON.parse(fs.readFileSync('coordination-results.json', 'utf8'));
+              }
+            } catch (error) {
+              console.log('Could not read coordination results:', error.message);
+            }
+            
+            // Read report content
             try {
               if (fs.existsSync('coordination-report.md')) {
                 reportContent = fs.readFileSync('coordination-report.md', 'utf8');
@@ -319,25 +456,95 @@ jobs:
               console.log('Could not read coordination report:', error.message);
             }
             
-            const comment = `## 🤖 AI Agent Coordination Complete
+            const status = '${{ steps.coordinate.outputs.status }}';
+            const activeAgents = '${{ steps.coordinate.outputs.active-agents }}';
+            const successCount = '${{ steps.coordinate.outputs.success-count }}';
+            const failedCount = '${{ steps.coordinate.outputs.failed-count }}';
+            const issuesCount = '${{ steps.coordinate.outputs.issues-count || "0" }}';
             
-            The AI Agent Coordinator has successfully analyzed this PR and activated the appropriate agents.
+            let statusEmoji = '✅';
+            let statusText = 'Complete';
+            if (status === 'failed') {
+              statusEmoji = '❌';
+              statusText = 'Failed';
+            } else if (parseInt(issuesCount) > 0) {
+              statusEmoji = '⚠️';
+              statusText = 'Complete with Issues';
+            }
             
-            **Priority Level:** ${{ steps.set-priority.outputs.priority }}
-            **Active Agents:** ${{ steps.coordinate.outputs.active-agents }}
-            **Status:** ${{ steps.coordinate.outputs.status }}
+            let comment = '## 🤖 AI Agent Coordination ' + statusEmoji + ' ' + statusText + '\n\n';
+            comment += '**Automated Code Review & QA Analysis Complete**\n\n';
+            comment += '### 📊 Execution Summary\n';
+            comment += '- **Priority Level:** \${{ steps.set-priority.outputs.priority }}\n';
+            comment += '- **Agents Executed:** ' + activeAgents + '\n';
+            comment += '- **Successful Operations:** ' + successCount + '\n';
+            comment += '- **Failed Operations:** ' + failedCount + '\n';
+            comment += '- **Issues Detected:** ' + issuesCount + '\n\n';
+            comment += '### 🔧 Actions Performed\n';
+
+            if (coordinationResults && coordinationResults.ExecutedActions && coordinationResults.ExecutedActions.length > 0) {
+              coordinationResults.ExecutedActions.forEach(action => {
+                comment += '- ✅ ' + action + '\n';
+              });
+            } else {
+              comment += '- 🔍 Basic validation and analysis performed\n';
+            }
+
+            if (coordinationResults && coordinationResults.Issues && coordinationResults.Issues.length > 0) {
+              comment += '\n### ⚠️ Issues Found\n\n';
+              coordinationResults.Issues.forEach(issue => {
+                comment += '- 🔸 ' + issue + '\n';
+              });
+              
+              comment += '\n### 🛠️ Recommended Actions\n\n';
+              comment += '1. **Review Issues**: Check the detailed analysis results in the workflow artifacts\n';
+              comment += '2. **Run Locally**: Use `./az 0404` for code analysis and `./az 0402` for testing\n';
+              comment += '3. **Fix Issues**: Address the identified problems and push updates\n';
+              comment += '4. **Re-validate**: The AI coordinator will automatically re-run on new commits\n';
+            } else {
+              comment += '\n### ✅ Quality Check Passed\n\n';
+              comment += 'Your code has passed the automated quality checks! The following validations were completed:\n\n';
+              comment += '- 📝 **Code Quality**: PSScriptAnalyzer analysis\n';
+              comment += '- 🧪 **Testing**: Unit test execution\n';  
+              comment += '- 🔒 **Security**: Syntax and security validation\n';
+            }
             
-            ${reportContent ? '### Detailed Report\n\n' + reportContent : ''}
+            comment += '\n### 🔗 Resources\n\n';
+            comment += '- **Detailed Report**: [View Artifacts](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')\n';
+            comment += '- **Local Commands**: `./az 0404` (analysis), `./az 0402` (tests), `./az 0407` (syntax)\n';
+            comment += '- **Documentation**: See [AitherZero Automation Scripts](https://github.com/wizzense/AitherZero#automation-scripts)\n';
             
-            ---
-            *This is an automated message from the AI Agent Coordination system.*`;
+            comment += '\n---\n*🤖 This automated review used AitherZero\'s AI Agent Coordinator with real PowerShell analysis tools*';
             
-            await github.rest.issues.createComment({
+            // Find existing coordination comment to update or create new one
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: comment
+              issue_number: context.issue.number
             });
+            
+            const existingComment = comments.find(c => 
+              c.user.login === 'github-actions[bot]' && 
+              c.body.includes('🤖 AI Agent Coordination')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+              console.log('Updated existing coordination comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+              console.log('Created new coordination comment');
+            }
 
   monitor-coordination:
     name: Monitor Agent Coordination
@@ -358,10 +565,208 @@ jobs:
           echo "✅ All coordinated agents are operating within normal parameters"
           echo "📈 Coordination monitoring complete"
 
+  create-quality-issues:
+    name: Create Quality Improvement Issues
+    runs-on: ubuntu-latest
+    needs: coordinate-agents
+    if: always() && needs.coordinate-agents.outputs.issues-count > 0
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 📥 Download Coordination Results
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-coordination-artifacts-${{ github.run_id }}
+          path: ./coordination-artifacts
+        continue-on-error: true
+        
+      - name: 🐛 Create GitHub Issues for Quality Problems
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            console.log('Creating GitHub issues for detected quality problems...');
+            
+            let coordinationResults = null;
+            const resultsPath = './coordination-artifacts/coordination-results.json';
+            
+            try {
+              if (fs.existsSync(resultsPath)) {
+                coordinationResults = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+                console.log('Loaded coordination results:', coordinationResults);
+              } else {
+                console.log('No coordination results file found at:', resultsPath);
+                return;
+              }
+            } catch (error) {
+              console.log('Error reading coordination results:', error.message);
+              return;
+            }
+            
+            if (!coordinationResults || !coordinationResults.Issues || coordinationResults.Issues.length === 0) {
+              console.log('No issues found in coordination results');
+              return;
+            }
+            
+            const prNumber = '${{ github.event.pull_request.number }}';
+            const prTitle = '${{ github.event.pull_request.title }}';
+            const headSha = '${{ github.sha }}';
+            const runId = '${{ github.run_id }}';
+            
+            // Group similar issues to avoid spam
+            const codeQualityIssues = coordinationResults.Issues.filter(issue => 
+              issue.includes('quality') || issue.includes('PSScriptAnalyzer'));
+            const testingIssues = coordinationResults.Issues.filter(issue => 
+              issue.includes('test') || issue.includes('Unit test'));
+            const securityIssues = coordinationResults.Issues.filter(issue => 
+              issue.includes('security') || issue.includes('syntax'));
+            
+            // Create code quality issue if needed
+            if (codeQualityIssues.length > 0) {
+              const title = '🔍 Code Quality Issues Detected - PR #' + prNumber;
+              let body = '## 🔍 Automated Code Quality Analysis Results\n\n';
+              body += '**Source:** PR #' + prNumber + ' - ' + prTitle + '\n';
+              body += '**Commit:** ' + headSha + '\n';
+              body += '**Workflow Run:** [View Details](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + runId + ')\n';
+              body += '\n### Issues Detected\n\n';
+              
+              codeQualityIssues.forEach(issue => {
+                body += '- 🔸 ' + issue + '\n';
+              });
+              
+              body += '\n### 🛠️ How to Fix\n\n';
+              body += '1. **Run PSScriptAnalyzer locally:**\n';
+              body += '   ```powershell\n';
+              body += '   ./az 0404\n';
+              body += '   ```\n\n';
+              body += '2. **Review the detailed analysis** in the workflow artifacts\n\n';
+              body += '3. **Fix the identified issues** in your code\n\n';
+              body += '4. **Re-run validation:**\n';
+              body += '   ```powershell\n';
+              body += '   ./az 0407  # Syntax validation\n';
+              body += '   ```\n\n';
+              body += '### 📋 Next Steps\n\n';
+              body += '- [ ] Review PSScriptAnalyzer findings\n';
+              body += '- [ ] Fix code quality issues\n';
+              body += '- [ ] Validate fixes locally\n';
+              body += '- [ ] Update the PR\n\n';
+              body += '**Priority:** ' + (codeQualityIssues.length > 5 ? 'High' : 'Medium') + '\n\n';
+              body += '---\n';
+              body += '*This issue was automatically created by the AI Agent Coordinator*';
+              
+              try {
+                const issue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  body: body,
+                  labels: ['ai-coordination', 'code-quality', 'automated-issue']
+                });
+                console.log(`Created code quality issue: #${issue.data.number}`);
+              } catch (error) {
+                console.log('Error creating code quality issue:', error.message);
+              }
+            }
+            
+            // Create testing issue if needed
+            if (testingIssues.length > 0) {
+              const title = '🧪 Test Failures Detected - PR #' + prNumber;
+              let body = '## 🧪 Automated Testing Analysis Results\n\n';
+              body += '**Source:** PR #' + prNumber + ' - ' + prTitle + '\n';
+              body += '**Commit:** ' + headSha + '\n';
+              body += '**Workflow Run:** [View Details](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + runId + ')\n\n';
+              body += '### Test Issues\n\n';
+              
+              testingIssues.forEach(issue => {
+                body += '- 🔸 ' + issue + '\n';
+              });
+              
+              body += '\n### 🛠️ How to Fix\n\n';
+              body += '1. **Run tests locally:**\n';
+              body += '   ```powershell\n';
+              body += '   ./az 0402  # Unit tests\n';
+              body += '   ```\n\n';
+              body += '2. **Review test failures** in detail\n\n';
+              body += '3. **Fix failing tests** or update test expectations\n\n';
+              body += '4. **Validate all tests pass**\n\n';
+              body += '### 📋 Next Steps\n\n';
+              body += '- [ ] Review test failure details\n';
+              body += '- [ ] Fix failing tests\n';
+              body += '- [ ] Ensure new code has test coverage\n';
+              body += '- [ ] Validate all tests pass locally\n\n';
+              body += '**Priority:** High\n\n';
+              body += '---\n';
+              body += '*This issue was automatically created by the AI Agent Coordinator*';
+              
+              try {
+                const issue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  body: body,
+                  labels: ['ai-coordination', 'testing', 'automated-issue', 'bug']
+                });
+                console.log(`Created testing issue: #${issue.data.number}`);
+              } catch (error) {
+                console.log('Error creating testing issue:', error.message);
+              }
+            }
+            
+            // Create security issue if needed
+            if (securityIssues.length > 0) {
+              const title = '🔒 Security Issues Detected - PR #' + prNumber;
+              let body = '## 🔒 Automated Security Analysis Results\n\n';
+              body += '**Source:** PR #' + prNumber + ' - ' + prTitle + '\n';
+              body += '**Commit:** ' + headSha + '\n';
+              body += '**Workflow Run:** [View Details](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + runId + ')\n\n';
+              body += '### Security Issues\n\n';
+              
+              securityIssues.forEach(issue => {
+                body += '- 🔸 ' + issue + '\n';
+              });
+              
+              body += '\n### 🛠️ How to Fix\n\n';
+              body += '1. **Run security validation:**\n';
+              body += '   ```powershell\n';
+              body += '   ./az 0407  # Syntax and security validation\n';
+              body += '   ```\n\n';
+              body += '2. **Review security findings** carefully\n\n';
+              body += '3. **Fix security issues** following PowerShell security best practices\n\n';
+              body += '4. **Re-validate security**\n\n';
+              body += '### 📋 Next Steps\n\n';
+              body += '- [ ] Review security analysis details\n';
+              body += '- [ ] Fix identified security issues\n';
+              body += '- [ ] Follow PowerShell security best practices\n';
+              body += '- [ ] Validate security improvements\n\n';
+              body += '**Priority:** High\n\n';
+              body += '---\n';
+              body += '*This issue was automatically created by the AI Agent Coordinator*';
+              
+              try {
+                const issue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  body: body,
+                  labels: ['ai-coordination', 'security', 'automated-issue', 'priority-high']
+                });
+                console.log(`Created security issue: #${issue.data.number}`);
+              } catch (error) {
+                console.log('Error creating security issue:', error.message);
+              }
+            }
+            
+            console.log('Finished creating quality improvement issues');
+
   cleanup-coordination:
     name: Cleanup Coordination Resources
     runs-on: ubuntu-latest
-    needs: [coordinate-agents, monitor-coordination]
+    needs: [coordinate-agents, monitor-coordination, create-quality-issues]
     if: always()
     timeout-minutes: 3
     

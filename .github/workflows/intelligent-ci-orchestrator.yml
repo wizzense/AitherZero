@@ -416,6 +416,77 @@ jobs:
           Write-Host "📊 CI Summary:" -ForegroundColor Green
           Write-Host $summaryJson
           
+      - name: 🤖 Trigger AI Agent Coordination
+        if: github.event_name == 'pull_request' && (needs.core-validation.result == 'failure' || needs.comprehensive-tests.result == 'failure')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('Triggering AI Agent Coordinator due to CI issues...');
+            
+            // Determine priority based on failure severity
+            let priority = 'normal';
+            const coreValidationFailed = '${{ needs.core-validation.result }}' === 'failure';
+            const testsFailed = '${{ needs.comprehensive-tests.result }}' === 'failure';
+            
+            if (coreValidationFailed && testsFailed) {
+              priority = 'high';
+            } else if (coreValidationFailed || testsFailed) {
+              priority = 'normal';
+            }
+            
+            // Determine agent type based on what failed
+            let agentType = 'code-review';
+            if (testsFailed && !coreValidationFailed) {
+              agentType = 'testing';
+            }
+            
+            console.log(`AI Agent coordination will be triggered with priority: ${priority}, agent type: ${agentType}`);
+            
+            try {
+              // Trigger the AI Agent Coordinator workflow
+              const response = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'ai-agent-coordinator.yml',
+                ref: context.ref,
+                inputs: {
+                  priority: priority,
+                  agent_type: agentType,
+                  target_branch: context.ref.replace('refs/heads/', '')
+                }
+              });
+              
+              console.log('✅ AI Agent Coordinator workflow triggered successfully');
+              
+              // Add a comment to the PR about the coordination
+              if (context.payload.pull_request) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `## 🤖 AI Agent Coordination Triggered
+
+The Intelligent CI detected issues and has automatically triggered the AI Agent Coordinator for advanced analysis and issue resolution.
+
+**Priority Level:** ${priority}
+**Focus Area:** ${agentType === 'testing' ? 'Test Failures' : 'Code Quality Issues'}
+
+The AI Agent Coordinator will:
+- Run detailed analysis of the detected issues
+- Create specific GitHub issues for problems found
+- Provide actionable recommendations for fixes
+
+📊 [View CI Results](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+
+---
+*This coordination was automatically triggered by the Intelligent CI Orchestrator*`
+                });
+              }
+            } catch (error) {
+              console.log('⚠️ Could not trigger AI Agent Coordinator:', error.message);
+              // Don't fail the workflow if coordination fails
+            }
+          
       - name: 📊 Upload CI Summary
         uses: actions/upload-artifact@v4
         with:
