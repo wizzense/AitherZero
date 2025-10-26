@@ -331,7 +331,7 @@ jobs:
             tests/reports/
           retention-days: 30
 
-  # Multi-platform validation - only for main/develop branches or when explicitly requested
+  # Multi-platform validation - for main/develop/copilot branches or when explicitly requested
   cross-platform:
     name: 🌍 Cross-Platform (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
