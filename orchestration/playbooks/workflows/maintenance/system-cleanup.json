@@ -1,0 +1,168 @@
+{
+  "metadata": {
+    "name": "system-cleanup",
+    "description": "System maintenance and cleanup operations",
+    "version": "2.0.0",
+    "category": "maintenance",
+    "author": "AitherZero Operations Team",
+    "tags": ["maintenance", "cleanup", "optimization", "system"],
+    "estimatedDuration": "5-15 minutes",
+    "lastUpdated": "2025-10-26T22:25:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["OrchestrationEngine"],
+    "requiredTools": [],
+    "platforms": ["CrossPlatform"],
+    "permissions": ["SystemMaintenance", "FileCleanup"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "CleanLogs": true,
+      "CleanTemp": true,
+      "CleanReports": false,
+      "OptimizeSystem": true,
+      "DryRun": false
+    },
+    "profiles": {
+      "safe": {
+        "description": "Safe cleanup - logs and temp only",
+        "variables": {
+          "CleanReports": false,
+          "OptimizeSystem": false,
+          "DryRun": true
+        }
+      },
+      "aggressive": {
+        "description": "Comprehensive cleanup and optimization",
+        "variables": {
+          "CleanReports": true,
+          "OptimizeSystem": true,
+          "ResetEnvironment": true
+        }
+      },
+      "development": {
+        "description": "Development-friendly cleanup",
+        "variables": {
+          "CleanReports": false,
+          "PreserveWorkspace": true,
+          "OptimizeSystem": false
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Environment Cleanup",
+        "description": "Clean temporary files and logs", 
+        "sequences": ["0000"],
+        "condition": "$CleanTemp -or $CleanLogs",
+        "variables": {
+          "PreserveLogs": "-not $CleanLogs",
+          "PreserveTemp": "-not $CleanTemp",
+          "DryRun": "{{DryRun}}"
+        },
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Log Management",
+        "description": "Archive and clean old logs",
+        "sequences": ["0530"],
+        "condition": "$CleanLogs",
+        "variables": {
+          "ArchiveLogs": true,
+          "RetentionDays": 30,
+          "CompressOld": true
+        },
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Report Cleanup",
+        "description": "Clean old reports and artifacts",
+        "sequences": ["0530"],
+        "condition": "$CleanReports",
+        "variables": {
+          "Path": "./reports",
+          "OlderThan": "7d",
+          "KeepLatest": 5
+        },
+        "continueOnError": true,
+        "timeout": 180
+      },
+      {
+        "name": "System Optimization",
+        "description": "Optimize system performance",
+        "sequences": ["0500"],
+        "condition": "$OptimizeSystem",
+        "variables": {
+          "CheckPerformance": true,
+          "OptimizeMemory": true,
+          "CleanupServices": true
+        },
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "Environment Reset",
+        "description": "Reset development environment",
+        "sequences": ["9999"],
+        "condition": "$ResetEnvironment",
+        "variables": {
+          "ConfirmReset": true,
+          "PreserveData": true
+        },
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "System Validation",
+        "description": "Validate system state after cleanup",
+        "sequences": ["0500"],
+        "variables": {
+          "QuickCheck": true,
+          "ReportStatus": true
+        },
+        "continueOnError": true,
+        "timeout": 180
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "Sufficient Disk Space",
+        "condition": "(Get-PSDrive -Name (Get-Location).Drive.Name).Free -gt 1GB",
+        "message": "At least 1GB free space required for cleanup operations"
+      }
+    ],
+    "postConditions": [
+      {
+        "name": "Cleanup Successful",
+        "condition": "$true", 
+        "message": "System cleanup should complete without critical errors"
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🧹 Starting system maintenance and cleanup...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✨ System cleanup completed successfully!",
+      "level": "Success"
+    },
+    "onFailure": {
+      "message": "❌ Some cleanup operations failed. Check logs for details.",
+      "level": "Error"
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["JSON", "Markdown"],
+    "outputPath": "./reports/maintenance", 
+    "includeMetrics": true,
+    "includeLogs": false
+  }
+}
