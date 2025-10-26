@@ -44,7 +44,7 @@ function Show-BetterMenu {
     if (-not $isNonInteractive) {
         try {
             # Test if we can read keys and have a proper console
-            if ($host.UI -and $host.UI.RawUI -and $host.UI.RawUI.KeyAvailable -ne $null) {
+            if ($host.UI -and $host.UI.RawUI -and $null -ne $host.UI.RawUI.KeyAvailable) {
                 $canUseInteractive = $true
             }
         } catch {
@@ -95,7 +95,11 @@ function Show-BetterMenu {
             $index = [int]$selection - 1
             if ($index -ge 0 -and $index -lt $Items.Count) {
                 return $Items[$index]
+            } else {
+                Write-Host "Invalid selection. Please choose a number between 1 and $($Items.Count)." -ForegroundColor Red
             }
+        } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
+            Write-Host "Invalid input '$selection'. Please enter a number." -ForegroundColor Red
         }
 
         return $null
@@ -386,7 +390,10 @@ function Show-BetterMenu {
                                 # Not a digit, process single digit
                             }
                         }
-                    } catch {}
+                    } catch {
+                        # Error parsing number input - continue with menu
+                        Write-Verbose "Error parsing number input: $_"
+                    }
 
                     if (-not [string]::IsNullOrEmpty($number)) {
                         $parsedNumber = 0
