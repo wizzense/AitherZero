@@ -219,8 +219,11 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
         BeforeEach {
             Import-Module $script:RootModule -Force -DisableNameChecking
 
-            # Setup mock automation scripts
+            # Setup mock automation scripts with clean directory
             $script:MockScriptPath = Join-Path $TestDrive "automation-scripts"
+            if (Test-Path $script:MockScriptPath) {
+                Remove-Item $script:MockScriptPath -Recurse -Force
+            }
             New-Item -ItemType Directory -Path $script:MockScriptPath -Force
 
             # Override the environment variable for testing
@@ -242,11 +245,13 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
         }
 
         It "Should handle script not found gracefully" {
-            # Capture the error output instead of mocking
-            $errorOutput = Invoke-AitherScript -ScriptNumber "9999" 2>&1
+            # Use a script number that truly doesn't exist (8888 is not used in the real automation-scripts)
+            $errorOutput = Invoke-AitherScript -ScriptNumber "8888" 2>&1
 
             # Should produce an error about no script found
             $errorOutput | Should -Not -BeNullOrEmpty
+            # The error should contain information about the pattern not being found
+            $errorOutput | Should -BeLike "*No script found matching pattern*8888*.ps1*"
         }
 
         It "Should handle multiple matching scripts" {
