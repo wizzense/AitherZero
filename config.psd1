@@ -879,6 +879,94 @@
         EnableMFA = $false
         MaxLoginAttempts = 3
         SessionTimeout = 3600
+        
+        # SSH Configuration
+        SSH = @{
+            Enabled = $true
+            DefaultKeyType = 'ed25519'
+            DefaultKeySize = 4096
+            ConnectionTimeout = 30
+            MaxRetries = 3
+            StrictHostKeyChecking = $false
+            UseAgent = $true
+            
+            # Default SSH options applied to all connections
+            DefaultOptions = @{
+                'ServerAliveInterval' = '60'
+                'ServerAliveCountMax' = '3'
+                'TCPKeepAlive' = 'yes'
+                'Compression' = 'yes'
+            }
+            
+            # Connection profiles for common environments
+            Profiles = @{
+                'dev' = @{
+                    Description = 'Development environment template'
+                    Port = 22
+                    Username = 'admin'
+                    SSHKeyName = 'aitherzero-dev'
+                }
+                'prod' = @{
+                    Description = 'Production environment template'
+                    Port = 22
+                    Username = 'aitherzero'
+                    SSHKeyName = 'aitherzero-prod'
+                    RequireSecureTransport = $true
+                }
+            }
+        }
+        
+        # Remote deployment settings
+        RemoteDeployment = @{
+            Enabled = $true
+            DefaultWorkingDirectory = '/tmp/aitherzero'
+            CleanupAfterExecution = $true
+            MaxConcurrentConnections = 5
+            ProgressReporting = $true
+            
+            # Script deployment settings
+            ScriptDeployment = @{
+                RemoteDirectory = '/tmp/aitherzero/scripts'
+                MakeExecutable = $true
+                BackupExisting = $false
+                ValidateBeforeExecution = $true
+            }
+            
+            # Infrastructure deployment settings  
+            InfrastructureDeployment = @{
+                RemoteDirectory = '/tmp/aitherzero/infrastructure'
+                RequireApproval = $true
+                DryRunFirst = $true
+                RollbackOnFailure = $true
+                MaxExecutionTime = 3600
+            }
+        }
+        
+        # Credential management
+        CredentialManagement = @{
+            AutoStore = $true
+            EncryptStorage = $true
+            UseOSKeystore = $true
+            BackupCredentials = $false
+            CredentialTimeout = 3600
+            
+            # Platform-specific settings
+            Windows = @{
+                UseCredentialManager = $true
+                CredentialType = 'Generic'
+                Persist = 'LocalMachine'
+            }
+            macOS = @{
+                UseKeychain = $true
+                KeychainName = 'login'
+                AccessGroup = ''
+            }
+            Linux = @{
+                UseSecretService = $true
+                FallbackToGnomeKeyring = $true
+                FallbackToKwallet = $true
+            }
+        }
     }
     
     # ===================================================================

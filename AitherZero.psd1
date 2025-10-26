@@ -51,6 +51,11 @@
         'Initialize-DocumentationEngine', 'New-ModuleDocumentation', 'New-ProjectDocumentation',
         'Test-DocumentationQuality', 'Get-DocumentationCoverage',
 
+        # From Security
+        'Initialize-SecurityModule', 'Test-SSHAvailability', 'New-SSHKeyPair', 'Get-SSHKey', 'Remove-SSHKey',
+        'Set-SecureCredential', 'Get-SecureCredential', 'New-ConnectionProfile', 'Get-ConnectionProfile',
+        'Remove-ConnectionProfile', 'Test-SSHConnection', 'Invoke-SSHCommand', 'Copy-FileToRemote', 'Invoke-RemoteScript',
+
         # Wildcard for any additional functions
         '*'
     )
