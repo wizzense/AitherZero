@@ -67,7 +67,7 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0  # Need full history for accurate change detection
           
       - name: 🔍 Intelligent Change Analysis
         id: detect
@@ -81,12 +81,27 @@ jobs:
           $needsPerformanceTests = $false
           $changedAreas = @()
           
-          # Get changed files
-          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
-            $changedFiles = git diff --name-only origin/$env:GITHUB_BASE_REF..HEAD
-          } else {
-            $changedFiles = git diff --name-only HEAD~1
+          # Get changed files with error handling
+          $changedFiles = @()
+          try {
+            if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+              # For pull requests, compare with the base branch
+              $changedFiles = git diff --name-only $env:GITHUB_BASE_REF...HEAD 2>$null
+              if ($LASTEXITCODE -ne 0) {
+                # Fallback: use GitHub's files API approach
+                $changedFiles = git diff --name-only HEAD~1..HEAD 2>$null
+              }
+            } else {
+              # For push events, compare with previous commit
+              $changedFiles = git diff --name-only HEAD~1..HEAD 2>$null
+            }
+          } catch {
+            Write-Host "⚠️ Git diff failed, assuming all files changed for safety" -ForegroundColor Yellow
+            $changedFiles = @('**/*')  # Trigger full validation as fallback
           }
+          
+          # Ensure we have an array
+          if (-not $changedFiles) { $changedFiles = @() }
           
           Write-Host "📋 Changed files detected:" -ForegroundColor Cyan
           $changedFiles | ForEach-Object { Write-Host "  • $_" }
@@ -137,7 +152,7 @@ jobs:
           }
           
           # Force full analysis if requested
-          if ($env:GITHUB_EVENT_INPUTS_FORCE_FULL_ANALYSIS -eq 'true') {
+          if ('${{ github.event.inputs.force_full_analysis }}' -eq 'true') {
             $needsCoreValidation = $true
             $needsSecurityScan = $true
             $needsFullTests = $true

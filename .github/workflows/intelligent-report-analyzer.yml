@@ -45,8 +45,10 @@ jobs:
         
       - name: 📊 Download Latest Reports
         if: github.event.workflow_run
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v6
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_id: ${{ github.event.workflow_run.id }}
           name: core-analysis-results
           path: ./latest-reports
         continue-on-error: true
