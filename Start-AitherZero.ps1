@@ -565,7 +565,7 @@ function Invoke-PlaybookMenu {
             Write-Host "ERROR: $($_.Exception)" -ForegroundColor Red
         }
     } else {
-        Show-UINotification -Message "No playbook selected" -Type 'Info'
+        Show-UINotification -Message "No playbook selected" -Type 'Warning'
     }
 
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
