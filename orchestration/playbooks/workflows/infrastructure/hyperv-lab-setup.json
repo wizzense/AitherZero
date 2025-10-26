@@ -1,0 +1,178 @@
+{
+  "metadata": {
+    "name": "hyperv-lab-setup", 
+    "description": "Complete Hyper-V lab infrastructure with networking and VMs",
+    "version": "2.0.0",
+    "category": "infrastructure",
+    "author": "AitherZero Infrastructure Team",
+    "tags": ["hyperv", "virtualization", "lab", "infrastructure", "windows"],
+    "estimatedDuration": "20-45 minutes",
+    "lastUpdated": "2025-10-26T22:25:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Infrastructure", "Hyper-V"],
+    "requiredTools": [],
+    "platforms": ["Windows"],
+    "permissions": ["Administrator", "HyperVAdmin"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "VMMPath": "C:\\VMs",
+      "SwitchName": "AitherLab",
+      "NetworkSubnet": "192.168.100.0/24", 
+      "CreateDomain": false,
+      "InstallWSL": true
+    },
+    "profiles": {
+      "minimal": {
+        "description": "Basic Hyper-V setup without VMs",
+        "variables": {
+          "CreateVMs": false,
+          "InstallWSL": false
+        }
+      },
+      "full-lab": {
+        "description": "Complete lab with domain controller",
+        "variables": {
+          "CreateDomain": true,
+          "CreateVMs": true,
+          "VMCount": 3
+        }
+      },
+      "dev-lab": {
+        "description": "Development-focused lab setup",
+        "variables": {
+          "CreateVMs": true,
+          "VMCount": 2,
+          "InstallVSCode": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "System Prerequisites",
+        "description": "Prepare Windows system for virtualization",
+        "sequences": ["0100"],
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Hyper-V Installation",
+        "description": "Install and configure Hyper-V role",
+        "sequences": ["0105"],
+        "continueOnError": false,
+        "timeout": 900,
+        "retries": 1
+      },
+      {
+        "name": "WSL2 Setup",
+        "description": "Install WSL2 for Linux development",
+        "sequences": ["0106"],
+        "condition": "$InstallWSL",
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "Certificate Authority",
+        "description": "Set up internal certificate authority",
+        "sequences": ["0104"],
+        "condition": "$CreateDomain",
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "Network Configuration",
+        "description": "Configure virtual switches and networking",
+        "sequences": ["0112"],
+        "variables": {
+          "SwitchName": "{{SwitchName}}",
+          "NetworkType": "Private",
+          "EnablePXE": true
+        },
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Infrastructure Deployment",
+        "description": "Deploy VMs and infrastructure components",
+        "sequences": ["0300"],
+        "condition": "$CreateVMs",
+        "variables": {
+          "VMPath": "{{VMMPath}}",
+          "Network": "{{NetworkSubnet}}",
+          "Count": "{{VMCount:=2}}"
+        },
+        "continueOnError": true,
+        "timeout": 1800
+      },
+      {
+        "name": "Environment Validation",
+        "description": "Validate infrastructure deployment",
+        "sequences": ["0500"],
+        "variables": {
+          "CheckHyperV": true,
+          "CheckNetworking": true,
+          "CheckVMs": "{{CreateVMs:=false}}"
+        },
+        "continueOnError": true,
+        "timeout": 300
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "Windows Platform",
+        "condition": "$IsWindows",
+        "message": "Hyper-V is only available on Windows"
+      },
+      {
+        "name": "Administrator Rights",
+        "condition": "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
+        "message": "Administrator privileges are required for Hyper-V setup"
+      },
+      {
+        "name": "Hyper-V Support",
+        "condition": "(Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V).State -eq 'Enabled' -or (Get-WindowsFeature -Name Hyper-V -ErrorAction SilentlyContinue).InstallState -ne 'Installed'",
+        "message": "System must support Hyper-V virtualization"
+      }
+    ],
+    "postConditions": [
+      {
+        "name": "Hyper-V Installed",
+        "condition": "Get-WindowsFeature -Name Hyper-V | Where-Object InstallState -eq 'Installed'",
+        "message": "Hyper-V should be installed and enabled"
+      },
+      {
+        "name": "Virtual Switch Created", 
+        "condition": "Get-VMSwitch -Name '{{SwitchName}}' -ErrorAction SilentlyContinue",
+        "message": "Virtual switch should be created"
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🏗️ Starting Hyper-V lab infrastructure setup...",
+      "level": "Information",
+      "channels": ["console", "log"]
+    },
+    "onSuccess": {
+      "message": "🎉 Hyper-V lab infrastructure is ready! You can now create and manage VMs.",
+      "level": "Success",
+      "channels": ["console", "log"]
+    },
+    "onFailure": {
+      "message": "💥 Infrastructure setup failed. System may require restart.",
+      "level": "Error",
+      "channels": ["console", "log"]
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "Markdown"],
+    "outputPath": "./reports/infrastructure",
+    "includeMetrics": true,
+    "includeLogs": true
+  }
+}
