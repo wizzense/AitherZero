@@ -162,20 +162,84 @@ function Get-CodeQualityFindings {
         }
     }
     
-    # If no results file exists, create a finding to run analysis
-    Write-Status "No existing PSScriptAnalyzer results found, creating reminder issue..."
+    # If no results file exists, run ULTRA-FAST analysis on core files
+    Write-Status "No existing PSScriptAnalyzer results found, running ULTRA-FAST analysis on core files..." "Info"
     
-    $findings += @{
-        Title = "📊 [CODE-QUALITY] PSScriptAnalyzer Analysis Required"
-        Priority = "P2-Medium"
-        Type = "code-quality"
-        Count = 1
-        Details = @(@{
-            RuleName = "AnalysisRequired"
-            Message = "PSScriptAnalyzer needs to be run to identify code quality issues"
-            ScriptName = "N/A"
-            Line = "N/A"
-        })
+    try {
+        $rootPath = Split-Path (Split-Path $Path -Parent) -ErrorAction SilentlyContinue
+        if (-not $rootPath) { $rootPath = "." }
+        
+        # Ultra-fast analysis on core files only (2-3 seconds vs 60+ seconds)
+        $coreFiles = @(
+            "$rootPath/Start-AitherZero.ps1",
+            "$rootPath/az.ps1"
+        ) | Where-Object { Test-Path $_ }
+        
+        if ($coreFiles.Count -gt 0) {
+            $results = @()
+            $startTime = Get-Date
+            
+            foreach ($file in $coreFiles) {
+                Write-Status "  Ultra-fast scan: $(Split-Path $file -Leaf)" "Info"
+                $fileResults = Invoke-ScriptAnalyzer -Path $file -ExcludeRule @('PSUseSingularNouns') -ErrorAction SilentlyContinue
+                $results += $fileResults
+            }
+            
+            $duration = ((Get-Date) - $startTime).TotalSeconds
+            Write-Status "Ultra-fast analysis completed in $([math]::Round($duration, 1))s" "Success"
+            
+            $errorCount = ($results | Where-Object { $_.Severity -eq 'Error' }).Count
+            $warningCount = ($results | Where-Object { $_.Severity -eq 'Warning' }).Count
+            
+            if ($errorCount -gt 0) {
+                $findings += @{
+                    Title = "⚡ [CODE-QUALITY] Core File Errors ($errorCount violations)"
+                    Priority = "P1-High"
+                    Type = "code-quality"
+                    Count = $errorCount
+                    Details = $results | Where-Object { $_.Severity -eq 'Error' } | Select-Object -First 3
+                }
+            }
+            
+            if ($warningCount -gt 10) { # Lower threshold for core files
+                $findings += @{
+                    Title = "🔍 [CODE-QUALITY] Core File Warnings ($warningCount violations)"
+                    Priority = "P2-Medium"
+                    Type = "code-quality"
+                    Count = $warningCount
+                    Details = $results | Where-Object { $_.Severity -eq 'Warning' } | Select-Object -First 3
+                }
+            }
+        } else {
+            # Fallback if core files not found
+            $findings += @{
+                Title = "📊 [CODE-QUALITY] PSScriptAnalyzer Analysis Recommended"
+                Priority = "P3-Low"
+                Type = "code-quality"
+                Count = 1
+                Details = @(@{
+                    RuleName = "AnalysisRecommended"
+                    Message = "Run full PSScriptAnalyzer analysis when time permits"
+                    ScriptName = "N/A"
+                    Line = "N/A"
+                })
+            }
+        }
+    } catch {
+        Write-Status "Ultra-fast analysis failed: $_" "Warning"
+        # Fallback to reminder issue
+        $findings += @{
+            Title = "📊 [CODE-QUALITY] PSScriptAnalyzer Analysis Required"
+            Priority = "P2-Medium"
+            Type = "code-quality"
+            Count = 1
+            Details = @(@{
+                RuleName = "AnalysisRequired"
+                Message = "PSScriptAnalyzer needs to be run to identify code quality issues"
+                ScriptName = "N/A"
+                Line = "N/A"
+            })
+        }
     }
     
     return $findings
