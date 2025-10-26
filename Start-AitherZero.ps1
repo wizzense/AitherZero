@@ -226,11 +226,52 @@ function Initialize-CoreModules {
 }
 
 # Load configuration
+# Helper function to convert PSObject to Hashtable
+function Convert-PSObjectToHashtable {
+    param($InputObject)
+    
+    if ($InputObject -is [hashtable]) {
+        return $InputObject
+    }
+    
+    $hashtable = @{}
+    if ($InputObject) {
+        foreach ($property in $InputObject.PSObject.Properties) {
+            if ($property.Value -is [PSCustomObject]) {
+                $hashtable[$property.Name] = Convert-PSObjectToHashtable $property.Value
+            } elseif ($property.Value -is [array]) {
+                $hashtable[$property.Name] = $property.Value | ForEach-Object {
+                    if ($_ -is [PSCustomObject]) {
+                        Convert-PSObjectToHashtable $_
+                    } else {
+                        $_
+                    }
+                }
+            } else {
+                $hashtable[$property.Name] = $property.Value
+            }
+        }
+    }
+    return $hashtable
+}
+
 function Get-AitherConfiguration {
     param([string]$Path)
 
     if ($Path -and (Test-Path $Path)) {
         return Get-Content $Path -Raw | ConvertFrom-Json -AsHashtable
+    }
+
+    # Try both PSD1 and JSON formats
+    $psd1Path = Join-Path $script:ProjectRoot 'config.psd1'
+    if (Test-Path $psd1Path) {
+        try {
+            $configData = Import-PowerShellDataFile $psd1Path
+            # Convert to hashtable for compatibility
+            return Convert-PSObjectToHashtable $configData
+        } catch {
+            Write-Warning "Failed to load PSD1 config: $($_.Exception.Message)"
+        }
     }
 
     $defaultPath = Join-Path $script:ProjectRoot 'config.json'

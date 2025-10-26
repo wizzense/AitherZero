@@ -326,7 +326,7 @@ try {
                         # Split files into batches and process each batch together
                         for ($i = 0; $i -lt $totalFiles; $i += $batchSize) {
                             $endIndex = [Math]::Min($i + $batchSize - 1, $totalFiles - 1)
-                            $batch = $params.Path[$i..$endIndex]
+                            $batch = $params.Path[$i..$endIndex] | ForEach-Object { $_.ToString() }
                             
                             Write-Progress -Activity "Batch Analysis" -Status "Processing batch $([Math]::Ceiling(($i + 1) / $batchSize)) of $([Math]::Ceiling($totalFiles / $batchSize))" -PercentComplete (($i / $totalFiles) * 100)
                             
@@ -341,7 +341,20 @@ try {
                             $batchParams['Recurse'] = $false  # Files are already specified
                             
                             try {
-                                $batchResults = Invoke-ScriptAnalyzer @batchParams -ErrorAction SilentlyContinue
+                                # Process each file individually if batch fails with array conversion
+                                if ($batch.Count -eq 1) {
+                                    $batchResults = Invoke-ScriptAnalyzer @batchParams -ErrorAction SilentlyContinue
+                                } else {
+                                    $batchResults = @()
+                                    foreach ($file in $batch) {
+                                        $fileParams = $batchParams.Clone()
+                                        $fileParams['Path'] = $file
+                                        $fileResult = Invoke-ScriptAnalyzer @fileParams -ErrorAction SilentlyContinue
+                                        if ($fileResult) {
+                                            $batchResults += $fileResult
+                                        }
+                                    }
+                                }
                                 if ($batchResults) {
                                     $allResults += $batchResults
                                 }
@@ -351,9 +364,28 @@ try {
                         }
                         return $allResults
                     } elseif ($params.Path -is [array] -and $params.Path.Count -gt 1) {
-                        # Use direct array processing for smaller sets
-                        $params['Recurse'] = $false  # Files are already specified
-                        return Invoke-ScriptAnalyzer @params
+                        # Use individual file processing for smaller sets to avoid array conversion issues
+                        $allResults = @()
+                        foreach ($file in $params.Path) {
+                            $fileParams = @{}
+                            foreach ($key in $params.Keys) {
+                                if ($key -ne 'Path') {
+                                    $fileParams[$key] = $params[$key]
+                                }
+                            }
+                            $fileParams['Path'] = $file.ToString()
+                            $fileParams['Recurse'] = $false
+                            
+                            try {
+                                $fileResult = Invoke-ScriptAnalyzer @fileParams -ErrorAction SilentlyContinue
+                                if ($fileResult) {
+                                    $allResults += $fileResult
+                                }
+                            } catch {
+                                Write-Warning "Failed to analyze file $file: $($_.Exception.Message)"
+                            }
+                        }
+                        return $allResults
                     } else {
                         return Invoke-ScriptAnalyzer @params
                     }
