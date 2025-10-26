@@ -93,16 +93,23 @@ jobs:
             Write-Host "❌ Start-AitherZero.ps1 not found" -ForegroundColor Red
           }
           
-          # Test basic orchestration (if available)
+          # Test actual syntax validation
           if (Test-Path $startScript) {
-            Write-Host "Testing basic orchestration..." -ForegroundColor Yellow
+            Write-Host "Testing syntax validation..." -ForegroundColor Yellow
             try {
-              # Just test help/version, don't run full validation yet
-              & pwsh -Command "Get-Help '$startScript' -ErrorAction SilentlyContinue" 2>$null
-              Write-Host "✅ Basic script execution test passed" -ForegroundColor Green
+              & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
+              $exitCode = $LASTEXITCODE
+              Write-Host "Exit code: $exitCode" -ForegroundColor Yellow
+              if ($exitCode -eq 0) {
+                Write-Host "✅ Syntax validation passed!" -ForegroundColor Green
+              } else {
+                Write-Host "❌ Syntax validation failed with exit code: $exitCode" -ForegroundColor Red
+                exit 1
+              }
             } catch {
-              Write-Host "⚠️ Script execution test failed: $_" -ForegroundColor Yellow
+              Write-Host "❌ Script execution failed: $_" -ForegroundColor Red
+              exit 1
             }
           }
           
-          Write-Host "✅ Basic validation test completed!" -ForegroundColor Green
+          Write-Host "✅ All tests completed successfully!" -ForegroundColor Green

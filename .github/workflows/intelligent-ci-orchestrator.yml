@@ -189,9 +189,16 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Running quick syntax validation..." -ForegroundColor Cyan
-          $result = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Syntax validation failed"
+          try {
+            & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
+            $exitCode = $LASTEXITCODE
+            Write-Host "✅ Syntax validation completed with exit code: $exitCode" -ForegroundColor Green
+            if ($exitCode -ne 0) {
+              Write-Error "Syntax validation failed with exit code: $exitCode"
+              exit $exitCode
+            }
+          } catch {
+            Write-Error "Syntax validation failed with exception: $($_.Exception.Message)"
             exit 1
           }
 
