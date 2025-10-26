@@ -928,7 +928,24 @@
         MaxFileSize = '10MB'
         RetentionDays = 30
         Targets = @('Console', 'File')
-        
+
+        # Separate log files by level
+        # Each log level writes to its own file for easier filtering and analysis
+        # Files: errors-YYYY-MM-DD.log, warnings-YYYY-MM-DD.log, critical-YYYY-MM-DD.log,
+        #        debug-YYYY-MM-DD.log, trace-YYYY-MM-DD.log, aitherzero-YYYY-MM-DD.log (all levels)
+        SeparateLogFiles = $true
+
+        # Centralized logging features
+        # Use Import-Module CentralizedLogging for simplified logging across all scripts
+        # Functions: Write-Log, Write-ErrorLog, Write-WarningLog, Write-InfoLog, etc.
+        CentralizedLogging = @{
+            Enabled = $true
+            AutoDetectSource = $true  # Automatically detect calling script/module
+            LogTestResults = $true    # Automatically log test results
+            LogCodeAnalysis = $true   # Automatically log code analysis results
+            LogOperations = $true     # Track operation start/stop with performance metrics
+        }
+
         # Audit logging
         AuditLogging = @{
             Enabled = $true

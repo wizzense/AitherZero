@@ -154,9 +154,19 @@ function Write-LogToFile {
         New-Item -ItemType Directory -Path $script:LogPath -Force | Out-Null
     }
 
+    # Create separate log files by level
+    $levelLogFiles = @{
+        'Error' = Join-Path $script:LogPath "errors-$(Get-Date -Format 'yyyy-MM-dd').log"
+        'Critical' = Join-Path $script:LogPath "critical-$(Get-Date -Format 'yyyy-MM-dd').log"
+        'Warning' = Join-Path $script:LogPath "warnings-$(Get-Date -Format 'yyyy-MM-dd').log"
+        'Debug' = Join-Path $script:LogPath "debug-$(Get-Date -Format 'yyyy-MM-dd').log"
+        'Trace' = Join-Path $script:LogPath "trace-$(Get-Date -Format 'yyyy-MM-dd').log"
+    }
+
+    # Main combined log file
     $logFile = Join-Path $script:LogPath "aitherzero-$(Get-Date -Format 'yyyy-MM-dd').log"
 
-    # Check rotation
+    # Check rotation on main log file
     if ($script:LogRotation.Enabled) {
         Invoke-LogRotation -LogFile $logFile
     }
@@ -172,7 +182,14 @@ function Write-LogToFile {
         $logMessage += "`n  Exception: $($Entry.Exception)"
     }
 
+    # Write to main combined log
     Add-Content -Path $logFile -Value $logMessage
+
+    # Write to level-specific log file if applicable
+    if ($levelLogFiles.ContainsKey($Entry.Level)) {
+        $levelLogFile = $levelLogFiles[$Entry.Level]
+        Add-Content -Path $levelLogFile -Value $logMessage
+    }
 }
 
 # JSON logging
