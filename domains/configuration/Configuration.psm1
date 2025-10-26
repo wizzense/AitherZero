@@ -543,7 +543,6 @@ function Test-Configuration {
 # Helper function to convert object to PSD1 string using native PowerShell capabilities
 function ConvertTo-Psd1String {
     param(
-        [Parameter(Mandatory = $false)]
         $InputObject
     )
 
@@ -554,7 +553,8 @@ function ConvertTo-Psd1String {
     # Use PowerShell's native conversion capabilities
     # Convert to JSON first then parse back to create a clean structure
     try {
-        $json = $InputObject | ConvertTo-Json -Depth 20 -Compress
+        # Use depth of 10 to match the original function's MaxDepth parameter and prevent excessive nesting
+        $json = $InputObject | ConvertTo-Json -Depth 10 -Compress
         $cleanObject = $json | ConvertFrom-Json -AsHashtable
         
         # Now convert the clean hashtable to PSD1 format
@@ -587,7 +587,9 @@ function ConvertTo-Psd1Format {
     elseif ($InputObject -is [int] -or $InputObject -is [long] -or $InputObject -is [double]) {
         return $InputObject.ToString()
     }
-    elseif ($InputObject -is [array]) {
+    elseif ($InputObject -is [System.Collections.IEnumerable] -and 
+            -not ($InputObject -is [string]) -and 
+            -not ($InputObject -is [hashtable])) {
         if ($InputObject.Count -eq 0) {
             return '@()'
         }
