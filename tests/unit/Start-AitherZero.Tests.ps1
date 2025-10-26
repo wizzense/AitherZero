@@ -51,17 +51,14 @@ Describe "Start-AitherZero Script" -Tag 'Unit' {
         BeforeEach {
             # Create a test version of the script that we can invoke
             $script:TestScript = @'
+[CmdletBinding()]
 param(
-    [Parameter(ParameterSetName = 'Interactive')]
     [switch]$Interactive,
 
-    [Parameter(ParameterSetName = 'Orchestrate')]
     [string]$Mode,
 
-    [Parameter(ParameterSetName = 'Orchestrate')]
     [string]$Sequence,
 
-    [Parameter(ParameterSetName = 'Orchestrate')]
     [string]$Playbook,
 
     [hashtable]$Variables = @{},
@@ -69,8 +66,6 @@ param(
     [string]$ConfigPath,
 
     [switch]$DryRun,
-
-    [switch]$Verbose,
 
     [switch]$Help
 )
