@@ -417,7 +417,7 @@ try {
         
         # In CI environments, report issues but don't fail the build
         if ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true') {
-            Write-Host "Security analysis completed with exit code: 1" -ForegroundColor Yellow
+            Write-Host "Security analysis completed with critical issues found" -ForegroundColor Yellow
             Write-Host "⚠️ Security issues detected - see detailed report" -ForegroundColor Yellow
             Write-Host "📋 Security findings are captured in reports for review" -ForegroundColor Cyan
             Write-Host "💡 Security issues are reported for attention - they don't block CI but require review" -ForegroundColor Cyan

@@ -110,7 +110,7 @@ function Get-CopilotConfiguration {
         }
         Agents = @{
             PrimaryReviewer = "claude"
-            SecurityAnalyzer = "claude"  
+            SecurityAnalyzer = "claude"
             TestGenerator = "gemini"
             DocumentationWriter = "claude"
             PerformanceOptimizer = "gemini"
