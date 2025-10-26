@@ -3,7 +3,7 @@ name: Automated Issue Management
 
 on:
   workflow_run:
-    workflows: ["CI Pipeline"]
+    workflows: ["CI Pipeline", "AI Agent Coordinator", "Intelligent CI Orchestrator"]
     types: [completed]
   schedule:
     # Run daily to check for ongoing issues
