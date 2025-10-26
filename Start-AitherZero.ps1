@@ -12,9 +12,7 @@
 .PARAMETER ConfigPath
     Path to configuration file
 .PARAMETER NonInteractive
-    Run without user prompts
-.PARAMETER ForceInteractive
-    Force Interactive mode even in CI environments (overrides automatic NonInteractive detection)
+    Run without user prompts (automatically detected in CI environments)
 .PARAMETER Profile
     Execution profile to use
 .PARAMETER Playbook
@@ -62,8 +60,6 @@ param(
     [switch]$Help,
 
     [switch]$CI,
-
-    [switch]$ForceInteractive,
 
     [hashtable]$Variables,
 
@@ -1057,22 +1053,35 @@ try {
 
     $config = Get-AitherConfiguration -Path $ConfigPath
 
-    # Handle ForceInteractive override
-    if ($ForceInteractive) {
-        Write-CustomLog "ForceInteractive flag detected - overriding CI NonInteractive settings" -Level 'Information'
-        $NonInteractive = $false
+    # Smart execution mode detection based on environment context
+    if (-not $PSBoundParameters.ContainsKey('NonInteractive')) {
+        # Detect CI environment using standard CI environment variables
+        $isCI = ($env:CI -eq 'true') -or 
+                ($env:GITHUB_ACTIONS -eq 'true') -or 
+                ($env:TF_BUILD -eq 'true') -or
+                ($env:GITLAB_CI -eq 'true') -or
+                ($env:JENKINS_URL) -or
+                ($env:TRAVIS -eq 'true') -or
+                ($env:CIRCLECI -eq 'true')
+        
+        if ($isCI) {
+            # CI environment: Non-interactive by default with validation mode for automated logging
+            $NonInteractive = $true
+            if ($Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
+                $Mode = 'Validate'
+                Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
+            }
+        } else {
+            # Manual execution: Interactive by default for user experience  
+            $NonInteractive = $false
+            Write-CustomLog "Manual execution detected - starting interactive mode" -Level 'Information'
+        }
     }
 
-    # Auto-adjust mode for CI/Non-Interactive environments
-    # Only auto-switch if Mode was not explicitly specified by user AND NonInteractive is from CI detection
-    if ($NonInteractive -and $Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
-        # Check if NonInteractive was auto-detected by CI (not explicitly passed by user)
-        if (-not $PSBoundParameters.ContainsKey('NonInteractive')) {
-            Write-CustomLog "CI environment detected with default Interactive mode, switching to Validate mode" -Level 'Information'
-            $Mode = 'Validate'
-        } else {
-            Write-CustomLog "NonInteractive flag explicitly provided with Interactive mode - this combination is not supported" -Level 'Warning'
-        }
+    # Validate mode compatibility
+    if ($NonInteractive -and $Mode -eq 'Interactive') {
+        Write-Warning "Interactive mode is not compatible with NonInteractive flag. Use -Mode Validate, Orchestrate, or Test instead."
+        exit 1
     }
 
     # Handle different modes
