@@ -13,7 +13,11 @@ on:
       force_check:
         description: 'Force check for all issues'
         type: boolean
-        default: false
+        default: true
+      create_issues_now:
+        description: 'Create GitHub issues immediately'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -25,7 +29,7 @@ jobs:
   analyze-workflow-results:
     name: Analyze CI Results & Create Issues
     runs-on: ubuntu-latest
-    if: always() && (github.event.workflow_run || github.event_name == 'schedule' || github.event.inputs.force_check == 'true')
+    if: always() && (github.event.workflow_run || github.event_name == 'schedule' || github.event.inputs.force_check == 'true' || github.event.inputs.create_issues_now == 'true')
     
     steps:
       - name: 📥 Checkout Repository

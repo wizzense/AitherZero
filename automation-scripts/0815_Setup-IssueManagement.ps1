@@ -122,50 +122,63 @@ function Get-SecurityFindings {
 function Get-CodeQualityFindings {
     param([string]$Path)
     
-    # Look for PSScriptAnalyzer results
-    $analyzerResults = @()
+    $findings = @()
     
-    # Try to get recent analyzer results
-    try {
-        # Run analyzer directly with Invoke-ScriptAnalyzer
-        Write-Status "Running PSScriptAnalyzer to get current results..."
-        $rootPath = Split-Path $PSScriptRoot -Parent
-        $results = Invoke-ScriptAnalyzer -Path $rootPath -Recurse -ExcludeRule @('PSUseSingularNouns') -ErrorAction SilentlyContinue
-        
-        if ($results) {
-                $errorCount = ($results | Where-Object { $_.Severity -eq 'Error' }).Count
-                $warningCount = ($results | Where-Object { $_.Severity -eq 'Warning' }).Count
-                
-                $findings = @()
-                
-                if ($errorCount -gt 0) {
-                    $findings += @{
-                        Title = "❌ [CODE-QUALITY] PSScriptAnalyzer Errors ($errorCount violations)"
-                        Priority = "P1-High"
-                        Type = "code-quality"
-                        Count = $errorCount
-                        Details = $results | Where-Object { $_.Severity -eq 'Error' } | Select-Object -First 5
-                    }
+    # Look for existing PSScriptAnalyzer results first
+    $analyzerResultsFile = Join-Path $Path "psscriptanalyzer-results.json"
+    
+    if (Test-Path $analyzerResultsFile) {
+        try {
+            Write-Status "Loading existing PSScriptAnalyzer results..."
+            $results = Get-Content $analyzerResultsFile | ConvertFrom-Json
+            
+            $errorCount = ($results | Where-Object { $_.Severity -eq 'Error' }).Count
+            $warningCount = ($results | Where-Object { $_.Severity -eq 'Warning' }).Count
+            
+            if ($errorCount -gt 0) {
+                $findings += @{
+                    Title = "❌ [CODE-QUALITY] PSScriptAnalyzer Errors ($errorCount violations)"
+                    Priority = "P1-High"
+                    Type = "code-quality"
+                    Count = $errorCount
+                    Details = $results | Where-Object { $_.Severity -eq 'Error' } | Select-Object -First 5
                 }
-                
-                if ($warningCount -gt 50) { # Only create issue for significant warning counts
-                    $findings += @{
-                        Title = "⚠️ [CODE-QUALITY] High Warning Count ($warningCount violations)"
-                        Priority = "P2-Medium"
-                        Type = "code-quality"
-                        Count = $warningCount
-                        Details = $results | Where-Object { $_.Severity -eq 'Warning' } | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 5
-                    }
+            }
+            
+            if ($warningCount -gt 50) {
+                $findings += @{
+                    Title = "⚠️ [CODE-QUALITY] High Warning Count ($warningCount violations)"
+                    Priority = "P2-Medium"
+                    Type = "code-quality"
+                    Count = $warningCount
+                    Details = $results | Where-Object { $_.Severity -eq 'Warning' } | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 5
                 }
-                
+            }
+            
             return $findings
         }
-    }
-    catch {
-        Write-Status "Error running PSScriptAnalyzer: $_" "Warning"
+        catch {
+            Write-Status "Error parsing existing PSScriptAnalyzer results: $_" "Warning"
+        }
     }
     
-    return @()
+    # If no results file exists, create a finding to run analysis
+    Write-Status "No existing PSScriptAnalyzer results found, creating reminder issue..."
+    
+    $findings += @{
+        Title = "📊 [CODE-QUALITY] PSScriptAnalyzer Analysis Required"
+        Priority = "P2-Medium"
+        Type = "code-quality"
+        Count = 1
+        Details = @(@{
+            RuleName = "AnalysisRequired"
+            Message = "PSScriptAnalyzer needs to be run to identify code quality issues"
+            ScriptName = "N/A"
+            Line = "N/A"
+        })
+    }
+    
+    return $findings
 }
 
 function Get-TestFindings {
