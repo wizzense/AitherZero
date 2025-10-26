@@ -382,7 +382,8 @@ try {
                                     $allResults += $fileResult
                                 }
                             } catch {
-                                Write-Warning "Failed to analyze file $file: $($_.Exception.Message)"
+                                $errorMsg = $_.Exception.Message
+                                Write-Warning "Failed to analyze file ${file}: $errorMsg"
                             }
                         }
                         return $allResults
