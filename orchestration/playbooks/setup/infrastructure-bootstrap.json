@@ -1,0 +1,198 @@
+{
+  "Name": "infrastructure-bootstrap",
+  "Description": "Bootstrap infrastructure from clean state to production-ready deployment capability",
+  "Version": "1.0",
+  "Created": "2025-10-26",
+  "Stages": [
+    {
+      "Name": "Prerequisites Check",
+      "Description": "Verify system prerequisites and dependencies",
+      "Sequence": [
+        "0001",
+        "0006"
+      ],
+      "Variables": {
+        "ValidateEnvironment": true,
+        "CheckDependencies": true,
+        "RequiredTools": ["PowerShell", "Git"]
+      }
+    },
+    {
+      "Name": "Infrastructure Tools",
+      "Description": "Install and configure infrastructure management tools",
+      "Sequence": [
+        "0007",
+        "0008", 
+        "0009"
+      ],
+      "Variables": {
+        "InstallationOptions": {
+          "Go": {
+            "Install": true,
+            "Version": "latest"
+          },
+          "OpenTofu": {
+            "Install": true,
+            "Version": "latest",
+            "Initialize": true
+          }
+        },
+        "Infrastructure": {
+          "WorkingDirectory": "./infrastructure",
+          "Bootstrap": true,
+          "Provider": "opentofu"
+        }
+      }
+    },
+    {
+      "Name": "Version Control Setup",
+      "Description": "Configure Git and repository management",
+      "Sequence": [
+        "0207",
+        "0700"
+      ],
+      "Variables": {
+        "Features": {
+          "Development": {
+            "Git": {
+              "Enabled": true,
+              "Configuration": {
+                "DefaultBranch": "main",
+                "AutoFetch": true
+              }
+            }
+          }
+        },
+        "Development": {
+          "GitAutomation": {
+            "Enabled": true,
+            "DefaultBranch": "main"
+          }
+        }
+      }
+    },
+    {
+      "Name": "Infrastructure Configuration",
+      "Description": "Bootstrap infrastructure configuration and directory structure",
+      "Sequence": [
+        "0300"
+      ],
+      "Variables": {
+        "Infrastructure": {
+          "Bootstrap": true,
+          "WorkingDirectory": "./infrastructure",
+          "CreateStructure": true,
+          "InitializeProviders": true,
+          "CreateExamples": true,
+          "SetupEnvironments": ["development", "staging", "production"],
+          "BackendConfiguration": {
+            "Type": "local",
+            "Path": "./terraform.tfstate"
+          }
+        }
+      }
+    },
+    {
+      "Name": "Validation and Testing",
+      "Description": "Validate infrastructure setup and configuration",
+      "Sequence": [
+        "0400",
+        "0404",
+        "0407"
+      ],
+      "Variables": {
+        "Testing": {
+          "Profile": "Standard",
+          "RunInfrastructureTests": true,
+          "ValidateConfiguration": true
+        }
+      }
+    },
+    {
+      "Name": "Documentation Generation",
+      "Description": "Generate infrastructure documentation and setup guide",
+      "Sequence": [
+        "0510"
+      ],
+      "Variables": {
+        "Reporting": {
+          "ShowAll": true,
+          "Format": "HTML,Markdown",
+          "IncludeInfrastructureGuide": true,
+          "GenerateReadme": true
+        }
+      }
+    }
+  ],
+  "Variables": {
+    "Profile": "Standard",
+    "Environment": "Development",
+    "NonInteractive": false,
+    "ContinueOnError": false,
+    "MaxConcurrency": 2
+  },
+  "Options": {
+    "Profiles": {
+      "minimal": {
+        "Description": "Minimal infrastructure bootstrap for quick start",
+        "Variables": {
+          "Infrastructure": {
+            "SetupEnvironments": ["development"],
+            "CreateExamples": false
+          }
+        },
+        "ExcludeSequence": ["0700"]
+      },
+      "cloud-ready": {
+        "Description": "Bootstrap with cloud provider configuration templates",
+        "Variables": {
+          "Infrastructure": {
+            "CloudProviders": ["azure", "aws"],
+            "BackendConfiguration": {
+              "Type": "azurerm"
+            }
+          }
+        }
+      },
+      "enterprise": {
+        "Description": "Enterprise-ready infrastructure setup with compliance",
+        "Variables": {
+          "Infrastructure": {
+            "ComplianceMode": true,
+            "SecurityScanning": true,
+            "AuditLogging": true
+          },
+          "Security": {
+            "RequireSecureTransport": true,
+            "EnableMFA": true,
+            "EnforceExecutionPolicy": true
+          }
+        }
+      }
+    }
+  },
+  "Prerequisites": {
+    "Platform": "Cross-platform",
+    "MinPowerShellVersion": "7.0",
+    "RequiredSpace": "5GB",
+    "RequiredMemory": "2GB",
+    "NetworkRequirements": "Internet connection for tool downloads"
+  },
+  "PostDeployment": {
+    "ManualSteps": [
+      "Review generated infrastructure configuration in ./infrastructure/",
+      "Customize provider configurations as needed",
+      "Set up remote state backend if using cloud providers",
+      "Configure CI/CD pipeline for infrastructure deployment",
+      "Review security settings and access controls"
+    ],
+    "ValidationCommands": [
+      "tofu version",
+      "tofu validate", 
+      "git status",
+      "Test-Path ./infrastructure/main.tf"
+    ]
+  },
+  "EstimatedDuration": "10-20 minutes",
+  "Tags": ["infrastructure", "bootstrap", "setup", "opentofu", "terraform"]
+}

@@ -1,0 +1,342 @@
+{
+  "Name": "zero-to-hyperv-host",
+  "Description": "Complete zero-to-production Hyper-V host setup from fresh OS install",
+  "Version": "1.0",
+  "Created": "2025-10-26",
+  "Stages": [
+    {
+      "Name": "Environment Preparation",
+      "Description": "Prepare the system environment and install prerequisites",
+      "Sequence": [
+        "0000",
+        "0001",
+        "0002"
+      ],
+      "Variables": {
+        "Profile": "Full",
+        "Environment": "Production",
+        "ContinueOnError": false,
+        "RequiredModules": ["ThreadJob"],
+        "ValidateBeforeRun": true
+      }
+    },
+    {
+      "Name": "Core Infrastructure Tools",
+      "Description": "Install essential infrastructure management tools",
+      "Sequence": [
+        "0006",
+        "0007",
+        "0008",
+        "0009"
+      ],
+      "Variables": {
+        "InstallationOptions": {
+          "Go": {
+            "Install": true,
+            "Version": "latest"
+          },
+          "OpenTofu": {
+            "Install": true,
+            "Version": "latest",
+            "Initialize": true
+          }
+        },
+        "Infrastructure": {
+          "WorkingDirectory": "./infrastructure",
+          "Backend": {
+            "Type": "local"
+          }
+        }
+      }
+    },
+    {
+      "Name": "System Configuration", 
+      "Description": "Configure system settings for production use",
+      "Sequence": [
+        "0100",
+        "0104"
+      ],
+      "Variables": {
+        "System": {
+          "ConfigureFirewall": true,
+          "FirewallPorts": [3389, 5985, 5986, 445, 135, "49152-65535"],
+          "AllowRemoteDesktop": true,
+          "SetTrustedHosts": true,
+          "TrustedHosts": "*",
+          "SetDNSServers": true,
+          "DNSServers": "8.8.8.8,1.1.1.1"
+        },
+        "CertificateAuthority": {
+          "InstallCA": true,
+          "CommonName": "AitherZero-RootCA",
+          "ValidityYears": 5
+        }
+      }
+    },
+    {
+      "Name": "Hyper-V Installation",
+      "Description": "Install and configure Hyper-V virtualization platform",
+      "Sequence": [
+        "0105",
+        "0110"
+      ],
+      "Variables": {
+        "Features": {
+          "Infrastructure": {
+            "HyperV": {
+              "Enabled": true,
+              "Configuration": {
+                "PrepareHost": true,
+                "EnableManagementTools": true,
+                "DefaultVMPath": "C:\\VMs",
+                "DefaultVHDPath": "C:\\VHDs",
+                "CreateExternalSwitch": true,
+                "ConfigureDynamicMemory": true,
+                "DynamicMemory": {
+                  "MinimumBytes": "512MB",
+                  "MaximumBytes": "8GB", 
+                  "StartupBytes": "1GB"
+                },
+                "ResourceAllocation": {
+                  "NumaSpanning": false,
+                  "VirtualMachineMigration": true
+                },
+                "ConfigureInternalNetwork": true,
+                "InternalNetwork": {
+                  "IPAddress": "192.168.100.1",
+                  "PrefixLength": 24,
+                  "NetworkAddress": "192.168.100.0",
+                  "EnableNAT": true,
+                  "NATName": "AitherZero-NAT"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "Networking and Security",
+      "Description": "Configure secure networking with Tailscale VPN",
+      "Sequence": [
+        "0106",
+        "0109"
+      ],
+      "Variables": {
+        "Features": {
+          "Infrastructure": {
+            "WSL2": {
+              "Enabled": true,
+              "Configuration": {
+                "Distribution": "Ubuntu",
+                "Version": "2",
+                "Settings": {
+                  "Memory": "4GB",
+                  "Processors": 2,
+                  "SwapSize": "2GB",
+                  "LocalhostForwarding": true
+                }
+              }
+            },
+            "Tailscale": {
+              "Enabled": true,
+              "AutoStart": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "Development Tools",
+      "Description": "Install essential development and management tools", 
+      "Sequence": [
+        "0207",
+        "0206",
+        "0201",
+        "0208",
+        "0210"
+      ],
+      "Variables": {
+        "Features": {
+          "Development": {
+            "Git": {
+              "Enabled": true,
+              "Configuration": {
+                "DefaultBranch": "main",
+                "AutoFetch": true
+              }
+            },
+            "Python": {
+              "Enabled": true,
+              "Configuration": {
+                "InstallPip": true,
+                "CreateVirtualEnv": true
+              }
+            },
+            "Node": {
+              "Enabled": true,
+              "Configuration": {
+                "InstallNpm": true,
+                "InstallYarn": true,
+                "GlobalPackages": ["yarn", "vite", "nodemon", "@types/node"]
+              }
+            },
+            "Docker": {
+              "Enabled": true,
+              "Configuration": {
+                "StartOnBoot": true,
+                "WSL2Backend": true,
+                "Resources": {
+                  "Memory": "4GB",
+                  "CPUs": 2,
+                  "Disk": "60GB"
+                }
+              }
+            },
+            "VSCode": {
+              "Enabled": true,
+              "Configuration": {
+                "Extensions": [
+                  "ms-vscode.powershell",
+                  "ms-azuretools.vscode-docker",
+                  "github.copilot",
+                  "ms-python.python",
+                  "hashicorp.terraform"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "Infrastructure Bootstrap",
+      "Description": "Bootstrap infrastructure configuration and validate setup",
+      "Sequence": [
+        "0300"
+      ],
+      "Variables": {
+        "Infrastructure": {
+          "Bootstrap": true,
+          "WorkingDirectory": "./infrastructure",
+          "Provider": "opentofu",
+          "Hypervisor": "hyperv",
+          "Repositories": {
+            "RepoUrl": "https://github.com/Aitherium/AitherLabs.git",
+            "InfraRepoUrl": "https://github.com/Aitherium/aitherium-infrastructure.git"
+          },
+          "HyperV": {
+            "EnableManagementTools": true,
+            "Https": true,
+            "Insecure": true,
+            "UseNtlm": true,
+            "Timeout": "30s",
+            "Port": 5986,
+            "ScriptPath": "C:/Temp/tofu_%RAND%.cmd",
+            "ProviderVersion": "1.2.1"
+          }
+        }
+      }
+    },
+    {
+      "Name": "Validation and Testing",
+      "Description": "Validate complete setup and run comprehensive tests",
+      "Sequence": [
+        "0400",
+        "0402",
+        "0404",
+        "0407"
+      ],
+      "Variables": {
+        "Testing": {
+          "Profile": "Full",
+          "RunInfrastructureTests": true,
+          "ValidateHyperV": true,
+          "ValidateNetworking": true
+        }
+      }
+    },
+    {
+      "Name": "Reporting and Documentation", 
+      "Description": "Generate comprehensive deployment report",
+      "Sequence": [
+        "0510"
+      ],
+      "Variables": {
+        "Reporting": {
+          "ShowAll": true,
+          "Format": "HTML,JSON,Markdown",
+          "IncludeInfrastructureInventory": true,
+          "IncludeHyperVConfiguration": true,
+          "IncludeNetworkConfiguration": true
+        }
+      }
+    }
+  ],
+  "Variables": {
+    "Profile": "Full",
+    "Environment": "Production",
+    "NonInteractive": false,
+    "ContinueOnError": false,
+    "MaxConcurrency": 2,
+    "RequiredModules": ["ThreadJob", "Hyper-V"],
+    "PlatformRestrictions": ["Windows"]
+  },
+  "Options": {
+    "Profiles": {
+      "minimal": {
+        "Description": "Minimal Hyper-V host setup with basic tools only",
+        "Variables": {
+          "SkipDevelopmentTools": true,
+          "SkipTailscale": true,
+          "SkipWSL2": true
+        },
+        "ExcludeStages": ["Development Tools", "Networking and Security"]
+      },
+      "standard": {
+        "Description": "Standard production Hyper-V host setup",
+        "Variables": {
+          "IncludeAllFeatures": true,
+          "ConfigureMonitoring": true
+        }
+      },
+      "enterprise": {
+        "Description": "Enterprise-grade setup with all security and monitoring features",
+        "Variables": {
+          "EnterpriseFeatures": true,
+          "EnhancedSecurity": true,
+          "ComplianceMode": true,
+          "AuditLogging": true
+        }
+      }
+    }
+  },
+  "Prerequisites": {
+    "Platform": "Windows",
+    "MinVersion": "Windows 10 Pro / Windows Server 2019",
+    "MinPowerShellVersion": "7.0",
+    "RequiredFeatures": ["Hyper-V capable hardware", "Virtualization enabled in BIOS"],
+    "RequiredSpace": "50GB",
+    "RequiredMemory": "8GB",
+    "RequiredPermissions": "Administrator",
+    "NetworkRequirements": "Internet connection for downloads"
+  },
+  "PostDeployment": {
+    "ManualSteps": [
+      "Configure Tailscale authentication: Run 'tailscale up' and visit provided URL",
+      "Configure Git credentials if not using SSH keys",
+      "Review and customize infrastructure configuration in ./infrastructure/",
+      "Set up any required cloud provider credentials",
+      "Configure backup and monitoring solutions"
+    ],
+    "ValidationCommands": [
+      "Get-VMHost | Select-Object VirtualMachinePath, VirtualHardDiskPath",
+      "Get-VMSwitch | Format-Table Name, SwitchType -AutoSize",
+      "tailscale status",
+      "tofu version",
+      "docker version"
+    ]
+  },
+  "EstimatedDuration": "45-90 minutes",
+  "Tags": ["infrastructure", "hyperv", "production", "zero-to-production", "complete-setup"]
+}

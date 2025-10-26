@@ -1,0 +1,396 @@
+{
+  "Name": "zero-to-cloud",
+  "Description": "Complete zero-to-cloud infrastructure setup supporting Azure, AWS, and hybrid scenarios",
+  "Version": "1.0",
+  "Created": "2025-10-26",
+  "Stages": [
+    {
+      "Name": "Environment Preparation",
+      "Description": "Prepare system for cloud infrastructure management",
+      "Sequence": [
+        "0000",
+        "0001", 
+        "0002"
+      ],
+      "Variables": {
+        "Profile": "Developer",
+        "Environment": "Cloud",
+        "ContinueOnError": false
+      }
+    },
+    {
+      "Name": "Infrastructure Tools Installation",
+      "Description": "Install cloud infrastructure management tools",
+      "Sequence": [
+        "0006",
+        "0007",
+        "0008",
+        "0009"
+      ],
+      "Variables": {
+        "InstallationOptions": {
+          "Go": {
+            "Install": true,
+            "Version": "latest"
+          },
+          "OpenTofu": {
+            "Install": true,
+            "Version": "latest",
+            "Initialize": true
+          }
+        },
+        "Infrastructure": {
+          "WorkingDirectory": "./infrastructure",
+          "Provider": "opentofu",
+          "Backend": {
+            "Type": "azurerm"
+          }
+        }
+      }
+    },
+    {
+      "Name": "Cloud CLI Tools",
+      "Description": "Install cloud provider CLI tools and authentication",
+      "Sequence": [
+        "0212",
+        "0213"
+      ],
+      "Variables": {
+        "Features": {
+          "Cloud": {
+            "AzureCLI": {
+              "Enabled": true,
+              "Configuration": {
+                "AutoLogin": false,
+                "DefaultSubscription": ""
+              }
+            },
+            "AWSCLI": {
+              "Enabled": true,
+              "Configuration": {
+                "DefaultRegion": "us-east-1",
+                "OutputFormat": "json"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "Development Environment",
+      "Description": "Set up development tools for infrastructure management",
+      "Sequence": [
+        "0207",
+        "0206",
+        "0201",
+        "0210"
+      ],
+      "Variables": {
+        "Features": {
+          "Development": {
+            "Git": {
+              "Enabled": true,
+              "Configuration": {
+                "DefaultBranch": "main",
+                "AutoFetch": true
+              }
+            },
+            "Python": {
+              "Enabled": true,
+              "Configuration": {
+                "InstallPip": true,
+                "CreateVirtualEnv": true,
+                "DefaultPackages": ["azure-cli", "boto3", "ansible"]
+              }
+            },
+            "Node": {
+              "Enabled": true,
+              "Configuration": {
+                "InstallNpm": true,
+                "InstallYarn": true,
+                "GlobalPackages": ["@azure/cli", "aws-cdk", "serverless"]
+              }
+            },
+            "VSCode": {
+              "Enabled": true,
+              "Configuration": {
+                "Extensions": [
+                  "ms-vscode.powershell",
+                  "ms-vscode.azure-account",
+                  "amazonwebservices.aws-toolkit-vscode",
+                  "hashicorp.terraform",
+                  "ms-kubernetes-tools.vscode-kubernetes-tools",
+                  "ms-python.python",
+                  "github.copilot"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "Container Platform",
+      "Description": "Install containerization tools for cloud deployments",
+      "Sequence": [
+        "0208"
+      ],
+      "Variables": {
+        "Features": {
+          "Development": {
+            "Docker": {
+              "Enabled": true,
+              "Configuration": {
+                "StartOnBoot": true,
+                "Resources": {
+                  "Memory": "4GB",
+                  "CPUs": 2,
+                  "Disk": "60GB"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "Name": "Infrastructure Bootstrap",
+      "Description": "Bootstrap cloud infrastructure configuration",
+      "Sequence": [
+        "0300"
+      ],
+      "Variables": {
+        "Infrastructure": {
+          "Bootstrap": true,
+          "WorkingDirectory": "./infrastructure",
+          "Provider": "opentofu",
+          "MultiCloud": true,
+          "Providers": {
+            "Azure": {
+              "Enabled": true,
+              "Features": {
+                "KeyVault": true,
+                "VirtualMachines": true,
+                "Networking": true,
+                "Storage": true
+              }
+            },
+            "AWS": {
+              "Enabled": true,
+              "Features": {
+                "EC2": true,
+                "VPC": true,
+                "S3": true,
+                "IAM": true
+              }
+            },
+            "HyperV": {
+              "Enabled": false,
+              "OnDemand": true
+            }
+          },
+          "Environments": ["development", "staging", "production"],
+          "BackendConfiguration": {
+            "Type": "azurerm",
+            "StorageAccount": "aitherzerostate",
+            "ResourceGroup": "rg-aitherzero-tfstate",
+            "Container": "tfstate"
+          }
+        }
+      }
+    },
+    {
+      "Name": "Security Configuration",
+      "Description": "Configure security tools and practices",
+      "Sequence": [
+        "0109"
+      ],
+      "Variables": {
+        "Features": {
+          "Infrastructure": {
+            "Tailscale": {
+              "Enabled": true,
+              "AutoStart": true,
+              "Configuration": {
+                "ExitNode": false,
+                "AcceptRoutes": true,
+                "AdvertiseRoutes": []
+              }
+            }
+          }
+        },
+        "Security": {
+          "CredentialStore": "KeyVault",
+          "EncryptionType": "AES256",
+          "RequireSecureTransport": true,
+          "RequireAdminForInstall": false,
+          "EnableMFA": true
+        }
+      }
+    },
+    {
+      "Name": "Testing and Validation",
+      "Description": "Validate cloud infrastructure setup",
+      "Sequence": [
+        "0400",
+        "0402",
+        "0404", 
+        "0407"
+      ],
+      "Variables": {
+        "Testing": {
+          "Profile": "Cloud",
+          "Categories": ["Unit", "Integration", "CloudConnectivity"],
+          "CloudProviders": ["Azure", "AWS"],
+          "ValidateCredentials": true,
+          "ValidateConnectivity": true
+        }
+      }
+    },
+    {
+      "Name": "Documentation and Reporting",
+      "Description": "Generate cloud deployment documentation",
+      "Sequence": [
+        "0510"
+      ],
+      "Variables": {
+        "Reporting": {
+          "ShowAll": true,
+          "Format": "HTML,JSON,Markdown",
+          "IncludeCloudConfiguration": true,
+          "IncludeSecurityConfiguration": true,
+          "IncludeCostEstimates": true
+        }
+      }
+    }
+  ],
+  "Variables": {
+    "Profile": "Developer", 
+    "Environment": "Cloud",
+    "NonInteractive": false,
+    "ContinueOnError": false,
+    "MaxConcurrency": 3,
+    "RequiredModules": ["ThreadJob", "Az", "AWS.Tools"],
+    "PlatformRestrictions": []
+  },
+  "Options": {
+    "Profiles": {
+      "azure-only": {
+        "Description": "Azure-focused cloud setup",
+        "Variables": {
+          "Infrastructure": {
+            "Providers": {
+              "Azure": {
+                "Enabled": true
+              },
+              "AWS": {
+                "Enabled": false
+              }
+            }
+          }
+        },
+        "ExcludeSequence": ["0213"]
+      },
+      "aws-only": {
+        "Description": "AWS-focused cloud setup", 
+        "Variables": {
+          "Infrastructure": {
+            "Providers": {
+              "Azure": {
+                "Enabled": false
+              },
+              "AWS": {
+                "Enabled": true
+              }
+            },
+            "BackendConfiguration": {
+              "Type": "s3",
+              "Bucket": "aitherzero-terraform-state",
+              "Region": "us-east-1",
+              "DynamoDBTable": "aitherzero-terraform-locks"
+            }
+          }
+        },
+        "ExcludeSequence": ["0212"]
+      },
+      "multi-cloud": {
+        "Description": "Full multi-cloud setup with hybrid capabilities",
+        "Variables": {
+          "Infrastructure": {
+            "MultiCloud": true,
+            "HybridCloud": true,
+            "Providers": {
+              "Azure": {"Enabled": true},
+              "AWS": {"Enabled": true},
+              "HyperV": {"Enabled": true, "OnDemand": true}
+            }
+          }
+        }
+      },
+      "ci-cd": {
+        "Description": "Optimized for CI/CD pipeline deployment",
+        "Variables": {
+          "CI": true,
+          "NonInteractive": true,
+          "AutoApprove": false,
+          "GenerateReports": true,
+          "ValidateOnly": true
+        }
+      }
+    }
+  },
+  "Prerequisites": {
+    "Platform": "Cross-platform (Windows, Linux, macOS)",
+    "MinPowerShellVersion": "7.0",
+    "RequiredSpace": "15GB",
+    "RequiredMemory": "4GB",
+    "NetworkRequirements": "Internet connection for cloud services",
+    "CloudAccounts": {
+      "Azure": "Valid Azure subscription with Contributor access",
+      "AWS": "Valid AWS account with programmatic access"
+    }
+  },
+  "PostDeployment": {
+    "ManualSteps": [
+      "Authenticate with Azure: Run 'az login'",
+      "Configure AWS credentials: Run 'aws configure' or set environment variables",
+      "Configure Tailscale: Run 'tailscale up'", 
+      "Review infrastructure configuration in ./infrastructure/",
+      "Set up CI/CD pipelines for infrastructure deployment",
+      "Configure monitoring and alerting solutions",
+      "Set up cost monitoring and budgets",
+      "Configure backup policies for state files"
+    ],
+    "ValidationCommands": [
+      "az account show",
+      "aws sts get-caller-identity", 
+      "tofu version",
+      "docker version",
+      "tailscale status"
+    ],
+    "SecurityChecklist": [
+      "Verify credentials are stored securely",
+      "Enable MFA on all cloud accounts", 
+      "Configure least privilege access policies",
+      "Set up logging and monitoring for infrastructure changes",
+      "Enable encryption for all data stores",
+      "Configure network security groups and firewall rules"
+    ]
+  },
+  "CostConsiderations": {
+    "EstimatedMonthlyCost": {
+      "Azure": "$50-200 for basic development environment",
+      "AWS": "$50-200 for basic development environment",
+      "Tools": "$0-50 for premium tooling subscriptions"
+    },
+    "CostOptimization": [
+      "Use Azure DevTest subscriptions for development",
+      "Implement auto-shutdown for development resources", 
+      "Use AWS Free Tier resources where possible",
+      "Set up cost alerts and budgets",
+      "Regular review of resource utilization"
+    ]
+  },
+  "EstimatedDuration": "30-60 minutes",
+  "Tags": ["cloud", "infrastructure", "azure", "aws", "multi-cloud", "zero-to-cloud"]
+}
