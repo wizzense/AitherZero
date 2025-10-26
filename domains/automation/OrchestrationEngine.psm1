@@ -700,7 +700,14 @@ function Test-PlaybookConditions {
         try {
             Write-OrchestrationLog "Testing ${Type}: $($condition.name)" -Level 'Information'
             
-            # Create evaluation context
+            # Validate condition syntax for security
+            if ($condition.condition -match '[;&|`]|Invoke-|iex|Get-Content|Set-Content|Remove-Item') {
+                Write-OrchestrationLog "Condition contains potentially dangerous commands: $($condition.condition)" -Level 'Error'
+                $allPassed = $false
+                continue
+            }
+            
+            # Create evaluation context with validated condition
             $scriptBlock = [ScriptBlock]::Create($condition.condition)
             
             # Inject variables into scope
