@@ -47,7 +47,7 @@ jobs:
   coordinate-agents:
     name: Coordinate AI Agents
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes || '30') }}
+    timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes || '30') }}
     
     outputs:
       coordination-status: ${{ steps.coordinate.outputs.status }}
@@ -63,7 +63,7 @@ jobs:
         id: set-priority
         run: |
           # Set priority with proper fallback handling
-          PRIORITY="${{ inputs.priority || 'normal' }}"
+          PRIORITY="${{ github.event.inputs.priority || 'normal' }}"
           echo "priority=${PRIORITY}" >> $GITHUB_OUTPUT
           echo "Setting coordination priority to: ${PRIORITY}"
           
@@ -160,7 +160,7 @@ jobs:
           log_activity "🎯 Coordination started with priority: ${PRIORITY}"
           
           # Code Review Agent
-          if [[ "${{ steps.analyze.outputs.needs-code-review }}" == "true" ]] || [[ "${{ inputs.agent_type }}" == "code-review" ]]; then
+          if [[ "${{ steps.analyze.outputs.needs-code-review }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "code-review" ]]; then
             if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
               log_activity "📝 Activating Code Review Agent..."
               # In a real implementation, this would trigger the code review agent
@@ -176,7 +176,7 @@ jobs:
           fi
           
           # Documentation Agent
-          if [[ "${{ steps.analyze.outputs.needs-documentation }}" == "true" ]] || [[ "${{ inputs.agent_type }}" == "documentation" ]]; then
+          if [[ "${{ steps.analyze.outputs.needs-documentation }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "documentation" ]]; then
             if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
               log_activity "📚 Activating Documentation Agent..."
               echo "  -> Documentation Agent: Reviewing documentation updates"
@@ -191,7 +191,7 @@ jobs:
           fi
           
           # Testing Agent
-          if [[ "${{ steps.analyze.outputs.needs-testing }}" == "true" ]] || [[ "${{ inputs.agent_type }}" == "testing" ]]; then
+          if [[ "${{ steps.analyze.outputs.needs-testing }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "testing" ]]; then
             if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
               log_activity "🧪 Activating Testing Agent..."
               echo "  -> Testing Agent: Orchestrating test execution"
@@ -206,7 +206,7 @@ jobs:
           fi
           
           # Security Agent
-          if [[ "${{ steps.analyze.outputs.needs-security }}" == "true" ]] || [[ "${{ inputs.agent_type }}" == "security" ]]; then
+          if [[ "${{ steps.analyze.outputs.needs-security }}" == "true" ]] || [[ "${{ github.event.inputs.agent_type || 'code-review' }}" == "security" ]]; then
             if [[ ${ACTIVE_AGENTS} -lt ${MAX_AGENTS} ]]; then
               log_activity "🔒 Activating Security Agent..."
               echo "  -> Security Agent: Performing security analysis"
@@ -271,7 +271,7 @@ jobs:
           echo "" >> coordination-report.md
           echo "- **Max Concurrent Agents:** ${{ steps.set-priority.outputs.max-agents }}" >> coordination-report.md
           echo "- **Timeout:** ${{ steps.set-priority.outputs.timeout }} seconds" >> coordination-report.md
-          echo "- **Target Branch:** ${{ inputs.target_branch || 'main' }}" >> coordination-report.md
+          echo "- **Target Branch:** ${{ github.event.inputs.target_branch || 'main' }}" >> coordination-report.md
           echo "" >> coordination-report.md
           echo "## Agent Requirements Analysis" >> coordination-report.md
           echo "" >> coordination-report.md
