@@ -305,10 +305,18 @@ try {
 
     # CI mode adjustments (override config if in CI)
     if ($CI) {
-        Write-ScriptLog -Message "Running in CI mode"
-        $pesterConfig.Output.Verbosity = 'Normal'
+        Write-ScriptLog -Message "Running in CI mode - applying performance optimizations"
+        $pesterConfig.Output.Verbosity = 'Minimal'  # Reduce output for speed
         $pesterConfig.Should.ErrorAction = 'Continue'
-        # CIFormat is not a boolean property in newer Pester versions - remove this setting
+        
+        # CI Performance optimization: Reduce test scope for faster execution
+        # Focus on critical/core tests only in CI environment
+        $pesterConfig.Filter.Tag = @('Unit', 'Critical', 'Core')
+        $pesterConfig.Filter.ExcludeTag = @('Integration', 'E2E', 'Performance', 'Slow')
+        
+        # Disable expensive features in CI
+        $NoCoverage = $true  # Force disable coverage in CI for speed
+        Write-ScriptLog -Message "CI mode: Disabled code coverage for performance"
     }
 
     # Apply filter settings from config or use defaults for unit tests

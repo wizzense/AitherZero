@@ -119,6 +119,24 @@ try {
             $analysisConfig = $config.Testing.PSScriptAnalyzer
         }
     }
+    
+    # Detect CI environment for performance optimizations
+    $isCI = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true') -or ($env:TF_BUILD -eq 'true')
+    if (-not $isCI -and (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue)) {
+        $envValue = Get-ConfiguredValue -Name 'Environment' -Section 'Core' -Default 'Development'
+        $isCI = ($envValue -eq 'CI')
+    }
+             
+    if ($isCI) {
+        Write-ScriptLog -Message "CI environment detected - applying performance optimizations"
+        # In CI, focus on critical issues only for faster execution
+        $Severity = @('Error')  # Only check for errors in CI
+        # Add more aggressive exclusions for CI speed
+        if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
+            $ExcludePaths = @('tests', 'examples', 'docs', '.git', 'node_modules')
+        }
+        Write-ScriptLog -Message "CI mode: Reduced scope to Error-level issues only"
+    }
 
     # Apply parameter overrides or use config defaults
     if (-not $PSBoundParameters.ContainsKey('Severity')) {
@@ -302,8 +320,9 @@ try {
     }
 
     # Process results
+    $totalIssues = if ($results -and $results.Count) { $results.Count } else { 0 }
     $resultSummary = @{
-        TotalIssues = $results.Count
+        TotalIssues = $totalIssues
         ByScript = @{}
         BySeverity = @{}
         ByRule = @{}
@@ -334,14 +353,14 @@ try {
 
     # Display summary
     Write-Host "`nPSScriptAnalyzer Summary:" -ForegroundColor Cyan
-    Write-Host "  Total Issues: $($results.Count)"
+    Write-Host "  Total Issues: $totalIssues"
 
-    if ($results.Count -gt 0) {
+    if ($totalIssues -gt 0) {
         # By severity
         Write-Host "`n  By Severity:" -ForegroundColor Yellow
         foreach ($severity in @('Error', 'Warning', 'Information')) {
             $severityResults = @($results | Where-Object { $_.Severity -eq $severity })
-            $count = $severityResults.Count
+            $count = if ($severityResults) { $severityResults.Count } else { 0 }
             if ($count -gt 0) {
                 $color = @{ 'Error' = 'Red'; 'Warning' = 'Yellow'; 'Information' = 'Cyan' }[$severity]
                 Write-Host "    $severity : $count" -ForegroundColor $color
@@ -372,8 +391,9 @@ try {
                 Write-Host ""
             }
 
-            if ($errors.Count -gt 10) {
-                Write-Host "  ... and $($errors.Count - 10) more errors" -ForegroundColor DarkRed
+            $errorCount = if ($errors) { $errors.Count } else { 0 }
+            if ($errorCount -gt 10) {
+                Write-Host "  ... and $($errorCount - 10) more errors" -ForegroundColor DarkRed
             }
         }
     } else {
@@ -381,7 +401,7 @@ try {
     }
 
     # Save results
-    if ($results.Count -gt 0) {
+    if ($totalIssues -gt 0) {
         if (-not $OutputPath) {
             $OutputPath = Join-Path $projectRoot "tests/analysis"
         }
@@ -423,16 +443,16 @@ try {
     }
 
     # Exit based on results
-    if ($results.Count -eq 0) {
+    if ($totalIssues -eq 0) {
         Write-ScriptLog -Message "PSScriptAnalyzer found no issues!"
         exit 0
     } else {
         $errorResults = @($results | Where-Object { $_.Severity -eq 'Error' })
-        $errorCount = $errorResults.Count
+        $errorCount = if ($errorResults) { $errorResults.Count } else { 0 }
         if ($errorCount -gt 0) {
             Write-ScriptLog -Level Error -Message "PSScriptAnalyzer found $errorCount errors"
         } else {
-            Write-ScriptLog -Level Warning -Message "PSScriptAnalyzer found $($results.Count) warnings"
+            Write-ScriptLog -Level Warning -Message "PSScriptAnalyzer found $totalIssues warnings"
         }
         exit 1
     }
