@@ -79,10 +79,7 @@ if (-not $PSBoundParameters.ContainsKey('NoCoverage')) {
         $runCoverage = Get-ConfiguredValue -Name 'RunCoverage' -Section 'Testing' -Default $true
         $NoCoverage = -not $runCoverage
     }
-    # In CI, maintain code coverage for quality assurance
-    if ($CI -and -not $PSBoundParameters.ContainsKey('NoCoverage')) {
-        Write-ScriptLog -Message "CI mode: Code coverage maintained for quality assurance"
-    }
+    # In CI, maintain code coverage for quality assurance (note logged after module loading)
 }
 
 if (Test-Path $testingModule) {
@@ -126,6 +123,11 @@ function Write-ScriptLog {
 
 try {
     Write-ScriptLog -Message "Starting unit test execution"
+    
+    # Log CI mode coverage message now that Write-ScriptLog is available
+    if ($CI -and -not $PSBoundParameters.ContainsKey('NoCoverage')) {
+        Write-ScriptLog -Message "CI mode: Code coverage maintained for quality assurance"
+    }
 
     # Check cache if enabled and not forced
     if ($UseCache -and -not $ForceRun -and $script:CacheAvailable) {
@@ -310,12 +312,23 @@ try {
     # CI mode adjustments (override config if in CI)
     if ($CI) {
         Write-ScriptLog -Message "Running in CI mode - applying performance optimizations"
-        $pesterConfig.Output.Verbosity = 'Minimal'  # Reduce output for speed
+        $pesterConfig.Output.Verbosity = 'Normal'  # Show meaningful test output in CI
         $pesterConfig.Should.ErrorAction = 'Continue'
         
+        # Reduce excessive logging from modules during test execution
+        $env:AITHERZERO_LOG_LEVEL = 'Warning'  # Only show warnings and errors
+        $env:AITHERZERO_QUIET_MODE = 'true'   # Suppress verbose module initialization
+        
+        # Enable parallel execution in CI for better performance
+        if (-not $pesterSettings.Parallel) {
+            $pesterSettings.Parallel = @{}
+        }
+        $pesterSettings.Parallel.Enabled = $true
+        $pesterSettings.Parallel.Workers = 2  # Reduce to avoid resource contention
+        $pesterSettings.Parallel.BlockSize = 5  # Larger chunks for fewer overhead
+        
         # CI adjustments: Enable full testing with optimized reporting
-        # Run all tests but optimize output for CI
-        Write-ScriptLog -Message "CI mode: Running full test suite with optimized reporting"
+        Write-ScriptLog -Message "CI mode: Running full test suite with clear output and parallel execution"
     }
 
     # Apply filter settings from config or use defaults for unit tests
