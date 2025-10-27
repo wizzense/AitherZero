@@ -340,6 +340,11 @@
                     Description = 'Complete machine reset'
                     RequiresElevation = $true
                 }
+                QualityValidation = @{
+                    DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
+                    Scripts = @('0420')
+                    Features = @('error-handling', 'logging', 'test-coverage', 'ui-integration', 'github-actions', 'static-analysis')
+                }
             }
         }
         
@@ -779,6 +784,20 @@
                 InstallScript = '0443'
                 Platforms = @('Windows', 'Linux', 'macOS')
                 Description = 'YAML parsing for workflow validation'
+            QualityValidation = @{
+                Enabled = $true  # Always enabled for Standard+ profiles
+                InstallScript = '0420'
+                Required = $false
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    MinimumScore = 70  # Minimum quality score required (0-100)
+                    FailOnWarnings = $false  # Fail validation on warnings
+                    SkipChecks = @()  # Checks to skip: ErrorHandling, Logging, TestCoverage, UIIntegration, GitHubActions, PSScriptAnalyzer
+                    ReportFormat = 'Text'  # Text, HTML, JSON
+                    ReportPath = './reports/quality'
+                    AutoCreateIssues = $true  # Create GitHub issues for failures in CI
+                    IssueLabels = @('quality-validation', 'automated', 'needs-fix')
+                }
             }
         }
     }
