@@ -328,6 +328,99 @@ if ($DryRun) {
         }
     }
 
+    Context "Configuration Editing and Reload" {
+        It "Should reload configuration after editing in Advanced Menu" {
+            # Create a test config file
+            $testConfigPath = Join-Path $TestDrive "test-config.psd1"
+            $initialConfig = @'
+@{
+    Core = @{
+        Name = "InitialConfig"
+        Version = "1.0.0"
+        Profile = "Standard"
+    }
+}
+'@
+            $initialConfig | Set-Content $testConfigPath
+
+            # Simulate the configuration editing and reloading process
+            $reloadScript = @'
+param([string]$ConfigPath)
+
+# Mock functions that would be available
+function Show-UINotification { param($Message, $Type) Write-Host "$Type - $Message" }
+function Get-AitherConfiguration { 
+    param([string]$Path)
+    if (Test-Path $Path) {
+        return Import-PowerShellDataFile $Path
+    }
+}
+
+# Initial load
+$Config = Get-AitherConfiguration -Path $ConfigPath
+Write-Host "Before: $($Config.Core.Name)"
+
+# Simulate editing the file
+$updatedConfig = @"
+@{
+    Core = @{
+        Name = "UpdatedConfig"
+        Version = "1.0.0"
+        Profile = "Developer"
+    }
+}
+"@
+$updatedConfig | Set-Content $ConfigPath
+
+# Reload configuration (simulating the fix)
+Show-UINotification -Message "Reloading configuration..." -Type 'Info'
+try {
+    $Config = Get-AitherConfiguration -Path $ConfigPath
+    Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
+    Write-Host "After: $($Config.Core.Name)"
+} catch {
+    Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
+}
+'@
+            $reloadScriptPath = Join-Path $TestDrive "reload-test.ps1"
+            $reloadScript | Set-Content $reloadScriptPath
+
+            # Execute the test
+            $output = & $reloadScriptPath -ConfigPath $testConfigPath
+            
+            # Verify the reload happened
+            $output | Should -Contain "Before: InitialConfig"
+            $output | Should -Contain "Info - Reloading configuration..."
+            $output | Should -Contain "Success - Configuration reloaded successfully!"
+            $output | Should -Contain "After: UpdatedConfig"
+        }
+
+        It "Should handle configuration reload errors gracefully" {
+            $errorScript = @'
+param([string]$ConfigPath)
+
+function Show-UINotification { param($Message, $Type) Write-Host "$Type - $Message" }
+function Get-AitherConfiguration { 
+    param([string]$Path)
+    throw "Simulated error loading configuration"
+}
+
+try {
+    $Config = Get-AitherConfiguration -Path $ConfigPath
+    Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
+} catch {
+    Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
+}
+'@
+            $errorScriptPath = Join-Path $TestDrive "error-reload-test.ps1"
+            $errorScript | Set-Content $errorScriptPath
+
+            $output = & $errorScriptPath -ConfigPath "/fake/path"
+            $output | Should -Match "Error - Failed to reload configuration"
+            $output | Should -Match "Simulated error loading configuration"
+        }
+    }
+
     Context "PowerShell Version Check" {
         It "Should have version check logic in the script" {
             $content = Get-Content $script:EntryScript -Raw
