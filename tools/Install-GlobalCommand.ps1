@@ -240,8 +240,20 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$launcherDest" %*
         if ($PSCmdlet.ShouldProcess($launcherDest, "Copy launcher")) {
             Copy-Item -Path $launcherSource -Destination $launcherDest -Force
             
-            # Make it executable
-            chmod +x $launcherDest
+            # Make it executable (PowerShell 7+ cross-platform approach)
+            try {
+                [System.IO.File]::SetUnixFileMode($launcherDest, @(
+                    'UserRead', 'UserWrite', 'UserExecute',
+                    'GroupRead', 'GroupExecute',
+                    'OtherRead', 'OtherExecute'
+                ))
+                Write-Host "Set executable permissions using SetUnixFileMode: $launcherDest" -ForegroundColor Green
+            } catch {
+                # Fallback to chmod if SetUnixFileMode is unavailable
+                Write-Host "SetUnixFileMode failed, falling back to chmod..." -ForegroundColor Yellow
+                chmod +x $launcherDest
+                Write-Host "Set executable permissions using chmod: $launcherDest" -ForegroundColor Green
+            }
             Write-Host "Installed launcher: $launcherDest" -ForegroundColor Green
         }
     }
