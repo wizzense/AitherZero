@@ -6,6 +6,12 @@
     Uses $host.UI.RawUI.ReadKey() for proper keyboard input
 #>
 
+# Import shared text utilities
+$textUtilsPath = Join-Path $PSScriptRoot "../utilities/TextUtilities.psm1"
+if (Test-Path $textUtilsPath) {
+    Import-Module $textUtilsPath -Force -ErrorAction SilentlyContinue
+}
+
 function Show-BetterMenu {
     <#
     .SYNOPSIS
@@ -62,7 +68,8 @@ function Show-BetterMenu {
 
         for ($i = 0; $i -lt $Items.Count; $i++) {
             $item = $Items[$i]
-            $displayText = if ($item -is [string]) { $item } else { $item.Name }
+            $rawText = if ($item -is [string]) { $item } else { $item.Name }
+            $displayText = Repair-TextSpacing -Text $rawText
             Write-Host "[$($i + 1)] $displayText" -ForegroundColor White
 
             if ($item -isnot [string] -and $item.PSObject.Properties['Description'] -and $item.Description) {
@@ -156,7 +163,8 @@ function Show-BetterMenu {
         # Draw items
         for ($i = $startIdx; $i -le $endIdx; $i++) {
             $item = $Items[$i]
-            $displayText = if ($item -is [string]) { $item } else { $item.Name }
+            $rawText = if ($item -is [string]) { $item } else { $item.Name }
+            $displayText = Repair-TextSpacing -Text $rawText
 
             # Build prefix
             $prefix = ""
@@ -238,7 +246,8 @@ function Show-BetterMenu {
             Write-Host ""
             for ($i = 0; $i -lt $Items.Count; $i++) {
                 $item = $Items[$i]
-                $displayText = if ($item -is [string]) { $item } else { $item.Name }
+                $rawText = if ($item -is [string]) { $item } else { $item.Name }
+                $displayText = Repair-TextSpacing -Text $rawText
                 Write-Host "[$($i + 1)] $displayText" -ForegroundColor White
             }
 
@@ -422,7 +431,8 @@ function Show-BetterMenu {
                     # Jump to first item starting with this letter
                     $targetChar = $char.ToString().ToLower()
                     for ($i = 0; $i -lt $Items.Count; $i++) {
-                        $itemText = if ($Items[$i] -is [string]) { $Items[$i] } else { $Items[$i].Name }
+                        $rawItemText = if ($Items[$i] -is [string]) { $Items[$i] } else { $Items[$i].Name }
+                        $itemText = Repair-TextSpacing -Text $rawItemText
                         if ($itemText.ToLower().StartsWith($targetChar)) {
                             $selectedIndex = $i
                             # Adjust scroll to show selected item

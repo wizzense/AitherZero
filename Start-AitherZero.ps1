@@ -682,12 +682,15 @@ function Invoke-ModernRunAction {
             
             Write-ModernCLI "Running script $ScriptNum..." -Type 'Info'
             
-            # Use existing az.ps1 functionality
-            if (Test-Path "./az.ps1") {
-                Write-ModernCLI "Executing: ./az.ps1 $ScriptNum" -Type 'Success'
-                & "./az.ps1" $ScriptNum
+            # Execute automation script directly
+            $scriptPath = "./automation-scripts/$($ScriptNum.ToString().PadLeft(4, '0'))_*.ps1"
+            $matchingScript = Get-ChildItem -Path $scriptPath -ErrorAction SilentlyContinue | Select-Object -First 1
+            
+            if ($matchingScript) {
+                Write-ModernCLI "Executing: $($matchingScript.Name)" -Type 'Success'
+                & $matchingScript.FullName
             } else {
-                Write-ModernCLI "Script runner not found: ./az.ps1" -Type 'Error'
+                Write-ModernCLI "Script not found: $scriptPath" -Type 'Error'
             }
         }
         'playbook' {
@@ -763,12 +766,12 @@ function Show-InteractiveMenu {
                 Description = "Git automation and AI coding tools"
             },
             [PSCustomObject]@{
-                Name = "Reports & Logs"
-                Description = "View logs, generate reports, and analyze metrics"
+                Name = "Health Dashboard"
+                Description = "View system health, errors, and test results"
             },
             [PSCustomObject]@{
-                Name = "UI Demo"
-                Description = "Interactive UI System Demo"
+                Name = "Reports & Logs"
+                Description = "View logs, generate reports, and analyze metrics"
             },
             [PSCustomObject]@{
                 Name = "Advanced"
@@ -819,18 +822,17 @@ function Show-InteractiveMenu {
                 'Testing' { Invoke-TestingMenu -Config $Config }
                 'Infrastructure' { Invoke-InfrastructureMenu -Config $Config }
                 'Development' { Invoke-DevelopmentMenu -Config $Config }
-                'Reports & Logs' { Invoke-ReportsAndLogsMenu -Config $Config }
-                'UI Demo' {
-                    # Run the interactive UI demo
-                    $demoPath = Join-Path $script:ProjectRoot "examples/interactive-ui-demo.ps1"
-                    if (Test-Path $demoPath) {
-                        & $demoPath
-                    }
-                    else {
-                        Show-UINotification -Message "Demo script not found at: $demoPath" -Type 'Warning'
+                'Health Dashboard' {
+                    # Show the consolidated health dashboard
+                    $healthScript = Join-Path $script:ProjectRoot "automation-scripts/0550_Health-Dashboard.ps1"
+                    if (Test-Path $healthScript) {
+                        & $healthScript -Configuration $Config -ShowAll
+                    } else {
+                        Show-UINotification -Message "Health Dashboard script not found" -Type 'Warning'
                     }
                     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
                 }
+                'Reports & Logs' { Invoke-ReportsAndLogsMenu -Config $Config }
                 'Advanced' { Show-AdvancedMenu -Config $Config }
             }
     }
@@ -841,25 +843,82 @@ function Show-InteractiveMenu {
 function Invoke-QuickSetup {
     param($Config)
 
+    # Display what Quick Setup will do
+    Write-Host "`n╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                    Quick Setup                            ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Current Profile: " -NoNewline -ForegroundColor White
+    Write-Host "$($Config.Core.Profile)" -ForegroundColor Green
+    Write-Host ""
+
+    # Determine what will be installed
     $ProfileNameSequence = switch ($Config.Core.Profile) {
-        'Minimal' { "0000-0099,0207" }
-        'Standard' { "0000-0199,0207,0201" }
-        'Developer' { "0000-0299,!0208" }
-        'Full' { "0000-0499" }
+        'Minimal' { 
+            Write-Host "Minimal Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Basic environment setup (0000-0099)" -ForegroundColor Gray
+            Write-Host "  • Git installation (0207)" -ForegroundColor Gray
+            "0000-0099,0207"
+        }
+        'Standard' { 
+            Write-Host "Standard Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Environment setup (0000-0199)" -ForegroundColor Gray
+            Write-Host "  • Git (0207) and Node.js Core (0201)" -ForegroundColor Gray
+            "0000-0199,0207,0201"
+        }
+        'Developer' { 
+            Write-Host "Developer Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Full development environment (0000-0299)" -ForegroundColor Gray
+            Write-Host "  • Excluding Docker Desktop (0208)" -ForegroundColor Gray
+            "0000-0299,!0208"
+        }
+        'Full' { 
+            Write-Host "Full Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Complete infrastructure setup (0000-0499)" -ForegroundColor Gray
+            "0000-0499"
+        }
     }
 
-    Show-UINotification -Message "Starting $($Config.Core.Profile) profile setup" -Type 'Info' -Title "Quick Setup"
+    Write-Host ""
+    Write-Host "⚠️  This will execute multiple automation scripts." -ForegroundColor Yellow
+    Write-Host ""
 
-    # Call directly instead of in scriptblock to avoid scope issues
+    # Confirm before proceeding
+    $confirm = Show-UIPrompt -Message "Do you want to proceed with Quick Setup?" -ValidateSet @('Yes', 'No', 'Dry-Run') -DefaultValue 'No'
+
+    if ($confirm -eq 'No') {
+        Show-UINotification -Message "Quick Setup cancelled" -Type 'Info'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        return
+    }
+
+    if ($confirm -eq 'Dry-Run') {
+        Show-UINotification -Message "Running dry run for $($Config.Core.Profile) profile..." -Type 'Info'
+        Write-Host ""
+        $result = Invoke-OrchestrationSequence -Sequence $ProfileNameSequence -Configuration $Config -DryRun
+        Write-Host ""
+        $proceed = Show-UIPrompt -Message "Dry run complete. Execute for real?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
+        if ($proceed -eq 'No') {
+            Show-UINotification -Message "Quick Setup cancelled after dry run" -Type 'Info'
+            Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+            return
+        }
+    }
+
+    # Execute the setup
+    Show-UINotification -Message "Starting $($Config.Core.Profile) profile setup..." -Type 'Info' -Title "Quick Setup"
+    Write-Host ""
+    
     $result = Invoke-OrchestrationSequence -Sequence $ProfileNameSequence -Configuration $Config
 
+    Write-Host ""
     if ($result.Failed -eq 0) {
-        Show-UINotification -Message "Profile setup completed successfully!" -Type 'Success'
-        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        Show-UINotification -Message "✅ Profile setup completed successfully!" -Type 'Success'
     } else {
-        Show-UINotification -Message "Profile setup completed with $($result.Failed) errors" -Type 'Warning'
-        # Don't add another prompt - orchestration errors already prompt
+        Show-UINotification -Message "⚠️  Profile setup completed with $($result.Failed) errors" -Type 'Warning'
     }
+    
+    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Orchestration Menu
@@ -1114,34 +1173,39 @@ function Invoke-ReportsAndLogsMenu {
 
     $reportItems = @(
         [PSCustomObject]@{
+            Name = "Health Dashboard"
+            Description = "Consolidated system health and status"
+            Action = 'HealthDashboard'
+        },
+        [PSCustomObject]@{
             Name = "View Latest Logs"
             Description = "Show recent log entries"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Latest' }
+            Action = 'ViewLogs'
+            Mode = 'Latest'
         },
         [PSCustomObject]@{
             Name = "Log Dashboard"
             Description = "Interactive log viewer with statistics"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Dashboard' }
+            Action = 'ViewLogs'
+            Mode = 'Dashboard'
         },
         [PSCustomObject]@{
             Name = "View Errors & Warnings"
             Description = "Show only error and warning messages"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Errors' }
+            Action = 'ViewLogs'
+            Mode = 'Errors'
         },
         [PSCustomObject]@{
             Name = "Search Logs"
             Description = "Search for specific patterns in logs"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Search' }
+            Action = 'ViewLogs'
+            Mode = 'Search'
         },
         [PSCustomObject]@{
             Name = "View PowerShell Transcript"
             Description = "Show PowerShell session transcript"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Transcript' }
+            Action = 'ViewLogs'
+            Mode = 'Transcript'
         },
         [PSCustomObject]@{
             Name = "Generate Project Report"
@@ -1166,8 +1230,8 @@ function Invoke-ReportsAndLogsMenu {
         [PSCustomObject]@{
             Name = "Logging Status"
             Description = "Check logging system configuration"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Status' }
+            Action = 'ViewLogs'
+            Mode = 'Status'
         }
     )
 
@@ -1176,16 +1240,27 @@ function Invoke-ReportsAndLogsMenu {
     if ($selection) {
         Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
 
-        if ($selection.Sequence) {
-            # Build parameters for the script
-            $scriptParams = $Config.Clone()
-            if ($selection.Parameters) {
-                foreach ($key in $selection.Parameters.Keys) {
-                    $scriptParams[$key] = $selection.Parameters[$key]
-                }
+        if ($selection.Action -eq 'HealthDashboard') {
+            # Call health dashboard script
+            $healthScript = Join-Path $script:ProjectRoot "automation-scripts/0550_Health-Dashboard.ps1"
+            if (Test-Path $healthScript) {
+                & $healthScript -Configuration $Config -ShowAll
+            } else {
+                Show-UINotification -Message "Health Dashboard script not found at: $healthScript" -Type 'Warning'
             }
-
-            $result = Invoke-OrchestrationSequence -Sequence $selection.Sequence -Configuration $scriptParams
+        }
+        elseif ($selection.Action -eq 'ViewLogs') {
+            # Call log viewer script directly with proper parameters
+            $logScript = Join-Path $script:ProjectRoot "automation-scripts/0530_View-Logs.ps1"
+            if (Test-Path $logScript) {
+                & $logScript -Mode $selection.Mode -Configuration $Config
+            } else {
+                Show-UINotification -Message "Log viewer script not found at: $logScript" -Type 'Warning'
+            }
+        }
+        elseif ($selection.Sequence) {
+            # Use orchestration for report generation
+            $result = Invoke-OrchestrationSequence -Sequence $selection.Sequence -Configuration $Config
         }
     }
 
