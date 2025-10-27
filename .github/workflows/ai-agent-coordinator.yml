@@ -498,7 +498,7 @@ jobs:
               
               comment += '\n### 🛠️ Recommended Actions\n\n';
               comment += '1. **Review Issues**: Check the detailed analysis results in the workflow artifacts\n';
-              comment += '2. **Run Locally**: Use `./az 0404` for code analysis and `./az 0402` for testing\n';
+              comment += '2. **Run Locally**: Use `./az.ps1 0404` for code analysis and `./az.ps1 0402` for testing\n';
               comment += '3. **Fix Issues**: Address the identified problems and push updates\n';
               comment += '4. **Re-validate**: The AI coordinator will automatically re-run on new commits\n';
             } else {
@@ -511,7 +511,7 @@ jobs:
             
             comment += '\n### 🔗 Resources\n\n';
             comment += '- **Detailed Report**: [View Artifacts](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')\n';
-            comment += '- **Local Commands**: `./az 0404` (analysis), `./az 0402` (tests), `./az 0407` (syntax)\n';
+            comment += '- **Local Commands**: `./az.ps1 0404` (analysis), `./az.ps1 0402` (tests), `./az.ps1 0407` (syntax)\n';
             comment += '- **Documentation**: See [AitherZero Automation Scripts](https://github.com/wizzense/AitherZero#automation-scripts)\n';
             
             comment += '\n---\n*🤖 This automated review used AitherZero\'s AI Agent Coordinator with real PowerShell analysis tools*';
@@ -642,13 +642,13 @@ jobs:
               body += '\n### 🛠️ How to Fix\n\n';
               body += '1. **Run PSScriptAnalyzer locally:**\n';
               body += '   ```powershell\n';
-              body += '   ./az 0404\n';
+              body += '   ./az.ps1 0404\n';
               body += '   ```\n\n';
               body += '2. **Review the detailed analysis** in the workflow artifacts\n\n';
               body += '3. **Fix the identified issues** in your code\n\n';
               body += '4. **Re-run validation:**\n';
               body += '   ```powershell\n';
-              body += '   ./az 0407  # Syntax validation\n';
+              body += '   ./az.ps1 0407  # Syntax validation\n';
               body += '   ```\n\n';
               body += '### 📋 Next Steps\n\n';
               body += '- [ ] Review PSScriptAnalyzer findings\n';
@@ -689,7 +689,7 @@ jobs:
               body += '\n### 🛠️ How to Fix\n\n';
               body += '1. **Run tests locally:**\n';
               body += '   ```powershell\n';
-              body += '   ./az 0402  # Unit tests\n';
+              body += '   ./az.ps1 0402  # Unit tests\n';
               body += '   ```\n\n';
               body += '2. **Review test failures** in detail\n\n';
               body += '3. **Fix failing tests** or update test expectations\n\n';
@@ -733,7 +733,7 @@ jobs:
               body += '\n### 🛠️ How to Fix\n\n';
               body += '1. **Run security validation:**\n';
               body += '   ```powershell\n';
-              body += '   ./az 0407  # Syntax and security validation\n';
+              body += '   ./az.ps1 0407  # Syntax and security validation\n';
               body += '   ```\n\n';
               body += '2. **Review security findings** carefully\n\n';
               body += '3. **Fix security issues** following PowerShell security best practices\n\n';

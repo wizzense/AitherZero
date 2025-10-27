@@ -79,9 +79,9 @@ cd AitherZero
 ./Start-AitherZero.ps1
 
 # Or use the command runner
-./az 0511           # Show project dashboard
-./az 0402           # Run unit tests  
-./az 0510           # Generate project report
+./az.ps1 0511           # Show project dashboard
+./az.ps1 0402           # Run unit tests  
+./az.ps1 0510           # Generate project report
 
 # Get help
 ./Start-AitherZero.ps1 -Help
@@ -108,10 +108,10 @@ Import-Module ./AitherZero.psd1
 Get-Module AitherZero
 
 # Run syntax validation
-./az 0407
+./az.ps1 0407
 
 # Generate and view project report
-./az 0510 -ShowAll
+./az.ps1 0510 -ShowAll
 ```
 
 ## Features

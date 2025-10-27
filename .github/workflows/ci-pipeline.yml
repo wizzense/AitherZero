@@ -678,9 +678,9 @@ jobs:
             ### 🚀 Quick Start
             ```powershell
             ./Start-AitherZero.ps1           # Interactive mode
-            ./az 0407                        # Syntax validation  
-            ./az 0402                        # Run tests
-            ./az 0510                        # Generate reports
+            ./az.ps1 0407                        # Syntax validation  
+            ./az.ps1 0402                        # Run tests
+            ./az.ps1 0510                        # Generate reports
             ```
           files: |
             ./artifacts/AitherZero-*.zip
