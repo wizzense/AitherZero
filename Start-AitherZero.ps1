@@ -1,10 +1,12 @@
-#Requires -Version 7.0
 <#
 .SYNOPSIS
     AitherZero Platform Launcher with Orchestration Engine
 .DESCRIPTION
     Main entry point for the AitherZero automation platform.
     Provides interactive menu and number-based orchestration capabilities.
+    
+    Note: This script requires PowerShell 7.0 or higher. If running from PowerShell 5.1,
+    the script will automatically attempt to relaunch itself using pwsh.
 .PARAMETER Mode
     Startup mode: Interactive (default), Orchestrate, Validate
 .PARAMETER Sequence
@@ -19,6 +21,8 @@
     Name of the playbook to execute
 .PARAMETER PlaybookProfile
     Profile to use within the playbook (e.g., quick, full, ci)
+.PARAMETER IsRelaunch
+    Internal parameter to prevent infinite relaunch loops
 .EXAMPLE
     # Interactive mode
     .\Start-AitherZero.ps1
@@ -80,10 +84,122 @@ param(
 
     [switch]$Parallel,
 
+    # Internal parameter to prevent relaunch loops
+    [switch]$IsRelaunch,
+
     # Catch any extra arguments that might come from shell redirection
     [Parameter(ValueFromRemainingArguments)]
     [object[]]$RemainingArguments
 )
+
+#region PowerShell Version Check and Auto-Relaunch
+# Check if we're running PowerShell 7+ - required for AitherZero
+if ($PSVersionTable.PSVersion.Major -lt 7 -and -not $IsRelaunch) {
+    Write-Host ""
+    Write-Host "PowerShell Version Check" -ForegroundColor Yellow
+    Write-Host "========================" -ForegroundColor Yellow
+    Write-Host "Current version: PowerShell $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
+    Write-Host "Required version: PowerShell 7.0 or higher" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "AitherZero requires PowerShell 7+ for cross-platform compatibility and modern features." -ForegroundColor Cyan
+    Write-Host ""
+
+    # Try to find and launch pwsh
+    $pwshCommand = $null
+    
+    # Check if pwsh is in PATH
+    if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+        $pwshCommand = "pwsh"
+    }
+    # On Windows, check common installation paths
+    elseif ($PSVersionTable.Platform -eq 'Win32NT' -or [System.Environment]::OSVersion.Platform -eq 'Win32NT' -or $IsWindows) {
+        $pwshPaths = @(
+            "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+            "${env:ProgramFiles(x86)}\PowerShell\7\pwsh.exe",
+            "$env:ProgramFiles\PowerShell\pwsh.exe"
+        )
+        foreach ($path in $pwshPaths) {
+            if (Test-Path $path) {
+                $pwshCommand = $path
+                break
+            }
+        }
+    }
+
+    if ($pwshCommand) {
+        Write-Host "Found PowerShell 7+ at: $pwshCommand" -ForegroundColor Green
+        Write-Host "Relaunching script with PowerShell 7..." -ForegroundColor Green
+        Write-Host ""
+
+        # Build argument list to preserve all parameters
+        $argumentList = @(
+            '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-File', $PSCommandPath
+        )
+
+        # Preserve all bound parameters
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Value -is [switch]) {
+                if ($param.Value) {
+                    $argumentList += "-$($param.Key)"
+                }
+            }
+            elseif ($param.Value -is [array]) {
+                $argumentList += "-$($param.Key)"
+                $argumentList += ($param.Value -join ',')
+            }
+            elseif ($param.Value -is [hashtable]) {
+                # Hashtables need special handling
+                $argumentList += "-$($param.Key)"
+                $htString = '@{'
+                $pairs = @()
+                foreach ($key in $param.Value.Keys) {
+                    $pairs += "'$key'='$($param.Value[$key])'"
+                }
+                $htString += $pairs -join ';'
+                $htString += '}'
+                $argumentList += $htString
+            }
+            else {
+                $argumentList += "-$($param.Key)", $param.Value
+            }
+        }
+
+        # Add IsRelaunch flag to prevent infinite loops
+        $argumentList += '-IsRelaunch'
+
+        # Add any remaining arguments
+        if ($RemainingArguments) {
+            $argumentList += $RemainingArguments
+        }
+
+        try {
+            # Use Start-Process to ensure proper console attachment
+            & $pwshCommand @argumentList
+            exit $LASTEXITCODE
+        }
+        catch {
+            Write-Host "Failed to launch PowerShell 7: $_" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Please run this script directly with PowerShell 7:" -ForegroundColor Yellow
+            Write-Host "  pwsh $PSCommandPath" -ForegroundColor Cyan
+            exit 1
+        }
+    }
+    else {
+        Write-Host "PowerShell 7+ is not installed or not found in the expected locations." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Please install PowerShell 7+ from:" -ForegroundColor Yellow
+        Write-Host "  https://github.com/PowerShell/PowerShell#get-powershell" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Or run the AitherZero bootstrap script which will install it for you:" -ForegroundColor Yellow
+        Write-Host "  .\bootstrap.ps1 -AutoInstallDeps" -ForegroundColor Cyan
+        Write-Host ""
+        exit 1
+    }
+}
+#endregion
 
 # Set up environment
 $script:ProjectRoot = $PSScriptRoot
