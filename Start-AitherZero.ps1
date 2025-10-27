@@ -1259,6 +1259,8 @@ function Show-AdvancedMenu {
                 Show-UINotification -Message "Reloading configuration..." -Type 'Info'
                 try {
                     # Clear the cached configuration in the Configuration module if available
+                    # This ensures Get-Configuration calls will also see the updated values
+                    # Note: This is optional and safe - if the module structure changes, it will just skip this step
                     if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
                         # Force reload by accessing the module's script scope
                         $configModule = Get-Module -Name 'Configuration' -ErrorAction SilentlyContinue
@@ -1268,7 +1270,7 @@ function Show-AdvancedMenu {
                     }
 
                     # Reload configuration using the same method as initial load
-                    $Config = Get-AitherConfiguration -Path $ConfigPath
+                    $config = Get-AitherConfiguration -Path $ConfigPath
                     Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
                 } catch {
                     Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
