@@ -98,7 +98,7 @@
                 }
                 Python = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0206')
+                    Scripts = @('0206', '0204')  # Install Python and Poetry
                     Features = @('pip', 'poetry', 'virtualenv')
                 }
                 VSCode = @{
@@ -111,10 +111,25 @@
                     Scripts = @('0208')
                     RequiresElevation = $true
                 }
+                DevTools = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0205', '0209', '0211', '0214', '0215', '0216')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
+                    Description = 'Additional development utilities'
+                }
+                AITools = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0217', '0218')  # Claude Code, Gemini CLI
+                    Description = 'AI-powered development tools'
+                }
             }
             
             # Infrastructure components  
             Infrastructure = @{
+                System = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0100')  # Configure-System
+                    Description = 'Base system configuration'
+                }
                 HyperV = @{
                     DependsOn = @('Core.PowerShell7')
                     Scripts = @('0105')
@@ -127,23 +142,203 @@
                     RequiresElevation = $true
                     PlatformRestrictions = @('Windows')
                 }
+                WindowsAdminCenter = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0106')  # Same number, different script
+                    RequiresElevation = $true
+                    PlatformRestrictions = @('Windows')
+                }
+                CertificateAuthority = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0104')
+                    RequiresElevation = $true
+                    PlatformRestrictions = @('Windows')
+                }
+                PXE = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0112')
+                    RequiresElevation = $true
+                    PlatformRestrictions = @('Windows')
+                }
                 OpenTofu = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
                     Scripts = @('0008', '0009')
+                }
+                Go = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0007')
+                    Description = 'Go language runtime'
+                }
+                ValidationTools = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0006')
+                    Description = 'Code validation and analysis tools'
                 }
             }
             
             # Testing and quality assurance
             Testing = @{
-                Pester = @{
+                TestingTools = @{
                     DependsOn = @('Core.PowerShell7')
                     Scripts = @('0400')
+                    Description = 'Install Pester and PSScriptAnalyzer'
+                }
+                Pester = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0400', '0402', '0403', '0409', '0411', '0480', '0490')
                     MinVersion = '5.0.0'
+                    Description = 'Unit, integration, and smart testing'
                 }
                 PSScriptAnalyzer = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0400')
+                    Scripts = @('0400', '0404')
                     MinVersion = '1.20.0'
+                    Description = 'Static code analysis'
+                }
+                CodeQuality = @{
+                    DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
+                    Scripts = @('0405', '0406', '0407', '0408')
+                    Description = 'AST validation, syntax checks, coverage generation'
+                }
+                WorkflowTesting = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0440', '0441', '0442', '0443')
+                    Description = 'GitHub Actions workflow validation and local testing'
+                }
+                TestOrchestration = @{
+                    DependsOn = @('Testing.Pester')
+                    Scripts = @('0450', '0460', '0470')
+                    Description = 'Test orchestration and result publishing'
+                }
+            }
+            
+            # Reporting and analytics
+            Reporting = @{
+                SystemInfo = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0500', '0501')
+                    Description = 'Environment validation and system information'
+                }
+                ProjectReports = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0510', '0511', '0512', '0513')
+                    Description = 'Project reports, dashboards, and scheduling'
+                }
+                Analysis = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0520', '0521', '0522', '0523', '0524')
+                    Description = 'Configuration, documentation, code quality, security, and tech debt analysis'
+                }
+                Logging = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0530', '0550')
+                    Description = 'Log viewing and health dashboard'
+                }
+                CI = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0599')
+                    Description = 'CI progress reporting'
+                }
+            }
+            
+            # Git automation and workflows
+            Git = @{
+                GitSetup = @{
+                    DependsOn = @('Core.Git')
+                    Scripts = @('0700')
+                    Description = 'Git environment configuration'
+                }
+                GitWorkflow = @{
+                    DependsOn = @('Core.Git')
+                    Scripts = @('0701', '0702', '0703', '0704', '0705', '0709')
+                    Description = 'Branch creation, commits, PRs, and comments'
+                }
+                GitHubRunners = @{
+                    DependsOn = @('Core.Git', 'Core.PowerShell7')
+                    Scripts = @('0720', '0721', '0722', '0723')
+                    Description = 'GitHub Actions runner setup and configuration'
+                }
+            }
+            
+            # AI agents and automation
+            AIAgents = @{
+                Setup = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0730')
+                    Description = 'AI agent setup and configuration'
+                }
+                CodeReview = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0731', '0735')
+                    Description = 'AI-powered code review and security analysis'
+                }
+                TestGeneration = @{
+                    DependsOn = @('Core.PowerShell7', 'Testing.Pester')
+                    Scripts = @('0732')
+                    Description = 'AI-powered test generation'
+                }
+                Documentation = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0733')
+                    Description = 'AI-powered documentation generation'
+                }
+                Optimization = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0734', '0737', '0738', '0739')
+                    Description = 'AI performance optimization, monitoring, training, and validation'
+                }
+                Workflows = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0736', '0740', '0741', '0742', '0743')
+                    Description = 'AI workflow generation, integration, and automation'
+                }
+            }
+            
+            # Issue management and tracking
+            IssueManagement = @{
+                Creation = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0800', '0810', '0825', '0830', '0835')
+                    Description = 'Issue creation from tests and manual triggers'
+                }
+                Analysis = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0801', '0805', '0815')
+                    Description = 'Result parsing, issue analysis, and health monitoring'
+                }
+                Workflow = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0820', '0821', '0830', '0831')
+                    Description = 'Work context, continuation prompts, and templates'
+                }
+            }
+            
+            # Deployment and validation
+            Deployment = @{
+                Infrastructure = @{
+                    DependsOn = @('Infrastructure.OpenTofu')
+                    Scripts = @('0300')
+                    Description = 'Infrastructure deployment automation'
+                }
+                Validation = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0900', '0901')
+                    Description = 'Self-deployment and local deployment testing'
+                }
+            }
+            
+            # Maintenance and cleanup
+            Maintenance = @{
+                Environment = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0000', '0002')
+                    Description = 'Environment cleanup and directory setup'
+                }
+                Reset = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('9999')
+                    Description = 'Complete machine reset'
+                    RequiresElevation = $true
                 }
             }
         }
@@ -184,9 +379,38 @@
             }
         }
         
+        # Domain module structure (actual repository state)
+        Domains = @{
+            'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
+            'automation' = @{ Modules = 2; Description = 'Orchestration engine and deployment automation' }
+            'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
+            'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
+            'documentation' = @{ Modules = 1; Description = 'Documentation generation engine' }
+            'experience' = @{ Modules = 8; Description = 'UI/UX components and interactive menus' }
+            'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
+            'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
+            'security' = @{ Modules = 1; Description = 'Security and credential management' }
+            'testing' = @{ Modules = 5; Description = 'Testing framework and test generation' }
+            'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
+        }
+        
+        # Script inventory by range (101 total automation scripts)
+        ScriptInventory = @{
+            '0000-0099' = @{ Count = 7; Category = 'Environment Setup' }
+            '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
+            '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
+            '0300-0399' = @{ Count = 1; Category = 'Deployment' }
+            '0400-0499' = @{ Count = 20; Category = 'Testing & Quality' }
+            '0500-0599' = @{ Count = 15; Category = 'Reporting & Analytics' }
+            '0700-0799' = @{ Count = 27; Category = 'Git & AI Automation' }
+            '0800-0899' = @{ Count = 13; Category = 'Issue Management' }
+            '0900-0999' = @{ Count = 2; Category = 'Validation' }
+            '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
+        }
+        
         # Configuration schema version for validation
         SchemaVersion = '2.0'
-        LastUpdated = '2025-10-25'
+        LastUpdated = '2025-10-27'
     }
     
     # ===================================================================
@@ -276,6 +500,11 @@
                     DefaultBranch = 'main'
                     AutoFetch = $true
                 }
+                Installer = @{
+                    Windows = 'https://github.com/git-for-windows/git/releases/download/v2.48.1.windows.1/Git-2.48.1-64-bit.exe'
+                    Linux = 'package-manager'
+                    macOS = 'package-manager'
+                }
             }
         }
         
@@ -349,6 +578,12 @@
         
         # Infrastructure components
         Infrastructure = @{
+            System = @{
+                Enabled = $false
+                InstallScript = '0100'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'Base system configuration'
+            }
             HyperV = @{
                 Enabled = $false
                 InstallScript = '0105'
@@ -377,6 +612,27 @@
                     }
                 }
             }
+            WindowsAdminCenter = @{
+                Enabled = $false
+                InstallScript = '0106'
+                Platforms = @('Windows')
+                RequiresElevation = $true
+                Description = 'Windows Admin Center for remote management'
+            }
+            CertificateAuthority = @{
+                Enabled = $false
+                InstallScript = '0104'
+                Platforms = @('Windows')
+                RequiresElevation = $true
+                Description = 'Certificate Authority installation'
+            }
+            PXE = @{
+                Enabled = $false
+                InstallScript = '0112'
+                Platforms = @('Windows')
+                RequiresElevation = $true
+                Description = 'PXE boot configuration'
+            }
             OpenTofu = @{
                 Enabled = $false
                 Version = 'latest'
@@ -387,6 +643,19 @@
                     Initialize = $false
                     WorkingDirectory = './infrastructure'
                 }
+            }
+            Go = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0007'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'Go programming language'
+            }
+            ValidationTools = @{
+                Enabled = $true  # Enabled by default for code quality
+                InstallScript = '0006'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'Validation and linting tools (actionlint, etc.)'
             }
         }
         
@@ -403,6 +672,8 @@
                 }
                 Installer = @{
                     Windows = 'https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi'
+                    Linux = 'package-manager'
+                    macOS = 'package-manager'
                 }
             }
             AzureCLI = @{
@@ -414,6 +685,70 @@
                 Enabled = $false
                 InstallScript = '0213'
                 Platforms = @('Windows', 'Linux', 'macOS')
+            }
+        }
+        
+        # AI Development Tools
+        AITools = @{
+            ClaudeCode = @{
+                Enabled = $false
+                InstallScript = '0217'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    APIKeyEnvVar = 'ANTHROPIC_API_KEY'
+                    Model = 'claude-3-sonnet-20240229'
+                }
+            }
+            GeminiCLI = @{
+                Enabled = $false
+                InstallScript = '0218'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    APIKeyEnvVar = 'GOOGLE_API_KEY'
+                    Model = 'gemini-pro'
+                }
+            }
+        }
+        
+        # Additional Development Tools
+        DevTools = @{
+            Sysinternals = @{
+                Enabled = $false
+                InstallScript = '0205'
+                Platforms = @('Windows')
+                Description = 'Windows Sysinternals Suite'
+            }
+            SevenZip = @{
+                Enabled = $false
+                InstallScript = '0209'
+                Platforms = @('Windows')
+                Description = 'File compression utility'
+            }
+            VSBuildTools = @{
+                Enabled = $false
+                InstallScript = '0211'
+                Platforms = @('Windows')
+                Description = 'Visual Studio Build Tools'
+                RequiresElevation = $true
+            }
+            Packer = @{
+                Enabled = $false
+                InstallScript = '0214'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'HashiCorp Packer for image building'
+            }
+            Chocolatey = @{
+                Enabled = $false
+                InstallScript = '0215'
+                Platforms = @('Windows')
+                Description = 'Windows package manager'
+                RequiresElevation = $true
+            }
+            Poetry = @{
+                Enabled = $false
+                InstallScript = '0204'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'Python dependency management'
             }
         }
         
@@ -432,6 +767,18 @@
                 InstallScript = '0400'
                 Required = $true
                 Platforms = @('Windows', 'Linux', 'macOS')
+            }
+            Act = @{
+                Enabled = $false
+                InstallScript = '0442'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'Local GitHub Actions testing with nektos/act'
+            }
+            PowerShellYaml = @{
+                Enabled = $false
+                InstallScript = '0443'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'YAML parsing for workflow validation'
             }
         }
     }
