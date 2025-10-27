@@ -515,7 +515,7 @@ jobs:
             "*.psd1", "*.psm1", "*.ps1", "*.md", "LICENSE", "VERSION",
             "domains", "automation-scripts", "orchestration", "tests",
             "config.example.psd1", "build-info.json", ".azprofile.ps1",
-            "az", "az.ps1", "bootstrap.ps1", "bootstrap.sh", "activate.sh",
+            "bootstrap.ps1", "bootstrap.sh", "activate.sh",
             "assets", "examples", "docs", ".github/workflows"
           )
           

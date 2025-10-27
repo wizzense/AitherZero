@@ -27,7 +27,7 @@ cd /path/to/AitherZero
 . ./.azprofile.ps1
 
 # Option 2: Just run any command - it auto-loads!
-./az.ps1 0511  # Show dashboard
+./Start-AitherZero.ps1 -Script 0511  # Show dashboard
 ```
 
 ## Environment Features

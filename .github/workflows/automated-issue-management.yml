@@ -13,7 +13,11 @@ on:
       force_check:
         description: 'Force check for all issues'
         type: boolean
-        default: false
+        default: true
+      create_issues_now:
+        description: 'Create GitHub issues immediately'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -25,7 +29,7 @@ jobs:
   analyze-workflow-results:
     name: Analyze CI Results & Create Issues
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion != 'success' || github.event_name == 'schedule' || github.event.inputs.force_check == 'true'
+    if: always() && (github.event.workflow_run || github.event_name == 'schedule' || github.event.inputs.force_check == 'true' || github.event.inputs.create_issues_now == 'true')
     
     steps:
       - name: 📥 Checkout Repository
@@ -233,7 +237,17 @@ jobs:
               console.log(`Error analyzing artifacts: ${error.message}`);
             }
             
-            console.log('Issue analysis and creation completed');
+            console.log('Legacy issue analysis completed');
+
+      - name: 🤖 Run Comprehensive Issue Management
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running comprehensive issue analysis..." -ForegroundColor Cyan
+          
+          # Run our comprehensive issue management script
+          ./automation-scripts/0815_Setup-IssueManagement.ps1 -CreateIssues -AnalysisPath "./reports"
+          
+          Write-Host "✅ Comprehensive issue analysis completed" -ForegroundColor Green
 
   auto-assign-and-tag:
     name: Auto-assign Issues to Copilot
