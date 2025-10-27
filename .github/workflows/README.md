@@ -165,7 +165,7 @@ Generated artifacts:
 #### Syntax Validation Failures
 ```bash
 # Local debugging
-./az 0407                    # Run syntax validation
+./az.ps1 0407                    # Run syntax validation
 Get-ChildItem -Recurse -Include "*.ps1" | Test-PowerShellSyntax
 ```
 
@@ -178,9 +178,9 @@ Import-Module ./AitherZero.psd1 -Force -Verbose
 #### Test Failures
 ```bash  
 # Run tests locally
-./az 0402                    # Unit tests
-./az 0409                    # All tests
-./az 0404                    # Code analysis
+./az.ps1 0402                    # Unit tests
+./az.ps1 0409                    # All tests
+./az.ps1 0404                    # Code analysis
 ```
 
 ## 🔄 Migration from Legacy Workflows

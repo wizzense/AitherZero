@@ -352,7 +352,7 @@ jobs:
               
               ### 📋 Next Steps:
               1. **@copilot** please review this automated fix
-              2. Run additional validation: \`./az 0407\` and \`./az 0402\`
+              2. Run additional validation: \`./az.ps1 0407\` and \`./az.ps1 0402\`
               3. Make any necessary manual adjustments
               4. Merge when ready
               5. Close issue #${issueNumber} with resolution summary
@@ -429,7 +429,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pr.number,
-                body: `🤖 **Automated Fix PR Validation**\n\nThis PR contains automated fixes. Please validate:\n\n\`\`\`bash\n# Run comprehensive validation\n./az 0407  # Syntax validation\n./az 0402  # Unit tests\n./az 0404  # Code analysis\n\`\`\`\n\nIf all validations pass, this PR can be auto-merged.\n\n@copilot Please confirm validation results.`
+                body: `🤖 **Automated Fix PR Validation**\n\nThis PR contains automated fixes. Please validate:\n\n\`\`\`bash\n# Run comprehensive validation\n./az.ps1 0407  # Syntax validation\n./az.ps1 0402  # Unit tests\n./az.ps1 0404  # Code analysis\n\`\`\`\n\nIf all validations pass, this PR can be auto-merged.\n\n@copilot Please confirm validation results.`
               });
               
               // Check if PR is small and safe for auto-merge
