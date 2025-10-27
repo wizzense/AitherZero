@@ -38,6 +38,12 @@ backups/
 test-output/
 test-results/
 
+# Generated test reports
+reports/*.json
+!reports/dashboard.json
+!reports/psscriptanalyzer-fast-results.json
+tests/reports/*.json
+
 # IDE files
 .vscode/settings.json
 .idea/
