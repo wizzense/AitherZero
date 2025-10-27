@@ -176,7 +176,7 @@ jobs:
           path: |
             reports/quality/*.json
             reports/quality/*.html
-            reports/quality/*.text
+            reports/quality/*.txt
           retention-days: 30
 
       - name: 💬 Comment PR with Results
