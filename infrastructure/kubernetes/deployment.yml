@@ -1,0 +1,187 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aitherzero-preview
+  labels:
+    app: aitherzero
+    environment: preview
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aitherzero-sa
+  namespace: aitherzero-preview
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aitherzero-config
+  namespace: aitherzero-preview
+data:
+  AITHERZERO_NONINTERACTIVE: "true"
+  AITHERZERO_CI: "false"
+  AITHERZERO_PROFILE: "Standard"
+  DEPLOYMENT_ENVIRONMENT: "preview"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aitherzero-secrets
+  namespace: aitherzero-preview
+type: Opaque
+stringData:
+  postgres-password: "changeme"  # Replace with actual secret in production
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aitherzero
+  namespace: aitherzero-preview
+  labels:
+    app: aitherzero
+    version: "1.0.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aitherzero
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: aitherzero
+        version: "1.0.0"
+    spec:
+      serviceAccountName: aitherzero-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      containers:
+      - name: aitherzero
+        image: aitherzero:latest
+        imagePullPolicy: IfNotPresent
+        
+        envFrom:
+        - configMapRef:
+            name: aitherzero-config
+        
+        env:
+        - name: PR_NUMBER
+          value: ""  # Set via deployment
+        - name: BRANCH_NAME
+          value: ""  # Set via deployment
+        - name: COMMIT_SHA
+          value: ""  # Set via deployment
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: aitherzero-secrets
+              key: postgres-password
+        
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: https
+          containerPort: 8443
+          protocol: TCP
+        
+        livenessProbe:
+          exec:
+            command:
+            - pwsh
+            - -Command
+            - Test-Path /app/AitherZero.psd1
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - pwsh
+            - -Command
+            - Test-Path /app/AitherZero.psd1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: reports
+          mountPath: /app/reports
+        - name: results
+          mountPath: /app/tests/results
+      
+      volumes:
+      - name: logs
+        emptyDir: {}
+      - name: reports
+        emptyDir: {}
+      - name: results
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aitherzero-service
+  namespace: aitherzero-preview
+  labels:
+    app: aitherzero
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8443
+    protocol: TCP
+  selector:
+    app: aitherzero
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aitherzero-ingress
+  namespace: aitherzero-preview
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - aitherzero-preview.example.com
+    secretName: aitherzero-tls
+  rules:
+  - host: aitherzero-preview.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: aitherzero-service
+            port:
+              number: 80

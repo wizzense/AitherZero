@@ -1,0 +1,317 @@
+---
+name: Deploy PR Environment
+
+# Deploy ephemeral test environments for PRs
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, develop]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy'
+        required: true
+        type: number
+      force_redeploy:
+        description: 'Force redeployment even if environment exists'
+        type: boolean
+        default: false
+
+# Prevent concurrent deployments for the same PR
+concurrency:
+  group: deploy-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: false  # Don't cancel in-progress deployments
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+  deployments: write
+  id-token: write  # For OIDC authentication to cloud providers
+
+env:
+  DEPLOYMENT_TYPE: preview
+  CONTAINER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/aitherzero
+  
+jobs:
+  # Determine if deployment should proceed
+  check-deployment-trigger:
+    name: Check Deployment Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.check.outputs.should-deploy }}
+      pr-number: ${{ steps.check.outputs.pr-number }}
+      deployment-comment: ${{ steps.check.outputs.deployment-comment }}
+      
+    steps:
+      - name: 🔍 Check Deployment Conditions
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let shouldDeploy = false;
+            let prNumber = null;
+            let isDeploymentComment = false;
+            
+            // Handle different trigger types
+            if (context.eventName === 'pull_request') {
+              // Auto-deploy on PR events (except drafts)
+              shouldDeploy = !context.payload.pull_request.draft;
+              prNumber = context.payload.pull_request.number;
+              core.info(`PR event: #${prNumber}, Draft: ${context.payload.pull_request.draft}`);
+              
+            } else if (context.eventName === 'issue_comment') {
+              // Deploy on comment commands
+              const comment = context.payload.comment.body.toLowerCase();
+              const isPR = !!context.payload.issue.pull_request;
+              
+              isDeploymentComment = (
+                comment.includes('/deploy') || 
+                comment.includes('@deploy') ||
+                comment.includes('deploy environment')
+              );
+              
+              shouldDeploy = isPR && isDeploymentComment;
+              prNumber = context.payload.issue.number;
+              core.info(`Comment event on ${isPR ? 'PR' : 'issue'} #${prNumber}: Deploy command: ${isDeploymentComment}`);
+              
+            } else if (context.eventName === 'workflow_dispatch') {
+              // Manual deployment trigger
+              shouldDeploy = true;
+              prNumber = context.payload.inputs.pr_number;
+              core.info(`Manual deployment trigger for PR #${prNumber}`);
+            }
+            
+            core.setOutput('should-deploy', shouldDeploy);
+            core.setOutput('pr-number', prNumber);
+            core.setOutput('deployment-comment', isDeploymentComment);
+            
+            if (!shouldDeploy) {
+              core.notice('Deployment skipped: Conditions not met');
+            }
+
+  # Build and push container image
+  build-container:
+    name: Build Container Image
+    runs-on: ubuntu-latest
+    needs: check-deployment-trigger
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+      
+    steps:
+      - name: 📥 Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ needs.check-deployment-trigger.outputs.pr-number }}/head
+          
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 🏷️ Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr,prefix=pr-
+            type=sha,prefix=pr-${{ needs.check-deployment-trigger.outputs.pr-number }}-
+            
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: 🏗️ Build and Push Container
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          build-args: |
+            PR_NUMBER=${{ needs.check-deployment-trigger.outputs.pr-number }}
+            COMMIT_SHA=${{ github.sha }}
+            
+      - name: 📊 Image Build Summary
+        run: |
+          echo "### 🐳 Container Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Size**: ${{ steps.build.outputs.size }}" >> $GITHUB_STEP_SUMMARY
+
+  # Deploy to Docker Compose (local/simple deployment)
+  deploy-docker-compose:
+    name: Deploy with Docker Compose
+    runs-on: ubuntu-latest
+    needs: [check-deployment-trigger, build-container]
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    environment:
+      name: pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
+      url: http://localhost:8080
+      
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 🚀 Deploy with Docker Compose
+        env:
+          PR_NUMBER: ${{ needs.check-deployment-trigger.outputs.pr-number }}
+          BRANCH_NAME: ${{ github.head_ref }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          echo "🚀 Deploying PR #${PR_NUMBER} environment..."
+          
+          # Create environment-specific compose file
+          cat > docker-compose.pr-${PR_NUMBER}.yml <<EOF
+          version: '3.8'
+          services:
+            aitherzero:
+              image: ${{ needs.build-container.outputs.image-tag }}
+              container_name: aitherzero-pr-${PR_NUMBER}
+              environment:
+                - PR_NUMBER=${PR_NUMBER}
+                - BRANCH_NAME=${BRANCH_NAME}
+                - COMMIT_SHA=${COMMIT_SHA}
+                - DEPLOYMENT_ENVIRONMENT=preview
+              ports:
+                - "808${PR_NUMBER: -1}:8080"
+              restart: unless-stopped
+          EOF
+          
+          # Deploy
+          docker-compose -f docker-compose.pr-${PR_NUMBER}.yml up -d
+          
+          # Wait for health check
+          echo "⏳ Waiting for environment to be healthy..."
+          sleep 10
+          
+          # Verify deployment
+          if docker ps | grep -q "aitherzero-pr-${PR_NUMBER}"; then
+            echo "✅ Environment deployed successfully"
+          else
+            echo "❌ Deployment verification failed"
+            exit 1
+          fi
+          
+      - name: 🧪 Run Smoke Tests
+        run: |
+          echo "🧪 Running smoke tests against deployed environment..."
+          
+          # Test container health
+          docker ps -a --filter "name=aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}"
+          
+          # Test PowerShell module loading
+          docker exec aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }} \
+            pwsh -Command "Import-Module /app/AitherZero.psd1; Write-Host 'Module loaded successfully'"
+
+  # Comment on PR with deployment status
+  comment-deployment-status:
+    name: Update PR with Deployment Status
+    runs-on: ubuntu-latest
+    needs: [check-deployment-trigger, build-container, deploy-docker-compose]
+    if: always() && needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    
+    steps:
+      - name: 💬 Post Deployment Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
+            const buildSuccess = '${{ needs.build-container.result }}' === 'success';
+            const deploySuccess = '${{ needs.deploy-docker-compose.result }}' === 'success';
+            
+            let status = '🚀';
+            let title = 'Deployment Successful';
+            let message = 'Your PR environment has been deployed and is ready for testing!';
+            
+            if (!buildSuccess || !deploySuccess) {
+              status = '❌';
+              title = 'Deployment Failed';
+              message = 'There was an issue deploying your PR environment. Please check the workflow logs.';
+            }
+            
+            const comment = `## ${status} PR Environment Deployment
+            
+            **Status**: ${title}
+            
+            ${message}
+            
+            ### 📋 Deployment Details
+            - **PR Number**: #${prNumber}
+            - **Branch**: \`${{ github.head_ref }}\`
+            - **Commit**: \`${{ github.sha }}\`
+            - **Image**: \`${{ needs.build-container.outputs.image-tag }}\`
+            - **Deployed**: ${new Date().toLocaleString()}
+            
+            ${deploySuccess ? `
+            ### 🔗 Access Your Environment
+            - **Local URL**: http://localhost:808${prNumber.toString().slice(-1)}
+            - **Container**: \`aitherzero-pr-${prNumber}\`
+            
+            ### 🧪 Testing Commands
+            \`\`\`bash
+            # View container logs
+            docker logs aitherzero-pr-${prNumber}
+            
+            # Execute commands in environment
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "./Start-AitherZero.ps1 -Mode List"
+            
+            # Run tests
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "./az.ps1 0402"
+            \`\`\`
+            
+            ### 🛠️ Management Commands
+            - **Redeploy**: Comment \`/deploy\` on this PR
+            - **Destroy**: Will auto-cleanup when PR is closed
+            ` : `
+            ### ❌ Deployment Failed
+            - **Build Status**: ${buildSuccess ? '✅ Success' : '❌ Failed'}
+            - **Deploy Status**: ${deploySuccess ? '✅ Success' : '❌ Failed'}
+            
+            [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `}
+            
+            ---
+            *Automated PR Environment Deployment* • [Workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            // Find and update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.login === 'github-actions[bot]' && 
+              c.body.includes('PR Environment Deployment')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
