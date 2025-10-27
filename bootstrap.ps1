@@ -1072,7 +1072,7 @@ function Initialize-CleanEnvironment {
             }
 
             # Set aliases
-            Set-Alias -Name 'az' -Value (Join-Path $script:ProjectRoot 'az.ps1') -Scope Global -Force
+            # Note: 'az' alias removed - use Start-AitherZero.ps1 -Script <number> instead
             Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
 
             # Show loaded modules count
