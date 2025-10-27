@@ -75,20 +75,32 @@ cd AitherZero
 ## 🎯 Quick Start
 
 ```powershell
-# After installation, start AitherZero
+# After installation, AitherZero is available globally as 'aitherzero'
+aitherzero              # Start interactive mode
+
+# Or run from the installation directory
 ./Start-AitherZero.ps1
 
-# Or use the command runner
-./az.ps1 0511           # Show project dashboard
-./az.ps1 0402           # Run unit tests  
-./az.ps1 0510           # Generate project report
-
-# Get help
-./Start-AitherZero.ps1 -Help
-
-# Check version
-./Start-AitherZero.ps1 -Version
+# The global command works from anywhere
+cd /any/directory
+aitherzero -Mode List -Target scripts    # List all automation scripts
+aitherzero -Mode Run -Target script -ScriptNumber 0402  # Run specific script
 ```
+
+### Global Command
+
+After installation via `bootstrap.ps1`, the `aitherzero` command is automatically available from anywhere on your system:
+
+- **Linux/macOS**: Installed to `~/.local/bin/aitherzero`
+- **Windows**: Installed to `%LocalAppData%\AitherZero\bin\aitherzero.cmd`
+
+The global command:
+- Automatically locates your AitherZero installation
+- Forwards all arguments to `Start-AitherZero.ps1`
+- Works from any directory
+- Supports all parameters and modes
+
+**Note**: Open a new terminal or run `source ~/.bashrc` (Linux/macOS) for the command to be available after installation.
 
 ## 📦 What's Included
 
@@ -145,6 +157,28 @@ Get-Module AitherZero
 ## Configuration
 
 Configuration files are stored in the `configs/` directory.
+
+## Uninstallation
+
+To remove AitherZero from your system:
+
+```powershell
+# Remove the installation
+./bootstrap.ps1 -Mode Remove
+
+# Or manually remove the global command
+./tools/Install-GlobalCommand.ps1 -Action Uninstall
+
+# Manual cleanup (if needed)
+# Remove installation directory
+rm -rf ~/AitherZero  # or your custom installation path
+
+# Remove global command (Linux/macOS)
+rm ~/.local/bin/aitherzero
+
+# Remove environment variable from shell profiles
+# Edit ~/.bashrc, ~/.zshrc, ~/.profile and remove AITHERZERO_ROOT lines
+```
 
 ## License
 
