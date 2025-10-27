@@ -1,0 +1,10 @@
+# Missing 'name' and improper structure
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    # Missing runs-on
+    steps:
+      - run: echo "test"
