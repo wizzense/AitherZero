@@ -112,7 +112,8 @@ if ($PSVersionTable.PSVersion.Major -lt 7 -and -not $IsRelaunch) {
         $pwshCommand = "pwsh"
     }
     # On Windows, check common installation paths
-    elseif ($PSVersionTable.Platform -eq 'Win32NT' -or [System.Environment]::OSVersion.Platform -eq 'Win32NT' -or $IsWindows) {
+    # Note: In PS 5.1, $IsWindows doesn't exist, so we check PSVersion and Platform
+    elseif ($PSVersionTable.PSVersion.Major -lt 6 -or $IsWindows) {
         $pwshPaths = @(
             "$env:ProgramFiles\PowerShell\7\pwsh.exe",
             "${env:ProgramFiles(x86)}\PowerShell\7\pwsh.exe",
@@ -150,16 +151,11 @@ if ($PSVersionTable.PSVersion.Major -lt 7 -and -not $IsRelaunch) {
                 $argumentList += ($param.Value -join ',')
             }
             elseif ($param.Value -is [hashtable]) {
-                # Hashtables need special handling
+                # Hashtables require special handling - use JSON for safe serialization
                 $argumentList += "-$($param.Key)"
-                $htString = '@{'
-                $pairs = @()
-                foreach ($key in $param.Value.Keys) {
-                    $pairs += "'$key'='$($param.Value[$key])'"
-                }
-                $htString += $pairs -join ';'
-                $htString += '}'
-                $argumentList += $htString
+                # Serialize to JSON, escape it properly for command line
+                $jsonString = ($param.Value | ConvertTo-Json -Compress) -replace '"', '\"'
+                $argumentList += $jsonString
             }
             else {
                 $argumentList += "-$($param.Key)", $param.Value
