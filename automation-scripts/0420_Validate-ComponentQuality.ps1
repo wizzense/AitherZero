@@ -264,9 +264,17 @@ try {
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $reportName = "quality-report-$timestamp"
     
+    # Map format to correct file extension
+    switch ($Format.ToUpper()) {
+        'TEXT' { $fileExtension = 'txt' }
+        'HTML' { $fileExtension = 'html' }
+        'JSON' { $fileExtension = 'json' }
+        default { $fileExtension = $Format.ToLower() }
+    }
+    
     foreach ($report in $allReports) {
         $fileName = [System.IO.Path]::GetFileNameWithoutExtension($report.FilePath)
-        $reportPath = Join-Path $OutputPath "$reportName-$fileName.$($Format.ToLower())"
+        $reportPath = Join-Path $OutputPath "$reportName-$fileName.$fileExtension"
         
         if ($PSCmdlet.ShouldProcess($reportPath, "Save quality report")) {
             $formattedReport = Format-QualityReport -Report $report -Format $Format
