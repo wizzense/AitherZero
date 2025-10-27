@@ -1142,7 +1142,7 @@ function Show-AdvancedMenu {
                     $editor = $env:EDITOR ?? 'nano'
                     Start-Process -FilePath $editor -ArgumentList $configPath -Wait
                 }
-                
+
                 # Reload configuration after editing
                 Show-UINotification -Message "Reloading configuration..." -Type 'Info'
                 try {
@@ -1154,7 +1154,7 @@ function Show-AdvancedMenu {
                             & $configModule { $script:Config = $null }
                         }
                     }
-                    
+
                     # Reload configuration using the same method as initial load
                     $Config = Get-AitherConfiguration -Path $ConfigPath
                     Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
