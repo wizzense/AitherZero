@@ -233,7 +233,7 @@ Variables:
 ### Run CI/CD Locally
 ```powershell
 # Install act for local GitHub Actions
-./az 0441 -InstallDependencies
+./az.ps1 0441 -InstallDependencies
 
 # Test specific workflow
 act -W .github/workflows/ci-cd-pipeline.yml
@@ -248,7 +248,7 @@ act pull_request -W .github/workflows/ci-cd-pipeline.yml
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full
 
 # Publish results
-./az 0450  # Publish test results
+./az.ps1 0450  # Publish test results
 
 # View locally
 Start-Process "./docs/reports/latest/test-report.html"

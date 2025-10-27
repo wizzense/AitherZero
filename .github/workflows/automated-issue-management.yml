@@ -324,7 +324,7 @@ jobs:
             ### 🎯 Action Required
             
             1. **Review the latest commits** in the associated PR
-            2. **Run comprehensive validation** using \`./az 0404\` and \`./az 0402\`
+            2. **Run comprehensive validation** using \`./az.ps1 0404\` and \`./az.ps1 0402\`
             3. **Address any issues found** in the review
             4. **Update this issue** with review findings
             5. **Close this issue** once review is complete
@@ -333,10 +333,10 @@ jobs:
             
             \`\`\`powershell
             # Run comprehensive validation
-            ./az 0407  # Syntax validation
-            ./az 0402  # Unit tests
-            ./az 0404  # Code analysis
-            ./az 0510  # Generate report
+            ./az.ps1 0407  # Syntax validation
+            ./az.ps1 0402  # Unit tests
+            ./az.ps1 0404  # Code analysis
+            ./az.ps1 0510  # Generate report
             \`\`\`
             
             This automated review helps ensure consistent code quality and catches issues before merging.
