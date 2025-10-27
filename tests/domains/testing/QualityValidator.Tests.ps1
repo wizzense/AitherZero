@@ -2,7 +2,7 @@
 
 BeforeAll {
     # Import test helpers
-    $testHelpersPath = Join-Path $PSScriptRoot '../..' 'tests/TestHelpers.psm1'
+    $testHelpersPath = Join-Path (Join-Path $PSScriptRoot '../..') 'tests/TestHelpers.psm1'
     if (Test-Path $testHelpersPath) {
         Import-Module $testHelpersPath -Force
     }
