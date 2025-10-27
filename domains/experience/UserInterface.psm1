@@ -10,6 +10,12 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Import shared text utilities
+$textUtilsPath = Join-Path $PSScriptRoot "../utilities/TextUtilities.psm1"
+if (Test-Path $textUtilsPath) {
+    Import-Module $textUtilsPath -Force -ErrorAction SilentlyContinue
+}
+
 # Module state
 $script:UIState = @{
     Theme = 'Default'
@@ -435,7 +441,8 @@ function Show-UIMenu {
 
         for ($i = 0; $i -lt $Items.Count; $i++) {
             $item = $Items[$i]
-            $displayText = if ($item -is [string]) { $item } else { $item.Name }
+            $rawText = if ($item -is [string]) { $item } else { $item.Name }
+            $displayText = Repair-TextSpacing -Text $rawText
             $prefix = "[$($i + 1)]"
 
             Write-Host "$prefix $displayText" -ForegroundColor White
