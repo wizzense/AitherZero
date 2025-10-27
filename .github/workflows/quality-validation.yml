@@ -51,11 +51,24 @@ jobs:
         run: |
           Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
           ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
-          
-          # Install PSScriptAnalyzer if needed
+
+      - name: 💾 Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-powershell-modules-${{ hashFiles('**/*.psd1') }}
+          restore-keys: |
+            ${{ runner.os }}-powershell-modules-
+
+      - name: 📦 Install Testing Dependencies
+        shell: pwsh
+        run: |
+          # Install PSScriptAnalyzer if not cached
           if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
             Write-Host "Installing PSScriptAnalyzer..." -ForegroundColor Yellow
             Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser
+          } else {
+            Write-Host "PSScriptAnalyzer already installed" -ForegroundColor Green
           }
 
       - name: 🔍 Detect Changed PowerShell Files
@@ -68,8 +81,8 @@ jobs:
           $changedFiles = @()
           
           if ("${{ github.event_name }}" -eq "pull_request") {
-            # For PRs, compare with base branch
-            $gitDiff = git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD
+            # For PRs, compare with base branch (no origin/ prefix needed in GitHub Actions)
+            $gitDiff = git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD
             $changedFiles = $gitDiff | Where-Object {
               $_ -match '\.(ps1|psm1|psd1)$' -and
               $_ -notmatch '^(tests|legacy-to-migrate|\.archive)/'
@@ -197,7 +210,7 @@ jobs:
                   reportContent += `- ⚠️ **Warnings:** ${summary.Warnings || 0}\n`;
                   reportContent += `- ❌ **Failed:** ${summary.Failed || 0}\n\n`;
                   
-                  if (summary.Files && summary.Files.length > 0) {
+                  if (summary.Files && Array.isArray(summary.Files) && summary.Files.length > 0) {
                     reportContent += `### File Details\n`;
                     for (const file of summary.Files) {
                       const icon = file.Status === 'Passed' ? '✅' : 
