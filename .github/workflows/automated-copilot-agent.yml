@@ -84,8 +84,7 @@ jobs:
             # BREAKTHROUGH: Analyze only 3-5 core files instead of 462 files = 99% reduction!  
             # This takes the analysis from 60+ seconds to 2-3 seconds
             $coreFiles = @(
-              './Start-AitherZero.ps1',
-              './az.ps1'
+              './Start-AitherZero.ps1'
             ) | Where-Object { Test-Path $_ }
             
             # Optional: Add 1-2 critical automation scripts if they exist
@@ -293,8 +292,7 @@ jobs:
             $securityIssues = @()
             # ULTRA-FAST security scan - only core files to prevent hanging
             $coreSecurityFiles = @(
-              './Start-AitherZero.ps1',
-              './az.ps1'
+              './Start-AitherZero.ps1'
             ) | Where-Object { Test-Path $_ }
             
             Write-Host "  ⚡ ULTRA-FAST MODE: Scanning $($coreSecurityFiles.Count) core files for security issues" -ForegroundColor Green

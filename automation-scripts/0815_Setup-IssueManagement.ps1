@@ -171,8 +171,7 @@ function Get-CodeQualityFindings {
         
         # Ultra-fast analysis on core files only (2-3 seconds vs 60+ seconds)
         $coreFiles = @(
-            "$rootPath/Start-AitherZero.ps1",
-            "$rootPath/az.ps1"
+            "$rootPath/Start-AitherZero.ps1"
         ) | Where-Object { Test-Path $_ }
         
         if ($coreFiles.Count -gt 0) {

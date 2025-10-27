@@ -56,8 +56,7 @@ try {
         # Strategy 1: Core application files (3 files)
         $coreFiles = @(
             './Start-AitherZero.ps1',
-            './Initialize-AitherEnvironment.ps1', 
-            './az.ps1'
+            './Initialize-AitherEnvironment.ps1'
         ) | Where-Object { Test-Path $_ }
         
         # Strategy 2: Key automation scripts (most important ones, not all 108)

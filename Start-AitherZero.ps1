@@ -570,12 +570,15 @@ function Invoke-ModernRunAction {
             
             Write-ModernCLI "Running script $ScriptNum..." -Type 'Info'
             
-            # Use existing az.ps1 functionality
-            if (Test-Path "./az.ps1") {
-                Write-ModernCLI "Executing: ./az.ps1 $ScriptNum" -Type 'Success'
-                & "./az.ps1" $ScriptNum
+            # Execute automation script directly
+            $scriptPath = "./automation-scripts/$($ScriptNum.ToString().PadLeft(4, '0'))_*.ps1"
+            $matchingScript = Get-ChildItem -Path $scriptPath -ErrorAction SilentlyContinue | Select-Object -First 1
+            
+            if ($matchingScript) {
+                Write-ModernCLI "Executing: $($matchingScript.Name)" -Type 'Success'
+                & $matchingScript.FullName
             } else {
-                Write-ModernCLI "Script runner not found: ./az.ps1" -Type 'Error'
+                Write-ModernCLI "Script not found: $scriptPath" -Type 'Error'
             }
         }
         'playbook' {
