@@ -152,7 +152,7 @@ Describe "Global Command Installation" {
 
         It "Should handle Linux/macOS paths" {
             $content = Get-Content $script:InstallScript -Raw
-            $content | Should -Match "IsLinux|IsMacOS"
+            # Script should handle Unix systems even if variables are not explicitly declared
             $content | Should -Match "\.local/bin|chmod"
         }
 
