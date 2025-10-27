@@ -691,9 +691,8 @@ function Test-PSScriptAnalyzerCompliance {
             $result.Details.Warnings = $warningCount
             
             # Score calculation
-            $result.Score -= ($errorCount * 15)
-            $result.Score -= ($warningCount * 5)
-            $result.Score = [math]::Max(0, $result.Score)
+            $totalPenalty = ($errorCount * 15) + ($warningCount * 5)
+            $result.Score = [math]::Max(0, $result.Score - $totalPenalty)
             
             # Add findings
             if ($errorCount -gt 0) {
