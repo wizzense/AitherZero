@@ -1,0 +1,102 @@
+---
+name: 🚨 Create Issues Now
+
+on:
+  workflow_dispatch:
+    inputs:
+      analysis_type:
+        description: 'Type of analysis to run'
+        type: choice
+        options: ['all', 'security-only', 'code-quality-only']
+        default: 'all'
+      create_actual_issues:
+        description: 'Create actual GitHub issues (not dry run)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  create-issues:
+    name: 🤖 Create Issues from Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🧪 Run Tests and Check for Failures
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running tests to detect current failures..." -ForegroundColor Cyan
+          
+          # Run unit tests and capture results
+          try {
+            ./automation-scripts/0402_Run-UnitTests.ps1 -OutputPath "./test-results" -ContinueOnError
+          } catch {
+            Write-Warning "Some tests may have failed - this is expected for issue detection"
+          }
+          
+          # Run PSScriptAnalyzer
+          try {
+            ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -OutputPath "./reports/psscriptanalyzer-results.json"
+          } catch {
+            Write-Warning "PSScriptAnalyzer analysis completed with findings"
+          }
+          
+          Write-Host "✅ Test execution completed" -ForegroundColor Green
+
+      - name: 🔍 Run Issue Analysis and Creation
+        shell: pwsh
+        run: |
+          Write-Host "🚨 Creating GitHub Issues from Analysis Findings..." -ForegroundColor Red
+          Write-Host "Analysis Type: ${{ github.event.inputs.analysis_type }}" -ForegroundColor Cyan
+          Write-Host "Create Issues: ${{ github.event.inputs.create_actual_issues }}" -ForegroundColor Cyan
+          Write-Host ""
+          
+          # Ensure the script exists
+          if (-not (Test-Path "./automation-scripts/0815_Setup-IssueManagement.ps1")) {
+            Write-Error "Issue management script not found!"
+            exit 1
+          }
+          
+          # Run the enhanced issue management script (now includes tests and bugs)
+          if ("${{ github.event.inputs.create_actual_issues }}" -eq "true") {
+            Write-Host "🔥 CREATING ACTUAL GITHUB ISSUES..." -ForegroundColor Red
+            ./automation-scripts/0815_Setup-IssueManagement.ps1 -CreateIssues -AnalysisPath "./reports"
+          } else {
+            Write-Host "🧪 DRY RUN - Previewing issues that would be created..." -ForegroundColor Yellow  
+            ./automation-scripts/0815_Setup-IssueManagement.ps1 -DryRun -AnalysisPath "./reports"
+          }
+          
+          Write-Host ""
+          Write-Host "✅ Issue creation workflow completed!" -ForegroundColor Green
+
+      - name: 📊 Report Results
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "📋 Issue Creation Summary" -ForegroundColor Cyan
+          Write-Host "=====================" 
+          
+          if ("${{ github.event.inputs.create_actual_issues }}" -eq "true") {
+            Write-Host "✅ Issues have been created in the repository" -ForegroundColor Green
+            Write-Host "🔗 Check: https://github.com/${{ github.repository }}/issues?q=is:issue+is:open+label:automated-issue" -ForegroundColor Cyan
+          } else {
+            Write-Host "🧪 This was a dry run - no actual issues were created" -ForegroundColor Yellow
+            Write-Host "💡 Set 'Create actual GitHub issues' to true to create real issues" -ForegroundColor Blue
+          }
+          
+          Write-Host ""
+          Write-Host "🎯 Expected issue types:" -ForegroundColor White
+          Write-Host "• 🚨 Critical Security Vulnerabilities" -ForegroundColor Red
+          Write-Host "• 🔐 Exposed Credentials" -ForegroundColor Red  
+          Write-Host "• 🌐 Insecure Protocol Usage" -ForegroundColor Yellow
+          Write-Host "• 🧪 Test Failures" -ForegroundColor Red
+          Write-Host "• 🔴 Pester Unit Test Failures" -ForegroundColor Red
+          Write-Host "• 🐛 System Errors and Bugs" -ForegroundColor Yellow
+          Write-Host "• ❌ PSScriptAnalyzer Errors" -ForegroundColor Yellow
+          Write-Host "• ⚠️ Code Quality Warnings" -ForegroundColor Gray
