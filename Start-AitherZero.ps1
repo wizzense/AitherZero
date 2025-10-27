@@ -1142,7 +1142,28 @@ function Show-AdvancedMenu {
                     $editor = $env:EDITOR ?? 'nano'
                     Start-Process -FilePath $editor -ArgumentList $configPath -Wait
                 }
-            Show-UINotification -Message "Configuration may have changed. Restart to apply changes." -Type 'Info'
+                
+                # Reload configuration after editing
+                Show-UINotification -Message "Reloading configuration..." -Type 'Info'
+                try {
+                    # Clear the cached configuration in the Configuration module if available
+                    if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
+                        # Force reload by accessing the module's script scope
+                        $configModule = Get-Module -Name 'Configuration' -ErrorAction SilentlyContinue
+                        if ($configModule) {
+                            & $configModule { $script:Config = $null }
+                        }
+                    }
+                    
+                    # Reload configuration using the same method as initial load
+                    $Config = Get-AitherConfiguration -Path $ConfigPath
+                    Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
+                } catch {
+                    Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
+                    Write-ConfigLog -Level Warning -Message "Configuration reload failed, changes will apply on restart" -Data @{
+                        Error = $_.Exception.Message
+                    }
+                }
             }
 
             'Create Playbook' {
