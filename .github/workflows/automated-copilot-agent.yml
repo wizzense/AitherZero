@@ -411,7 +411,6 @@ jobs:
             const { data: existingIssues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              assignee: 'copilot',
               state: 'open',
               labels: 'auto-created'
             });
@@ -434,9 +433,8 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `🤖 ${title}`,
-                body: `${body}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Priority:** ${priority}\n**Assignee:** @copilot\n\n@copilot Please address this issue following the automated resolution process.`,
-                labels: ['auto-created', 'copilot-task', `priority-${priority}`, ...labels],
-                assignees: ['copilot']
+                body: `${body}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Priority:** ${priority}\n\n@copilot Please address this issue following the automated resolution process.`,
+                labels: ['auto-created', 'copilot-task', `priority-${priority}`, ...labels]
               });
               
               issuesCreated.push(issue.data.number);
