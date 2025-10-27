@@ -211,8 +211,8 @@ catch {
     
     # Show helpful information
     Write-Host "Troubleshooting Tips:" -ForegroundColor Yellow
-    Write-Host "- Verify the connection profile exists: az 0602 -Action list" -ForegroundColor Gray
-    Write-Host "- Test the connection: az 0602 -Action test -ProfileName '$ProfileName'" -ForegroundColor Gray
+    Write-Host "- Verify the connection profile exists: ./automation-scripts/0602_Manage-ConnectionProfiles.ps1 -Action list" -ForegroundColor Gray
+    Write-Host "- Test the connection: ./automation-scripts/0602_Manage-ConnectionProfiles.ps1 -Action test -ProfileName '$ProfileName'" -ForegroundColor Gray
     Write-Host "- Check script path: $ScriptPath" -ForegroundColor Gray
     Write-Host "- Ensure SSH keys are properly set up" -ForegroundColor Gray
     Write-Host ""
