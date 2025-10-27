@@ -1,0 +1,159 @@
+---
+name: 🤖 Copilot Issue Commenter - Auto-prompt on New Issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  comment-with-copilot-prompt:
+    name: 💬 Add Copilot Prompt to New Issues
+    runs-on: ubuntu-latest
+    # Only run for issues that are assigned to wizzense or have auto-created label
+    if: |
+      (contains(github.event.issue.assignees.*.login, 'wizzense') || 
+       contains(github.event.issue.labels.*.name, 'auto-created'))
+    
+    steps:
+      - name: 📝 Post Copilot Prompt Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            
+            // Check if this is an auto-created issue with copilot-task label
+            const isAutoCreated = issue.labels.some(l => l.name === 'auto-created');
+            const isCopilotTask = issue.labels.some(l => l.name === 'copilot-task');
+            const hasWizzenseAssigned = issue.assignees?.some(a => a.login === 'wizzense');
+            
+            // Only comment if it's an auto-created copilot task or assigned to wizzense
+            if (!isAutoCreated && !hasWizzenseAssigned) {
+              console.log('Skipping: Issue is not auto-created or assigned to wizzense');
+              return;
+            }
+            
+            // Check if we already commented on this issue
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number
+            });
+            
+            const alreadyCommented = comments.some(c => 
+              c.user.login === 'github-actions[bot]' && 
+              c.body.includes('🤖 Copilot Task Assignment')
+            );
+            
+            if (alreadyCommented) {
+              console.log('Already commented on this issue');
+              return;
+            }
+            
+            // Determine priority from labels
+            let priority = 'medium';
+            if (issue.labels.some(l => l.name === 'priority-critical')) {
+              priority = 'critical';
+            } else if (issue.labels.some(l => l.name === 'priority-high')) {
+              priority = 'high';
+            } else if (issue.labels.some(l => l.name === 'priority-low')) {
+              priority = 'low';
+            }
+            
+            // Build priority guideline
+            let priorityGuideline = '';
+            if (priority === 'critical') {
+              priorityGuideline = '🚨 **CRITICAL**: Address immediately - blocking functionality or security vulnerability';
+            } else if (priority === 'high') {
+              priorityGuideline = '⚠️ **HIGH**: Address within 24-48 hours - important functionality affected';
+            } else if (priority === 'low') {
+              priorityGuideline = '📌 **LOW**: Address when capacity allows - minor improvement or non-blocking issue';
+            } else {
+              priorityGuideline = '📋 **MEDIUM**: Address within normal development cycle';
+            }
+            
+            const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
+            
+            // Build the comment body piece by piece to avoid YAML parsing issues
+            let promptComment = '## 🤖 Copilot Task Assignment\n\n';
+            promptComment += '**Issue:** ' + issue.title + '\n';
+            promptComment += '**Priority:** ' + priority.toUpperCase() + '\n';
+            promptComment += '**Assigned to:** @' + assignedTo + '\n\n';
+            promptComment += '### 📋 Task Instructions for GitHub Copilot\n\n';
+            promptComment += 'This issue has been automatically created and requires your attention. ';
+            promptComment += 'Please follow the resolution process below:\n\n';
+            promptComment += '#### 1️⃣ Analysis Phase\n';
+            promptComment += '- Review the issue description and understand the requirements\n';
+            promptComment += '- Identify the root cause and scope of work needed\n';
+            promptComment += '- Check for any related issues or dependencies\n';
+            promptComment += '- Validate the priority level and adjust if necessary\n\n';
+            promptComment += '#### 2️⃣ Implementation Phase\n';
+            promptComment += '- Create a focused branch from the main branch\n';
+            promptComment += '- Make minimal, surgical changes to address the issue\n';
+            promptComment += '- Follow existing code patterns and conventions\n';
+            promptComment += '- Ensure all changes are properly tested\n\n';
+            promptComment += '#### 3️⃣ Validation Phase\n';
+            promptComment += '- Run all relevant linters and checks:\n';
+            promptComment += '  - `./az 0404` - PSScriptAnalyzer\n';
+            promptComment += '  - `./az 0407` - Syntax validation\n';
+            promptComment += '  - `./az 0402` - Unit tests\n';
+            promptComment += '- Verify no new issues are introduced\n';
+            promptComment += '- Test the changes in a local environment if applicable\n\n';
+            promptComment += '#### 4️⃣ PR Creation Phase\n';
+            promptComment += '- Create a pull request with a clear title and description\n';
+            promptComment += '- Link this issue in the PR description using "Closes #' + issue.number + '"\n';
+            promptComment += '- Request review from appropriate team members\n';
+            promptComment += '- Ensure CI/CD pipelines pass\n\n';
+            promptComment += '#### 5️⃣ Completion Phase\n';
+            promptComment += '- Address any review feedback\n';
+            promptComment += '- Merge the PR once approved\n';
+            promptComment += '- Verify the issue is automatically closed\n';
+            promptComment += '- Add a summary comment with what was changed\n\n';
+            promptComment += '### 🚀 Quick Commands\n\n';
+            promptComment += '```powershell\n';
+            promptComment += '# Initialize environment\n';
+            promptComment += './Initialize-AitherEnvironment.ps1\n\n';
+            promptComment += '# Run analysis tools\n';
+            promptComment += './az 0404  # PSScriptAnalyzer\n';
+            promptComment += './az 0402  # Unit tests\n';
+            promptComment += './az 0407  # Syntax validation\n\n';
+            promptComment += '# Create branch and PR (if using automation scripts)\n';
+            promptComment += './az 0701 -Type feature -Name "fix-issue-' + issue.number + '"\n';
+            promptComment += './az 0702 -Type fix -Message "address issue #' + issue.number + '"\n';
+            promptComment += './az 0703 -Title "Fix: ' + issue.title + '"\n';
+            promptComment += '```\n\n';
+            promptComment += '### ⚡ Priority Guidelines\n\n';
+            promptComment += priorityGuideline + '\n\n';
+            promptComment += '### ✅ Success Criteria\n\n';
+            promptComment += 'The issue will be considered resolved when:\n';
+            promptComment += '- [ ] Root cause is identified and addressed\n';
+            promptComment += '- [ ] All code changes are minimal and focused\n';
+            promptComment += '- [ ] All tests pass (no new failures introduced)\n';
+            promptComment += '- [ ] PSScriptAnalyzer shows no new critical issues\n';
+            promptComment += '- [ ] PR is created and linked to this issue\n';
+            promptComment += '- [ ] PR is reviewed and approved\n';
+            promptComment += '- [ ] Changes are merged to main branch\n';
+            promptComment += '- [ ] This issue is closed with resolution summary\n\n';
+            promptComment += '---\n';
+            promptComment += '*This is an automated comment to help guide the resolution process. ';
+            promptComment += 'Reply with questions or updates as you work through the issue.*';
+
+            // Post the comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: promptComment
+            });
+            
+            console.log(`✅ Posted Copilot prompt comment on issue #${issue.number}`);
+            
+      - name: 📊 Log Activity
+        run: |
+          echo "::notice::Copilot prompt comment added to issue #${{ github.event.issue.number }}"
+          echo "Issue: ${{ github.event.issue.title }}"
+          echo "Created by: ${{ github.event.issue.user.login }}"
+          echo "Assigned to: ${{ join(github.event.issue.assignees.*.login, ', ') }}"
