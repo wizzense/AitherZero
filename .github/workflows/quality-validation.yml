@@ -25,6 +25,7 @@ permissions:
   contents: read
   pull-requests: write
   checks: write
+  issues: write
 
 concurrency:
   group: quality-validation-${{ github.event.pull_request.number || github.run_id }}
@@ -238,6 +239,126 @@ jobs:
               issue_number: context.payload.pull_request.number,
               body: reportContent
             });
+
+      - name: 📋 Create Issues for Quality Failures
+        if: steps.validation.outputs.exit-code != '0' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read quality reports
+            const reportsDir = './reports/quality';
+            
+            try {
+              if (!fs.existsSync(reportsDir)) {
+                console.log('No reports directory found');
+                return;
+              }
+              
+              const summaryFiles = fs.readdirSync(reportsDir)
+                .filter(f => f.endsWith('-summary.json'));
+              
+              if (summaryFiles.length === 0) {
+                console.log('No summary files found');
+                return;
+              }
+              
+              const summaryPath = path.join(reportsDir, summaryFiles[0]);
+              const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+              
+              // Only create issue if there are failed files
+              if (!summary.Files || summary.Failed === 0) {
+                console.log('No failed files to report');
+                return;
+              }
+              
+              // Read detailed reports for failed files
+              const failedFiles = Array.isArray(summary.Files) 
+                ? summary.Files.filter(f => f.Status === 'Failed')
+                : (summary.Files.Status === 'Failed' ? [summary.Files] : []);
+              
+              if (failedFiles.length === 0) {
+                console.log('No failed files found in details');
+                return;
+              }
+              
+              // Create issue for each failed file or one consolidated issue
+              for (const file of failedFiles) {
+                const fileName = path.basename(file.FilePath);
+                
+                // Find the detailed report
+                const detailedReportFiles = fs.readdirSync(reportsDir)
+                  .filter(f => f.includes(fileName.replace(/\.(ps1|psm1|psd1)$/, '')) && f.endsWith('.txt'));
+                
+                let detailedFindings = '';
+                if (detailedReportFiles.length > 0) {
+                  const reportPath = path.join(reportsDir, detailedReportFiles[0]);
+                  const reportContent = fs.readFileSync(reportPath, 'utf8');
+                  
+                  // Extract the detailed results section
+                  const match = reportContent.match(/DETAILED RESULTS[\s\S]*?={50,}/);
+                  if (match) {
+                    detailedFindings = match[0].replace(/={50,}/, '').trim();
+                  }
+                }
+                
+                const issueTitle = `Quality Validation Failed: ${fileName} (Score: ${file.Score}%)`;
+                const issueBody = `## Quality Validation Failure Report
+            
+**File**: \`${file.FilePath}\`
+**Overall Score**: ${file.Score}%
+**Status**: ${file.Status}
+**PR**: #${{ github.event.pull_request.number }}
+
+### Summary
+This file failed quality validation checks. Please review the findings below and address the issues.
+
+### Detailed Findings
+
+\`\`\`
+${detailedFindings || 'See workflow artifacts for full details'}
+\`\`\`
+
+### Next Steps
+1. Review the quality validation report in the [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+2. Address the issues identified in the findings
+3. Run local validation: \`./az 0420 -Path ${file.FilePath}\`
+4. Re-run validation after fixes
+
+@copilot please review this file and address the quality issues identified above.
+
+---
+*This issue was automatically created by the Quality Validation System*
+*Related PR: #${{ github.event.pull_request.number }}*
+*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
+                
+                // Create the issue
+                const issue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: issueBody,
+                  labels: ['quality-validation', 'automated', 'needs-fix'],
+                  assignees: ['${{ github.event.pull_request.user.login }}']
+                });
+                
+                console.log(`Created issue #${issue.data.number} for ${fileName}`);
+                
+                // Link issue to PR by adding a comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `📋 Created issue #${issue.data.number} to track quality validation failures for \`${fileName}\``
+                });
+              }
+              
+            } catch (error) {
+              console.error('Error creating quality issues:', error);
+              core.setFailed(`Failed to create quality issues: ${error.message}`);
+            }
 
       - name: ❌ Fail if Quality Check Failed
         if: steps.validation.outputs.exit-code != '0'
