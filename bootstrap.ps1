@@ -1072,7 +1072,7 @@ function Initialize-CleanEnvironment {
             }
 
             # Set aliases
-            Set-Alias -Name 'az' -Value (Join-Path $script:ProjectRoot 'az.ps1') -Scope Global -Force
+            # Note: 'az' alias removed - use Start-AitherZero.ps1 -Script <number> instead
             Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
 
             # Show loaded modules count
@@ -1106,8 +1106,31 @@ function Remove-AitherZero {
     }
 
     Write-BootstrapLog "Removing AitherZero..." -Level Info
-    Remove-Item $installPath -Recurse -Force
-    Write-BootstrapLog "AitherZero removed successfully" -Level Success
+    
+    # First, uninstall the global command
+    $installScript = Join-Path $installPath "tools/Install-GlobalCommand.ps1"
+    $globalUninstallSucceeded = $true
+    if (Test-Path $installScript) {
+        try {
+            Write-BootstrapLog "Uninstalling global 'aitherzero' command..." -Level Info
+            & $installScript -Action Uninstall -ErrorAction Stop
+        } catch {
+            Write-BootstrapLog "Failed to uninstall global command: $_" -Level Warning
+            $globalUninstallSucceeded = $false
+        }
+    }
+    
+    # Only remove the installation if global uninstall succeeded
+    if ($globalUninstallSucceeded) {
+        try {
+            Remove-Item $installPath -Recurse -Force
+            Write-BootstrapLog "AitherZero removed successfully" -Level Success
+        } catch {
+            Write-BootstrapLog "Failed to remove installation directory: $_" -Level Warning
+        }
+    } else {
+        Write-BootstrapLog "AitherZero removal incomplete: global uninstall failed, installation directory not removed." -Level Warning
+    }
 }
 
 # Main execution
@@ -1171,6 +1194,23 @@ try {
             Write-BootstrapLog "Failed to initialize environment: $_" -Level Warning
         } finally {
             Pop-Location
+        }
+    }
+
+    # Install global command if we have an installation path
+    if ($installPath -and $Mode -ne 'Remove') {
+        Write-BootstrapLog "Installing global 'aitherzero' command..." -Level Info
+        $installScript = Join-Path $installPath "tools/Install-GlobalCommand.ps1"
+        
+        if (Test-Path $installScript) {
+            try {
+                & $installScript -Action Install -InstallPath $installPath -ErrorAction Stop
+            } catch {
+                Write-BootstrapLog "Failed to install global command: $_" -Level Warning
+                Write-BootstrapLog "You can manually install it later by running: $installScript -Action Install" -Level Info
+            }
+        } else {
+            Write-BootstrapLog "Global command installer not found at: $installScript" -Level Warning
         }
     }
 
