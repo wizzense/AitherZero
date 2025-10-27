@@ -2,111 +2,168 @@
 name: 🤖 Copilot Issue Commenter - Auto-prompt on New Issues
 
 on:
-  issues:
-    types: [opened]
+  # Trigger after automated-copilot-agent completes
+  # This avoids the GITHUB_TOKEN recursion prevention issue
+  workflow_run:
+    workflows: ["🤖 Automated Copilot Agent - Iterative Issue Resolution"]
+    types: [completed]
+  
+  # Also support manual trigger for existing issues
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to comment on'
+        required: true
+        type: number
 
 permissions:
   contents: read
   issues: write
+  actions: read
 
 jobs:
   comment-with-copilot-prompt:
     name: 💬 Add Copilot Prompt to New Issues
     runs-on: ubuntu-latest
-    # Pre-filter at workflow level to save GitHub Actions minutes
-    # More comprehensive validation is performed in the JavaScript code below
+    # Run if workflow completed successfully or if manually triggered
     if: |
-      (contains(github.event.issue.assignees.*.login, 'wizzense') || 
-       contains(github.event.issue.labels.*.name, 'auto-created'))
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     
     steps:
-      - name: 📝 Post Copilot Prompt Comment
+      - name: 📝 Post Copilot Prompt Comments
         uses: actions/github-script@v7
         with:
           script: |
-            const issue = context.payload.issue;
+            let issuesToComment = [];
             
-            // Check if this is an auto-created issue with copilot-task label
-            const isAutoCreated = issue.labels.some(l => l.name === 'auto-created');
-            const isCopilotTask = issue.labels.some(l => l.name === 'copilot-task');
-            const hasWizzenseAssigned = issue.assignees?.some(a => a.login === 'wizzense');
-            
-            // Only comment if it's an auto-created copilot task or assigned to wizzense
-            if (!isAutoCreated && !hasWizzenseAssigned) {
-              console.log('Skipping: Issue is not auto-created or assigned to wizzense');
-              return;
-            }
-            
-            // Check if we already commented on this issue
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number
-            });
-            
-            const alreadyCommented = comments.some(c => 
-              c.user.login === 'github-actions[bot]' && 
-              c.body.includes('🤖 Copilot Task Assignment')
-            );
-            
-            if (alreadyCommented) {
-              console.log('Already commented on this issue');
-              return;
-            }
-            
-            // Determine priority from labels in a single pass
-            const labelToPriority = {
-              'priority-critical': 'critical',
-              'priority-high': 'high',
-              'priority-medium': 'medium',
-              'priority-low': 'low'
-            };
-            let priority = 'medium';
-            for (const label of issue.labels) {
-              if (labelToPriority[label.name]) {
-                priority = labelToPriority[label.name];
-                if (priority === 'critical') break; // Stop at highest priority
+            // Get issue number from manual trigger or find recent issues
+            if (context.eventName === 'workflow_dispatch') {
+              const issueNumber = parseInt('${{ github.event.inputs.issue_number }}');
+              console.log(`Manual trigger for issue #${issueNumber}`);
+              
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+                issuesToComment.push(issue);
+              } catch (error) {
+                console.error(`Failed to fetch issue #${issueNumber}: ${error.message}`);
+                return;
               }
-            }
-            
-            // Build priority guideline
-            let priorityGuideline = '';
-            if (priority === 'critical') {
-              priorityGuideline = '🚨 **CRITICAL**: Address immediately - blocking functionality or security vulnerability';
-            } else if (priority === 'high') {
-              priorityGuideline = '⚠️ **HIGH**: Address within 24-48 hours - important functionality affected';
-            } else if (priority === 'low') {
-              priorityGuideline = '📌 **LOW**: Address when capacity allows - minor improvement or non-blocking issue';
             } else {
-              priorityGuideline = '📋 **MEDIUM**: Address within normal development cycle';
+              // workflow_run event - find recently created issues with auto-created label
+              console.log('Triggered by workflow_run, finding recent auto-created issues');
+              
+              // Get issues created in the last hour with auto-created label
+              const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+              
+              const { data: recentIssues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'auto-created',
+                sort: 'created',
+                direction: 'desc',
+                per_page: 20
+              });
+              
+              // Filter to issues created recently (within last hour)
+              issuesToComment = recentIssues.filter(issue => {
+                const createdAt = new Date(issue.created_at);
+                return createdAt > new Date(oneHourAgo);
+              });
+              
+              console.log(`Found ${issuesToComment.length} recent auto-created issues to comment on`);
             }
             
-            const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
-            
-            // Sanitize issue title using efficient mapping approach
-            const htmlEntityMap = {
-              '&': '&amp;',
-              '<': '&lt;',
-              '>': '&gt;',
-              '"': '&quot;',
-              "'": '&#39;',
-              '`': '&#96;',
-              '[': '&#91;',
-              ']': '&#93;',
-              '(': '&#40;',
-              ')': '&#41;',
-              '*': '&#42;',
-              '_': '&#95;',
-              '#': '&#35;',
-              '$': '&#36;'
-            };
-            const sanitizedTitle = issue.title.replace(
-              /[&<>"'`\[\]\(\)\*_#\$]/g,
-              (char) => htmlEntityMap[char] || char
-            );
-            
-            // Build the comment body using array join for better performance
-            const promptCommentLines = [
+            // Process each issue
+            for (const issue of issuesToComment) {
+              console.log(`Processing issue #${issue.number}: ${issue.title}`);
+              
+              // Check if this is an auto-created issue with copilot-task label
+              const isAutoCreated = issue.labels.some(l => l.name === 'auto-created');
+              const isCopilotTask = issue.labels.some(l => l.name === 'copilot-task');
+              const hasWizzenseAssigned = issue.assignees?.some(a => a.login === 'wizzense');
+              
+              // Only comment if it's an auto-created copilot task or assigned to wizzense
+              if (!isAutoCreated && !hasWizzenseAssigned) {
+                console.log(`Skipping issue #${issue.number}: Not auto-created or assigned to wizzense`);
+                continue;
+              }
+              
+              // Check if we already commented on this issue
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number
+              });
+              
+              const alreadyCommented = comments.some(c => 
+                c.user.login === 'github-actions[bot]' && 
+                c.body.includes('🤖 Copilot Task Assignment')
+              );
+              
+              if (alreadyCommented) {
+                console.log(`Skipping issue #${issue.number}: Already commented`);
+                continue;
+              }
+              
+              // Determine priority from labels in a single pass
+              const labelToPriority = {
+                'priority-critical': 'critical',
+                'priority-high': 'high',
+                'priority-medium': 'medium',
+                'priority-low': 'low'
+              };
+              let priority = 'medium';
+              for (const label of issue.labels) {
+                if (labelToPriority[label.name]) {
+                  priority = labelToPriority[label.name];
+                  if (priority === 'critical') break; // Stop at highest priority
+                }
+              }
+              
+              // Build priority guideline
+              let priorityGuideline = '';
+              if (priority === 'critical') {
+                priorityGuideline = '🚨 **CRITICAL**: Address immediately - blocking functionality or security vulnerability';
+              } else if (priority === 'high') {
+                priorityGuideline = '⚠️ **HIGH**: Address within 24-48 hours - important functionality affected';
+              } else if (priority === 'low') {
+                priorityGuideline = '📌 **LOW**: Address when capacity allows - minor improvement or non-blocking issue';
+              } else {
+                priorityGuideline = '📋 **MEDIUM**: Address within normal development cycle';
+              }
+              
+              const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
+              
+              // Sanitize issue title using efficient mapping approach
+              const htmlEntityMap = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '`': '&#96;',
+                '[': '&#91;',
+                ']': '&#93;',
+                '(': '&#40;',
+                ')': '&#41;',
+                '*': '&#42;',
+                '_': '&#95;',
+                '#': '&#35;',
+                '$': '&#36;'
+              };
+              const sanitizedTitle = issue.title.replace(
+                /[&<>"'`\[\]\(\)\*_#\$]/g,
+                (char) => htmlEntityMap[char] || char
+              );
+              
+              // Build the comment body using array join for better performance
+              const promptCommentLines = [
               '## 🤖 Copilot Task Assignment\n',
               '**Issue:** ' + sanitizedTitle,
               '**Priority:** ' + priority.toUpperCase(),
@@ -177,27 +234,27 @@ jobs:
               '---',
               '*This is an automated comment to help guide the resolution process. ',
               'Reply with questions or updates as you work through the issue.*'
-            ];
-            const promptComment = promptCommentLines.join('\n');
+              ];
+              const promptComment = promptCommentLines.join('\n');
 
-            // Post the comment
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number,
-              body: promptComment
-            });
+              // Post the comment
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: promptComment
+                });
+                
+                console.log(`✅ Posted Copilot prompt comment on issue #${issue.number}`);
+              } catch (error) {
+                console.error(`Failed to comment on issue #${issue.number}: ${error.message}`);
+              }
+            }
             
-            console.log(`✅ Posted Copilot prompt comment on issue #${issue.number}`);
+            console.log(`Completed processing ${issuesToComment.length} issue(s)`);
             
       - name: 📊 Log Activity
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_CREATOR: ${{ github.event.issue.user.login }}
-          ISSUE_ASSIGNEES: ${{ join(github.event.issue.assignees.*.login, ', ') }}
         run: |
-          echo "::notice::Copilot prompt comment added to issue #${ISSUE_NUMBER}"
-          echo "Issue: ${ISSUE_TITLE}"
-          echo "Created by: ${ISSUE_CREATOR}"
-          echo "Assigned to: ${ISSUE_ASSIGNEES}"
+          echo "::notice::Copilot issue commenter workflow completed"
+          echo "Triggered by: ${{ github.event_name }}"
