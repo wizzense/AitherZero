@@ -12,6 +12,12 @@ on:
         description: 'Maximum iterations for automated resolution'
         type: number
         default: 3
+  
+  # Trigger after quality checks complete
+  workflow_run:
+    workflows: ["Intelligent CI Orchestrator"]
+    types: [completed]
+    branches: [main, develop]
         
   schedule:
     # Run every hour during business hours (9 AM - 5 PM UTC, Monday-Friday)
@@ -465,6 +471,11 @@ jobs:
               4. Submit PR with fixes
               5. Update this issue with resolution summary
               
+              ### 🔍 Quality Check Integration:
+              - This issue was created based on automated analysis
+              - Changes will be validated by \`Intelligent CI Orchestrator\` workflow
+              - Security scan, core validation, and comprehensive tests will run on PR
+              
               ### 🚀 Automated Commands:
               \`\`\`powershell
               # Analyze issues
@@ -503,6 +514,11 @@ jobs:
               4. Ensure all tests pass before submitting PR
               5. Update this issue with findings
               
+              ### 🔍 Quality Check Integration:
+              - This issue was created based on automated test analysis
+              - Comprehensive tests will run on PR via \`Intelligent CI Orchestrator\`
+              - Core validation and security scans ensure code quality
+              
               ### 🚀 Automated Commands:
               \`\`\`powershell
               # Run specific failing tests
@@ -538,6 +554,11 @@ jobs:
               3. Add appropriate security suppressions for test code
               4. Implement SecureString usage where needed
               5. Submit PR with security improvements
+              
+              ### 🔍 Quality Check Integration:
+              - This issue was created based on security pattern detection
+              - Security validation will run on PR via \`Intelligent CI Orchestrator\`
+              - Automated security scans ensure compliance with best practices
               
               ### 🛡️ Security Guidelines:
               - Use SecureString for sensitive data
