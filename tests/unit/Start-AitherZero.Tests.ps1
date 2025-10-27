@@ -332,7 +332,15 @@ if ($DryRun) {
         It "Should reload configuration after editing in Advanced Menu" {
             # Create a test config file
             $testConfigPath = Join-Path $TestDrive "test-config.psd1"
-            $initialConfig = "@{`n    Core = @{`n        Name = `"InitialConfig`"`n        Version = `"1.0.0`"`n        Profile = `"Standard`"`n    }`n}"
+            $initialConfig = @'
+@{
+    Core = @{
+        Name = "InitialConfig"
+        Version = "1.0.0"
+        Profile = "Standard"
+    }
+}
+'@
             $initialConfig | Set-Content $testConfigPath
 
             # Simulate the configuration editing and reloading process
@@ -353,7 +361,15 @@ $Config = Get-AitherConfiguration -Path $ConfigPath
 Write-Host "Before: $($Config.Core.Name)"
 
 # Simulate editing the file
-$updatedConfig = "@{`n    Core = @{`n        Name = `"UpdatedConfig`"`n        Version = `"1.0.0`"`n        Profile = `"Developer`"`n    }`n}"
+$updatedConfig = @"
+@{
+    Core = @{
+        Name = "UpdatedConfig"
+        Version = "1.0.0"
+        Profile = "Developer"
+    }
+}
+"@
 $updatedConfig | Set-Content $ConfigPath
 
 # Reload configuration (simulating the fix)
@@ -402,6 +418,9 @@ try {
             $output = & $errorScriptPath -ConfigPath "/fake/path"
             $output | Should -Match "Error - Failed to reload configuration"
             $output | Should -Match "Simulated error loading configuration"
+        }
+    }
+
     Context "PowerShell Version Check" {
         It "Should have version check logic in the script" {
             $content = Get-Content $script:EntryScript -Raw
