@@ -23,7 +23,7 @@ param(
     [string]$Action,
 
     [Parameter()]
-    [string]$InstallPath = $PSScriptRoot
+    [string]$InstallPath = (Split-Path $PSScriptRoot -Parent)
 )
 
 # Determine platform
