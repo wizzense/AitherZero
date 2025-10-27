@@ -843,25 +843,82 @@ function Show-InteractiveMenu {
 function Invoke-QuickSetup {
     param($Config)
 
+    # Display what Quick Setup will do
+    Write-Host "`n╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                    Quick Setup                            ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Current Profile: " -NoNewline -ForegroundColor White
+    Write-Host "$($Config.Core.Profile)" -ForegroundColor Green
+    Write-Host ""
+
+    # Determine what will be installed
     $ProfileNameSequence = switch ($Config.Core.Profile) {
-        'Minimal' { "0000-0099,0207" }
-        'Standard' { "0000-0199,0207,0201" }
-        'Developer' { "0000-0299,!0208" }
-        'Full' { "0000-0499" }
+        'Minimal' { 
+            Write-Host "Minimal Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Basic environment setup (0000-0099)" -ForegroundColor Gray
+            Write-Host "  • Git installation (0207)" -ForegroundColor Gray
+            "0000-0099,0207"
+        }
+        'Standard' { 
+            Write-Host "Standard Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Environment setup (0000-0199)" -ForegroundColor Gray
+            Write-Host "  • Git (0207) and Node.js Core (0201)" -ForegroundColor Gray
+            "0000-0199,0207,0201"
+        }
+        'Developer' { 
+            Write-Host "Developer Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Full development environment (0000-0299)" -ForegroundColor Gray
+            Write-Host "  • Excluding Docker Desktop (0208)" -ForegroundColor Gray
+            "0000-0299,!0208"
+        }
+        'Full' { 
+            Write-Host "Full Profile includes:" -ForegroundColor Yellow
+            Write-Host "  • Complete infrastructure setup (0000-0499)" -ForegroundColor Gray
+            "0000-0499"
+        }
     }
 
-    Show-UINotification -Message "Starting $($Config.Core.Profile) profile setup" -Type 'Info' -Title "Quick Setup"
+    Write-Host ""
+    Write-Host "⚠️  This will execute multiple automation scripts." -ForegroundColor Yellow
+    Write-Host ""
 
-    # Call directly instead of in scriptblock to avoid scope issues
+    # Confirm before proceeding
+    $confirm = Show-UIPrompt -Message "Do you want to proceed with Quick Setup?" -ValidateSet @('Yes', 'No', 'Dry-Run') -DefaultValue 'No'
+
+    if ($confirm -eq 'No') {
+        Show-UINotification -Message "Quick Setup cancelled" -Type 'Info'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        return
+    }
+
+    if ($confirm -eq 'Dry-Run') {
+        Show-UINotification -Message "Running dry run for $($Config.Core.Profile) profile..." -Type 'Info'
+        Write-Host ""
+        $result = Invoke-OrchestrationSequence -Sequence $ProfileNameSequence -Configuration $Config -DryRun
+        Write-Host ""
+        $proceed = Show-UIPrompt -Message "Dry run complete. Execute for real?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
+        if ($proceed -eq 'No') {
+            Show-UINotification -Message "Quick Setup cancelled after dry run" -Type 'Info'
+            Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+            return
+        }
+    }
+
+    # Execute the setup
+    Show-UINotification -Message "Starting $($Config.Core.Profile) profile setup..." -Type 'Info' -Title "Quick Setup"
+    Write-Host ""
+    
     $result = Invoke-OrchestrationSequence -Sequence $ProfileNameSequence -Configuration $Config
 
+    Write-Host ""
     if ($result.Failed -eq 0) {
-        Show-UINotification -Message "Profile setup completed successfully!" -Type 'Success'
-        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        Show-UINotification -Message "✅ Profile setup completed successfully!" -Type 'Success'
     } else {
-        Show-UINotification -Message "Profile setup completed with $($result.Failed) errors" -Type 'Warning'
-        # Don't add another prompt - orchestration errors already prompt
+        Show-UINotification -Message "⚠️  Profile setup completed with $($result.Failed) errors" -Type 'Warning'
     }
+    
+    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Orchestration Menu
