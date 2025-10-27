@@ -75,6 +75,9 @@ $modulesToLoad = @(
     # Infrastructure
     './domains/infrastructure/Infrastructure.psm1',
     
+    # Security
+    './domains/security/Security.psm1',
+    
     # Documentation
     './domains/documentation/DocumentationEngine.psm1'
 )
