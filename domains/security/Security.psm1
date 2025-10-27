@@ -97,6 +97,9 @@ function Invoke-SSHCommand {
     }
     
     try {
+        # Cache SSH command for later use
+        $sshCommand = Get-Command ssh
+        
         # Build SSH command arguments
         $sshArgs = @()
         
@@ -106,10 +109,11 @@ function Invoke-SSHCommand {
         
         # Disable host key checking for CI environments
         if ($env:CI -or $env:AITHERZERO_CI) {
+            $nullDevice = if ($IsWindows) { 'NUL' } else { '/dev/null' }
             $sshArgs += '-o'
             $sshArgs += 'StrictHostKeyChecking=no'
             $sshArgs += '-o'
-            $sshArgs += 'UserKnownHostsFile=/dev/null'
+            $sshArgs += "UserKnownHostsFile=$nullDevice"
         }
         
         # Port specification
@@ -144,19 +148,31 @@ function Invoke-SSHCommand {
             $job = Start-Job -ScriptBlock {
                 param($sshPath, $args)
                 try {
-                    & $sshPath @args 2>&1
-                    return $LASTEXITCODE
+                    $output = & $sshPath @args 2>&1
+                    return @{
+                        Output = $output
+                        ExitCode = $LASTEXITCODE
+                    }
                 } catch {
-                    Write-Error $_.Exception.Message
-                    return 255
+                    return @{
+                        Output = $_.Exception.Message
+                        ExitCode = 255
+                    }
                 }
-            } -ArgumentList (Get-Command ssh).Source, $sshArgs
+            } -ArgumentList $sshCommand.Source, $sshArgs
             
             $completed = Wait-Job $job -Timeout $TimeoutSeconds
             
             if ($completed) {
-                $output = Receive-Job $job
-                $exitCode = if ($job.State -eq 'Failed') { 255 } else { 0 }
+                $jobResult = Receive-Job $job
+                if ($jobResult -is [hashtable]) {
+                    $output = $jobResult.Output
+                    $exitCode = $jobResult.ExitCode
+                } else {
+                    # Fallback if job returned unexpected format
+                    $output = $jobResult
+                    $exitCode = if ($job.State -eq 'Failed') { 255 } else { 0 }
+                }
                 Remove-Job $job -Force
             } else {
                 Stop-Job $job -ErrorAction SilentlyContinue
