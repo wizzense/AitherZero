@@ -295,23 +295,29 @@ https://github.com/wizzense/AitherZero/issues?q=is:issue+is:open+label:auto-crea
 
 ### Workflow Dependencies
 
+Example workflow trigger configuration:
+
 ```yaml
 # In intelligent-ci-orchestrator.yml
+# This step triggers the AI Agent Coordinator on PR failures
 validation-summary:
   steps:
     - name: 🤖 Trigger AI Agent Coordination
       if: github.event_name == 'pull_request' && (needs.core-validation.result == 'failure' || needs.comprehensive-tests.result == 'failure')
       uses: actions/github-script@v7
-      # Triggers ai-agent-coordinator.yml
+      # This triggers ai-agent-coordinator.yml workflow
 
-# In automated-copilot-agent.yml  
+# In automated-copilot-agent.yml
+# This configures the workflow to run when CI completes
 on:
   workflow_run:
     workflows: ["Intelligent CI Orchestrator"]
     types: [completed]
     branches: [main, develop]
-  # Triggers when intelligent-ci-orchestrator.yml completes
+  # Triggers when intelligent-ci-orchestrator.yml completes on main/develop
 ```
+
+> **Note**: These are simplified configuration examples showing the key trigger mechanisms. See the actual workflow files for complete syntax.
 
 ## Success Metrics
 
@@ -370,6 +376,6 @@ Full documentation available in:
 
 ---
 
-**Optimization completed**: 2024-01-XX
+**Optimization completed**: 2025-10-27
 **Workflows tested**: ⏳ Pending first run
 **Issues created**: ⏳ Pending first CI failure on main/develop
