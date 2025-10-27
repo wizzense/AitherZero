@@ -65,8 +65,9 @@ try {
                             Start-Job -ScriptBlock {
                                 param($FilePath, $ProjectDir)
                                 Set-Location $ProjectDir
-                                if (Test-Path "./az.ps1") {
-                                    & ./az.ps1 0407 -CI -FilePath $FilePath 2>&1 | Out-Null
+                                if (Test-Path "./automation-scripts") {
+                                    $syntaxScript = Get-ChildItem "./automation-scripts/0407_*.ps1" -ErrorAction SilentlyContinue | Select-Object -First 1
+                                    if ($syntaxScript) { & $syntaxScript.FullName -CI -FilePath $FilePath 2>&1 | Out-Null }
                                 }
                             } -ArgumentList $filePath, $env:CLAUDE_PROJECT_DIR | Out-Null
                             Pop-Location

@@ -142,7 +142,7 @@ docs/
 - Fast execution
 
 #### 4. Backward Compatibility
-- Integrates with existing `az.ps1` script runner
+- Integrates with `Start-AitherZero.ps1` script runner
 - Uses same orchestration engine
 - Preserves all existing functionality
 - Gradual migration path
@@ -208,7 +208,7 @@ docs/
 - CI/CD environments (GitHub Actions, Azure DevOps, etc.)
 
 ### Integration Points
-- Uses existing `az.ps1` for script execution
+- Uses `Start-AitherZero.ps1` for script execution
 - Integrates with orchestration engine
 - Leverages current playbook system
 - Maintains configuration compatibility
