@@ -314,16 +314,57 @@ function Build-MenuItemText {
         $text += if ($IsChecked) { "[✓] " } else { "[ ] " }
     }
 
-    # Add item text
+    # Add item text with protection against character spacing issues
     if ($Item -is [string]) {
-        $text += $Item
+        $itemText = $Item
     } elseif ($Item.Name) {
-        $text += $Item.Name
+        $itemText = $Item.Name
         if ($Item.Description) {
-            $text += " - $($Item.Description)"
+            $itemText += " - $($Item.Description)"
         }
     } else {
-        $text += $Item.ToString()
+        $itemText = $Item.ToString()
+    }
+    
+    # Smart fix for character spacing issues
+    if ($itemText) {
+        $fixedText = $itemText.ToString().Trim()
+        $fixedText = $fixedText -replace '\s+', ' '
+        
+        $words = $fixedText -split '\s+'
+        $singleCharWords = ($words | Where-Object { $_.Length -eq 1 }).Count
+        $totalWords = $words.Count
+        
+        if ($totalWords -gt 3 -and $singleCharWords / $totalWords -gt 0.5) {
+            $chars = $words | Where-Object { $_ }
+            $rebuiltWords = @()
+            $currentWord = ""
+            
+            foreach ($char in $chars) {
+                if ($char.Length -eq 1) {
+                    if ($char -cmatch '^[A-Z]' -and $currentWord -ne "") {
+                        $rebuiltWords += $currentWord
+                        $currentWord = $char
+                    } else {
+                        $currentWord += $char
+                    }
+                } else {
+                    if ($currentWord -ne "") {
+                        $rebuiltWords += $currentWord
+                        $currentWord = ""
+                    }
+                    $rebuiltWords += $char
+                }
+            }
+            
+            if ($currentWord -ne "") {
+                $rebuiltWords += $currentWord
+            }
+            
+            $fixedText = $rebuiltWords -join ' '
+        }
+        
+        $text += $fixedText
     }
 
     return $text
