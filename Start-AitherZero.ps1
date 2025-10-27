@@ -1116,32 +1116,32 @@ function Invoke-ReportsAndLogsMenu {
         [PSCustomObject]@{
             Name = "View Latest Logs"
             Description = "Show recent log entries"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Latest' }
+            Action = 'ViewLogs'
+            Mode = 'Latest'
         },
         [PSCustomObject]@{
             Name = "Log Dashboard"
             Description = "Interactive log viewer with statistics"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Dashboard' }
+            Action = 'ViewLogs'
+            Mode = 'Dashboard'
         },
         [PSCustomObject]@{
             Name = "View Errors & Warnings"
             Description = "Show only error and warning messages"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Errors' }
+            Action = 'ViewLogs'
+            Mode = 'Errors'
         },
         [PSCustomObject]@{
             Name = "Search Logs"
             Description = "Search for specific patterns in logs"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Search' }
+            Action = 'ViewLogs'
+            Mode = 'Search'
         },
         [PSCustomObject]@{
             Name = "View PowerShell Transcript"
             Description = "Show PowerShell session transcript"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Transcript' }
+            Action = 'ViewLogs'
+            Mode = 'Transcript'
         },
         [PSCustomObject]@{
             Name = "Generate Project Report"
@@ -1166,8 +1166,8 @@ function Invoke-ReportsAndLogsMenu {
         [PSCustomObject]@{
             Name = "Logging Status"
             Description = "Check logging system configuration"
-            Sequence = "0530"
-            Parameters = @{ Mode = 'Status' }
+            Action = 'ViewLogs'
+            Mode = 'Status'
         }
     )
 
@@ -1176,16 +1176,16 @@ function Invoke-ReportsAndLogsMenu {
     if ($selection) {
         Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
 
-        if ($selection.Sequence) {
-            # Build parameters for the script
-            $scriptParams = $Config.Clone()
-            if ($selection.Parameters) {
-                foreach ($key in $selection.Parameters.Keys) {
-                    $scriptParams[$key] = $selection.Parameters[$key]
-                }
+        if ($selection.Action -eq 'ViewLogs') {
+            # Call log viewer script directly with proper parameters
+            $logScript = Join-Path $script:ProjectRoot "automation-scripts/0530_View-Logs.ps1"
+            if (Test-Path $logScript) {
+                & $logScript -Mode $selection.Mode -Configuration $Config
             }
-
-            $result = Invoke-OrchestrationSequence -Sequence $selection.Sequence -Configuration $scriptParams
+        }
+        elseif ($selection.Sequence) {
+            # Use orchestration for report generation
+            $result = Invoke-OrchestrationSequence -Sequence $selection.Sequence -Configuration $Config
         }
     }
 
