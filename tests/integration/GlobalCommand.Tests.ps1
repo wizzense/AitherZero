@@ -99,7 +99,7 @@ Describe "Global Command Installation" {
                 $launcherContent = Get-Content $script:LauncherScript -Raw
                 
                 # Extract the Find-AitherZeroInstallation function
-                if ($launcherContent -match '(?s)function Find-AitherZeroInstallation \{(.+?)\n\}') {
+                if ($launcherContent -match '(?s)function Find-AitherZeroInstallation \{(.*?)\}') {
                     $functionBody = $matches[1]
                     # Basic check that it would use AITHERZERO_ROOT
                     $functionBody | Should -Match 'AITHERZERO_ROOT'
