@@ -172,8 +172,13 @@ jobs:
             console.log(`✅ Posted Copilot prompt comment on issue #${issue.number}`);
             
       - name: 📊 Log Activity
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_CREATOR: ${{ github.event.issue.user.login }}
+          ISSUE_ASSIGNEES: ${{ join(github.event.issue.assignees.*.login, ', ') }}
         run: |
-          echo "::notice::Copilot prompt comment added to issue #${{ github.event.issue.number }}"
-          echo "Issue: ${{ github.event.issue.title }}"
-          echo "Created by: ${{ github.event.issue.user.login }}"
-          echo "Assigned to: ${{ join(github.event.issue.assignees.*.login, ', ') }}"
+          echo "::notice::Copilot prompt comment added to issue #${ISSUE_NUMBER}"
+          echo "Issue: ${ISSUE_TITLE}"
+          echo "Created by: ${ISSUE_CREATOR}"
+          echo "Assigned to: ${ISSUE_ASSIGNEES}"
