@@ -766,12 +766,12 @@ function Show-InteractiveMenu {
                 Description = "Git automation and AI coding tools"
             },
             [PSCustomObject]@{
-                Name = "Reports & Logs"
-                Description = "View logs, generate reports, and analyze metrics"
+                Name = "Health Dashboard"
+                Description = "View system health, errors, and test results"
             },
             [PSCustomObject]@{
-                Name = "UI Demo"
-                Description = "Interactive UI System Demo"
+                Name = "Reports & Logs"
+                Description = "View logs, generate reports, and analyze metrics"
             },
             [PSCustomObject]@{
                 Name = "Advanced"
@@ -822,18 +822,17 @@ function Show-InteractiveMenu {
                 'Testing' { Invoke-TestingMenu -Config $Config }
                 'Infrastructure' { Invoke-InfrastructureMenu -Config $Config }
                 'Development' { Invoke-DevelopmentMenu -Config $Config }
-                'Reports & Logs' { Invoke-ReportsAndLogsMenu -Config $Config }
-                'UI Demo' {
-                    # Run the interactive UI demo
-                    $demoPath = Join-Path $script:ProjectRoot "examples/interactive-ui-demo.ps1"
-                    if (Test-Path $demoPath) {
-                        & $demoPath
-                    }
-                    else {
-                        Show-UINotification -Message "Demo script not found at: $demoPath" -Type 'Warning'
+                'Health Dashboard' {
+                    # Show the consolidated health dashboard
+                    $healthScript = Join-Path $script:ProjectRoot "automation-scripts/0550_Health-Dashboard.ps1"
+                    if (Test-Path $healthScript) {
+                        & $healthScript -Configuration $Config -ShowAll
+                    } else {
+                        Show-UINotification -Message "Health Dashboard script not found" -Type 'Warning'
                     }
                     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
                 }
+                'Reports & Logs' { Invoke-ReportsAndLogsMenu -Config $Config }
                 'Advanced' { Show-AdvancedMenu -Config $Config }
             }
     }
@@ -1117,6 +1116,11 @@ function Invoke-ReportsAndLogsMenu {
 
     $reportItems = @(
         [PSCustomObject]@{
+            Name = "Health Dashboard"
+            Description = "Consolidated system health and status"
+            Action = 'HealthDashboard'
+        },
+        [PSCustomObject]@{
             Name = "View Latest Logs"
             Description = "Show recent log entries"
             Action = 'ViewLogs'
@@ -1179,7 +1183,14 @@ function Invoke-ReportsAndLogsMenu {
     if ($selection) {
         Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
 
-        if ($selection.Action -eq 'ViewLogs') {
+        if ($selection.Action -eq 'HealthDashboard') {
+            # Call health dashboard script
+            $healthScript = Join-Path $script:ProjectRoot "automation-scripts/0550_Health-Dashboard.ps1"
+            if (Test-Path $healthScript) {
+                & $healthScript -Configuration $Config -ShowAll
+            }
+        }
+        elseif ($selection.Action -eq 'ViewLogs') {
             # Call log viewer script directly with proper parameters
             $logScript = Join-Path $script:ProjectRoot "automation-scripts/0530_View-Logs.ps1"
             if (Test-Path $logScript) {
