@@ -54,14 +54,19 @@ jobs:
               return;
             }
             
-            // Determine priority from labels
+            // Determine priority from labels in a single pass
+            const labelToPriority = {
+              'priority-critical': 'critical',
+              'priority-high': 'high',
+              'priority-medium': 'medium',
+              'priority-low': 'low'
+            };
             let priority = 'medium';
-            if (issue.labels.some(l => l.name === 'priority-critical')) {
-              priority = 'critical';
-            } else if (issue.labels.some(l => l.name === 'priority-high')) {
-              priority = 'high';
-            } else if (issue.labels.some(l => l.name === 'priority-low')) {
-              priority = 'low';
+            for (const label of issue.labels) {
+              if (labelToPriority[label.name]) {
+                priority = labelToPriority[label.name];
+                if (priority === 'critical') break; // Stop at highest priority
+              }
             }
             
             // Build priority guideline
@@ -78,88 +83,94 @@ jobs:
             
             const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
             
-            // Sanitize issue title to prevent markdown and command injection
-            // Use HTML entities for consistency and maximum safety
-            const sanitizedTitle = issue.title
-              .replace(/&/g, '&amp;')   // Escape ampersands first
-              .replace(/</g, '&lt;')    // Escape less than
-              .replace(/>/g, '&gt;')    // Escape greater than
-              .replace(/"/g, '&quot;')  // Escape quotes
-              .replace(/'/g, '&#39;')   // Escape single quotes
-              .replace(/`/g, '&#96;')   // Escape backticks
-              .replace(/\[/g, '&#91;')  // Escape square brackets
-              .replace(/\]/g, '&#93;')  // Escape square brackets
-              .replace(/\(/g, '&#40;')  // Escape parentheses
-              .replace(/\)/g, '&#41;')  // Escape parentheses
-              .replace(/\*/g, '&#42;')  // Escape asterisks
-              .replace(/_/g, '&#95;')   // Escape underscores
-              .replace(/#/g, '&#35;')   // Escape hash/pound
-              .replace(/\$/g, '&#36;'); // Escape dollar signs
+            // Sanitize issue title using efficient mapping approach
+            const htmlEntityMap = {
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              '"': '&quot;',
+              "'": '&#39;',
+              '`': '&#96;',
+              '[': '&#91;',
+              ']': '&#93;',
+              '(': '&#40;',
+              ')': '&#41;',
+              '*': '&#42;',
+              '_': '&#95;',
+              '#': '&#35;',
+              '$': '&#36;'
+            };
+            const sanitizedTitle = issue.title.replace(
+              /[&<>"'`\[\]\(\)\*_#\$]/g,
+              (char) => htmlEntityMap[char] || char
+            );
             
-            // Build the comment body piece by piece to avoid YAML parsing issues
-            let promptComment = '## 🤖 Copilot Task Assignment\n\n';
-            promptComment += '**Issue:** ' + sanitizedTitle + '\n';
-            promptComment += '**Priority:** ' + priority.toUpperCase() + '\n';
-            promptComment += '**Assigned to:** @' + assignedTo + '\n\n';
-            promptComment += '### 📋 Task Instructions for GitHub Copilot\n\n';
-            promptComment += 'This issue has been automatically created and requires your attention. ';
-            promptComment += 'Please follow the resolution process below:\n\n';
-            promptComment += '#### 1️⃣ Analysis Phase\n';
-            promptComment += '- Review the issue description and understand the requirements\n';
-            promptComment += '- Identify the root cause and scope of work needed\n';
-            promptComment += '- Check for any related issues or dependencies\n';
-            promptComment += '- Validate the priority level and adjust if necessary\n\n';
-            promptComment += '#### 2️⃣ Implementation Phase\n';
-            promptComment += '- Create a focused branch from the main branch\n';
-            promptComment += '- Make minimal, surgical changes to address the issue\n';
-            promptComment += '- Follow existing code patterns and conventions\n';
-            promptComment += '- Ensure all changes are properly tested\n\n';
-            promptComment += '#### 3️⃣ Validation Phase\n';
-            promptComment += '- Run all relevant linters and checks:\n';
-            promptComment += '  - `./az 0404` - PSScriptAnalyzer\n';
-            promptComment += '  - `./az 0407` - Syntax validation\n';
-            promptComment += '  - `./az 0402` - Unit tests\n';
-            promptComment += '- Verify no new issues are introduced\n';
-            promptComment += '- Test the changes in a local environment if applicable\n\n';
-            promptComment += '#### 4️⃣ PR Creation Phase\n';
-            promptComment += '- Create a pull request with a clear title and description\n';
-            promptComment += '- Link this issue in the PR description using "Closes #' + issue.number + '"\n';
-            promptComment += '- Request review from appropriate team members\n';
-            promptComment += '- Ensure CI/CD pipelines pass\n\n';
-            promptComment += '#### 5️⃣ Completion Phase\n';
-            promptComment += '- Address any review feedback\n';
-            promptComment += '- Merge the PR once approved\n';
-            promptComment += '- Verify the issue is automatically closed\n';
-            promptComment += '- Add a summary comment with what was changed\n\n';
-            promptComment += '### 🚀 Quick Commands\n\n';
-            promptComment += '```powershell\n';
-            promptComment += '# Initialize environment\n';
-            promptComment += './Initialize-AitherEnvironment.ps1\n\n';
-            promptComment += '# Run analysis tools\n';
-            promptComment += './az 0404  # PSScriptAnalyzer\n';
-            promptComment += './az 0402  # Unit tests\n';
-            promptComment += './az 0407  # Syntax validation\n\n';
-            promptComment += '# Create branch and PR (if using automation scripts)\n';
-            promptComment += './az 0701 -Type feature -Name "fix-issue-' + issue.number + '"\n';
-            promptComment += './az 0702 -Type fix -Message "address issue #' + issue.number + '"\n';
-            // Note: Users should manually provide the title to avoid injection risks
-            promptComment += '# ./az 0703 -Title "Fix: [manually-enter-title-here]"\n';
-            promptComment += '```\n\n';
-            promptComment += '### ⚡ Priority Guidelines\n\n';
-            promptComment += priorityGuideline + '\n\n';
-            promptComment += '### ✅ Success Criteria\n\n';
-            promptComment += 'The issue will be considered resolved when:\n';
-            promptComment += '- [ ] Root cause is identified and addressed\n';
-            promptComment += '- [ ] All code changes are minimal and focused\n';
-            promptComment += '- [ ] All tests pass (no new failures introduced)\n';
-            promptComment += '- [ ] PSScriptAnalyzer shows no new critical issues\n';
-            promptComment += '- [ ] PR is created and linked to this issue\n';
-            promptComment += '- [ ] PR is reviewed and approved\n';
-            promptComment += '- [ ] Changes are merged to main branch\n';
-            promptComment += '- [ ] This issue is closed with resolution summary\n\n';
-            promptComment += '---\n';
-            promptComment += '*This is an automated comment to help guide the resolution process. ';
-            promptComment += 'Reply with questions or updates as you work through the issue.*';
+            // Build the comment body using array join for better performance
+            const promptCommentLines = [
+              '## 🤖 Copilot Task Assignment\n',
+              '**Issue:** ' + sanitizedTitle,
+              '**Priority:** ' + priority.toUpperCase(),
+              '**Assigned to:** @' + assignedTo + '\n',
+              '### 📋 Task Instructions for GitHub Copilot\n',
+              'This issue has been automatically created and requires your attention. ',
+              'Please follow the resolution process below:\n',
+              '#### 1️⃣ Analysis Phase',
+              '- Review the issue description and understand the requirements',
+              '- Identify the root cause and scope of work needed',
+              '- Check for any related issues or dependencies',
+              '- Validate the priority level and adjust if necessary\n',
+              '#### 2️⃣ Implementation Phase',
+              '- Create a focused branch from the main branch',
+              '- Make minimal, surgical changes to address the issue',
+              '- Follow existing code patterns and conventions',
+              '- Ensure all changes are properly tested\n',
+              '#### 3️⃣ Validation Phase',
+              '- Run all relevant linters and checks:',
+              '  - `./automation-scripts/0404_Run-PSScriptAnalyzer.ps1` - PSScriptAnalyzer',
+              '  - `./automation-scripts/0407_Validate-Syntax.ps1` - Syntax validation',
+              '  - `./automation-scripts/0402_Run-UnitTests.ps1` - Unit tests',
+              '- Verify no new issues are introduced',
+              '- Test the changes in a local environment if applicable\n',
+              '#### 4️⃣ PR Creation Phase',
+              '- Create a pull request with a clear title and description',
+              '- Link this issue in the PR description using "Closes #' + issue.number + '"',
+              '- Request review from appropriate team members',
+              '- Ensure CI/CD pipelines pass\n',
+              '#### 5️⃣ Completion Phase',
+              '- Address any review feedback',
+              '- Merge the PR once approved',
+              '- Verify the issue is automatically closed',
+              '- Add a summary comment with what was changed\n',
+              '### 🚀 Quick Commands\n',
+              '```powershell',
+              '# Initialize environment',
+              './Initialize-AitherEnvironment.ps1\n',
+              '# Run analysis tools',
+              './automation-scripts/0404_Run-PSScriptAnalyzer.ps1  # PSScriptAnalyzer',
+              './automation-scripts/0402_Run-UnitTests.ps1  # Unit tests',
+              './automation-scripts/0407_Validate-Syntax.ps1  # Syntax validation\n',
+              '# Create branch and PR (if using automation scripts)',
+              './automation-scripts/0701_Create-FeatureBranch.ps1 -Type feature -Name "fix-issue-' + issue.number + '"',
+              './automation-scripts/0702_Create-Commit.ps1 -Type fix -Message "address issue #' + issue.number + '"',
+              '# ./automation-scripts/0703_Create-PullRequest.ps1 -Title "Fix: [manually-enter-title-here]"',
+              '```\n',
+              '### ⚡ Priority Guidelines\n',
+              priorityGuideline + '\n',
+              '### ✅ Success Criteria\n',
+              'The issue will be considered resolved when:',
+              '- [ ] Root cause is identified and addressed',
+              '- [ ] All code changes are minimal and focused',
+              '- [ ] All tests pass (no new failures introduced)',
+              '- [ ] PSScriptAnalyzer shows no new critical issues',
+              '- [ ] PR is created and linked to this issue',
+              '- [ ] PR is reviewed and approved',
+              '- [ ] Changes are merged to main branch',
+              '- [ ] This issue is closed with resolution summary\n',
+              '---',
+              '*This is an automated comment to help guide the resolution process. ',
+              'Reply with questions or updates as you work through the issue.*'
+            ];
+            const promptComment = promptCommentLines.join('\n');
 
             // Post the comment
             await github.rest.issues.createComment({
