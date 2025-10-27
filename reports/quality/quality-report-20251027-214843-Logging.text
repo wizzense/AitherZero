@@ -1,0 +1,43 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: Logging.psm1
+Path: ./domains/utilities/Logging.psm1
+Timestamp: 10/27/2025 21:48:40
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 70%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 1
+  Failed: 2
+  Warnings: 2
+  Skipped: 1
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Failed] ErrorHandling - Score: 60%
+  Findings:
+    - Consider setting $ErrorActionPreference = 'Stop' for better error handling
+    - Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Directory creation, Directory creation, Directory creation, Remove-Item, Remove-Item, Move-Item, Move-Item
+
+[Warning] Logging - Score: 80%
+  Findings:
+    - Consider adding error logging in catch blocks
+
+[Passed] TestCoverage - Score: 100%
+[Warning] UIIntegration - Score: 85%
+  Findings:
+    - Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)
+
+[Skipped] GitHubActions - Score: 100%
+  Findings:
+    - Component does not require GitHub Actions integration
+
+[Failed] PSScriptAnalyzer - Score: 25%
+  Findings:
+    - 15 PSScriptAnalyzer warning(s) found
+
+================================================================================

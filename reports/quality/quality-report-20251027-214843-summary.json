@@ -1,0 +1,14 @@
+{
+  "Timestamp": "2025-10-27T21:48:43.5058603+00:00",
+  "Failed": 1,
+  "OverallStatus": "Failed",
+  "AverageScore": 70.0,
+  "Passed": 0,
+  "FilesValidated": 1,
+  "Files": {
+    "Score": 70.0,
+    "Status": "Failed",
+    "FilePath": "./domains/utilities/Logging.psm1"
+  },
+  "Warnings": 0
+}
