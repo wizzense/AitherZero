@@ -1109,18 +1109,28 @@ function Remove-AitherZero {
     
     # First, uninstall the global command
     $installScript = Join-Path $installPath "tools/Install-GlobalCommand.ps1"
+    $globalUninstallSucceeded = $true
     if (Test-Path $installScript) {
         try {
             Write-BootstrapLog "Uninstalling global 'aitherzero' command..." -Level Info
             & $installScript -Action Uninstall -ErrorAction Stop
         } catch {
             Write-BootstrapLog "Failed to uninstall global command: $_" -Level Warning
+            $globalUninstallSucceeded = $false
         }
     }
     
-    # Then remove the installation
-    Remove-Item $installPath -Recurse -Force
-    Write-BootstrapLog "AitherZero removed successfully" -Level Success
+    # Only remove the installation if global uninstall succeeded
+    if ($globalUninstallSucceeded) {
+        try {
+            Remove-Item $installPath -Recurse -Force
+            Write-BootstrapLog "AitherZero removed successfully" -Level Success
+        } catch {
+            Write-BootstrapLog "Failed to remove installation directory: $_" -Level Warning
+        }
+    } else {
+        Write-BootstrapLog "AitherZero removal incomplete: global uninstall failed, installation directory not removed." -Level Warning
+    }
 }
 
 # Main execution
