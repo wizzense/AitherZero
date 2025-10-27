@@ -395,17 +395,17 @@
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
-            'testing' = @{ Modules = 5; Description = 'Testing framework and test generation' }
+            'testing' = @{ Modules = 6; Description = 'Testing framework, quality validation, and test generation' }
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (111 total files, 101 unique numbers - some numbers have variants)
+        # Script inventory by range (112 total files, 102 unique numbers - some numbers have variants)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 7; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 5; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 19; Category = 'Testing & Quality' }
+            '0400-0499' = @{ Count = 20; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 14; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 25; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 11; Category = 'Issue Management' }
@@ -784,6 +784,7 @@
                 InstallScript = '0443'
                 Platforms = @('Windows', 'Linux', 'macOS')
                 Description = 'YAML parsing for workflow validation'
+            }
             QualityValidation = @{
                 Enabled = $true  # Always enabled for Standard+ profiles
                 InstallScript = '0420'
