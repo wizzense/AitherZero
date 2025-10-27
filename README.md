@@ -97,6 +97,7 @@ The AitherZero package includes:
 - **200+ automation scripts** (numbered 0000-9999) for systematic execution
 - **Cross-platform bootstrap scripts** for automatic dependency installation  
 - **Comprehensive test suite** with validation tools
+- **Quality validation system** for code standards enforcement
 - **CI/CD workflow templates** for GitHub Actions
 - **Documentation and examples** for all features
 
@@ -110,9 +111,35 @@ Get-Module AitherZero
 # Run syntax validation
 ./az 0407
 
+# Run quality checks
+./az 0420 -Path ./domains/utilities/Logging.psm1
+
 # Generate and view project report
 ./az 0510 -ShowAll
 ```
+
+## 📊 Quality Standards
+
+AitherZero maintains high code quality standards through automated validation:
+
+```powershell
+# Validate component quality
+./az 0420 -Path ./MyModule.psm1
+
+# Validate entire domain
+./az 0420 -Path ./domains/testing -Recursive
+```
+
+**Quality checks include:**
+- ✅ Error handling validation
+- ✅ Logging implementation
+- ✅ Test coverage verification
+- ✅ UI/CLI integration
+- ✅ PSScriptAnalyzer compliance
+
+**Documentation:**
+- [Quality Standards](docs/QUALITY-STANDARDS.md) - Complete quality guidelines
+- [Quick Reference](docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
 
 ## Features
 

@@ -1,0 +1,254 @@
+---
+name: Quality Validation
+
+# Run quality checks on new features and components
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'domains/**/*.psm1'
+      - 'domains/**/*.ps1'
+      - 'automation-scripts/*.ps1'
+      - 'Start-AitherZero.ps1'
+  workflow_dispatch:
+    inputs:
+      path:
+        description: 'Path to validate (file or directory)'
+        required: false
+        default: './domains'
+      recursive:
+        description: 'Validate recursively'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: quality-validation-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  quality-validation:
+    name: Quality Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need base for diff
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          
+          # Install PSScriptAnalyzer if needed
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+            Write-Host "Installing PSScriptAnalyzer..." -ForegroundColor Yellow
+            Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+
+      - name: 🔍 Detect Changed PowerShell Files
+        id: changes
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Detecting changed PowerShell files..." -ForegroundColor Cyan
+          
+          # Get changed files from git diff
+          $changedFiles = @()
+          
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            # For PRs, compare with base branch
+            $gitDiff = git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD
+            $changedFiles = $gitDiff | Where-Object {
+              $_ -match '\.(ps1|psm1|psd1)$' -and
+              $_ -notmatch '^(tests|legacy-to-migrate|\.archive)/'
+            }
+          } else {
+            # For workflow_dispatch, use input path
+            $path = "${{ github.event.inputs.path || './domains' }}"
+            $recursive = "${{ github.event.inputs.recursive }}" -eq "true"
+            
+            $params = @{
+              Path = $path
+              Include = '*.ps1', '*.psm1', '*.psd1'
+              File = $true
+            }
+            
+            if ($recursive) {
+              $params.Recurse = $true
+            }
+            
+            $changedFiles = Get-ChildItem @params | Select-Object -ExpandProperty FullName
+          }
+          
+          if (-not $changedFiles) {
+            Write-Host "⚠️ No PowerShell files to validate" -ForegroundColor Yellow
+            echo "has-files=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          
+          Write-Host "Found $($changedFiles.Count) PowerShell file(s) to validate:" -ForegroundColor Green
+          $changedFiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor White }
+          
+          # Save files to output
+          $filesJson = $changedFiles | ConvertTo-Json -Compress
+          echo "has-files=true" >> $env:GITHUB_OUTPUT
+          echo "files=$filesJson" >> $env:GITHUB_OUTPUT
+          echo "count=$($changedFiles.Count)" >> $env:GITHUB_OUTPUT
+
+      - name: 🔍 Run Quality Validation
+        if: steps.changes.outputs.has-files == 'true'
+        id: validation
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running quality validation..." -ForegroundColor Cyan
+          
+          # Import AitherZero module
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Get changed files
+          $filesJson = '${{ steps.changes.outputs.files }}'
+          $files = $filesJson | ConvertFrom-Json
+          
+          # Run validation on each file
+          $allResults = @()
+          $exitCode = 0
+          
+          foreach ($file in $files) {
+            Write-Host "`nValidating: $file" -ForegroundColor Yellow
+            
+            try {
+              # Run quality validation
+              $result = & ./automation-scripts/0420_Validate-ComponentQuality.ps1 `
+                -Path $file `
+                -Format JSON `
+                -MinimumScore 70 `
+                -ErrorAction Stop
+              
+              if ($LASTEXITCODE -ne 0) {
+                $exitCode = 1
+              }
+              
+            } catch {
+              Write-Host "❌ Validation failed for $file : $_" -ForegroundColor Red
+              $exitCode = 1
+            }
+          }
+          
+          # Set output
+          echo "exit-code=$exitCode" >> $env:GITHUB_OUTPUT
+          
+          if ($exitCode -ne 0) {
+            Write-Host "`n❌ Quality validation failed for one or more files" -ForegroundColor Red
+          } else {
+            Write-Host "`n✅ Quality validation passed for all files" -ForegroundColor Green
+          }
+
+      - name: 📊 Upload Quality Reports
+        if: always() && steps.changes.outputs.has-files == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: |
+            reports/quality/*.json
+            reports/quality/*.html
+            reports/quality/*.text
+          retention-days: 30
+
+      - name: 💬 Comment PR with Results
+        if: always() && github.event_name == 'pull_request' && steps.changes.outputs.has-files == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read quality reports
+            const reportsDir = './reports/quality';
+            let reportContent = '## 🔍 Quality Validation Report\n\n';
+            
+            try {
+              if (fs.existsSync(reportsDir)) {
+                const summaryFiles = fs.readdirSync(reportsDir)
+                  .filter(f => f.endsWith('-summary.json'));
+                
+                if (summaryFiles.length > 0) {
+                  const summaryPath = path.join(reportsDir, summaryFiles[0]);
+                  const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                  
+                  reportContent += `### Summary\n`;
+                  reportContent += `- **Files Validated:** ${summary.FilesValidated || 0}\n`;
+                  reportContent += `- **Average Score:** ${summary.AverageScore || 0}%\n`;
+                  reportContent += `- **Status:** ${summary.OverallStatus || 'Unknown'}\n\n`;
+                  
+                  reportContent += `### Results\n`;
+                  reportContent += `- ✅ **Passed:** ${summary.Passed || 0}\n`;
+                  reportContent += `- ⚠️ **Warnings:** ${summary.Warnings || 0}\n`;
+                  reportContent += `- ❌ **Failed:** ${summary.Failed || 0}\n\n`;
+                  
+                  if (summary.Files && summary.Files.length > 0) {
+                    reportContent += `### File Details\n`;
+                    for (const file of summary.Files) {
+                      const icon = file.Status === 'Passed' ? '✅' : 
+                                  file.Status === 'Warning' ? '⚠️' : '❌';
+                      reportContent += `${icon} **${path.basename(file.FilePath)}** - ${file.Score}%\n`;
+                    }
+                  }
+                } else {
+                  reportContent += '⚠️ No quality reports found.\n';
+                }
+              } else {
+                reportContent += '⚠️ Reports directory not found.\n';
+              }
+            } catch (error) {
+              reportContent += `⚠️ Error reading reports: ${error.message}\n`;
+            }
+            
+            reportContent += '\n---\n';
+            reportContent += '*View detailed reports in the workflow artifacts.*\n';
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: reportContent
+            });
+
+      - name: ❌ Fail if Quality Check Failed
+        if: steps.validation.outputs.exit-code != '0'
+        run: |
+          echo "::error::Quality validation failed. Please review the reports and address the issues."
+          exit 1
+
+      - name: ✅ Quality Validation Summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║              QUALITY VALIDATION SUMMARY                      ║" -ForegroundColor Cyan
+          Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+          
+          $hasFiles = "${{ steps.changes.outputs.has-files }}"
+          $exitCode = "${{ steps.validation.outputs.exit-code }}"
+          
+          if ($hasFiles -eq "false") {
+            Write-Host "`n⚠️ No PowerShell files found to validate" -ForegroundColor Yellow
+          } elseif ($exitCode -eq "0") {
+            Write-Host "`n✅ All quality checks PASSED" -ForegroundColor Green
+          } else {
+            Write-Host "`n❌ Quality checks FAILED" -ForegroundColor Red
+          }
+          
+          Write-Host "`n📊 View detailed reports in workflow artifacts" -ForegroundColor Cyan
