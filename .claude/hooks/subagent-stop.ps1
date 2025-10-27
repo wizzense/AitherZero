@@ -352,8 +352,9 @@ try {
                     Start-Job -ScriptBlock {
                         param($ProjectDir)
                         Set-Location $ProjectDir
-                        if (Test-Path "./az.ps1") {
-                            & ./az.ps1 0501 -CI 2>&1 | Out-Null
+                        if (Test-Path "./automation-scripts") {
+                            $reportScript = Get-ChildItem "./automation-scripts/0501_*.ps1" -ErrorAction SilentlyContinue | Select-Object -First 1
+                            if ($reportScript) { & $reportScript.FullName -CI 2>&1 | Out-Null }
                         }
                     } -ArgumentList $env:CLAUDE_PROJECT_DIR | Out-Null
                 }
