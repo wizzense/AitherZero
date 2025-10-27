@@ -1270,7 +1270,15 @@ function Show-AdvancedMenu {
                     }
 
                     # Reload configuration using the same method as initial load
-                    $config = Get-AitherConfiguration -Path $ConfigPath
+                    $newConfig = Get-AitherConfiguration -Path $ConfigPath
+                    
+                    # Update the existing hashtable in-place to preserve references
+                    # This ensures the changes are visible to all callers
+                    $Config.Clear()
+                    foreach ($key in $newConfig.Keys) {
+                        $Config[$key] = $newConfig[$key]
+                    }
+                    
                     Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
                 } catch {
                     Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
