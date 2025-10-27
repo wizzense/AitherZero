@@ -144,7 +144,7 @@
                 }
                 WindowsAdminCenter = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0106')  # Same number, different script
+                    Scripts = @('0106')  # Script 0106 is used for both WSL2 and WindowsAdminCenter setup. The orchestration engine distinguishes usage by the parent key (WSL2 vs. WindowsAdminCenter) and passes context-specific parameters to the script. No conflict occurs as each domain invokes 0106 with its own configuration.
                     RequiresElevation = $true
                     PlatformRestrictions = @('Windows')
                 }
