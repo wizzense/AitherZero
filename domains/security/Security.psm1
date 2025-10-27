@@ -108,7 +108,7 @@ function Invoke-SSHCommand {
         $sshArgs += "ConnectTimeout=$ConnectTimeoutSeconds"
         
         # Disable host key checking for CI environments
-        if ($env:CI -or $env:AITHERZERO_CI) {
+        if ($env:CI -eq $true -or $env:AITHERZERO_CI -eq $true) {
             $nullDevice = if ($IsWindows) { 'NUL' } else { '/dev/null' }
             $sshArgs += '-o'
             $sshArgs += 'StrictHostKeyChecking=no'
