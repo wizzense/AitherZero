@@ -19,7 +19,7 @@ function Format-SafeDisplayText {
     .PARAMETER MaxLength
         Maximum length to truncate to (optional)
     .EXAMPLE
-        Format-SafeDisplayText -Text "Orchestration Engine"
+        Format-SafeDisplayText -Text "O r c h e s t r a t i o n E n g i n e"
         Returns: "Orchestration Engine"
     #>
     [CmdletBinding()]
@@ -35,18 +35,61 @@ function Format-SafeDisplayText {
             return ""
         }
         
-        # Ensure we're working with a proper string, not a character array
-        $safeText = $Text.ToString().Trim()
+        $text = $Text.ToString().Trim()
         
-        # Normalize whitespace (remove extra spaces, but keep words intact)
-        $safeText = $safeText -replace '\s+', ' '
+        # Smart fix for both character and fragment spacing issues
+        $text = $text -replace '\s+', ' '
+        $words = $text -split '\s+'
+        $totalWords = $words.Count
         
-        # Truncate if requested
-        if ($MaxLength -gt 0 -and $safeText.Length -gt $MaxLength) {
-            $safeText = $safeText.Substring(0, $MaxLength - 3) + "..."
+        # Check for single character spacing (e.g., "O r c h e s t r a t i o n")
+        $singleCharWordsArray = @($words | Where-Object { $_.Length -eq 1 })
+        $singleCharWords = $singleCharWordsArray.Count
+        $hasSingleCharSpacing = $totalWords -gt 3 -and $singleCharWords / $totalWords -gt 0.5
+        
+        # Check for fragment spacing (e.g., "O rc he st ra ti on")  
+        $shortWordsArray = @($words | Where-Object { $_.Length -le 2 })
+        $shortWords = $shortWordsArray.Count
+        $hasFragmentSpacing = $totalWords -gt 5 -and $shortWords / $totalWords -gt 0.6
+        
+        if ($hasSingleCharSpacing -or $hasFragmentSpacing) {
+            $fragments = $words | Where-Object { $_ }
+            $rebuiltWords = @()
+            $currentWord = ""
+            
+            foreach ($fragment in $fragments) {
+                if ($fragment -cmatch '^[A-Z]' -and $currentWord -ne "" -and $currentWord.Length -gt 1) {
+                    # New word starting with uppercase
+                    $rebuiltWords += $currentWord
+                    $currentWord = $fragment
+                } else {
+                    # Continue building current word
+                    $currentWord += $fragment
+                }
+                
+                # Check if we should end current word (for fragment spacing)
+                if ($hasFragmentSpacing -and $currentWord.Length -ge 6 -and $fragment -notmatch '^[A-Z]') {
+                    $nextIndex = [array]::IndexOf($fragments, $fragment) + 1
+                    if ($nextIndex -lt $fragments.Count -and $fragments[$nextIndex] -cmatch '^[A-Z]') {
+                        $rebuiltWords += $currentWord
+                        $currentWord = ""
+                    }
+                }
+            }
+            
+            if ($currentWord -ne "") {
+                $rebuiltWords += $currentWord
+            }
+            
+            $text = $rebuiltWords -join ' '
         }
         
-        return $safeText
+        # Truncate if requested
+        if ($MaxLength -gt 0 -and $text.Length -gt $MaxLength) {
+            $text = $text.Substring(0, $MaxLength - 3) + "..."
+        }
+        
+        return $text
     }
 }
 

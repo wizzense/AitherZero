@@ -6,6 +6,12 @@
     Uses $host.UI.RawUI.ReadKey() for proper keyboard input
 #>
 
+# Try to import TextProcessor module for safe text handling
+$textProcessorPath = Join-Path $PSScriptRoot "TextProcessor.psm1"
+if (Test-Path $textProcessorPath) {
+    Import-Module $textProcessorPath -Force -ErrorAction SilentlyContinue
+}
+
 function Show-BetterMenu {
     <#
     .SYNOPSIS
@@ -63,46 +69,15 @@ function Show-BetterMenu {
         for ($i = 0; $i -lt $Items.Count; $i++) {
             $item = $Items[$i]
             $rawText = if ($item -is [string]) { $item } else { $item.Name }
-            # Protect against character spacing issues  
+            # Protect against character spacing issues using TextProcessor module
             $displayText = if ($rawText) { 
-                $text = $rawText.ToString().Trim()
-                
-                # Smart fix for character spacing issues 
-                $text = $text -replace '\s+', ' '
-                $words = $text -split '\s+'
-                $singleCharWords = ($words | Where-Object { $_.Length -eq 1 }).Count
-                $totalWords = $words.Count
-                
-                if ($totalWords -gt 3 -and $singleCharWords / $totalWords -gt 0.5) {
-                    $chars = $words | Where-Object { $_ }
-                    $rebuiltWords = @()
-                    $currentWord = ""
-                    
-                    foreach ($char in $chars) {
-                        if ($char.Length -eq 1) {
-                            if ($char -cmatch '^[A-Z]' -and $currentWord -ne "") {
-                                $rebuiltWords += $currentWord
-                                $currentWord = $char
-                            } else {
-                                $currentWord += $char
-                            }
-                        } else {
-                            if ($currentWord -ne "") {
-                                $rebuiltWords += $currentWord
-                                $currentWord = ""
-                            }
-                            $rebuiltWords += $char
-                        }
-                    }
-                    
-                    if ($currentWord -ne "") {
-                        $rebuiltWords += $currentWord
-                    }
-                    
-                    $text = $rebuiltWords -join ' '
+                # Try to use TextProcessor module if available
+                if (Get-Command Format-SafeDisplayText -ErrorAction SilentlyContinue) {
+                    Format-SafeDisplayText -Text $rawText
+                } else {
+                    # Fallback to basic text processing
+                    $rawText.ToString().Trim() -replace '\s+', ' '
                 }
-                
-                $text
             } else { 
                 "" 
             }
@@ -200,54 +175,15 @@ function Show-BetterMenu {
         for ($i = $startIdx; $i -le $endIdx; $i++) {
             $item = $Items[$i]
             $rawText = if ($item -is [string]) { $item } else { $item.Name }
-            # Protect against character spacing issues
+            # Protect against character spacing issues using TextProcessor module
             $displayText = if ($rawText) { 
-                $text = $rawText.ToString().Trim()
-                
-                # Smart fix for character spacing issues (e.g., "O r c h e s t r a t i o n  E n g i n e" -> "Orchestration Engine")
-                # First, normalize multiple spaces to single spaces
-                $text = $text -replace '\s+', ' '
-                
-                # If text looks like it has character spacing (more than 50% single letter sequences), rebuild it intelligently
-                $words = $text -split '\s+'
-                $singleCharWords = ($words | Where-Object { $_.Length -eq 1 }).Count
-                $totalWords = $words.Count
-                
-                if ($totalWords -gt 3 -and $singleCharWords / $totalWords -gt 0.5) {
-                    # Join single characters, but break on uppercase letters to form words
-                    $chars = $words | Where-Object { $_ }
-                    $rebuiltWords = @()
-                    $currentWord = ""
-                    
-                    foreach ($char in $chars) {
-                        if ($char.Length -eq 1) {
-                            if ($char -cmatch '^[A-Z]' -and $currentWord -ne "") {
-                                # New word starts with uppercase
-                                $rebuiltWords += $currentWord
-                                $currentWord = $char
-                            } else {
-                                # Continue current word
-                                $currentWord += $char
-                            }
-                        } else {
-                            # Multi-character word
-                            if ($currentWord -ne "") {
-                                $rebuiltWords += $currentWord
-                                $currentWord = ""
-                            }
-                            $rebuiltWords += $char
-                        }
-                    }
-                    
-                    # Add final word
-                    if ($currentWord -ne "") {
-                        $rebuiltWords += $currentWord
-                    }
-                    
-                    $text = $rebuiltWords -join ' '
+                # Try to use TextProcessor module if available
+                if (Get-Command Format-SafeDisplayText -ErrorAction SilentlyContinue) {
+                    Format-SafeDisplayText -Text $rawText
+                } else {
+                    # Fallback to basic text processing
+                    $rawText.ToString().Trim() -replace '\s+', ' '
                 }
-                
-                $text
             } else { 
                 "" 
             }

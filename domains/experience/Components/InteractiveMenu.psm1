@@ -326,45 +326,15 @@ function Build-MenuItemText {
         $itemText = $Item.ToString()
     }
     
-    # Smart fix for character spacing issues
+    # Smart fix for character spacing issues using TextProcessor module
     if ($itemText) {
-        $fixedText = $itemText.ToString().Trim()
-        $fixedText = $fixedText -replace '\s+', ' '
-        
-        $words = $fixedText -split '\s+'
-        $singleCharWords = ($words | Where-Object { $_.Length -eq 1 }).Count
-        $totalWords = $words.Count
-        
-        if ($totalWords -gt 3 -and $singleCharWords / $totalWords -gt 0.5) {
-            $chars = $words | Where-Object { $_ }
-            $rebuiltWords = @()
-            $currentWord = ""
-            
-            foreach ($char in $chars) {
-                if ($char.Length -eq 1) {
-                    if ($char -cmatch '^[A-Z]' -and $currentWord -ne "") {
-                        $rebuiltWords += $currentWord
-                        $currentWord = $char
-                    } else {
-                        $currentWord += $char
-                    }
-                } else {
-                    if ($currentWord -ne "") {
-                        $rebuiltWords += $currentWord
-                        $currentWord = ""
-                    }
-                    $rebuiltWords += $char
-                }
-            }
-            
-            if ($currentWord -ne "") {
-                $rebuiltWords += $currentWord
-            }
-            
-            $fixedText = $rebuiltWords -join ' '
+        # Try to use TextProcessor module if available
+        if (Get-Command Format-SafeDisplayText -ErrorAction SilentlyContinue) {
+            $text += Format-SafeDisplayText -Text $itemText
+        } else {
+            # Fallback to basic text processing
+            $text += $itemText.ToString().Trim() -replace '\s+', ' '
         }
-        
-        $text += $fixedText
     }
 
     return $text
