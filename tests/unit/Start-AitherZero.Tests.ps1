@@ -327,4 +327,43 @@ if ($DryRun) {
             $output | Should -Be "[DryRun] Would execute action"
         }
     }
+
+    Context "PowerShell Version Check" {
+        It "Should have version check logic in the script" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match "PSVersionTable.PSVersion.Major"
+            $content | Should -Match "PowerShell 7"
+        }
+
+        It "Should have IsRelaunch parameter to prevent infinite loops" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match '\[switch\]\$IsRelaunch'
+        }
+
+        It "Should not have #Requires statement that blocks PS 5.1 execution" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Not -Match '^#Requires -Version 7'
+        }
+
+        It "Should describe auto-relaunch feature in help documentation" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match "automatically.*relaunch"
+        }
+
+        It "Should provide helpful error message when pwsh not found" {
+            # Test the version check logic by checking the actual script content
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match "PowerShell 7\+ is not installed"
+            $content | Should -Match "https://github.com/PowerShell/PowerShell"
+            $content | Should -Match "bootstrap.ps1"
+        }
+
+        It "Should skip version check when IsRelaunch is set" {
+            # Test that the IsRelaunch parameter prevents infinite loops
+            # by checking the script logic
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match '-not \$IsRelaunch'
+            $content | Should -Match 'IsRelaunch flag to prevent'
+        }
+    }
 }
