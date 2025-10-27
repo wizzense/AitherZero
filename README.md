@@ -81,11 +81,6 @@ aitherzero              # Start interactive mode
 # Or run from the installation directory
 ./Start-AitherZero.ps1
 
-# Use the command runner for automation scripts
-./az 0511               # Show project dashboard
-./az 0402               # Run unit tests  
-./az 0510               # Generate project report
-
 # The global command works from anywhere
 cd /any/directory
 aitherzero -Mode List -Target scripts    # List all automation scripts
@@ -126,13 +121,13 @@ Import-Module ./AitherZero.psd1
 Get-Module AitherZero
 
 # Run syntax validation
-./az 0407
+./az.ps1 0407
 
 # Run quality checks
 ./az 0420 -Path ./domains/utilities/Logging.psm1
 
 # Generate and view project report
-./az 0510 -ShowAll
+./az.ps1 0510 -ShowAll
 ```
 
 ## 📊 Quality Standards

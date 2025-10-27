@@ -283,30 +283,30 @@ jobs:
           ### Verification
           ```powershell
           # Verify installation
-          ./az 0407          # Syntax validation
+          ./az.ps1 0407          # Syntax validation
           ./Start-AitherZero.ps1  # Interactive mode
           ```
           
           ## 🎯 Quick Start Commands
           ```powershell
           # Environment and validation
-          ./az 0407          # Validate PowerShell syntax
-          ./az 0402          # Run unit tests
-          ./az 0404          # Code quality analysis
+          ./az.ps1 0407          # Validate PowerShell syntax
+          ./az.ps1 0402          # Run unit tests
+          ./az.ps1 0404          # Code quality analysis
           
           # System setup (Windows)
-          ./az 0001          # Ensure PowerShell 7
-          ./az 0105          # Install Hyper-V
-          ./az 0106          # Install WSL2
+          ./az.ps1 0001          # Ensure PowerShell 7
+          ./az.ps1 0105          # Install Hyper-V
+          ./az.ps1 0106          # Install WSL2
           
           # Development tools
-          ./az 0207          # Install Git
-          ./az 0208          # Install Docker
-          ./az 0210          # Install VS Code
+          ./az.ps1 0207          # Install Git
+          ./az.ps1 0208          # Install Docker
+          ./az.ps1 0210          # Install VS Code
           
           # Reporting and monitoring
-          ./az 0510          # Generate project report
-          ./az 0511          # Show project dashboard
+          ./az.ps1 0510          # Generate project report
+          ./az.ps1 0511          # Show project dashboard
           ```
           
           ## 📋 System Requirements

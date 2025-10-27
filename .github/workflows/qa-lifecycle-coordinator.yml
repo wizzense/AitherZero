@@ -275,11 +275,11 @@ jobs:
           
           $dashboard += "<div class=`"card`">`n<h3>🔧 Local Commands</h3>`n"
           $dashboard += "<p>Run these commands locally to reproduce and fix issues:</p>`n<ul>`n"
-          $dashboard += "<li><code>./az 0407</code> - Syntax validation</li>`n"
-          $dashboard += "<li><code>./az 0404</code> - Code quality analysis</li>`n"
-          $dashboard += "<li><code>./az 0402</code> - Unit tests</li>`n"
-          $dashboard += "<li><code>./az 0403</code> - Integration tests</li>`n"
-          $dashboard += "<li><code>./az 0510</code> - Generate comprehensive report</li>`n"
+          $dashboard += "<li><code>./az.ps1 0407</code> - Syntax validation</li>`n"
+          $dashboard += "<li><code>./az.ps1 0404</code> - Code quality analysis</li>`n"
+          $dashboard += "<li><code>./az.ps1 0402</code> - Unit tests</li>`n"
+          $dashboard += "<li><code>./az.ps1 0403</code> - Integration tests</li>`n"
+          $dashboard += "<li><code>./az.ps1 0510</code> - Generate comprehensive report</li>`n"
           $dashboard += "</ul>`n</div>`n"
           
           $dashboard += "<div class=`"card`">`n<h3>🔗 Resources</h3>`n<ul>`n"
@@ -385,9 +385,9 @@ jobs:
 
             comment += '**Local Testing:**\n';
             comment += '```bash\n';
-            comment += './az 0407  # Syntax validation\n';
-            comment += './az 0404  # Code quality check\n';
-            comment += './az 0402  # Run unit tests\n';
+            comment += './az.ps1 0407  # Syntax validation\n';
+            comment += './az.ps1 0404  # Code quality check\n';
+            comment += './az.ps1 0402  # Run unit tests\n';
             comment += '```\n\n';
             comment += '**Resources:**\n';
             comment += '- 📊 [QA Dashboard](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';

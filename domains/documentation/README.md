@@ -63,13 +63,13 @@ New-ModuleDocumentation -ModulePath "./domains/utilities/Logging.psm1"
 ### Automated Generation
 ```powershell
 # Full documentation generation
-./az 0733 -Mode Full -Format Both -Quality
+./az.ps1 0733 -Mode Full -Format Both -Quality
 
 # Incremental updates
-./az 0733 -Mode Incremental
+./az.ps1 0733 -Mode Incremental
 
 # Reactive mode with file watching
-./az 0733 -Mode Reactive -Watch -WatchTimeout 300
+./az.ps1 0733 -Mode Reactive -Watch -WatchTimeout 300
 ```
 
 ### Quality Validation

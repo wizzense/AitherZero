@@ -140,7 +140,7 @@ jobs:
           }
           
           if ($psFiles.Count -gt 0) {
-            $analysis.Recommendations += "🧪 Run local tests: ./az 0402"
+            $analysis.Recommendations += "🧪 Run local tests: ./az.ps1 0402"
           }
           
           # Set outputs
@@ -324,7 +324,7 @@ jobs:
             ### 🔧 Issue Resolution
             - **Syntax errors**: Check the validation output above
             - **Test failures**: Review CI pipeline logs
-            - **Local testing**: Run \`./az 0407\` for syntax, \`./az 0402\` for tests
+            - **Local testing**: Run \`./az.ps1 0407\` for syntax, \`./az.ps1 0402\` for tests
             `;
             }
             
