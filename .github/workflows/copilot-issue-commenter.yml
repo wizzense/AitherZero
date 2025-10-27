@@ -13,7 +13,8 @@ jobs:
   comment-with-copilot-prompt:
     name: 💬 Add Copilot Prompt to New Issues
     runs-on: ubuntu-latest
-    # Only run for issues that are assigned to wizzense or have auto-created label
+    # Pre-filter at workflow level to avoid wasting GitHub Actions minutes
+    # The JavaScript code performs additional validation for safety
     if: |
       (contains(github.event.issue.assignees.*.login, 'wizzense') || 
        contains(github.event.issue.labels.*.name, 'auto-created'))
@@ -77,9 +78,15 @@ jobs:
             
             const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
             
+            // Sanitize issue title to prevent markdown/command injection
+            const sanitizedTitle = issue.title
+              .replace(/[`]/g, '\\`')  // Escape backticks
+              .replace(/"/g, '\\"')     // Escape quotes
+              .replace(/\$/g, '\\$');   // Escape dollar signs
+            
             // Build the comment body piece by piece to avoid YAML parsing issues
             let promptComment = '## 🤖 Copilot Task Assignment\n\n';
-            promptComment += '**Issue:** ' + issue.title + '\n';
+            promptComment += '**Issue:** ' + sanitizedTitle + '\n';
             promptComment += '**Priority:** ' + priority.toUpperCase() + '\n';
             promptComment += '**Assigned to:** @' + assignedTo + '\n\n';
             promptComment += '### 📋 Task Instructions for GitHub Copilot\n\n';
@@ -123,7 +130,8 @@ jobs:
             promptComment += '# Create branch and PR (if using automation scripts)\n';
             promptComment += './az 0701 -Type feature -Name "fix-issue-' + issue.number + '"\n';
             promptComment += './az 0702 -Type fix -Message "address issue #' + issue.number + '"\n';
-            promptComment += './az 0703 -Title "Fix: ' + issue.title + '"\n';
+            // Note: Title in command is escaped but users should verify before running
+            promptComment += '# ./az 0703 -Title "Fix: [issue-title-here]"\n';
             promptComment += '```\n\n';
             promptComment += '### ⚡ Priority Guidelines\n\n';
             promptComment += priorityGuideline + '\n\n';
