@@ -263,12 +263,19 @@ function Test-LoggingImplementation {
     }
     
     # Check for logging at different levels
-    $hasInfo = $content -match 'Write-.*(Log|Verbose|Information).*-Level.*[''"]Information[''"]' -or 
-               $content -match 'Write-(Verbose|Information)'
-    $hasWarning = $content -match 'Write-.*(Log|Warning).*-Level.*[''"]Warning[''"]' -or 
-                  $content -match 'Write-Warning'
-    $hasError = $content -match 'Write-.*(Log|Error).*-Level.*[''"]Error[''"]' -or 
-                $content -match 'Write-Error'
+    $infoLevelPattern = 'Write-.*(Log|Verbose|Information).*-Level.*[''"]Information[''"]'
+    $infoFunctionPattern = 'Write-(Verbose|Information)'
+    $warningLevelPattern = 'Write-.*(Log|Warning).*-Level.*[''"]Warning[''"]'
+    $warningFunctionPattern = 'Write-Warning'
+    $errorLevelPattern = 'Write-.*(Log|Error).*-Level.*[''"]Error[''"]'
+    $errorFunctionPattern = 'Write-Error'
+
+    $hasInfo = $content -match $infoLevelPattern -or 
+               $content -match $infoFunctionPattern
+    $hasWarning = $content -match $warningLevelPattern -or 
+                  $content -match $warningFunctionPattern
+    $hasError = $content -match $errorLevelPattern -or 
+                $content -match $errorFunctionPattern
     
     $result.Details.HasInfoLevel = $hasInfo
     $result.Details.HasWarningLevel = $hasWarning
