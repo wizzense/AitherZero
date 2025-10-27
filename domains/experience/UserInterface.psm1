@@ -10,6 +10,12 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Import shared text utilities
+$textUtilsPath = Join-Path $PSScriptRoot "../utilities/TextUtilities.psm1"
+if (Test-Path $textUtilsPath) {
+    Import-Module $textUtilsPath -Force -ErrorAction SilentlyContinue
+}
+
 # Module state
 $script:UIState = @{
     Theme = 'Default'
@@ -21,42 +27,6 @@ $script:UIState = @{
     SupportsEmoji = $false
     MenuStyle = 'Interactive'
     ProgressBarStyle = 'Classic'
-}
-
-# Helper function to fix character spacing issues in text (e.g., "O rc he st ra ti on" -> "Orchestration")
-function Repair-TextSpacing {
-    param([string]$Text)
-    
-    if ([string]::IsNullOrWhiteSpace($Text)) { return "" }
-    
-    $cleaned = $Text.Trim() -replace '\s+', ' '
-    $words = $cleaned -split '\s+'
-    $totalWords = $words.Count
-    
-    # Detect fragment spacing (e.g., "O rc he st ra ti on")
-    $shortFragments = @($words | Where-Object { $_.Length -le 2 })
-    $fragmentRatio = if ($totalWords -gt 0) { $shortFragments.Count / $totalWords } else { 0 }
-    
-    if ($totalWords -gt 5 -and $fragmentRatio -gt 0.6) {
-        # Rebuild words by joining fragments, breaking on uppercase letters
-        $fragments = $words | Where-Object { $_ }
-        $rebuilt = @()
-        $current = ""
-        
-        foreach ($frag in $fragments) {
-            if ($frag -cmatch '^[A-Z]' -and $current.Length -gt 1) {
-                $rebuilt += $current
-                $current = $frag
-            } else {
-                $current += $frag
-            }
-        }
-        
-        if ($current) { $rebuilt += $current }
-        return $rebuilt -join ' '
-    }
-    
-    return $cleaned
 }
 
 # Default color themes

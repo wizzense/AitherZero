@@ -1245,6 +1245,8 @@ function Invoke-ReportsAndLogsMenu {
             $healthScript = Join-Path $script:ProjectRoot "automation-scripts/0550_Health-Dashboard.ps1"
             if (Test-Path $healthScript) {
                 & $healthScript -Configuration $Config -ShowAll
+            } else {
+                Show-UINotification -Message "Health Dashboard script not found at: $healthScript" -Type 'Warning'
             }
         }
         elseif ($selection.Action -eq 'ViewLogs') {
@@ -1252,6 +1254,8 @@ function Invoke-ReportsAndLogsMenu {
             $logScript = Join-Path $script:ProjectRoot "automation-scripts/0530_View-Logs.ps1"
             if (Test-Path $logScript) {
                 & $logScript -Mode $selection.Mode -Configuration $Config
+            } else {
+                Show-UINotification -Message "Log viewer script not found at: $logScript" -Type 'Warning'
             }
         }
         elseif ($selection.Sequence) {

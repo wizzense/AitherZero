@@ -18,6 +18,10 @@ param(
 # Initialize environment
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
 
+# Configuration constants
+$script:CoreModules = @('Logging', 'LogViewer', 'Configuration')
+$script:TestResultsPath = 'tests/test-results.json'
+
 # Import required modules
 $modulesToImport = @(
     "domains/utilities/LogViewer.psm1",
@@ -62,10 +66,9 @@ function Get-SystemHealth {
         $health.Issues += "PowerShell 7+ required (Current: $($PSVersionTable.PSVersion))"
     }
 
-    # Check core modules
-    $coreModules = @('Logging', 'LogViewer', 'Configuration')
+    # Check core modules (using script-level constant)
     $loadedModules = Get-Module | Select-Object -ExpandProperty Name
-    $missingModules = $coreModules | Where-Object { $_ -notin $loadedModules }
+    $missingModules = $script:CoreModules | Where-Object { $_ -notin $loadedModules }
     
     if ($missingModules.Count -eq 0) {
         $health.Checks.Modules = $true
@@ -143,8 +146,8 @@ function Get-TestResults {
         Total = 0
     }
 
-    # Check for test results file
-    $resultsPath = Join-Path $ProjectRoot "tests/test-results.json"
+    # Check for test results file (using script-level constant)
+    $resultsPath = Join-Path $ProjectRoot $script:TestResultsPath
     if (Test-Path $resultsPath) {
         try {
             $data = Get-Content $resultsPath -Raw | ConvertFrom-Json
