@@ -124,7 +124,7 @@ Get-Module AitherZero
 ./az.ps1 0407
 
 # Run quality checks
-./az 0420 -Path ./domains/utilities/Logging.psm1
+./aitherzero 0420 -Path ./domains/utilities/Logging.psm1
 
 # Generate and view project report
 ./az.ps1 0510 -ShowAll
@@ -136,10 +136,10 @@ AitherZero maintains high code quality standards through automated validation:
 
 ```powershell
 # Validate component quality
-./az 0420 -Path ./MyModule.psm1
+./aitherzero 0420 -Path ./MyModule.psm1
 
 # Validate entire domain
-./az 0420 -Path ./domains/testing -Recursive
+./aitherzero 0420 -Path ./domains/testing -Recursive
 ```
 
 **Quality checks include:**

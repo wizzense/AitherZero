@@ -298,8 +298,8 @@ The overall score is the average of all non-skipped checks. A minimum score of *
 
 ### Via AitherZero Launcher
 ```powershell
-# Using the az wrapper
-az 0420 -Path ./domains/testing/MyModule.psm1
+# Using the aitherzero wrapper
+aitherzero 0420 -Path ./domains/testing/MyModule.psm1
 
 # Or with Start-AitherZero
 ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0420

@@ -324,7 +324,7 @@ ${detailedFindings || 'See workflow artifacts for full details'}
 ### Next Steps
 1. Review the quality validation report in the [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 2. Address the issues identified in the findings
-3. Run local validation: \`./az 0420 -Path ${file.FilePath}\`
+3. Run local validation: \`./aitherzero 0420 -Path ${file.FilePath}\`
 4. Re-run validation after fixes
 
 @copilot please review this file and address the quality issues identified above.
