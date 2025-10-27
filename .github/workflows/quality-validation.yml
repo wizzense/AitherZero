@@ -82,7 +82,7 @@ jobs:
           
           if ("${{ github.event_name }}" -eq "pull_request") {
             # For PRs, compare with base branch (no origin/ prefix needed in GitHub Actions)
-            $gitDiff = git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD
+            $gitDiff = git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD
             $changedFiles = $gitDiff | Where-Object {
               $_ -match '\.(ps1|psm1|psd1)$' -and
               $_ -notmatch '^(tests|legacy-to-migrate|\.archive)/'
