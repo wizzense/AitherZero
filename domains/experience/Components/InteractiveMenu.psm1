@@ -314,53 +314,18 @@ function Build-MenuItemText {
         $text += if ($IsChecked) { "[✓] " } else { "[ ] " }
     }
 
-    # Add item text with spacing fix
-    $itemText = ""
+    # Add item text
     if ($Item -is [string]) {
-        $itemText = $Item
+        $text += $Item
     } elseif ($Item.Name) {
-        $itemText = $Item.Name
+        $text += $Item.Name
         if ($Item.Description) {
-            $itemText += " - $($Item.Description)"
+            $text += " - $($Item.Description)"
         }
     } else {
-        $itemText = $Item.ToString()
+        $text += $Item.ToString()
     }
-    
-    # Fix text spacing issues (e.g., "O rc he st ra ti on" -> "Orchestration")
-    if ($itemText) {
-        $cleanText = $itemText.ToString().Trim() -replace '\s+', ' '
-        $words = $cleanText -split '\s+'
-        $totalWords = $words.Count
-        
-        # Check for fragment spacing
-        $shortWordsArray = @($words | Where-Object { $_.Length -le 2 })
-        $shortWords = $shortWordsArray.Count
-        $hasFragmentSpacing = $totalWords -gt 5 -and $shortWords / $totalWords -gt 0.6
-        
-        if ($hasFragmentSpacing) {
-            $fragments = $words | Where-Object { $_ }
-            $rebuiltWords = @()
-            $currentWord = ""
-            
-            foreach ($fragment in $fragments) {
-                if ($fragment -cmatch '^[A-Z]' -and $currentWord -ne "" -and $currentWord.Length -gt 1) {
-                    $rebuiltWords += $currentWord
-                    $currentWord = $fragment
-                } else {
-                    $currentWord += $fragment
-                }
-            }
-            
-            if ($currentWord -ne "") {
-                $rebuiltWords += $currentWord
-            }
-            
-            $itemText = $rebuiltWords -join ' '
-        }
-    }
-    
-    $text += $itemText
+
     return $text
 }
 

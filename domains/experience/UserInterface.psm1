@@ -23,6 +23,42 @@ $script:UIState = @{
     ProgressBarStyle = 'Classic'
 }
 
+# Helper function to fix character spacing issues in text (e.g., "O rc he st ra ti on" -> "Orchestration")
+function Repair-TextSpacing {
+    param([string]$Text)
+    
+    if ([string]::IsNullOrWhiteSpace($Text)) { return "" }
+    
+    $cleaned = $Text.Trim() -replace '\s+', ' '
+    $words = $cleaned -split '\s+'
+    $totalWords = $words.Count
+    
+    # Detect fragment spacing (e.g., "O rc he st ra ti on")
+    $shortFragments = @($words | Where-Object { $_.Length -le 2 })
+    $fragmentRatio = if ($totalWords -gt 0) { $shortFragments.Count / $totalWords } else { 0 }
+    
+    if ($totalWords -gt 5 -and $fragmentRatio -gt 0.6) {
+        # Rebuild words by joining fragments, breaking on uppercase letters
+        $fragments = $words | Where-Object { $_ }
+        $rebuilt = @()
+        $current = ""
+        
+        foreach ($frag in $fragments) {
+            if ($frag -cmatch '^[A-Z]' -and $current.Length -gt 1) {
+                $rebuilt += $current
+                $current = $frag
+            } else {
+                $current += $frag
+            }
+        }
+        
+        if ($current) { $rebuilt += $current }
+        return $rebuilt -join ' '
+    }
+    
+    return $cleaned
+}
+
 # Default color themes
 $script:Themes = @{
     Default = @{
@@ -391,192 +427,35 @@ function Show-UIMenu {
         [switch]$NonInteractive
     )
 
+    # Always use better menu system unless in non-interactive mode
+    $betterMenuModule = Join-Path $PSScriptRoot "BetterMenu.psm1"
+
     # Check if we're in non-interactive mode
     $isNonInteractive = $NonInteractive -or $env:CI -or $env:GITHUB_ACTIONS -or $env:TF_BUILD -or $env:AITHERZERO_NONINTERACTIVE
 
-    # Helper function to fix text spacing issues
-    $fixTextSpacing = {
-        param($text)
-        if (-not $text) { return "" }
-        
-        $text = $text.ToString().Trim() -replace '\s+', ' '
-        $words = $text -split '\s+'
-        $totalWords = $words.Count
-        
-        # Check for fragment spacing (e.g., "O rc he st ra ti on")
-        $shortWordsArray = @($words | Where-Object { $_.Length -le 2 })
-        $shortWords = $shortWordsArray.Count
-        $hasFragmentSpacing = $totalWords -gt 5 -and $shortWords / $totalWords -gt 0.6
-        
-        if ($hasFragmentSpacing) {
-            $fragments = $words | Where-Object { $_ }
-            $rebuiltWords = @()
-            $currentWord = ""
-            
-            foreach ($fragment in $fragments) {
-                if ($fragment -cmatch '^[A-Z]' -and $currentWord -ne "" -and $currentWord.Length -gt 1) {
-                    $rebuiltWords += $currentWord
-                    $currentWord = $fragment
-                } else {
-                    $currentWord += $fragment
-                }
-            }
-            
-            if ($currentWord -ne "") {
-                $rebuiltWords += $currentWord
-            }
-            
-            return $rebuiltWords -join ' '
-        }
-        
-        return $text
-    }
-
-    # Interactive mode with keyboard navigation
     if (-not $isNonInteractive) {
-        # Use interactive menu with arrow key navigation
-        try {
-            $selectedIndex = 0
-            $selectedItems = @()
-            
-            # Calculate page size
-            $terminalHeight = 25
-            try {
-                if ($host.UI.RawUI -and $host.UI.RawUI.WindowSize -and $host.UI.RawUI.WindowSize.Height) {
-                    $terminalHeight = $host.UI.RawUI.WindowSize.Height
-                }
-            } catch { }
-            
-            $maxPageSize = [Math]::Max(5, $terminalHeight - 10)
-            $pageSize = [Math]::Min($maxPageSize, $Items.Count)
-            $scrollOffset = 0
-            
-            while ($true) {
-                try { Clear-Host } catch { }
-                
-                # Draw title
-                if ($Title) {
-                    Write-Host "`n  $Title" -ForegroundColor Cyan
-                    Write-Host ("  " + "=" * $Title.Length) -ForegroundColor DarkCyan
-                    Write-Host ""
-                }
-                
-                # Calculate visible range
-                $startIdx = $scrollOffset
-                $endIdx = [Math]::Min($scrollOffset + $pageSize, $Items.Count) - 1
-                
-                # Draw items
-                for ($i = $startIdx; $i -le $endIdx; $i++) {
-                    $item = $Items[$i]
-                    $rawText = if ($item -is [string]) { $item } else { $item.Name }
-                    $displayText = & $fixTextSpacing $rawText
-                    
-                    # Build prefix
-                    $prefix = if ($ShowNumbers) {
-                        $num = $i + 1
-                        if ($num -lt 10) { " $num. " } else { "$num. " }
-                    } else { "    " }
-                    
-                    # Multi-select checkbox
-                    if ($MultiSelect) {
-                        $checked = if ($i -in $selectedItems) { "[✓]" } else { "[ ]" }
-                        $prefix = "$prefix$checked "
-                    }
-                    
-                    # Highlight selected item
-                    if ($i -eq $selectedIndex) {
-                        Write-Host "  ► $prefix$displayText" -ForegroundColor Cyan
-                        if ($item -isnot [string] -and $item.PSObject.Properties['Description'] -and $item.Description) {
-                            Write-Host "      $($item.Description)" -ForegroundColor DarkGray
-                        }
-                    } else {
-                        Write-Host "    $prefix$displayText" -ForegroundColor White
-                        if ($item -isnot [string] -and $item.PSObject.Properties['Description'] -and $item.Description) {
-                            Write-Host "      $($item.Description)" -ForegroundColor DarkGray
-                        }
-                    }
-                }
-                
-                # Show scroll indicators
-                if ($scrollOffset -gt 0) {
-                    Write-Host "`n  ↑ More above" -ForegroundColor DarkGray
-                }
-                if ($endIdx -lt $Items.Count - 1) {
-                    Write-Host "  ↓ More below" -ForegroundColor DarkGray
-                }
-                
-                # Show position and help
-                Write-Host "`n  [$($selectedIndex + 1) of $($Items.Count)]" -ForegroundColor DarkCyan
-                Write-Host "`n  Navigate: ↑/↓ | Select: Enter | Cancel: Esc" -ForegroundColor DarkGray
-                if ($MultiSelect) {
-                    Write-Host "  Toggle: Space" -ForegroundColor DarkGray
-                }
-                
-                # Show custom actions
-                if ($CustomActions.Count -gt 0) {
-                    Write-Host ""
-                    foreach ($action in $CustomActions.GetEnumerator()) {
-                        Write-Host "  [$($action.Key)] $($action.Value)" -ForegroundColor Cyan
-                    }
-                }
-                
-                # Read key
-                $key = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
-                
-                # Process key
-                switch ($key.VirtualKeyCode) {
-                    38 { # Up arrow
-                        if ($selectedIndex -gt 0) {
-                            $selectedIndex--
-                            if ($selectedIndex -lt $scrollOffset) {
-                                $scrollOffset = $selectedIndex
-                            }
-                        }
-                    }
-                    40 { # Down arrow
-                        if ($selectedIndex -lt $Items.Count - 1) {
-                            $selectedIndex++
-                            if ($selectedIndex -gt $scrollOffset + $pageSize - 1) {
-                                $scrollOffset = $selectedIndex - $pageSize + 1
-                            }
-                        }
-                    }
-                    13 { # Enter
-                        if ($MultiSelect -and $selectedItems.Count -gt 0) {
-                            $result = $selectedItems | ForEach-Object { $Items[$_] }
-                        } else {
-                            $result = $Items[$selectedIndex]
-                        }
-                        
-                        if ($ReturnIndex -and $result -and $result -isnot [array]) {
-                            return $selectedIndex
-                        }
-                        return $result
-                    }
-                    32 { # Space
-                        if ($MultiSelect) {
-                            if ($selectedIndex -in $selectedItems) {
-                                $selectedItems = $selectedItems | Where-Object { $_ -ne $selectedIndex }
-                            } else {
-                                $selectedItems += $selectedIndex
-                            }
-                        }
-                    }
-                    27 { # Escape
-                        return $null
-                    }
-                    default {
-                        # Handle custom actions
-                        $char = $key.Character
-                        if ($CustomActions -and $char -and $CustomActions.ContainsKey($char.ToString().ToUpper())) {
-                            return @{ Action = $char.ToString().ToUpper() }
-                        }
+        if (Test-Path $betterMenuModule) {
+            # Import BetterMenu module if not already loaded
+            if (-not (Get-Module -Name BetterMenu)) {
+                Import-Module $betterMenuModule -Force -Global -ErrorAction Stop
+            }
+
+            $result = Show-BetterMenu -Title $Title -Items $Items `
+                -MultiSelect:$MultiSelect -ShowNumbers:$ShowNumbers `
+                -CustomActions $CustomActions
+
+            if ($ReturnIndex -and $result -and $result -isnot [hashtable]) {
+                # Convert item back to index
+                for ($i = 0; $i -lt $Items.Count; $i++) {
+                    if ($Items[$i] -eq $result) {
+                        return $i
                     }
                 }
             }
-        } catch {
-            Write-UILog -Level Warning -Message "Interactive mode failed, falling back to simple menu: $_"
-            # Fall through to non-interactive mode
+
+            return $result
+        } else {
+            throw "BetterMenu.psm1 not found at $betterMenuModule. Interactive menu system is required."
         }
     }
 
@@ -593,7 +472,7 @@ function Show-UIMenu {
         for ($i = 0; $i -lt $Items.Count; $i++) {
             $item = $Items[$i]
             $rawText = if ($item -is [string]) { $item } else { $item.Name }
-            $displayText = & $fixTextSpacing $rawText
+            $displayText = Repair-TextSpacing -Text $rawText
             $prefix = "[$($i + 1)]"
 
             Write-Host "$prefix $displayText" -ForegroundColor White

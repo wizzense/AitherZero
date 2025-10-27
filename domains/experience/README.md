@@ -1,132 +1,228 @@
-# AitherZero UI System
+# AitherZero Interactive UI System
 
 ## Overview
 
-A clean, unified CLI UI system for PowerShell 7+ that provides interactive menus, notifications, progress tracking, and other UI components with automatic text formatting fixes.
+A modern, component-based, truly interactive CLI UI system for PowerShell 7+ that provides real keyboard navigation, modular architecture, and comprehensive testing.
 
 ## Key Features
 
-### ✅ Interactive Menus
-- **Arrow Key Navigation**: Up/Down arrow keys for navigation
-- **Multi-Select**: Space key to select/deselect items  
+### ✅ Real Interactivity
+- **Arrow Key Navigation**: Up/Down/Left/Right arrow keys for navigation
+- **Page Navigation**: PageUp/PageDown, Home/End keys
+- **Multi-Select**: Space key to select/deselect items
+- **Search/Filter**: Type to filter items in real-time
 - **Escape/Enter**: Standard keyboard shortcuts
-- **Custom Actions**: Register hotkeys for custom operations
-- **Auto Text Fixing**: Automatically fixes character spacing issues in menu text
+- **Custom Hotkeys**: Register any key combination
 
-### ✅ Comprehensive UI Components  
-- **Interactive Menus**: Full keyboard navigation with scrolling
-- **Notifications**: Success, warning, error, and info notifications
-- **Progress Tracking**: Progress bars and spinners
-- **Tables**: Data table display with formatting
-- **Prompts**: Input prompts with validation
-- **Borders**: Decorative borders and separators
-- **Wizards**: Multi-step user workflows
+### ✅ Component Architecture
+- **Base Component Class**: All UI elements inherit from `UIComponent`
+- **Lifecycle Management**: Initialize, Mount, Render, Unmount phases
+- **Event System**: Full event propagation and bubbling
+- **State Management**: Component state with automatic re-rendering
+- **Style Inheritance**: CSS-like style inheritance from parent components
 
-### ✅ Smart Text Processing
-- **Automatic Spacing Fix**: Fixes fragmented text like "O rc he st ra ti on" → "Orchestration"
-- **Fallback Safety**: Graceful degradation if advanced features unavailable
-- **Cross-Platform**: Works on Windows, Linux, and macOS
+### ✅ Modular & Extensible
+- **Plugin System**: Register custom components dynamically
+- **Theme Support**: Multiple built-in themes, custom theme creation
+- **Layout Engine**: Grid, Flow, and custom layout managers
+- **Component Registry**: Dynamic component discovery and registration
+
+### ✅ Test-Driven Development
+- **Mock Terminal**: Full terminal emulation for testing
+- **Mock Keyboard**: Simulate any keyboard input sequence
+- **Component Testing**: Test components in isolation
+- **Event Testing**: Verify event propagation
+- **Layout Testing**: Test responsive layouts
 
 ## Architecture
 
 ```
 domains/experience/
-├── Components/
-│   └── InteractiveMenu.psm1   # Advanced menu component
-└── UserInterface.psm1         # Main UI system with all functions
+├── Core/                      # Core system components
+│   ├── UIComponent.psm1       # Base component class
+│   ├── UIContext.psm1         # Application context
+│   ├── UIEventSystem.psm1     # Event bus (planned)
+│   └── UIRenderer.psm1        # Rendering engine (planned)
+├── Components/                # Built-in components
+│   ├── InteractiveMenu.psm1   # Interactive menu with arrow keys
+│   ├── SelectList.psm1        # Multi-select list (planned)
+│   ├── TextField.psm1         # Text input field (planned)
+│   ├── ProgressBar.psm1       # Progress indicator (planned)
+│   ├── Table.psm1             # Data table (planned)
+│   └── Dialog.psm1            # Modal dialog (planned)
+├── Layout/                    # Layout managers (planned)
+│   ├── LayoutManager.psm1
+│   ├── Container.psm1
+│   └── ResponsiveLayout.psm1
+├── Registry/                  # Component registry (planned)
+│   ├── ComponentRegistry.psm1
+│   ├── ThemeRegistry.psm1
+│   └── PluginLoader.psm1
+└── UserInterface.psm1         # Backward compatibility layer
 
 tests/unit/domains/experience/
 ├── UITestFramework.psm1       # Testing utilities
-└── *.Tests.ps1               # Component tests
+├── UITestFramework.Tests.ps1  # Framework tests
+├── UIComponent.Tests.ps1      # Component tests
+└── InteractiveMenu.Tests.ps1  # Menu tests
 ```
 
 ## Usage
 
-### Interactive Menu
+### Basic Menu
 ```powershell
-# Basic menu
-$selection = Show-UIMenu -Title "Select Option" -Items @("Option 1", "Option 2", "Option 3")
+# Using backward-compatible wrapper
+$selection = Show-UIMenu -Title "Select Option" -Items @("Option 1", "Option 2", "Option 3") -UseInteractive
 
-# Menu with complex objects
-$services = @(
-    [PSCustomObject]@{ Name = "Web Server"; Description = "HTTP service" }
-    [PSCustomObject]@{ Name = "Database"; Description = "Data storage" }
-)
-$selected = Show-UIMenu -Title "Services" -Items $services -ShowNumbers
+# Using new component directly
+$menu = New-InteractiveMenu -Items $items -Title "My Menu"
+# ... handle menu in custom loop
 ```
 
 ### Multi-Select Menu
 ```powershell
-$selected = Show-UIMenu -Title "Select Features" -Items $features -MultiSelect
+$selected = Show-UIMenu -Title "Select Features" -Items $features -MultiSelect -UseInteractive
 # Returns array of selected items
 ```
 
-### Other UI Functions
+### Complex Objects
 ```powershell
-# Notifications
-Show-UINotification -Message "Task completed!" -Type 'Success'
-Show-UINotification -Message "Warning: Check configuration" -Type 'Warning'
-
-# Progress tracking
-Show-UIProgress -Activity "Processing" -Status "Step 1 of 3" -PercentComplete 33
-
-# Input prompts
-$name = Show-UIPrompt -Message "Enter name"
-$choice = Show-UIPrompt -Message "Continue?" -ValidateSet @('Yes', 'No')
-
-# Tables
-Show-UITable -Data $processes -Title "Running Processes"
+$services = @(
+    [PSCustomObject]@{ Name = "Web"; Status = "Running"; Port = 80 }
+    [PSCustomObject]@{ Name = "Database"; Status = "Stopped"; Port = 5432 }
+)
+$selected = Show-UIMenu -Title "Services" -Items $services -UseInteractive
 ```
 
-## Text Spacing Fix
-
-The UI system automatically fixes common text spacing issues:
-
+### Enable Globally
 ```powershell
-# Before: Fragmented text
-$problematicText = "O rc he st ra ti on En gi ne"
+# Enable interactive UI for entire session
+$env:AITHERZERO_USE_INTERACTIVE_UI = 'true'
 
-# After: Automatically fixed when displayed in menus
-# Output: "Orchestration Engine"
-
-# The fix handles:
-# - Fragment spacing: "C on fi gu ra ti on" → "Configuration"  
-# - Multiple word spacing: "R e p o s i t o r y  M a n a g e r" → "Repository Manager"
-# - Preserves normal text unchanged
+# Now all Show-UIMenu calls use interactive system
+$selection = Show-UIMenu -Title "Menu" -Items $items
 ```
 
-## Non-Interactive Mode
+## Component Development
 
-For CI/CD and automation scenarios:
-
+### Creating a Custom Component
 ```powershell
-# Force non-interactive mode
-$env:AITHERZERO_NONINTERACTIVE = '1'
-$selection = Show-UIMenu -Title "Options" -Items $items
+# Create base component
+$component = New-UIComponent -Name "MyCustomComponent"
 
-# Or use parameter
-$selection = Show-UIMenu -Title "Options" -Items $items -NonInteractive
+# Set properties
+$component.Properties = @{
+    Text = "Hello World"
+    Color = "Green"
+}
+
+# Define render logic
+$component.OnRender = {
+    param($self)
+    # Custom rendering logic
+    Write-Host $self.Properties.Text -ForegroundColor $self.Properties.Color
+}
+
+# Handle input
+$component.OnKeyPress = {
+    param($inputValue)
+    if ($inputValue.Key -eq "Enter") {
+        # Handle enter key
+        return $true  # Handled
+    }
+    return $false  # Not handled
+}
+```
+
+### Component Lifecycle
+```powershell
+# 1. Create
+$component = New-UIComponent -Name "MyComponent"
+
+# 2. Initialize
+Initialize-UIComponent -Component $component -Context $context
+
+# 3. Mount
+Mount-UIComponent -Component $component -Context $context
+
+# 4. Render (called automatically or manually)
+Invoke-UIComponentRender -Component $component
+
+# 5. Handle events
+Invoke-UIComponentEvent -Component $component -EventName "Click"
+
+# 6. Unmount
+Unmount-UIComponent -Component $component
 ```
 
 ## Testing
 
+### Test Framework Usage
 ```powershell
-# Run UI tests
-Invoke-Pester ./tests/unit/domains/experience/*.Tests.ps1
+# Import test framework
+Import-Module ./tests/unit/domains/experience/UITestFramework.psm1
 
-# Test menu functionality 
-$testItems = @("Option A", "Option B", "Option C")
-$result = Show-UIMenu -Title "Test Menu" -Items $testItems -NonInteractive
+# Create test context
+$context = New-UITestContext
+
+# Create mock terminal
+$terminal = New-MockTerminal -Width 80 -Height 24
+
+# Simulate keyboard input
+$keyboard = New-MockKeyboard
+Add-MockKeySequence -Keyboard $keyboard -Sequence @("DownArrow", "DownArrow", "Enter")
+
+# Test menu navigation
+$result = Test-UIMenuNavigation -Context $context -Items @("A", "B", "C")
+$result.SelectedIndex | Should -Be 2
 ```
 
-## Backward Compatibility
+### Running Tests
+```powershell
+# Run all UI tests
+Invoke-Pester ./tests/unit/domains/experience/*.Tests.ps1
 
-The system maintains full compatibility with existing code:
+# Run specific test
+Invoke-Pester ./tests/unit/domains/experience/UIComponent.Tests.ps1
+```
 
-- **Same API**: All existing `Show-UIMenu` calls work unchanged
-- **Automatic Fallback**: Gracefully falls back to simple prompts if interactive mode fails  
-- **Environment Detection**: Automatically uses non-interactive mode in CI/CD environments
-- **Progressive Enhancement**: Interactive features are added without breaking existing functionality
+## Migration from Classic UI
+
+The system maintains full backward compatibility:
+
+1. **Automatic Fallback**: If interactive system fails, falls back to classic Read-Host
+2. **Same API**: Show-UIMenu maintains same parameters and return values
+3. **Opt-in**: Use `-UseInteractive` flag or set environment variable
+4. **Gradual Migration**: Migrate one menu at a time
+
+## Performance
+
+- **Lazy Loading**: Components load only when needed
+- **Dirty Region Tracking**: Only re-render changed areas
+- **Event Batching**: Batch multiple state updates
+- **Optimized Rendering**: Minimal terminal operations
+
+## Roadmap
+
+### Completed ✅
+- [x] Test framework with mocks
+- [x] Core component system (UIComponent, UIContext)
+- [x] Interactive input system
+- [x] InteractiveMenu component
+- [x] Backward compatibility layer
+
+### In Progress 🚧
+- [ ] Additional components (SelectList, TextField, etc.)
+- [ ] Component registry system
+- [ ] Layout engine
+
+### Planned 📋
+- [ ] More built-in components
+- [ ] Advanced theming
+- [ ] Animation support
+- [ ] Accessibility features
+- [ ] Terminal capability detection
+- [ ] Cross-platform testing
 
 ## Contributing
 
@@ -142,27 +238,21 @@ To add new components:
 
 Run the interactive demo:
 ```powershell
-# Interactive demo
 ./examples/interactive-ui-demo.ps1
-
-# Test the UI system  
-./examples/test-better-menu.ps1
 ```
+
+This demonstrates:
+- Simple menus
+- Multi-select menus
+- Complex object menus
+- Large scrollable menus
+- Custom actions and hotkeys
 
 ## Requirements
 
 - PowerShell 7.0+
 - Terminal with ANSI color support
-
-## Architecture Benefits
-
-This simplified architecture provides:
-
-- **Single Source of Truth**: One main UI module instead of multiple competing systems
-- **Integrated Text Fixes**: Built-in handling of text spacing issues
-- **Clean API**: Consistent function names and parameters
-- **Backward Compatibility**: Existing code continues to work
-- **Maintainability**: Easier to understand and modify than complex component hierarchies
+- UTF-8 encoding support (for box drawing characters)
 
 ## License
 
