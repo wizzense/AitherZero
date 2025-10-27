@@ -27,9 +27,13 @@ function Write-SecurityLog {
 
 # Log module initialization (only once)
 if (-not (Get-Variable -Name "AitherZeroSecurityInitialized" -Scope Global -ErrorAction SilentlyContinue)) {
+    # Cache command availability checks at module load time
+    $script:TimeoutCommandAvailable = (Get-Command timeout -ErrorAction SilentlyContinue) -ne $null
+    
     Write-SecurityLog -Message "Security module initialized" -Data @{
         SSHAvailable = (Get-Command ssh -ErrorAction SilentlyContinue) -ne $null
         OpenSSLAvailable = (Get-Command openssl -ErrorAction SilentlyContinue) -ne $null
+        TimeoutCommandAvailable = $script:TimeoutCommandAvailable
     }
     $global:AitherZeroSecurityInitialized = $true
 }
@@ -131,7 +135,7 @@ function Invoke-SSHCommand {
         $sshArgs += $Command
         
         # Use timeout command if available (Linux/macOS), otherwise use PowerShell jobs
-        if (Get-Command timeout -ErrorAction SilentlyContinue) {
+        if ($script:TimeoutCommandAvailable) {
             # Use system timeout for better reliability
             $timeoutCmd = "timeout"
             $allArgs = @($TimeoutSeconds, 'ssh') + $sshArgs
@@ -170,6 +174,11 @@ function Invoke-SSHCommand {
                     $exitCode = $jobResult.ExitCode
                 } else {
                     # Fallback if job returned unexpected format
+                    Write-SecurityLog -Level Warning -Message "Unexpected job result format in SSH command. Fallback path taken." -Data @{
+                        JobState = $job.State
+                        RawJobResult = $jobResult
+                        Target = $Target
+                    }
                     $output = $jobResult
                     $exitCode = if ($job.State -eq 'Failed') { 255 } else { 0 }
                 }
