@@ -314,7 +314,8 @@ function Build-MenuItemText {
         $text += if ($IsChecked) { "[✓] " } else { "[ ] " }
     }
 
-    # Add item text with protection against character spacing issues
+    # Add item text with spacing fix
+    $itemText = ""
     if ($Item -is [string]) {
         $itemText = $Item
     } elseif ($Item.Name) {
@@ -326,17 +327,40 @@ function Build-MenuItemText {
         $itemText = $Item.ToString()
     }
     
-    # Smart fix for character spacing issues using TextProcessor module
+    # Fix text spacing issues (e.g., "O rc he st ra ti on" -> "Orchestration")
     if ($itemText) {
-        # Try to use TextProcessor module if available
-        if (Get-Command Format-SafeDisplayText -ErrorAction SilentlyContinue) {
-            $text += Format-SafeDisplayText -Text $itemText
-        } else {
-            # Fallback to basic text processing
-            $text += $itemText.ToString().Trim() -replace '\s+', ' '
+        $cleanText = $itemText.ToString().Trim() -replace '\s+', ' '
+        $words = $cleanText -split '\s+'
+        $totalWords = $words.Count
+        
+        # Check for fragment spacing
+        $shortWordsArray = @($words | Where-Object { $_.Length -le 2 })
+        $shortWords = $shortWordsArray.Count
+        $hasFragmentSpacing = $totalWords -gt 5 -and $shortWords / $totalWords -gt 0.6
+        
+        if ($hasFragmentSpacing) {
+            $fragments = $words | Where-Object { $_ }
+            $rebuiltWords = @()
+            $currentWord = ""
+            
+            foreach ($fragment in $fragments) {
+                if ($fragment -cmatch '^[A-Z]' -and $currentWord -ne "" -and $currentWord.Length -gt 1) {
+                    $rebuiltWords += $currentWord
+                    $currentWord = $fragment
+                } else {
+                    $currentWord += $fragment
+                }
+            }
+            
+            if ($currentWord -ne "") {
+                $rebuiltWords += $currentWord
+            }
+            
+            $itemText = $rebuiltWords -join ' '
         }
     }
-
+    
+    $text += $itemText
     return $text
 }
 
