@@ -13,8 +13,8 @@ jobs:
   comment-with-copilot-prompt:
     name: 💬 Add Copilot Prompt to New Issues
     runs-on: ubuntu-latest
-    # Pre-filter at workflow level to avoid wasting GitHub Actions minutes
-    # The JavaScript code performs additional validation for safety
+    # Pre-filter at workflow level to save GitHub Actions minutes
+    # More comprehensive validation is performed in the JavaScript code below
     if: |
       (contains(github.event.issue.assignees.*.login, 'wizzense') || 
        contains(github.event.issue.labels.*.name, 'auto-created'))
@@ -78,11 +78,19 @@ jobs:
             
             const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
             
-            // Sanitize issue title to prevent markdown/command injection
+            // Sanitize issue title to prevent markdown and command injection
+            // Escape markdown special characters and shell metacharacters
             const sanitizedTitle = issue.title
-              .replace(/[`]/g, '\\`')  // Escape backticks
+              .replace(/\\/g, '\\\\')   // Escape backslashes first
+              .replace(/[`]/g, '\\`')   // Escape backticks
               .replace(/"/g, '\\"')     // Escape quotes
-              .replace(/\$/g, '\\$');   // Escape dollar signs
+              .replace(/\$/g, '\\$')    // Escape dollar signs
+              .replace(/\[/g, '\\[')    // Escape square brackets
+              .replace(/\]/g, '\\]')    // Escape square brackets
+              .replace(/\(/g, '\\(')    // Escape parentheses
+              .replace(/\)/g, '\\)')    // Escape parentheses
+              .replace(/</g, '&lt;')    // Escape less than
+              .replace(/>/g, '&gt;');   // Escape greater than
             
             // Build the comment body piece by piece to avoid YAML parsing issues
             let promptComment = '## 🤖 Copilot Task Assignment\n\n';
@@ -130,8 +138,8 @@ jobs:
             promptComment += '# Create branch and PR (if using automation scripts)\n';
             promptComment += './az 0701 -Type feature -Name "fix-issue-' + issue.number + '"\n';
             promptComment += './az 0702 -Type fix -Message "address issue #' + issue.number + '"\n';
-            // Note: Title in command is escaped but users should verify before running
-            promptComment += '# ./az 0703 -Title "Fix: [issue-title-here]"\n';
+            // Note: Users should manually provide the title to avoid injection risks
+            promptComment += '# ./az 0703 -Title "Fix: [manually-enter-title-here]"\n';
             promptComment += '```\n\n';
             promptComment += '### ⚡ Priority Guidelines\n\n';
             promptComment += priorityGuideline + '\n\n';
