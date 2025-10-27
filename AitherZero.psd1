@@ -51,6 +51,11 @@
         'Initialize-DocumentationEngine', 'New-ModuleDocumentation', 'New-ProjectDocumentation',
         'Test-DocumentationQuality', 'Get-DocumentationCoverage',
 
+        # From QualityValidator
+        'Test-ErrorHandling', 'Test-LoggingImplementation', 'Test-TestCoverage',
+        'Test-UIIntegration', 'Test-GitHubActionsIntegration', 'Test-PSScriptAnalyzerCompliance',
+        'Invoke-QualityValidation', 'Format-QualityReport',
+
         # Wildcard for any additional functions
         '*'
     )
