@@ -394,7 +394,7 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (101 total automation scripts)
+        # Script inventory by range (111 total files, 101 unique numbers - some numbers have variants)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 7; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
