@@ -28,8 +28,6 @@ param(
 
 # Determine platform
 $IsWindowsPlatform = $IsWindows -or ($PSVersionTable.PSVersion.Major -lt 6)
-$IsMacOSPlatform = $IsMacOS
-$IsLinuxPlatform = $IsLinux
 
 function Get-GlobalBinPath {
     <#
@@ -106,12 +104,12 @@ function Add-ToUserPath {
             $exportLine = "export PATH=`"$PathToAdd`$pathSeparator`$PATH`""
             $addedTo = @()
 
-            foreach ($profile in $shellProfiles) {
-                if (Test-Path $profile) {
-                    $content = Get-Content $profile -Raw -ErrorAction SilentlyContinue
+            foreach ($shellProfile in $shellProfiles) {
+                if (Test-Path $shellProfile) {
+                    $content = Get-Content $shellProfile -Raw -ErrorAction SilentlyContinue
                     if ($content -notmatch [regex]::Escape($PathToAdd)) {
-                        Add-Content -Path $profile -Value "`n# AitherZero global command`n$exportLine"
-                        $addedTo += $profile
+                        Add-Content -Path $shellProfile -Value "`n# AitherZero global command`n$exportLine"
+                        $addedTo += $shellProfile
                     }
                 }
             }
@@ -137,6 +135,7 @@ function Remove-FromUserPath {
     .SYNOPSIS
         Removes a directory from the user's PATH environment variable
     #>
+    [CmdletBinding(SupportsShouldProcess)]
     param([string]$PathToRemove)
 
     try {
@@ -165,14 +164,14 @@ function Remove-FromUserPath {
                 (Join-Path $HOME ".profile")
             )
 
-            foreach ($profile in $shellProfiles) {
-                if (Test-Path $profile) {
-                    $content = Get-Content $profile -Raw -ErrorAction SilentlyContinue
+            foreach ($shellProfile in $shellProfiles) {
+                if (Test-Path $shellProfile) {
+                    $content = Get-Content $shellProfile -Raw -ErrorAction SilentlyContinue
                     if ($content -match [regex]::Escape($PathToRemove)) {
                         # Remove lines containing the path
                         $lines = $content -split "`n" | Where-Object { $_ -notmatch [regex]::Escape($PathToRemove) }
-                        Set-Content -Path $profile -Value ($lines -join "`n")
-                        Write-Host "Removed from PATH in: $profile" -ForegroundColor Green
+                        Set-Content -Path $shellProfile -Value ($lines -join "`n")
+                        Write-Host "Removed from PATH in: $shellProfile" -ForegroundColor Green
                     }
                 }
             }
@@ -190,6 +189,7 @@ function Install-GlobalCommand {
     .SYNOPSIS
         Installs the global aitherzero command
     #>
+    [CmdletBinding(SupportsShouldProcess)]
     param([string]$AitherZeroRoot)
 
     Write-Host "`nInstalling global 'aitherzero' command..." -ForegroundColor Cyan
@@ -262,11 +262,11 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$launcherDest" %*
 
             $exportLine = "export AITHERZERO_ROOT=`"$AitherZeroRoot`""
             
-            foreach ($profile in $shellProfiles) {
-                if (Test-Path $profile) {
-                    $content = Get-Content $profile -Raw -ErrorAction SilentlyContinue
+            foreach ($shellProfile in $shellProfiles) {
+                if (Test-Path $shellProfile) {
+                    $content = Get-Content $shellProfile -Raw -ErrorAction SilentlyContinue
                     if ($content -notmatch 'AITHERZERO_ROOT') {
-                        Add-Content -Path $profile -Value "`n$exportLine"
+                        Add-Content -Path $shellProfile -Value "`n$exportLine"
                     }
                 }
             }
@@ -303,7 +303,8 @@ function Uninstall-GlobalCommand {
     .SYNOPSIS
         Uninstalls the global aitherzero command
     #>
-
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
     Write-Host "`nUninstalling global 'aitherzero' command..." -ForegroundColor Cyan
 
     # Get the global bin path
