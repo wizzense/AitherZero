@@ -1,6 +1,6 @@
 # AitherZero CI/CD Workflows
 
-This directory contains the consolidated and optimized GitHub Actions workflows for AitherZero. The workflow structure has been refactored for better efficiency, maintainability, and resource usage.
+This directory contains the optimized GitHub Actions workflows for AitherZero. The workflow structure has been streamlined for efficiency, maintainability, and optimal resource usage.
 
 ## 🚀 Workflow Overview
 
@@ -8,70 +8,99 @@ This directory contains the consolidated and optimized GitHub Actions workflows 
 
 | Workflow | Purpose | Triggers | Duration |
 |----------|---------|----------|----------|
-| `ci-pipeline.yml` | Main CI/CD pipeline with comprehensive testing | Push, PR, Manual | 15-25 min |
-| `pr-validation.yml` | Fast PR validation and automated review | PR events, Comments | 3-5 min |
+| `intelligent-ci-orchestrator.yml` | Main CI/CD with smart change detection | Push, PR, Manual | 10-20 min |
+| `automated-copilot-agent.yml` | Automated issue creation and Copilot task assignment | CI completion, Schedule, Manual | 3-5 min |
+| `ai-agent-coordinator.yml` | Coordinates AI agents for code review, testing, security | PR, Issues, Schedule, Manual | 5-15 min |
+| `copilot-pr-automation.yml` | Automated PR creation for Copilot fixes | Manual | 5-10 min |
+| `pr-validation.yml` | Fast PR validation and automated review | PR events | 3-5 min |
 | `release-automation.yml` | Automated release creation and packaging | Tags, Manual | 10-15 min |
 
-## 📋 Workflow Details
+### Supporting Workflows
 
-### CI Pipeline (`ci-pipeline.yml`)
+| Workflow | Purpose | Triggers |
+|----------|---------|----------|
+| `create-issues-now.yml` | Manual issue creation from analysis | Manual |
+| `documentation-automation.yml` | Documentation generation and updates | Push, PR, Manual |
+| `enhanced-cost-optimizer.yml` | CI cost analysis and optimization | Schedule, Manual |
+| `intelligent-report-analyzer.yml` | Analysis reporting and metrics | Schedule, Manual |
+| `qa-lifecycle-coordinator.yml` | QA workflow coordination | PR, Manual |
+| `validate-manifests.yml` | PowerShell manifest validation | Push, PR, Manual |
+| `jekyll-gh-pages.yml` | GitHub Pages deployment | Push, Manual |
 
-**The main workhorse** - Handles all comprehensive testing and validation.
+## 📋 Primary Workflow Details
+
+### Intelligent CI Orchestrator (`intelligent-ci-orchestrator.yml`)
+
+**The main CI/CD pipeline** - Intelligently orchestrates all testing and validation.
 
 **Features:**
-- ⚡ **Quick Validation**: Fast syntax and module loading tests (5 min)  
-- 🧪 **Cross-Platform Testing**: Ubuntu, Windows, macOS support
-- 🔍 **Code Quality**: PSScriptAnalyzer integration
-- 📊 **Reporting**: Coverage reports and project dashboards
-- 📦 **Packaging**: Automated build artifact creation
-- 🚀 **Release**: Conditional release creation for main branch
-
-**Job Flow:**
-```
-quick-validation → comprehensive-testing → build-package → create-release
-                                      ↘  
-                                        ci-summary
-```
+- 🧠 **Smart Change Detection**: Only runs necessary validations based on changed files
+- ⚡ **Quick Validation**: Fast syntax checks (< 2 min)
+- 🔍 **Core Validation**: PSScriptAnalyzer and comprehensive analysis
+- 🔒 **Security Validation**: Security-focused scanning for sensitive changes
+- 🧪 **Comprehensive Testing**: Parallelized test matrix by priority and category
+- 🌍 **Cross-Platform**: Ubuntu, Windows, macOS validation for main/develop branches
+- 🤖 **AI Integration**: Automatically triggers AI Agent Coordinator on failures
 
 **Optimization Features:**
-- Dependency caching for faster builds
-- Intelligent path-based triggering  
-- Job matrices for parallel execution
-- Conditional job execution to save resources
+- Intelligent path-based change detection
+- Parallelized test execution (8 concurrent test categories)
+- Priority-based test ordering (P1-P4)
+- Conditional job execution based on changes
+- Smart caching for dependencies
 
-### PR Validation (`pr-validation.yml`)
+### Automated Copilot Agent (`automated-copilot-agent.yml`)
 
-**Fast feedback loop** - Provides immediate validation for pull requests.
-
-**Features:**
-- 📊 **Change Analysis**: Categorizes modified files
-- 🔍 **Quick Validation**: Syntax checking for PowerShell changes
-- 💬 **Automated Comments**: Progress updates and recommendations
-- 🤖 **Copilot Integration**: Responds to @copilot mentions
-- 📋 **Checklist Generation**: Automated review checklists
-
-**Smart Analysis:**
-- Detects PowerShell, workflow, test, and config changes
-- Provides contextual recommendations
-- Links to comprehensive CI for full validation
-
-### Release Automation (`release-automation.yml`)
-
-**Production releases** - Handles version management and release packaging.
+**Automated issue creation** - Analyzes code and creates actionable issues for Copilot.
 
 **Features:**
-- 🔍 **Pre-Release Validation**: Comprehensive quality checks
-- 📦 **Multi-Format Packaging**: ZIP and TAR.GZ archives
-- 📝 **Release Notes**: Auto-generated with build information
-- 🏷️ **Tag Management**: Version and latest tag updates
-- 📊 **Release Dashboard**: Post-release summary and links
+- 📊 **Fast Analysis**: Ultra-fast PSScriptAnalyzer (3s vs 60s+)
+- 🧪 **Test Analysis**: Optimized Pester test execution
+- 🔒 **Security Scanning**: Pattern-based security issue detection
+- 🎯 **Smart Issue Creation**: Creates targeted issues with fix instructions
+- 🤖 **Copilot Assignment**: Auto-assigns issues to @copilot
+- 🔄 **Iterative Resolution**: Tracks resolution progress
 
-**Package Contents:**
-- Complete PowerShell module
-- All automation scripts (0000-9999)
-- Cross-platform bootstrap scripts
-- Documentation and examples
-- Build metadata and version info
+**Trigger Conditions:**
+- When Intelligent CI Orchestrator completes (main/develop branches only)
+- Manual dispatch for forced analysis
+- Scheduled runs every 6 hours
+- When issues are opened/labeled
+
+### AI Agent Coordinator (`ai-agent-coordinator.yml`)
+
+**Coordinates AI agent actions** - Runs real PowerShell analysis tools and creates quality issues.
+
+**Features:**
+- 🔍 **Code Review Agent**: PSScriptAnalyzer analysis (az 0404)
+- 🧪 **Testing Agent**: Unit test execution (az 0402)
+- 🔒 **Security Agent**: Syntax and security validation (az 0407)
+- 📊 **Reporting**: Comprehensive project reports (az 0510)
+- 💬 **PR Comments**: Automated feedback on pull requests
+- 🐛 **Issue Creation**: Creates GitHub issues for detected problems
+
+**Real Analysis:**
+- Uses actual AitherZero automation scripts
+- Provides actionable, real results
+- Priority-based execution (critical, high, normal, low)
+- Timeout management and resource optimization
+
+### Copilot PR Automation (`copilot-pr-automation.yml`)
+
+**Automated PR creation** - Creates PRs for Copilot-fixed issues (manual trigger only).
+
+**Features:**
+- 👀 **Issue Monitoring**: Scans for Copilot-assigned issues
+- 🛠️ **Automated Fixes**: Applies PSScriptAnalyzer fixes, test updates, security improvements
+- 🔄 **PR Creation**: Creates PRs with fix summary and validation steps
+- 💬 **PR Comments**: Updates issues with PR links
+- ✅ **Auto-merge**: Eligible PRs can be auto-merged after validation
+
+**Fix Strategies:**
+- PSScriptAnalyzer auto-fixes
+- Test parameter conflict resolution
+- Security suppression additions
+- Code quality improvements
 
 ## 🔧 Configuration
 
@@ -83,31 +112,72 @@ All workflows use consistent environment variables:
 env:
   AITHERZERO_CI: true                    # Enable CI mode
   AITHERZERO_NONINTERACTIVE: true       # Disable interactive prompts
-  AITHERZERO_CI_PROGRESS: true          # Enable progress reporting
+  AI_AGENT_MODE: true                    # Enable AI agent features
+  CI_OPTIMIZATION_LEVEL: 'aggressive'    # Optimization level
 ```
+
+### Workflow Optimization
+
+**Change Detection:**
+- Infrastructure changes → Full validation + security scan + full tests
+- Security-sensitive files → Security scan + core validation
+- PowerShell files → Security scan + basic validation
+- Test changes → Core validation only
+- Documentation → Skip CI (handled by docs workflow)
+
+**Test Parallelization:**
+Tests run in parallel by priority and category:
+- **P1 (Priority 1)**: Core Domain Tests, Core Unit Tests
+- **P2 (Priority 2)**: Infrastructure Tests, Testing Framework Tests
+- **P3 (Priority 3)**: Development Tests, CI/CD Tests
+- **P4 (Priority 4)**: Reporting Tests, Integration Tests
+
+**Benefits:**
+- ✅ Faster feedback (parallel execution)
+- ✅ Priority-based failure detection
+- ✅ Better resource utilization
+- ✅ Easier debugging (isolated test categories)
 
 ### Timeouts and Limits
 
 | Component | Timeout | Purpose |
 |-----------|---------|---------|
-| Quick Validation | 5 min | Fast feedback |
-| Comprehensive Testing | 25 min | Full validation |
-| Pre-Release Validation | 15 min | Release quality |
-| Build Packaging | 10 min | Artifact creation |
+| Quick Validation | 2 min | Fast feedback |
+| Core Validation | 10 min | Comprehensive analysis |
+| Security Validation | 10 min | Security scanning |
+| Comprehensive Testing | 20 min per category | Parallelized test execution |
+| Cross-Platform | 15 min | Platform compatibility |
 
-### Caching Strategy
+## 🔄 Workflow Optimization Changes
 
-Workflows implement intelligent caching:
+### Removed Workflows
 
-```yaml
-# PowerShell modules cache
-~/.local/share/powershell/Modules
-key: ${{ runner.os }}-powershell-modules-${{ hashFiles('**/*.psd1') }}
+The following workflows have been removed to eliminate duplication and confusion:
 
-# Dependencies cache  
-~/.cache/
-key: ${{ runner.os }}-deps-${{ github.run_id }}
-```
+| Removed Workflow | Reason | Replaced By |
+|-----------------|--------|-------------|
+| `ci-pipeline.yml` | DEPRECATED - marked for removal | `intelligent-ci-orchestrator.yml` |
+| `ai-issue-creator.yml` | Duplicate issue creation | `automated-copilot-agent.yml` |
+| `automated-issue-management.yml` | Legacy issue management | `automated-copilot-agent.yml` |
+| `ci-cost-optimizer.yml` | Old version | `enhanced-cost-optimizer.yml` |
+| `test-intelligent-ci.yml` | Test workflow in production | N/A (removed) |
+
+### Benefits of Optimization
+
+- ✅ **Eliminated 5 duplicate/obsolete workflows** (19 → 14 workflows)
+- ✅ **Clearer workflow purposes and triggers**
+- ✅ **Reduced schedule overhead** (fewer cron triggers)
+- ✅ **Better Copilot integration** (automated issue creation and PR workflow)
+- ✅ **Streamlined issue creation** (single source of truth)
+- ✅ **Improved maintainability** (less confusion, better docs)
+
+### Key Improvements
+
+1. **Automated Issue Creation**: Now properly triggers from CI failures on main/develop
+2. **Copilot PR Automation**: Simplified and focused on manual triggers
+3. **AI Agent Coordination**: Enhanced with real analysis tools
+4. **Smart CI Orchestration**: Intelligent change detection reduces unnecessary runs
+5. **Schedule Optimization**: Reduced from hourly to 6-8 hour intervals
 
 ## 🎯 Usage Examples
 
@@ -115,50 +185,43 @@ key: ${{ runner.os }}-deps-${{ github.run_id }}
 
 #### Run Full CI Pipeline
 ```bash
-# Via GitHub UI: Actions → CI Pipeline → Run workflow
-# Choose scope: quick, full, integration
+# Via GitHub UI: Actions → Intelligent CI Orchestrator → Run workflow
+# Choose test scope: quick, standard, comprehensive
 ```
 
-#### Create Release
+#### Force Issue Analysis
 ```bash
-# Via GitHub UI: Actions → Release Automation → Run workflow  
-# Specify version: 1.2.3
-# Choose pre-release: true/false
+# Via GitHub UI: Actions → Automated Copilot Agent → Run workflow
+# Check "Force new analysis and issue creation"
+```
+
+#### Create Copilot PR for Issue
+```bash
+# Via GitHub UI: Actions → Copilot PR Automation → Run workflow
+# Optionally specify issue number
+# Check "Force PR creation"
 ```
 
 ### Automatic Triggers
 
-#### Push to Main
-- Triggers full CI pipeline
-- Creates release if successful (on main branch)
-- Deploys reports to GitHub Pages
+#### Push to Main/Develop
+- Triggers Intelligent CI Orchestrator
+- On failure, triggers Automated Copilot Agent
+- Creates issues for detected problems
 
 #### Pull Request
 - Runs PR validation immediately
-- Links to comprehensive CI pipeline  
-- Provides automated feedback and recommendations
-
-#### Tag Push  
-- Triggers release automation
-- Creates GitHub release with artifacts
-- Updates documentation and tags
+- Triggers AI Agent Coordinator for review
+- Links to comprehensive CI pipeline
 
 ## 📊 Monitoring and Debugging
 
 ### Workflow Status
 
 Check workflow status at:
-- **CI Pipeline**: `https://github.com/wizzense/AitherZero/actions/workflows/ci-pipeline.yml`
-- **PR Validation**: `https://github.com/wizzense/AitherZero/actions/workflows/pr-validation.yml`  
-- **Release**: `https://github.com/wizzense/AitherZero/actions/workflows/release-automation.yml`
-
-### Artifacts and Reports
-
-Generated artifacts:
-- **Test Results**: `test-results-{os}-{scope}`
-- **Coverage Reports**: `comprehensive-reports`  
-- **Release Packages**: `aitherzero-package`
-- **Build Info**: `build-info.json`
+- **CI Pipeline**: `https://github.com/wizzense/AitherZero/actions/workflows/intelligent-ci-orchestrator.yml`
+- **Copilot Agent**: `https://github.com/wizzense/AitherZero/actions/workflows/automated-copilot-agent.yml`
+- **AI Coordinator**: `https://github.com/wizzense/AitherZero/actions/workflows/ai-agent-coordinator.yml`
 
 ### Debugging Common Issues
 
@@ -166,95 +229,25 @@ Generated artifacts:
 ```bash
 # Local debugging
 ./az.ps1 0407                    # Run syntax validation
-Get-ChildItem -Recurse -Include "*.ps1" | Test-PowerShellSyntax
-```
-
-#### Module Loading Issues  
-```bash
-# Local testing
-Import-Module ./AitherZero.psd1 -Force -Verbose
 ```
 
 #### Test Failures
-```bash  
+```bash
 # Run tests locally
 ./az.ps1 0402                    # Unit tests
-./az.ps1 0409                    # All tests
 ./az.ps1 0404                    # Code analysis
 ```
 
-## 🔄 Migration from Legacy Workflows
-
-### Removed Workflows
-
-The following legacy workflows have been consolidated:
-
-| Old Workflow | Replaced By | Reason |
-|--------------|-------------|---------|
-| `ci.yml` | `ci-pipeline.yml` | Feature consolidation |
-| `comprehensive-ci.yml` | `ci-pipeline.yml` | Duplication removal |
-| `pr-automation.yml` | `pr-validation.yml` | Simplified PR handling |
-| `quick-validation.yml` | `ci-pipeline.yml` (quick job) | Integration |
-| `release.yml` | `release-automation.yml` | Enhanced features |
-| `manual-release.yml` | `release-automation.yml` | Consolidation |
-
-### Migration Benefits
-
-- ✅ **50% fewer workflow files** (6 → 3)
-- ✅ **Faster execution** through caching and optimization
-- ✅ **Better resource usage** with intelligent job dependencies  
-- ✅ **Consistent patterns** across all workflows
-- ✅ **Enhanced features** like automated PR analysis
-- ✅ **Improved maintainability** with cleaner structure
-
-### Breaking Changes
-
-⚠️ **None** - All existing functionality is preserved in the new workflows.
-
-## 🛠️ Customization
-
-### Adding New Jobs
-
-To add a job to the CI pipeline:
-
-1. Add the job definition to `ci-pipeline.yml`
-2. Set appropriate dependencies with `needs:`
-3. Use consistent naming and timeout patterns
-4. Include artifact uploads for debugging
-
-### Modifying Triggers
-
-Common trigger modifications:
-
-```yaml
-# Add branch pattern
-on:
-  push:
-    branches: [main, develop, 'feature/**', 'hotfix/**']
-
-# Add path filtering  
-on:
-  push:
-    paths:
-      - '**.ps1'
-      - '**.psm1'  
-      - '**.psd1'
-```
-
-### Environment Customization
-
-Workflows can be customized via environment variables in repository settings:
-
-- `AITHERZERO_TEST_TIMEOUT`: Override test timeouts
-- `AITHERZERO_ANALYSIS_TIMEOUT`: Override analysis timeouts  
-- `AITHERZERO_SKIP_TESTS`: Skip specific test categories
-
----
+#### Issue Creation Not Working
+1. Check if CI is completing successfully (no issues created for passing builds)
+2. Verify workflow permissions (needs write access to issues)
+3. Check workflow run logs for error messages
+4. Manually trigger with `workflow_dispatch`
 
 ## 📚 Resources
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [AitherZero Documentation](../README.md)
+- [AitherZero Documentation](../../README.md)
 - [PowerShell CI/CD Best Practices](https://docs.microsoft.com/en-us/powershell/scripting/dev-cross-plat/ci-cd)
 
 For questions or issues with the CI/CD workflows, please [create an issue](../../issues/new) with the `ci/cd` label.
