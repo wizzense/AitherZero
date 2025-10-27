@@ -79,18 +79,22 @@ jobs:
             const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
             
             // Sanitize issue title to prevent markdown and command injection
-            // Escape markdown special characters and shell metacharacters
+            // Use HTML entities for consistency and maximum safety
             const sanitizedTitle = issue.title
-              .replace(/\\/g, '\\\\')   // Escape backslashes first
-              .replace(/[`]/g, '\\`')   // Escape backticks
-              .replace(/"/g, '\\"')     // Escape quotes
-              .replace(/\$/g, '\\$')    // Escape dollar signs
-              .replace(/\[/g, '\\[')    // Escape square brackets
-              .replace(/\]/g, '\\]')    // Escape square brackets
-              .replace(/\(/g, '\\(')    // Escape parentheses
-              .replace(/\)/g, '\\)')    // Escape parentheses
+              .replace(/&/g, '&amp;')   // Escape ampersands first
               .replace(/</g, '&lt;')    // Escape less than
-              .replace(/>/g, '&gt;');   // Escape greater than
+              .replace(/>/g, '&gt;')    // Escape greater than
+              .replace(/"/g, '&quot;')  // Escape quotes
+              .replace(/'/g, '&#39;')   // Escape single quotes
+              .replace(/`/g, '&#96;')   // Escape backticks
+              .replace(/\[/g, '&#91;')  // Escape square brackets
+              .replace(/\]/g, '&#93;')  // Escape square brackets
+              .replace(/\(/g, '&#40;')  // Escape parentheses
+              .replace(/\)/g, '&#41;')  // Escape parentheses
+              .replace(/\*/g, '&#42;')  // Escape asterisks
+              .replace(/_/g, '&#95;')   // Escape underscores
+              .replace(/#/g, '&#35;')   // Escape hash/pound
+              .replace(/\$/g, '&#36;'); // Escape dollar signs
             
             // Build the comment body piece by piece to avoid YAML parsing issues
             let promptComment = '## 🤖 Copilot Task Assignment\n\n';
