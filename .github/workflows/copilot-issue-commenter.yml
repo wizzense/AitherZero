@@ -1,0 +1,260 @@
+---
+name: 🤖 Copilot Issue Commenter - Auto-prompt on New Issues
+
+on:
+  # Trigger after automated-copilot-agent completes
+  # This avoids the GITHUB_TOKEN recursion prevention issue
+  workflow_run:
+    workflows: ["🤖 Automated Copilot Agent - Iterative Issue Resolution"]
+    types: [completed]
+  
+  # Also support manual trigger for existing issues
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to comment on'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  comment-with-copilot-prompt:
+    name: 💬 Add Copilot Prompt to New Issues
+    runs-on: ubuntu-latest
+    # Run if workflow completed successfully or if manually triggered
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    
+    steps:
+      - name: 📝 Post Copilot Prompt Comments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let issuesToComment = [];
+            
+            // Get issue number from manual trigger or find recent issues
+            if (context.eventName === 'workflow_dispatch') {
+              const issueNumber = parseInt('${{ github.event.inputs.issue_number }}');
+              console.log(`Manual trigger for issue #${issueNumber}`);
+              
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+                issuesToComment.push(issue);
+              } catch (error) {
+                console.error(`Failed to fetch issue #${issueNumber}: ${error.message}`);
+                return;
+              }
+            } else {
+              // workflow_run event - find recently created issues with auto-created label
+              console.log('Triggered by workflow_run, finding recent auto-created issues');
+              
+              // Get issues created in the last hour with auto-created label
+              const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+              
+              const { data: recentIssues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'auto-created',
+                sort: 'created',
+                direction: 'desc',
+                per_page: 20
+              });
+              
+              // Filter to issues created recently (within last hour)
+              issuesToComment = recentIssues.filter(issue => {
+                const createdAt = new Date(issue.created_at);
+                return createdAt > new Date(oneHourAgo);
+              });
+              
+              console.log(`Found ${issuesToComment.length} recent auto-created issues to comment on`);
+            }
+            
+            // Process each issue
+            for (const issue of issuesToComment) {
+              console.log(`Processing issue #${issue.number}: ${issue.title}`);
+              
+              // Check if this is an auto-created issue with copilot-task label
+              const isAutoCreated = issue.labels.some(l => l.name === 'auto-created');
+              const isCopilotTask = issue.labels.some(l => l.name === 'copilot-task');
+              const hasWizzenseAssigned = issue.assignees?.some(a => a.login === 'wizzense');
+              
+              // Only comment if it's an auto-created copilot task or assigned to wizzense
+              if (!isAutoCreated && !hasWizzenseAssigned) {
+                console.log(`Skipping issue #${issue.number}: Not auto-created or assigned to wizzense`);
+                continue;
+              }
+              
+              // Check if we already commented on this issue
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number
+              });
+              
+              const alreadyCommented = comments.some(c => 
+                c.user.login === 'github-actions[bot]' && 
+                c.body.includes('🤖 Copilot Task Assignment')
+              );
+              
+              if (alreadyCommented) {
+                console.log(`Skipping issue #${issue.number}: Already commented`);
+                continue;
+              }
+              
+              // Determine priority from labels in a single pass
+              const labelToPriority = {
+                'priority-critical': 'critical',
+                'priority-high': 'high',
+                'priority-medium': 'medium',
+                'priority-low': 'low'
+              };
+              let priority = 'medium';
+              for (const label of issue.labels) {
+                if (labelToPriority[label.name]) {
+                  priority = labelToPriority[label.name];
+                  if (priority === 'critical') break; // Stop at highest priority
+                }
+              }
+              
+              // Build priority guideline
+              let priorityGuideline = '';
+              if (priority === 'critical') {
+                priorityGuideline = '🚨 **CRITICAL**: Address immediately - blocking functionality or security vulnerability';
+              } else if (priority === 'high') {
+                priorityGuideline = '⚠️ **HIGH**: Address within 24-48 hours - important functionality affected';
+              } else if (priority === 'low') {
+                priorityGuideline = '📌 **LOW**: Address when capacity allows - minor improvement or non-blocking issue';
+              } else {
+                priorityGuideline = '📋 **MEDIUM**: Address within normal development cycle';
+              }
+              
+              const assignedTo = hasWizzenseAssigned ? 'wizzense' : 'copilot';
+              
+              // Sanitize issue title using efficient mapping approach
+              const htmlEntityMap = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '`': '&#96;',
+                '[': '&#91;',
+                ']': '&#93;',
+                '(': '&#40;',
+                ')': '&#41;',
+                '*': '&#42;',
+                '_': '&#95;',
+                '#': '&#35;',
+                '$': '&#36;'
+              };
+              const sanitizedTitle = issue.title.replace(
+                /[&<>"'`\[\]\(\)\*_#\$]/g,
+                (char) => htmlEntityMap[char] || char
+              );
+              
+              // Build the comment body using array join for better performance
+              const promptCommentLines = [
+              '## 🤖 Copilot Task Assignment\n',
+              '**Issue:** ' + sanitizedTitle,
+              '**Priority:** ' + priority.toUpperCase(),
+              '**Assigned to:** @' + assignedTo + '\n',
+              '### 📋 Task Instructions for GitHub Copilot\n',
+              'This issue has been automatically created and requires your attention. ',
+              'Please follow the resolution process below:\n',
+              '#### 1️⃣ Analysis Phase',
+              '- Review the issue description and understand the requirements',
+              '- Identify the root cause and scope of work needed',
+              '- Check for any related issues or dependencies',
+              '- Validate the priority level and adjust if necessary\n',
+              '#### 2️⃣ Implementation Phase',
+              '- Create a focused branch from the main branch',
+              '- Make minimal, surgical changes to address the issue',
+              '- Follow existing code patterns and conventions',
+              '- Ensure all changes are properly tested\n',
+              '#### 3️⃣ Validation Phase',
+              '- Run all relevant linters and checks:',
+              '  - `./automation-scripts/0404_Run-PSScriptAnalyzer.ps1` - PSScriptAnalyzer',
+              '  - `./automation-scripts/0407_Validate-Syntax.ps1` - Syntax validation',
+              '  - `./automation-scripts/0402_Run-UnitTests.ps1` - Unit tests',
+              '- Verify no new issues are introduced',
+              '- Test the changes in a local environment if applicable\n',
+              '#### 4️⃣ PR Creation Phase',
+              '- Create a pull request with a clear title and description',
+              '- Link this issue in the PR description using "Closes #' + issue.number + '"',
+              '- Request review from appropriate team members',
+              '- Ensure CI/CD pipelines pass',
+              '- **Automated Quality Checks:** PR will trigger `Intelligent CI Orchestrator`',
+              '  - Core validation (PSScriptAnalyzer, syntax)',
+              '  - Security validation (pattern detection, best practices)',
+              '  - Comprehensive tests (unit, integration, cross-platform)\n',
+              '#### 5️⃣ Completion Phase',
+              '- Address any review feedback',
+              '- Merge the PR once approved',
+              '- Verify the issue is automatically closed',
+              '- Add a summary comment with what was changed\n',
+              '### 🚀 Quick Commands\n',
+              '```powershell',
+              '# Initialize environment',
+              './Initialize-AitherEnvironment.ps1\n',
+              '# Run analysis tools',
+              './automation-scripts/0404_Run-PSScriptAnalyzer.ps1  # PSScriptAnalyzer',
+              './automation-scripts/0402_Run-UnitTests.ps1  # Unit tests',
+              './automation-scripts/0407_Validate-Syntax.ps1  # Syntax validation\n',
+              '# Create branch and PR (if using automation scripts)',
+              './automation-scripts/0701_Create-FeatureBranch.ps1 -Type feature -Name "fix-issue-' + issue.number + '"',
+              './automation-scripts/0702_Create-Commit.ps1 -Type fix -Message "address issue #' + issue.number + '"',
+              '# ./automation-scripts/0703_Create-PullRequest.ps1 -Title "Fix: [manually-enter-title-here]"',
+              '```\n',
+              '### ⚡ Priority Guidelines\n',
+              priorityGuideline + '\n',
+              '### ✅ Success Criteria\n',
+              'The issue will be considered resolved when:',
+              '- [ ] Root cause is identified and addressed',
+              '- [ ] All code changes are minimal and focused',
+              '- [ ] All tests pass (no new failures introduced)',
+              '- [ ] PSScriptAnalyzer shows no new critical issues',
+              '- [ ] PR is created and linked to this issue',
+              '- [ ] PR is reviewed and approved',
+              '- [ ] Automated quality checks pass (Intelligent CI Orchestrator)',
+              '  - [ ] Core validation passes',
+              '  - [ ] Security validation passes',
+              '  - [ ] Comprehensive tests pass',
+              '- [ ] Changes are merged to main branch',
+              '- [ ] This issue is closed with resolution summary\n',
+              '---',
+              '*This is an automated comment to help guide the resolution process. ',
+              'Reply with questions or updates as you work through the issue.*'
+              ];
+              const promptComment = promptCommentLines.join('\n');
+
+              // Post the comment
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: promptComment
+                });
+                
+                console.log(`✅ Posted Copilot prompt comment on issue #${issue.number}`);
+              } catch (error) {
+                console.error(`Failed to comment on issue #${issue.number}: ${error.message}`);
+              }
+            }
+            
+            console.log(`Completed processing ${issuesToComment.length} issue(s)`);
+            
+      - name: 📊 Log Activity
+        run: |
+          echo "::notice::Copilot issue commenter workflow completed"
+          echo "Triggered by: ${{ github.event_name }}"
