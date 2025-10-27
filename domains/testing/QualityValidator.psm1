@@ -412,8 +412,14 @@ function Test-TestCoverage {
         } else {
             # Note: Actually running tests here could be expensive
             # We'll just validate the test file structure is valid PowerShell
-            $testAst = [System.Management.Automation.Language.Parser]::ParseFile($testFilePath, [ref]$null, [ref]$null)
-            if ($testAst) {
+            $parseErrors = $null
+            $testAst = [System.Management.Automation.Language.Parser]::ParseFile($testFilePath, [ref]$null, [ref]$parseErrors)
+            if ($parseErrors -and $parseErrors.Count -gt 0) {
+                $result.Details.TestFileSyntaxValid = $false
+                $result.Findings += "Test file has syntax errors:`n" + ($parseErrors | ForEach-Object { $_.Message } | Out-String)
+                $result.Score -= 40
+                $result.Status = 'Failed'
+            } elseif ($testAst) {
                 $result.Details.TestFileSyntaxValid = $true
             }
         }
