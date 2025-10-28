@@ -1,6 +1,6 @@
 # tools
 
-**Navigation**: [🏠 Root](../index.md) → [tools](index.md) → [tools](index.md) → **tools**
+**Navigation**: [🏠 Root](../index.md) → **tools**
 
 ⬆️ **Parent**: [Root](../index.md)
 
