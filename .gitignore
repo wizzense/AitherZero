@@ -52,6 +52,11 @@ tests/reports/*.json
 .DS_Store
 Thumbs.db
 
+# Environment files (Docker and local configs)
+.env
+.env.local
+.env.*.local
+
 # Build artifacts
 dist/
 build/
@@ -81,3 +86,10 @@ reports/quality/
 
 # Linting tools (downloaded binaries)
 actionlint
+
+# Jekyll build artifacts
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+Gemfile.lock

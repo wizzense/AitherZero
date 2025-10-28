@@ -1,0 +1,151 @@
+---
+name: 📊 Publish Test Reports to GitHub Pages
+
+# Publish comprehensive test reports and dashboards to GitHub Pages
+on:
+  workflow_run:
+    workflows: ["Intelligent CI Orchestrator", "Quality Validation"]
+    types: [completed]
+  push:
+    branches: [main, develop]
+    paths:
+      - 'reports/**'
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Force publish even if no changes detected'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: "pages-publish"
+  cancel-in-progress: false
+
+jobs:
+  collect-reports:
+    name: 📥 Collect Test Reports and Artifacts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # Always checkout from the base repository, not from PR/fork
+          # This is safe because we only publish reports from trusted CI runs
+          ref: ${{ github.event.repository.default_branch }}
+          
+      - name: 📊 Download Workflow Artifacts
+        if: github.event.workflow_run
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_id: ${{ github.event.workflow_run.id }}
+          path: ./downloaded-artifacts
+          workflow: ${{ github.event.workflow_run.workflow_id }}
+        continue-on-error: true
+        
+      - name: 📦 Organize Reports
+        shell: pwsh
+        run: |
+          Write-Host "📦 Organizing test reports..." -ForegroundColor Cyan
+          
+          # Create reports directory if it doesn't exist
+          $reportsDir = "./reports"
+          if (-not (Test-Path $reportsDir)) {
+            New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+          }
+          
+          # Copy downloaded artifacts to reports directory
+          if (Test-Path "./downloaded-artifacts") {
+            Write-Host "Copying downloaded artifacts..." -ForegroundColor Yellow
+            Get-ChildItem "./downloaded-artifacts" -Recurse -File | ForEach-Object {
+              $destPath = Join-Path $reportsDir $_.Name
+              Copy-Item $_.FullName -Destination $destPath -Force
+              Write-Host "  Copied: $($_.Name)" -ForegroundColor Green
+            }
+          }
+          
+          # Generate index of reports
+          $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending
+          
+          $indexHeader = @"
+# Test Reports Index
+
+Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+
+## Available Reports
+
+          "@
+          
+          $indexContent = $indexHeader
+          
+          foreach ($file in $reportFiles) {
+            $relativePath = "reports/$($file.Name)"
+            $indexContent += "- [$($file.Name)]($relativePath) - $(Get-Date $file.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss')`n"
+          }
+          
+          $indexContent | Out-File -FilePath "./reports-index.md" -Encoding UTF8
+          
+          Write-Host "✅ Reports organized successfully" -ForegroundColor Green
+          Write-Host "Total reports: $($reportFiles.Count)" -ForegroundColor Cyan
+          
+      - name: 📤 Upload Combined Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-reports
+          path: |
+            reports/
+            reports-index.md
+            index.md
+            _config.yml
+          retention-days: 30
+
+  publish-to-pages:
+    name: 🚀 Publish to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: collect-reports
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: 📊 Download Combined Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: combined-reports
+          path: ./
+          
+      - name: 🔧 Setup Pages
+        uses: actions/configure-pages@v5
+        
+      - name: 🏗️ Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+          
+      - name: 📤 Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+          
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        
+      - name: 📋 Report Deployment
+        shell: pwsh
+        run: |
+          Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
+          Write-Host "🔗 URL: ${{ steps.deployment.outputs.page_url }}" -ForegroundColor Cyan
+          Write-Host "" 
+          Write-Host "📊 Available Reports:" -ForegroundColor Yellow
+          Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}reports/dashboard.html"
+          Write-Host "  - Reports Index: ${{ steps.deployment.outputs.page_url }}reports-index.html"
+          Write-Host "  - All Reports: ${{ steps.deployment.outputs.page_url }}reports/"
