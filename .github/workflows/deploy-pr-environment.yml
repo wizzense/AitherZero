@@ -117,8 +117,8 @@ jobs:
           Write-Host "🚀 Running Docker configuration validation..." -ForegroundColor Cyan
           
           try {
-            # Run the quick validation script
-            ./automation-scripts/0853_Quick-Docker-Validation.ps1
+            # Run the quick validation script with explicit -File parameter
+            pwsh -File ./automation-scripts/0853_Quick-Docker-Validation.ps1
             
             if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ Validation passed" -ForegroundColor Green
@@ -141,6 +141,7 @@ jobs:
           name: docker-validation-report-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
           path: reports/pr-docker-quick-validation.json
           retention-days: 7
+          if-no-files-found: warn
 
   # Build and push container image
   build-container:

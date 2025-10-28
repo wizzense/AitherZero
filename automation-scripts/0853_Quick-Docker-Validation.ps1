@@ -441,5 +441,25 @@ try {
         Write-CustomLog -Message "Validation failed: $_" -Level 'Error'
     }
     
+    # Save error report
+    $ValidationResults.Error = @{
+        Message = $_.Exception.Message
+        StackTrace = $_.ScriptStackTrace
+        Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    }
+    
+    $reportPath = Join-Path $ProjectRoot "reports/pr-docker-quick-validation.json"
+    $reportDir = Split-Path -Parent $reportPath
+    if (-not (Test-Path $reportDir)) {
+        New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
+    }
+    
+    try {
+        $ValidationResults | ConvertTo-Json -Depth 5 | Out-File -FilePath $reportPath -Force
+        Write-Host "📄 Error report saved: $reportPath" -ForegroundColor Gray
+    } catch {
+        Write-Host "⚠️ Could not save error report: $_" -ForegroundColor Yellow
+    }
+    
     exit 1
 }
