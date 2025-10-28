@@ -189,11 +189,11 @@ Write-Host ""
 Write-ValidationLog -Message "Checking workflow files..." -Level Info
 
 $requiredWorkflows = @{
-    'intelligent-ci-orchestrator.yml' = 'Main CI/CD workflow'
+    'quality-validation.yml' = 'Quality validation workflow'
+    'pr-validation.yml' = 'PR validation workflow'
     'auto-create-issues-from-failures.yml' = 'Issue creation from test failures'
-    'automated-copilot-agent.yml' = 'Copilot agent automation'
-    'copilot-pr-automation.yml' = 'Copilot PR creation'
-    'copilot-issue-commenter.yml' = 'Issue instruction commenter'
+    'validate-manifests.yml' = 'Manifest validation'
+    'validate-config.yml' = 'Config validation'
 }
 
 foreach ($workflow in $requiredWorkflows.Keys) {

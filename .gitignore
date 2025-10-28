@@ -98,3 +98,6 @@ Gemfile.lock
 .aitherzero-index-cache.json
 .aitherzero-index-report.json
 actionlint*
+# Analysis results
+tests/analysis/*.csv
+tests/analysis/*.json
