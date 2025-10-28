@@ -14,6 +14,7 @@ BeforeAll {
     # Define stub function so Mock can override it
     function New-BaselineTestContent {
         param([string]$ModulePath, [string]$ModuleName)
+        throw "This stub should be mocked. If you see this error, the mock is not working correctly."
     }
 
     # Mock functions
