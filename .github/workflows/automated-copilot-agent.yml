@@ -13,15 +13,16 @@ on:
         type: number
         default: 3
 
-  # Trigger after quality checks complete
-  workflow_run:
-    workflows: ["Intelligent CI Orchestrator"]
-    types: [completed]
-    branches: [main, develop]
+  # Trigger after quality checks complete - DISABLED to prevent duplicate issues
+  # workflow_run:
+  #   workflows: ["Intelligent CI Orchestrator"]
+  #   types: [completed]
+  #   branches: [main, develop]
 
-  schedule:
-    # Run every hour during business hours (9 AM - 5 PM UTC, Monday-Friday)
-    - cron: '0 9-17 * * 1-5'
+  # DISABLED: Hourly schedule was creating too many duplicate issues
+  # schedule:
+  #   # Run every hour during business hours (9 AM - 5 PM UTC, Monday-Friday)
+  #   - cron: '0 9-17 * * 1-5'
 
   issues:
     types: [opened, labeled]
