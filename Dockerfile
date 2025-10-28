@@ -36,9 +36,10 @@ ENV AITHERZERO_ROOT=/app \
 
 # Install PowerShell modules
 RUN pwsh -Command " \
+    Register-PSRepository -Default -ErrorAction SilentlyContinue; \
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; \
-    Install-Module -Name Pester -MinimumVersion 5.0 -Force -Scope CurrentUser; \
-    Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser; \
+    Install-Module -Name Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -ErrorAction SilentlyContinue; \
+    Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction SilentlyContinue; \
     "
 
 # Create required directories
