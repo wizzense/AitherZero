@@ -1,6 +1,6 @@
 # .claude
 
-**Navigation**: [🏠 Root](../index.md) → [.claude](index.md) → [.claude](index.md) → **.claude**
+**Navigation**: [🏠 Root](../index.md) → **.claude**
 
 ⬆️ **Parent**: [Root](../index.md)
 
