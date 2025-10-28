@@ -231,7 +231,7 @@ function Remove-AzureEnvironment {
         
         # Fallback: Direct resource group deletion
         $resourceGroupName = "aitherzero-pr-$PRNumber-rg-*"
-        $resourceGroups = az group list --query "[?starts_with(name, 'aitherzero-pr-$PRNumber')].name" -o tsv 2>$null
+        $resourceGroups = az group list --query "[?starts_with(name, `"aitherzero-pr-$PRNumber`")].name" -o tsv 2>$null
         
         if ($resourceGroups) {
             foreach ($rg in $resourceGroups) {

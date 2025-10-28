@@ -86,7 +86,6 @@ locals {
     BranchName    = var.branch_name
     CommitSHA     = var.commit_sha
     ManagedBy     = "Terraform"
-    CreatedDate   = timestamp()
     TTL           = "${var.ttl_hours}h"
     AutoShutdown  = var.auto_shutdown_time
   }
@@ -139,8 +138,9 @@ resource "azurerm_network_security_group" "pr_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "80"
-    source_address_prefix      = "*"
+    source_address_prefix      = "*"  # TODO: Restrict to GitHub Actions IP ranges or specific IPs
     destination_address_prefix = "*"
+    description                = "Allow HTTP - Consider restricting source IPs for production"
   }
   
   security_rule {
@@ -151,8 +151,9 @@ resource "azurerm_network_security_group" "pr_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "443"
-    source_address_prefix      = "*"
+    source_address_prefix      = "*"  # TODO: Restrict to GitHub Actions IP ranges or specific IPs
     destination_address_prefix = "*"
+    description                = "Allow HTTPS - Consider restricting source IPs for production"
   }
   
   security_rule {
@@ -163,6 +164,9 @@ resource "azurerm_network_security_group" "pr_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
+    source_address_prefix      = "*"  # TODO: Restrict to specific management IPs only
+    destination_address_prefix = "*"
+    description                = "Allow SSH - Restrict to specific IPs for production"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }

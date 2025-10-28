@@ -139,8 +139,8 @@ services:
       - BRANCH_NAME=$BranchName
       - COMMIT_SHA=$CommitSHA
     ports:
-      - "808${PRNumber}:8080"
-      - "844${PRNumber}:8443"
+      - "808$($PRNumber % 10):8080"
+      - "844$($PRNumber % 10):8443"
     volumes:
       - aitherzero-pr-${PRNumber}-logs:/app/logs
       - aitherzero-pr-${PRNumber}-reports:/app/reports
@@ -192,8 +192,8 @@ volumes:
         EnvironmentName = $EnvironmentName
         ContainerName = $ContainerName
         IPAddress = $ipAddress
-        Port = "808${PRNumber}"
-        URL = "http://localhost:808${PRNumber}"
+        Port = "808$($PRNumber % 10)"
+        URL = "http://localhost:808$($PRNumber % 10)"
         ComposeFile = $composeFile
     }
 }

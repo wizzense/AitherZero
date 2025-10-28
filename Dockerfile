@@ -3,9 +3,6 @@
 
 FROM mcr.microsoft.com/powershell:7.4-ubuntu-22.04 AS base
 
-# Set working directory
-WORKDIR /app
-
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
@@ -15,6 +12,9 @@ RUN apt-get update && apt-get install -y \
     openssh-client \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
 
 # Create non-root user for security
 RUN useradd -m -s /bin/bash aitherzero && \

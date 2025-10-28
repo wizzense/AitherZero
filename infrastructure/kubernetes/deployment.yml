@@ -30,8 +30,13 @@ metadata:
   name: aitherzero-secrets
   namespace: aitherzero-preview
 type: Opaque
-stringData:
-  postgres-password: "changeme"  # Replace with actual secret in production
+# stringData:
+#   postgres-password: ""  # DO NOT hardcode secrets in manifests
+# 
+# Create this secret securely using kubectl or your CI/CD pipeline:
+# kubectl create secret generic aitherzero-secrets \
+#   --namespace=aitherzero-preview \
+#   --from-literal=postgres-password='<your-strong-random-password>'
 ---
 apiVersion: apps/v1
 kind: Deployment

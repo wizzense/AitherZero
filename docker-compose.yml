@@ -32,9 +32,11 @@ services:
       - aitherzero-reports:/app/reports
       - aitherzero-results:/app/tests/results
       
-      # Git credentials (if needed for operations)
-      - ~/.gitconfig:/home/aitherzero/.gitconfig:ro
-      - ~/.ssh:/home/aitherzero/.ssh:ro
+      # Git credentials (OPTIONAL: for local development only)
+      # SECURITY WARNING: Do not mount SSH keys or credentials in PR environments
+      # - ~/.gitconfig:/home/aitherzero/.gitconfig:ro
+      # - ~/.ssh:/home/aitherzero/.ssh:ro
+      # For CI/CD and PR environments, use deployment keys or token-based authentication instead.
     
     networks:
       - aitherzero-network

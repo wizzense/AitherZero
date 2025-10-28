@@ -187,7 +187,7 @@ jobs:
                 - COMMIT_SHA=${COMMIT_SHA}
                 - DEPLOYMENT_ENVIRONMENT=preview
               ports:
-                - "808${PR_NUMBER: -1}:8080"
+                - "808$((${PR_NUMBER} % 10)):8080"
               restart: unless-stopped
           EOF
           
