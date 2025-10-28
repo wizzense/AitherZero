@@ -423,6 +423,16 @@ jobs:
             #### Option B: Manual local testing (start container yourself)
             If you want to test locally, follow ALL steps in order:
             
+            **🚀 QuickStart (Automated - pull + run + verify):**
+            \`\`\`bash
+            # Clone AitherZero repo and run the container manager
+            git clone https://github.com/wizzense/AitherZero.git
+            cd AitherZero
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber ${prNumber}
+            \`\`\`
+            
+            **📋 Manual Steps (if you prefer step-by-step):**
+            
             **Step 1: Pull the image**
             \`\`\`bash
             docker pull ${{ needs.build-container.outputs.image-tag }}
@@ -449,6 +459,18 @@ jobs:
             \`\`\`bash
             docker stop aitherzero-pr-${prNumber}
             docker rm aitherzero-pr-${prNumber}
+            \`\`\`
+            
+            **💡 Advanced: Use the container manager for all operations**
+            \`\`\`bash
+            # After cloning the repo, use the integrated container manager:
+            cd AitherZero
+            
+            # Quick commands
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber ${prNumber}
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber ${prNumber} -Follow
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "./az.ps1 0402"
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber ${prNumber}
             \`\`\`
 
             ### 🛠️ Management Commands
