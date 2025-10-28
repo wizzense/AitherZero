@@ -293,11 +293,14 @@ jobs:
             5. **Submit** a PR with the fixes
             
             ### Workflow Context
-            ${analysis.WorkflowRun ? `
+            ${analysis.WorkflowRun ? (() => {
+              const workflowRunUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${analysis.WorkflowRun.Id}`;
+              return `
             - **Workflow:** ${analysis.WorkflowRun.Workflow}
-            - **Run ID:** [${analysis.WorkflowRun.Id}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${analysis.WorkflowRun.Id})
+            - **Run ID:** [${analysis.WorkflowRun.Id}](${workflowRunUrl})
             - **Conclusion:** ${analysis.WorkflowRun.Conclusion}
-            ` : '- **Triggered by:** Scheduled analysis'}
+            `;
+            })() : '- **Triggered by:** Scheduled analysis'}
             
             ---
             *This issue was automatically created from test failure analysis*`;
