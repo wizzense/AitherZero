@@ -88,7 +88,7 @@ If you need to deploy locally or test the deployment process:
     -DeploymentTarget Docker
 
 # Cleanup a PR environment
-./automation-scripts/0811_Cleanup-PREnvironment.ps1 `
+./automation-scripts/0851_Cleanup-PREnvironment.ps1 `
     -PRNumber 123 `
     -Target All
 ```
@@ -302,16 +302,16 @@ Environments are automatically cleaned up:
 
 ```powershell
 # Cleanup specific PR environment
-./automation-scripts/0811_Cleanup-PREnvironment.ps1 -PRNumber 123
+./automation-scripts/0851_Cleanup-PREnvironment.ps1 -PRNumber 123
 
 # Cleanup only Docker resources
-./automation-scripts/0811_Cleanup-PREnvironment.ps1 -PRNumber 123 -Target Docker
+./automation-scripts/0851_Cleanup-PREnvironment.ps1 -PRNumber 123 -Target Docker
 
 # Force cleanup without confirmation
-./automation-scripts/0811_Cleanup-PREnvironment.ps1 -PRNumber 123 -Force
+./automation-scripts/0851_Cleanup-PREnvironment.ps1 -PRNumber 123 -Force
 
 # Cleanup all targets
-./automation-scripts/0811_Cleanup-PREnvironment.ps1 -PRNumber 123 -Target All
+./automation-scripts/0851_Cleanup-PREnvironment.ps1 -PRNumber 123 -Target All
 ```
 
 ### Verify Cleanup
@@ -431,7 +431,7 @@ az container show -g <resource-group> -n <container> --query ipAddress
 
 ```bash
 # Force cleanup with script
-./automation-scripts/0811_Cleanup-PREnvironment.ps1 -PRNumber 123 -Force
+./automation-scripts/0851_Cleanup-PREnvironment.ps1 -PRNumber 123 -Force
 
 # Manual cleanup
 docker rm -f aitherzero-pr-123

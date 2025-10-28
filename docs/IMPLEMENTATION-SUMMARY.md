@@ -23,7 +23,7 @@ This implementation provides a complete, production-ready system for automated d
 | deploy-pr-environment.yml | Automatic PR deployment | ✅ Complete |
 | cleanup-pr-environment.yml | Automatic cleanup | ✅ Complete |
 | 0810_Deploy-PREnvironment.ps1 | Deployment script | ✅ Complete |
-| 0811_Cleanup-PREnvironment.ps1 | Cleanup script | ✅ Complete |
+| 0851_Cleanup-PREnvironment.ps1 | Cleanup script | ✅ Complete |
 
 ### Documentation
 
@@ -223,7 +223,7 @@ env:
    ./automation-scripts/0810_Deploy-PREnvironment.ps1 -PRNumber 999 -DeploymentTarget Docker -WhatIf
    
    # Test cleanup script
-   ./automation-scripts/0811_Cleanup-PREnvironment.ps1 -PRNumber 999 -Target Docker -WhatIf
+   ./automation-scripts/0851_Cleanup-PREnvironment.ps1 -PRNumber 999 -Target Docker -WhatIf
    ```
 
 ### Validation Checklist

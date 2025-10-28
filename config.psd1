@@ -311,6 +311,11 @@
                     Scripts = @('0820', '0821', '0822', '0831')
                     Description = 'Work context, continuation prompts, issue creation testing, and templates'
                 }
+                PRDeployment = @{
+                    DependsOn = @('Core.PowerShell7', 'Core.Git')
+                    Scripts = @('0850', '0851')
+                    Description = 'Ephemeral PR environment deployment and cleanup for automated testing'
+                }
             }
             
             # Deployment and validation
@@ -408,7 +413,7 @@
             '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 26; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 15; Category = 'Issue Management' }
+            '0800-0899' = @{ Count = 16; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 2; Category = 'Validation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }

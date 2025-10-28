@@ -38,7 +38,7 @@ kubectl exec deployment/aitherzero -n aitherzero-pr-123 -- pwsh -Command "./az.p
 # Automatic - Close/merge PR
 
 # Manual
-./automation-scripts/0811_Cleanup-PREnvironment.ps1 -PRNumber 123 -Force
+./automation-scripts/0851_Cleanup-PREnvironment.ps1 -PRNumber 123 -Force
 ```
 
 ## 📋 Workflow Triggers
@@ -128,7 +128,7 @@ variable "ttl_hours" {
 | `.github/workflows/deploy-pr-environment.yml` | Deployment workflow |
 | `.github/workflows/cleanup-pr-environment.yml` | Cleanup workflow |
 | `automation-scripts/0810_Deploy-PREnvironment.ps1` | Deployment script |
-| `automation-scripts/0811_Cleanup-PREnvironment.ps1` | Cleanup script |
+| `automation-scripts/0851_Cleanup-PREnvironment.ps1` | Cleanup script |
 | `Dockerfile` | Container definition |
 | `docker-compose.yml` | Docker Compose config |
 | `infrastructure/kubernetes/deployment.yml` | Kubernetes manifests |

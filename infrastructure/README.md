@@ -314,8 +314,8 @@ gh workflow run cleanup-pr-environment.yml \
 
 Located in `automation-scripts/`:
 
-- **0810_Deploy-PREnvironment.ps1**: Deployment automation
-- **0811_Cleanup-PREnvironment.ps1**: Cleanup automation
+- **0850_Deploy-PREnvironment.ps1**: Deployment automation
+- **0851_Cleanup-PREnvironment.ps1**: Cleanup automation
 
 ## 📈 Scaling
 

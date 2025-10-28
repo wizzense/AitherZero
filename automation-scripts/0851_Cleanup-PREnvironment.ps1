@@ -16,7 +16,7 @@
     Force cleanup without confirmation
 
 .EXAMPLE
-    .\0811_Cleanup-PREnvironment.ps1 -PRNumber 123 -Target Docker
+    .\0851_Cleanup-PREnvironment.ps1 -PRNumber 123 -Target Docker
 
 .NOTES
     Script Number: 0811

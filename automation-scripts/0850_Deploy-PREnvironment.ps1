@@ -22,7 +22,7 @@
     Force redeployment even if environment exists
 
 .EXAMPLE
-    .\0810_Deploy-PREnvironment.ps1 -PRNumber 123 -BranchName "feature/new-feature" -CommitSHA "abc123"
+    .\0850_Deploy-PREnvironment.ps1 -PRNumber 123 -BranchName "feature/new-feature" -CommitSHA "abc123"
 
 .NOTES
     Script Number: 0810
