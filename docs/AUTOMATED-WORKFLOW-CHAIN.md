@@ -15,16 +15,39 @@ graph TD
     F --> G{Test Failures<br/>Detected?}
     G -->|Yes| H[Create GitHub Issues]
     G -->|No| I[No Action]
-    H --> J[Automated Copilot Agent]
-    J --> K[Add copilot-task Label]
-    J --> L[@copilot Comment Added]
-    K --> M[Copilot PR Automation]
-    L --> N[GitHub Copilot Workspace]
-    N --> O[Copilot Creates PR]
-    M --> O
-    O --> P[Copilot Issue Commenter]
-    P --> Q[Adds Detailed Instructions]
+    H --> J[Add copilot-task Label]
+    J --> K[Add Priority Instructions]
+    K --> L{User Adds<br/>P1-P10 Label?}
+    L -->|Yes| M[Copilot PR Automation]
+    L -->|No| N[Issue Waits]
+    M --> O[After 2 Hours]
+    O --> P[Copilot Creates PR]
 ```
+
+## ⚠️ IMPORTANT: Priority Labels Required
+
+**Issues will NOT be automatically processed unless they have a priority label (P1-P10).**
+
+This gives you control over which issues to prioritize and prevents the system from automatically working on every issue.
+
+### How It Works
+
+1. **Issues Created:** System creates issues with `copilot-task` label
+2. **Instructions Added:** Comment explains priority label requirement
+3. **You Choose Priority:** Add `P1` (critical) through `P10` (backlog) label
+4. **After 2 Hours:** System picks up issues with priority labels
+5. **Auto-Processing:** Copilot creates PR to resolve the issue
+
+### Priority Labels
+
+- `P1` - Critical (4 hour SLA, work immediately)
+- `P2` - High (24 hour SLA)
+- `P3` - Medium (48 hour SLA)
+- `P4` - Normal (1 week SLA)
+- `P5` - Low (2 weeks SLA)
+- `P6-P10` - Backlog (as capacity allows)
+
+**Alternative:** Mention @copilot in a comment to manually trigger automation.
 
 ## Workflow Files
 
@@ -115,8 +138,16 @@ graph TD
 
 **Key Changes (2025-10-28):**
 - ✅ Changed from `assignee: 'copilot'` to `labels: 'copilot-task'`
+- ✅ Now requires priority labels (P1-P10) for auto-processing
+- ✅ Filters issues by priority before creating PRs
 - Now triggers on both 'assigned' and 'labeled' events
 - Scans for issues with 'copilot-task' label
+
+**Priority-Based Processing:**
+- Only processes issues with P1-P10 labels
+- Respects 2-hour minimum age (allows manual triage)
+- Limits to 5 concurrent issues for performance
+- Can be overridden with manual workflow_dispatch
 
 **Automated PR Creation:**
 - Analyzes issue labels and content
@@ -147,9 +178,25 @@ graph TD
 
 ## GitHub Copilot Integration
 
+### Priority Label Requirement (NEW)
+
+**Issues now require a priority label before automated processing:**
+
+1. **Issue Created** with `copilot-task` label
+2. **Instructions Added** explaining priority labels
+3. **You Add Priority** label (P1-P10) when ready
+4. **After 2 Hours** system picks up prioritized issues
+5. **Copilot Works** on issues with priority labels
+
+**Why Priority Labels?**
+- Gives you control over which issues to work on
+- Prevents system from automatically working on everything
+- Allows manual triage and prioritization
+- Focus resources on most important issues
+
 ### How @copilot Mentions Work
 
-GitHub Copilot Workspace is triggered by **@copilot mentions in issue comments**, not user assignments:
+GitHub Copilot Workspace is triggered by **@copilot mentions in issue comments** OR **priority labels**:
 
 1. **Issue Created:** Workflow creates issue with `copilot-task` label
 2. **Comment Added:** Separate workflow posts `@copilot [instructions]` comment

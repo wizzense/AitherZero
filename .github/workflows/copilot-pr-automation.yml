@@ -60,7 +60,11 @@ jobs:
                   issue_number: parseInt(specificIssue)
                 });
 
-                if (issue.labels.some(l => l.name === 'copilot-task') && issue.state === 'open') {
+                // Check if issue has copilot-task label AND a priority label (P1-P10)
+                const hasCopilotTask = issue.labels.some(l => l.name === 'copilot-task');
+                const hasPriorityLabel = issue.labels.some(l => /^P([1-9]|10)$/.test(l.name));
+                
+                if (hasCopilotTask && hasPriorityLabel && issue.state === 'open') {
                   issuesToProcess.push({
                     number: issue.number,
                     title: issue.title,
@@ -83,14 +87,20 @@ jobs:
                 per_page: 50
               });
 
-              // Filter for actionable issues
+              // Filter for actionable issues - only process issues with priority labels (P1-P10)
               issuesToProcess = issues
                 .filter(issue => {
                   const hasAutoLabel = issue.labels.some(l => l.name.includes('auto-created') || l.name.includes('copilot-task'));
                   const ageHours = Math.round((Date.now() - new Date(issue.created_at)) / (1000 * 60 * 60));
                   const isStale = ageHours > 2; // Issues older than 2 hours without PR
-
-                  return hasAutoLabel && (isStale || '${{ github.event.inputs.force_pr_creation }}' === 'true');
+                  
+                  // Check if issue has a priority label (P1-P10) - REQUIRED for auto-processing
+                  const hasPriorityLabel = issue.labels.some(l => /^P([1-9]|10)$/.test(l.name));
+                  
+                  // Only process if:
+                  // 1. Has priority label AND (is stale OR force flag is set)
+                  // 2. OR force flag is set (allows manual override)
+                  return hasAutoLabel && hasPriorityLabel && (isStale || '${{ github.event.inputs.force_pr_creation }}' === 'true');
                 })
                 .map(issue => ({
                   number: issue.number,

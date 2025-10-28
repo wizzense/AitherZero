@@ -311,6 +311,11 @@
                     Scripts = @('0820', '0821', '0822', '0831')
                     Description = 'Work context, continuation prompts, issue creation testing, and templates'
                 }
+                Automation = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0840')
+                    Description = 'Automated workflow validation and priority-based issue processing'
+                }
                 PRDeployment = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
                     Scripts = @('0850', '0851')
@@ -1344,5 +1349,65 @@
         # Internal modules and scripts (placeholder for future expansion)
         Modules = @{}
         Scripts = @{}
+    }
+    
+    # ===================================================================
+    # AUTOMATED ISSUE MANAGEMENT - GitHub Issue Automation
+    # ===================================================================
+    AutomatedIssueManagement = @{
+        # Issue creation settings
+        AutoCreateIssues = $true
+        CreateFromTestFailures = $true
+        CreateFromCodeQuality = $true
+        CreateFromSecurity = $true
+        
+        # Priority-based processing
+        PriorityLabels = @{
+            Enabled = $true
+            Required = $true  # Priority label REQUIRED before automated processing
+            ValidLabels = @('P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10')
+            DefaultPriority = 'P5'  # Default if not specified
+            
+            # Priority definitions
+            P1 = @{ Name = 'Critical'; SLA = '4 hours'; AutoProcess = $true }
+            P2 = @{ Name = 'High'; SLA = '24 hours'; AutoProcess = $true }
+            P3 = @{ Name = 'Medium'; SLA = '48 hours'; AutoProcess = $true }
+            P4 = @{ Name = 'Normal'; SLA = '1 week'; AutoProcess = $true }
+            P5 = @{ Name = 'Low'; SLA = '2 weeks'; AutoProcess = $true }
+            P6toP10 = @{ Name = 'Backlog'; SLA = 'As capacity allows'; AutoProcess = $true }
+        }
+        
+        # Automated processing rules
+        AutomatedProcessing = @{
+            Enabled = $true
+            RequirePriorityLabel = $true  # Must have P1-P10 label to be auto-processed
+            RequireManualApproval = $false  # Set to true to require @copilot mention
+            MinimumAgeHours = 2  # Wait 2 hours before auto-processing (allows manual triage)
+            MaxIssuesPerRun = 5  # Limit concurrent processing
+            
+            # Filters
+            RequiredLabels = @('copilot-task')  # Must have these labels
+            ExcludedLabels = @('on-hold', 'blocked', 'wontfix')  # Skip these
+        }
+        
+        # Workflow integration
+        Workflows = @{
+            IssueCreation = 'auto-create-issues-from-failures.yml'
+            CopilotAgent = 'automated-copilot-agent.yml'
+            PRAutomation = 'copilot-pr-automation.yml'
+            IssueCommenter = 'copilot-issue-commenter.yml'
+        }
+        
+        # Label management
+        Labels = @{
+            AutoCreated = 'auto-created'
+            CopilotTask = 'copilot-task'
+            TestFailure = 'test-failure'
+            CodeQuality = 'code-quality'
+            Security = 'security'
+            NeedsFix = 'needs-fix'
+            InProgress = 'in-progress'
+            NeedsReview = 'needs-review'
+        }
     }
 }

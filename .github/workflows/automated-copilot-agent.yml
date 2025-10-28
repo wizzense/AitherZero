@@ -617,13 +617,13 @@ jobs:
             console.log(`Critical issues: ${criticalIssues.length}`);
 
   trigger-copilot-resolution:
-    name: 🎯 Trigger Automated Copilot Resolution
+    name: 🎯 Add Priority Label Instructions
     needs: analyze-and-create-issues
     runs-on: ubuntu-latest
     if: needs.analyze-and-create-issues.outputs.issues_created != ''
 
     steps:
-      - name: 🚀 Initiate Copilot Agent Resolution Cycle
+      - name: 🏷️ Add Priority Label Instructions
         uses: actions/github-script@v7
         with:
           script: |
@@ -632,17 +632,42 @@ jobs:
 
             if (issuesCreated) {
               const issues = issuesCreated.split(',').filter(id => id);
-              console.log(`Triggering resolution for ${issues.length} issues`);
+              console.log(`Adding priority instructions to ${issues.length} issues`);
 
-              // Comment on each issue to trigger copilot attention
+              // Add comment explaining priority label requirement
               for (const issueId of issues) {
                 if (issueId) {
                   try {
+                    const isCritical = criticalIssues.includes(issueId);
                     await github.rest.issues.createComment({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: parseInt(issueId),
-                      body: `🤖 **Automated Resolution Triggered**\n\n@copilot This issue has been automatically created and assigned to you for resolution.\n\n**Resolution Process:**\n1. Analyze the issue details and requirements\n2. Create a focused PR with minimal changes to address the issue\n3. Ensure all tests pass and no new issues are introduced\n4. Request review and merge when ready\n5. Close this issue with a summary of changes made\n\n**Automated Validation:** This issue will be automatically validated once resolved.\n\n⚡ **Priority:** ${criticalIssues.includes(issueId) ? 'CRITICAL - Address immediately' : 'Normal - Address in development cycle'}`
+                      body: `## 📋 Issue Created - Priority Label Required
+
+This issue has been automatically created from test failures or code quality analysis.
+
+### 🏷️ To Enable Automated Resolution
+
+**Add a priority label to this issue:**
+- \`P1\` - Critical priority (work immediately)
+- \`P2\` - High priority (work within 24 hours)
+- \`P3\` - Medium priority (work within 48 hours)
+- \`P4-P10\` - Lower priorities (work as capacity allows)
+
+${isCritical ? '⚠️ **Recommended:** This issue appears to be critical. Consider adding \`P1\` or \`P2\` label.' : ''}
+
+**Or manually request assistance:**
+- Mention @copilot in a comment when ready for automated resolution
+
+### 🤖 How Automated Resolution Works
+
+Once you add a priority label:
+1. The issue will be picked up by automated workflows after 2 hours
+2. Copilot will analyze the issue and create a PR
+3. You'll be notified when the PR is ready for review
+
+**Note:** Issues without priority labels will NOT be automatically worked on. This gives you control over which issues to prioritize.`
                     });
                   } catch (error) {
                     console.log(`Failed to comment on issue ${issueId}: ${error.message}`);
@@ -650,13 +675,7 @@ jobs:
                 }
               }
 
-              // Create summary comment with coordination info
-              if (criticalIssues) {
-                const criticalIds = criticalIssues.split(',').filter(id => id);
-                if (criticalIds.length > 0) {
-                  console.log(`🚨 ${criticalIds.length} critical issues require immediate attention`);
-                }
-              }
+              console.log(`✅ Added priority instructions to ${issues.length} issue(s)`);
             }
 
   schedule-followup:
