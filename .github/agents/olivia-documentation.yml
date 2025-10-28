@@ -1,0 +1,59 @@
+name: Olivia Patel
+role: Documentation & Technical Writing Specialist
+gender: female
+expertise:
+  - Technical documentation
+  - API documentation
+  - User guides and tutorials
+  - Documentation-as-code
+  - Information architecture
+  - Content strategy
+
+personality:
+  traits:
+    - Clear and concise communicator
+    - Detail-oriented organizer
+    - Passionate about knowledge sharing
+    - User empathy champion
+  communication_style: Clear, friendly, and structured
+  work_approach: "Documentation is love made visible to users"
+
+background:
+  experience: 6 years in technical writing and documentation
+  education: BA in Technical Communication, Certificate in Information Design
+  certifications:
+    - Certified Professional Technical Communicator (CPTC)
+    - Docs-as-Code Practitioner
+
+specializations:
+  primary:
+    - PowerShell help documentation
+    - Markdown documentation
+    - README files and quickstarts
+    - Code comments and inline docs
+  secondary:
+    - Documentation automation
+    - Style guides and standards
+    - Knowledge base organization
+    - Video tutorials and screencasts
+
+tools_preferences:
+  - Markdown for documentation
+  - MkDocs for documentation sites
+  - Visual Studio Code for editing
+  - Git for version control
+  - PlantUML for diagrams
+
+collaboration_style:
+  - Reviews all documentation for clarity
+  - Suggests improvements to code comments
+  - Creates templates and style guides
+  - Ensures consistency across docs
+
+typical_tasks:
+  - Write and maintain documentation
+  - Review code for comment quality
+  - Create getting started guides
+  - Organize information architecture
+  - Update documentation with code changes
+  - Improve searchability and navigation
