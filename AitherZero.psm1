@@ -222,7 +222,7 @@ function Invoke-AitherScript {
 }
 
 # Set up aliases
-Set-Alias -Name 'az' -Value 'Invoke-AitherScript'
+Set-Alias -Name 'az' -Value 'Invoke-AitherScript' -Force
 
 # Note: We do NOT use Export-ModuleMember here. When omitted, PowerShell automatically
 # exports all functions and aliases defined in the module. The nested modules are imported
