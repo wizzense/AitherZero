@@ -399,7 +399,7 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (113 total files, 113 unique numbers - all numbers now unique)
+        # Script inventory by range (114 total files, 114 unique numbers - all numbers now unique)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 7; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
@@ -408,7 +408,7 @@
             '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 26; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 14; Category = 'Issue Management' }
+            '0800-0899' = @{ Count = 15; Category = 'Issue Management' }
             '0900-0999' = @{ Count = 2; Category = 'Validation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
