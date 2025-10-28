@@ -198,8 +198,8 @@ function Invoke-TestSuite {
         }
 
         # Get profile settings
-        $ProfileNameConfig = if ($testConfig -and $testConfig.ContainsKey('Profiles') -and $testConfig.Profiles -and $testConfig.Profiles.ContainsKey($ProfileName)) {
-            $testConfig.Profiles[$ProfileName]
+        $ProfileNameConfig = if ($testConfig -and $testConfig.ContainsKey('Profiles') -and $testConfig['Profiles'] -and $testConfig['Profiles'].ContainsKey($ProfileName)) {
+            $testConfig['Profiles'][$ProfileName]
         } else {
             @{
                 Categories = @('Unit', 'Integration')
@@ -290,7 +290,7 @@ function Invoke-TestSuite {
         Write-TestingLog -Message "Starting Pester test execution" -Data @{
             TestPath = $Path
             Categories = ($ProfileNameConfig.Categories -join ', ')
-            CoverageEnabled = $testConfig.CodeCoverage.Enabled
+            CoverageEnabled = ($testConfig['CodeCoverage'] -and $testConfig['CodeCoverage']['Enabled'])
         }
         $result = Invoke-Pester -Configuration $pesterConfig
 
@@ -309,20 +309,21 @@ function Invoke-TestSuite {
         }
 
         # Check minimum coverage
-        if ($testConfig.CodeCoverage.Enabled) {
+        if ($testConfig['CodeCoverage'] -and $testConfig['CodeCoverage']['Enabled']) {
             $coveragePercent = $result.CodeCoverage.CoveragePercent
+            $minCoveragePercent = $testConfig['CodeCoverage']['MinimumPercent'] ?? 80
             Write-TestingLog -Message "Code coverage analysis completed" -Data @{
                 CoveragePercent = $coveragePercent
-                MinimumRequired = $testConfig.CodeCoverage.MinimumPercent
-                MeetsRequirement = ($coveragePercent -ge $testConfig.CodeCoverage.MinimumPercent)
+                MinimumRequired = $minCoveragePercent
+                MeetsRequirement = ($coveragePercent -ge $minCoveragePercent)
             }
 
-            if ($coveragePercent -lt $testConfig.CodeCoverage.MinimumPercent) {
+            if ($coveragePercent -lt $minCoveragePercent) {
                 Write-TestingLog -Level Warning -Message "Code coverage below minimum threshold" -Data @{
                     Actual = $coveragePercent
-                    Required = $testConfig.CodeCoverage.MinimumPercent
+                    Required = $minCoveragePercent
                 }
-                Write-Warning "Code coverage ($($coveragePercent)%) is below minimum ($($testConfig.CodeCoverage.MinimumPercent)%)"
+                Write-Warning "Code coverage ($($coveragePercent)%) is below minimum ($($minCoveragePercent)%)"
             }
         }
 
@@ -341,9 +342,10 @@ function Invoke-TestSuite {
         Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
         Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
 
-        if ($testConfig.CodeCoverage.Enabled) {
+        if ($testConfig['CodeCoverage'] -and $testConfig['CodeCoverage']['Enabled']) {
+            $minCoveragePercent = $testConfig['CodeCoverage']['MinimumPercent'] ?? 80
             Write-Host "  Coverage: $($result.CodeCoverage.CoveragePercent)%" -ForegroundColor $(
-                if ($result.CodeCoverage.CoveragePercent -ge $testConfig.CodeCoverage.MinimumPercent) { 'Green' } else { 'Yellow' }
+                if ($result.CodeCoverage.CoveragePercent -ge $minCoveragePercent) { 'Green' } else { 'Yellow' }
             )
     }
 
@@ -394,9 +396,9 @@ function Invoke-ScriptAnalysis {
     )
 
     $testConfig = Get-TestingConfiguration
-    $analysisConfig = $testConfig.PSScriptAnalyzer
+    $analysisConfig = $testConfig['PSScriptAnalyzer']
 
-    if (-not $analysisConfig.Enabled) {
+    if (-not ($analysisConfig -and $analysisConfig['Enabled'])) {
         Write-Warning "PSScriptAnalyzer is disabled in configuration"
         return
     }
@@ -412,12 +414,12 @@ function Invoke-ScriptAnalysis {
     $analyzerParams = @{
         Path = $Path
         Recurse = $Recurse
-        ExcludeRule = $analysisConfig.Rules.ExcludeRules
-        Severity = $analysisConfig.Rules.Severity
+        ExcludeRule = if ($analysisConfig['Rules']) { $analysisConfig['Rules']['ExcludeRules'] } else { @() }
+        Severity = if ($analysisConfig['Rules']) { $analysisConfig['Rules']['Severity'] } else { @('Error', 'Warning') }
     }
 
-    if ($SettingsPath -or $analysisConfig.SettingsPath) {
-        $settingsFile = $SettingsPath ?? (Join-Path $script:ProjectRoot $analysisConfig.SettingsPath)
+    if ($SettingsPath -or $analysisConfig['SettingsPath']) {
+        $settingsFile = $SettingsPath ?? (Join-Path $script:ProjectRoot $analysisConfig['SettingsPath'])
         if (Test-Path $settingsFile) {
             $analyzerParams['Settings'] = $settingsFile
         }
