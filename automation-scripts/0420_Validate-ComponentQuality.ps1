@@ -214,7 +214,10 @@ try {
             $criticalFindings = $report.Checks | Where-Object { $_.Status -eq 'Failed' }
             if ($criticalFindings) {
                 foreach ($check in $criticalFindings) {
-                    Write-Host "    ❌ $($check.CheckName): $($check.Findings[0])" -ForegroundColor Red
+                    $findingsArray = @($check.Findings)
+                    if ($findingsArray.Count -gt 0) {
+                        Write-Host "    ❌ $($check.CheckName): $($findingsArray[0])" -ForegroundColor Red
+                    }
                 }
             }
             
