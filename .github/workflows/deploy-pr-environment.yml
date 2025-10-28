@@ -331,8 +331,8 @@ jobs:
             
             // Check for successful deployment (all completed successfully)
             const deploymentSuccessful = validationResult === 'success' && 
-                                        buildResult === 'success' && 
-                                        deployResult === 'success';
+                buildResult === 'success' && 
+                deployResult === 'success';
             
             // Check if deployment was skipped (jobs didn't run but no failures)
             const deploymentSkipped = !validationFailed && !buildFailed && !deployFailed && !deploymentSuccessful;
