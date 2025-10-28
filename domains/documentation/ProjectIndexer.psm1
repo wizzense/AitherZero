@@ -326,10 +326,12 @@ function New-NavigationMarkdown {
         $null = $md.Append($rootIndexPath.Replace('\', '/'))
         $null = $md.Append(")")
         
-        foreach ($part in $nav.Parts[0..($nav.Parts.Count - 2)]) {
-            $null = $md.Append(" → ")
-            $indexPath = [System.IO.Path]::GetRelativePath($Path, (Join-Path $part.Path $config.IndexFileName))
-            $null = $md.Append("[$($part.Name)]($($indexPath.Replace('\', '/')))")
+        if ($nav.Parts.Count -gt 1) {
+            foreach ($part in $nav.Parts[0..($nav.Parts.Count - 2)]) {
+                $null = $md.Append(" → ")
+                $indexPath = [System.IO.Path]::GetRelativePath($Path, (Join-Path $part.Path $config.IndexFileName))
+                $null = $md.Append("[$($part.Name)]($($indexPath.Replace('\', '/')))")
+            }
         }
         
         $null = $md.Append(" → **$($Content.Name)**")
