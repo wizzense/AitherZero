@@ -11,6 +11,60 @@ AitherZero provides Docker containers for consistent, isolated environments acro
 - **Docker Engine** 20.10+ ([Install Docker](https://docs.docker.com/get-docker/))
 - **Docker Compose** 2.0+ (included with Docker Desktop)
 
+#### Installing Docker on Linux
+
+**Ubuntu/Debian (APT):**
+```bash
+# Update package index
+sudo apt-get update
+
+# Install prerequisites
+sudo apt-get install -y ca-certificates curl gnupg
+
+# Add Docker's official GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Set up the repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker Engine
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+**Fedora/RHEL/CentOS (DNF/YUM):**
+```bash
+# Fedora (using moby-engine - Docker's open-source version)
+sudo dnf install -y moby-engine docker-compose
+
+# Or use Docker's official repository
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Start and enable Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add your user to the docker group (requires logout/login to take effect)
+sudo usermod -aG docker $USER
+```
+
+**Arch Linux (Pacman):**
+```bash
+sudo pacman -S docker docker-compose
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+```
+
+**Note**: After installation, you may need to log out and back in for group membership changes to take effect, or run `newgrp docker` to activate the group in your current session.
+
 ### Fastest Start
 
 ```bash
@@ -140,12 +194,12 @@ Configure AitherZero behavior using environment variables:
 # Set in docker-compose.yml or via -e flag
 AITHERZERO_ROOT=/app                    # Installation root (default: /app)
 AITHERZERO_NONINTERACTIVE=false         # Run in non-interactive mode
-AITHERZERO_CI=false                     # Enable CI mode
-AITHERZERO_PROFILE=Standard             # Profile: Minimal, Standard, Developer, Full
-DEPLOYMENT_ENVIRONMENT=development      # Environment: development, staging, production
-PR_NUMBER=                              # PR number for PR deployments
-BRANCH_NAME=main                        # Git branch name
-COMMIT_SHA=                             # Git commit SHA
+AITHERZERO_CI=false # Enable CI mode
+AITHERZERO_PROFILE=Standard # Profile: Minimal, Standard, Developer, Full
+DEPLOYMENT_ENVIRONMENT=development # Environment: development, staging, production
+PR_NUMBER= # PR number for PR deployments
+BRANCH_NAME=main # Git branch name
+COMMIT_SHA= # Git commit SHA
 ```
 
 ### Using .env File
