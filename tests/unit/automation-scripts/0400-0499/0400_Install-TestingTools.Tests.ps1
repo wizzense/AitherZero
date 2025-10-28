@@ -32,7 +32,7 @@ BeforeAll {
         })
     }
     Mock Test-Path { return $true }
-    Mock Get-Content { return '{"Testing":{"MinVersion":"5.0.0"}}' }
+    Mock Get-Content { return '{"Testing":{"MinVersion":"5.0.0"}}' } -ParameterFilter { $Path -notlike "*0400_Install-TestingTools.ps1" }
     Mock ConvertFrom-Json {
         return @{
             Testing = @{
