@@ -79,7 +79,8 @@ $modulesToLoad = @(
     './domains/security/Security.psm1',
     
     # Documentation
-    './domains/documentation/DocumentationEngine.psm1'
+    './domains/documentation/DocumentationEngine.psm1',
+    './domains/documentation/ProjectIndexer.psm1'
 )
 
 # Parallel module loading for better performance

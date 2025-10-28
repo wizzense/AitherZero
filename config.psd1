@@ -279,8 +279,8 @@
                 }
                 Documentation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0733', '0744')
-                    Description = 'AI-powered documentation generation and auto-documentation'
+                    Scripts = @('0733', '0744', '0745')
+                    Description = 'AI-powered documentation generation, auto-documentation, and project indexing'
                 }
                 Optimization = @{
                     DependsOn = @('Core.PowerShell7')
@@ -395,7 +395,7 @@
             'automation' = @{ Modules = 2; Description = 'Orchestration engine and deployment automation' }
             'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
-            'documentation' = @{ Modules = 1; Description = 'Documentation generation engine' }
+            'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
             'experience' = @{ Modules = 8; Description = 'UI/UX components and interactive menus' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
@@ -404,7 +404,7 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (114 total files, 114 unique numbers - all numbers now unique)
+        # Script inventory by range (118 total files, 118 unique numbers - all numbers now unique)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 7; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
@@ -412,7 +412,7 @@
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 26; Category = 'Git & AI Automation' }
+            '0700-0799' = @{ Count = 27; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 18; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 2; Category = 'Validation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
