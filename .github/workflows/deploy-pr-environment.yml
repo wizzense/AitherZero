@@ -148,7 +148,7 @@ jobs:
     name: Build Container Image
     runs-on: ubuntu-latest
     needs: [check-deployment-trigger, validate-docker-config]
-    if: needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.validate-docker-config.outputs.validation-passed == 'true'
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.validate-docker-config.result == 'success'
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
       image-digest: ${{ steps.build.outputs.digest }}
