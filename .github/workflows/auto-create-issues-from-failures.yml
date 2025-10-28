@@ -198,6 +198,34 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             
+            // Helper function to format failures list
+            function formatFailuresList(failures, count) {
+              const failuresToShow = failures.slice(0, 10);
+              const formattedFailures = failuresToShow.map(f => 
+                `- **Test:** \`${f.TestName}\`
+              - **Error:** ${f.ErrorMessage}
+              - **Location:** Line ${f.Line || 'unknown'}`
+              ).join('\n\n');
+              
+              const moreFailures = count > 10 ? `\n*...and ${count - 10} more failures. See full test report for details.*\n` : '';
+              
+              return formattedFailures + moreFailures;
+            }
+            
+            // Helper function to format workflow context
+            function formatWorkflowContext(workflowRun) {
+              if (!workflowRun) {
+                return '- **Triggered by:** Scheduled analysis';
+              }
+              
+              const workflowRunUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${workflowRun.Id}`;
+              return `
+            - **Workflow:** ${workflowRun.Workflow}
+            - **Run ID:** [${workflowRun.Id}](${workflowRunUrl})
+            - **Conclusion:** ${workflowRun.Conclusion}
+            `;
+            }
+            
             // Load analysis results
             const analysisPath = './failure-analysis.json';
             if (!fs.existsSync(analysisPath)) {
@@ -237,20 +265,10 @@ jobs:
             **Total Failures:** ${fileGroup.Count}
             
             ### Failed Tests
-            ${fileGroup.Failures.slice(0, 10).map(f => 
-              `- \`${f.TestName}\`
-              - **Error:** ${f.ErrorMessage}
-              - **Location:** Line ${f.Line || 'unknown'}`
-            ).join('\n')}
-            
-            ${fileGroup.Count > 10 ? `\n*...and ${fileGroup.Count - 10} more failures*\n` : ''}
+            ${formatFailuresList(fileGroup.Failures, fileGroup.Count)}
             
             ### Workflow Context
-            ${analysis.WorkflowRun ? `
-            - **Workflow:** ${analysis.WorkflowRun.Workflow}
-            - **Run ID:** ${analysis.WorkflowRun.Id}
-            - **Conclusion:** ${analysis.WorkflowRun.Conclusion}
-            ` : ''}
+            ${formatWorkflowContext(analysis.WorkflowRun)}
             
             ---
             *This is an automated update. Issue remains open until all tests pass.*`;
@@ -274,13 +292,7 @@ jobs:
             **Detected:** ${analysis.Timestamp}
             
             ### Failed Tests
-            ${fileGroup.Failures.slice(0, 10).map(f => 
-              `- **Test:** \`${f.TestName}\`
-              - **Error:** ${f.ErrorMessage}
-              - **Location:** Line ${f.Line || 'unknown'}`
-            ).join('\n\n')}
-            
-            ${fileGroup.Count > 10 ? `\n*...and ${fileGroup.Count - 10} more failures. See full test report for details.*\n` : ''}
+            ${formatFailuresList(fileGroup.Failures, fileGroup.Count)}
             
             ### 🤖 AI Agent Instructions
             
@@ -293,14 +305,7 @@ jobs:
             5. **Submit** a PR with the fixes
             
             ### Workflow Context
-            ${analysis.WorkflowRun ? (() => {
-              const workflowRunUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${analysis.WorkflowRun.Id}`;
-              return `
-            - **Workflow:** ${analysis.WorkflowRun.Workflow}
-            - **Run ID:** [${analysis.WorkflowRun.Id}](${workflowRunUrl})
-            - **Conclusion:** ${analysis.WorkflowRun.Conclusion}
-            `;
-            })() : '- **Triggered by:** Scheduled analysis'}
+            ${formatWorkflowContext(analysis.WorkflowRun)}
             
             ---
             *This issue was automatically created from test failure analysis*`;
@@ -352,9 +357,7 @@ jobs:
             5. **Submit** PR(s) with the improvements
             
             ### Context
-            ${analysis.WorkflowRun ? `
-            - **Workflow Run:** [${analysis.WorkflowRun.Id}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${analysis.WorkflowRun.Id})
-            ` : ''}
+            ${formatWorkflowContext(analysis.WorkflowRun)}
             
             ---
             *This issue was automatically created from code quality analysis*`;

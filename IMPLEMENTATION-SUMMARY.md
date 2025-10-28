@@ -103,8 +103,8 @@ Configuration:
   .gitignore                            (7 lines added)
 
 Workflows:
-  auto-create-issues-from-failures.yml  (404 lines) NEW
-  publish-test-reports.yml              (149 lines) NEW
+  auto-create-issues-from-failures.yml  (410 lines) NEW
+  publish-test-reports.yml              (151 lines) NEW
   jekyll-gh-pages.yml                   (23 lines modified)
   intelligent-ci-orchestrator.yml       (3 lines modified)
 
