@@ -3,12 +3,14 @@ name: 🚨 Auto-Create Issues from Test Failures
 
 # Automatically analyze test results and create targeted GitHub issues
 on:
-  workflow_run:
-    workflows: ["Intelligent CI Orchestrator", "Quality Validation"]
-    types: [completed]
-  schedule:
-    # Run daily to catch any missed failures
-    - cron: '0 7 * * *'  # 7 AM UTC daily
+  # DISABLED: workflow_run trigger was creating duplicate issues
+  # workflow_run:
+  #   workflows: ["Intelligent CI Orchestrator", "Quality Validation"]
+  #   types: [completed]
+  # DISABLED: Daily cron was creating duplicate issues
+  # schedule:
+  #   # Run daily to catch any missed failures
+  #   - cron: '0 7 * * *'  # 7 AM UTC daily
   workflow_dispatch:
     inputs:
       dry_run:

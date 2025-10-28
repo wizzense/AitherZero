@@ -14,9 +14,10 @@ on:
   pull_request:
     types: [opened, synchronize, closed]
 
-  schedule:
-    # Check for stale assigned issues every 4 hours during business days
-    - cron: '0 */4 * * 1-5'
+  # DISABLED: 4-hour schedule during business days was too aggressive
+  # schedule:
+  #   # Check for stale assigned issues every 4 hours during business days
+  #   - cron: '0 */4 * * 1-5'
 
   workflow_dispatch:
     inputs:
