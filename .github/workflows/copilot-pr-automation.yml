@@ -59,8 +59,12 @@ jobs:
                   repo: context.repo.repo,
                   issue_number: parseInt(specificIssue)
                 });
-                
-                if (issue.assignees?.some(a => a.login === 'copilot') && issue.state === 'open') {
+
+                // Check if issue has copilot-task label or is assigned to wizzense
+                const hasCopilotLabel = issue.labels?.some(l => l.name === 'copilot-task' || l.name === 'auto-created');
+                const isAssignedToWizzense = issue.assignees?.some(a => a.login === 'wizzense');
+
+                if ((hasCopilotLabel || isAssignedToWizzense) && issue.state === 'open') {
                   issuesToProcess.push({
                     number: issue.number,
                     title: issue.title,
