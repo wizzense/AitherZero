@@ -90,7 +90,7 @@ All workflows trigger automatically:
 - `.gitignore` - Updated with Jekyll exclusions
 
 ### Workflows
-- `.github/workflows/auto-create-issues-from-failures.yml` - Issue creator (393 lines)
+- `.github/workflows/auto-create-issues-from-failures.yml` - Issue creator (404 lines)
 - `.github/workflows/publish-test-reports.yml` - Report publisher (138 lines)
 - `.github/workflows/jekyll-gh-pages.yml` - Enhanced Pages deployment
 
