@@ -107,7 +107,7 @@ jobs:
         
         # Run documentation generation
         try {
-          ./automation-scripts/0733_Generate-AutoDocumentation.ps1 -Mode $mode -Format $format -Quality
+          ./automation-scripts/0744_Generate-AutoDocumentation.ps1 -Mode $mode -Format $format -Quality
           Write-Host "Documentation generation completed successfully" -ForegroundColor Green
         } catch {
           Write-Error "Documentation generation failed: $_"
