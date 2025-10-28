@@ -250,6 +250,51 @@ try {
     Write-Host "⚠️  Warnings: $warningCount" -ForegroundColor Yellow
     Write-Host "❌ Failed: $failedCount" -ForegroundColor Red
     
+    # Display file-by-file breakdown
+    if ($fileCount -gt 0) {
+        Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+        Write-Host "║                   FILE BREAKDOWN                             ║" -ForegroundColor Cyan
+        Write-Host "╚══════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
+        
+        foreach ($report in $allReports) {
+            $fileName = $report.FileName
+            $status = $report.OverallStatus
+            $score = $report.OverallScore
+            
+            $statusIcon = @{
+                'Passed' = '✅'
+                'Warning' = '⚠️ '
+                'Failed' = '❌'
+            }[$status]
+            
+            $statusColor = @{
+                'Passed' = 'Green'
+                'Warning' = 'Yellow'
+                'Failed' = 'Red'
+            }[$status]
+            
+            Write-Host "$statusIcon $fileName" -ForegroundColor $statusColor -NoNewline
+            Write-Host " - Score: $score%" -ForegroundColor White
+            
+            # Show top issues for failed/warning files
+            if ($status -in @('Failed', 'Warning')) {
+                $issues = $report.Checks | Where-Object { $_.Status -in @('Failed', 'Warning') } | Select-Object -First 2
+                foreach ($issue in $issues) {
+                    $issueIcon = if ($issue.Status -eq 'Failed') { '  ❌' } else { '  ⚠️ ' }
+                    if ($issue.Findings -and $issue.Findings.Count -gt 0) {
+                        $finding = $issue.Findings[0]
+                        # Truncate long findings
+                        if ($finding.Length -gt 70) {
+                            $finding = $finding.Substring(0, 67) + "..."
+                        }
+                        Write-Host "$issueIcon $($issue.CheckName): $finding" -ForegroundColor Gray
+                    }
+                }
+            }
+        }
+        Write-Host ""
+    }
+    
     # Save reports
     if (-not $OutputPath) {
         $OutputPath = Join-Path $projectRoot "reports/quality"
