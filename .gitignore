@@ -81,3 +81,10 @@ reports/quality/
 
 # Linting tools (downloaded binaries)
 actionlint
+
+# Jekyll build artifacts
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+Gemfile.lock

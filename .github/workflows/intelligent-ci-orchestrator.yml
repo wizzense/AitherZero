@@ -275,6 +275,7 @@ jobs:
           path: |
             tests/analysis/
             tests/reports/
+            reports/
           retention-days: 30
 
   # Security-focused validation
@@ -296,16 +297,18 @@ jobs:
           # Run security-focused scripts
           $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0523' -NonInteractive") -Wait -PassThru -NoNewWindow
 
-          Write-Host "Security analysis completed with exit code: $($process.ExitCode)" -ForegroundColor $(if ($process.ExitCode -eq 0) { 'Green' } else { 'Yellow' })
-
+          # Interpret exit codes:
+          # 0 = No issues found
+          # 1 = Issues found (non-blocking in CI)
+          # >1 = Actual errors
+          
           if ($process.ExitCode -eq 0) {
-            Write-Host "✅ No critical security issues found!" -ForegroundColor Green
+            Write-Host "`n✅ Security validation passed - no critical issues found!" -ForegroundColor Green
           } elseif ($process.ExitCode -eq 1) {
-            Write-Host "⚠️ Security issues detected - see detailed report" -ForegroundColor Yellow
-            Write-Host "📋 Security findings are captured in reports for review" -ForegroundColor Cyan
-            Write-Host "💡 Security issues are reported for attention - they don't block CI but require review" -ForegroundColor Blue
+            Write-Host "`n⚠️  Security validation completed with findings" -ForegroundColor Yellow
+            Write-Host "Review the detailed report above for security issues that need attention" -ForegroundColor Cyan
           } else {
-            Write-Host "❌ Security analysis encountered errors (exit code: $($process.ExitCode))" -ForegroundColor Red
+            Write-Host "`n❌ Security analysis encountered errors (exit code: $($process.ExitCode))" -ForegroundColor Red
             exit $process.ExitCode
           }
 
@@ -537,6 +540,7 @@ jobs:
           path: |
             tests/results/
             tests/reports/
+            reports/
             logs/
           retention-days: 30
 
@@ -582,6 +586,7 @@ jobs:
           path: |
             tests/results/
             tests/reports/
+            reports/
           retention-days: 30
 
   # Multi-platform validation - for main/develop/copilot branches or when explicitly requested
