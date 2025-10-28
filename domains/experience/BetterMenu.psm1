@@ -76,8 +76,8 @@ function Show-BetterMenu {
         # - Basic Linux console
         # - Terminals with known refresh issues
         $problematicTerms = @('linux', 'dumb', 'unknown')
-        $isProblematicTerminal = $termProgram -eq 'Termux' -or 
-                                 $term -in $problematicTerms -or
+        $isProblematicTerminal = $termProgram -eq 'Termux' -or `
+                                 $term -in $problematicTerms -or `
                                  ($IsLinux -and $env:PREFIX -match 'com.termux')
         
         if ($isProblematicTerminal) {

@@ -367,7 +367,7 @@ clean_environment() {
     
     # Detect problematic terminals and enable simple menu mode for better compatibility
     # This helps with Android terminals, Termux, and other limited environments
-    if [ -n "$PREFIX" ] && echo "$PREFIX" | grep -q "termux"; then
+    if [[ -n "$PREFIX" && "$PREFIX" == *"termux"* ]]; then
         # Termux/Android terminal detected
         export AITHERZERO_SIMPLE_MENU="1"
         print_log "INFO" "Detected Termux/Android terminal - enabling simple menu mode"
