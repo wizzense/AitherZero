@@ -354,8 +354,11 @@ services:
 docker run --rm \
   -v $(pwd)/my-config.psd1:/app/config.psd1:ro \
   aitherzero:latest pwsh -Command "./Start-AitherZero.ps1"
+```
 
-# Using Docker Compose, add to volumes:
+**Using Docker Compose, add to `docker-compose.yml`:**
+
+```yaml
 services:
   aitherzero:
     volumes:
@@ -372,8 +375,11 @@ docker run --rm \
   --cpus=2 \
   --memory=2g \
   aitherzero:latest pwsh -Command "./az.ps1 0402"
+```
 
-# Docker Compose (already configured in docker-compose.yml)
+**Docker Compose (already configured in `docker-compose.yml`):**
+
+```yaml
 services:
   aitherzero:
     deploy:
