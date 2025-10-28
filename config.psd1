@@ -121,6 +121,11 @@
                     Scripts = @('0217', '0218')  # Claude Code, Gemini CLI
                     Description = 'AI-powered development tools'
                 }
+                CloudCLI = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0212', '0213')  # Azure CLI, AWS CLI
+                    Description = 'Cloud provider command-line tools'
+                }
             }
             
             # Infrastructure components  
@@ -318,8 +323,8 @@
                 }
                 PRDeployment = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts = @('0850', '0851')
-                    Description = 'Ephemeral PR environment deployment and cleanup for automated testing'
+                    Scripts = @('0850', '0851', '0852', '0853')
+                    Description = 'Ephemeral PR environment deployment, cleanup, and Docker validation'
                 }
             }
             
@@ -341,8 +346,8 @@
             Maintenance = @{
                 Environment = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0000', '0002')
-                    Description = 'Environment cleanup and directory setup'
+                    Scripts = @('0000', '0002', '0003')
+                    Description = 'Environment cleanup, directory setup, and config sync'
                 }
                 Reset = @{
                     DependsOn = @('Core.PowerShell7')
