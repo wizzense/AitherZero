@@ -3,6 +3,8 @@ name: 'Validate Config Manifest'
 
 on:
   push:
+    # Only run on base branches to avoid duplicate runs with pull_request events
+    branches: [main, develop]
     paths:
       - 'config.psd1'
       - 'automation-scripts/0413_Validate-ConfigManifest.ps1'

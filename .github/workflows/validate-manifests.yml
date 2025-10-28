@@ -2,6 +2,8 @@ name: 'Validate PowerShell Module Manifests'
 
 on:
   push:
+    # Only run on base branches to avoid duplicate runs with pull_request events
+    branches: [main, develop]
     paths:
       - '**/*.psd1'
       - 'tools/Validate-ModuleManifest.ps1'

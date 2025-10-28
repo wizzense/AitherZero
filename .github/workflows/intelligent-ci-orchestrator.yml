@@ -4,7 +4,9 @@ name: Intelligent CI Orchestrator
 # Smart CI/CD orchestration optimized for AI agents and cost efficiency
 on:
   push:
-    branches: [main, develop, 'feature/**', 'copilot/**']
+    # Only run on base branches to avoid duplicate runs with pull_request events
+    # Feature branches and copilot branches are tested via pull_request event
+    branches: [main, develop]
     paths-ignore:
       - '**.md'
       - 'docs/**'
