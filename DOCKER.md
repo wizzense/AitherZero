@@ -1,129 +1,146 @@
 # AitherZero Docker Usage Guide
 
-This guide explains how to use AitherZero with Docker for easy deployment and access.
+This guide explains how to use AitherZero with Docker for easy deployment and testing.
 
 ## Quick Start
 
-### Using the Container Manager (Easiest for PR Testing)
+### Pull and Run a PR Container
 
-The automated container manager simplifies PR container testing:
+The simplest way to test a PR is to pull and run the pre-built container:
 
 ```bash
-# Clone the repo
+# Pull the PR container image (replace 1634 with your PR number)
+docker pull ghcr.io/wizzense/aitherzero:pr-1634
+
+# Run the container interactively
+docker run -it --name aitherzero-pr-1634 ghcr.io/wizzense/aitherzero:pr-1634
+
+# You'll immediately see the AitherZero welcome screen with the module loaded!
+# ✅ AitherZero loaded. Type Start-AitherZero to begin.
+```
+
+### Interactive Shell Access
+
+If the container is already running, access it with:
+
+```bash
+# Access interactive PowerShell shell (module auto-loads)
+docker exec -it aitherzero-pr-1634 pwsh
+
+# You'll see the welcome message and can immediately use AitherZero commands:
+Start-AitherZero     # Launch interactive menu
+az 0402              # Run unit tests
+az 0510              # Generate project report
+```
+
+### Run Single Commands
+
+Execute commands without entering the container:
+
+```bash
+# Run unit tests
+docker exec aitherzero-pr-1634 pwsh -Command "az 0402"
+
+# Run PSScriptAnalyzer
+docker exec aitherzero-pr-1634 pwsh -Command "az 0404"
+
+# Generate project report
+docker exec aitherzero-pr-1634 pwsh -Command "az 0510 -ShowAll"
+```
+
+### Using the Container Manager (Alternative)
+
+For automated PR testing workflows, use the container manager script:
+
+```bash
+# Clone the repo (if you want to run automation scripts)
 git clone https://github.com/wizzense/AitherZero.git
 cd AitherZero
 
 # QuickStart: Pull + Run + Verify in one command
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1634
 
-# Open interactive shell (no need to run Start-AitherZero twice!)
+# Open interactive shell
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1634
-
-# Run specific commands
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1634 -Command "./az.ps1 0402"
 
 # Cleanup when done
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1634
 ```
 
-**Available Actions**: Pull, Run, Stop, Logs, Exec, Shell, Cleanup, Status, List, QuickStart
+### Building Locally
 
-### Using Docker Compose (Recommended for Local Development)
-
-```bash
-# Build and start the container
-docker-compose up -d
-
-# Access the web interface
-open http://localhost:8080
-
-# View logs
-docker-compose logs -f
-
-# Stop the container
-docker-compose down
-```
-
-### Using Docker directly
+If you want to build from source:
 
 ```bash
+# Clone and navigate to repo
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+
 # Build the image
 docker build -t aitherzero:latest .
 
-# Run the container
-docker run -d \
-  --name aitherzero \
-  -p 8080:8080 \
-  -p 8443:8443 \
-  aitherzero:latest
-
-# Access the web interface
-open http://localhost:8080
+# Run interactively
+docker run -it --name aitherzero aitherzero:latest
 ```
 
 ## Container Features
 
-When the container starts, it automatically:
+When you start the container, it automatically:
 
-1. ✅ Initializes and validates the AitherZero environment
-2. 📊 Generates reports and dashboards
-3. 🌐 Starts a web server on port 8080
-4. 🖥️ Provides interactive CLI access via `docker exec`
+1. ✅ Loads the AitherZero module at `/opt/aitherzero`
+2. 📦 Provides an interactive PowerShell 7 environment
+3. 🎯 Sets the working directory to `/opt/aitherzero` with all scripts accessible
+4. 🖥️ Displays a welcome message with helpful commands
+
+**Important Directories:**
+- `/opt/aitherzero` - AitherZero installation (where the module lives)
+- `/app` - Working directory for mounting your own files (optional)
+- Logs, reports, and test results are stored in `/opt/aitherzero/`
 
 ## Access Methods
 
-### Web Browser Access
+### Interactive CLI Access (Recommended)
 
-Once the container is running, access the web interface at:
-- **HTTP**: http://localhost:8080
-- **HTTPS**: https://localhost:8443 (reserved for future use)
-
-The web interface provides:
-- 📊 Live dashboards with project metrics
-- 🧪 Test results and coverage reports
-- 🔒 Security scan results
-- 📚 API documentation
-- 📈 Historical trends and analytics
-
-### Interactive CLI Access
-
-To access PowerShell interactively inside the container:
+The simplest way to use AitherZero in a container:
 
 ```bash
-# Simplified access (recommended) - uses docker-start.ps1 for better UX
-docker exec -it aitherzero pwsh /opt/aitherzero/docker-start.ps1
+# For a running container
+docker exec -it aitherzero-pr-1634 pwsh
 
-# Alternative: Direct PowerShell access
-docker exec -it aitherzero pwsh
+# For a new container
+docker run -it --name aitherzero-pr-1634 ghcr.io/wizzense/aitherzero:pr-1634
 
-# Once inside, you can use AitherZero commands
-PS> Start-AitherZero
-PS> az 0402  # Run unit tests
-PS> az 0510  # Generate reports
+# Inside the container:
+PS /opt/aitherzero> Start-AitherZero     # Launch the interactive menu
+PS /opt/aitherzero> az 0402              # Run unit tests
+PS /opt/aitherzero> az 0510              # Generate reports
+PS /opt/aitherzero> Get-Command -Module AitherZero  # List all commands
 ```
-
-**Note**: The container starts with AitherZero already loaded in `/opt/aitherzero`. 
-The simplified `docker-start.ps1` script provides a better user experience with:
-- Automatic module loading
-- Clear welcome message and helpful commands
-- Proper working directory setup
 
 ### Run Single Commands
 
 Execute AitherZero commands from outside the container:
 
 ```bash
-# Run unit tests (note: work from /opt/aitherzero directory)
-docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
+# Run unit tests
+docker exec aitherzero-pr-1634 pwsh -Command "az 0402"
 
 # Generate project report
-docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./az.ps1 0510"
+docker exec aitherzero-pr-1634 pwsh -Command "az 0510"
 
 # Run a playbook
-docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick"
+docker exec aitherzero-pr-1634 pwsh -Command "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick"
 
 # List available scripts
-docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List -Target scripts"
+docker exec aitherzero-pr-1634 pwsh -Command "./Start-AitherZero.ps1 -Mode List -Target scripts"
+```
+
+### Using docker-start.ps1 (Alternative Entry Point)
+
+For an enhanced interactive experience with more startup messages:
+
+```bash
+docker exec -it aitherzero-pr-1634 pwsh /opt/aitherzero/docker-start.ps1
 ```
 
 ## Custom Configuration
@@ -133,62 +150,75 @@ docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.p
 Configure AitherZero behavior using environment variables:
 
 ```bash
-docker run -d \
+docker run -it \
   -e AITHERZERO_PROFILE=Developer \
-  -e AITHERZERO_NONINTERACTIVE=true \
-  -p 8080:8080 \
-  aitherzero:latest
+  -e AITHERZERO_NONINTERACTIVE=false \
+  --name aitherzero \
+  ghcr.io/wizzense/aitherzero:latest
 ```
 
 Available environment variables:
 - `AITHERZERO_PROFILE`: Minimal, Standard, Developer, Full
-- `AITHERZERO_NONINTERACTIVE`: true/false
+- `AITHERZERO_NONINTERACTIVE`: true/false (default: true in container)
 - `AITHERZERO_CI`: true/false
 - `AITHERZERO_LOG_LEVEL`: Debug, Information, Warning, Error
 
-### Custom Startup Mode
+### Running Specific Modes
 
-Override the default startup behavior:
+Override the default interactive mode:
 
 ```bash
-# Skip validation and report generation
-docker run -d \
-  -p 8080:8080 \
-  aitherzero:latest \
-  pwsh -File ./docker-entrypoint.ps1 -SkipValidation -SkipReports
+# Run validation only
+docker run --rm ghcr.io/wizzense/aitherzero:latest \
+  pwsh -Command "./Start-AitherZero.ps1 -Mode Validate"
 
-# Run a specific mode instead
-docker run -d \
-  -p 8080:8080 \
-  aitherzero:latest \
+# Run tests
+docker run --rm ghcr.io/wizzense/aitherzero:latest \
   pwsh -Command "./Start-AitherZero.ps1 -Mode Test -NonInteractive"
+
+# Run a specific playbook
+docker run --rm ghcr.io/wizzense/aitherzero:latest \
+  pwsh -Command "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -NonInteractive"
 ```
 
 ### Volume Mounts
 
-Persist data and configuration across container restarts:
+Mount your project files or persist data across container restarts:
 
 ```bash
-docker run -d \
-  -v aitherzero-logs:/app/logs \
-  -v aitherzero-reports:/app/reports \
-  -v aitherzero-results:/app/tests/results \
-  -p 8080:8080 \
-  aitherzero:latest
+# Mount your project files to /app
+docker run -it \
+  -v $(pwd):/app \
+  --name aitherzero \
+  ghcr.io/wizzense/aitherzero:latest
+
+# Persist logs and reports
+docker run -it \
+  -v aitherzero-logs:/opt/aitherzero/logs \
+  -v aitherzero-reports:/opt/aitherzero/reports \
+  --name aitherzero \
+  ghcr.io/wizzense/aitherzero:latest
 ```
 
-For local development with live code updates:
+## Docker Compose (For Local Development)
+
+For local development, use Docker Compose:
 
 ```bash
-docker run -d \
-  -v $(pwd):/app:rw \
-  -p 8080:8080 \
-  aitherzero:latest
+# Start the container
+docker-compose up -d
+
+# Access the container
+docker exec -it aitherzero-app pwsh
+
+# View logs
+docker-compose logs -f
+
+# Stop the container
+docker-compose down
 ```
 
-## Docker Compose Advanced Usage
-
-### Profiles
+### Using Profiles
 
 Docker compose supports optional services via profiles:
 
@@ -203,85 +233,90 @@ docker-compose --profile with-database up -d
 docker-compose --profile with-cache --profile with-database up -d
 ```
 
-### Custom Commands
-
-Override the default command in docker-compose:
-
-```yaml
-services:
-  aitherzero:
-    # ... other config ...
-    command: ["pwsh", "-Command", "./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402 -NonInteractive"]
-```
-
 ## Troubleshooting
 
-### Container exits immediately
+### Container starts then exits immediately
 
-Check logs to see what happened:
-```bash
-docker logs aitherzero
-```
-
-### Web interface not accessible
-
-1. Verify the container is running:
-   ```bash
-   docker ps
-   ```
-
-2. Check port mapping:
-   ```bash
-   docker port aitherzero
-   ```
-
-3. View server logs:
-   ```bash
-   docker logs aitherzero
-   ```
-
-### Python web server not starting
-
-The entrypoint script requires Python to serve the web interface. If Python is not available, the container will stay alive for CLI access but the web interface won't work. Rebuild the image to ensure Python is installed:
+The updated container now stays running in interactive mode. If you see issues:
 
 ```bash
-docker-compose build --no-cache
+# Check container status
+docker ps -a
+
+# Check logs
+docker logs aitherzero-pr-1634
+
+# Restart the container
+docker restart aitherzero-pr-1634
 ```
+
+### Module not loading properly
+
+If you encounter module loading issues:
+
+```bash
+# Verify module exists
+docker exec aitherzero-pr-1634 pwsh -Command "Test-Path /opt/aitherzero/AitherZero.psd1"
+
+# Manually import module
+docker exec -it aitherzero-pr-1634 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1 -Verbose"
+
+# Check what modules are loaded
+docker exec aitherzero-pr-1634 pwsh -Command "Get-Module"
+```
+
+### First run shows errors about OpenTofu
+
+This is expected behavior. Some infrastructure scripts (like 0300) check for tools like OpenTofu that aren't in the container. These scripts are designed for full infrastructure deployments, not container environments.
+
+**Solution**: Use the container for testing, validation, and development tasks:
+- ✅ `az 0402` - Unit tests
+- ✅ `az 0404` - PSScriptAnalyzer
+- ✅ `az 0407` - Syntax validation
+- ✅ `az 0510` - Generate reports
+- ✅ `Start-AitherZero` - Interactive menu (skip infrastructure options)
 
 ### Permission issues
 
 If you encounter permission errors with mounted volumes:
 
 ```bash
-# Fix ownership on Linux/Mac
-sudo chown -R $(id -u):$(id -g) ./logs ./reports ./tests
+# On Linux/Mac, fix ownership
+sudo chown -R $(id -u):$(id -g) ./logs ./reports
+
+# Or run container as root (not recommended)
+docker exec -it -u root aitherzero-pr-1634 pwsh
 ```
 
 ## Health Checks
 
-Check if the container is healthy:
+The container includes a health check that verifies the module manifest exists:
 
 ```bash
-# Using Docker
-docker inspect --format='{{.State.Health.Status}}' aitherzero
+# Check if container is healthy
+docker inspect --format='{{.State.Health.Status}}' aitherzero-pr-1634
 
 # Using docker-compose
 docker-compose ps
 ```
 
-The health check verifies that the AitherZero.psd1 manifest file exists.
-
 ## Stopping and Cleaning Up
 
 ```bash
-# Stop the container
+# Stop a running container
+docker stop aitherzero-pr-1634
+
+# Remove the container
+docker rm aitherzero-pr-1634
+
+# Stop and remove with Docker Compose
 docker-compose down
 
-# Stop and remove volumes
+# Remove volumes as well
 docker-compose down -v
 
 # Remove the image
-docker rmi aitherzero:latest
+docker rmi ghcr.io/wizzense/aitherzero:pr-1634
 
 # Complete cleanup
 docker-compose down -v --rmi all
@@ -289,53 +324,65 @@ docker-compose down -v --rmi all
 
 ## Best Practices
 
-1. **Production Use**: Always use docker-compose for easier management
-2. **Security**: Don't mount sensitive credentials in production
-3. **Updates**: Regularly rebuild images to get security updates
-4. **Monitoring**: Use `docker logs` and the web dashboard to monitor status
-5. **Backups**: Regularly backup volume data (logs, reports, results)
+1. **PR Testing**: Use pre-built PR images from GHCR for quick testing
+2. **Interactive Use**: Use `docker exec -it <container> pwsh` for the best experience
+3. **Automation**: Use single command execution for CI/CD pipelines
+4. **Volumes**: Mount volumes for persistent logs and reports if needed
+5. **Container Names**: Use descriptive names like `aitherzero-pr-1634` for easy identification
 
-## Examples
+## Common Use Cases
 
-### Development Workflow
+### Testing a Pull Request
 
 ```bash
-# Start container in development mode
-docker-compose up -d
+# Pull and test a specific PR
+docker pull ghcr.io/wizzense/aitherzero:pr-1634
+docker run -it --name aitherzero-pr-1634 ghcr.io/wizzense/aitherzero:pr-1634
 
-# Watch logs
-docker-compose logs -f
+# Inside container, run tests
+az 0402  # Unit tests
+az 0404  # Linter
 
-# Run tests
-docker exec aitherzero pwsh -Command "az 0402"
-
-# Generate fresh reports
-docker exec aitherzero pwsh -Command "az 0510"
-
-# View in browser
-open http://localhost:8080
+# Cleanup when done
+exit
+docker rm aitherzero-pr-1634
 ```
 
 ### CI/CD Integration
 
 ```bash
-# Build for CI
-docker build --tag aitherzero:ci .
-
-# Run tests in container
-docker run --rm aitherzero:ci \
-  pwsh -Command "./Start-AitherZero.ps1 -Mode Test -NonInteractive -CI"
-
-# Extract reports
+# Run tests in CI pipeline
 docker run --rm \
-  -v $(pwd)/reports:/output \
-  aitherzero:ci \
-  pwsh -Command "Copy-Item /app/reports/* /output/ -Recurse"
+  -e AITHERZERO_CI=true \
+  ghcr.io/wizzense/aitherzero:pr-1634 \
+  pwsh -Command "az 0402"
+
+# Generate reports and extract them
+docker run --rm \
+  -v $(pwd)/reports:/opt/aitherzero/reports \
+  ghcr.io/wizzense/aitherzero:pr-1634 \
+  pwsh -Command "az 0510 -ShowAll"
+```
+
+### Local Development
+
+```bash
+# Build local image
+docker build -t aitherzero:dev .
+
+# Run with your code mounted
+docker run -it \
+  -v $(pwd)/automation-scripts:/opt/aitherzero/automation-scripts \
+  --name aitherzero-dev \
+  aitherzero:dev
+
+# Make changes on host, test in container immediately
 ```
 
 ## Support
 
 For more information:
-- Main README: [README.md](README.md)
-- Modern CLI Guide: [README-ModernCLI.md](README-ModernCLI.md)
-- GitHub Issues: https://github.com/wizzense/AitherZero/issues
+- **Main README**: [README.md](README.md)
+- **Docker Compose Setup**: [docker-compose.yml](docker-compose.yml)
+- **Container Manager Script**: [automation-scripts/0854_Manage-PRContainer.ps1](automation-scripts/0854_Manage-PRContainer.ps1)
+- **GitHub Issues**: https://github.com/wizzense/AitherZero/issues
