@@ -50,28 +50,28 @@ Describe "0512_Generate-Dashboard" {
 
     Context "Dashboard Generation" {
         It "Should generate HTML dashboard successfully" {
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "HTML" 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "HTML" 2>&1 | Out-Null
             $LASTEXITCODE | Should -Be 0
             $htmlPath = Join-Path $script:TestOutputPath "dashboard.html"
             Test-Path $htmlPath | Should -Be $true
         }
 
         It "Should generate Markdown dashboard successfully" {
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "Markdown" 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "Markdown" 2>&1 | Out-Null
             $LASTEXITCODE | Should -Be 0
             $mdPath = Join-Path $script:TestOutputPath "dashboard.md"
             Test-Path $mdPath | Should -Be $true
         }
 
         It "Should generate JSON report successfully" {
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "JSON" 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "JSON" 2>&1 | Out-Null
             $LASTEXITCODE | Should -Be 0
             $jsonPath = Join-Path $script:TestOutputPath "dashboard.json"
             Test-Path $jsonPath | Should -Be $true
         }
 
         It "Should generate all formats when Format is All" {
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "All" 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "All" 2>&1 | Out-Null
             $LASTEXITCODE | Should -Be 0
 
             $htmlPath = Join-Path $script:TestOutputPath "dashboard.html"
@@ -86,7 +86,7 @@ Describe "0512_Generate-Dashboard" {
         }
 
         It "Should create README.md index file" {
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath 2>&1 | Out-Null
             $readmePath = Join-Path $script:TestOutputPath "README.md"
             Test-Path $readmePath | Should -Be $true
         }
@@ -132,14 +132,14 @@ Describe "0512_Generate-Dashboard" {
 
         It "Should work with Open parameter on actual generation" {
             # This will fail to open browser in CI but should not cause script to fail
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "HTML" -Open 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "HTML" -Open 2>&1 | Out-Null
             $LASTEXITCODE | Should -Be 0
         }
     }
 
     Context "WhatIf Support" {
         It "Should show dashboard generation preview with WhatIf" {
-            $result = & $script:ScriptPath -WhatIf -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath 2>&1
+            & $script:ScriptPath -WhatIf -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath 2>&1 | Out-Null
             # Should complete successfully with WhatIf
             $LASTEXITCODE | Should -Be 0
         }
@@ -162,27 +162,27 @@ Describe "0512_Generate-Dashboard" {
 
     Context "Error Handling" {
         It "Should handle missing project path gracefully" {
-            $result = & $script:ScriptPath -ProjectPath "nonexistent" -OutputPath $script:TestOutputPath 2>&1
+            & $script:ScriptPath -ProjectPath "nonexistent" -OutputPath $script:TestOutputPath 2>&1 | Out-Null
             $LASTEXITCODE | Should -Be 0  # Should complete even with missing files
         }
 
         It "Should handle invalid output path creation" {
             # Use a path that should work but test resilience
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath 2>&1 | Out-Null
             $LASTEXITCODE | Should -Be 0
         }
     }
 
     Context "Cross-Platform Compatibility" {
         It "Should detect current platform" {
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "JSON" 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "JSON" 2>&1 | Out-Null
             $jsonPath = Join-Path $script:TestOutputPath "dashboard.json"
             $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
             $json.Environment.Platform | Should -Not -BeNullOrEmpty
         }
 
         It "Should include PowerShell version in output" {
-            $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "JSON" 2>&1
+            & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "JSON" 2>&1 | Out-Null
             $jsonPath = Join-Path $script:TestOutputPath "dashboard.json"
             $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
             $json.Environment.PowerShell | Should -Not -BeNullOrEmpty
