@@ -1,7 +1,52 @@
----
-layout: default
-title: AitherZero Project Dashboard
----
+# AitherZero
+
+## 📖 Overview
+
+See [README.md](./README.md) for detailed information about this directory.
+
+### 📊 Contents
+
+- **Subdirectories**: 16
+- **Files**: 30
+- **PowerShell Scripts**: 10
+
+## 📁 Subdirectories
+
+- [📂 **.claude**](./.claude/index.md)
+  - *This directory contains the Claude Code hooks configuration for AitherZero, providing intelligent...*
+- 📂 **.github**
+- [📂 **assets**](./assets/index.md)
+- [📂 **automation-scripts**](./automation-scripts/index.md)
+  - *This directory contains all automated installation and configuration scripts used by the AitherZe...*
+- [📂 **demos**](./demos/index.md)
+- [📂 **docs**](./docs/index.md)
+- [📂 **domains**](./domains/index.md)
+  - *This directory contains all domain modules for the AitherZero platform, organized by functional a...*
+- [📂 **examples**](./examples/index.md)
+- [📂 **generated-issues**](./generated-issues/index.md)
+- [📂 **infrastructure**](./infrastructure/index.md)
+  - *This directory contains infrastructure-as-code definitions for deploying AitherZero environments.*
+- [📂 **legacy-to-migrate**](./legacy-to-migrate/index.md)
+- 📂 **logs**
+- [📂 **orchestration**](./orchestration/index.md)
+  - *A powerful number-based orchestration language for automating complex deployments and configurati...*
+- [📂 **reports**](./reports/index.md)
+  - *- [📊 HTML Dashboard](dashboard.html) - Interactive web dashboard*
+- [📂 **tests**](./tests/index.md)
+  - *This directory contains all tests for the AitherZero project, organized by domain and test type.*
+- [📂 **tools**](./tools/index.md)
+
+## 📄 Files
+
+### (no extension) Files
+
+- 📄 [Dockerfile](./Dockerfile)
+- 📄 [LICENSE](./LICENSE)
+- 📄 [VERSION](./VERSION)
+
+### .dockerignore Files
+
+- 📄 [.dockerignore](./.dockerignore)
 
 <style>
 /* Component-specific styles - colors handled by main stylesheet */
