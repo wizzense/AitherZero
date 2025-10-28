@@ -75,6 +75,18 @@ try {
     }
 
     # Validate single file
+    # Check if file contains only null bytes or is effectively empty/binary
+    $fileContent = Get-Content -Path $FilePath -Raw -ErrorAction SilentlyContinue
+    if ([string]::IsNullOrEmpty($fileContent) -or $fileContent -match '^\x00+$' -or $fileContent.Trim().Length -eq 0) {
+        # Check if file only contains null bytes or non-text characters
+        $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+        $nullByteCount = ($bytes | Where-Object { $_ -eq 0 }).Count
+        if ($nullByteCount -eq $bytes.Length -or $bytes.Length -eq 0) {
+            Write-Host "Error parsing file: File appears to be empty or contains only null bytes" -ForegroundColor Red
+            exit 1
+        }
+    }
+    
     $parseErrors = $null
     $tokens = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($FilePath, [ref]$tokens, [ref]$parseErrors)
@@ -93,10 +105,10 @@ try {
 
         if ($Detailed -and $ast) {
             Write-Host "`nScript Statistics:" -ForegroundColor Cyan
-            $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             Write-Host "  Functions: $($functions.Count)"
 
-            $commands = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
+            $commands = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
             Write-Host "  Commands: $($commands.Count)"
 
             Write-Host "  Total Lines: $($ast.Extent.EndLineNumber)"
