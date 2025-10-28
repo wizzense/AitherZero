@@ -86,9 +86,32 @@ if ! command -v docker &> /dev/null; then
         gnupg \
         lsb-release
     
-    # Add Docker GPG key
+    # Add Docker GPG key securely
     mkdir -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    DOCKER_GPG_TMP="/tmp/docker.gpg"
+    DOCKER_GPG_DEARMOR_TMP="/tmp/docker.gpg.dearmor"
+    DOCKER_GPG_FINAL="/etc/apt/keyrings/docker.gpg"
+    DOCKER_FINGERPRINT="9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88"
+    
+    echo "Downloading Docker GPG key..."
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o "$DOCKER_GPG_TMP"
+    
+    # Show and verify fingerprint
+    ACTUAL_FINGERPRINT=$(gpg --show-keys --with-fingerprint "$DOCKER_GPG_TMP" 2>/dev/null | awk '/Key fingerprint/ {$1=""; $2=""; print}' | xargs)
+    echo -e "${BLUE}Docker GPG key fingerprint:${NC} $ACTUAL_FINGERPRINT"
+    
+    if [ "$ACTUAL_FINGERPRINT" != "$DOCKER_FINGERPRINT" ]; then
+        echo -e "${RED}❌ Docker GPG key fingerprint does not match official value!${NC}"
+        echo -e "${RED}   Expected: $DOCKER_FINGERPRINT${NC}"
+        echo -e "${RED}   Got:      $ACTUAL_FINGERPRINT${NC}"
+        rm -f "$DOCKER_GPG_TMP"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✓${NC} GPG key fingerprint verified"
+    gpg --dearmor -o "$DOCKER_GPG_DEARMOR_TMP" "$DOCKER_GPG_TMP"
+    mv "$DOCKER_GPG_DEARMOR_TMP" "$DOCKER_GPG_FINAL"
+    rm -f "$DOCKER_GPG_TMP"
     
     # Add Docker repository
     echo \

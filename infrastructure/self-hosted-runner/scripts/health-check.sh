@@ -39,7 +39,7 @@ if docker ps | grep -q aitherzero-runner; then
     echo -e "${GREEN}✓${NC} Runner container is running"
     
     # Check runner logs for errors
-    RECENT_ERRORS=$(docker logs --since 5m aitherzero-runner 2>&1 | grep -i "error\|fatal\|failed" | wc -l)
+    RECENT_ERRORS=$(docker logs --since 5m aitherzero-runner 2>&1 | grep -iE 'error|fatal|failed' | wc -l)
     if [ "$RECENT_ERRORS" -gt 0 ]; then
         echo -e "${YELLOW}⚠${NC} Found $RECENT_ERRORS recent errors in logs"
     else

@@ -289,6 +289,25 @@ export DOCKER_CONTENT_TRUST=1
 docker scan aitherzero:main
 ```
 
+### Runner Sudo Permissions
+
+The auto-update workflow requires sudo access to run deployment scripts. Configure limited sudo permissions for security:
+
+```bash
+# Create sudoers entry for the runner user (replace 'runner' with actual username)
+echo 'runner ALL=(ALL) NOPASSWD: /opt/aitherzero-runner/scripts/update-main.sh' | sudo tee /etc/sudoers.d/aitherzero-runner
+sudo chmod 440 /etc/sudoers.d/aitherzero-runner
+
+# Verify the configuration
+sudo visudo -c
+```
+
+**Security Benefits:**
+- Runner can only execute specific script, not any sudo command
+- No password required (NOPASSWD) for automated workflows
+- Full path prevents PATH manipulation attacks
+- Limited to single script with known functionality
+
 ## 🔥 Troubleshooting
 
 ### Runner Not Appearing in GitHub

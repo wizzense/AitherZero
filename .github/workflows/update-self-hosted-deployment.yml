@@ -76,6 +76,10 @@ jobs:
         if: steps.check-runner.outputs.update_script_exists == 'true'
         run: |
           echo "Running deployment update script..."
+          # Note: sudo is required for docker-compose operations on the self-hosted runner.
+          # Security: Configure runner with limited sudoers permissions:
+          #   runner-user ALL=(ALL) NOPASSWD: /opt/aitherzero-runner/scripts/update-main.sh
+          # This allows the runner to execute only this specific script without password.
           sudo /opt/aitherzero-runner/scripts/update-main.sh
       
       - name: ✅ Verify Updated Deployment

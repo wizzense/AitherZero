@@ -101,7 +101,7 @@ services:
           memory: 512M
     
     healthcheck:
-      test: ["CMD", "pwsh", "-NoProfile", "-Command", "Test-Path /opt/aitherzero/AitherZero.psd1 -PathType Leaf"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
       interval: 30s
       timeout: 10s
       retries: 3

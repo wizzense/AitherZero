@@ -52,7 +52,7 @@ if [ -d "$REPO_ROOT/.git" ]; then
     CURRENT_COMMIT=$(git rev-parse HEAD)
     LATEST_COMMIT=$(git rev-parse origin/main)
     
-    if [ "$CURRENT_COMMIT" = "$LATEST_COMMIT" ]; then
+    if [[ "$CURRENT_COMMIT" == "$LATEST_COMMIT" ]]; then
         echo -e "${GREEN}✓${NC} Already on latest commit: ${CURRENT_COMMIT:0:8}"
     else
         echo "Current: ${CURRENT_COMMIT:0:8}"
