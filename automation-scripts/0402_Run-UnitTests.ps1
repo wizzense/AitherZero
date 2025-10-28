@@ -454,6 +454,7 @@ try {
             Duration = ($parallelResults | Measure-Object -Property Duration -Maximum).Maximum
             Failed = @($parallelResults | ForEach-Object { $_.Failed } | Where-Object { $_ })
             Tests = @($parallelResults | ForEach-Object { $_.Tests } | Where-Object { $_ })
+            CodeCoverage = $null  # Code coverage not supported in parallel mode
         }
     } else {
         # Standard sequential execution
