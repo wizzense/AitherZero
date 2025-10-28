@@ -58,11 +58,13 @@ docker run -it --rm -v "$(pwd):/app" -w /app ghcr.io/wizzense/aitherzero:latest
 
 ### Example: Running Scripts on Your Files
 
+> **Note:** Manual import of the AitherZero module (`Import-Module /opt/aitherzero/AitherZero.psd1`) is only necessary when you override the default CMD with `-c` (as shown below). If you start the container interactively (see above), the module loads automatically and you do not need to import it manually.
+
 ```bash
 # Navigate to your project directory
 cd /path/to/your/project
 
-# Run AitherZero container with your project mounted
+# Run AitherZero container with your project mounted and a custom command
 docker run -it --rm -v "$(pwd):/app" -w /app ghcr.io/wizzense/aitherzero:latest pwsh -c "
   Import-Module /opt/aitherzero/AitherZero.psd1
   # Your project files are now in /app
