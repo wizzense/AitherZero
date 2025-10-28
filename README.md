@@ -125,7 +125,7 @@ See the [contribution guide](./CONTRIBUTING.md) for more details.
 
 ## License
 
-actionlint is distributed under [the MIT license](./LICENSE.txt).
+actionlint is distributed under [The MIT License](./LICENSE.txt).
 
 [CI Badge]: https://github.com/rhysd/actionlint/workflows/CI/badge.svg?branch=main&event=push
 [CI]: https://github.com/rhysd/actionlint/actions?query=workflow%3ACI+branch%3Amain
