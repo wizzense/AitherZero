@@ -160,11 +160,10 @@ Write-Host "━━━━━━━━━━━━━━━━━━━━━━�
 Push-Location $webRoot
 try {
     # Check if Python is available for HTTP server
+    Write-Host "`n🔵 Starting Python HTTP server..." -ForegroundColor Cyan
     if (Get-Command python3 -ErrorAction SilentlyContinue) {
-        Write-Host "`n🔵 Starting Python HTTP server..." -ForegroundColor Cyan
         python3 -m http.server $Port
     } elseif (Get-Command python -ErrorAction SilentlyContinue) {
-        Write-Host "`n🔵 Starting Python HTTP server..." -ForegroundColor Cyan
         python -m http.server $Port
     } else {
         # Fallback: Keep container alive without web server
