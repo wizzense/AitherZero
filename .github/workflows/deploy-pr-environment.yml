@@ -238,7 +238,9 @@ jobs:
         run: |
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
 
-          # Calculate dynamic port
+          # Calculate dynamic port (8080-8089 range, max 10 concurrent PRs)
+          # Note: Port collision possible if >10 PRs deployed simultaneously
+          # Consider port management strategy for high-concurrency scenarios
           DYNAMIC_PORT="808$((${PR_NUMBER} % 10))"
           echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
 
@@ -295,6 +297,8 @@ jobs:
           fi
 
           # Set deployment URL output
+          # Note: Uses localhost as deployment is on GitHub Actions runner
+          # For remote deployments, replace with actual server IP/domain
           DEPLOYMENT_URL="http://localhost:${DYNAMIC_PORT}"
           echo "url=${DEPLOYMENT_URL}" >> $GITHUB_OUTPUT
           echo "✅ Deployment URL: ${DEPLOYMENT_URL}"
