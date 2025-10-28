@@ -415,13 +415,13 @@ try {
     if ($results.Summary.Critical -gt 0) {
         Write-Host "`n⚠️  Critical security issues found!" -ForegroundColor Red
         
-        # In CI environments, report issues but don't fail the build
+        # In CI environments, report issues with exit code 1 (non-blocking warning)
         if ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true') {
             Write-Host "Security analysis completed with critical issues found" -ForegroundColor Yellow
             Write-Host "⚠️ Security issues detected - see detailed report" -ForegroundColor Yellow
             Write-Host "📋 Security findings are captured in reports for review" -ForegroundColor Cyan
             Write-Host "💡 Security issues are reported for attention - they don't block CI but require review" -ForegroundColor Cyan
-            exit 0  # Don't fail CI, just report
+            exit 1  # Exit code 1 indicates issues found (handled gracefully by CI)
         } else {
             exit 1  # Fail in interactive mode
         }
