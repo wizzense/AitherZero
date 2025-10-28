@@ -52,7 +52,7 @@ When the container starts, it automatically:
 
 Once the container is running, access the web interface at:
 - **HTTP**: http://localhost:8080
-- **HTTPS**: http://localhost:8443 (reserved for future use)
+- **HTTPS**: https://localhost:8443 (reserved for future use)
 
 The web interface provides:
 - 📊 Live dashboards with project metrics
