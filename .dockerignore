@@ -1,0 +1,91 @@
+# Exclude version control
+.git/
+.gitignore
+.gitattributes
+
+# Exclude CI/CD (except needed files)
+.github/
+.claude/
+
+# Exclude development files
+*.md
+!README.md
+docs/
+examples/
+demos/
+
+# Exclude logs and temporary files
+logs/
+*.log
+reports/
+tests/results/
+tests/reports/
+tests/coverage/
+audit-logs/
+generated-issues/
+
+# Exclude build artifacts
+*.zip
+*.tar.gz
+*.tgz
+build-info.json
+deployment-result-*.json
+cleanup-report-*.json
+
+# Exclude IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Exclude large binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Exclude test files (keep test framework)
+*.Tests.ps1
+tests/unit/
+tests/integration/
+tests/domains/
+
+# Exclude legacy and migration files
+legacy-to-migrate/
+
+# Exclude infrastructure definitions (already have source)
+infrastructure/examples/
+
+# Exclude Docker files (to avoid recursion)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Exclude Terraform state and files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Exclude sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+.env
+.env.*
+
+# Keep essential files
+!AitherZero.psd1
+!AitherZero.psm1
+!bootstrap.ps1
+!bootstrap.sh
+!Start-AitherZero.ps1
+!config.example.psd1
+!config.psd1
+!automation-scripts/
+!domains/
+!orchestration/
