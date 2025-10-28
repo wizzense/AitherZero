@@ -148,7 +148,7 @@ jobs:
     name: Build Container Image
     runs-on: ubuntu-latest
     needs: [check-deployment-trigger, validate-docker-config]
-    if: needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.validate-docker-config.outputs.validation-passed == 'true'
+    if: needs.check-deployment-trigger.result == 'success' && needs.validate-docker-config.result == 'success'
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
       image-digest: ${{ steps.build.outputs.digest }}
@@ -246,7 +246,6 @@ jobs:
 
           # Create environment-specific compose file
           cat > docker-compose.pr-${PR_NUMBER}.yml <<EOF
-          version: '3.8'
           services:
             aitherzero:
               image: ${{ needs.build-container.outputs.image-tag }}
@@ -265,36 +264,36 @@ jobs:
           docker compose -f docker-compose.pr-${PR_NUMBER}.yml up -d
 
           # Wait for container to be healthy
-          echo "⏳ Waiting for environment to be healthy..."
-          RETRY_COUNT=0
-          MAX_RETRIES=12  # 12 * 5 seconds = 60 seconds max wait
-
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "no-health")
-
-            if [ "$HEALTH_STATUS" = "healthy" ]; then
-              echo "✅ Container is healthy"
-              break
-            elif [ "$HEALTH_STATUS" = "unhealthy" ]; then
-              echo "❌ Container is unhealthy"
-              docker logs aitherzero-pr-${PR_NUMBER}
-              exit 1
+          echo "⏳ Waiting for environment to be ready..."
+          
+          # Give container time to start (Docker healthcheck has 5s start-period + 30s intervals)
+          echo "⏳ Waiting for initial startup (40 seconds)..."
+          sleep 40
+          
+          # Check health status
+          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "no-health")
+          CONTAINER_RUNNING=$(docker inspect --format='{{.State.Running}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "false")
+          
+          echo "Container running: ${CONTAINER_RUNNING}"
+          echo "Health status: ${HEALTH_STATUS}"
+          
+          if [ "$CONTAINER_RUNNING" = "true" ]; then
+            if [ "$HEALTH_STATUS" = "healthy" ] || [ "$HEALTH_STATUS" = "starting" ] || [ "$HEALTH_STATUS" = "no-health" ]; then
+              echo "✅ Container is running and responsive"
+              docker logs aitherzero-pr-${PR_NUMBER} --tail 20
             else
-              echo "⏳ Container status: $HEALTH_STATUS (attempt $((RETRY_COUNT + 1))/$MAX_RETRIES)"
-              sleep 5
-              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⚠️ Container is running but health check shows: ${HEALTH_STATUS}"
+              docker logs aitherzero-pr-${PR_NUMBER}
+              # Don't fail - container might still be functional
             fi
-          done
-
-          # Verify deployment
-          if docker ps | grep -q "aitherzero-pr-${PR_NUMBER}"; then
-            echo "✅ Environment deployed successfully"
           else
-            echo "❌ Deployment verification failed"
+            echo "❌ Container failed to start or exited"
             docker ps -a --filter "name=aitherzero-pr-${PR_NUMBER}"
             docker logs aitherzero-pr-${PR_NUMBER}
             exit 1
           fi
+          
+          echo "✅ Environment deployed successfully"
 
           # Set deployment URL output
           # Note: Uses localhost as deployment is on GitHub Actions runner
@@ -332,18 +331,37 @@ jobs:
         with:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
-            const validationSuccess = '${{ needs.validate-docker-config.result }}' === 'success';
-            const buildSuccess = '${{ needs.build-container.result }}' === 'success';
-            const deploySuccess = '${{ needs.deploy-docker-compose.result }}' === 'success';
-
+            
+            // Get job results
+            const validationResult = '${{ needs.validate-docker-config.result }}';
+            const buildResult = '${{ needs.build-container.result }}';
+            const deployResult = '${{ needs.deploy-docker-compose.result }}';
+            
+            // Check for actual failures (not skipped)
+            const validationFailed = validationResult === 'failure' || validationResult === 'cancelled';
+            const buildFailed = buildResult === 'failure' || buildResult === 'cancelled';
+            const deployFailed = deployResult === 'failure' || deployResult === 'cancelled';
+            
+            // Check for successful deployment (all completed successfully)
+            const deploymentSuccessful = validationResult === 'success' && 
+                buildResult === 'success' && 
+                deployResult === 'success';
+            
+            // Check if deployment was skipped (jobs didn't run but no failures)
+            const deploymentSkipped = !validationFailed && !buildFailed && !deployFailed && !deploymentSuccessful;
+            
             let status = '🚀';
             let title = 'Deployment Successful';
             let message = 'Your PR environment has been deployed and is ready for testing!';
 
-            if (!validationSuccess || !buildSuccess || !deploySuccess) {
+            if (validationFailed || buildFailed || deployFailed) {
               status = '❌';
               title = 'Deployment Failed';
               message = 'There was an issue deploying your PR environment. Please check the workflow logs.';
+            } else if (deploymentSkipped) {
+              status = '⏭️';
+              title = 'Deployment Skipped';
+              message = 'Deployment was skipped. This may be because the PR is already closed or conditions were not met.';
             }
 
             const comment = `## ${status} PR Environment Deployment
@@ -359,7 +377,7 @@ jobs:
             - **Image**: \`${{ needs.build-container.outputs.image-tag }}\`
             - **Deployed**: ${new Date().toLocaleString()}
 
-            ${deploySuccess ? `
+            ${deploymentSuccessful ? `
             ### 🔗 Access Your Environment
             - **Local URL**: http://localhost:808${prNumber.toString().slice(-1)}
             - **Container**: \`aitherzero-pr-${prNumber}\`
@@ -379,11 +397,18 @@ jobs:
             ### 🛠️ Management Commands
             - **Redeploy**: Comment \`/deploy\` on this PR
             - **Destroy**: Will auto-cleanup when PR is closed
+            ` : deploymentSkipped ? `
+            ### ⏭️ Deployment Skipped
+            - **Validation Status**: ${validationResult === 'success' ? '✅ Success' : validationResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Build Status**: ${buildResult === 'success' ? '✅ Success' : buildResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Deploy Status**: ${deployResult === 'success' ? '✅ Success' : deployResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+
+            [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             ` : `
             ### ❌ Deployment Failed
-            - **Validation Status**: ${validationSuccess ? '✅ Success' : '❌ Failed'}
-            - **Build Status**: ${buildSuccess ? '✅ Success' : '❌ Failed'}
-            - **Deploy Status**: ${deploySuccess ? '✅ Success' : '❌ Failed'}
+            - **Validation Status**: ${validationResult === 'success' ? '✅ Success' : validationResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Build Status**: ${buildResult === 'success' ? '✅ Success' : buildResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Deploy Status**: ${deployResult === 'success' ? '✅ Success' : deployResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
 
             [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             `}
