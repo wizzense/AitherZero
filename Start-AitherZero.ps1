@@ -1703,11 +1703,13 @@ try {
                 $result = Invoke-OrchestrationSequence -Sequence $Sequence -Configuration $config -Variables $variables -DryRun:$DryRun
             }
 
-            # Exit with appropriate code
+            # Exit with appropriate code based on results
             if ($result.Failed -gt 0) {
                 exit 1
+            } else {
+                exit 0
             }
-    }
+        }
 
         'Validate' {
             & (Join-Path $script:ProjectRoot "automation-scripts/0500_Validate-Environment.ps1") -Configuration $config
