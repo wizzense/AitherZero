@@ -12,6 +12,26 @@ BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0404_Run-PSScriptAnalyzer.ps1"
 
+    # Create stubs for commands that may not exist
+    if (-not (Get-Command -Name ConvertTo-SarifReport -ErrorAction SilentlyContinue)) {
+        function global:ConvertTo-SarifReport { param($InputObject) }
+    }
+    if (-not (Get-Command -Name Write-CustomLog -ErrorAction SilentlyContinue)) {
+        function global:Write-CustomLog { param($Level, $Message, $Source, $Data) }
+    }
+    if (-not (Get-Command -Name Start-PerformanceTrace -ErrorAction SilentlyContinue)) {
+        function global:Start-PerformanceTrace { param($Name, $Description) }
+    }
+    if (-not (Get-Command -Name Stop-PerformanceTrace -ErrorAction SilentlyContinue)) {
+        function global:Stop-PerformanceTrace { param($Name) return [PSCustomObject]@{ TotalSeconds = 1.5 } }
+    }
+    if (-not (Get-Command -Name Get-Configuration -ErrorAction SilentlyContinue)) {
+        function global:Get-Configuration { return $null }
+    }
+    if (-not (Get-Command -Name Get-ConfiguredValue -ErrorAction SilentlyContinue)) {
+        function global:Get-ConfiguredValue { param($Name, $Section, $Default) return $null }
+    }
+
     # Mock PSScriptAnalyzer and other functions
     Mock Invoke-ScriptAnalyzer {
         return @(
@@ -49,11 +69,13 @@ BeforeAll {
         })
     }
     Mock Get-ChildItem {
-        if ($Filter -eq '*.ps1') {
+        param($Path, $Filter, $Include, $Recurse, $File)
+        # Handle both Filter and Include parameters
+        if ($Filter -eq '*.ps1' -or ($Include -and ($Include -contains '*.ps1' -or $Include -contains '*.psm1' -or $Include -contains '*.psd1'))) {
             return @(
-                [PSCustomObject]@{ FullName = '/path/to/Script1.ps1' }
-                [PSCustomObject]@{ FullName = '/path/to/Script2.ps1' }
-                [PSCustomObject]@{ FullName = '/path/to/Script3.ps1' }
+                [PSCustomObject]@{ FullName = '/path/to/Script1.ps1'; Name = 'Script1.ps1' }
+                [PSCustomObject]@{ FullName = '/path/to/Script2.ps1'; Name = 'Script2.ps1' }
+                [PSCustomObject]@{ FullName = '/path/to/Script3.ps1'; Name = 'Script3.ps1' }
             )
         }
         return @()
@@ -79,6 +101,7 @@ BeforeAll {
     Mock Export-Csv {}
     Mock Set-Content {}
     Mock ConvertTo-Json { return '{}' }
+    Mock ConvertTo-SarifReport { return '{"sarif":"data"}' }
     Mock Write-Host {}
     Mock Group-Object {
         return @(
@@ -86,6 +109,13 @@ BeforeAll {
             [PSCustomObject]@{ Name = 'Error'; Count = 1 }
         )
     }
+    
+    # Mock optional functions that the script checks for
+    Mock Write-CustomLog {}
+    Mock Start-PerformanceTrace {}
+    Mock Stop-PerformanceTrace { return [PSCustomObject]@{ TotalSeconds = 1.5 } }
+    Mock Get-Configuration { return $null }
+    Mock Get-ConfiguredValue { return $null }
 }
 
 Describe "0404_Run-PSScriptAnalyzer" -Tag @('Unit', 'Testing', 'StaticAnalysis') {
@@ -398,9 +428,7 @@ Describe "0404_Run-PSScriptAnalyzer" -Tag @('Unit', 'Testing', 'StaticAnalysis')
 
     Context "SARIF Report Generation" {
         It "Should generate SARIF report when ConvertTo-SarifReport is available" {
-            Mock Get-Command { return $true } -ParameterFilter { $Name -eq 'ConvertTo-SarifReport' }
-            Mock ConvertTo-SarifReport { return '{"sarif":"data"}' }
-
+            # No need to mock Get-Command - the stub function will be found
             & $scriptPath -Path "/test/path" -OutputPath "/output/path"
 
             Assert-MockCalled ConvertTo-SarifReport
@@ -410,7 +438,7 @@ Describe "0404_Run-PSScriptAnalyzer" -Tag @('Unit', 'Testing', 'StaticAnalysis')
         }
 
         It "Should skip SARIF generation when ConvertTo-SarifReport is not available" {
-            Mock Get-Command { return $false } -ParameterFilter { $Name -eq 'ConvertTo-SarifReport' }
+            Mock Get-Command { return $null } -ParameterFilter { $Name -eq 'ConvertTo-SarifReport' }
 
             & $scriptPath -Path "/test/path" -OutputPath "/output/path"
 

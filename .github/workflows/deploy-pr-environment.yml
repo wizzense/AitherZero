@@ -411,18 +411,69 @@ jobs:
             - **Container Name**: \`aitherzero-pr-${prNumber}\`
 
             ### 🧪 Testing Commands
+            
+            #### Option A: Container already running (automated deployment)
+            If the deployment workflow already started the container, use these commands:
             \`\`\`bash
-            # Pull the container image
-            docker pull ${{ needs.build-container.outputs.image-tag }}
-
-            # View container logs
             docker logs aitherzero-pr-${prNumber}
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List"
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
+            \`\`\`
+            
+            #### Option B: Manual local testing (start container yourself)
+            If you want to test locally, follow ALL steps in order:
+            
+            **🚀 QuickStart (Automated - pull + run + verify):**
+            \`\`\`bash
+            # Clone AitherZero repo and run the container manager
+            git clone https://github.com/wizzense/AitherZero.git
+            cd AitherZero
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber ${prNumber}
+            \`\`\`
+            
+            **📋 Manual Steps (if you prefer step-by-step):**
+            
+            **Step 1: Pull the image**
+            \`\`\`bash
+            docker pull ${{ needs.build-container.outputs.image-tag }}
+            \`\`\`
 
-            # Execute commands in environment
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "./Start-AitherZero.ps1 -Mode List"
+            **Step 2: Start the container** (REQUIRED - container won't exist until you run this)
+            \`\`\`bash
+            docker run -d --name aitherzero-pr-${prNumber} -p 808${prNumber.toString().slice(-1)}:8080 ${{ needs.build-container.outputs.image-tag }}
+            \`\`\`
 
-            # Run tests
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "./az.ps1 0402"
+            **Step 3: Wait for startup and check logs**
+            \`\`\`bash
+            sleep 5
+            docker logs aitherzero-pr-${prNumber}
+            \`\`\`
+
+            **Step 4: Run commands in the container**
+            \`\`\`bash
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List"
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
+            \`\`\`
+
+            **Step 5: Cleanup when done**
+            \`\`\`bash
+            docker stop aitherzero-pr-${prNumber}
+            docker rm aitherzero-pr-${prNumber}
+            \`\`\`
+            
+            **💡 Advanced: Use the container manager for all operations**
+            \`\`\`bash
+            # After cloning the repo, use the integrated container manager:
+            cd AitherZero
+            
+            # Interactive shell (easiest way to explore)
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber ${prNumber}
+            
+            # Other useful commands
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber ${prNumber}
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber ${prNumber} -Follow
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "./az.ps1 0402"
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber ${prNumber}
             \`\`\`
 
             ### 🛠️ Management Commands

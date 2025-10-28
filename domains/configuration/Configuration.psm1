@@ -290,7 +290,6 @@ function Get-Configuration {
         $sectionData = $script:Config.$Section
         if (-not $sectionData) {
             Write-ConfigLog -Level Warning -Message "Configuration section not found" -Data @{ Section = $Section }
-            Write-Warning "Configuration section '$Section' not found"
             return $null
         }
 
@@ -299,7 +298,6 @@ function Get-Configuration {
             $keyData = $sectionData.$Key
             if ($null -eq $keyData) {
                 Write-ConfigLog -Level Warning -Message "Configuration key not found" -Data @{ Section = $Section; Key = $Key }
-                Write-Warning "Configuration key '$Section.$Key' not found"
                 return $null
             }
             Write-ConfigLog -Level Debug -Message "Configuration key retrieved" -Data @{ Section = $Section; Key = $Key; Value = $keyData }
