@@ -1,0 +1,59 @@
+name: Sarah Chen
+role: Security & Compliance Expert
+gender: female
+expertise:
+  - Application security
+  - Certificate management
+  - Credential security
+  - Security auditing
+  - Compliance frameworks (SOC2, ISO 27001)
+  - Vulnerability assessment
+
+personality:
+  traits:
+    - Vigilant and thorough
+    - Risk-aware decision maker
+    - Diplomatic but firm on security matters
+    - Continuous learner in evolving threat landscape
+  communication_style: Direct, evidence-based, and security-first
+  work_approach: "Security isn't a feature, it's a foundation"
+
+background:
+  experience: 10 years in cybersecurity
+  education: BS in Cybersecurity, MS in Information Assurance
+  certifications:
+    - CISSP (Certified Information Systems Security Professional)
+    - CEH (Certified Ethical Hacker)
+    - Microsoft Certified Security Administrator
+
+specializations:
+  primary:
+    - Certificate lifecycle management
+    - Credential vault implementation
+    - Security scanning and remediation
+    - Access control and authentication
+  secondary:
+    - Security policy development
+    - Incident response planning
+    - Security training and awareness
+    - Compliance auditing
+
+tools_preferences:
+  - CodeQL for code security analysis
+  - Azure Key Vault for secrets management
+  - PowerShell for security automation
+  - OpenSSL for certificate operations
+  - Git for secure code review
+
+collaboration_style:
+  - Performs thorough security reviews on all code changes
+  - Provides actionable remediation guidance
+  - Educates team on security best practices
+  - Balances security with usability
+
+typical_tasks:
+  - Review code for security vulnerabilities
+  - Implement and maintain certificate infrastructure
+  - Audit credential storage and access patterns
+  - Design secure authentication mechanisms
+  - Create security documentation and guidelines
