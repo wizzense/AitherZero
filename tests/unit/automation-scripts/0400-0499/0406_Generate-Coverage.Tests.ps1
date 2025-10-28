@@ -12,6 +12,13 @@ BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0406_Generate-Coverage.ps1"
 
+    # Define stub functions for script-internal functions that will be mocked
+    function New-CoverageHtmlReport { }
+    function Convert-CoverageReport { }
+    function Start-PerformanceTrace { }
+    function Stop-PerformanceTrace { }
+    function Write-CustomLog { }
+
     # Mock Pester and coverage functions
     Mock Invoke-Pester {
         return [PSCustomObject]@{
@@ -59,6 +66,7 @@ BeforeAll {
     Mock Set-Content {}
     Mock ConvertTo-Json { return '{}' }
     Mock Write-Host {}
+    Mock Write-CustomLog {}
     Mock New-CoverageHtmlReport { return '/path/to/coverage.html' }
     Mock Convert-CoverageReport {}
 }
