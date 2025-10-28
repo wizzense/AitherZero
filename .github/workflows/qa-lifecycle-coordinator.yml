@@ -246,9 +246,7 @@ jobs:
           $dashboard += '.success{border-left:4px solid #28a745}</style>`n</head>`n<body>`n"
           $dashboard += "<h1>🎯 AitherZero QA Dashboard</h1>`n"
 
-          $cssClass = if ($qaResults.OverallStatus -eq 'Passed') { 'success' }
-                     elseif ($qaResults.OverallStatus -eq 'Critical Issues') { 'critical' }
-                     else { 'warning' }
+          $cssClass = if ($qaResults.OverallStatus -eq 'Passed') { 'success' } elseif ($qaResults.OverallStatus -eq 'Critical Issues') { 'critical' } else { 'warning' }
 
           $dashboard += "<div class=`"card $cssClass`">`n"
           $dashboard += "<h2>📊 Overall Status: $($qaResults.OverallStatus)</h2>`n"
