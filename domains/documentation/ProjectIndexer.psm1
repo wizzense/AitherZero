@@ -36,7 +36,7 @@ if (Test-Path $script:LoggingModule) {
     Import-Module $script:LoggingModule -Force -ErrorAction SilentlyContinue
 }
 
-$script:LoggingAvailable = (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) -ne $null
+$script:LoggingAvailable = $null -ne (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)
 
 function Write-IndexLog {
     param(
