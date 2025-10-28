@@ -42,16 +42,48 @@ jobs:
             console.log(`📋 Close Reason: ${closeReason}`);
             console.log('');
 
-            // Find all auto-created issues
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'auto-created',
-              per_page: 100
+            // Find all auto-created issues (checking both label variations) with pagination
+            async function fetchAllIssuesByLabel(label) {
+              let allIssues = [];
+              let page = 1;
+              let fetched;
+              do {
+                const { data } = await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  labels: label,
+                  per_page: 100,
+                  page: page
+                });
+                fetched = data.length;
+                allIssues = allIssues.concat(data);
+                page++;
+              } while (fetched === 100);
+              return allIssues;
+            }
+            
+            const autoCreatedIssues = await fetchAllIssuesByLabel('auto-created');
+            const automatedIssues = await fetchAllIssuesByLabel('automated-issue');
+            
+            // Optionally warn if the number of issues is a multiple of 100 (could indicate more issues exist)
+            if (autoCreatedIssues.length > 0 && autoCreatedIssues.length % 100 === 0) {
+              console.warn('⚠️ Warning: More than 100 issues with label "auto-created" may exist. Some may not have been fetched.');
+            }
+            if (automatedIssues.length > 0 && automatedIssues.length % 100 === 0) {
+              console.warn('⚠️ Warning: More than 100 issues with label "automated-issue" may exist. Some may not have been fetched.');
+            }
+            
+            // Combine and deduplicate by issue number
+            const issueMap = new Map();
+            [...autoCreatedIssues, ...automatedIssues].forEach(issue => {
+              issueMap.set(issue.number, issue);
             });
+            const issues = Array.from(issueMap.values());
 
-            console.log(`Found ${issues.length} auto-created issues to process`);
+            console.log(`Found ${issues.length} auto-created/automated issues to process`);
+            console.log(`  - auto-created label: ${autoCreatedIssues.length}`);
+            console.log(`  - automated-issue label: ${automatedIssues.length}`);
             console.log('');
 
             if (issues.length === 0) {
