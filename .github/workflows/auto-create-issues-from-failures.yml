@@ -1,0 +1,394 @@
+---
+name: 🚨 Auto-Create Issues from Test Failures
+
+# Automatically analyze test results and create targeted GitHub issues
+on:
+  workflow_run:
+    workflows: ["Intelligent CI Orchestrator", "Quality Validation"]
+    types: [completed]
+  schedule:
+    # Run daily to catch any missed failures
+    - cron: '0 7 * * *'  # 7 AM UTC daily
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run - preview issues without creating them'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+  checks: write
+
+jobs:
+  analyze-test-failures:
+    name: 🔍 Analyze Test Failures
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && 
+       github.event.workflow_run.conclusion == 'failure')
+    
+    outputs:
+      has-test-failures: ${{ steps.analysis.outputs.has-test-failures }}
+      has-code-quality-issues: ${{ steps.analysis.outputs.has-code-quality-issues }}
+      total-failures: ${{ steps.analysis.outputs.total-failures }}
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: 📊 Download Test Artifacts
+        if: github.event.workflow_run
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_id: ${{ github.event.workflow_run.id }}
+          path: ./test-artifacts
+        continue-on-error: true
+        
+      - name: 🔍 Analyze Test Results
+        id: analysis
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Analyzing test results for failures..." -ForegroundColor Cyan
+          
+          $testFailures = @()
+          $codeQualityIssues = @()
+          
+          # Analyze test report files
+          $testReportFiles = Get-ChildItem -Path "./reports", "./test-artifacts" -Filter "TestReport*.json" -Recurse -ErrorAction SilentlyContinue
+          
+          foreach ($reportFile in $testReportFiles) {
+            try {
+              $report = Get-Content $reportFile.FullName | ConvertFrom-Json
+              
+              if ($report.FailedCount -gt 0) {
+                Write-Host "Found $($report.FailedCount) test failures in $($reportFile.Name)" -ForegroundColor Red
+                
+                # Extract failure details
+                foreach ($result in $report.Tests) {
+                  if ($result.Result -eq 'Failed') {
+                    $testFailures += @{
+                      TestName = $result.ExpandedName
+                      ErrorMessage = $result.ErrorRecord.Exception.Message
+                      File = $result.ScriptBlock.File
+                      Line = $result.ScriptBlock.StartPosition.Line
+                    }
+                  }
+                }
+              }
+            } catch {
+              Write-Warning "Failed to parse report: $($reportFile.Name)"
+            }
+          }
+          
+          # Analyze PSScriptAnalyzer results
+          $psAnalysisFiles = Get-ChildItem -Path "./reports", "./test-artifacts" -Filter "*psscriptanalyzer*.json" -Recurse -ErrorAction SilentlyContinue
+          
+          foreach ($analysisFile in $psAnalysisFiles) {
+            try {
+              $analysis = Get-Content $analysisFile.FullName | ConvertFrom-Json
+              
+              if ($analysis.Summary -and $analysis.Summary.BySeverity) {
+                $errorCount = $analysis.Summary.BySeverity.Error
+                $warningCount = $analysis.Summary.BySeverity.Warning
+                
+                if ($errorCount -gt 0) {
+                  Write-Host "Found $errorCount PSScriptAnalyzer errors" -ForegroundColor Red
+                  $codeQualityIssues += @{
+                    Type = "PSScriptAnalyzer"
+                    Severity = "Error"
+                    Count = $errorCount
+                  }
+                }
+                
+                if ($warningCount -gt 50) {
+                  Write-Host "Found $warningCount PSScriptAnalyzer warnings (threshold: 50)" -ForegroundColor Yellow
+                  $codeQualityIssues += @{
+                    Type = "PSScriptAnalyzer"
+                    Severity = "Warning"
+                    Count = $warningCount
+                  }
+                }
+              }
+            } catch {
+              Write-Warning "Failed to parse analysis: $($analysisFile.Name)"
+            }
+          }
+          
+          # Group failures by category
+          $failuresByFile = $testFailures | Group-Object -Property File
+          
+          # Save analysis results
+          $analysisResults = @{
+            Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+            TotalFailures = $testFailures.Count
+            FailuresByFile = $failuresByFile | ForEach-Object {
+              @{
+                File = $_.Name
+                Count = $_.Count
+                Failures = $_.Group
+              }
+            }
+            CodeQualityIssues = $codeQualityIssues
+            WorkflowRun = if ($env:GITHUB_EVENT_NAME -eq 'workflow_run') { 
+              @{
+                Id = "${{ github.event.workflow_run.id }}"
+                Conclusion = "${{ github.event.workflow_run.conclusion }}"
+                Workflow = "${{ github.event.workflow_run.name }}"
+              }
+            } else { $null }
+          }
+          
+          $analysisResults | ConvertTo-Json -Depth 10 | Out-File "failure-analysis.json"
+          
+          # Set outputs
+          "has-test-failures=$($testFailures.Count -gt 0)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "has-code-quality-issues=$($codeQualityIssues.Count -gt 0)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "total-failures=$($testFailures.Count)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          
+          Write-Host "✅ Analysis complete!" -ForegroundColor Green
+          Write-Host "  Test Failures: $($testFailures.Count)" -ForegroundColor $(if ($testFailures.Count -gt 0) { 'Red' } else { 'Green' })
+          Write-Host "  Code Quality Issues: $($codeQualityIssues.Count)" -ForegroundColor $(if ($codeQualityIssues.Count -gt 0) { 'Yellow' } else { 'Green' })
+          
+      - name: 📤 Upload Analysis Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-analysis
+          path: failure-analysis.json
+          retention-days: 30
+
+  create-issues:
+    name: 📝 Create GitHub Issues
+    runs-on: ubuntu-latest
+    needs: analyze-test-failures
+    if: |
+      needs.analyze-test-failures.outputs.has-test-failures == 'true' ||
+      needs.analyze-test-failures.outputs.has-code-quality-issues == 'true'
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: 📊 Download Analysis Results
+        uses: actions/download-artifact@v4
+        with:
+          name: failure-analysis
+          path: ./
+          
+      - name: 📝 Create Issues from Failures
+        if: github.event.inputs.dry_run != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Load analysis results
+            const analysisPath = './failure-analysis.json';
+            if (!fs.existsSync(analysisPath)) {
+              console.log('❌ No analysis results found');
+              return;
+            }
+            
+            const analysis = JSON.parse(fs.readFileSync(analysisPath, 'utf8'));
+            console.log(`📊 Processing ${analysis.TotalFailures} test failures`);
+            
+            // Get existing automated issues to avoid duplicates
+            const { data: existingIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'automated-issue,test-failure',
+              state: 'open',
+              per_page: 100
+            });
+            
+            console.log(`Found ${existingIssues.length} existing automated test failure issues`);
+            
+            // Create issues grouped by file
+            for (const fileGroup of analysis.FailuresByFile || []) {
+              if (!fileGroup.File) continue;
+              
+              const fileName = fileGroup.File.split('/').pop();
+              const issueTitle = `🧪 Test Failures in ${fileName} (${fileGroup.Count} failures)`;
+              
+              // Check if issue already exists
+              const existingIssue = existingIssues.find(i => i.title.includes(fileName));
+              
+              if (existingIssue) {
+                // Update existing issue with latest info
+                const updateComment = `## 🔄 Updated Test Failure Report
+            
+            **Timestamp:** ${analysis.Timestamp}
+            **Total Failures:** ${fileGroup.Count}
+            
+            ### Failed Tests
+            ${fileGroup.Failures.slice(0, 10).map(f => 
+              `- \`${f.TestName}\`
+              - **Error:** ${f.ErrorMessage}
+              - **Location:** Line ${f.Line || 'unknown'}`
+            ).join('\n')}
+            
+            ${fileGroup.Count > 10 ? `\n*...and ${fileGroup.Count - 10} more failures*\n` : ''}
+            
+            ### Workflow Context
+            ${analysis.WorkflowRun ? `
+            - **Workflow:** ${analysis.WorkflowRun.Workflow}
+            - **Run ID:** ${analysis.WorkflowRun.Id}
+            - **Conclusion:** ${analysis.WorkflowRun.Conclusion}
+            ` : ''}
+            
+            ---
+            *This is an automated update. Issue remains open until all tests pass.*`;
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: updateComment
+                });
+                
+                console.log(`✅ Updated existing issue #${existingIssue.number}: ${issueTitle}`);
+                continue;
+              }
+              
+              // Create new issue
+              const issueBody = `## 🧪 Test Failures Detected
+            
+            **File:** \`${fileGroup.File}\`
+            **Total Failures:** ${fileGroup.Count}
+            **Detected:** ${analysis.Timestamp}
+            
+            ### Failed Tests
+            ${fileGroup.Failures.slice(0, 10).map(f => 
+              `- **Test:** \`${f.TestName}\`
+              - **Error:** ${f.ErrorMessage}
+              - **Location:** Line ${f.Line || 'unknown'}`
+            ).join('\n\n')}
+            
+            ${fileGroup.Count > 10 ? `\n*...and ${fileGroup.Count - 10} more failures. See full test report for details.*\n` : ''}
+            
+            ### 🤖 AI Agent Instructions
+            
+            @copilot Please investigate and fix these test failures:
+            
+            1. **Analyze** the failed tests and identify root causes
+            2. **Fix** the underlying issues causing the failures
+            3. **Verify** all tests pass after fixes
+            4. **Update** this issue with your findings and solutions
+            5. **Submit** a PR with the fixes
+            
+            ### Workflow Context
+            ${analysis.WorkflowRun ? `
+            - **Workflow:** ${analysis.WorkflowRun.Workflow}
+            - **Run ID:** [${analysis.WorkflowRun.Id}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${analysis.WorkflowRun.Id})
+            - **Conclusion:** ${analysis.WorkflowRun.Conclusion}
+            ` : '- **Triggered by:** Scheduled analysis'}
+            
+            ---
+            *This issue was automatically created from test failure analysis*`;
+              
+              try {
+                const newIssue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: issueBody,
+                  labels: ['automated-issue', 'test-failure', 'p1', 'bug']
+                });
+                
+                console.log(`✅ Created issue #${newIssue.data.number}: ${issueTitle}`);
+              } catch (error) {
+                console.error(`❌ Failed to create issue for ${fileName}: ${error.message}`);
+              }
+            }
+            
+            // Create issues for code quality problems
+            for (const issue of analysis.CodeQualityIssues || []) {
+              const issueTitle = `⚠️ ${issue.Type} ${issue.Severity}: ${issue.Count} issues detected`;
+              
+              // Check for existing issue
+              const existingIssue = existingIssues.find(i => 
+                i.title.includes(issue.Type) && i.title.includes(issue.Severity)
+              );
+              
+              if (existingIssue) {
+                console.log(`Issue already exists for ${issue.Type} ${issue.Severity}`);
+                continue;
+              }
+              
+              const issueBody = `## ⚠️ Code Quality Issues Detected
+            
+            **Type:** ${issue.Type}
+            **Severity:** ${issue.Severity}
+            **Count:** ${issue.Count}
+            **Detected:** ${analysis.Timestamp}
+            
+            ### 🤖 AI Agent Instructions
+            
+            @copilot Please address these code quality issues:
+            
+            1. **Review** the PSScriptAnalyzer results in the reports directory
+            2. **Prioritize** ${issue.Severity.toLowerCase()} issues by impact
+            3. **Fix** the most critical violations first
+            4. **Test** to ensure fixes don't break functionality
+            5. **Submit** PR(s) with the improvements
+            
+            ### Context
+            ${analysis.WorkflowRun ? `
+            - **Workflow Run:** [${analysis.WorkflowRun.Id}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${analysis.WorkflowRun.Id})
+            ` : ''}
+            
+            ---
+            *This issue was automatically created from code quality analysis*`;
+              
+              try {
+                const newIssue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: issueBody,
+                  labels: ['automated-issue', 'code-quality', issue.Severity.toLowerCase(), 'p2']
+                });
+                
+                console.log(`✅ Created code quality issue #${newIssue.data.number}`);
+              } catch (error) {
+                console.error(`❌ Failed to create code quality issue: ${error.message}`);
+              }
+            }
+            
+            console.log('✅ Issue creation complete!');
+            
+      - name: 📋 Preview Issues (Dry Run)
+        if: github.event.inputs.dry_run == 'true'
+        shell: pwsh
+        run: |
+          Write-Host "🧪 DRY RUN MODE - No issues will be created" -ForegroundColor Yellow
+          Write-Host ""
+          
+          $analysis = Get-Content "./failure-analysis.json" | ConvertFrom-Json
+          
+          Write-Host "📊 Issues that would be created:" -ForegroundColor Cyan
+          Write-Host "================================" -ForegroundColor Cyan
+          
+          foreach ($fileGroup in $analysis.FailuresByFile) {
+            Write-Host ""
+            Write-Host "🧪 Test Failure Issue:" -ForegroundColor Red
+            Write-Host "  File: $($fileGroup.File)"
+            Write-Host "  Failures: $($fileGroup.Count)"
+          }
+          
+          foreach ($issue in $analysis.CodeQualityIssues) {
+            Write-Host ""
+            Write-Host "⚠️ Code Quality Issue:" -ForegroundColor Yellow
+            Write-Host "  Type: $($issue.Type)"
+            Write-Host "  Severity: $($issue.Severity)"
+            Write-Host "  Count: $($issue.Count)"
+          }
+          
+          Write-Host ""
+          Write-Host "💡 Run without dry_run to create these issues" -ForegroundColor Blue

@@ -1,0 +1,65 @@
+# Jekyll configuration for AitherZero GitHub Pages
+
+# Site settings
+title: AitherZero Dashboard
+description: Infrastructure automation platform with comprehensive testing and reporting
+baseurl: "" # Leave empty for user/org pages
+url: "https://wizzense.github.io/AitherZero"
+
+# Theme
+theme: minima
+
+# Build settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Include/exclude files
+include:
+  - reports
+  - reports/dashboard.html
+  - reports/*.json
+  - reports/*.md
+
+exclude:
+  - .git
+  - .github
+  - node_modules
+  - vendor
+  - automation-scripts
+  - tests
+  - domains
+  - infrastructure
+  - legacy-to-migrate
+  - orchestration
+  - tools
+  - "*.ps1"
+  - "*.psm1"
+  - "*.psd1"
+  - Dockerfile
+  - docker-compose.yml
+  - bootstrap.sh
+  - bootstrap.ps1
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /docs/:path/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+  - scope:
+      path: "docs"
+    values:
+      layout: page
