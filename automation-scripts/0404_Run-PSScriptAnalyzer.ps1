@@ -313,67 +313,56 @@ try {
             # For CI environments, use job with intelligent resource management
             if ($isCI) {
                 Write-ScriptLog -Message "Running PSScriptAnalyzer with CI optimizations and adaptive timeout"
+                
+                # Extract file paths and other parameters separately to avoid serialization issues
+                $filePaths = if ($analyzerParams.Path -is [array]) { $analyzerParams.Path } else { @($analyzerParams.Path) }
+                $otherParams = @{}
+                foreach ($key in $analyzerParams.Keys) {
+                    if ($key -ne 'Path') {
+                        $otherParams[$key] = $analyzerParams[$key]
+                    }
+                }
+                
                 $analysisJob = Start-Job -ScriptBlock {
-                    param($params)
+                    param([string[]]$Files, [hashtable]$Params)
                     Import-Module PSScriptAnalyzer -Force
                     
-                    if ($params.Path -is [array] -and $params.Path.Count -gt 100) {
+                    if ($Files.Count -gt 100) {
                         # Use highly optimized batch processing for large file sets
                         $allResults = @()
                         $batchSize = 25  # Optimal batch size for memory vs speed
-                        $totalFiles = $params.Path.Count
+                        $totalFiles = $Files.Count
                         
                         # Split files into batches and process each batch together
                         for ($i = 0; $i -lt $totalFiles; $i += $batchSize) {
                             $endIndex = [Math]::Min($i + $batchSize - 1, $totalFiles - 1)
-                            $batch = $params.Path[$i..$endIndex] | ForEach-Object { $_.ToString() }
+                            $batch = $Files[$i..$endIndex]
                             
                             Write-Progress -Activity "Batch Analysis" -Status "Processing batch $([Math]::Ceiling(($i + 1) / $batchSize)) of $([Math]::Ceiling($totalFiles / $batchSize))" -PercentComplete (($i / $totalFiles) * 100)
                             
-                            # Create batch-specific parameters once
-                            $batchParams = @{}
-                            foreach ($key in $params.Keys) {
-                                if ($key -ne 'Path') {
-                                    $batchParams[$key] = $params[$key]
-                                }
-                            }
-                            $batchParams['Path'] = $batch
-                            $batchParams['Recurse'] = $false  # Files are already specified
-                            
-                            try {
-                                # Process each file individually if batch fails with array conversion
-                                if ($batch.Count -eq 1) {
-                                    $batchResults = Invoke-ScriptAnalyzer @batchParams -ErrorAction SilentlyContinue
-                                } else {
-                                    $batchResults = @()
-                                    foreach ($file in $batch) {
-                                        $fileParams = $batchParams.Clone()
-                                        $fileParams['Path'] = $file
-                                        $fileResult = Invoke-ScriptAnalyzer @fileParams -ErrorAction SilentlyContinue
-                                        if ($fileResult) {
-                                            $batchResults += $fileResult
-                                        }
+                            # Process each file individually to avoid array conversion issues
+                            foreach ($file in $batch) {
+                                $fileParams = $Params.Clone()
+                                $fileParams['Path'] = $file
+                                $fileParams['Recurse'] = $false
+                                
+                                try {
+                                    $fileResult = Invoke-ScriptAnalyzer @fileParams -ErrorAction SilentlyContinue
+                                    if ($fileResult) {
+                                        $allResults += $fileResult
                                     }
+                                } catch {
+                                    Write-Warning "Failed to analyze file ${file}: $($_.Exception.Message)"
                                 }
-                                if ($batchResults) {
-                                    $allResults += $batchResults
-                                }
-                            } catch {
-                                Write-Warning "Failed to analyze batch starting at file $($i + 1): $($_.Exception.Message)"
                             }
                         }
                         return $allResults
-                    } elseif ($params.Path -is [array] -and $params.Path.Count -gt 1) {
+                    } elseif ($Files.Count -gt 1) {
                         # Use individual file processing for smaller sets to avoid array conversion issues
                         $allResults = @()
-                        foreach ($file in $params.Path) {
-                            $fileParams = @{}
-                            foreach ($key in $params.Keys) {
-                                if ($key -ne 'Path') {
-                                    $fileParams[$key] = $params[$key]
-                                }
-                            }
-                            $fileParams['Path'] = $file.ToString()
+                        foreach ($file in $Files) {
+                            $fileParams = $Params.Clone()
+                            $fileParams['Path'] = $file
                             $fileParams['Recurse'] = $false
                             
                             try {
@@ -388,12 +377,15 @@ try {
                         }
                         return $allResults
                     } else {
-                        return Invoke-ScriptAnalyzer @params
+                        # Single file - use original params approach
+                        $singleParams = $Params.Clone()
+                        $singleParams['Path'] = $Files[0]
+                        return Invoke-ScriptAnalyzer @singleParams
                     }
-                } -ArgumentList $analyzerParams
+                } -ArgumentList $filePaths, $otherParams
                 
                 # Wait for job with adaptive timeout based on file count
-                $fileCount = if ($analyzerParams.Path -is [array]) { $analyzerParams.Path.Count } else { 1 }
+                $fileCount = $filePaths.Count
                 $timeoutSeconds = [Math]::Min(300, [Math]::Max(60, $fileCount * 2))  # 2 seconds per file, min 60, max 300
                 Write-ScriptLog -Message "Using adaptive timeout of $timeoutSeconds seconds for $fileCount files"
                 

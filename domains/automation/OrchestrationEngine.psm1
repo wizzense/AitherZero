@@ -899,7 +899,8 @@ function Invoke-ParallelOrchestration {
                     try {
                         # Execute the script
                         $result = & $ScriptPath @params
-                        return @{ Success = $true; ExitCode = $LASTEXITCODE; Output = $result }
+                        $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+                        return @{ Success = $true; ExitCode = $exitCode; Output = $result }
                     } finally {
                         # Clean up environment variable
                         $env:AITHERZERO_NONINTERACTIVE = $null
@@ -926,7 +927,11 @@ function Invoke-ParallelOrchestration {
 
             $duration = New-TimeSpan -Start $jobInfo.StartTime -End (Get-Date)
 
-            if ($result.Success -and $result.ExitCode -eq 0) {
+            # Check if script succeeded (exit code 0 or null means success)
+            $exitCode = if ($null -eq $result.ExitCode) { 0 } else { $result.ExitCode }
+            $isSuccess = ($result.Success -and $exitCode -eq 0)
+            
+            if ($isSuccess) {
                 Write-OrchestrationLog "Completed: [$number] $($jobInfo.Script.Name) (Duration: $($duration.TotalSeconds)s)"
                 $completed[$number] = $result
             } else {
@@ -1052,8 +1057,10 @@ function Invoke-SequentialOrchestration {
                 Write-OrchestrationLog "Script: $($script.Number) - Parameters being passed: $($params.Keys -join ', ')" -Level 'Debug'
                 & $script.Path @params
 
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Script exited with code: $LASTEXITCODE"
+                # Treat null or 0 as success
+                $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+                if ($exitCode -ne 0) {
+                    throw "Script exited with code: $exitCode"
                 }
 
                 $succeeded = $true
