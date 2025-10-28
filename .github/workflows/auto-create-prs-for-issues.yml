@@ -7,9 +7,10 @@ on:
   issues:
     types: [labeled]
   
-  schedule:
-    # Check for prioritized issues every 4 hours
-    - cron: '0 */4 * * *'
+  # DISABLED: 4-hour schedule was too aggressive
+  # schedule:
+  #   # Check for prioritized issues every 4 hours
+  #   - cron: '0 */4 * * *'
   
   workflow_dispatch:
     inputs:

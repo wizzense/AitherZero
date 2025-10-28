@@ -23,9 +23,10 @@ on:
         type: number
         default: 30
 
-  schedule:
-    # Run daily coordination check at 2 AM UTC
-    - cron: '0 2 * * *'
+  # DISABLED: Daily schedule was creating unnecessary issues
+  # schedule:
+  #   # Run daily coordination check at 2 AM UTC
+  #   - cron: '0 2 * * *'
 
   issues:
     types: [opened, labeled, assigned]
