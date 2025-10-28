@@ -135,6 +135,44 @@ function Show-UpdatedFiles {
     }
 }
 
+function Export-IndexReport {
+    param(
+        [hashtable]$Results,
+        [string]$Mode,
+        [timespan]$Duration
+    )
+    
+    $reportPath = Join-Path $script:ProjectRoot ".aitherzero-index-report.json"
+    
+    $report = @{
+        Timestamp = (Get-Date).ToString('o')
+        Mode = $Mode
+        Duration = @{
+            TotalSeconds = [math]::Round($Duration.TotalSeconds, 2)
+            Formatted = "{0:mm}m {0:ss}s" -f $Duration
+        }
+        Statistics = @{
+            TotalDirectories = $Results.TotalDirectories
+            UpdatedIndexes = $Results.UpdatedIndexes
+            SkippedIndexes = $Results.SkippedIndexes
+            FailedIndexes = $Results.FailedIndexes
+            UpdateRate = if ($Results.TotalDirectories -gt 0) {
+                [math]::Round(($Results.UpdatedIndexes / $Results.TotalDirectories) * 100, 1)
+            } else { 0 }
+        }
+        UpdatedPaths = @($Results.IndexedPaths | ForEach-Object {
+            [System.IO.Path]::GetRelativePath($script:ProjectRoot, $_)
+        })
+    }
+    
+    try {
+        $report | ConvertTo-Json -Depth 10 | Set-Content -Path $reportPath -Encoding UTF8 -Force
+        Write-IndexLog "Index report exported to: $reportPath" -Level Success
+    } catch {
+        Write-IndexLog "Failed to export index report: $_" -Level Warning
+    }
+}
+
 #region Main Execution
 
 try {
@@ -166,6 +204,10 @@ try {
             Show-Statistics -Results $results
             Show-UpdatedFiles -Results $results
             
+            # Export report for CI/CD
+            $duration = (Get-Date) - $script:StartTime
+            Export-IndexReport -Results $results -Mode $Mode -Duration $duration
+            
             if ($results.UpdatedIndexes -gt 0) {
                 Write-Host "✓ Full project indexing completed successfully!" -ForegroundColor Green
             } else {
@@ -181,6 +223,10 @@ try {
             
             Show-Statistics -Results $results
             Show-UpdatedFiles -Results $results
+            
+            # Export report for CI/CD
+            $duration = (Get-Date) - $script:StartTime
+            Export-IndexReport -Results $results -Mode $Mode -Duration $duration
             
             if ($results.UpdatedIndexes -gt 0) {
                 Write-Host "✓ Incremental indexing completed - $($results.UpdatedIndexes) indexes updated!" -ForegroundColor Green
