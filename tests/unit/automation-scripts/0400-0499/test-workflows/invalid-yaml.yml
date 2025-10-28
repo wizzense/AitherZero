@@ -1,8 +1,0 @@
-name: Invalid YAML
-on:
-  push:
-    branches: [main]
-	invalid_tab_indentation: true
-jobs:
-  test:
-    runs-on: ubuntu-latest

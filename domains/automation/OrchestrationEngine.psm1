@@ -43,6 +43,30 @@ function Write-OrchestrationLog {
     }
 }
 
+function Get-NormalizedExitCode {
+    <#
+    .SYNOPSIS
+        Normalize exit code, treating null as success (0)
+    .DESCRIPTION
+        Helper function to handle null $LASTEXITCODE or exit codes from job results.
+        Treats null values as success (exit code 0) to ensure consistent exit code handling.
+    .PARAMETER ExitCode
+        The exit code to normalize (can be null)
+    .EXAMPLE
+        $exitCode = Get-NormalizedExitCode -ExitCode $LASTEXITCODE
+    #>
+    param(
+        [Parameter(Mandatory = $false)]
+        [object]$ExitCode
+    )
+    
+    if ($null -eq $ExitCode) { 
+        return 0 
+    } else { 
+        return $ExitCode 
+    }
+}
+
 function Invoke-OrchestrationSequence {
     <#
     .SYNOPSIS
@@ -899,7 +923,9 @@ function Invoke-ParallelOrchestration {
                     try {
                         # Execute the script
                         $result = & $ScriptPath @params
-                        return @{ Success = $true; ExitCode = $LASTEXITCODE; Output = $result }
+                        # Treat null exit code as success (0) - inlined for Start-Job scope
+                        $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+                        return @{ Success = $true; ExitCode = $exitCode; Output = $result }
                     } finally {
                         # Clean up environment variable
                         $env:AITHERZERO_NONINTERACTIVE = $null
@@ -926,7 +952,11 @@ function Invoke-ParallelOrchestration {
 
             $duration = New-TimeSpan -Start $jobInfo.StartTime -End (Get-Date)
 
-            if ($result.Success -and $result.ExitCode -eq 0) {
+            # Check if script succeeded (exit code 0 or null means success)
+            $exitCode = Get-NormalizedExitCode -ExitCode $result.ExitCode
+            $isSuccess = ($result.Success -and $exitCode -eq 0)
+            
+            if ($isSuccess) {
                 Write-OrchestrationLog "Completed: [$number] $($jobInfo.Script.Name) (Duration: $($duration.TotalSeconds)s)"
                 $completed[$number] = $result
             } else {
@@ -1052,8 +1082,10 @@ function Invoke-SequentialOrchestration {
                 Write-OrchestrationLog "Script: $($script.Number) - Parameters being passed: $($params.Keys -join ', ')" -Level 'Debug'
                 & $script.Path @params
 
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Script exited with code: $LASTEXITCODE"
+                # Treat null or 0 as success
+                $exitCode = Get-NormalizedExitCode -ExitCode $LASTEXITCODE
+                if ($exitCode -ne 0) {
+                    throw "Script exited with code: $exitCode"
                 }
 
                 $succeeded = $true
