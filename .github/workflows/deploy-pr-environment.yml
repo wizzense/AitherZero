@@ -412,43 +412,43 @@ jobs:
 
             ### 🧪 Testing Commands
             
-            #### If the container is already running (automated deployment):
+            #### Option A: Container already running (automated deployment)
+            If the deployment workflow already started the container, use these commands:
             \`\`\`bash
-            # View container logs
             docker logs aitherzero-pr-${prNumber}
-
-            # Execute commands in environment
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "./Start-AitherZero.ps1 -Mode List"
-
-            # Run tests
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "./az.ps1 0402"
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List"
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
             \`\`\`
             
-            #### For manual local testing:
+            #### Option B: Manual local testing (start container yourself)
+            If you want to test locally, follow ALL steps in order:
+            
+            **Step 1: Pull the image**
             \`\`\`bash
-            # Pull the container image
             docker pull ${{ needs.build-container.outputs.image-tag }}
+            \`\`\`
 
-            # Run the container (use port 808${prNumber.toString().slice(-1)} to match deployment)
-            docker run -d \\
-              --name aitherzero-pr-${prNumber} \\
-              -p 808${prNumber.toString().slice(-1)}:8080 \\
-              ${{ needs.build-container.outputs.image-tag }}
+            **Step 2: Start the container** (REQUIRED - container won't exist until you run this)
+            \`\`\`bash
+            docker run -d --name aitherzero-pr-${prNumber} -p 808${prNumber.toString().slice(-1)}:8080 ${{ needs.build-container.outputs.image-tag }}
+            \`\`\`
 
-            # Wait for container to start
+            **Step 3: Wait for startup and check logs**
+            \`\`\`bash
             sleep 5
-
-            # View container logs
             docker logs aitherzero-pr-${prNumber}
+            \`\`\`
 
-            # Execute commands in environment
+            **Step 4: Run commands in the container**
+            \`\`\`bash
             docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List"
-
-            # Run tests
             docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
+            \`\`\`
 
-            # Stop and remove when done
-            docker stop aitherzero-pr-${prNumber} && docker rm aitherzero-pr-${prNumber}
+            **Step 5: Cleanup when done**
+            \`\`\`bash
+            docker stop aitherzero-pr-${prNumber}
+            docker rm aitherzero-pr-${prNumber}
             \`\`\`
 
             ### 🛠️ Management Commands
