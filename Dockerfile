@@ -3,7 +3,7 @@
 
 FROM mcr.microsoft.com/powershell:7.4-ubuntu-22.04 AS base
 
-# Install system dependencies
+# Install system dependencies including Python for web server
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     openssh-client \
     ca-certificates \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
