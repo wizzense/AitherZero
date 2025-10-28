@@ -1016,9 +1016,8 @@ $manifestTagsSection
             <div class="subtitle">Infrastructure Automation Platform</div>
 
             <div class="badges-container">
-                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/intelligent-ci-orchestrator.yml?label=CI%2FCD&logo=github" alt="CI/CD Status">
-                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
                 <img src="$($Status.Badges.Tests)" alt="Tests Status">
                 <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
