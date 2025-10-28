@@ -115,11 +115,11 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Running Docker configuration validation..." -ForegroundColor Cyan
-          
+
           try {
             # Run the quick validation script with explicit -File parameter
             pwsh -File ./automation-scripts/0853_Quick-Docker-Validation.ps1
-            
+
             if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ Validation passed" -ForegroundColor Green
               echo "passed=true" >> $GITHUB_OUTPUT
@@ -223,19 +223,26 @@ jobs:
     if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
     environment:
       name: pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
-      url: http://localhost:8080
+      url: ${{ steps.deploy.outputs.url }}
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
       - name: 🚀 Deploy with Docker Compose
+        id: deploy
         env:
           PR_NUMBER: ${{ needs.check-deployment-trigger.outputs.pr-number }}
           BRANCH_NAME: ${{ github.head_ref }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
+
+          # Calculate dynamic port (8080-8089 range, max 10 concurrent PRs)
+          # Note: Port collision occurs when PR numbers share the same modulo 10 value (e.g., PR #5 and #15 both use port 8085)
+          # Consider port management strategy for high-concurrency scenarios
+          DYNAMIC_PORT="808$((${PR_NUMBER} % 10))"
+          echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
 
           # Create environment-specific compose file
           cat > docker-compose.pr-${PR_NUMBER}.yml <<EOF
@@ -249,7 +256,7 @@ jobs:
                 - COMMIT_SHA=${COMMIT_SHA}
                 - DEPLOYMENT_ENVIRONMENT=preview
               ports:
-                - "808$((${PR_NUMBER} % 10)):8080"
+                - "${DYNAMIC_PORT}:8080"
               restart: unless-stopped
           EOF
 
@@ -287,6 +294,13 @@ jobs:
           fi
           
           echo "✅ Environment deployed successfully"
+
+          # Set deployment URL output
+          # Note: Uses localhost as deployment is on GitHub Actions runner
+          # For remote deployments, replace with actual server IP/domain
+          DEPLOYMENT_URL="http://localhost:${DYNAMIC_PORT}"
+          echo "url=${DEPLOYMENT_URL}" >> $GITHUB_OUTPUT
+          echo "✅ Deployment URL: ${DEPLOYMENT_URL}"
 
       - name: 🧪 Run Smoke Tests
         run: |
