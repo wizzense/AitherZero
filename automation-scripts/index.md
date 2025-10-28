@@ -1,6 +1,6 @@
 # automation-scripts
 
-**Navigation**: [🏠 Root](../index.md) → [automation-scripts](index.md) → [automation-scripts](index.md) → **automation-scripts**
+**Navigation**: [🏠 Root](../index.md) → **automation-scripts**
 
 ⬆️ **Parent**: [Root](../index.md)
 
