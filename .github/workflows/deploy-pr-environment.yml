@@ -411,10 +411,9 @@ jobs:
             - **Container Name**: \`aitherzero-pr-${prNumber}\`
 
             ### 🧪 Testing Commands
+            
+            #### If the container is already running (automated deployment):
             \`\`\`bash
-            # Pull the container image
-            docker pull ${{ needs.build-container.outputs.image-tag }}
-
             # View container logs
             docker logs aitherzero-pr-${prNumber}
 
@@ -423,6 +422,33 @@ jobs:
 
             # Run tests
             docker exec aitherzero-pr-${prNumber} pwsh -Command "./az.ps1 0402"
+            \`\`\`
+            
+            #### For manual local testing:
+            \`\`\`bash
+            # Pull the container image
+            docker pull ${{ needs.build-container.outputs.image-tag }}
+
+            # Run the container (use port 808${prNumber.toString().slice(-1)} to match deployment)
+            docker run -d \\
+              --name aitherzero-pr-${prNumber} \\
+              -p 808${prNumber.toString().slice(-1)}:8080 \\
+              ${{ needs.build-container.outputs.image-tag }}
+
+            # Wait for container to start
+            sleep 5
+
+            # View container logs
+            docker logs aitherzero-pr-${prNumber}
+
+            # Execute commands in environment
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List"
+
+            # Run tests
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
+
+            # Stop and remove when done
+            docker stop aitherzero-pr-${prNumber} && docker rm aitherzero-pr-${prNumber}
             \`\`\`
 
             ### 🛠️ Management Commands
