@@ -95,7 +95,7 @@ function Initialize-DocumentationEngine {
             $script:DocumentationState.Config = Merge-Configuration $script:DocumentationState.Config $fileConfig
             Write-DocLog "Loaded configuration from $ConfigPath"
         } catch {
-            Write-DocLog "Failed to load configuration from $ConfigPath: $_" -Level Warning
+            Write-DocLog "Failed to load configuration from ${ConfigPath}: $($_.Exception.Message)" -Level Warning
         }
     }
     
@@ -465,7 +465,7 @@ function New-ProjectDocumentation {
             try {
                 New-ModuleDocumentation -ModulePath $module.Path -OutputPath (Join-Path $outputDir "modules")
             } catch {
-                Write-DocLog "Failed to generate documentation for module $($module.Name): $_" -Level Warning
+                Write-DocLog "Failed to generate documentation for module $($module.Name): $($_.Exception.Message)" -Level Warning
             }
         }
     }
@@ -609,7 +609,7 @@ function Get-ProjectAnalysis {
             Contributing = (Get-ContributingGuidelines)
         }
     } catch {
-        Write-DocLog "Error generating project info: $_" -Level Warning
+        Write-DocLog "Error generating project info: $($_.Exception.Message)" -Level Warning
         $projectInfo = @{
             Name = $projectName
             Description = "AitherZero infrastructure automation platform"
@@ -925,7 +925,7 @@ function Test-DocumentationContent {
                         }
                     }
                 } catch {
-                    Write-DocLog "Validation rule $($rule.Name) failed for $($file.Name): $_" -Level Warning
+                    Write-DocLog "Validation rule $($rule.Name) failed for $($file.Name): $($_.Exception.Message)" -Level Warning
                 }
             }
         }

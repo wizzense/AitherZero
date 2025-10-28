@@ -4,14 +4,14 @@ name: 🔄 Copilot PR Automation - Iterative Issue Resolution
 on:
   issues:
     types: [assigned, labeled, commented]
-  
+
   pull_request:
     types: [opened, synchronize, closed]
-    
+
   schedule:
     # Check for stale assigned issues every 4 hours during business days
     - cron: '0 */4 * * 1-5'
-    
+
   workflow_dispatch:
     inputs:
       issue_number:
@@ -35,12 +35,12 @@ jobs:
     name: 👀 Monitor Copilot-Assigned Issues
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event.inputs.force_pr_creation == 'true' || (github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == 'copilot')
-    
+
     outputs:
       actionable_issues: ${{ steps.scan_issues.outputs.actionable_issues }}
-      
+
     steps:
-      - name: 📥 Checkout Repository  
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
       - name: 🔍 Scan for Actionable Copilot Issues
@@ -50,7 +50,7 @@ jobs:
           script: |
             const specificIssue = '${{ github.event.inputs.issue_number }}';
             let issuesToProcess = [];
-            
+
             if (specificIssue) {
               // Process specific issue
               try {
@@ -59,7 +59,7 @@ jobs:
                   repo: context.repo.repo,
                   issue_number: parseInt(specificIssue)
                 });
-                
+
                 if (issue.assignees?.some(a => a.login === 'copilot') && issue.state === 'open') {
                   issuesToProcess.push({
                     number: issue.number,
@@ -82,32 +82,32 @@ jobs:
                 direction: 'desc',
                 per_page: 50
               });
-              
+
               // Filter for actionable issues
               issuesToProcess = issues
                 .filter(issue => {
                   const hasAutoLabel = issue.labels.some(l => l.name.includes('auto-created') || l.name.includes('copilot-task'));
                   const ageHours = Math.round((Date.now() - new Date(issue.created_at)) / (1000 * 60 * 60));
                   const isStale = ageHours > 2; // Issues older than 2 hours without PR
-                  
+
                   return hasAutoLabel && (isStale || '${{ github.event.inputs.force_pr_creation }}' === 'true');
                 })
                 .map(issue => ({
                   number: issue.number,
-                  title: issue.title, 
+                  title: issue.title,
                   labels: issue.labels.map(l => l.name),
                   age_hours: Math.round((Date.now() - new Date(issue.created_at)) / (1000 * 60 * 60))
                 }))
                 .slice(0, 5); // Limit to 5 issues per run for performance
             }
-            
+
             console.log(`Found ${issuesToProcess.length} actionable issues for copilot`);
             issuesToProcess.forEach(issue => {
               console.log(`  - #${issue.number}: ${issue.title} (${issue.age_hours}h old)`);
             });
-            
+
             core.setOutput('actionable_issues', JSON.stringify(issuesToProcess));
-            
+
             return issuesToProcess;
 
   create-resolution-prs:
@@ -115,12 +115,12 @@ jobs:
     needs: monitor-assigned-issues
     runs-on: ubuntu-latest
     if: needs.monitor-assigned-issues.outputs.actionable_issues != '[]'
-    
+
     strategy:
       matrix:
         issue: ${{ fromJson(needs.monitor-assigned-issues.outputs.actionable_issues) }}
       max-parallel: 2 # Process 2 issues concurrently to avoid conflicts
-      
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -128,15 +128,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0 # Full history for branch creation
 
-      - name: 🔧 Setup PowerShell Environment  
+      - name: 🔧 Setup PowerShell Environment
         shell: pwsh
         run: |
           Write-Host "🔧 Setting up PowerShell environment..." -ForegroundColor Cyan
-          
+
           # Install required modules
           Install-Module PSScriptAnalyzer -Force -AllowClobber -Scope CurrentUser -ErrorAction SilentlyContinue
           Install-Module Pester -Force -AllowClobber -Scope CurrentUser -ErrorAction SilentlyContinue
-          
+
           # Import AitherZero modules
           if (Test-Path "./AitherZero.psd1") {
             try {
@@ -156,15 +156,15 @@ jobs:
           ISSUE_LABELS: ${{ join(matrix.issue.labels, ',') }}
         run: |
           Write-Host "🎯 Analyzing issue #$env:ISSUE_NUMBER: $env:ISSUE_TITLE" -ForegroundColor Yellow
-          
+
           $issueNumber = $env:ISSUE_NUMBER
           $issueTitle = $env:ISSUE_TITLE
           $issueLabels = $env:ISSUE_LABELS -split ','
-          
+
           # Create branch for the fix
           $branchName = "copilot/fix-issue-$issueNumber"
           $branchExists = git branch --list $branchName
-          
+
           if (-not $branchExists) {
             git checkout -b $branchName
             Write-Host "✅ Created branch: $branchName" -ForegroundColor Green
@@ -172,14 +172,14 @@ jobs:
             git checkout $branchName
             Write-Host "📋 Switched to existing branch: $branchName" -ForegroundColor Cyan
           }
-          
+
           $changesMade = $false
           $fixSummary = @()
-          
+
           # Determine fix strategy based on issue labels and title
           if ($issueLabels -contains 'psscriptanalyzer' -or $issueTitle -match 'PSScriptAnalyzer') {
             Write-Host "🔍 Applying PSScriptAnalyzer fixes..." -ForegroundColor Cyan
-            
+
             # Run PSScriptAnalyzer and attempt automatic fixes
             try {
               $psaResults = Invoke-ScriptAnalyzer -Path . -Recurse -Fix -ErrorAction SilentlyContinue
@@ -188,7 +188,7 @@ jobs:
                 $fixSummary += "Applied $fixedCount PSScriptAnalyzer automatic fixes"
                 $changesMade = $true
               }
-              
+
               # Check for remaining critical issues
               $remainingIssues = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error -ErrorAction SilentlyContinue
               if ($remainingIssues) {
@@ -198,31 +198,31 @@ jobs:
               $fixSummary += "PSScriptAnalyzer execution encountered issues: $($_.Exception.Message)"
             }
           }
-          
+
           if ($issueLabels -contains 'unit-tests' -or $issueTitle -match 'Test') {
             Write-Host "🧪 Addressing test failures..." -ForegroundColor Cyan
-            
+
             # Run tests to identify specific failures
             try {
               if (Test-Path "./tests/unit/Start-AitherZero.Tests.ps1") {
                 # We know this test had issues - apply the fix we made earlier
                 $testFile = "./tests/unit/Start-AitherZero.Tests.ps1"
                 $content = Get-Content $testFile -Raw
-                
+
                 # Check if our previous fix is not applied
                 if ($content -match 'switch.*Verbose' -and $content -notmatch 'CmdletBinding') {
                   Write-Host "🔧 Applying test parameter fix..." -ForegroundColor Green
-                  
-                  # Apply the same fix we did manually  
+
+                  # Apply the same fix we did manually
                   $content = $content -replace 'param\(', '[CmdletBinding()]`nparam('
                   $content = $content -replace '\s+\[switch\].*Verbose.*,\s*', "`n"
-                  
+
                   Set-Content $testFile -Value $content -Encoding UTF8
                   $fixSummary += "Fixed parameter conflicts in Start-AitherZero.Tests.ps1"
                   $changesMade = $true
                 }
               }
-              
+
               # Run tests to validate
               $testResults = Invoke-Pester -Path "./tests/unit" -PassThru -Output None -ErrorAction SilentlyContinue
               if ($testResults -and $testResults.FailedCount -lt 5) {
@@ -232,16 +232,16 @@ jobs:
               $fixSummary += "Test analysis encountered issues: $($_.Exception.Message)"
             }
           }
-          
+
           if ($issueLabels -contains 'security' -or $issueTitle -match 'Security') {
             Write-Host "🔒 Addressing security issues..." -ForegroundColor Cyan
-            
+
             # Look for common security patterns and add suppressions for test code
             $securityFixes = 0
-            $psFiles = Get-ChildItem -Path . -Filter "*.ps1" -Recurse | Where-Object { 
+            $psFiles = Get-ChildItem -Path . -Filter "*.ps1" -Recurse | Where-Object {
               $_.FullName -match 'tests|example' -and $_.FullName -notmatch 'node_modules'
             }
-            
+
             foreach ($file in $psFiles) {
               try {
                 $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
@@ -258,31 +258,31 @@ jobs:
                 Write-Warning "Could not process file $($file.FullName): $($_.Exception.Message)"
               }
             }
-            
+
             if ($securityFixes -gt 0) {
               $fixSummary += "Added security suppressions to $securityFixes test files"
             }
           }
-          
+
           # Check if any changes were made
           $gitStatus = git status --porcelain
           if ($gitStatus) {
             Write-Host "📝 Changes detected:" -ForegroundColor Green
             $gitStatus | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
-            
+
             # Stage and commit changes
             git add .
             $commitMessage = "Fix issue #$issueNumber`: $($fixSummary -join '; ')"
             git commit -m $commitMessage
-            
+
             # Push branch
             git push origin $branchName --force
-            
+
             Write-Output "changes_made=true" >> $env:GITHUB_OUTPUT
             Write-Output "branch_name=$branchName" >> $env:GITHUB_OUTPUT
             Write-Output "commit_message=$commitMessage" >> $env:GITHUB_OUTPUT
             Write-Output "fix_summary=$($fixSummary -join '; ')" >> $env:GITHUB_OUTPUT
-            
+
             Write-Host "✅ Changes committed and pushed to $branchName" -ForegroundColor Green
           } else {
             Write-Host "ℹ️  No changes made - issue may require manual intervention" -ForegroundColor Yellow
@@ -298,7 +298,7 @@ jobs:
             const branchName = "${{ steps.create_fix.outputs.branch_name }}";
             const commitMessage = "${{ steps.create_fix.outputs.commit_message }}";
             const fixSummary = "${{ steps.create_fix.outputs.fix_summary }}";
-            
+
             // Check if PR already exists
             const { data: existingPRs } = await github.rest.pulls.list({
               owner: context.repo.owner,
@@ -306,10 +306,10 @@ jobs:
               head: `${context.repo.owner}:${branchName}`,
               state: 'open'
             });
-            
+
             if (existingPRs.length > 0) {
               console.log(`PR already exists for branch ${branchName}: #${existingPRs[0].number}`);
-              
+
               // Update existing PR
               await github.rest.pulls.update({
                 owner: context.repo.owner,
@@ -317,7 +317,7 @@ jobs:
                 pull_number: existingPRs[0].number,
                 body: `${existingPRs[0].body}\n\n---\n**Updated:** ${new Date().toISOString()}\n**Additional Changes:** ${fixSummary}`
               });
-              
+
               // Comment on issue about PR update
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -325,10 +325,10 @@ jobs:
                 issue_number: issueNumber,
                 body: `🔄 **Automated Fix Updated**\n\nPR #${existingPRs[0].number} has been updated with additional fixes.\n\n**Changes:** ${fixSummary}\n\n@copilot Please review the updated PR.`
               });
-              
+
               return;
             }
-            
+
             // Create new PR
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,
@@ -337,37 +337,37 @@ jobs:
               head: branchName,
               base: 'main',
               body: `## 🤖 Automated Fix for Issue #${issueNumber}
-              
+
               **Issue:** ${context.payload.issue?.title || '${{ matrix.issue.title }}'}
               **Labels:** ${{ join(matrix.issue.labels, ', ') }}
-              
+
               ### 🔧 Changes Made:
               ${fixSummary}
-              
+
               ### 🧪 Validation:
               - [x] Automated fixes applied
               - [ ] Manual review completed (pending)
               - [ ] Tests passing (to be validated)
               - [ ] No new issues introduced (to be verified)
-              
+
               ### 📋 Next Steps:
               1. **@copilot** please review this automated fix
               2. Run additional validation: \`./az.ps1 0407\` and \`./az.ps1 0402\`
               3. Make any necessary manual adjustments
               4. Merge when ready
               5. Close issue #${issueNumber} with resolution summary
-              
+
               ---
               **Auto-generated PR** - Created by Copilot Agent Automation
               **Branch:** \`${branchName}\`
               **Created:** ${new Date().toISOString()}
-              
+
               Fixes #${issueNumber}`,
               draft: false
             });
-            
+
             console.log(`Created PR #${pr.number} for issue #${issueNumber}`);
-            
+
             // Add labels to PR
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
@@ -375,7 +375,7 @@ jobs:
               issue_number: pr.number,
               labels: ['automated-fix', 'copilot-generated', 'needs-review']
             });
-            
+
             // Comment on original issue
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -383,7 +383,7 @@ jobs:
               issue_number: issueNumber,
               body: `🤖 **Automated Fix Created**\n\nI've created PR #${pr.number} with an automated fix for this issue.\n\n**Changes:** ${fixSummary}\n\n**Next Steps:**\n1. Review the PR changes\n2. Run validation tests\n3. Merge if satisfactory\n4. Close this issue\n\n@copilot Please complete the review and validation process.`
             });
-            
+
             // Request review from copilot (if different from creator)
             try {
               await github.rest.pulls.requestReviewers({
@@ -400,7 +400,7 @@ jobs:
     name: 📊 Monitor PR Progress & Auto-merge
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -415,15 +415,15 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number
             });
-            
+
             // Check if this is a copilot-generated automated fix PR
-            const isAutomatedFix = pr.labels?.some(label => 
+            const isAutomatedFix = pr.labels?.some(label =>
               label.name.includes('automated-fix') || label.name.includes('copilot-generated')
             );
-            
+
             if (isAutomatedFix && pr.user.login === 'copilot') {
               console.log('This is a copilot-generated automated fix PR');
-              
+
               // Add comment with validation instructions
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -431,22 +431,22 @@ jobs:
                 issue_number: pr.number,
                 body: `🤖 **Automated Fix PR Validation**\n\nThis PR contains automated fixes. Please validate:\n\n\`\`\`bash\n# Run comprehensive validation\n./az.ps1 0407  # Syntax validation\n./az.ps1 0402  # Unit tests\n./az.ps1 0404  # Code analysis\n\`\`\`\n\nIf all validations pass, this PR can be auto-merged.\n\n@copilot Please confirm validation results.`
               });
-              
+
               // Check if PR is small and safe for auto-merge
               const { data: files } = await github.rest.pulls.listFiles({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pr.number
               });
-              
+
               const isSmallChange = files.length <= 3 && files.every(file => file.changes <= 50);
-              const isTestOrDocChange = files.every(file => 
+              const isTestOrDocChange = files.every(file =>
                 file.filename.includes('test') || file.filename.includes('.md') || file.filename.includes('example')
               );
-              
+
               if (isSmallChange && isTestOrDocChange) {
                 console.log('PR is eligible for auto-merge after validation');
-                
+
                 // Add label indicating auto-merge eligibility
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
@@ -463,12 +463,12 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
-            
+
             // Check if this PR was addressing an issue
             const issueMatch = pr.body?.match(/(?:Fixes|Closes|Resolves)\s+#(\d+)/i);
             if (issueMatch) {
               const issueNumber = parseInt(issueMatch[1]);
-              
+
               try {
                 // Close the original issue with resolution summary
                 await github.rest.issues.createComment({
@@ -477,7 +477,7 @@ jobs:
                   issue_number: issueNumber,
                   body: `✅ **Issue Resolved**\n\nThis issue has been automatically resolved by PR #${pr.number}.\n\n**Resolution:** ${pr.title}\n**Merged:** ${new Date(pr.merged_at).toISOString()}\n\nAutomated resolution process completed successfully.`
                 });
-                
+
                 await github.rest.issues.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -485,7 +485,7 @@ jobs:
                   state: 'closed',
                   state_reason: 'completed'
                 });
-                
+
                 console.log(`Closed issue #${issueNumber} as resolved by PR #${pr.number}`);
               } catch (error) {
                 console.log(`Could not close issue #${issueNumber}: ${error.message}`);
