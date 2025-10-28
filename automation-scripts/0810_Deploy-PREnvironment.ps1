@@ -161,7 +161,7 @@ volumes:
     
     # Deploy
     Write-Host "🚀 Starting containers..." -ForegroundColor Yellow
-    & docker-compose -f $composeFile up -d
+    & docker compose -f $composeFile up -d
     if ($LASTEXITCODE -ne 0) {
         throw "Docker Compose deployment failed"
     }
