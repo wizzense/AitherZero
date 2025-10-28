@@ -70,7 +70,7 @@ cd AitherZero
 
 **Optional:**
 - OpenTofu or Terraform (for infrastructure automation)
-- Docker (for containerized workflows)
+- Docker (for containerized workflows) - [See Docker Guide](docs/DOCKER.md)
 
 ### 🐳 Docker Quick Start
 
@@ -130,6 +130,29 @@ The AitherZero package includes:
 - **Quality validation system** for code standards enforcement
 - **CI/CD workflow templates** for GitHub Actions
 - **Documentation and examples** for all features
+- **Docker support** for containerized workflows and testing
+
+## 🐳 Using Docker
+
+AitherZero can run in Docker containers for consistent, isolated environments:
+
+```bash
+# Quick start with Docker Compose
+docker-compose up -d
+docker-compose exec aitherzero pwsh
+
+# Or build and run manually
+docker build -t aitherzero:latest .
+docker run -it --rm aitherzero:latest pwsh
+```
+
+**Benefits:**
+- ✅ Consistent environment across platforms
+- ✅ No dependency conflicts
+- ✅ Perfect for CI/CD pipelines
+- ✅ Quick testing and validation
+
+**📖 Full Documentation**: [Docker Guide](docs/DOCKER.md) - Complete instructions for building, running, and using the Docker container.
 
 ## 🔧 Verify Installation
 
