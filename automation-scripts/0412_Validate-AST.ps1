@@ -13,7 +13,7 @@
 
 .NOTES
     Stage: Testing
-    Order: 0405
+    Order: 0412
     Dependencies: 0400
     Tags: testing, ast, syntax, validation
 #>
@@ -35,7 +35,7 @@ Set-StrictMode -Version Latest
 
 # Script metadata (kept as comment for documentation)
 # Stage: Testing
-# Order: 0405
+# Order: 0412
 # Dependencies: 0400
 # Tags: testing, ast, syntax, validation
 # RequiresAdmin: No
@@ -60,7 +60,7 @@ function Write-ScriptLog {
     )
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0405_Validate-AST" -Data $Data
+        Write-CustomLog -Level $Level -Message $Message -Source "0412_Validate-AST" -Data $Data
     } else {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         $color = @{

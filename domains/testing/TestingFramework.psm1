@@ -10,7 +10,8 @@
     Copyright © 2025 Aitherium Corporation
     Consolidates: 0400_Install-TestingTools.ps1, 0402_Run-UnitTests.ps1,
                   0403_Run-IntegrationTests.ps1, 0404_Run-PSScriptAnalyzer.ps1,
-                  0405_Validate-AST.ps1, 0406_Generate-Coverage.ps1, 0407_Validate-Syntax.ps1,
+                  0410_Run-PSScriptAnalyzer-Fast.ps1, 0412_Validate-AST.ps1,
+                  0406_Generate-Coverage.ps1, 0407_Validate-Syntax.ps1,
                   0408_Generate-TestCoverage.ps1, 0409_Run-AllTests.ps1, plus workflow testing
 #>
 
@@ -903,7 +904,7 @@ function Test-SyntaxValidation {
         Validate PowerShell syntax across all files
     .DESCRIPTION
         Performs syntax validation using AST parsing
-        Consolidates 0405_Validate-AST.ps1 and 0407_Validate-Syntax.ps1
+        Consolidates 0412_Validate-AST.ps1 and 0407_Validate-Syntax.ps1
     #>
     [CmdletBinding()]
     param(
