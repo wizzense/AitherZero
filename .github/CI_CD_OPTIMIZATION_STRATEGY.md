@@ -12,32 +12,24 @@ This document outlines the new intelligent CI/CD strategy designed for cost effi
 4. **Quality Assurance**: Maintain high code quality while optimizing for speed
 5. **Resource Efficiency**: Smart change detection and conditional execution
 
-## 🔄 New Workflow Architecture
+## 🔄 Current Workflow Architecture
 
-### 1. **Intelligent CI Orchestrator** (`intelligent-ci-orchestrator.yml`)
-**Primary CI/CD workflow replacing the legacy ci-pipeline.yml**
+### 1. **Quality Validation** (`quality-validation.yml`)
+**Primary quality assurance workflow for pull requests**
 
-- **Smart Change Detection**: Analyzes changed files to determine what testing is needed
-- **Conditional Execution**: Only runs necessary jobs based on change impact
-- **Cost Optimization**: Aggressive optimizations for PR/branch-specific needs
-- **Multi-Platform Support**: Cross-platform testing only when required
+- **Code Quality**: PSScriptAnalyzer static analysis
+- **Unit Testing**: Pester test execution
+- **Issue Creation**: Automatically creates issues for quality failures
+- **PR Feedback**: Posts results as PR comments
 
 **Triggers:**
-- Push to main/develop/feature branches
-- Pull requests (opened, synchronized, reopened, ready_for_review)
+- Pull requests with code changes
 - Manual workflow dispatch
 
-**Optimization Features:**
-- Files < 5 changes: Aggressive optimization (syntax check only)
-- Infrastructure changes: Full validation required
-- Security-sensitive files: Automatic security scans
-- Performance-critical code: Performance testing included
-
-### 2. **Intelligent Report Analyzer** (`intelligent-report-analyzer.yml`)
-**Automated analysis of comprehensive reports with issue creation**
-
-- **Report Ingestion**: Analyzes PSScriptAnalyzer, test reports, project metrics
-- **Issue Classification**: Categorizes findings by severity and auto-fixability
+**Features:**
+- Analyzes only changed files for efficiency
+- Generates detailed quality reports
+- Creates GitHub issues for tracking failures
 - **Targeted Issue Creation**: Creates specific, actionable issues for AI agents
 - **Optimization Detection**: Identifies code quality and performance opportunities
 - **Auto-PR Triggering**: Can automatically request PRs for fixable issues
@@ -87,12 +79,12 @@ This document outlines the new intelligent CI/CD strategy designed for cost effi
 ### Immediate Optimizations Applied
 
 1. **Workflow Consolidation**
-   - Replaced redundant ci-pipeline.yml with intelligent orchestrator
-   - Reduced PR validation to essential-only triggers
+   - Streamlined to essential workflows only
+   - Removed redundant AI coordination workflows
    - Eliminated duplicate workflow executions
 
-2. **Smart Change Detection**
-   - Files analyzed for impact (infrastructure vs. docs vs. tests)
+2. **Smart Validation**
+   - Quality validation runs on PR changes
    - Conditional job execution based on actual needs
    - Skip unnecessary validations for minor changes
 
@@ -207,13 +199,14 @@ The system generates comprehensive reports including:
 
 ### For Existing Workflows
 
-1. **ci-pipeline.yml**: Deprecated, replaced by intelligent-ci-orchestrator.yml
+1. **Removed workflows**: AI coordination workflows were removed (see README.md for list)
 2. **pr-validation.yml**: Optimized for fork PRs only
-3. **automated-issue-management.yml**: Enhanced by intelligent-report-analyzer.yml
+3. **quality-validation.yml**: Primary quality checks for all PRs
+4. **auto-create-issues-from-failures.yml**: Tracks real test failures
 
 ### For Developers
 
-- Pull requests now trigger intelligent analysis
+- Pull requests trigger quality validation
 - Expect faster feedback for minor changes
 - Security and infrastructure changes get full validation
 - AI agents will automatically create issues for improvements
