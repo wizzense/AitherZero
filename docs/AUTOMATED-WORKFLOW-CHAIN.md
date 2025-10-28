@@ -1,6 +1,6 @@
 # Automated Testing and Issue Creation Workflow Chain
 
-This document describes the complete automated workflow chain for testing, issue detection, and GitHub Copilot integration.
+This document describes the complete automated workflow chain for testing, issue detection, GitHub Copilot integration, and PR-based issue resolution.
 
 ## Workflow Overview
 
@@ -15,13 +15,15 @@ graph TD
     F --> G{Test Failures<br/>Detected?}
     G -->|Yes| H[Create GitHub Issues]
     G -->|No| I[No Action]
-    H --> J[Add copilot-task Label]
-    J --> K[Add Priority Instructions]
+    H --> J[Add copilot-task + needs-priority Label]
+    J --> K[Show Priority Recommendation]
     K --> L{User Adds<br/>P1-P10 Label?}
-    L -->|Yes| M[Copilot PR Automation]
+    L -->|Yes| M[Group Related Issues]
     L -->|No| N[Issue Waits]
     M --> O[After 2 Hours]
-    O --> P[Copilot Creates PR]
+    O --> P[Create PR with Issue Group]
+    P --> Q[Add @copilot mention to PR]
+    Q --> R[Link Issues to PR]
 ```
 
 ## ⚠️ IMPORTANT: Priority Labels Required
@@ -30,13 +32,19 @@ graph TD
 
 This gives you control over which issues to prioritize and prevents the system from automatically working on every issue.
 
-### How It Works
+### Phase 1: Issue Creation with Recommendations
 
-1. **Issues Created:** System creates issues with `copilot-task` label
-2. **Instructions Added:** Comment explains priority label requirement
-3. **You Choose Priority:** Add `P1` (critical) through `P10` (backlog) label
-4. **After 2 Hours:** System picks up issues with priority labels
-5. **Auto-Processing:** Copilot creates PR to resolve the issue
+1. **Issues Created:** System creates issues with `copilot-task` and `needs-priority` labels
+2. **Recommendation Added:** Issue displays recommended priority (P1/P2/P3) based on severity
+3. **You Choose Priority:** Add `P1` (critical) through `P10` (backlog) label based on your assessment
+4. **Wait Period:** System waits 2 hours for manual review
+
+### Phase 2: PR-Based Grouping
+
+5. **Issue Grouping:** System groups related issues by type, file/domain, and priority
+6. **PR Creation:** Automatically creates PR with grouped issues
+7. **@copilot Assignment:** PR mentions @copilot (not individual issues)
+8. **Progress Tracking:** Issues marked `in-progress` and linked to PR
 
 ### Priority Labels
 
@@ -217,6 +225,61 @@ To fix:
   3. Add script numbers to appropriate sections in config.psd1
   4. Commit the changes
 ```
+
+### 7. Auto-Create PRs for Prioritized Issues (Phase 2)
+**File:** `.github/workflows/auto-create-prs-for-issues.yml`
+
+**Purpose:** Groups related prioritized issues and creates PRs automatically
+
+**Triggers:**
+- When P1-P10 label added to issue
+- Schedule: Every 4 hours
+- Manual workflow_dispatch
+
+**Grouping Strategy:**
+1. **By Type:** code-quality, testing, security, maintenance
+2. **By File/Domain:** Analyzes file paths in issue body
+   - `domains/configuration` → `domain-configuration`
+   - `automation-scripts/08XX` → `scripts-08xx`
+   - `tests/` → `tests`
+3. **By Priority:** P1-P10 ensures similar urgency grouped
+
+**PR Creation Rules:**
+- Groups with 2+ issues: Always create PR
+- Single P1/P2 issues: Create individual PR
+- Single P3-P10 issues: Handled by existing copilot-pr-automation workflow
+- Wait 2 hours after P1-P10 label for manual review
+
+**Process:**
+1. Scans for open issues with `copilot-task` label and P1-P10 priority
+2. Groups related issues intelligently
+3. Creates branch: `auto-fix/{type}-{context}-{priority}-{timestamp}`
+4. Creates PR with:
+   - Title: `🤖 [P2] Fix {type} issues in {context}`
+   - Body: Summary + links to all issues (Fixes #123)
+   - @copilot mention for implementation
+5. Updates each issue:
+   - Comment with PR link
+   - Adds `in-progress` label
+   - Links back to PR for tracking
+
+**Example PR:**
+```markdown
+Title: 🤖 [P2] Fix code-quality issues in domain-configuration
+
+Issues Addressed:
+- Fixes #45: PSScriptAnalyzer error in Configuration.psm1
+- Fixes #47: Missing parameter validation in Set-Config
+
+@copilot Please analyze the linked issues and implement fixes...
+```
+
+**Benefits:**
+- ✅ Related issues fixed together (not individually)
+- ✅ Single PR review instead of multiple
+- ✅ Better context for @copilot
+- ✅ Clear progress tracking
+- ✅ Reduced notification noise
 
 ## GitHub Copilot Integration
 
