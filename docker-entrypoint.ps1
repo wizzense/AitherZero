@@ -48,7 +48,7 @@ if (-not $SkipReports) {
         # Generate project reports
         $reportScript = Join-Path $script:ProjectRoot "automation-scripts/0510_Generate-ProjectReport.ps1"
         if (Test-Path $reportScript) {
-            & $reportScript -NonInteractive -ErrorAction SilentlyContinue
+            & $reportScript -ErrorAction SilentlyContinue
         }
         
         # Generate dashboard
@@ -77,9 +77,16 @@ try {
     $deployDocScript = Join-Path $script:ProjectRoot "automation-scripts/0515_Deploy-Documentation.ps1"
     if (Test-Path $deployDocScript) {
         & $deployDocScript -OutputPath $webRoot -ErrorAction SilentlyContinue
-        Write-Host "✅ Web content prepared" -ForegroundColor Green
-    } else {
-        # Create a simple index page if deployment script doesn't exist
+        # Verify expected output was created
+        if (Test-Path (Join-Path $webRoot "index.html")) {
+            Write-Host "✅ Web content prepared" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️  Documentation deployment did not produce expected output, using fallback." -ForegroundColor Yellow
+        }
+    }
+    
+    # Create fallback index page if needed
+    if (-not (Test-Path (Join-Path $webRoot "index.html"))) {
         $simpleIndex = @"
 <!DOCTYPE html>
 <html>
@@ -125,13 +132,13 @@ try {
         <p style="font-size: 1rem; margin-top: 20px;">Container is running successfully</p>
         <div class="commands">
             <div><strong>Interactive Shell:</strong></div>
-            <div>docker exec -it &lt;container&gt; pwsh</div>
+            <div>docker exec -it <container> pwsh</div>
             <br>
             <div><strong>Run Script:</strong></div>
-            <div>docker exec -it &lt;container&gt; pwsh -Command "./Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402"</div>
+            <div>docker exec -it <container> pwsh -Command "./Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402"</div>
             <br>
             <div><strong>View Logs:</strong></div>
-            <div>docker logs &lt;container&gt;</div>
+            <div>docker logs <container></div>
         </div>
     </div>
 </body>

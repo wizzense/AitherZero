@@ -81,10 +81,10 @@ Execute AitherZero commands from outside the container:
 
 ```bash
 # Run unit tests
-docker exec aitherzero pwsh -Command "./Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402"
+docker exec aitherzero pwsh -Command "az 0402"
 
 # Generate project report
-docker exec aitherzero pwsh -Command "./Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0510"
+docker exec aitherzero pwsh -Command "az 0510"
 
 # Run a playbook
 docker exec aitherzero pwsh -Command "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick"
