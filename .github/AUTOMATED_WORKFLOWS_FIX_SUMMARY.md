@@ -265,15 +265,34 @@ All modified workflow files validated successfully:
 
 ## Rollback Plan (If Needed)
 
-If issues arise, revert with:
+If issues arise, you can revert these changes:
+
+**Option 1: Revert all changes from this PR**
 ```bash
-git revert 5afcd0a  # Fix issue filtering
-git revert 3d8bcb5  # Fix intelligent-report-analyzer
-git revert 9fa6ede  # Add newline
-git revert 5992b18  # Main fixes
+# After merge, find the merge commit
+git log --oneline --merges | head -5
+# Then revert the merge
+git revert -m 1 <merge-commit-hash>
 ```
 
-Or cherry-pick specific changes to keep some fixes while removing others.
+**Option 2: Revert specific commits (before merge)**
+```bash
+# Revert from newest to oldest
+git revert HEAD~0  # Fix summary
+git revert HEAD~1  # Issue filtering fix
+git revert HEAD~2  # Intelligent report analyzer fix
+git revert HEAD~3  # Newline fix
+git revert HEAD~4  # Main workflow fixes
+```
+
+**Option 3: Cherry-pick specific changes**
+If you want to keep some fixes but remove others, create a new branch from main and cherry-pick only the desired commits.
+
+**Option 4: Manual rollback**
+Restore the original schedule and trigger settings:
+- `automated-copilot-agent.yml`: Change cron back to `'0 9-17 * * 1-5'`, add back `branches: [main, develop]`
+- `copilot-pr-automation.yml`: Change cron back to `'0 */4 * * 1-5'`
+- Revert assignee changes from 'wizzense' back to 'copilot' (not recommended as this user doesn't exist)
 
 ## Next Steps for User
 
@@ -292,7 +311,6 @@ For questions or issues:
 
 ---
 
-**Fixed by**: Copilot Coding Agent  
-**Date**: 2025-10-27  
-**Branch**: `copilot/fix-automated-issues-copilot`  
-**Commits**: 5992b18, 9fa6ede, 3d8bcb5, 5afcd0a
+**Fixed by**: GitHub Copilot Coding Agent  
+**PR Branch**: `copilot/fix-automated-issues-copilot`  
+**See Git history for commit details**
