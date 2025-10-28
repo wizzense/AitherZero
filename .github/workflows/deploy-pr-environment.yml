@@ -312,7 +312,7 @@ jobs:
           # Test PowerShell module loading with timeout
           echo "Testing PowerShell module loading..."
           timeout 30s docker exec aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }} \
-            pwsh -Command "try { Import-Module /app/AitherZero.psd1 -ErrorAction Stop; Write-Host '✅ Module loaded successfully' -ForegroundColor Green; exit 0 } catch { Write-Error \$_.Exception.Message; exit 1 }" || {
+            pwsh -Command "try { Import-Module /opt/aitherzero/AitherZero.psd1 -ErrorAction Stop; Write-Host '✅ Module loaded successfully' -ForegroundColor Green; exit 0 } catch { Write-Error \$_.Exception.Message; exit 1 }" || {
             echo "❌ Module loading failed or timed out"
             docker logs aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
             exit 1
