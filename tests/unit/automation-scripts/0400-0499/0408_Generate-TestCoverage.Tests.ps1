@@ -11,6 +11,12 @@ BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0408_Generate-TestCoverage.ps1"
 
+    # Define stub function so Mock can override it
+    function New-BaselineTestContent {
+        param([string]$ModulePath, [string]$ModuleName)
+        throw "This stub should be mocked. If you see this error, the mock is not working correctly."
+    }
+
     # Mock functions
     Mock Import-Module {}
     Mock Get-Module {
@@ -58,7 +64,52 @@ BeforeAll {
     }
     Mock Write-Host {}
     Mock New-BaselineTestContent {
-        return "# Generated test content for module"
+        param(
+            [string]$ModulePath,
+            [string]$ModuleName
+        )
+        
+        $testContent = @"
+# Generated baseline tests for $ModuleName
+# Generated on: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+
+BeforeAll {
+    # Get the module path
+    `$modulePath = '$ModulePath'
+
+    # Import the module
+    Import-Module `$modulePath -Force -ErrorAction Stop
+}
+
+Describe '$ModuleName Module Tests' {
+
+    Context 'Module Loading' {
+        It 'Should import without errors' {
+            { Import-Module `$modulePath -Force } | Should -Not -Throw
+        }
+
+        It 'Should be loaded' {
+            Get-Module $ModuleName | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Function Tests' {
+        `$exportedFunctions = (Get-Module $ModuleName).ExportedFunctions.Keys
+
+        foreach (`$functionName in `$exportedFunctions) {
+            It "Should have help for `$functionName" {
+                `$help = Get-Help `$functionName
+                `$help | Should -Not -BeNullOrEmpty
+            }
+        }
+    }
+}
+
+AfterAll {
+    Remove-Module $ModuleName -Force -ErrorAction SilentlyContinue
+}
+"@
+        return $testContent
     }
 }
 
