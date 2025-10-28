@@ -95,12 +95,59 @@ jobs:
               core.notice('Deployment skipped: Conditions not met');
             }
 
+  # Validate Docker configuration
+  validate-docker-config:
+    name: Validate Docker Configuration
+    runs-on: ubuntu-latest
+    needs: check-deployment-trigger
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    outputs:
+      validation-passed: ${{ steps.validate.outputs.passed }}
+
+    steps:
+      - name: 📥 Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ needs.check-deployment-trigger.outputs.pr-number }}/head
+
+      - name: 🔍 Run Quick Docker Validation
+        id: validate
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Running Docker configuration validation..." -ForegroundColor Cyan
+          
+          try {
+            # Run the quick validation script
+            ./automation-scripts/0853_Quick-Docker-Validation.ps1
+            
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "✅ Validation passed" -ForegroundColor Green
+              echo "passed=true" >> $GITHUB_OUTPUT
+            } else {
+              Write-Host "❌ Validation failed" -ForegroundColor Red
+              echo "passed=false" >> $GITHUB_OUTPUT
+              exit 1
+            }
+          } catch {
+            Write-Host "❌ Validation error: $_" -ForegroundColor Red
+            echo "passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          }
+
+      - name: 📊 Upload Validation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-validation-report-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
+          path: reports/pr-docker-quick-validation.json
+          retention-days: 7
+
   # Build and push container image
   build-container:
     name: Build Container Image
     runs-on: ubuntu-latest
-    needs: check-deployment-trigger
-    if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    needs: [check-deployment-trigger, validate-docker-config]
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.validate-docker-config.outputs.validation-passed == 'true'
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
       image-digest: ${{ steps.build.outputs.digest }}
@@ -261,7 +308,7 @@ jobs:
   comment-deployment-status:
     name: Update PR with Deployment Status
     runs-on: ubuntu-latest
-    needs: [check-deployment-trigger, build-container, deploy-docker-compose]
+    needs: [check-deployment-trigger, validate-docker-config, build-container, deploy-docker-compose]
     if: always() && needs.check-deployment-trigger.outputs.should-deploy == 'true'
 
     steps:
@@ -270,6 +317,7 @@ jobs:
         with:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
+            const validationSuccess = '${{ needs.validate-docker-config.result }}' === 'success';
             const buildSuccess = '${{ needs.build-container.result }}' === 'success';
             const deploySuccess = '${{ needs.deploy-docker-compose.result }}' === 'success';
 
@@ -277,7 +325,7 @@ jobs:
             let title = 'Deployment Successful';
             let message = 'Your PR environment has been deployed and is ready for testing!';
 
-            if (!buildSuccess || !deploySuccess) {
+            if (!validationSuccess || !buildSuccess || !deploySuccess) {
               status = '❌';
               title = 'Deployment Failed';
               message = 'There was an issue deploying your PR environment. Please check the workflow logs.';
@@ -318,6 +366,7 @@ jobs:
             - **Destroy**: Will auto-cleanup when PR is closed
             ` : `
             ### ❌ Deployment Failed
+            - **Validation Status**: ${validationSuccess ? '✅ Success' : '❌ Failed'}
             - **Build Status**: ${buildSuccess ? '✅ Success' : '❌ Failed'}
             - **Deploy Status**: ${deploySuccess ? '✅ Success' : '❌ Failed'}
 
