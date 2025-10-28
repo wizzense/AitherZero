@@ -1,6 +1,6 @@
-# infrastructure
+# documentation
 
-**Navigation**: [🏠 Root](../../../../index.md) → [tests](../../../index.md) → [unit](../../index.md) → [domains](../index.md) → **infrastructure**
+**Navigation**: [🏠 Root](../../../../index.md) → [tests](../../../index.md) → [unit](../../index.md) → [domains](../index.md) → **documentation**
 
 ⬆️ **Parent**: [domains](../index.md)
 
@@ -11,18 +11,15 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 2
+- **Files**: 1
 - **PowerShell Scripts**: 1
 
 ## 📄 Files
 
-### .md Files
-
-- 📝 [index.md](./index.md)
-
 ### .ps1 Files
 
-- ⚙️ [Infrastructure.Tests.ps1](./Infrastructure.Tests.ps1)
+- ⚙️ [ProjectIndexer.Tests.ps1](./ProjectIndexer.Tests.ps1)
+  - *Unit tests for ProjectIndexer module*
 
 ---
 
