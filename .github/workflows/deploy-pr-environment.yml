@@ -115,11 +115,11 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Running Docker configuration validation..." -ForegroundColor Cyan
-          
+
           try {
             # Run the quick validation script with explicit -File parameter
             pwsh -File ./automation-scripts/0853_Quick-Docker-Validation.ps1
-            
+
             if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ Validation passed" -ForegroundColor Green
               echo "passed=true" >> $GITHUB_OUTPUT
@@ -223,19 +223,24 @@ jobs:
     if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
     environment:
       name: pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
-      url: http://localhost:8080
+      url: ${{ steps.deploy.outputs.url }}
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
       - name: 🚀 Deploy with Docker Compose
+        id: deploy
         env:
           PR_NUMBER: ${{ needs.check-deployment-trigger.outputs.pr-number }}
           BRANCH_NAME: ${{ github.head_ref }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
+
+          # Calculate dynamic port
+          DYNAMIC_PORT="808$((${PR_NUMBER} % 10))"
+          echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
 
           # Create environment-specific compose file
           cat > docker-compose.pr-${PR_NUMBER}.yml <<EOF
@@ -250,7 +255,7 @@ jobs:
                 - COMMIT_SHA=${COMMIT_SHA}
                 - DEPLOYMENT_ENVIRONMENT=preview
               ports:
-                - "808$((${PR_NUMBER} % 10)):8080"
+                - "${DYNAMIC_PORT}:8080"
               restart: unless-stopped
           EOF
 
@@ -261,10 +266,10 @@ jobs:
           echo "⏳ Waiting for environment to be healthy..."
           RETRY_COUNT=0
           MAX_RETRIES=12  # 12 * 5 seconds = 60 seconds max wait
-          
+
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "no-health")
-            
+
             if [ "$HEALTH_STATUS" = "healthy" ]; then
               echo "✅ Container is healthy"
               break
@@ -288,6 +293,11 @@ jobs:
             docker logs aitherzero-pr-${PR_NUMBER}
             exit 1
           fi
+
+          # Set deployment URL output
+          DEPLOYMENT_URL="http://localhost:${DYNAMIC_PORT}"
+          echo "url=${DEPLOYMENT_URL}" >> $GITHUB_OUTPUT
+          echo "✅ Deployment URL: ${DEPLOYMENT_URL}"
 
       - name: 🧪 Run Smoke Tests
         run: |
