@@ -212,9 +212,9 @@ jobs:
           echo "Using image tag for deployment: ${IMAGE_TAG}"
           
           # Generate package URL for GitHub Container Registry
-          # Use repository name dynamically to support repository renames or forks
-          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
-          PACKAGE_URL="https://github.com/${{ github.repository }}/pkgs/container/${REPO_NAME}"
+          # Note: Package name matches the hardcoded image name 'aitherzero' (line 175)
+          # This ensures consistency between the image push and package URL
+          PACKAGE_URL="https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
           echo "package-url=${PACKAGE_URL}" >> $GITHUB_OUTPUT
           
           # Full image URL with registry
