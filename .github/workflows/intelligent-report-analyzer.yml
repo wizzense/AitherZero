@@ -324,7 +324,7 @@ jobs:
               const labels = ['automated-issue', issue.Priority.toLowerCase(), issue.Type.toLowerCase()];
               if (issue.AutoFixable) labels.push('auto-fixable');
               if (issue.RequiresHumanInput) labels.push('needs-human-input');
-              
+
               try {
                 const createdIssue = await github.rest.issues.create({
                   owner: context.repo.owner,
@@ -332,7 +332,7 @@ jobs:
                   title: issueTitle,
                   body: issueBody,
                   labels: labels,
-                  assignees: ['copilot']
+                  assignees: ['wizzense']
                 });
                 console.log(`✅ Created critical issue #${createdIssue.data.number}: ${issueTitle}`);
               } catch (error) {
@@ -385,7 +385,7 @@ jobs:
               
               const labels = ['automated-issue', 'optimization', type.toLowerCase()];
               if (autoFixable) labels.push('auto-fixable');
-              
+
               try {
                 const createdIssue = await github.rest.issues.create({
                   owner: context.repo.owner,
@@ -393,7 +393,7 @@ jobs:
                   title: issueTitle,
                   body: issueBody,
                   labels: labels,
-                  assignees: ['copilot']
+                  assignees: ['wizzense']
                 });
                 console.log(`✅ Created optimization issue #${createdIssue.data.number}: ${issueTitle}`);
               } catch (error) {
