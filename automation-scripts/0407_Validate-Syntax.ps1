@@ -39,8 +39,8 @@ if (-not $FilePath -and -not $All) {
 }
 
 try {
-    # If All switch or no FilePath, validate all PowerShell files
-    if ($All -or -not $FilePath) {
+    # If All switch is specified, validate all PowerShell files
+    if ($All) {
         Write-Host "Validating all PowerShell files..." -ForegroundColor Cyan
         $filesToValidate = @(
             Get-ChildItem -Path . -Filter "*.ps1" -Recurse -File |
