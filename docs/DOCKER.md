@@ -136,16 +136,16 @@ docker-compose exec aitherzero pwsh -Command "./Start-AitherZero.ps1"
 
 ```bash
 # Run unit tests
-docker run --rm aitherzero:latest pwsh -Command "./az.ps1 0402"
+docker run --rm aitherzero:latest pwsh -Command "az 0402"
 
 # Run syntax validation
-docker run --rm aitherzero:latest pwsh -Command "./az.ps1 0407"
+docker run --rm aitherzero:latest pwsh -Command "az 0407"
 
 # Run PSScriptAnalyzer
-docker run --rm aitherzero:latest pwsh -Command "./az.ps1 0404"
+docker run --rm aitherzero:latest pwsh -Command "az 0404"
 
 # Generate project report
-docker run --rm aitherzero:latest pwsh -Command "./az.ps1 0510 -ShowAll"
+docker run --rm aitherzero:latest pwsh -Command "az 0510 -ShowAll"
 ```
 
 **Using Docker Compose:**
@@ -155,8 +155,8 @@ docker run --rm aitherzero:latest pwsh -Command "./az.ps1 0510 -ShowAll"
 docker-compose up -d
 
 # Run commands
-docker-compose exec aitherzero pwsh -Command "./az.ps1 0402"
-docker-compose exec aitherzero pwsh -Command "./az.ps1 0404"
+docker-compose exec aitherzero pwsh -Command "az 0402"
+docker-compose exec aitherzero pwsh -Command "az 0404"
 
 # Stop the container
 docker-compose down
@@ -245,10 +245,10 @@ docker-compose up -d
 # 2. Make changes to code on your host machine
 
 # 3. Test changes in container
-docker-compose exec aitherzero pwsh -Command "./az.ps1 0402"
+docker-compose exec aitherzero pwsh -Command "az 0402"
 
 # 4. Run quality checks
-docker-compose exec aitherzero pwsh -Command "./az.ps1 0404"
+docker-compose exec aitherzero pwsh -Command "az 0404"
 
 # 5. View logs
 docker-compose logs -f aitherzero
@@ -281,15 +281,15 @@ docker run --rm \
 ```bash
 # Run validation sequence
 docker run --rm aitherzero:latest pwsh -Command " \
-  ./az.ps1 0407 && \
-  ./az.ps1 0404 && \
-  ./az.ps1 0402 \
+  az 0407 && \
+  az 0404 && \
+  az 0402 \
 "
 
 # Run with exit code handling
 docker run --rm aitherzero:latest pwsh -Command " \
   \$ErrorActionPreference = 'Stop'; \
-  ./az.ps1 0402; \
+  az 0402; \
   if (\$LASTEXITCODE -ne 0) { exit \$LASTEXITCODE } \
 "
 ```
@@ -321,7 +321,7 @@ docker run --rm \
   -e AITHERZERO_CI=true \
   -e AITHERZERO_PROFILE=Developer \
   -e AITHERZERO_LOG_LEVEL=Verbose \
-  aitherzero:latest pwsh -Command "./az.ps1 0402"
+  aitherzero:latest pwsh -Command "az 0402"
 ```
 
 **Available Environment Variables:**
@@ -374,7 +374,7 @@ services:
 docker run --rm \
   --cpus=2 \
   --memory=2g \
-  aitherzero:latest pwsh -Command "./az.ps1 0402"
+  aitherzero:latest pwsh -Command "az 0402"
 ```
 
 **Docker Compose (already configured in `docker-compose.yml`):**
@@ -434,7 +434,7 @@ docker run --rm aitherzero:latest ls -la /app/domains
 
 # Test module import manually
 docker run --rm aitherzero:latest pwsh -Command " \
-  Import-Module /app/AitherZero.psd1 -Verbose; \
+  Import-Module /opt/aitherzero/AitherZero.psd1 -Verbose; \
   Get-Module \
 "
 
@@ -487,7 +487,7 @@ docker stats <container-id>
 docker run --rm \
   --cpus=4 \
   --memory=4g \
-  aitherzero:latest pwsh -Command "./az.ps1 0402"
+  aitherzero:latest pwsh -Command "az 0402"
 
 # Check Docker daemon settings
 docker info
@@ -630,7 +630,7 @@ docker build \
 # Run with debug output
 docker run --rm \
   -e AITHERZERO_LOG_LEVEL=Verbose \
-  aitherzero:latest pwsh -Command './az.ps1 0402'
+  aitherzero:latest pwsh -Command 'az 0402'
 
 # Attach to running container
 docker exec -it <container-id> pwsh
@@ -937,16 +937,16 @@ az 0510 -ShowAll  # Generate reports
 
 ```bash
 # Run validation tests
-docker exec aitherzero-app pwsh -Command "./az.ps1 0402"
+docker exec aitherzero-app pwsh -Command "az 0402"
 
 # Run PSScriptAnalyzer
-docker exec aitherzero-app pwsh -Command "./az.ps1 0404"
+docker exec aitherzero-app pwsh -Command "az 0404"
 
 # Run syntax validation
-docker exec aitherzero-app pwsh -Command "./az.ps1 0407"
+docker exec aitherzero-app pwsh -Command "az 0407"
 
 # Generate project report
-docker exec aitherzero-app pwsh -Command "./az.ps1 0510 -ShowAll"
+docker exec aitherzero-app pwsh -Command "az 0510 -ShowAll"
 ```
 
 ### Running Orchestration Playbooks
@@ -1128,7 +1128,7 @@ docker-compose ps
 docker exec -it aitherzero-app pwsh
 
 # Manually import module
-Import-Module /app/AitherZero.psd1 -Verbose
+Import-Module /opt/aitherzero/AitherZero.psd1 -Verbose
 
 # Check module
 Get-Module AitherZero
@@ -1373,7 +1373,7 @@ pipeline {
             steps {
                 sh '''
                     docker-compose run --rm aitherzero \
-                        pwsh -Command "./az.ps1 0402"
+                        pwsh -Command "az 0402"
                 '''
             }
         }
@@ -1382,7 +1382,7 @@ pipeline {
             steps {
                 sh '''
                     docker-compose run --rm aitherzero \
-                        pwsh -Command "./az.ps1 0510 -ShowAll"
+                        pwsh -Command "az 0510 -ShowAll"
                 '''
             }
         }
