@@ -120,19 +120,23 @@ if (Test-ContentChanged -Path ./domains) {
 
 The GitHub Actions workflow `.github/workflows/index-automation.yml` automatically:
 
-1. **On Push** (main/develop):
+1. **On Pull Request**:
    - Runs incremental index generation
-   - Commits updated indexes
-   - Pushes changes back to branch
-
-2. **On Pull Request**:
-   - Generates indexes for changed files
    - Posts comment with statistics
    - Uploads indexes as artifacts
+   - Does NOT auto-commit (avoids conflicts)
+
+2. **On Push to main/develop** (post-merge):
+   - Runs **Full regeneration** with Force flag
+   - Resolves any merge conflicts from feature branches
+   - Commits updated indexes with `[skip ci]`
+   - Pushes changes back to branch
 
 3. **Manual Trigger** (workflow_dispatch):
    - Choose mode: Full, Incremental, or Verify
    - Run on-demand from Actions tab
+
+**Post-Merge Behavior**: When a PR is merged to `main` or `develop`, the workflow automatically triggers with Full mode to regenerate all indexes. This ensures any index.md conflicts from the merge are resolved and all navigation is consistent.
 
 ## Index File Structure
 
@@ -309,6 +313,23 @@ ls -Recurse -Filter index.md
 - Minimal I/O with cache system
 
 ## Troubleshooting
+
+### Issue: Merge conflicts in index.md files
+
+**Solution:**
+The workflow automatically handles this! When you merge a PR to `main` or `develop`, the GitHub Actions workflow:
+1. Detects it's a push event to main/develop
+2. Runs Full regeneration with Force flag
+3. Resolves all conflicts by regenerating from current state
+4. Auto-commits the updated indexes
+
+**Manual resolution (if needed):**
+```powershell
+# After resolving merge conflicts, regenerate
+./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Full -Force
+git add **/index.md
+git commit -m "docs: regenerate indexes post-merge"
+```
 
 ### Issue: Indexes not updating
 
