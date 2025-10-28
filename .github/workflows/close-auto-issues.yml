@@ -119,25 +119,20 @@ jobs:
 
 This auto-created issue is being closed as part of a system-wide cleanup.
 
-**Reason:** Cleaning up duplicate and useless auto-created issues
+**Reason:** Migrating to improved intelligent issue creation system with:
+- Better deduplication logic
+- PR-based workflow for grouped fixes
+- More detailed context (file, domain, branch info)
+- Manual priority assignment with recommendations
+- Prevention of duplicate issues across branches
 
-These automated issues were being created constantly by overly aggressive workflows:
-- Hourly schedule (9am-5pm UTC, Mon-Fri) in automated-copilot-agent
-- Daily schedule in auto-create-issues-from-failures
-- Multiple workflow_run triggers creating duplicates
-
-**Changes made to prevent future duplicates:**
-1. Disabled hourly and daily cron schedules
-2. Disabled workflow_run triggers
-3. Workflows now only run on manual trigger (workflow_dispatch)
-4. Better deduplication logic will be implemented
-
-If this issue represents a real problem that still exists, it can be manually re-created or the workflow can be manually triggered when needed.
+If this issue represents a real problem that still exists, it will be recreated by the new system with more context and better grouping.
 
 **Next Steps:**
-1. Workflows only run on manual trigger to prevent spam
-2. Use workflow_dispatch when issue creation is actually needed
-3. Review issues manually before running automated workflows
+1. New issues will be created with improved deduplication
+2. Similar issues will be grouped in PRs
+3. Manual priority assignment required (P1-P10)
+4. Copilot will be assigned to PRs, not individual issues
 
 ---
 **Closed by:** Automated cleanup workflow
