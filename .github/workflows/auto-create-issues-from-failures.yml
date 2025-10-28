@@ -5,11 +5,7 @@ name: 🚨 Auto-Create Issues from Test Failures
 on:
   # DISABLED: workflow_run trigger was creating duplicate issues
   # workflow_run:
-<<<<<<< HEAD
   #   workflows: ["Quality Validation"]
-=======
-  #   workflows: ["Intelligent CI Orchestrator", "Quality Validation"]
->>>>>>> origin/main
   #   types: [completed]
   # DISABLED: Daily cron was creating duplicate issues
   # schedule:
