@@ -96,3 +96,4 @@ Gemfile.lock
 
 # Index cache
 .aitherzero-index-cache.json
+actionlint*
