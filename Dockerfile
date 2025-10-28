@@ -3,7 +3,7 @@
 
 FROM mcr.microsoft.com/powershell:7.4-ubuntu-22.04 AS base
 
-# Install system dependencies
+# Install system dependencies including Python for web server
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     openssh-client \
     ca-certificates \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -48,9 +49,14 @@ RUN mkdir -p /app/logs /app/reports /app/tests/results
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pwsh -NoProfile -Command "Test-Path /app/AitherZero.psd1 -PathType Leaf"
 
-# Default command - keep container running for interactive use or automation
-# Uses a long-running sleep to keep container alive while allowing exec commands
-CMD ["pwsh", "-NoProfile", "-Command", "$VerbosePreference='SilentlyContinue'; $InformationPreference='SilentlyContinue'; Import-Module /app/AitherZero.psd1 -WarningAction SilentlyContinue; Write-Host '✅ AitherZero loaded. Type Start-AitherZero to begin.' -ForegroundColor Green; Start-Sleep -Seconds 2147483"]
+# Copy and set executable permission for entrypoint script
+COPY --chown=aitherzero:aitherzero docker-entrypoint.ps1 /app/
+
+# Default command - run entrypoint script that initializes AitherZero and starts web server
+# Web interface will be available at http://localhost:8080
+# For interactive CLI: docker exec -it <container> pwsh
+# For custom startup: docker run ... pwsh -NoProfile -Command "./Start-AitherZero.ps1 -Mode <mode>"
+CMD ["pwsh", "-NoProfile", "-File", "./docker-entrypoint.ps1"]
 
 # Expose ports for potential web interfaces (future use)
 EXPOSE 8080 8443
