@@ -233,7 +233,8 @@ function Invoke-TestExecution {
 
     try {
         # Execute tests using the framework  
-        # Call function using the function: provider
+        # IMPORTANT: Call Invoke-TestCategory via the function provider (function:) to preserve module scope.
+        # Direct invocation may fail in scriptblocks or dynamic contexts due to scope loss (see AitherZero architecture notes).
         $testResult = & (Get-Item function:Invoke-TestCategory) @testParams
 
         Write-TestRunnerLog "Test execution completed" -Level Success -Data $testResult.Summary
