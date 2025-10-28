@@ -1,10 +1,15 @@
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
+# Jekyll site to GitHub Pages - Enhanced with Reports
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    branches: ["main", "develop"]
+    paths:
+      - 'reports/**'
+      - 'docs/**'
+      - 'index.md'
+      - '_config.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -28,13 +33,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./_site
+          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
@@ -49,3 +57,14 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        
+      - name: Report Deployment
+        shell: pwsh
+        run: |
+          Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
+          Write-Host "🔗 Main URL: ${{ steps.deployment.outputs.page_url }}" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "📊 Available Pages:" -ForegroundColor Yellow
+          Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}reports/dashboard.html"
+          Write-Host "  - Reports: ${{ steps.deployment.outputs.page_url }}reports/"
+          Write-Host "  - Docs: ${{ steps.deployment.outputs.page_url }}docs/"

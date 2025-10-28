@@ -72,14 +72,16 @@ jobs:
           # Generate index of reports
           $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending
           
-          $indexContent = @"
-# Test Reports Index
+          $indexHeader = @"
+          # Test Reports Index
 
-Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
 
-## Available Reports
+          ## Available Reports
 
-"@
+          "@
+          
+          $indexContent = $indexHeader
           
           foreach ($file in $reportFiles) {
             $relativePath = "reports/$($file.Name)"
