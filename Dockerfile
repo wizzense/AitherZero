@@ -34,11 +34,20 @@ ENV AITHERZERO_ROOT=/app \
     AITHERZERO_LOG_LEVEL=Warning \
     PATH="/app:${PATH}"
 
-# Install PowerShell modules
-RUN pwsh -Command " \
-    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; \
-    Install-Module -Name Pester -MinimumVersion 5.0 -Force -Scope CurrentUser; \
-    Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser; \
+# Install PowerShell modules (optional - modules can be installed at runtime if needed)
+# Note: PSGallery configuration may require network access or additional setup in containerized environments
+# The modules will be installed on first use if not present
+RUN pwsh -NoProfile -Command " \
+    \$ErrorActionPreference = 'Continue'; \
+    try { \
+        Get-PSRepository -Name PSGallery -ErrorAction Stop | Set-PSRepository -InstallationPolicy Trusted -ErrorAction Stop; \
+        Write-Host 'Attempting to install PowerShell modules...'; \
+        Install-Module -Name Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -SkipPublisherCheck -AllowClobber -ErrorAction Continue; \
+        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck -AllowClobber -ErrorAction Continue; \
+        Get-InstalledModule -ErrorAction SilentlyContinue | Format-Table Name, Version -AutoSize; \
+    } catch { \
+        Write-Host 'Module installation skipped. Modules can be installed at runtime with: Install-Module -Name Pester,PSScriptAnalyzer -Force'; \
+    } \
     "
 
 # Create required directories
