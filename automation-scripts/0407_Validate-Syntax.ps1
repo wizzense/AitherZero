@@ -93,10 +93,10 @@ try {
 
         if ($Detailed -and $ast) {
             Write-Host "`nScript Statistics:" -ForegroundColor Cyan
-            $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             Write-Host "  Functions: $($functions.Count)"
 
-            $commands = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
+            $commands = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
             Write-Host "  Commands: $($commands.Count)"
 
             Write-Host "  Total Lines: $($ast.Extent.EndLineNumber)"
