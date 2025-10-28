@@ -226,20 +226,21 @@ function Invoke-TestSuite {
         Write-Verbose "Categories: $($ProfileNameConfig.Categories -join ', ')"
 
         # Ensure Pester is available
+        $minVersion = $testConfig['MinVersion'] ?? '5.0.0'
         Write-TestingLog -Level Debug -Message "Checking Pester availability" -Data @{
-            RequiredVersion = $testConfig.MinVersion
+            RequiredVersion = $minVersion
         }
 
-        if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge $testConfig.MinVersion })) {
+        if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge $minVersion })) {
             Write-TestingLog -Level Error -Message "Required Pester version not available" -Data @{
-                RequiredVersion = $testConfig.MinVersion
+                RequiredVersion = $minVersion
             }
-            throw "Pester $($testConfig.MinVersion) or higher is required"
+            throw "Pester $minVersion or higher is required"
         }
 
         Write-TestingLog -Message "Pester module available and compatible"
 
-        Import-Module Pester -MinimumVersion $testConfig.MinVersion
+        Import-Module Pester -MinimumVersion $minVersion
         Write-TestingLog -Message "Pester module imported successfully" -Data @{
             Version = (Get-Module Pester).Version.ToString()
         }
@@ -272,11 +273,12 @@ function Invoke-TestSuite {
         }
 
         # Code coverage
-        if ($testConfig.CodeCoverage.Enabled) {
-            $coveragePath = Join-Path ($OutputPath ?? './tests/coverage') "Coverage-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
+        if ($testConfig['CodeCoverage'] -and $testConfig['CodeCoverage']['Enabled']) {
+            $coverageBasePath = if ([string]::IsNullOrEmpty($OutputPath)) { './tests/coverage' } else { $OutputPath }
+            $coveragePath = Join-Path $coverageBasePath "Coverage-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
             Write-TestingLog -Message "Code coverage enabled" -Data @{
                 CoveragePath = $coveragePath
-                MinimumPercent = $testConfig.CodeCoverage.MinimumPercent
+                MinimumPercent = ($testConfig['CodeCoverage']['MinimumPercent'] ?? 80)
             }
             $pesterConfig.CodeCoverage.Enabled = $true
             $pesterConfig.CodeCoverage.Path = Join-Path $script:ProjectRoot 'domains'
