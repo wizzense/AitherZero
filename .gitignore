@@ -77,4 +77,4 @@ powershellsec/
 tests/results/
 
 # Quality reports (generated artifacts)
-reports/quality/
+reports/quality/actionlint
