@@ -277,7 +277,7 @@ if ($script:ValidationErrors.Count -eq 0) {
     Write-Host "To fix these issues:" -ForegroundColor Cyan
     Write-Host "  1. Update the config.psd1 file to match actual repository state" -ForegroundColor White
     Write-Host "  2. Run this script again to verify" -ForegroundColor White
-    Write-Host "  3. Or use: ./automation-scripts/0408_Validate-ConfigManifest.ps1 -Fix (if available)" -ForegroundColor White
+    Write-Host "  3. Or use: ./automation-scripts/0413_Validate-ConfigManifest.ps1 -Fix (if available)" -ForegroundColor White
     
     exit 1
 }
