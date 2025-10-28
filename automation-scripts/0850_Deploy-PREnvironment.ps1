@@ -142,11 +142,11 @@ services:
       - "808$($PRNumber % 10):8080"
       - "844$($PRNumber % 10):8443"
     volumes:
-      - aitherzero-pr-${PRNumber}-logs:/app/logs
-      - aitherzero-pr-${PRNumber}-reports:/app/reports
+      - aitherzero-pr-${PRNumber}-logs:/opt/aitherzero/logs
+      - aitherzero-pr-${PRNumber}-reports:/opt/aitherzero/reports
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pwsh", "-Command", "Test-Path /app/AitherZero.psd1"]
+      test: ["CMD", "pwsh", "-Command", "Test-Path /opt/aitherzero/AitherZero.psd1"]
       interval: 30s
       timeout: 10s
       retries: 3

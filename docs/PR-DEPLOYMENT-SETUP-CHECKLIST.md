@@ -24,7 +24,7 @@ Use this checklist to set up automated PR branch deployments for your organizati
 ### Testing
 - [ ] Build image locally: `docker build -t aitherzero:test .`
 - [ ] Run container: `docker run -d --name test aitherzero:test`
-- [ ] Test module loading: `docker exec test pwsh -Command "Import-Module /app/AitherZero.psd1"`
+- [ ] Test module loading: `docker exec test pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1"`
 - [ ] Cleanup: `docker rm -f test`
 
 **Status:** ✅ Ready for use immediately

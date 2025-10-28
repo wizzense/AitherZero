@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   aitherzero:
     build:
@@ -11,7 +9,7 @@ services:
     
     environment:
       # AitherZero configuration
-      - AITHERZERO_ROOT=/app
+      - AITHERZERO_ROOT=/opt/aitherzero
       - AITHERZERO_NONINTERACTIVE=${AITHERZERO_NONINTERACTIVE:-false}
       - AITHERZERO_CI=${AITHERZERO_CI:-false}
       - AITHERZERO_PROFILE=${AITHERZERO_PROFILE:-Standard}
@@ -22,15 +20,22 @@ services:
       - BRANCH_NAME=${BRANCH_NAME:-main}
       - COMMIT_SHA=${COMMIT_SHA:-}
     
+    ports:
+      # Web interface for dashboards and reports
+      - "8080:8080"
+      # HTTPS port (reserved for future use)
+      - "8443:8443"
+    
     volumes:
-      # Mount local directory for development (optional)
-      # Uncomment for local development with hot-reload
+      # Mount local directory for user files (optional)
+      # Uncomment for local development - this mounts to /app, not /opt/aitherzero
+      # AitherZero is installed in /opt/aitherzero and won't be affected
       # - .:/app:rw
       
       # Persist logs and reports
-      - aitherzero-logs:/app/logs
-      - aitherzero-reports:/app/reports
-      - aitherzero-results:/app/tests/results
+      - aitherzero-logs:/opt/aitherzero/logs
+      - aitherzero-reports:/opt/aitherzero/reports
+      - aitherzero-results:/opt/aitherzero/tests/results
       
       # Git credentials (OPTIONAL: for local development only)
       # SECURITY WARNING: Do not mount SSH keys or credentials in PR environments
