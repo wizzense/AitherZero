@@ -46,7 +46,7 @@ RUN mkdir -p /app/logs /app/reports /app/tests/results
 
 # Health check - run silently
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pwsh -NoProfile -Command "Test-Path /app/AitherZero.psd1 -PathType Leaf" > /dev/null 2>&1
+    CMD sh -c 'pwsh -NoProfile -Command "Test-Path /app/AitherZero.psd1 -PathType Leaf" > /dev/null 2>&1'
 
 # Default command - start interactive shell with minimal logging
 CMD ["pwsh", "-NoExit", "-NoProfile", "-Command", "$VerbosePreference='SilentlyContinue'; $InformationPreference='SilentlyContinue'; Import-Module /app/AitherZero.psd1 -WarningAction SilentlyContinue; Write-Host '✅ AitherZero loaded. Type Start-AitherZero to begin.' -ForegroundColor Green"]
