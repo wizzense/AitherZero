@@ -18,6 +18,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Module constants
+$script:DefaultMinVersion = '5.0.0'
+$script:DefaultMinCoveragePercent = 80
+
 # Module state
 $script:TestingState = @{
     CurrentProfile = 'Standard'
@@ -116,24 +120,24 @@ function Get-TestingConfiguration {
                     LocalConfigPath = $localConfigPath
                 }
                 $localConfig = Import-PowerShellDataFile $localConfigPath
-                if ($localConfig.Testing) {
+                if ($localConfig['Testing']) {
                     # Merge local Testing configuration
-                    foreach ($key in $localConfig.Testing.Keys) {
-                        $config.Testing.$key = $localConfig.Testing.$key
+                    foreach ($key in $localConfig['Testing'].Keys) {
+                        $config['Testing'][$key] = $localConfig['Testing'][$key]
                     }
                 }
             }
 
-            $testingConfig = $config.Testing ?? @{
+            $testingConfig = $config['Testing'] ?? @{
                 Framework = 'Pester'
                 MinVersion = '5.0.0'
                 Parallel = $true
                 MaxConcurrency = 4
             }
             Write-TestingLog -Message "Testing configuration loaded from file" -Data @{
-                Framework = $testingConfig.Framework
-                MinVersion = $testingConfig.MinVersion
-                Parallel = $testingConfig.Parallel
+                Framework = ($testingConfig['Framework'] ?? 'Pester')
+                MinVersion = ($testingConfig['MinVersion'] ?? '5.0.0')
+                Parallel = ($testingConfig['Parallel'] ?? $true)
             }
             return $testingConfig
         } catch {
@@ -226,7 +230,7 @@ function Invoke-TestSuite {
         Write-Verbose "Categories: $($ProfileNameConfig.Categories -join ', ')"
 
         # Ensure Pester is available
-        $minVersion = $testConfig['MinVersion'] ?? '5.0.0'
+        $minVersion = $testConfig['MinVersion'] ?? $script:DefaultMinVersion
         Write-TestingLog -Level Debug -Message "Checking Pester availability" -Data @{
             RequiredVersion = $minVersion
         }
@@ -278,7 +282,7 @@ function Invoke-TestSuite {
             $coveragePath = Join-Path $coverageBasePath "Coverage-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
             Write-TestingLog -Message "Code coverage enabled" -Data @{
                 CoveragePath = $coveragePath
-                MinimumPercent = ($testConfig['CodeCoverage']['MinimumPercent'] ?? 80)
+                MinimumPercent = ($testConfig['CodeCoverage']['MinimumPercent'] ?? $script:DefaultMinCoveragePercent)
             }
             $pesterConfig.CodeCoverage.Enabled = $true
             $pesterConfig.CodeCoverage.Path = Join-Path $script:ProjectRoot 'domains'
@@ -311,7 +315,7 @@ function Invoke-TestSuite {
         # Check minimum coverage
         if ($testConfig['CodeCoverage'] -and $testConfig['CodeCoverage']['Enabled']) {
             $coveragePercent = $result.CodeCoverage.CoveragePercent
-            $minCoveragePercent = $testConfig['CodeCoverage']['MinimumPercent'] ?? 80
+            $minCoveragePercent = $testConfig['CodeCoverage']['MinimumPercent'] ?? $script:DefaultMinCoveragePercent
             Write-TestingLog -Message "Code coverage analysis completed" -Data @{
                 CoveragePercent = $coveragePercent
                 MinimumRequired = $minCoveragePercent
@@ -343,7 +347,7 @@ function Invoke-TestSuite {
         Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
 
         if ($testConfig['CodeCoverage'] -and $testConfig['CodeCoverage']['Enabled']) {
-            $minCoveragePercent = $testConfig['CodeCoverage']['MinimumPercent'] ?? 80
+            $minCoveragePercent = $testConfig['CodeCoverage']['MinimumPercent'] ?? $script:DefaultMinCoveragePercent
             Write-Host "  Coverage: $($result.CodeCoverage.CoveragePercent)%" -ForegroundColor $(
                 if ($result.CodeCoverage.CoveragePercent -ge $minCoveragePercent) { 'Green' } else { 'Yellow' }
             )
