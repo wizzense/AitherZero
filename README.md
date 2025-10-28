@@ -1,148 +1,254 @@
-actionlint
-==========
-[![CI Badge][]][CI]
-[![API Document][apidoc-badge]][apidoc]
+<p align="center">
+  <img src="aitherium_logo.jpg" alt="Aitherium Logo" width="200"/>
+</p>
 
-[actionlint][repo] is a static checker for GitHub Actions workflow files. [Try it online!][playground]
+<h1 align="center">AitherZero</h1>
 
-Features:
+<p align="center">
+  <strong>Aitherium™ Enterprise Infrastructure Automation Platform</strong><br>
+  Infrastructure automation platform with AI-powered orchestration
+</p>
 
-- **Syntax check for workflow files** to check unexpected or missing keys following [workflow syntax][syntax-doc]
-- **Strong type check for `${{ }}` expressions** to catch several semantic errors like access to not existing property,
-  type mismatches, ...
-- **Actions usage check** to check that inputs at `with:` and outputs in `steps.{id}.outputs` are correct
-- **Reusable workflow check** to check inputs/outputs/secrets of reusable workflows and workflow calls
-- **[shellcheck][] and [pyflakes][] integrations** for scripts at `run:`
-- **Security checks**; [script injection][script-injection-doc] by untrusted inputs, hard-coded credentials
-- **Other several useful checks**; [glob syntax][filter-pattern-doc] validation, dependencies check for `needs:`,
-  runner label validation, cron syntax validation, ...
+<p align="center">
+  <a href="#quick-install">Quick Install</a> •
+  <a href="#features">Features</a> •
+  <a href="#documentation">Documentation</a> •
+  <a href="#license">License</a>
+</p>
 
-See the [full list][checks] of checks done by actionlint.
+---
 
-<img src="https://github.com/rhysd/ss/blob/master/actionlint/main.gif?raw=true" alt="actionlint reports 7 errors" width="806" height="492"/>
+## 🚀 Quick Install
 
-**Example of broken workflow:**
+### One-Liner Installation (Recommended)
 
-```yaml
-on:
-  push:
-    branch: main
-    tags:
-      - 'v\d+'
-jobs:
-  test:
-    strategy:
-      matrix:
-        os: [macos-latest, linux-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - run: echo "Checking commit '${{ github.event.head_commit.message }}'"
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node_version: 18.x
-      - uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ matrix.platform }}-node-${{ hashFiles('**/package-lock.json') }}
-        if: ${{ github.repository.permissions.admin == true }}
-      - run: npm install && npm test
+**Windows/Linux/macOS (PowerShell 5.1+)**
+```powershell
+iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
 ```
 
-**actionlint reports 7 errors:**
-
-```
-test.yaml:3:5: unexpected key "branch" for "push" section. expected one of "branches", "branches-ignore", "paths", "paths-ignore", "tags", "tags-ignore", "types", "workflows" [syntax-check]
-  |
-3 |     branch: main
-  |     ^~~~~~~
-test.yaml:5:11: character '\' is invalid for branch and tag names. only special characters [, ?, +, *, \, ! can be escaped with \. see `man git-check-ref-format` for more details. note that regular expression is unavailable. note: filter pattern syntax is explained at https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet [glob]
-  |
-5 |       - 'v\d+'
-  |           ^~~~
-test.yaml:10:28: label "linux-latest" is unknown. available labels are "windows-latest", "windows-latest-8-cores", "windows-2025", "windows-2022", "windows-2019", "ubuntu-latest", "ubuntu-latest-4-cores", "ubuntu-latest-8-cores", "ubuntu-latest-16-cores", "ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04", "macos-latest", "macos-latest-xl", "macos-latest-xlarge", "macos-latest-large", "macos-15-xlarge", "macos-15-large", "macos-15", "macos-14-xl", "macos-14-xlarge", "macos-14-large", "macos-14", "macos-13-xl", "macos-13-xlarge", "macos-13-large", "macos-13", "self-hosted", "x64", "arm", "arm64", "linux", "macos", "windows". if it is a custom label for self-hosted runner, set list of labels in actionlint.yaml config file [runner-label]
-   |
-10 |         os: [macos-latest, linux-latest]
-   |                            ^~~~~~~~~~~~~
-test.yaml:13:41: "github.event.head_commit.message" is potentially untrusted. avoid using it directly in inline scripts. instead, pass it through an environment variable. see https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions for more details [expression]
-   |
-13 |       - run: echo "Checking commit '${{ github.event.head_commit.message }}'"
-   |                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-test.yaml:17:11: input "node_version" is not defined in action "actions/setup-node@v4". available inputs are "always-auth", "architecture", "cache", "cache-dependency-path", "check-latest", "node-version", "node-version-file", "registry-url", "scope", "token" [action]
-   |
-17 |           node_version: 18.x
-   |           ^~~~~~~~~~~~~
-test.yaml:21:20: property "platform" is not defined in object type {os: string} [expression]
-   |
-21 |           key: ${{ matrix.platform }}-node-${{ hashFiles('**/package-lock.json') }}
-   |                    ^~~~~~~~~~~~~~~
-test.yaml:22:17: receiver of object dereference "permissions" must be type of object but got "string" [expression]
-   |
-22 |         if: ${{ github.repository.permissions.admin == true }}
-   |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Linux/macOS (Bash)**
+```bash
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 ```
 
-## Quick start
+### Download Latest Release Package
 
-Install `actionlint` command by downloading [the released binary][releases] or by Homebrew or by `go install`. See
-[the installation document][install] for more details like how to manage the command with several package managers
-or run via Docker container.
-
-```sh
-go install github.com/rhysd/actionlint/cmd/actionlint@latest
+**Option 1: Direct Download (Latest Release)**
+```powershell
+# Download latest release ZIP
+$latest = (Invoke-RestMethod "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | Where-Object {$_.name -like "*.zip"}
+Invoke-WebRequest -Uri $latest.browser_download_url -OutFile "AitherZero-latest.zip"
+Expand-Archive -Path "AitherZero-latest.zip" -DestinationPath ./
+cd AitherZero-*
+./bootstrap.ps1 -Mode New -NonInteractive
 ```
 
-Basically all you need to do is run the `actionlint` command in your repository. actionlint automatically detects workflows and
-checks errors. actionlint focuses on finding out mistakes. It tries to catch errors as much as possible and make false positives
-as minimal as possible.
-
-```sh
-actionlint
+**Option 2: GitHub CLI**
+```bash
+# Using GitHub CLI (gh)
+gh repo clone wizzense/AitherZero
+cd AitherZero
+./bootstrap.sh
 ```
 
-Another option to try actionlint is [the online playground][playground]. Your browser can run actionlint through WebAssembly.
+**Option 3: Git Clone**
+```bash
+# Traditional git clone
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+./bootstrap.ps1  # Windows/PowerShell
+# OR
+./bootstrap.sh   # Linux/macOS
+```
 
-See [the usage document][usage] for more details.
+## 📋 Requirements
 
-## Documents
+**Automatically Installed:**
+- PowerShell 7.0+ (auto-installed if missing)
+- Git (auto-installed if missing)
 
-- [Checks][checks]: Full list of all checks done by actionlint with example inputs, outputs, and playground links.
-- [Installation][install]: Installation instructions. Prebuilt binaries, a Docker image, building from source, a download script
-  (for CI), supports by several package managers are available.
-- [Usage][usage]: How to use `actionlint` command locally or on GitHub Actions, the online playground, an official Docker image,
-  and integrations with reviewdog, Problem Matchers, super-linter, pre-commit, VS Code.
-- [Configuration][config]: How to configure actionlint behavior. Currently, the labels of self-hosted runners, the configuration
-  variables, and ignore patterns of errors for each file paths can be set.
-- [Go API][api]: How to use actionlint as Go library.
-- [References][refs]: Links to resources.
+**Optional:**
+- OpenTofu or Terraform (for infrastructure automation)
+- Docker (for containerized workflows) - [See Docker Guide](docs/DOCKER.md)
 
-## Bug reporting
+### 🐳 Docker Quick Start
 
-When you see some bugs or false positives, it is helpful to [file a new issue][issue-form] with a minimal example
-of input. Giving me some feedbacks like feature requests or ideas of additional checks is also welcome.
+Run AitherZero in an isolated container:
 
-See the [contribution guide](./CONTRIBUTING.md) for more details.
+```bash
+# Quick start with Docker Compose
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+docker-compose up -d
+docker exec -it aitherzero-app pwsh
+
+# Or build and run with Docker
+docker build -t aitherzero:latest .
+docker run -it --rm aitherzero:latest
+```
+
+📖 **[Complete Docker Documentation](docs/DOCKER.md)** - Building, running, CI/CD integration, and production deployment
+
+## 🎯 Quick Start
+
+```powershell
+# After installation, AitherZero is available globally as 'aitherzero'
+aitherzero              # Start interactive mode
+
+# Or run from the installation directory
+./Start-AitherZero.ps1
+
+# The global command works from anywhere
+cd /any/directory
+aitherzero -Mode List -Target scripts    # List all automation scripts
+aitherzero -Mode Run -Target script -ScriptNumber 0402  # Run specific script
+```
+
+### Global Command
+
+After installation via `bootstrap.ps1`, the `aitherzero` command is automatically available from anywhere on your system:
+
+- **Linux/macOS**: Installed to `~/.local/bin/aitherzero`
+- **Windows**: Installed to `%LocalAppData%\AitherZero\bin\aitherzero.cmd`
+
+The global command:
+- Automatically locates your AitherZero installation
+- Forwards all arguments to `Start-AitherZero.ps1`
+- Works from any directory
+- Supports all parameters and modes
+
+**Note**: Open a new terminal or run `source ~/.bashrc` (Linux/macOS) for the command to be available after installation.
+
+## 📦 What's Included
+
+The AitherZero package includes:
+- **Complete PowerShell module** with all domains and functions
+- **200+ automation scripts** (numbered 0000-9999) for systematic execution
+- **Cross-platform bootstrap scripts** for automatic dependency installation  
+- **Comprehensive test suite** with validation tools
+- **Quality validation system** for code standards enforcement
+- **CI/CD workflow templates** for GitHub Actions
+- **Documentation and examples** for all features
+- **Docker support** for containerized workflows and testing
+
+## 🐳 Using Docker
+
+AitherZero can run in Docker containers for consistent, isolated environments:
+
+```bash
+# Quick start with Docker Compose
+docker-compose up -d
+docker-compose exec aitherzero pwsh
+
+# Or build and run manually
+docker build -t aitherzero:latest .
+docker run -it --rm aitherzero:latest pwsh
+```
+
+**Benefits:**
+- ✅ Consistent environment across platforms
+- ✅ No dependency conflicts
+- ✅ Perfect for CI/CD pipelines
+- ✅ Quick testing and validation
+
+**📖 Full Documentation**: [Docker Guide](docs/DOCKER.md) - Complete instructions for building, running, and using the Docker container.
+
+## 🔧 Verify Installation
+
+```powershell
+# Test basic functionality
+Import-Module ./AitherZero.psd1
+Get-Module AitherZero
+
+# Run syntax validation
+./az.ps1 0407
+
+# Run quality checks
+./aitherzero 0420 -Path ./domains/utilities/Logging.psm1
+
+# Generate and view project report
+./az.ps1 0510 -ShowAll
+```
+
+## 📊 Quality Standards
+
+AitherZero maintains high code quality standards through automated validation:
+
+```powershell
+# Validate component quality
+./aitherzero 0420 -Path ./MyModule.psm1
+
+# Validate entire domain
+./aitherzero 0420 -Path ./domains/testing -Recursive
+```
+
+**Quality checks include:**
+- ✅ Error handling validation
+- ✅ Logging implementation
+- ✅ Test coverage verification
+- ✅ UI/CLI integration
+- ✅ PSScriptAnalyzer compliance
+
+**Documentation:**
+- [Quality Standards](docs/QUALITY-STANDARDS.md) - Complete quality guidelines
+- [Quick Reference](docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
+- [Docker Usage Guide](docs/DOCKER.md) - Container deployment and workflows
+
+## Features
+
+- **Infrastructure Deployment**: Plan, apply, and destroy infrastructure using OpenTofu/Terraform
+- **Lab VM Management**: Create and manage virtual machines
+- **Configuration**: Simple configuration management
+
+## Core Modules
+
+- **LabRunner**: Lab automation and VM management
+- **OpenTofuProvider**: Infrastructure deployment
+- **Logging**: Centralized logging
+- **ConfigurationCore**: Configuration management
+- **SecureCredentials**: Credential handling
+
+## Project Structure
+
+```
+```
+
+## Usage
+
+1. Run `./Start-AitherZero.ps1`
+2. Select from the menu:
+   - Deploy Infrastructure
+   - Manage Lab VMs
+   - Configure Settings
+3. Follow the prompts
+
+## Configuration
+
+Configuration files are stored in the `configs/` directory.
+
+## Uninstallation
+
+To remove AitherZero from your system:
+
+```powershell
+# Remove the installation
+./bootstrap.ps1 -Mode Remove
+
+# Or manually remove the global command
+./tools/Install-GlobalCommand.ps1 -Action Uninstall
+
+# Manual cleanup (if needed)
+# Remove installation directory
+rm -rf ~/AitherZero  # or your custom installation path
+
+# Remove global command (Linux/macOS)
+rm ~/.local/bin/aitherzero
+
+# Remove environment variable from shell profiles
+# Edit ~/.bashrc, ~/.zshrc, ~/.profile and remove AITHERZERO_ROOT lines
+```
 
 ## License
 
-actionlint is distributed under [The MIT License](./LICENSE.txt).
-
-[CI Badge]: https://github.com/rhysd/actionlint/workflows/CI/badge.svg?branch=main&event=push
-[CI]: https://github.com/rhysd/actionlint/actions?query=workflow%3ACI+branch%3Amain
-[apidoc-badge]: https://pkg.go.dev/badge/github.com/rhysd/actionlint.svg
-[apidoc]: https://pkg.go.dev/github.com/rhysd/actionlint
-[repo]: https://github.com/rhysd/actionlint
-[playground]: https://rhysd.github.io/actionlint/
-[shellcheck]: https://github.com/koalaman/shellcheck
-[pyflakes]: https://github.com/PyCQA/pyflakes
-[syntax-doc]: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
-[filter-pattern-doc]: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
-[script-injection-doc]: https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
-[releases]: https://github.com/rhysd/actionlint/releases
-[checks]: https://github.com/rhysd/actionlint/blob/v1.7.5/docs/checks.md
-[install]: https://github.com/rhysd/actionlint/blob/v1.7.5/docs/install.md
-[usage]: https://github.com/rhysd/actionlint/blob/v1.7.5/docs/usage.md
-[config]: https://github.com/rhysd/actionlint/blob/v1.7.5/docs/config.md
-[api]: https://github.com/rhysd/actionlint/blob/v1.7.5/docs/api.md
-[refs]: https://github.com/rhysd/actionlint/blob/v1.7.5/docs/reference.md
-[issue-form]: https://github.com/rhysd/actionlint/issues/new
+MIT License - see LICENSE file for details.

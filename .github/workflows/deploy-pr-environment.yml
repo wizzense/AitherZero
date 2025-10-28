@@ -213,7 +213,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Image**: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Size**: \`${{ steps.build.outputs.size }}\`" >> $GITHUB_STEP_SUMMARY
   # Deploy to Docker Compose (local/simple deployment)
   deploy-docker-compose:
     name: Deploy with Docker Compose
