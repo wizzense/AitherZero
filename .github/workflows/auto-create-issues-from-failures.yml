@@ -66,23 +66,33 @@ jobs:
             try {
               $report = Get-Content $reportFile.FullName | ConvertFrom-Json
               
-              if ($report.FailedCount -gt 0) {
-                Write-Host "Found $($report.FailedCount) test failures in $($reportFile.Name)" -ForegroundColor Red
+              # Check for test results in the expected structure
+              $failedCount = 0
+              if ($report.TestResults -and $report.TestResults.Summary) {
+                $failedCount = $report.TestResults.Summary.Failed
+              } elseif ($report.FailedCount) {
+                $failedCount = $report.FailedCount
+              }
+              
+              if ($failedCount -gt 0) {
+                Write-Host "Found $failedCount test failures in $($reportFile.Name)" -ForegroundColor Red
                 
-                # Extract failure details
-                foreach ($result in $report.Tests) {
-                  if ($result.Result -eq 'Failed') {
-                    $testFailures += @{
-                      TestName = $result.ExpandedName
-                      ErrorMessage = $result.ErrorRecord.Exception.Message
-                      File = $result.ScriptBlock.File
-                      Line = $result.ScriptBlock.StartPosition.Line
+                # Extract failure details from Details array
+                if ($report.TestResults.Details) {
+                  foreach ($result in $report.TestResults.Details) {
+                    if ($result.Result -eq 'Failed') {
+                      $testFailures += @{
+                        TestName = $result.ExpandedName
+                        ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } else { "Test failed" }
+                        File = if ($result.ScriptBlock) { $result.ScriptBlock.File } else { "Unknown" }
+                        Line = if ($result.ScriptBlock) { $result.ScriptBlock.StartPosition.Line } else { 0 }
+                      }
                     }
                   }
                 }
               }
             } catch {
-              Write-Warning "Failed to parse report: $($reportFile.Name)"
+              Write-Warning "Failed to parse report: $($reportFile.Name) - $_"
             }
           }
           
