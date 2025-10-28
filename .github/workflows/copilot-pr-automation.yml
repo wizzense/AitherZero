@@ -9,8 +9,8 @@ on:
     types: [opened, synchronize, closed]
     
   schedule:
-    # Check for stale assigned issues every 4 hours during business days
-    - cron: '0 */4 * * 1-5'
+    # Check for stale assigned issues every 3 hours, 7 days a week
+    - cron: '0 */3 * * *'
     
   workflow_dispatch:
     inputs:
@@ -34,7 +34,7 @@ jobs:
   monitor-assigned-issues:
     name: 👀 Monitor Copilot-Assigned Issues
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event.inputs.force_pr_creation == 'true' || (github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == 'copilot')
+    if: github.event_name == 'schedule' || github.event.inputs.force_pr_creation == 'true' || (github.event_name == 'issues' && github.event.action == 'assigned')
     
     outputs:
       actionable_issues: ${{ steps.scan_issues.outputs.actionable_issues }}
@@ -72,12 +72,12 @@ jobs:
                 console.log(`Issue ${specificIssue} not found or not accessible`);
               }
             } else {
-              // Scan for all copilot-assigned issues
+              // Scan for all auto-created copilot issues (assigned to wizzense or with copilot-task label)
               const { data: issues } = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                assignee: 'copilot',
                 state: 'open',
+                labels: 'copilot-task',
                 sort: 'created',
                 direction: 'desc',
                 per_page: 50
@@ -421,8 +421,8 @@ jobs:
               label.name.includes('automated-fix') || label.name.includes('copilot-generated')
             );
             
-            if (isAutomatedFix && pr.user.login === 'copilot') {
-              console.log('This is a copilot-generated automated fix PR');
+            if (isAutomatedFix) {
+              console.log('This is an automated fix PR');
               
               // Add comment with validation instructions
               await github.rest.issues.createComment({
