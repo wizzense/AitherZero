@@ -36,7 +36,9 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
+          # Always checkout from the base repository, not from PR/fork
+          # This is safe because we only publish reports from trusted CI runs
+          ref: ${{ github.event.repository.default_branch }}
           
       - name: 📊 Download Workflow Artifacts
         if: github.event.workflow_run
