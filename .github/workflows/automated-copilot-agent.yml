@@ -437,9 +437,8 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `🤖 ${title}`,
-                body: `${body}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Priority:** ${priority}\n\n@copilot Please address this issue following the automated resolution process.`,
-                labels: ['auto-created', 'copilot-task', `priority-${priority}`, ...labels],
-                assignees: ['wizzense']
+                body: `${body}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Priority:** ${priority}\n\n**Note:** This issue requires automated resolution. Copilot will be notified in a follow-up comment.`,
+                labels: ['auto-created', 'copilot-task', `priority-${priority}`, ...labels]
               });
 
               issuesCreated.push(issue.data.number);

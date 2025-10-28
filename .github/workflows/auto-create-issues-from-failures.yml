@@ -29,8 +29,7 @@ jobs:
     if: |
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && 
-       github.event.workflow_run.conclusion == 'failure')
+      github.event_name == 'workflow_run'
     
     outputs:
       has-test-failures: ${{ steps.analysis.outputs.has-test-failures }}
