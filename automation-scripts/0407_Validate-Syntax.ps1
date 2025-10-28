@@ -33,9 +33,14 @@ param(
     [switch]$All
 )
 
+# Validate parameters: either FilePath or All must be specified
+if (-not $FilePath -and -not $All) {
+    throw "Either FilePath parameter or All switch must be specified"
+}
+
 try {
-    # If All switch or no FilePath, validate all PowerShell files
-    if ($All -or -not $FilePath) {
+    # If All switch is specified, validate all PowerShell files
+    if ($All) {
         Write-Host "Validating all PowerShell files..." -ForegroundColor Cyan
         $filesToValidate = @(
             Get-ChildItem -Path . -Filter "*.ps1" -Recurse -File |
@@ -93,10 +98,10 @@ try {
 
         if ($Detailed -and $ast) {
             Write-Host "`nScript Statistics:" -ForegroundColor Cyan
-            $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            $functions = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             Write-Host "  Functions: $($functions.Count)"
 
-            $commands = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
+            $commands = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.CommandAst] }, $true)
             Write-Host "  Commands: $($commands.Count)"
 
             Write-Host "  Total Lines: $($ast.Extent.EndLineNumber)"

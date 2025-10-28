@@ -196,14 +196,14 @@ Describe "UI Test Framework" -Tag 'Unit' {
         }
 
         It "Should track event history" {
-            $EventNameBus = New-MockEventBus
+            $eventBus = New-MockEventBus
 
-            Invoke-MockEvent -EventBus $EventNameBus -EventName "Event1" -Data @{ Value = 1 }
-            Invoke-MockEvent -EventBus $EventNameBus -EventName "Event2" -Data @{ Value = 2 }
+            Invoke-MockEvent -EventBus $eventBus -EventName "Event1" -Data @{ Value = 1 }
+            Invoke-MockEvent -EventBus $eventBus -EventName "Event2" -Data @{ Value = 2 }
 
-            $EventNameBus.History.Count | Should -Be 2
-            $EventNameBus.History[0].Name | Should -Be "Event1"
-            $EventNameBus.History[1].Name | Should -Be "Event2"
+            $eventBus.History.Count | Should -Be 2
+            $eventBus.History[0].Name | Should -Be "Event1"
+            $eventBus.History[1].Name | Should -Be "Event2"
         }
     }
 
