@@ -49,12 +49,16 @@
     Check container status
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1634
-    Stop and remove container
+    .\0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1634
+    Open interactive shell in the running container
 
 .EXAMPLE
     .\0854_Manage-PRContainer.ps1 -Action List
     List all PR containers
+
+.EXAMPLE
+    .\0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1634
+    Automated setup: pull + run + verify in one command
 
 .NOTES
     Script Number: 0854
@@ -66,7 +70,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('Pull', 'Run', 'Stop', 'Logs', 'Exec', 'Cleanup', 'Status', 'List', 'QuickStart')]
+    [ValidateSet('Pull', 'Run', 'Stop', 'Logs', 'Exec', 'Cleanup', 'Status', 'List', 'QuickStart', 'Shell')]
     [string]$Action,
     
     [Parameter(Mandatory = $false)]
@@ -294,6 +298,7 @@ function Invoke-RunContainer {
                 Write-Host "   Port: $($Config.Port)" -ForegroundColor White
                 Write-Host "   URL:  http://localhost:$($Config.Port)" -ForegroundColor White
                 Write-Host "`n💡 Quick commands:" -ForegroundColor Cyan
+                Write-Host "   Open shell: az 0854 -Action Shell -PRNumber $PRNumber" -ForegroundColor Gray
                 Write-Host "   View logs:  az 0854 -Action Logs -PRNumber $PRNumber" -ForegroundColor Gray
                 Write-Host "   Run tests:  az 0854 -Action Exec -PRNumber $PRNumber -Command './az.ps1 0402'" -ForegroundColor Gray
                 Write-Host "   Cleanup:    az 0854 -Action Cleanup -PRNumber $PRNumber" -ForegroundColor Gray
@@ -506,6 +511,38 @@ function Get-AllPRContainers {
     return $true
 }
 
+# Open interactive shell in container
+function Invoke-InteractiveShell {
+    param([hashtable]$Config)
+    
+    if (-not (Test-ContainerRunning -ContainerName $Config.Name)) {
+        Write-LogMessage "Container is not running: $($Config.Name)" -Level 'Error'
+        Write-Host "`nStart the container first: az 0854 -Action Run -PRNumber $PRNumber" -ForegroundColor Yellow
+        return $false
+    }
+    
+    Write-LogMessage "Opening interactive shell in: $($Config.Name)" -Level 'Info'
+    Write-Host "📝 Use Ctrl+D or type 'exit' to close the shell`n" -ForegroundColor Gray
+    
+    try {
+        # Use the simplified docker-start.ps1 script for better UX
+        # Falls back to basic pwsh if script doesn't exist
+        $startScript = "pwsh /opt/aitherzero/docker-start.ps1"
+        docker exec -it $Config.Name $startScript 2>$null
+        
+        # Fallback if docker-start.ps1 doesn't exist
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Using fallback shell access..." -ForegroundColor Yellow
+            docker exec -it $Config.Name pwsh -NoProfile -WorkingDirectory /opt/aitherzero
+        }
+        
+        return $true
+    } catch {
+        Write-LogMessage "Error opening shell: $_" -Level 'Error'
+        return $false
+    }
+}
+
 # QuickStart - automated full workflow
 function Invoke-QuickStart {
     param([hashtable]$Config)
@@ -534,6 +571,7 @@ function Invoke-QuickStart {
     
     Write-LogMessage "`n✅ QuickStart complete! Container is ready for testing." -Level 'Success'
     Write-Host "`n💡 Next steps:" -ForegroundColor Cyan
+    Write-Host "   Open shell: az 0854 -Action Shell -PRNumber $PRNumber" -ForegroundColor Gray
     Write-Host "   Run tests:  az 0854 -Action Exec -PRNumber $PRNumber -Command './az.ps1 0402'" -ForegroundColor Gray
     Write-Host "   View logs:  az 0854 -Action Logs -PRNumber $PRNumber" -ForegroundColor Gray
     Write-Host "   Cleanup:    az 0854 -Action Cleanup -PRNumber $PRNumber" -ForegroundColor Gray
@@ -569,6 +607,7 @@ function Invoke-Main {
         'Cleanup'    { Invoke-CleanupContainer -Config $config -ForceCleanup:$Force }
         'Status'     { Get-ContainerStatus -Config $config }
         'List'       { Get-AllPRContainers }
+        'Shell'      { Invoke-InteractiveShell -Config $config }
         'QuickStart' { Invoke-QuickStart -Config $config }
     }
     

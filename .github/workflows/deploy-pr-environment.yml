@@ -466,7 +466,10 @@ jobs:
             # After cloning the repo, use the integrated container manager:
             cd AitherZero
             
-            # Quick commands
+            # Interactive shell (easiest way to explore)
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber ${prNumber}
+            
+            # Other useful commands
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber ${prNumber}
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber ${prNumber} -Follow
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "./az.ps1 0402"
