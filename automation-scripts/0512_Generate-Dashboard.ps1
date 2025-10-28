@@ -7,11 +7,25 @@
     Creates HTML and Markdown dashboards showing project health, test results,
     security status, CI/CD metrics, and deployment information for effective
     project management and systematic improvement.
+    
+    Use the -Open parameter to automatically open the HTML dashboard in your 
+    default browser after generation.
 
     Exit Codes:
     0   - Dashboard generated successfully
     1   - Generation failed
     2   - Configuration error
+
+.PARAMETER Open
+    Automatically open the HTML dashboard in the default browser after generation
+
+.EXAMPLE
+    ./0512_Generate-Dashboard.ps1
+    Generate all dashboard formats (HTML, Markdown, JSON)
+
+.EXAMPLE
+    ./0512_Generate-Dashboard.ps1 -Format HTML -Open
+    Generate HTML dashboard and open it in the browser
 
 .NOTES
     Stage: Reporting
@@ -29,7 +43,8 @@ param(
     [switch]$IncludeMetrics,
     [switch]$IncludeTrends,
     [switch]$RefreshData,
-    [string]$ThemeColor = '#667eea'
+    [string]$ThemeColor = '#667eea',
+    [switch]$Open
 )
 
 $ErrorActionPreference = 'Stop'
@@ -69,6 +84,52 @@ function Write-ScriptLog {
     } else {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Host "[$timestamp] [$Level] $Message"
+    }
+}
+
+function Open-HTMLDashboard {
+    param(
+        [string]$FilePath
+    )
+    
+    Write-ScriptLog -Message "Opening HTML dashboard in browser: $FilePath"
+    
+    if (-not (Test-Path $FilePath)) {
+        Write-ScriptLog -Level Warning -Message "Dashboard file not found: $FilePath"
+        return $false
+    }
+    
+    try {
+        # Cross-platform browser opening
+        if ($IsWindows -or ($PSVersionTable.PSVersion.Major -le 5)) {
+            # Windows - use Start-Process with default browser
+            Start-Process $FilePath
+        }
+        elseif ($IsMacOS) {
+            # macOS - use open command
+            & open $FilePath
+        }
+        elseif ($IsLinux) {
+            # Linux - try xdg-open
+            if (Get-Command xdg-open -ErrorAction SilentlyContinue) {
+                & xdg-open $FilePath
+            }
+            else {
+                Write-ScriptLog -Level Warning -Message "xdg-open not found. Please open manually: $FilePath"
+                return $false
+            }
+        }
+        else {
+            Write-ScriptLog -Level Warning -Message "Unable to detect platform. Please open manually: $FilePath"
+            return $false
+        }
+        
+        Write-ScriptLog -Message "Dashboard opened successfully in default browser"
+        return $true
+    }
+    catch {
+        Write-ScriptLog -Level Error -Message "Failed to open dashboard: $_"
+        return $false
     }
 }
 
@@ -1372,6 +1433,16 @@ try {
         ProjectFiles = $metrics.Files.Total
         LinesOfCode = $metrics.LinesOfCode
         Status = $status.Overall
+    }
+
+    # Open HTML dashboard in browser if requested
+    if ($Open -and ($Format -eq 'HTML' -or $Format -eq 'All')) {
+        $htmlDashboardPath = Join-Path $OutputPath 'dashboard.html'
+        Write-Host "`n🌐 Opening HTML dashboard in browser..." -ForegroundColor Cyan
+        $opened = Open-HTMLDashboard -FilePath $htmlDashboardPath
+        if (-not $opened) {
+            Write-Host "⚠️  Could not open dashboard automatically. Please open manually: $htmlDashboardPath" -ForegroundColor Yellow
+        }
     }
 
     exit 0
