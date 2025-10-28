@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="12" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-10-28" time="10:39:24">
+  <environment machine-name="runnervmwhb2z" clr-version="8.0.19" user-domain="" cwd="/home/runner/work/AitherZero/AitherZero" user="runner" os-version="6.11.0-1018-azure" nunit-version="2.5.8.0" platform="Linux" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="0.9802" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/home/runner/work/AitherZero/AitherZero/tests/unit/automation-scripts/0800-0899/0850_Deploy-PREnvironment.Tests.ps1" executed="True" result="Success" success="True" time="0.8237" asserts="0" description="/home/runner/work/AitherZero/AitherZero/tests/unit/automation-scripts/0800-0899/0850_Deploy-PREnvironment.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="0850_Deploy-PREnvironment - Docker Path Configuration" executed="True" result="Success" success="True" time="0.2877" asserts="0" description="0850_Deploy-PREnvironment - Docker Path Configuration">
+            <results>
+              <test-suite type="TestFixture" name="0850_Deploy-PREnvironment - Docker Path Configuration.Docker Compose Generation" executed="True" result="Success" success="True" time="0.144" asserts="0" description="0850_Deploy-PREnvironment - Docker Path Configuration.Docker Compose Generation">
+                <results>
+                  <test-case description="Should use /opt/aitherzero path for logs volume" name="0850_Deploy-PREnvironment - Docker Path Configuration.Docker Compose Generation.Should use /opt/aitherzero path for logs volume" time="0.0861" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should use /opt/aitherzero path for reports volume" name="0850_Deploy-PREnvironment - Docker Path Configuration.Docker Compose Generation.Should use /opt/aitherzero path for reports volume" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should use /opt/aitherzero path in healthcheck" name="0850_Deploy-PREnvironment - Docker Path Configuration.Docker Compose Generation.Should use /opt/aitherzero path in healthcheck" time="0.0049" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not reference /app for AitherZero module path" name="0850_Deploy-PREnvironment - Docker Path Configuration.Docker Compose Generation.Should not reference /app for AitherZero module path" time="0.0097" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="0850_Deploy-PREnvironment - Docker Path Configuration.Script Structure" executed="True" result="Success" success="True" time="0.2744" asserts="0" description="0850_Deploy-PREnvironment - Docker Path Configuration.Script Structure">
+                <results>
+                  <test-case description="Should exist and be readable" name="0850_Deploy-PREnvironment - Docker Path Configuration.Script Structure.Should exist and be readable" time="0.107" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be a valid PowerShell script" name="0850_Deploy-PREnvironment - Docker Path Configuration.Script Structure.Should be a valid PowerShell script" time="0.0181" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/AitherZero/AitherZero/tests/unit/automation-scripts/0800-0899/0852_Validate-PRDockerDeployment.Tests.ps1" executed="True" result="Success" success="True" time="0.1565" asserts="0" description="/home/runner/work/AitherZero/AitherZero/tests/unit/automation-scripts/0800-0899/0852_Validate-PRDockerDeployment.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="0852_Validate-PRDockerDeployment - Module Path Validation" executed="True" result="Success" success="True" time="0.0798" asserts="0" description="0852_Validate-PRDockerDeployment - Module Path Validation">
+            <results>
+              <test-suite type="TestFixture" name="0852_Validate-PRDockerDeployment - Module Path Validation.Module Import Paths" executed="True" result="Success" success="True" time="0.019" asserts="0" description="0852_Validate-PRDockerDeployment - Module Path Validation.Module Import Paths">
+                <results>
+                  <test-case description="Should use /opt/aitherzero path for module import tests" name="0852_Validate-PRDockerDeployment - Module Path Validation.Module Import Paths.Should use /opt/aitherzero path for module import tests" time="0.0072" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not use old /app path for module import" name="0852_Validate-PRDockerDeployment - Module Path Validation.Module Import Paths.Should not use old /app path for module import" time="0.0062" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="0852_Validate-PRDockerDeployment - Module Path Validation.File System Validation Paths" executed="True" result="Success" success="True" time="0.0392" asserts="0" description="0852_Validate-PRDockerDeployment - Module Path Validation.File System Validation Paths">
+                <results>
+                  <test-case description="Should validate /opt/aitherzero paths in container" name="0852_Validate-PRDockerDeployment - Module Path Validation.File System Validation Paths.Should validate /opt/aitherzero paths in container" time="0.0082" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate /opt/aitherzero logs and reports directories" name="0852_Validate-PRDockerDeployment - Module Path Validation.File System Validation Paths.Should validate /opt/aitherzero logs and reports directories" time="0.007" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="0852_Validate-PRDockerDeployment - Module Path Validation.Script Structure" executed="True" result="Success" success="True" time="0.0745" asserts="0" description="0852_Validate-PRDockerDeployment - Module Path Validation.Script Structure">
+                <results>
+                  <test-case description="Should exist and be readable" name="0852_Validate-PRDockerDeployment - Module Path Validation.Script Structure.Should exist and be readable" time="0.0188" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be a valid PowerShell script" name="0852_Validate-PRDockerDeployment - Module Path Validation.Script Structure.Should be a valid PowerShell script" time="0.0116" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
