@@ -48,8 +48,9 @@ RUN mkdir -p /app/logs /app/reports /app/tests/results
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pwsh -NoProfile -Command "Test-Path /app/AitherZero.psd1 -PathType Leaf"
 
-# Default command - start interactive shell with minimal logging
-CMD ["pwsh", "-NoExit", "-NoProfile", "-Command", "$VerbosePreference='SilentlyContinue'; $InformationPreference='SilentlyContinue'; Import-Module /app/AitherZero.psd1 -WarningAction SilentlyContinue; Write-Host '✅ AitherZero loaded. Type Start-AitherZero to begin.' -ForegroundColor Green"]
+# Default command - keep container running for interactive use or automation
+# Uses a long-running sleep to keep container alive while allowing exec commands
+CMD ["pwsh", "-NoProfile", "-Command", "$VerbosePreference='SilentlyContinue'; $InformationPreference='SilentlyContinue'; Import-Module /app/AitherZero.psd1 -WarningAction SilentlyContinue; Write-Host '✅ AitherZero loaded. Type Start-AitherZero to begin.' -ForegroundColor Green; Start-Sleep -Seconds 2147483"]
 
 # Expose ports for potential web interfaces (future use)
 EXPOSE 8080 8443
