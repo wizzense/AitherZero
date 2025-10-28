@@ -1,0 +1,240 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+/* AitherZero Custom Theme - Comfortable Dark Blue Scheme */
+
+/* Root variables for consistent theming */
+:root {
+  --primary-bg: #0d1117;
+  --secondary-bg: #161b22;
+  --tertiary-bg: #21262d;
+  --accent-color: #667eea;
+  --accent-hover: #764ba2;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --border-color: #30363d;
+  --link-color: #58a6ff;
+  --link-hover: #79c0ff;
+  --card-bg: #161b22;
+  --highlight-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Base body styling - comfortable dark background */
+body {
+  background-color: var(--primary-bg) !important;
+  color: var(--text-primary) !important;
+  line-height: 1.6;
+}
+
+/* Main content wrapper */
+.page-content {
+  background-color: var(--primary-bg);
+}
+
+.wrapper {
+  max-width: 1200px;
+  background-color: var(--primary-bg);
+}
+
+/* Header styling */
+.site-header {
+  border-top: 5px solid var(--accent-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  background-color: var(--secondary-bg) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.site-title,
+.site-title:visited {
+  color: var(--text-primary) !important;
+  font-weight: 700;
+  font-size: 1.8rem;
+}
+
+.site-title:hover {
+  color: var(--link-hover) !important;
+  text-decoration: none;
+}
+
+.site-nav {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+}
+
+.site-nav .page-link {
+  color: var(--text-primary) !important;
+}
+
+.site-nav .page-link:hover {
+  color: var(--link-hover) !important;
+}
+
+/* Footer styling */
+.site-footer {
+  border-top: 1px solid var(--border-color) !important;
+  background-color: var(--secondary-bg) !important;
+  color: var(--text-secondary) !important;
+}
+
+.footer-heading {
+  color: var(--text-primary) !important;
+}
+
+/* Typography improvements */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+/* Links */
+a {
+  color: var(--link-color) !important;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--link-hover) !important;
+  text-decoration: underline;
+}
+
+/* Code blocks */
+pre,
+code {
+  background-color: var(--tertiary-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.highlight {
+  background-color: var(--tertiary-bg) !important;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+/* Override inline styles on index page elements */
+.card {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card h3 {
+  color: var(--accent-color) !important;
+}
+
+/* Improve the highlight box at the top */
+.highlight-box {
+  background: var(--highlight-gradient) !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  animation: subtle-pulse 3s ease-in-out infinite;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+  }
+}
+
+/* Quick links styling */
+.quick-link {
+  background: var(--card-bg) !important;
+  border: 2px solid var(--accent-color) !important;
+  color: var(--accent-color) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.quick-link:hover {
+  background: var(--accent-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  text-decoration: none !important;
+}
+
+/* Badge container improvements */
+.badge-container img {
+  filter: brightness(1.1);
+}
+
+/* Lists */
+ul, ol {
+  color: var(--text-secondary);
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+li strong {
+  color: var(--text-primary);
+}
+
+/* Tables */
+table {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+}
+
+thead {
+  background-color: var(--tertiary-bg);
+}
+
+th, td {
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.75rem;
+}
+
+tr:hover {
+  background-color: var(--tertiary-bg);
+}
+
+/* Blockquotes */
+blockquote {
+  border-left: 4px solid var(--accent-color);
+  background-color: var(--secondary-bg);
+  color: var(--text-secondary);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+/* Horizontal rules */
+hr {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 800px) {
+  .site-title {
+    font-size: 1.5rem;
+  }
+  
+  .highlight-box h1 {
+    font-size: 2rem !important;
+  }
+  
+  .quick-links {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Accessibility improvements */
+:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}

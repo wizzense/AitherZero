@@ -4,66 +4,99 @@ title: AitherZero Project Dashboard
 ---
 
 <style>
+/* Component-specific styles - colors handled by main stylesheet */
 .badge-container {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin: 20px 0;
+  justify-content: center;
 }
 .badge-container img {
-  height: 20px;
+  height: 22px;
 }
 .card {
-  background: #f6f8fa;
-  border: 1px solid #d0d7de;
   border-radius: 8px;
-  padding: 20px;
-  margin: 20px 0;
+  padding: 24px;
+  margin: 24px 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
 }
 .card h3 {
   margin-top: 0;
-  color: #0969da;
+  font-size: 1.4rem;
 }
 .highlight-box {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 30px;
-  border-radius: 12px;
-  margin: 30px 0;
+  padding: 40px 30px;
+  border-radius: 16px;
+  margin: 0 0 30px 0;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.highlight-box::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 .highlight-box h1 {
-  margin: 0 0 10px 0;
-  font-size: 2.5rem;
+  margin: 0 0 15px 0;
+  font-size: 3rem;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.highlight-box p {
+  position: relative;
+  z-index: 1;
+  color: rgba(255,255,255,0.95) !important;
+}
+.highlight-box .subtitle {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.highlight-box .tagline {
+  font-size: 1rem;
+  opacity: 0.9;
 }
 .quick-links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 15px;
-  margin: 20px 0;
+  margin: 24px 0;
 }
 .quick-link {
-  background: white;
-  border: 2px solid #0969da;
-  border-radius: 8px;
-  padding: 15px;
+  border-radius: 10px;
+  padding: 18px;
   text-align: center;
   text-decoration: none;
-  color: #0969da;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  font-size: 1.05rem;
 }
 .quick-link:hover {
-  background: #0969da;
-  color: white;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  text-decoration: none !important;
 }
 </style>
 
 <div class="highlight-box">
   <h1>🚀 AitherZero</h1>
-  <p style="font-size: 1.2rem; opacity: 0.95;">Infrastructure Automation Platform</p>
-  <p style="margin-top: 15px; opacity: 0.9;">Number-based orchestration system for systematic infrastructure automation</p>
+  <p class="subtitle">Infrastructure Automation Platform</p>
+  <p class="tagline">Number-based orchestration system for systematic infrastructure automation</p>
 </div>
 
 <div class="badge-container">
