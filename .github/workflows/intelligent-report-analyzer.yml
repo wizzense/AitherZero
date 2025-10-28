@@ -3,12 +3,14 @@ name: Intelligent Report Analyzer & Issue Creator
 
 # Automatically analyze comprehensive reports and create targeted issues/PRs for AI agents
 on:
-  workflow_run:
-    workflows: ["Intelligent CI Orchestrator", "CI Pipeline"]
-    types: [completed]
-  schedule:
-    # Daily analysis of accumulated issues and opportunities
-    - cron: '0 6 * * *'  # 6 AM UTC daily
+  # DISABLED: workflow_run trigger was creating duplicate issues
+  # workflow_run:
+  #   workflows: ["Intelligent CI Orchestrator", "CI Pipeline"]
+  #   types: [completed]
+  # DISABLED: Daily schedule was creating unnecessary issues
+  # schedule:
+  #   # Daily analysis of accumulated issues and opportunities
+  #   - cron: '0 6 * * *'  # 6 AM UTC daily
   workflow_dispatch:
     inputs:
       analysis_mode:
