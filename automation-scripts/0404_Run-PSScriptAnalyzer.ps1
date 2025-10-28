@@ -315,7 +315,7 @@ try {
                 Write-ScriptLog -Message "Running PSScriptAnalyzer with CI optimizations and adaptive timeout"
                 
                 # Extract file paths and other parameters separately to avoid serialization issues
-                $filePaths = if ($analyzerParams.Path -is [array]) { $analyzerParams.Path } else { @($analyzerParams.Path) }
+                $filePaths = @($analyzerParams.Path)
                 $otherParams = @{}
                 foreach ($key in $analyzerParams.Keys) {
                     if ($key -ne 'Path') {
