@@ -104,9 +104,8 @@ try {
     }
     
     try {
-        docker compose version 2>&1 | Out-Null
+        $composeVersion = docker compose version 2>&1
         if ($LASTEXITCODE -eq 0) {
-            $composeVersion = docker compose version 2>&1
             Add-TestResult -TestName "Docker Compose" -Status "Passed" -Message "Docker Compose is available: $composeVersion"
         } else {
             throw "Docker Compose command failed"
