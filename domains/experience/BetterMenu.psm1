@@ -65,7 +65,7 @@ function Show-BetterMenu {
 
     # Auto-detect problematic terminals and enable simple menu mode
     # This helps with Android terminals, Termux, and other limited environments
-    if ($canUseInteractive -and -not $env:AITHERZERO_SIMPLE_MENU) {
+    if ($canUseInteractive -and -not ($env:AITHERZERO_SIMPLE_MENU -eq '1')) {
         # Check for known problematic terminal types
         $termProgram = $env:TERM_PROGRAM
         $term = $env:TERM
