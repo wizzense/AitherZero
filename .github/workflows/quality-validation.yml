@@ -306,7 +306,7 @@ jobs:
                 
                 const issueTitle = 'Quality Validation Failed: ' + fileName + ' (Score: ' + file.Score + '%)';
                 const prNumber = context.payload.pull_request?.number || 'N/A';
-                const runUrl = context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId;
+                const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
                 const issueBody = '## Quality Validation Failure Report\n\n' +
                   '**File**: `' + file.FilePath + '`\n' +
                   '**Overall Score**: ' + file.Score + '%\n' +
