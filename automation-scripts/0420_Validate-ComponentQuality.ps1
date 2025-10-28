@@ -153,6 +153,9 @@ try {
         
         $filesToValidate = Get-ChildItem @scanParams | Select-Object -ExpandProperty FullName
         
+        # Ensure it's an array
+        $filesToValidate = @($filesToValidate)
+        
         if ($filesToValidate.Count -eq 0) {
             Write-ScriptLog -Level Warning -Message "No PowerShell files found in: $Path"
             exit 0
@@ -281,13 +284,16 @@ try {
                 $issues = $report.Checks | Where-Object { $_.Status -in @('Failed', 'Warning') } | Select-Object -First 2
                 foreach ($issue in $issues) {
                     $issueIcon = if ($issue.Status -eq 'Failed') { '  ❌' } else { '  ⚠️ ' }
-                    if ($issue.Findings -and $issue.Findings.Count -gt 0) {
-                        $finding = $issue.Findings[0]
-                        # Truncate long findings
-                        if ($finding.Length -gt 70) {
-                            $finding = $finding.Substring(0, 67) + "..."
+                    if ($issue.Findings) {
+                        $findingsArray = @($issue.Findings)
+                        if ($findingsArray.Count -gt 0) {
+                            $finding = $findingsArray[0]
+                            # Truncate long findings
+                            if ($finding.Length -gt 70) {
+                                $finding = $finding.Substring(0, 67) + "..."
+                            }
+                            Write-Host "$issueIcon $($issue.CheckName): $finding" -ForegroundColor Gray
                         }
-                        Write-Host "$issueIcon $($issue.CheckName): $finding" -ForegroundColor Gray
                     }
                 }
             }
