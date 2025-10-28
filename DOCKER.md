@@ -4,7 +4,31 @@ This guide explains how to use AitherZero with Docker for easy deployment and ac
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
+### Using the Container Manager (Easiest for PR Testing)
+
+The automated container manager simplifies PR container testing:
+
+```bash
+# Clone the repo
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+
+# QuickStart: Pull + Run + Verify in one command
+pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1634
+
+# Open interactive shell (no need to run Start-AitherZero twice!)
+pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1634
+
+# Run specific commands
+pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1634 -Command "./az.ps1 0402"
+
+# Cleanup when done
+pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1634
+```
+
+**Available Actions**: Pull, Run, Stop, Logs, Exec, Shell, Cleanup, Status, List, QuickStart
+
+### Using Docker Compose (Recommended for Local Development)
 
 ```bash
 # Build and start the container
@@ -66,7 +90,10 @@ The web interface provides:
 To access PowerShell interactively inside the container:
 
 ```bash
-# Open an interactive PowerShell session
+# Simplified access (recommended) - uses docker-start.ps1 for better UX
+docker exec -it aitherzero pwsh /opt/aitherzero/docker-start.ps1
+
+# Alternative: Direct PowerShell access
 docker exec -it aitherzero pwsh
 
 # Once inside, you can use AitherZero commands
@@ -75,22 +102,28 @@ PS> az 0402  # Run unit tests
 PS> az 0510  # Generate reports
 ```
 
+**Note**: The container starts with AitherZero already loaded in `/opt/aitherzero`. 
+The simplified `docker-start.ps1` script provides a better user experience with:
+- Automatic module loading
+- Clear welcome message and helpful commands
+- Proper working directory setup
+
 ### Run Single Commands
 
 Execute AitherZero commands from outside the container:
 
 ```bash
-# Run unit tests
-docker exec aitherzero pwsh -Command "az 0402"
+# Run unit tests (note: work from /opt/aitherzero directory)
+docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
 
 # Generate project report
-docker exec aitherzero pwsh -Command "az 0510"
+docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./az.ps1 0510"
 
 # Run a playbook
-docker exec aitherzero pwsh -Command "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick"
+docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick"
 
 # List available scripts
-docker exec aitherzero pwsh -Command "./Start-AitherZero.ps1 -Mode List -Target scripts"
+docker exec aitherzero pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List -Target scripts"
 ```
 
 ## Custom Configuration
