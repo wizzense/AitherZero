@@ -246,9 +246,7 @@ jobs:
           $dashboard += '.success{border-left:4px solid #28a745}</style>`n</head>`n<body>`n"
           $dashboard += "<h1>🎯 AitherZero QA Dashboard</h1>`n"
 
-          $cssClass = if ($qaResults.OverallStatus -eq 'Passed') { 'success' }
-                     elseif ($qaResults.OverallStatus -eq 'Critical Issues') { 'critical' }
-                     else { 'warning' }
+          $cssClass = if ($qaResults.OverallStatus -eq 'Passed') { 'success' } elseif ($qaResults.OverallStatus -eq 'Critical Issues') { 'critical' } else { 'warning' }
 
           $dashboard += "<div class=`"card $cssClass`">`n"
           $dashboard += "<h2>📊 Overall Status: $($qaResults.OverallStatus)</h2>`n"
@@ -333,6 +331,8 @@ jobs:
       - name: 💬 Update PR with QA Status
         if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
+        env:
+          QA_SCOPE: ${{ github.event.inputs.qa_scope || 'standard' }}
         with:
           script: |
             const fs = require('fs');
@@ -364,7 +364,7 @@ jobs:
             let comment = '## 🎯 QA Lifecycle Report ' + statusEmoji + '\n\n';
             comment += '**Overall Status:** ' + status + '\n';
             comment += '**Total Issues:** ' + qaResults.TotalIssues + '\n';
-            comment += '**QA Scope:** ${{ github.event.inputs.qa_scope || \'standard\' }}\n\n';
+            comment += '**QA Scope:** ' + process.env.QA_SCOPE + '\n\n';
             comment += '### 📊 Quality Analysis Results\n\n';
             comment += '| Phase | Status | Details |\n';
             comment += '|-------|--------|---------|\n';
