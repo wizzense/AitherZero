@@ -365,6 +365,18 @@ clean_environment() {
     export SKIP_AUTO_MODULES="1"
     export AITHERZERO_ONLY="1"
     
+    # Detect problematic terminals and enable simple menu mode for better compatibility
+    # This helps with Android terminals, Termux, and other limited environments
+    if [ -n "$PREFIX" ] && echo "$PREFIX" | grep -q "termux"; then
+        # Termux/Android terminal detected
+        export AITHERZERO_SIMPLE_MENU="1"
+        print_log "INFO" "Detected Termux/Android terminal - enabling simple menu mode"
+    elif [ "$TERM" = "linux" ] || [ "$TERM" = "dumb" ] || [ "$TERM" = "unknown" ]; then
+        # Basic Linux console or limited terminal
+        export AITHERZERO_SIMPLE_MENU="1"
+        print_log "INFO" "Detected basic terminal - enabling simple menu mode"
+    fi
+    
     print_log "SUCCESS" "Environment cleaned"
 }
 
