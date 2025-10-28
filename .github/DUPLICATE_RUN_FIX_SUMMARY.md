@@ -48,7 +48,7 @@ on:
 
 | Workflow | Change | Impact |
 |----------|--------|--------|
-| `intelligent-ci-orchestrator.yml` | Removed `'feature/**', 'copilot/**'` from push branches | PR updates now only trigger `pull_request` event |
+| `quality-validation.yml` | Uses pull_request trigger for PR validation | PR updates only trigger once |
 | `validate-config.yml` | Added `branches: [main, develop]` to push trigger | Config validation only runs once per PR update |
 | `validate-manifests.yml` | Added `branches: [main, develop]` to push trigger | Manifest validation only runs once per PR update |
 
