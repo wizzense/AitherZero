@@ -200,8 +200,8 @@ function Invoke-UIComponentLifecycle {
         [Parameter(Mandatory)][string]$EventName
     )
 
-    $EventNameName = "$($Component.Name):$EventName"
-    [void]$Context.Events.Add($EventNameName)
+    $eventName = "$($Component.Name):$EventName"
+    [void]$Context.Events.Add($eventName)
 
     # Update component state
     if ($Component.PSObject.Properties["State"]) {
@@ -209,7 +209,7 @@ function Invoke-UIComponentLifecycle {
     }
 
     # Trigger event on bus
-    Invoke-MockEvent -EventBus $Context.EventBus -EventName $EventNameName -Sender $Component
+    Invoke-MockEvent -EventBus $Context.EventBus -EventName $eventName -Sender $Component
 }
 
 function Test-UIMenuNavigation {
@@ -257,37 +257,37 @@ function New-MockEventBus {
 
 function Register-MockEventHandler {
     param(
-        [Parameter(Mandatory)]$EventNameBus,
-        [Parameter(Mandatory)][string]$EventNameName,
+        [Parameter(Mandatory)]$EventBus,
+        [Parameter(Mandatory)][string]$EventName,
         [Parameter(Mandatory)][scriptblock]$Handler
     )
 
-    if (-not $EventNameBus.Handlers.ContainsKey($EventNameName)) {
-        $EventNameBus.Handlers[$EventNameName] = [System.Collections.ArrayList]::new()
+    if (-not $EventBus.Handlers.ContainsKey($EventName)) {
+        $EventBus.Handlers[$EventName] = [System.Collections.ArrayList]::new()
     }
 
-    [void]$EventNameBus.Handlers[$EventNameName].Add($Handler)
+    [void]$EventBus.Handlers[$EventName].Add($Handler)
 }
 
 function Invoke-MockEvent {
     param(
-        [Parameter(Mandatory)]$EventNameBus,
-        [Parameter(Mandatory)][string]$EventNameName,
+        [Parameter(Mandatory)]$EventBus,
+        [Parameter(Mandatory)][string]$EventName,
         $Sender = $null,
         [hashtable]$Data = @{}
     )
 
-    $EventName = @{
-        Name = $EventNameName
+    $event = @{
+        Name = $EventName
         Sender = $Sender
         Data = $Data
         Timestamp = [DateTime]::Now
     }
 
-    [void]$EventNameBus.History.Add($EventName)
+    [void]$EventBus.History.Add($event)
 
-    if ($EventNameBus.Handlers.ContainsKey($EventNameName)) {
-        foreach ($handler in $EventNameBus.Handlers[$EventNameName]) {
+    if ($EventBus.Handlers.ContainsKey($EventName)) {
+        foreach ($handler in $EventBus.Handlers[$EventName]) {
             & $handler $Sender $Data
         }
     }

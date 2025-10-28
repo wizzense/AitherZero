@@ -99,3 +99,6 @@ Gemfile.lock
 .aitherzero-index-report.json
 actionlint*
 tests/coverage/*.xml
+# Analysis results
+tests/analysis/*.csv
+tests/analysis/*.json
