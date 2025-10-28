@@ -232,8 +232,9 @@ function Invoke-TestExecution {
     }
 
     try {
-        # Execute tests using the framework
-        $testResult = Invoke-TestCategory @testParams
+        # Execute tests using the framework  
+        # Call function using the function: provider
+        $testResult = & (Get-Item function:Invoke-TestCategory) @testParams
 
         Write-TestRunnerLog "Test execution completed" -Level Success -Data $testResult.Summary
         return $testResult
