@@ -17,11 +17,20 @@ on:
   workflow_run:
     workflows: ["Intelligent CI Orchestrator"]
     types: [completed]
+    # Removed branch restriction to enable on all branches
+
+  # Trigger on pushes to main/develop to ensure immediate execution
+  push:
     branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
 
   schedule:
-    # Run every hour during business hours (9 AM - 5 PM UTC, Monday-Friday)
-    - cron: '0 9-17 * * 1-5'
+    # Run every 2 hours, 7 days a week for consistent automation
+    - cron: '0 */2 * * *'
 
   issues:
     types: [opened, labeled]

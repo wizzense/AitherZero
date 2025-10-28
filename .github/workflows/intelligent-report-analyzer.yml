@@ -332,7 +332,7 @@ jobs:
                   title: issueTitle,
                   body: issueBody,
                   labels: labels,
-                  assignees: ['copilot']
+                  assignees: ['wizzense']
                 });
                 console.log(`✅ Created critical issue #${createdIssue.data.number}: ${issueTitle}`);
               } catch (error) {
@@ -393,7 +393,7 @@ jobs:
                   title: issueTitle,
                   body: issueBody,
                   labels: labels,
-                  assignees: ['copilot']
+                  assignees: ['wizzense']
                 });
                 console.log(`✅ Created optimization issue #${createdIssue.data.number}: ${issueTitle}`);
               } catch (error) {
