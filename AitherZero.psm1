@@ -96,7 +96,8 @@ foreach ($modulePath in $criticalModules) {
     $fullPath = Join-Path $PSScriptRoot $modulePath
     if (Test-Path $fullPath) {
         try {
-            Import-Module $fullPath -Force -Global -ErrorAction Stop
+            # Import without -Global to keep functions in this module's scope
+            Import-Module $fullPath -Force -ErrorAction Stop
         } catch {
             Write-Error "Failed to load critical module: $modulePath - $_"
         }
@@ -110,7 +111,8 @@ foreach ($modulePath in $parallelModules) {
     $fullPath = Join-Path $PSScriptRoot $modulePath
     if (Test-Path $fullPath) {
         try {
-            Import-Module $fullPath -Force -Global -ErrorAction Stop
+            # Import without -Global to keep functions in this module's scope
+            Import-Module $fullPath -Force -ErrorAction Stop
         } catch {
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                 Write-CustomLog -Level 'Warning' -Message "Failed to load module: $modulePath" -Source "ModuleLoader" -Data @{ Error = $_.ToString() }
@@ -122,7 +124,7 @@ foreach ($modulePath in $parallelModules) {
 }
 
 # Create the az/Invoke-AitherScript function with dynamic parameters
-function global:Invoke-AitherScript {
+function Invoke-AitherScript {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Position = 0, Mandatory = $true)]
@@ -220,7 +222,9 @@ function global:Invoke-AitherScript {
 }
 
 # Set up aliases
-Set-Alias -Name 'az' -Value 'Invoke-AitherScript' -Scope Global -Force
+Set-Alias -Name 'az' -Value 'Invoke-AitherScript'
 
-# Export the main function
-Export-ModuleMember -Function 'Invoke-AitherScript' -Alias 'az'
+# Note: We do NOT use Export-ModuleMember here. When omitted, PowerShell automatically
+# exports all functions and aliases defined in the module. The nested modules are imported
+# into this module's scope (not global), so their functions become part of this module.
+# The .psd1 manifest's FunctionsToExport list controls what is ultimately exported.
