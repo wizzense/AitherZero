@@ -93,3 +93,6 @@ _site/
 .jekyll-metadata
 .sass-cache/
 Gemfile.lock
+
+# Index cache
+.aitherzero-index-cache.json

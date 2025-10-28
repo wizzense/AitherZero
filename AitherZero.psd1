@@ -51,6 +51,10 @@
         'Initialize-DocumentationEngine', 'New-ModuleDocumentation', 'New-ProjectDocumentation',
         'Test-DocumentationQuality', 'Get-DocumentationCoverage',
 
+        # From ProjectIndexer
+        'Initialize-ProjectIndexer', 'New-ProjectIndexes', 'New-DirectoryIndex',
+        'Get-DirectoryContent', 'Test-ContentChanged', 'Get-IndexerConfig',
+
         # From QualityValidator
         'Test-ErrorHandling', 'Test-LoggingImplementation', 'Test-TestCoverage',
         'Test-UIIntegration', 'Test-GitHubActionsIntegration', 'Test-PSScriptAnalyzerCompliance',

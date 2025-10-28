@@ -422,32 +422,46 @@ jobs:
             const issuesCreated = [];
             const criticalIssues = [];
 
-            // Helper function to create issue if it doesn't exist
-            async function createIssueIfNeeded(title, body, labels, priority = 'medium') {
-              const existing = existingIssues.find(issue =>
-                issue.title.toLowerCase().includes(title.toLowerCase().slice(0, 20))
-              );
+            // Helper function to create issue with priority recommendation
+            async function createIssueIfNeeded(title, body, labels, recommendedPriority = 'P3') {
+              // Better deduplication: check for similar titles AND labels
+              const existing = existingIssues.find(issue => {
+                const titleMatch = issue.title.toLowerCase().includes(title.toLowerCase().slice(0, 30));
+                const labelMatch = labels.some(label => issue.labels.some(l => l.name === label));
+                return titleMatch && labelMatch;
+              });
 
               if (existing) {
-                console.log(`Issue already exists: ${existing.title}`);
+                console.log(`Issue already exists: ${existing.title} (#${existing.number})`);
                 return existing.number;
               }
+
+              // Build priority recommendation section
+              const priorityGuidance = `
+### 🏷️ Priority Assignment Required
+
+**Recommended Priority:** \`${recommendedPriority}\`
+
+This issue will NOT be automatically processed until you assign a priority label:
+- \`P1\` - Critical (4 hour SLA) - System breaking, security issues
+- \`P2\` - High (24 hour SLA) - Major functionality impaired
+- \`P3\` - Medium (48 hour SLA) - Moderate impact (recommended)
+- \`P4\` - Normal (1 week SLA) - Minor issues
+- \`P5-P10\` - Backlog - Low priority improvements
+
+**Action Required:** Review this issue and add the appropriate P1-P10 label based on impact.`;
 
               const issue = await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `🤖 ${title}`,
-                body: `${body}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Priority:** ${priority}\n\n@copilot Please address this issue following the automated resolution process.`,
-                labels: ['auto-created', 'copilot-task', `priority-${priority}`, ...labels],
-                assignees: ['wizzense']
+                body: `${body}\n\n${priorityGuidance}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Branch:** ${context.ref}\n**Workflow Run:** ${context.runId}`,
+                labels: ['auto-created', 'copilot-task', 'needs-priority', ...labels]
               });
 
               issuesCreated.push(issue.data.number);
-              if (priority === 'critical') {
-                criticalIssues.push(issue.data.number);
-              }
 
-              console.log(`Created issue #${issue.data.number}: ${title}`);
+              console.log(`Created issue #${issue.data.number}: ${title} (Recommended: ${recommendedPriority})`);
               return issue.data.number;
             }
 
@@ -489,7 +503,7 @@ jobs:
                 'Fix Critical PSScriptAnalyzer Issues',
                 issueBody,
                 ['code-quality', 'psscriptanalyzer', 'critical-fix'],
-                'critical'
+                'P1'  // Recommended priority - manual assignment required
               );
             }
 
@@ -532,7 +546,7 @@ jobs:
                 'Fix Failing Unit Tests',
                 issueBody,
                 ['testing', 'unit-tests', 'failure'],
-                'high'
+                'P2'  // Recommended priority - manual assignment required
               );
             }
 
@@ -570,7 +584,7 @@ jobs:
                 'Address Security Vulnerabilities',
                 issueBody,
                 ['security', 'vulnerability', 'credentials'],
-                'high'
+                'P1'  // Recommended priority - manual assignment required
               );
             }
 
@@ -606,7 +620,7 @@ jobs:
                 'Repository Health Maintenance',
                 issueBody,
                 ['maintenance', 'health-check', 'coordination'],
-                'medium'
+                'P3'  // Recommended priority - manual assignment required
               );
             }
 
@@ -618,13 +632,13 @@ jobs:
             console.log(`Critical issues: ${criticalIssues.length}`);
 
   trigger-copilot-resolution:
-    name: 🎯 Trigger Automated Copilot Resolution
+    name: 🎯 Add Priority Label Instructions
     needs: analyze-and-create-issues
     runs-on: ubuntu-latest
     if: needs.analyze-and-create-issues.outputs.issues_created != ''
 
     steps:
-      - name: 🚀 Initiate Copilot Agent Resolution Cycle
+      - name: 🏷️ Add Priority Label Instructions
         uses: actions/github-script@v7
         with:
           script: |
@@ -633,17 +647,42 @@ jobs:
 
             if (issuesCreated) {
               const issues = issuesCreated.split(',').filter(id => id);
-              console.log(`Triggering resolution for ${issues.length} issues`);
+              console.log(`Adding priority instructions to ${issues.length} issues`);
 
-              // Comment on each issue to trigger copilot attention
+              // Add comment explaining priority label requirement
               for (const issueId of issues) {
                 if (issueId) {
                   try {
+                    const isCritical = criticalIssues.includes(issueId);
                     await github.rest.issues.createComment({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: parseInt(issueId),
-                      body: `🤖 **Automated Resolution Triggered**\n\n@copilot This issue has been automatically created and assigned to you for resolution.\n\n**Resolution Process:**\n1. Analyze the issue details and requirements\n2. Create a focused PR with minimal changes to address the issue\n3. Ensure all tests pass and no new issues are introduced\n4. Request review and merge when ready\n5. Close this issue with a summary of changes made\n\n**Automated Validation:** This issue will be automatically validated once resolved.\n\n⚡ **Priority:** ${criticalIssues.includes(issueId) ? 'CRITICAL - Address immediately' : 'Normal - Address in development cycle'}`
+                      body: `## 📋 Issue Created - Priority Label Required
+
+This issue has been automatically created from test failures or code quality analysis.
+
+### 🏷️ To Enable Automated Resolution
+
+**Add a priority label to this issue:**
+- \`P1\` - Critical priority (work immediately)
+- \`P2\` - High priority (work within 24 hours)
+- \`P3\` - Medium priority (work within 48 hours)
+- \`P4-P10\` - Lower priorities (work as capacity allows)
+
+${isCritical ? '⚠️ **Recommended:** This issue appears to be critical. Consider adding \`P1\` or \`P2\` label.' : ''}
+
+**Or manually request assistance:**
+- Mention @copilot in a comment when ready for automated resolution
+
+### 🤖 How Automated Resolution Works
+
+Once you add a priority label:
+1. The issue will be picked up by automated workflows after 2 hours
+2. Copilot will analyze the issue and create a PR
+3. You'll be notified when the PR is ready for review
+
+**Note:** Issues without priority labels will NOT be automatically worked on. This gives you control over which issues to prioritize.`
                     });
                   } catch (error) {
                     console.log(`Failed to comment on issue ${issueId}: ${error.message}`);
@@ -651,13 +690,7 @@ jobs:
                 }
               }
 
-              // Create summary comment with coordination info
-              if (criticalIssues) {
-                const criticalIds = criticalIssues.split(',').filter(id => id);
-                if (criticalIds.length > 0) {
-                  console.log(`🚨 ${criticalIds.length} critical issues require immediate attention`);
-                }
-              }
+              console.log(`✅ Added priority instructions to ${issues.length} issue(s)`);
             }
 
   schedule-followup:

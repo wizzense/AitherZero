@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -120,6 +120,11 @@
                     DependsOn = @('Core.PowerShell7')
                     Scripts = @('0217', '0218')  # Claude Code, Gemini CLI
                     Description = 'AI-powered development tools'
+                }
+                CloudCLI = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0212', '0213')  # Azure CLI, AWS CLI
+                    Description = 'Cloud provider command-line tools'
                 }
             }
             
@@ -279,8 +284,8 @@
                 }
                 Documentation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0733', '0744')
-                    Description = 'AI-powered documentation generation and auto-documentation'
+                    Scripts = @('0733', '0744', '0745')
+                    Description = 'AI-powered documentation generation, auto-documentation, and project indexing'
                 }
                 Optimization = @{
                     DependsOn = @('Core.PowerShell7')
@@ -311,10 +316,15 @@
                     Scripts = @('0820', '0821', '0822', '0831')
                     Description = 'Work context, continuation prompts, issue creation testing, and templates'
                 }
+                Automation = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0840')
+                    Description = 'Automated workflow validation and priority-based issue processing'
+                }
                 PRDeployment = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts = @('0850', '0851')
-                    Description = 'Ephemeral PR environment deployment and cleanup for automated testing'
+                    Scripts = @('0850', '0851', '0852', '0853')
+                    Description = 'Ephemeral PR environment deployment, cleanup, and Docker validation'
                 }
             }
             
@@ -336,8 +346,8 @@
             Maintenance = @{
                 Environment = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0000', '0002')
-                    Description = 'Environment cleanup and directory setup'
+                    Scripts = @('0000', '0002', '0003')
+                    Description = 'Environment cleanup, directory setup, and config sync'
                 }
                 Reset = @{
                     DependsOn = @('Core.PowerShell7')
@@ -395,7 +405,7 @@
             'automation' = @{ Modules = 2; Description = 'Orchestration engine and deployment automation' }
             'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
-            'documentation' = @{ Modules = 1; Description = 'Documentation generation engine' }
+            'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
             'experience' = @{ Modules = 8; Description = 'UI/UX components and interactive menus' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
@@ -404,16 +414,16 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (114 total files, 114 unique numbers - all numbers now unique)
+        # Script inventory by range (118 total files, 118 unique numbers - all numbers now unique)
         ScriptInventory = @{
-            '0000-0099' = @{ Count = 7; Category = 'Environment Setup' }
+            '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 26; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 18; Category = 'Issue Management & PR Deployment' }
+            '0700-0799' = @{ Count = 27; Category = 'Git & AI Automation' }
+            '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 2; Category = 'Validation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
@@ -1344,5 +1354,92 @@
         # Internal modules and scripts (placeholder for future expansion)
         Modules = @{}
         Scripts = @{}
+    }
+    
+    # ===================================================================
+    # AUTOMATED ISSUE MANAGEMENT - GitHub Issue Automation
+    # ===================================================================
+    AutomatedIssueManagement = @{
+        # Issue creation settings
+        AutoCreateIssues = $true
+        CreateFromTestFailures = $true
+        CreateFromCodeQuality = $true
+        CreateFromSecurity = $true
+        
+        # Priority-based processing
+        PriorityLabels = @{
+            Enabled = $true
+            Required = $true  # Priority label REQUIRED before automated processing
+            ValidLabels = @('P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10')
+            DefaultPriority = 'P5'  # Default if not specified
+            
+            # Priority definitions
+            P1 = @{ Name = 'Critical'; SLA = '4 hours'; AutoProcess = $true }
+            P2 = @{ Name = 'High'; SLA = '24 hours'; AutoProcess = $true }
+            P3 = @{ Name = 'Medium'; SLA = '48 hours'; AutoProcess = $true }
+            P4 = @{ Name = 'Normal'; SLA = '1 week'; AutoProcess = $true }
+            P5 = @{ Name = 'Low'; SLA = '2 weeks'; AutoProcess = $true }
+            P6toP10 = @{ Name = 'Backlog'; SLA = 'As capacity allows'; AutoProcess = $true }
+        }
+        
+        # Automated processing rules
+        AutomatedProcessing = @{
+            Enabled = $true
+            RequirePriorityLabel = $true  # Must have P1-P10 label to be auto-processed
+            RequireManualApproval = $false  # Set to true to require @copilot mention
+            MinimumAgeHours = 2  # Wait 2 hours before auto-processing (allows manual triage)
+            MaxIssuesPerRun = 5  # Limit concurrent processing
+            
+            # Filters
+            RequiredLabels = @('copilot-task')  # Must have these labels
+            ExcludedLabels = @('on-hold', 'blocked', 'wontfix')  # Skip these
+        }
+        
+        # PR-based grouping (Phase 2)
+        PRGrouping = @{
+            Enabled = $true
+            MinimumGroupSize = 2  # Minimum issues to create group PR (except P1/P2)
+            GroupByType = $true  # Group by issue type (code-quality, testing, security)
+            GroupByDomain = $true  # Group by file/domain context
+            GroupByPriority = $true  # Final grouping by priority level
+            
+            # Grouping rules
+            AlwaysGroupTypes = @('code-quality', 'testing', 'security', 'maintenance')
+            SingleIssuePRForPriority = @('P1', 'P2')  # Create individual PR for these priorities
+            
+            # Branch naming
+            BranchPrefix = 'auto-fix/'
+            BranchPattern = '{type}-{context}-{priority}-{timestamp}'
+            
+            # PR settings
+            PRTitlePattern = '🤖 [{priority}] Fix {type} issues in {context}'
+            AddCopilotMention = $true  # Mention @copilot in PR
+            LinkIssuesToPR = $true  # Add comments linking issues to PR
+            AddInProgressLabel = $true  # Add in-progress label to grouped issues
+        }
+        
+        # Workflow integration
+        Workflows = @{
+            IssueCreation = 'auto-create-issues-from-failures.yml'
+            CopilotAgent = 'automated-copilot-agent.yml'
+            PRAutomation = 'copilot-pr-automation.yml'
+            IssueCommenter = 'copilot-issue-commenter.yml'
+            IssueCleanup = 'close-auto-issues.yml'  # Phase 1: Close existing auto-created issues
+            PRGrouping = 'auto-create-prs-for-issues.yml'  # Phase 2: Group issues and create PRs
+        }
+        
+        # Label management
+        Labels = @{
+            AutoCreated = 'auto-created'
+            CopilotTask = 'copilot-task'
+            CopilotPR = 'copilot-pr'  # PRs created for grouped issues
+            NeedsPriority = 'needs-priority'  # Issues awaiting priority assignment
+            TestFailure = 'test-failure'
+            CodeQuality = 'code-quality'
+            Security = 'security'
+            NeedsFix = 'needs-fix'
+            InProgress = 'in-progress'  # Issues linked to active PR
+            NeedsReview = 'needs-review'
+        }
     }
 }
