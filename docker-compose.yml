@@ -20,6 +20,12 @@ services:
       - BRANCH_NAME=${BRANCH_NAME:-main}
       - COMMIT_SHA=${COMMIT_SHA:-}
     
+    ports:
+      # Web interface for dashboards and reports
+      - "8080:8080"
+      # HTTPS port (reserved for future use)
+      - "8443:8443"
+    
     volumes:
       # Mount local directory for development (optional)
       # Uncomment for local development with hot-reload
