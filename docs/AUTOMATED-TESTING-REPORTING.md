@@ -165,7 +165,7 @@ Visit: `https://wizzense.github.io/AitherZero`
 
 - Main dashboard with project metrics
 - Links to all available reports
-- Browseable report directory
+- Browsable report directory
 
 ### GitHub Actions
 
