@@ -197,6 +197,74 @@ function Invoke-TestSuite {
             $testConfig = $testConfig + $Configuration
         }
 
+        # Normalize configuration to ensure expected properties exist
+        # Handle both hashtables and PSCustomObjects
+        $minVersion = if ($testConfig -is [hashtable]) {
+            if ($testConfig.ContainsKey('MinVersion')) {
+                $testConfig.MinVersion
+            } elseif ($testConfig.ContainsKey('Pester') -and $testConfig.Pester) {
+                if ($testConfig.Pester -is [hashtable] -and $testConfig.Pester.ContainsKey('MinVersion')) {
+                    $testConfig.Pester.MinVersion
+                } elseif ($testConfig.Pester.PSObject.Properties['MinVersion']) {
+                    $testConfig.Pester.MinVersion
+                } else {
+                    '5.0.0'
+                }
+            } else {
+                '5.0.0'
+            }
+        } else {
+            # PSCustomObject
+            if ($testConfig.PSObject.Properties['MinVersion']) {
+                $testConfig.MinVersion
+            } elseif ($testConfig.PSObject.Properties['Pester'] -and $testConfig.Pester) {
+                if ($testConfig.Pester.PSObject.Properties['MinVersion']) {
+                    $testConfig.Pester.MinVersion
+                } else {
+                    '5.0.0'
+                }
+            } else {
+                '5.0.0'
+            }
+        }
+
+        # Convert to hashtable for easier manipulation if needed
+        if ($testConfig -isnot [hashtable]) {
+            $tempConfig = @{}
+            foreach ($prop in $testConfig.PSObject.Properties) {
+                $tempConfig[$prop.Name] = $prop.Value
+            }
+            $testConfig = $tempConfig
+        }
+
+        # Set MinVersion
+        $testConfig.MinVersion = $minVersion
+
+        # Ensure CodeCoverage section exists with defaults
+        if (-not $testConfig.ContainsKey('CodeCoverage')) {
+            $testConfig.CodeCoverage = @{
+                Enabled = $false
+                MinimumPercent = 80
+            }
+        } elseif ($testConfig.CodeCoverage) {
+            # Ensure nested properties exist
+            if ($testConfig.CodeCoverage -is [hashtable]) {
+                if (-not $testConfig.CodeCoverage.ContainsKey('Enabled')) {
+                    $testConfig.CodeCoverage.Enabled = $false
+                }
+                if (-not $testConfig.CodeCoverage.ContainsKey('MinimumPercent')) {
+                    $testConfig.CodeCoverage.MinimumPercent = 80
+                }
+            } else {
+                # Convert CodeCoverage to hashtable as well
+                $tempCoverage = @{
+                    Enabled = if ($testConfig.CodeCoverage.PSObject.Properties['Enabled']) { $testConfig.CodeCoverage.Enabled } else { $false }
+                    MinimumPercent = if ($testConfig.CodeCoverage.PSObject.Properties['MinimumPercent']) { $testConfig.CodeCoverage.MinimumPercent } else { 80 }
+                }
+                $testConfig.CodeCoverage = $tempCoverage
+            }
+        }
+
         # Get profile settings
         $ProfileNameConfig = if ($testConfig -and $testConfig.ContainsKey('Profiles') -and $testConfig.Profiles -and $testConfig.Profiles.ContainsKey($ProfileName)) {
             $testConfig.Profiles[$ProfileName]
@@ -273,7 +341,8 @@ function Invoke-TestSuite {
 
         # Code coverage
         if ($testConfig.CodeCoverage.Enabled) {
-            $coveragePath = Join-Path ($OutputPath ?? './tests/coverage') "Coverage-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
+            $effectiveOutputPath = if ([string]::IsNullOrWhiteSpace($OutputPath)) { './tests/coverage' } else { $OutputPath }
+            $coveragePath = Join-Path $effectiveOutputPath "Coverage-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
             Write-TestingLog -Message "Code coverage enabled" -Data @{
                 CoveragePath = $coveragePath
                 MinimumPercent = $testConfig.CodeCoverage.MinimumPercent
