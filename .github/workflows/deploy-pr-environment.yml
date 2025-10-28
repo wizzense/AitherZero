@@ -60,8 +60,8 @@ jobs:
 
             // Handle different trigger types
             if (context.eventName === 'pull_request') {
-              // Auto-deploy on PR events (except drafts)
-              shouldDeploy = !context.payload.pull_request.draft;
+              // Auto-deploy on all PR events (including drafts for testing)
+              shouldDeploy = true;
               prNumber = context.payload.pull_request.number;
               core.info(`PR event: #${prNumber}, Draft: ${context.payload.pull_request.draft}`);
 
