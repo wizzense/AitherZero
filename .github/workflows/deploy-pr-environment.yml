@@ -35,7 +35,7 @@ permissions:
 env:
   DEPLOYMENT_TYPE: preview
   CONTAINER_REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/aitherzero
+  IMAGE_NAME: ${{ github.repository_owner }}/aitherzero
   
 jobs:
   # Determine if deployment should proceed
@@ -116,12 +116,20 @@ jobs:
           registry: ${{ env.CONTAINER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🔤 Set Lowercase Image Name
+        id: image-name
+        run: |
+          # Convert repository name to lowercase for Docker
+          IMAGE_NAME_LOWER=$(echo "${{ github.repository_owner }}/aitherzero" | tr '[:upper:]' '[:lower:]')
+          echo "image-name=${IMAGE_NAME_LOWER}" >> $GITHUB_OUTPUT
+          echo "Using image name: ${IMAGE_NAME_LOWER}"
           
       - name: 🏷️ Extract Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}
           tags: |
             type=ref,event=pr,prefix=pr-
             type=sha,prefix=pr-${{ needs.check-deployment-trigger.outputs.pr-number }}-
@@ -138,8 +146,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}:buildcache
+          cache-to: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}:buildcache,mode=max
           build-args: |
             PR_NUMBER=${{ needs.check-deployment-trigger.outputs.pr-number }}
             COMMIT_SHA=${{ github.sha }}
