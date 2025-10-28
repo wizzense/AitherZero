@@ -11,13 +11,9 @@ BeforeAll {
     # Get script path
     $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0408_Generate-TestCoverage.ps1"
 
-    # Define the function that will be mocked
+    # Define stub function so Mock can override it
     function New-BaselineTestContent {
-        param(
-            [string]$ModulePath,
-            [string]$ModuleName
-        )
-        return "# Generated test content for module"
+        param([string]$ModulePath, [string]$ModuleName)
     }
 
     # Mock functions
