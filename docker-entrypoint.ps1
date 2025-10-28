@@ -54,7 +54,12 @@ if (-not $SkipReports) {
         # Generate dashboard
         $dashboardScript = Join-Path $script:ProjectRoot "automation-scripts/0512_Generate-Dashboard.ps1"
         if (Test-Path $dashboardScript) {
-            & $dashboardScript -Format All -ErrorAction SilentlyContinue
+            $cmd = Get-Command $dashboardScript -ErrorAction SilentlyContinue
+            if ($cmd -and $cmd.Parameters.ContainsKey('Format')) {
+                & $dashboardScript -Format All -ErrorAction SilentlyContinue
+            } else {
+                & $dashboardScript -ErrorAction SilentlyContinue
+            }
         }
         
         Write-Host "✅ Reports generated" -ForegroundColor Green
