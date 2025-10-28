@@ -77,4 +77,7 @@ powershellsec/
 tests/results/
 
 # Quality reports (generated artifacts)
-reports/quality/actionlint
+reports/quality/
+
+# Linting tools (downloaded binaries)
+actionlint
