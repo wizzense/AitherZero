@@ -30,6 +30,7 @@ permissions:
   issues: write
   checks: write
   deployments: write
+  packages: write  # Required to push to GitHub Container Registry
   id-token: write  # For OIDC authentication to cloud providers
 
 env:
