@@ -239,7 +239,7 @@ jobs:
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
 
           # Calculate dynamic port (8080-8089 range, max 10 concurrent PRs)
-          # Note: Port collision possible if >10 PRs deployed simultaneously
+          # Note: Port collision occurs when PR numbers share the same modulo 10 value (e.g., PR #5 and #15 both use port 8085)
           # Consider port management strategy for high-concurrency scenarios
           DYNAMIC_PORT="808$((${PR_NUMBER} % 10))"
           echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
