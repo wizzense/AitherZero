@@ -139,7 +139,7 @@ docker run -it --rm \
 ```
 
 Available variables:
-- `AITHERZERO_ROOT` - Installation root (default: `/opt/aitherzero`)
+- `AITHERZERO_ROOT` - Installation root (**fixed as `/opt/aitherzero` in the Docker image; do not change unless you know what you are doing**)
 - `AITHERZERO_NONINTERACTIVE` - Disable interactive prompts
 - `AITHERZERO_CI` - Enable CI mode
 - `AITHERZERO_DISABLE_TRANSCRIPT` - Disable transcript logging
