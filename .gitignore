@@ -76,5 +76,8 @@ release-notes.md
 powershellsec/
 tests/results/
 
-# Quality reports (generated artifacts)
+# Quality reports (generated artifacts - linting results, analysis output)
 reports/quality/
+
+# Linting tools (downloaded binaries)
+actionlint
