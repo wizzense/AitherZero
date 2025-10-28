@@ -60,7 +60,7 @@ jobs:
                   issue_number: parseInt(specificIssue)
                 });
 
-                if (issue.assignees?.some(a => a.login === 'copilot') && issue.state === 'open') {
+                if (issue.labels.some(l => l.name === 'copilot-task') && issue.state === 'open') {
                   issuesToProcess.push({
                     number: issue.number,
                     title: issue.title,
