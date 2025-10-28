@@ -1624,19 +1624,25 @@ try {
             if ($PSBoundParameters.ContainsKey('Mode') -and $Mode -eq 'Interactive') {
                 # User explicitly requested Interactive mode in CI - allow it for testing
                 $NonInteractive = $false
-                Write-CustomLog "CI environment detected, but Interactive mode explicitly requested - allowing interactive mode" -Level 'Information'
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                    Write-CustomLog "CI environment detected, but Interactive mode explicitly requested - allowing interactive mode" -Level 'Information'
+                }
             } else {
                 # Default CI behavior: Non-interactive with validation mode for automated logging
                 $NonInteractive = $true
                 if ($Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
                     $Mode = 'Validate'
-                    Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
+                    }
                 }
             }
         } else {
             # Manual execution: Interactive by default for user experience  
             $NonInteractive = $false
-            Write-CustomLog "Manual execution detected - starting interactive mode" -Level 'Information'
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                Write-CustomLog "Manual execution detected - starting interactive mode" -Level 'Information'
+            }
         }
     }
 
