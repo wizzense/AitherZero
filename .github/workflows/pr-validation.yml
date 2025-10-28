@@ -4,10 +4,10 @@ name: PR Validation
 # Optimized for cost efficiency - only essential PR validations
 on:
   pull_request:
-    # Only trigger on specific events to avoid redundancy with intelligent-ci-orchestrator
+    # Only trigger on specific events to avoid redundancy with quality-validation
     types: [opened, ready_for_review]
     # Only for external/fork PRs where we need special handling
-    # Internal PRs are handled by intelligent-ci-orchestrator.yml
+    # Internal PRs are handled by quality-validation.yml
   issue_comment:
     types: [created]
 
