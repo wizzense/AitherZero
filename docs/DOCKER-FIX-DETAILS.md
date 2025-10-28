@@ -5,7 +5,7 @@
 When users tried to use the Docker container with a volume mount:
 
 ```bash
-docker run -it --rm -v "$(pwd):/app" -w /app ghcr.io/wizzense/aitherzero:pr-739
+docker run -it --rm -v "$(pwd):/app" -w /app ghcr.io/wizzense/aitherzero:latest
 ```
 
 They would get this error:
