@@ -1438,10 +1438,14 @@ try {
     # Open HTML dashboard in browser if requested
     if ($Open -and ($Format -eq 'HTML' -or $Format -eq 'All')) {
         $htmlDashboardPath = Join-Path $OutputPath 'dashboard.html'
-        Write-Host "`n🌐 Opening HTML dashboard in browser..." -ForegroundColor Cyan
-        $opened = Open-HTMLDashboard -FilePath $htmlDashboardPath
-        if (-not $opened) {
-            Write-Host "⚠️  Could not open dashboard automatically. Please open manually: $htmlDashboardPath" -ForegroundColor Yellow
+        if ($PSCmdlet.ShouldProcess($htmlDashboardPath, "Open HTML dashboard in browser")) {
+            Write-Host "`n🌐 Opening HTML dashboard in browser..." -ForegroundColor Cyan
+            $opened = Open-HTMLDashboard -FilePath $htmlDashboardPath
+            if (-not $opened) {
+                Write-Host "⚠️  Could not open dashboard automatically. Please open manually: $htmlDashboardPath" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "`n🌐 [WhatIf] Would open HTML dashboard in browser: $htmlDashboardPath" -ForegroundColor Yellow
         }
     }
 
