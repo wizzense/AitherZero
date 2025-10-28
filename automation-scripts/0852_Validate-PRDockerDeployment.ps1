@@ -276,7 +276,7 @@ try {
     try {
         # Test module import
         Write-Host "  Testing module import..." -ForegroundColor Yellow
-        $moduleTest = docker exec $ContainerName pwsh -Command "try { Import-Module /app/AitherZero.psd1 -ErrorAction Stop; Write-Output 'SUCCESS' } catch { Write-Output `"ERROR: `$_`"; exit 1 }" 2>&1
+        $moduleTest = docker exec $ContainerName pwsh -Command "try { Import-Module /opt/aitherzero/AitherZero.psd1 -ErrorAction Stop; Write-Output 'SUCCESS' } catch { Write-Output `"ERROR: `$_`"; exit 1 }" 2>&1
         
         if ($moduleTest -match 'SUCCESS') {
             Add-TestResult -TestName "Module Import" -Status "Passed" -Message "AitherZero module loads successfully"
@@ -285,7 +285,7 @@ try {
         }
         
         # Test module commands availability
-        $commandTest = docker exec $ContainerName pwsh -Command "Import-Module /app/AitherZero.psd1 -WarningAction SilentlyContinue; (Get-Command -Module AitherZero).Count" 2>&1
+        $commandTest = docker exec $ContainerName pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1 -WarningAction SilentlyContinue; (Get-Command -Module AitherZero).Count" 2>&1
         
         if ($commandTest -match '^\d+$' -and [int]$commandTest -gt 0) {
             Add-TestResult -TestName "Module Commands" -Status "Passed" -Message "$commandTest commands exported from module"
@@ -294,7 +294,7 @@ try {
         }
         
         # Test basic command execution
-        $functionTest = docker exec $ContainerName pwsh -Command "Import-Module /app/AitherZero.psd1 -WarningAction SilentlyContinue; Get-Command Get-AitherConfig -ErrorAction Stop; Write-Output 'SUCCESS'" 2>&1
+        $functionTest = docker exec $ContainerName pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1 -WarningAction SilentlyContinue; Get-Command Get-AitherConfig -ErrorAction Stop; Write-Output 'SUCCESS'" 2>&1
         
         if ($functionTest -match 'SUCCESS') {
             Add-TestResult -TestName "Command Execution" -Status "Passed" -Message "Module commands are executable"
@@ -329,7 +329,7 @@ try {
     Write-Host "`n📋 Test 8: Container File System" -ForegroundColor Cyan
     
     try {
-        $requiredPaths = @('/app/AitherZero.psd1', '/app/domains', '/app/automation-scripts', '/app/logs', '/app/reports')
+        $requiredPaths = @('/opt/aitherzero/AitherZero.psd1', '/opt/aitherzero/domains', '/opt/aitherzero/automation-scripts', '/opt/aitherzero/logs', '/opt/aitherzero/reports')
         
         foreach ($path in $requiredPaths) {
             $pathExists = docker exec $ContainerName pwsh -Command "Test-Path '$path'" 2>&1
