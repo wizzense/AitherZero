@@ -1395,23 +1395,50 @@
             ExcludedLabels = @('on-hold', 'blocked', 'wontfix')  # Skip these
         }
         
+        # PR-based grouping (Phase 2)
+        PRGrouping = @{
+            Enabled = $true
+            MinimumGroupSize = 2  # Minimum issues to create group PR (except P1/P2)
+            GroupByType = $true  # Group by issue type (code-quality, testing, security)
+            GroupByDomain = $true  # Group by file/domain context
+            GroupByPriority = $true  # Final grouping by priority level
+            
+            # Grouping rules
+            AlwaysGroupTypes = @('code-quality', 'testing', 'security', 'maintenance')
+            SingleIssuePRForPriority = @('P1', 'P2')  # Create individual PR for these priorities
+            
+            # Branch naming
+            BranchPrefix = 'auto-fix/'
+            BranchPattern = '{type}-{context}-{priority}-{timestamp}'
+            
+            # PR settings
+            PRTitlePattern = '🤖 [{priority}] Fix {type} issues in {context}'
+            AddCopilotMention = $true  # Mention @copilot in PR
+            LinkIssuesToPR = $true  # Add comments linking issues to PR
+            AddInProgressLabel = $true  # Add in-progress label to grouped issues
+        }
+        
         # Workflow integration
         Workflows = @{
             IssueCreation = 'auto-create-issues-from-failures.yml'
             CopilotAgent = 'automated-copilot-agent.yml'
             PRAutomation = 'copilot-pr-automation.yml'
             IssueCommenter = 'copilot-issue-commenter.yml'
+            IssueCleanup = 'close-auto-issues.yml'  # Phase 1: Close existing auto-created issues
+            PRGrouping = 'auto-create-prs-for-issues.yml'  # Phase 2: Group issues and create PRs
         }
         
         # Label management
         Labels = @{
             AutoCreated = 'auto-created'
             CopilotTask = 'copilot-task'
+            CopilotPR = 'copilot-pr'  # PRs created for grouped issues
+            NeedsPriority = 'needs-priority'  # Issues awaiting priority assignment
             TestFailure = 'test-failure'
             CodeQuality = 'code-quality'
             Security = 'security'
             NeedsFix = 'needs-fix'
-            InProgress = 'in-progress'
+            InProgress = 'in-progress'  # Issues linked to active PR
             NeedsReview = 'needs-review'
         }
     }
