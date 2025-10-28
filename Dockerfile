@@ -37,7 +37,7 @@ ENV AITHERZERO_ROOT=/opt/aitherzero \
     AITHERZERO_CI=false \
     AITHERZERO_DISABLE_TRANSCRIPT=1 \
     AITHERZERO_LOG_LEVEL=Warning \
-    PATH="/opt/aitherzero:/opt/aitherzero/automation-scripts:${PATH}"
+    PATH="/opt/aitherzero:${PATH}"
 
 # Install PowerShell modules (optional - modules can be installed at runtime if needed)
 # Note: PSGallery configuration may require network access or additional setup in containerized environments
