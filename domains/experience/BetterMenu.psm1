@@ -49,12 +49,41 @@ function Show-BetterMenu {
     
     if (-not $isNonInteractive) {
         try {
-            # Test if we can read keys and have a proper console
-            if ($host.UI -and $host.UI.RawUI -and $null -ne $host.UI.RawUI.KeyAvailable) {
-                $canUseInteractive = $true
+            # Test if we can actually read keys - this is more reliable than checking KeyAvailable
+            # On some Linux terminals (Android, Termux), KeyAvailable may exist but not work properly
+            if ($host.UI -and $host.UI.RawUI) {
+                # Try to access ReadKey method to verify it exists and is functional
+                $readKeyMethod = $host.UI.RawUI.GetType().GetMethod('ReadKey')
+                if ($readKeyMethod) {
+                    $canUseInteractive = $true
+                }
             }
         } catch {
             $canUseInteractive = $false
+        }
+    }
+
+    # Auto-detect problematic terminals and enable simple menu mode
+    # This helps with Android terminals, Termux, and other limited environments
+    if ($canUseInteractive -and -not ($env:AITHERZERO_SIMPLE_MENU -eq '1')) {
+        # Check for known problematic terminal types
+        $termProgram = $env:TERM_PROGRAM
+        $term = $env:TERM
+        
+        # Enable simple mode for:
+        # - Android terminals (common terminal identifiers)
+        # - Termux
+        # - Basic Linux console
+        # - Terminals with known refresh issues
+        $problematicTerms = @('linux', 'dumb', 'unknown')
+        $isProblematicTerminal = $termProgram -eq 'Termux' -or `
+                                 $term -in $problematicTerms -or `
+                                 ($IsLinux -and $env:PREFIX -match 'com.termux')
+        
+        if ($isProblematicTerminal) {
+            # Automatically enable simple menu mode for better compatibility
+            $env:AITHERZERO_SIMPLE_MENU = '1'
+            Write-Verbose "Auto-enabled simple menu mode for terminal compatibility"
         }
     }
 
@@ -134,15 +163,20 @@ function Show-BetterMenu {
     # Initial setup
     $lastSelectedIndex = -1
     $firstDraw = $true
-    $simpleRedraw = $env:AITHERZERO_SIMPLE_MENU -eq '1'
+    # AITHERZERO_SIMPLE_MENU should REDUCE screen clearing for terminals with refresh issues
+    $reduceClearing = $env:AITHERZERO_SIMPLE_MENU -eq '1'
 
     # Main menu loop
     while ($true) {
-        # Only clear screen on first draw or when explicitly needed
+        # Only clear screen on first draw or when selection changes
         # To prevent duplicated / overlapping menu artifacts observed on some hosts (especially
         # Windows Terminal + certain VS Code integrated scenarios), we use smart screen clearing.
-        # Only clear when the selection changes or on first draw to prevent rapid refresh issues.
-        $needsClear = $firstDraw -or ($lastSelectedIndex -ne $selectedIndex) -or $simpleRedraw
+        # In simple/reduced mode, only clear on first draw to prevent rapid refresh issues on slow terminals.
+        $needsClear = if ($reduceClearing) {
+            $firstDraw
+        } else {
+            $firstDraw -or ($lastSelectedIndex -ne $selectedIndex)
+        }
         if ($needsClear -and -not $env:CI -and -not $env:GITHUB_ACTIONS) {
             try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
         }
