@@ -236,7 +236,7 @@ function Register-AutomationScriptTestSuites {
             }
 
             It "Should have valid PowerShell syntax in scripts" {
-                $scripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" | Select-Object -First 10
+                $scripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1"
 
                 foreach ($script in $scripts) {
                     $errors = $null
