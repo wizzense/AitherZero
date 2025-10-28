@@ -304,30 +304,26 @@ jobs:
                   }
                 }
                 
-                const issueTitle = `Quality Validation Failed: ${fileName} (Score: ${file.Score}%)`;
-                const issueBody = `## Quality Validation Failure Report
-            
-**File**: \`${file.FilePath}\`
-**Overall Score**: ${file.Score}%
-**Status**: ${file.Status}
-**PR**: #${{ github.event.pull_request.number }}
-
-### Summary
-This file failed quality validation checks. Please review the findings below and address the issues.
-
-### Detailed Findings
-
-\`\`\`
-${detailedFindings || 'See workflow artifacts for full details'}
-\`\`\`
-
-### Next Steps
-1. Review the quality validation report in the [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-2. Address the issues identified in the findings
-3. Run local validation: \`./aitherzero 0420 -Path ${file.FilePath}\`
-4. Re-run validation after fixes
-
-@copilot please review this file and address the quality issues identified above.
+                const issueTitle = 'Quality Validation Failed: ' + fileName + ' (Score: ' + file.Score + '%)';
+                const prNumber = context.payload.pull_request?.number || 'N/A';
+                const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+                const issueBody = '## Quality Validation Failure Report\n\n' +
+                  '**File**: `' + file.FilePath + '`\n' +
+                  '**Overall Score**: ' + file.Score + '%\n' +
+                  '**Status**: ' + file.Status + '\n' +
+                  '**PR**: #' + prNumber + '\n\n' +
+                  '### Summary\n' +
+                  'This file failed quality validation checks. Please review the findings below and address the issues.\n\n' +
+                  '### Detailed Findings\n\n' +
+                  '```\n' +
+                  (detailedFindings || 'See workflow artifacts for full details') + '\n' +
+                  '```\n\n' +
+                  '### Next Steps\n' +
+                  '1. Review the quality validation report in the [workflow artifacts](' + runUrl + ')\n' +
+                  '2. Address the issues identified in the findings\n' +
+                  '3. Run local validation: `./aitherzero 0420 -Path ' + file.FilePath + '`\n' +
+                  '4. Re-run validation after fixes\n\n' +
+                  '@copilot please review this file and address the quality issues identified above.';
 
 ---
 *This issue was automatically created by the Quality Validation System*

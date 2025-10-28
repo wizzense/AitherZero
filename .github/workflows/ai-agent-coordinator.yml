@@ -52,6 +52,8 @@ jobs:
     outputs:
       coordination-status: ${{ steps.coordinate.outputs.status }}
       priority-level: ${{ steps.set-priority.outputs.priority }}
+      active-agents: ${{ steps.coordinate.outputs.active-agents }}
+      issues-count: ${{ steps.coordinate.outputs.issues-count }}
 
     steps:
       - name: 📥 Checkout Repository
@@ -460,7 +462,7 @@ jobs:
             const activeAgents = '${{ steps.coordinate.outputs.active-agents }}';
             const successCount = '${{ steps.coordinate.outputs.success-count }}';
             const failedCount = '${{ steps.coordinate.outputs.failed-count }}';
-            const issuesCount = '${{ steps.coordinate.outputs.issues-count || "0" }}';
+            const issuesCount = '${{ steps.coordinate.outputs.issues-count || '0' }}';
 
             let statusEmoji = '✅';
             let statusText = 'Complete';
@@ -585,6 +587,11 @@ jobs:
 
       - name: 🐛 Create GitHub Issues for Quality Problems
         uses: actions/github-script@v7
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
         with:
           script: |
             const fs = require('fs');
@@ -613,10 +620,10 @@ jobs:
               return;
             }
 
-            const prNumber = '${{ github.event.pull_request.number }}';
-            const prTitle = '${{ github.event.pull_request.title }}';
-            const headSha = '${{ github.sha }}';
-            const runId = '${{ github.run_id }}';
+            const prNumber = process.env.PR_NUMBER;
+            const prTitle = process.env.PR_TITLE;
+            const headSha = process.env.HEAD_SHA;
+            const runId = process.env.RUN_ID;
 
             // Group similar issues to avoid spam
             const codeQualityIssues = coordinationResults.Issues.filter(issue =>
