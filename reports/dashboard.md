@@ -2,7 +2,7 @@
 
 **Infrastructure Automation Platform**
 
-*Last updated: 2025-10-28 16:55:20*
+*Last updated: 2025-10-28 19:31:01*
 
 ---
 
@@ -10,9 +10,9 @@
 
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📁 **Total Files** | **177** | 121 Scripts, 47 Modules, 9 Data Files |
-| 📝 **Lines of Code** | **69,338** | 0 Functions |
-| 🧪 **Tests** | **108** | 100 Unit, 8 Integration |
+| 📁 **Total Files** | **181** | 124 Scripts, 48 Modules, 9 Data Files |
+| 📝 **Lines of Code** | **71,012** | 0 Functions |
+| 🧪 **Tests** | **109** | 101 Unit, 8 Integration |
 | 📈 **Coverage** | **0%** | 0/0 Lines |
 
 ## 🎯 Project Health
@@ -26,9 +26,8 @@
 
 ## 🔄 Recent Activity
 
-- `95e4423` Implement modern dark-themed dashboard with comprehensive features
-- `fbd89f4` Initial plan
-- `b85a97c` Fix Docker module loading when mounting volumes to /app (#742)
+- `7cfe127` Initial plan
+- `f67eda5` [WIP] Fix formatting issues on AitherZero dashboard (#1076)
 
 ## 🎯 Quick Commands
 
@@ -53,7 +52,7 @@
 - [⚡ CI/CD Pipeline](https://github.com/wizzense/AitherZero/actions)
 - [📦 Releases](https://github.com/wizzense/AitherZero/releases)
 - [🐛 Issues](https://github.com/wizzense/AitherZero/issues)
-- [📖 Documentation](https://github.com/wizzense/AitherZero/wiki)
+- [📖 Documentation](https://github.com/wizzense/AitherZero/tree/main/docs)
 
 ---
 
