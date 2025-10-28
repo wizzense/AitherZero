@@ -8,11 +8,12 @@ AitherZero includes comprehensive AI integration capabilities for automating dev
 
 1. [Quick Start](#quick-start)
 2. [Configuration](#configuration)
-3. [AI Automation Scripts](#ai-automation-scripts)
-4. [Orchestration Playbooks](#orchestration-playbooks)
-5. [API Reference](#api-reference)
-6. [Best Practices](#best-practices)
-7. [Troubleshooting](#troubleshooting)
+3. [GitHub Actions Integration](#github-actions-integration)
+4. [AI Automation Scripts](#ai-automation-scripts)
+5. [Orchestration Playbooks](#orchestration-playbooks)
+6. [API Reference](#api-reference)
+7. [Best Practices](#best-practices)
+8. [Troubleshooting](#troubleshooting)
 
 ## Quick Start
 
@@ -57,6 +58,66 @@ export OPENAI_API_KEY="sk-..."
 # Generate tests with AI
 ./automation-scripts/0732_Generate-AITests.ps1 -Path ./module.psm1 -TestType Unit
 ```
+
+## GitHub Actions Integration
+
+AitherZero includes comprehensive GitHub Actions workflows for AI-powered automation:
+
+### Claude AI Assistant
+
+**Workflow:** `.github/workflows/claude-ai-assistant.yml`
+
+Integrates Claude AI (Anthropic) for intelligent code review and collaboration:
+
+- **Automatic PR Review**: Analyzes code changes and provides strategic insights
+- **Issue Analysis**: Reviews issues and provides guidance
+- **@mention Support**: Responds to `@claude` mentions in comments
+- **Multi-Agent Collaboration**: Works with GitHub Copilot and Gemini
+
+**Quick Start:**
+```bash
+# Add API key to repository secrets
+# Settings > Secrets > New secret
+Name: ANTHROPIC_API_KEY
+Secret: sk-ant-api03-your-key-here
+
+# Claude will automatically review new PRs
+# Or mention Claude in any PR/issue:
+@claude please review the security aspects of this change
+```
+
+**See [Claude Integration Guide](./Claude-Integration-Guide.md) for detailed documentation.**
+
+### AI Agent Coordinator
+
+**Workflow:** `.github/workflows/ai-agent-coordinator.yml`
+
+Coordinates multiple AI agents for comprehensive analysis:
+
+- **Code Review Agent**: PSScriptAnalyzer and quality checks
+- **Testing Agent**: Unit test execution
+- **Security Agent**: Security validation
+- **Claude Agent**: Strategic AI analysis
+- **Multi-Agent Mode**: Coordinates all agents together
+
+**Trigger Manually:**
+```bash
+Actions > AI Agent Coordinator > Run workflow
+- Agent Type: claude | multi-agent
+- Priority: normal | high | critical
+```
+
+### Copilot Integration
+
+**Workflows:**
+- `automated-copilot-agent.yml` - Iterative issue resolution
+- `copilot-pr-automation.yml` - PR automation
+- `copilot-issue-commenter.yml` - Issue management
+
+These workflows collaborate with Claude AI to provide:
+- **Claude**: Strategic analysis and architecture
+- **Copilot**: Implementation and code generation
+- **AitherZero**: Validation and quality assurance
 
 ## Configuration
 
@@ -636,10 +697,17 @@ We welcome contributions! Please see our contributing guidelines for:
 - Improving prompts
 - Optimizing performance
 
+## Related Documentation
+
+- **[Claude Integration Guide](./Claude-Integration-Guide.md)** - Detailed guide for Claude AI integration
+- **[GitHub Actions Workflows](../.github/workflows/)** - All automation workflows
+- **[Configuration Guide](./CONFIGURATION.md)** - Complete configuration reference
+
 ## Support
 
 For issues, questions, or feature requests:
 - Create an issue on GitHub
 - Check existing documentation
 - Review troubleshooting guide
+- For Claude-specific issues, see [Claude Integration Guide](./Claude-Integration-Guide.md)
 - Contact support team
