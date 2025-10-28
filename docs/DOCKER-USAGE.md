@@ -12,8 +12,8 @@ AitherZero is available as a Docker container image that provides a complete, pr
 # Latest release
 docker pull ghcr.io/wizzense/aitherzero:latest
 
-# Specific PR build
-docker pull ghcr.io/wizzense/aitherzero:pr-739
+# Specific PR build (replace XXX with your PR number)
+docker pull ghcr.io/wizzense/aitherzero:pr-XXX
 ```
 
 ### Run Interactively
