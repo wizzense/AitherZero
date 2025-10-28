@@ -1,3 +1,8 @@
+---
+layout: default
+title: AitherZero Dashboard
+---
+
 # AitherZero
 
 ## 📖 Overview
