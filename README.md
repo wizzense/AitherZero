@@ -154,6 +154,27 @@ docker run -it --rm aitherzero:latest pwsh
 
 **📖 Full Documentation**: [Docker Guide](docs/DOCKER.md) - Complete instructions for building, running, and using the Docker container.
 
+## 🖥️ Self-Hosted Deployment
+
+For production environments, set up a self-hosted GitHub Actions runner with persistent main branch deployment:
+
+```bash
+# Quick setup on Linux server
+cd infrastructure/self-hosted-runner
+sudo ./install-runner.sh
+```
+
+**Features:**
+- ✅ Always-on deployment of main branch
+- ✅ Auto-updates on every commit to main
+- ✅ Web dashboard accessible 24/7
+- ✅ GitHub Actions runner for CI/CD
+- ✅ Systemd service with auto-restart
+
+**📖 Full Documentation**: 
+- [Self-Hosted Runner Setup Guide](docs/SELF-HOSTED-RUNNER-SETUP.md) - Complete setup instructions
+- [Quick Reference](docs/SELF-HOSTED-RUNNER-QUICKREF.md) - Commands and troubleshooting
+
 ## 🔧 Verify Installation
 
 ```powershell
