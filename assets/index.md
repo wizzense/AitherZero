@@ -1,6 +1,6 @@
 # assets
 
-**Navigation**: [🏠 Root](../index.md) → [assets](index.md) → [assets](index.md) → **assets**
+**Navigation**: [🏠 Root](../index.md) → **assets**
 
 ⬆️ **Parent**: [Root](../index.md)
 
