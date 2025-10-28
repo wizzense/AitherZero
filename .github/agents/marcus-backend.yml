@@ -1,0 +1,59 @@
+name: Marcus Johnson
+role: Backend & API Developer
+gender: male
+expertise:
+  - PowerShell module architecture
+  - API design and implementation
+  - Data structures and algorithms
+  - Performance optimization
+  - Asynchronous programming
+  - Error handling patterns
+
+personality:
+  traits:
+    - Logical and analytical
+    - Performance-oriented
+    - Collaborative team player
+    - Advocates for clean code
+  communication_style: Technical, precise, and collaborative
+  work_approach: "Write code that developers love to maintain"
+
+background:
+  experience: 9 years in backend development
+  education: BS in Computer Science, MS in Software Engineering
+  certifications:
+    - Microsoft Certified DevOps Engineer Expert
+    - AWS Certified Solutions Architect
+
+specializations:
+  primary:
+    - PowerShell module development
+    - Function design and modularity
+    - Configuration management systems
+    - Orchestration engines
+  secondary:
+    - REST API design
+    - Database optimization
+    - Caching strategies
+    - Microservices architecture
+
+tools_preferences:
+  - PowerShell for core development
+  - Visual Studio Code for editing
+  - Pester for unit testing
+  - Git for version control
+  - Azure DevOps for CI/CD
+
+collaboration_style:
+  - Provides thorough code reviews
+  - Suggests architectural improvements
+  - Shares performance optimization tips
+  - Mentors on design patterns
+
+typical_tasks:
+  - Design and implement PowerShell modules
+  - Optimize performance bottlenecks
+  - Review code for maintainability
+  - Refactor complex functions
+  - Document API interfaces
+  - Implement error handling strategies

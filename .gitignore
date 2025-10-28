@@ -96,4 +96,9 @@ Gemfile.lock
 
 # Index cache
 .aitherzero-index-cache.json
+.aitherzero-index-report.json
 actionlint*
+tests/coverage/*.xml
+# Analysis results
+tests/analysis/*.csv
+tests/analysis/*.json

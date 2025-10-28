@@ -1,75 +1,70 @@
 {
-  "Metrics": {
-    "Dependencies": {},
-    "PSVersion": "7.4.12",
-    "Platform": "Unix",
-    "LastUpdated": "2025-10-28 16:55:20",
-    "Coverage": {
-      "CoveredLines": 0,
-      "Percentage": 0,
-      "TotalLines": 0
-    },
-    "Tests": {
-      "Unit": 100,
-      "Integration": 8,
-      "Total": 108
-    },
-    "Files": {
-      "Data": 9,
-      "PowerShell": 121,
-      "Total": 177,
-      "Modules": 47
-    },
-    "LinesOfCode": 69338,
-    "Functions": 0
-  },
-  "Generated": "2025-10-28T16:55:21Z",
-  "Environment": {
-    "CI": false,
-    "WorkingDirectory": "/home/runner/work/AitherZero/AitherZero",
-    "PowerShell": "7.4.12",
-    "Platform": "Unix"
-  },
-  "Status": {
-    "LastBuild": "Unknown",
-    "Tests": "Unknown",
-    "Badges": {
-      "Coverage": "https://img.shields.io/badge/coverage-unknown-lightgrey",
-      "Security": "https://img.shields.io/badge/security-unknown-lightgrey",
-      "Tests": "https://img.shields.io/badge/tests-unknown-lightgrey",
-      "Build": "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI"
-    },
-    "Coverage": "Unknown",
-    "Security": "Unknown",
-    "Deployment": "Unknown",
-    "LastSuccess": "Unknown",
-    "Overall": "Unknown"
-  },
+  "Generated": "2025-10-28T19:31:02Z",
   "Project": {
     "Repository": "https://github.com/wizzense/AitherZero",
     "Name": "AitherZero",
     "Description": "Infrastructure Automation Platform"
   },
+  "Status": {
+    "Deployment": "Unknown",
+    "LastSuccess": "Unknown",
+    "Badges": {
+      "Coverage": "https://img.shields.io/badge/coverage-unknown-lightgrey",
+      "Build": "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI",
+      "Tests": "https://img.shields.io/badge/tests-unknown-lightgrey",
+      "Security": "https://img.shields.io/badge/security-unknown-lightgrey"
+    },
+    "Overall": "Unknown",
+    "Coverage": "Unknown",
+    "LastBuild": "Unknown",
+    "Tests": "Unknown",
+    "Security": "Unknown"
+  },
   "Activity": {
-    "Releases": [],
-    "Issues": [],
     "Commits": [
       {
-        "Hash": "95e4423",
-        "Date": "2025-10-28 16:54:26 +0000",
-        "Message": "Implement modern dark-themed dashboard with comprehensive features"
-      },
-      {
-        "Hash": "fbd89f4",
-        "Date": "2025-10-28 16:39:35 +0000",
+        "Hash": "7cfe127",
+        "Date": "2025-10-28 19:24:11 +0000",
         "Message": "Initial plan"
       },
       {
-        "Hash": "b85a97c",
-        "Date": "2025-10-28 08:54:27 -0700",
-        "Message": "Fix Docker module loading when mounting volumes to /app (#742)"
+        "Hash": "f67eda5",
+        "Date": "2025-10-28 12:20:55 -0700",
+        "Message": "[WIP] Fix formatting issues on AitherZero dashboard (#1076)"
       }
     ],
-    "LastUpdate": "2025-10-28 16:55:21"
+    "Issues": [],
+    "LastUpdate": "2025-10-28 19:31:02",
+    "Releases": []
+  },
+  "Metrics": {
+    "Files": {
+      "Modules": 48,
+      "Total": 181,
+      "Data": 9,
+      "PowerShell": 124
+    },
+    "PSVersion": "7.4.12",
+    "Functions": 0,
+    "Tests": {
+      "Total": 109,
+      "Integration": 8,
+      "Unit": 101
+    },
+    "Platform": "Unix",
+    "LinesOfCode": 71012,
+    "LastUpdated": "2025-10-28 19:31:01",
+    "Coverage": {
+      "Percentage": 0,
+      "CoveredLines": 0,
+      "TotalLines": 0
+    },
+    "Dependencies": {}
+  },
+  "Environment": {
+    "Platform": "Unix",
+    "WorkingDirectory": "/home/runner/work/AitherZero/AitherZero",
+    "PowerShell": "7.4.12",
+    "CI": false
   }
 }

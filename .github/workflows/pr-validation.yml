@@ -4,10 +4,10 @@ name: PR Validation
 # Optimized for cost efficiency - only essential PR validations
 on:
   pull_request:
-    # Only trigger on specific events to avoid redundancy with intelligent-ci-orchestrator
+    # Only trigger on specific events to avoid redundancy with quality-validation
     types: [opened, ready_for_review]
     # Only for external/fork PRs where we need special handling
-    # Internal PRs are handled by intelligent-ci-orchestrator.yml
+    # Internal PRs are handled by quality-validation.yml
   issue_comment:
     types: [created]
 
@@ -22,7 +22,7 @@ permissions:
 
 # Cost-optimized concurrency to prevent conflicts with main CI
 concurrency:
-  group: pr-validation-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: pr-validation-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -272,75 +272,4 @@ jobs:
               });
             }
 
-  handle-copilot-mention:
-    name: Handle @copilot Mentions
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'issue_comment' &&
-      contains(github.event.comment.body, '@copilot') &&
-      github.event.issue.pull_request
 
-    steps:
-      - name: 🤖 Process Copilot Request
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const comment = context.payload.comment.body.toLowerCase();
-            const commenter = context.payload.comment.user.login;
-            const prNumber = context.payload.issue.number;
-
-            console.log(`Copilot mentioned by ${commenter} in PR #${prNumber}`);
-
-            let response = `## 🤖 Copilot Assistant
-
-            Hello @${commenter}! I'm monitoring this PR and can help with:
-            `;
-
-            // Contextual responses based on keywords
-            if (comment.includes('review') || comment.includes('check')) {
-              response += `
-            ### 🔍 Code Review
-            - **Automated validation** runs on every PR update
-            - **Full CI pipeline** with cross-platform testing
-            - **Issue tracking** for any failures detected
-
-            The latest validation results are posted above. ⬆️
-            `;
-            }
-
-            if (comment.includes('test') || comment.includes('fail')) {
-              response += `
-            ### 🧪 Testing Support
-            - **Quick validation**: Basic syntax and module loading
-            - **Comprehensive tests**: Full test suite across platforms
-            - **Issue creation**: Automatic GitHub issues for test failures
-
-            Check the [CI pipeline](https://github.com/${context.repo.owner}/${context.repo.repo}/actions) for detailed results.
-            `;
-            }
-
-            if (comment.includes('fix') || comment.includes('error')) {
-              response += `
-            ### 🔧 Issue Resolution
-            - **Syntax errors**: Check the validation output above
-            - **Test failures**: Review CI pipeline logs
-            - **Local testing**: Run \`./az.ps1 0407\` for syntax, \`./az.ps1 0402\` for tests
-            `;
-            }
-
-            response += `
-            ### 📊 Current Status
-            - **PR Validation**: ${context.payload.issue.state === 'open' ? 'Active monitoring' : 'Completed'}
-            - **CI Pipeline**: Triggered automatically on PR updates
-            - **Release**: Available after merge to main branch
-
-            ---
-            *Tag me with specific questions like "@copilot check tests" or "@copilot explain error"*
-            `;
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: response
-            });
