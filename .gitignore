@@ -98,3 +98,4 @@ Gemfile.lock
 .aitherzero-index-cache.json
 .aitherzero-index-report.json
 actionlint*
+tests/coverage/*.xml
