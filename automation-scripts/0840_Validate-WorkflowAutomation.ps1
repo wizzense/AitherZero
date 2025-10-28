@@ -15,8 +15,8 @@
 
 .PARAMETER Quick
     Run quick validation only (skip deep checks)
-.PARAMETER Fix
-    Attempt to fix common issues automatically
+.PARAMETER Verbose
+    Display verbose output during validation
 .EXAMPLE
     ./automation-scripts/0840_Validate-WorkflowAutomation.ps1
     Run full validation of workflow automation
@@ -32,8 +32,7 @@
 
 [CmdletBinding()]
 param(
-    [switch]$Quick,
-    [switch]$Fix
+    [switch]$Quick
 )
 
 $ErrorActionPreference = 'Continue'
@@ -221,16 +220,17 @@ $testScript = Join-Path $projectRoot "automation-scripts/0402_Run-UnitTests.ps1"
 if (Test-Path $testScript) {
     $content = Get-Content $testScript -Raw
     
-    # Check for proper exit code logic
-    $hasProperExitCodes = $content -match 'if.*FailedCount.*exit 1' -and $content -match 'exit 0'
+    # Check for proper exit code logic - look for both patterns
+    $hasFailExit = $content -match 'exit 1' -and ($content -match 'FailedCount' -or $content -match 'Failed')
+    $hasSuccessExit = $content -match 'exit 0'
     
-    if ($hasProperExitCodes) {
+    if ($hasFailExit -and $hasSuccessExit) {
         Add-ValidationCheck -Name "Test script exit codes" -Passed $true `
-            -Message "0402 script has proper exit code handling"
+            -Message "0402 script has proper exit code handling (exit 0 and exit 1)"
     } else {
         Add-ValidationCheck -Name "Test script exit codes" -Passed $false `
             -Message "0402 script may not exit properly on failure" `
-            -Fix "Ensure script exits with 1 when tests fail"
+            -Fix "Ensure script exits with 1 when tests fail and 0 when tests pass"
     }
 }
 
@@ -302,10 +302,7 @@ if ($validationResults.Failed -gt 0) {
         }
     }
     
-    if ($Fix) {
-        Write-Host "`n⚙️  Attempting automatic fixes..." -ForegroundColor Yellow
-        Write-Host "⚠️  Automatic fixes not yet implemented - please fix manually" -ForegroundColor Yellow
-    }
+    Write-Host "`n💡 To fix these issues, review the workflow files and apply the suggested fixes manually." -ForegroundColor Cyan
     
     exit 1
 } else {
