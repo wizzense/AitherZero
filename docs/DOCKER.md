@@ -82,9 +82,10 @@ docker-compose up --build
 
 > **Note**: Public container registry support is planned for future releases. For now, build locally using the instructions above.
 
+> **Note:** Container image names use lowercase per Docker conventions.
+
 ```bash
 # When available, you'll be able to pull pre-built images from GitHub Container Registry:
-# Note: Container image names use lowercase per Docker conventions
 # docker pull ghcr.io/wizzense/aitherzero:latest
 # docker pull ghcr.io/wizzense/aitherzero:v1.0.0
 ```
