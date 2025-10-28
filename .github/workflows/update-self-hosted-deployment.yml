@@ -1,0 +1,185 @@
+---
+name: Update Self-Hosted Main Deployment
+
+# Automatically update the self-hosted runner's main deployment when main branch changes
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/*.md'
+      - 'LICENSE'
+  
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild even if no changes'
+        type: boolean
+        default: false
+  
+  schedule:
+    # Daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+# Only one update at a time
+concurrency:
+  group: self-hosted-deployment-update
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  DEPLOYMENT_NAME: aitherzero-main
+
+jobs:
+  # Trigger update on self-hosted runner
+  update-deployment:
+    name: Update Main Deployment
+    runs-on: self-hosted
+    # Only run if self-hosted runner is available
+    # Otherwise, skip gracefully
+    continue-on-error: true
+    
+    timeout-minutes: 30
+    
+    steps:
+      - name: 🔍 Check Runner Environment
+        id: check-runner
+        run: |
+          echo "hostname=$(hostname)" >> $GITHUB_OUTPUT
+          echo "os=$(uname -s)" >> $GITHUB_OUTPUT
+          echo "deployment_script=/opt/aitherzero-runner/scripts/update-main.sh"
+          
+          if [ -f /opt/aitherzero-runner/scripts/update-main.sh ]; then
+            echo "update_script_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Update script found"
+          else
+            echo "update_script_exists=false" >> $GITHUB_OUTPUT
+            echo "⚠ Update script not found - skipping update"
+          fi
+      
+      - name: 📊 Display Current Deployment Status
+        if: steps.check-runner.outputs.update_script_exists == 'true'
+        run: |
+          echo "### Current Deployment Status"
+          docker ps --filter name=aitherzero-main --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+          
+          echo ""
+          echo "### Current Image"
+          docker images aitherzero:main --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" || true
+      
+      - name: 🔄 Update Main Deployment
+        if: steps.check-runner.outputs.update_script_exists == 'true'
+        run: |
+          echo "Running deployment update script..."
+          sudo /opt/aitherzero-runner/scripts/update-main.sh
+      
+      - name: ✅ Verify Updated Deployment
+        if: steps.check-runner.outputs.update_script_exists == 'true'
+        run: |
+          echo "### Updated Deployment Status"
+          docker ps --filter name=aitherzero-main --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          
+          echo ""
+          echo "### Container Health"
+          docker inspect --format='{{.State.Health.Status}}' aitherzero-main || echo "No health check defined"
+          
+          echo ""
+          echo "### Recent Logs (last 20 lines)"
+          docker logs --tail 20 aitherzero-main
+      
+      - name: 🏥 Health Check
+        if: steps.check-runner.outputs.update_script_exists == 'true'
+        run: |
+          # Wait for container to be healthy
+          echo "Waiting for container to be healthy..."
+          RETRIES=30
+          COUNT=0
+          
+          while [ $COUNT -lt $RETRIES ]; do
+            if docker ps | grep -q aitherzero-main; then
+              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' aitherzero-main 2>/dev/null || echo "unknown")
+              
+              if [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "unknown" ]; then
+                echo "✓ Container is healthy"
+                break
+              fi
+              
+              echo "Container health: $HEALTH (attempt $COUNT/$RETRIES)"
+            else
+              echo "⚠ Container not found (attempt $COUNT/$RETRIES)"
+            fi
+            
+            sleep 2
+            COUNT=$((COUNT + 1))
+          done
+          
+          if [ $COUNT -eq $RETRIES ]; then
+            echo "❌ Container did not become healthy within timeout"
+            exit 1
+          fi
+          
+          # Test web interface
+          echo ""
+          echo "Testing web interface..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 || echo "000")
+          
+          if [[ "$HTTP_CODE" =~ ^(200|301|302)$ ]]; then
+            echo "✓ Web interface is accessible (HTTP $HTTP_CODE)"
+          else
+            echo "⚠ Web interface returned HTTP $HTTP_CODE"
+          fi
+      
+      - name: 📝 Generate Update Report
+        if: always() && steps.check-runner.outputs.update_script_exists == 'true'
+        run: |
+          echo "## Deployment Update Report" > update-report.txt
+          echo "" >> update-report.txt
+          echo "**Workflow:** ${{ github.workflow }}" >> update-report.txt
+          echo "**Run ID:** ${{ github.run_id }}" >> update-report.txt
+          echo "**Commit:** ${{ github.sha }}" >> update-report.txt
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> update-report.txt
+          echo "" >> update-report.txt
+          
+          echo "### Container Status" >> update-report.txt
+          docker ps --filter name=aitherzero-main --format "- **{{.Names}}**: {{.Status}}" >> update-report.txt || echo "- Container not found" >> update-report.txt
+          
+          echo "" >> update-report.txt
+          echo "### Image Info" >> update-report.txt
+          docker images aitherzero:main --format "- **Size**: {{.Size}}" >> update-report.txt || echo "- Image not found" >> update-report.txt
+          
+          cat update-report.txt
+      
+      - name: 🔔 Report Update Status
+        if: always() && steps.check-runner.outputs.update_script_exists == 'true'
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deployment update completed successfully"
+          else
+            echo "❌ Deployment update failed"
+            echo "Check logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+
+  # Fallback notification if no self-hosted runner is available
+  notify-no-runner:
+    name: Notify No Self-Hosted Runner
+    runs-on: ubuntu-latest
+    needs: [update-deployment]
+    if: failure()
+    
+    steps:
+      - name: 📢 No Self-Hosted Runner Available
+        run: |
+          echo "::notice::No self-hosted runner is currently available for deployment updates"
+          echo ""
+          echo "This is expected if you haven't set up a self-hosted runner yet."
+          echo ""
+          echo "To set up a self-hosted runner:"
+          echo "1. Follow the guide in docs/SELF-HOSTED-RUNNER-SETUP.md"
+          echo "2. Run: sudo ./infrastructure/self-hosted-runner/install-runner.sh"
+          echo ""
+          echo "The main branch deployment will be updated automatically once a self-hosted runner is registered."

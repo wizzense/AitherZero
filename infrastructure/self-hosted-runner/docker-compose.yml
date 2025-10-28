@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # Self-hosted GitHub Actions runner
+  runner:
+    image: myoung34/github-runner:latest
+    container_name: aitherzero-runner
+    hostname: aitherzero-runner
+    restart: unless-stopped
+    
+    environment:
+      # GitHub configuration
+      - REPO_URL=https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}
+      - RUNNER_NAME=${RUNNER_NAME:-aitherzero-main-runner}
+      - RUNNER_TOKEN=${GITHUB_TOKEN}
+      - RUNNER_WORKDIR=${RUNNER_WORKDIR:-/runner/_work}
+      - RUNNER_GROUP=${RUNNER_GROUP:-default}
+      - LABELS=${RUNNER_LABELS:-self-hosted,linux,x64,aitherzero}
+      
+      # Runner behavior
+      - EPHEMERAL=false
+      - DISABLE_AUTO_UPDATE=false
+      - RUNNER_SCOPE=repo
+      
+      # Access token for API operations
+      - ACCESS_TOKEN=${GITHUB_TOKEN}
+    
+    volumes:
+      # Docker socket for Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Runner workspace persistence
+      - runner-work:/runner/_work
+      # Docker data
+      - runner-docker:/var/lib/docker
+    
+    security_opt:
+      - label:disable
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '${RUNNER_CPU_LIMIT:-2}'
+          memory: ${RUNNER_MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    
+    networks:
+      - aitherzero-network
+    
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # AitherZero main branch deployment
+  aitherzero-main:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: aitherzero:main
+    container_name: aitherzero-main
+    hostname: aitherzero-main
+    restart: unless-stopped
+    
+    environment:
+      # AitherZero configuration
+      - AITHERZERO_ROOT=/opt/aitherzero
+      - AITHERZERO_NONINTERACTIVE=true
+      - AITHERZERO_CI=false
+      - AITHERZERO_PROFILE=Standard
+      - AITHERZERO_LOG_LEVEL=${LOG_LEVEL:-info}
+      
+      # Deployment metadata
+      - DEPLOYMENT_ENVIRONMENT=self-hosted-main
+      - BRANCH_NAME=${DEPLOYMENT_BRANCH:-main}
+      - DEPLOYMENT_TYPE=persistent
+      - AUTO_UPDATE=${DEPLOYMENT_AUTO_UPDATE:-true}
+    
+    ports:
+      - "${DEPLOYMENT_PORT:-8080}:8080"
+      - "${DEPLOYMENT_HTTPS_PORT:-8443}:8443"
+    
+    volumes:
+      # Persist logs and reports
+      - deployment-logs:/opt/aitherzero/logs
+      - deployment-reports:/opt/aitherzero/reports
+      - deployment-results:/opt/aitherzero/tests/results
+    
+    networks:
+      - aitherzero-network
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '${DEPLOYMENT_CPU_LIMIT:-2}'
+          memory: ${DEPLOYMENT_MEMORY_LIMIT:-2G}
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    healthcheck:
+      test: ["CMD", "pwsh", "-NoProfile", "-Command", "Test-Path /opt/aitherzero/AitherZero.psd1 -PathType Leaf"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Run web server by default
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        echo "🚀 Starting AitherZero Main Deployment..."
+        
+        # Import AitherZero module
+        pwsh -NoProfile -Command "Import-Module /opt/aitherzero/AitherZero.psd1 -WarningAction SilentlyContinue"
+        
+        # Generate reports for web dashboard
+        echo "📊 Generating initial reports..."
+        pwsh -NoProfile -Command "cd /opt/aitherzero && ./az.ps1 0510 -NonInteractive" || true
+        
+        # Start web server for reports
+        echo "🌐 Starting web server on port 8080..."
+        cd /opt/aitherzero/reports
+        python3 -m http.server 8080 --bind 0.0.0.0
+
+networks:
+  aitherzero-network:
+    driver: bridge
+    name: aitherzero-network
+
+volumes:
+  runner-work:
+    driver: local
+  runner-docker:
+    driver: local
+  deployment-logs:
+    driver: local
+  deployment-reports:
+    driver: local
+  deployment-results:
+    driver: local

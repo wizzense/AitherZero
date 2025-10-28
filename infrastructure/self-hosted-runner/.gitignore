@@ -1,0 +1,16 @@
+# Environment configuration (contains secrets)
+.env
+
+# Runtime data
+data/
+
+# Docker volumes
+volumes/
+
+# Backup files
+*.backup
+*.bak
+
+# Logs
+*.log
+logs/
