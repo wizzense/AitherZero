@@ -1,6 +1,6 @@
 # orchestration
 
-**Navigation**: [🏠 Root](../index.md) → [orchestration](index.md) → [orchestration](index.md) → **orchestration**
+**Navigation**: [🏠 Root](../index.md) → **orchestration**
 
 ⬆️ **Parent**: [Root](../index.md)
 
