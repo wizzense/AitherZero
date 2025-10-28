@@ -14,26 +14,30 @@ RUN apt-get update && apt-get install -y \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
-
 # Create non-root user for security
-RUN useradd -m -s /bin/bash aitherzero && \
+RUN useradd -m -s /bin/bash aitherzero
+
+# Create AitherZero installation directory (separate from /app working directory)
+RUN mkdir -p /opt/aitherzero && \
+    chown -R aitherzero:aitherzero /opt/aitherzero
+
+# Create working directory for user files
+RUN mkdir -p /app && \
     chown -R aitherzero:aitherzero /app
 
 # Switch to non-root user
 USER aitherzero
 
-# Copy application files
-COPY --chown=aitherzero:aitherzero . /app/
+# Copy application files to /opt/aitherzero
+COPY --chown=aitherzero:aitherzero . /opt/aitherzero/
 
 # Set environment variables
-ENV AITHERZERO_ROOT=/app \
+ENV AITHERZERO_ROOT=/opt/aitherzero \
     AITHERZERO_NONINTERACTIVE=true \
     AITHERZERO_CI=false \
     AITHERZERO_DISABLE_TRANSCRIPT=1 \
     AITHERZERO_LOG_LEVEL=Warning \
-    PATH="/app:${PATH}"
+    PATH="/opt/aitherzero:${PATH}"
 
 # Install PowerShell modules (optional - modules can be installed at runtime if needed)
 # Note: PSGallery configuration may require network access or additional setup in containerized environments
@@ -51,21 +55,19 @@ RUN pwsh -NoProfile -Command " \
     } \
     "
 
-# Create required directories
-RUN mkdir -p /app/logs /app/reports /app/tests/results
+# Create required directories in /opt/aitherzero
+RUN mkdir -p /opt/aitherzero/logs /opt/aitherzero/reports /opt/aitherzero/tests/results
 
-# Health check - verify manifest file exists
+# Set working directory to /app for user files
+WORKDIR /app
+
+# Health check - verify manifest file exists in installation directory
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pwsh -NoProfile -Command "Test-Path /app/AitherZero.psd1 -PathType Leaf"
+    CMD pwsh -NoProfile -Command "Test-Path /opt/aitherzero/AitherZero.psd1 -PathType Leaf"
 
-# Copy and set executable permission for entrypoint script
-COPY --chown=aitherzero:aitherzero docker-entrypoint.ps1 /app/
-
-# Default command - run entrypoint script that initializes AitherZero and starts web server
-# Web interface will be available at http://localhost:8080
-# For interactive CLI: docker exec -it <container> pwsh
-# For custom startup: docker run ... pwsh -NoProfile -Command "./Start-AitherZero.ps1 -Mode <mode>"
-CMD ["pwsh", "-NoProfile", "-File", "./docker-entrypoint.ps1"]
+# Default command - keep container running for interactive use or automation
+# Import module from /opt/aitherzero, work in /app directory
+CMD ["pwsh", "-NoProfile", "-Command", "$VerbosePreference='SilentlyContinue'; $InformationPreference='SilentlyContinue'; Import-Module /opt/aitherzero/AitherZero.psd1 -WarningAction SilentlyContinue; Write-Host '✅ AitherZero loaded. Type Start-AitherZero to begin.' -ForegroundColor Green; Start-Sleep -Seconds 2147483"]
 
 # Expose ports for potential web interfaces (future use)
 EXPOSE 8080 8443
