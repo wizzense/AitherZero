@@ -275,6 +275,7 @@ jobs:
           path: |
             tests/analysis/
             tests/reports/
+            reports/
           retention-days: 30
 
   # Security-focused validation
@@ -539,6 +540,7 @@ jobs:
           path: |
             tests/results/
             tests/reports/
+            reports/
             logs/
           retention-days: 30
 
@@ -584,6 +586,7 @@ jobs:
           path: |
             tests/results/
             tests/reports/
+            reports/
           retention-days: 30
 
   # Multi-platform validation - for main/develop/copilot branches or when explicitly requested
