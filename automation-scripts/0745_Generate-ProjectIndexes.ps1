@@ -149,7 +149,7 @@ function Export-IndexReport {
         Mode = $Mode
         Duration = @{
             TotalSeconds = [math]::Round($Duration.TotalSeconds, 2)
-            Formatted = "{0:mm}m {0:ss}s" -f $Duration
+            Formatted = $Duration.ToString('mm\m\ ss\s')
         }
         Statistics = @{
             TotalDirectories = $Results.TotalDirectories

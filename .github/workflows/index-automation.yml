@@ -227,6 +227,10 @@ jobs:
           // Build status emoji
           const statusEmoji = parseInt(failed) > 0 ? '⚠️' : parseInt(updated) > 0 ? '✅' : 'ℹ️';
           
+          // Calculate percentages for skipped and failed
+          const skippedPercent = totalDirs > 0 ? Math.round((skipped / totalDirs) * 100) : 0;
+          const failedPercent = totalDirs > 0 ? Math.round((failed / totalDirs) * 100) : 0;
+          
           const comment = `## ${statusEmoji} Project Index Update Report
           
           **Mode:** ${mode} | **Duration:** ${duration}s
@@ -237,8 +241,8 @@ jobs:
           |--------|-------|------------|
           | 📁 Total Directories Scanned | ${totalDirs} | 100% |
           | ✅ Indexes Updated | ${updated} | ${updateRate}% |
-          | ⏭️ Skipped (No Changes) | ${skipped} | ${totalDirs > 0 ? Math.round((skipped / totalDirs) * 100) : 0}% |
-          | ❌ Failed | ${failed} | ${totalDirs > 0 ? Math.round((failed / totalDirs) * 100) : 0}% |
+          | ⏭️ Skipped (No Changes) | ${skipped} | ${skippedPercent}% |
+          | ❌ Failed | ${failed} | ${failedPercent}% |
           
           ${changedFilesSection}
           
