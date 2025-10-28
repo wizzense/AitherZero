@@ -166,18 +166,20 @@ push:
 ### Step 1: Enable Scheduled Workflows
 ⚠️ **IMPORTANT**: GitHub Actions schedules don't run automatically until the workflow is manually triggered at least once.
 
-1. Go to: `https://github.com/wizzense/AitherZero/actions/workflows/automated-copilot-agent.yml`
-2. Click "Run workflow"
-3. Select `main` branch
-4. Set `force_analyze: true`
-5. Click "Run workflow"
-6. Wait for completion (~3-5 minutes)
+1. Navigate to the Actions tab in your repository
+2. Select "🤖 Automated Copilot Agent - Iterative Issue Resolution" from the workflows list
+3. Click "Run workflow"
+4. Select `main` branch
+5. Set `force_analyze: true`
+6. Click "Run workflow"
+7. Wait for completion (~3-5 minutes)
 
 ### Step 2: Verify Issue Creation
 After the workflow completes:
 
-1. Go to: `https://github.com/wizzense/AitherZero/issues?q=is:issue+is:open+label:auto-created`
-2. Verify issues were created with:
+1. Navigate to the Issues tab in your repository
+2. Filter by label: `auto-created` (or use the filter: `is:issue is:open label:auto-created`)
+3. Verify issues were created with:
    - ✅ Label: `auto-created`
    - ✅ Label: `copilot-task`
    - ✅ Assignee: `wizzense`
@@ -210,12 +212,13 @@ The `copilot-issue-commenter` workflow should automatically run after `automated
 
 ### Step 6: Test Manual PR Creation
 1. Identify an issue with label `copilot-task`
-2. Go to: `https://github.com/wizzense/AitherZero/actions/workflows/copilot-pr-automation.yml`
-3. Click "Run workflow"
-4. Enter the issue number
-5. Set `force_pr_creation: true`
-6. Click "Run workflow"
-7. Verify PR is created for the issue
+2. Navigate to the Actions tab in your repository
+3. Select "🔄 Copilot PR Automation - Iterative Issue Resolution" from the workflows list
+4. Click "Run workflow"
+5. Enter the issue number
+6. Set `force_pr_creation: true`
+7. Click "Run workflow"
+8. Verify PR is created for the issue
 
 ## Expected Behavior After Fixes
 

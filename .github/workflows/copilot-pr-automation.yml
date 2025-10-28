@@ -9,7 +9,7 @@ on:
     types: [opened, synchronize, closed]
     
   schedule:
-    # Check for stale assigned issues every 3 hours, 7 days a week
+    # Check for issues labeled 'copilot-task' every 3 hours, 7 days a week
     - cron: '0 */3 * * *'
     
   workflow_dispatch:
@@ -76,7 +76,7 @@ jobs:
                 console.log(`Issue ${specificIssue} not found or not accessible`);
               }
             } else {
-              // Scan for all auto-created copilot issues (assigned to wizzense or with copilot-task label)
+              // Scan for all issues with 'copilot-task' label
               const { data: issues } = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
