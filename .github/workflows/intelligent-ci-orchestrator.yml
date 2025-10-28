@@ -16,7 +16,7 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-      - '.gitignore' 
+      - '.gitignore'
       - 'LICENSE'
       - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
@@ -62,13 +62,13 @@ jobs:
       needs-performance-tests: ${{ steps.detect.outputs.needs-performance-tests }}
       changed-areas: ${{ steps.detect.outputs.changed-areas }}
       optimization-level: ${{ steps.detect.outputs.optimization-level }}
-      
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Need full history for accurate change detection
-          
+
       - name: 🔍 Intelligent Change Analysis
         id: detect
         shell: pwsh
@@ -80,7 +80,7 @@ jobs:
           $needsFullTests = $false
           $needsPerformanceTests = $false
           $changedAreas = @()
-          
+
           # Get changed files with error handling
           $changedFiles = @()
           try {
@@ -99,13 +99,13 @@ jobs:
             Write-Host "⚠️ Git diff failed, assuming all files changed for safety" -ForegroundColor Yellow
             $changedFiles = @('**/*')  # Trigger full validation as fallback
           }
-          
+
           # Ensure we have an array
           if (-not $changedFiles) { $changedFiles = @() }
-          
+
           Write-Host "📋 Changed files detected:" -ForegroundColor Cyan
           $changedFiles | ForEach-Object { Write-Host "  • $_" }
-          
+
           # Analyze impact
           foreach ($file in $changedFiles) {
             switch -Regex ($file) {
@@ -116,41 +116,41 @@ jobs:
                 $needsSecurityScan = $true  # Infrastructure changes need security review
                 $changedAreas += 'infrastructure'
               }
-              
+
               # Security-sensitive files - always need security scan
               '^(domains/security/|.*[Ss]ecurity.*|.*[Aa]uth.*|.*[Cc]red.*\.ps1)' {
                 $needsSecurityScan = $true
                 $needsCoreValidation = $true
                 $changedAreas += 'security'
               }
-              
+
               # Performance-critical components
               '^(domains/automation/|.*[Pp]erformance.*|.*[Oo]rchestration.*)' {
                 $needsPerformanceTests = $true
                 $needsSecurityScan = $true  # Automation code needs security review
                 $changedAreas += 'performance'
               }
-              
+
               # Core modules - need security scan for PowerShell code
               '^domains/.*\.(ps1|psm1)$' {
                 $needsCoreValidation = $true
                 $needsSecurityScan = $true  # All PowerShell code needs security review
                 $changedAreas += 'core'
               }
-              
+
               # Automation scripts - need security scan
               '^automation-scripts/.*\.ps1$' {
                 $needsCoreValidation = $true
                 $needsSecurityScan = $true  # All automation scripts need security review
                 $changedAreas += 'automation'
               }
-              
+
               # Test changes
               '^tests/' {
                 $needsCoreValidation = $true
                 $changedAreas += 'testing'
               }
-              
+
               # Any PowerShell file - needs basic security scan
               '\.(ps1|psm1|psd1)$' {
                 $needsSecurityScan = $true  # All PowerShell files need security review
@@ -160,7 +160,7 @@ jobs:
               }
             }
           }
-          
+
           # Determine optimization level
           $optimizationLevel = 'standard'
           if ($changedFiles.Count -lt 5 -and -not $needsFullTests) {
@@ -168,7 +168,7 @@ jobs:
           } elseif ($needsPerformanceTests -or $changedFiles.Count -gt 20) {
             $optimizationLevel = 'conservative'
           }
-          
+
           # Force full analysis if requested
           if ('${{ github.event.inputs.force_full_analysis }}' -eq 'true') {
             $needsCoreValidation = $true
@@ -176,15 +176,15 @@ jobs:
             $needsFullTests = $true
             $optimizationLevel = 'conservative'
           }
-          
+
           # Set outputs
           "needs-core-validation=$needsCoreValidation" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "needs-security-scan=$needsSecurityScan" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "needs-full-tests=$needsFullTests" | Out-File -FilePath $env:GITHUB_OUTPUT -Append  
+          "needs-full-tests=$needsFullTests" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "needs-performance-tests=$needsPerformanceTests" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "changed-areas=$($changedAreas -join ',')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "optimization-level=$optimizationLevel" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          
+
           Write-Host "🎯 Analysis Results:" -ForegroundColor Green
           Write-Host "  Core Validation: $needsCoreValidation"
           Write-Host "  Security Scan: $needsSecurityScan"
@@ -198,19 +198,19 @@ jobs:
     name: ⚡ Quick Validation
     runs-on: ubuntu-latest
     needs: change-detection
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-        
+
       - name: ⚡ Quick Syntax Check
         shell: pwsh
         run: |
           Write-Host "🔍 Running quick syntax validation..." -ForegroundColor Cyan
-          
+
           # Run validation and capture result via process exit code
           $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0407' -NonInteractive") -Wait -PassThru -NoNewWindow
-          
+
           if ($process.ExitCode -eq 0) {
             Write-Host "✅ Quick syntax validation completed successfully!" -ForegroundColor Green
           } else {
@@ -220,27 +220,27 @@ jobs:
 
   # Conditional - run based on change detection
   core-validation:
-    name: 🔍 Core Validation  
+    name: 🔍 Core Validation
     runs-on: ubuntu-latest
     needs: [change-detection, quick-validation]
     if: needs.change-detection.outputs.needs-core-validation == 'true'
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-        
+
       - name: 🔍 Core Analysis
         shell: pwsh
         run: |
           Write-Host "🔍 Running core validation..." -ForegroundColor Cyan
-          
+
           # Run comprehensive PSScriptAnalyzer analysis with full fidelity
           Write-Host "Running PSScriptAnalyzer with full analysis..." -ForegroundColor Yellow
-          
+
           try {
             $process1 = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0404' -NonInteractive") -Wait -PassThru -NoNewWindow
             Write-Host "PSScriptAnalyzer completed with exit code: $($process1.ExitCode)" -ForegroundColor $(if ($process1.ExitCode -eq 0) { 'Green' } elseif ($process1.ExitCode -eq 1) { 'Yellow' } else { 'Red' })
-            
+
             # Report all findings - don't hide issues
             if ($process1.ExitCode -ne 0) {
               Write-Host "⚠️ PSScriptAnalyzer found issues (exit code: $($process1.ExitCode))" -ForegroundColor Yellow
@@ -250,7 +250,7 @@ jobs:
             Write-Error "PSScriptAnalyzer encountered a critical error: $($_.Exception.Message)"
             throw
           }
-          
+
           # Generate comprehensive report for analysis
           Write-Host "Generating project report..." -ForegroundColor Yellow
           try {
@@ -263,9 +263,9 @@ jobs:
           } catch {
             Write-Warning "Project report generation encountered an issue: $($_.Exception.Message)"
           }
-          
+
           Write-Host "✅ Core validation completed!" -ForegroundColor Green
-          
+
       - name: 📊 Upload Analysis Results
         uses: actions/upload-artifact@v4
         with:
@@ -281,21 +281,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: [change-detection, quick-validation]
     if: needs.change-detection.outputs.needs-security-scan == 'true'
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-        
+
       - name: 🔒 Security Analysis
         shell: pwsh
         run: |
           Write-Host "🔒 Running security analysis..." -ForegroundColor Cyan
-          
+
           # Run security-focused scripts
           $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0523' -NonInteractive") -Wait -PassThru -NoNewWindow
-          
+
           Write-Host "Security analysis completed with exit code: $($process.ExitCode)" -ForegroundColor $(if ($process.ExitCode -eq 0) { 'Green' } else { 'Yellow' })
-          
+
           if ($process.ExitCode -eq 0) {
             Write-Host "✅ No critical security issues found!" -ForegroundColor Green
           } elseif ($process.ExitCode -eq 1) {
@@ -306,14 +306,14 @@ jobs:
             Write-Host "❌ Security analysis encountered errors (exit code: $($process.ExitCode))" -ForegroundColor Red
             exit $process.ExitCode
           }
-          
+
           # Always exit 0 for security findings (exit code 1), only fail on actual errors (exit code > 1)
           if ($process.ExitCode -le 1) {
             exit 0
           } else {
             exit $process.ExitCode
           }
-          
+
       - name: 📊 Upload Security Results
         uses: actions/upload-artifact@v4
         with:
@@ -332,7 +332,7 @@ jobs:
     needs: [change-detection, core-validation]
     if: needs.change-detection.outputs.needs-full-tests == 'true'
     timeout-minutes: 20
-    
+
     strategy:
       fail-fast: false
       max-parallel: 6
@@ -344,81 +344,81 @@ jobs:
             test_path: "tests/domains"
             test_scope: "core-domains"
             timeout: 10
-            
-          - category: "Core Unit Tests" 
+
+          - category: "Core Unit Tests"
             priority: 1
             test_path: "tests/unit/AitherZero.Tests.ps1,tests/unit/Configuration.Tests.ps1,tests/unit/Start-AitherZero.Tests.ps1"
             test_scope: "core-unit"
             timeout: 10
-            
+
           # Priority 2: Infrastructure & Setup (0000-0199)
           - category: "Infrastructure Tests"
             priority: 2
             test_path: "tests/unit/automation-scripts/0000-0099,tests/unit/automation-scripts/0100-0199"
             test_scope: "infrastructure"
             timeout: 15
-            
-          # Priority 3: Development Tools (0200-0299)  
+
+          # Priority 3: Development Tools (0200-0299)
           - category: "Development Tests"
             priority: 3
             test_path: "tests/unit/automation-scripts/0200-0299"
             test_scope: "development"
             timeout: 15
-            
+
           # Priority 4: Testing & Validation (0400-0499)
           - category: "Testing Framework Tests"
             priority: 2
             test_path: "tests/unit/automation-scripts/0400-0499"
             test_scope: "testing"
             timeout: 15
-            
+
           # Priority 5: Reporting & Analysis (0500-0599)
-          - category: "Reporting Tests" 
+          - category: "Reporting Tests"
             priority: 4
             test_path: "tests/unit/automation-scripts/0500-0599"
             test_scope: "reporting"
             timeout: 15
-            
+
           # Priority 6: Git & CI/CD (0700-0799)
           - category: "CI/CD Tests"
             priority: 3
             test_path: "tests/unit/automation-scripts/0700-0799"
             test_scope: "cicd"
             timeout: 15
-            
+
           # Priority 7: Integration Tests
           - category: "Integration Tests"
             priority: 4
             test_path: "tests/integration"
             test_scope: "integration"
             timeout: 15
-    
+
     steps:
-      - name: 📥 Checkout  
+      - name: 📥 Checkout
         uses: actions/checkout@v4
-        
+
       - name: 🧪 Run ${{ matrix.category }}
         shell: pwsh
         timeout-minutes: ${{ matrix.timeout }}
         run: |
           Write-Host "🧪 Running ${{ matrix.category }} (Priority ${{ matrix.priority }})..." -ForegroundColor Cyan
           Write-Host "📁 Test Path: ${{ matrix.test_path }}" -ForegroundColor Gray
-          
+
           # Determine test execution strategy
           $testPath = "${{ matrix.test_path }}"
           $totalTests = 0
           $totalPassed = 0
           $totalFailed = 0
-          
+
           # Simple direct Pester execution for cleaner output
           if ($testPath -match ',') {
             $testFiles = $testPath -split ',' | ForEach-Object { $_.Trim() }
             Write-Host "🔍 Running $($testFiles.Count) test file(s)/path(s)" -ForegroundColor Yellow
-            
+
             foreach ($path in $testFiles) {
               if (Test-Path $path) {
                 Write-Host "`n  ▶️ Testing: $path" -ForegroundColor Cyan
-                
+
                 try {
                   # Direct Pester execution with minimal overhead
                   Import-Module Pester -Force -MinimumVersion 5.0
@@ -427,18 +427,18 @@ jobs:
                   $config.Run.PassThru = $true
                   $config.Output.Verbosity = 'Normal'
                   $config.Should.ErrorAction = 'Continue'
-                  
+
                   $result = Invoke-Pester -Configuration $config
-                  
+
                   Write-Host "     📊 Found: $($result.TotalCount) tests, Passed: $($result.PassedCount), Failed: $($result.FailedCount)" -ForegroundColor Gray
-                  
+
                   if ($result.FailedCount -eq 0) {
                     Write-Host "     ✅ PASSED" -ForegroundColor Green
                     $totalPassed++
                   } else {
                     Write-Host "     ❌ FAILED ($($result.FailedCount) failures)" -ForegroundColor Red
                     $totalFailed++
-                    
+
                     # Show failed test names
                     if ($result.Failed.Count -gt 0) {
                       Write-Host "     Failed Tests:" -ForegroundColor Red
@@ -456,17 +456,17 @@ jobs:
                   $totalFailed++
                   $totalTests++
                 }
-                
+
               } else {
                 Write-Host "  ⏭️ Skipped: $path (not found)" -ForegroundColor Yellow
               }
             }
-            
+
           } else {
             # Single path execution
             if (Test-Path $testPath) {
               Write-Host "🔍 Running test directory: $testPath" -ForegroundColor Yellow
-              
+
               try {
                 # Direct Pester execution
                 Import-Module Pester -Force -MinimumVersion 5.0
@@ -475,18 +475,18 @@ jobs:
                 $config.Run.PassThru = $true
                 $config.Output.Verbosity = 'Normal'
                 $config.Should.ErrorAction = 'Continue'
-                
+
                 $result = Invoke-Pester -Configuration $config
-                
+
                 Write-Host "  📊 Found: $($result.TotalCount) tests, Passed: $($result.PassedCount), Failed: $($result.FailedCount)" -ForegroundColor Gray
-                
+
                 if ($result.FailedCount -eq 0) {
                   $totalPassed = 1
                   $totalFailed = 0
                 } else {
                   $totalPassed = 0
                   $totalFailed = 1
-                  
+
                   # Show failed test names
                   if ($result.Failed.Count -gt 0) {
                     Write-Host "  Failed Tests:" -ForegroundColor Red
@@ -504,18 +504,18 @@ jobs:
                 $totalFailed = 1
                 $totalTests = 1
               }
-              
+
             } else {
               Write-Host "⏭️ Test path not found: $testPath - no tests to run" -ForegroundColor Yellow
             }
           }
-          
+
           # Display final summary
           Write-Host "`n📊 ${{ matrix.category }} Summary:" -ForegroundColor Cyan
           Write-Host "   Test Paths: $totalTests" -ForegroundColor White
           Write-Host "   Passed: $totalPassed" -ForegroundColor Green
           Write-Host "   Failed: $totalFailed" -ForegroundColor $(if ($totalFailed -eq 0) { 'Green' } else { 'Red' })
-          
+
           if ($totalFailed -eq 0 -and $totalTests -gt 0) {
             Write-Host "✅ All ${{ matrix.category }} tests passed!" -ForegroundColor Green
           } elseif ($totalTests -eq 0) {
@@ -523,10 +523,10 @@ jobs:
           } else {
             Write-Host "⚠️ Some ${{ matrix.category }} tests failed - check details above" -ForegroundColor Yellow
           }
-          
+
           # Always exit 0 to not block CI - test failures are reported via artifacts
           exit 0
-          
+
       - name: 📊 Upload ${{ matrix.category }} Results
         uses: actions/upload-artifact@v4
         if: always()
@@ -545,23 +545,23 @@ jobs:
     needs: [change-detection, core-validation]
     if: needs.change-detection.outputs.needs-full-tests == 'true' && github.event.inputs.force_full_analysis == 'true'
     timeout-minutes: 45
-    
+
     steps:
-      - name: 📥 Checkout  
+      - name: 📥 Checkout
         uses: actions/checkout@v4
-        
+
       - name: 🧪 Run All Comprehensive Tests
         shell: pwsh
         run: |
           Write-Host "🧪 Running ALL comprehensive tests in legacy mode..." -ForegroundColor Cyan
           Write-Host "⚠️ This is slower than the parallelized matrix approach" -ForegroundColor Yellow
-          
+
           # Run full test suite - all tests in one execution
           $env:AITHERZERO_TEST_SCOPE = "full"
           $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0402' -NonInteractive") -Wait -PassThru -NoNewWindow
-          
+
           Write-Host "Test execution completed with exit code: $($process.ExitCode)" -ForegroundColor $(if ($process.ExitCode -eq 0) { 'Green' } else { 'Yellow' })
-          
+
           if ($process.ExitCode -eq 0) {
             Write-Host "✅ All comprehensive tests passed!" -ForegroundColor Green
           } else {
@@ -569,10 +569,10 @@ jobs:
             Write-Host "📋 Complete test results and failure details are captured in reports" -ForegroundColor Cyan
             Write-Host "💡 Test failures are reported for review - they don't block CI but require attention" -ForegroundColor Blue
           }
-          
+
           # Always exit 0 to not block CI
           exit 0
-          
+
       - name: 📊 Upload All Test Results
         uses: actions/upload-artifact@v4
         with:
@@ -588,21 +588,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [change-detection, core-validation]
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/copilot/') || github.event.inputs.force_full_analysis == 'true') && needs.change-detection.outputs.needs-core-validation == 'true'
-    
+
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-        
+
       - name: 🌍 Platform Validation
         shell: pwsh
         run: |
           Write-Host "🌍 Running platform-specific validation on ${{ matrix.os }}..." -ForegroundColor Cyan
-          
+
           # Quick validation for cross-platform compatibility
           $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0407' -NonInteractive") -Wait -PassThru -NoNewWindow
           if ($process.ExitCode -eq 0) {
@@ -611,7 +611,7 @@ jobs:
             Write-Error "Platform validation failed with exit code: $($process.ExitCode)"
             exit $process.ExitCode
           }
-          
+
       - name: 📊 Upload Platform Results
         uses: actions/upload-artifact@v4
         with:
@@ -626,22 +626,22 @@ jobs:
     runs-on: ubuntu-latest
     needs: [change-detection, quick-validation, core-validation, comprehensive-tests, comprehensive-tests-legacy]
     if: always() && needs.change-detection.result == 'success'
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-        
+
       - name: 📊 Download All Results
         uses: actions/download-artifact@v4
         with:
           path: ./ci-results
         continue-on-error: true
-        
+
       - name: 📋 Generate CI Summary
         shell: pwsh
         run: |
           Write-Host "📋 Generating CI validation summary..." -ForegroundColor Cyan
-          
+
           $summary = @{
             Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
             GitRef = $env:GITHUB_REF
@@ -663,7 +663,7 @@ jobs:
             TestMatrix = @{
               Strategy = "Parallelized by Priority & Category"
               Categories = @(
-                "Core Domain Tests (P1)", "Core Unit Tests (P1)", 
+                "Core Domain Tests (P1)", "Core Unit Tests (P1)",
                 "Infrastructure Tests (P2)", "Testing Framework Tests (P2)",
                 "Development Tests (P3)", "CI/CD Tests (P3)",
                 "Reporting Tests (P4)", "Integration Tests (P4)"
@@ -671,39 +671,39 @@ jobs:
               Benefits = "Faster execution, better resource utilization, priority-based failure detection"
             }
           }
-          
+
           $summaryJson = $summary | ConvertTo-Json -Depth 5
           $summaryJson | Out-File "ci-summary.json"
-          
+
           Write-Host "📊 CI Summary:" -ForegroundColor Green
           Write-Host $summaryJson
-          
+
       - name: 🤖 Trigger AI Agent Coordination
         if: github.event_name == 'pull_request' && (needs.core-validation.result == 'failure' || needs.comprehensive-tests.result == 'failure')
         uses: actions/github-script@v7
         with:
           script: |
             console.log('Triggering AI Agent Coordinator due to CI issues...');
-            
+
             // Determine priority based on failure severity
             let priority = 'normal';
             const coreValidationFailed = '${{ needs.core-validation.result }}' === 'failure';
             const testsFailed = '${{ needs.comprehensive-tests.result }}' === 'failure';
-            
+
             if (coreValidationFailed && testsFailed) {
               priority = 'high';
             } else if (coreValidationFailed || testsFailed) {
               priority = 'normal';
             }
-            
+
             // Determine agent type based on what failed
             let agentType = 'code-review';
             if (testsFailed && !coreValidationFailed) {
               agentType = 'testing';
             }
-            
+
             console.log(`AI Agent coordination will be triggered with priority: ${priority}, agent type: ${agentType}`);
-            
+
             try {
               // Trigger the AI Agent Coordinator workflow
               const response = await github.rest.actions.createWorkflowDispatch({
@@ -717,9 +717,9 @@ jobs:
                   target_branch: context.ref.replace('refs/heads/', '')
                 }
               });
-              
+
               console.log('✅ AI Agent Coordinator workflow triggered successfully');
-              
+
               // Add a comment to the PR about the coordination
               if (context.payload.pull_request) {
                 await github.rest.issues.createComment({
@@ -743,7 +743,7 @@ jobs:
               console.log('⚠️ Could not trigger AI Agent Coordinator:', error.message);
               // Don't fail the workflow if coordination fails
             }
-          
+
       - name: 📊 Upload CI Summary
         uses: actions/upload-artifact@v4
         with:

@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 15
     outputs:
       validation-status: ${{ steps.validation.outputs.status }}
-      
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
@@ -64,17 +64,17 @@ jobs:
         run: |
           Write-Host "🔍 Running comprehensive pre-release validation..." -ForegroundColor Yellow
           $errors = @()
-          
+
           # Syntax validation
           try {
             Write-Host "  📝 Syntax validation..." -ForegroundColor Cyan
-            & "./az.ps1" 0407
+            & "./automation-scripts/0407_*.ps1"
             Write-Host "  ✅ Syntax validation passed" -ForegroundColor Green
           } catch {
             $errors += "Syntax validation failed: $_"
             Write-Host "  ❌ Syntax validation failed" -ForegroundColor Red
           }
-          
+
           # Module loading test
           try {
             Write-Host "  📦 Module loading test..." -ForegroundColor Cyan
@@ -85,25 +85,25 @@ jobs:
             $errors += "Module loading failed: $_"
             Write-Host "  ❌ Module loading failed" -ForegroundColor Red
           }
-          
+
           # Core tests
           try {
             Write-Host "  🧪 Core functionality tests..." -ForegroundColor Cyan
-            & "./az.ps1" 0402
+            & "./automation-scripts/0402_*.ps1"
             Write-Host "  ✅ Core tests passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Core tests had issues (not blocking): $_" -ForegroundColor Yellow
           }
-          
+
           # Code analysis
           try {
             Write-Host "  🔬 Code quality analysis..." -ForegroundColor Cyan
-            & "./az.ps1" 0404
+            & "./automation-scripts/0404_*.ps1"
             Write-Host "  ✅ Code analysis passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Code analysis had issues (not blocking): $_" -ForegroundColor Yellow
           }
-          
+
           if ($errors.Count -gt 0) {
             Write-Host "❌ Critical validation errors found:" -ForegroundColor Red
             $errors | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
@@ -120,7 +120,7 @@ jobs:
     needs: [pre-release-validation]
     if: always() && (needs.pre-release-validation.result == 'success' || needs.pre-release-validation.result == 'skipped')
     timeout-minutes: 10
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
@@ -134,22 +134,22 @@ jobs:
           } else {
             $version = "${{ github.ref_name }}" -replace '^v', ''
           }
-          
+
           Write-Host "🏷️ Preparing release for version: $version" -ForegroundColor Magenta
-          
+
           # Update VERSION file
           $version | Set-Content ./VERSION -NoNewline
-          
+
           # Update module manifest version
           $manifestPath = "./AitherZero.psd1"
           $manifestContent = Get-Content $manifestPath -Raw
           $manifestContent = $manifestContent -replace "ModuleVersion\s*=\s*'[\d\.]+[^']*'", "ModuleVersion = '$version'"
           $manifestContent | Set-Content $manifestPath -NoNewline
-          
+
           # Verify version update
           $updatedVersion = Get-Content ./VERSION -Raw
           Write-Host "✅ Version updated to: $updatedVersion" -ForegroundColor Green
-          
+
           echo "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: 📦 Build Release Package
@@ -158,7 +158,7 @@ jobs:
           $version = $env:RELEASE_VERSION
           $packageName = "AitherZero-v$version"
           $isPrerelease = "${{ github.event.inputs.prerelease }}" -eq "true"
-          
+
           # Create comprehensive build info
           $buildInfo = @{
             Version = $version
@@ -174,27 +174,27 @@ jobs:
             PowerShellVersion = $PSVersionTable.PSVersion.ToString()
             BuildEnvironment = "GitHub Actions"
           }
-          
+
           $buildInfo | ConvertTo-Json -Depth 2 | Set-Content "./build-info.json"
-          
+
           Write-Host "📦 Creating release package: $packageName" -ForegroundColor Yellow
           New-Item -ItemType Directory -Path "./$packageName" -Force | Out-Null
-          
+
           # Complete file list for release
           $releaseFiles = @(
             # Core modules
-            "*.psd1", "*.psm1", "*.ps1", 
+            "*.psd1", "*.psm1", "*.ps1",
             # Documentation
             "*.md", "LICENSE", "VERSION",
             # Essential directories
             "domains", "automation-scripts", "orchestration", "tests",
             # Configuration and setup
-            "config.example.psd1", ".azprofile.ps1", 
-            "az", "az.ps1", "bootstrap.ps1", "bootstrap.sh",
+            "config.example.psd1", ".azprofile.ps1",
+            "bootstrap.ps1", "bootstrap.sh",
             # Build artifacts
             "build-info.json"
           )
-          
+
           foreach ($pattern in $releaseFiles) {
             if (Test-Path $pattern) {
               Copy-Item -Path $pattern -Destination "./$packageName" -Recurse -Force
@@ -203,20 +203,20 @@ jobs:
               Write-Host "  ⚠️ Not found: $pattern" -ForegroundColor Yellow
             }
           }
-          
+
           # Create multiple archive formats
           Write-Host "📁 Creating archive formats..." -ForegroundColor Cyan
-          
+
           # ZIP for Windows compatibility - compress contents, not the directory itself
           Compress-Archive -Path "./$packageName/*" -DestinationPath "./$packageName.zip" -Force
           Write-Host "  ✅ Created: $packageName.zip" -ForegroundColor Green
-          
+
           # TAR.GZ for Unix systems - use -C to change directory and avoid nested structure
           if (Get-Command tar -ErrorAction SilentlyContinue) {
             tar -czf "./$packageName.tar.gz" -C "./$packageName" .
             Write-Host "  ✅ Created: $packageName.tar.gz" -ForegroundColor Green
           }
-          
+
           # Display package info
           Write-Host "📊 Package Summary:" -ForegroundColor Magenta
           Get-ChildItem -Filter "AitherZero-v*" | ForEach-Object {
@@ -230,7 +230,7 @@ jobs:
           $version = $env:RELEASE_VERSION
           $buildInfo = Get-Content "./build-info.json" | ConvertFrom-Json
           $isPrerelease = "${{ github.event.inputs.prerelease }}" -eq "true"
-          
+
           # Get commit messages since last tag for changelog
           $lastTag = ""
           try {
@@ -238,19 +238,19 @@ jobs:
           } catch {
             $lastTag = "Initial release"
           }
-          
+
           $releaseNotes = @"
           # AitherZero v$version
-          
+
           $(if ($isPrerelease) { "🚧 **Pre-Release** - Use with caution in production environments" } else { "🚀 **Stable Release**" })
-          
+
           ## 📋 Build Information
           - **Version:** $($buildInfo.Version)
-          - **Build:** #$($buildInfo.BuildNumber)  
+          - **Build:** #$($buildInfo.BuildNumber)
           - **Commit:** [$($buildInfo.CommitShort)](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
           - **Build Date:** $($buildInfo.BuildDate)
           - **Environment:** $($buildInfo.BuildEnvironment)
-          
+
           ## ✨ AitherZero Features
           - **Cross-Platform:** Windows, Linux, and macOS support
           - **Number-Based Orchestration:** Systematic script execution (0000-9999)
@@ -258,7 +258,7 @@ jobs:
           - **CI/CD Integration:** GitHub Actions workflows for automation
           - **Infrastructure as Code:** OpenTofu/Terraform support
           - **Comprehensive Testing:** Automated validation and reporting
-          
+
           ## 📦 What's Included
           - Complete PowerShell module with all domains
           - 100+ automation scripts organized by number ranges
@@ -266,78 +266,78 @@ jobs:
           - Comprehensive test suite and validation tools
           - Documentation and examples
           - CI/CD workflow templates
-          
+
           ## 🚀 Quick Installation
-          
+
           ### One-Line Install (Recommended)
           ```powershell
           # PowerShell 5.1+ (auto-upgrades to PowerShell 7)
           iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
           ```
-          
+
           ### Manual Installation
           1. Download and extract `AitherZero-v$version.zip`
           2. Open PowerShell in the extracted directory
           3. Run: `./bootstrap.ps1 -Mode New -NonInteractive`
-          
+
           ### Verification
           ```powershell
           # Verify installation
-          ./az 0407          # Syntax validation
+          ./az.ps1 0407          # Syntax validation
           ./Start-AitherZero.ps1  # Interactive mode
           ```
-          
+
           ## 🎯 Quick Start Commands
           ```powershell
           # Environment and validation
-          ./az 0407          # Validate PowerShell syntax
-          ./az 0402          # Run unit tests
-          ./az 0404          # Code quality analysis
-          
+          ./az.ps1 0407          # Validate PowerShell syntax
+          ./az.ps1 0402          # Run unit tests
+          ./az.ps1 0404          # Code quality analysis
+
           # System setup (Windows)
-          ./az 0001          # Ensure PowerShell 7
-          ./az 0105          # Install Hyper-V
-          ./az 0106          # Install WSL2
-          
+          ./az.ps1 0001          # Ensure PowerShell 7
+          ./az.ps1 0105          # Install Hyper-V
+          ./az.ps1 0106          # Install WSL2
+
           # Development tools
-          ./az 0207          # Install Git
-          ./az 0208          # Install Docker
-          ./az 0210          # Install VS Code
-          
+          ./az.ps1 0207          # Install Git
+          ./az.ps1 0208          # Install Docker
+          ./az.ps1 0210          # Install VS Code
+
           # Reporting and monitoring
-          ./az 0510          # Generate project report
-          ./az 0511          # Show project dashboard
+          ./az.ps1 0510          # Generate project report
+          ./az.ps1 0511          # Show project dashboard
           ```
-          
+
           ## 📋 System Requirements
           - **PowerShell:** 7.0+ (5.1+ supported with auto-upgrade)
           - **Operating System:** Windows 10/11, Ubuntu 20.04+, macOS 11.0+
           - **Memory:** 2GB RAM minimum, 4GB recommended
           - **Storage:** 1GB free space
           - **Network:** Internet connection for initial setup and updates
-          
+
           ## 📚 Documentation
           - [Getting Started Guide](https://github.com/wizzense/AitherZero#getting-started)
           - [Function Reference](https://github.com/wizzense/AitherZero/blob/main/FUNCTIONALITY-INDEX.md)
           - [Automation Scripts](https://github.com/wizzense/AitherZero/tree/main/automation-scripts)
           - [Domain Architecture](https://github.com/wizzense/AitherZero/tree/main/domains)
-          
+
           ## 🔄 Updates and Migration
           ```powershell
           # Update existing installation
           ./bootstrap.ps1 -Mode Update
-          
-          # Clean install (removes old version)  
+
+          # Clean install (removes old version)
           ./bootstrap.ps1 -Mode Clean
           ```
-          
+
           ---
-          
+
           **Full Changelog:** [Compare v$lastTag...v$version](${{ github.server_url }}/${{ github.repository }}/compare/$lastTag...v$version)
-          
+
           **Support:** [Create an issue](${{ github.server_url }}/${{ github.repository }}/issues/new) for questions or problems
           "@
-          
+
           $releaseNotes | Set-Content ./release-notes.md
           Write-Host "📝 Release notes generated for v$version" -ForegroundColor Green
 
@@ -362,11 +362,11 @@ jobs:
           Write-Host "🏷️ Updating 'latest' tag..." -ForegroundColor Yellow
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
+
           # Force update latest tag
           git tag -f latest
           git push -f origin latest
-          
+
           Write-Host "✅ Latest tag updated to v${{ env.RELEASE_VERSION }}" -ForegroundColor Green
 
   post-release:
@@ -374,7 +374,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [create-release]
     if: success() && github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
@@ -383,7 +383,7 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ env.RELEASE_VERSION }}"
-          
+
           Write-Host ""
           Write-Host "🎉 Release v$version Completed Successfully!" -ForegroundColor Green
           Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Green

@@ -1,0 +1,88 @@
+---
+name: 'Validate Config Manifest'
+
+on:
+  push:
+    paths:
+      - 'config.psd1'
+      - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
+      - 'domains/**/*.psm1'
+      - 'automation-scripts/*.ps1'
+  pull_request:
+    paths:
+      - 'config.psd1'
+      - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
+      - 'domains/**/*.psm1'
+      - 'automation-scripts/*.ps1'
+  workflow_dispatch:
+
+jobs:
+  validate-config:
+    name: 'Validate Config.psd1'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup PowerShell'
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell $($PSVersionTable.PSVersion) ready" -ForegroundColor Cyan
+
+          # Install PSScriptAnalyzer if not available
+          if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+            Write-Host "Installing PSScriptAnalyzer..." -ForegroundColor Yellow
+            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -AllowClobber
+          }
+
+      - name: 'Validate Config Manifest'
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating config.psd1 manifest..." -ForegroundColor Cyan
+          Write-Host ""
+
+          # Run the validation script
+          & ./automation-scripts/0413_Validate-ConfigManifest.ps1
+          $exitCode = $LASTEXITCODE
+
+          Write-Host ""
+          if ($exitCode -ne 0) {
+            Write-Host "❌ Config manifest validation failed!" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Common issues:" -ForegroundColor Yellow
+            Write-Host "  • Domain/module counts don't match actual repository state" -ForegroundColor Yellow
+            Write-Host "  • Script inventory counts are outdated" -ForegroundColor Yellow
+            Write-Host "  • Script references point to non-existent files" -ForegroundColor Yellow
+            Write-Host "  • Missing required sections or subsections" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "To fix:" -ForegroundColor Cyan
+            Write-Host "  1. Run: pwsh -File ./automation-scripts/0413_Validate-ConfigManifest.ps1" -ForegroundColor White
+            Write-Host "  2. Update config.psd1 based on the validation output" -ForegroundColor White
+            Write-Host "  3. Commit the changes" -ForegroundColor White
+            exit 1
+          } else {
+            Write-Host "✅ Config manifest is valid and synchronized!" -ForegroundColor Green
+          }
+
+      - name: 'Summary'
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_STEP_SUMMARY) {
+            $summary = @"
+          ## Config Manifest Validation Results
+
+          The config.psd1 manifest has been validated for:
+          - ✅ Syntax correctness
+          - ✅ Required structure
+          - ✅ Domain/module count accuracy
+          - ✅ Script inventory accuracy
+          - ✅ Script reference validity
+          - ✅ PSScriptAnalyzer compliance
+
+          **Status**: ${{ job.status }}
+          "@
+
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+          }

@@ -20,17 +20,17 @@ jobs:
     name: 💰 Advanced Cost Analysis & AI-Driven Optimization
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: 📊 Comprehensive CI Cost Analysis
-        shell: pwsh  
+        shell: pwsh
         run: |
           Write-Host "🔍 Performing advanced CI cost analysis with AI-driven recommendations..." -ForegroundColor Cyan
-          
+
           # Simulate comprehensive cost analysis
           $analysisScope = '${{ github.event.inputs.analysis_scope || 'full' }}'
           Write-Host "Analysis Scope: $analysisScope" -ForegroundColor Yellow
-          
+
           # Mock realistic CI usage data
           $weeklyMetrics = @{
             TotalWorkflowRuns = 198
@@ -47,11 +47,11 @@ jobs:
             PeakUsageHours = @('09:00-11:00', '14:00-16:00', '20:00-22:00')
             BottleneckWorkflows = @('ci-pipeline.yml', 'pr-validation.yml')
           }
-          
+
           # Advanced optimization analysis
           $optimizationMatrix = @()
           $totalPotentialSavings = 0
-          
+
           # 1. Cancellation Waste Analysis
           $cancelationWaste = $weeklyMetrics.CancelledRuns * 4.2
           if ($cancelationWaste -gt 50) {
@@ -60,7 +60,7 @@ jobs:
               Category = "Workflow Efficiency"
               Issue = "High Cancellation Rate"
               Impact = "High"
-              Effort = "Low"  
+              Effort = "Low"
               CurrentWaste = "$([Math]::Round($cancelationWaste, 1)) min/week"
               PotentialSaving = "$([Math]::Round($monthlySaving, 2))/month"
               Implementation = "Smart change detection + queue management"
@@ -70,8 +70,8 @@ jobs:
             }
             $totalPotentialSavings += $monthlySaving
           }
-          
-          # 2. Timeout Analysis  
+
+          # 2. Timeout Analysis
           $timeoutWaste = $weeklyMetrics.TimeoutRuns * 25
           if ($timeoutWaste -gt 100) {
             $monthlySaving = ($timeoutWaste * 4.33 * 0.008)
@@ -83,13 +83,13 @@ jobs:
               CurrentWaste = "$([Math]::Round($timeoutWaste, 1)) min/week"
               PotentialSaving = "$([Math]::Round($monthlySaving, 2))/month"
               Implementation = "Parallel execution + resource optimization"
-              AssignTo = "@copilot"  
+              AssignTo = "@copilot"
               EstimatedHours = "8-12 hours"
               ROI = "$([Math]::Round(($monthlySaving / 10) * 100, 0))%"
             }
             $totalPotentialSavings += $monthlySaving
           }
-          
+
           # 3. Runtime Optimization
           if ($weeklyMetrics.AverageRunTime -gt 12) {
             $runtimeSaving = ($weeklyMetrics.AverageRunTime - 10) * $weeklyMetrics.SuccessfulRuns
@@ -108,11 +108,11 @@ jobs:
             }
             $totalPotentialSavings += $monthlySaving
           }
-          
+
           # 4. Peak Usage Optimization
           $optimizationMatrix += @{
             Category = "Resource Management"
-            Issue = "Peak Hour Congestion"  
+            Issue = "Peak Hour Congestion"
             Impact = "Medium"
             Effort = "Low"
             CurrentWaste = "Queue delays during peak hours"
@@ -123,12 +123,12 @@ jobs:
             ROI = "250%"
           }
           $totalPotentialSavings += ($weeklyMetrics.EstimatedMonthlyCost * 0.15)
-          
+
           # Generate comprehensive report
           Write-Host "📊 CI COST ANALYSIS REPORT" -ForegroundColor Green
           Write-Host "=========================" -ForegroundColor Green
           Write-Host ""
-          
+
           Write-Host "📈 Current Metrics:" -ForegroundColor Yellow
           Write-Host "  Weekly Runs: $($weeklyMetrics.TotalWorkflowRuns)"
           Write-Host "  Success Rate: $([Math]::Round(($weeklyMetrics.SuccessfulRuns / ($weeklyMetrics.TotalWorkflowRuns)) * 100, 1))%"
@@ -136,18 +136,18 @@ jobs:
           Write-Host "  Waste Factor: $([Math]::Round(($weeklyMetrics.WastedMinutes / $weeklyMetrics.TotalMinutes) * 100, 1))%"
           Write-Host "  Monthly Cost: `$$($weeklyMetrics.EstimatedMonthlyCost)"
           Write-Host ""
-          
+
           Write-Host "🎯 OPTIMIZATION OPPORTUNITIES:" -ForegroundColor Magenta
-          $optimizationMatrix | Sort-Object { 
-            switch ($_.Impact) { 
-              'High' { 1 } 
-              'Medium' { 2 } 
-              'Low' { 3 } 
-            } 
+          $optimizationMatrix | Sort-Object {
+            switch ($_.Impact) {
+              'High' { 1 }
+              'Medium' { 2 }
+              'Low' { 3 }
+            }
           } | ForEach-Object {
             $priority = switch ($_.Impact) {
               'High' { '🔥' }
-              'Medium' { '⚡' }  
+              'Medium' { '⚡' }
               'Low' { '💡' }
             }
             Write-Host "  $priority $($_.Issue) [$($_.Impact) Impact, $($_.Effort) Effort]" -ForegroundColor Cyan
@@ -157,19 +157,19 @@ jobs:
             Write-Host "    📊 ROI: $($_.ROI)"
             Write-Host ""
           }
-          
+
           Write-Host "💰 FINANCIAL IMPACT:" -ForegroundColor Green
           Write-Host "  Total Potential Monthly Savings: `$$([Math]::Round($totalPotentialSavings, 2))"
           Write-Host "  Annual Savings Potential: `$$([Math]::Round($totalPotentialSavings * 12, 2))"
           Write-Host "  Cost Reduction: $([Math]::Round(($totalPotentialSavings / $weeklyMetrics.EstimatedMonthlyCost) * 100, 1))%"
           Write-Host ""
-          
+
           Write-Host "🚀 RECOMMENDED ACTION PLAN:" -ForegroundColor Blue
           Write-Host "  Phase 1 (Week 1): High Impact, Low Effort items"
-          Write-Host "  Phase 2 (Week 2-3): High Impact, Medium Effort items"  
+          Write-Host "  Phase 2 (Week 2-3): High Impact, Medium Effort items"
           Write-Host "  Phase 3 (Week 4): Medium Impact optimizations"
           Write-Host "  Phase 4 (Ongoing): Monitoring and fine-tuning"
-          
+
           # Save comprehensive analysis for AI coordination
           $costOptimizationReport = @{
             Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
@@ -185,6 +185,6 @@ jobs:
             }
             NextReviewDate = (Get-Date).AddDays(7).ToString('yyyy-MM-dd')
           }
-          
+
           $costOptimizationReport | ConvertTo-Json -Depth 6 | Set-Content "comprehensive-cost-analysis.json"
           Write-Host "📋 Comprehensive analysis saved for AI agent coordination and issue creation" -ForegroundColor Green

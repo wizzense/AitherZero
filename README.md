@@ -75,20 +75,32 @@ cd AitherZero
 ## 🎯 Quick Start
 
 ```powershell
-# After installation, start AitherZero
+# After installation, AitherZero is available globally as 'aitherzero'
+aitherzero              # Start interactive mode
+
+# Or run from the installation directory
 ./Start-AitherZero.ps1
 
-# Or use the command runner
-./az 0511           # Show project dashboard
-./az 0402           # Run unit tests  
-./az 0510           # Generate project report
-
-# Get help
-./Start-AitherZero.ps1 -Help
-
-# Check version
-./Start-AitherZero.ps1 -Version
+# The global command works from anywhere
+cd /any/directory
+aitherzero -Mode List -Target scripts    # List all automation scripts
+aitherzero -Mode Run -Target script -ScriptNumber 0402  # Run specific script
 ```
+
+### Global Command
+
+After installation via `bootstrap.ps1`, the `aitherzero` command is automatically available from anywhere on your system:
+
+- **Linux/macOS**: Installed to `~/.local/bin/aitherzero`
+- **Windows**: Installed to `%LocalAppData%\AitherZero\bin\aitherzero.cmd`
+
+The global command:
+- Automatically locates your AitherZero installation
+- Forwards all arguments to `Start-AitherZero.ps1`
+- Works from any directory
+- Supports all parameters and modes
+
+**Note**: Open a new terminal or run `source ~/.bashrc` (Linux/macOS) for the command to be available after installation.
 
 ## 📦 What's Included
 
@@ -97,6 +109,7 @@ The AitherZero package includes:
 - **200+ automation scripts** (numbered 0000-9999) for systematic execution
 - **Cross-platform bootstrap scripts** for automatic dependency installation  
 - **Comprehensive test suite** with validation tools
+- **Quality validation system** for code standards enforcement
 - **CI/CD workflow templates** for GitHub Actions
 - **Documentation and examples** for all features
 
@@ -108,11 +121,37 @@ Import-Module ./AitherZero.psd1
 Get-Module AitherZero
 
 # Run syntax validation
-./az 0407
+./az.ps1 0407
+
+# Run quality checks
+./aitherzero 0420 -Path ./domains/utilities/Logging.psm1
 
 # Generate and view project report
-./az 0510 -ShowAll
+./az.ps1 0510 -ShowAll
 ```
+
+## 📊 Quality Standards
+
+AitherZero maintains high code quality standards through automated validation:
+
+```powershell
+# Validate component quality
+./aitherzero 0420 -Path ./MyModule.psm1
+
+# Validate entire domain
+./aitherzero 0420 -Path ./domains/testing -Recursive
+```
+
+**Quality checks include:**
+- ✅ Error handling validation
+- ✅ Logging implementation
+- ✅ Test coverage verification
+- ✅ UI/CLI integration
+- ✅ PSScriptAnalyzer compliance
+
+**Documentation:**
+- [Quality Standards](docs/QUALITY-STANDARDS.md) - Complete quality guidelines
+- [Quick Reference](docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
 
 ## Features
 
@@ -145,6 +184,28 @@ Get-Module AitherZero
 ## Configuration
 
 Configuration files are stored in the `configs/` directory.
+
+## Uninstallation
+
+To remove AitherZero from your system:
+
+```powershell
+# Remove the installation
+./bootstrap.ps1 -Mode Remove
+
+# Or manually remove the global command
+./tools/Install-GlobalCommand.ps1 -Action Uninstall
+
+# Manual cleanup (if needed)
+# Remove installation directory
+rm -rf ~/AitherZero  # or your custom installation path
+
+# Remove global command (Linux/macOS)
+rm ~/.local/bin/aitherzero
+
+# Remove environment variable from shell profiles
+# Edit ~/.bashrc, ~/.zshrc, ~/.profile and remove AITHERZERO_ROOT lines
+```
 
 ## License
 

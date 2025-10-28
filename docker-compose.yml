@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  aitherzero:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aitherzero:latest
+    container_name: aitherzero-app
+    hostname: aitherzero
+    
+    environment:
+      # AitherZero configuration
+      - AITHERZERO_ROOT=/app
+      - AITHERZERO_NONINTERACTIVE=${AITHERZERO_NONINTERACTIVE:-false}
+      - AITHERZERO_CI=${AITHERZERO_CI:-false}
+      - AITHERZERO_PROFILE=${AITHERZERO_PROFILE:-Standard}
+      
+      # Environment identification
+      - DEPLOYMENT_ENVIRONMENT=${DEPLOYMENT_ENVIRONMENT:-development}
+      - PR_NUMBER=${PR_NUMBER:-}
+      - BRANCH_NAME=${BRANCH_NAME:-main}
+      - COMMIT_SHA=${COMMIT_SHA:-}
+    
+    volumes:
+      # Mount local directory for development (optional)
+      # Uncomment for local development with hot-reload
+      # - .:/app:rw
+      
+      # Persist logs and reports
+      - aitherzero-logs:/app/logs
+      - aitherzero-reports:/app/reports
+      - aitherzero-results:/app/tests/results
+      
+      # Git credentials (OPTIONAL: for local development only)
+      # SECURITY WARNING: Do not mount SSH keys or credentials in PR environments
+      # - ~/.gitconfig:/home/aitherzero/.gitconfig:ro
+      # - ~/.ssh:/home/aitherzero/.ssh:ro
+      # For CI/CD and PR environments, use deployment keys or token-based authentication instead.
+    
+    networks:
+      - aitherzero-network
+    
+    # Resource limits for cost optimization
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Restart policy for resilience
+    restart: unless-stopped
+    
+    # Override default command for specific operations
+    # Uncomment and modify as needed:
+    # command: ["pwsh", "-Command", "./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402 -NonInteractive"]
+
+  # Redis cache for future enhancements
+  redis:
+    image: redis:7-alpine
+    container_name: aitherzero-redis
+    hostname: redis
+    
+    networks:
+      - aitherzero-network
+    
+    volumes:
+      - aitherzero-redis:/data
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    
+    restart: unless-stopped
+    
+    # Only start if needed
+    profiles:
+      - with-cache
+
+  # PostgreSQL database for future data persistence
+  postgres:
+    image: postgres:16-alpine
+    container_name: aitherzero-postgres
+    hostname: postgres
+    
+    environment:
+      - POSTGRES_DB=aitherzero
+      - POSTGRES_USER=aitherzero
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    
+    networks:
+      - aitherzero-network
+    
+    volumes:
+      - aitherzero-postgres:/var/lib/postgresql/data
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    
+    restart: unless-stopped
+    
+    # Only start if needed
+    profiles:
+      - with-database
+
+networks:
+  aitherzero-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  aitherzero-logs:
+    driver: local
+  aitherzero-reports:
+    driver: local
+  aitherzero-results:
+    driver: local
+  aitherzero-redis:
+    driver: local
+  aitherzero-postgres:
+    driver: local

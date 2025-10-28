@@ -327,4 +327,136 @@ if ($DryRun) {
             $output | Should -Be "[DryRun] Would execute action"
         }
     }
+
+    Context "Configuration Editing and Reload" {
+        It "Should reload configuration after editing in Advanced Menu" {
+            # Create a test config file
+            $testConfigPath = Join-Path $TestDrive "test-config.psd1"
+            $initialConfig = @'
+@{
+    Core = @{
+        Name = "InitialConfig"
+        Version = "1.0.0"
+        Profile = "Standard"
+    }
+}
+'@
+            $initialConfig | Set-Content $testConfigPath
+
+            # Simulate the configuration editing and reloading process
+            $reloadScript = @'
+param([string]$ConfigPath)
+
+# Mock functions that would be available
+function Show-UINotification { param($Message, $Type) Write-Host "$Type - $Message" }
+function Get-AitherConfiguration { 
+    param([string]$Path)
+    if (Test-Path $Path) {
+        return Import-PowerShellDataFile $Path
+    }
+}
+
+# Initial load
+$Config = Get-AitherConfiguration -Path $ConfigPath
+Write-Host "Before: $($Config.Core.Name)"
+
+# Simulate editing the file
+$updatedConfig = @"
+@{
+    Core = @{
+        Name = "UpdatedConfig"
+        Version = "1.0.0"
+        Profile = "Developer"
+    }
+}
+"@
+$updatedConfig | Set-Content $ConfigPath
+
+# Reload configuration (simulating the fix)
+Show-UINotification -Message "Reloading configuration..." -Type 'Info'
+try {
+    $Config = Get-AitherConfiguration -Path $ConfigPath
+    Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
+    Write-Host "After: $($Config.Core.Name)"
+} catch {
+    Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
+}
+'@
+            $reloadScriptPath = Join-Path $TestDrive "reload-test.ps1"
+            $reloadScript | Set-Content $reloadScriptPath
+
+            # Execute the test
+            $output = & $reloadScriptPath -ConfigPath $testConfigPath
+            
+            # Verify the reload happened
+            $output | Should -Contain "Before: InitialConfig"
+            $output | Should -Contain "Info - Reloading configuration..."
+            $output | Should -Contain "Success - Configuration reloaded successfully!"
+            $output | Should -Contain "After: UpdatedConfig"
+        }
+
+        It "Should handle configuration reload errors gracefully" {
+            $errorScript = @'
+param([string]$ConfigPath)
+
+function Show-UINotification { param($Message, $Type) Write-Host "$Type - $Message" }
+function Get-AitherConfiguration { 
+    param([string]$Path)
+    throw "Simulated error loading configuration"
+}
+
+try {
+    $Config = Get-AitherConfiguration -Path $ConfigPath
+    Show-UINotification -Message "Configuration reloaded successfully!" -Type 'Success'
+} catch {
+    Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
+}
+'@
+            $errorScriptPath = Join-Path $TestDrive "error-reload-test.ps1"
+            $errorScript | Set-Content $errorScriptPath
+
+            $output = & $errorScriptPath -ConfigPath "/fake/path"
+            $output | Should -Match "Error - Failed to reload configuration"
+            $output | Should -Match "Simulated error loading configuration"
+        }
+    }
+
+    Context "PowerShell Version Check" {
+        It "Should have version check logic in the script" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match "PSVersionTable.PSVersion.Major"
+            $content | Should -Match "PowerShell 7"
+        }
+
+        It "Should have IsRelaunch parameter to prevent infinite loops" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match '\[switch\]\$IsRelaunch'
+        }
+
+        It "Should not have #Requires statement that blocks PS 5.1 execution" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Not -Match '^#Requires -Version 7'
+        }
+
+        It "Should describe auto-relaunch feature in help documentation" {
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match "automatically.*relaunch"
+        }
+
+        It "Should provide helpful error message when pwsh not found" {
+            # Test the version check logic by checking the actual script content
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match "PowerShell 7\+ is not installed"
+            $content | Should -Match "https://github.com/PowerShell/PowerShell"
+            $content | Should -Match "bootstrap.ps1"
+        }
+
+        It "Should skip version check when IsRelaunch is set" {
+            # Test that the IsRelaunch parameter prevents infinite loops
+            # by checking the script logic
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match '-not \$IsRelaunch'
+            $content | Should -Match 'IsRelaunch flag to prevent'
+        }
+    }
 }

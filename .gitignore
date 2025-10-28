@@ -38,6 +38,12 @@ backups/
 test-output/
 test-results/
 
+# Generated test reports
+reports/*.json
+!reports/dashboard.json
+!reports/psscriptanalyzer-fast-results.json
+tests/reports/*.json
+
 # IDE files
 .vscode/settings.json
 .idea/
@@ -69,3 +75,6 @@ release-notes.md
 # PowerShell Security Scripts (Private - Never Commit)
 powershellsec/
 tests/results/
+
+# Quality reports (generated artifacts)
+reports/quality/

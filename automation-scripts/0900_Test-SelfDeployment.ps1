@@ -350,7 +350,7 @@ function Test-CICDPipeline {
 
             # Test documentation deployment
             try {
-                $result = & pwsh -c "./automation-scripts/0520_Deploy-Documentation.ps1 -WhatIf"
+                $result = & pwsh -c "./automation-scripts/0515_Deploy-Documentation.ps1 -WhatIf"
                 if ($LASTEXITCODE -eq 0) {
                     $pipelineTests.Documentation = $true
                     Write-ScriptLog -Level Success -Message "Documentation deployment validated"
@@ -426,7 +426,7 @@ function Test-EndToEndScenario {
             # Phase 4: Deployment preparation
             Write-ScriptLog -Message "Phase 4: Deployment preparation"
             try {
-                & pwsh -c "./automation-scripts/0520_Deploy-Documentation.ps1 -WhatIf" | Out-Null
+                & pwsh -c "./automation-scripts/0515_Deploy-Documentation.ps1 -WhatIf" | Out-Null
                 if ($LASTEXITCODE -eq 0) {
                     $scenario.Deployment = $true
                     Write-ScriptLog -Level Success -Message "Deployment phase validated"
