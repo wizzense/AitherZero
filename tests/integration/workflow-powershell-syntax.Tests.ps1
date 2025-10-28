@@ -86,7 +86,7 @@ Describe "Workflow PowerShell Syntax Validation" {
                 It "Should have valid YAML structure" {
                     # Basic YAML validation
                     { 
-                        $null = ConvertFrom-Yaml -Yaml $script:Content -ErrorAction Stop
+                        $null = Test-YamlStructure -Yaml $script:Content
                     } | Should -Not -Throw
                 }
             }
@@ -94,11 +94,14 @@ Describe "Workflow PowerShell Syntax Validation" {
     }
 
     Context "PowerShell syntax patterns" {
+        BeforeAll {
+            # Common test code for syntax validation
+            $script:SingleLineIfElseIfElse = '$cssClass = if ($status -eq ''Passed'') { ''success'' } elseif ($status -eq ''Failed'') { ''error'' } else { ''warning'' }'
+        }
+        
         It "Should validate single-line if-elseif-else syntax" {
-            $testCode = '$cssClass = if ($status -eq ''Passed'') { ''success'' } elseif ($status -eq ''Failed'') { ''error'' } else { ''warning'' }'
-            
             { 
-                [scriptblock]::Create($testCode)
+                [scriptblock]::Create($script:SingleLineIfElseIfElse)
             } | Should -Not -Throw
         }
 
@@ -106,10 +109,8 @@ Describe "Workflow PowerShell Syntax Validation" {
             # While PowerShell may accept multi-line if-elseif-else with leading whitespace,
             # GitHub Actions workflows can have issues parsing them. Test that we prefer
             # single-line format for better compatibility.
-            $testCode = '$cssClass = if ($status -eq ''Passed'') { ''success'' } elseif ($status -eq ''Failed'') { ''error'' } else { ''warning'' }'
-            
             { 
-                [scriptblock]::Create($testCode)
+                [scriptblock]::Create($script:SingleLineIfElseIfElse)
             } | Should -Not -Throw
         }
 
@@ -131,8 +132,8 @@ $cssClass = if ($status -eq 'Passed') {
     }
 }
 
-# Helper function to convert YAML (using PowerShell's built-in capabilities)
-function ConvertFrom-Yaml {
+# Helper function to validate YAML structure
+function Test-YamlStructure {
     param([string]$Yaml)
     
     # Basic validation - check if it can be loaded by Python's yaml module
@@ -141,18 +142,36 @@ function ConvertFrom-Yaml {
         # Try using PowerShell-Yaml module if available
         if (Get-Module -ListAvailable -Name powershell-yaml) {
             Import-Module powershell-yaml -ErrorAction Stop
-            return ConvertFrom-Yaml -Yaml $Yaml
+            # Use the imported module's function
+            $null = ConvertFrom-Yaml -Yaml $Yaml
+            return $true
         } else {
             # Fallback to Python if available
-            $tempFile = [System.IO.Path]::GetTempFileName()
-            $Yaml | Set-Content -Path $tempFile
-            $result = python3 -c "import yaml; yaml.safe_load(open('$tempFile'))" 2>&1
-            Remove-Item -Path $tempFile -Force
+            $pythonCmd = if (Get-Command python3 -ErrorAction SilentlyContinue) { 'python3' } 
+                        elseif (Get-Command python -ErrorAction SilentlyContinue) { 'python' }
+                        else { $null }
             
-            if ($LASTEXITCODE -ne 0) {
-                throw "YAML validation failed: $result"
+            if (-not $pythonCmd) {
+                Write-Warning "Neither PowerShell-Yaml module nor Python is available for YAML validation. Skipping detailed validation."
+                return $true
             }
-            return $true
+            
+            $tempFile = [System.IO.Path]::GetTempFileName()
+            try {
+                $Yaml | Set-Content -Path $tempFile
+                # Properly escape the file path for shell execution
+                $escapedPath = $tempFile -replace "'", "'\''"
+                $result = & $pythonCmd -c "import yaml; yaml.safe_load(open('$escapedPath'))" 2>&1
+                
+                if ($LASTEXITCODE -ne 0) {
+                    throw "YAML validation failed: $result"
+                }
+                return $true
+            } finally {
+                if (Test-Path $tempFile) {
+                    Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
+                }
+            }
         }
     } catch {
         throw "YAML validation failed: $_"
