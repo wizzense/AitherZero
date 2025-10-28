@@ -44,6 +44,14 @@
     .\Start-AitherZero.ps1 -Mode Search -Query security
 
 .EXAMPLE
+    # Install Docker via CLI
+    .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0208
+
+.EXAMPLE
+    # Deploy self-hosted runner via CLI
+    .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0724
+
+.EXAMPLE
     # Run playbook with specific profile
     .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook tech-debt-analysis -PlaybookProfile quick
 #>
@@ -525,6 +533,8 @@ function Show-ModernHelp {
     Write-ModernCLI " - Execute scripts, playbooks, or sequences" -Type 'Muted'
     Write-ModernCLI "  Search" -Type 'Accent' -NoNewline
     Write-ModernCLI " - Find resources by name or description" -Type 'Muted'
+    Write-ModernCLI "  Deploy" -Type 'Accent' -NoNewline
+    Write-ModernCLI " - Deploy infrastructure (Docker, runners, etc.)" -Type 'Muted'
     Write-ModernCLI "  Interactive" -Type 'Accent' -NoNewline
     Write-ModernCLI " - Traditional menu interface" -Type 'Muted'
     
@@ -532,6 +542,8 @@ function Show-ModernHelp {
     Write-ModernCLI "Examples:" -Type 'Info'
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode List -Target scripts" -Type 'Muted'
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0208  # Install Docker" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0724  # Deploy Self-Hosted Runner" -Type 'Muted'
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Search -Query security" -Type 'Muted'
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Muted'
 }
@@ -1077,6 +1089,16 @@ function Invoke-InfrastructureMenu {
     param($Config)
 
     $infraItems = @(
+        [PSCustomObject]@{
+            Name = "Install Docker"
+            Description = "Setup Docker for containerization"
+            Sequence = "0208"
+        },
+        [PSCustomObject]@{
+            Name = "Deploy Self-Hosted Runner"
+            Description = "Setup persistent GitHub Actions runner with main deployment"
+            Sequence = "0724"
+        },
         [PSCustomObject]@{
             Name = "Install Hyper-V"
             Description = "Setup virtualization platform"

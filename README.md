@@ -137,6 +137,9 @@ The AitherZero package includes:
 AitherZero can run in Docker containers for consistent, isolated environments:
 
 ```bash
+# Install Docker via AitherZero (if needed)
+./az.ps1 0208
+
 # Quick start with Docker Compose
 docker-compose up -d
 docker-compose exec aitherzero pwsh
@@ -144,6 +147,10 @@ docker-compose exec aitherzero pwsh
 # Or build and run manually
 docker build -t aitherzero:latest .
 docker run -it --rm aitherzero:latest pwsh
+
+# Or via interactive menu
+./Start-AitherZero.ps1
+# Navigate to: Infrastructure > Install Docker
 ```
 
 **Benefits:**
@@ -151,6 +158,7 @@ docker run -it --rm aitherzero:latest pwsh
 - ✅ No dependency conflicts
 - ✅ Perfect for CI/CD pipelines
 - ✅ Quick testing and validation
+- ✅ **Integrated into CLI and menu**
 
 **📖 Full Documentation**: [Docker Guide](docs/DOCKER.md) - Complete instructions for building, running, and using the Docker container.
 
@@ -159,10 +167,14 @@ docker run -it --rm aitherzero:latest pwsh
 Deploy a self-hosted GitHub Actions runner with persistent main branch deployment:
 
 ```bash
-# Automated deployment (recommended)
+# Automated deployment via CLI (recommended)
 git clone https://github.com/wizzense/AitherZero.git
 cd AitherZero
 ./az.ps1 0724 -GitHubToken "ghp_your_token_here"
+
+# Or via interactive menu
+./Start-AitherZero.ps1
+# Navigate to: Infrastructure > Deploy Self-Hosted Runner
 
 # Or manual setup
 cd infrastructure/self-hosted-runner
@@ -175,7 +187,7 @@ sudo ./install-runner.sh
 - ✅ Web dashboard accessible 24/7
 - ✅ GitHub Actions runner for CI/CD
 - ✅ Systemd service with auto-restart
-- ✅ Integrated into AitherZero automation
+- ✅ **Fully integrated into AitherZero CLI and menu**
 
 **📖 Full Documentation**: 
 - [Self-Hosted Runner Setup Guide](docs/SELF-HOSTED-RUNNER-SETUP.md) - Complete setup instructions

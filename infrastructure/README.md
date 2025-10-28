@@ -6,6 +6,11 @@ This directory contains infrastructure-as-code definitions for deploying AitherZ
 
 ```
 infrastructure/
+├── self-hosted-runner/ # Self-hosted GitHub Actions runner (NEW!)
+│   ├── install-runner.sh        # Automated installation
+│   ├── docker-compose.yml       # Container definitions
+│   ├── scripts/                 # Management scripts
+│   └── README.md               # Setup guide
 ├── kubernetes/         # Kubernetes manifests
 │   └── deployment.yml  # K8s deployment, service, ingress
 ├── terraform/          # Terraform/OpenTofu configurations
@@ -16,7 +21,55 @@ infrastructure/
 └── README.md          # This file
 ```
 
-## 🚀 Deployment Targets
+## 🚀 Quick Deployment Options
+
+### Option 1: Self-Hosted Runner with Persistent Main Deployment (Recommended)
+
+**Best for:** Production environments, always-on deployments, self-hosted CI/CD
+
+Deploy a self-hosted GitHub Actions runner with persistent main branch deployment:
+
+```bash
+# Via AitherZero CLI (easiest)
+./az.ps1 0724 -GitHubToken "ghp_xxx"
+
+# Or via menu
+./Start-AitherZero.ps1
+# Navigate to: Infrastructure > Deploy Self-Hosted Runner
+
+# Or manually
+cd self-hosted-runner
+sudo ./install-runner.sh
+```
+
+**What you get:**
+- ✅ Self-hosted GitHub Actions runner
+- ✅ Always-on main branch deployment
+- ✅ Auto-updates on every commit to main
+- ✅ Web dashboard on port 8080
+- ✅ Systemd service with auto-restart
+
+📖 **Full Guide:** [Self-Hosted Runner Setup](self-hosted-runner/README.md)
+
+### Option 2: Docker Standalone
+
+**Best for:** Local development, testing, isolated environments
+
+```bash
+# Via AitherZero CLI
+./az.ps1 0208  # Install Docker first
+docker-compose up -d
+
+# Or via menu
+./Start-AitherZero.ps1
+# Navigate to: Infrastructure > Install Docker
+```
+
+📖 **Full Guide:** [Docker Usage Guide](../DOCKER.md)
+
+### Option 3: Kubernetes
+
+**Best for:** Cloud deployments, scalability, production clusters
 
 ### 1. Kubernetes
 
