@@ -62,6 +62,41 @@ You'll need:
 
 ## 🚀 Quick Start
 
+### Method 1: Using AitherZero Automation Script (Recommended)
+
+The easiest way to deploy a self-hosted runner is using the built-in automation script:
+
+```bash
+# Clone repository
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+
+# Deploy using automation script
+./az.ps1 0724 -GitHubToken "ghp_your_token_here"
+
+# Or use the alias
+./az.ps1 deploy-runner -GitHubToken "ghp_your_token_here"
+
+# Custom configuration
+./az.ps1 0724 `
+  -GitHubToken "ghp_your_token_here" `
+  -Organization "myorg" `
+  -Repository "myrepo" `
+  -RunnerName "prod-runner" `
+  -DeploymentPort 8080
+```
+
+**What it does:**
+- ✅ Validates prerequisites (Linux, sudo, Docker)
+- ✅ Creates configuration file with your settings
+- ✅ Runs the installation script
+- ✅ Verifies deployment (service, containers, web interface)
+- ✅ Shows access points and management commands
+
+### Method 2: Manual Installation
+
+If you prefer manual control or need to customize the installation:
+
 ### Step 1: Clone the Repository
 
 ```bash

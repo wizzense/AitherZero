@@ -156,10 +156,15 @@ docker run -it --rm aitherzero:latest pwsh
 
 ## 🖥️ Self-Hosted Deployment
 
-For production environments, set up a self-hosted GitHub Actions runner with persistent main branch deployment:
+Deploy a self-hosted GitHub Actions runner with persistent main branch deployment:
 
 ```bash
-# Quick setup on Linux server
+# Automated deployment (recommended)
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+./az.ps1 0724 -GitHubToken "ghp_your_token_here"
+
+# Or manual setup
 cd infrastructure/self-hosted-runner
 sudo ./install-runner.sh
 ```
@@ -170,6 +175,7 @@ sudo ./install-runner.sh
 - ✅ Web dashboard accessible 24/7
 - ✅ GitHub Actions runner for CI/CD
 - ✅ Systemd service with auto-restart
+- ✅ Integrated into AitherZero automation
 
 **📖 Full Documentation**: 
 - [Self-Hosted Runner Setup Guide](docs/SELF-HOSTED-RUNNER-SETUP.md) - Complete setup instructions

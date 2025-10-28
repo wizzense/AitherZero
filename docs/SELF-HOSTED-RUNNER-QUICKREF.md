@@ -1,6 +1,19 @@
 # Self-Hosted Runner Quick Reference
 
-## 🚀 Installation (5 Minutes)
+## 🚀 Installation (2 Minutes - Automated)
+
+### Using AitherZero Automation (Recommended)
+
+```bash
+# One-command deployment
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero
+./az.ps1 0724 -GitHubToken "ghp_your_token_here"
+
+# That's it! ✅
+```
+
+## 🚀 Installation (5 Minutes - Manual)
 
 ```bash
 # 1. Clone repo
