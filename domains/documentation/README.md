@@ -37,7 +37,7 @@ The core documentation engine providing:
 
 ## Automation Scripts
 
-### 0733_Generate-AutoDocumentation.ps1
+### 0744_Generate-AutoDocumentation.ps1
 Automated documentation generation script with modes:
 - `Full`: Complete documentation regeneration
 - `Incremental`: Update only changed files
@@ -169,7 +169,7 @@ domains/documentation/
 └── README.md           # This file
 
 automation-scripts/
-└── 0733_Generate-AutoDocumentation.ps1  # Automation script
+└── 0744_Generate-AutoDocumentation.ps1  # Automation script
 
 .github/workflows/
 └── documentation-automation.yml  # CI/CD workflow
