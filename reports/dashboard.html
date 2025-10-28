@@ -10,323 +10,747 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --bg-dark: #0d1117;
+            --bg-darker: #010409;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --success: #238636;
+            --warning: #d29922;
+            --error: #da3633;
+            --info: #1f6feb;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
         }
-        
+
+        /* Navigation TOC */
+        .toc {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 250px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .toc-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 101;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .toc h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 10px;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .toc a:hover {
+            color: var(--primary-color);
+        }
+
+        .toc a.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            overflow: hidden;
         }
-        
+
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-        
+
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 3rem;
             margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        
+
         .header .subtitle {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             opacity: 0.9;
+            color: rgba(255,255,255,0.9);
         }
-        
-        .status-bar {
+
+        .badges-container {
             display: flex;
-            justify-content: center;
-            gap: 20px;
+            gap: 10px;
             margin-top: 20px;
             flex-wrap: wrap;
+            justify-content: center;
         }
-        
+
+        .badges-container img {
+            height: 20px;
+            transition: transform 0.2s;
+        }
+
+        .badges-container img:hover {
+            transform: scale(1.05);
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+
         .status-badge {
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 0.9rem;
+            background: rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
         }
-        
-        .status-healthy { background: rgba(40, 167, 69, 0.2); color: #ffffff; }
-        .status-issues { background: rgba(220, 53, 69, 0.2); color: #ffffff; }
-        .status-unknown { background: rgba(108, 117, 125, 0.2); color: #ffffff; }
-        
+
+        .status-healthy { 
+            background: linear-gradient(135deg, rgba(35, 134, 54, 0.3), rgba(35, 134, 54, 0.1)); 
+            border-color: var(--success);
+        }
+        .status-issues { 
+            background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
+            border-color: var(--error);
+        }
+        .status-unknown { 
+            background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
+            border-color: var(--text-secondary);
+        }
+
         .content {
-            padding: 40px;
+            margin-bottom: 30px;
         }
-        
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-        
-        .metric-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 25px;
-            border-left: 4px solid #667eea;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-        
-        .metric-card h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
-        
-        .metric-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        
-        .metric-label {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-        
+
         .section {
-            margin-bottom: 40px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            scroll-margin-top: 20px;
         }
-        
+
         .section h2 {
-            color: #333;
+            color: var(--primary-color);
             margin-bottom: 20px;
             font-size: 1.8rem;
-            border-bottom: 2px solid #e9ecef;
             padding-bottom: 10px;
+            border-bottom: 2px solid var(--card-border);
         }
-        
-        .info-grid {
+
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        
-        .info-card {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(22, 27, 34, 0.5) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
             overflow: hidden;
         }
-        
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .metric-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+        }
+
         .info-card-header {
-            background: #f8f9fa;
+            background: rgba(102, 126, 234, 0.1);
             padding: 15px 20px;
             font-weight: 600;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-primary);
         }
-        
+
         .info-card-body {
             padding: 20px;
         }
-        
+
+        .info-card-body p {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .info-card-body strong {
+            color: var(--text-primary);
+        }
+
+        .info-card-body a {
+            color: var(--info);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .info-card-body a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .info-card-body code {
+            background: var(--bg-darker);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--primary-color);
+        }
+
         .commit-list {
             list-style: none;
         }
-        
+
         .commit-item {
             display: flex;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f3f4;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--card-border);
         }
-        
+
+        .commit-item:last-child {
+            border-bottom: none;
+        }
+
         .commit-hash {
             font-family: 'Courier New', monospace;
             font-size: 0.8rem;
-            background: #e9ecef;
-            padding: 2px 6px;
+            background: var(--bg-darker);
+            padding: 4px 8px;
             border-radius: 4px;
-            margin-right: 10px;
+            margin-right: 12px;
+            color: var(--primary-color);
+            flex-shrink: 0;
         }
-        
+
+        .commit-message {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
         .progress-bar {
-            background: #e9ecef;
+            background: var(--bg-darker);
             border-radius: 10px;
-            height: 20px;
+            height: 24px;
             overflow: hidden;
             margin: 10px 0;
+            border: 1px solid var(--card-border);
         }
-        
+
         .progress-fill {
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
             height: 100%;
             border-radius: 10px;
             transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
-        
-        .badges {
+
+        .badge-grid {
             display: flex;
             gap: 10px;
             margin: 20px 0;
             flex-wrap: wrap;
         }
-        
+
         .badge {
-            background: #28a745;
+            background: var(--success);
             color: white;
-            padding: 5px 10px;
-            border-radius: 12px;
-            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .badge.warning { 
+            background: var(--warning); 
+            color: var(--bg-darker); 
+        }
+        .badge.error { 
+            background: var(--error); 
+        }
+        .badge.info { 
+            background: var(--info); 
+        }
+
+        .manifest-info {
+            background: var(--bg-darker);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .manifest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .manifest-item {
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-item .label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .manifest-item .value {
+            color: var(--text-primary);
             font-weight: 600;
         }
-        
-        .badge.warning { background: #ffc107; color: #212529; }
-        .badge.error { background: #dc3545; }
-        .badge.info { background: #17a2b8; }
-        
-        .footer {
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            color: #6c757d;
+
+        .domains-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .domain-card {
+            background: var(--bg-darker);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            transition: all 0.2s;
+        }
+
+        .domain-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .domain-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .domain-card .module-count {
+            color: var(--text-secondary);
             font-size: 0.9rem;
         }
-        
+
+        .footer {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--info);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--primary-color);
+        }
+
         .refresh-indicator {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: white;
-            padding: 10px 15px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            font-size: 0.8rem;
-            color: #666;
+            background: var(--card-bg);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--card-border);
+            z-index: 100;
         }
-        
-        @media (max-width: 768px) {
+
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+            }
+
+            .toc {
+                transform: translateX(-270px);
+            }
+
+            .toc.open {
+                transform: translateX(0);
+            }
+
             .metrics-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .info-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .status-bar {
-                flex-direction: column;
-                align-items: center;
+                grid-template-columns: 1fr;
             }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Link styling */
+        a {
+            color: var(--info);
         }
     </style>
 </head>
 <body>
-    <div class="refresh-indicator">
-        Last updated: 2025-10-24 17:47:14
-    </div>
+    <div class="toc-toggle" onclick="toggleToc()">☰</div>
     
+    <nav class="toc" id="toc">
+        <h3>📑 Contents</h3>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#manifest">Module Manifest</a></li>
+            <li><a href="#domains">Domain Modules</a></li>
+            <li><a href="#health">Project Health</a></li>
+            <li><a href="#activity">Recent Activity</a></li>
+            <li><a href="#actions">Quick Actions</a></li>
+            <li><a href="#system">System Info</a></li>
+            <li><a href="#resources">Resources</a></li>
+        </ul>
+    </nav>
+
+    <div class="refresh-indicator">
+        🔄 Last updated: 2025-10-28 16:51:39
+    </div>
+
     <div class="container">
-        <div class="header">
+        <div class="header" id="overview">
             <h1>🚀 AitherZero</h1>
             <div class="subtitle">Infrastructure Automation Platform</div>
-            
+
+            <div class="badges-container">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/intelligent-ci-orchestrator.yml?label=CI%2FCD&logo=github" alt="CI/CD Status">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
+                <img src="https://img.shields.io/badge/tests-unknown-lightgrey" alt="Tests Status">
+                <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
+                <img src="https://img.shields.io/github/license/wizzense/AitherZero" alt="License">
+                <img src="https://img.shields.io/github/last-commit/wizzense/AitherZero" alt="Last Commit">
+            </div>
+
             <div class="status-bar">
                 <div class="status-badge status-unknown">
-                    Overall: Unknown
+                    🎯 Overall: Unknown
                 </div>
                 <div class="status-badge status-unknown">
-                    Tests: Unknown
+                    🧪 Tests: Unknown
                 </div>
                 <div class="status-badge status-unknown">
-                    Security: Unknown
+                    🔒 Security: Unknown
+                </div>
+                <div class="status-badge status-unknown">
+                    📦 Deployment: Unknown
                 </div>
             </div>
         </div>
-        
+
         <div class="content">
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <h3>📁 Project Files</h3>
-                    <div class="metric-value">138</div>
-                    <div class="metric-label">
-                        93 Scripts | 36 Modules | 9 Data Files
+            <section class="section" id="metrics">
+                <h2>📊 Project Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Project Files</h3>
+                        <div class="metric-value">177</div>
+                        <div class="metric-label">
+                            121 Scripts | 47 Modules | 9 Data Files
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Lines of Code</h3>
+                        <div class="metric-value">69,338</div>
+                        <div class="metric-label">0 Functions</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Suite</h3>
+                        <div class="metric-value">108</div>
+                        <div class="metric-label">
+                            100 Unit | 8 Integration
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📊 Code Coverage</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            0 / 0 Lines Covered
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%">
+                                
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="metric-card">
-                    <h3>📝 Lines of Code</h3>
-                    <div class="metric-value">49,360</div>
-                    <div class="metric-label">0 Functions</div>
-                </div>
-                
-                <div class="metric-card">
-                    <h3>🧪 Test Suite</h3>
-                    <div class="metric-value">102</div>
-                    <div class="metric-label">
-                        96 Unit | 6 Integration
+            </section>
+
+            <section class="section" id="manifest">
+                <h2>📦 Module Manifest</h2>
+                <div class="manifest-info">
+                    <h4>AitherZero.psd1</h4>
+                    <div class="manifest-grid">
+                        <div class="manifest-item">
+                            <div class="label">Version</div>
+                            <div class="value">1.0.0</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">GUID</div>
+                            <div class="value">a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Author</div>
+                            <div class="value">AitherZero Team</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">PowerShell Version</div>
+                            <div class="value">7.0+</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Functions Exported</div>
+                            <div class="value">51</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Aliases</div>
+                            <div class="value">az, seq</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div class="label" style="margin-bottom: 10px;">Description</div>
+                        <div class="value" style="color: var(--text-secondary);">AitherZero Automation Platform - Infrastructure automation with number-based orchestration</div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <div class="label" style="margin-bottom: 10px;">Tags</div>
+                        <div class="badge-grid">
+                            <span class='badge info'>Automation</span> <span class='badge info'>Infrastructure</span> <span class='badge info'>DevOps</span> <span class='badge info'>OpenTofu</span> <span class='badge info'>Terraform</span> <span class='badge info'>Orchestration</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="metric-card">
-                    <h3>📊 Code Coverage</h3>
-                    <div class="metric-value">0%</div>
-                    <div class="metric-label">
-                        0 / 0 Lines Covered
+            </section>
+
+            <section class="section" id="domains">
+                <h2>🗂️ Domain Modules</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Consolidated domain-based module architecture with 11 domains
+                </p>
+                <div class="domains-list">
+                    <div class="domain-card">
+                        <h4>ai-agents</h4>
+                        <div class="module-count">3 modules</div>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 0%"></div>
+                    <div class="domain-card">
+                        <h4>automation</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>configuration</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>development</h4>
+                        <div class="module-count">4 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>documentation</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>experience</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>infrastructure</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>reporting</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>security</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>testing</h4>
+                        <div class="module-count">6 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>utilities</h4>
+                        <div class="module-count">9 modules</div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="section">
+            </section>
+
+            <section class="section" id="health">
                 <h2>📈 Project Health</h2>
-                <div class="badges">
-                    <div class="badge">Build: Unknown</div>
+                <div class="badge-grid">
+                    <div class="badge warning">
+                        Build: Unknown
+                    </div>
                     <div class="badge warning">
                         Tests: Unknown
                     </div>
                     <div class="badge info">Coverage: 0%</div>
                     <div class="badge">Security: Scanned</div>
+                    <div class="badge">Platform: Unix</div>
+                    <div class="badge">PowerShell: 7.4.12</div>
                 </div>
-            </div>
-            
+            </section>
+
             <div class="info-grid">
-                <div class="info-card">
+                <div class="info-card" id="activity">
                     <div class="info-card-header">🔄 Recent Activity</div>
                     <div class="info-card-body">
                         <ul class="commit-list">
                             <li class='commit-item'>
-                                <span class='commit-hash'>14cfeeb</span>
-                                <span>Implement comprehensive CI/CD pipeline with AI integration and issue management</span>
+                                <span class='commit-hash'>fbd89f4</span>
+                                <span class='commit-message'>Initial plan</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>b00a0bc</span>
-                                <span>Initial plan</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>72bceb6</span>
-                                <span>Update README.md (#673)</span>
+                                <span class='commit-hash'>b85a97c</span>
+                                <span class='commit-message'>Fix Docker module loading when mounting volumes to /app (#742)</span>
                             </li>
                         </ul>
                     </div>
                 </div>
-                
-                <div class="info-card">
+
+                <div class="info-card" id="actions">
                     <div class="info-card-header">🎯 Quick Actions</div>
                     <div class="info-card-body">
                         <p><strong>Run Tests:</strong> <code>./az 0402</code></p>
@@ -336,18 +760,19 @@
                         <p><strong>Update Project:</strong> <code>git pull && ./bootstrap.ps1</code></p>
                     </div>
                 </div>
-                
-                <div class="info-card">
+
+                <div class="info-card" id="system">
                     <div class="info-card-header">📋 System Information</div>
                     <div class="info-card-body">
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.12</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-24 17:47:14</p>
+                        <p><strong>Last Scan:</strong> 2025-10-28 16:51:39</p>
+                        <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
-                
-                <div class="info-card">
+
+                <div class="info-card" id="resources">
                     <div class="info-card-header">🔗 Resources</div>
                     <div class="info-card-body">
                         <p><a href="https://github.com/wizzense/AitherZero" target="_blank">🏠 GitHub Repository</a></p>
@@ -355,32 +780,72 @@
                         <p><a href="https://github.com/wizzense/AitherZero/releases" target="_blank">📦 Releases</a></p>
                         <p><a href="https://github.com/wizzense/AitherZero/issues" target="_blank">🐛 Issues</a></p>
                         <p><a href="https://github.com/wizzense/AitherZero/wiki" target="_blank">📖 Documentation</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/blob/main/README.md" target="_blank">📄 README</a></p>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-24 17:47:14 | 
+            Generated by AitherZero Dashboard | 2025-10-28 16:51:39 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
-    
+
     <script>
+        // TOC toggle for mobile
+        function toggleToc() {
+            document.getElementById('toc').classList.toggle('open');
+        }
+
+        // Highlight active section in TOC
+        const sections = document.querySelectorAll('.section, .header');
+        const tocLinks = document.querySelectorAll('.toc a');
+
+        function highlightToc() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightToc);
+        highlightToc();
+
         // Auto-refresh every 5 minutes
         setTimeout(() => {
             window.location.reload();
         }, 300000);
-        
-        // Add some interactive elements
+
+        // Add interactive elements
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.metric-card');
+            const cards = document.querySelectorAll('.metric-card, .domain-card');
             cards.forEach(card => {
                 card.addEventListener('click', function() {
                     this.style.transform = 'scale(0.98)';
                     setTimeout(() => {
                         this.style.transform = '';
                     }, 150);
+                });
+            });
+
+            // Close TOC when clicking a link on mobile
+            tocLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 1024) {
+                        document.getElementById('toc').classList.remove('open');
+                    }
                 });
             });
         });

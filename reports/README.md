@@ -3,14 +3,14 @@
 ## Available Reports
 
 - [📊 HTML Dashboard](dashboard.html) - Interactive web dashboard
-- [📝 Markdown Dashboard](dashboard.md) - Text-based dashboard  
+- [📝 Markdown Dashboard](dashboard.md) - Text-based dashboard
 - [📋 JSON Report](dashboard.json) - Machine-readable data
 
-## Generated: 2025-10-24 17:51:41
+## Generated: 2025-10-28 16:51:39
 
 ### Quick Stats
-- Files: 140
-- Lines of Code: 50,386
-- Tests: 102
+- Files: 177
+- Lines of Code: 69,338
+- Tests: 108
 - Coverage: 0%
 - Status: Unknown
