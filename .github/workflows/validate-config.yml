@@ -5,13 +5,13 @@ on:
   push:
     paths:
       - 'config.psd1'
-      - 'automation-scripts/0408_Validate-ConfigManifest.ps1'
+      - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
       - 'domains/**/*.psm1'
       - 'automation-scripts/*.ps1'
   pull_request:
     paths:
       - 'config.psd1'
-      - 'automation-scripts/0408_Validate-ConfigManifest.ps1'
+      - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
       - 'domains/**/*.psm1'
       - 'automation-scripts/*.ps1'
   workflow_dispatch:
@@ -43,7 +43,7 @@ jobs:
           Write-Host ""
           
           # Run the validation script
-          & ./automation-scripts/0408_Validate-ConfigManifest.ps1
+          & ./automation-scripts/0413_Validate-ConfigManifest.ps1
           $exitCode = $LASTEXITCODE
           
           Write-Host ""
@@ -57,7 +57,7 @@ jobs:
             Write-Host "  • Missing required sections or subsections" -ForegroundColor Yellow
             Write-Host ""
             Write-Host "To fix:" -ForegroundColor Cyan
-            Write-Host "  1. Run: pwsh -File ./automation-scripts/0408_Validate-ConfigManifest.ps1" -ForegroundColor White
+            Write-Host "  1. Run: pwsh -File ./automation-scripts/0413_Validate-ConfigManifest.ps1" -ForegroundColor White
             Write-Host "  2. Update config.psd1 based on the validation output" -ForegroundColor White
             Write-Host "  3. Commit the changes" -ForegroundColor White
             exit 1

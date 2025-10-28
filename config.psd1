@@ -144,7 +144,7 @@
                 }
                 WindowsAdminCenter = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0106')  # Script 0106 is used for both WSL2 and WindowsAdminCenter setup. The orchestration engine distinguishes usage by the parent key (WSL2 vs. WindowsAdminCenter) and passes context-specific parameters to the script. No conflict occurs as each domain invokes 0106 with its own configuration.
+                    Scripts = @('0107')
                     RequiresElevation = $true
                     PlatformRestrictions = @('Windows')
                 }
@@ -191,14 +191,14 @@
                 }
                 PSScriptAnalyzer = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0400', '0404')
+                    Scripts = @('0400', '0404', '0410')
                     MinVersion = '1.20.0'
-                    Description = 'Static code analysis'
+                    Description = 'Static code analysis (standard and fast)'
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0405', '0406', '0407', '0408')
-                    Description = 'AST validation, syntax checks, coverage generation'
+                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414')
+                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests'
                 }
                 WorkflowTesting = @{
                     DependsOn = @('Core.PowerShell7')
@@ -221,13 +221,13 @@
                 }
                 ProjectReports = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0510', '0511', '0512', '0513')
-                    Description = 'Project reports, dashboards, and scheduling'
+                    Scripts = @('0510', '0511', '0512', '0513', '0514')
+                    Description = 'Project reports, dashboards, scheduling, and report generation'
                 }
                 Analysis = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0520', '0521', '0522', '0523', '0524')
-                    Description = 'Configuration, documentation, code quality, security, and tech debt analysis'
+                    Scripts = @('0515', '0520', '0521', '0522', '0523', '0524')
+                    Description = 'Documentation deployment, configuration, code quality, security, and tech debt analysis'
                 }
                 Logging = @{
                     DependsOn = @('Core.PowerShell7')
@@ -279,8 +279,8 @@
                 }
                 Documentation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0733')
-                    Description = 'AI-powered documentation generation'
+                    Scripts = @('0733', '0744')
+                    Description = 'AI-powered documentation generation and auto-documentation'
                 }
                 Optimization = @{
                     DependsOn = @('Core.PowerShell7')
@@ -298,18 +298,18 @@
             IssueManagement = @{
                 Creation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0800', '0810', '0825', '0830', '0835')
-                    Description = 'Issue creation from tests and manual triggers'
+                    Scripts = @('0800', '0810', '0825', '0830', '0832', '0835')
+                    Description = 'Issue creation from tests, manual triggers, file generation, and prompt generation'
                 }
                 Analysis = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0801', '0805', '0815')
-                    Description = 'Result parsing, issue analysis, and health monitoring'
+                    Scripts = @('0801', '0805', '0815', '0816')
+                    Description = 'Result parsing, issue analysis, setup, and automation health monitoring'
                 }
                 Workflow = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0820', '0821', '0830', '0831')
-                    Description = 'Work context, continuation prompts, and templates'
+                    Scripts = @('0820', '0821', '0822', '0831')
+                    Description = 'Work context, continuation prompts, issue creation testing, and templates'
                 }
             }
             
@@ -399,16 +399,16 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (113 total files, 102 unique numbers - some numbers have variants)
+        # Script inventory by range (113 total files, 113 unique numbers - all numbers now unique)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 7; Category = 'Environment Setup' }
-            '0100-0199' = @{ Count = 5; Category = 'Infrastructure' }
+            '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 20; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 14; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 25; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 11; Category = 'Issue Management' }
+            '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
+            '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
+            '0700-0799' = @{ Count = 26; Category = 'Git & AI Automation' }
+            '0800-0899' = @{ Count = 14; Category = 'Issue Management' }
             '0900-0999' = @{ Count = 2; Category = 'Validation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
