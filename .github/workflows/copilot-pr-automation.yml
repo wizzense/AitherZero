@@ -3,7 +3,10 @@ name: 🔄 Copilot PR Automation - Iterative Issue Resolution
 
 on:
   issues:
-    types: [assigned, labeled, commented]
+    types: [assigned, labeled]
+  
+  issue_comment:
+    types: [created]
 
   pull_request:
     types: [opened, synchronize, closed]

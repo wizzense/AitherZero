@@ -213,7 +213,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Image**: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Size**: ${{ steps.build.outputs.size }}" >> $GITHUB_STEP_SUMMARY
 
   # Deploy to Docker Compose (local/simple deployment)
   deploy-docker-compose:
@@ -328,6 +327,10 @@ jobs:
     steps:
       - name: 💬 Post Deployment Status
         uses: actions/github-script@v7
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+          COMMIT_SHA: ${{ github.sha }}
+          IMAGE_TAG: ${{ needs.build-container.outputs.image-tag }}
         with:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
@@ -372,9 +375,9 @@ jobs:
 
             ### 📋 Deployment Details
             - **PR Number**: #${prNumber}
-            - **Branch**: \`${{ github.head_ref }}\`
-            - **Commit**: \`${{ github.sha }}\`
-            - **Image**: \`${{ needs.build-container.outputs.image-tag }}\`
+            - **Branch**: \`${process.env.BRANCH_NAME}\`
+            - **Commit**: \`${process.env.COMMIT_SHA}\`
+            - **Image**: \`${process.env.IMAGE_TAG}\`
             - **Deployed**: ${new Date().toLocaleString()}
 
             ${deploymentSuccessful ? `
