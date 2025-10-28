@@ -258,8 +258,8 @@ AitherZero uses a **consolidated domain-based module system** with the following
   <a href="https://github.com/wizzense/AitherZero/pulls" class="quick-link">
     🔀 Pull Requests
   </a>
-  <a href="https://github.com/wizzense/AitherZero/wiki" class="quick-link">
-    📖 Wiki
+  <a href="https://github.com/wizzense/AitherZero/tree/main/docs" class="quick-link">
+    📖 Documentation
   </a>
 </div>
 

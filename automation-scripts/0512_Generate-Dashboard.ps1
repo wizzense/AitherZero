@@ -1142,7 +1142,7 @@ $commitsHTML
                         <p><a href="https://github.com/wizzense/AitherZero/actions" target="_blank">⚡ CI/CD Pipeline</a></p>
                         <p><a href="https://github.com/wizzense/AitherZero/releases" target="_blank">📦 Releases</a></p>
                         <p><a href="https://github.com/wizzense/AitherZero/issues" target="_blank">🐛 Issues</a></p>
-                        <p><a href="https://github.com/wizzense/AitherZero/wiki" target="_blank">📖 Documentation</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/tree/main/docs" target="_blank">📖 Documentation</a></p>
                         <p><a href="https://github.com/wizzense/AitherZero/blob/main/README.md" target="_blank">📄 README</a></p>
                     </div>
                 </div>
@@ -1298,7 +1298,7 @@ $(if($Activity.Commits.Count -gt 0) {
 - [⚡ CI/CD Pipeline](https://github.com/wizzense/AitherZero/actions)
 - [📦 Releases](https://github.com/wizzense/AitherZero/releases)
 - [🐛 Issues](https://github.com/wizzense/AitherZero/issues)
-- [📖 Documentation](https://github.com/wizzense/AitherZero/wiki)
+- [📖 Documentation](https://github.com/wizzense/AitherZero/tree/main/docs)
 
 ---
 
