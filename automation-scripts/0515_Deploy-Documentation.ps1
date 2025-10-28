@@ -14,7 +14,7 @@
 
 .NOTES
     Stage: Deployment
-    Order: 0520
+    Order: 0515
     Dependencies: 0510, 0512
     Tags: deployment, documentation, github-pages, reporting
 #>
@@ -35,7 +35,7 @@ Set-StrictMode -Version Latest
 # Script metadata
 $scriptMetadata = @{
     Stage = 'Deployment'
-    Order = 0520
+    Order = 0515
     Dependencies = @('0510', '0512')
     Tags = @('deployment', 'documentation', 'github-pages')
     RequiresAdmin = $false
@@ -56,7 +56,7 @@ function Write-ScriptLog {
     )
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0520_Deploy-Documentation" -Data $Data
+        Write-CustomLog -Level $Level -Message $Message -Source "0515_Deploy-Documentation" -Data $Data
     } else {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Host "[$timestamp] [$Level] $Message"
