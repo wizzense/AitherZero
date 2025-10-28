@@ -74,14 +74,9 @@ jobs:
           # Generate index of reports
           $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending
           
-          $indexHeader = @"
-# Test Reports Index
-
-Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-
-## Available Reports
-
-          "@
+          $indexHeader = "# Test Reports Index`n`n"
+          $indexHeader += "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n`n"
+          $indexHeader += "## Available Reports`n`n"
           
           $indexContent = $indexHeader
           

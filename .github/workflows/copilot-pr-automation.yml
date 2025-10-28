@@ -3,7 +3,13 @@ name: 🔄 Copilot PR Automation - Iterative Issue Resolution
 
 on:
   issues:
-    types: [assigned, labeled, commented]
+    types: [assigned, labeled]
+  
+  # Note: The 'commented' type was removed from issues.types and moved to issue_comment.types.
+  # This is because GitHub Actions only triggers issue comments via the 'issue_comment' event,
+  # not the 'issues' event. This split ensures correct automation for comments.
+  issue_comment:
+    types: [created]
 
   pull_request:
     types: [opened, synchronize, closed]
