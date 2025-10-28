@@ -254,6 +254,150 @@ function New-HTMLDashboard {
 
     Write-ScriptLog -Message "Generating HTML dashboard"
 
+    # Load module manifest data
+    $manifestPath = Join-Path $ProjectPath "AitherZero.psd1"
+    $manifestData = $null
+    $manifestVersion = "Unknown"
+    $manifestGUID = "Unknown"
+    $manifestAuthor = "Unknown"
+    $manifestPSVersion = "Unknown"
+    $manifestFunctionsCount = 0
+    $manifestAliases = ""
+    $manifestDescription = ""
+    $manifestTagsHTML = ""
+    
+    if (Test-Path $manifestPath) {
+        try {
+            $manifestData = Import-PowerShellDataFile $manifestPath
+            $manifestVersion = $manifestData.ModuleVersion
+            $manifestGUID = $manifestData.GUID
+            $manifestAuthor = $manifestData.Author
+            $manifestPSVersion = $manifestData.PowerShellVersion
+            $manifestFunctionsCount = @($manifestData.FunctionsToExport).Count
+            $manifestAliases = $manifestData.AliasesToExport -join ', '
+            $manifestDescription = $manifestData.Description
+            
+            if ($manifestData.PrivateData -and $manifestData.PrivateData.PSData -and $manifestData.PrivateData.PSData.Tags) {
+                $manifestTagsHTML = $manifestData.PrivateData.PSData.Tags | ForEach-Object { "<span class='badge info'>$_</span>" } | Join-String -Separator ' '
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to load manifest data"
+        }
+    }
+
+    # Get domain module information
+    $domainsPath = Join-Path $ProjectPath "domains"
+    $domains = @()
+    if (Test-Path $domainsPath) {
+        $domainDirs = Get-ChildItem -Path $domainsPath -Directory
+        foreach ($domainDir in $domainDirs) {
+            $moduleFiles = @(Get-ChildItem -Path $domainDir.FullName -Filter "*.psm1")
+            $domains += @{
+                Name = $domainDir.Name
+                ModuleCount = $moduleFiles.Count
+                Modules = $moduleFiles.Name
+            }
+        }
+    }
+    
+    # Pre-build commits HTML
+    $commitsHTML = ""
+    if (@($Activity.Commits).Count -gt 0) {
+        $commitsHTML = $Activity.Commits | Select-Object -First 5 | ForEach-Object {
+            @"
+                            <li class='commit-item'>
+                                <span class='commit-hash'>$($_.Hash)</span>
+                                <span class='commit-message'>$($_.Message)</span>
+                            </li>
+"@
+        } | Join-String -Separator "`n"
+    } else {
+        $commitsHTML = "                            <li class='commit-item'><span class='commit-message'>No recent activity found</span></li>"
+    }
+    
+    # Pre-build domains HTML
+    $domainsHTML = ""
+    if (@($domains).Count -gt 0) {
+        $domainsCount = @($domains).Count
+        $domainCardsHTML = foreach($domain in $domains) {
+            @"
+                    <div class="domain-card">
+                        <h4>$($domain.Name)</h4>
+                        <div class="module-count">$($domain.ModuleCount) module$(if($domain.ModuleCount -ne 1){'s'})</div>
+                    </div>
+"@
+        }
+        $domainCardsJoined = $domainCardsHTML | Join-String -Separator "`n"
+        
+        $domainsHTML = @"
+            <section class="section" id="domains">
+                <h2>🗂️ Domain Modules</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Consolidated domain-based module architecture with $domainsCount domains
+                </p>
+                <div class="domains-list">
+$domainCardsJoined
+                </div>
+            </section>
+"@
+    }
+    
+    # Pre-build manifest HTML
+    $manifestHTML = ""
+    if ($manifestData) {
+        $manifestTagsSection = ""
+        if ($manifestTagsHTML) {
+            $manifestTagsSection = @"
+                    <div style="margin-top: 15px;">
+                        <div class="label" style="margin-bottom: 10px;">Tags</div>
+                        <div class="badge-grid">
+                            $manifestTagsHTML
+                        </div>
+                    </div>
+"@
+        }
+        
+        $manifestHTML = @"
+            <section class="section" id="manifest">
+                <h2>📦 Module Manifest</h2>
+                <div class="manifest-info">
+                    <h4>AitherZero.psd1</h4>
+                    <div class="manifest-grid">
+                        <div class="manifest-item">
+                            <div class="label">Version</div>
+                            <div class="value">$manifestVersion</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">GUID</div>
+                            <div class="value">$manifestGUID</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Author</div>
+                            <div class="value">$manifestAuthor</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">PowerShell Version</div>
+                            <div class="value">$manifestPSVersion+</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Functions Exported</div>
+                            <div class="value">$manifestFunctionsCount</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Aliases</div>
+                            <div class="value">$manifestAliases</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div class="label" style="margin-bottom: 10px;">Description</div>
+                        <div class="value" style="color: var(--text-secondary);">$manifestDescription</div>
+                    </div>
+$manifestTagsSection
+                </div>
+            </section>
+"@
+    }
+
     $html = @"
 <!DOCTYPE html>
 <html lang="en">
@@ -268,136 +412,301 @@ function New-HTMLDashboard {
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --bg-dark: #0d1117;
+            --bg-darker: #010409;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --success: #238636;
+            --warning: #d29922;
+            --error: #da3633;
+            --info: #1f6feb;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, $ThemeColor 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation TOC */
+        .toc {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 250px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
             padding: 20px;
-            color: #333;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .toc-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 101;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .toc h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 10px;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .toc a:hover {
+            color: var(--primary-color);
+        }
+
+        .toc a.active {
+            color: var(--primary-color);
+            font-weight: 600;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, $ThemeColor 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
 
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 3rem;
             margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .header .subtitle {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             opacity: 0.9;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .badges-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .badges-container img {
+            height: 20px;
+            transition: transform 0.2s;
+        }
+
+        .badges-container img:hover {
+            transform: scale(1.05);
         }
 
         .status-bar {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
         }
 
         .status-badge {
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 0.9rem;
+            background: rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
         }
 
-        .status-healthy { background: rgba(40, 167, 69, 0.2); color: #ffffff; }
-        .status-issues { background: rgba(220, 53, 69, 0.2); color: #ffffff; }
-        .status-unknown { background: rgba(108, 117, 125, 0.2); color: #ffffff; }
+        .status-healthy { 
+            background: linear-gradient(135deg, rgba(35, 134, 54, 0.3), rgba(35, 134, 54, 0.1)); 
+            border-color: var(--success);
+        }
+        .status-issues { 
+            background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
+            border-color: var(--error);
+        }
+        .status-unknown { 
+            background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
+            border-color: var(--text-secondary);
+        }
 
         .content {
-            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            scroll-margin-top: 20px;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--card-border);
         }
 
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .metric-card {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(22, 27, 34, 0.5) 100%);
+            border: 1px solid var(--card-border);
             border-radius: 12px;
             padding: 25px;
-            border-left: 4px solid $ThemeColor;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
         }
 
         .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            border-color: var(--primary-color);
         }
 
         .metric-card h3 {
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 15px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
         }
 
         .metric-value {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: bold;
-            color: $ThemeColor;
-            margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
         }
 
         .metric-label {
-            color: #6c757d;
+            color: var(--text-secondary);
             font-size: 0.9rem;
-        }
-
-        .section {
-            margin-bottom: 40px;
-        }
-
-        .section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 10px;
         }
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
         }
 
         .info-card {
-            background: white;
-            border: 1px solid #e9ecef;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 8px;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
         }
 
         .info-card-header {
-            background: #f8f9fa;
+            background: rgba(102, 126, 234, 0.1);
             padding: 15px 20px;
             font-weight: 600;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-primary);
         }
 
         .info-card-body {
             padding: 20px;
+        }
+
+        .info-card-body p {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .info-card-body strong {
+            color: var(--text-primary);
+        }
+
+        .info-card-body a {
+            color: var(--info);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .info-card-body a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .info-card-body code {
+            background: var(--bg-darker);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--primary-color);
         }
 
         .commit-list {
@@ -406,36 +715,54 @@ function New-HTMLDashboard {
 
         .commit-item {
             display: flex;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f3f4;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .commit-item:last-child {
+            border-bottom: none;
         }
 
         .commit-hash {
             font-family: 'Courier New', monospace;
             font-size: 0.8rem;
-            background: #e9ecef;
-            padding: 2px 6px;
+            background: var(--bg-darker);
+            padding: 4px 8px;
             border-radius: 4px;
-            margin-right: 10px;
+            margin-right: 12px;
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+
+        .commit-message {
+            color: var(--text-secondary);
+            line-height: 1.5;
         }
 
         .progress-bar {
-            background: #e9ecef;
+            background: var(--bg-darker);
             border-radius: 10px;
-            height: 20px;
+            height: 24px;
             overflow: hidden;
             margin: 10px 0;
+            border: 1px solid var(--card-border);
         }
 
         .progress-fill {
-            background: linear-gradient(90deg, $ThemeColor, #764ba2);
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
             height: 100%;
             border-radius: 10px;
             transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
 
-        .badges {
+        .badge-grid {
             display: flex;
             gap: 10px;
             margin: 20px 0;
@@ -443,39 +770,139 @@ function New-HTMLDashboard {
         }
 
         .badge {
-            background: #28a745;
+            background: var(--success);
             color: white;
-            padding: 5px 10px;
-            border-radius: 12px;
-            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .badge.warning { 
+            background: var(--warning); 
+            color: var(--bg-darker); 
+        }
+        .badge.error { 
+            background: var(--error); 
+        }
+        .badge.info { 
+            background: var(--info); 
+        }
+
+        .manifest-info {
+            background: var(--bg-darker);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .manifest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .manifest-item {
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-item .label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .manifest-item .value {
+            color: var(--text-primary);
             font-weight: 600;
         }
 
-        .badge.warning { background: #ffc107; color: #212529; }
-        .badge.error { background: #dc3545; }
-        .badge.info { background: #17a2b8; }
+        .domains-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .domain-card {
+            background: var(--bg-darker);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            transition: all 0.2s;
+        }
+
+        .domain-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .domain-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .domain-card .module-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
 
         .footer {
-            background: #f8f9fa;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
             padding: 20px;
             text-align: center;
-            color: #6c757d;
+            color: var(--text-secondary);
             font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--info);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--primary-color);
         }
 
         .refresh-indicator {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: white;
-            padding: 10px 15px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            font-size: 0.8rem;
-            color: #666;
+            background: var(--card-bg);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--card-border);
+            z-index: 100;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+            }
+
+            .toc {
+                transform: translateX(-270px);
+            }
+
+            .toc.open {
+                transform: translateX(0);
+            }
+
             .metrics-grid {
                 grid-template-columns: 1fr;
             }
@@ -485,103 +912,147 @@ function New-HTMLDashboard {
             }
 
             .status-bar {
-                flex-direction: column;
-                align-items: center;
+                grid-template-columns: 1fr;
             }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Link styling */
+        a {
+            color: var(--info);
         }
     </style>
 </head>
 <body>
+    <div class="toc-toggle" onclick="toggleToc()">☰</div>
+    
+    <nav class="toc" id="toc">
+        <h3>📑 Contents</h3>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#manifest">Module Manifest</a></li>
+            <li><a href="#domains">Domain Modules</a></li>
+            <li><a href="#health">Project Health</a></li>
+            <li><a href="#activity">Recent Activity</a></li>
+            <li><a href="#actions">Quick Actions</a></li>
+            <li><a href="#system">System Info</a></li>
+            <li><a href="#resources">Resources</a></li>
+        </ul>
+    </nav>
+
     <div class="refresh-indicator">
-        Last updated: $($Metrics.LastUpdated)
+        🔄 Last updated: $($Metrics.LastUpdated)
     </div>
 
     <div class="container">
-        <div class="header">
+        <div class="header" id="overview">
             <h1>🚀 AitherZero</h1>
             <div class="subtitle">Infrastructure Automation Platform</div>
 
+            <div class="badges-container">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/intelligent-ci-orchestrator.yml?label=CI%2FCD&logo=github" alt="CI/CD Status">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
+                <img src="$($Status.Badges.Tests)" alt="Tests Status">
+                <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
+                <img src="https://img.shields.io/github/license/wizzense/AitherZero" alt="License">
+                <img src="https://img.shields.io/github/last-commit/wizzense/AitherZero" alt="Last Commit">
+            </div>
+
             <div class="status-bar">
                 <div class="status-badge status-$(($Status.Overall).ToLower())">
-                    Overall: $($Status.Overall)
+                    🎯 Overall: $($Status.Overall)
                 </div>
                 <div class="status-badge status-$(if($Status.Tests -eq 'Passing'){'healthy'}elseif($Status.Tests -eq 'Failing'){'issues'}else{'unknown'})">
-                    Tests: $($Status.Tests)
+                    🧪 Tests: $($Status.Tests)
                 </div>
                 <div class="status-badge status-unknown">
-                    Security: $($Status.Security)
+                    🔒 Security: $($Status.Security)
+                </div>
+                <div class="status-badge status-unknown">
+                    📦 Deployment: $($Status.Deployment)
                 </div>
             </div>
         </div>
 
         <div class="content">
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <h3>📁 Project Files</h3>
-                    <div class="metric-value">$($Metrics.Files.Total)</div>
-                    <div class="metric-label">
-                        $($Metrics.Files.PowerShell) Scripts | $($Metrics.Files.Modules) Modules | $($Metrics.Files.Data) Data Files
+            <section class="section" id="metrics">
+                <h2>📊 Project Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Project Files</h3>
+                        <div class="metric-value">$($Metrics.Files.Total)</div>
+                        <div class="metric-label">
+                            $($Metrics.Files.PowerShell) Scripts | $($Metrics.Files.Modules) Modules | $($Metrics.Files.Data) Data Files
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Lines of Code</h3>
+                        <div class="metric-value">$($Metrics.LinesOfCode.ToString('N0'))</div>
+                        <div class="metric-label">$($Metrics.Functions) Functions</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Suite</h3>
+                        <div class="metric-value">$($Metrics.Tests.Total)</div>
+                        <div class="metric-label">
+                            $($Metrics.Tests.Unit) Unit | $($Metrics.Tests.Integration) Integration
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📊 Code Coverage</h3>
+                        <div class="metric-value">$($Metrics.Coverage.Percentage)%</div>
+                        <div class="metric-label">
+                            $($Metrics.Coverage.CoveredLines) / $($Metrics.Coverage.TotalLines) Lines Covered
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: $($Metrics.Coverage.Percentage)%">
+                                $(if($Metrics.Coverage.Percentage -gt 0){ "$($Metrics.Coverage.Percentage)%" })
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </section>
 
-                <div class="metric-card">
-                    <h3>📝 Lines of Code</h3>
-                    <div class="metric-value">$($Metrics.LinesOfCode.ToString('N0'))</div>
-                    <div class="metric-label">$($Metrics.Functions) Functions</div>
-                </div>
+$manifestHTML
 
-                <div class="metric-card">
-                    <h3>🧪 Test Suite</h3>
-                    <div class="metric-value">$($Metrics.Tests.Total)</div>
-                    <div class="metric-label">
-                        $($Metrics.Tests.Unit) Unit | $($Metrics.Tests.Integration) Integration
-                    </div>
-                </div>
+$domainsHTML
 
-                <div class="metric-card">
-                    <h3>📊 Code Coverage</h3>
-                    <div class="metric-value">$($Metrics.Coverage.Percentage)%</div>
-                    <div class="metric-label">
-                        $($Metrics.Coverage.CoveredLines) / $($Metrics.Coverage.TotalLines) Lines Covered
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: $($Metrics.Coverage.Percentage)%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
+            <section class="section" id="health">
                 <h2>📈 Project Health</h2>
-                <div class="badges">
-                    <div class="badge">Build: $(if($Status.Overall -eq 'Healthy'){'Passing'}else{'Unknown'})</div>
+                <div class="badge-grid">
+                    <div class="badge $(if($Status.Overall -eq 'Healthy'){''}elseif($Status.Overall -eq 'Issues'){'error'}else{'warning'})">
+                        Build: $(if($Status.Overall -eq 'Healthy'){'Passing'}else{'Unknown'})
+                    </div>
                     <div class="badge $(if($Status.Tests -eq 'Passing'){''}elseif($Status.Tests -eq 'Failing'){'error'}else{'warning'})">
                         Tests: $($Status.Tests)
                     </div>
                     <div class="badge info">Coverage: $($Metrics.Coverage.Percentage)%</div>
                     <div class="badge">Security: Scanned</div>
+                    <div class="badge">Platform: $($Metrics.Platform)</div>
+                    <div class="badge">PowerShell: $($Metrics.PSVersion)</div>
                 </div>
-            </div>
+            </section>
 
             <div class="info-grid">
-                <div class="info-card">
+                <div class="info-card" id="activity">
                     <div class="info-card-header">🔄 Recent Activity</div>
                     <div class="info-card-body">
                         <ul class="commit-list">
-$(if($Activity.Commits.Count -gt 0) {
-    $Activity.Commits | Select-Object -First 5 | ForEach-Object {
-        "                            <li class='commit-item'>`n" +
-        "                                <span class='commit-hash'>$($_.Hash)</span>`n" +
-        "                                <span>$($_.Message)</span>`n" +
-        "                            </li>"
-    } | Join-String -Separator "`n"
-} else {
-    "                            <li class='commit-item'>No recent activity found</li>"
-})
+$commitsHTML
                         </ul>
                     </div>
                 </div>
 
-                <div class="info-card">
+                <div class="info-card" id="actions">
                     <div class="info-card-header">🎯 Quick Actions</div>
                     <div class="info-card-body">
                         <p><strong>Run Tests:</strong> <code>./az 0402</code></p>
@@ -592,17 +1063,18 @@ $(if($Activity.Commits.Count -gt 0) {
                     </div>
                 </div>
 
-                <div class="info-card">
+                <div class="info-card" id="system">
                     <div class="info-card-header">📋 System Information</div>
                     <div class="info-card-body">
                         <p><strong>Platform:</strong> $($Metrics.Platform ?? 'Unknown')</p>
                         <p><strong>PowerShell:</strong> $($Metrics.PSVersion)</p>
                         <p><strong>Environment:</strong> $(if($env:AITHERZERO_CI){'CI/CD'}else{'Development'})</p>
                         <p><strong>Last Scan:</strong> $($Metrics.LastUpdated)</p>
+                        <p><strong>Working Directory:</strong> <code>$(Split-Path $ProjectPath -Leaf)</code></p>
                     </div>
                 </div>
 
-                <div class="info-card">
+                <div class="info-card" id="resources">
                     <div class="info-card-header">🔗 Resources</div>
                     <div class="info-card-body">
                         <p><a href="https://github.com/wizzense/AitherZero" target="_blank">🏠 GitHub Repository</a></p>
@@ -610,6 +1082,7 @@ $(if($Activity.Commits.Count -gt 0) {
                         <p><a href="https://github.com/wizzense/AitherZero/releases" target="_blank">📦 Releases</a></p>
                         <p><a href="https://github.com/wizzense/AitherZero/issues" target="_blank">🐛 Issues</a></p>
                         <p><a href="https://github.com/wizzense/AitherZero/wiki" target="_blank">📖 Documentation</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/blob/main/README.md" target="_blank">📄 README</a></p>
                     </div>
                 </div>
             </div>
@@ -622,20 +1095,59 @@ $(if($Activity.Commits.Count -gt 0) {
     </div>
 
     <script>
+        // TOC toggle for mobile
+        function toggleToc() {
+            document.getElementById('toc').classList.toggle('open');
+        }
+
+        // Highlight active section in TOC
+        const sections = document.querySelectorAll('.section, .header');
+        const tocLinks = document.querySelectorAll('.toc a');
+
+        function highlightToc() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightToc);
+        highlightToc();
+
         // Auto-refresh every 5 minutes
         setTimeout(() => {
             window.location.reload();
         }, 300000);
 
-        // Add some interactive elements
+        // Add interactive elements
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.metric-card');
+            const cards = document.querySelectorAll('.metric-card, .domain-card');
             cards.forEach(card => {
                 card.addEventListener('click', function() {
                     this.style.transform = 'scale(0.98)';
                     setTimeout(() => {
                         this.style.transform = '';
                     }, 150);
+                });
+            });
+
+            // Close TOC when clicking a link on mobile
+            tocLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 1024) {
+                        document.getElementById('toc').classList.remove('open');
+                    }
                 });
             });
         });
