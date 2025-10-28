@@ -209,15 +209,35 @@ jobs:
           # Deploy
           docker compose -f docker-compose.pr-${PR_NUMBER}.yml up -d
 
-          # Wait for health check
+          # Wait for container to be healthy
           echo "⏳ Waiting for environment to be healthy..."
-          sleep 10
+          RETRY_COUNT=0
+          MAX_RETRIES=12  # 12 * 5 seconds = 60 seconds max wait
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "no-health")
+            
+            if [ "$HEALTH_STATUS" = "healthy" ]; then
+              echo "✅ Container is healthy"
+              break
+            elif [ "$HEALTH_STATUS" = "unhealthy" ]; then
+              echo "❌ Container is unhealthy"
+              docker logs aitherzero-pr-${PR_NUMBER}
+              exit 1
+            else
+              echo "⏳ Container status: $HEALTH_STATUS (attempt $((RETRY_COUNT + 1))/$MAX_RETRIES)"
+              sleep 5
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            fi
+          done
 
           # Verify deployment
           if docker ps | grep -q "aitherzero-pr-${PR_NUMBER}"; then
             echo "✅ Environment deployed successfully"
           else
             echo "❌ Deployment verification failed"
+            docker ps -a --filter "name=aitherzero-pr-${PR_NUMBER}"
+            docker logs aitherzero-pr-${PR_NUMBER}
             exit 1
           fi
 
@@ -228,9 +248,14 @@ jobs:
           # Test container health
           docker ps -a --filter "name=aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}"
 
-          # Test PowerShell module loading
-          docker exec aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }} \
-            pwsh -Command "Import-Module /app/AitherZero.psd1; Write-Host 'Module loaded successfully'"
+          # Test PowerShell module loading with timeout
+          echo "Testing PowerShell module loading..."
+          timeout 30s docker exec aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }} \
+            pwsh -Command "try { Import-Module /app/AitherZero.psd1 -ErrorAction Stop; Write-Host '✅ Module loaded successfully' -ForegroundColor Green; exit 0 } catch { Write-Error \$_.Exception.Message; exit 1 }" || {
+            echo "❌ Module loading failed or timed out"
+            docker logs aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
+            exit 1
+          }
 
   # Comment on PR with deployment status
   comment-deployment-status:
