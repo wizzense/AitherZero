@@ -28,11 +28,13 @@ on:
   #   # Run daily coordination check at 2 AM UTC
   #   - cron: '0 2 * * *'
 
-  issues:
-    types: [opened, labeled, assigned]
+  # DISABLED: Event triggers can create cascade of issues
+  # issues:
+  #   types: [opened, labeled, assigned]
 
-  pull_request:
-    types: [opened, synchronize, ready_for_review, review_requested]
+  # DISABLED: Event triggers can create cascade of issues
+  # pull_request:
+  #   types: [opened, synchronize, ready_for_review, review_requested]
 
 permissions:
   contents: read
@@ -49,6 +51,8 @@ jobs:
     name: Coordinate AI Agents
     runs-on: ubuntu-latest
     timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes || '30') }}
+    # Only run on manual trigger to prevent cascade of issue creation
+    if: github.event_name == 'workflow_dispatch'
 
     outputs:
       coordination-status: ${{ steps.coordinate.outputs.status }}
