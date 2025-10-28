@@ -462,7 +462,7 @@ jobs:
             const activeAgents = '${{ steps.coordinate.outputs.active-agents }}';
             const successCount = '${{ steps.coordinate.outputs.success-count }}';
             const failedCount = '${{ steps.coordinate.outputs.failed-count }}';
-            const issuesCount = '${{ steps.coordinate.outputs.issues-count || 0 }}';
+            const issuesCount = '${{ steps.coordinate.outputs.issues-count || '0' }}';
 
             let statusEmoji = '✅';
             let statusText = 'Complete';
