@@ -56,11 +56,9 @@
 │  ┌────────────────────────────┐   ┌─────────────────────────────────┐      │
 │  │ GitHub Issues Created      │   │ GitHub Pages Published           │      │
 │  │ ───────────────────────── │   │ ──────────────────────────────── │      │
-│  │ Labels:                    │   │ URL:                             │      │
-│  │ • automated-issue          │   │ https://wizzense.github.io/      │      │
-│  │ • test-failure             │   │        AitherZero                │      │
-│  │ • code-quality             │   │                                  │      │
-│  │ • p0, p1, p2, p3 (priority)│   │ Content:                         │      │
+│  │ Labels:                    │   │ URL: https://wizzense.github.io/AitherZero │      │
+│  │ • automated-issue          │   │                                  │      │
+│  │ • test-failure             │   │ Content:                         │      │
 │  │ • bug                      │   │ • Interactive dashboard          │      │
 │  │ • auto-fixable (optional)  │   │ • Test reports (JSON)            │      │
 │  │                            │   │ • PSScriptAnalyzer results       │      │
