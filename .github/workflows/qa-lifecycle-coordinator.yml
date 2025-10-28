@@ -38,24 +38,24 @@ jobs:
     name: 🎯 QA Lifecycle Coordination
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    
+
     outputs:
       qa-status: ${{ steps.qa-summary.outputs.status }}
       issues-created: ${{ steps.qa-summary.outputs.issues-created }}
       recommendations: ${{ steps.qa-summary.outputs.recommendations }}
-      
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: 🔧 Setup AitherZero QA Environment
         shell: pwsh
         run: |
           Write-Host "🎯 Setting up comprehensive QA environment..." -ForegroundColor Magenta
           ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Standard
-          
+
           # Ensure QA directories exist
           @('tests/qa-results', 'qa-reports', 'qa-artifacts') | ForEach-Object {
             if (-not (Test-Path $_)) {
@@ -63,9 +63,9 @@ jobs:
               Write-Host "Created QA directory: $_" -ForegroundColor Cyan
             }
           }
-          
+
           Write-Host "✅ QA environment ready" -ForegroundColor Green
-          
+
       - name: 🔍 Comprehensive Quality Analysis
         id: qa-analysis
         shell: pwsh
@@ -76,7 +76,7 @@ jobs:
           Write-Host "🔍 Starting comprehensive quality analysis..." -ForegroundColor Cyan
           Write-Host "QA Scope: $env:QA_SCOPE" -ForegroundColor White
           Write-Host "Force Analysis: $env:FORCE_ANALYSIS" -ForegroundColor White
-          
+
           $qaResults = @{
             SyntaxValidation = @{ Status = 'Not Run'; ExitCode = -1; Issues = @() }
             CodeQuality = @{ Status = 'Not Run'; ExitCode = -1; Issues = @() }
@@ -88,13 +88,13 @@ jobs:
             CriticalIssues = 0
             Recommendations = @()
           }
-          
+
           # 1. Syntax Validation (Always run)
           Write-Host "🔍 Phase 1: Syntax Validation" -ForegroundColor Yellow
           try {
             $syntaxResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407" -NonInteractive
             $syntaxExitCode = $LASTEXITCODE
-            
+
             if ($syntaxExitCode -eq 0) {
               $qaResults.SyntaxValidation.Status = 'Passed'
               Write-Host "  ✅ Syntax validation passed" -ForegroundColor Green
@@ -109,13 +109,13 @@ jobs:
             $qaResults.SyntaxValidation.Issues += "Syntax validation error: $_"
             Write-Host "  💥 Syntax validation error: $_" -ForegroundColor Red
           }
-          
+
           # 2. Code Quality Analysis
           Write-Host "🔍 Phase 2: Code Quality Analysis" -ForegroundColor Yellow
           try {
             $codeQualityResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0404" -NonInteractive
             $codeQualityExitCode = $LASTEXITCODE
-            
+
             if ($codeQualityExitCode -eq 0) {
               $qaResults.CodeQuality.Status = 'Passed'
               Write-Host "  ✅ Code quality analysis passed" -ForegroundColor Green
@@ -130,13 +130,13 @@ jobs:
             $qaResults.CodeQuality.Issues += "Code quality analysis error: $_"
             Write-Host "  💥 Code quality analysis error: $_" -ForegroundColor Red
           }
-          
+
           # 3. Unit Tests
           Write-Host "🔍 Phase 3: Unit Testing" -ForegroundColor Yellow
           try {
             $unitTestResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0402" -NonInteractive
             $unitTestExitCode = $LASTEXITCODE
-            
+
             if ($unitTestExitCode -eq 0) {
               $qaResults.UnitTests.Status = 'Passed'
               Write-Host "  ✅ Unit tests passed" -ForegroundColor Green
@@ -152,14 +152,14 @@ jobs:
             $qaResults.UnitTests.Issues += "Unit test execution error: $_"
             Write-Host "  💥 Unit test execution error: $_" -ForegroundColor Red
           }
-          
+
           # 4. Integration Tests (if standard or comprehensive)
           if ($env:QA_SCOPE -in @('standard', 'comprehensive')) {
             Write-Host "🔍 Phase 4: Integration Testing" -ForegroundColor Yellow
             try {
               $integrationResult = & ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0403" -NonInteractive
               $integrationExitCode = $LASTEXITCODE
-              
+
               if ($integrationExitCode -eq 0) {
                 $qaResults.IntegrationTests.Status = 'Passed'
                 Write-Host "  ✅ Integration tests passed" -ForegroundColor Green
@@ -175,16 +175,16 @@ jobs:
               Write-Host "  💥 Integration test error: $_" -ForegroundColor Red
             }
           }
-          
+
           # Calculate overall status and recommendations
           $allIssues = @()
           $qaResults.Values | Where-Object { $_ -is [hashtable] -and $_.Issues } | ForEach-Object { $allIssues += $_.Issues }
           $qaResults.TotalIssues = $allIssues.Count
-          
+
           # Determine overall status
           $failedPhases = @($qaResults.Values | Where-Object { $_ -is [hashtable] -and $_.Status -in @('Failed', 'Error') }).Count
           $criticalFailures = @($qaResults.SyntaxValidation, $qaResults.UnitTests | Where-Object { $_.Status -in @('Failed', 'Error') }).Count
-          
+
           if ($criticalFailures -gt 0) {
             $qaResults.OverallStatus = 'Critical Issues'
           } elseif ($failedPhases -gt 0) {
@@ -192,7 +192,7 @@ jobs:
           } else {
             $qaResults.OverallStatus = 'Passed'
           }
-          
+
           # Generate recommendations
           if ($qaResults.SyntaxValidation.Status -ne 'Passed') {
             $qaResults.Recommendations += 'Fix syntax errors before proceeding with other changes'
@@ -206,37 +206,37 @@ jobs:
           if ($qaResults.IntegrationTests.Status -eq 'Failed') {
             $qaResults.Recommendations += 'Investigate integration test failures for system compatibility'
           }
-          
+
           # Save results for later steps
           $qaResults | ConvertTo-Json -Depth 3 | Set-Content "qa-results.json"
-          
+
           # Set step outputs
           echo "status=$($qaResults.OverallStatus)" >> $env:GITHUB_OUTPUT
           echo "total-issues=$($qaResults.TotalIssues)" >> $env:GITHUB_OUTPUT
           echo "critical-issues=$($qaResults.CriticalIssues)" >> $env:GITHUB_OUTPUT
-          
+
           Write-Host ""
           Write-Host "📊 QA Analysis Summary:" -ForegroundColor Magenta
           Write-Host "  Overall Status: $($qaResults.OverallStatus)" -ForegroundColor White
           Write-Host "  Total Issues: $($qaResults.TotalIssues)" -ForegroundColor White
           Write-Host "  Critical Issues: $($qaResults.CriticalIssues)" -ForegroundColor White
           Write-Host "  Recommendations: $($qaResults.Recommendations.Count)" -ForegroundColor White
-          
+
       - name: 📊 Generate QA Dashboard
         if: always() && github.event.inputs.create_dashboard != 'false'
         shell: pwsh
         run: |
           Write-Host "📊 Generating comprehensive QA dashboard..." -ForegroundColor Cyan
-          
+
           # Read QA results
           $qaResults = Get-Content "qa-results.json" | ConvertFrom-Json
-          
+
           # Generate dashboard HTML (simplified to avoid YAML conflicts)
           $prNumber = "${{ github.event.pull_request.number || 'N/A' }}"
           $qaScope = "${{ github.event.inputs.qa_scope || 'standard' }}"
           $repoName = "${{ github.repository }}"
           $runId = "${{ github.run_id }}"
-          
+
           $dashboard = "<!DOCTYPE html>`n<html>`n<head>`n"
           $dashboard += "<title>AitherZero QA Dashboard - PR #$prNumber</title>`n"
           $dashboard += '<style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;margin:20px}'
@@ -245,11 +245,11 @@ jobs:
           $dashboard += '.critical{border-left:4px solid #dc3545}.warning{border-left:4px solid #ffc107}'
           $dashboard += '.success{border-left:4px solid #28a745}</style>`n</head>`n<body>`n"
           $dashboard += "<h1>🎯 AitherZero QA Dashboard</h1>`n"
-          
-          $cssClass = if ($qaResults.OverallStatus -eq 'Passed') { 'success' } 
-                     elseif ($qaResults.OverallStatus -eq 'Critical Issues') { 'critical' } 
+
+          $cssClass = if ($qaResults.OverallStatus -eq 'Passed') { 'success' }
+                     elseif ($qaResults.OverallStatus -eq 'Critical Issues') { 'critical' }
                      else { 'warning' }
-          
+
           $dashboard += "<div class=`"card $cssClass`">`n"
           $dashboard += "<h2>📊 Overall Status: $($qaResults.OverallStatus)</h2>`n"
           $dashboard += "<p><strong>Total Issues:</strong> $($qaResults.TotalIssues)</p>`n"
@@ -257,7 +257,7 @@ jobs:
           $dashboard += "<p><strong>QA Scope:</strong> $qaScope</p>`n"
           $dashboard += "<p><strong>Timestamp:</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')</p>`n"
           $dashboard += "</div>`n"
-          
+
           $dashboard += "<div class=`"card`">`n<h3>🔍 Quality Analysis Results</h3>`n<ul>`n"
           $dashboard += "<li><strong>Syntax Validation:</strong> $($qaResults.SyntaxValidation.Status)</li>`n"
           $dashboard += "<li><strong>Code Quality:</strong> $($qaResults.CodeQuality.Status)</li>`n"
@@ -272,7 +272,7 @@ jobs:
             }
             $dashboard += "</ul>`n</div>`n"
           }
-          
+
           $dashboard += "<div class=`"card`">`n<h3>🔧 Local Commands</h3>`n"
           $dashboard += "<p>Run these commands locally to reproduce and fix issues:</p>`n<ul>`n"
           $dashboard += "<li><code>./az.ps1 0407</code> - Syntax validation</li>`n"
@@ -281,39 +281,39 @@ jobs:
           $dashboard += "<li><code>./az.ps1 0403</code> - Integration tests</li>`n"
           $dashboard += "<li><code>./az.ps1 0510</code> - Generate comprehensive report</li>`n"
           $dashboard += "</ul>`n</div>`n"
-          
+
           $dashboard += "<div class=`"card`">`n<h3>🔗 Resources</h3>`n<ul>`n"
           $dashboard += "<li><a href=`"https://github.com/$repoName/actions/runs/$runId`">View Workflow Run</a></li>`n"
           $dashboard += "<li><a href=`"https://github.com/$repoName/pull/$prNumber`">View Pull Request</a></li>`n"
           $dashboard += "<li><a href=`"https://github.com/wizzense/AitherZero#automation-scripts`">AitherZero Documentation</a></li>`n"
           $dashboard += "</ul>`n</div>`n</body>`n</html>`n"
-          
+
           $dashboard | Set-Content "qa-dashboard.html"
           Write-Host "✅ QA Dashboard generated" -ForegroundColor Green
-          
+
       - name: 📋 Generate QA Summary
         id: qa-summary
         if: always()
         shell: pwsh
         run: |
           Write-Host "📋 Generating QA lifecycle summary..." -ForegroundColor Cyan
-          
+
           # Read results if available
           $qaResults = @{ OverallStatus = 'Unknown'; TotalIssues = 0; Recommendations = @() }
           if (Test-Path "qa-results.json") {
             $qaResults = Get-Content "qa-results.json" | ConvertFrom-Json
           }
-          
+
           # Count issues created (would be updated by issue creation logic)
           $issuesCreated = 0  # This would be set by actual issue creation
-          
+
           # Set outputs for other jobs/workflows
           echo "status=$($qaResults.OverallStatus)" >> $env:GITHUB_OUTPUT
           echo "issues-created=$issuesCreated" >> $env:GITHUB_OUTPUT
           echo "recommendations=$($qaResults.Recommendations -join ';')" >> $env:GITHUB_OUTPUT
-          
+
           Write-Host "✅ QA lifecycle coordination completed!" -ForegroundColor Green
-          
+
       - name: 📤 Upload QA Artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -329,14 +329,14 @@ jobs:
             tests/results/
             reports/
           retention-days: 30
-          
+
       - name: 💬 Update PR with QA Status
         if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            
+
             let qaResults = { OverallStatus: 'Unknown', TotalIssues: 0, Recommendations: [] };
             try {
               if (fs.existsSync('qa-results.json')) {
@@ -345,11 +345,11 @@ jobs:
             } catch (error) {
               console.log('Could not read QA results:', error.message);
             }
-            
+
             const status = qaResults.OverallStatus;
             let statusEmoji = '📊';
             let statusColor = 'yellow';
-            
+
             if (status === 'Passed') {
               statusEmoji = '✅';
               statusColor = 'green';
@@ -360,7 +360,7 @@ jobs:
               statusEmoji = '⚠️';
               statusColor = 'orange';
             }
-            
+
             let comment = '## 🎯 QA Lifecycle Report ' + statusEmoji + '\n\n';
             comment += '**Overall Status:** ' + status + '\n';
             comment += '**Total Issues:** ' + qaResults.TotalIssues + '\n';
@@ -372,7 +372,7 @@ jobs:
             comment += '| 📝 Code Quality | ' + (qaResults.CodeQuality?.Status || 'Not Run') + ' | ' + (qaResults.CodeQuality?.ExitCode === 0 ? 'No PSScriptAnalyzer issues' : 'Quality improvements needed') + ' |\n';
             comment += '| 🧪 Unit Tests | ' + (qaResults.UnitTests?.Status || 'Not Run') + ' | ' + (qaResults.UnitTests?.ExitCode === 0 ? 'All tests passing' : 'Test failures detected') + ' |\n';
             comment += '| 🔗 Integration Tests | ' + (qaResults.IntegrationTests?.Status || 'Not Run') + ' | ' + (qaResults.IntegrationTests?.Status === 'Not Run' ? 'Skipped for quick QA' : (qaResults.IntegrationTests?.ExitCode === 0 ? 'Integration successful' : 'Integration issues')) + ' |\n\n';
-            
+
             if (qaResults.Recommendations && qaResults.Recommendations.length > 0) {
               comment += '### 💡 Recommendations\n\n';
               qaResults.Recommendations.forEach(rec => {
@@ -380,7 +380,7 @@ jobs:
               });
               comment += '\n';
             }
-            
+
             comment += '### 🔧 Quick Actions\n\n';
 
             comment += '**Local Testing:**\n';
@@ -395,19 +395,19 @@ jobs:
             comment += '- 📚 [AitherZero Docs](https://github.com/wizzense/AitherZero#automation-scripts)\n\n';
             comment += '---\n';
             comment += '*🤖 Automated QA lifecycle powered by AitherZero\'s comprehensive testing framework*';
-            
+
             // Find and update existing comment or create new one
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number
             });
-            
-            const existingComment = comments.find(c => 
-              c.user.login === 'github-actions[bot]' && 
+
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
               c.body.includes('🎯 QA Lifecycle Report')
             );
-            
+
             if (existingComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,

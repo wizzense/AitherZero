@@ -14,7 +14,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  issues: write  
+  issues: write
   checks: write
   # Explicitly deny dangerous permissions
   actions: none
@@ -31,7 +31,7 @@ jobs:
     name: Fork PR Analysis (Safe)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name != github.repository
-    
+
     steps:
       - name: 📋 Fork PR Notice
         uses: actions/github-script@v7
@@ -40,33 +40,33 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const prAuthor = context.payload.pull_request.user.login;
             const forkRepo = context.payload.pull_request.head.repo.full_name;
-            
+
             const comment = `## 🔒 Fork PR Security Notice
-            
+
             **PR #${prNumber} from Fork Repository**
             - **Author:** @${prAuthor}
             - **Fork:** ${forkRepo}
-            
+
             ### 🛡️ Security Policy
             For security reasons, automated validation is **limited** for fork PRs:
             - ✅ **Static analysis** and change review available
-            - ❌ **Code execution** disabled to prevent security risks  
+            - ❌ **Code execution** disabled to prevent security risks
             - 🔍 **Full CI pipeline** will run after maintainer review
-            
+
             ### 🚀 Next Steps
             1. **Maintainer review** required before full validation
             2. **Manual approval** needed to run comprehensive tests
             3. **Security review** for any sensitive changes
-            
+
             ### 📋 Contribution Guidelines
             - Review [Contributing Guidelines](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
             - Ensure all changes follow project standards
             - Add tests for new functionality when possible
-            
+
             ---
             *This is an automated security notice for fork contributions.*
             `;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -82,7 +82,7 @@ jobs:
       has-powershell: ${{ steps.analyze.outputs.has-powershell }}
       has-workflows: ${{ steps.analyze.outputs.has-workflows }}
       change-summary: ${{ steps.analyze.outputs.change-summary }}
-      
+
     steps:
       - name: 📥 Checkout Base Branch (Safe)
         uses: actions/checkout@v4
@@ -96,11 +96,11 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Analyzing PR changes..." -ForegroundColor Cyan
-          
+
           # Get changed files using GitHub API (safe for forks)
           $prNumber = "${{ github.event.pull_request.number }}"
           $apiUrl = "https://api.github.com/repos/${{ github.repository }}/pulls/$prNumber/files"
-          
+
           try {
             $response = Invoke-RestMethod -Uri $apiUrl -Headers @{ 'Accept' = 'application/vnd.github.v3+json' }
             $changedFiles = $response | ForEach-Object { $_.filename }
@@ -108,13 +108,13 @@ jobs:
             Write-Host "⚠️ Could not fetch PR files via API, using local diff" -ForegroundColor Yellow
             $changedFiles = @()  # Empty array for safety
           }
-          
+
           # Categorize files
           $psFiles = $changedFiles | Where-Object { $_ -match '\.(ps1|psm1|psd1)$' }
           $yamlFiles = $changedFiles | Where-Object { $_ -match '\.github/workflows/.*\.(yml|yaml)$' }
           $testFiles = $changedFiles | Where-Object { $_ -match '\.Tests\.ps1$' }
           $configFiles = $changedFiles | Where-Object { $_ -match '\.(json|psd1)$' -and $_ -notmatch '\.Tests\.' }
-          
+
           # Create analysis
           $analysis = @{
             TotalFiles = $changedFiles.Count
@@ -125,32 +125,32 @@ jobs:
             ChangedFiles = $changedFiles
             Recommendations = @()
           }
-          
+
           # Generate recommendations
           if ($psFiles.Count -gt 0 -and $testFiles.Count -eq 0) {
             $analysis.Recommendations += "⚠️ PowerShell files changed but no test files updated"
           }
-          
+
           if ($yamlFiles.Count -gt 0) {
             $analysis.Recommendations += "🔍 Workflow files changed - ensure YAML validation passes"
           }
-          
+
           if ($analysis.TotalFiles -gt 15) {
             $analysis.Recommendations += "📋 Large PR ($($analysis.TotalFiles) files) - consider smaller increments"
           }
-          
+
           if ($psFiles.Count -gt 0) {
             $analysis.Recommendations += "🧪 Run local tests: ./az.ps1 0402"
           }
-          
+
           # Set outputs
           echo "has-powershell=$($psFiles.Count -gt 0)" >> $env:GITHUB_OUTPUT
           echo "has-workflows=$($yamlFiles.Count -gt 0)" >> $env:GITHUB_OUTPUT
           echo "change-summary=$($analysis.TotalFiles) files: PS=$($psFiles.Count), Workflows=$($yamlFiles.Count), Tests=$($testFiles.Count)" >> $env:GITHUB_OUTPUT
-          
+
           # Save for comment
           $analysis | ConvertTo-Json -Depth 3 | Set-Content "./pr-analysis.json"
-          
+
           Write-Host "📊 Analysis complete:" -ForegroundColor Green
           Write-Host "   Total files: $($analysis.TotalFiles)" -ForegroundColor White
           Write-Host "   PowerShell files: $($psFiles.Count)" -ForegroundColor White
@@ -161,17 +161,17 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Running quick validation for PowerShell changes..." -ForegroundColor Yellow
-          
+
           # Security check
           if ("${{ github.event.pull_request.head.repo.full_name }}" -ne "${{ github.repository }}") {
             Write-Host "⚠️ Skipping validation for fork PR for security" -ForegroundColor Yellow
             echo "SYNTAX_STATUS=⏭️ SKIPPED (Fork PR)" >> $env:GITHUB_ENV
             exit 0
           }
-          
+
           # Minimal bootstrap for validation
           ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
-          
+
           # Test syntax
           try {
             & "./automation-scripts/0407_*.ps1"
@@ -188,7 +188,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
+
             // Read analysis
             let analysis = { Recommendations: [], TotalFiles: 0 };
             try {
@@ -196,27 +196,27 @@ jobs:
             } catch (e) {
               console.log('No analysis file found');
             }
-            
+
             const syntaxStatus = process.env.SYNTAX_STATUS || 'Not checked';
             const syntaxError = process.env.SYNTAX_ERROR || '';
             const changeSummary = "${{ steps.analyze.outputs.change-summary }}";
-            
+
             const prNumber = context.payload.pull_request.number;
             const prTitle = context.payload.pull_request.title;
             const prAuthor = context.payload.pull_request.user.login;
-            
+
             let comment = `## 🔍 PR Validation Results
-            
+
             **#${prNumber}: ${prTitle}** by @${prAuthor}
-            
-            ### 📊 Change Summary  
+
+            ### 📊 Change Summary
             ${changeSummary}
-            
+
             ### ✅ Validation Status
             - **Syntax Check:** ${syntaxStatus}
             - **Main CI:** Will run automatically after this validation
             `;
-            
+
             if (syntaxError) {
               comment += `
             ### ❌ Syntax Issues
@@ -225,37 +225,37 @@ jobs:
             \`\`\`
             `;
             }
-            
+
             if (analysis.Recommendations.length > 0) {
               comment += `
             ### 💡 Recommendations
             ${analysis.Recommendations.map(rec => `- ${rec}`).join('\n')}
             `;
             }
-            
+
             comment += `
             ### 🚀 Next Steps
-            ${syntaxStatus.includes('FAILED') ? 
-              '1. ❗ **Fix syntax errors** before proceeding\n2. Push changes to trigger re-validation' : 
+            ${syntaxStatus.includes('FAILED') ?
+              '1. ❗ **Fix syntax errors** before proceeding\n2. Push changes to trigger re-validation' :
               '1. ✅ Quick validation passed\n2. Comprehensive CI will run automatically\n3. Monitor the CI pipeline for full results'
             }
-            
+
             ---
             *Automated PR validation • [View full CI pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*
             `;
-            
+
             // Find existing comment to update or create new
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber
             });
-            
-            const existingComment = comments.find(c => 
-              c.user.login === 'github-actions[bot]' && 
+
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
               c.body.includes('🔍 PR Validation Results')
             );
-            
+
             if (existingComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -276,10 +276,10 @@ jobs:
     name: Handle @copilot Mentions
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'issue_comment' && 
+      github.event_name == 'issue_comment' &&
       contains(github.event.comment.body, '@copilot') &&
       github.event.issue.pull_request
-    
+
     steps:
       - name: 🤖 Process Copilot Request
         uses: actions/github-script@v7
@@ -288,14 +288,14 @@ jobs:
             const comment = context.payload.comment.body.toLowerCase();
             const commenter = context.payload.comment.user.login;
             const prNumber = context.payload.issue.number;
-            
+
             console.log(`Copilot mentioned by ${commenter} in PR #${prNumber}`);
-            
+
             let response = `## 🤖 Copilot Assistant
-            
+
             Hello @${commenter}! I'm monitoring this PR and can help with:
             `;
-            
+
             // Contextual responses based on keywords
             if (comment.includes('review') || comment.includes('check')) {
               response += `
@@ -303,22 +303,22 @@ jobs:
             - **Automated validation** runs on every PR update
             - **Full CI pipeline** with cross-platform testing
             - **Issue tracking** for any failures detected
-            
+
             The latest validation results are posted above. ⬆️
             `;
             }
-            
+
             if (comment.includes('test') || comment.includes('fail')) {
               response += `
-            ### 🧪 Testing Support  
+            ### 🧪 Testing Support
             - **Quick validation**: Basic syntax and module loading
             - **Comprehensive tests**: Full test suite across platforms
             - **Issue creation**: Automatic GitHub issues for test failures
-            
+
             Check the [CI pipeline](https://github.com/${context.repo.owner}/${context.repo.repo}/actions) for detailed results.
             `;
             }
-            
+
             if (comment.includes('fix') || comment.includes('error')) {
               response += `
             ### 🔧 Issue Resolution
@@ -327,17 +327,17 @@ jobs:
             - **Local testing**: Run \`./az.ps1 0407\` for syntax, \`./az.ps1 0402\` for tests
             `;
             }
-            
+
             response += `
             ### 📊 Current Status
             - **PR Validation**: ${context.payload.issue.state === 'open' ? 'Active monitoring' : 'Completed'}
             - **CI Pipeline**: Triggered automatically on PR updates
             - **Release**: Available after merge to main branch
-            
+
             ---
             *Tag me with specific questions like "@copilot check tests" or "@copilot explain error"*
             `;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

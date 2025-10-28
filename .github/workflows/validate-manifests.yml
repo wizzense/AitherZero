@@ -17,11 +17,11 @@ jobs:
   validate-manifests:
     name: 'Validate Module Manifests'
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
-        
+
       - name: 'Setup PowerShell'
         uses: azure/powershell@v2
         with:
@@ -29,41 +29,41 @@ jobs:
           azPSVersion: 'latest'
           inlineScript: |
             Write-Host "PowerShell $($PSVersionTable.PSVersion) ready"
-            
+
       - name: 'Validate All Module Manifests'
         shell: pwsh
         run: |
           Write-Host "🔍 Validating PowerShell module manifests for Unicode and syntax issues..." -ForegroundColor Cyan
-          
+
           # Run the validation script
           $result = & ./automation-scripts/0405_Validate-ModuleManifests.ps1 2>&1
           $exitCode = $LASTEXITCODE
-          
+
           # Display results
           $result | ForEach-Object { Write-Host $_ }
-          
+
           if ($exitCode -ne 0) {
             Write-Host "❌ Module manifest validation failed!" -ForegroundColor Red
             Write-Host "This usually indicates:" -ForegroundColor Yellow
             Write-Host "  • Unicode characters (→, ←, ↑, ↓) that break Windows PowerShell parsing" -ForegroundColor Yellow
             Write-Host "  • Unterminated strings or malformed syntax" -ForegroundColor Yellow
             Write-Host "  • Invalid PowerShell restricted language usage" -ForegroundColor Yellow
-            Write-Host "" 
+            Write-Host ""
             Write-Host "To fix automatically, run locally:" -ForegroundColor Cyan
             Write-Host "  pwsh -File ./automation-scripts/0405_Validate-ModuleManifests.ps1 -Fix" -ForegroundColor White
             exit 1
           } else {
             Write-Host "✅ All module manifests validated successfully!" -ForegroundColor Green
           }
-          
+
       - name: 'Test Validation Tools'
         shell: pwsh
         run: |
           Write-Host "🧪 Testing validation tools..." -ForegroundColor Cyan
-          
+
           # Run validation tool tests
           $testResult = Invoke-Pester -Path './tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1' -PassThru
-          
+
           if ($testResult.Failed -gt 0) {
             Write-Host "❌ Validation tool tests failed!" -ForegroundColor Red
             exit 1
