@@ -73,12 +73,12 @@ Describe "0512_Generate-Dashboard" {
         It "Should generate all formats when Format is All" {
             $result = & $script:ScriptPath -ProjectPath $script:TestProjectPath -OutputPath $script:TestOutputPath -Format "All" 2>&1
             $LASTEXITCODE | Should -Be 0
-            
+
             $htmlPath = Join-Path $script:TestOutputPath "dashboard.html"
             $mdPath = Join-Path $script:TestOutputPath "dashboard.md"
             $jsonPath = Join-Path $script:TestOutputPath "dashboard.json"
             $readmePath = Join-Path $script:TestOutputPath "README.md"
-            
+
             Test-Path $htmlPath | Should -Be $true
             Test-Path $mdPath | Should -Be $true
             Test-Path $jsonPath | Should -Be $true
@@ -149,12 +149,12 @@ Describe "0512_Generate-Dashboard" {
             New-Item -ItemType Directory -Path $testPath -Force | Out-Null
             $testOutput = Join-Path $testPath "reports"
             New-Item -ItemType Directory -Path $testOutput -Force | Out-Null
-            
+
             & $script:ScriptPath -WhatIf -ProjectPath $testPath -OutputPath $testOutput -Format "HTML" -Open 2>&1 | Out-Null
-            
+
             # Files should not be created
             Test-Path (Join-Path $testOutput "dashboard.html") | Should -Be $false
-            
+
             # Cleanup
             Remove-Item -Path $testPath -Recurse -Force -ErrorAction SilentlyContinue
         }
