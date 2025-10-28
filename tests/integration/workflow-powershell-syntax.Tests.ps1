@@ -99,16 +99,10 @@ Describe "Workflow PowerShell Syntax Validation" {
             $script:SingleLineIfElseIfElse = '$cssClass = if ($status -eq ''Passed'') { ''success'' } elseif ($status -eq ''Failed'') { ''error'' } else { ''warning'' }'
         }
         
-        It "Should validate single-line if-elseif-else syntax" {
-            { 
-                [scriptblock]::Create($script:SingleLineIfElseIfElse)
-            } | Should -Not -Throw
-        }
-
-        It "Should use single-line if-elseif-else for GitHub Actions compatibility" {
+        It "Should validate and prefer single-line if-elseif-else for GitHub Actions compatibility" {
             # While PowerShell may accept multi-line if-elseif-else with leading whitespace,
-            # GitHub Actions workflows can have issues parsing them. Test that we prefer
-            # single-line format for better compatibility.
+            # GitHub Actions workflows can have issues parsing them. Verify that single-line
+            # format works correctly and is preferred for better compatibility.
             { 
                 [scriptblock]::Create($script:SingleLineIfElseIfElse)
             } | Should -Not -Throw
@@ -118,9 +112,11 @@ Describe "Workflow PowerShell Syntax Validation" {
             $testCode = @'
 $cssClass = if ($status -eq 'Passed') { 
     'success' 
-} elseif ($status -eq 'Failed') { 
+} 
+elseif ($status -eq 'Failed') { 
     'error' 
-} else { 
+} 
+else { 
     'warning' 
 }
 '@
@@ -158,10 +154,10 @@ function Test-YamlStructure {
             
             $tempFile = [System.IO.Path]::GetTempFileName()
             try {
-                $Yaml | Set-Content -Path $tempFile
-                # Properly escape the file path for shell execution
-                $escapedPath = $tempFile -replace "'", "'\''"
-                $result = & $pythonCmd -c "import yaml; yaml.safe_load(open('$escapedPath'))" 2>&1
+                $Yaml | Set-Content -Path $tempFile -Encoding UTF8
+                # Use call operator with properly quoted arguments for safety
+                $pythonScript = "import yaml; yaml.safe_load(open(r'$tempFile'))"
+                $result = & $pythonCmd -c $pythonScript 2>&1
                 
                 if ($LASTEXITCODE -ne 0) {
                     throw "YAML validation failed: $result"
