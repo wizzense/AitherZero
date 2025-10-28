@@ -176,25 +176,10 @@ jobs:
           if (-not (Test-Path $indexPath) -and (Test-Path (Join-Path $deployPath "INDEX.md"))) {
             # Convert INDEX.md to index.html for GitHub Pages
             $indexMd = Get-Content (Join-Path $deployPath "INDEX.md") -Raw
-            $indexHtml = @"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AitherZero Documentation</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; margin: 40px; }
-        h1, h2, h3 { color: #333; }
-        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
-        pre { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
-    </style>
-</head>
-<body>
-$($indexMd -replace '# (.*)', '<h1>$1</h1>' -replace '## (.*)', '<h2>$1</h2>' -replace '### (.*)', '<h3>$1</h3>')
-</body>
-</html>
-"@
+            $htmlHeader = "<!DOCTYPE html>`n<html lang=`"en`">`n<head>`n    <meta charset=`"UTF-8`">`n    <meta name=`"viewport`" content=`"width=device-width, initial-scale=1.0`">`n    <title>AitherZero Documentation</title>`n    <style>`n        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; margin: 40px; }`n        h1, h2, h3 { color: #333; }`n        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; }`n        pre { background-color: #f4f4f4; padding: 10px; border-radius: 5px; }`n    </style>`n</head>`n<body>`n"
+            $htmlBody = $indexMd -replace '# (.*)', '<h1>$1</h1>' -replace '## (.*)', '<h2>$1</h2>' -replace '### (.*)', '<h3>$1</h3>'
+            $htmlFooter = "`n</body>`n</html>"
+            $indexHtml = $htmlHeader + $htmlBody + $htmlFooter
             $indexHtml | Set-Content $indexPath
           }
           
@@ -203,7 +188,7 @@ $($indexMd -replace '# (.*)', '<h1>$1</h1>' -replace '## (.*)', '<h2>$1</h2>' -r
         
     - name: 🌐 Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs-deploy
