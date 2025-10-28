@@ -32,7 +32,7 @@ Write-Host "━━━━━━━━━━━━━━━━━━━━━━�
 if (-not $SkipValidation) {
     Write-Host "`n📋 Step 1: Initializing AitherZero..." -ForegroundColor Yellow
     try {
-        & "$script:ProjectRoot/Start-AitherZero.ps1" -Mode Validate -NonInteractive
+        & "$script:ProjectRoot/Start-AitherZero.ps1" -Mode Validate
         Write-Host "✅ AitherZero initialized successfully" -ForegroundColor Green
     } catch {
         Write-Host "⚠️  Initialization completed with warnings: $_" -ForegroundColor Yellow
