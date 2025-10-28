@@ -523,14 +523,15 @@ jobs:
 
           if ($totalFailed -eq 0 -and $totalTests -gt 0) {
             Write-Host "✅ All ${{ matrix.category }} tests passed!" -ForegroundColor Green
+            exit 0
           } elseif ($totalTests -eq 0) {
             Write-Host "⏭️ No tests found for ${{ matrix.category }}" -ForegroundColor Yellow
+            exit 0
           } else {
-            Write-Host "⚠️ Some ${{ matrix.category }} tests failed - check details above" -ForegroundColor Yellow
+            Write-Host "❌ ${{ matrix.category }} tests FAILED - check details above" -ForegroundColor Red
+            Write-Host "::error::$totalFailed test path(s) failed in ${{ matrix.category }}"
+            exit 1
           }
-
-          # Always exit 0 to not block CI - test failures are reported via artifacts
-          exit 0
 
       - name: 📊 Upload ${{ matrix.category }} Results
         uses: actions/upload-artifact@v4
@@ -566,18 +567,17 @@ jobs:
           $env:AITHERZERO_TEST_SCOPE = "full"
           $process = Start-Process -FilePath "pwsh" -ArgumentList @("-Command", "& './Start-AitherZero.ps1' -Mode Orchestrate -Sequence '0402' -NonInteractive") -Wait -PassThru -NoNewWindow
 
-          Write-Host "Test execution completed with exit code: $($process.ExitCode)" -ForegroundColor $(if ($process.ExitCode -eq 0) { 'Green' } else { 'Yellow' })
+          Write-Host "Test execution completed with exit code: $($process.ExitCode)" -ForegroundColor $(if ($process.ExitCode -eq 0) { 'Green' } else { 'Red' })
 
           if ($process.ExitCode -eq 0) {
             Write-Host "✅ All comprehensive tests passed!" -ForegroundColor Green
+            exit 0
           } else {
-            Write-Host "⚠️ Test failures detected (exit code: $($process.ExitCode))" -ForegroundColor Yellow
+            Write-Host "❌ Test failures detected (exit code: $($process.ExitCode))" -ForegroundColor Red
             Write-Host "📋 Complete test results and failure details are captured in reports" -ForegroundColor Cyan
-            Write-Host "💡 Test failures are reported for review - they don't block CI but require attention" -ForegroundColor Blue
+            Write-Host "::error::Comprehensive tests failed with $($process.ExitCode) failures"
+            exit 1
           }
-
-          # Always exit 0 to not block CI
-          exit 0
 
       - name: 📊 Upload All Test Results
         uses: actions/upload-artifact@v4
