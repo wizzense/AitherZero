@@ -206,7 +206,7 @@ env:
    # Build and test locally
    docker build -t aitherzero:test .
    docker run -d --name test-container aitherzero:test
-   docker exec test-container pwsh -Command "Import-Module /app/AitherZero.psd1"
+   docker exec test-container pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1"
    docker rm -f test-container
    ```
 
