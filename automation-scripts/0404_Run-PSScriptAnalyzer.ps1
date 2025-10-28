@@ -324,8 +324,11 @@ try {
                 }
                 
                 $analysisJob = Start-Job -ScriptBlock {
-                    param([string[]]$Files, [hashtable]$Params)
+                    param([object]$FilesArg, [hashtable]$Params)
                     Import-Module PSScriptAnalyzer -Force
+                    
+                    # Convert to array if needed
+                    $Files = if ($FilesArg -is [array]) { $FilesArg } else { @($FilesArg) }
                     
                     if ($Files.Count -gt 100) {
                         # Use highly optimized batch processing for large file sets
