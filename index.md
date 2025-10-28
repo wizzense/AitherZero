@@ -50,6 +50,11 @@ title: AitherZero Project Dashboard
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+@media (prefers-reduced-motion: reduce) {
+  .highlight-box::before {
+    animation: none;
+  }
+}
 .highlight-box h1 {
   margin: 0 0 15px 0;
   font-size: 3rem;
