@@ -75,11 +75,11 @@ jobs:
           $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending
           
           $indexHeader = @"
-          # Test Reports Index
+# Test Reports Index
 
-          Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
 
-          ## Available Reports
+## Available Reports
 
           "@
           
