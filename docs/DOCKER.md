@@ -607,8 +607,12 @@ docker build --target base -t aitherzero:base .
 
 ### Custom Base Images
 
+> **Note:**  
+> The official AitherZero Docker image is based on PowerShell 7.4 (Ubuntu 22.04).  
+> Using alternative base images (such as Alpine) is for advanced/custom builds only and may require Dockerfile modifications for compatibility (e.g., package installation, dependency changes). Alpine is **not officially supported** and may not work out-of-the-box.
+
 ```bash
-# Use a different PowerShell base
+# Use a different PowerShell base (custom build; may require Dockerfile changes)
 docker build \
   --build-arg BASE_IMAGE=mcr.microsoft.com/powershell:7.4-alpine-3.19 \
   -t aitherzero:alpine .
