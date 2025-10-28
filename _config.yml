@@ -6,8 +6,8 @@ description: Infrastructure automation platform with comprehensive testing and r
 baseurl: "" # Leave empty for user/org pages
 url: "https://wizzense.github.io/AitherZero"
 
-# Theme
-theme: minima
+# Theme - using custom layout instead of minima for better dark theme support
+# theme: minima
 
 # Build settings
 markdown: kramdown
@@ -43,15 +43,9 @@ exclude:
   - bootstrap.ps1
 
 # Plugins
-plugins:
-  - jekyll-feed
-  - jekyll-seo-tag
-
-# Collections
-collections:
-  docs:
-    output: true
-    permalink: /docs/:path/
+# plugins:
+#   - jekyll-feed
+#   - jekyll-seo-tag
 
 # Defaults
 defaults:
@@ -59,7 +53,3 @@ defaults:
       path: ""
     values:
       layout: default
-  - scope:
-      path: "docs"
-    values:
-      layout: page
