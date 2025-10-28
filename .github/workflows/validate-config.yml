@@ -7,12 +7,14 @@ on:
     branches: [main, develop]
     paths:
       - 'config.psd1'
+      - 'automation-scripts/0003_Sync-ConfigManifest.ps1'
       - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
       - 'domains/**/*.psm1'
       - 'automation-scripts/*.ps1'
   pull_request:
     paths:
       - 'config.psd1'
+      - 'automation-scripts/0003_Sync-ConfigManifest.ps1'
       - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
       - 'domains/**/*.psm1'
       - 'automation-scripts/*.ps1'
@@ -67,6 +69,30 @@ jobs:
             Write-Host "✅ Config manifest is valid and synchronized!" -ForegroundColor Green
           }
 
+      - name: 'Sync Config with Automation Scripts'
+        shell: pwsh
+        run: |
+          Write-Host "🔄 Checking config.psd1 synchronization with automation scripts..." -ForegroundColor Cyan
+          Write-Host ""
+
+          # Run the sync check script
+          & ./automation-scripts/0003_Sync-ConfigManifest.ps1
+          $exitCode = $LASTEXITCODE
+
+          Write-Host ""
+          if ($exitCode -ne 0) {
+            Write-Host "❌ Config is out of sync with automation scripts!" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "To fix:" -ForegroundColor Cyan
+            Write-Host "  1. Run: pwsh -File ./automation-scripts/0003_Sync-ConfigManifest.ps1" -ForegroundColor White
+            Write-Host "  2. Review the missing scripts listed above" -ForegroundColor White
+            Write-Host "  3. Add script numbers to appropriate sections in config.psd1" -ForegroundColor White
+            Write-Host "  4. Commit the changes" -ForegroundColor White
+            exit 1
+          } else {
+            Write-Host "✅ Config is synchronized with all automation scripts!" -ForegroundColor Green
+          }
+
       - name: 'Summary'
         if: always()
         shell: pwsh
@@ -81,9 +107,20 @@ jobs:
           - ✅ Domain/module count accuracy
           - ✅ Script inventory accuracy
           - ✅ Script reference validity
+          - ✅ Synchronization with automation scripts
           - ✅ PSScriptAnalyzer compliance
 
           **Status**: ${{ job.status }}
+          
+          ### What This Checks
+          
+          1. **Config Validation (0413)**: Validates structure, counts, and references
+          2. **Config Sync (0003)**: Ensures all automation scripts are registered in config.psd1
+          
+          If validation fails, run the sync script locally to identify missing scripts:
+          \`\`\`powershell
+          ./automation-scripts/0003_Sync-ConfigManifest.ps1
+          \`\`\`
           "@
 
             $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8

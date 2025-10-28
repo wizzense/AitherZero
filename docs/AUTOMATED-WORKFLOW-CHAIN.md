@@ -176,6 +176,48 @@ This gives you control over which issues to prioritize and prevents the system f
    - PR creation process
    - Success criteria checklist
 
+### 6. Config Validation
+**File:** `.github/workflows/validate-config.yml`
+
+**Purpose:** Automatically validates config.psd1 synchronization with automation scripts
+
+**Triggers:**
+- Push to main/develop branches (when config.psd1 or scripts change)
+- Pull requests (when config.psd1 or scripts change)
+- Manual workflow_dispatch
+
+**Process:**
+1. **Config Validation (0413):** Validates structure, counts, and references
+2. **Config Sync (0003):** Ensures all automation scripts are registered in config.psd1
+3. Fails CI if scripts are missing from config.psd1
+4. Provides instructions on how to fix missing registrations
+
+**Automatic Execution:**
+- Runs whenever automation scripts are added/modified
+- Runs whenever config.psd1 is changed
+- Ensures config stays synchronized automatically
+- Exit code 1 if sync issues found, preventing merge
+
+**Output Example:**
+```
+✅ Found 119 automation scripts
+✅ Found 119 scripts registered in config.psd1
+✅ Configuration is in sync
+```
+
+**When It Fails:**
+```
+⚠️ Missing scripts found:
+  0000-0099:
+    • 0003 - 0003_New-Script.ps1
+    
+To fix:
+  1. Run: pwsh -File ./automation-scripts/0003_Sync-ConfigManifest.ps1
+  2. Review the missing scripts listed above
+  3. Add script numbers to appropriate sections in config.psd1
+  4. Commit the changes
+```
+
 ## GitHub Copilot Integration
 
 ### Priority Label Requirement (NEW)
