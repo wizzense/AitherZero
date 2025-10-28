@@ -422,31 +422,46 @@ jobs:
             const issuesCreated = [];
             const criticalIssues = [];
 
-            // Helper function to create issue if it doesn't exist
-            async function createIssueIfNeeded(title, body, labels, priority = 'medium') {
-              const existing = existingIssues.find(issue =>
-                issue.title.toLowerCase().includes(title.toLowerCase().slice(0, 20))
-              );
+            // Helper function to create issue with priority recommendation
+            async function createIssueIfNeeded(title, body, labels, recommendedPriority = 'P3') {
+              // Better deduplication: check for similar titles AND labels
+              const existing = existingIssues.find(issue => {
+                const titleMatch = issue.title.toLowerCase().includes(title.toLowerCase().slice(0, 30));
+                const labelMatch = labels.some(label => issue.labels.some(l => l.name === label));
+                return titleMatch && labelMatch;
+              });
 
               if (existing) {
-                console.log(`Issue already exists: ${existing.title}`);
+                console.log(`Issue already exists: ${existing.title} (#${existing.number})`);
                 return existing.number;
               }
+
+              // Build priority recommendation section
+              const priorityGuidance = `
+### 🏷️ Priority Assignment Required
+
+**Recommended Priority:** \`${recommendedPriority}\`
+
+This issue will NOT be automatically processed until you assign a priority label:
+- \`P1\` - Critical (4 hour SLA) - System breaking, security issues
+- \`P2\` - High (24 hour SLA) - Major functionality impaired
+- \`P3\` - Medium (48 hour SLA) - Moderate impact (recommended)
+- \`P4\` - Normal (1 week SLA) - Minor issues
+- \`P5-P10\` - Backlog - Low priority improvements
+
+**Action Required:** Review this issue and add the appropriate P1-P10 label based on impact.`;
 
               const issue = await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `🤖 ${title}`,
-                body: `${body}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Priority:** ${priority}\n\n**Note:** This issue requires automated resolution. Copilot will be notified in a follow-up comment.`,
-                labels: ['auto-created', 'copilot-task', `priority-${priority}`, ...labels]
+                body: `${body}\n\n${priorityGuidance}\n\n---\n**Auto-created:** ${new Date().toISOString()}\n**Branch:** ${context.ref}\n**Workflow Run:** ${context.runId}`,
+                labels: ['auto-created', 'copilot-task', 'needs-priority', ...labels]
               });
 
               issuesCreated.push(issue.data.number);
-              if (priority === 'critical') {
-                criticalIssues.push(issue.data.number);
-              }
 
-              console.log(`Created issue #${issue.data.number}: ${title}`);
+              console.log(`Created issue #${issue.data.number}: ${title} (Recommended: ${recommendedPriority})`);
               return issue.data.number;
             }
 
@@ -488,7 +503,7 @@ jobs:
                 'Fix Critical PSScriptAnalyzer Issues',
                 issueBody,
                 ['code-quality', 'psscriptanalyzer', 'critical-fix'],
-                'critical'
+                'P1'  // Recommended priority - manual assignment required
               );
             }
 
@@ -531,7 +546,7 @@ jobs:
                 'Fix Failing Unit Tests',
                 issueBody,
                 ['testing', 'unit-tests', 'failure'],
-                'high'
+                'P2'  // Recommended priority - manual assignment required
               );
             }
 
@@ -569,7 +584,7 @@ jobs:
                 'Address Security Vulnerabilities',
                 issueBody,
                 ['security', 'vulnerability', 'credentials'],
-                'high'
+                'P1'  // Recommended priority - manual assignment required
               );
             }
 
@@ -605,7 +620,7 @@ jobs:
                 'Repository Health Maintenance',
                 issueBody,
                 ['maintenance', 'health-check', 'coordination'],
-                'medium'
+                'P3'  // Recommended priority - manual assignment required
               );
             }
 
