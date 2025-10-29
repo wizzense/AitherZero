@@ -184,7 +184,7 @@ jobs:
         Write-Host "Checking for uncommitted index changes..." -ForegroundColor Cyan
         
         # Check if there are uncommitted changes after generation
-        $changes = git status --porcelain | Where-Object { $_ -match 'index\.md' }
+        $changes = git status --porcelain | Where-Object { $_ -match '\/index\.md$' }
         $hasUncommittedChanges = $changes.Count -gt 0
         
         if ($hasUncommittedChanges) {
@@ -264,8 +264,17 @@ jobs:
           `;
           }
           
-          // Build status emoji
-          const statusEmoji = hasUncommitted ? '⚠️' : parseInt(failed) > 0 ? '⚠️' : parseInt(updated) > 0 ? '✅' : 'ℹ️';
+          // Build status emoji based on conditions
+          let statusEmoji;
+          if (hasUncommitted) {
+            statusEmoji = '⚠️';
+          } else if (parseInt(failed) > 0) {
+            statusEmoji = '⚠️';
+          } else if (parseInt(updated) > 0) {
+            statusEmoji = '✅';
+          } else {
+            statusEmoji = 'ℹ️';
+          }
           
           // Calculate percentages for skipped and failed
           const skippedPercent = totalDirs > 0 ? Math.round((skipped / totalDirs) * 100) : 0;
@@ -299,11 +308,14 @@ jobs:
             `✓ All index files are current - no regeneration needed. The change detection system verified that no directory content has changed since the last index generation.`
           }
           
-          ${parseInt(failed) > 0 && !hasUncommitted ? `
+          ${(() => {
+            const hasGenerationErrors = parseInt(failed) > 0 && !hasUncommitted;
+            return hasGenerationErrors ? `
           ### ⚠️ Generation Errors
           
           **${failed} directories failed** to generate indexes. Please review the workflow logs for details.
-          ` : ''}
+          ` : '';
+          })()}
           
           ---
           <details>
