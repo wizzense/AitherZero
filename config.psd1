@@ -284,8 +284,8 @@
                 }
                 Documentation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0733', '0744', '0745')
-                    Description = 'AI-powered documentation generation, auto-documentation, and project indexing'
+                    Scripts = @('0733', '0744', '0745', '0746')
+                    Description = 'AI-powered documentation generation, auto-documentation, project indexing, and orchestration'
                 }
                 Optimization = @{
                     DependsOn = @('Core.PowerShell7')
