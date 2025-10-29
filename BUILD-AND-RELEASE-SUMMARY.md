@@ -11,7 +11,9 @@ This implementation establishes a comprehensive official build and release syste
 **Key Features:**
 - **Multi-platform builds**: linux/amd64 and linux/arm64
 - **GitHub Container Registry integration**: Publishes to ghcr.io/wizzense/aitherzero
-- **Automatic triggers**: On version tags (v*) and GitHub releases
+- **Automatic triggers**: On GitHub releases (published) and workflow_dispatch
+  - **Optimized workflow**: Removed redundant tag push trigger to prevent duplicate builds
+  - **Sequenced execution**: Triggers AFTER release-automation.yml creates the release
 - **Multiple image tags**:
   - Specific version: `v1.1.0`
   - Major.minor: `1.1`
@@ -102,7 +104,29 @@ Updated `automation-scripts/README.md` to document the new git automation sectio
 
 ## Enhanced Release Workflow
 
-The existing `release-automation.yml` workflow already provides:
+### Workflow Execution Flow (Optimized)
+
+The release system uses a **sequential trigger chain** to avoid redundancy:
+
+1. **Tag Push (`v*`)** → Triggers `release-automation.yml` ONLY
+   - Pre-release validation (syntax, module loading, tests, code quality)
+   - Build release packages (ZIP, TAR.GZ, build-info.json)
+   - Create GitHub Release with artifacts
+   - Update `latest` tag
+
+2. **Release Published Event** → Triggers `docker-publish.yml` ONLY
+   - Build multi-platform Docker images
+   - Push to GitHub Container Registry
+   - Security scanning with Trivy
+   - Image testing and validation
+
+**Result**: Single Docker build per release, no redundant builds
+
+### Previous Issue (Fixed)
+- ❌ **Before**: Both workflows triggered on tag push, causing duplicate Docker builds
+- ✅ **After**: Sequential execution - tag push → release creation → Docker build
+
+The existing `release-automation.yml` workflow provides:
 
 1. **Pre-release validation**:
    - Syntax validation
