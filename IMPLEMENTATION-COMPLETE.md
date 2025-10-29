@@ -160,7 +160,7 @@ wget https://github.com/wizzense/AitherZero/releases/download/v1.1.0/AitherZero-
 
 # Or pull Docker image
 docker pull ghcr.io/wizzense/aitherzero:v1.1.0
-docker run -it --rm ghcr.io/wizzense/aitherzero:v1.1.0
+docker run -it --rm ghcr.io/wizzense/aitherzero:v1.1.0 pwsh
 ```
 
 ## Repository State
