@@ -341,6 +341,16 @@ try {
             
             Write-ScriptLog -Message "Report saved: $reportPath"
         }
+        
+        # Always save detailed JSON report for PR comments (in addition to requested format)
+        if ($Format -ne 'JSON') {
+            $jsonReportPath = Join-Path $OutputPath "$reportName-$fileName.json"
+            if ($PSCmdlet.ShouldProcess($jsonReportPath, "Save detailed JSON report")) {
+                $jsonReport = Format-QualityReport -Report $report -Format 'JSON'
+                $jsonReport | Set-Content -Path $jsonReportPath
+                Write-ScriptLog -Message "Detailed JSON report saved: $jsonReportPath"
+            }
+        }
     }
     
     # Create summary report

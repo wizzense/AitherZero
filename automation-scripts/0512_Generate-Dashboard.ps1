@@ -215,6 +215,147 @@ function Get-ProjectMetrics {
     return $metrics
 }
 
+function Get-QualityMetrics {
+    <#
+    .SYNOPSIS
+        Collect code quality validation metrics from recent reports
+    .DESCRIPTION
+        Aggregates quality validation data including scores, checks, and trends
+    #>
+    Write-ScriptLog -Message "Collecting quality validation metrics"
+    
+    $qualityMetrics = @{
+        OverallScore = 0
+        AverageScore = 0
+        TotalFiles = 0
+        PassedFiles = 0
+        FailedFiles = 0
+        WarningFiles = 0
+        Checks = @{
+            ErrorHandling = @{ Passed = 0; Failed = 0; Warnings = 0; AvgScore = 0 }
+            Logging = @{ Passed = 0; Failed = 0; Warnings = 0; AvgScore = 0 }
+            TestCoverage = @{ Passed = 0; Failed = 0; Warnings = 0; AvgScore = 0 }
+            PSScriptAnalyzer = @{ Passed = 0; Failed = 0; Warnings = 0; AvgScore = 0 }
+            UIIntegration = @{ Passed = 0; Failed = 0; Warnings = 0; AvgScore = 0 }
+            GitHubActions = @{ Passed = 0; Failed = 0; Warnings = 0; AvgScore = 0 }
+        }
+        RecentReports = @()
+        LastValidation = $null
+        Trends = @{
+            ScoreHistory = @()
+            PassRateHistory = @()
+        }
+    }
+    
+    # Find quality reports
+    $qualityReportsPath = Join-Path $ProjectPath "reports/quality"
+    if (-not (Test-Path $qualityReportsPath)) {
+        Write-ScriptLog -Level Warning -Message "Quality reports directory not found: $qualityReportsPath"
+        return $qualityMetrics
+    }
+    
+    # Get recent summary files
+    $summaryFiles = Get-ChildItem -Path $qualityReportsPath -Filter "*-summary.json" -ErrorAction SilentlyContinue | 
+                    Sort-Object LastWriteTime -Descending | 
+                    Select-Object -First 10
+    
+    if ($summaryFiles.Count -eq 0) {
+        Write-ScriptLog -Level Warning -Message "No quality summary reports found"
+        return $qualityMetrics
+    }
+    
+    # Process most recent summary
+    try {
+        $latestSummary = Get-Content $summaryFiles[0].FullName | ConvertFrom-Json
+        $qualityMetrics.AverageScore = $latestSummary.AverageScore
+        $qualityMetrics.TotalFiles = $latestSummary.FilesValidated
+        $qualityMetrics.PassedFiles = $latestSummary.Passed
+        $qualityMetrics.FailedFiles = $latestSummary.Failed
+        $qualityMetrics.WarningFiles = $latestSummary.Warnings
+        $qualityMetrics.LastValidation = $latestSummary.Timestamp
+        
+        # Calculate overall score
+        if ($qualityMetrics.TotalFiles -gt 0) {
+            $qualityMetrics.OverallScore = [math]::Round(
+                (($qualityMetrics.PassedFiles * 100) + ($qualityMetrics.WarningFiles * 70)) / $qualityMetrics.TotalFiles, 
+                1
+            )
+        }
+    } catch {
+        Write-ScriptLog -Level Warning -Message "Failed to parse latest quality summary: $_"
+    }
+    
+    # Collect detailed check statistics from individual reports
+    $detailedReports = Get-ChildItem -Path $qualityReportsPath -Filter "*.json" -ErrorAction SilentlyContinue | 
+                       Where-Object { $_.Name -notlike "*summary*" } |
+                       Sort-Object LastWriteTime -Descending |
+                       Select-Object -First 20
+    
+    $checkScores = @{}
+    foreach ($reportFile in $detailedReports) {
+        try {
+            $report = Get-Content $reportFile.FullName | ConvertFrom-Json
+            if ($report.Checks) {
+                foreach ($check in $report.Checks) {
+                    $checkName = $check.CheckName
+                    if (-not $checkScores.ContainsKey($checkName)) {
+                        $checkScores[$checkName] = @{ Scores = @(); Passed = 0; Failed = 0; Warnings = 0 }
+                    }
+                    
+                    $checkScores[$checkName].Scores += $check.Score
+                    
+                    switch ($check.Status) {
+                        'Passed' { $checkScores[$checkName].Passed++ }
+                        'Failed' { $checkScores[$checkName].Failed++ }
+                        'Warning' { $checkScores[$checkName].Warnings++ }
+                    }
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse quality report: $($reportFile.Name)"
+        }
+    }
+    
+    # Calculate average scores for each check type
+    foreach ($checkName in $checkScores.Keys) {
+        if ($qualityMetrics.Checks.ContainsKey($checkName)) {
+            $qualityMetrics.Checks[$checkName].Passed = $checkScores[$checkName].Passed
+            $qualityMetrics.Checks[$checkName].Failed = $checkScores[$checkName].Failed
+            $qualityMetrics.Checks[$checkName].Warnings = $checkScores[$checkName].Warnings
+            
+            if ($checkScores[$checkName].Scores.Count -gt 0) {
+                $qualityMetrics.Checks[$checkName].AvgScore = [math]::Round(
+                    ($checkScores[$checkName].Scores | Measure-Object -Average).Average,
+                    1
+                )
+            }
+        }
+    }
+    
+    # Build trends from historical summaries
+    foreach ($summaryFile in $summaryFiles) {
+        try {
+            $summary = Get-Content $summaryFile.FullName | ConvertFrom-Json
+            $qualityMetrics.Trends.ScoreHistory += @{
+                Timestamp = $summary.Timestamp
+                Score = $summary.AverageScore
+            }
+            
+            if ($summary.FilesValidated -gt 0) {
+                $passRate = [math]::Round(($summary.Passed / $summary.FilesValidated) * 100, 1)
+                $qualityMetrics.Trends.PassRateHistory += @{
+                    Timestamp = $summary.Timestamp
+                    PassRate = $passRate
+                }
+            }
+        } catch {
+            # Skip invalid summaries
+        }
+    }
+    
+    return $qualityMetrics
+}
+
 function Get-BuildStatus {
     Write-ScriptLog -Message "Determining build status"
 
@@ -310,6 +451,7 @@ function New-HTMLDashboard {
         [hashtable]$Metrics,
         [hashtable]$Status,
         [hashtable]$Activity,
+        [hashtable]$QualityMetrics,
         [string]$OutputPath
     )
 
@@ -1082,6 +1224,80 @@ $manifestTagsSection
                 </div>
             </section>
 
+            <section class="section" id="quality">
+                <h2>✨ Code Quality Validation</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card $(if($QualityMetrics.AverageScore -ge 90){''}elseif($QualityMetrics.AverageScore -ge 70){'warning'}else{'error'})">
+                        <h3>📈 Quality Score</h3>
+                        <div class="metric-value">$($QualityMetrics.AverageScore)%</div>
+                        <div class="metric-label">
+                            Average across $($QualityMetrics.TotalFiles) validated files
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: $($QualityMetrics.AverageScore)%; background: $(if($QualityMetrics.AverageScore -ge 90){'var(--success)'}elseif($QualityMetrics.AverageScore -ge 70){'var(--warning)'}else{'var(--error)'})">
+                                $(if($QualityMetrics.AverageScore -gt 0){ "$($QualityMetrics.AverageScore)%" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>✅ Validation Results</h3>
+                        <div class="metric-value">$($QualityMetrics.PassedFiles)</div>
+                        <div class="metric-label">
+                            ✅ $($QualityMetrics.PassedFiles) Passed | 
+                            ⚠️ $($QualityMetrics.WarningFiles) Warnings | 
+                            ❌ $($QualityMetrics.FailedFiles) Failed
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔍 Error Handling</h3>
+                        <div class="metric-value">$($QualityMetrics.Checks.ErrorHandling.AvgScore)%</div>
+                        <div class="metric-label">
+                            ✅ $($QualityMetrics.Checks.ErrorHandling.Passed) | 
+                            ⚠️ $($QualityMetrics.Checks.ErrorHandling.Warnings) | 
+                            ❌ $($QualityMetrics.Checks.ErrorHandling.Failed)
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Logging</h3>
+                        <div class="metric-value">$($QualityMetrics.Checks.Logging.AvgScore)%</div>
+                        <div class="metric-label">
+                            ✅ $($QualityMetrics.Checks.Logging.Passed) | 
+                            ⚠️ $($QualityMetrics.Checks.Logging.Warnings) | 
+                            ❌ $($QualityMetrics.Checks.Logging.Failed)
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">$($QualityMetrics.Checks.TestCoverage.AvgScore)%</div>
+                        <div class="metric-label">
+                            ✅ $($QualityMetrics.Checks.TestCoverage.Passed) | 
+                            ⚠️ $($QualityMetrics.Checks.TestCoverage.Warnings) | 
+                            ❌ $($QualityMetrics.Checks.TestCoverage.Failed)
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔬 PSScriptAnalyzer</h3>
+                        <div class="metric-value">$($QualityMetrics.Checks.PSScriptAnalyzer.AvgScore)%</div>
+                        <div class="metric-label">
+                            ✅ $($QualityMetrics.Checks.PSScriptAnalyzer.Passed) | 
+                            ⚠️ $($QualityMetrics.Checks.PSScriptAnalyzer.Warnings) | 
+                            ❌ $($QualityMetrics.Checks.PSScriptAnalyzer.Failed)
+                        </div>
+                    </div>
+                </div>
+                
+                $(if ($QualityMetrics.LastValidation) {
+                    "<p class='metric-label' style='text-align: center; margin-top: 20px;'>Last validation: $($QualityMetrics.LastValidation)</p>"
+                } else {
+                    "<p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>"
+                })
+            </section>
+
 $manifestHTML
 
 $domainsHTML
@@ -1228,6 +1444,7 @@ function New-MarkdownDashboard {
         [hashtable]$Metrics,
         [hashtable]$Status,
         [hashtable]$Activity,
+        [hashtable]$QualityMetrics,
         [string]$OutputPath
     )
 
@@ -1250,6 +1467,23 @@ function New-MarkdownDashboard {
 | 📝 **Lines of Code** | **$($Metrics.LinesOfCode.ToString('N0'))** | $($Metrics.Functions) Functions |
 | 🧪 **Tests** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
 | 📈 **Coverage** | **$($Metrics.Coverage.Percentage)%** | $($Metrics.Coverage.CoveredLines)/$($Metrics.Coverage.TotalLines) Lines |
+
+## ✨ Code Quality Validation
+
+| Metric | Score | Status |
+|--------|-------|--------|
+| 📈 **Overall Quality** | **$($QualityMetrics.AverageScore)%** | $(if($QualityMetrics.AverageScore -ge 90){'✅ Excellent'}elseif($QualityMetrics.AverageScore -ge 70){'⚠️ Good'}else{'❌ Needs Improvement'}) |
+| ✅ **Passed Files** | **$($QualityMetrics.PassedFiles)** | Out of $($QualityMetrics.TotalFiles) validated |
+| 🔍 **Error Handling** | **$($QualityMetrics.Checks.ErrorHandling.AvgScore)%** | ✅ $($QualityMetrics.Checks.ErrorHandling.Passed) / ⚠️ $($QualityMetrics.Checks.ErrorHandling.Warnings) / ❌ $($QualityMetrics.Checks.ErrorHandling.Failed) |
+| 📝 **Logging** | **$($QualityMetrics.Checks.Logging.AvgScore)%** | ✅ $($QualityMetrics.Checks.Logging.Passed) / ⚠️ $($QualityMetrics.Checks.Logging.Warnings) / ❌ $($QualityMetrics.Checks.Logging.Failed) |
+| 🧪 **Test Coverage** | **$($QualityMetrics.Checks.TestCoverage.AvgScore)%** | ✅ $($QualityMetrics.Checks.TestCoverage.Passed) / ⚠️ $($QualityMetrics.Checks.TestCoverage.Warnings) / ❌ $($QualityMetrics.Checks.TestCoverage.Failed) |
+| 🔬 **PSScriptAnalyzer** | **$($QualityMetrics.Checks.PSScriptAnalyzer.AvgScore)%** | ✅ $($QualityMetrics.Checks.PSScriptAnalyzer.Passed) / ⚠️ $($QualityMetrics.Checks.PSScriptAnalyzer.Warnings) / ❌ $($QualityMetrics.Checks.PSScriptAnalyzer.Failed) |
+
+$(if ($QualityMetrics.LastValidation) {
+    "*Last quality validation: $($QualityMetrics.LastValidation)*"
+} else {
+    "*⚠️ No quality validation data available. Run ``./az 0420`` to generate quality reports.*"
+})
 
 ## 🎯 Project Health
 
@@ -1316,6 +1550,7 @@ function New-JSONReport {
         [hashtable]$Metrics,
         [hashtable]$Status,
         [hashtable]$Activity,
+        [hashtable]$QualityMetrics,
         [string]$OutputPath
     )
 
@@ -1331,6 +1566,7 @@ function New-JSONReport {
         Metrics = $Metrics
         Status = $Status
         Activity = $Activity
+        QualityMetrics = $QualityMetrics
         Environment = @{
             CI = [bool]$env:AITHERZERO_CI
             Platform = $Metrics.Platform
@@ -1359,22 +1595,23 @@ try {
     $metrics = Get-ProjectMetrics
     $status = Get-BuildStatus
     $activity = Get-RecentActivity
+    $qualityMetrics = Get-QualityMetrics
 
     # Generate dashboards based on format selection
     switch ($Format) {
         'HTML' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
         }
         'Markdown' {
-            New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -OutputPath $OutputPath
+            New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
         }
         'JSON' {
-            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -OutputPath $OutputPath
+            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
         }
         'All' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -OutputPath $OutputPath
-            New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -OutputPath $OutputPath
-            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
+            New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
+            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
         }
     }
 
