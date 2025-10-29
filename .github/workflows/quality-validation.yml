@@ -425,12 +425,11 @@ jobs:
                   '2. Address the issues identified in the findings\n' +
                   '3. Run local validation: `./aitherzero 0420 -Path ' + file.FilePath + '`\n' +
                   '4. Re-run validation after fixes\n\n' +
-                  '@copilot please review this file and address the quality issues identified above.';
-
----
-*This issue was automatically created by the Quality Validation System*
-*Related PR: #${{ github.event.pull_request.number }}*
-*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
+                  '@copilot please review this file and address the quality issues identified above.\n\n' +
+                  '---\n' +
+                  '*This issue was automatically created by the Quality Validation System*\n' +
+                  '*Related PR: #${{ github.event.pull_request.number }}*\n' +
+                  '*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*';
                 
                 // Create the issue
                 const issue = await github.rest.issues.create({

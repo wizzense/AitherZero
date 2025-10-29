@@ -255,9 +255,9 @@ function Get-QualityMetrics {
     }
     
     # Get recent summary files
-    $summaryFiles = Get-ChildItem -Path $qualityReportsPath -Filter "*-summary.json" -ErrorAction SilentlyContinue | 
+    $summaryFiles = @(Get-ChildItem -Path $qualityReportsPath -Filter "*-summary.json" -ErrorAction SilentlyContinue | 
                     Sort-Object LastWriteTime -Descending | 
-                    Select-Object -First 10
+                    Select-Object -First 10)
     
     if ($summaryFiles.Count -eq 0) {
         Write-ScriptLog -Level Warning -Message "No quality summary reports found"
@@ -267,11 +267,11 @@ function Get-QualityMetrics {
     # Process most recent summary
     try {
         $latestSummary = Get-Content $summaryFiles[0].FullName | ConvertFrom-Json
-        $qualityMetrics.AverageScore = $latestSummary.AverageScore
-        $qualityMetrics.TotalFiles = $latestSummary.FilesValidated
-        $qualityMetrics.PassedFiles = $latestSummary.Passed
-        $qualityMetrics.FailedFiles = $latestSummary.Failed
-        $qualityMetrics.WarningFiles = $latestSummary.Warnings
+        $qualityMetrics.AverageScore = if ($latestSummary.AverageScore) { $latestSummary.AverageScore } else { 0 }
+        $qualityMetrics.TotalFiles = if ($latestSummary.FilesValidated) { $latestSummary.FilesValidated } else { 0 }
+        $qualityMetrics.PassedFiles = if ($latestSummary.Passed) { $latestSummary.Passed } else { 0 }
+        $qualityMetrics.FailedFiles = if ($latestSummary.Failed) { $latestSummary.Failed } else { 0 }
+        $qualityMetrics.WarningFiles = if ($latestSummary.Warnings) { $latestSummary.Warnings } else { 0 }
         $qualityMetrics.LastValidation = $latestSummary.Timestamp
         
         # Calculate overall score

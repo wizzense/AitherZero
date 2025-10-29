@@ -545,7 +545,7 @@
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-28 19:37:20
+        🔄 Last updated: 2025-10-29 18:42:09
     </div>
 
     <div class="container">
@@ -554,9 +554,8 @@
             <div class="subtitle">Infrastructure Automation Platform</div>
 
             <div class="badges-container">
-                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/intelligent-ci-orchestrator.yml?label=CI%2FCD&logo=github" alt="CI/CD Status">
-                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
                 <img src="https://img.shields.io/badge/tests-unknown-lightgrey" alt="Tests Status">
                 <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
@@ -586,23 +585,23 @@
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <h3>📁 Project Files</h3>
-                        <div class="metric-value">181</div>
+                        <div class="metric-value">201</div>
                         <div class="metric-label">
-                            124 Scripts | 48 Modules | 9 Data Files
+                            131 Scripts | 60 Modules | 10 Data Files
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">71,083</div>
+                        <div class="metric-value">81,233</div>
                         <div class="metric-label">0 Functions</div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🧪 Test Suite</h3>
-                        <div class="metric-value">110</div>
+                        <div class="metric-value">112</div>
                         <div class="metric-label">
-                            102 Unit | 8 Integration
+                            102 Unit | 10 Integration
                         </div>
                     </div>
 
@@ -621,6 +620,76 @@
                 </div>
             </section>
 
+            <section class="section" id="quality">
+                <h2>✨ Code Quality Validation</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card error">
+                        <h3>📈 Quality Score</h3>
+                        <div class="metric-value">49%</div>
+                        <div class="metric-label">
+                            Average across 1 validated files
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 49%; background: var(--error)">
+                                49%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>✅ Validation Results</h3>
+                        <div class="metric-value">0</div>
+                        <div class="metric-label">
+                            ✅ 0 Passed | 
+                            ⚠️ 0 Warnings | 
+                            ❌ 1 Failed
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔍 Error Handling</h3>
+                        <div class="metric-value">90%</div>
+                        <div class="metric-label">
+                            ✅ 1 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Logging</h3>
+                        <div class="metric-value">65%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 1
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 1
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔬 PSScriptAnalyzer</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 1
+                        </div>
+                    </div>
+                </div>
+                
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Last validation: 10/29/2025 18:40:17</p>
+            </section>
+
             <section class="section" id="manifest">
                 <h2>📦 Module Manifest</h2>
                 <div class="manifest-info">
@@ -628,7 +697,7 @@
                     <div class="manifest-grid">
                         <div class="manifest-item">
                             <div class="label">Version</div>
-                            <div class="value">1.0.0</div>
+                            <div class="value">1.0.0.0</div>
                         </div>
                         <div class="manifest-item">
                             <div class="label">GUID</div>
@@ -739,24 +808,16 @@
                     <div class="info-card-body">
                         <ul class="commit-list">
                             <li class='commit-item'>
-                                <span class='commit-hash'>b7025e0</span>
-                                <span class='commit-message'>Add comprehensive tests for dashboard script with -Open parameter</span>
+                                <span class='commit-hash'>edd9088</span>
+                                <span class='commit-message'>Enhanced quality validation reporting with detailed PR comments and dashboard integration</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>cd56251</span>
-                                <span class='commit-message'>Add -Open parameter to dashboard script for easy HTML viewing</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>57fbee6</span>
-                                <span class='commit-message'>Merge branch 'main' into copilot/fix-html-dashboard-not-found</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>0a449bc</span>
-                                <span class='commit-message'>Fix workflow validation errors and restore AitherZero documentation (#991)</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>86a40e9</span>
+                                <span class='commit-hash'>95ad991</span>
                                 <span class='commit-message'>Initial plan</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>341ba70</span>
+                                <span class='commit-message'>Add aithercore: complete 11-module foundational distribution with build system and workflow integration (#1663)</span>
                             </li>
                         </ul>
                     </div>
@@ -779,7 +840,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.12</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-28 19:37:20</p>
+                        <p><strong>Last Scan:</strong> 2025-10-29 18:42:09</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -799,7 +860,7 @@
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-28 19:37:20 |
+            Generated by AitherZero Dashboard | 2025-10-29 18:42:09 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
