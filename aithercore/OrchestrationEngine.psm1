@@ -1031,12 +1031,17 @@ function Invoke-SequentialOrchestration {
 
                 # Write audit log for script execution
                 if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
-                    Write-AuditLog -EventNameType 'ScriptExecution' -Action 'StartScript' -Target $script.Path -Details @{
-                        ScriptName = $script.Name
-                        ScriptNumber = $script.Number
-                        Configuration = $Configuration
-                        DryRun = $DryRun
-                        RetryAttempt = $retryCount
+                    try {
+                        Write-AuditLog -EventNameType 'ScriptExecution' -Action 'StartScript' -Target $script.Path -Details @{
+                            ScriptName = $script.Name
+                            ScriptNumber = $script.Number
+                            Configuration = $Configuration
+                            DryRun = $DryRun
+                            RetryAttempt = $retryCount
+                        }
+                    }
+                    catch {
+                        # Silently ignore audit log errors
                     }
                 }
 

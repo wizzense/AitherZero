@@ -554,7 +554,7 @@ function Enable-AuditLogging {
     $script:AuditEnabled = $true
     $script:CurrentCorrelationId = $CorrelationId
     Write-CustomLog -Level 'Information' -Message "Audit logging enabled" -Source "Logging"
-    Write-AuditLog -EventType 'SystemChange' -Action 'EnableAuditLogging' -Result 'Success'
+    Write-AuditLog -EventNameType 'SystemChange' -Action 'EnableAuditLogging' -Result 'Success'
 }
 
 function Disable-AuditLogging {
@@ -565,7 +565,7 @@ function Disable-AuditLogging {
     [CmdletBinding()]
     param()
 
-    Write-AuditLog -EventType 'SystemChange' -Action 'DisableAuditLogging' -Result 'Success'
+    Write-AuditLog -EventNameType 'SystemChange' -Action 'DisableAuditLogging' -Result 'Success'
     $script:AuditEnabled = $false
     $script:CurrentCorrelationId = $null
     Write-CustomLog -Level 'Information' -Message "Audit logging disabled" -Source "Logging"

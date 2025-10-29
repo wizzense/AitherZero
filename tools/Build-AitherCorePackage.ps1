@@ -361,7 +361,7 @@ Get-ChildItem $sourcePath -File | ForEach-Object {
 
 # Make script executable
 if ($IsLinux -or $IsMacOS) {
-    chmod +x "$installPath/Bootstrap.psm1" 2>/dev/null
+    Start-Process chmod -ArgumentList '+x', "$installPath/Bootstrap.psm1" -Wait -NoNewWindow -ErrorAction SilentlyContinue
 }
 
 Write-Host "`n✅ Installation complete!" -ForegroundColor Green
@@ -374,7 +374,8 @@ Write-Host "  Get-Module AitherCore -ListAvailable" -ForegroundColor White
         
         # Make it executable on Unix
         if ($IsLinux -or $IsMacOS) {
-            chmod +x (Join-Path $PackageRoot "Install-Unix.ps1")
+            $installScriptPath = Join-Path $PackageRoot "Install-Unix.ps1"
+            Start-Process chmod -ArgumentList '+x', $installScriptPath -Wait -NoNewWindow -ErrorAction SilentlyContinue
         }
     }
 }
@@ -413,11 +414,16 @@ function New-PackageArchive {
         
         $packageDir = Split-Path $PackageRoot -Leaf
         $packageParent = Split-Path $PackageRoot -Parent
+        $tarFileName = Split-Path $tarFile -Leaf
         
         Push-Location $packageParent
         try {
             if ($IsLinux -or $IsMacOS) {
-                tar -czf $tarFile $packageDir
+                tar -czf $tarFileName $packageDir
+                # Move from current directory to final output path
+                if (Test-Path $tarFileName) {
+                    Move-Item $tarFileName $tarFile -Force
+                }
             }
             else {
                 # On Windows, use PowerShell compression
@@ -430,7 +436,6 @@ function New-PackageArchive {
             Pop-Location
         }
         
-        Move-Item $tarFile $OutputPath -Force
         Write-BuildLog "Created: $tarFile" -Level Success
         
         return $tarFile
