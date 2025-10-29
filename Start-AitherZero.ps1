@@ -8,7 +8,7 @@
     Note: This script requires PowerShell 7.0 or higher. If running from PowerShell 5.1,
     the script will automatically attempt to relaunch itself using pwsh.
 .PARAMETER Mode
-    Startup mode: Interactive (default), NonInteractive, Orchestrate, Validate, Test, List, Search, Run
+    Startup mode: Interactive (default), Orchestrate, Validate, Test, List, Search, Run, Deploy
 .PARAMETER Sequence
     Number sequence for orchestration mode
 .PARAMETER ConfigPath
@@ -30,10 +30,6 @@
 .EXAMPLE
     # Interactive mode (default)
     .\Start-AitherZero.ps1
-
-.EXAMPLE
-    # Non-interactive mode (auto-detects what to do based on parameters)
-    .\Start-AitherZero.ps1 -Mode NonInteractive
 
 .EXAMPLE
     # Run specific sequence
@@ -61,7 +57,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run', 'NonInteractive')]
+    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
     [string]$Mode = 'Interactive',
 
     [string[]]$Sequence,
@@ -1678,25 +1674,6 @@ try {
     if ($NonInteractive -and $Mode -eq 'Interactive') {
         Write-Warning "Interactive mode is not compatible with NonInteractive flag. Use -Mode Validate, Orchestrate, or Test instead."
         exit 1
-    }
-
-    # Handle NonInteractive mode by resolving it to the appropriate actual mode
-    if ($Mode -eq 'NonInteractive') {
-        # NonInteractive mode is a convenience alias - determine the best actual mode
-        if ($Sequence -or $Playbook) {
-            $Mode = 'Orchestrate'
-        } elseif ($Target -eq 'script' -or $ScriptNumber -or ($Target -and $Target -match '^\d{3,4}$')) {
-            $Mode = 'Run'
-        } elseif ($Query) {
-            $Mode = 'Search'
-        } elseif ($Target) {
-            $Mode = 'List'
-        } else {
-            # Default to Validate mode for non-interactive runs without specific targets
-            $Mode = 'Validate'
-        }
-        $NonInteractive = $true
-        Write-Verbose "NonInteractive mode resolved to: $Mode"
     }
 
     # Handle different modes

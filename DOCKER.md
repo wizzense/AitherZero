@@ -41,9 +41,6 @@ Execute commands without entering the container:
 # Run unit tests (using simplified syntax)
 docker exec aitherzero-pr-1634 pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode Run -Target 0402"
 
-# Or use the NonInteractive mode (even simpler)
-docker exec aitherzero-pr-1634 pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode NonInteractive -Target 0501"
-
 # Run PSScriptAnalyzer
 docker exec aitherzero-pr-1634 pwsh -Command "az 0404"
 
