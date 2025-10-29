@@ -38,7 +38,7 @@ cd AitherZero
 docker-compose up -d
 
 # Access the container
-docker exec -it aitherzero-app pwsh
+docker-compose exec aitherzero pwsh
 
 # AitherZero is already loaded!
 PS /opt/aitherzero> Start-AitherZero

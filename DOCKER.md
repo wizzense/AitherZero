@@ -209,7 +209,7 @@ For local development, use Docker Compose:
 docker-compose up -d
 
 # Access the container
-docker exec -it aitherzero-app pwsh
+docker-compose exec aitherzero pwsh
 
 # View logs
 docker-compose logs -f

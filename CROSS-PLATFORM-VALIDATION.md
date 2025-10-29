@@ -279,7 +279,7 @@ Expand-Archive -Path "AitherZero.zip" -DestinationPath "C:\AitherZero"
 
 # Or use Docker
 docker pull ghcr.io/wizzense/aitherzero:latest
-docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest pwsh
 ```
 
 ### Linux/macOS Users
@@ -292,7 +292,7 @@ tar -xzf AitherZero-v1.0.0.0.tar.gz
 
 # Or use Docker
 docker pull ghcr.io/wizzense/aitherzero:latest
-docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest pwsh
 ```
 
 ### ARM64/M1/M2 Mac Users
