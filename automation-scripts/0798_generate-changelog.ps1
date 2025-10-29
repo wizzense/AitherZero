@@ -74,8 +74,26 @@ try {
 
 Write-Host "📊 Generating changelog from $FromTag to $ToTag..." -ForegroundColor Cyan
 
-# Get commit messages
-$commits = git log --pretty=format:"%H|%s|%b|%an|%ae|%ai" "$FromTag..$ToTag" | ConvertFrom-Csv -Delimiter '|' -Header 'Hash', 'Subject', 'Body', 'Author', 'Email', 'Date'
+# Get commit messages using a simple format
+$commits = @()
+$commitList = git log --pretty=format:"%H" "$FromTag..$ToTag"
+
+foreach ($hash in $commitList) {
+    $subject = git log --format=%s -n 1 $hash
+    $body = git log --format=%b -n 1 $hash
+    $author = git log --format=%an -n 1 $hash
+    $email = git log --format=%ae -n 1 $hash
+    $date = git log --format=%ai -n 1 $hash
+    
+    $commits += [PSCustomObject]@{
+        Hash = $hash
+        Subject = $subject
+        Body = $body
+        Author = $author
+        Email = $email
+        Date = $date
+    }
+}
 
 if ($commits.Count -eq 0) {
     Write-Host "⚠️  No commits found between $FromTag and $ToTag" -ForegroundColor Yellow
@@ -121,7 +139,7 @@ foreach ($commit in $commits) {
     $isBreaking = $commit.Body -match 'BREAKING CHANGE' -or $commit.Subject -match '!'
     
     $categories[$type].Commits += @{
-        Hash      = $commit.Hash.Substring(0, 8)
+        Hash      = if ($commit.Hash.Length -ge 8) { $commit.Hash.Substring(0, 8) } else { $commit.Hash }
         Message   = $message
         Author    = $commit.Author
         Date      = $commit.Date
@@ -185,7 +203,17 @@ $changelogContent += "### 📊 Statistics"
 $changelogContent += ""
 $changelogContent += "- **Total Commits:** $($commits.Count)"
 $changelogContent += "- **Contributors:** $($contributors.Count)"
-$changelogContent += "- **Files Changed:** $(git diff --shortstat $FromTag..$ToTag | Select-String -Pattern '\d+ files? changed' | ForEach-Object { $_.Matches.Value })"
+
+# Get file changes statistics
+try {
+    $diffStat = git diff --shortstat "$FromTag" "$ToTag" 2>&1
+    if ($LASTEXITCODE -eq 0 -and $diffStat) {
+        $changelogContent += "- **Changes:** $diffStat"
+    }
+} catch {
+    # Skip if diff fails
+}
+
 $changelogContent += ""
 
 # Full changelog link
