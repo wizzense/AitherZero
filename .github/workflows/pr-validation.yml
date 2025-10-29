@@ -172,14 +172,30 @@ jobs:
           # Minimal bootstrap for validation
           ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
 
-          # Test syntax
+          # Test syntax with -All switch to validate all PowerShell files
           try {
-            & "./automation-scripts/0407_*.ps1"
-            echo "SYNTAX_STATUS=✅ PASSED" >> $env:GITHUB_ENV
+            Write-Host "Running syntax validation on all PowerShell files..." -ForegroundColor Cyan
+            $output = & "./automation-scripts/0407_Validate-Syntax.ps1" -All 2>&1
+
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "✅ Syntax validation passed" -ForegroundColor Green
+              echo "SYNTAX_STATUS=✅ PASSED" >> $env:GITHUB_ENV
+              echo "SYNTAX_DETAILS<<EOF" >> $env:GITHUB_ENV
+              echo "$output" >> $env:GITHUB_ENV
+              echo "EOF" >> $env:GITHUB_ENV
+            } else {
+              Write-Host "❌ Syntax validation failed" -ForegroundColor Red
+              Write-Host "$output" -ForegroundColor Yellow
+              echo "SYNTAX_STATUS=❌ FAILED" >> $env:GITHUB_ENV
+              echo "SYNTAX_ERROR<<EOF" >> $env:GITHUB_ENV
+              echo "$output" >> $env:GITHUB_ENV
+              echo "EOF" >> $env:GITHUB_ENV
+            }
           } catch {
+            Write-Host "⚠️ Error running syntax validation: $_" -ForegroundColor Red
             echo "SYNTAX_STATUS=❌ FAILED" >> $env:GITHUB_ENV
             echo "SYNTAX_ERROR<<EOF" >> $env:GITHUB_ENV
-            echo "$_" >> $env:GITHUB_ENV
+            echo "Error executing syntax validation script: $_" >> $env:GITHUB_ENV
             echo "EOF" >> $env:GITHUB_ENV
           }
 
@@ -199,6 +215,7 @@ jobs:
 
             const syntaxStatus = process.env.SYNTAX_STATUS || 'Not checked';
             const syntaxError = process.env.SYNTAX_ERROR || '';
+            const syntaxDetails = process.env.SYNTAX_DETAILS || '';
             const changeSummary = "${{ steps.analyze.outputs.change-summary }}";
 
             const prNumber = context.payload.pull_request.number;
@@ -219,10 +236,39 @@ jobs:
 
             if (syntaxError) {
               comment += `
-            ### ❌ Syntax Issues
+            ### ❌ Syntax Validation Failed
+
+            The syntax validation detected errors in your PowerShell code. Please review and fix the issues below:
+
+            <details>
+            <summary>📋 View Syntax Errors</summary>
+
             \`\`\`
             ${syntaxError}
             \`\`\`
+
+            </details>
+
+            **How to fix:**
+            1. Review the error messages above to identify problematic files
+            2. Fix syntax errors in the identified files
+            3. Run local validation: \`./automation-scripts/0407_Validate-Syntax.ps1 -FilePath <file>\`
+            4. Push your changes to trigger re-validation
+            `;
+            } else if (syntaxDetails && syntaxStatus.includes('PASSED')) {
+              comment += `
+            ### ✅ Syntax Validation Passed
+
+            All PowerShell files have valid syntax. Great job! 🎉
+
+            <details>
+            <summary>📋 View Validation Details</summary>
+
+            \`\`\`
+            ${syntaxDetails}
+            \`\`\`
+
+            </details>
             `;
             }
 
@@ -235,11 +281,25 @@ jobs:
 
             comment += `
             ### 🚀 Next Steps
-            ${syntaxStatus.includes('FAILED') ?
-              '1. ❗ **Fix syntax errors** before proceeding\n2. Push changes to trigger re-validation' :
-              '1. ✅ Quick validation passed\n2. Comprehensive CI will run automatically\n3. Monitor the CI pipeline for full results'
+            `;
+
+            if (syntaxStatus.includes('FAILED')) {
+              comment += `
+            1. ❗ **Fix syntax errors** listed above
+            2. **Test locally** using: \`./automation-scripts/0407_Validate-Syntax.ps1 -All\`
+            3. **Push changes** to trigger automatic re-validation
+            4. Once validation passes, **comprehensive CI** will run automatically
+            `;
+            } else {
+              comment += `
+            1. ✅ Quick validation passed successfully
+            2. 🔄 Comprehensive CI will run automatically
+            3. 📊 Monitor the [CI pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for full results
+            4. 🧪 Consider running additional local tests: \`./az.ps1 0402\`
+            `;
             }
 
+            comment += `
             ---
             *Automated PR validation • [View full CI pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*
             `;
