@@ -299,9 +299,9 @@ jobs:
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
 
           # Calculate unique port for each PR with automatic rollover
-          # Port range: 8080-65535 (57,456 ports available)
-          # Formula: 8080 + (PR_NUMBER % 57456) ensures ports stay within valid range
-          DYNAMIC_PORT="$((8080 + (${PR_NUMBER} % 57456)))"
+          # Port range: 8080-8179 (100 ports available)
+          # Formula: 8080 + (PR_NUMBER % 100) ensures ports roll over after 100 PRs
+          DYNAMIC_PORT="$((8080 + (${PR_NUMBER} % 100)))"
           echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
 
           # Create environment-specific compose file
@@ -440,9 +440,9 @@ jobs:
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
             
             // Calculate unique port for each PR with automatic rollover
-            // Port range: 8080-65535 (57,456 ports available)
-            // Formula: 8080 + (prNumber % 57456) ensures ports stay within valid range
-            const dynamicPort = 8080 + (prNumber % 57456);
+            // Port range: 8080-8179 (100 ports available)
+            // Formula: 8080 + (prNumber % 100) ensures ports roll over after 100 PRs
+            const dynamicPort = 8080 + (prNumber % 100);
             
             // Get job results
             const validationResult = '${{ needs.validate-docker-config.result }}';
