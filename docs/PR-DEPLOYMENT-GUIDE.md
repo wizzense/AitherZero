@@ -248,7 +248,7 @@ docker ps -a | grep aitherzero-pr-
 docker logs aitherzero-pr-123 -f
 
 # Execute commands in container
-docker exec aitherzero-pr-123 pwsh -Command "Import-Module /app/AitherZero.psd1; Get-Module"
+docker exec aitherzero-pr-123 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; Get-Module"
 
 # Run tests
 docker exec aitherzero-pr-123 pwsh -Command "./az.ps1 0402"
