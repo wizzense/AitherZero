@@ -1,27 +1,35 @@
 ---
-name: Deploy PR Environment
+name: Deploy PR Environment and Releases
 
-# Deploy ephemeral test environments for PRs
+# Deploy ephemeral test environments for PRs AND build/publish release images
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main, develop]
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
   issue_comment:
     types: [created]
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR number to deploy'
-        required: true
+        description: 'PR number to deploy (leave empty for release)'
+        required: false
         type: number
+      release_tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: false
+        type: string
       force_redeploy:
         description: 'Force redeployment even if environment exists'
         type: boolean
         default: false
 
-# Prevent concurrent deployments for the same PR
+# Prevent concurrent deployments for the same PR or release
 concurrency:
-  group: deploy-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  group: deploy-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.release.tag_name || github.ref_name }}
   cancel-in-progress: false  # Don't cancel in-progress deployments
 
 permissions:
@@ -34,7 +42,7 @@ permissions:
   id-token: write  # For OIDC authentication to cloud providers
 
 env:
-  DEPLOYMENT_TYPE: preview
+  DEPLOYMENT_TYPE: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') && 'release' || 'preview' }}
   CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/aitherzero
 
@@ -47,6 +55,8 @@ jobs:
       should-deploy: ${{ steps.check.outputs.should-deploy }}
       pr-number: ${{ steps.check.outputs.pr-number }}
       deployment-comment: ${{ steps.check.outputs.deployment-comment }}
+      is-release: ${{ steps.check.outputs.is-release }}
+      release-tag: ${{ steps.check.outputs.release-tag }}
 
     steps:
       - name: 🔍 Check Deployment Conditions
@@ -57,6 +67,8 @@ jobs:
             let shouldDeploy = false;
             let prNumber = null;
             let isDeploymentComment = false;
+            let isRelease = false;
+            let releaseTag = null;
 
             // Handle different trigger types
             if (context.eventName === 'pull_request') {
@@ -64,6 +76,20 @@ jobs:
               shouldDeploy = !context.payload.pull_request.draft;
               prNumber = context.payload.pull_request.number;
               core.info(`PR event: #${prNumber}, Draft: ${context.payload.pull_request.draft}`);
+
+            } else if (context.eventName === 'push' && context.ref.startsWith('refs/tags/')) {
+              // Tag push - this is a release
+              shouldDeploy = true;
+              isRelease = true;
+              releaseTag = context.ref.replace('refs/tags/', '');
+              core.info(`Tag push event: ${releaseTag}`);
+
+            } else if (context.eventName === 'release') {
+              // Release event
+              shouldDeploy = true;
+              isRelease = true;
+              releaseTag = context.payload.release.tag_name;
+              core.info(`Release event: ${releaseTag}`);
 
             } else if (context.eventName === 'issue_comment') {
               // Deploy on comment commands
@@ -83,13 +109,21 @@ jobs:
             } else if (context.eventName === 'workflow_dispatch') {
               // Manual deployment trigger
               shouldDeploy = true;
-              prNumber = context.payload.inputs.pr_number;
-              core.info(`Manual deployment trigger for PR #${prNumber}`);
+              if (context.payload.inputs.pr_number) {
+                prNumber = context.payload.inputs.pr_number;
+                core.info(`Manual deployment trigger for PR #${prNumber}`);
+              } else if (context.payload.inputs.release_tag) {
+                isRelease = true;
+                releaseTag = context.payload.inputs.release_tag;
+                core.info(`Manual deployment trigger for release ${releaseTag}`);
+              }
             }
 
             core.setOutput('should-deploy', shouldDeploy);
             core.setOutput('pr-number', prNumber);
             core.setOutput('deployment-comment', isDeploymentComment);
+            core.setOutput('is-release', isRelease);
+            core.setOutput('release-tag', releaseTag);
 
             if (!shouldDeploy) {
               core.notice('Deployment skipped: Conditions not met');
@@ -105,10 +139,11 @@ jobs:
       validation-passed: ${{ steps.validate.outputs.passed }}
 
     steps:
-      - name: 📥 Checkout PR Branch
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ needs.check-deployment-trigger.outputs.pr-number }}/head
+          ref: ${{ needs.check-deployment-trigger.outputs.is-release == 'true' && needs.check-deployment-trigger.outputs.release-tag || format('refs/pull/{0}/head', needs.check-deployment-trigger.outputs.pr-number) }}
+          fetch-depth: 0
 
       - name: 🔍 Run Quick Docker Validation
         id: validate
@@ -156,10 +191,11 @@ jobs:
       package-url: ${{ steps.image-tag.outputs.package-url }}
 
     steps:
-      - name: 📥 Checkout PR Branch
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ needs.check-deployment-trigger.outputs.pr-number }}/head
+          ref: ${{ needs.check-deployment-trigger.outputs.is-release == 'true' && needs.check-deployment-trigger.outputs.release-tag || format('refs/pull/{0}/head', needs.check-deployment-trigger.outputs.pr-number) }}
+          fetch-depth: 0
 
       - name: 🔐 Login to Container Registry
         uses: docker/login-action@v3
@@ -183,7 +219,11 @@ jobs:
           images: ${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}
           tags: |
             type=ref,event=pr,prefix=pr-
-            type=sha,prefix=pr-${{ needs.check-deployment-trigger.outputs.pr-number }}-
+            type=sha,prefix=pr-${{ needs.check-deployment-trigger.outputs.pr-number }}-,enable=${{ needs.check-deployment-trigger.outputs.is-release != 'true' }}
+            type=semver,pattern={{version}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+            type=semver,pattern={{major}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+            type=raw,value=latest,enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
 
       - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -200,7 +240,9 @@ jobs:
           cache-from: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}:buildcache
           cache-to: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}:buildcache,mode=max
           build-args: |
-            PR_NUMBER=${{ needs.check-deployment-trigger.outputs.pr-number }}
+            PR_NUMBER=${{ needs.check-deployment-trigger.outputs.pr-number || '' }}
+            RELEASE_TAG=${{ needs.check-deployment-trigger.outputs.release-tag || '' }}
+            VERSION=${{ needs.check-deployment-trigger.outputs.is-release == 'true' && needs.check-deployment-trigger.outputs.release-tag || '0.0.0.0' }}
             COMMIT_SHA=${{ github.sha }}
 
       - name: 📊 Image Build Summary
@@ -227,12 +269,12 @@ jobs:
           echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Package URL**: ${PACKAGE_URL}" >> $GITHUB_STEP_SUMMARY
           echo "- **Labels**: ${{ steps.meta.outputs.labels }}" >> $GITHUB_STEP_SUMMARY
-  # Deploy to Docker Compose (local/simple deployment)
+  # Deploy to Docker Compose (local/simple deployment) - PR only
   deploy-docker-compose:
     name: Deploy with Docker Compose
     runs-on: ubuntu-latest
     needs: [check-deployment-trigger, build-container]
-    if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.check-deployment-trigger.outputs.is-release != 'true'
     environment:
       name: pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
       url: ${{ needs.build-container.outputs.package-url }}
@@ -331,12 +373,54 @@ jobs:
             exit 1
           }
 
+  # Security scan for release images
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [check-deployment-trigger, build-container]
+    if: needs.check-deployment-trigger.outputs.is-release == 'true'
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build-container.outputs.image-tag }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: 📤 Upload Trivy Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: 📊 Generate Security Summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Security scan completed using Trivy" >> $GITHUB_STEP_SUMMARY
+          echo "Check the Security tab for detailed results" >> $GITHUB_STEP_SUMMARY
+
   # Comment on PR with deployment status
   comment-deployment-status:
     name: Update PR with Deployment Status
     runs-on: ubuntu-latest
     needs: [check-deployment-trigger, validate-docker-config, build-container, deploy-docker-compose]
-    if: always() && needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    if: always() && needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.check-deployment-trigger.outputs.is-release != 'true'
 
     steps:
       - name: 💬 Post Deployment Status
