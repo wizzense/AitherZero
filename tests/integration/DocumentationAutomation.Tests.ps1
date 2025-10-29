@@ -5,7 +5,8 @@
     Integration tests for documentation automation (0746 script)
 .DESCRIPTION
     Tests that the documentation orchestrator properly coordinates
-    documentation generation and prevents duplicate INDEX.md files
+    documentation generation and prevents duplicate uppercase INDEX.md files.
+    Ensures all generated index files use lowercase naming (index.md).
 #>
 
 BeforeAll {
@@ -75,8 +76,10 @@ Describe "Documentation Automation (0746)" {
         It "No uppercase INDEX.md files exist in generated docs" {
             $docsGenerated = Join-Path $script:projectRoot "docs/generated"
             if (Test-Path $docsGenerated) {
+                # Only check docs/generated as this is where 0744 and 0745 generate documentation
+                # Other directories use different naming conventions and are not managed by these scripts
                 $uppercaseIndexFiles = @(Get-ChildItem -Path $docsGenerated -Recurse -File | Where-Object { $_.Name -ceq "INDEX.md" })
-                $uppercaseIndexFiles.Count | Should -Be 0 -Because "All index files should be lowercase (index.md)"
+                $uppercaseIndexFiles.Count | Should -Be 0 -Because "All index files in generated docs should be lowercase (index.md)"
             }
         }
     }
