@@ -56,6 +56,11 @@ $modulesToLoad = @(
     # Configuration (optional Logging dependency)
     'Configuration.psm1',
     
+    # Platform services (depend on Logging)
+    'Performance.psm1',
+    'PackageManager.psm1',
+    'Bootstrap.psm1',
+    
     # User interface (depends on TextUtilities, Configuration)
     'BetterMenu.psm1',
     'UserInterface.psm1',

@@ -38,15 +38,35 @@ This consolidation serves several key purposes:
 - **Purpose**: Text formatting and spacing utilities
 - **Key Functions**: `Repair-TextSpacing`
 
+### Platform Services
+
+#### 4. Performance.psm1
+- **Size**: ~702 lines
+- **Dependencies**: Logging
+- **Purpose**: Runtime performance monitoring and profiling
+- **Key Functions**: `Start-PerformanceTimer`, `Get-PerformanceMetrics`, `Measure-Performance`
+
+#### 5. Bootstrap.psm1
+- **Size**: ~713 lines
+- **Dependencies**: Logging
+- **Purpose**: Platform initialization and environment setup
+- **Key Functions**: `Initialize-AitherEnvironment`, `Test-PowerShell7`, `Install-ValidationTools`
+
+#### 6. PackageManager.psm1
+- **Size**: ~490 lines
+- **Dependencies**: Logging
+- **Purpose**: Cross-platform package and dependency management
+- **Key Functions**: `Install-SoftwarePackage`, `Test-PackageInstalled`, `Get-AvailablePackageManagers`
+
 ### User Interface
 
-#### 4. BetterMenu.psm1
+#### 7. BetterMenu.psm1
 - **Size**: ~488 lines
 - **Dependencies**: TextUtilities
 - **Purpose**: Interactive menu system with keyboard navigation
 - **Key Functions**: `Show-BetterMenu`
 
-#### 5. UserInterface.psm1
+#### 8. UserInterface.psm1
 - **Size**: ~1029 lines
 - **Dependencies**: TextUtilities, Configuration, BetterMenu
 - **Purpose**: Unified UI system with menus, progress tracking, notifications
@@ -54,13 +74,13 @@ This consolidation serves several key purposes:
 
 ### Infrastructure & Security
 
-#### 6. Infrastructure.psm1
+#### 9. Infrastructure.psm1
 - **Size**: ~182 lines
 - **Dependencies**: Logging
 - **Purpose**: Lightweight infrastructure essentials and provider detection
 - **Key Functions**: `Initialize-Infrastructure`, `Get-InfrastructureProvider`
 
-#### 7. Security.psm1
+#### 10. Security.psm1
 - **Size**: ~266 lines
 - **Dependencies**: Logging
 - **Purpose**: Security essentials, credential/certificate management
@@ -68,7 +88,7 @@ This consolidation serves several key purposes:
 
 ### Orchestration
 
-#### 8. OrchestrationEngine.psm1
+#### 11. OrchestrationEngine.psm1
 - **Size**: ~1488 lines
 - **Dependencies**: Logging, Configuration
 - **Purpose**: Core orchestration system for script execution
@@ -76,10 +96,10 @@ This consolidation serves several key purposes:
 
 ## Total Size
 
-**Total Lines**: ~5,572 lines
-**Total Modules**: 8 core modules
+**Total Lines**: ~7,477 lines
+**Total Modules**: 11 core modules
 
-This represents approximately 23% of the total module codebase but provides 100% of the critical foundation functionality.
+This represents approximately 29.6% of the total module codebase but provides 100% of the critical foundation functionality.
 
 ## Dependency Graph
 

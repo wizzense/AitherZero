@@ -76,6 +76,39 @@
         'Enable-UIEmoji',
         'Disable-UIEmoji',
 
+        # From Performance.psm1
+        'Start-PerformanceTimer',
+        'Stop-PerformanceTimer',
+        'Measure-Performance',
+        'Get-PerformanceMetrics',
+        'Get-PerformanceSummary',
+        'Show-PerformanceDashboard',
+        'Measure-FileProcessing',
+        'Initialize-PerformanceMonitoring',
+        'Export-PerformanceReport',
+        'Test-PerformanceBudget',
+        'Set-PerformanceBudget',
+
+        # From Bootstrap.psm1
+        'Initialize-AitherEnvironment',
+        'Test-PowerShell7',
+        'Install-PowerShell7',
+        'Initialize-DirectoryStructure',
+        'Install-ValidationTools',
+        'Install-DevelopmentTools',
+        'Install-GoLanguage',
+        'Install-OpenTofu',
+        'Initialize-OpenTofu',
+        'Clear-AitherEnvironment',
+        'Get-EnvironmentStatus',
+
+        # From PackageManager.psm1
+        'Get-AvailablePackageManagers',
+        'Get-PackageId',
+        'Test-PackageInstalled',
+        'Install-SoftwarePackage',
+        'Get-SoftwareVersion',
+
         # From Infrastructure.psm1
         'Test-OpenTofu',
         'Get-InfrastructureTool',
