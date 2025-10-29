@@ -42,7 +42,7 @@ if (Test-Path $script:ConfigModule) {
     Import-Module $script:ConfigModule -Force -ErrorAction SilentlyContinue
 }
 
-$script:LoggingAvailable = (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) -ne $null
+$script:LoggingAvailable = $null -ne (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)
 
 function Write-DocLog {
     param(
@@ -721,7 +721,7 @@ function Get-DomainFunctionCount {
             $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             $totalFunctions += $functions.Count
         } catch {
-            # Continue on error
+            Write-DocLog "Failed to parse module $($moduleFile.Name): $_" -Level Warning
         }
     }
     
