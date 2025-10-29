@@ -1,0 +1,248 @@
+---
+name: Comment-Triggered Release
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  check-release-command:
+    name: Check for Release Command
+    runs-on: ubuntu-latest
+    if: |
+      github.event.issue.pull_request &&
+      (startsWith(github.event.comment.body, '/release') || 
+       startsWith(github.event.comment.body, '@copilot release'))
+    outputs:
+      should-release: ${{ steps.parse.outputs.should_release }}
+      version: ${{ steps.parse.outputs.version }}
+      prerelease: ${{ steps.parse.outputs.prerelease }}
+    
+    steps:
+      - name: 🔍 Parse Release Command
+        id: parse
+        shell: bash
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+          echo "Comment: $COMMENT"
+          
+          # Check if this is a release command
+          if [[ "$COMMENT" =~ ^(/release|@copilot\ release) ]]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            
+            # Extract version (e.g., /release v1.2.0 or /release 1.2.0)
+            if [[ "$COMMENT" =~ (v?[0-9]+\.[0-9]+\.[0-9]+) ]]; then
+              VERSION="${BASH_REMATCH[1]}"
+              # Remove 'v' prefix if present
+              VERSION="${VERSION#v}"
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              echo "Found version: $VERSION"
+            else
+              echo "No version specified, workflow will fail"
+              echo "version=" >> $GITHUB_OUTPUT
+            fi
+            
+            # Check for prerelease flag
+            if [[ "$COMMENT" =~ (--prerelease|--pre|-p) ]]; then
+              echo "prerelease=true" >> $GITHUB_OUTPUT
+              echo "Pre-release flag detected"
+            else
+              echo "prerelease=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 👍 React to Comment
+        if: steps.parse.outputs.should_release == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: rocket
+
+  trigger-release:
+    name: Trigger Release Workflow
+    needs: check-release-command
+    runs-on: ubuntu-latest
+    if: needs.check-release-command.outputs.should-release == 'true'
+    
+    steps:
+      - name: 📥 Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: ✅ Validate Version
+        id: validate
+        shell: bash
+        run: |
+          VERSION="${{ needs.check-release-command.outputs.version }}"
+          
+          if [ -z "$VERSION" ]; then
+            echo "❌ Error: No version specified in comment"
+            echo "Usage: /release v1.2.3 or /release 1.2.3"
+            exit 1
+          fi
+          
+          # Check if version follows semver format
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "❌ Error: Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-prerelease"
+            exit 1
+          fi
+          
+          # Check if tag already exists
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "❌ Error: Tag v$VERSION already exists"
+            exit 1
+          fi
+          
+          echo "✅ Version $VERSION is valid"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 📝 Update Version Files
+        shell: pwsh
+        run: |
+          $version = "${{ steps.validate.outputs.version }}"
+          Write-Host "📝 Updating version to $version" -ForegroundColor Cyan
+          
+          # Update VERSION file
+          $version | Set-Content ./VERSION -NoNewline
+          
+          # Update module manifest
+          $manifestPath = "./AitherZero.psd1"
+          if (Test-Path $manifestPath) {
+            $manifestContent = Get-Content $manifestPath -Raw
+            $manifestContent = $manifestContent -replace "ModuleVersion\s*=\s*'[\d\.\-]+[^']*'", "ModuleVersion = '$version'"
+            $manifestContent | Set-Content $manifestPath -NoNewline
+            Write-Host "✅ Updated module manifest" -ForegroundColor Green
+          }
+          
+          # Verify updates
+          Write-Host "`nVerification:" -ForegroundColor Yellow
+          Write-Host "VERSION file: $(Get-Content ./VERSION)" -ForegroundColor White
+          if (Test-Path $manifestPath) {
+            $manifest = Get-Content $manifestPath -Raw
+            if ($manifest -match "ModuleVersion\s*=\s*'([^']+)'") {
+              Write-Host "Module version: $($matches[1])" -ForegroundColor White
+            }
+          }
+
+      - name: 🏷️ Create and Push Tag
+        id: create-tag
+        shell: bash
+        run: |
+          VERSION="${{ steps.validate.outputs.version }}"
+          PRERELEASE="${{ needs.check-release-command.outputs.prerelease }}"
+          
+          # Commit version changes
+          git add VERSION AitherZero.psd1
+          if git diff --staged --quiet; then
+            echo "No version changes to commit"
+          else
+            git commit -m "chore: bump version to v$VERSION"
+            git push origin HEAD:refs/pull/${{ github.event.issue.number }}/head
+          fi
+          
+          # Create annotated tag
+          TAG_MESSAGE="Release v$VERSION"
+          if [ "$PRERELEASE" = "true" ]; then
+            TAG_MESSAGE="$TAG_MESSAGE (Pre-release)"
+          fi
+          
+          git tag -a "v$VERSION" -m "$TAG_MESSAGE"
+          git push origin "v$VERSION"
+          
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "✅ Created and pushed tag v$VERSION"
+
+      - name: 💬 Post Success Comment
+        if: success()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## 🚀 Release Triggered Successfully
+            
+            **Version:** `${{ steps.create-tag.outputs.tag }}`
+            **Pre-release:** ${{ needs.check-release-command.outputs.prerelease == 'true' && '✅ Yes' || '❌ No' }}
+            
+            The release automation workflow has been triggered. You can monitor the progress here:
+            - [Release Automation Workflow](${{ github.server_url }}/${{ github.repository }}/actions/workflows/release-automation.yml)
+            - [Docker Publishing Workflow](${{ github.server_url }}/${{ github.repository }}/actions/workflows/docker-publish.yml)
+            
+            Once complete, the release will be available at:
+            - [Releases Page](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.create-tag.outputs.tag }})
+            - Docker: `docker pull ghcr.io/${{ github.repository_owner }}/aitherzero:${{ steps.validate.outputs.version }}`
+
+      - name: 💬 Post Failure Comment
+        if: failure()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## ❌ Release Failed
+            
+            There was an error creating the release. Please check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+            
+            ### Common Issues:
+            - Version format is invalid (use X.Y.Z)
+            - Tag already exists
+            - Version files couldn't be updated
+            
+            ### Usage:
+            ```
+            /release v1.2.3           # Create stable release
+            /release v1.2.3 --pre     # Create pre-release
+            /release 1.2.3            # Version without 'v' prefix works too
+            ```
+
+  show-usage:
+    name: Show Usage Instructions
+    runs-on: ubuntu-latest
+    if: |
+      github.event.issue.pull_request &&
+      github.event.comment.body == '/release' &&
+      needs.check-release-command.outputs.should-release != 'true'
+    needs: check-release-command
+    
+    steps:
+      - name: 💬 Post Usage Instructions
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## 📋 Release Command Usage
+            
+            To create a release from this PR, use one of these commands:
+            
+            ```
+            /release v1.2.3           # Create stable release with version 1.2.3
+            /release v1.2.3 --pre     # Create pre-release
+            /release 1.2.3 --prerelease  # Alternative pre-release syntax
+            ```
+            
+            ### What happens:
+            1. ✅ Version validation
+            2. 📝 Update VERSION and AitherZero.psd1
+            3. 🏷️ Create and push git tag
+            4. 🚀 Trigger release automation workflow
+            5. 🐳 Build and publish Docker images
+            6. 📦 Create GitHub Release with artifacts
+            
+            ### Notes:
+            - Version must follow semantic versioning (X.Y.Z)
+            - Tag must not already exist
+            - Both `/release` and `@copilot release` work

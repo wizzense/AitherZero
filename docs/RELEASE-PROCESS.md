@@ -4,6 +4,52 @@
 
 This document describes the official release process for AitherZero, including versioning, building, tagging, and publishing releases.
 
+## 🚀 Quick Release (New!)
+
+**The easiest way to create a release is from a pull request comment:**
+
+```
+/release v1.2.3
+```
+
+That's it! See [Comment-Triggered Releases](COMMENT-RELEASE.md) for full details.
+
+## Release Methods
+
+AitherZero supports two release methods:
+
+### 1. Comment-Triggered Release (Recommended)
+Comment on a PR with `/release vX.Y.Z` to automatically create a release. See [COMMENT-RELEASE.md](COMMENT-RELEASE.md) for complete documentation.
+
+**Pros:**
+- ✅ Fastest and simplest method
+- ✅ One command from PR
+- ✅ Automatic version file updates
+- ✅ Built-in validation
+- ✅ Progress notifications
+
+**Usage:**
+```
+/release v1.2.3          # Stable release
+/release v1.2.3 --pre    # Pre-release
+```
+
+### 2. Manual Tag Push (Traditional)
+Manually update version files, commit, and push a tag. See below for complete steps.
+
+**Pros:**
+- ✅ Full control over commit message
+- ✅ Works from any branch
+- ✅ Can be scripted
+
+**Usage:**
+```bash
+git tag -a v1.2.3 -m "Release v1.2.3"
+git push origin v1.2.3
+```
+
+---
+
 ## Release Types
 
 ### Stable Releases
