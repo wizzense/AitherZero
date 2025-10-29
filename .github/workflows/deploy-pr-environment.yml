@@ -298,10 +298,10 @@ jobs:
         run: |
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
 
-          # Calculate unique port for each PR (8080 + PR number)
-          # This allows unlimited concurrent PR testing without port collisions
-          # Valid for PR numbers up to ~57,000 (port range limit: 65535)
-          DYNAMIC_PORT="$((8080 + ${PR_NUMBER}))"
+          # Calculate unique port for each PR with automatic rollover
+          # Port range: 8080-65535 (57,456 ports available)
+          # Formula: 8080 + (PR_NUMBER % 57456) ensures ports stay within valid range
+          DYNAMIC_PORT="$((8080 + (${PR_NUMBER} % 57456)))"
           echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
 
           # Create environment-specific compose file
@@ -439,9 +439,10 @@ jobs:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
             
-            // Calculate unique port for each PR (8080 + PR number)
-            // This allows unlimited concurrent PR testing without port collisions
-            const dynamicPort = 8080 + prNumber;
+            // Calculate unique port for each PR with automatic rollover
+            // Port range: 8080-65535 (57,456 ports available)
+            // Formula: 8080 + (prNumber % 57456) ensures ports stay within valid range
+            const dynamicPort = 8080 + (prNumber % 57456);
             
             // Get job results
             const validationResult = '${{ needs.validate-docker-config.result }}';
