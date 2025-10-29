@@ -1,5 +1,7 @@
 # AitherZero AI Coding Agent Instructions
 
+This file provides guidance for GitHub Copilot coding agents working on this repository. It includes architecture details, development patterns, testing procedures, and best practices specific to AitherZero.
+
 ## Project Overview
 
 AitherZero is an infrastructure automation platform with a **number-based orchestration system** (0000-9999) for systematic script execution. The architecture uses a consolidated domain-based module system that loads through a single entry point.
@@ -169,5 +171,82 @@ Check exit codes: 0=success, 1=error, 3010=restart required
 2. Validate with `az 0404` (PSScriptAnalyzer)
 3. Test with appropriate domain tests
 4. Check transcript logs in `logs/transcript-*.log` for errors
+
+## Acceptance Criteria
+
+All code changes must meet these requirements:
+- **Tests**: All existing tests must pass. Add new tests for new functionality.
+- **Linting**: Code must pass PSScriptAnalyzer validation (`az 0404`)
+- **Syntax**: PowerShell syntax must be valid (`az 0407`)
+- **Documentation**: Update relevant documentation for public API changes
+- **Module Exports**: New functions must be added to `Export-ModuleMember` lists
+- **Logging**: Use `Write-CustomLog` for all log messages (with error handling)
+- **Cross-Platform**: Verify compatibility on Windows, Linux, and macOS where applicable
+- **No Breaking Changes**: Maintain backward compatibility unless explicitly required
+
+## Security and Privacy Guidelines
+
+### Sensitive Data Handling
+- **Never commit secrets**: No API keys, passwords, tokens, or credentials in code
+- **Use credential management**: Leverage the `security/` domain for secure credential storage
+- **Certificate handling**: All certificate operations must use the certificate management domain
+- **Environment variables**: Use `.env` files (excluded from git) for sensitive configuration
+
+### Code Security
+- **Input validation**: Validate all external inputs and user-provided parameters
+- **Error messages**: Don't expose sensitive information in error messages or logs
+- **File permissions**: Set appropriate permissions on generated files (especially credentials)
+- **Audit logging**: Security-related operations should be logged to transcript files
+
+### Infrastructure Security
+- **Network isolation**: Lab VMs should be on isolated networks by default
+- **Admin rights**: Minimize operations requiring elevated privileges
+- **Resource cleanup**: Always clean up resources (VMs, certificates) when no longer needed
+
+## Communication Guidelines
+
+### Working with Issues
+- Read issue descriptions carefully and understand requirements before starting
+- Ask clarifying questions if requirements are ambiguous
+- Break down large tasks into smaller, manageable steps
+- Report progress frequently with clear status updates
+
+### Pull Request Standards
+- Keep PRs focused on a single issue or feature
+- Write clear, descriptive commit messages following conventional commits format
+- Include test results and validation steps in PR description
+- Reference the issue number in commit messages and PR description
+
+### Code Review Expectations
+- Address all review comments or explain why changes weren't made
+- Run full test suite before marking PR as ready for review
+- Update documentation to reflect code changes
+- Ensure CI/CD pipelines pass before requesting review
+
+## Task Workflow Guidelines
+
+### Planning Phase
+1. **Understand**: Read and comprehend the full issue/task
+2. **Research**: Review related code, tests, and documentation
+3. **Plan**: Outline approach and identify affected components
+4. **Validate**: Confirm plan addresses all requirements
+
+### Implementation Phase
+1. **Small Changes**: Make minimal, focused changes to accomplish the goal
+2. **Test Often**: Run tests after each significant change
+3. **Validate Early**: Use linting and syntax checking frequently
+4. **Document**: Update comments and docs as you code
+
+### Verification Phase
+1. **Self-Review**: Review your own changes for quality and completeness
+2. **Test Coverage**: Verify all code paths have test coverage
+3. **Integration**: Test with related components and workflows
+4. **Documentation**: Ensure all docs are updated and accurate
+
+### Completion Phase
+1. **Final Tests**: Run complete test suite including PSScriptAnalyzer
+2. **Clean Code**: Remove debug code, commented code, and temporary files
+3. **PR Description**: Write comprehensive description of changes and testing
+4. **Handoff**: Ensure reviewer has all context needed
 
 This consolidated architecture ensures reliable module loading and provides powerful orchestration capabilities through the number-based system.

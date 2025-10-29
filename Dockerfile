@@ -65,10 +65,10 @@ WORKDIR /app
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pwsh -NoProfile -Command "Test-Path /opt/aitherzero/AitherZero.psd1 -PathType Leaf"
 
-# Default command - keep container running for interactive use or automation
-# The container runs a simple sleep command to stay alive
-# Use docker-start.ps1 for interactive sessions: docker exec -it <container> pwsh /opt/aitherzero/docker-start.ps1
-CMD ["pwsh", "-NoProfile", "-Command", "Write-Host '✅ AitherZero container started. Module available at /opt/aitherzero' -ForegroundColor Green; Write-Host 'For interactive access: docker exec -it <container-name> pwsh /opt/aitherzero/docker-start.ps1' -ForegroundColor Cyan; Start-Sleep -Seconds 2147483"]
+# Default command - Automatically loads AitherZero module and provides interactive shell
+# The container imports the module, displays a welcome message, and stays alive
+# This allows `docker exec -it <container> pwsh` to immediately have AitherZero available
+CMD ["pwsh", "-NoLogo", "-WorkingDirectory", "/opt/aitherzero", "-File", "/opt/aitherzero/container-welcome.ps1"]
 
 # Expose ports for potential web interfaces (future use)
 EXPOSE 8080 8443
