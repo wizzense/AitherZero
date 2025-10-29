@@ -8,7 +8,7 @@
     Note: This script requires PowerShell 7.0 or higher. If running from PowerShell 5.1,
     the script will automatically attempt to relaunch itself using pwsh.
 .PARAMETER Mode
-    Startup mode: Interactive (default), Orchestrate, Validate
+    Startup mode: Interactive (default), NonInteractive, Orchestrate, Validate, Test, List, Search, Run
 .PARAMETER Sequence
     Number sequence for orchestration mode
 .PARAMETER ConfigPath
@@ -21,26 +21,38 @@
     Name of the playbook to execute
 .PARAMETER PlaybookProfile
     Profile to use within the playbook (e.g., quick, full, ci)
+.PARAMETER Target
+    Target for List, Search, or Run modes. Can be: scripts, playbooks, script, playbook, sequence, or a script number (e.g., 0501)
+.PARAMETER ScriptNumber
+    Specific script number to run (e.g., 0501, 0402)
 .PARAMETER IsRelaunch
     Internal parameter to prevent infinite relaunch loops
 .EXAMPLE
-    # Interactive mode
+    # Interactive mode (default)
     .\Start-AitherZero.ps1
+
+.EXAMPLE
+    # Non-interactive mode (auto-detects what to do based on parameters)
+    .\Start-AitherZero.ps1 -Mode NonInteractive
 
 .EXAMPLE
     # Run specific sequence
     .\Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0000-0099"
 
 .EXAMPLE
-    # Modern CLI - List all scripts
+    # List all scripts
     .\Start-AitherZero.ps1 -Mode List -Target scripts
 
 .EXAMPLE
-    # Modern CLI - Run a specific script
+    # Run a specific script (verbose syntax)
     .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402
 
 .EXAMPLE
-    # Modern CLI - Search for security tools
+    # Run a specific script (shortcut - script number as target)
+    .\Start-AitherZero.ps1 -Mode Run -Target 0501
+
+.EXAMPLE
+    # Search for security tools
     .\Start-AitherZero.ps1 -Mode Search -Query security
 
 .EXAMPLE
@@ -49,7 +61,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
+    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run', 'NonInteractive')]
     [string]$Mode = 'Interactive',
 
     [string[]]$Sequence,
@@ -673,10 +685,18 @@ function Invoke-ModernSearchAction {
 function Invoke-ModernRunAction {
     param([string]$RunTarget, [string]$ScriptNum, [string]$PlaybookName, [string[]]$SequenceRange)
     
+    # Auto-detect target type if RunTarget looks like a script number
+    if ($RunTarget -and $RunTarget -match '^\d{3,4}$') {
+        $ScriptNum = $RunTarget
+        $RunTarget = 'script'
+    }
+    
     switch ($RunTarget) {
         'script' {
             if (-not $ScriptNum) {
                 Write-ModernCLI "Script number required: -ScriptNumber <number>" -Type 'Error'
+                Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0501" -Type 'Info'
+                Write-ModernCLI "Or use shortcut: .\Start-AitherZero.ps1 -Mode Run -Target 0501" -Type 'Info'
                 return
             }
             
@@ -691,11 +711,13 @@ function Invoke-ModernRunAction {
                 & $matchingScript.FullName
             } else {
                 Write-ModernCLI "Script not found: $scriptPath" -Type 'Error'
+                Write-ModernCLI "Use -Mode List -Target scripts to see available scripts" -Type 'Info'
             }
         }
         'playbook' {
             if (-not $PlaybookName) {
                 Write-ModernCLI "Playbook name required: -Playbook <name>" -Type 'Error'
+                Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target playbook -Playbook tech-debt-analysis" -Type 'Info'
                 return
             }
             
@@ -709,6 +731,7 @@ function Invoke-ModernRunAction {
         'sequence' {
             if (-not $SequenceRange) {
                 Write-ModernCLI "Sequence required: -Sequence <range>" -Type 'Error'
+                Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target sequence -Sequence 0400-0499" -Type 'Info'
                 return
             }
             
@@ -722,6 +745,11 @@ function Invoke-ModernRunAction {
         default {
             Write-ModernCLI "Unknown target: $RunTarget" -Type 'Error'
             Write-ModernCLI "Valid targets: script, playbook, sequence" -Type 'Info'
+            Write-ModernCLI "Examples:" -Type 'Info'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0501" -Type 'Muted'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target 0501 (shortcut)" -Type 'Muted'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target playbook -Playbook tech-debt-analysis" -Type 'Muted'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target sequence -Sequence 0400-0499" -Type 'Muted'
         }
     }
 }
@@ -1650,6 +1678,25 @@ try {
     if ($NonInteractive -and $Mode -eq 'Interactive') {
         Write-Warning "Interactive mode is not compatible with NonInteractive flag. Use -Mode Validate, Orchestrate, or Test instead."
         exit 1
+    }
+
+    # Handle NonInteractive mode by resolving it to the appropriate actual mode
+    if ($Mode -eq 'NonInteractive') {
+        # NonInteractive mode is a convenience alias - determine the best actual mode
+        if ($Sequence -or $Playbook) {
+            $Mode = 'Orchestrate'
+        } elseif ($Target -eq 'script' -or $ScriptNumber -or ($Target -and $Target -match '^\d{3,4}$')) {
+            $Mode = 'Run'
+        } elseif ($Query) {
+            $Mode = 'Search'
+        } elseif ($Target) {
+            $Mode = 'List'
+        } else {
+            # Default to Validate mode for non-interactive runs without specific targets
+            $Mode = 'Validate'
+        }
+        $NonInteractive = $true
+        Write-Verbose "NonInteractive mode resolved to: $Mode"
     }
 
     # Handle different modes
