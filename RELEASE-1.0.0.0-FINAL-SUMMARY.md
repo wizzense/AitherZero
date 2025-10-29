@@ -193,11 +193,11 @@ pwsh bootstrap.ps1 -Mode New
 ```bash
 # Latest version
 docker pull ghcr.io/wizzense/aitherzero:latest
-docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest pwsh
 
 # Specific version
 docker pull ghcr.io/wizzense/aitherzero:v1.0.0.0
-docker run -it --rm ghcr.io/wizzense/aitherzero:v1.0.0.0
+docker run -it --rm ghcr.io/wizzense/aitherzero:v1.0.0.0 pwsh
 ```
 
 **With Docker Compose:**
