@@ -66,9 +66,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pwsh -NoProfile -Command "Test-Path /opt/aitherzero/AitherZero.psd1 -PathType Leaf"
 
 # Default command - Automatically loads AitherZero module and provides interactive shell
-# The container imports the module, displays a welcome message, and enters an interactive PowerShell session
+# The container imports the module, displays a welcome message, and stays alive
 # This allows `docker exec -it <container> pwsh` to immediately have AitherZero available
-CMD ["pwsh", "-NoLogo", "-NoExit", "-WorkingDirectory", "/opt/aitherzero", "-File", "/opt/aitherzero/container-welcome.ps1"]
+CMD ["pwsh", "-NoLogo", "-WorkingDirectory", "/opt/aitherzero", "-File", "/opt/aitherzero/container-welcome.ps1"]
 
 # Expose ports for potential web interfaces (future use)
 EXPOSE 8080 8443
