@@ -7,56 +7,56 @@
 **Infrastructure & Automation**
 ```
 Need: VM setup, networking, infrastructure code
-Contact: 👩‍💻 Maya Rodriguez (maya-infrastructure.yml)
-Backup: 👩‍💻 Rachel Martinez (rachel-powershell.yml)
+Contact: 👩‍💻 Maya Rodriguez (maya-infrastructure.md)
+Backup: 👩‍💻 Rachel Martinez (rachel-powershell.md)
 ```
 
 **Security & Credentials**
 ```
 Need: Certificates, security scans, vulnerability fixes
-Contact: 👩‍💻 Sarah Chen (sarah-security.yml)
-Backup: 👩‍💻 Maya Rodriguez (maya-infrastructure.yml)
+Contact: 👩‍💻 Sarah Chen (sarah-security.md)
+Backup: 👩‍💻 Maya Rodriguez (maya-infrastructure.md)
 ```
 
 **Testing & Quality**
 ```
 Need: Unit tests, test coverage, quality metrics
-Contact: 👩‍💻 Jessica Williams (jessica-testing.yml)
-Backup: 👨‍💻 Marcus Johnson (marcus-backend.yml)
+Contact: 👩‍💻 Jessica Williams (jessica-testing.md)
+Backup: 👨‍💻 Marcus Johnson (marcus-backend.md)
 ```
 
 **User Interface**
 ```
 Need: Console UI, menus, user experience
-Contact: 👩‍💻 Emma Nakamura (emma-frontend.yml)
-Backup: 👩‍💻 Olivia Patel (olivia-documentation.yml)
+Contact: 👩‍💻 Emma Nakamura (emma-frontend.md)
+Backup: 👩‍💻 Olivia Patel (olivia-documentation.md)
 ```
 
 **Backend Development**
 ```
 Need: PowerShell modules, APIs, performance
-Contact: 👨‍💻 Marcus Johnson (marcus-backend.yml)
-Backup: 👩‍💻 Rachel Martinez (rachel-powershell.yml)
+Contact: 👨‍💻 Marcus Johnson (marcus-backend.md)
+Backup: 👩‍💻 Rachel Martinez (rachel-powershell.md)
 ```
 
 **Documentation**
 ```
 Need: READMEs, guides, comments, docs
-Contact: 👩‍💻 Olivia Patel (olivia-documentation.yml)
-Backup: 👩‍💻 Emma Nakamura (emma-frontend.yml)
+Contact: 👩‍💻 Olivia Patel (olivia-documentation.md)
+Backup: 👩‍💻 Emma Nakamura (emma-frontend.md)
 ```
 
 **PowerShell & Automation**
 ```
 Need: Advanced scripts, orchestration, automation
-Contact: 👩‍💻 Rachel Martinez (rachel-powershell.yml)
-Backup: 👨‍💻 Marcus Johnson (marcus-backend.yml)
+Contact: 👩‍💻 Rachel Martinez (rachel-powershell.md)
+Backup: 👨‍💻 Marcus Johnson (marcus-backend.md)
 ```
 
 **Project Coordination**
 ```
 Need: Planning, prioritization, team coordination
-Contact: 👨‍💻 David Thompson (david-project-manager.yml)
+Contact: 👨‍💻 David Thompson (david-project-manager.md)
 ```
 
 ### By Script Range (AitherZero Number System)
