@@ -27,9 +27,23 @@ Scripts are organized by priority number (0000-9999) and follow this naming conv
   
 - **0300-0399**: Services and applications (reserved)
 
-- **0400-0499**: Configuration and customization (reserved)
-
-- **0500-0599**: Validation and testing (reserved)
+- **0400-0499**: Testing and validation
+  - Unit tests
+  - PSScriptAnalyzer
+  - Syntax validation
+  - Quality checks
+  
+- **0500-0599**: Reporting and metrics
+  - Project reports
+  - Dashboard generation
+  - Metrics collection
+  
+- **0700-0799**: Git automation and release management
+  - Feature branch creation
+  - Conventional commits
+  - Pull request automation
+  - Changelog generation
+  - Tag cleanup
 
 - **9000-9999**: Cleanup and maintenance
 
