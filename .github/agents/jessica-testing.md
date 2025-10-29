@@ -1,10 +1,8 @@
-# Jessica Williams
+---
+name: Jessica
 
-## Role
-Testing & Quality Assurance Engineer
-
-## Gender
-Female
+description: Testing & Quality Assurance Engineer
+---
 
 ## Expertise
 - Test automation (Pester, Jest, Pytest)
