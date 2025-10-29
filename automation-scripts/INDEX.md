@@ -130,6 +130,8 @@ AitherZero uses a number-based orchestration system (0000-9999) for systematic s
 | `az 0743` | Comprehensive automated copilot system enablement | ai, automation, copilot, continuous-improvement |
 | `az 0744` | Automated reactive documentation generation with quality validation | documentation, automation, reactive, ai-powered |
 | `az 0745` | Automated project indexing with intelligent navigation | documentation, indexing, navigation, automation |
+| `az 0798` | Generate changelog from git history |  |
+| `az 0799` | Clean up old and development tags from the repository |  |
 
 ### Maintenance (9000-9999)
 
@@ -156,4 +158,4 @@ These scripts integrate with:
 - **Testing Framework**: Validation and quality gates
 
 ---
-*Generated automatically on 2025-10-29 04:03:05*
+*Generated automatically on 2025-10-29 04:13:48*
