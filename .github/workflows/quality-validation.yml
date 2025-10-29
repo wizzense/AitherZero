@@ -233,8 +233,15 @@ jobs:
                       reportContent += `<summary>${icon} <strong>${fileName}</strong> - Score: ${fileInfo.Score}% (${fileInfo.Status})</summary>\n\n`;
                       
                       // Try to find detailed report for this file
+                      // Use more precise filename matching to avoid false positives
+                      const baseName = fileName.replace(/\.(ps1|psm1|psd1)$/, '');
                       const detailedReportFiles = fs.readdirSync(reportsDir)
-                        .filter(f => f.includes(fileName.replace(/\.(ps1|psm1|psd1)$/, '')) && f.endsWith('.json') && !f.includes('summary'));
+                        .filter(f => {
+                          // Match files that contain the base name followed by .json (not summary)
+                          // Use word boundary-like matching to avoid substring matches
+                          const namePattern = new RegExp(`-${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.json$`, 'i');
+                          return namePattern.test(f) && !f.includes('summary');
+                        });
                       
                       if (detailedReportFiles.length > 0) {
                         try {
@@ -250,8 +257,16 @@ jobs:
                               const checkIcon = check.Status === 'Passed' ? '✅' : 
                                               check.Status === 'Warning' ? '⚠️' : 
                                               check.Status === 'Skipped' ? '⏭️' : '❌';
-                              const findings = check.Findings && check.Findings.length > 0 ? 
-                                             check.Findings.slice(0, 2).join('<br>') : 'None';
+                              // Escape findings to prevent markdown/HTML breaking
+                              let findings = 'None';
+                              if (check.Findings && check.Findings.length > 0) {
+                                findings = check.Findings.slice(0, 2)
+                                  .map(f => f.replace(/[|<>]/g, match => {
+                                    // Escape pipe, less than, greater than
+                                    return {'|': '\\|', '<': '&lt;', '>': '&gt;'}[match];
+                                  }))
+                                  .join('<br>');
+                              }
                               reportContent += `| ${checkIcon} ${check.CheckName} | ${check.Status} | ${check.Score}% | ${findings} |\n`;
                             }
                             
@@ -283,7 +298,7 @@ jobs:
                   if (summary.OverallStatus === 'Failed' || summary.Warnings > 0) {
                     reportContent += `1. 📥 **Download** [detailed reports](${runUrl}) from workflow artifacts\n`;
                     reportContent += `2. 🔧 **Fix** issues identified in the findings above\n`;
-                    reportContent += `3. 🧪 **Test locally**: \`./az.ps1 0420 -Path <file>\`\n`;
+                    reportContent += `3. 🧪 **Test locally**: \`./aitherzero 0420 -Path <file>\`\n`;
                     reportContent += `4. ♻️ **Push** changes to re-run validation\n\n`;
                   } else {
                     reportContent += `✨ **All quality checks passed!** Your code meets our quality standards.\n\n`;

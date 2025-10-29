@@ -89,7 +89,7 @@ This document shows what the enhanced quality validation PR comments will look l
 
 1. 📥 **Download** [detailed reports](https://github.com/wizzense/AitherZero/actions/runs/12345) from workflow artifacts
 2. 🔧 **Fix** issues identified in the findings above
-3. 🧪 **Test locally**: `./az.ps1 0420 -Path <file>`
+3. 🧪 **Test locally**: `./aitherzero 0420 -Path <file>`
 4. ♻️ **Push** changes to re-run validation
 
 ### 📚 Quality Standards

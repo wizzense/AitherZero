@@ -267,11 +267,11 @@ function Get-QualityMetrics {
     # Process most recent summary
     try {
         $latestSummary = Get-Content $summaryFiles[0].FullName | ConvertFrom-Json
-        $qualityMetrics.AverageScore = if ($latestSummary.AverageScore) { $latestSummary.AverageScore } else { 0 }
-        $qualityMetrics.TotalFiles = if ($latestSummary.FilesValidated) { $latestSummary.FilesValidated } else { 0 }
-        $qualityMetrics.PassedFiles = if ($latestSummary.Passed) { $latestSummary.Passed } else { 0 }
-        $qualityMetrics.FailedFiles = if ($latestSummary.Failed) { $latestSummary.Failed } else { 0 }
-        $qualityMetrics.WarningFiles = if ($latestSummary.Warnings) { $latestSummary.Warnings } else { 0 }
+        $qualityMetrics.AverageScore = $latestSummary.AverageScore ?? 0
+        $qualityMetrics.TotalFiles = $latestSummary.FilesValidated ?? 0
+        $qualityMetrics.PassedFiles = $latestSummary.Passed ?? 0
+        $qualityMetrics.FailedFiles = $latestSummary.Failed ?? 0
+        $qualityMetrics.WarningFiles = $latestSummary.Warnings ?? 0
         $qualityMetrics.LastValidation = $latestSummary.Timestamp
         
         # Calculate overall score
@@ -299,10 +299,15 @@ function Get-QualityMetrics {
                 foreach ($check in $report.Checks) {
                     $checkName = $check.CheckName
                     if (-not $checkScores.ContainsKey($checkName)) {
-                        $checkScores[$checkName] = @{ Scores = @(); Passed = 0; Failed = 0; Warnings = 0 }
+                        $checkScores[$checkName] = @{ 
+                            Scores = [System.Collections.ArrayList]::new()
+                            Passed = 0
+                            Failed = 0
+                            Warnings = 0 
+                        }
                     }
                     
-                    $checkScores[$checkName].Scores += $check.Score
+                    [void]$checkScores[$checkName].Scores.Add($check.Score)
                     
                     switch ($check.Status) {
                         'Passed' { $checkScores[$checkName].Passed++ }
@@ -332,26 +337,33 @@ function Get-QualityMetrics {
         }
     }
     
-    # Build trends from historical summaries
+    # Build trends from historical summaries using efficient collections
+    $scoreHistoryList = [System.Collections.Generic.List[object]]::new()
+    $passRateHistoryList = [System.Collections.Generic.List[object]]::new()
+    
     foreach ($summaryFile in $summaryFiles) {
         try {
             $summary = Get-Content $summaryFile.FullName | ConvertFrom-Json
-            $qualityMetrics.Trends.ScoreHistory += @{
+            $scoreHistoryList.Add(@{
                 Timestamp = $summary.Timestamp
                 Score = $summary.AverageScore
-            }
+            })
             
             if ($summary.FilesValidated -gt 0) {
                 $passRate = [math]::Round(($summary.Passed / $summary.FilesValidated) * 100, 1)
-                $qualityMetrics.Trends.PassRateHistory += @{
+                $passRateHistoryList.Add(@{
                     Timestamp = $summary.Timestamp
                     PassRate = $passRate
-                }
+                })
             }
         } catch {
             # Skip invalid summaries
         }
     }
+    
+    # Convert to arrays for compatibility
+    $qualityMetrics.Trends.ScoreHistory = @($scoreHistoryList)
+    $qualityMetrics.Trends.PassRateHistory = @($passRateHistoryList)
     
     return $qualityMetrics
 }
