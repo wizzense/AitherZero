@@ -109,7 +109,7 @@ aitherzero -Mode NonInteractive -Target 0501       # Auto-detects and runs scrip
 
 # The global command works from anywhere
 cd /any/directory
-aitherzero -Mode Search -Query test                # Find test-related scripts
+./Start-AitherZero.ps1 -Mode Search -Query test    # Find test-related scripts
 ```
 
 ### Global Command

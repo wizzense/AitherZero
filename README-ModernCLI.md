@@ -45,15 +45,15 @@ The AitherZero Modern CLI integrates new command modes directly into Start-Aithe
 ```bash
 # Development workflow
 Start-AitherZero.ps1 -Mode List -Target scripts | grep test        # Find test scripts
-Start-AitherZero.ps1 -Mode Run -Target 0402                        # Run unit tests (shortcut)
+./Start-AitherZero.ps1 -Mode Run -Target 0402                      # Run unit tests (shortcut)
 az run playbook test-quick         # Fast validation
 az search deploy                   # Find deployment tools
 
 # CI/CD integration (NonInteractive mode)
-Start-AitherZero.ps1 -Mode NonInteractive -Target 0402            # Run tests in CI
+./Start-AitherZero.ps1 -Mode NonInteractive -Target 0402           # Run tests in CI
 az run sequence 0400-0499          # Run all test scripts
 az run playbook automated-security # Security analysis
-Start-AitherZero.ps1 -Mode List -Target playbooks                 # List orchestration options
+./Start-AitherZero.ps1 -Mode List -Target playbooks                # List orchestration options
 ```
 
 ## 🎯 Interactive Mode
