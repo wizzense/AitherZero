@@ -211,7 +211,7 @@ Describe 'AitherCore vs Full AitherZero' {
             )
             
             foreach ($func in $criticalFunctions) {
-                Get-Command -Name $func -Module AitherCore -ErrorAction SilentlyContinue | 
+                Get-Command -Name $func -Module AitherCore -ErrorAction SilentlyContinue |
                     Should -Not -BeNullOrEmpty -Because "$func is a critical function"
             }
         }
