@@ -225,6 +225,11 @@ jobs:
             type=semver,pattern={{major}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
             type=raw,value=latest,enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
 
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
       - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
