@@ -180,21 +180,33 @@ jobs:
           Write-Host "📦 Creating release package: $packageName" -ForegroundColor Yellow
           New-Item -ItemType Directory -Path "./$packageName" -Force | Out-Null
 
-          # Complete file list for release
+          # Runtime-only file list for clean releases
+          # Users get what they need to run AitherZero, not development files
           $releaseFiles = @(
-            # Core modules
-            "*.psd1", "*.psm1", "*.ps1",
-            # Documentation
-            "*.md", "LICENSE", "VERSION",
-            # Essential directories
-            "domains", "automation-scripts", "orchestration", "tests",
-            # Configuration and setup
-            "config.example.psd1", ".azprofile.ps1",
+            # Core module manifest and loader
+            "AitherZero.psd1", "AitherZero.psm1",
+            # Essential startup scripts
+            "Start-AitherZero.ps1", "az.ps1",
+            # Bootstrap for installation
             "bootstrap.ps1", "bootstrap.sh",
-            # Build artifacts
+            # Container support
+            "Dockerfile", "docker-compose.yml", "docker-entrypoint.ps1", 
+            "docker-start.ps1", "container-welcome.ps1",
+            # Documentation (user-facing only)
+            "README.md", "LICENSE", "VERSION",
+            "QUICKSTART-AUTOMATED-REPORTS.md", "README-ModernCLI.md",
+            "FUNCTIONALITY-INDEX.md", "DOCKER.md",
+            # Essential directories - Runtime modules only
+            "domains",
+            "automation-scripts",
+            # Configuration templates (examples only)
+            "config.example.psd1", ".env.example",
+            # Build metadata
             "build-info.json"
           )
 
+          Write-Host "📦 Creating clean runtime package (no dev/test files)..." -ForegroundColor Cyan
+          
           foreach ($pattern in $releaseFiles) {
             if (Test-Path $pattern) {
               Copy-Item -Path $pattern -Destination "./$packageName" -Recurse -Force
@@ -203,6 +215,23 @@ jobs:
               Write-Host "  ⚠️ Not found: $pattern" -ForegroundColor Yellow
             }
           }
+
+          # Exclude development/internal files from domains and scripts
+          Write-Host "🧹 Cleaning development files from package..." -ForegroundColor Cyan
+          
+          # Remove test files if they exist
+          if (Test-Path "./$packageName/domains/*/tests") {
+            Remove-Item "./$packageName/domains/*/tests" -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "  ✅ Removed domain test files" -ForegroundColor Green
+          }
+          
+          # Remove any .git directories
+          if (Test-Path "./$packageName/.git*") {
+            Remove-Item "./$packageName/.git*" -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "  ✅ Removed git metadata" -ForegroundColor Green
+          }
+
+          Write-Host "✅ Package contains only runtime essentials" -ForegroundColor Green
 
           # Create multiple archive formats
           Write-Host "📁 Creating archive formats..." -ForegroundColor Cyan
