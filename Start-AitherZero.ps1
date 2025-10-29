@@ -680,13 +680,13 @@ function Invoke-ModernSearchAction {
 
 function Invoke-ModernRunAction {
     param([string]$RunTarget, [string]$ScriptNum, [string]$PlaybookName, [string[]]$SequenceRange)
-    
+
     # Auto-detect target type if RunTarget looks like a script number
     if ($RunTarget -and $RunTarget -match '^\d{3,4}$') {
         $ScriptNum = $RunTarget
         $RunTarget = 'script'
     }
-    
+
     switch ($RunTarget) {
         'script' {
             if (-not $ScriptNum) {
@@ -695,13 +695,13 @@ function Invoke-ModernRunAction {
                 Write-ModernCLI "Or use shortcut: .\Start-AitherZero.ps1 -Mode Run -Target 0501" -Type 'Info'
                 return
             }
-            
+
             Write-ModernCLI "Running script $ScriptNum..." -Type 'Info'
-            
+
             # Execute automation script directly
             $scriptPath = "./automation-scripts/$($ScriptNum.ToString().PadLeft(4, '0'))_*.ps1"
             $matchingScript = Get-ChildItem -Path $scriptPath -ErrorAction SilentlyContinue | Select-Object -First 1
-            
+
             if ($matchingScript) {
                 Write-ModernCLI "Executing: $($matchingScript.Name)" -Type 'Success'
                 & $matchingScript.FullName
@@ -716,7 +716,7 @@ function Invoke-ModernRunAction {
                 Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target playbook -Playbook tech-debt-analysis" -Type 'Info'
                 return
             }
-            
+
             Write-ModernCLI "Running playbook: $PlaybookName" -Type 'Info'
             if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
                 Invoke-OrchestrationSequence -LoadPlaybook $PlaybookName
@@ -730,7 +730,7 @@ function Invoke-ModernRunAction {
                 Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target sequence -Sequence 0400-0499" -Type 'Info'
                 return
             }
-            
+
             Write-ModernCLI "Running sequence: $($SequenceRange -join ',')" -Type 'Info'
             if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
                 Invoke-OrchestrationSequence -Sequence $SequenceRange
