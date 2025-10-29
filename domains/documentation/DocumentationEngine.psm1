@@ -83,31 +83,40 @@ function Initialize-DocumentationEngine {
         [string]$TemplateDirectory = $null
     )
     
-    Write-DocLog "Initializing Documentation Engine..."
+    Write-DocLog "Initializing Documentation Engine..." -Level Information
+    Write-DocLog "ConfigPath: $ConfigPath, TemplateDirectory: $TemplateDirectory" -Level Debug
     
     # Load default configuration
     $script:DocumentationState.Config = Get-DefaultDocumentationConfig
+    Write-DocLog "Loaded default configuration" -Level Debug
     
     # Override with file-based config if available
     if ($ConfigPath -and (Test-Path $ConfigPath)) {
         try {
+            Write-DocLog "Loading configuration from: $ConfigPath" -Level Information
             $fileConfig = Get-Content $ConfigPath | ConvertFrom-Json -AsHashtable
             $script:DocumentationState.Config = Merge-Configuration $script:DocumentationState.Config $fileConfig
-            Write-DocLog "Loaded configuration from $ConfigPath"
+            Write-DocLog "Loaded configuration from $ConfigPath" -Level Information
         } catch {
             Write-DocLog "Failed to load configuration from ${ConfigPath}: $($_.Exception.Message)" -Level Warning
         }
+    } else {
+        Write-DocLog "No config file provided or file not found, using defaults" -Level Debug
     }
     
     # Load templates
     $templateDir = $TemplateDirectory ?? (Join-Path $script:ProjectRoot "docs/templates")
+    Write-DocLog "Looking for templates in: $templateDir" -Level Debug
     if (Test-Path $templateDir) {
+        Write-DocLog "Loading templates from: $templateDir" -Level Information
         Load-DocumentationTemplates -TemplateDirectory $templateDir
     } else {
+        Write-DocLog "Template directory not found, initializing default templates" -Level Information
         Initialize-DefaultTemplates
     }
     
     # Initialize validation rules
+    Write-DocLog "Initializing validation rules" -Level Debug
     Initialize-ValidationRules
     
     Write-DocLog "Documentation Engine initialized successfully" -Data @{
