@@ -298,10 +298,10 @@ jobs:
         run: |
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
 
-          # Calculate dynamic port (8080-8089 range, max 10 concurrent PRs)
-          # Note: Port collision occurs when PR numbers share the same modulo 10 value (e.g., PR #5 and #15 both use port 8085)
-          # Consider port management strategy for high-concurrency scenarios
-          DYNAMIC_PORT="808$((${PR_NUMBER} % 10))"
+          # Calculate unique port for each PR (8080 + PR number)
+          # This allows unlimited concurrent PR testing without port collisions
+          # Valid for PR numbers up to ~57,000 (port range limit: 65535)
+          DYNAMIC_PORT="$((8080 + ${PR_NUMBER}))"
           echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
 
           # Create environment-specific compose file
@@ -439,8 +439,9 @@ jobs:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
             
-            // Calculate dynamic port for container (8080-8089 range)
-            const dynamicPort = `808${prNumber % 10}`;
+            // Calculate unique port for each PR (8080 + PR number)
+            // This allows unlimited concurrent PR testing without port collisions
+            const dynamicPort = 8080 + prNumber;
             
             // Get job results
             const validationResult = '${{ needs.validate-docker-config.result }}';
