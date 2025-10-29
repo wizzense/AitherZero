@@ -81,7 +81,7 @@ Run AitherZero in an isolated container:
 git clone https://github.com/wizzense/AitherZero.git
 cd AitherZero
 docker-compose up -d
-docker exec -it aitherzero-app pwsh
+docker-compose exec aitherzero pwsh
 
 # Or build and run with Docker
 docker build -t aitherzero:latest .
@@ -139,7 +139,7 @@ AitherZero can run in Docker containers for consistent, isolated environments:
 ```bash
 # Quick start with Docker Compose
 docker-compose up -d
-docker exec -it aitherzero-app pwsh
+docker-compose exec aitherzero pwsh
 
 # Or build and run manually
 docker build -t aitherzero:latest .

@@ -277,7 +277,7 @@ Then:
 
 ```bash
 docker-compose up -d
-docker exec -it aitherzero-dev pwsh
+docker-compose exec aitherzero pwsh
 ```
 
 ## Best Practices
