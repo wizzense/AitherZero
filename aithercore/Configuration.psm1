@@ -722,7 +722,7 @@ function Merge-Configuration {
             }
         }
         else {
-            $merged | Add-Member -NotePropertyName $prop.Name -NotePropertyValue $prop.Value
+            $merged | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value
         }
     }
 
