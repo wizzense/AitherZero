@@ -77,19 +77,24 @@
         'Disable-UIEmoji',
 
         # From Infrastructure.psm1
-        'Initialize-Infrastructure',
-        'Get-InfrastructureProvider',
+        'Test-OpenTofu',
+        'Get-InfrastructureTool',
+        'Invoke-InfrastructurePlan',
+        'Invoke-InfrastructureApply',
+        'Invoke-InfrastructureDestroy',
 
         # From Security.psm1
-        'Initialize-Security',
-        'Test-SecureEnvironment',
+        'Invoke-SSHCommand',
+        'Test-SSHConnection',
 
         # From OrchestrationEngine.psm1
         'Invoke-OrchestrationSequence',
         'Invoke-Sequence',
         'Get-OrchestrationPlaybook',
-        'Get-AvailableScripts',
-        'Get-ScriptMetadata',
+        'Save-OrchestrationPlaybook',
+        'ConvertTo-StandardPlaybookFormat',
+        'Test-PlaybookConditions',
+        'Send-PlaybookNotification',
 
         # Wildcard for any additional functions
         '*'
