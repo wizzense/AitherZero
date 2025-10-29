@@ -176,7 +176,7 @@ docker pull ghcr.io/wizzense/aitherzero:v1.1.0
 docker pull ghcr.io/wizzense/aitherzero:latest
 
 # Run interactively
-docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest pwsh
 
 # Use Docker Compose
 docker-compose up -d

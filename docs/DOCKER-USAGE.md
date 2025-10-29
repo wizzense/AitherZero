@@ -277,7 +277,7 @@ Then:
 
 ```bash
 docker-compose up -d
-docker exec -it aitherzero-dev pwsh
+docker-compose exec aitherzero pwsh
 ```
 
 ## Best Practices
@@ -292,6 +292,5 @@ docker exec -it aitherzero-dev pwsh
 
 For more information:
 - **Main Docker Guide**: [/DOCKER.md](../DOCKER.md)
-- **Detailed Docker Setup**: [docs/DOCKER.md](DOCKER.md)
 - **Container Manager Script**: [automation-scripts/0854_Manage-PRContainer.ps1](../automation-scripts/0854_Manage-PRContainer.ps1)
 - **GitHub Issues**: https://github.com/wizzense/AitherZero/issues

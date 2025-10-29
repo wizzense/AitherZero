@@ -190,6 +190,10 @@ jobs:
             
             // Read quality reports
             const reportsDir = './reports/quality';
+            const prNumber = context.payload.pull_request.number;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const repoUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
+            
             let reportContent = '## 🔍 Quality Validation Report\n\n';
             
             try {
@@ -201,24 +205,114 @@ jobs:
                   const summaryPath = path.join(reportsDir, summaryFiles[0]);
                   const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
                   
-                  reportContent += `### Summary\n`;
-                  reportContent += `- **Files Validated:** ${summary.FilesValidated || 0}\n`;
-                  reportContent += `- **Average Score:** ${summary.AverageScore || 0}%\n`;
-                  reportContent += `- **Status:** ${summary.OverallStatus || 'Unknown'}\n\n`;
+                  // Status Badge
+                  const statusIcon = summary.OverallStatus === 'Passed' ? '✅' : 
+                                    summary.OverallStatus === 'Warning' ? '⚠️' : '❌';
+                  const scoreColor = summary.AverageScore >= 90 ? '🟢' : 
+                                    summary.AverageScore >= 70 ? '🟡' : '🔴';
                   
-                  reportContent += `### Results\n`;
-                  reportContent += `- ✅ **Passed:** ${summary.Passed || 0}\n`;
-                  reportContent += `- ⚠️ **Warnings:** ${summary.Warnings || 0}\n`;
-                  reportContent += `- ❌ **Failed:** ${summary.Failed || 0}\n\n`;
+                  reportContent += `### ${statusIcon} Overall Status: **${summary.OverallStatus}**\n\n`;
+                  reportContent += `| Metric | Value |\n`;
+                  reportContent += `|--------|-------|\n`;
+                  reportContent += `| 📊 **Average Score** | ${scoreColor} **${summary.AverageScore}%** |\n`;
+                  reportContent += `| 📝 **Files Validated** | ${summary.FilesValidated || 0} |\n`;
+                  reportContent += `| ✅ **Passed** | ${summary.Passed || 0} |\n`;
+                  reportContent += `| ⚠️ **Warnings** | ${summary.Warnings || 0} |\n`;
+                  reportContent += `| ❌ **Failed** | ${summary.Failed || 0} |\n\n`;
                   
+                  // File-by-file breakdown with detailed findings
                   if (summary.Files && Array.isArray(summary.Files) && summary.Files.length > 0) {
-                    reportContent += `### File Details\n`;
-                    for (const file of summary.Files) {
-                      const icon = file.Status === 'Passed' ? '✅' : 
-                                  file.Status === 'Warning' ? '⚠️' : '❌';
-                      reportContent += `${icon} **${path.basename(file.FilePath)}** - ${file.Score}%\n`;
+                    reportContent += `### 📋 Detailed File Analysis\n\n`;
+                    
+                    for (const fileInfo of summary.Files) {
+                      const fileName = path.basename(fileInfo.FilePath);
+                      const icon = fileInfo.Status === 'Passed' ? '✅' : 
+                                  fileInfo.Status === 'Warning' ? '⚠️' : '❌';
+                      
+                      reportContent += `<details>\n`;
+                      reportContent += `<summary>${icon} <strong>${fileName}</strong> - Score: ${fileInfo.Score}% (${fileInfo.Status})</summary>\n\n`;
+                      
+                      // Try to find detailed report for this file
+                      // Use more precise filename matching to avoid false positives
+                      const baseName = fileName.replace(/\.(ps1|psm1|psd1)$/, '');
+                      const detailedReportFiles = fs.readdirSync(reportsDir)
+                        .filter(f => {
+                          // Match files that contain the base name followed by .json (not summary)
+                          // Use word boundary-like matching to avoid substring matches
+                          const namePattern = new RegExp(`-${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.json$`, 'i');
+                          return namePattern.test(f) && !f.includes('summary');
+                        });
+                      
+                      if (detailedReportFiles.length > 0) {
+                        try {
+                          const detailedPath = path.join(reportsDir, detailedReportFiles[0]);
+                          const detailed = JSON.parse(fs.readFileSync(detailedPath, 'utf8'));
+                          
+                          if (detailed.Checks && detailed.Checks.length > 0) {
+                            reportContent += `#### Quality Checks\n\n`;
+                            reportContent += `| Check | Status | Score | Findings |\n`;
+                            reportContent += `|-------|--------|-------|----------|\n`;
+                            
+                            for (const check of detailed.Checks) {
+                              const checkIcon = check.Status === 'Passed' ? '✅' : 
+                                              check.Status === 'Warning' ? '⚠️' : 
+                                              check.Status === 'Skipped' ? '⏭️' : '❌';
+                              // Escape findings to prevent markdown/HTML breaking
+                              let findings = 'None';
+                              if (check.Findings && check.Findings.length > 0) {
+                                findings = check.Findings.slice(0, 2)
+                                  .map(f => f.replace(/[|<>]/g, match => {
+                                    // Escape pipe, less than, greater than
+                                    return {'|': '\\|', '<': '&lt;', '>': '&gt;'}[match];
+                                  }))
+                                  .join('<br>');
+                              }
+                              reportContent += `| ${checkIcon} ${check.CheckName} | ${check.Status} | ${check.Score}% | ${findings} |\n`;
+                            }
+                            
+                            // Add actionable recommendations
+                            const failedChecks = detailed.Checks.filter(c => c.Status === 'Failed' || c.Status === 'Warning');
+                            if (failedChecks.length > 0) {
+                              reportContent += `\n#### 💡 Recommended Actions\n\n`;
+                              for (const check of failedChecks) {
+                                if (check.Findings && check.Findings.length > 0) {
+                                  reportContent += `**${check.CheckName}:**\n`;
+                                  for (const finding of check.Findings) {
+                                    reportContent += `- ${finding}\n`;
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        } catch (err) {
+                          reportContent += `*Unable to load detailed findings: ${err.message}*\n`;
+                        }
+                      }
+                      
+                      reportContent += `\n</details>\n\n`;
                     }
                   }
+                  
+                  // Quick Actions section
+                  reportContent += `### 🚀 Quick Actions\n\n`;
+                  if (summary.OverallStatus === 'Failed' || summary.Warnings > 0) {
+                    reportContent += `1. 📥 **Download** [detailed reports](${runUrl}) from workflow artifacts\n`;
+                    reportContent += `2. 🔧 **Fix** issues identified in the findings above\n`;
+                    reportContent += `3. 🧪 **Test locally**: \`./aitherzero 0420 -Path <file>\`\n`;
+                    reportContent += `4. ♻️ **Push** changes to re-run validation\n\n`;
+                  } else {
+                    reportContent += `✨ **All quality checks passed!** Your code meets our quality standards.\n\n`;
+                  }
+                  
+                  // Quality Standards Reference
+                  reportContent += `### 📚 Quality Standards\n\n`;
+                  reportContent += `- **Error Handling**: Proper try/catch blocks, error logging\n`;
+                  reportContent += `- **Logging**: Appropriate logging at different levels\n`;
+                  reportContent += `- **Test Coverage**: Corresponding test files exist\n`;
+                  reportContent += `- **PSScriptAnalyzer**: No critical issues\n`;
+                  reportContent += `- **Documentation**: Function help and comments\n\n`;
+                  reportContent += `📖 [View Quality Guidelines](${repoUrl}/blob/main/docs/QUALITY-QUICK-REFERENCE.md)\n\n`;
+                  
                 } else {
                   reportContent += '⚠️ No quality reports found.\n';
                 }
@@ -227,18 +321,41 @@ jobs:
               }
             } catch (error) {
               reportContent += `⚠️ Error reading reports: ${error.message}\n`;
+              console.error('Error generating quality report:', error);
             }
             
-            reportContent += '\n---\n';
-            reportContent += '*View detailed reports in the workflow artifacts.*\n';
+            reportContent += `---\n`;
+            reportContent += `📊 [View Dashboard](https://wizzense.github.io/AitherZero/reports/dashboard.html) | `;
+            reportContent += `📁 [Detailed Reports](${runUrl}) | `;
+            reportContent += `🔄 [Workflow Run](${runUrl})\n`;
             
-            // Post comment
-            await github.rest.issues.createComment({
+            // Find and update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: reportContent
+              issue_number: prNumber
             });
+            
+            const botComment = comments.find(c => 
+              c.user.login === 'github-actions[bot]' && 
+              c.body.includes('🔍 Quality Validation Report')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: reportContent
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: reportContent
+              });
+            }
 
       - name: 📋 Create Issues for Quality Failures
         if: steps.validation.outputs.exit-code != '0' && github.event_name == 'pull_request'
@@ -323,12 +440,11 @@ jobs:
                   '2. Address the issues identified in the findings\n' +
                   '3. Run local validation: `./aitherzero 0420 -Path ' + file.FilePath + '`\n' +
                   '4. Re-run validation after fixes\n\n' +
-                  '@copilot please review this file and address the quality issues identified above.';
-
----
-*This issue was automatically created by the Quality Validation System*
-*Related PR: #${{ github.event.pull_request.number }}*
-*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
+                  '@copilot please review this file and address the quality issues identified above.\n\n' +
+                  '---\n' +
+                  '*This issue was automatically created by the Quality Validation System*\n' +
+                  '*Related PR: #${{ github.event.pull_request.number }}*\n' +
+                  '*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*';
                 
                 // Create the issue
                 const issue = await github.rest.issues.create({
