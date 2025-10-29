@@ -1,10 +1,8 @@
-# Marcus Johnson
+---
+name: Marcus
 
-## Role
-Backend & API Developer
-
-## Gender
-Male
+description: Backend & API Developer
+---
 
 ## Expertise
 - PowerShell module architecture

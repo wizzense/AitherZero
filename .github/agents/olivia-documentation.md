@@ -1,10 +1,8 @@
-# Olivia Patel
+---
+name: Olivia
 
-## Role
-Documentation & Technical Writing Specialist
-
-## Gender
-Female
+description: Documentation & Technical Writing Specialist
+---
 
 ## Expertise
 - Technical documentation
