@@ -1,10 +1,8 @@
-# Maya Rodriguez
+---
+name: Maya
 
-## Role
-Infrastructure & DevOps Specialist
-
-## Gender
-Female
+description: Infrastructure & DevOps Specialist
+---
 
 ## Expertise
 - Infrastructure as Code (OpenTofu/Terraform)

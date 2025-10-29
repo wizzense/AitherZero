@@ -1,10 +1,8 @@
-# Emma Nakamura
+---
+name: Emma
 
-## Role
-Frontend & User Experience Developer
-
-## Gender
-Female
+description: Frontend & User Experience Developer
+---
 
 ## Expertise
 - UI/UX design principles
