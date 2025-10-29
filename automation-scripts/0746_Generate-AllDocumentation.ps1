@@ -91,10 +91,12 @@ function Write-DocOrchLog {
 # Set default output path
 if (-not $OutputPath) {
     $OutputPath = Join-Path $script:ProjectRoot "docs/generated"
+    Write-DocOrchLog "Using default output path: $OutputPath"
 }
 
 Write-DocOrchLog "Starting orchestrated documentation generation"
 Write-DocOrchLog "Mode: $Mode | Format: $Format | Output: $OutputPath"
+Write-DocOrchLog "Force: $Force"
 
 # Step 1: Generate module and API documentation
 Write-Host ""
@@ -103,10 +105,12 @@ Write-Host "📚 Step 1: Generating Module & API Documentation" -ForegroundColor
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
 
 $script0744 = Join-Path $PSScriptRoot "0744_Generate-AutoDocumentation.ps1"
+Write-DocOrchLog "Checking for script: $script0744"
 if (-not (Test-Path $script0744)) {
     Write-DocOrchLog "Error: 0744_Generate-AutoDocumentation.ps1 not found" -Level Error
     exit 1
 }
+Write-DocOrchLog "Found 0744 script"
 
 try {
     $params = @{
@@ -116,7 +120,7 @@ try {
         Quality = $true
     }
     
-    Write-DocOrchLog "Executing: 0744_Generate-AutoDocumentation.ps1"
+    Write-DocOrchLog "Executing: 0744_Generate-AutoDocumentation.ps1 with parameters: Mode=$Mode, Format=$Format"
     & $script0744 @params
     
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
@@ -137,13 +141,16 @@ Write-Host "🗂️  Step 2: Generating Project Navigation Indexes" -ForegroundC
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
 
 $script0745 = Join-Path $PSScriptRoot "0745_Generate-ProjectIndexes.ps1"
+Write-DocOrchLog "Checking for script: $script0745"
 if (-not (Test-Path $script0745)) {
     Write-DocOrchLog "Error: 0745_Generate-ProjectIndexes.ps1 not found" -Level Error
     exit 1
 }
+Write-DocOrchLog "Found 0745 script"
 
 try {
     $indexMode = if ($Mode -eq 'Full' -or $Force) { 'Full' } else { 'Incremental' }
+    Write-DocOrchLog "Index generation mode determined: $indexMode"
     
     $params = @{
         Mode = $indexMode
@@ -152,9 +159,10 @@ try {
     
     if ($Force) {
         $params['Force'] = $true
+        Write-DocOrchLog "Force flag enabled for project indexes"
     }
     
-    Write-DocOrchLog "Executing: 0745_Generate-ProjectIndexes.ps1"
+    Write-DocOrchLog "Executing: 0745_Generate-ProjectIndexes.ps1 with mode: $indexMode"
     & $script0745 @params
     
     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
@@ -177,7 +185,9 @@ Write-DocOrchLog "Checking for duplicate INDEX.md (uppercase) files..."
 
 # Get all index files and filter for uppercase ones (case-sensitive)
 $allIndexFiles = @(Get-ChildItem -Path $OutputPath -Recurse -Filter "*ndex.md" -File -ErrorAction SilentlyContinue)
+Write-DocOrchLog "Found $($allIndexFiles.Count) total index files"
 $legacyIndexFiles = @($allIndexFiles | Where-Object { $_.Name -ceq "INDEX.md" })
+Write-DocOrchLog "Found $($legacyIndexFiles.Count) uppercase INDEX.md files"
 
 if ($legacyIndexFiles.Count -gt 0) {
     Write-DocOrchLog "Found $($legacyIndexFiles.Count) legacy INDEX.md (uppercase) files to clean up"
