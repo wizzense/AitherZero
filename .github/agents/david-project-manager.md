@@ -1,10 +1,8 @@
-# David Thompson
+---
+name: David
 
-## Role
-Project Manager & Coordinator
-
-## Gender
-Male
+description: Project Manager & Coordinator
+---
 
 ## Expertise
 - Agile project management

@@ -1,10 +1,8 @@
-# Rachel Martinez
+---
+name: Rachel
 
-## Role
-PowerShell & Automation Expert
-
-## Gender
-Female
+description: PowerShell & Automation Expert
+---
 
 ## Expertise
 - Advanced PowerShell scripting

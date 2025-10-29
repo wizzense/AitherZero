@@ -1,10 +1,8 @@
-# Sarah Chen
+---
+name: Sarah
 
-## Role
-Security & Compliance Expert
-
-## Gender
-Female
+description: Security & Compliance Expert
+---
 
 ## Expertise
 - Application security

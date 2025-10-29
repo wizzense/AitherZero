@@ -6,37 +6,37 @@
 
 ┌─ FEMALE AGENTS (6) ──────────────────────────────────────────────────────┐
 │                                                                           │
-│  👩‍💻 MAYA RODRIGUEZ                                                        │
+│  👩‍💻 MAYA                                                                   │
 │     Role: Infrastructure & DevOps Specialist                             │
 │     Experience: 12 years                                                 │
 │     Motto: "Infrastructure is the foundation - build it right, once"     │
 │     Focus: OpenTofu/Terraform, Hyper-V, Network Architecture             │
 │                                                                           │
-│  👩‍💻 SARAH CHEN                                                            │
+│  👩‍💻 SARAH                                                                  │
 │     Role: Security & Compliance Expert                                   │
 │     Experience: 10 years                                                 │
 │     Motto: "Security isn't a feature, it's a foundation"                 │
 │     Focus: Certificates, Credentials, Security Auditing                  │
 │                                                                           │
-│  👩‍💻 JESSICA WILLIAMS                                                      │
+│  👩‍💻 JESSICA                                                                │
 │     Role: Testing & Quality Assurance Engineer                           │
 │     Experience: 8 years                                                  │
 │     Motto: "Quality is not an act, it's a habit"                         │
 │     Focus: Pester Testing, Test Automation, Quality Metrics              │
 │                                                                           │
-│  👩‍💻 EMMA NAKAMURA                                                         │
+│  👩‍💻 EMMA                                                                   │
 │     Role: Frontend & User Experience Developer                           │
 │     Experience: 7 years                                                  │
 │     Motto: "Great design is invisible - it just works"                   │
 │     Focus: Console UI/UX, Terminal Interfaces, Accessibility             │
 │                                                                           │
-│  👩‍💻 OLIVIA PATEL                                                          │
+│  👩‍💻 OLIVIA                                                                 │
 │     Role: Documentation & Technical Writing Specialist                   │
 │     Experience: 6 years                                                  │
 │     Motto: "Documentation is love made visible to users"                 │
 │     Focus: Technical Docs, API Documentation, User Guides                │
 │                                                                           │
-│  👩‍💻 RACHEL MARTINEZ                                                       │
+│  👩‍💻 RACHEL                                                                 │
 │     Role: PowerShell & Automation Expert                                 │
 │     Experience: 11 years                                                 │
 │     Motto: "Automate everything that can be automated"                   │
@@ -46,13 +46,13 @@
 
 ┌─ MALE AGENTS (2) ────────────────────────────────────────────────────────┐
 │                                                                           │
-│  👨‍💻 MARCUS JOHNSON                                                         │
+│  👨‍💻 MARCUS                                                                 │
 │     Role: Backend & API Developer                                        │
 │     Experience: 9 years                                                  │
 │     Motto: "Write code that developers love to maintain"                 │
 │     Focus: PowerShell Modules, API Design, Performance Optimization      │
 │                                                                           │
-│  👨‍💻 DAVID THOMPSON                                                         │
+│  👨‍💻 DAVID                                                                  │
 │     Role: Project Manager & Coordinator                                  │
 │     Experience: 13 years                                                 │
 │     Motto: "Great teams build great products"                            │
