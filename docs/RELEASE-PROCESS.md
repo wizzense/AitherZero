@@ -74,9 +74,10 @@ git push origin v1.2.3
 
 AitherZero follows [Semantic Versioning 2.0.0](https://semver.org/):
 
-- **MAJOR** (v2.0.0): Breaking changes, incompatible API changes
-- **MINOR** (v1.1.0): New features, backward compatible
-- **PATCH** (v1.0.1): Bug fixes, backward compatible
+- **MAJOR** (v2.0.0.0): Breaking changes, incompatible API changes
+- **MINOR** (v1.1.1.0): New features, backward compatible
+- **PATCH** (v1.0.1.0): Bug fixes, backward compatible
+- **HOTFIX** (v1.0.1.1)
 
 ### Current Version: 1.1.0
 
