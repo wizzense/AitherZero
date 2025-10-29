@@ -70,7 +70,7 @@ cd AitherZero
 
 **Optional:**
 - OpenTofu or Terraform (for infrastructure automation)
-- Docker (for containerized workflows) - [See Docker Guide](docs/DOCKER.md)
+- Docker (for containerized workflows) - [See Docker Guide](DOCKER.md)
 
 ### 🐳 Docker Quick Start
 
@@ -85,10 +85,10 @@ docker exec -it aitherzero-app pwsh
 
 # Or build and run with Docker
 docker build -t aitherzero:latest .
-docker run -it --rm aitherzero:latest
+docker run -it --rm aitherzero:latest pwsh
 ```
 
-📖 **[Complete Docker Documentation](docs/DOCKER.md)** - Building, running, CI/CD integration, and production deployment
+📖 **[Complete Docker Documentation](DOCKER.md)** - Building, running, CI/CD integration, and production deployment
 
 ## 🎯 Quick Start
 
@@ -139,7 +139,7 @@ AitherZero can run in Docker containers for consistent, isolated environments:
 ```bash
 # Quick start with Docker Compose
 docker-compose up -d
-docker-compose exec aitherzero pwsh
+docker exec -it aitherzero-app pwsh
 
 # Or build and run manually
 docker build -t aitherzero:latest .
@@ -152,7 +152,7 @@ docker run -it --rm aitherzero:latest pwsh
 - ✅ Perfect for CI/CD pipelines
 - ✅ Quick testing and validation
 
-**📖 Full Documentation**: [Docker Guide](docs/DOCKER.md) - Complete instructions for building, running, and using the Docker container.
+**📖 Full Documentation**: [Docker Guide](DOCKER.md) - Complete instructions for building, running, and using the Docker container.
 
 ## 🔧 Verify Installation
 
@@ -193,7 +193,7 @@ AitherZero maintains high code quality standards through automated validation:
 **Documentation:**
 - [Quality Standards](docs/QUALITY-STANDARDS.md) - Complete quality guidelines
 - [Quick Reference](docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
-- [Docker Usage Guide](docs/DOCKER.md) - Container deployment and workflows
+- [Docker Usage Guide](DOCKER.md) - Container deployment and workflows
 
 ## Features
 
