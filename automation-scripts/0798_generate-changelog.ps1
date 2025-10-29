@@ -74,25 +74,58 @@ try {
 
 Write-Host "📊 Generating changelog from $FromTag to $ToTag..." -ForegroundColor Cyan
 
-# Get commit messages using a simple format
+# Get commit messages efficiently with a single git log call using a unique delimiter
 $commits = @()
-$commitList = git log --pretty=format:"%H" "$FromTag..$ToTag"
 
-foreach ($hash in $commitList) {
-    $subject = git log --format=%s -n 1 $hash
-    $body = git log --format=%b -n 1 $hash
-    $author = git log --format=%an -n 1 $hash
-    $email = git log --format=%ae -n 1 $hash
-    $date = git log --format=%ai -n 1 $hash
+# Use a unique delimiter that won't appear in commit messages
+$delimiter = "---AITHER-COMMIT-BOUNDARY---"
+$gitLogOutput = git log --format="%H%n%s%n%b%n%an%n%ae%n%ai%n$delimiter" "$FromTag..$ToTag" 2>&1 | Out-String
+
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($gitLogOutput)) {
+    Write-Host "⚠️  No commits found between $FromTag and $ToTag" -ForegroundColor Yellow
+    exit 0
+}
+
+# Split by the unique delimiter
+$commitBlocks = $gitLogOutput -split $delimiter
+
+foreach ($block in $commitBlocks) {
+    if ([string]::IsNullOrWhiteSpace($block)) { continue }
     
-    $commits += [PSCustomObject]@{
-        Hash = $hash
-        Subject = $subject
-        Body = $body
-        Author = $author
-        Email = $email
-        Date = $date
+    # Split into lines and parse
+    $lines = $block -split "`n" | Where-Object { $_ -ne '' }
+    
+    if ($lines.Count -ge 5) {
+        # Lines: Hash, Subject, Body (may be multiple lines), Author, Email, Date
+        $hash = $lines[0].Trim()
+        $subject = $lines[1].Trim()
+        
+        # Find author line (contains author name, should be second to last with valid date)
+        $authorIndex = $lines.Count - 3
+        if ($authorIndex -lt 2) { $authorIndex = 2 }
+        
+        $author = $lines[$authorIndex].Trim()
+        $email = $lines[$authorIndex + 1].Trim()
+        $date = $lines[$authorIndex + 2].Trim()
+        
+        # Body is everything between subject and author
+        $bodyLines = $lines[2..($authorIndex - 1)]
+        $body = ($bodyLines -join "`n").Trim()
+        
+        $commits += [PSCustomObject]@{
+            Hash = $hash
+            Subject = $subject
+            Body = $body
+            Author = $author
+            Email = $email
+            Date = $date
+        }
     }
+}
+
+if ($commits.Count -eq 0) {
+    Write-Host "⚠️  No commits found between $FromTag and $ToTag" -ForegroundColor Yellow
+    exit 0
 }
 
 if ($commits.Count -eq 0) {
@@ -139,7 +172,7 @@ foreach ($commit in $commits) {
     $isBreaking = $commit.Body -match 'BREAKING CHANGE' -or $commit.Subject -match '!'
     
     $categories[$type].Commits += @{
-        Hash      = if ($commit.Hash.Length -ge 8) { $commit.Hash.Substring(0, 8) } else { $commit.Hash }
+        Hash      = $commit.Hash.Substring(0, 8)  # Git hashes are always 40+ chars
         Message   = $message
         Author    = $commit.Author
         Date      = $commit.Date
@@ -205,13 +238,9 @@ $changelogContent += "- **Total Commits:** $($commits.Count)"
 $changelogContent += "- **Contributors:** $($contributors.Count)"
 
 # Get file changes statistics
-try {
-    $diffStat = git diff --shortstat "$FromTag" "$ToTag" 2>&1
-    if ($LASTEXITCODE -eq 0 -and $diffStat) {
-        $changelogContent += "- **Changes:** $diffStat"
-    }
-} catch {
-    # Skip if diff fails
+$diffStat = git diff --shortstat "$FromTag" "$ToTag" 2>&1
+if ($LASTEXITCODE -eq 0 -and $diffStat) {
+    $changelogContent += "- **Changes:** $diffStat"
 }
 
 $changelogContent += ""
