@@ -38,14 +38,23 @@ az 0510              # Generate project report
 Execute commands without entering the container:
 
 ```bash
-# Run unit tests
-docker exec aitherzero-pr-1634 pwsh -Command "az 0402"
+# Run unit tests (using simplified syntax)
+docker exec aitherzero-pr-1634 pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode Run -Target 0402"
+
+# Or use the NonInteractive mode (even simpler)
+docker exec aitherzero-pr-1634 pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode NonInteractive -Target 0501"
 
 # Run PSScriptAnalyzer
 docker exec aitherzero-pr-1634 pwsh -Command "az 0404"
 
 # Generate project report
 docker exec aitherzero-pr-1634 pwsh -Command "az 0510 -ShowAll"
+
+# List available scripts
+docker exec aitherzero-pr-1634 pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List -Target scripts"
+
+# Search for scripts
+docker exec aitherzero-pr-1634 pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode Search -Query test"
 ```
 
 ### Using the Container Manager (Alternative)

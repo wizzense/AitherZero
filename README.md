@@ -99,10 +99,17 @@ aitherzero              # Start interactive mode
 # Or run from the installation directory
 ./Start-AitherZero.ps1
 
+# Modern CLI - Simplified syntax
+aitherzero -Mode List -Target scripts              # List all automation scripts
+aitherzero -Mode Run -Target 0402                  # Run specific script (shortcut)
+aitherzero -Mode Run -Target script -ScriptNumber 0402  # Run specific script (verbose)
+
+# NonInteractive mode - Perfect for Docker/CI
+aitherzero -Mode NonInteractive -Target 0501       # Auto-detects and runs script
+
 # The global command works from anywhere
 cd /any/directory
-aitherzero -Mode List -Target scripts    # List all automation scripts
-aitherzero -Mode Run -Target script -ScriptNumber 0402  # Run specific script
+aitherzero -Mode Search -Query test                # Find test-related scripts
 ```
 
 ### Global Command

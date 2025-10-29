@@ -19,9 +19,13 @@ The AitherZero Modern CLI integrates new command modes directly into Start-Aithe
 # Interactive mode (traditional menu)
 .\Start-AitherZero.ps1
 
+# NonInteractive mode (auto-detects what to do)
+.\Start-AitherZero.ps1 -Mode NonInteractive -Target 0501
+
 # Modern CLI modes
 .\Start-AitherZero.ps1 -Mode List -Target scripts                    # List all automation scripts
-.\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402   # Run unit tests
+.\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402   # Run unit tests (verbose)
+.\Start-AitherZero.ps1 -Mode Run -Target 0402                        # Run unit tests (shortcut)
 .\Start-AitherZero.ps1 -Mode Search -Query security                  # Find security-related items
 .\Start-AitherZero.ps1 -Help                                         # Show help
 ```
@@ -31,8 +35,9 @@ The AitherZero Modern CLI integrates new command modes directly into Start-Aithe
 ### New CLI Modes
 | Mode | Description | Examples |
 |------|-------------|----------|
+| `NonInteractive` | Auto-detect mode based on parameters | `-Mode NonInteractive -Target 0501` (runs script), `-Mode NonInteractive` (validates environment) |
 | `List` | Show available resources | `-Mode List -Target scripts`, `-Mode List -Target playbooks` |
-| `Run` | Execute scripts/playbooks | `-Mode Run -Target script -ScriptNumber 0402`, `-Mode Run -Target playbook -Playbook tech-debt` |
+| `Run` | Execute scripts/playbooks | `-Mode Run -Target 0402` (shortcut), `-Mode Run -Target script -ScriptNumber 0402` (verbose), `-Mode Run -Target playbook -Playbook tech-debt` |
 | `Search` | Find by name/description | `-Mode Search -Query test`, `-Mode Search -Query security` |
 | `Interactive` | Traditional menu interface | `-Mode Interactive` (default) |
 
@@ -40,14 +45,15 @@ The AitherZero Modern CLI integrates new command modes directly into Start-Aithe
 ```bash
 # Development workflow
 Start-AitherZero.ps1 -Mode List -Target scripts | grep test        # Find test scripts
-az run script 0402                 # Run unit tests  
+Start-AitherZero.ps1 -Mode Run -Target 0402                        # Run unit tests (shortcut)
 az run playbook test-quick         # Fast validation
 az search deploy                   # Find deployment tools
 
-# CI/CD integration  
+# CI/CD integration (NonInteractive mode)
+Start-AitherZero.ps1 -Mode NonInteractive -Target 0402            # Run tests in CI
 az run sequence 0400-0499          # Run all test scripts
 az run playbook automated-security # Security analysis
-Start-AitherZero.ps1 -Mode List -Target playbooks                  # List orchestration options
+Start-AitherZero.ps1 -Mode List -Target playbooks                 # List orchestration options
 ```
 
 ## 🎯 Interactive Mode
