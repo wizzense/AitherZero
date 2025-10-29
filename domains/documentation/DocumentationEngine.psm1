@@ -522,7 +522,7 @@ function New-DocumentationIndex {
 *Generated automatically on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*
 "@
     
-    $indexFile = Join-Path $OutputPath "INDEX.md"
+    $indexFile = Join-Path $OutputPath "index.md"
     $indexContent | Set-Content $indexFile -Encoding UTF8
     Write-DocLog "Documentation index created: $indexFile"
 }

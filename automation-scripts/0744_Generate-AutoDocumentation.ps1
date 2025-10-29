@@ -286,7 +286,7 @@ function Invoke-ScriptDocumentationGeneration {
             New-Item -Path $scriptIndexPath -ItemType Directory -Force | Out-Null
         }
         
-        $indexFile = Join-Path $scriptIndexPath "INDEX.md"
+        $indexFile = Join-Path $scriptIndexPath "index.md"
         $scriptIndex | Set-Content $indexFile -Encoding UTF8
         
         Write-DocLog "Generated automation script documentation index: $indexFile"
@@ -469,7 +469,7 @@ function Update-MainDocumentation {
         }
         
         # Update documentation index if function is available
-        $indexPath = Join-Path $script:OutputPath "INDEX.md"
+        $indexPath = Join-Path $script:OutputPath "index.md"
         if (Test-Path $indexPath) {
             try {
                 # Try to regenerate index with current documentation
