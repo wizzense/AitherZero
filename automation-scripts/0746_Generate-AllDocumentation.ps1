@@ -173,12 +173,14 @@ Write-Host "━━━━━━━━━━━━━━━━━━━━━━�
 Write-Host "🧹 Step 3: Cleaning Up Legacy Index Files" -ForegroundColor Yellow
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
 
-Write-DocOrchLog "Checking for duplicate INDEX.md files..."
+Write-DocOrchLog "Checking for duplicate INDEX.md (uppercase) files..."
 
-$legacyIndexFiles = @(Get-ChildItem -Path $OutputPath -Recurse -Filter "INDEX.md" -File -ErrorAction SilentlyContinue)
+# Get all index files and filter for uppercase ones (case-sensitive)
+$allIndexFiles = @(Get-ChildItem -Path $OutputPath -Recurse -Filter "*ndex.md" -File -ErrorAction SilentlyContinue)
+$legacyIndexFiles = @($allIndexFiles | Where-Object { $_.Name -ceq "INDEX.md" })
 
 if ($legacyIndexFiles.Count -gt 0) {
-    Write-DocOrchLog "Found $($legacyIndexFiles.Count) legacy INDEX.md files to remove"
+    Write-DocOrchLog "Found $($legacyIndexFiles.Count) legacy INDEX.md (uppercase) files to clean up"
     
     foreach ($file in $legacyIndexFiles) {
         $dir = Split-Path $file.FullName -Parent
@@ -186,7 +188,7 @@ if ($legacyIndexFiles.Count -gt 0) {
         
         # Only remove if lowercase version exists
         if (Test-Path $lowercaseIndex) {
-            Write-DocOrchLog "Removing duplicate: $($file.FullName)"
+            Write-DocOrchLog "Removing uppercase duplicate: $($file.FullName)"
             Remove-Item $file.FullName -Force
         } else {
             Write-DocOrchLog "Renaming to lowercase: $($file.FullName)"
@@ -196,7 +198,7 @@ if ($legacyIndexFiles.Count -gt 0) {
     
     Write-DocOrchLog "Cleanup completed" -Level Success
 } else {
-    Write-DocOrchLog "No legacy INDEX.md files found - all clear!"
+    Write-DocOrchLog "No legacy INDEX.md (uppercase) files found - all clear!" -Level Success
 }
 
 # Summary
