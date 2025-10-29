@@ -378,14 +378,18 @@ function New-ModuleDocumentation {
         [string]$Format = 'Markdown'
     )
     
-    Write-DocLog "Generating documentation for module: $ModulePath"
+    Write-DocLog "Generating documentation for module: $ModulePath" -Level Information
+    Write-DocLog "Output format: $Format, Output path: $OutputPath" -Level Debug
     
     if (-not (Test-Path $ModulePath)) {
+        Write-DocLog "Module file not found: $ModulePath" -Level Error
         throw "Module file not found: $ModulePath"
     }
     
+    Write-DocLog "Parsing module content..." -Level Information
     # Parse module content
     $moduleInfo = Get-ModuleAnalysis -ModulePath $ModulePath
+    Write-DocLog "Module analysis complete: $($moduleInfo.Name)" -Level Information
     
     # Generate documentation data
     $docData = @{
@@ -397,14 +401,18 @@ function New-ModuleDocumentation {
         VersionHistory = $moduleInfo.VersionHistory
         GeneratedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     }
+    Write-DocLog "Documentation data prepared for $($moduleInfo.Name)" -Level Debug
     
     # Apply template
     $template = $script:DocumentationState.Templates['module']
+    Write-DocLog "Applying module template..." -Level Debug
     $documentation = Expand-Template -Template $template -Data $docData
+    Write-DocLog "Template expansion complete" -Level Debug
     
     # Save documentation
     $outputDir = $OutputPath ?? (Join-Path $script:DocumentationState.Config.OutputDirectory "modules")
     if (-not (Test-Path $outputDir)) {
+        Write-DocLog "Creating output directory: $outputDir" -Level Information
         New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
     }
     
@@ -412,10 +420,11 @@ function New-ModuleDocumentation {
     $outputFile = Join-Path $outputDir $fileName
     
     $documentation | Set-Content $outputFile -Encoding UTF8
-    Write-DocLog "Module documentation saved to: $outputFile"
+    Write-DocLog "Module documentation saved to: $outputFile" -Level Information
     
     # Generate HTML if requested
     if ($Format -in @('HTML', 'Both')) {
+        Write-DocLog "Generating HTML documentation..." -Level Information
         $htmlFile = $outputFile -replace '\.md$', '.html'
         ConvertTo-Html -InputObject $documentation -OutputPath $htmlFile
         Write-DocLog "HTML documentation saved to: $htmlFile"
@@ -439,9 +448,12 @@ function New-ProjectDocumentation {
         [switch]$IncludePrivate
     )
     
-    Write-DocLog "Generating comprehensive project documentation"
+    Write-DocLog "Generating comprehensive project documentation" -Level Information
+    Write-DocLog "Include private modules: $IncludePrivate" -Level Debug
     
+    Write-DocLog "Analyzing project structure..." -Level Information
     $projectInfo = Get-ProjectAnalysis -IncludePrivate:$IncludePrivate
+    Write-DocLog "Project analysis complete: $($projectInfo.Name)" -Level Information
     
     # Generate main project documentation
     $docData = @{
@@ -455,23 +467,30 @@ function New-ProjectDocumentation {
         ContributingGuidelines = $projectInfo.Contributing
         GeneratedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     }
+    Write-DocLog "Project documentation data prepared" -Level Debug
     
     $template = $script:DocumentationState.Templates['project']
+    Write-DocLog "Applying project template..." -Level Debug
     $documentation = Expand-Template -Template $template -Data $docData
+    Write-DocLog "Template expansion complete" -Level Debug
     
     # Save main documentation
     $outputDir = $OutputPath ?? $script:DocumentationState.Config.OutputDirectory
     if (-not (Test-Path $outputDir)) {
+        Write-DocLog "Creating output directory: $outputDir" -Level Information
         New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
     }
     
     $mainDocFile = Join-Path $outputDir "PROJECT-DOCUMENTATION.md"
     $documentation | Set-Content $mainDocFile -Encoding UTF8
+    Write-DocLog "Main project documentation saved to: $mainDocFile" -Level Information
     
     # Generate module documentation
+    Write-DocLog "Generating module documentation for all domains..." -Level Information
     foreach ($domain in $projectInfo.Domains) {
         foreach ($module in $domain.Modules) {
             try {
+                Write-DocLog "Generating docs for module: $($module.Name)" -Level Debug
                 New-ModuleDocumentation -ModulePath $module.Path -OutputPath (Join-Path $outputDir "modules")
             } catch {
                 Write-DocLog "Failed to generate documentation for module $($module.Name): $($_.Exception.Message)" -Level Warning
@@ -480,7 +499,9 @@ function New-ProjectDocumentation {
     }
     
     # Generate navigation index
+    Write-DocLog "Generating navigation index..." -Level Information
     New-DocumentationIndex -OutputPath $outputDir -ProjectInfo $projectInfo
+    Write-DocLog "Navigation index generated" -Level Debug
     
     $totalModules = if ($projectInfo.Domains -and $projectInfo.Domains.Count -gt 0) {
         $counts = $projectInfo.Domains | ForEach-Object { 
@@ -503,6 +524,9 @@ function New-DocumentationIndex {
         [hashtable]$ProjectInfo
     )
     
+    Write-DocLog "Starting documentation index generation" -Level Information
+    Write-DocLog "Index will be created at: $OutputPath" -Level Debug
+    
     $indexContent = @"
 # Documentation Index
 
@@ -512,8 +536,11 @@ function New-DocumentationIndex {
 ## Module Documentation
 "@
     
+    Write-DocLog "Building index content for $($ProjectInfo.Domains.Count) domains" -Level Debug
+    
     foreach ($domain in $ProjectInfo.Domains) {
         $indexContent += "`n### $($domain.Name)`n"
+        Write-DocLog "Adding domain to index: $($domain.Name)" -Level Debug
         foreach ($module in $domain.Modules) {
             $indexContent += "- [$($module.Name)](modules/$($module.Name).md)`n"
         }
@@ -531,9 +558,10 @@ function New-DocumentationIndex {
 *Generated automatically on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*
 "@
     
+    Write-DocLog "Writing index to file..." -Level Debug
     $indexFile = Join-Path $OutputPath "index.md"
     $indexContent | Set-Content $indexFile -Encoding UTF8
-    Write-DocLog "Documentation index created: $indexFile"
+    Write-DocLog "Documentation index created successfully: $indexFile" -Level Information
 }
 
 #endregion
@@ -580,13 +608,23 @@ function Get-ModuleAnalysis {
 function Get-ProjectAnalysis {
     param([switch]$IncludePrivate)
     
+    Write-DocLog "Initiating project analysis" -Level Information
+    Write-DocLog "Include private modules: $IncludePrivate" -Level Debug
+    
     $projectName = "AitherZero"
     $domainsPath = Join-Path $script:ProjectRoot "domains"
+    
+    Write-DocLog "Scanning domains at: $domainsPath" -Level Debug
     
     $domains = if (Test-Path $domainsPath) {
         @(Get-ChildItem -Path $domainsPath -Directory | ForEach-Object {
             $domainPath = $_.FullName
+            $domainName = $_.Name
+            Write-DocLog "Analyzing domain: $domainName" -Level Debug
+            
             $moduleFiles = @(Get-ChildItem -Path $domainPath -Filter "*.psm1")
+            Write-DocLog "Found $($moduleFiles.Count) modules in $domainName domain" -Level Debug
+            
             $modules = @($moduleFiles | ForEach-Object {
                 @{
                     Name = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
@@ -604,8 +642,11 @@ function Get-ProjectAnalysis {
             }
         })
     } else {
+        Write-DocLog "Domains directory not found: $domainsPath" -Level Warning
         @()
     }
+    
+    Write-DocLog "Building project information object..." -Level Debug
     
     try {
         $projectInfo = @{
@@ -617,6 +658,7 @@ function Get-ProjectAnalysis {
             Examples = (Get-ProjectExamples)
             Contributing = (Get-ContributingGuidelines)
         }
+        Write-DocLog "Project information assembled successfully" -Level Debug
     } catch {
         Write-DocLog "Error generating project info: $($_.Exception.Message)" -Level Warning
         $projectInfo = @{
@@ -629,6 +671,10 @@ function Get-ProjectAnalysis {
             Contributing = "See CONTRIBUTING.md for guidelines"
         }
     }
+    
+    $totalModules = ($domains | ForEach-Object { $_.ModuleCount } | Measure-Object -Sum).Sum
+    Write-DocLog "Project analysis complete" -Level Information
+    Write-DocLog "Analysis summary: $($domains.Count) domains, $totalModules modules" -Level Information
     
     return $projectInfo
 }

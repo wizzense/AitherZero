@@ -219,8 +219,11 @@ Write-Host "══════════════════════�
 Write-Host ""
 
 $duration = (Get-Date) - $script:StartTime
+Write-DocOrchLog "All documentation generation tasks completed" -Level Success
 Write-DocOrchLog "Total execution time: $($duration.ToString('mm\:ss'))" -Level Success
 Write-DocOrchLog "Output directory: $OutputPath" -Level Success
+Write-DocOrchLog "Mode: $Mode, Format: $Format" -Level Information
+Write-DocOrchLog "Process finished at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -Level Information
 
 Write-Host ""
 Write-Host "✅ All documentation has been generated successfully!" -ForegroundColor Green
@@ -230,5 +233,7 @@ Write-Host "  • View generated docs: cd $OutputPath" -ForegroundColor White
 Write-Host "  • Open index: $OutputPath/index.md" -ForegroundColor White
 Write-Host "  • Run validation: az 0404 (PSScriptAnalyzer)" -ForegroundColor White
 Write-Host ""
+
+Write-DocOrchLog "Documentation orchestration completed successfully" -Level Success
 
 exit 0
