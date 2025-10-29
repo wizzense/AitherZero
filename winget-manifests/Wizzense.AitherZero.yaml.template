@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.6.0.schema.json
+
+# This is the version manifest for AitherZero
+# Update the PackageVersion for each new release
+
+PackageIdentifier: Wizzense.AitherZero
+PackageVersion: {VERSION}
+DefaultLocale: en-US
+ManifestType: version
+ManifestVersion: 1.6.0

@@ -2,7 +2,13 @@
 
 ## Overview
 
-This document describes the official release process for AitherZero, including versioning, building, tagging, and publishing releases.
+This document describes the official release process for AitherZero, including versioning, building, tagging, and publishing releases to multiple distribution channels:
+
+- **GitHub Releases**: Source code, archives, and Docker images
+- **PowerShell Gallery**: PowerShell module for easy installation
+- **WinGet**: Windows Package Manager (requires installer - in development)
+
+For detailed publishing information, see [PUBLISHING-GUIDE.md](PUBLISHING-GUIDE.md).
 
 ## 🚀 Quick Release (New!)
 
@@ -341,6 +347,51 @@ git push origin v1.1.0
 - **Minor releases:** Monthly or when features are ready
 - **Patch releases:** As needed (bug fixes)
 - **Pre-releases:** Before major/minor releases for testing
+
+## Distribution Channels
+
+### PowerShell Gallery
+
+AitherZero automatically publishes to PowerShell Gallery on stable releases.
+
+**Status**: ✅ Ready to publish (workflow configured in `.github/workflows/publish-psgallery.yml`)
+
+**Setup Required**:
+1. Generate API key at https://www.powershellgallery.com/account/apikeys
+2. Add to GitHub secrets as `PSGALLERY_API_KEY`
+3. Future releases will automatically publish
+
+**User Installation** (after first publish):
+```powershell
+Install-Module -Name AitherZero
+Import-Module AitherZero
+```
+
+**Benefits**:
+- ✅ Easy installation with `Install-Module`
+- ✅ Automatic updates via `Update-Module`
+- ✅ Global reach to PowerShell users
+- ✅ Semantic versioning support
+
+### WinGet (Windows Package Manager)
+
+**Status**: ⚠️ In Development (requires Windows installer)
+
+**Current Approach**: Template manifests and generation script ready
+- Script: `automation-scripts/0797_generate-winget-manifests.ps1`
+- Templates: `winget-manifests/*.template`
+
+**What's Needed**:
+1. Create a Windows installer (MSI or EXE)
+2. Generate WinGet manifests using provided script
+3. Submit PR to microsoft/winget-pkgs
+
+**Future User Installation**:
+```powershell
+winget install Wizzense.AitherZero
+```
+
+**Documentation**: See [PUBLISHING-GUIDE.md](PUBLISHING-GUIDE.md) for detailed instructions on both publishing channels.
 
 ## Questions?
 
