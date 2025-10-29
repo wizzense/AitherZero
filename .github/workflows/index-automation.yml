@@ -184,8 +184,8 @@ jobs:
         Write-Host "Checking for uncommitted index changes..." -ForegroundColor Cyan
         
         # Check if there are uncommitted changes after generation
-        $changes = git status --porcelain | Where-Object { $_ -match '\/index\.md$' }
-        $hasUncommittedChanges = $changes.Count -gt 0
+        $changes = git status --porcelain | Where-Object { $_ -match '/index\.md$' }
+        $hasUncommittedChanges = @($changes).Count -gt 0
         
         if ($hasUncommittedChanges) {
           Write-Warning "⚠️ Index files were regenerated but not committed to this PR"
@@ -308,14 +308,11 @@ jobs:
             `✓ All index files are current - no regeneration needed. The change detection system verified that no directory content has changed since the last index generation.`
           }
           
-          ${(() => {
-            const hasGenerationErrors = parseInt(failed) > 0 && !hasUncommitted;
-            return hasGenerationErrors ? `
+          ${parseInt(failed) > 0 && !hasUncommitted ? `
           ### ⚠️ Generation Errors
           
           **${failed} directories failed** to generate indexes. Please review the workflow logs for details.
-          ` : '';
-          })()}
+          ` : ''}
           
           ---
           <details>
