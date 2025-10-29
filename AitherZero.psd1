@@ -1,5 +1,5 @@
 @{
-    ModuleVersion = '0.0.0.0'
+    ModuleVersion = '1.0.0.0'
     GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
     Author = 'AitherZero Team'
     Description = 'AitherZero Automation Platform - Infrastructure automation with number-based orchestration'
