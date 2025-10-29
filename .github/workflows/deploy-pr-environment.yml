@@ -439,6 +439,9 @@ jobs:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
             
+            // Calculate dynamic port for container (8080-8089 range)
+            const dynamicPort = `808${prNumber % 10}`;
+            
             // Get job results
             const validationResult = '${{ needs.validate-docker-config.result }}';
             const buildResult = '${{ needs.build-container.result }}';
@@ -497,7 +500,7 @@ jobs:
             ${deploymentSuccessful ? `
             ### 🔗 Access Your Environment
             - **Container Package**: [${{ needs.build-container.outputs.package-url }}](${{ needs.build-container.outputs.package-url }})
-            - **Local Testing URL**: http://localhost:808${prNumber.toString().slice(-1)}
+            - **Local Testing URL**: http://localhost:${dynamicPort}
             - **Container Name**: \`aitherzero-pr-${prNumber}\`
 
             ### 🧪 Testing Commands
@@ -530,7 +533,7 @@ jobs:
 
             **Step 2: Start the container** (REQUIRED - container won't exist until you run this)
             \`\`\`bash
-            docker run -d --name aitherzero-pr-${prNumber} -p 808${prNumber.toString().slice(-1)}:8080 ${{ needs.build-container.outputs.image-tag }}
+            docker run -d --name aitherzero-pr-${prNumber} -p ${dynamicPort}:8080 ${{ needs.build-container.outputs.image-tag }}
             \`\`\`
 
             **Step 3: Wait for startup and check logs**
