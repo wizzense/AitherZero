@@ -24,14 +24,6 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
 
-      - name: 'Setup PowerShell'
-        uses: azure/powershell@v2
-        with:
-          pwsh: true
-          azPSVersion: 'latest'
-          inlineScript: |
-            Write-Host "PowerShell $($PSVersionTable.PSVersion) ready"
-
       - name: 'Validate All Module Manifests'
         shell: pwsh
         run: |
