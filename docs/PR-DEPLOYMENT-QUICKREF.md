@@ -77,7 +77,7 @@ kubectl delete namespace $(kubectl get ns | grep aitherzero-pr- | awk '{print $1
 
 ```bash
 # Deployment health
-docker exec aitherzero-pr-123 pwsh -Command "Test-Path /app/AitherZero.psd1"
+docker exec aitherzero-pr-123 pwsh -Command "Test-Path /opt/aitherzero/AitherZero.psd1"
 kubectl exec deployment/aitherzero -n aitherzero-pr-123 -- pwsh -Command "Get-Module AitherZero"
 
 # Resource usage
