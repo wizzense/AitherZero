@@ -34,6 +34,7 @@ This directory contains the essential GitHub Actions workflows for AitherZero. T
 |----------|---------|----------|----------|
 | `deploy-pr-environment.yml` | Deploy PR preview environments | PR events, Manual | 5-10 min |
 | `release-automation.yml` | Automated release creation and packaging | Tags, Manual | 10-15 min |
+| `docker-publish.yml` | Build and publish Docker images to GHCR | Tags, Releases, Manual | 15-20 min |
 
 ## 📋 Workflow Details
 
@@ -131,3 +132,48 @@ The following over-engineered "AI coordination" workflows were removed as they p
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [AitherZero Documentation](../../README.md)
 - [PowerShell CI/CD Best Practices](https://docs.microsoft.com/en-us/powershell/scripting/dev-cross-plat/ci-cd-pipeline)
+
+### Docker Image Publishing (`docker-publish.yml`)
+
+**Purpose:** Build and publish multi-platform Docker images to GitHub Container Registry.
+
+**Features:**
+- 🐳 **Multi-Platform**: Builds for linux/amd64 and linux/arm64
+- 📦 **GHCR Publishing**: Publishes to ghcr.io/wizzense/aitherzero
+- 🏷️ **Smart Tagging**: Creates version, major.minor, major, latest, and SHA tags
+- 🔒 **Security Scanning**: Trivy integration for vulnerability detection
+- 🧪 **Automated Testing**: Smoke tests verify image functionality
+- ⚡ **Build Caching**: GitHub Actions cache for faster builds
+
+**Triggers:**
+- Push of version tags (e.g., `v1.1.0`)
+- GitHub Release published
+- Manual workflow dispatch
+
+**Image Tags Created:**
+```
+ghcr.io/wizzense/aitherzero:v1.1.0   # Specific version
+ghcr.io/wizzense/aitherzero:1.1      # Major.minor
+ghcr.io/wizzense/aitherzero:1        # Major version
+ghcr.io/wizzense/aitherzero:latest   # Latest stable release
+ghcr.io/wizzense/aitherzero:sha-abc  # Specific commit
+```
+
+**Usage:**
+```bash
+# Pull and run the latest image
+docker pull ghcr.io/wizzense/aitherzero:latest
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+
+# Pull specific version
+docker pull ghcr.io/wizzense/aitherzero:v1.1.0
+```
+
+**Jobs:**
+1. `build-and-push`: Builds multi-platform images and pushes to GHCR
+2. `security-scan`: Scans images with Trivy and uploads results to GitHub Security
+
+**Artifacts:**
+- Docker images in GitHub Container Registry
+- Security scan results (SARIF format) in GitHub Security tab
+
