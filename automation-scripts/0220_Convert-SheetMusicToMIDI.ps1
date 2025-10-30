@@ -389,8 +389,12 @@ try:
 except ImportError:
     print("Warning: music21 not found, falling back to mido", file=sys.stderr)
     use_music21 = False
-    import mido
-    from mido import MidiFile, MidiTrack, Message, MetaMessage
+    try:
+        import mido
+        from mido import MidiFile, MidiTrack, Message, MetaMessage
+    except ImportError:
+        print("Error: Neither music21 nor mido is installed. Please install at least one of these Python packages.", file=sys.stderr)
+        sys.exit(1)
 
 def note_to_midi(note_name):
     """Convert note name to MIDI number"""
