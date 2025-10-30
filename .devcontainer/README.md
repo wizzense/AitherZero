@@ -67,13 +67,15 @@ The container sets these environment variables:
 - `AITHERZERO_ROOT`: Points to workspace folder
 - `AITHERZERO_ENVIRONMENT`: Set to "development"
 
+To use secrets and tokens (like `GITHUB_TOKEN` for MCP servers):
+1. Create a `.env` file in the repository root (already in .gitignore)
+2. Add your tokens: `GITHUB_TOKEN=your_token_here`
+3. The file will be available in the container at `${workspaceFolder}/.env`
+4. Source it in your shell if needed: `. ./.env`
+
 ### Port Forwarding
 
 Ports 8080 and 8443 are forwarded for web services and testing.
-
-### Volume Mounts
-
-The `.env` file is mounted from the host (if it exists) for secrets and tokens.
 
 ## Using the Container
 

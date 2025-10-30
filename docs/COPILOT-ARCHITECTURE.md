@@ -196,7 +196,7 @@ Copilot Request → MCP Server Manager
 | Validate Syntax           | 0407_Validate-Syntax.ps1         | Task menu     |
 | Run Quick Tests           | Playbook: test-quick             | Task menu     |
 | Generate Project Report   | 0510_Generate-ProjectReport.ps1  | Task menu     |
-| Quality Check             | 0420_Validate-Quality.ps1        | Task menu     |
+| Quality Check             | 0420_Validate-ComponentQuality.ps1 | Task menu   |
 | Initialize Environment    | Initialize-AitherEnvironment.ps1 | On folder open|
 | Start AitherZero          | Start-AitherZero.ps1             | Task menu     |
 | Bootstrap                 | bootstrap.ps1                    | Task menu     |

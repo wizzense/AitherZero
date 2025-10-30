@@ -110,7 +110,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "./automation-scripts/0420_Run-QualityValidation.ps1 -Path ${input:componentPath}"
+        "./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ${input:componentPath}"
       ],
       "presentation": {
         "reveal": "always",

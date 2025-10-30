@@ -82,10 +82,6 @@
     "AITHERZERO_ENVIRONMENT": "development"
   },
 
-  "mounts": [
-    "source=${localWorkspaceFolder}/.env,target=${containerWorkspaceFolder}/.env,type=bind,consistency=cached"
-  ],
-
   "forwardPorts": [8080, 8443],
 
   "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"

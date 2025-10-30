@@ -229,7 +229,7 @@ AitherZero maintains high code quality standards through automated validation:
 
 ## Configuration
 
-Configuration files are stored in the `configs/` directory.
+The main configuration file is `config.psd1` in the project root.
 
 ## 🤖 AI-Assisted Development
 

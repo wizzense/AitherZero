@@ -1,5 +1,5 @@
 {
-  "$schema": "https://github.com/modelcontextprotocol/specification/blob/main/schema/mcp-config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/specification/main/schema/mcp-config.schema.json",
   "mcpServers": {
     "filesystem": {
       "command": "npx",
