@@ -362,6 +362,16 @@ function Test-TestCoverage {
     
     # For automation scripts
     if ($fileDir -like "*automation-scripts*") {
+        # Check for range-based unit test organization (e.g., 0000-0099, 0900-0999)
+        if ($fileName -match '^(\d{4})_') {
+            $scriptNum = [int]$Matches[1]
+            $rangeStart = [Math]::Floor($scriptNum / 100) * 100
+            $rangeEnd = $rangeStart + 99
+            $rangeDir = "$($rangeStart.ToString('0000'))-$($rangeEnd.ToString('0000'))"
+            $possibleTestPaths += Join-Path $TestsPath "unit/automation-scripts/$rangeDir/$fileName.Tests.ps1"
+        }
+        $possibleTestPaths += Join-Path $TestsPath "integration/automation-scripts/$fileName.Integration.Tests.ps1"
+        $possibleTestPaths += Join-Path $TestsPath "unit/automation-scripts/$fileName.Tests.ps1"
         $possibleTestPaths += Join-Path $TestsPath "integration/$fileName.Tests.ps1"
         $possibleTestPaths += Join-Path $TestsPath "unit/$fileName.Tests.ps1"
     }

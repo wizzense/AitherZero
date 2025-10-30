@@ -31,7 +31,7 @@
     restricted language parser, especially on Windows systems.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [switch]$Fix,
     [string[]]$Path

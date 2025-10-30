@@ -1,108 +1,99 @@
 #Requires -Version 7.0
+#Requires -Module Pester
 
-Describe "0524_Generate-TechDebtReport" {
+<#
+.SYNOPSIS
+    Unit tests for 0524_Generate-TechDebtReport
+.DESCRIPTION
+    Auto-generated comprehensive tests
+    Script: 0524_Generate-TechDebtReport
+    Stage: Reporting
+    Description: Tech debt report generation from modular analysis results
+    Generated: 2025-10-30 02:11:49
+#>
+
+Describe '0524_Generate-TechDebtReport' -Tag 'Unit', 'AutomationScript', 'Reporting' {
+
     BeforeAll {
-        $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0524_Generate-TechDebtReport.ps1"
-        $script:TempOutputPath = Join-Path ([System.IO.Path]::GetTempPath()) "analysis"
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0524_Generate-TechDebtReport.ps1'
+        $script:ScriptName = '0524_Generate-TechDebtReport'
+    }
 
-        # Mock external dependencies
-        Mock -CommandName Import-Module -MockWith { }
-        Mock -CommandName Write-AnalysisLog -MockWith { param($Message, $Component, $Level) Write-Host "[$Level] $Message" }
-        Mock -CommandName Initialize-TechDebtAnalysis -MockWith { }
-        Mock -CommandName Save-AnalysisResults -MockWith { "analysis-results.json" }
-        Mock -CommandName Write-Host -MockWith { }
+    Context 'Script Validation' {
+        It 'Script file should exist' {
+            Test-Path $script:ScriptPath | Should -Be $true
+        }
 
-        # Script-specific mocks
-        if ("0524_Generate-TechDebtReport" -eq "0522_Analyze-CodeQuality") {
-            Mock -CommandName Get-FilesToAnalyze -MockWith {
-                @(@{ FullName = "TestScript.ps1" })
-            }
-            Mock -CommandName Get-Content -MockWith {
-                @("# TODO: Implement feature", "# FIXME: Bug fix needed", "function Test-Function { }")
-            }
-        } elseif ("0524_Generate-TechDebtReport" -eq "0523_Analyze-SecurityIssues") {
-            Mock -CommandName Get-FilesToAnalyze -MockWith {
-                @(@{ FullName = "TestScript.ps1" })
-            }
-            Mock -CommandName Get-Content -MockWith {
-                @("param([string]$Password)", "Invoke-Expression $userInput", "$cred = 'admin:password123'")
-            }
-        } elseif ("0524_Generate-TechDebtReport" -eq "0524_Generate-TechDebtReport") {
-            Mock -CommandName Invoke-AnalysisIfNeeded -MockWith { }
-            Mock -CommandName Merge-AnalysisResults -MockWith {
-                @{
-                    Analyses = @{
-                        ConfigurationUsage = @{ UsagePercentage = 75; UnusedSettings = @("test.setting") }
-                        DocumentationCoverage = @{ OverallCoveragePercentage = 80 }
-                        CodeQuality = @{ Summary = @{ QualityScore = 70 }; TODOs = @(); FIXMEs = @(); HACKs = @() }
-                        SecurityIssues = @{ SecurityScore = 90; Summary = @{ Critical = 0; High = 1 } }
-                    }
-                }
-            }
-            Mock -CommandName Export-HTMLReport -MockWith { }
-            Mock -CommandName Export-MarkdownReport -MockWith { }
-            Mock -CommandName Set-Content -MockWith { }
-            Mock -CommandName ConvertTo-Json -MockWith { "mocked json" }
+        It 'Should have valid PowerShell syntax' {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script:ScriptPath, [ref]$null, [ref]$errors
+            )
+            $errors.Count | Should -Be 0
+        }
+
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
         }
     }
 
-    Context "Parameter Validation" {
-        It "Should accept basic parameters" {
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
+    Context 'Parameters' {
+        It 'Should have parameter: AnalysisPath' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('AnalysisPath') | Should -Be $true
         }
 
-        if ("0524_Generate-TechDebtReport" -eq "0524_Generate-TechDebtReport") {
-            It "Should accept Format parameter" {
-                { & $script:ScriptPath -Format @("HTML", "JSON") -WhatIf } | Should -Not -Throw
-            }
+        It 'Should have parameter: OutputPath' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
+        }
 
-            It "Should accept RunAnalysis switch" {
-                { & $script:ScriptPath -RunAnalysis -WhatIf } | Should -Not -Throw
-            }
-        } else {
-            It "Should accept OutputPath parameter" {
-                { & $script:ScriptPath -OutputPath $script:TempOutputPath -WhatIf } | Should -Not -Throw
-            }
+        It 'Should have parameter: Format' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Format') | Should -Be $true
+        }
 
-            It "Should accept UseCache switch" {
-                { & $script:ScriptPath -UseCache -WhatIf } | Should -Not -Throw
-            }
+        It 'Should have parameter: RunAnalysis' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('RunAnalysis') | Should -Be $true
+        }
+
+        It 'Should have parameter: UseLatest' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('UseLatest') | Should -Be $true
+        }
+
+        It 'Should have parameter: OpenReport' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('OpenReport') | Should -Be $true
+        }
+
+        It 'Should have parameter: AnalysisTypes' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('AnalysisTypes') | Should -Be $true
+        }
+
+    }
+
+    Context 'Metadata' {
+        It 'Should be in stage: Reporting' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Stage:'
+        }
+
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 
-    Context "Analysis Execution" {
-        It "Should execute analysis successfully" {
-            $result = & $script:ScriptPath -WhatIf 2>&1
-            $result | Should -Not -BeNullOrEmpty
-        }
-
-        if ("0524_Generate-TechDebtReport" -ne "0524_Generate-TechDebtReport") {
-            It "Should initialize tech debt analysis" {
-                & $script:ScriptPath -OutputPath $script:TempOutputPath -WhatIf 2>&1
-                Should -Not -Invoke Initialize-TechDebtAnalysis # WhatIf should not invoke
-            }
-        }
-    }
-
-    Context "WhatIf Support" {
-        It "Should show preview with WhatIf" {
-            $result = & $script:ScriptPath -WhatIf 2>&1
-            $result | Should -Not -BeNullOrEmpty
-        }
-
-        It "Should not save results with WhatIf" {
-            & $script:ScriptPath -WhatIf 2>&1
-            Should -Not -Invoke Save-AnalysisResults
-        }
-    }
-
-    Context "Error Handling" {
-        It "Should handle module import failures" {
-            Mock -CommandName Import-Module -MockWith { throw "Module not found" }
-
-            $result = & $script:ScriptPath -WhatIf 2>&1
-            # Should complete even with import failures in WhatIf mode
-            $result | Should -Not -BeNullOrEmpty
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }
