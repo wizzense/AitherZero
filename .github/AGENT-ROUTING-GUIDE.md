@@ -175,7 +175,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ---
 
 ### 👨‍💻 David - Project Manager & Coordinator
-**File:** [`.github/agents/david-project-manager.md`](.github/agents/david-project-manager.md)
+**File:** [`./agents/david-project-manager.md`](./agents/david-project-manager.md)
 
 **Best for:**
 - Sprint planning and coordination
