@@ -4,11 +4,41 @@
 
 .DESCRIPTION
     Comprehensive container management for AitherZero PR environments.
-    Provides automated pull, run, stop, logs, exec, and cleanup operations.
-    Simplifies testing PR deployments locally.
+    
+    This script manages the complete lifecycle of PR containers that are automatically
+    built and published to GitHub Container Registry (ghcr.io) for every pull request.
+    
+    **What This Does:**
+    - Pulls PR container images from GitHub Container Registry
+    - Starts, stops, and manages container lifecycle
+    - Provides interactive shell access to containers
+    - Executes commands and tests in isolated PR environments
+    - Monitors container logs and status
+    - Handles cleanup of PR containers
+    
+    **Prerequisites:**
+    - Docker must be installed and running
+    - PR must have been built (automatic when PR is created)
+    
+    **Common Workflows:**
+    
+    1. Quick Test (Automated):
+       .\0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1677
+       
+    2. Interactive Exploration:
+       .\0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
+       
+    3. Run Tests:
+       .\0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "./az.ps1 0402"
+       
+    4. Monitor Activity:
+       .\0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
+       
+    5. Cleanup:
+       .\0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1677
 
 .PARAMETER Action
-    Action to perform: Pull, Run, Stop, Logs, Exec, Cleanup, Status, List
+    Action to perform: Pull, Run, Stop, Logs, Exec, Cleanup, Status, List, QuickStart, Shell
 
 .PARAMETER PRNumber
     Pull request number (required for most actions)
@@ -20,7 +50,8 @@
     Custom image tag (defaults to ghcr.io/wizzense/aitherzero:pr-{PRNumber})
 
 .PARAMETER Port
-    Host port to bind (defaults to 808{last digit of PR number})
+    Host port to bind (defaults to 8080 + (PRNumber % 100))
+    Examples: PR #1677 → 8087, PR #1634 → 8084, PR #2500 → 8080
 
 .PARAMETER Follow
     Follow logs in real-time (used with Logs action)
@@ -29,42 +60,51 @@
     Force operation even if container exists or is running
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Pull -PRNumber 1634
-    Pull the container image for PR #1634
+    .\0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1677
+    Automated setup: pull + run + verify in one command (recommended for first use)
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Run -PRNumber 1634
-    Start the container for PR #1634
+    .\0854_Manage-PRContainer.ps1 -Action Pull -PRNumber 1677
+    Pull the container image for PR #1677 from GitHub Container Registry
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1634 -Command "./az.ps1 0402"
-    Execute tests in the running container
+    .\0854_Manage-PRContainer.ps1 -Action Run -PRNumber 1677
+    Start the container for PR #1677
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1634 -Follow
-    View and follow container logs
+    .\0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
+    Open interactive PowerShell shell in the container (easiest way to explore)
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Status -PRNumber 1634
-    Check container status
+    .\0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "./az.ps1 0402"
+    Execute unit tests in the running container
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1634
-    Open interactive shell in the running container
+    .\0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
+    View and follow container logs in real-time
+
+.EXAMPLE
+    .\0854_Manage-PRContainer.ps1 -Action Status -PRNumber 1677
+    Check container status and health
 
 .EXAMPLE
     .\0854_Manage-PRContainer.ps1 -Action List
-    List all PR containers
+    List all AitherZero PR containers on your system
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1634
-    Automated setup: pull + run + verify in one command
+    .\0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1677
+    Stop and remove the container for PR #1677
 
 .NOTES
     Script Number: 0854
     Category: Container Management
-    Required: Docker
+    Required: Docker Desktop or Docker Engine
     Integration: Fully integrated with AitherZero automation system
+    
+    Container images are automatically built by GitHub Actions and published to:
+    ghcr.io/wizzense/aitherzero:pr-{number}
+    
+    See DOCKER.md for complete documentation and alternative methods.
 #>
 
 [CmdletBinding()]
