@@ -52,11 +52,11 @@ gh pr merge 1700 --squash
 # Review the PR
 gh pr view 1660
 
-# Verify workflow syntax
-cd .github/workflows && ls -la publish-psgallery.yml
-
 # Merge
 gh pr merge 1660 --squash
+
+# After merging, verify workflow file exists
+cd .github/workflows && ls -la publish-psgallery.yml
 ```
 
 **Time**: 20 minutes  

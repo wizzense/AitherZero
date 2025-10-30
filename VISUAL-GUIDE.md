@@ -1,6 +1,6 @@
 # AitherZero Strategic Overview - Visual Guide
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                    AITHERZERO STRATEGIC ROADMAP                        │
 │                         "What's Next?"                                 │

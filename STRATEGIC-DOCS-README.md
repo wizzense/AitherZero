@@ -336,7 +336,7 @@ A: Week 2 plan is in NEXT-ACTIONS.md; full roadmap in STRATEGIC-ROADMAP.md
 
 **Still stuck?**
 - Open a GitHub Discussion
-- Comment on PR #1703
+- Comment on the current strategic planning PR
 - Review related PRs: #1700, #1660
 
 ---

@@ -1,6 +1,7 @@
 # 📋 AitherZero Next Steps - Quick Reference Card
 
-**Last Updated**: October 30, 2025
+**Last Updated**: October 30, 2025  
+_Maintainers: Please update this date whenever you make changes to this document._
 
 ---
 
