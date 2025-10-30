@@ -1,14 +1,16 @@
-# How to Republish v1.0.0.0 with Proper Release Assets
+# How to Republish a Failed Release with Proper Release Assets
 
 ## 📋 Background
 
-The v1.0.0.0 release was created successfully, but the workflow was cancelled before it could upload release assets (ZIP/TAR.GZ packages). This guide shows you how to re-trigger the release process to attach the missing assets.
+Sometimes a release workflow may be cancelled or fail before it can upload release assets (ZIP/TAR.GZ packages). This guide shows you how to re-trigger the release process to attach the missing assets.
+
+**Example:** The v1.0.0.0 release was created successfully, but the workflow was cancelled before it could upload release assets.
 
 ## ✅ The Release Workflow is Working
 
 Good news: The release automation workflow (`release-automation.yml`) is correctly configured and functional. It creates:
-- ✅ `AitherZero-v1.0.0.0.zip` - Windows compatible package
-- ✅ `AitherZero-v1.0.0.0.tar.gz` - Unix/Linux/macOS compatible package
+- ✅ `AitherZero-v{version}.zip` - Windows compatible package
+- ✅ `AitherZero-v{version}.tar.gz` - Unix/Linux/macOS compatible package
 - ✅ `build-info.json` - Build metadata and version information
 - ✅ Comprehensive release notes with changelog and installation instructions
 
@@ -28,15 +30,15 @@ This is the **easiest and safest** method:
    - Click the **"Run workflow"** button (top right)
    - Fill in the form:
      - **Use workflow from:** `main`
-     - **Release version:** `1.0.0.0` (without 'v' prefix)
-     - **Mark as pre-release:** `false` (unchecked)
+     - **Release version:** Enter the version number without 'v' prefix (e.g., `1.0.0.0`)
+     - **Mark as pre-release:** `false` (unchecked for stable releases)
      - **Run comprehensive tests:** `false` (unchecked - code already validated)
 
 3. **Click "Run workflow"**
 
 4. **Monitor the workflow**
    - The workflow will take ~5-10 minutes
-   - It will create packages and attach them to the existing v1.0.0.0 release
+   - It will create packages and attach them to the existing release
    - Check the "Actions" tab to see progress
 
 **Why this works:**
@@ -52,10 +54,12 @@ If you have the GitHub CLI installed:
 
 ```bash
 gh workflow run release-automation.yml \
-  -f version=1.0.0.0 \
+  -f version=X.Y.Z \
   -f prerelease=false \
   -f run_full_tests=false
 ```
+
+Replace `X.Y.Z` with your version number (e.g., `1.0.0.0`).
 
 Then monitor the workflow:
 ```bash
@@ -74,14 +78,15 @@ git checkout main
 git pull
 
 # Delete existing tag (local and remote)
-git tag -d v1.0.0.0
-git push origin --delete v1.0.0.0
+# Replace vX.Y.Z with your version (e.g., v1.0.0.0)
+git tag -d vX.Y.Z
+git push origin --delete vX.Y.Z
 
 # Recreate the tag
-git tag -a v1.0.0.0 -m "Initial PowerShell Gallery release"
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
 
 # Push the tag to trigger the workflow
-git push origin v1.0.0.0
+git push origin vX.Y.Z
 ```
 
 The workflow will automatically trigger and create a new release with all assets.
@@ -92,12 +97,12 @@ The workflow will automatically trigger and create a new release with all assets
 
 ## 📦 What Will Be Created
 
-Once the workflow completes successfully, the v1.0.0.0 release will have:
+Once the workflow completes successfully, the release will have:
 
 ### Release Assets:
 ```
-AitherZero-v1.0.0.0.zip         (~12-15 MB)  - Windows package
-AitherZero-v1.0.0.0.tar.gz      (~4-5 MB)    - Unix/Linux/macOS package  
+AitherZero-vX.Y.Z.zip           (~12-15 MB)  - Windows package
+AitherZero-vX.Y.Z.tar.gz        (~4-5 MB)    - Unix/Linux/macOS package  
 build-info.json                  (~1 KB)      - Build metadata
 ```
 
@@ -115,9 +120,10 @@ build-info.json                  (~1 KB)      - Build metadata
 After the workflow completes:
 
 1. **Check the release page:**
-   ```bash
-   https://github.com/wizzense/AitherZero/releases/tag/v1.0.0.0
    ```
+   https://github.com/wizzense/AitherZero/releases/tag/vX.Y.Z
+   ```
+   (Replace `vX.Y.Z` with your version, e.g., `v1.0.0.0`)
 
 2. **Verify assets are attached:**
    - Should see 3 files (ZIP, TAR.GZ, JSON)
@@ -126,25 +132,27 @@ After the workflow completes:
 3. **Test installation (optional):**
    ```powershell
    # Windows
-   $url = "https://github.com/wizzense/AitherZero/releases/download/v1.0.0.0/AitherZero-v1.0.0.0.zip"
-   Invoke-WebRequest -Uri $url -OutFile "AitherZero-v1.0.0.0.zip"
-   Expand-Archive -Path "AitherZero-v1.0.0.0.zip" -DestinationPath ./test
+   $version = "1.0.0.0"  # Replace with your version
+   $url = "https://github.com/wizzense/AitherZero/releases/download/v$version/AitherZero-v$version.zip"
+   Invoke-WebRequest -Uri $url -OutFile "AitherZero-v$version.zip"
+   Expand-Archive -Path "AitherZero-v$version.zip" -DestinationPath ./test
    ```
 
    ```bash
    # Linux/macOS
-   curl -LO "https://github.com/wizzense/AitherZero/releases/download/v1.0.0.0/AitherZero-v1.0.0.0.tar.gz"
-   tar -xzf AitherZero-v1.0.0.0.tar.gz
-   cd AitherZero-v1.0.0.0
+   VERSION="1.0.0.0"  # Replace with your version
+   curl -LO "https://github.com/wizzense/AitherZero/releases/download/v${VERSION}/AitherZero-v${VERSION}.tar.gz"
+   tar -xzf "AitherZero-v${VERSION}.tar.gz"
+   cd "AitherZero-v${VERSION}"
    ./bootstrap.sh
    ```
 
 ## 🔍 Understanding the Issue
 
 **What happened:**
-- The v1.0.0.0 tag was created and pushed successfully
+- The release tag was created and pushed successfully
 - The release automation workflow was triggered
-- The workflow started but was **cancelled before completion** (run ID: 18897558846)
+- The workflow started but was **cancelled before completion**
 - This left the GitHub release created but with no assets attached
 
 **Why it happened:**
@@ -154,7 +162,7 @@ After the workflow completes:
 
 **Why it's not a code problem:**
 - The workflow code is correct and functional
-- Previous releases (v1.0.7, v1.0.4) worked successfully
+- The workflow has completed successfully for other releases
 - The workflow will work when run to completion
 
 ## 📚 Additional Resources
@@ -195,5 +203,4 @@ If you encounter problems:
 ---
 
 **Last Updated:** 2025-10-30  
-**Target Release:** v1.0.0.0  
-**Status:** Ready to republish
+**Status:** General guide for any failed release
