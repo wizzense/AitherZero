@@ -415,11 +415,11 @@
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
-            'testing' = @{ Modules = 6; Description = 'Testing framework, quality validation, and test generation' }
+            'testing' = @{ Modules = 8; Description = 'Testing framework, quality validation, and test generation' }
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (123 total files, 123 unique numbers - all numbers now unique)
+        # Script inventory by range (125 total files, 125 unique numbers - all numbers now unique)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
