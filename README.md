@@ -74,7 +74,19 @@ cd AitherZero
 
 ### 🐳 Docker Quick Start
 
-Run AitherZero in an isolated container:
+**Easiest way - Pull from Docker Hub (no authentication required):**
+
+```bash
+# Pull and run the latest stable version
+docker pull wizzense/aitherzero:latest
+docker run -it --name aitherzero wizzense/aitherzero:latest
+
+# Inside the container, module is auto-loaded:
+# az 0402              # Run tests
+# Start-AitherZero     # Interactive menu
+```
+
+**Build locally:**
 
 ```bash
 # Quick start with Docker Compose
@@ -88,7 +100,9 @@ docker build -t aitherzero:latest .
 docker run -it --rm aitherzero:latest pwsh
 ```
 
-📖 **[Complete Docker Documentation](DOCKER.md)** - Building, running, CI/CD integration, and production deployment
+📖 **[Complete Docker Documentation](DOCKER.md)** - Building, running, CI/CD integration, production deployment, and publishing your own images
+
+🐳 **[Docker Hub](https://hub.docker.com/r/wizzense/aitherzero)** - Official AitherZero images
 
 ## 🎯 Quick Start
 
