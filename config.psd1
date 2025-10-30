@@ -284,8 +284,8 @@
                 }
                 Documentation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0733', '0744', '0745')
-                    Description = 'AI-powered documentation generation, auto-documentation, and project indexing'
+                    Scripts = @('0733', '0744', '0745', '0746')
+                    Description = 'AI-powered documentation generation, auto-documentation, project indexing, and orchestration'
                 }
                 Optimization = @{
                     DependsOn = @('Core.PowerShell7')
@@ -422,7 +422,7 @@
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 29; Category = 'Git & AI Automation' }
+            '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 2; Category = 'Validation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
