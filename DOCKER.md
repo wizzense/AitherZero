@@ -2,46 +2,157 @@
 
 This guide explains how to use AitherZero with Docker for easy deployment and testing.
 
+## Quick Start - Docker Desktop on Windows/macOS/Linux
+
+**Want to use AitherZero with Docker Desktop? This is the fastest way:**
+
+```bash
+# Pull the latest stable release from Docker Hub (no authentication required)
+docker pull wizzense/aitherzero:latest
+
+# Run AitherZero interactively
+docker run -it --name aitherzero wizzense/aitherzero:latest
+
+# Inside the container, the module is auto-loaded - try these commands:
+# az 0402              # Run unit tests
+# az 0510 -ShowAll     # Generate project report
+# Start-AitherZero     # Launch interactive menu
+```
+
+That's it! No authentication, no GitHub account needed. Perfect for Docker Desktop users.
+
+## Available Images
+
+AitherZero Docker images are published to two registries:
+
+### 🐳 Docker Hub (Public - Recommended for Docker Desktop)
+- **Repository**: `wizzense/aitherzero`
+- **No authentication required** - works out of the box with Docker Desktop
+- **Stable releases only** - production-ready versions
+- **Multi-platform**: linux/amd64, linux/arm64
+
+```bash
+# Pull latest stable release
+docker pull wizzense/aitherzero:latest
+
+# Pull specific version
+docker pull wizzense/aitherzero:1.0.0
+```
+
+**Docker Hub Link**: https://hub.docker.com/r/wizzense/aitherzero
+
+### 📦 GitHub Container Registry (GHCR - For Development)
+- **Repository**: `ghcr.io/wizzense/aitherzero`
+- **Authentication required** (GitHub account)
+- **PR previews** - test changes before they're merged
+- **Development builds** - bleeding edge features
+
+```bash
+# Authenticate to GHCR first
+echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+
+# Pull PR preview (for testing pull requests)
+docker pull ghcr.io/wizzense/aitherzero:pr-1677
+
+# Pull latest development build
+docker pull ghcr.io/wizzense/aitherzero:latest
+```
+
 ## What Does This Do?
 
-The AitherZero PR container system provides:
-- **Automated PR Testing**: Every PR automatically builds a Docker image published to GitHub Container Registry
-- **Isolated Environments**: Each PR gets its own container for safe testing without affecting your system
-- **Quick Access**: Pull and run PR containers in seconds to test changes before merging
-- **Container Management**: The `0854_Manage-PRContainer.ps1` script provides automated container lifecycle management
+The AitherZero container system provides:
+- **Easy Installation**: No PowerShell module installation required - just run the container
+- **Isolated Environments**: Test without affecting your system
+- **Cross-Platform**: Works on Windows, macOS, and Linux with Docker Desktop
+- **Automated PR Testing**: Every PR gets its own container for safe testing
+- **Quick Access**: Pull and run in seconds
+- **Container Management**: Automated lifecycle management with scripts
 
 ### How It Works
 
-1. **Automatic Build**: When you open a PR, GitHub Actions automatically builds a container image
-2. **Published to Registry**: The image is pushed to `ghcr.io/wizzense/aitherzero:pr-{number}`
-3. **Easy Testing**: Pull the image and run it locally to test the PR changes
-4. **Managed Lifecycle**: Use the container manager script for automated setup, testing, and cleanup
+1. **Stable Releases → Docker Hub**: Production releases automatically published to Docker Hub
+2. **PR Builds → GHCR**: Each PR automatically builds a container image on GitHub Container Registry
+3. **Easy Testing**: Pull and run containers to test stable releases or PR changes
+4. **Managed Lifecycle**: Use container manager scripts for automated operations
 
-## Quick Start
+## Testing Stable Releases (Docker Hub)
+
+### Method 1: Interactive Mode (Recommended for Docker Desktop)
+
+The easiest way to explore AitherZero:
+
+```bash
+# Pull and run the latest stable version from Docker Hub
+docker pull wizzense/aitherzero:latest
+docker run -it --name aitherzero wizzense/aitherzero:latest
+
+# You'll see the AitherZero welcome screen!
+# ✅ AitherZero loaded. Module is ready to use.
+
+# Inside the container, the module is already loaded, so use:
+Start-AitherZero                    # Launch interactive menu
+az 0402                             # Run unit tests  
+az 0510 -ShowAll                    # Generate project report
+Get-Command -Module AitherZero      # List all available commands
+```
+
+### Method 2: Quick Test Commands
+
+Execute specific commands without interactive mode:
+
+```bash
+# Pull the image from Docker Hub
+docker pull wizzense/aitherzero:1.0.0
+
+# Run tests
+docker run --rm wizzense/aitherzero:1.0.0 \
+  pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
+
+# Generate a project report
+docker run --rm wizzense/aitherzero:1.0.0 \
+  pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0510 -ShowAll"
+```
+
+### Method 3: Background Container
+
+Run as a background service and execute commands as needed:
+
+```bash
+# Start container in background
+docker run -d --name aitherzero wizzense/aitherzero:latest
+
+# Execute commands in running container
+docker exec aitherzero pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
+
+# Open interactive shell
+docker exec -it aitherzero pwsh
+
+# Stop and cleanup
+docker stop aitherzero && docker rm aitherzero
+```
+
+## Testing Pull Requests (GitHub Container Registry)
+
+For PR testing, you'll need to authenticate to GHCR:
+
+### Authenticate to GHCR
+
+```bash
+# Option 1: Using GitHub token
+echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+
+# Option 2: Using GitHub CLI
+gh auth token | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+
+# Option 3: Create a personal access token
+# Go to: https://github.com/settings/tokens
+# Create token with 'read:packages' scope
+echo YOUR_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+```
 
 ### Method 1: Simple Docker Commands (No Clone Required)
 
 The fastest way to test a PR - just use Docker directly:
-
-```bash
-# Pull the PR container image (replace 1677 with your PR number)
-docker pull ghcr.io/wizzense/aitherzero:pr-1677
-
-# Run the container
-docker run -d --name aitherzero-pr-1677 -p 8087:8080 ghcr.io/wizzense/aitherzero:pr-1677
-
-# Wait a few seconds for startup
-sleep 5
-
-# Run tests in the container (when module is loaded, 'az' alias is available)
-docker exec aitherzero-pr-1677 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
-
-# Open interactive shell to explore
-docker exec -it aitherzero-pr-1677 pwsh
-
-# Cleanup when done
-docker stop aitherzero-pr-1677 && docker rm aitherzero-pr-1677
-```
 
 ### Method 2: Using the Container Manager (After Cloning)
 
@@ -423,6 +534,107 @@ This is expected behavior. Some infrastructure scripts (like 0300) check for too
 - ✅ `az 0407` - Syntax validation
 - ✅ `az 0510` - Generate reports
 - ✅ `Start-AitherZero` - Interactive menu (skip infrastructure options)
+
+## Publishing Your Own Docker Images
+
+Want to publish your own customized AitherZero images? Use the automated publishing script!
+
+### Automated Publishing to Docker Hub
+
+The `0855_Publish-DockerImage.ps1` script automates the entire publishing process:
+
+```powershell
+# Prerequisites:
+# 1. Docker installed and running
+# 2. Docker Hub account created at https://hub.docker.com
+# 3. Docker Hub access token created at https://hub.docker.com/settings/security
+
+# Set your Docker Hub credentials
+$env:DOCKER_HUB_USERNAME = "yourusername"
+$env:DOCKER_HUB_TOKEN = "your-access-token"
+
+# Publish to Docker Hub
+.\automation-scripts\0855_Publish-DockerImage.ps1 -Registry DockerHub -Username "yourusername"
+
+# Publish to both Docker Hub and GitHub Container Registry
+.\automation-scripts\0855_Publish-DockerImage.ps1 -Registry All -Username "yourusername"
+
+# Publish specific version and tag as latest
+.\automation-scripts\0855_Publish-DockerImage.ps1 -Registry DockerHub -Username "yourusername" -Version "1.0.0" -PushLatest
+```
+
+### Build Locally Without Publishing
+
+Test your Docker image build before publishing:
+
+```powershell
+# Build for local testing only (no push to registry)
+.\automation-scripts\0855_Publish-DockerImage.ps1 -BuildOnly
+
+# Build for specific platform (faster for testing)
+.\automation-scripts\0855_Publish-DockerImage.ps1 -BuildOnly -Platform linux/amd64
+
+# Force rebuild without cache
+.\automation-scripts\0855_Publish-DockerImage.ps1 -BuildOnly -Force
+```
+
+### Dry Run Mode
+
+See what would happen without making changes:
+
+```powershell
+# Dry run to see the commands that would be executed
+.\automation-scripts\0855_Publish-DockerImage.ps1 -Registry DockerHub -Username "yourusername" -DryRun
+```
+
+### Publishing Script Features
+
+The `0855_Publish-DockerImage.ps1` script provides:
+- ✅ **Multi-Registry Support**: Publish to Docker Hub, GHCR, or both
+- ✅ **Automatic Versioning**: Uses VERSION file or custom version
+- ✅ **Multi-Platform Builds**: linux/amd64, linux/arm64
+- ✅ **Semantic Versioning**: Automatically creates version tags (1.0, 1, latest)
+- ✅ **Build Cache**: Speeds up rebuilds
+- ✅ **Authentication Handling**: Secure credential management
+- ✅ **Dry Run Mode**: Preview changes before execution
+
+### Setting Up Docker Hub Credentials
+
+Create a Docker Hub access token (more secure than password):
+
+1. Go to https://hub.docker.com/settings/security
+2. Click "New Access Token"
+3. Give it a descriptive name (e.g., "AitherZero Publishing")
+4. Set permissions: "Read, Write, Delete"
+5. Copy the token and set environment variable:
+
+```powershell
+# Windows PowerShell
+$env:DOCKER_HUB_TOKEN = "dckr_pat_your_token_here"
+
+# Linux/macOS
+export DOCKER_HUB_TOKEN="dckr_pat_your_token_here"
+```
+
+### Automated Publishing on Releases
+
+The repository includes a GitHub Actions workflow that automatically publishes to Docker Hub when you create a release:
+
+1. Create a release on GitHub with a version tag (e.g., `v1.0.0`)
+2. GitHub Actions automatically:
+   - Builds multi-platform Docker images
+   - Publishes to Docker Hub as `wizzense/aitherzero:1.0.0`
+   - Publishes to GHCR as `ghcr.io/wizzense/aitherzero:1.0.0`
+   - Tags as `latest` if it's a stable release
+   - Runs tests to verify the image works
+3. Images are immediately available for `docker pull`
+
+**Required GitHub Secrets:**
+- `DOCKER_HUB_USERNAME`: Your Docker Hub username
+- `DOCKER_HUB_TOKEN`: Docker Hub access token
+
+Set these in: Repository Settings → Secrets and variables → Actions → New repository secret
+
 
 ### Permission issues
 
