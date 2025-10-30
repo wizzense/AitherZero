@@ -521,10 +521,10 @@ jobs:
             # Wait for startup
             sleep 5
             
-            # Run tests
-            docker exec aitherzero-pr-${prNumber} pwsh /opt/aitherzero/az.ps1 0402
+            # Run tests (import module first to get az alias)
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
             
-            # Open interactive shell to explore
+            # Open interactive shell to explore (module auto-loads)
             docker exec -it aitherzero-pr-${prNumber} pwsh
             
             # Cleanup when done

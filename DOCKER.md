@@ -146,13 +146,13 @@ pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber
 
 **Run Tests in Container:**
 ```bash
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "./az.ps1 0402"
+pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "az 0402"
 ```
 
 **Interactive Debugging Session:**
 ```bash
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
-# Opens interactive shell in container
+# Opens interactive shell in container (module auto-loads, az alias available)
 # Use exit or Ctrl+D to close
 ```
 
@@ -174,10 +174,10 @@ If you prefer using Docker commands directly without cloning the repo:
 # Access interactive PowerShell shell in a running container
 docker exec -it aitherzero-pr-1677 pwsh
 
-# Inside the container, you can use:
+# Inside the container, module is auto-loaded, so you can use:
 Start-AitherZero                    # Launch interactive menu
-./az.ps1 0402                       # Run unit tests
-./az.ps1 0510 -ShowAll              # Generate project report
+az 0402                             # Run unit tests
+az 0510 -ShowAll                    # Generate project report
 Get-Command -Module AitherZero      # List all commands
 ```
 
@@ -186,14 +186,14 @@ Get-Command -Module AitherZero      # List all commands
 Execute commands without entering the container:
 
 ```bash
-# Run tests using az.ps1 wrapper
-docker exec aitherzero-pr-1677 pwsh /opt/aitherzero/az.ps1 0402
+# Run tests (import module first to get az alias)
+docker exec aitherzero-pr-1677 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
 
 # Run PSScriptAnalyzer
-docker exec aitherzero-pr-1677 pwsh /opt/aitherzero/az.ps1 0404
+docker exec aitherzero-pr-1677 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0404"
 
 # Generate project report
-docker exec aitherzero-pr-1677 pwsh /opt/aitherzero/az.ps1 0510 -ShowAll
+docker exec aitherzero-pr-1677 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0510 -ShowAll"
 
 # List available scripts
 docker exec aitherzero-pr-1677 pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List -Target scripts"
