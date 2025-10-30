@@ -1882,7 +1882,12 @@ function New-MarkdownDashboard {
 |--------|-------|---------|
 | 📝 **Lines of Code** | **$($Metrics.LinesOfCode.ToString('N0'))** | Total lines across all PowerShell files |
 | 🔨 **Functions** | **$($Metrics.Functions)** | Public and private functions |
-$(if ($Metrics.Classes -gt 0) { "| 🏗️ **Classes** | **$($Metrics.Classes)** | PowerShell classes |`n" })| 💬 **Comments** | **$($Metrics.CommentLines.ToString('N0'))** | $(if($Metrics.LinesOfCode -gt 0){[math]::Round(($Metrics.CommentLines / $Metrics.LinesOfCode) * 100, 1)})% of total code |
+$(if ($Metrics.Classes -gt 0) { 
+    "| 🏗️ **Classes** | **$($Metrics.Classes)** | PowerShell classes |`n"
+})$(
+    $commentRatio = if($Metrics.LinesOfCode -gt 0){[math]::Round(($Metrics.CommentLines / $Metrics.LinesOfCode) * 100, 1)}else{0}
+    "| 💬 **Comments** | **$($Metrics.CommentLines.ToString('N0'))** | $commentRatio% of total code |"
+)
 | ⚪ **Blank Lines** | **$($Metrics.BlankLines.ToString('N0'))** | Whitespace and formatting |
 
 ### Automation & Infrastructure  
@@ -1897,9 +1902,11 @@ $(if ($Metrics.Classes -gt 0) { "| 🏗️ **Classes** | **$($Metrics.Classes)**
 |--------|-------|---------|
 | 🧪 **Test Suite** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
 $(if ($Metrics.Tests.LastRun) {
-"| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$($Metrics.Tests.Passed + $Metrics.Tests.Failed)** | Success Rate: $($Metrics.Tests.SuccessRate)% | Duration: $($Metrics.Tests.Duration) |
+    $totalTests = $Metrics.Tests.Passed + $Metrics.Tests.Failed
+    @"
+| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$totalTests** | Success Rate: $($Metrics.Tests.SuccessRate)% | Duration: $($Metrics.Tests.Duration) |
 | 📊 **Last Test Run** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
-"
+"@
 } else {
 "| ⚠️ **Test Results** | **N/A** | No test results available. Run ``./az 0402`` |
 "
