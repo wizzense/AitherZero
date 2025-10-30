@@ -539,6 +539,7 @@
             <li><a href="#manifest">Module Manifest</a></li>
             <li><a href="#domains">Domain Modules</a></li>
             <li><a href="#health">Project Health</a></li>
+            <li><a href="#git">Git & VCS</a></li>
             <li><a href="#activity">Recent Activity</a></li>
             <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#system">System Info</a></li>
@@ -547,7 +548,7 @@
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-30 08:05:14
+        🔄 Last updated: 2025-10-30 08:11:38
     </div>
 
     <div class="container">
@@ -589,14 +590,42 @@
                         <h3>📁 Project Files</h3>
                         <div class="metric-value">204</div>
                         <div class="metric-label">
-                            132 Scripts | 62 Modules | 10 Data Files
+                            132 Scripts | 62 Modules | 10 Data
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            📄 295 Markdown | 🔧 3 YAML | 📋 93 JSON
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">85,198</div>
-                        <div class="metric-label">0 Functions</div>
+                        <div class="metric-value">85,396</div>
+                        <div class="metric-label">
+                            966 Functions
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            💬 7,125 Comments (8.3%) | ⚪ 14,463 Blank Lines
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🤖 Automation Scripts</h3>
+                        <div class="metric-value">125</div>
+                        <div class="metric-label">Number-based orchestration (0000-9999)</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚡ 14 GitHub Workflows
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🗂️ Domain Modules</h3>
+                        <div class="metric-value">11</div>
+                        <div class="metric-label">
+                            35 Total Modules
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Consolidated architecture
+                        </div>
                     </div>
 
                     <div class="metric-card">
@@ -607,10 +636,10 @@
                         </div>
                                                 <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--success);">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                ✅ 9500 Passed | ❌ 500 Failed | ⏭️ 0 Skipped
+                                ✅ 12 Passed | ❌ 0 Failed
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                Success Rate: <span style="color: var(--success); font-weight: 600;">95%</span>
+                                Success Rate: <span style="color: var(--success); font-weight: 600;">100%</span> | Duration: 0.98s
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
                                 Last run: 2025-10-30 08:03:38
@@ -622,12 +651,34 @@
                         <h3>📊 Code Coverage</h3>
                         <div class="metric-value">0%</div>
                         <div class="metric-label">
-                            0 / 0 Lines Covered
+                            No coverage data available
                         </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 0%">
-                                
+                        
+                    </div>
+                    
+                                        <div class="metric-card">
+                        <h3>🌿 Git Repository</h3>
+                        <div class="metric-value" style="font-size: 1.8rem;">3</div>
+                        <div class="metric-label">Total Commits</div>
+                        <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/fix-aitherzero-dashboard-issues</span>
                             </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                👥 2 Contributors
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Latest: fae33be - Initial plan for dashboard improvements (5 minutes ago)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>💻 Platform</h3>
+                        <div class="metric-value" style="font-size: 2rem;">Unix</div>
+                        <div class="metric-label">PowerShell 7.4.12</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Environment: Development
                         </div>
                     </div>
                 </div>
@@ -846,6 +897,32 @@
                     <div class="badge">Security: Scanned</div>
                     <div class="badge">Platform: Unix</div>
                     <div class="badge">PowerShell: 7.4.12</div>
+                    <div class='badge info'>Workflows: 14</div>
+                </div>
+            </section>
+            
+                        <section class="section" id="git">
+                <h2>🌿 Git Repository & Version Control</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                    <div class="info-card">
+                        <div class="info-card-header">📊 Repository Statistics</div>
+                        <div class="info-card-body">
+                            <p><strong>Branch:</strong> <code>copilot/fix-aitherzero-dashboard-issues</code></p>
+                            <p><strong>Total Commits:</strong> 3</p>
+                            <p><strong>Contributors:</strong> 2</p>
+                            <p><strong>Automation Scripts:</strong> 125</p>
+                            <p><strong>GitHub Workflows:</strong> 14</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-card-header">📝 Latest Commit</div>
+                        <div class="info-card-body">
+                            <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
+                                fae33be - Initial plan for dashboard improvements (5 minutes ago)
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -854,6 +931,10 @@
                     <div class="info-card-header">🔄 Recent Activity</div>
                     <div class="info-card-body">
                         <ul class="commit-list">
+                            <li class='commit-item'>
+                                <span class='commit-hash'>fae33be</span>
+                                <span class='commit-message'>Initial plan for dashboard improvements</span>
+                            </li>
                             <li class='commit-item'>
                                 <span class='commit-hash'>d65ed5d</span>
                                 <span class='commit-message'>Initial plan</span>
@@ -883,7 +964,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.12</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-30 08:05:14</p>
+                        <p><strong>Last Scan:</strong> 2025-10-30 08:11:38</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -903,7 +984,7 @@
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-30 08:05:14 |
+            Generated by AitherZero Dashboard | 2025-10-30 08:11:38 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>

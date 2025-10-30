@@ -141,10 +141,16 @@ function Get-ProjectMetrics {
             PowerShell = @(Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse | Where-Object { $_.FullName -notmatch '(tests|examples|legacy)' }).Count
             Modules = @(Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse).Count
             Data = @(Get-ChildItem -Path $ProjectPath -Filter "*.psd1" -Recurse).Count
+            Markdown = @(Get-ChildItem -Path $ProjectPath -Filter "*.md" -Recurse | Where-Object { $_.FullName -notmatch '(node_modules|\.git)' }).Count
+            YAML = @(Get-ChildItem -Path $ProjectPath -Filter "*.yml" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch '(node_modules|\.git)' }).Count
+            JSON = @(Get-ChildItem -Path $ProjectPath -Filter "*.json" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch '(node_modules|\.git)' }).Count
             Total = 0
         }
         LinesOfCode = 0
+        CommentLines = 0
+        BlankLines = 0
         Functions = 0
+        Classes = 0
         Tests = @{
             Unit = 0
             Integration = 0
@@ -154,11 +160,18 @@ function Get-ProjectMetrics {
             Failed = 0
             Skipped = 0
             SuccessRate = 0
+            Duration = "Unknown"
         }
         Coverage = @{
             Percentage = 0
             CoveredLines = 0
             TotalLines = 0
+        }
+        Git = @{
+            Branch = "Unknown"
+            LastCommit = "Unknown"
+            CommitCount = 0
+            Contributors = 0
         }
         Dependencies = @{}
         Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { "Windows" }
@@ -166,6 +179,7 @@ function Get-ProjectMetrics {
         LastUpdated = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Domains = @()
         AutomationScripts = 0
+        Workflows = 0
     }
 
     # Calculate total files
@@ -182,17 +196,50 @@ function Get-ProjectMetrics {
         try {
             $content = Get-Content $file.FullName -ErrorAction Stop
             if ($content) {
+                foreach ($line in $content) {
+                    $trimmed = $line.Trim()
+                    if ($trimmed -eq '') {
+                        $metrics.BlankLines++
+                    } elseif ($trimmed -match '^#' -or $trimmed -match '^\s*<#' -or $trimmed -match '^\s*\*') {
+                        $metrics.CommentLines++
+                    }
+                }
+                
                 $metrics.LinesOfCode += $content.Count
 
-                # Count functions
-                $functionMatches = $content | Select-String -Pattern "^function " -SimpleMatch -ErrorAction SilentlyContinue
+                # Count functions - improved pattern matching
+                $functionMatches = $content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue
                 if ($functionMatches) {
                     $metrics.Functions += $functionMatches.Count
+                }
+                
+                # Count classes
+                $classMatches = $content | Select-String -Pattern '^\s*class\s+' -ErrorAction SilentlyContinue
+                if ($classMatches) {
+                    $metrics.Classes += $classMatches.Count
                 }
             }
         } catch {
             # Silently skip files that can't be read
         }
+    }
+    
+    # Get Git information
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        try {
+            $metrics.Git.Branch = git rev-parse --abbrev-ref HEAD 2>$null
+            $metrics.Git.LastCommit = (git log -1 --format="%h - %s (%cr)" 2>$null)
+            $metrics.Git.CommitCount = [int](git rev-list --count HEAD 2>$null)
+            $metrics.Git.Contributors = @(git log --format='%an' | Sort-Object -Unique).Count
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to get git information"
+        }
+    }
+    
+    # Count GitHub Actions workflows
+    $workflowsPath = Join-Path $ProjectPath ".github/workflows"
+    if (Test-Path $workflowsPath) {
+        $metrics.Workflows = @(Get-ChildItem -Path $workflowsPath -Filter "*.yml" -ErrorAction SilentlyContinue).Count
     }
 
     # Count automation scripts
@@ -225,24 +272,69 @@ function Get-ProjectMetrics {
         $metrics.Tests.Total = $metrics.Tests.Unit + $metrics.Tests.Integration
     }
 
-    # Get latest test results
-    $testReportPath = Join-Path $ProjectPath "reports"
-    $latestTestReport = Get-ChildItem -Path $testReportPath -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | 
-                        Sort-Object LastWriteTime -Descending | 
-                        Select-Object -First 1
+    # Get latest test results - check multiple possible locations
+    $testResultsPaths = @(
+        (Join-Path $ProjectPath "testResults.xml"),
+        (Join-Path $ProjectPath "tests/results/*.xml")
+    )
     
-    if ($latestTestReport) {
+    $latestTestResults = $null
+    foreach ($testPath in $testResultsPaths) {
+        if ($testPath -like "*`**") {
+            $latestTestResults = Get-ChildItem -Path (Split-Path $testPath -Parent) -Filter (Split-Path $testPath -Leaf) -ErrorAction SilentlyContinue | 
+                               Where-Object { $_.Name -notlike "Coverage*" } |
+                               Sort-Object LastWriteTime -Descending | 
+                               Select-Object -First 1
+        } else {
+            if (Test-Path $testPath) {
+                $latestTestResults = Get-Item $testPath
+            }
+        }
+        if ($latestTestResults) { break }
+    }
+    
+    if ($latestTestResults) {
         try {
-            $testData = Get-Content $latestTestReport.FullName | ConvertFrom-Json
-            if ($testData.TestResults.Summary) {
-                $metrics.Tests.Passed = $testData.TestResults.Summary.Passed
-                $metrics.Tests.Failed = $testData.TestResults.Summary.Failed
-                $metrics.Tests.Skipped = $testData.TestResults.Summary.Skipped
-                $metrics.Tests.SuccessRate = $testData.TestResults.Summary.SuccessRate
-                $metrics.Tests.LastRun = $latestTestReport.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            [xml]$testXml = Get-Content $latestTestResults.FullName
+            
+            # Parse NUnit format test results
+            if ($testXml.'test-results') {
+                $results = $testXml.'test-results'
+                $totalTests = [int]$results.total
+                $failures = [int]$results.failures
+                $errors = [int]$results.errors
+                $skipped = [int]$results.skipped
+                
+                $metrics.Tests.Passed = $totalTests - $failures - $errors - $skipped
+                $metrics.Tests.Failed = $failures + $errors
+                $metrics.Tests.Skipped = $skipped
+                
+                if ($totalTests -gt 0) {
+                    $metrics.Tests.SuccessRate = [math]::Round(($metrics.Tests.Passed / $totalTests) * 100, 1)
+                }
+                
+                $metrics.Tests.LastRun = $latestTestResults.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+                
+                # Try to extract duration from test suite
+                if ($testXml.'test-results'.'test-suite' -and $testXml.'test-results'.'test-suite'.time) {
+                    try {
+                        $duration = [double]$testXml.'test-results'.'test-suite'.time
+                        if ($duration -lt 60) {
+                            $metrics.Tests.Duration = "$([math]::Round($duration, 2))s"
+                        } else {
+                            $minutes = [math]::Floor($duration / 60)
+                            $seconds = [math]::Round($duration % 60, 0)
+                            $metrics.Tests.Duration = "${minutes}m ${seconds}s"
+                        }
+                    } catch {
+                        $metrics.Tests.Duration = "Unknown"
+                    }
+                } else {
+                    $metrics.Tests.Duration = "Unknown"
+                }
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse test report: $_"
+            Write-ScriptLog -Level Warning -Message "Failed to parse test results: $_"
         }
     }
 
@@ -1259,6 +1351,7 @@ $manifestTagsSection
             <li><a href="#manifest">Module Manifest</a></li>
             <li><a href="#domains">Domain Modules</a></li>
             <li><a href="#health">Project Health</a></li>
+            <li><a href="#git">Git & VCS</a></li>
             <li><a href="#activity">Recent Activity</a></li>
             <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#system">System Info</a></li>
@@ -1309,14 +1402,47 @@ $manifestTagsSection
                         <h3>📁 Project Files</h3>
                         <div class="metric-value">$($Metrics.Files.Total)</div>
                         <div class="metric-label">
-                            $($Metrics.Files.PowerShell) Scripts | $($Metrics.Files.Modules) Modules | $($Metrics.Files.Data) Data Files
+                            $($Metrics.Files.PowerShell) Scripts | $($Metrics.Files.Modules) Modules | $($Metrics.Files.Data) Data
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            📄 $($Metrics.Files.Markdown) Markdown | 🔧 $($Metrics.Files.YAML) YAML | 📋 $($Metrics.Files.JSON) JSON
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
                         <div class="metric-value">$($Metrics.LinesOfCode.ToString('N0'))</div>
-                        <div class="metric-label">$($Metrics.Functions) Functions</div>
+                        <div class="metric-label">
+                            $($Metrics.Functions) Functions$(if($Metrics.Classes -gt 0){" | $($Metrics.Classes) Classes"})
+                        </div>
+                        $(if ($Metrics.CommentLines -gt 0) {
+                            $commentRatio = [math]::Round(($Metrics.CommentLines / $Metrics.LinesOfCode) * 100, 1)
+                            @"
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            💬 $($Metrics.CommentLines.ToString('N0')) Comments ($commentRatio%) | ⚪ $($Metrics.BlankLines.ToString('N0')) Blank Lines
+                        </div>
+"@
+                        })
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🤖 Automation Scripts</h3>
+                        <div class="metric-value">$($Metrics.AutomationScripts)</div>
+                        <div class="metric-label">Number-based orchestration (0000-9999)</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚡ $($Metrics.Workflows) GitHub Workflows
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🗂️ Domain Modules</h3>
+                        <div class="metric-value">$(@($Metrics.Domains).Count)</div>
+                        <div class="metric-label">
+                            $(($Metrics.Domains | ForEach-Object { $_.Modules } | Measure-Object -Sum).Sum) Total Modules
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Consolidated architecture
+                        </div>
                     </div>
 
                     <div class="metric-card">
@@ -1332,13 +1458,21 @@ $manifestTagsSection
                             @"
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid $testStatusColor;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                ✅ $($Metrics.Tests.Passed) Passed | ❌ $($Metrics.Tests.Failed) Failed | ⏭️ $($Metrics.Tests.Skipped) Skipped
+                                ✅ $($Metrics.Tests.Passed) Passed | ❌ $($Metrics.Tests.Failed) Failed$(if($Metrics.Tests.Skipped -gt 0){" | ⏭️ $($Metrics.Tests.Skipped) Skipped"})
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                Success Rate: <span style="color: $testStatusColor; font-weight: 600;">$($Metrics.Tests.SuccessRate)%</span>
+                                Success Rate: <span style="color: $testStatusColor; font-weight: 600;">$($Metrics.Tests.SuccessRate)%</span> | Duration: $($Metrics.Tests.Duration)
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
                                 Last run: $($Metrics.Tests.LastRun)
+                            </div>
+                        </div>
+"@
+                        } else {
+                            @"
+                        <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--text-secondary);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                ⚠️ No test results available. Run <code>./az 0402</code> to execute tests.
                             </div>
                         </div>
 "@
@@ -1349,12 +1483,46 @@ $manifestTagsSection
                         <h3>📊 Code Coverage</h3>
                         <div class="metric-value">$($Metrics.Coverage.Percentage)%</div>
                         <div class="metric-label">
-                            $($Metrics.Coverage.CoveredLines) / $($Metrics.Coverage.TotalLines) Lines Covered
+                            $(if($Metrics.Coverage.TotalLines -gt 0){"$($Metrics.Coverage.CoveredLines) / $($Metrics.Coverage.TotalLines) Lines Covered"}else{"No coverage data available"})
                         </div>
+                        $(if($Metrics.Coverage.Percentage -gt 0) {
+                            @"
                         <div class="progress-bar">
                             <div class="progress-fill" style="width: $($Metrics.Coverage.Percentage)%">
-                                $(if($Metrics.Coverage.Percentage -gt 0){ "$($Metrics.Coverage.Percentage)%" })
+                                $($Metrics.Coverage.Percentage)%
                             </div>
+                        </div>
+"@
+                        })
+                    </div>
+                    
+                    $(if ($Metrics.Git.Branch -ne "Unknown") {
+                        @"
+                    <div class="metric-card">
+                        <h3>🌿 Git Repository</h3>
+                        <div class="metric-value" style="font-size: 1.8rem;">$($Metrics.Git.CommitCount)</div>
+                        <div class="metric-label">Total Commits</div>
+                        <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">$($Metrics.Git.Branch)</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                👥 $($Metrics.Git.Contributors) Contributors
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Latest: $($Metrics.Git.LastCommit)
+                            </div>
+                        </div>
+                    </div>
+"@
+                    })
+                    
+                    <div class="metric-card">
+                        <h3>💻 Platform</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($Metrics.Platform)</div>
+                        <div class="metric-label">PowerShell $($Metrics.PSVersion)</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Environment: $(if($env:AITHERZERO_CI){'CI/CD Pipeline'}else{'Development'})
                         </div>
                     </div>
                 </div>
@@ -1511,8 +1679,38 @@ $domainsHTML
                     <div class="badge">Security: Scanned</div>
                     <div class="badge">Platform: $($Metrics.Platform)</div>
                     <div class="badge">PowerShell: $($Metrics.PSVersion)</div>
+                    $(if($Metrics.Workflows -gt 0){"<div class='badge info'>Workflows: $($Metrics.Workflows)</div>"})
                 </div>
             </section>
+            
+            $(if ($Metrics.Git.Branch -ne "Unknown") {
+                @"
+            <section class="section" id="git">
+                <h2>🌿 Git Repository & Version Control</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                    <div class="info-card">
+                        <div class="info-card-header">📊 Repository Statistics</div>
+                        <div class="info-card-body">
+                            <p><strong>Branch:</strong> <code>$($Metrics.Git.Branch)</code></p>
+                            <p><strong>Total Commits:</strong> $($Metrics.Git.CommitCount.ToString('N0'))</p>
+                            <p><strong>Contributors:</strong> $($Metrics.Git.Contributors)</p>
+                            <p><strong>Automation Scripts:</strong> $($Metrics.AutomationScripts)</p>
+                            <p><strong>GitHub Workflows:</strong> $($Metrics.Workflows)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-card-header">📝 Latest Commit</div>
+                        <div class="info-card-body">
+                            <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
+                                $($Metrics.Git.LastCommit)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+"@
+            })
 
             <div class="info-grid">
                 <div class="info-card" id="activity">
