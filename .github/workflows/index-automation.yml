@@ -411,7 +411,7 @@ jobs:
             - **Duration**: ${duration}s
             
             ### Automation Details
-            This PR was automatically created by the index automation workflow. It will be automatically merged into the parent PR branch once all checks pass.
+            This PR was automatically created by the index automation workflow.
             
             ### Important
             - Do not modify this PR manually
@@ -447,7 +447,7 @@ jobs:
           core.setOutput('auto_pr_number', autoIndexPR.number);
           
           // Add comment to original PR
-          const comment = `Index Updates Available
+          const comment = `## 🔄 Index Updates Available
           
           Automated index updates have been generated and are available in PR #${autoIndexPR.number}.
           
