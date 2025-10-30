@@ -18,8 +18,6 @@
     1   - Validation issues found
     2   - Validation error
 
-.PARAMETER Fix
-    Automatically fix certain issues (like broken links to moved files)
 .PARAMETER CheckLinks
     Check for broken internal documentation links
 .PARAMETER Strict
@@ -42,7 +40,6 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [switch]$Fix,
     [switch]$CheckLinks,
     [switch]$Strict
 )
