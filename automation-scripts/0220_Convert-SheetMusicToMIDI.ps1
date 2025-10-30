@@ -611,8 +611,15 @@ if __name__ == '__main__':
     
     # Determine model to use
     if ($Model -eq 'auto') {
-        $Model = if ($config.MusicProcessing -and $config.MusicProcessing.DefaultModel) {
-            $config.MusicProcessing.DefaultModel
+        $Model = if (
+            $config.Features -and
+            $config.Features.Development -and
+            $config.Features.Development.MusicProcessing -and
+            $config.Features.Development.MusicProcessing.SheetMusicToMIDI -and
+            $config.Features.Development.MusicProcessing.SheetMusicToMIDI.Configuration -and
+            $config.Features.Development.MusicProcessing.SheetMusicToMIDI.Configuration.DefaultModel
+        ) {
+            $config.Features.Development.MusicProcessing.SheetMusicToMIDI.Configuration.DefaultModel
         } else {
             'llava'
         }
