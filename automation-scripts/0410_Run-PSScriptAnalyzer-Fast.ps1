@@ -86,7 +86,7 @@ try {
         Write-FastStatus "📂 STANDARD MODE: Analyzing key directories with exclusions" "Info"
         
         # Use exclusions but still analyze more files
-        $excludePatterns = @('.archive', 'legacy-to-migrate', 'tests', '.claude', 'examples', 'temp')
+        $excludePatterns = @('.archive', 'tests', '.claude', 'examples', 'temp')
         $allTargets = Get-ChildItem -Path '.' -Filter '*.ps1' -Recurse | 
                      Where-Object { 
                          $exclude = $false
