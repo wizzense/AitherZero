@@ -1340,7 +1340,11 @@ function Invoke-ModernRunAction {
 
     param([string]$RunTarget, [string]$ScriptNum, [string]$PlaybookName, [string[]]$SequenceRange)
 
-
+    # Auto-detect target type if RunTarget looks like a script number
+    if ($RunTarget -and $RunTarget -match '^\d{3,4}$') {
+        $ScriptNum = $RunTarget
+        $RunTarget = 'script'
+    }
 
     switch ($RunTarget) {
 
@@ -1349,6 +1353,8 @@ function Invoke-ModernRunAction {
             if (-not $ScriptNum) {
 
                 Write-ModernCLI "Script number required: -ScriptNumber <number>" -Type 'Error'
+                Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0501" -Type 'Info'
+                Write-ModernCLI "Or use shortcut: .\Start-AitherZero.ps1 -Mode Run -Target 0501" -Type 'Info'
 
                 return
 
@@ -1377,6 +1383,7 @@ function Invoke-ModernRunAction {
             } else {
 
                 Write-ModernCLI "Script not found: $scriptPath" -Type 'Error'
+                Write-ModernCLI "Use -Mode List -Target scripts to see available scripts" -Type 'Info'
 
             }
 
@@ -1387,6 +1394,7 @@ function Invoke-ModernRunAction {
             if (-not $PlaybookName) {
 
                 Write-ModernCLI "Playbook name required: -Playbook <name>" -Type 'Error'
+                Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target playbook -Playbook tech-debt-analysis" -Type 'Info'
 
                 return
 
@@ -1413,6 +1421,7 @@ function Invoke-ModernRunAction {
             if (-not $SequenceRange) {
 
                 Write-ModernCLI "Sequence required: -Sequence <range>" -Type 'Error'
+                Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Run -Target sequence -Sequence 0400-0499" -Type 'Info'
 
                 return
 
@@ -1439,6 +1448,11 @@ function Invoke-ModernRunAction {
             Write-ModernCLI "Unknown target: $RunTarget" -Type 'Error'
 
             Write-ModernCLI "Valid targets: script, playbook, sequence" -Type 'Info'
+            Write-ModernCLI "Examples:" -Type 'Info'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0501" -Type 'Muted'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target 0501 (shortcut)" -Type 'Muted'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target playbook -Playbook tech-debt-analysis" -Type 'Muted'
+            Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target sequence -Sequence 0400-0499" -Type 'Muted'
 
         }
 
