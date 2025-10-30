@@ -27,7 +27,7 @@ param(
     [switch]$CheckParameters,
     [switch]$CheckCommands,
     [switch]$CheckModuleDependencies,
-    [string[]]$ExcludePaths = @('tests', 'legacy-to-migrate')
+    [string[]]$ExcludePaths = @('tests')
 )
 
 $ErrorActionPreference = 'Stop'

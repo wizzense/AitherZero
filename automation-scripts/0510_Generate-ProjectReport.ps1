@@ -106,12 +106,10 @@ try {
 Write-ReportLog "Calculating code coverage..."
 $psFiles = Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse | Where-Object {
     $_.FullName -notlike "*\tests\*" -and
-    $_.FullName -notlike "*\legacy-to-migrate\*" -and
     $_.FullName -notlike "*\examples\*"
 }
 $psmFiles = Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object {
-    $_.FullName -notlike "*\tests\*" -and
-    $_.FullName -notlike "*\legacy-to-migrate\*"
+    $_.FullName -notlike "*\tests\*"
 }
 
 $totalLines = 0
