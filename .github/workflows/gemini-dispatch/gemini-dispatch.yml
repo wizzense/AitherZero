@@ -10,6 +10,8 @@ on:
   pull_request:
     types:
       - 'opened'
+      - 'synchronize'  # FIXED: Added to trigger on PR updates (including base branch updates)
+      - 'reopened'     # FIXED: Added to trigger when PR is reopened
   issues:
     types:
       - 'opened'
@@ -93,7 +95,8 @@ jobs:
             const request = process.env.REQUEST;
             core.setOutput('request', request);
 
-            if (eventType === 'pull_request.opened') {
+            // Handle PR events - review on open, synchronize, or reopened
+            if (['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'].includes(eventType)) {
               core.setOutput('command', 'review');
             } else if (['issues.opened', 'issues.reopened'].includes(eventType)) {
               core.setOutput('command', 'triage');
@@ -127,7 +130,7 @@ jobs:
     needs: 'dispatch'
     if: |-
       ${{ needs.dispatch.outputs.command == 'review' }}
-    uses: './.github/workflows/gemini-review.yml'
+    uses: './.github/workflows/pr-review/gemini-review.yml'
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -141,7 +144,7 @@ jobs:
     needs: 'dispatch'
     if: |-
       ${{ needs.dispatch.outputs.command == 'triage' }}
-    uses: './.github/workflows/gemini-triage.yml'
+    uses: './.github/workflows/issue-triage/gemini-triage.yml'
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -155,7 +158,7 @@ jobs:
     needs: 'dispatch'
     if: |-
       ${{ needs.dispatch.outputs.command == 'invoke' }}
-    uses: './.github/workflows/gemini-invoke.yml'
+    uses: './.github/workflows/gemini-assistant/gemini-invoke.yml'
     permissions:
       contents: 'read'
       id-token: 'write'
