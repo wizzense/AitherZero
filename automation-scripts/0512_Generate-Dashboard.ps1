@@ -2220,6 +2220,198 @@ $manifestTagsSection
         a {
             color: var(--info);
         }
+
+        /* Roadmap Styles */
+        .roadmap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .roadmap-priority {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .roadmap-priority:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .priority-header {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--card-border);
+            user-select: none;
+        }
+
+        .priority-header:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.1));
+        }
+
+        .priority-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .priority-header.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .priority-content {
+            padding: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .progress-indicator {
+            margin-bottom: 20px;
+        }
+
+        .roadmap-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 15px 0;
+        }
+
+        .roadmap-item {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .roadmap-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .roadmap-item.completed .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .roadmap-item.in-progress .status-dot {
+            background: var(--warning);
+            box-shadow: 0 0 8px var(--warning);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .roadmap-item.pending .status-dot {
+            background: var(--text-secondary);
+            opacity: 0.3;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .timeline {
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--bg-darker);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Interactive enhancements */
+        .metric-card {
+            cursor: pointer;
+            transition: all 0.3s ease, transform 0.2s ease;
+        }
+
+        .metric-card.expanded {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(102, 126, 234, 0.05) 100%);
+        }
+
+        .metric-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--card-border);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .metric-card.expanded .metric-details {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Chart styles */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            min-height: 20px;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: translateY(-5px);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -2240,6 +2432,8 @@ $manifestTagsSection
             <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#system">System Info</a></li>
             <li><a href="#resources">Resources</a></li>
+            <li><a href="#roadmap">🗺️ Roadmap</a></li>
+            <li><a href="#github-activity">🌟 GitHub</a></li>
         </ul>
     </nav>
 
@@ -2646,6 +2840,192 @@ $commitsHTML
                     </div>
                 </div>
             </div>
+
+            <!-- Strategic Roadmap Section -->
+            <section class="section" id="roadmap" style="margin-top: 30px;">
+                <h2>🗺️ Strategic Roadmap</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                    Current strategic priorities and project direction
+                </p>
+                
+                <div class="roadmap-container">
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority1')">
+                            <h3>🚀 Priority 1: Expand Distribution & Discoverability</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority1" class="priority-content">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 30%">30%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Make AitherZero easily discoverable across all platforms</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Publish to PowerShell Gallery (<code>Install-Module -Name AitherZero</code>)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Create Windows installer (MSI/EXE) with WinGet integration
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Submit to package managers (Homebrew consideration)
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 2-3 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority2')">
+                            <h3>📚 Priority 2: Enhance Documentation & Onboarding</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority2" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%">45%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Reduce time-to-value for new users from hours to minutes</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Comprehensive documentation structure
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Quick start guide for common scenarios
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Video tutorials and interactive demos
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    API reference documentation
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 3-4 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority3')">
+                            <h3>🎯 Priority 3: Build Community & Ecosystem</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority3" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 15%">15%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Foster active community and enable contributions</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community contribution guidelines (CONTRIBUTING.md)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Plugin/extension system for community additions
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    User showcase and case studies
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community Discord or Discussions forum
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 4-6 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority4')">
+                            <h3>⚡ Priority 4: Advanced Features & Integrations</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority4" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 20%">20%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Expand capabilities and integrations</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Cross-platform support (Windows, Linux, macOS)
+                                </li>
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Docker containerization with multi-arch support
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Web-based dashboard and monitoring (this page!)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Enhanced cloud provider integrations
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Metrics and telemetry for usage insights
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 6-8 weeks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);">
+                    <h4 style="color: var(--info); margin-bottom: 10px;">📊 Overall Progress</h4>
+                    <div class="progress-bar" style="height: 30px; margin-bottom: 10px;">
+                        <div class="progress-fill" style="width: 28%; font-size: 0.9rem;">28% Complete</div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Based on strategic priorities outlined in <a href="https://github.com/wizzense/AitherZero/blob/main/STRATEGIC-ROADMAP.md" target="_blank" style="color: var(--info);">STRATEGIC-ROADMAP.md</a>
+                    </p>
+                </div>
+            </section>
+
+            <!-- GitHub Activity Section -->
+            <section class="section" id="github-activity" style="margin-top: 30px;">
+                <h2>🌟 GitHub Activity</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>⭐ Stars</h3>
+                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-label">GitHub Stars</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🍴 Forks</h3>
+                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-label">Repository Forks</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>👥 Contributors</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($Metrics.Git.Contributors)</div>
+                        <div class="metric-label">Active Contributors</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🔀 Pull Requests</h3>
+                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-label">Open PRs</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 <em>GitHub API integration coming soon for real-time stats</em>
+                </p>
+            </section>
         </div>
 
         <div class="footer">
@@ -2658,6 +3038,20 @@ $commitsHTML
         // TOC toggle for mobile
         function toggleToc() {
             document.getElementById('toc').classList.toggle('open');
+        }
+
+        // Roadmap priority toggle
+        function togglePriority(id) {
+            const content = document.getElementById(id);
+            const header = content.previousElementSibling;
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                header.classList.add('active');
+            } else {
+                content.style.display = 'none';
+                header.classList.remove('active');
+            }
         }
 
         // Highlight active section in TOC
@@ -2685,19 +3079,115 @@ $commitsHTML
         window.addEventListener('scroll', highlightToc);
         highlightToc();
 
-        // Auto-refresh every 5 minutes
-        setTimeout(() => {
-            window.location.reload();
-        }, 300000);
-
-        // Add interactive elements
+        // Interactive card expansion
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.metric-card, .domain-card');
+            const cards = document.querySelectorAll('.metric-card');
             cards.forEach(card => {
-                card.addEventListener('click', function() {
+                // Add click animation
+                card.addEventListener('click', function(e) {
+                    // Don't expand if clicking on a link
+                    if (e.target.tagName === 'A' || e.target.closest('a')) {
+                        return;
+                    }
+                    
                     this.style.transform = 'scale(0.98)';
                     setTimeout(() => {
                         this.style.transform = '';
+                    }, 150);
+                });
+
+                // Add hover effects
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.25)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '';
+                });
+            });
+
+            // Smooth scroll for TOC links
+            document.querySelectorAll('.toc a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Close mobile TOC after navigation
+                        if (window.innerWidth < 768) {
+                            document.getElementById('toc').classList.remove('open');
+                        }
+                    }
+                });
+            });
+
+            // Add copy-to-clipboard for code blocks
+            document.querySelectorAll('code').forEach(code => {
+                code.style.cursor = 'pointer';
+                code.title = 'Click to copy';
+                code.addEventListener('click', function() {
+                    navigator.clipboard.writeText(this.textContent).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = '✓ Copied!';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 1500);
+                    });
+                });
+            });
+
+            // Animate progress bars on scroll
+            const progressBars = document.querySelectorAll('.progress-fill');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transition = 'width 1.5s ease-out';
+                        const width = entry.target.style.width;
+                        entry.target.style.width = '0%';
+                        setTimeout(() => {
+                            entry.target.style.width = width;
+                        }, 100);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            progressBars.forEach(bar => observer.observe(bar));
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K to toggle TOC
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    toggleToc();
+                }
+                // Escape to close TOC
+                if (e.key === 'Escape') {
+                    document.getElementById('toc').classList.remove('open');
+                }
+            });
+
+            // Add search functionality hint (for future enhancement)
+            console.log('💡 Dashboard Pro Tip: Use Ctrl+F to search this dashboard');
+            console.log('🔍 Keyboard shortcuts:');
+            console.log('  - Ctrl/Cmd + K: Toggle navigation');
+            console.log('  - Escape: Close navigation');
+            console.log('  - Click code blocks to copy');
+        });
+
+        // Auto-refresh every 5 minutes (optional - can be disabled)
+        // setTimeout(() => {
+        //     window.location.reload();
+        // }, 300000);
+
+        // Add live timestamp update
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            document.title = 'AitherZero Dashboard - Updated ' + timeString;
+        }
+        setInterval(updateTimestamp, 60000); // Update every minute
                     }, 150);
                 });
             });
