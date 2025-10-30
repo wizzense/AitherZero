@@ -2145,6 +2145,7 @@ $manifestTagsSection
                             $testStatusColor = if ($Metrics.Tests.SuccessRate -ge 95) { 'var(--success)' } 
                                               elseif ($Metrics.Tests.SuccessRate -ge 80) { 'var(--warning)' } 
                                               else { 'var(--error)' }
+                            $totalTestsRun = $Metrics.Tests.Passed + $Metrics.Tests.Failed
                             @"
                             <div style="padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid $testStatusColor;">
                                 <div style="font-size: 0.85rem; color: var(--text-secondary);">
@@ -2157,11 +2158,11 @@ $manifestTagsSection
                                     Last run: $($Metrics.Tests.LastRun)
                                 </div>
                             </div>
-                            $(if ($Metrics.Tests.Passed + $Metrics.Tests.Failed -lt 100) {
+                            $(if ($totalTestsRun -lt 100) {
                                 @"
                             <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
                                 <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
-                                    ⚠️ Only $($Metrics.Tests.Passed + $Metrics.Tests.Failed) test cases executed. Run <code>./az 0402</code> for full test suite.
+                                    ⚠️ Only $totalTestsRun test cases executed. Run <code>./az 0402</code> for full test suite.
                                 </div>
                             </div>
 "@
