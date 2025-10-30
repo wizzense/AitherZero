@@ -275,6 +275,58 @@ MCP Servers (.github/mcp-servers.json) → Context
 Copilot Response with Full Context
 ```
 
+## Schema Versioning and Updates
+
+The MCP configuration uses a versioned JSON schema to validate the configuration file.
+
+### Current Schema Version
+
+The schema is currently set to `2025-06-18` version:
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-06-18/schema.json"
+}
+```
+
+### Checking for Schema Updates
+
+To check if a new schema version is available:
+
+1. **Visit the schema repository**: https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/schema
+2. **Look for newer dated folders** (format: YYYY-MM-DD)
+3. **Review the changelog** for breaking changes
+
+### Updating to a New Schema
+
+When a new schema version is released:
+
+1. **Update the schema URL** in `.github/mcp-servers.json`:
+   ```json
+   {
+     "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/YYYY-MM-DD/schema.json"
+   }
+   ```
+
+2. **Validate configuration**:
+   ```bash
+   cat .github/mcp-servers.json | jq .
+   ```
+
+3. **Review schema changes** to ensure compatibility with your MCP server configurations
+
+4. **Test MCP servers** in VS Code to verify they still work correctly
+
+### Automation Considerations
+
+For future automation of schema updates:
+
+- **GitHub Actions workflow** could periodically check for new schema versions
+- **Dependabot-style alerts** when new schemas are released
+- **Automated PR creation** with schema updates and validation
+- **Version pinning** ensures stability until manual review
+
+**Note**: Schema updates should be reviewed and tested before applying to prevent configuration breakage.
+
 ## Further Reading
 
 - [Model Context Protocol Specification](https://github.com/modelcontextprotocol/specification)
