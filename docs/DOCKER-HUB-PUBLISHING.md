@@ -119,10 +119,10 @@ After publishing version 1.0.0, these tags are created:
 - Or use Docker Desktop which includes Buildx
 
 ### Multi-platform build fails
+- Note: Docker Desktop includes QEMU/buildx, so this is usually not needed
 - **SECURITY WARNING**: The following command uses `--privileged` which grants extensive system access to the container. Only run on trusted systems.
 - Install QEMU for multi-platform emulation: `docker run --privileged --rm tonistiigi/binfmt --install all`
 - Alternative: Build for single platform only: `-Platform linux/amd64`
-- Note: Docker Desktop includes QEMU/buildx, so this is usually not needed
 
 ## See Also
 

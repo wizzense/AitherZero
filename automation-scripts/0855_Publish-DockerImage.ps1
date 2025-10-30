@@ -250,9 +250,14 @@ function Invoke-DockerLogin {
 
                 if (-not $DryRun) {
                     $secureToken = Read-Host "Enter Docker Hub access token" -AsSecureString
-                    $token = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                        [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-                    )
+                    $bstrPtr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+                    try {
+                        $token = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstrPtr)
+                    }
+                    finally {
+                        # Clear the plain text token from memory
+                        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstrPtr)
+                    }
                 }
             }
 
@@ -262,7 +267,7 @@ function Invoke-DockerLogin {
             }
 
             try {
-                $token | docker login $registryUrl -u $Username --password-stdin 2>&1 | Out-Null
+                Write-Output $token | docker login $registryUrl -u $Username --password-stdin 2>&1 | Out-Null
                 Write-LogMessage "Successfully authenticated to Docker Hub" -Level Success
                 return $true
             }
@@ -277,7 +282,8 @@ function Invoke-DockerLogin {
             if (-not $token) {
                 # Try to get token from gh CLI
                 try {
-                    $token = gh auth token 2>$null
+                    $token = gh auth token 2>&1
+                    if ($LASTEXITCODE -ne 0) { $token = $null }
                 }
                 catch {
                     Write-LogMessage "GITHUB_TOKEN not found and gh CLI not available" -Level Warning
@@ -285,9 +291,14 @@ function Invoke-DockerLogin {
 
                     if (-not $DryRun) {
                         $secureToken = Read-Host "Enter GitHub personal access token" -AsSecureString
-                        $token = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                            [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-                        )
+                        $bstrPtr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+                        try {
+                            $token = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstrPtr)
+                        }
+                        finally {
+                            # Clear the plain text token from memory
+                            [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstrPtr)
+                        }
                     }
                 }
             }
@@ -298,7 +309,7 @@ function Invoke-DockerLogin {
             }
 
             try {
-                $token | docker login $registryUrl -u $Username --password-stdin 2>&1 | Out-Null
+                Write-Output $token | docker login $registryUrl -u $Username --password-stdin 2>&1 | Out-Null
                 Write-LogMessage "Successfully authenticated to GitHub Container Registry" -Level Success
                 return $true
             }
@@ -355,9 +366,15 @@ function Build-DockerImage {
 
     # Add cache options
     if ($UseCache) {
-        $cacheTag = ($Tags[0] -replace ':.*$', ':buildcache')
-        $buildArgs += '--cache-from', "type=registry,ref=$cacheTag"
-        $buildArgs += '--cache-to', "type=registry,ref=$cacheTag,mode=max"
+        # Validate that the first tag has proper format
+        if ($Tags[0] -match ':') {
+            $cacheTag = ($Tags[0] -replace ':.*$', ':buildcache')
+            $buildArgs += '--cache-from', "type=registry,ref=$cacheTag"
+            $buildArgs += '--cache-to', "type=registry,ref=$cacheTag,mode=max"
+        }
+        else {
+            Write-LogMessage "Tag '$($Tags[0])' is missing colon separator. Cache options will be skipped." -Level Warning
+        }
     }
     else {
         $buildArgs += '--no-cache'

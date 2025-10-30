@@ -208,9 +208,14 @@ jobs:
             
             Perfect for Docker Desktop on Windows, Linux, and macOS! 🎉`;
             
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.release.id,
-              body: comment
-            });
+            // Only post comment if the release has an associated discussion
+            if (context.payload.release.discussion_url) {
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.release.discussion_number || context.payload.release.id,
+                body: comment
+              });
+            } else {
+              core.info('Release does not have an associated discussion. Skipping comment.');
+            }
