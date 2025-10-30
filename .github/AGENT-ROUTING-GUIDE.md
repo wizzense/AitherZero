@@ -162,7 +162,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 - Environment prep (0000-0099), Git automation (0700-0799), Maintenance (9000-9999)
 
 **Triggers:**
-- Files: `*.ps1`, `*.psm1`, `orchestration/`, `automation-scripts/00*.ps1`, `07*.ps1`, `90*.ps1`
+- Files: `*.ps1`, `*.psm1`, `orchestration/`, `automation-scripts/00*.ps1`, `07*.ps1`, `9*.ps1`
 - Keywords: `powershell`, `automation`, `orchestration`, `script`, `workflow`
 - Labels: `automation`, `powershell`, `scripting`
 
