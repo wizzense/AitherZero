@@ -700,7 +700,10 @@ function Get-BuildStatus {
         $status.Overall = "Healthy"
     } elseif ($status.Tests -eq "Failing" -or $status.Security -eq "Issues Found") {
         $status.Overall = "Issues"
-    } elseif ($status.Tests -eq "Passing" -or $status.Security -eq "Minor Issues") {
+    } elseif (
+        ($status.Tests -eq "Passing" -and $status.Security -eq "Minor Issues") -or
+        ($status.Tests -ne "Failing" -and $status.Security -eq "Clean")
+    ) {
         $status.Overall = "Warning"
     } else {
         $status.Overall = "Unknown"
@@ -1166,7 +1169,9 @@ function Get-CodeCoverageDetails {
                 $counters = @($coverageXml.report.counter)
                 $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
                 
-                if ($lineCounter) {
+                if (-not $lineCounter) {
+                    Write-ScriptLog -Level Warning -Message 'No LINE counter found in JaCoCo report'
+                } elseif ($lineCounter) {
                     $missedLines = [int]$lineCounter.missed
                     $coveredLines = [int]$lineCounter.covered
                     $totalLines = $missedLines + $coveredLines
@@ -1246,6 +1251,13 @@ function Get-CodeCoverageDetails {
                 $coverage.Format = "Cobertura"
                 
                 $coverage.Overall.Percentage = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                
+                # Calculate total and covered lines for Cobertura format
+                if ($coverageXml.coverage.'lines-covered' -and $coverageXml.coverage.'lines-valid') {
+                    $coverage.Overall.CoveredLines = [int]$coverageXml.coverage.'lines-covered'
+                    $coverage.Overall.TotalLines = [int]$coverageXml.coverage.'lines-valid'
+                    $coverage.Overall.MissedLines = $coverage.Overall.TotalLines - $coverage.Overall.CoveredLines
+                }
                 
                 # Extract file-level coverage
                 $packages = $coverageXml.SelectNodes("//package")
@@ -3188,19 +3200,6 @@ $commitsHTML
             document.title = 'AitherZero Dashboard - Updated ' + timeString;
         }
         setInterval(updateTimestamp, 60000); // Update every minute
-                    }, 150);
-                });
-            });
-
-            // Close TOC when clicking a link on mobile
-            tocLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    if (window.innerWidth <= 1024) {
-                        document.getElementById('toc').classList.remove('open');
-                    }
-                });
-            });
-        });
     </script>
 </body>
 </html>

@@ -23,7 +23,6 @@ include:
   - reports/*.md
   - docs
   - docs/archive
-  - docs/archive/index.md
 
 exclude:
   - .git
