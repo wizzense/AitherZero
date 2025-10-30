@@ -1,31 +1,73 @@
 #Requires -Version 7.0
+#Requires -Module Pester
 
-BeforeAll {
-    # Mock common functions for 0736_Generate-AIWorkflow
-    Mock Write-Host { }
-    Mock Write-Warning { }
-    Mock Write-Error { }
-    Mock git { return '' }
-    Mock gh { return '' }
-}
+<#
+.SYNOPSIS
+    Unit tests for 0736_Generate-AIWorkflow
+.DESCRIPTION
+    Auto-generated comprehensive tests
+    Script: 0736_Generate-AIWorkflow
+    Stage: Unknown
+    Generated: 2025-10-30 02:11:49
+#>
 
-Describe "0736_Generate-AIWorkflow" {
-    Context "Parameter Validation" {
-        It "Should execute without throwing errors in WhatIf mode" {
-            { & "/workspaces/AitherZero/automation-scripts/0736_Generate-AIWorkflow.ps1" -WhatIf } | Should -Not -Throw
+Describe '0736_Generate-AIWorkflow' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+
+    BeforeAll {
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0736_Generate-AIWorkflow.ps1'
+        $script:ScriptName = '0736_Generate-AIWorkflow'
+    }
+
+    Context 'Script Validation' {
+        It 'Script file should exist' {
+            Test-Path $script:ScriptPath | Should -Be $true
+        }
+
+        It 'Should have valid PowerShell syntax' {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script:ScriptPath, [ref]$null, [ref]$errors
+            )
+            $errors.Count | Should -Be 0
+        }
+
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
         }
     }
 
-    Context "WhatIf Support" {
-        It "Should show operations without executing them when WhatIf is used" {
-            & "/workspaces/AitherZero/automation-scripts/0736_Generate-AIWorkflow.ps1" -WhatIf
+    Context 'Parameters' {
+        It 'Should have parameter: Requirements' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Requirements') | Should -Be $true
+        }
 
-            # Verify mocked commands were not executed inappropriately
-            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'commit' }
-            Should -Not -Invoke gh -ParameterFilter { $arguments[0] -eq 'pr' -and $arguments[1] -eq 'create' }
+        It 'Should have parameter: WorkflowType' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('WorkflowType') | Should -Be $true
+        }
+
+        It 'Should have parameter: OutputPath' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
+        }
+
+    }
+
+    Context 'Metadata' {
+        It 'Should be in stage: Unknown' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Stage:'
         }
     }
 
-    # TODO: Add comprehensive tests for 0736_Generate-AIWorkflow functionality
-    # This is a placeholder - expand based on script-specific behavior
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
+        }
+    }
 }

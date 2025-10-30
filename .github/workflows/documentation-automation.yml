@@ -39,16 +39,17 @@ on:
         - Both
 
 jobs:
-  cleanup-auto-prs:
-    name: 🧹 Cleanup Auto PRs
+  cleanup-legacy-branches:
+    name: 🧹 Cleanup Legacy Auto-Docs Branches
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     
     permissions:
+      contents: write
       pull-requests: write
       
     steps:
-    - name: 🔍 Find and Close Auto PRs
+    - name: 🔍 Find and Delete Legacy Auto-Docs Branches
       uses: actions/github-script@v7
       with:
         script: |
@@ -56,55 +57,26 @@ jobs:
           const autoBranchName = `auto-docs/${prNumber}`;
           const repo = context.repo;
           
-          core.info(`Parent PR #${prNumber} was closed, searching for auto-docs PRs...`);
+          core.info(`PR #${prNumber} was closed, checking for legacy auto-docs branches...`);
           
-          // Find all open PRs from the auto-docs branch
-          const { data: allPRs } = await github.rest.pulls.list({
-            owner: repo.owner,
-            repo: repo.repo,
-            state: 'open'
-          });
-          
-          const autoPRs = allPRs.filter(pr => pr.head.ref === autoBranchName);
-          
-          if (autoPRs.length === 0) {
-            core.info(`No open auto-docs PRs found for branch ${autoBranchName}`);
-            return;
-          }
-          
-          for (const autoPR of autoPRs) {
-            core.info(`Closing auto-docs PR #${autoPR.number}`);
-            
-            // Add a comment explaining why it's being closed
-            await github.rest.issues.createComment({
-              owner: repo.owner,
-              repo: repo.repo,
-              issue_number: autoPR.number,
-              body: `🔒 Automatically closing this PR because the parent PR #${prNumber} was closed.`
-            });
-            
-            // Close the PR
-            await github.rest.pulls.update({
-              owner: repo.owner,
-              repo: repo.repo,
-              pull_number: autoPR.number,
-              state: 'closed'
-            });
-            
-            core.info(`✅ Closed auto-docs PR #${autoPR.number}`);
-          }
-          
-          // Delete the auto branch
+          // Try to delete the auto-docs branch if it exists
           try {
+            await github.rest.git.getRef({
+              owner: repo.owner,
+              repo: repo.repo,
+              ref: `heads/${autoBranchName}`
+            });
+            
+            core.info(`Found legacy branch ${autoBranchName}, deleting it...`);
             await github.rest.git.deleteRef({
               owner: repo.owner,
               repo: repo.repo,
               ref: `heads/${autoBranchName}`
             });
-            core.info(`✅ Deleted branch ${autoBranchName}`);
+            core.info(`✅ Deleted legacy branch ${autoBranchName}`);
           } catch (error) {
             if (error.status === 404) {
-              core.info(`Branch ${autoBranchName} does not exist`);
+              core.info(`No legacy branch ${autoBranchName} found (this is expected for new PRs)`);
             } else {
               core.warning(`Failed to delete branch ${autoBranchName}: ${error.message}`);
             }
@@ -253,185 +225,125 @@ jobs:
           echo "has_changes=false" >> $env:GITHUB_OUTPUT
         }
         
-    - name: 🌿 Create Auto-Docs Branch and PR (PR Only)
-      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const prNumber = context.issue.number;
-          const autoBranchName = `auto-docs/${prNumber}`;
-          const baseBranchName = context.payload.pull_request.head.ref;
-          const repo = context.repo;
-          
-          core.info(`Creating auto-docs branch: ${autoBranchName}`);
-          core.info(`Base PR branch: ${baseBranchName}`);
-          core.info(`PR number: ${prNumber}`);
-          
-          // Get the current commit SHA
-          const { data: prData } = await github.rest.pulls.get({
-            owner: repo.owner,
-            repo: repo.repo,
-            pull_number: prNumber
-          });
-          
-          const headSha = prData.head.sha;
-          core.info(`Head SHA: ${headSha}`);
-          
-          // Check if auto-docs branch already exists and delete it
-          try {
-            await github.rest.git.getRef({
-              owner: repo.owner,
-              repo: repo.repo,
-              ref: `heads/${autoBranchName}`
-            });
-            
-            core.info(`Branch ${autoBranchName} exists, deleting it`);
-            await github.rest.git.deleteRef({
-              owner: repo.owner,
-              repo: repo.repo,
-              ref: `heads/${autoBranchName}`
-            });
-          } catch (error) {
-            if (error.status === 404) {
-              core.info(`Branch ${autoBranchName} does not exist yet`);
-            } else {
-              throw error;
-            }
-          }
-          
-          // Create new branch from current PR head
-          await github.rest.git.createRef({
-            owner: repo.owner,
-            repo: repo.repo,
-            ref: `refs/heads/${autoBranchName}`,
-            sha: headSha
-          });
-          
-          core.info(`✅ Created branch ${autoBranchName}`);
-          core.setOutput('auto_branch', autoBranchName);
-          core.setOutput('base_branch', baseBranchName);
-          
-    - name: 💾 Commit and Push Documentation Updates
-      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
+    - name: 🔍 Check if PR is from Fork
+      if: github.event_name == 'pull_request'
+      id: check-fork
       shell: bash
+      env:
+        PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        BASE_REPO: ${{ github.repository }}
+      run: |
+        # Check if the PR is from a forked repository
+        if [ "$PR_HEAD_REPO" != "$BASE_REPO" ]; then
+          echo "is_fork=true" >> "$GITHUB_OUTPUT"
+          echo "⚠️ PR is from a forked repository"
+        else
+          echo "is_fork=false" >> "$GITHUB_OUTPUT"
+          echo "✅ PR is from the same repository"
+        fi
+        
+    - name: 💾 Commit and Push Documentation Updates
+      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'false'
+      shell: bash
+      env:
+        PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        MARKDOWN_COUNT: ${{ env.MARKDOWN_FILES }}
+        HTML_COUNT: ${{ env.HTML_FILES }}
       run: |
         # Configure git
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
-        # Get the auto-docs branch name
-        AUTO_BRANCH="auto-docs/${{ github.event.pull_request.number }}"
+        echo "Committing documentation changes to branch: $PR_BRANCH"
         
-        # Checkout the auto-docs branch
-        git fetch origin
-        git checkout "$AUTO_BRANCH"
+        # Checkout the PR branch
+        git fetch origin "$PR_BRANCH" 2>&1 || { echo "Failed to fetch branch"; exit 1; }
+        git checkout "$PR_BRANCH" 2>&1 || { echo "Failed to checkout branch"; exit 1; }
         
         # Add and commit documentation changes
         git add docs/generated/
         
         # Create commit message with details
-        MARKDOWN_COUNT="${{ env.MARKDOWN_FILES }}"
-        HTML_COUNT="${{ env.HTML_FILES }}"
         git commit -m "docs: update auto-generated documentation [auto-generated]" \
-          -m "Automated documentation generation for PR #${{ github.event.pull_request.number }}" \
+          -m "Automated documentation generation for PR #${PR_NUMBER}" \
           -m "" \
           -m "Generated: ${MARKDOWN_COUNT} Markdown files, ${HTML_COUNT} HTML files" \
           -m "" \
           -m "This commit was automatically generated by the documentation automation workflow." \
           -m "It updates documentation to reflect changes in the codebase."
         
-        # Push to the auto-docs branch
-        git push origin "$AUTO_BRANCH"
+        # Push directly to the PR branch
+        git push origin "$PR_BRANCH" 2>&1 || { echo "Failed to push changes"; exit 1; }
         
-        echo "✅ Committed and pushed documentation updates to $AUTO_BRANCH"
+        echo "✅ Committed and pushed documentation updates to $PR_BRANCH"
         
-    - name: 📝 Create PR for Documentation Updates
-      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
+    - name: 💬 Comment on PR (Fork - Manual Update Required)
+      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'true'
       uses: actions/github-script@v7
       with:
         script: |
-          const prNumber = context.issue.number;
-          const autoBranchName = `auto-docs/${prNumber}`;
-          const baseBranchName = context.payload.pull_request.head.ref;
-          const repo = context.repo;
-          
           const markdownCount = process.env.MARKDOWN_FILES || '0';
           const htmlCount = process.env.HTML_FILES || '0';
           
-          // Check if a PR already exists from auto-docs branch to base branch
-          const { data: existingPRs } = await github.rest.pulls.list({
-            owner: repo.owner,
-            repo: repo.repo,
-            head: `${repo.owner}:${autoBranchName}`,
-            base: baseBranchName,
-            state: 'open'
-          });
+          const comment = `## 📚 Documentation Update Required (Fork PR)
           
-          let autoDocsPR;
+          **Documentation files need to be updated, but this PR is from a forked repository.**
           
-          if (existingPRs.length > 0) {
-            autoDocsPR = existingPRs[0];
-            core.info(`Found existing auto-docs PR #${autoDocsPR.number}`);
-          } else {
-            // Create PR from auto-docs branch to base PR branch
-            const prTitle = `Auto-update documentation for PR #${prNumber}`;
-            const prBody = `## Automated Documentation Updates
-            
-            This PR contains automatically generated documentation updates for [PR #${prNumber}](https://github.com/${repo.owner}/${repo.repo}/pull/${prNumber}).
-            
-            ### Summary
-            - **Markdown files**: ${markdownCount}
-            - **HTML files**: ${htmlCount}
-            
-            ### Automation Details
-            This PR was automatically created by the documentation automation workflow. Please review and merge this PR into the parent branch to apply the documentation updates.
-            
-            ### Important
-            - Do not modify this PR manually
-            - This PR will be closed automatically when the parent PR is merged or closed
-            - Documentation updates are isolated to keep the parent PR commits clean
-            
-            ---
-            *Related to: #${prNumber}*
-            *Generated by: Documentation Automation Workflow*`;
-
-            const { data: newPR } = await github.rest.pulls.create({
-              owner: repo.owner,
-              repo: repo.repo,
-              title: prTitle,
-              head: autoBranchName,
-              base: baseBranchName,
-              body: prBody
-            });
-            
-            autoDocsPR = newPR;
-            core.info(`✅ Created auto-docs PR #${newPR.number}`);
-            
-            // Add labels
-            await github.rest.issues.addLabels({
-              owner: repo.owner,
-              repo: repo.repo,
-              issue_number: newPR.number,
-              labels: ['documentation', 'automated', 'auto-docs']
-            });
-          }
+          ### Generated Files
+          - 📄 Markdown files: ${markdownCount}
+          - 🌐 HTML files: ${htmlCount}
           
-          // Set output for potential auto-merge step
-          core.setOutput('auto_pr_number', autoDocsPR.number);
+          ### Action Required
+          Since this PR is from a fork, the workflow cannot automatically commit the changes. Please run the following commands locally and push the changes:
           
-          // Add comment to original PR
-          const comment = `Documentation Updates Available
+          \`\`\`bash
+          ./automation-scripts/0744_Generate-AutoDocumentation.ps1 -Mode Incremental -Format Both
+          git add docs/generated/
+          git commit -m "docs: update auto-generated documentation [auto-generated]"
+          git push
+          \`\`\`
           
-          Automated documentation updates have been generated and are available in PR #${autoDocsPR.number}.
-          
-          Once that PR is reviewed and merged into this branch, the documentation will be up to date.
-          
-          [View Auto-Docs PR](https://github.com/${repo.owner}/${repo.repo}/pull/${autoDocsPR.number})`;
+          ---
+          *Generated by AitherZero Documentation Automation*`;
 
           await github.rest.issues.createComment({
-            issue_number: prNumber,
-            owner: repo.owner,
-            repo: repo.repo,
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+        
+    - name: 💬 Comment on PR (Changes Committed)
+      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'false'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const markdownCount = process.env.MARKDOWN_FILES || '0';
+          const htmlCount = process.env.HTML_FILES || '0';
+          
+          const comment = `## 📚 Documentation Update Report
+          
+          **Documentation has been automatically updated!**
+          
+          ### Generated Files
+          - 📄 Markdown files: ${markdownCount}
+          - 🌐 HTML files: ${htmlCount}
+          
+          ### Summary
+          - ✅ Documentation engine initialized
+          - ✅ Quality validation passed
+          - ✅ Documentation files updated and committed to this PR
+          
+          The changes have been committed directly to this PR branch. No additional action is required.
+          
+          ---
+          *Generated by AitherZero Documentation Automation*`;
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
             body: comment
           });
         
@@ -460,9 +372,9 @@ jobs:
           *Generated by AitherZero Documentation Automation*`;
           // Post the comment to the PR
           await github.rest.issues.createComment({
-            issue_number: github.context.issue.number,
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
             body: comment
           });
     - name: 🚀 Deploy Documentation (Main Branch)
