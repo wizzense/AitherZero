@@ -340,6 +340,11 @@
                     Scripts = @('0900', '0901')
                     Description = 'Self-deployment and local deployment testing'
                 }
+                TestGeneration = @{
+                    DependsOn = @('Core.PowerShell7', 'Testing.Pester')
+                    Scripts = @('0950')
+                    Description = 'Automatic test generation system - generates unit and integration tests for all automation scripts'
+                }
             }
             
             # Maintenance and cleanup
@@ -424,7 +429,7 @@
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 2; Category = 'Validation' }
+            '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
         
@@ -813,6 +818,21 @@
                     ReportPath = './reports/quality'
                     AutoCreateIssues = $true  # Create GitHub issues for failures in CI
                     IssueLabels = @('quality-validation', 'automated', 'needs-fix')
+                }
+            }
+            AutoTestGenerator = @{
+                Enabled = $true  # Automatic test generation system
+                InstallScript = '0950'
+                Required = $false
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = '100% automatic test generation for all automation scripts'
+                Configuration = @{
+                    Mode = 'Full'  # Full, Quick, Changed, Watch
+                    Force = $false  # Regenerate existing tests
+                    RunTests = $false  # Run tests after generation
+                    AutoGenerate = $true  # Auto-generate on script changes
+                    TestsPath = './tests'
+                    CoverageTarget = 100  # Target test coverage percentage
                 }
             }
         }
