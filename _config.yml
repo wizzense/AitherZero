@@ -21,6 +21,8 @@ include:
   - reports/dashboard.html
   - reports/*.json
   - reports/*.md
+  - docs
+  - docs/archive
 
 exclude:
   - .git
