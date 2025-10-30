@@ -1,0 +1,6 @@
+# Git Attributes for AitherZero
+
+# Auto-generated index.md files should always use the most recent version
+# This prevents merge conflicts when multiple branches update these files
+# The files will be regenerated after merge anyway
+**/index.md merge=ours
