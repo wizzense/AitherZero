@@ -32,6 +32,19 @@ iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.p
 curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 ```
 
+### PowerShell Gallery (Coming Soon)
+
+Once published to PowerShell Gallery, you'll be able to install with:
+
+```powershell
+# Install from PowerShell Gallery
+Install-Module -Name AitherZero -Scope CurrentUser
+
+# Import and use
+Import-Module AitherZero
+Get-Command -Module AitherZero
+```
+
 ### Download Latest Release Package
 
 **Option 1: Direct Download (Latest Release)**
