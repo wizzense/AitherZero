@@ -350,8 +350,8 @@ jobs:
         git fetch origin
         git checkout "$AUTO_BRANCH"
         
-        # Add and commit index changes
-        git add **/index.md .aitherzero-index-cache.json .aitherzero-index-report.json
+        # Add and commit index changes (only index.md files, cache files are gitignored)
+        git add **/index.md
         
         # Create commit message with details
         UPDATED_COUNT="${{ env.UPDATED_INDEXES }}"
