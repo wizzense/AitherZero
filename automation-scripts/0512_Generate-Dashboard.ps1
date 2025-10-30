@@ -574,6 +574,12 @@ function Get-BuildStatus {
         Security = "Unknown"
         Coverage = "Unknown"
         Deployment = "Unknown"
+        Workflows = @{
+            Quality = "Unknown"
+            PRValidation = "Unknown"
+            GitHubPages = "Unknown"
+            DockerPublish = "Unknown"
+        }
         Badges = @{
             Build = "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI"
             Tests = "https://img.shields.io/badge/tests-unknown-lightgrey"
@@ -582,40 +588,127 @@ function Get-BuildStatus {
         }
     }
 
-    # Check recent test results
-    $testResultsPath = Join-Path $ProjectPath "tests/results"
+    # Check recent test results from testResults.xml at project root
+    $testResultsPath = Join-Path $ProjectPath "testResults.xml"
     if (Test-Path $testResultsPath) {
-        $latestResults = Get-ChildItem -Path $testResultsPath -Filter "*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        try {
+            [xml]$testXml = Get-Content $testResultsPath
+            
+            # Parse NUnit format test results
+            if ($testXml.'test-results') {
+                $results = $testXml.'test-results'
+                $totalTests = [int]$results.total
+                $failures = [int]$results.failures
+                $errors = [int]$results.errors
+                $skipped = [int]$results.skipped
+
+                if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
+                    $status.Tests = "Passing"
+                    $status.Badges.Tests = "https://img.shields.io/badge/tests-passing-brightgreen"
+                } elseif (($failures + $errors) -gt 0) {
+                    $status.Tests = "Failing"
+                    $status.Badges.Tests = "https://img.shields.io/badge/tests-failing-red"
+                } else {
+                    $status.Tests = "No Tests"
+                    $status.Badges.Tests = "https://img.shields.io/badge/tests-none-yellow"
+                }
+                
+                $status.LastBuild = (Get-Item $testResultsPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse test results from testResults.xml: $_"
+        }
+    }
+    
+    # Also check tests/results directory for additional test data
+    $testResultsDir = Join-Path $ProjectPath "tests/results"
+    if (Test-Path $testResultsDir) {
+        $latestResults = Get-ChildItem -Path $testResultsDir -Filter "*.xml" -ErrorAction SilentlyContinue | 
+                        Sort-Object LastWriteTime -Descending | 
+                        Select-Object -First 1
         if ($latestResults) {
             try {
                 [xml]$testXml = Get-Content $latestResults.FullName
-                $testSuites = $testXml.testsuites
-                if ($testSuites) {
-                    $totalTests = $testSuites.tests -as [int]
-                    $failures = $testSuites.failures -as [int]
-                    $errors = $testSuites.errors -as [int]
+                if ($testXml.'test-results' -and $status.Tests -eq "Unknown") {
+                    $results = $testXml.'test-results'
+                    $totalTests = [int]$results.total
+                    $failures = [int]$results.failures
+                    $errors = [int]$results.errors
 
-                    if (($failures + $errors) -eq 0) {
+                    if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
                         $status.Tests = "Passing"
                         $status.Badges.Tests = "https://img.shields.io/badge/tests-passing-brightgreen"
-                    } else {
+                    } elseif (($failures + $errors) -gt 0) {
                         $status.Tests = "Failing"
                         $status.Badges.Tests = "https://img.shields.io/badge/tests-failing-red"
                     }
                 }
             } catch {
-                Write-ScriptLog -Level Warning -Message "Failed to parse test results"
+                Write-ScriptLog -Level Warning -Message "Failed to parse test results from tests/results"
             }
         }
     }
 
+    # Check code coverage
+    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
+                    Sort-Object LastWriteTime -Descending |
+                    Select-Object -First 1
+    if ($coverageFiles) {
+        try {
+            [xml]$coverageXml = Get-Content $coverageFiles.FullName
+            if ($coverageXml.coverage) {
+                $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                $status.Coverage = "${coveragePercent}%"
+                
+                if ($coveragePercent -ge 80) {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
+                } elseif ($coveragePercent -ge 50) {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
+                } else {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data"
+        }
+    }
+    
+    # Check PSScriptAnalyzer results for security/quality
+    $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+    if (Test-Path $pssaPath) {
+        try {
+            $pssaData = Get-Content $pssaPath | ConvertFrom-Json
+            $errorCount = $pssaData.Summary.Errors
+            
+            if ($errorCount -eq 0) {
+                $status.Security = "Clean"
+                $status.Badges.Security = "https://img.shields.io/badge/security-clean-brightgreen"
+            } elseif ($errorCount -lt 5) {
+                $status.Security = "Minor Issues"
+                $status.Badges.Security = "https://img.shields.io/badge/security-minor_issues-yellow"
+            } else {
+                $status.Security = "Issues Found"
+                $status.Badges.Security = "https://img.shields.io/badge/security-issues-red"
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse PSScriptAnalyzer results for security status"
+        }
+    }
+
     # Determine overall status
-    if ($status.Tests -eq "Passing") {
+    if ($status.Tests -eq "Passing" -and $status.Security -eq "Clean") {
         $status.Overall = "Healthy"
-    } elseif ($status.Tests -eq "Failing") {
+    } elseif ($status.Tests -eq "Failing" -or $status.Security -eq "Issues Found") {
         $status.Overall = "Issues"
+    } elseif ($status.Tests -eq "Passing" -or $status.Security -eq "Minor Issues") {
+        $status.Overall = "Warning"
     } else {
         $status.Overall = "Unknown"
+    }
+    
+    # Check if we're in a CI environment to set deployment status
+    if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
+        $status.Deployment = "CI/CD Active"
     }
 
     return $status
