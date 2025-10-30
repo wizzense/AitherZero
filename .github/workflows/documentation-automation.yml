@@ -10,7 +10,7 @@ on:
       - 'README.md'
       - 'docs/**'
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
     branches: [ main, develop ]
     paths:
       - 'domains/**/*.psm1'
