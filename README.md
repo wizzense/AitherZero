@@ -201,10 +201,40 @@ AitherZero maintains high code quality standards through automated validation:
 
 ## Features
 
-- **Infrastructure Deployment**: Plan, apply, and destroy infrastructure using OpenTofu/Terraform
-- **Lab VM Management**: Create and manage virtual machines
-- **Configuration**: Simple configuration management
-- **🤖 AI-Powered PR Reviews**: Automatic GitHub Copilot agent routing for specialized code reviews
+### Core Capabilities
+
+- **🔢 Number-Based Orchestration**: Systematic script execution using numbered ranges (0000-9999) for predictable automation workflows
+- **🏗️ Infrastructure Deployment**: Plan, apply, and destroy infrastructure using OpenTofu/Terraform with lab automation
+- **💻 Lab VM Management**: Create, configure, and manage Hyper-V virtual machines with networking and storage
+- **🔧 Development Tools**: Automated installation and configuration of Git, Node.js, Python, Docker, VS Code, and more
+- **🧪 Testing Framework**: Comprehensive testing with Pester, PSScriptAnalyzer, and automated quality validation
+- **📊 Reporting & Analytics**: Interactive dashboards, project metrics, technical debt analysis, and GitHub Pages integration
+- **⚙️ Configuration Management**: Hierarchical config system with automatic CI/CD detection and environment switching
+- **🔒 Security Management**: Credential handling, certificate management, and secure secret storage
+- **📚 Documentation Generation**: Automated documentation with templates and markdown generation
+- **🎨 Interactive UI**: Rich console menus, wizards, and progress indicators for user-friendly operation
+- **🤖 AI Integration**: Claude Code and Gemini CLI integration for AI-assisted development workflows
+
+### Cross-Platform Support
+
+- **Windows**: Full support with Hyper-V, WSL2, and Windows-specific features
+- **Linux**: Native support with all core functionality
+- **macOS**: Native support with all core functionality
+- **Docker**: Containerized workflows for consistent environments
+
+### Automation & Orchestration
+
+- **Playbook System**: Predefined sequences for common workflows (testing, setup, validation)
+- **Parallel Execution**: Configurable concurrency for faster script execution
+- **Dependency Management**: Automatic detection and installation of required tools
+- **CI/CD Integration**: Zero-configuration operation in GitHub Actions, Azure DevOps, and other CI systems
+
+### Quality Assurance
+
+- **Automated Testing**: Unit tests, integration tests, and domain-specific test suites
+- **Code Quality**: PSScriptAnalyzer integration with customizable rules
+- **Test Coverage**: Code coverage tracking and reporting
+- **Quality Validation**: Script 0420 validates components against quality standards
 
 ### 🤖 GitHub Copilot Agent Routing
 
@@ -230,29 +260,174 @@ AitherZero includes an **automatic agent routing system** with 8 specialized AI 
 
 ## Core Modules
 
-- **LabRunner**: Lab automation and VM management
-- **OpenTofuProvider**: Infrastructure deployment
-- **Logging**: Centralized logging
-- **ConfigurationCore**: Configuration management
-- **SecureCredentials**: Credential handling
+AitherZero uses a consolidated **domain-based module architecture** (v2.0):
+
+- **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management, Hyper-V
+- **configuration/**: Configuration management with environment switching
+- **security/**: Credential management, certificate handling
+- **utilities/**: Logging, maintenance, cross-platform helpers
+- **experience/**: UI components, interactive menus, wizards
+- **automation/**: Orchestration engine, workflow management
+- **testing/**: Testing framework, code quality validation
+- **reporting/**: Analytics, dashboards, metrics
+- **development/**: Git automation, dev tools integration
+- **documentation/**: Documentation generation and management
+
+All modules load through a single entry point (`AitherZero.psm1`) and are accessible after running:
+```powershell
+./Initialize-AitherEnvironment.ps1
+```
 
 ## Project Structure
 
 ```
+AitherZero/
+├── AitherZero.psd1              # Module manifest
+├── AitherZero.psm1              # Root module loader
+├── Start-AitherZero.ps1         # Main entry point
+├── bootstrap.ps1 / .sh          # Cross-platform installers
+├── config.psd1                  # Configuration file
+│
+├── domains/                     # Domain-based module architecture
+│   ├── infrastructure/          # Lab automation, VM management
+│   ├── configuration/           # Config management
+│   ├── security/                # Credentials, certificates
+│   ├── utilities/               # Logging, maintenance
+│   ├── experience/              # UI components, menus
+│   ├── automation/              # Orchestration engine
+│   ├── testing/                 # Testing framework
+│   ├── reporting/               # Analytics, dashboards
+│   ├── development/             # Dev tools, Git automation
+│   └── documentation/           # Documentation generation
+│
+├── automation-scripts/          # Number-based orchestration (0000-9999)
+│   ├── 0000-0099/              # Environment preparation
+│   ├── 0100-0199/              # Infrastructure setup
+│   ├── 0200-0299/              # Development tools
+│   ├── 0400-0499/              # Testing & validation
+│   ├── 0500-0599/              # Reporting & metrics
+│   ├── 0700-0799/              # Git automation & AI
+│   └── 9000-9999/              # Maintenance & cleanup
+│
+├── orchestration/               # Playbooks and workflows
+│   └── playbooks/              # Predefined automation sequences
+│
+├── infrastructure/              # Infrastructure-as-Code
+│   ├── terraform/              # Terraform configurations
+│   └── examples/               # Example configurations
+│
+├── tests/                       # Comprehensive test suite
+│   ├── unit/                   # Unit tests
+│   ├── integration/            # Integration tests
+│   └── domains/                # Domain-specific tests
+│
+├── docs/                        # Documentation
+└── reports/                     # Generated reports
 ```
 
 ## Usage
 
-1. Run `./Start-AitherZero.ps1`
-2. Select from the menu:
-   - Deploy Infrastructure
-   - Manage Lab VMs
-   - Configure Settings
-3. Follow the prompts
+### Interactive Mode
+
+Launch the interactive menu system:
+
+```powershell
+./Start-AitherZero.ps1
+# Or use the global command
+aitherzero
+```
+
+Navigate through menus to:
+- Deploy infrastructure with OpenTofu/Terraform
+- Manage Hyper-V lab VMs
+- Configure system settings
+- Run automation scripts
+- View reports and metrics
+
+### CLI Mode
+
+Run specific scripts by number:
+
+```powershell
+# Using the az wrapper (recommended)
+./az.ps1 0402                   # Run unit tests
+./az.ps1 0404                   # Run PSScriptAnalyzer
+./az.ps1 0510 -ShowAll          # Generate project report
+
+# Using the global command
+aitherzero -Mode Run -Target 0402
+```
+
+### Orchestration Mode
+
+Execute predefined playbooks:
+
+```powershell
+# Quick validation
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick
+
+# Full test suite
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full
+
+# Environment setup
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook environment-setup
+```
+
+### Script Number Ranges
+
+- **0000-0099**: Environment preparation (PowerShell 7, directories)
+- **0100-0199**: Infrastructure (Hyper-V, certificates, networking)
+- **0200-0299**: Development tools (Git, Node, Python, Docker, VS Code)
+- **0400-0499**: Testing & validation
+- **0500-0599**: Reporting & metrics
+- **0700-0799**: Git automation & AI tools
+- **9000-9999**: Maintenance & cleanup
 
 ## Configuration
 
-Configuration files are stored in the `configs/` directory.
+### Configuration Hierarchy
+
+AitherZero uses a hierarchical configuration system with automatic CI/CD detection:
+
+1. **Command-line parameters** (highest priority)
+2. **Environment variables** (`AITHERZERO_*` prefixed)
+3. **config.local.psd1** (local overrides, gitignored)
+4. **config.psd1** (main configuration file)
+5. **CI defaults** (automatic in CI environments)
+6. **Script defaults** (fallback values)
+
+### Configuration Files
+
+| File | Purpose | Version Control |
+|------|---------|-----------------|
+| `config.example.psd1` | Documented template | Yes |
+| `config.psd1` | Main configuration | Yes |
+| `config.local.psd1` | Local overrides | No (gitignored) |
+| `.env` | Environment variables | No (gitignored) |
+
+### Quick Configuration
+
+```powershell
+# Use defaults (recommended for CI/CD)
+./bootstrap.ps1
+./Start-AitherZero.ps1
+
+# Customize installation profile
+./bootstrap.ps1 -InstallProfile Developer
+
+# Create local configuration
+Copy-Item config.example.psd1 config.local.psd1
+# Edit config.local.psd1 as needed
+```
+
+### Key Configuration Options
+
+- **Core.Profile**: Installation profile (Minimal, Standard, Developer, Full)
+- **Core.Environment**: Environment type (Development, Testing, Production, CI)
+- **Automation.MaxConcurrency**: Parallel execution limit
+- **Testing.Profile**: Test execution profile (Quick, Standard, Full, CI)
+
+**Full documentation**: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 
 ## 📚 Documentation
 
