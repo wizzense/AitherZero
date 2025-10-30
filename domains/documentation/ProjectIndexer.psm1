@@ -75,7 +75,7 @@ function Initialize-ProjectIndexer {
     [CmdletBinding()]
     param(
         [string]$RootPath = $script:ProjectRoot,
-        [string[]]$ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'reports', 'logs'),
+        [string[]]$ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'logs'),
         [switch]$EnableAI
     )
     
@@ -111,7 +111,7 @@ function Initialize-ProjectIndexer {
 function Get-DefaultIndexerConfig {
     return @{
         RootPath = $script:ProjectRoot
-        ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'reports', 'logs')
+        ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'logs')
         EnableAI = $false
         IndexFileName = 'index.md'
         ReadmeFileName = 'README.md'
