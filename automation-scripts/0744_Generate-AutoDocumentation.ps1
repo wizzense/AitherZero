@@ -28,16 +28,16 @@
 param(
     [ValidateSet('Full', 'Incremental', 'Reactive')]
     [string]$Mode = 'Full',
-    
+
     [string]$OutputPath = $null,
-    
+
     [ValidateSet('Markdown', 'HTML', 'Both')]
     [string]$Format = 'Both',
-    
+
     [switch]$Watch,
-    
+
     [switch]$Quality = $true,
-    
+
     [int]$WatchTimeout = 300  # 5 minutes for reactive mode
 )
 
@@ -54,7 +54,7 @@ Import-Module (Join-Path $script:ProjectRoot "domains/documentation/Documentatio
 
 function Write-DocLog {
     param([string]$Message, [string]$Level = 'Information', [hashtable]$Data = @{})
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $Level -Message $Message -Source "AutoDocumentation" -Data $Data
     } else {
@@ -63,6 +63,7 @@ function Write-DocLog {
                 'Information' { 'White' }
                 'Warning' { 'Yellow' }
                 'Error' { 'Red' }
+                default { 'White' }
             }
         )
     }
@@ -75,7 +76,7 @@ function Initialize-Documentation {
         OutputPath = $OutputPath
     }
     Write-DocLog "Starting initialization process..." -Level Information
-    
+
     # Initialize documentation engine
     try {
         Write-DocLog "Importing and initializing documentation engine..." -Level Debug
@@ -85,7 +86,7 @@ function Initialize-Documentation {
         Write-DocLog "Failed to initialize documentation engine: $_" -Level Error
         throw
     }
-    
+
     # Set default output path if not specified
     if (-not $OutputPath) {
         $script:OutputPath = Join-Path $script:ProjectRoot "docs/generated"
@@ -94,7 +95,7 @@ function Initialize-Documentation {
         $script:OutputPath = $OutputPath
         Write-DocLog "Using provided output path: $script:OutputPath" -Level Debug
     }
-    
+
     # Ensure output directory exists
     if (-not (Test-Path $script:OutputPath)) {
         Write-DocLog "Creating output directory..." -Level Information
@@ -103,37 +104,37 @@ function Initialize-Documentation {
     } else {
         Write-DocLog "Output directory already exists: $script:OutputPath" -Level Debug
     }
-    
+
     Write-DocLog "Initialization completed successfully" -Level Information
 }
 
 function Invoke-FullDocumentationGeneration {
     Write-DocLog "Starting full documentation generation..." -Level Information
     Write-DocLog "Mode: Full regeneration of all documentation" -Level Debug
-    
+
     try {
         # Generate complete project documentation
         Write-DocLog "Generating project-level documentation..." -Level Information
         $projectDocPath = New-ProjectDocumentation -OutputPath $script:OutputPath
         Write-DocLog "Generated project documentation: $projectDocPath" -Level Information
-        
+
         # Generate individual module documentation
         $domainsPath = Join-Path $script:ProjectRoot "domains"
         Write-DocLog "Scanning for modules in: $domainsPath" -Level Debug
-        
+
         if (Test-Path $domainsPath) {
             $domains = Get-ChildItem -Path $domainsPath -Directory
             Write-DocLog "Found $($domains.Count) domains to process" -Level Information
-            
+
             $moduleCount = 0
             Get-ChildItem -Path $domainsPath -Directory | ForEach-Object {
                 $domainPath = $_.FullName
                 $domainName = $_.Name
                 Write-DocLog "Processing domain: $domainName" -Level Debug
-                
+
                 $domainModules = Get-ChildItem -Path $domainPath -Filter "*.psm1"
                 Write-DocLog "Found $($domainModules.Count) modules in domain: $domainName" -Level Debug
-                
+
                 $domainModules | ForEach-Object {
                     try {
                         Write-DocLog "Generating docs for: $($_.BaseName)" -Level Debug
@@ -147,16 +148,16 @@ function Invoke-FullDocumentationGeneration {
             }
             Write-DocLog "Generated documentation for $moduleCount modules" -Level Information
         }
-        
+
         # Generate automation script documentation
         Invoke-ScriptDocumentationGeneration
-        
+
         # Update main documentation files
         Update-MainDocumentation
-        
+
         Write-DocLog "Full documentation generation completed successfully"
         return $true
-        
+
     } catch {
         Write-DocLog "Full documentation generation failed: $_" -Level Error
         return $false
@@ -165,18 +166,18 @@ function Invoke-FullDocumentationGeneration {
 
 function Invoke-IncrementalDocumentationGeneration {
     Write-DocLog "Starting incremental documentation generation..."
-    
+
     try {
         # Find recently changed files
         $changedFiles = Get-RecentlyChangedFiles -Hours 24
-        
+
         if ($changedFiles.Count -eq 0) {
             Write-DocLog "No recent changes detected, skipping incremental generation"
             return $true
         }
-        
+
         Write-DocLog "Found $($changedFiles.Count) recently changed files"
-        
+
         # Process each changed file
         foreach ($file in $changedFiles) {
             try {
@@ -194,10 +195,10 @@ function Invoke-IncrementalDocumentationGeneration {
                 Write-DocLog "Failed to update documentation for $($file.Name): $_" -Level Warning
             }
         }
-        
+
         Write-DocLog "Incremental documentation generation completed"
         return $true
-        
+
     } catch {
         Write-DocLog "Incremental documentation generation failed: $_" -Level Error
         return $false
@@ -206,11 +207,11 @@ function Invoke-IncrementalDocumentationGeneration {
 
 function Invoke-ReactiveDocumentationMode {
     Write-DocLog "Starting reactive documentation mode with $WatchTimeout second timeout..."
-    
+
     try {
         # Set up file system watchers
         $watchers = @()
-        
+
         # Watch domains directory
         $domainsPath = Join-Path $script:ProjectRoot "domains"
         if (Test-Path $domainsPath) {
@@ -219,7 +220,7 @@ function Invoke-ReactiveDocumentationMode {
             $domainsWatcher.Filter = "*.psm1"
             $domainsWatcher.EnableRaisingEvents = $true
             $domainsWatcher.IncludeSubdirectories = $true
-            
+
             Register-ObjectEvent -InputObject $domainsWatcher -EventName "Changed" -Action {
                 param($sender, $eventArgs)
                 Write-DocLog "Detected change in module: $($eventArgs.FullPath)"
@@ -229,10 +230,10 @@ function Invoke-ReactiveDocumentationMode {
                     Write-DocLog "Failed to update documentation for changed module: $_" -Level Warning
                 }
             } | Out-Null
-            
+
             $watchers += $domainsWatcher
         }
-        
+
         # Watch automation scripts directory
         $scriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
         if (Test-Path $scriptsPath) {
@@ -240,25 +241,25 @@ function Invoke-ReactiveDocumentationMode {
             $scriptsWatcher.Path = $scriptsPath
             $scriptsWatcher.Filter = "*.ps1"
             $scriptsWatcher.EnableRaisingEvents = $true
-            
+
             Register-ObjectEvent -InputObject $scriptsWatcher -EventName "Changed" -Action {
                 param($sender, $eventArgs)
                 Write-DocLog "Detected change in script: $($eventArgs.Name)"
                 # Update script documentation index
                 Invoke-ScriptDocumentationGeneration
             } | Out-Null
-            
+
             $watchers += $scriptsWatcher
         }
-        
+
         Write-DocLog "File system watchers initialized. Monitoring for changes..."
         Write-Host "📚 Reactive documentation mode active. Press Ctrl+C to stop or wait $WatchTimeout seconds..." -ForegroundColor Cyan
-        
+
         # Wait for timeout or manual interruption
         $endTime = (Get-Date).AddSeconds($WatchTimeout)
         while ((Get-Date) -lt $endTime) {
             Start-Sleep -Seconds 5
-            
+
             # Check for interruption
             if ([Console]::KeyAvailable) {
                 $key = [Console]::ReadKey($true)
@@ -268,17 +269,17 @@ function Invoke-ReactiveDocumentationMode {
                 }
             }
         }
-        
+
         Write-DocLog "Reactive documentation mode ended"
-        
+
         # Clean up watchers
         foreach ($watcher in $watchers) {
             $watcher.EnableRaisingEvents = $false
             $watcher.Dispose()
         }
-        
+
         return $true
-        
+
     } catch {
         Write-DocLog "Reactive documentation mode failed: $_" -Level Error
         return $false
@@ -287,33 +288,33 @@ function Invoke-ReactiveDocumentationMode {
 
 function Invoke-ScriptDocumentationGeneration {
     Write-DocLog "Generating automation script documentation..."
-    
+
     try {
         $scriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
         if (-not (Test-Path $scriptsPath)) {
             Write-DocLog "Automation scripts directory not found" -Level Warning
             return
         }
-        
+
         # Get all automation scripts
-        $scripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" | Where-Object { 
-            $_.Name -match '^\d{4}_' 
+        $scripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" | Where-Object {
+            $_.Name -match '^\d{4}_'
         } | Sort-Object Name
-        
+
         # Generate script index documentation
         $scriptIndex = Generate-ScriptIndexDocumentation -Scripts $scripts
-        
+
         # Save script index
         $scriptIndexPath = Join-Path $script:OutputPath "automation-scripts"
         if (-not (Test-Path $scriptIndexPath)) {
             New-Item -Path $scriptIndexPath -ItemType Directory -Force | Out-Null
         }
-        
+
         $indexFile = Join-Path $scriptIndexPath "index.md"
         $scriptIndex | Set-Content $indexFile -Encoding UTF8
-        
+
         Write-DocLog "Generated automation script documentation index: $indexFile"
-        
+
     } catch {
         Write-DocLog "Failed to generate script documentation: $_" -Level Error
     }
@@ -321,7 +322,7 @@ function Invoke-ScriptDocumentationGeneration {
 
 function Generate-ScriptIndexDocumentation {
     param([System.IO.FileInfo[]]$Scripts)
-    
+
     $index = @"
 # Automation Scripts Index
 
@@ -330,7 +331,7 @@ AitherZero uses a number-based orchestration system (0000-9999) for systematic s
 ## Script Categories
 
 "@
-    
+
     # Group scripts by category
     $categories = @{
         '0000-0099' = @{ Name = 'Environment Setup'; Scripts = @() }
@@ -341,11 +342,11 @@ AitherZero uses a number-based orchestration system (0000-9999) for systematic s
         '0700-0799' = @{ Name = 'Git & AI Tools'; Scripts = @() }
         '9000-9999' = @{ Name = 'Maintenance'; Scripts = @() }
     }
-    
+
     foreach ($script in $Scripts) {
         $number = ($script.Name -split '_')[0]
         $numValue = [int]$number
-        
+
         $category = switch ($numValue) {
             {$_ -ge 0 -and $_ -le 99} { '0000-0099' }
             {$_ -ge 100 -and $_ -le 199} { '0100-0199' }
@@ -356,7 +357,7 @@ AitherZero uses a number-based orchestration system (0000-9999) for systematic s
             {$_ -ge 9000 -and $_ -le 9999} { '9000-9999' }
             default { 'Other' }
         }
-        
+
         if ($categories.ContainsKey($category)) {
             $scriptInfo = Get-ScriptInformation -ScriptPath $script.FullName
             $categories[$category].Scripts += @{
@@ -367,7 +368,7 @@ AitherZero uses a number-based orchestration system (0000-9999) for systematic s
             }
         }
     }
-    
+
     # Generate documentation for each category
     foreach ($categoryKey in $categories.Keys | Sort-Object) {
         $category = $categories[$categoryKey]
@@ -375,13 +376,13 @@ AitherZero uses a number-based orchestration system (0000-9999) for systematic s
             $index += "`n### $($category.Name) ($categoryKey)`n"
             $index += "`n| Script | Description | Tags |`n"
             $index += "| ------ | ----------- | ---- |`n"
-            
+
             foreach ($script in ($category.Scripts | Sort-Object Number)) {
                 $index += "| ``az $($script.Number)`` | $($script.Description) | $($script.Tags -join ', ') |`n"
             }
         }
     }
-    
+
     $index += @"
 
 ## Usage
@@ -391,7 +392,7 @@ Use the ``az`` command wrapper to execute scripts:
 ```powershell
 # Examples
 az 0402      # Run unit tests
-az 0510      # Generate project report  
+az 0510      # Generate project report
 az 0701      # Create feature branch
 ```
 
@@ -405,16 +406,16 @@ These scripts integrate with:
 ---
 *Generated automatically on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*
 "@
-    
+
     return $index
 }
 
 function Get-ScriptInformation {
     param([string]$ScriptPath)
-    
+
     try {
         $content = Get-Content $ScriptPath -Raw
-        
+
         # Extract description from comment
         $description = if ($content -match '# Description:\s*(.*)') {
             $Matches[1].Trim()
@@ -423,14 +424,14 @@ function Get-ScriptInformation {
         } else {
             "No description available"
         }
-        
+
         # Extract tags
         $tags = if ($content -match '# Tags:\s*(.*)') {
             $Matches[1].Trim().Split(',') | ForEach-Object { $_.Trim() }
         } else {
             @()
         }
-        
+
         return @{
             Description = $description
             Tags = $tags
@@ -445,25 +446,25 @@ function Get-ScriptInformation {
 
 function Get-RecentlyChangedFiles {
     param([int]$Hours = 24)
-    
+
     $cutoffTime = (Get-Date).AddHours(-$Hours)
-    
+
     $changedFiles = @()
-    
+
     # Check domains
     $domainsPath = Join-Path $script:ProjectRoot "domains"
     if (Test-Path $domainsPath) {
-        $changedFiles += Get-ChildItem -Path $domainsPath -Recurse -Filter "*.psm1" | 
+        $changedFiles += Get-ChildItem -Path $domainsPath -Recurse -Filter "*.psm1" |
             Where-Object { $_.LastWriteTime -gt $cutoffTime }
     }
-    
+
     # Check automation scripts
     $scriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
     if (Test-Path $scriptsPath) {
-        $changedFiles += Get-ChildItem -Path $scriptsPath -Filter "*.ps1" | 
+        $changedFiles += Get-ChildItem -Path $scriptsPath -Filter "*.ps1" |
             Where-Object { $_.LastWriteTime -gt $cutoffTime }
     }
-    
+
     # Check main files
     $mainFiles = @('README.md', 'AitherZero.psd1', 'AitherZero.psm1')
     foreach ($file in $mainFiles) {
@@ -475,13 +476,13 @@ function Get-RecentlyChangedFiles {
             }
         }
     }
-    
+
     return $changedFiles
 }
 
 function Update-MainDocumentation {
     Write-DocLog "Updating main documentation files..."
-    
+
     try {
         # Generate new README sections based on current state
         $readmePath = Join-Path $script:ProjectRoot "README.md"
@@ -490,7 +491,7 @@ function Update-MainDocumentation {
             Update-FunctionalityIndex
             Write-DocLog "Updated functionality index"
         }
-        
+
         # Update documentation index if function is available
         $indexPath = Join-Path $script:OutputPath "index.md"
         if (Test-Path $indexPath) {
@@ -507,7 +508,7 @@ function Update-MainDocumentation {
                 Write-DocLog "Failed to update documentation index: $_" -Level Warning
             }
         }
-        
+
     } catch {
         Write-DocLog "Failed to update main documentation: $_" -Level Warning
     }
@@ -516,20 +517,20 @@ function Update-MainDocumentation {
 function Update-FunctionalityIndex {
     # Update the FUNCTIONALITY-INDEX.md file with current module and script counts
     $indexPath = Join-Path $script:ProjectRoot "FUNCTIONALITY-INDEX.md"
-    
+
     if (Test-Path $indexPath) {
         try {
             # Get current counts
             $domainCounts = Get-CurrentDomainCounts
             $scriptCounts = Get-CurrentScriptCounts
-            
+
             # Note: In a full implementation, this would update the actual index file
             # For now, we'll just log that it should be updated
             Write-DocLog "Functionality index should be updated with current counts" -Data @{
                 Domains = $domainCounts.Count
                 Scripts = $scriptCounts
             }
-            
+
         } catch {
             Write-DocLog "Failed to update functionality index: $_" -Level Warning
         }
@@ -554,10 +555,10 @@ function Get-CurrentScriptCounts {
 
 function Invoke-DocumentationQualityValidation {
     Write-DocLog "Running documentation quality validation..."
-    
+
     try {
         $validationResults = Test-DocumentationQuality -Path $script:OutputPath
-        
+
         Write-Host "`n📊 Documentation Quality Report" -ForegroundColor Cyan
         Write-Host "================================" -ForegroundColor Cyan
         Write-Host "Overall Score: $($validationResults.Score)%" -ForegroundColor $(
@@ -570,18 +571,18 @@ function Invoke-DocumentationQualityValidation {
         )
         Write-Host "Coverage: $($validationResults.Coverage.CoveragePercentage)%" -ForegroundColor White
         Write-Host "Issues Found: $($validationResults.Issues.Count)" -ForegroundColor White
-        
+
         if ($validationResults.Issues.Count -gt 0) {
             Write-Host "`nTop Issues:" -ForegroundColor Yellow
             $validationResults.Issues | Select-Object -First 5 | ForEach-Object {
                 Write-Host "  - $($_.Description)" -ForegroundColor Yellow
             }
         }
-        
+
         Write-DocLog "Documentation quality validation completed" -Data $validationResults
-        
+
         return $validationResults.Passed
-        
+
     } catch {
         Write-DocLog "Documentation quality validation failed: $_" -Level Error
         return $false
@@ -596,22 +597,22 @@ try {
         Watch = $Watch.IsPresent
         Quality = $Quality.IsPresent
     }
-    
+
     # Initialize documentation system
     Initialize-Documentation
-    
+
     # Execute based on mode
     $success = switch ($Mode) {
         'Full' { Invoke-FullDocumentationGeneration }
         'Incremental' { Invoke-IncrementalDocumentationGeneration }
         'Reactive' { Invoke-ReactiveDocumentationMode }
     }
-    
+
     if (-not $success) {
         Write-DocLog "Documentation generation failed" -Level Error
         exit 1
     }
-    
+
     # Run quality validation if requested
     if ($Quality) {
         $qualityPassed = Invoke-DocumentationQualityValidation
@@ -619,28 +620,28 @@ try {
             Write-DocLog "Documentation quality validation failed" -Level Warning
         }
     }
-    
+
     # Final summary
     $duration = (Get-Date) - $script:StartTime
     Write-Host "`n✅ Documentation generation completed successfully!" -ForegroundColor Green
     Write-Host "📁 Output: $script:OutputPath" -ForegroundColor White
     Write-Host "⏱️  Duration: $($duration.TotalSeconds.ToString('F2')) seconds" -ForegroundColor White
     Write-Host "📊 Mode: $Mode | Format: $Format" -ForegroundColor White
-    
+
     Write-DocLog "Automated documentation generation completed successfully" -Data @{
         Duration = $duration.TotalSeconds
         OutputPath = $script:OutputPath
         Success = $true
     }
-    
+
     exit 0
-    
+
 } catch {
     Write-DocLog "Automated documentation generation failed: $_" -Level Error
     Write-DocLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
-    
+
     Write-Host "`n❌ Documentation generation failed!" -ForegroundColor Red
     Write-Host "Error: $_" -ForegroundColor Red
-    
+
     exit 1
 }
