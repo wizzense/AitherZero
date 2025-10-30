@@ -1117,7 +1117,7 @@ Run './az 0402' to execute the full test suite.
 function Get-CodeCoverageDetails {
     <#
     .SYNOPSIS
-        Get detailed code coverage information
+        Get detailed code coverage information from JaCoCo or Cobertura format
     #>
     param(
         [string]$ProjectPath
@@ -1130,24 +1130,121 @@ function Get-CodeCoverageDetails {
             Percentage = 0
             CoveredLines = 0
             TotalLines = 0
+            MissedLines = 0
         }
         ByFile = @()
         ByDomain = @{}
+        Format = "Unknown"
     }
     
-    # Look for latest coverage XML
-    $coverageFiles = Get-ChildItem -Path (Join-Path $ProjectPath "tests/results") -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
-                     Where-Object { $_.Length -gt 100 } |  # Skip empty files
-                     Sort-Object LastWriteTime -Descending |
-                     Select-Object -First 1
+    # Look for latest coverage XML - check both tests/results and tests/coverage
+    $searchPaths = @(
+        (Join-Path $ProjectPath "tests/results"),
+        (Join-Path $ProjectPath "tests/coverage")
+    )
     
-    if ($coverageFiles) {
+    $coverageFiles = @()
+    foreach ($searchPath in $searchPaths) {
+        if (Test-Path $searchPath) {
+            $coverageFiles += Get-ChildItem -Path $searchPath -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
+                             Where-Object { $_.Length -gt 100 }  # Skip empty files
+        }
+    }
+    
+    $latestCoverage = $coverageFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    
+    if ($latestCoverage) {
         try {
-            [xml]$coverageXml = Get-Content $coverageFiles.FullName
+            [xml]$coverageXml = Get-Content $latestCoverage.FullName
             
-            # Parse JaCoCo or Cobertura format
-            if ($coverageXml.coverage) {
-                # Cobertura format
+            # Check for JaCoCo format (used by Pester)
+            if ($coverageXml.report) {
+                Write-ScriptLog -Message "Parsing JaCoCo coverage format"
+                $coverage.Format = "JaCoCo"
+                
+                # Get counters from report root - handle both single and multiple counters
+                $counters = @($coverageXml.report.counter)
+                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                
+                if ($lineCounter) {
+                    $missedLines = [int]$lineCounter.missed
+                    $coveredLines = [int]$lineCounter.covered
+                    $totalLines = $missedLines + $coveredLines
+                    
+                    if ($totalLines -gt 0) {
+                        $coverage.Overall.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                        $coverage.Overall.CoveredLines = $coveredLines
+                        $coverage.Overall.TotalLines = $totalLines
+                        $coverage.Overall.MissedLines = $missedLines
+                        
+                        Write-ScriptLog -Message "Coverage: $($coverage.Overall.Percentage)% ($coveredLines/$totalLines lines)"
+                    }
+                }
+                
+                # Extract file-level coverage from classes
+                $packages = $coverageXml.SelectNodes("//package")
+                foreach ($package in $packages) {
+                    $classes = $package.SelectNodes(".//class")
+                    foreach ($class in $classes) {
+                        $filename = $class.sourcefilename
+                        if (-not $filename) { continue }
+                        
+                        # Get line counter for this class
+                        $classLineCounter = $class.counter | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                        if ($classLineCounter) {
+                            $classMissed = [int]$classLineCounter.missed
+                            $classCovered = [int]$classLineCounter.covered
+                            $classTotal = $classMissed + $classCovered
+                            
+                            $fileCoverage = if ($classTotal -gt 0) { 
+                                [math]::Round(($classCovered / $classTotal) * 100, 1)
+                            } else { 0 }
+                            
+                            $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
+                                     elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
+                                     else { 'other' }
+                            
+                            $coverage.ByFile += @{
+                                File = $filename
+                                Coverage = $fileCoverage
+                                Domain = $domain
+                                CoveredLines = $classCovered
+                                TotalLines = $classTotal
+                            }
+                            
+                            # Track by domain
+                            if (-not $coverage.ByDomain.ContainsKey($domain)) {
+                                $coverage.ByDomain[$domain] = @{ 
+                                    Files = 0
+                                    TotalCoverage = 0
+                                    AverageCoverage = 0
+                                    CoveredLines = 0
+                                    TotalLines = 0
+                                }
+                            }
+                            $coverage.ByDomain[$domain].Files++
+                            $coverage.ByDomain[$domain].TotalCoverage += $fileCoverage
+                            $coverage.ByDomain[$domain].CoveredLines += $classCovered
+                            $coverage.ByDomain[$domain].TotalLines += $classTotal
+                        }
+                    }
+                }
+                
+                # Calculate domain averages
+                foreach ($domain in $coverage.ByDomain.Keys) {
+                    if ($coverage.ByDomain[$domain].Files -gt 0) {
+                        $coverage.ByDomain[$domain].AverageCoverage = [math]::Round(
+                            $coverage.ByDomain[$domain].TotalCoverage / $coverage.ByDomain[$domain].Files,
+                            1
+                        )
+                    }
+                }
+            }
+            # Check for Cobertura format
+            elseif ($coverageXml.coverage) {
+                Write-ScriptLog -Message "Parsing Cobertura coverage format"
+                $coverage.Format = "Cobertura"
+                
                 $coverage.Overall.Percentage = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
                 
                 # Extract file-level coverage
@@ -1191,9 +1288,14 @@ function Get-CodeCoverageDetails {
                     }
                 }
             }
+            else {
+                Write-ScriptLog -Level Warning -Message "Unrecognized coverage file format"
+            }
         } catch {
             Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
+    } else {
+        Write-ScriptLog -Level Warning -Message "No coverage files found in tests/results or tests/coverage"
     }
     
     return $coverage
