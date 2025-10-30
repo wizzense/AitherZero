@@ -45,7 +45,11 @@ reports/*.json
 tests/reports/*.json
 
 # IDE files
-.vscode/settings.json
+# Allow workspace VS Code settings for Copilot integration
+# .vscode/settings.json - Now tracked for team collaboration
+# Exclude user-specific VS Code files
+.vscode/*.code-workspace
+.vscode/launch.local.json
 .idea/
 
 # OS files
