@@ -281,9 +281,9 @@ jobs:
               comment += `**Relevance Score:** ${agent.Score}\n\n`;
               comment += `**To engage this agent:**\n`;
               comment += `\`\`\`\n`;
-              comment += `@${agent.Id.toLowerCase()}, please review this PR\n`;
+              comment += `@${agent.id.toLowerCase()}, please review this PR\n`;
               comment += `\`\`\`\n`;
-              comment += `or use the command: \`/${agent.Id.toLowerCase()}\`\n\n`;
+              comment += `or use the command: \`/${agent.id.toLowerCase()}\`\n\n`;
             }
 
             // Add analysis breakdown
