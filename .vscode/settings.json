@@ -1,0 +1,107 @@
+{
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/*.log": true,
+    "**/logs": true,
+    "**/testResults.xml": true
+  },
+
+  // PowerShell settings
+  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+  "powershell.integratedConsole.showOnStartup": false,
+  "powershell.codeFormatting.preset": "OTBS",
+  "powershell.scriptAnalysis.enable": true,
+  "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
+
+  // Language-specific settings
+  "[powershell]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-vscode.powershell"
+  },
+  "[yaml]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.autoIndent": "advanced"
+  },
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
+
+  // GitHub Copilot settings
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": false,
+    "markdown": true,
+    "powershell": true
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+
+  // Terminal settings
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.defaultProfile.linux": "pwsh",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "AitherZero": {
+      "path": "pwsh.exe",
+      "args": [
+        "-NoExit",
+        "-NoLogo",
+        "-Command",
+        "if (Test-Path ./.azprofile.ps1) { . ./.azprofile.ps1 }"
+      ],
+      "icon": "terminal-powershell"
+    }
+  },
+  "terminal.integrated.profiles.linux": {
+    "pwsh": {
+      "path": "pwsh",
+      "icon": "terminal-powershell"
+    },
+    "AitherZero": {
+      "path": "pwsh",
+      "args": [
+        "-NoExit",
+        "-NoLogo",
+        "-Command",
+        "if (Test-Path ./.azprofile.ps1) { . ./.azprofile.ps1 }"
+      ],
+      "icon": "terminal-powershell"
+    }
+  },
+
+  // Git settings
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+
+  // Search settings
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/logs": true,
+    "**/*.log": true,
+    "**/testResults.xml": true,
+    "**/reports": true
+  }
+}

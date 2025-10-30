@@ -229,7 +229,47 @@ AitherZero maintains high code quality standards through automated validation:
 
 ## Configuration
 
-Configuration files are stored in the `configs/` directory.
+The main configuration file is `config.psd1` in the project root.
+
+## 🤖 AI-Assisted Development
+
+AitherZero includes comprehensive GitHub Copilot integration to enhance developer productivity:
+
+### Features
+- **Custom Instructions**: Project-specific guidance for AI coding assistants
+- **Agent Routing**: 8 specialized expert agents for different domains
+- **MCP Servers**: Model Context Protocol integration for enhanced context
+- **Dev Containers**: Pre-configured development environment
+- **VS Code Integration**: Optimized settings, tasks, and debugging
+
+### Quick Setup
+1. **Install GitHub Copilot** extensions in VS Code
+2. **Open in Dev Container** (recommended) or install recommended extensions
+3. **Set GitHub Token** for MCP servers: `export GITHUB_TOKEN="your_token"`
+4. **Start coding** with AI assistance!
+
+### Using Copilot Effectively
+```
+# Leverage specialized agents
+/infrastructure Design a VM network topology
+@sarah Review certificate security
+@jessica Create Pester tests
+
+# Use context from MCP servers
+@workspace Show recent commits to testing domain
+@workspace Create issue for feature request
+
+# Follow architecture patterns
+@workspace Create a new utility function following AitherZero patterns
+```
+
+### Documentation
+- [Development Environment Setup](docs/COPILOT-DEV-ENVIRONMENT.md) - Complete guide
+- [MCP Server Configuration](docs/COPILOT-MCP-SETUP.md) - Enhanced context setup
+- [Custom Instructions](.github/copilot-instructions.md) - AI coding guidance
+- [Agent Routing](.github/copilot.yaml) - Specialized experts
+
+**Learn more**: See [docs/COPILOT-DEV-ENVIRONMENT.md](docs/COPILOT-DEV-ENVIRONMENT.md) for the complete setup guide.
 
 ## Uninstallation
 

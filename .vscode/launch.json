@@ -1,0 +1,53 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PowerShell: Launch Current File",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${file}",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "PowerShell: Launch Start-AitherZero",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${workspaceFolder}/Start-AitherZero.ps1",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "PowerShell: Debug Unit Tests",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${workspaceFolder}/automation-scripts/0402_Run-UnitTests.ps1",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "PowerShell: Debug Current Test File",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "Invoke-Pester",
+      "args": [
+        "-Path",
+        "${file}",
+        "-Output",
+        "Detailed"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "PowerShell: Interactive Debugging",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "",
+      "cwd": "${workspaceFolder}",
+      "createTemporaryIntegratedConsole": true
+    },
+    {
+      "name": "PowerShell: Attach to PowerShell Host Process",
+      "type": "PowerShell",
+      "request": "attach",
+      "runspaceId": 1
+    }
+  ]
+}
