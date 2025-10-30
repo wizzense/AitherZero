@@ -334,24 +334,40 @@ try {
     # Apply filter settings from config or use defaults for unit tests
     # Ensure pesterConfig is properly initialized
     if ($pesterConfig -and ($pesterConfig.PSObject.Properties['Filter'] -ne $null)) {
-        if ($pesterSettings -and $pesterSettings.PSObject.Properties['Filter'] -ne $null -and $pesterSettings.Filter) {
-            # Use config tags if specified, otherwise default to Unit
-            if ($pesterSettings.Filter.PSObject.Properties['Tag'] -ne $null -and $pesterSettings.Filter.Tag -and $pesterSettings.Filter.Tag.Count -gt 0) {
+        if ($pesterSettings -and $pesterSettings.ContainsKey('Filter') -and $pesterSettings.Filter) {
+            # Use config tags if specified (including empty array to run all tests)
+            # Check if Tag property exists in config - if it does, use it even if empty
+            if ($pesterSettings.Filter.ContainsKey('Tag')) {
                 $pesterConfig.Filter.Tag = $pesterSettings.Filter.Tag
+                if ($pesterSettings.Filter.Tag.Count -eq 0) {
+                    Write-ScriptLog -Message "Running all tests - no tag filter applied (Tag array is empty)"
+                } else {
+                    Write-ScriptLog -Message "Running tests with tags: $($pesterSettings.Filter.Tag -join ', ')"
+                }
             } else {
+                # Tag property not defined in config, use default
                 $pesterConfig.Filter.Tag = @('Unit')
+                Write-ScriptLog -Message "Running tests with default Unit tag filter"
             }
 
-            # Use config exclude tags if specified, otherwise default exclusions
-            if ($pesterSettings.Filter.PSObject.Properties['ExcludeTag'] -ne $null -and $pesterSettings.Filter.ExcludeTag -and $pesterSettings.Filter.ExcludeTag.Count -gt 0) {
+            # Use config exclude tags if specified
+            if ($pesterSettings.Filter.ContainsKey('ExcludeTag')) {
                 $pesterConfig.Filter.ExcludeTag = $pesterSettings.Filter.ExcludeTag
+                if ($pesterSettings.Filter.ExcludeTag.Count -gt 0) {
+                    Write-ScriptLog -Message "Excluding tests with tags: $($pesterSettings.Filter.ExcludeTag -join ', ')"
+                } else {
+                    Write-ScriptLog -Message "No exclusion tags specified"
+                }
             } else {
+                # ExcludeTag not defined, use default exclusions
                 $pesterConfig.Filter.ExcludeTag = @('Integration', 'E2E', 'Performance')
+                Write-ScriptLog -Message "Excluding tests with default tags: Integration, E2E, Performance"
             }
         } else {
-            # Default filters for unit tests
+            # Default filters for unit tests when no Filter config exists
             $pesterConfig.Filter.Tag = @('Unit')
             $pesterConfig.Filter.ExcludeTag = @('Integration', 'E2E', 'Performance')
+            Write-ScriptLog -Message "Using default unit test filters: Tag=Unit, ExcludeTag=Integration,E2E,Performance"
         }
     } else {
         Write-ScriptLog -Level Warning -Message "Pester configuration Filter property not available, skipping tag filtering"
