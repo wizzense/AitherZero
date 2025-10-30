@@ -61,6 +61,10 @@ jobs:
           Write-Host "🔍 Analyzing PR changes..." -ForegroundColor Cyan
 
           $prNumber = "${{ github.event.pull_request.number || github.event.issue.number }}"
+          if ($prNumber -notmatch '^\d+$') {
+            Write-Host "❌ Invalid PR number: $prNumber" -ForegroundColor Red
+            exit 1
+          }
           $apiUrl = "https://api.github.com/repos/${{ github.repository }}/pulls/$prNumber"
 
           try {
