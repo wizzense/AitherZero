@@ -263,11 +263,12 @@ function Test-LoggingImplementation {
     }
     
     # Check for logging at different levels
-    $infoLevelPattern = 'Write-.*(Log|Verbose|Information).*-Level.*[''"]Information[''"]'
+    # Updated patterns to match both quoted and unquoted level values
+    $infoLevelPattern = 'Write-.*(Log|Verbose|Information).*-Level\s+[''"]?Information[''"]?'
     $infoFunctionPattern = 'Write-(Verbose|Information)'
-    $warningLevelPattern = 'Write-.*(Log|Warning).*-Level.*[''"]Warning[''"]'
+    $warningLevelPattern = 'Write-.*(Log|Warning).*-Level\s+[''"]?Warning[''"]?'
     $warningFunctionPattern = 'Write-Warning'
-    $errorLevelPattern = 'Write-.*(Log|Error).*-Level.*[''"]Error[''"]'
+    $errorLevelPattern = 'Write-.*(Log|Error).*-Level\s+[''"]?Error[''"]?'
     $errorFunctionPattern = 'Write-Error'
 
     $hasInfo = $content -match $infoLevelPattern -or 
@@ -684,9 +685,24 @@ function Test-PSScriptAnalyzerCompliance {
     
     try {
         Import-Module PSScriptAnalyzer -ErrorAction Stop
-        
+
+        # Check for project PSScriptAnalyzer settings file
+        $settingsFile = Join-Path $script:ProjectRoot "PSScriptAnalyzerSettings.psd1"
+        $analyzerParams = @{
+            Path = $Path
+            Severity = 'Error', 'Warning'
+            ErrorAction = 'SilentlyContinue'
+        }
+
+        if (Test-Path $settingsFile) {
+            Write-QualityLog -Message "Using PSScriptAnalyzer settings from: $settingsFile" -Level Debug
+            $analyzerParams.Settings = $settingsFile
+        } else {
+            Write-QualityLog -Message "No PSScriptAnalyzer settings file found, using defaults" -Level Debug
+        }
+
         # Run analysis
-        $analysisResults = Invoke-ScriptAnalyzer -Path $Path -Severity Error, Warning -ErrorAction SilentlyContinue
+        $analysisResults = Invoke-ScriptAnalyzer @analyzerParams
         
         $result.Details.TotalIssues = if ($analysisResults) { $analysisResults.Count } else { 0 }
         
