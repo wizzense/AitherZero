@@ -94,13 +94,45 @@
 
     .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook tech-debt-analysis -PlaybookProfile quick
 
+
+
+.EXAMPLE
+
+    # Show what AitherZero can do
+
+    .\Start-AitherZero.ps1 -Mode Capabilities
+
+
+
+.EXAMPLE
+
+    # Find capabilities for a specific task
+
+    .\Start-AitherZero.ps1 -Mode Capabilities -Query "set up development"
+
+
+
+.EXAMPLE
+
+    # Show quick start guide
+
+    .\Start-AitherZero.ps1 -Mode QuickStart
+
+
+
+.EXAMPLE
+
+    # Show "How do I..." assistant
+
+    .\Start-AitherZero.ps1 -Mode HowDoI
+
 #>
 
 [CmdletBinding()]
 
 param(
 
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
+    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run', 'Capabilities', 'QuickStart', 'HowDoI')]
 
     [string]$Mode = 'Interactive',
 
@@ -3554,6 +3586,30 @@ try {
 
             Invoke-ModernRunAction -RunTarget $Target -ScriptNum $ScriptNumber -PlaybookName $Playbook -SequenceRange $Sequence
 
+        }
+
+        'Capabilities' {
+            # Show capabilities discovery
+            if ($Query) {
+                # If query provided, search for capabilities
+                Find-AitherCapability -Task $Query
+            } elseif ($Target) {
+                # If target provided, show specific category
+                Show-AitherCapabilities -Category $Target
+            } else {
+                # Show all capabilities
+                Show-AitherCapabilities
+            }
+        }
+
+        'QuickStart' {
+            # Show quick start guide
+            Get-AitherQuickStart
+        }
+
+        'HowDoI' {
+            # Show "How do I..." assistant
+            Show-AitherHowDoI
         }
 
     }

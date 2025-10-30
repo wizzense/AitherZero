@@ -53,6 +53,7 @@ $modulesToLoad = @(
     # User interface (BetterMenu first, then UserInterface)
     './domains/experience/BetterMenu.psm1',
     './domains/experience/UserInterface.psm1',
+    './domains/experience/CapabilitiesDiscovery.psm1',
 
     # Development tools
     './domains/development/GitAutomation.psm1',
