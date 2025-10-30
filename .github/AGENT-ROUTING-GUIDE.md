@@ -129,7 +129,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ---
 
 ### 👩‍💻 Olivia - Documentation & Technical Writing
-**File:** [`.github/agents/olivia-documentation.md`](.github/agents/olivia-documentation.md)
+**File:** [`./agents/olivia-documentation.md`](./agents/olivia-documentation.md)
 
 **Best for:**
 - Technical documentation
