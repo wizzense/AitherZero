@@ -2,6 +2,15 @@
 
 Welcome to the AitherZero AI workforce! This directory contains custom GitHub Copilot agents with diverse personas designed to support various aspects of the AitherZero infrastructure automation platform.
 
+## 🚀 Quick Start: Using Agent Routing
+
+The repository includes an **automatic agent routing system** that suggests the best agents for your PR based on the files you change and keywords in your description. 
+
+**To use it:**
+1. Open a PR - agents are automatically suggested in a comment
+2. Request specific agents: `@maya, please review` or `/infrastructure`
+3. See [Agent Routing Guide](../AGENT-ROUTING-GUIDE.md) for detailed instructions
+
 ## Team Overview
 
 Our AI workforce consists of 8 specialized agents each bringing unique expertise and perspectives to the project.
@@ -272,6 +281,23 @@ These agents are designed to support the AitherZero number-based orchestration s
 - **0500-0599** (Reporting): Olivia, David
 - **0700-0799** (Git & AI): Rachel, David
 - **9000-9999** (Maintenance): Maya, Rachel
+
+## Automatic Agent Routing
+
+The [`.github/copilot.yaml`](../copilot.yaml) configuration file enables automatic routing:
+
+- **File Pattern Matching**: Agents are suggested based on which files you modify
+- **Keyword Detection**: PR titles/descriptions trigger relevant agent suggestions
+- **Label-Based Routing**: GitHub labels map to agent expertise areas
+- **Manual Invocation**: Use `@agent-name` or `/command` in comments
+- **Collaboration Patterns**: Pre-configured multi-agent workflows
+
+**Workflow Integration:**
+- [`.github/workflows/copilot-agent-router.yml`](../workflows/copilot-agent-router.yml) - Automation workflow
+- Automatically posts agent suggestions on PR open/update
+- Handles agent command parsing and acknowledgment
+
+For complete details, see the [Agent Routing Guide](../AGENT-ROUTING-GUIDE.md).
 
 ## License
 

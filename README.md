@@ -204,6 +204,29 @@ AitherZero maintains high code quality standards through automated validation:
 - **Infrastructure Deployment**: Plan, apply, and destroy infrastructure using OpenTofu/Terraform
 - **Lab VM Management**: Create and manage virtual machines
 - **Configuration**: Simple configuration management
+- **🤖 AI-Powered PR Reviews**: Automatic GitHub Copilot agent routing for specialized code reviews
+
+### 🤖 GitHub Copilot Agent Routing
+
+AitherZero includes an **automatic agent routing system** with 8 specialized AI agents that provide expert reviews on pull requests:
+
+**Available Agents:**
+- 🏗️ **Maya** - Infrastructure & DevOps (Hyper-V, Terraform, networking)
+- 🔒 **Sarah** - Security & Compliance (certificates, credentials, vulnerabilities)
+- 🧪 **Jessica** - Testing & QA (Pester tests, coverage, quality)
+- 🎨 **Emma** - Frontend & UX (console UI, menus, accessibility)
+- ⚙️ **Marcus** - Backend & API (PowerShell modules, performance)
+- 📚 **Olivia** - Documentation (guides, README, technical writing)
+- ⚡ **Rachel** - PowerShell & Automation (advanced scripting, orchestration)
+- 📋 **David** - Project Management (coordination, planning, releases)
+
+**How it works:**
+1. Open a PR → System analyzes files and suggests relevant agents
+2. Use `@agent-name` or `/command` in comments to engage specific agents
+3. Agents provide specialized expertise for their domain
+4. Multiple agents can collaborate on complex tasks
+
+**Learn more:** [.github/AGENT-ROUTING-GUIDE.md](.github/AGENT-ROUTING-GUIDE.md)
 
 ## Core Modules
 
@@ -230,6 +253,35 @@ AitherZero maintains high code quality standards through automated validation:
 ## Configuration
 
 Configuration files are stored in the `configs/` directory.
+
+## 📚 Documentation
+
+### Getting Started
+- **[Quick Install](#quick-install)** - Get up and running in minutes
+- **[Docker Guide](DOCKER.md)** - Containerized deployment
+- **[Cross-Platform Validation](CROSS-PLATFORM-VALIDATION.md)** - Multi-OS testing
+
+### Core Documentation
+- **[Functionality Index](FUNCTIONALITY-INDEX.md)** - Complete feature catalog
+- **[Implementation Summary](IMPLEMENTATION-SUMMARY.md)** - Architecture overview
+- **[Build & Release](BUILD-AND-RELEASE-SUMMARY.md)** - Release process
+
+### GitHub Integration
+- **[Agent Routing Guide](.github/AGENT-ROUTING-GUIDE.md)** - AI-powered PR reviews
+- **[Agent Quick Start](.github/AGENT-QUICK-START.md)** - Fast reference
+- **[Agent Examples](.github/AGENT-EXAMPLES.md)** - Real-world scenarios
+- **[.github/README.md](.github/README.md)** - GitHub configuration hub
+
+### Development
+- **[Copilot Instructions](.github/copilot-instructions.md)** - AI agent guidelines
+- **[Workflow Coordination](.github/WORKFLOW-COORDINATION.md)** - CI/CD pipelines
+- **[Troubleshooting](TROUBLESHOOTING-WORKFLOW-FAILURES.md)** - Common issues
+
+### Contributing
+Want to contribute? Check out:
+- **[Agent Profiles](.github/agents/)** - Meet the AI team
+- **[Pull Request Template](.github/pull_request_template.md)** - PR guidelines
+- Project follows semantic versioning and conventional commits
 
 ## Uninstallation
 
