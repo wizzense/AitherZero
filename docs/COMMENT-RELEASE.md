@@ -22,6 +22,23 @@ That's it! The system will automatically:
 
 ## Commands
 
+### Version Increment Commands (Recommended)
+
+Instead of specifying the exact version, you can use increment commands:
+
+```
+/release major      # 1.0.0.0 → 2.0.0.0
+/release minor      # 1.0.0.0 → 1.1.0.0
+/release patch      # 1.0.0.0 → 1.0.1.0
+/release hotfix     # 1.0.0.0 → 1.0.0.1
+```
+
+The system automatically reads the current version from `VERSION` file and increments accordingly.
+
+### Explicit Version Commands
+
+You can also specify the exact version:
+
 ### Stable Release
 ```
 /release v1.2.3
@@ -42,9 +59,27 @@ or
 
 ### Version Formats
 All of these work:
-- `/release v1.2.3` (recommended)
-- `/release 1.2.3` (without 'v' prefix)
-- `/release v1.2.3-beta.1` (with pre-release suffix)
+- `/release major` - Increment major version (recommended)
+- `/release minor` - Increment minor version (recommended)
+- `/release patch` - Increment patch version (recommended)
+- `/release hotfix` - Increment hotfix version (recommended)
+- `/release v1.2.3` - Explicit version (advanced)
+- `/release 1.2.3` - Without 'v' prefix (advanced)
+- `/release v1.2.3-beta.1` - With pre-release suffix (advanced)
+
+### Check Current Version
+
+To see the current version and available releases:
+
+```
+/release info
+```
+
+This will post a comment showing:
+- Current version in VERSION file
+- Latest release on GitHub
+- Recent releases
+- Recommended next version for each increment type
 
 ## What Happens
 
@@ -79,13 +114,56 @@ You'll receive a comment with:
 
 ## Examples
 
-### Example 1: Standard Release
+### Example 1: Increment Minor Version (Recommended)
+```
+/release minor
+```
+
+**Result:**
+- Reads current version: `1.0.0.0`
+- Calculates new version: `1.1.0.0`
+- Updates VERSION file
+- Creates tag `v1.1.0.0`
+- Triggers release workflows
+
+### Example 2: Increment Patch Version
+```
+/release patch
+```
+
+**Result:**
+- Current: `1.0.0.0` → New: `1.0.1.0`
+
+### Example 3: Check Version Info
+```
+/release info
+```
+
+**Result:** Comment with:
+```
+📋 Current Version Information
+
+Version File: 1.0.0.0
+Latest Release: v1.0.0.0
+
+Recent Releases:
+- v1.0.0.0 (2025-10-29)
+- v0.8.0 (2025-08-15)
+
+Next Versions:
+- major: 2.0.0.0
+- minor: 1.1.0.0
+- patch: 1.0.1.0
+- hotfix: 1.0.0.1
+```
+
+### Example 4: Standard Release (Explicit Version)
 ```
 /release v1.3.0
 ```
 
 **Result:**
-- VERSION updated to `1.3.0`
+- VERSION updated to explicit version `1.3.0`
 - Tag `v1.3.0` created
 - GitHub Release created
 - Docker images: `ghcr.io/wizzense/aitherzero:v1.3.0`, `:1.3`, `:1`, `:latest`
@@ -96,7 +174,7 @@ You'll receive a comment with:
 ```
 
 **Result:**
-- VERSION updated to `1.4.0-beta.1`
+- VERSION updated to explicit version `1.4.0-beta.1`
 - Tag `v1.4.0-beta.1` created
 - GitHub Release marked as pre-release
 - Docker images: `ghcr.io/wizzense/aitherzero:v1.4.0-beta.1`
