@@ -6,11 +6,11 @@
 - [📝 Markdown Dashboard](dashboard.md) - Text-based dashboard
 - [📋 JSON Report](dashboard.json) - Machine-readable data
 
-## Generated: 2025-10-30 08:57:03
+## Generated: 2025-10-30 16:18:15
 
 ### Quick Stats
-- Files: 204
-- Lines of Code: 86,219
+- Files: 192
+- Lines of Code: 85,693
 - Tests: 281
 - Coverage: 0%
 - Status: Unknown
