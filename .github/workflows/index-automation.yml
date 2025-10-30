@@ -14,7 +14,7 @@ on:
       - '**/*.ps1'
       - '**/*.psm1'
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
     branches: [ main, develop ]
     paths:
       - 'domains/**'
@@ -39,8 +39,52 @@ on:
         - Verify
 
 jobs:
+  cleanup-legacy-branches:
+    name: 🧹 Cleanup Legacy Auto-Index Branches
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      
+    steps:
+    - name: 🔍 Find and Delete Legacy Auto-Index Branches
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const prNumber = context.issue.number;
+          const autoBranchName = `auto-index/${prNumber}`;
+          const repo = context.repo;
+          
+          core.info(`PR #${prNumber} was closed, checking for legacy auto-index branches...`);
+          
+          // Try to delete the auto-index branch if it exists
+          try {
+            await github.rest.git.getRef({
+              owner: repo.owner,
+              repo: repo.repo,
+              ref: `heads/${autoBranchName}`
+            });
+            
+            core.info(`Found legacy branch ${autoBranchName}, deleting it...`);
+            await github.rest.git.deleteRef({
+              owner: repo.owner,
+              repo: repo.repo,
+              ref: `heads/${autoBranchName}`
+            });
+            core.info(`✅ Deleted legacy branch ${autoBranchName}`);
+          } catch (error) {
+            if (error.status === 404) {
+              core.info(`No legacy branch ${autoBranchName} found (this is expected for new PRs)`);
+            } else {
+              core.warning(`Failed to delete branch ${autoBranchName}: ${error.message}`);
+            }
+          }
+
   generate-indexes:
     name: 🔄 Generate Project Indexes
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     
     permissions:
@@ -205,8 +249,25 @@ jobs:
           echo "has_changes=false" >> $env:GITHUB_OUTPUT
         }
         
+    - name: 🔍 Check if PR is from Fork
+      if: github.event_name == 'pull_request'
+      id: check-fork
+      shell: bash
+      env:
+        PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        BASE_REPO: ${{ github.repository }}
+      run: |
+        # Check if the PR is from a forked repository
+        if [ "$PR_HEAD_REPO" != "$BASE_REPO" ]; then
+          echo "is_fork=true" >> "$GITHUB_OUTPUT"
+          echo "⚠️ PR is from a forked repository"
+        else
+          echo "is_fork=false" >> "$GITHUB_OUTPUT"
+          echo "✅ PR is from the same repository"
+        fi
+        
     - name: 💾 Commit and Push Index Updates
-      if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true'
+      if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'false'
       shell: bash
       env:
         PR_BRANCH: ${{ github.event.pull_request.head.ref }}
@@ -221,8 +282,8 @@ jobs:
         echo "Committing index changes to branch: $PR_BRANCH"
         
         # Checkout the PR branch
-        git fetch origin "$PR_BRANCH"
-        git checkout "$PR_BRANCH"
+        git fetch origin "$PR_BRANCH" 2>&1 || { echo "Failed to fetch branch"; exit 1; }
+        git checkout "$PR_BRANCH" 2>&1 || { echo "Failed to checkout branch"; exit 1; }
         
         # Add and commit index changes (only index.md files, not cache/report)
         # Add all index.md files recursively in a portable way
@@ -239,12 +300,48 @@ jobs:
           -m "It updates index.md files to reflect changes in the project structure."
         
         # Push directly to the PR branch
-        git push origin "$PR_BRANCH"
+        git push origin "$PR_BRANCH" 2>&1 || { echo "Failed to push changes"; exit 1; }
         
         echo "✅ Committed and pushed index updates to $PR_BRANCH"
         
+    - name: 💬 Comment on PR (Fork - Manual Update Required)
+      if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const updatedCount = process.env.UPDATED_INDEXES || '0';
+          const mode = process.env.INDEX_MODE || 'Unknown';
+          
+          const comment = `## 🔄 Index Update Required (Fork PR)
+          
+          **Index files need to be updated, but this PR is from a forked repository.**
+          
+          ### Summary
+          - **Updated Indexes**: ${updatedCount} files
+          - **Generation Mode**: ${mode}
+          
+          ### Action Required
+          Since this PR is from a fork, the workflow cannot automatically commit the changes. Please run the following command locally and push the changes:
+          
+          \`\`\`bash
+          ./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Incremental
+          git add **/index.md
+          git commit -m "docs: update project indexes [auto-generated]"
+          git push
+          \`\`\`
+          
+          ---
+          *Generated by AitherZero Index Automation*`;
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+        
     - name: 💬 Comment on PR (Changes Committed)
-      if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true'
+      if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'false'
       uses: actions/github-script@v7
       with:
         script: |

@@ -10,7 +10,7 @@ on:
       - 'README.md'
       - 'docs/**'
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
     branches: [ main, develop ]
     paths:
       - 'domains/**/*.psm1'
@@ -39,8 +39,52 @@ on:
         - Both
 
 jobs:
+  cleanup-legacy-branches:
+    name: 🧹 Cleanup Legacy Auto-Docs Branches
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      
+    steps:
+    - name: 🔍 Find and Delete Legacy Auto-Docs Branches
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const prNumber = context.issue.number;
+          const autoBranchName = `auto-docs/${prNumber}`;
+          const repo = context.repo;
+          
+          core.info(`PR #${prNumber} was closed, checking for legacy auto-docs branches...`);
+          
+          // Try to delete the auto-docs branch if it exists
+          try {
+            await github.rest.git.getRef({
+              owner: repo.owner,
+              repo: repo.repo,
+              ref: `heads/${autoBranchName}`
+            });
+            
+            core.info(`Found legacy branch ${autoBranchName}, deleting it...`);
+            await github.rest.git.deleteRef({
+              owner: repo.owner,
+              repo: repo.repo,
+              ref: `heads/${autoBranchName}`
+            });
+            core.info(`✅ Deleted legacy branch ${autoBranchName}`);
+          } catch (error) {
+            if (error.status === 404) {
+              core.info(`No legacy branch ${autoBranchName} found (this is expected for new PRs)`);
+            } else {
+              core.warning(`Failed to delete branch ${autoBranchName}: ${error.message}`);
+            }
+          }
+
   generate-documentation:
     name: 🔄 Generate Documentation
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     
     permissions:
@@ -181,8 +225,25 @@ jobs:
           echo "has_changes=false" >> $env:GITHUB_OUTPUT
         }
         
+    - name: 🔍 Check if PR is from Fork
+      if: github.event_name == 'pull_request'
+      id: check-fork
+      shell: bash
+      env:
+        PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        BASE_REPO: ${{ github.repository }}
+      run: |
+        # Check if the PR is from a forked repository
+        if [ "$PR_HEAD_REPO" != "$BASE_REPO" ]; then
+          echo "is_fork=true" >> "$GITHUB_OUTPUT"
+          echo "⚠️ PR is from a forked repository"
+        else
+          echo "is_fork=false" >> "$GITHUB_OUTPUT"
+          echo "✅ PR is from the same repository"
+        fi
+        
     - name: 💾 Commit and Push Documentation Updates
-      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
+      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'false'
       shell: bash
       env:
         PR_BRANCH: ${{ github.event.pull_request.head.ref }}
@@ -197,8 +258,8 @@ jobs:
         echo "Committing documentation changes to branch: $PR_BRANCH"
         
         # Checkout the PR branch
-        git fetch origin "$PR_BRANCH"
-        git checkout "$PR_BRANCH"
+        git fetch origin "$PR_BRANCH" 2>&1 || { echo "Failed to fetch branch"; exit 1; }
+        git checkout "$PR_BRANCH" 2>&1 || { echo "Failed to checkout branch"; exit 1; }
         
         # Add and commit documentation changes
         git add docs/generated/
@@ -213,12 +274,48 @@ jobs:
           -m "It updates documentation to reflect changes in the codebase."
         
         # Push directly to the PR branch
-        git push origin "$PR_BRANCH"
+        git push origin "$PR_BRANCH" 2>&1 || { echo "Failed to push changes"; exit 1; }
         
         echo "✅ Committed and pushed documentation updates to $PR_BRANCH"
         
+    - name: 💬 Comment on PR (Fork - Manual Update Required)
+      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const markdownCount = process.env.MARKDOWN_FILES || '0';
+          const htmlCount = process.env.HTML_FILES || '0';
+          
+          const comment = `## 📚 Documentation Update Required (Fork PR)
+          
+          **Documentation files need to be updated, but this PR is from a forked repository.**
+          
+          ### Generated Files
+          - 📄 Markdown files: ${markdownCount}
+          - 🌐 HTML files: ${htmlCount}
+          
+          ### Action Required
+          Since this PR is from a fork, the workflow cannot automatically commit the changes. Please run the following commands locally and push the changes:
+          
+          \`\`\`bash
+          ./automation-scripts/0744_Generate-AutoDocumentation.ps1 -Mode Incremental -Format Both
+          git add docs/generated/
+          git commit -m "docs: update auto-generated documentation [auto-generated]"
+          git push
+          \`\`\`
+          
+          ---
+          *Generated by AitherZero Documentation Automation*`;
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+        
     - name: 💬 Comment on PR (Changes Committed)
-      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
+      if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true' && steps.check-fork.outputs.is_fork == 'false'
       uses: actions/github-script@v7
       with:
         script: |
