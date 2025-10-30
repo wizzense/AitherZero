@@ -1001,6 +1001,13 @@
                 TestExtension = '.Tests.ps1'  # Test file extension
             }
             
+            # Filter settings - control which tests to run
+            # NOTE: To run ALL tests, leave Tag empty or set to @()
+            Filter = @{
+                Tag = @()  # Empty array = run all tests regardless of tags
+                ExcludeTag = @('Skip', 'Disabled')  # Only exclude explicitly disabled tests
+            }
+            
             # Should assertion settings
             Should = @{
                 ErrorAction = 'Stop'  # Stop, Continue, SilentlyContinue
