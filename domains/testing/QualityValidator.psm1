@@ -797,19 +797,44 @@ function Invoke-QualityValidation {
                 Summary = @{}
             }
             
+            # Detect file type - .psd1 files are data files and should skip certain checks
+            $fileExtension = [System.IO.Path]::GetExtension($filePath).ToLower()
+            $isDataFile = $fileExtension -eq '.psd1'
+            
+            if ($isDataFile) {
+                Write-QualityLog -Message "Detected PowerShell data file (.psd1), adjusting validation checks" -Level Debug
+            }
+            
             # Run all checks
             $checks = @(
-                @{ Name = 'ErrorHandling'; Function = 'Test-ErrorHandling' }
-                @{ Name = 'Logging'; Function = 'Test-LoggingImplementation' }
-                @{ Name = 'TestCoverage'; Function = 'Test-TestCoverage' }
-                @{ Name = 'UIIntegration'; Function = 'Test-UIIntegration' }
-                @{ Name = 'GitHubActions'; Function = 'Test-GitHubActionsIntegration' }
-                @{ Name = 'PSScriptAnalyzer'; Function = 'Test-PSScriptAnalyzerCompliance' }
+                @{ Name = 'ErrorHandling'; Function = 'Test-ErrorHandling'; SkipForDataFiles = $true }
+                @{ Name = 'Logging'; Function = 'Test-LoggingImplementation'; SkipForDataFiles = $true }
+                @{ Name = 'TestCoverage'; Function = 'Test-TestCoverage'; SkipForDataFiles = $true }
+                @{ Name = 'UIIntegration'; Function = 'Test-UIIntegration'; SkipForDataFiles = $true }
+                @{ Name = 'GitHubActions'; Function = 'Test-GitHubActionsIntegration'; SkipForDataFiles = $true }
+                @{ Name = 'PSScriptAnalyzer'; Function = 'Test-PSScriptAnalyzerCompliance'; SkipForDataFiles = $false }
             )
             
             foreach ($check in $checks) {
+                # Skip if explicitly in SkipChecks parameter
                 if ($check.Name -in $SkipChecks) {
                     Write-QualityLog -Message "Skipping check: $($check.Name)"
+                    continue
+                }
+                
+                # Skip checks that don't apply to data files
+                if ($isDataFile -and $check.SkipForDataFiles) {
+                    Write-QualityLog -Message "Skipping $($check.Name) for data file (.psd1)" -Level Debug
+                    
+                    # Add a skipped result for reporting
+                    $skippedResult = [PSCustomObject]@{
+                        CheckName = $check.Name
+                        Status = 'Skipped'
+                        Findings = @("Skipped for PowerShell data file (.psd1)")
+                        Score = 100
+                        Details = @{ Reason = 'Data files do not require this check' }
+                    }
+                    $report.Checks += $skippedResult
                     continue
                 }
                 
