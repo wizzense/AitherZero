@@ -37,7 +37,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ---
 
 ### 👩‍💻 Sarah - Security & Compliance Expert
-**File:** [`.github/agents/sarah-security.md`](.github/agents/sarah-security.md)
+**File:** [`./agents/sarah-security.md`](./agents/sarah-security.md)
 
 **Best for:**
 - Certificate and credential management
@@ -60,7 +60,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ---
 
 ### 👩‍💻 Jessica - Testing & QA Engineer
-**File:** [`.github/agents/jessica-testing.md`](.github/agents/jessica-testing.md)
+**File:** [`./agents/jessica-testing.md`](./agents/jessica-testing.md)
 
 **Best for:**
 - Pester test development
@@ -83,7 +83,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ---
 
 ### 👩‍💻 Emma - Frontend & UX Developer
-**File:** [`.github/agents/emma-frontend.md`](.github/agents/emma-frontend.md)
+**File:** [`./agents/emma-frontend.md`](./agents/emma-frontend.md)
 
 **Best for:**
 - Console UI/UX components
@@ -106,7 +106,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ---
 
 ### 👨‍💻 Marcus - Backend & API Developer
-**File:** [`.github/agents/marcus-backend.md`](.github/agents/marcus-backend.md)
+**File:** [`./agents/marcus-backend.md`](./agents/marcus-backend.md)
 
 **Best for:**
 - PowerShell module architecture

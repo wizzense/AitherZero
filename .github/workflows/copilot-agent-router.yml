@@ -285,9 +285,9 @@ jobs:
               comment += `**Relevance Score:** ${agent.Score}\n\n`;
               comment += `**To engage this agent:**\n`;
               comment += `\`\`\`\n`;
-              comment += `@${agent.id.toLowerCase()}, please review this PR\n`;
+              comment += `@${agent.Id.toLowerCase()}, please review this PR\n`;
               comment += `\`\`\`\n`;
-              comment += `or use the command: \`/${agent.id.toLowerCase()}\`\n\n`;
+              comment += `or use the command: \`/${agent.Id.toLowerCase()}\`\n\n`;
             }
 
             // Add analysis breakdown
@@ -404,7 +404,7 @@ jobs:
             The **${{ steps.parse.outputs.agent }}** agent has been notified and will be available for this PR.
 
             To work with this agent effectively:
-            1. Review their profile at `.github/agents/${{ steps.parse.outputs.agent }}-*.md`
+            1. Review their profile in `.github/agents/` directory
             2. Provide clear context and specific questions
             3. Tag them with `@${{ steps.parse.outputs.agent }}` in future comments
 
