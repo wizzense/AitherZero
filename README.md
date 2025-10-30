@@ -166,13 +166,13 @@ Import-Module ./AitherZero.psd1
 Get-Module AitherZero
 
 # Run syntax validation
-./az.ps1 0407
+az 0407
 
 # Run quality checks
-./aitherzero 0420 -Path ./domains/utilities/Logging.psm1
+aitherzero -Mode Run -Target 0420 -Path ./domains/utilities/Logging.psm1
 
 # Generate and view project report
-./az.ps1 0510 -ShowAll
+az 0510 -ShowAll
 ```
 
 ## 📊 Quality Standards
@@ -273,9 +273,9 @@ AitherZero uses a consolidated **domain-based module architecture** (v2.0):
 - **development/**: Git automation, dev tools integration
 - **documentation/**: Documentation generation and management
 
-All modules load through a single entry point (`AitherZero.psm1`) and are accessible after running:
+All modules load through a single entry point (`AitherZero.psm1`) and are accessible after importing the module:
 ```powershell
-./Initialize-AitherEnvironment.ps1
+Import-Module ./AitherZero.psd1
 ```
 
 ## Project Structure
@@ -349,10 +349,10 @@ Navigate through menus to:
 Run specific scripts by number:
 
 ```powershell
-# Using the az wrapper (recommended)
-./az.ps1 0402                   # Run unit tests
-./az.ps1 0404                   # Run PSScriptAnalyzer
-./az.ps1 0510 -ShowAll          # Generate project report
+# Using the az alias (recommended)
+az 0402                         # Run unit tests
+az 0404                         # Run PSScriptAnalyzer
+az 0510 -ShowAll                # Generate project report
 
 # Using the global command
 aitherzero -Mode Run -Target 0402
