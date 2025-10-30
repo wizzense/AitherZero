@@ -704,9 +704,12 @@ function Test-PSScriptAnalyzerCompliance {
         # Run analysis
         $analysisResults = Invoke-ScriptAnalyzer @analyzerParams
         
-        $result.Details.TotalIssues = if ($analysisResults) { $analysisResults.Count } else { 0 }
+        # Ensure results is always an array for consistent handling
+        $analysisResults = @($analysisResults)
         
-        if ($analysisResults) {
+        $result.Details.TotalIssues = $analysisResults.Count
+        
+        if ($analysisResults.Count -gt 0) {
             $errorCount = @($analysisResults | Where-Object { $_.Severity -eq 'Error' }).Count
             $warningCount = @($analysisResults | Where-Object { $_.Severity -eq 'Warning' }).Count
             
