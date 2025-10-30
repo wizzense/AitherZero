@@ -63,6 +63,7 @@ function Write-DocLog {
                 'Information' { 'White' }
                 'Warning' { 'Yellow' }
                 'Error' { 'Red' }
+                default { 'White' }
             }
         )
     }
