@@ -62,12 +62,14 @@ See [agents/README.md](agents/README.md) for detailed agent profiles.
 │       ├── quality-validation.yml     # Code quality checks
 │       ├── comment-release.yml        # Release via comment
 │       ├── release-automation.yml     # Release automation
-│       ├── documentation-automation.yml
+│       ├── documentation-automation.yml # Auto-generate documentation
+│       ├── index-automation.yml       # Auto-generate project indexes
 │       └── [other workflows...]
 │
 └── 📚 Documentation
     ├── copilot-instructions.md        # General Copilot instructions
     ├── WORKFLOW-COORDINATION.md       # Workflow coordination docs
+    ├── ../docs/AUTOMATED-DOC-INDEX-UPDATES.md  # Doc & Index automation guide
     └── [other docs...]
 ```
 
