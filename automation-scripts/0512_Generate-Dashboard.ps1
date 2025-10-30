@@ -200,7 +200,7 @@ function Get-ProjectMetrics {
                     $trimmed = $line.Trim()
                     if ($trimmed -eq '') {
                         $metrics.BlankLines++
-                    } elseif ($trimmed -match '^#' -or $trimmed -match '^\s*<#' -or $trimmed -match '^\s*\*') {
+                    } elseif ($trimmed -match '^#' -or $trimmed -match '^\s*<#') {
                         $metrics.CommentLines++
                     }
                 }
