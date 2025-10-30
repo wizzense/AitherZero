@@ -350,11 +350,12 @@ jobs:
         git fetch origin
         git checkout "$AUTO_BRANCH"
         
-        # Add and commit index changes
-        git add **/index.md .aitherzero-index-cache.json .aitherzero-index-report.json
+        # Add and commit index changes (only index.md files, not cache/report)
+        # Add all index.md files recursively in a portable way
+        find . -name 'index.md' -exec git add {} +
         
         # Create commit message with details
-        UPDATED_COUNT="${{ env.UPDATED_INDEXES }}"
+        UPDATED_COUNT="${{ env.UNCOMMITTED_COUNT }}"
         git commit -m "docs: update project indexes [auto-generated]" \
           -m "Automated index generation for PR #${{ github.event.pull_request.number }}" \
           -m "" \
@@ -410,7 +411,7 @@ jobs:
             - **Duration**: ${duration}s
             
             ### Automation Details
-            This PR was automatically created by the index automation workflow. Please review and merge this PR into the parent branch to apply the index updates.
+            This PR was automatically created by the index automation workflow.
             
             ### Important
             - Do not modify this PR manually
@@ -446,7 +447,7 @@ jobs:
           core.setOutput('auto_pr_number', autoIndexPR.number);
           
           // Add comment to original PR
-          const comment = `Index Updates Available
+          const comment = `## 🔄 Index Updates Available
           
           Automated index updates have been generated and are available in PR #${autoIndexPR.number}.
           

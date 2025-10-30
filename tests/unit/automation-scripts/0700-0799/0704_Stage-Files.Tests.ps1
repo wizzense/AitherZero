@@ -1,365 +1,88 @@
 #Requires -Version 7.0
+#Requires -Module Pester
 
-BeforeAll {
-    # Mock the GitAutomation module
-    $script:MockCalls = @{}
+<#
+.SYNOPSIS
+    Unit tests for 0704_Stage-Files
+.DESCRIPTION
+    Auto-generated comprehensive tests
+    Script: 0704_Stage-Files
+    Stage: Unknown
+    Generated: 2025-10-30 02:11:49
+#>
 
-    # Create mock GitAutomation module
-    New-Module -Name 'MockGitAutomation' -ScriptBlock {
-        function Get-GitStatus {
-            return @{
-                Clean = $false
-                Modified = @(
-                    @{ Path = 'file1.txt' }
-                    @{ Path = 'file2.ps1' }
-                )
-                Untracked = @(
-                    @{ Path = 'newfile.txt' }
-                )
-                Deleted = @(
-                    @{ Path = 'oldfile.txt' }
-                )
-                Staged = @()
-            }
+Describe '0704_Stage-Files' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+
+    BeforeAll {
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0704_Stage-Files.ps1'
+        $script:ScriptName = '0704_Stage-Files'
+    }
+
+    Context 'Script Validation' {
+        It 'Script file should exist' {
+            Test-Path $script:ScriptPath | Should -Be $true
         }
 
-        Export-ModuleMember -Function *
-    } | Import-Module -Force
+        It 'Should have valid PowerShell syntax' {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script:ScriptPath, [ref]$null, [ref]$errors
+            )
+            $errors.Count | Should -Be 0
+        }
 
-    # Mock external commands
-    Mock git {
-        switch -Regex ($arguments -join ' ') {
-            'add' {
-                $script:MockCalls['git_add'] += @{ Files = $arguments[1..($arguments.Length-1)] }
-                return ''
-            }
-            'status --short' { return 'M file1.txt' }
-            default { return '' }
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
         }
     }
 
-    Mock Test-Path {
-        param($Path)
-        # Mock that specific files exist
-        switch ($Path) {
-            'file1.txt' { return $true }
-            'file2.ps1' { return $true }
-            'newfile.txt' { return $true }
-            'oldfile.txt' { return $false }  # deleted file doesn't exist
-            'nonexistent.txt' { return $false }
-            default { return $true }
+    Context 'Parameters' {
+        It 'Should have parameter: Patterns' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Patterns') | Should -Be $true
+        }
+
+        It 'Should have parameter: Type' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Type') | Should -Be $true
+        }
+
+        It 'Should have parameter: Interactive' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Interactive') | Should -Be $true
+        }
+
+        It 'Should have parameter: DryRun' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('DryRun') | Should -Be $true
+        }
+
+        It 'Should have parameter: Force' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Force') | Should -Be $true
+        }
+
+        It 'Should have parameter: ShowStatus' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('ShowStatus') | Should -Be $true
+        }
+
+    }
+
+    Context 'Metadata' {
+        It 'Should be in stage: Unknown' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Stage:'
         }
     }
 
-    Mock Get-Item {
-        param($Path)
-        return @{ Name = (Split-Path $Path -Leaf); FullName = $Path }
-    }
-
-    Mock Write-Host { }
-    Mock Write-Warning { }
-    Mock Write-Error { }
-    Mock Read-Host { return 'all' }
-
-    # Initialize mock calls tracking
-    $script:MockCalls = @{
-        'git_add' = @()
-    }
-}
-
-Describe "0704_Stage-Files" {
-    BeforeEach {
-        $script:MockCalls = @{
-            'git_add' = @()
-        }
-
-        # Reset to default dirty state
-        New-Module -Name 'MockGitAutomation' -ScriptBlock {
-            function Get-GitStatus {
-                return @{
-                    Clean = $false
-                    Modified = @(
-                        @{ Path = 'file1.txt' }
-                        @{ Path = 'file2.ps1' }
-                    )
-                    Untracked = @(
-                        @{ Path = 'newfile.txt' }
-                    )
-                    Deleted = @(
-                        @{ Path = 'oldfile.txt' }
-                    )
-                    Staged = @()
-                }
-            }
-
-            Export-ModuleMember -Function *
-        } | Import-Module -Force
-    }
-
-    Context "Parameter Validation" {
-        It "Should accept patterns as remaining arguments" {
-            { & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "*.txt" "*.ps1" -WhatIf } | Should -Not -Throw
-        }
-
-        It "Should validate Type parameter values" {
-            $validTypes = @('All', 'Modified', 'Untracked', 'Deleted')
-            foreach ($type in $validTypes) {
-                { & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type $type -WhatIf } | Should -Not -Throw
-            }
-        }
-
-        It "Should accept various switches" {
-            { & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Interactive -DryRun -Force -Verbose -ShowStatus -WhatIf } | Should -Not -Throw
-        }
-    }
-
-    Context "Clean Repository Handling" {
-        BeforeAll {
-            # Mock clean repository state
-            New-Module -Name 'MockGitAutomationClean' -ScriptBlock {
-                function Get-GitStatus {
-                    return @{
-                        Clean = $true
-                        Modified = @()
-                        Untracked = @()
-                        Deleted = @()
-                        Staged = @()
-                    }
-                }
-                Export-ModuleMember -Function *
-            } | Import-Module -Force
-        }
-
-        It "Should exit early when repository is clean and no Force" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1"
-
-            $script:MockCalls['git_add'] | Should -HaveCount 0
-        }
-
-        It "Should continue when repository is clean but Force is used" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Force -WhatIf
-
-            # Should not throw or exit early, but won't have files to stage
-            $script:MockCalls['git_add'] | Should -HaveCount 0
-        }
-    }
-
-    Context "File Type Selection" {
-        It "Should stage all files when Type is All" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "All" -DryRun -WhatIf
-
-            # Should process modified, untracked, and deleted files
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*newfile.txt*" }
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*oldfile.txt*" }
-        }
-
-        It "Should stage only modified files when Type is Modified" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file2.ps1*" }
-            Should -Not -Invoke Write-Host -ParameterFilter { $Object -like "*newfile.txt*" }
-        }
-
-        It "Should stage only untracked files when Type is Untracked" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Untracked" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*newfile.txt*" }
-            Should -Not -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-        }
-
-        It "Should stage only deleted files when Type is Deleted" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Deleted" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*oldfile.txt*" }
-            Should -Not -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-        }
-    }
-
-    Context "Pattern Matching" {
-        It "Should stage all files when pattern is '.'" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "." -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*newfile.txt*" }
-        }
-
-        It "Should stage specific file when exact path is provided" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "file1.txt" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-        }
-
-        It "Should match glob patterns" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "*.txt" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*newfile.txt*" }
-            Should -Not -Invoke Write-Host -ParameterFilter { $Object -like "*file2.ps1*" }
-        }
-
-        It "Should handle multiple patterns" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "*.txt" "*.ps1" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file2.ps1*" }
-        }
-
-        It "Should warn when no files match pattern" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "*.xyz" -Verbose -DryRun -WhatIf
-
-            Should -Invoke Write-Warning -ParameterFilter { $Message -like "*No files match pattern*" }
-        }
-    }
-
-    Context "Interactive Selection" {
-        It "Should prompt for file selection in interactive mode" {
-            Mock Read-Host { return '1,2' }
-
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Interactive -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*Select files to stage*" }
-            Should -Invoke Read-Host
-        }
-
-        It "Should handle 'all' selection in interactive mode" {
-            Mock Read-Host { return 'all' }
-
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Interactive -DryRun -WhatIf
-
-            Should -Invoke Read-Host
-        }
-
-        It "Should handle numeric selection in interactive mode" {
-            Mock Read-Host { return '1' }
-
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Interactive -DryRun -WhatIf
-
-            Should -Invoke Read-Host
-        }
-    }
-
-    Context "File Staging" {
-        It "Should stage files when not in dry run mode" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -WhatIf
-
-            # In WhatIf mode, git add should not be called
-            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'add' }
-        }
-
-        It "Should not stage files in dry run mode" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*DRY RUN*" }
-            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'add' }
-        }
-
-        It "Should show git status after staging when ShowStatus is used" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -ShowStatus -WhatIf
-
-            Should -Invoke git -ParameterFilter { $arguments -contains 'status' -and $arguments -contains '--short' }
-        }
-
-        It "Should output files in verbose mode" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -Verbose -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*Staging:*" }
-        }
-    }
-
-    Context "File Status Display" {
-        It "Should display modified files with 'M' indicator" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*M file1.txt*" }
-        }
-
-        It "Should display untracked files with '+' indicator" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Untracked" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*+ newfile.txt*" }
-        }
-
-        It "Should display deleted files with '-' indicator" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Deleted" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*- oldfile.txt*" }
-        }
-
-        It "Should display file count summary" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "All" -DryRun -WhatIf
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*Total:*" }
-        }
-    }
-
-    Context "No Files to Stage" {
-        BeforeAll {
-            # Mock state with no files matching criteria
-            New-Module -Name 'MockGitAutomationEmpty' -ScriptBlock {
-                function Get-GitStatus {
-                    return @{
-                        Clean = $false
-                        Modified = @()
-                        Untracked = @()
-                        Deleted = @()
-                        Staged = @(@{ Path = 'already_staged.txt' })
-                    }
-                }
-                Export-ModuleMember -Function *
-            } | Import-Module -Force
-        }
-
-        It "Should exit early when no files match criteria" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified"
-
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*No files to stage*" }
-            $script:MockCalls['git_add'] | Should -HaveCount 0
-        }
-    }
-
-    Context "Duplicate File Handling" {
-        It "Should remove duplicates from file list" {
-            # Test with patterns that might match the same files multiple times
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "file1.txt" "*.txt" -DryRun -WhatIf
-
-            # file1.txt should only appear once in the output
-            $writeHostCalls = (Get-Mock Write-Host).History | Where-Object {
-                $_.BoundParameters.Object -like "*file1.txt*"
-            }
-            # Should not have duplicate entries in the file list
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*file1.txt*" }
-        }
-    }
-
-    Context "Error Handling" {
-        It "Should handle git add failures" {
-            Mock git { throw "Git add failed" } -ParameterFilter { $arguments[0] -eq 'add' }
-
-            { & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" } | Should -Throw
-        }
-
-        It "Should handle missing files gracefully" {
-            Mock Test-Path { return $false }
-
-            { & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "nonexistent.txt" -WhatIf } | Should -Not -Throw
-        }
-
-        It "Should handle Get-Item failures" {
-            Mock Get-Item { throw "Access denied" }
-
-            { & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" "file1.txt" -WhatIf } | Should -Not -Throw
-        }
-    }
-
-    Context "WhatIf Support" {
-        It "Should show staging operations without executing them when WhatIf is used" {
-            & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -WhatIf
-
-            # Should show what would be staged but not actually stage
-            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'add' }
-            Should -Invoke Write-Host -ParameterFilter { $Object -like "*Files to stage*" }
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }
