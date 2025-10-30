@@ -175,6 +175,10 @@
             background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
             border-color: var(--error);
         }
+        .status-warning { 
+            background: linear-gradient(135deg, rgba(210, 153, 34, 0.3), rgba(210, 153, 34, 0.1)); 
+            border-color: var(--warning);
+        }
         .status-unknown { 
             background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
             border-color: var(--text-secondary);
@@ -563,7 +567,7 @@
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-30 16:30:47
+        🔄 Last updated: 2025-10-30 16:34:14
     </div>
 
     <div class="container">
@@ -588,10 +592,10 @@
                 <div class="status-badge status-healthy">
                     🧪 Tests: Passing
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-healthy">
                     🔒 Security: Clean
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-healthy">
                     📦 Deployment: CI/CD Active
                 </div>
             </div>
@@ -614,7 +618,7 @@
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">85,888</div>
+                        <div class="metric-value">85,892</div>
                         <div class="metric-label">
                             968 Functions
                         </div>
@@ -673,7 +677,7 @@
                     
                                         <div class="metric-card">
                         <h3>🌿 Git Repository</h3>
-                        <div class="metric-value" style="font-size: 1.8rem;">4</div>
+                        <div class="metric-value" style="font-size: 1.8rem;">5</div>
                         <div class="metric-label">Total Commits</div>
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
@@ -683,7 +687,7 @@
                                 👥 2 Contributors
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Latest: 5939d9b - Enhance dashboard with real data connections and create archives index (5 minutes ago)
+                                Latest: f41efc7 - Fix code coverage parsing to support JaCoCo format (2 minutes ago)
                             </div>
                         </div>
                     </div>
@@ -923,7 +927,7 @@
                         <div class="info-card-header">📊 Repository Statistics</div>
                         <div class="info-card-body">
                             <p><strong>Branch:</strong> <code>copilot/update-dashboard-data-fidelity</code></p>
-                            <p><strong>Total Commits:</strong> 4</p>
+                            <p><strong>Total Commits:</strong> 5</p>
                             <p><strong>Contributors:</strong> 2</p>
                             <p><strong>Automation Scripts:</strong> 124</p>
                             <p><strong>GitHub Workflows:</strong> 15</p>
@@ -934,7 +938,7 @@
                         <div class="info-card-header">📝 Latest Commit</div>
                         <div class="info-card-body">
                             <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
-                                5939d9b - Enhance dashboard with real data connections and create archives index (5 minutes ago)
+                                f41efc7 - Fix code coverage parsing to support JaCoCo format (2 minutes ago)
                             </p>
                         </div>
                     </div>
@@ -946,6 +950,10 @@
                     <div class="info-card-header">🔄 Recent Activity</div>
                     <div class="info-card-body">
                         <ul class="commit-list">
+                            <li class='commit-item'>
+                                <span class='commit-hash'>f41efc7</span>
+                                <span class='commit-message'>Fix code coverage parsing to support JaCoCo format</span>
+                            </li>
                             <li class='commit-item'>
                                 <span class='commit-hash'>5939d9b</span>
                                 <span class='commit-message'>Enhance dashboard with real data connections and create archives index</span>
@@ -983,7 +991,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.12</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-30 16:30:47</p>
+                        <p><strong>Last Scan:</strong> 2025-10-30 16:34:14</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -1003,7 +1011,7 @@
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-30 16:30:47 |
+            Generated by AitherZero Dashboard | 2025-10-30 16:34:14 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>

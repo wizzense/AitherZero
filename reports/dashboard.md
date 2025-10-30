@@ -2,7 +2,7 @@
 
 **Infrastructure Automation Platform**
 
-*Last updated: 2025-10-30 16:30:47*
+*Last updated: 2025-10-30 16:34:14*
 
 ---
 
@@ -18,7 +18,7 @@
 ### Code Statistics
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📝 **Lines of Code** | **85,888** | Total lines across all PowerShell files |
+| 📝 **Lines of Code** | **85,892** | Total lines across all PowerShell files |
 | 🔨 **Functions** | **968** | Public and private functions |
 | 💬 **Comments** | **7,120** | 8.3% of total code |
 | ⚪ **Blank Lines** | **14,533** | Whitespace and formatting |
@@ -42,9 +42,9 @@
 | Metric | Value | Details |
 |--------|-------|---------|
 | 🌿 **Branch** | **`copilot/update-dashboard-data-fidelity`** | Current working branch |
-| 📝 **Total Commits** | **4** | Repository history |
+| 📝 **Total Commits** | **5** | Repository history |
 | 👥 **Contributors** | **2** | Unique contributors |
-| 🔄 **Latest Commit** | **5939d9b - Enhance dashboard with real data connections and create archives index (5 minutes ago)** | Most recent change |
+| 🔄 **Latest Commit** | **f41efc7 - Fix code coverage parsing to support JaCoCo format (2 minutes ago)** | Most recent change |
 
 
 ## ✨ Code Quality Validation
@@ -73,6 +73,7 @@
 
 ## 🔄 Recent Activity
 
+- `f41efc7` Fix code coverage parsing to support JaCoCo format
 - `5939d9b` Enhance dashboard with real data connections and create archives index
 - `f346c10` Initial plan for comprehensive dashboard and archive improvements
 - `7a7772d` Initial plan

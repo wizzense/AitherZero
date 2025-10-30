@@ -1852,6 +1852,10 @@ $manifestTagsSection
             background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
             border-color: var(--error);
         }
+        .status-warning { 
+            background: linear-gradient(135deg, rgba(210, 153, 34, 0.3), rgba(210, 153, 34, 0.1)); 
+            border-color: var(--warning);
+        }
         .status-unknown { 
             background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
             border-color: var(--text-secondary);
@@ -2265,10 +2269,10 @@ $manifestTagsSection
                 <div class="status-badge status-$(if($Status.Tests -eq 'Passing'){'healthy'}elseif($Status.Tests -eq 'Failing'){'issues'}else{'unknown'})">
                     🧪 Tests: $($Status.Tests)
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-$(if($Status.Security -eq 'Clean'){'healthy'}elseif($Status.Security -match 'Issues'){'issues'}elseif($Status.Security -match 'Minor'){'warning'}else{'unknown'})">
                     🔒 Security: $($Status.Security)
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-$(if($Status.Deployment -match 'Active'){'healthy'}else{'unknown'})">
                     📦 Deployment: $($Status.Deployment)
                 </div>
             </div>
