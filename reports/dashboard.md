@@ -2,7 +2,7 @@
 
 **Infrastructure Automation Platform**
 
-*Last updated: 2025-10-30 16:34:14*
+*Last updated: 2025-10-30 17:25:26*
 
 ---
 
@@ -18,7 +18,7 @@
 ### Code Statistics
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📝 **Lines of Code** | **85,892** | Total lines across all PowerShell files |
+| 📝 **Lines of Code** | **85,899** | Total lines across all PowerShell files |
 | 🔨 **Functions** | **968** | Public and private functions |
 | 💬 **Comments** | **7,120** | 8.3% of total code |
 | ⚪ **Blank Lines** | **14,533** | Whitespace and formatting |
@@ -33,18 +33,19 @@
 ### Testing & Quality
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🧪 **Test Suite** | **281** | 142 Unit, 139 Integration |
-| ✅ **Test Results** | **12/12** | Success Rate: 100%; Duration: 0.98s |
-| 📊 **Last Test Run** | **2025-10-30 16:14:51** | ✅ 12 passed, ❌ 0 failed |
+| 🧪 **Test Files** | **281** | 142 Unit, 139 Integration |
+| ✅ **Last Test Run** | **12/12 cases** | Success Rate: 100%; Duration: 0.98s |
+| 📊 **Test Details** | **2025-10-30 17:21:46** | ✅ 12 passed, ❌ 0 failed |
+| ⚠️ **Note** | **Partial Run** | Only 12 test cases executed from available test files. Run `./az 0402` for full suite. |
 | 📈 **Code Coverage** | **0%** | No coverage data available |
 
 ### Git Repository
 | Metric | Value | Details |
 |--------|-------|---------|
 | 🌿 **Branch** | **`copilot/update-dashboard-data-fidelity`** | Current working branch |
-| 📝 **Total Commits** | **5** | Repository history |
+| 📝 **Total Commits** | **6** | Repository history |
 | 👥 **Contributors** | **2** | Unique contributors |
-| 🔄 **Latest Commit** | **f41efc7 - Fix code coverage parsing to support JaCoCo format (2 minutes ago)** | Most recent change |
+| 🔄 **Latest Commit** | **ba38aec - Final dashboard improvements with correct status styling (50 minutes ago)** | Most recent change |
 
 
 ## ✨ Code Quality Validation
@@ -73,11 +74,11 @@
 
 ## 🔄 Recent Activity
 
+- `ba38aec` Final dashboard improvements with correct status styling
 - `f41efc7` Fix code coverage parsing to support JaCoCo format
 - `5939d9b` Enhance dashboard with real data connections and create archives index
 - `f346c10` Initial plan for comprehensive dashboard and archive improvements
 - `7a7772d` Initial plan
-- `317458f` Fix release process: Add documentation for republishing releases and version increment commands (#1705)
 
 ## 🎯 Quick Commands
 

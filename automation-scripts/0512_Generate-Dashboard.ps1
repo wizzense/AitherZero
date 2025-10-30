@@ -2330,7 +2330,7 @@ $manifestTagsSection
                     </div>
 
                     <div class="metric-card">
-                        <h3>🧪 Test Suite</h3>
+                        <h3>🧪 Test Files</h3>
                         <div class="metric-value">$($Metrics.Tests.Total)</div>
                         <div class="metric-label">
                             $($Metrics.Tests.Unit) Unit | $($Metrics.Tests.Integration) Integration
@@ -2341,7 +2341,10 @@ $manifestTagsSection
                                               else { 'var(--error)' }
                             @"
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid $testStatusColor;">
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                                Last Test Run Results:
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
                                 ✅ $($Metrics.Tests.Passed) Passed | ❌ $($Metrics.Tests.Failed) Failed$(if($Metrics.Tests.Skipped -gt 0){" | ⏭️ $($Metrics.Tests.Skipped) Skipped"})
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
@@ -2349,6 +2352,9 @@ $manifestTagsSection
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
                                 Last run: $($Metrics.Tests.LastRun)
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--warning); margin-top: 8px; font-style: italic;">
+                                ⚠️ Only $($Metrics.Tests.Passed + $Metrics.Tests.Failed) test cases executed. Run <code>./az 0402</code> for full test suite.
                             </div>
                         </div>
 "@
@@ -2769,12 +2775,13 @@ $(if ($Metrics.Classes -gt 0) {
 ### Testing & Quality
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🧪 **Test Suite** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
+| 🧪 **Test Files** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
 $(if ($Metrics.Tests.LastRun) {
     $totalTests = $Metrics.Tests.Passed + $Metrics.Tests.Failed
     @"
-| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$totalTests** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
-| 📊 **Last Test Run** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+| ✅ **Last Test Run** | **$($Metrics.Tests.Passed)/$totalTests cases** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
+| 📊 **Test Details** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+| ⚠️ **Note** | **Partial Run** | Only $totalTests test cases executed from available test files. Run ``./az 0402`` for full suite. |
 
 "@
 } else {
