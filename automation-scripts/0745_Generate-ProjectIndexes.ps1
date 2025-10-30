@@ -203,7 +203,7 @@ try {
             Write-IndexLog "Running FULL index generation..." -Level Information
             Write-Host ""
             
-            $results = New-ProjectIndexes -RootPath $RootPath -Recursive -Force:$Force
+            $results = New-ProjectIndex -RootPath $RootPath -Recursive -Force:$Force
             
             Show-Statistics -Results $results
             Show-UpdatedFiles -Results $results
@@ -223,7 +223,7 @@ try {
             Write-IndexLog "Running INCREMENTAL index generation..." -Level Information
             Write-Host ""
             
-            $results = New-ProjectIndexes -RootPath $RootPath -Recursive
+            $results = New-ProjectIndex -RootPath $RootPath -Recursive
             
             Show-Statistics -Results $results
             Show-UpdatedFiles -Results $results

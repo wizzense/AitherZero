@@ -1,6 +1,6 @@
-# orchestration
+# .devcontainer
 
-**Navigation**: [🏠 Root](../index.md) → **orchestration**
+**Navigation**: [🏠 Root](../index.md) → **.devcontainer**
 
 ⬆️ **Parent**: [Root](../index.md)
 
@@ -10,15 +10,14 @@ See [README.md](./README.md) for detailed information about this directory.
 
 ### 📊 Contents
 
-- **Subdirectories**: 2
-- **Files**: 2
-
-## 📁 Subdirectories
-
-- [📂 **playbooks**](./playbooks/index.md)
-- [📂 **schema**](./schema/index.md)
+- **Subdirectories**: 0
+- **Files**: 3
 
 ## 📄 Files
+
+### .json Files
+
+- ⚙️ [devcontainer.json](./devcontainer.json)
 
 ### .md Files
 
