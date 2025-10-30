@@ -39,77 +39,6 @@ on:
         - Verify
 
 jobs:
-  cleanup-auto-prs:
-    name: 🧹 Cleanup Auto PRs
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    
-    permissions:
-      pull-requests: write
-      
-    steps:
-    - name: 🔍 Find and Close Auto PRs
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const prNumber = context.payload.pull_request.number;
-          const autoBranchName = `auto-index/${prNumber}`;
-          const repo = context.repo;
-          
-          core.info(`Parent PR #${prNumber} was closed, searching for auto-index PRs...`);
-          
-          // Find all open PRs from the auto-index branch
-          const { data: allPRs } = await github.rest.pulls.list({
-            owner: repo.owner,
-            repo: repo.repo,
-            state: 'open'
-          });
-          
-          const autoPRs = allPRs.filter(pr => pr.head.ref === autoBranchName);
-          
-          if (autoPRs.length === 0) {
-            core.info(`No open auto-index PRs found for branch ${autoBranchName}`);
-            return;
-          }
-          
-          for (const autoPR of autoPRs) {
-            core.info(`Closing auto-index PR #${autoPR.number}`);
-            
-            // Add a comment explaining why it's being closed
-            await github.rest.issues.createComment({
-              owner: repo.owner,
-              repo: repo.repo,
-              issue_number: autoPR.number,
-              body: `🔒 Automatically closing this PR because the parent PR #${prNumber} was closed.`
-            });
-            
-            // Close the PR
-            await github.rest.pulls.update({
-              owner: repo.owner,
-              repo: repo.repo,
-              pull_number: autoPR.number,
-              state: 'closed'
-            });
-            
-            core.info(`✅ Closed auto-index PR #${autoPR.number}`);
-          }
-          
-          // Delete the auto branch
-          try {
-            await github.rest.git.deleteRef({
-              owner: repo.owner,
-              repo: repo.repo,
-              ref: `heads/${autoBranchName}`
-            });
-            core.info(`✅ Deleted branch ${autoBranchName}`);
-          } catch (error) {
-            if (error.status === 404) {
-              core.info(`Branch ${autoBranchName} does not exist`);
-            } else {
-              core.warning(`Failed to delete branch ${autoBranchName}: ${error.message}`);
-            }
-          }
-
   generate-indexes:
     name: 🔄 Generate Project Indexes
     if: github.event.action != 'closed'
@@ -277,78 +206,13 @@ jobs:
           echo "has_changes=false" >> $env:GITHUB_OUTPUT
         }
         
-    - name: 🌿 Create Auto-Index Branch and PR (PR Only)
-      if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const prNumber = context.payload.pull_request.number;
-          const autoBranchName = `auto-index/${prNumber}`;
-          const baseBranchName = context.payload.pull_request.head.ref;
-          const repo = context.repo;
-          
-          core.info(`Creating auto-index branch: ${autoBranchName}`);
-          core.info(`Base PR branch: ${baseBranchName}`);
-          core.info(`PR number: ${prNumber}`);
-          
-          // Get the current commit SHA
-          const { data: prData } = await github.rest.pulls.get({
-            owner: repo.owner,
-            repo: repo.repo,
-            pull_number: prNumber
-          });
-          
-          const headSha = prData.head.sha;
-          core.info(`Head SHA: ${headSha}`);
-          
-          // Check if auto-index branch already exists and delete it
-          try {
-            await github.rest.git.getRef({
-              owner: repo.owner,
-              repo: repo.repo,
-              ref: `heads/${autoBranchName}`
-            });
-            
-            core.info(`Branch ${autoBranchName} exists, deleting it`);
-            await github.rest.git.deleteRef({
-              owner: repo.owner,
-              repo: repo.repo,
-              ref: `heads/${autoBranchName}`
-            });
-          } catch (error) {
-            if (error.status === 404) {
-              core.info(`Branch ${autoBranchName} does not exist yet`);
-            } else {
-              throw error;
-            }
-          }
-          
-          // Create new branch from current PR head
-          await github.rest.git.createRef({
-            owner: repo.owner,
-            repo: repo.repo,
-            ref: `refs/heads/${autoBranchName}`,
-            sha: headSha
-          });
-          
-          core.info(`✅ Created branch ${autoBranchName}`);
-          core.setOutput('auto_branch', autoBranchName);
-          core.setOutput('base_branch', baseBranchName);
-          
-    - name: 💾 Commit and Push Index Updates
+    - name: 💾 Commit and Push Index Updates to PR
       if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true'
       shell: bash
       run: |
         # Configure git
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        
-        # Get the auto-index branch name from previous step
-        AUTO_BRANCH="auto-index/${{ github.event.pull_request.number }}"
-        
-        # Checkout the auto-index branch
-        git fetch origin
-        git checkout "$AUTO_BRANCH"
         
         # Add and commit index changes (only index.md files, cache files are gitignored)
         # Use find to add only non-ignored index.md files
@@ -363,102 +227,47 @@ jobs:
           -m "Mode: ${{ env.INDEX_MODE }}" \
           -m "" \
           -m "This commit was automatically generated by the index automation workflow." \
-          -m "It updates index.md files to reflect changes in the project structure."
+          -m "It updates index.md files to reflect changes in the project structure." \
+          -m "" \
+          -m "Merge conflicts are automatically resolved via .gitattributes (merge=ours)."
         
-        # Push to the auto-index branch
-        git push origin "$AUTO_BRANCH"
+        # Push directly to the PR's head branch
+        git push origin HEAD:${{ github.event.pull_request.head.ref }}
         
-        echo "✅ Committed and pushed index updates to $AUTO_BRANCH"
+        echo "✅ Committed and pushed index updates to PR branch"
         
-    - name: 📝 Create PR for Index Updates
+    - name: 💬 Comment on PR (Index Updates Committed)
       if: github.event_name == 'pull_request' && steps.check-changes.outputs.has_changes == 'true'
       uses: actions/github-script@v7
       with:
         script: |
           const prNumber = context.payload.pull_request.number;
-          const autoBranchName = `auto-index/${prNumber}`;
-          const baseBranchName = context.payload.pull_request.head.ref;
-          const repo = context.repo;
-          
           const updatedCount = process.env.UPDATED_INDEXES || '0';
           const mode = process.env.INDEX_MODE || 'Unknown';
           const duration = process.env.DURATION || '0';
           
-          // Check if a PR already exists from auto-index branch to base branch
-          const { data: existingPRs } = await github.rest.pulls.list({
-            owner: repo.owner,
-            repo: repo.repo,
-            head: `${repo.owner}:${autoBranchName}`,
-            base: baseBranchName,
-            state: 'open'
-          });
-          
-          let autoIndexPR;
-          
-          if (existingPRs.length > 0) {
-            autoIndexPR = existingPRs[0];
-            core.info(`Found existing auto-index PR #${autoIndexPR.number}`);
-          } else {
-            // Create PR from auto-index branch to base PR branch
-            const prTitle = `Auto-update indexes for PR #${prNumber}`;
-            const prBody = `## Automated Index Updates
-            
-            This PR contains automatically generated index file updates for [PR #${prNumber}](https://github.com/${repo.owner}/${repo.repo}/pull/${prNumber}).
-            
-            ### Summary
-            - **Updated Indexes**: ${updatedCount} files
-            - **Generation Mode**: ${mode}
-            - **Duration**: ${duration}s
-            
-            ### Automation Details
-            This PR was automatically created by the index automation workflow. Please review and merge this PR into the parent branch to apply the index updates.
-            
-            ### Important
-            - Do not modify this PR manually
-            - This PR will be closed automatically when the parent PR is merged or closed
-            - Index updates are isolated to keep the parent PR commits clean
-            
-            ---
-            *Related to: #${prNumber}*
-            *Generated by: Index Automation Workflow*`;
+          const comment = `## ✅ Project Index Updates Committed
 
-            const { data: newPR } = await github.rest.pulls.create({
-              owner: repo.owner,
-              repo: repo.repo,
-              title: prTitle,
-              head: autoBranchName,
-              base: baseBranchName,
-              body: prBody
-            });
-            
-            autoIndexPR = newPR;
-            core.info(`✅ Created auto-index PR #${newPR.number}`);
-            
-            // Add labels
-            await github.rest.issues.addLabels({
-              owner: repo.owner,
-              repo: repo.repo,
-              issue_number: newPR.number,
-              labels: ['documentation', 'automated', 'auto-index']
-            });
-          }
-          
-          // Set output for potential auto-merge step
-          core.setOutput('auto_pr_number', autoIndexPR.number);
-          
-          // Add comment to original PR
-          const comment = `Index Updates Available
-          
-          Automated index updates have been generated and are available in PR #${autoIndexPR.number}.
-          
-          Once that PR is reviewed and merged into this branch, the index files will be up to date.
-          
-          [View Auto-Index PR](https://github.com/${repo.owner}/${repo.repo}/pull/${autoIndexPR.number})`;
+          Automated index generation detected changes and committed them to this PR.
+
+          ### 📊 Summary
+          - **Updated Indexes**: ${updatedCount} files
+          - **Generation Mode**: ${mode}
+          - **Duration**: ${duration}s
+
+          ### ℹ️ About Merge Conflicts
+          Index files use \`merge=ours\` strategy in \`.gitattributes\`, which means:
+          - When merging, this branch's version of index.md files will be kept
+          - Merge conflicts are automatically resolved
+          - Indexes will be regenerated after merge if needed
+
+          ---
+          *Generated by: Index Automation Workflow*`;
 
           await github.rest.issues.createComment({
             issue_number: prNumber,
-            owner: repo.owner,
-            repo: repo.repo,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
             body: comment
           });
         
