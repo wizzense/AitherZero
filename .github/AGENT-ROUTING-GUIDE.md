@@ -14,7 +14,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ## 🤖 Available Agents
 
 ### 👩‍💻 Maya - Infrastructure & DevOps Specialist
-**File:** [`.github/agents/maya-infrastructure.md`](.github/agents/maya-infrastructure.md)
+**File:** [`./agents/maya-infrastructure.md`](./agents/maya-infrastructure.md)
 
 **Best for:**
 - Hyper-V and VM management
