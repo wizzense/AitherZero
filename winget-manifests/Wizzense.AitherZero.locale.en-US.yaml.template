@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+# Locale manifest for AitherZero (English - US)
+# Contains package metadata and descriptions
+
+PackageIdentifier: Wizzense.AitherZero
+PackageVersion: {VERSION}
+PackageLocale: en-US
+Publisher: Wizzense
+PublisherUrl: https://github.com/wizzense
+PublisherSupportUrl: https://github.com/wizzense/AitherZero/issues
+PackageName: AitherZero
+PackageUrl: https://github.com/wizzense/AitherZero
+License: MIT
+LicenseUrl: https://github.com/wizzense/AitherZero/blob/main/LICENSE
+Copyright: Copyright (c) 2025 Aitherium Contributors
+ShortDescription: Infrastructure automation platform with AI-powered orchestration
+Description: |-
+  AitherZero is an enterprise infrastructure automation platform featuring:
+  - Number-based orchestration system (0000-9999) for systematic script execution
+  - Cross-platform support (Windows, Linux, macOS) with PowerShell 7
+  - OpenTofu/Terraform integration for infrastructure as code
+  - Comprehensive testing and validation framework
+  - Domain-driven architecture with specialized modules
+  - CI/CD automation with GitHub Actions workflows
+  - Docker containerization support
+  - Automated reporting and monitoring
+  
+  Key Features:
+  • 200+ automation scripts organized by number ranges
+  • Lab VM management and infrastructure deployment
+  • Secure credential handling and certificate management
+  • Quality validation with PSScriptAnalyzer
+  • Automated documentation generation
+  • Git workflow automation
+  • Interactive UI and CLI modes
+Moniker: aitherzero
+Tags:
+- automation
+- infrastructure
+- devops
+- powershell
+- terraform
+- opentofu
+- orchestration
+- ci-cd
+- infrastructure-as-code
+- lab-automation
+- powershell-module
+- windows
+- linux
+- macos
+ReleaseNotes: |-
+  See release notes at https://github.com/wizzense/AitherZero/releases/tag/v{VERSION}
+ReleaseNotesUrl: https://github.com/wizzense/AitherZero/releases/tag/v{VERSION}
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
