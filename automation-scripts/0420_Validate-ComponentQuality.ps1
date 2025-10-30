@@ -15,6 +15,10 @@
 
     This script is part of the AitherZero quality assurance framework and should
     be run on all new features and components before merging.
+    
+    Note: PowerShell data files (.psd1) are automatically detected and only
+    validated for syntax (PSScriptAnalyzer). They do not require error handling,
+    logging, or test coverage as they are pure data files.
 
     Exit Codes:
     0   - All quality checks passed
@@ -29,6 +33,8 @@
 .PARAMETER SkipChecks
     Array of check names to skip: ErrorHandling, Logging, TestCoverage,
     UIIntegration, GitHubActions, PSScriptAnalyzer
+.PARAMETER ExcludeDataFiles
+    Exclude PowerShell data files (.psd1) from validation entirely
 .PARAMETER OutputPath
     Path to save the quality report (default: ./reports/quality)
 .PARAMETER Format
@@ -48,6 +54,9 @@
 .EXAMPLE
     ./0420_Validate-ComponentQuality.ps1 -Path ./automation-scripts/0500_NewScript.ps1 -Format HTML
     Validate a script and generate HTML report
+.EXAMPLE
+    ./0420_Validate-ComponentQuality.ps1 -Path ./config -Recursive -ExcludeDataFiles
+    Validate all scripts in config directory, but skip .psd1 data files
 .NOTES
     Stage: Testing
     Order: 0420
@@ -63,6 +72,8 @@ param(
     [switch]$Recursive,
     
     [string[]]$SkipChecks = @(),
+    
+    [switch]$ExcludeDataFiles,
     
     [string]$OutputPath,
     
@@ -155,6 +166,18 @@ try {
         
         # Ensure it's an array
         $filesToValidate = @($filesToValidate)
+        
+        # Filter out .psd1 files if requested
+        if ($ExcludeDataFiles) {
+            $originalCount = $filesToValidate.Count
+            $filesToValidate = @($filesToValidate | Where-Object { 
+                [System.IO.Path]::GetExtension($_).ToLower() -ne '.psd1' 
+            })
+            $excludedCount = $originalCount - $filesToValidate.Count
+            if ($excludedCount -gt 0) {
+                Write-ScriptLog -Message "Excluded $excludedCount PowerShell data file(s) (.psd1)"
+            }
+        }
         
         if ($filesToValidate.Count -eq 0) {
             Write-ScriptLog -Level Warning -Message "No PowerShell files found in: $Path"
