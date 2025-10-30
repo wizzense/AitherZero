@@ -278,6 +278,8 @@ jobs:
         git checkout "$AUTO_BRANCH"
         
         # Add and commit index changes (only index.md files, not cache/report)
+        # Enable globstar for recursive pattern matching
+        shopt -s globstar
         git add **/index.md
         
         # Create commit message with details
