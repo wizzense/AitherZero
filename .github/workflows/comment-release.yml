@@ -20,6 +20,7 @@ jobs:
        startsWith(github.event.comment.body, '@copilot release'))
     outputs:
       should-release: ${{ steps.parse.outputs.should_release }}
+      command: ${{ steps.parse.outputs.command }}
       version: ${{ steps.parse.outputs.version }}
       prerelease: ${{ steps.parse.outputs.prerelease }}
     
@@ -35,15 +36,41 @@ jobs:
           if [[ "$COMMENT" =~ ^(/release|@copilot\ release) ]]; then
             echo "should_release=true" >> $GITHUB_OUTPUT
             
-            # Extract version (e.g., /release v1.2.0 or /release 1.2.0)
-            if [[ "$COMMENT" =~ (v?[0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            # Check for info command
+            if [[ "$COMMENT" =~ (info|version) ]]; then
+              echo "command=info" >> $GITHUB_OUTPUT
+              echo "version=" >> $GITHUB_OUTPUT
+              echo "Info command detected"
+              exit 0
+            fi
+            
+            # Check for increment commands
+            if [[ "$COMMENT" =~ (major|minor|patch|hotfix) ]]; then
+              if [[ "$COMMENT" =~ major ]]; then
+                echo "command=major" >> $GITHUB_OUTPUT
+              elif [[ "$COMMENT" =~ minor ]]; then
+                echo "command=minor" >> $GITHUB_OUTPUT
+              elif [[ "$COMMENT" =~ patch ]]; then
+                echo "command=patch" >> $GITHUB_OUTPUT
+              elif [[ "$COMMENT" =~ hotfix ]]; then
+                echo "command=hotfix" >> $GITHUB_OUTPUT
+              fi
+              echo "version=" >> $GITHUB_OUTPUT
+              echo "Increment command detected: ${BASH_REMATCH[1]}"
+              exit 0
+            fi
+            
+            # Extract explicit version (e.g., /release v1.2.0 or /release 1.2.0)
+            if [[ "$COMMENT" =~ (v?[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.]+)?) ]]; then
               VERSION="${BASH_REMATCH[1]}"
               # Remove 'v' prefix if present
               VERSION="${VERSION#v}"
+              echo "command=explicit" >> $GITHUB_OUTPUT
               echo "version=$VERSION" >> $GITHUB_OUTPUT
-              echo "Found version: $VERSION"
+              echo "Found explicit version: $VERSION"
             else
-              echo "No version specified, workflow will fail"
+              echo "No version or command specified"
+              echo "command=" >> $GITHUB_OUTPUT
               echo "version=" >> $GITHUB_OUTPUT
             fi
             
@@ -65,11 +92,171 @@ jobs:
           comment-id: ${{ github.event.comment.id }}
           reactions: rocket
 
-  trigger-release:
-    name: Trigger Release Workflow
+  show-version-info:
+    name: Show Version Information
     needs: check-release-command
     runs-on: ubuntu-latest
-    if: needs.check-release-command.outputs.should-release == 'true'
+    if: needs.check-release-command.outputs.should-release == 'true' && needs.check-release-command.outputs.command == 'info'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📋 Get Version Information
+        id: version-info
+        shell: bash
+        run: |
+          # Read current version
+          CURRENT=$(cat VERSION 2>/dev/null || echo "unknown")
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+          
+          # Parse version parts
+          if [[ "$CURRENT" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+            HOTFIX="${BASH_REMATCH[4]}"
+          else
+            MAJOR=1
+            MINOR=0
+            PATCH=0
+            HOTFIX=0
+          fi
+          
+          # Calculate next versions
+          NEXT_MAJOR="$((MAJOR + 1)).0.0.0"
+          NEXT_MINOR="${MAJOR}.$((MINOR + 1)).0.0"
+          NEXT_PATCH="${MAJOR}.${MINOR}.$((PATCH + 1)).0"
+          NEXT_HOTFIX="${MAJOR}.${MINOR}.${PATCH}.$((HOTFIX + 1))"
+          
+          echo "next_major=$NEXT_MAJOR" >> $GITHUB_OUTPUT
+          echo "next_minor=$NEXT_MINOR" >> $GITHUB_OUTPUT
+          echo "next_patch=$NEXT_PATCH" >> $GITHUB_OUTPUT
+          echo "next_hotfix=$NEXT_HOTFIX" >> $GITHUB_OUTPUT
+          
+          # Get latest release info
+          LATEST_RELEASE=$(gh release list --limit 5 --json tagName,createdAt,isPrerelease \
+            --jq 'map(select(.isPrerelease == false)) | .[0] | .tagName' 2>/dev/null || echo "none")
+          echo "latest_release=$LATEST_RELEASE" >> $GITHUB_OUTPUT
+          
+          # Get recent releases
+          RECENT=$(gh release list --limit 5 --json tagName,createdAt --jq '.[] | "- \(.tagName) (\(.createdAt | split("T")[0]))"' 2>/dev/null || echo "- No releases found")
+          echo "recent<<EOF" >> $GITHUB_OUTPUT
+          echo "$RECENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 💬 Post Version Information
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## 📋 Current Version Information
+            
+            **Version File:** `${{ steps.version-info.outputs.current }}`  
+            **Latest Release:** `${{ steps.version-info.outputs.latest_release }}`
+            
+            ### Recent Releases
+            ${{ steps.version-info.outputs.recent }}
+            
+            ### Next Version Commands
+            
+            Use these commands to create the next release:
+            
+            ```
+            /release major      # → ${{ steps.version-info.outputs.next_major }}
+            /release minor      # → ${{ steps.version-info.outputs.next_minor }}
+            /release patch      # → ${{ steps.version-info.outputs.next_patch }}
+            /release hotfix     # → ${{ steps.version-info.outputs.next_hotfix }}
+            ```
+            
+            Or specify an explicit version:
+            ```
+            /release vX.Y.Z.W
+            ```
+            
+            ### Version Increment Guide
+            
+            - **major** (X.0.0.0): Breaking changes, incompatible API changes
+            - **minor** (1.X.0.0): New features, backward compatible
+            - **patch** (1.0.X.0): Bug fixes, backward compatible
+            - **hotfix** (1.0.0.X): Critical bug fixes, urgent patches
+
+  calculate-version:
+    name: Calculate Incremented Version
+    needs: check-release-command
+    runs-on: ubuntu-latest
+    if: |
+      needs.check-release-command.outputs.should-release == 'true' && 
+      (needs.check-release-command.outputs.command == 'major' || 
+       needs.check-release-command.outputs.command == 'minor' || 
+       needs.check-release-command.outputs.command == 'patch' || 
+       needs.check-release-command.outputs.command == 'hotfix')
+    outputs:
+      calculated-version: ${{ steps.calculate.outputs.version }}
+    
+    steps:
+      - name: 📥 Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          fetch-depth: 0
+
+      - name: 🔢 Calculate New Version
+        id: calculate
+        shell: bash
+        run: |
+          COMMAND="${{ needs.check-release-command.outputs.command }}"
+          CURRENT=$(cat VERSION 2>/dev/null || echo "1.0.0.0")
+          
+          echo "Current version: $CURRENT"
+          echo "Increment command: $COMMAND"
+          
+          # Parse version parts
+          if [[ "$CURRENT" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+            HOTFIX="${BASH_REMATCH[4]}"
+          else
+            echo "❌ Error: Invalid current version format: $CURRENT"
+            exit 1
+          fi
+          
+          # Calculate new version based on command
+          case "$COMMAND" in
+            major)
+              NEW_VERSION="$((MAJOR + 1)).0.0.0"
+              ;;
+            minor)
+              NEW_VERSION="${MAJOR}.$((MINOR + 1)).0.0"
+              ;;
+            patch)
+              NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1)).0"
+              ;;
+            hotfix)
+              NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}.$((HOTFIX + 1))"
+              ;;
+            *)
+              echo "❌ Error: Unknown command: $COMMAND"
+              exit 1
+              ;;
+          esac
+          
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+  trigger-release:
+    name: Trigger Release Workflow
+    needs: [check-release-command, calculate-version]
+    runs-on: ubuntu-latest
+    if: |
+      needs.check-release-command.outputs.should-release == 'true' && 
+      needs.check-release-command.outputs.command != 'info' &&
+      (always() && (needs.calculate-version.result == 'success' || needs.calculate-version.result == 'skipped'))
     
     steps:
       - name: 📥 Checkout PR Branch
@@ -88,18 +275,23 @@ jobs:
         id: validate
         shell: bash
         run: |
-          VERSION="${{ needs.check-release-command.outputs.version }}"
-          
-          if [ -z "$VERSION" ]; then
-            echo "❌ Error: No version specified in comment"
-            echo "Usage: /release v1.2.3 or /release 1.2.3"
+          # Get version from either explicit input or calculated increment
+          if [ -n "${{ needs.check-release-command.outputs.version }}" ]; then
+            VERSION="${{ needs.check-release-command.outputs.version }}"
+            echo "Using explicit version: $VERSION"
+          elif [ -n "${{ needs.calculate-version.outputs.calculated-version }}" ]; then
+            VERSION="${{ needs.calculate-version.outputs.calculated-version }}"
+            echo "Using calculated version: $VERSION"
+          else
+            echo "❌ Error: No version available"
+            echo "Usage: /release v1.2.3 or /release major|minor|patch|hotfix"
             exit 1
           fi
           
-          # Check if version follows semver format
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+          # Check if version follows semver format (support 4-part versions)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.]+)?$ ]]; then
             echo "❌ Error: Invalid version format: $VERSION"
-            echo "Expected format: X.Y.Z or X.Y.Z-prerelease"
+            echo "Expected format: X.Y.Z or X.Y.Z.W or X.Y.Z-prerelease"
             exit 1
           fi
           
@@ -204,9 +396,13 @@ jobs:
             
             ### Usage:
             ```
-            /release v1.2.3           # Create stable release
-            /release v1.2.3 --pre     # Create pre-release
-            /release 1.2.3            # Version without 'v' prefix works too
+            /release major            # Increment major version
+            /release minor            # Increment minor version
+            /release patch            # Increment patch version
+            /release hotfix           # Increment hotfix version
+            /release v1.2.3           # Explicit version
+            /release v1.2.3 --pre     # Pre-release
+            /release info             # Show version info
             ```
 
   show-usage:
@@ -228,10 +424,23 @@ jobs:
             
             To create a release from this PR, use one of these commands:
             
+            ### Version Increment (Recommended)
             ```
-            /release v1.2.3           # Create stable release with version 1.2.3
-            /release v1.2.3 --pre     # Create pre-release
-            /release 1.2.3 --prerelease  # Alternative pre-release syntax
+            /release major            # → X+1.0.0.0 (breaking changes)
+            /release minor            # → X.Y+1.0.0 (new features)
+            /release patch            # → X.Y.Z+1.0 (bug fixes)
+            /release hotfix           # → X.Y.Z.W+1 (urgent fixes)
+            ```
+            
+            ### Explicit Version
+            ```
+            /release v1.2.3.4         # Specific version
+            /release v1.2.3 --pre     # Pre-release
+            ```
+            
+            ### Version Information
+            ```
+            /release info             # Show current version and available commands
             ```
             
             ### What happens:
