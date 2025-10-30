@@ -229,7 +229,7 @@ jobs:
             changedFilesSection = `
           ### 📝 Updated Index Files
           
-          ${displayPaths.map(p => `- \`${p}/index.md\``).join('\n')}
+          ${displayPaths.map(p => `- \`${p}\``).join('\n')}
           ${hasMorePaths ? `\n_...and ${pathList.length - maxPathsToShow} more directories_` : ''}
           `;
           } else {
