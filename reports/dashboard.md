@@ -35,7 +35,8 @@
 |--------|-------|---------|
 | 🧪 **Test Suite** | **281** | 142 Unit, 139 Integration |
 | ✅ **Test Results** | **12/12** | Success Rate: 100% | Duration: 0.98s |
-| 📊 **Last Test Run** | **2025-10-30 08:03:38** | ✅ 12 passed, ❌ 0 failed || 📈 **Code Coverage** | **0%** | No coverage data available |
+| 📊 **Last Test Run** | **2025-10-30 08:03:38** | ✅ 12 passed, ❌ 0 failed |
+| 📈 **Code Coverage** | **0%** | No coverage data available |
 
 ### Git Repository
 | Metric | Value | Details |
