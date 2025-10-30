@@ -1,0 +1,376 @@
+---
+name: Publish to PowerShell Gallery
+
+# Publishes the AitherZero module to PowerShell Gallery
+# Triggers on stable (non-prerelease) releases only
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.2.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run (test without publishing)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  MODULE_NAME: AitherZero
+  MANIFEST_FILE: AitherZero.psd1
+
+jobs:
+  validate-and-publish:
+    name: Validate and Publish Module
+    runs-on: ubuntu-latest
+    # Only publish stable releases (not pre-releases)
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == false)
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Determine Version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ github.event.inputs.version }}"
+          } else {
+            $version = "${{ github.event.release.tag_name }}" -replace '^v', ''
+          }
+          
+          Write-Host "📦 Publishing version: $version" -ForegroundColor Cyan
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: 🔧 Install Required PowerShell Modules
+        shell: pwsh
+        run: |
+          Write-Host "📦 Installing required modules..." -ForegroundColor Yellow
+          
+          $modules = @(
+            'PSScriptAnalyzer'
+            'Pester'
+            'PowerShellGet'
+          )
+          
+          foreach ($module in $modules) {
+            if (-not (Get-Module -ListAvailable -Name $module)) {
+              Write-Host "  Installing $module..." -ForegroundColor Cyan
+              Install-Module -Name $module -Force -SkipPublisherCheck -Scope CurrentUser -Repository PSGallery
+            } else {
+              Write-Host "  ✅ $module already installed" -ForegroundColor Green
+            }
+          }
+
+      - name: ✅ Validate Module Manifest
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating module manifest..." -ForegroundColor Yellow
+          
+          $manifestPath = "./$env:MANIFEST_FILE"
+          
+          try {
+            $manifest = Test-ModuleManifest -Path $manifestPath -ErrorAction Stop
+            
+            Write-Host "✅ Manifest validation passed" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "📋 Module Information:" -ForegroundColor Cyan
+            Write-Host "  Name: $($manifest.Name)"
+            Write-Host "  Version: $($manifest.Version)"
+            Write-Host "  Author: $($manifest.Author)"
+            Write-Host "  Description: $($manifest.Description)"
+            Write-Host "  GUID: $($manifest.Guid)"
+            Write-Host "  PowerShell Version: $($manifest.PowerShellVersion)"
+            Write-Host "  Exported Functions: $($manifest.ExportedFunctions.Count)"
+            Write-Host "  Exported Aliases: $($manifest.ExportedAliases.Count)"
+            
+            # Verify version matches expected
+            $expectedVersion = "${{ steps.version.outputs.version }}"
+            if ($manifest.Version.ToString() -ne $expectedVersion) {
+              Write-Host "❌ Version mismatch!" -ForegroundColor Red
+              Write-Host "  Expected: $expectedVersion" -ForegroundColor Red
+              Write-Host "  Found: $($manifest.Version)" -ForegroundColor Red
+              exit 1
+            } else {
+              Write-Host "  ✅ Version matches: $expectedVersion" -ForegroundColor Green
+            }
+          }
+          catch {
+            Write-Host "❌ Manifest validation failed!" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+            exit 1
+          }
+
+      - name: 🧪 Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Write-Host "🔬 Running PSScriptAnalyzer..." -ForegroundColor Yellow
+          
+          $settingsPath = "./PSScriptAnalyzerSettings.psd1"
+          
+          # Run on main module file and all domain modules
+          $results = @()
+          
+          Write-Host "  Analyzing $env:MODULE_NAME.psm1..." -ForegroundColor Cyan
+          $results += Invoke-ScriptAnalyzer -Path "./$env:MODULE_NAME.psm1" -Settings $settingsPath
+          
+          if (Test-Path "./domains") {
+            Write-Host "  Analyzing domain modules..." -ForegroundColor Cyan
+            Get-ChildItem -Path "./domains" -Filter "*.psm1" -Recurse | ForEach-Object {
+              Write-Host "    Analyzing $($_.Name)..." -ForegroundColor Cyan
+              $results += Invoke-ScriptAnalyzer -Path $_.FullName -Settings $settingsPath
+            }
+          }
+          
+          # Filter and report
+          $errors = $results | Where-Object { $_.Severity -eq 'Error' }
+          $warnings = $results | Where-Object { $_.Severity -eq 'Warning' }
+          
+          if ($errors.Count -gt 0) {
+            Write-Host "❌ Found $($errors.Count) errors:" -ForegroundColor Red
+            $errors | ForEach-Object {
+              Write-Host "  [$($_.RuleName)] $($_.Message)" -ForegroundColor Red
+              Write-Host "    File: $($_.ScriptPath):$($_.Line)" -ForegroundColor Gray
+            }
+            Write-Host ""
+            Write-Host "❌ PSScriptAnalyzer validation failed!" -ForegroundColor Red
+            exit 1
+          }
+          
+          if ($warnings.Count -gt 0) {
+            Write-Host "⚠️ Found $($warnings.Count) warnings (not blocking):" -ForegroundColor Yellow
+            $warnings | Select-Object -First 10 | ForEach-Object {
+              Write-Host "  [$($_.RuleName)] $($_.Message)" -ForegroundColor Yellow
+            }
+          }
+          
+          Write-Host "✅ PSScriptAnalyzer validation passed" -ForegroundColor Green
+
+      - name: 🧪 Test Module Loading
+        shell: pwsh
+        run: |
+          Write-Host "🔄 Testing module loading..." -ForegroundColor Yellow
+          
+          try {
+            Import-Module "./$env:MANIFEST_FILE" -Force -ErrorAction Stop
+            
+            $module = Get-Module -Name $env:MODULE_NAME
+            
+            if ($null -eq $module) {
+              Write-Host "❌ Module failed to load!" -ForegroundColor Red
+              exit 1
+            }
+            
+            Write-Host "✅ Module loaded successfully" -ForegroundColor Green
+            Write-Host "  Exported Commands: $($module.ExportedCommands.Count)" -ForegroundColor Cyan
+            Write-Host "  Exported Aliases: $($module.ExportedAliases.Count)" -ForegroundColor Cyan
+            
+            # Test a sample function exists
+            if (Get-Command -Name 'Get-Configuration' -Module $env:MODULE_NAME -ErrorAction SilentlyContinue) {
+              Write-Host "  ✅ Sample function 'Get-Configuration' found" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠️ Sample function 'Get-Configuration' not found" -ForegroundColor Yellow
+            }
+          }
+          catch {
+            Write-Host "❌ Module loading failed!" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+            exit 1
+          }
+
+      - name: 📦 Prepare Module for Publishing
+        shell: pwsh
+        run: |
+          Write-Host "📦 Preparing module for publishing..." -ForegroundColor Yellow
+          
+          # Create a clean publish directory
+          $publishDir = "./publish"
+          $moduleDir = Join-Path $publishDir $env:MODULE_NAME
+          
+          if (Test-Path $publishDir) {
+            Remove-Item $publishDir -Recurse -Force
+          }
+          
+          New-Item -ItemType Directory -Path $moduleDir -Force | Out-Null
+          
+          Write-Host "  Copying module files..." -ForegroundColor Cyan
+          
+          # Copy essential files only
+          $filesToCopy = @(
+            "$env:MODULE_NAME.psd1"
+            "$env:MODULE_NAME.psm1"
+            "LICENSE"
+            "README.md"
+            "VERSION"
+          )
+          
+          foreach ($file in $filesToCopy) {
+            if (Test-Path $file) {
+              Copy-Item -Path $file -Destination $moduleDir -Force
+              Write-Host "    ✅ Copied: $file" -ForegroundColor Green
+            } else {
+              Write-Host "    ⚠️ Not found: $file" -ForegroundColor Yellow
+            }
+          }
+          
+          # Copy directories
+          $dirsToCopy = @(
+            "domains"
+            "orchestration"
+            "automation-scripts"
+          )
+          
+          foreach ($dir in $dirsToCopy) {
+            if (Test-Path $dir) {
+              Copy-Item -Path $dir -Destination $moduleDir -Recurse -Force
+              Write-Host "    ✅ Copied: $dir/" -ForegroundColor Green
+            } else {
+              Write-Host "    ⚠️ Not found: $dir/" -ForegroundColor Yellow
+            }
+          }
+          
+          Write-Host "✅ Module prepared in: $moduleDir" -ForegroundColor Green
+
+      - name: 🔐 Check API Key
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrEmpty("${{ secrets.PSGALLERY_API_KEY }}")) {
+            Write-Host "⚠️ PowerShell Gallery API key not configured!" -ForegroundColor Yellow
+            Write-Host "📝 To publish to PowerShell Gallery:" -ForegroundColor Cyan
+            Write-Host "  1. Generate API key at https://www.powershellgallery.com/account/apikeys" -ForegroundColor White
+            Write-Host "  2. Add as GitHub secret: PSGALLERY_API_KEY" -ForegroundColor White
+            Write-Host "  3. Re-run this workflow" -ForegroundColor White
+            
+            if ("${{ github.event_name }}" -eq "release") {
+              Write-Host ""
+              Write-Host "⚠️ Skipping publish step (no API key)" -ForegroundColor Yellow
+              echo "skip_publish=true" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "✅ API key configured" -ForegroundColor Green
+            echo "skip_publish=false" >> $env:GITHUB_OUTPUT
+          }
+        id: check_key
+
+      - name: 🚀 Publish to PowerShell Gallery
+        if: steps.check_key.outputs.skip_publish != 'true' && (github.event.inputs.dry_run != 'true' || github.event_name == 'release')
+        shell: pwsh
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          Write-Host "🚀 Publishing to PowerShell Gallery..." -ForegroundColor Magenta
+          
+          $moduleDir = "./publish/$env:MODULE_NAME"
+          
+          try {
+            # Publish module
+            Publish-Module `
+              -Path $moduleDir `
+              -NuGetApiKey $env:PSGALLERY_API_KEY `
+              -Repository PSGallery `
+              -Verbose `
+              -ErrorAction Stop
+            
+            Write-Host ""
+            Write-Host "✅ Successfully published to PowerShell Gallery!" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "📦 Module: $env:MODULE_NAME" -ForegroundColor Cyan
+            Write-Host "🔖 Version: ${{ steps.version.outputs.version }}" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "🌐 View at: https://www.powershellgallery.com/packages/$env:MODULE_NAME/${{ steps.version.outputs.version }}" -ForegroundColor Blue
+            Write-Host ""
+            Write-Host "📥 Install with:" -ForegroundColor Yellow
+            Write-Host "   Install-Module -Name $env:MODULE_NAME" -ForegroundColor White
+          }
+          catch {
+            Write-Host "❌ Publishing failed!" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+            
+            # Check for common errors
+            if ($_.Exception.Message -like "*conflict*" -or $_.Exception.Message -like "*version*already*exists*") {
+              Write-Host ""
+              Write-Host "⚠️ This version may already exist in PowerShell Gallery" -ForegroundColor Yellow
+              Write-Host "   Check: https://www.powershellgallery.com/packages/$env:MODULE_NAME" -ForegroundColor Cyan
+            }
+            
+            exit 1
+          }
+
+      - name: 🧪 Dry Run Summary
+        if: github.event.inputs.dry_run == 'true' && github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "🧪 DRY RUN MODE - Module NOT published" -ForegroundColor Yellow
+          Write-Host ""
+          Write-Host "✅ Validation completed successfully:" -ForegroundColor Green
+          Write-Host "  • Module manifest valid" -ForegroundColor White
+          Write-Host "  • PSScriptAnalyzer passed" -ForegroundColor White
+          Write-Host "  • Module loads correctly" -ForegroundColor White
+          Write-Host "  • Package prepared" -ForegroundColor White
+          Write-Host ""
+          Write-Host "To publish for real:" -ForegroundColor Cyan
+          Write-Host "  • Set dry_run to false in workflow_dispatch" -ForegroundColor White
+          Write-Host "  • Or create a GitHub release (auto-publishes)" -ForegroundColor White
+
+      - name: 🔍 Verify Publication
+        if: steps.check_key.outputs.skip_publish != 'true' && (github.event.inputs.dry_run != 'true' || github.event_name == 'release')
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Verifying publication..." -ForegroundColor Yellow
+          
+          # Wait a bit for PowerShell Gallery to index
+          Write-Host "  Waiting 30 seconds for indexing..." -ForegroundColor Cyan
+          Start-Sleep -Seconds 30
+          
+          try {
+            # Try to find the module
+            $module = Find-Module -Name $env:MODULE_NAME -RequiredVersion "${{ steps.version.outputs.version }}" -ErrorAction Stop
+            
+            Write-Host "✅ Module found in PowerShell Gallery!" -ForegroundColor Green
+            Write-Host "  Name: $($module.Name)" -ForegroundColor Cyan
+            Write-Host "  Version: $($module.Version)" -ForegroundColor Cyan
+            Write-Host "  Author: $($module.Author)" -ForegroundColor Cyan
+            Write-Host "  Published: $($module.PublishedDate)" -ForegroundColor Cyan
+          }
+          catch {
+            Write-Host "⚠️ Module not found yet (may take a few minutes to index)" -ForegroundColor Yellow
+            Write-Host "   Check manually: https://www.powershellgallery.com/packages/$env:MODULE_NAME" -ForegroundColor Cyan
+          }
+
+      - name: 📊 Generate Summary
+        if: always()
+        shell: pwsh
+        run: |
+          echo "## 📦 PowerShell Gallery Publication" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          if ("${{ steps.check_key.outputs.skip_publish }}" -eq "true") {
+            echo "⚠️ **Skipped**: API key not configured" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            echo "To enable publishing, configure the \`PSGALLERY_API_KEY\` secret." >> $env:GITHUB_STEP_SUMMARY
+          } elseif ("${{ github.event.inputs.dry_run }}" -eq "true" -and "${{ github.event_name }}" -eq "workflow_dispatch") {
+            echo "🧪 **Dry Run**: Module validated but not published" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            echo "All validation checks passed. Ready for publication." >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            echo "### ✅ Publication Details" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            echo "- **Module**: $env:MODULE_NAME" >> $env:GITHUB_STEP_SUMMARY
+            echo "- **Version**: ${{ steps.version.outputs.version }}" >> $env:GITHUB_STEP_SUMMARY
+            echo "- **Gallery**: [PowerShell Gallery](https://www.powershellgallery.com/packages/$env:MODULE_NAME/${{ steps.version.outputs.version }})" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            echo "### 📥 Installation" >> $env:GITHUB_STEP_SUMMARY
+            echo '```powershell' >> $env:GITHUB_STEP_SUMMARY
+            echo "Install-Module -Name $env:MODULE_NAME" >> $env:GITHUB_STEP_SUMMARY
+            echo '```' >> $env:GITHUB_STEP_SUMMARY
+          }
