@@ -168,10 +168,11 @@ Merge PR #456 to main
 - Closing an auto PR does not affect the parent PR
 - Auto branches can be recreated by re-running the workflow
 
-### No Manual Modifications
-- Auto PRs should not be manually modified
-- If changes are needed, update the source code and re-run the workflow
-- The workflow will update the existing auto PR or create a new one
+### Manual Modifications Policy
+- Manual modifications to auto PRs are generally discouraged, as they may be overwritten by subsequent workflow runs
+- If changes are needed, it is strongly recommended to update the source code and re-run the workflow
+- If absolutely necessary, manual modifications can be made before merging, but should be limited to urgent fixes that cannot be addressed by rerunning the workflow
+- The workflow will update the existing auto PR or create a new one, potentially overwriting manual changes
 
 ### When Changes Aren't Detected
 If no documentation or index changes are detected, the workflow will:
