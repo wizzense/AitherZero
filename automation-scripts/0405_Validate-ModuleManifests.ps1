@@ -22,6 +22,10 @@
     az 0405 -Fix
     Validates and automatically fixes all Unicode issues found
 .NOTES
+    Stage: Testing
+    Order: 0405
+    Dependencies: 0400
+    Tags: testing, validation, manifest, unicode
     Script ID: 0405
     Category: Testing & Validation
     Requires: PowerShell 7.0+
@@ -36,6 +40,14 @@ param(
     [switch]$Fix,
     [string[]]$Path
 )
+
+# Script metadata (kept as comment for documentation)
+# Stage: Testing
+# Order: 0405
+# Dependencies: 0400
+# Tags: testing, validation, manifest, unicode
+# RequiresAdmin: No
+# SupportsWhatIf: Yes
 
 # Import required functions
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -99,6 +111,12 @@ try {
 
     Write-Log "Found $($manifestFiles.Count) manifest files to validate" -Level Information
 
+    # Check if we should proceed with validation
+    if (-not $PSCmdlet.ShouldProcess("$($manifestFiles.Count) module manifest file(s)", "Validate module manifests")) {
+        Write-Log "WhatIf: Would validate $($manifestFiles.Count) module manifest file(s)" -Level Information
+        exit 0
+    }
+
     $totalIssues = 0
     $fixedFiles = 0
     $failedFiles = 0
@@ -110,6 +128,11 @@ try {
             # Build arguments for validation script
             $validationArgs = @('-Path', $manifestFile)
             if ($Fix) {
+                # Check if user approves fixing this specific file
+                if (-not $PSCmdlet.ShouldProcess($manifestFile, "Fix Unicode issues")) {
+                    Write-Log "Skipping fixes for: $(Split-Path $manifestFile -Leaf)" -Level Information
+                    continue
+                }
                 $validationArgs += '-Fix'
             }
 
