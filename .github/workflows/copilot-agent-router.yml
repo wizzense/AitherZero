@@ -175,7 +175,7 @@ jobs:
 
             # Rachel - PowerShell
             $score = 0
-            if ($patterns.powershell.Count -gt 0) { $score += $patterns.powershell.Count * 2 }
+            if ($patterns.powershell.Count -gt 0) { $score += $patterns.powershell.Count * 3 }
             if ($keywords.powershell) { $score += 2 }
             $agentScores['rachel'] = $score
 
