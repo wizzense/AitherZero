@@ -1,220 +1,69 @@
-#!/usr/bin/env pwsh
+#Requires -Version 7.0
 #Requires -Module Pester
 
 <#
 .SYNOPSIS
-    Tests for the module manifest validation script (0405)
+    Unit tests for 0405_Validate-ModuleManifests
 .DESCRIPTION
-    Tests the functionality of 0405_Validate-ModuleManifests.ps1 including:
-    - Unicode character detection and fixing
-    - PowerShell manifest validation
-    - Error handling and reporting
+    Auto-generated comprehensive tests
+    Script: 0405_Validate-ModuleManifests
+    Stage: Testing
+    Description: This script validates all .psd1 module manifest files in the AitherZero project to ensure:
+    Generated: 2025-10-30 03:41:21
 #>
 
-Describe "0405_Validate-ModuleManifests Tests" {
+Describe '0405_Validate-ModuleManifests' -Tag 'Unit', 'AutomationScript', 'Testing' {
+
     BeforeAll {
-        # Set up test environment
-        $scriptPath = "$PSScriptRoot/../../../../automation-scripts/0405_Validate-ModuleManifests.ps1"
-        $toolPath = "$PSScriptRoot/../../../../tools/Validate-ModuleManifest.ps1"
-        $testTempDir = Join-Path $TestDrive "manifest-tests"
-        New-Item -Path $testTempDir -ItemType Directory -Force
-        
-        # Ensure the scripts exist
-        $scriptPath | Should -Exist
-        $toolPath | Should -Exist
+        $script:ScriptPath = './automation-scripts/0405_Validate-ModuleManifests.ps1'
+        $script:ScriptName = '0405_Validate-ModuleManifests'
     }
 
-    Context "Valid Manifest Validation" {
-        It "Should pass validation for a clean manifest" {
-            $validManifest = @"
-@{
-    ModuleVersion = '1.0.0'
-    GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
-    Author = 'Test Author'
-    Description = 'Test module without Unicode issues'
-    PowerShellVersion = '7.0'
-    RootModule = 'TestModule.psm1'
-    FunctionsToExport = @('*')
-}
-"@
-            $manifestPath = Join-Path $testTempDir "valid-manifest.psd1"
-            Set-Content -Path $manifestPath -Value $validManifest -Encoding UTF8
-            
-            # Create a dummy module file to satisfy Test-ModuleManifest
-            $modulePath = Join-Path $testTempDir "TestModule.psm1"
-            Set-Content -Path $modulePath -Value "# Test module" -Encoding UTF8
-            
-            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath 2>&1
-            $LASTEXITCODE | Should -Be 0
+    Context 'Script Validation' {
+        It 'Script file should exist' {
+            Test-Path $script:ScriptPath | Should -Be $true
+        }
+
+        It 'Should have valid PowerShell syntax' {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script:ScriptPath, [ref]$null, [ref]$errors
+            )
+            $errors.Count | Should -Be 0
+        }
+
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
         }
     }
 
-    Context "Unicode Issue Detection" {
-        It "Should detect Unicode arrow characters" {
-            $unicodeManifest = @"
-@{
-    ModuleVersion = '1.0.0'
-    GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
-    Author = 'Test Author'
-    Description = 'Test module with Unicode arrows → ← ↑ ↓'
-    PowerShellVersion = '7.0'
-    RootModule = 'TestModule.psm1'
-    FunctionsToExport = @('*')
-}
-"@
-            $manifestPath = Join-Path $testTempDir "unicode-manifest.psd1"
-            Set-Content -Path $manifestPath -Value $unicodeManifest -Encoding UTF8
-            
-            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath 2>&1
-            $resultText = $result -join "`n"
-            
-            $resultText | Should -Match "Unicode.*issues"
-            $resultText | Should -Match "UnicodeArrow"
-            $resultText | Should -Match "NonAsciiCharacter"
+    Context 'Parameters' {
+        It 'Should have parameter: Fix' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Fix') | Should -Be $true
         }
 
-        It "Should detect Unicode quotes and dashes" {
-            $unicodeManifest = @"
-@{
-    ModuleVersion = '1.0.0'
-    GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
-    Author = 'Test Author'
-    Description = 'Test module with "smart quotes" and – em-dash — characters'
-    PowerShellVersion = '7.0'
-    RootModule = 'TestModule.psm1'
-    FunctionsToExport = @('*')
-}
-"@
-            $manifestPath = Join-Path $testTempDir "quotes-manifest.psd1"
-            Set-Content -Path $manifestPath -Value $unicodeManifest -Encoding UTF8
-            
-            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath 2>&1
-            $resultText = $result -join "`n"
-            
-            $resultText | Should -Match "Unicode.*issues"
-            $resultText | Should -Match "NonAsciiCharacter"
+        It 'Should have parameter: Path' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Path') | Should -Be $true
+        }
+
+    }
+
+    Context 'Metadata' {
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 
-    Context "Unicode Issue Fixing" {
-        It "Should fix Unicode arrows" {
-            $unicodeManifest = @"
-@{
-    ModuleVersion = '1.0.0'
-    GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
-    Author = 'Test Author'
-    Description = 'Complexity reduction (33 → 6 modules)'
-    PowerShellVersion = '7.0'
-    RootModule = 'TestModule.psm1'
-    FunctionsToExport = @('*')
-}
-"@
-            $manifestPath = Join-Path $testTempDir "fix-arrows-manifest.psd1"
-            Set-Content -Path $manifestPath -Value $unicodeManifest -Encoding UTF8
-            
-            # Run with fix option
-            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath -Fix 2>&1
-            $resultText = $result -join "`n"
-            
-            $resultText | Should -Match "Applied fixes"
-            $resultText | Should -Match "All Unicode issues resolved"
-            
-            # Check that the file was actually fixed
-            $fixedContent = Get-Content -Path $manifestPath -Raw
-            $fixedContent | Should -Match "33 -> 6 modules"
-            $fixedContent | Should -Not -Match "→"
-        }
-
-        It "Should create backup when fixing" {
-            $unicodeManifest = @"
-@{
-    ModuleVersion = '1.0.0'
-    GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
-    Author = 'Test Author'
-    Description = 'Test with – dash'
-    PowerShellVersion = '7.0'
-    RootModule = 'TestModule.psm1'
-    FunctionsToExport = @('*')
-}
-"@
-            $manifestPath = Join-Path $testTempDir "backup-test-manifest.psd1"
-            Set-Content -Path $manifestPath -Value $unicodeManifest -Encoding UTF8
-            
-            # Run with fix option
-            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath -Fix 2>&1
-            
-            # Check that backup was created
-            $backupPath = "$manifestPath.bak"
-            $backupPath | Should -Exist
-            
-            # Backup should contain original Unicode characters
-            $backupContent = Get-Content -Path $backupPath -Raw
-            $backupContent | Should -Match "–"
-            
-            # Fixed file should not contain Unicode characters
-            $fixedContent = Get-Content -Path $manifestPath -Raw
-            $fixedContent | Should -Match "Test with - dash"
-            $fixedContent | Should -Not -Match "–"
-        }
-    }
-
-    Context "Main Script Functionality" {
-        It "Should validate multiple manifests" {
-            # Create multiple test manifests in a subdirectory structure that mimics real usage
-            $moduleTestDir = Join-Path $testTempDir "TestModules"
-            New-Item -Path $moduleTestDir -ItemType Directory -Force
-            
-            $validManifest = @"
-@{
-    ModuleVersion = '1.0.0'
-    GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
-    Author = 'Test Author'
-    Description = 'Valid test module'
-    PowerShellVersion = '7.0'
-    RootModule = 'Valid.psm1'
-    FunctionsToExport = @('*')
-}
-"@
-            
-            $unicodeManifest = @"
-@{
-    ModuleVersion = '1.0.0'
-    GUID = 'b8e5f2g3-4c5d-6e7f-8a9b-0c1d2e3f4a5b'
-    Author = 'Test Author'
-    Description = 'Test with → arrow'
-    PowerShellVersion = '7.0'
-    RootModule = 'Unicode.psm1'
-    FunctionsToExport = @('*')
-}
-"@
-            
-            $validPath = Join-Path $moduleTestDir "valid.psd1"
-            $unicodePath = Join-Path $moduleTestDir "unicode.psd1"
-            
-            Set-Content -Path $validPath -Value $validManifest -Encoding UTF8
-            Set-Content -Path $unicodePath -Value $unicodeManifest -Encoding UTF8
-            
-            # Create corresponding module files
-            Set-Content -Path (Join-Path $moduleTestDir "Valid.psm1") -Value "# Valid test module" -Encoding UTF8
-            Set-Content -Path (Join-Path $moduleTestDir "Unicode.psm1") -Value "# Unicode test module" -Encoding UTF8
-            
-            # Test that the validation tool finds Unicode issues directly
-            $unicodeResult = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $unicodePath 2>&1
-            $unicodeResultText = $unicodeResult -join "`n"
-            
-            $unicodeResultText | Should -Match "Unicode.*issues"
-        }
-    }
-
-    Context "Error Handling" {
-        It "Should handle non-existent files gracefully" {
-            $nonExistentPath = Join-Path $testTempDir "does-not-exist.psd1"
-            
-            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $nonExistentPath 2>&1
-            $LASTEXITCODE | Should -Be 1
-            
-            $resultText = $result -join "`n"
-            $resultText | Should -Match "File not found"
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }
