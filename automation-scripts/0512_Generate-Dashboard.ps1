@@ -430,7 +430,8 @@ function Get-PSScriptAnalyzerMetrics {
         Errors = 0
         Warnings = 0
         Information = 0
-        FilesAnalyzed = 0
+        FilesAnalyzedCount = 0
+        FilesAnalyzed = @()
         LastRun = $null
         TopIssues = @()
     }
@@ -445,6 +446,7 @@ function Get-PSScriptAnalyzerMetrics {
             $metrics.Warnings = $pssaData.Summary.Warnings
             $metrics.Information = $pssaData.Summary.Information
             $metrics.FilesAnalyzed = $pssaData.FilesAnalyzed
+            $metrics.FilesAnalyzedCount = @($pssaData.FilesAnalyzed).Count
             $metrics.LastRun = $pssaData.GeneratedAt
             
             # Get top issues by count
@@ -1252,6 +1254,8 @@ $manifestTagsSection
         <ul>
             <li><a href="#overview">Overview</a></li>
             <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#quality">Code Quality</a></li>
+            <li><a href="#pssa">PSScriptAnalyzer</a></li>
             <li><a href="#manifest">Module Manifest</a></li>
             <li><a href="#domains">Domain Modules</a></li>
             <li><a href="#health">Project Health</a></li>
@@ -1321,6 +1325,24 @@ $manifestTagsSection
                         <div class="metric-label">
                             $($Metrics.Tests.Unit) Unit | $($Metrics.Tests.Integration) Integration
                         </div>
+                        $(if ($Metrics.Tests.LastRun) {
+                            $testStatusColor = if ($Metrics.Tests.SuccessRate -ge 95) { 'var(--success)' } 
+                                              elseif ($Metrics.Tests.SuccessRate -ge 80) { 'var(--warning)' } 
+                                              else { 'var(--error)' }
+                            @"
+                        <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid $testStatusColor;">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                ✅ $($Metrics.Tests.Passed) Passed | ❌ $($Metrics.Tests.Failed) Failed | ⏭️ $($Metrics.Tests.Skipped) Skipped
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                Success Rate: <span style="color: $testStatusColor; font-weight: 600;">$($Metrics.Tests.SuccessRate)%</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Last run: $($Metrics.Tests.LastRun)
+                            </div>
+                        </div>
+"@
+                        })
                     </div>
 
                     <div class="metric-card">
@@ -1409,6 +1431,66 @@ $manifestTagsSection
                     "<p class='metric-label' style='text-align: center; margin-top: 20px;'>Last validation: $($QualityMetrics.LastValidation)</p>"
                 } else {
                     "<p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>"
+                })
+            </section>
+
+            <section class="section" id="pssa">
+                <h2>🔬 PSScriptAnalyzer Analysis</h2>
+                $(if ($PSScriptAnalyzerMetrics.FilesAnalyzedCount -gt 0) {
+                    $issuesColor = if ($PSScriptAnalyzerMetrics.Errors -gt 0) { 'var(--error)' } 
+                                   elseif ($PSScriptAnalyzerMetrics.Warnings -gt 5) { 'var(--warning)' } 
+                                   else { 'var(--success)' }
+                    
+                    $topIssuesHTML = if ($PSScriptAnalyzerMetrics.TopIssues -and @($PSScriptAnalyzerMetrics.TopIssues).Count -gt 0) {
+                        $PSScriptAnalyzerMetrics.TopIssues | ForEach-Object {
+                            $severityIcon = switch ([int]$_.Severity) {
+                                3 { '❌' }  # Error
+                                2 { '⚠️' }  # Warning
+                                1 { 'ℹ️' }  # Information
+                                default { '📝' }
+                            }
+                            "<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>$severityIcon <strong>$($_.Rule)</strong> - $($_.Count) instances</li>"
+                        } | Join-String -Separator "`n"
+                    } else {
+                        "<li style='padding: 8px 0;'>No issues found</li>"
+                    }
+                    
+                    @"
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Files Analyzed</h3>
+                        <div class="metric-value">$($PSScriptAnalyzerMetrics.FilesAnalyzedCount)</div>
+                        <div class="metric-label">Last run: $(if($PSScriptAnalyzerMetrics.LastRun){$PSScriptAnalyzerMetrics.LastRun}else{'Never'})</div>
+                    </div>
+                    
+                    <div class="metric-card" style="border-left-color: $issuesColor;">
+                        <h3>⚠️ Total Issues</h3>
+                        <div class="metric-value" style="color: $issuesColor;">$($PSScriptAnalyzerMetrics.TotalIssues)</div>
+                        <div class="metric-label">
+                            ❌ $($PSScriptAnalyzerMetrics.Errors) Errors | 
+                            ⚠️ $($PSScriptAnalyzerMetrics.Warnings) Warnings | 
+                            ℹ️ $($PSScriptAnalyzerMetrics.Information) Info
+                        </div>
+                    </div>
+                </div>
+                
+                $(if (@($PSScriptAnalyzerMetrics.TopIssues).Count -gt 0) {
+                    @"
+                <div style="margin-top: 20px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 15px;">🔝 Top Issues</h3>
+                    <div style="background: var(--bg-darker); padding: 20px; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <ul style="list-style: none; margin: 0;">
+$topIssuesHTML
+                        </ul>
+                    </div>
+                </div>
+"@
+                })
+                
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./az 0404</code> to analyze code quality</p>
+"@
+                } else {
+                    "<p class='metric-label' style='text-align: center;'>⚠️ No PSScriptAnalyzer data available. Run <code>./az 0404</code> to analyze your code.</p>"
                 })
             </section>
 

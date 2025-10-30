@@ -534,6 +534,8 @@
         <ul>
             <li><a href="#overview">Overview</a></li>
             <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#quality">Code Quality</a></li>
+            <li><a href="#pssa">PSScriptAnalyzer</a></li>
             <li><a href="#manifest">Module Manifest</a></li>
             <li><a href="#domains">Domain Modules</a></li>
             <li><a href="#health">Project Health</a></li>
@@ -545,7 +547,7 @@
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-30 03:39:03
+        🔄 Last updated: 2025-10-30 03:43:27
     </div>
 
     <div class="container">
@@ -593,7 +595,7 @@
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">83,630</div>
+                        <div class="metric-value">83,712</div>
                         <div class="metric-label">0 Functions</div>
                     </div>
 
@@ -602,6 +604,17 @@
                         <div class="metric-value">117</div>
                         <div class="metric-label">
                             103 Unit | 14 Integration
+                        </div>
+                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--success);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                ✅ 9500 Passed | ❌ 500 Failed | ⏭️ 0 Skipped
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                Success Rate: <span style="color: var(--success); font-weight: 600;">95%</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Last run: 2025-10-30 03:31:15
+                            </div>
                         </div>
                     </div>
 
@@ -688,6 +701,40 @@
                 </div>
                 
                 <p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>
+            </section>
+
+            <section class="section" id="pssa">
+                <h2>🔬 PSScriptAnalyzer Analysis</h2>
+                                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Files Analyzed</h3>
+                        <div class="metric-value">22</div>
+                        <div class="metric-label">Last run: 2025-10-26 22:29:41 UTC</div>
+                    </div>
+                    
+                    <div class="metric-card" style="border-left-color: var(--warning);">
+                        <h3>⚠️ Total Issues</h3>
+                        <div class="metric-value" style="color: var(--warning);">22</div>
+                        <div class="metric-label">
+                            ❌ 0 Errors | 
+                            ⚠️ 22 Warnings | 
+                            ℹ️ 0 Info
+                        </div>
+                    </div>
+                </div>
+                
+                                <div style="margin-top: 20px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 15px;">🔝 Top Issues</h3>
+                    <div style="background: var(--bg-darker); padding: 20px; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <ul style="list-style: none; margin: 0;">
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSUseDeclaredVarsMoreThanAssignments</strong> - 11 instances</li>
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSPossibleIncorrectComparisonWithNull</strong> - 7 instances</li>
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSAvoidGlobalVars</strong> - 4 instances</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./az 0404</code> to analyze code quality</p>
             </section>
 
             <section class="section" id="manifest">
@@ -808,6 +855,10 @@
                     <div class="info-card-body">
                         <ul class="commit-list">
                             <li class='commit-item'>
+                                <span class='commit-hash'>9bd98bd</span>
+                                <span class='commit-message'>Add PSScriptAnalyzer metrics and enhance data collection in dashboard</span>
+                            </li>
+                            <li class='commit-item'>
                                 <span class='commit-hash'>6b71d56</span>
                                 <span class='commit-message'>Initial plan</span>
                             </li>
@@ -836,7 +887,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.12</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-30 03:39:03</p>
+                        <p><strong>Last Scan:</strong> 2025-10-30 03:43:27</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -856,7 +907,7 @@
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-30 03:39:03 |
+            Generated by AitherZero Dashboard | 2025-10-30 03:43:27 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
