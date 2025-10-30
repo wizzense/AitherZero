@@ -220,7 +220,7 @@ function Get-ProjectMetrics {
                 }
             }
         } catch {
-            # Silently skip files that can't be read
+            Write-ScriptLog -Level Warning -Message "Failed to parse file for metrics: $($file.Name) - $_"
         }
     }
     
@@ -499,7 +499,7 @@ function Get-QualityMetrics {
                 })
             }
         } catch {
-            # Skip invalid summaries
+            Write-ScriptLog -Level Warning -Message "Failed to parse quality summary: $($summaryFile.Name) - $_"
         }
     }
     
@@ -911,7 +911,7 @@ function Get-DetailedTestResults {
                 }
             }
         } catch {
-            # Skip files that can't be read
+            Write-ScriptLog -Level Warning -Message "Failed to read test file: $($testFile.Name) - $_"
         }
     }
     
@@ -1429,12 +1429,12 @@ $domainCardsJoined
         $manifestTagsSection = ""
         if ($manifestTagsHTML) {
             $manifestTagsSection = @"
-                    <div style="margin-top: 15px;">
-                        <div class="label" style="margin-bottom: 10px;">Tags</div>
-                        <div class="badge-grid">
-                            $manifestTagsHTML
-                        </div>
+                <div style="margin-top: 15px;">
+                    <div class="label" style="margin-bottom: 10px;">Tags</div>
+                    <div class="badge-grid">
+                        $manifestTagsHTML
                     </div>
+                </div>
 "@
         }
         
@@ -2090,7 +2090,7 @@ $manifestTagsSection
                             $($Metrics.Files.PowerShell) Scripts | $($Metrics.Files.Modules) Modules | $($Metrics.Files.Data) Data
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            📄 $($Metrics.Files.Markdown) Markdown | 🔧 $($Metrics.Files.YAML) YAML | 📋 $($Metrics.Files.JSON) JSON
+                        📄 $($Metrics.Files.Markdown) Markdown | 🔧 $($Metrics.Files.YAML) YAML | 📋 $($Metrics.Files.JSON) JSON
                         </div>
                     </div>
 
@@ -2576,6 +2576,7 @@ $(if ($Metrics.Tests.LastRun) {
     @"
 | ✅ **Test Results** | **$($Metrics.Tests.Passed)/$totalTests** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
 | 📊 **Last Test Run** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+
 "@
 } else {
 "| ⚠️ **Test Results** | **N/A** | No test results available. Run ``./az 0402`` |
