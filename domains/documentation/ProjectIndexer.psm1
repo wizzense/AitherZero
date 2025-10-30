@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -640,7 +640,7 @@ function New-DirectoryIndex {
     }
 }
 
-function New-ProjectIndexes {
+function New-ProjectIndex {
     <#
     .SYNOPSIS
         Generate indexes for entire project tree
@@ -654,9 +654,14 @@ function New-ProjectIndexes {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [string]$RootPath = $script:IndexerState.Config.RootPath,
-        [switch]$Recursive = $true,
+        [switch]$Recursive,
         [switch]$Force
     )
+    
+    # Default Recursive to true if not explicitly set
+    if (-not $PSBoundParameters.ContainsKey('Recursive')) {
+        $Recursive = $true
+    }
     
     Write-IndexLog "Starting project indexing" -Data @{
         RootPath = $RootPath
@@ -767,7 +772,7 @@ function Update-ProjectManifest {
     
     $functionsToExport = @(
         'Initialize-ProjectIndexer',
-        'New-ProjectIndexes',
+        'New-ProjectIndex',
         'New-DirectoryIndex',
         'Get-DirectoryContent',
         'Test-ContentChanged',
@@ -802,6 +807,12 @@ function Update-ProjectManifest {
         return $true
     }
     
+    # Use ShouldProcess to confirm the update
+    if (-not $PSCmdlet.ShouldProcess($ManifestPath, "Update manifest with missing functions: $($missingFunctions -join ', ')")) {
+        Write-IndexLog "Manifest update cancelled by user"
+        return $false
+    }
+    
     # Note: Actual manifest update would require careful parsing of the .psd1 file
     # For now, we'll just report what needs to be added
     Write-IndexLog "Manifest update required - add these functions to FunctionsToExport:" -Level Warning
@@ -817,7 +828,7 @@ function Update-ProjectManifest {
 # Export module members
 Export-ModuleMember -Function @(
     'Initialize-ProjectIndexer',
-    'New-ProjectIndexes',
+    'New-ProjectIndex',
     'New-DirectoryIndex',
     'Compare-IndexContent',
     'Get-DirectoryContent',
