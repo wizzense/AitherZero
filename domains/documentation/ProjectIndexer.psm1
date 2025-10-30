@@ -546,7 +546,7 @@ function New-DirectoryIndex {
     # Skip root index.md - it's managed manually for GitHub Pages dashboard redirect
     $isRoot = ($Path -eq $config.RootPath) -or ([System.IO.Path]::GetFullPath($Path) -eq [System.IO.Path]::GetFullPath($config.RootPath))
     if ($isRoot) {
-        Write-IndexLog "Skipping root index.md (managed manually for GitHub Pages)" -Level Debug
+        Write-IndexLog "Skipping root index.md (managed manually for GitHub Pages)" -Level Information
         return @{
             Success = $true
             Updated = $false
