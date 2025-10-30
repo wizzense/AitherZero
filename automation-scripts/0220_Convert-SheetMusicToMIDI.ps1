@@ -394,6 +394,7 @@ except ImportError:
         from mido import MidiFile, MidiTrack, Message, MetaMessage
     except ImportError:
         print("Error: Neither music21 nor mido is installed. Please install at least one of these Python packages.", file=sys.stderr)
+        print("Install with: pip install -r requirements-music.txt", file=sys.stderr)
         sys.exit(1)
 
 def note_to_midi(note_name):
