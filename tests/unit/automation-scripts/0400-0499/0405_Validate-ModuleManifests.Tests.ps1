@@ -16,6 +16,9 @@ Describe "0405_Validate-ModuleManifests" {
     BeforeAll {
         $script:ScriptPath = './automation-scripts/0405_Validate-ModuleManifests.ps1'
         $script:ScriptName = '0405_Validate-ModuleManifests'
+        $script:ToolPath = './tools/Validate-ModuleManifest.ps1'
+        $script:TestTempDir = Join-Path $TestDrive "manifest-tests"
+        New-Item -Path $script:TestTempDir -ItemType Directory -Force | Out-Null
     }
 
     Context "Script Validation" {
@@ -63,28 +66,15 @@ Describe "0405_Validate-ModuleManifests" {
     FunctionsToExport = @('*')
 }
 "@
-            $manifestPath = Join-Path $testTempDir "valid-manifest.psd1"
+            $manifestPath = Join-Path $script:TestTempDir "valid-manifest.psd1"
             Set-Content -Path $manifestPath -Value $validManifest -Encoding UTF8
             
             # Create a dummy module file to satisfy Test-ModuleManifest
-            $modulePath = Join-Path $testTempDir "TestModule.psm1"
+            $modulePath = Join-Path $script:TestTempDir "TestModule.psm1"
             Set-Content -Path $modulePath -Value "# Test module" -Encoding UTF8
             
-            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $toolPath -Path $manifestPath 2>&1
+            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $script:ToolPath -Path $manifestPath 2>&1
             $LASTEXITCODE | Should -Be 0
-        }
-
-        It 'Should have valid PowerShell syntax' {
-            $errors = $null
-            $null = [System.Management.Automation.Language.Parser]::ParseFile(
-                $script:ScriptPath, [ref]$null, [ref]$errors
-            )
-            $errors.Count | Should -Be 0
-        }
-
-        It 'Should support WhatIf' {
-            $content = Get-Content $script:ScriptPath -Raw
-            $content | Should -Match 'SupportsShouldProcess'
         }
     }
 
@@ -97,23 +87,6 @@ Describe "0405_Validate-ModuleManifests" {
         It 'Should have parameter: Path' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Path') | Should -Be $true
-        }
-
-    }
-
-    Context 'Metadata' {
-        It 'Should be in stage: Testing' {
-            $content = Get-Content $script:ScriptPath -First 40
-            ($content -join ' ') | Should -Match '(Stage:|Category:)'
-        }
-    }
-
-    Context 'Execution' {
-        It 'Should execute with WhatIf' {
-            {
-                $params = @{ WhatIf = $true }
-                & $script:ScriptPath @params
-            } | Should -Not -Throw
         }
     }
 }

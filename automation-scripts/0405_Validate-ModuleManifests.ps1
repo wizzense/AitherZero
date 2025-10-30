@@ -84,16 +84,6 @@ try {
         }
     }
 
-    # WhatIf support
-    if ($WhatIfPreference) {
-        Write-Log "WhatIf: Would validate module manifests" -Level Information
-        if ($Fix) {
-            Write-Log "WhatIf: Would automatically fix Unicode issues" -Level Information
-        }
-        Write-Log "WhatIf: No changes will be made" -Level Information
-        exit 0
-    }
-
     Write-Log "Starting module manifest validation..." -Level Information
 
     # Find all .psd1 files to validate
@@ -121,6 +111,12 @@ try {
 
     Write-Log "Found $($manifestFiles.Count) manifest files to validate" -Level Information
 
+    # Check if we should proceed with validation
+    if (-not $PSCmdlet.ShouldProcess("$($manifestFiles.Count) module manifest file(s)", "Validate module manifests")) {
+        Write-Log "WhatIf: Would validate $($manifestFiles.Count) module manifest file(s)" -Level Information
+        exit 0
+    }
+
     $totalIssues = 0
     $fixedFiles = 0
     $failedFiles = 0
@@ -132,6 +128,11 @@ try {
             # Build arguments for validation script
             $validationArgs = @('-Path', $manifestFile)
             if ($Fix) {
+                # Check if user approves fixing this specific file
+                if (-not $PSCmdlet.ShouldProcess($manifestFile, "Fix Unicode issues")) {
+                    Write-Log "Skipping fixes for: $(Split-Path $manifestFile -Leaf)" -Level Information
+                    continue
+                }
                 $validationArgs += '-Fix'
             }
 
