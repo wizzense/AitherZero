@@ -2,11 +2,15 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0744_Generate-AutoDocumentation.ps1 Write-DocLog function fix
+    Unit tests for 0744_Generate-AutoDocumentation.ps1 Write-DocLog function
 .DESCRIPTION
     Tests that the Write-DocLog function handles all log levels correctly
     without throwing null ForegroundColor errors. This validates the fix
     where a default case was added to the switch statement.
+    
+    IMPORTANT: This test extracts the actual function from the script under test
+    using AST parsing, ensuring tests always reflect the current implementation.
+    Do NOT duplicate function code in tests - always extract from source.
 #>
 
 BeforeAll {
@@ -18,6 +22,37 @@ BeforeAll {
     if (-not (Test-Path $script:ScriptPath)) {
         throw "Cannot find script at: $script:ScriptPath"
     }
+    
+    # Helper function to extract function definitions from a script file using AST parsing.
+    # This approach ensures tests always use the actual function implementation from the script,
+    # not a duplicate that could become stale when the source code changes.
+    function Get-FunctionDefinitionFromScript {
+        param(
+            [string]$ScriptPath,
+            [string]$FunctionName
+        )
+        
+        # Parse the script file without executing it to get its Abstract Syntax Tree (AST)
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+            $ScriptPath, 
+            [ref]$null, 
+            [ref]$null
+        )
+        
+        # Find the specific function definition in the AST
+        $functionAst = $ast.FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+            $node.Name -eq $FunctionName
+        }, $true) | Select-Object -First 1
+        
+        if (-not $functionAst) {
+            throw "Function '$FunctionName' not found in script '$ScriptPath'"
+        }
+        
+        # Return the complete function definition as text
+        return $functionAst.Extent.Text
+    }
 }
 
 Describe "0744_Generate-AutoDocumentation - Write-DocLog Function Fix" {
@@ -25,24 +60,33 @@ Describe "0744_Generate-AutoDocumentation - Write-DocLog Function Fix" {
     Context "Validating the fix prevents null ForegroundColor errors" {
         
         BeforeAll {
-            # Mock Write-Host to track calls
+            # Extract the actual Write-DocLog function from the script under test using AST.
+            # This approach ensures we're testing the real implementation, not a potentially
+            # outdated duplicate. If the source function changes, the test will automatically
+            # reflect those changes, maintaining test accuracy.
+            $functionDefinition = Get-FunctionDefinitionFromScript -ScriptPath $script:ScriptPath -FunctionName 'Write-DocLog'
+            
+            # Set up mocks for dependencies BEFORE loading the extracted function
+            # so they're available when the function is invoked.
+            
+            # Ensure Write-CustomLog exists as a stub for mocking
+            if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+                function global:Write-CustomLog { param($Level, $Message, $Source, $Data) }
+            }
+            Mock Write-CustomLog { }
+            
+            # Mock Write-Host to track and validate calls without producing output
             Mock Write-Host { }
             
-            # Define the Write-DocLog function WITH THE FIX (default case in switch)
-            # This simulates the fixed version in the actual script
-            function Write-DocLog {
-                param([string]$Message, [string]$Level = 'Information', [hashtable]$Data = @{})
-                
-                # For testing, we skip the Write-CustomLog path and go directly to Write-Host
-                Write-Host "[$Level] [AutoDocumentation] $Message" -ForegroundColor $(
-                    switch ($Level) {
-                        'Information' { 'White' }
-                        'Warning' { 'Yellow' }
-                        'Error' { 'Red' }
-                        default { 'White' }  # THE FIX: default case prevents null
-                    }
-                )
-            }
+            # Mock Get-Command to return null for Write-CustomLog lookups.
+            # This forces Write-DocLog to use the Write-Host fallback path,
+            # which is what we want to test (the color mapping logic).
+            Mock Get-Command {
+                return $null
+            } -ParameterFilter { $Name -eq 'Write-CustomLog' }
+            
+            # Load the extracted function definition into the test scope
+            Invoke-Expression $functionDefinition
         }
         
         It "Should not throw error with Information level" {
