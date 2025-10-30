@@ -653,6 +653,676 @@ function Get-RecentActivity {
     return $activity
 }
 
+function Get-FileLevelMetrics {
+    <#
+    .SYNOPSIS
+        Get detailed quality metrics for every file in the project
+    #>
+    param(
+        [string]$ProjectPath
+    )
+    
+    Write-ScriptLog -Message "Collecting file-level quality metrics"
+    
+    $fileMetrics = @{
+        Files = @()
+        Summary = @{
+            TotalFiles = 0
+            AnalyzedFiles = 0
+            AverageScore = 0
+            ByDomain = @{}
+        }
+    }
+    
+    # Get all PowerShell files
+    $psFiles = @(
+        Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
+        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
+    
+    $fileMetrics.Summary.TotalFiles = $psFiles.Count
+    
+    foreach ($file in $psFiles) {
+        try {
+            $relativePath = $file.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
+            $domain = if ($relativePath -match '^domains/([^/]+)') { $matches[1] } 
+                     elseif ($relativePath -match '^automation-scripts') { 'automation-scripts' }
+                     else { 'other' }
+            
+            $fileData = @{
+                Path = $relativePath
+                Name = $file.Name
+                Domain = $domain
+                Lines = 0
+                Functions = 0
+                Score = 0
+                Issues = @()
+                HasTests = $false
+            }
+            
+            # Count lines and functions
+            $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
+            if ($content) {
+                $fileData.Lines = $content.Count
+                $funcMatches = $content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue
+                $fileData.Functions = if ($funcMatches) { $funcMatches.Count } else { 0 }
+            }
+            
+            # Run PSScriptAnalyzer on individual file
+            if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
+                $rawIssues = Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue
+                $issues = if ($rawIssues) { @($rawIssues) } else { @() }
+                
+                if ($issues.Count -gt 0) {
+                    $fileData.Issues = $issues | Select-Object -First 10 | ForEach-Object {
+                        @{
+                            Rule = $_.RuleName
+                            Severity = $_.Severity
+                            Line = $_.Line
+                            Message = $_.Message
+                        }
+                    }
+                    
+                    # Calculate score (100 - issues penalty)
+                    $errorCount = @($issues | Where-Object { $_.Severity -eq 'Error' }).Count
+                    $warningCount = @($issues | Where-Object { $_.Severity -eq 'Warning' }).Count
+                    $infoCount = @($issues | Where-Object { $_.Severity -eq 'Information' }).Count
+                    $errorPenalty = $errorCount * 10
+                    $warningPenalty = $warningCount * 3
+                    $infoPenalty = $infoCount * 1
+                    $fileData.Score = [math]::Max(0, 100 - $errorPenalty - $warningPenalty - $infoPenalty)
+                } else {
+                    $fileData.Score = 100  # No issues
+                }
+            } else {
+                $fileData.Score = 100  # No analyzer, assume clean
+            }
+            
+            # Check if file has tests
+            $testPath = $file.FullName -replace '\.ps(m?)1$', '.Tests.ps1'
+            $testPath = $testPath -replace '(domains|automation-scripts)', 'tests/unit/$1'
+            $fileData.HasTests = Test-Path $testPath
+            
+            $fileMetrics.Files += $fileData
+            $fileMetrics.Summary.AnalyzedFiles++
+            
+            # Track by domain
+            if (-not $fileMetrics.Summary.ByDomain.ContainsKey($domain)) {
+                $fileMetrics.Summary.ByDomain[$domain] = @{
+                    Files = 0
+                    AverageScore = 0
+                    TotalScore = 0
+                }
+            }
+            $fileMetrics.Summary.ByDomain[$domain].Files++
+            $fileMetrics.Summary.ByDomain[$domain].TotalScore += $fileData.Score
+            
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to analyze file: $($file.Name) - $_"
+        }
+    }
+    
+    # Calculate averages
+    if ($fileMetrics.Summary.AnalyzedFiles -gt 0) {
+        $fileMetrics.Summary.AverageScore = [math]::Round(
+            ($fileMetrics.Files | Measure-Object -Property Score -Average).Average,
+            1
+        )
+        
+        foreach ($domain in $fileMetrics.Summary.ByDomain.Keys) {
+            if ($fileMetrics.Summary.ByDomain[$domain].Files -gt 0) {
+                $fileMetrics.Summary.ByDomain[$domain].AverageScore = [math]::Round(
+                    $fileMetrics.Summary.ByDomain[$domain].TotalScore / $fileMetrics.Summary.ByDomain[$domain].Files,
+                    1
+                )
+            }
+        }
+    }
+    
+    return $fileMetrics
+}
+
+function Get-DependencyMapping {
+    <#
+    .SYNOPSIS
+        Extract and map dependencies from config.psd1
+    #>
+    param(
+        [string]$ProjectPath
+    )
+    
+    Write-ScriptLog -Message "Mapping dependencies from config.psd1"
+    
+    $dependencies = @{
+        Features = @()
+        Scripts = @{}
+        Modules = @{}
+        Total = 0
+    }
+    
+    $configPath = Join-Path $ProjectPath "config.psd1"
+    if (Test-Path $configPath) {
+        try {
+            $config = Import-PowerShellDataFile $configPath -ErrorAction Stop
+            
+            # Extract feature dependencies
+            if ($config.Manifest.FeatureDependencies) {
+                foreach ($category in $config.Manifest.FeatureDependencies.Keys) {
+                    foreach ($feature in $config.Manifest.FeatureDependencies[$category].Keys) {
+                        try {
+                            $featureData = $config.Manifest.FeatureDependencies[$category][$feature]
+                            $featureDep = @{
+                                Category = $category
+                                Name = $feature
+                                DependsOn = @()
+                                Scripts = @()
+                                Required = $false
+                                Platform = @()
+                                Description = ''
+                            }
+                            
+                            # Safely add properties that exist
+                            if ($featureData.PSObject.Properties['DependsOn']) { $featureDep.DependsOn = $featureData.DependsOn }
+                            if ($featureData.PSObject.Properties['Scripts']) { $featureDep.Scripts = $featureData.Scripts }
+                            if ($featureData.PSObject.Properties['Required']) { $featureDep.Required = [bool]$featureData.Required }
+                            if ($featureData.PSObject.Properties['PlatformRestrictions']) { $featureDep.Platform = $featureData.PlatformRestrictions }
+                            if ($featureData.PSObject.Properties['Description']) { $featureDep.Description = $featureData.Description }
+                            
+                            $dependencies.Features += $featureDep
+                            $dependencies.Total++
+                        } catch {
+                            Write-ScriptLog -Level Warning -Message "Failed to parse feature $category.$feature : $_"
+                        }
+                    }
+                }
+            }
+            
+            # Extract script inventory
+            if ($config.Manifest.ScriptInventory) {
+                $dependencies.Scripts = $config.Manifest.ScriptInventory
+            }
+            
+            # Extract domain modules
+            if ($config.Manifest.Domains) {
+                $dependencies.Modules = $config.Manifest.Domains
+            }
+            
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse config.psd1: $_"
+        }
+    }
+    
+    return $dependencies
+}
+
+function Get-DetailedTestResults {
+    <#
+    .SYNOPSIS
+        Get comprehensive test results with descriptions and audit test files
+    #>
+    param(
+        [string]$ProjectPath
+    )
+    
+    Write-ScriptLog -Message "Collecting detailed test results and auditing test coverage"
+    
+    $testResults = @{
+        Tests = @()
+        Summary = @{
+            Total = 0
+            Passed = 0
+            Failed = 0
+            Skipped = 0
+            Duration = "Unknown"
+        }
+        ByDomain = @{}
+        ByType = @{
+            Unit = @{ Total = 0; Passed = 0; Failed = 0 }
+            Integration = @{ Total = 0; Passed = 0; Failed = 0 }
+        }
+        TestFiles = @{
+            Total = 0
+            Unit = 0
+            Integration = 0
+            WithResults = 0
+            PotentialTests = 0
+        }
+        Audit = @{
+            Message = ''
+            FilesWithoutResults = @()
+        }
+    }
+    
+    # Count all test files
+    $allTestFiles = Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+    $testResults.TestFiles.Total = $allTestFiles.Count
+    $testResults.TestFiles.Unit = @($allTestFiles | Where-Object { $_.FullName -match '/unit/' }).Count
+    $testResults.TestFiles.Integration = @($allTestFiles | Where-Object { $_.FullName -match '/integration/' }).Count
+    
+    # Count potential test cases in all test files
+    foreach ($testFile in $allTestFiles) {
+        try {
+            $content = Get-Content $testFile.FullName -ErrorAction SilentlyContinue
+            if ($content) {
+                # Count It blocks (actual test cases)
+                $itBlocks = $content | Select-String -Pattern '^\s*It\s+[''"]' -AllMatches
+                if ($itBlocks) {
+                    $testResults.TestFiles.PotentialTests += $itBlocks.Count
+                }
+            }
+        } catch {
+            # Skip files that can't be read
+        }
+    }
+    
+    # Parse testResults.xml for actual execution results
+    $testResultsPath = Join-Path $ProjectPath "testResults.xml"
+    if (Test-Path $testResultsPath) {
+        try {
+            [xml]$testXml = Get-Content $testResultsPath
+            
+            # Get summary from root
+            $results = $testXml.'test-results'
+            $testResults.Summary.Total = [int]$results.total
+            $failures = [int]$results.failures
+            $errors = [int]$results.errors
+            $testResults.Summary.Skipped = [int]$results.skipped
+            $testResults.Summary.Passed = $testResults.Summary.Total - $failures - $errors - $testResults.Summary.Skipped
+            $testResults.Summary.Failed = $failures + $errors
+            
+            # Count how many test files have results
+            $testCases = $testXml.SelectNodes("//test-case")
+            $filesWithResults = @($testCases | ForEach-Object { 
+                if ($_.name -match '/([^/]+\.Tests\.ps1)') { $matches[1] }
+            } | Select-Object -Unique)
+            $testResults.TestFiles.WithResults = $filesWithResults.Count
+            
+            # Extract individual test cases
+            foreach ($testCase in $testCases) {
+                $testPath = $testCase.name
+                $domain = if ($testPath -match '/domains/([^/]+)/') { $matches[1] }
+                         elseif ($testPath -match '/automation-scripts/') { 'automation-scripts' }
+                         else { 'other' }
+                
+                $testType = if ($testPath -match '/unit/') { 'Unit' }
+                           elseif ($testPath -match '/integration/') { 'Integration' }
+                           else { 'Other' }
+                
+                $testData = @{
+                    Name = $testCase.name
+                    Description = $testCase.description
+                    Result = $testCase.result
+                    Success = $testCase.success -eq 'True'
+                    Time = $testCase.time
+                    Domain = $domain
+                    Type = $testType
+                }
+                
+                $testResults.Tests += $testData
+                
+                # Track by domain
+                if (-not $testResults.ByDomain.ContainsKey($domain)) {
+                    $testResults.ByDomain[$domain] = @{ Total = 0; Passed = 0; Failed = 0 }
+                }
+                $testResults.ByDomain[$domain].Total++
+                if ($testData.Success) {
+                    $testResults.ByDomain[$domain].Passed++
+                } else {
+                    $testResults.ByDomain[$domain].Failed++
+                }
+                
+                # Track by type
+                if ($testResults.ByType.ContainsKey($testType)) {
+                    $testResults.ByType[$testType].Total++
+                    if ($testData.Success) {
+                        $testResults.ByType[$testType].Passed++
+                    } else {
+                        $testResults.ByType[$testType].Failed++
+                    }
+                }
+            }
+            
+            # Get duration from test suite
+            if ($testXml.'test-results'.'test-suite' -and $testXml.'test-results'.'test-suite'.time) {
+                $duration = [double]$testXml.'test-results'.'test-suite'.time
+                if ($duration -lt 60) {
+                    $testResults.Summary.Duration = "$([math]::Round($duration, 2))s"
+                } else {
+                    $minutes = [math]::Floor($duration / 60)
+                    $seconds = [math]::Round($duration % 60, 0)
+                    $testResults.Summary.Duration = "${minutes}m ${seconds}s"
+                }
+            }
+            
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse detailed test results: $_"
+        }
+    }
+    
+    # Create audit message
+    if ($testResults.TestFiles.Total -gt 0) {
+        $coveragePercent = if ($testResults.TestFiles.PotentialTests -gt 0) {
+            [math]::Round(($testResults.Summary.Total / $testResults.TestFiles.PotentialTests) * 100, 1)
+        } else { 0 }
+        
+        $testResults.Audit.Message = @"
+⚠️ TEST AUDIT FINDINGS:
+- Total Test Files: $($testResults.TestFiles.Total) ($($testResults.TestFiles.Unit) unit, $($testResults.TestFiles.Integration) integration)
+- Potential Test Cases: $($testResults.TestFiles.PotentialTests) (by counting It blocks)
+- Actually Run: $($testResults.Summary.Total) ($coveragePercent% of potential)
+- Files with Results: $($testResults.TestFiles.WithResults) / $($testResults.TestFiles.Total)
+
+The autogenerated test system has created $($testResults.TestFiles.Total) test files with approximately $($testResults.TestFiles.PotentialTests) test cases.
+Only $($testResults.Summary.Total) tests were run in the last execution (from testResults.xml).
+Run './az 0402' to execute the full test suite.
+"@
+    }
+    
+    return $testResults
+}
+
+function Get-CodeCoverageDetails {
+    <#
+    .SYNOPSIS
+        Get detailed code coverage information
+    #>
+    param(
+        [string]$ProjectPath
+    )
+    
+    Write-ScriptLog -Message "Collecting code coverage details"
+    
+    $coverage = @{
+        Overall = @{
+            Percentage = 0
+            CoveredLines = 0
+            TotalLines = 0
+        }
+        ByFile = @()
+        ByDomain = @{}
+    }
+    
+    # Look for latest coverage XML
+    $coverageFiles = Get-ChildItem -Path (Join-Path $ProjectPath "tests/results") -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
+                     Where-Object { $_.Length -gt 100 } |  # Skip empty files
+                     Sort-Object LastWriteTime -Descending |
+                     Select-Object -First 1
+    
+    if ($coverageFiles) {
+        try {
+            [xml]$coverageXml = Get-Content $coverageFiles.FullName
+            
+            # Parse JaCoCo or Cobertura format
+            if ($coverageXml.coverage) {
+                # Cobertura format
+                $coverage.Overall.Percentage = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                
+                # Extract file-level coverage
+                $packages = $coverageXml.SelectNodes("//package")
+                foreach ($package in $packages) {
+                    $classes = $package.SelectNodes(".//class")
+                    foreach ($class in $classes) {
+                        $filename = $class.filename
+                        $lineRate = [double]$class.'line-rate'
+                        
+                        $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
+                                 elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
+                                 else { 'other' }
+                        
+                        $coverage.ByFile += @{
+                            File = $filename
+                            Coverage = [math]::Round($lineRate * 100, 1)
+                            Domain = $domain
+                        }
+                        
+                        # Track by domain
+                        if (-not $coverage.ByDomain.ContainsKey($domain)) {
+                            $coverage.ByDomain[$domain] = @{ 
+                                Files = 0
+                                TotalCoverage = 0
+                                AverageCoverage = 0
+                            }
+                        }
+                        $coverage.ByDomain[$domain].Files++
+                        $coverage.ByDomain[$domain].TotalCoverage += ($lineRate * 100)
+                    }
+                }
+                
+                # Calculate domain averages
+                foreach ($domain in $coverage.ByDomain.Keys) {
+                    if ($coverage.ByDomain[$domain].Files -gt 0) {
+                        $coverage.ByDomain[$domain].AverageCoverage = [math]::Round(
+                            $coverage.ByDomain[$domain].TotalCoverage / $coverage.ByDomain[$domain].Files,
+                            1
+                        )
+                    }
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
+        }
+    }
+    
+    return $coverage
+}
+
+function Get-LifecycleAnalysis {
+    <#
+    .SYNOPSIS
+        Analyze the age and lifecycle of all project components
+    #>
+    param(
+        [string]$ProjectPath
+    )
+    
+    Write-ScriptLog -Message "Performing lifecycle analysis"
+    
+    $lifecycle = @{
+        Documentation = @{
+            Files = @()
+            Summary = @{
+                Total = 0
+                Stale = 0  # > 6 months
+                Old = 0    # > 1 year
+                Ancient = 0 # > 2 years
+                AverageAgeDays = 0
+            }
+        }
+        Code = @{
+            Files = @()
+            Summary = @{
+                Total = 0
+                Fresh = 0    # < 1 month
+                Recent = 0   # < 3 months  
+                Stale = 0    # > 6 months
+                Old = 0      # > 1 year
+                AverageAgeDays = 0
+            }
+        }
+        LineCountAnalysis = @{
+            PowerShellCode = 0
+            Documentation = 0
+            CommentedCode = 0
+            BlankLines = 0
+            ActualCode = 0
+            DocumentationRatio = 0
+        }
+        ByDomain = @{}
+    }
+    
+    $now = Get-Date
+    
+    # Analyze documentation files
+    $docFiles = Get-ChildItem -Path $ProjectPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -notmatch '(node_modules|\.git)' }
+    
+    $lifecycle.Documentation.Summary.Total = $docFiles.Count
+    
+    foreach ($doc in $docFiles) {
+        try {
+            $lastWrite = $doc.LastWriteTime
+            $ageDays = ($now - $lastWrite).TotalDays
+            $content = Get-Content $doc.FullName -ErrorAction SilentlyContinue
+            $lineCount = if ($content) { $content.Count } else { 0 }
+            
+            $docData = @{
+                Path = $doc.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
+                LastModified = $lastWrite.ToString("yyyy-MM-dd")
+                AgeDays = [math]::Round($ageDays, 0)
+                Lines = $lineCount
+                Status = if ($ageDays -gt 730) { 'Ancient' }
+                        elseif ($ageDays -gt 365) { 'Old' }
+                        elseif ($ageDays -gt 180) { 'Stale' }
+                        else { 'Current' }
+            }
+            
+            $lifecycle.Documentation.Files += $docData
+            $lifecycle.LineCountAnalysis.Documentation += $lineCount
+            
+            # Update summary counts
+            if ($ageDays -gt 730) { $lifecycle.Documentation.Summary.Ancient++ }
+            elseif ($ageDays -gt 365) { $lifecycle.Documentation.Summary.Old++ }
+            elseif ($ageDays -gt 180) { $lifecycle.Documentation.Summary.Stale++ }
+            
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name)"
+        }
+    }
+    
+    if ($docFiles.Count -gt 0) {
+        $lifecycle.Documentation.Summary.AverageAgeDays = [math]::Round(
+            ($lifecycle.Documentation.Files | Measure-Object -Property AgeDays -Average).Average,
+            0
+        )
+    }
+    
+    # Analyze PowerShell code files
+    $psFiles = @(
+        Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
+        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
+    
+    $lifecycle.Code.Summary.Total = $psFiles.Count
+    
+    foreach ($file in $psFiles) {
+        try {
+            $lastWrite = $file.LastWriteTime
+            $ageDays = ($now - $lastWrite).TotalDays
+            $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
+            
+            if ($content) {
+                $totalLines = $content.Count
+                $codeLines = 0
+                $commentLines = 0
+                $blankLines = 0
+                $inCommentBlock = $false
+                
+                foreach ($line in $content) {
+                    $trimmed = $line.Trim()
+                    
+                    if ($trimmed -eq '') {
+                        $blankLines++
+                    }
+                    elseif ($trimmed -match '^<#') {
+                        $inCommentBlock = $true
+                        $commentLines++
+                    }
+                    elseif ($trimmed -match '^#>') {
+                        $inCommentBlock = $false
+                        $commentLines++
+                    }
+                    elseif ($inCommentBlock -or $trimmed -match '^#') {
+                        $commentLines++
+                    }
+                    else {
+                        $codeLines++
+                    }
+                }
+                
+                $lifecycle.LineCountAnalysis.PowerShellCode += $totalLines
+                $lifecycle.LineCountAnalysis.ActualCode += $codeLines
+                $lifecycle.LineCountAnalysis.CommentedCode += $commentLines
+                $lifecycle.LineCountAnalysis.BlankLines += $blankLines
+                
+                $domain = if ($file.FullName -match 'domains[/\\]([^/\\]+)') { $matches[1] }
+                         elseif ($file.FullName -match 'automation-scripts') { 'automation-scripts' }
+                         else { 'other' }
+                
+                $fileData = @{
+                    Path = $file.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
+                    LastModified = $lastWrite.ToString("yyyy-MM-dd")
+                    AgeDays = [math]::Round($ageDays, 0)
+                    Lines = $totalLines
+                    CodeLines = $codeLines
+                    CommentLines = $commentLines
+                    Domain = $domain
+                    Status = if ($ageDays -lt 30) { 'Fresh' }
+                            elseif ($ageDays -lt 90) { 'Recent' }
+                            elseif ($ageDays -gt 365) { 'Old' }
+                            elseif ($ageDays -gt 180) { 'Stale' }
+                            else { 'Current' }
+                }
+                
+                $lifecycle.Code.Files += $fileData
+                
+                # Update summary counts
+                if ($ageDays -lt 30) { $lifecycle.Code.Summary.Fresh++ }
+                elseif ($ageDays -lt 90) { $lifecycle.Code.Summary.Recent++ }
+                elseif ($ageDays -gt 365) { $lifecycle.Code.Summary.Old++ }
+                elseif ($ageDays -gt 180) { $lifecycle.Code.Summary.Stale++ }
+                
+                # Track by domain
+                if (-not $lifecycle.ByDomain.ContainsKey($domain)) {
+                    $lifecycle.ByDomain[$domain] = @{
+                        Files = 0
+                        TotalLines = 0
+                        CodeLines = 0
+                        CommentLines = 0
+                        AverageAgeDays = 0
+                        TotalAgeDays = 0
+                    }
+                }
+                $lifecycle.ByDomain[$domain].Files++
+                $lifecycle.ByDomain[$domain].TotalLines += $totalLines
+                $lifecycle.ByDomain[$domain].CodeLines += $codeLines
+                $lifecycle.ByDomain[$domain].CommentLines += $commentLines
+                $lifecycle.ByDomain[$domain].TotalAgeDays += $ageDays
+            }
+            
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to analyze code: $($file.Name)"
+        }
+    }
+    
+    if ($psFiles.Count -gt 0) {
+        $lifecycle.Code.Summary.AverageAgeDays = [math]::Round(
+            ($lifecycle.Code.Files | Measure-Object -Property AgeDays -Average).Average,
+            0
+        )
+    }
+    
+    # Calculate domain averages
+    foreach ($domain in $lifecycle.ByDomain.Keys) {
+        if ($lifecycle.ByDomain[$domain].Files -gt 0) {
+            $lifecycle.ByDomain[$domain].AverageAgeDays = [math]::Round(
+                $lifecycle.ByDomain[$domain].TotalAgeDays / $lifecycle.ByDomain[$domain].Files,
+                0
+            )
+        }
+    }
+    
+    # Calculate documentation ratio
+    $totalCountedLines = $lifecycle.LineCountAnalysis.PowerShellCode + $lifecycle.LineCountAnalysis.Documentation
+    if ($totalCountedLines -gt 0) {
+        $lifecycle.LineCountAnalysis.DocumentationRatio = [math]::Round(
+            ($lifecycle.LineCountAnalysis.Documentation / $totalCountedLines) * 100,
+            1
+        )
+    }
+    
+    return $lifecycle
+}
+
 function New-HTMLDashboard {
     param(
         [hashtable]$Metrics,
@@ -2011,6 +2681,11 @@ function New-JSONReport {
         [hashtable]$Activity,
         [hashtable]$QualityMetrics,
         [hashtable]$PSScriptAnalyzerMetrics,
+        [hashtable]$FileMetrics,
+        [hashtable]$Dependencies,
+        [hashtable]$DetailedTests,
+        [hashtable]$CoverageDetails,
+        [hashtable]$Lifecycle,
         [string]$OutputPath
     )
 
@@ -2028,6 +2703,11 @@ function New-JSONReport {
         Activity = $Activity
         QualityMetrics = $QualityMetrics
         PSScriptAnalyzerMetrics = $PSScriptAnalyzerMetrics
+        FileMetrics = $FileMetrics
+        Dependencies = $Dependencies
+        DetailedTests = $DetailedTests
+        CoverageDetails = $CoverageDetails
+        Lifecycle = $Lifecycle
         Environment = @{
             CI = [bool]$env:AITHERZERO_CI
             Platform = $Metrics.Platform
@@ -2058,6 +2738,32 @@ try {
     $activity = Get-RecentActivity
     $qualityMetrics = Get-QualityMetrics
     $pssaMetrics = Get-PSScriptAnalyzerMetrics
+    
+    # Collect comprehensive detailed metrics
+    Write-ScriptLog -Message "Collecting comprehensive project intelligence..."
+    $fileMetrics = Get-FileLevelMetrics -ProjectPath $ProjectPath
+    $dependencies = Get-DependencyMapping -ProjectPath $ProjectPath
+    $detailedTests = Get-DetailedTestResults -ProjectPath $ProjectPath
+    $coverageDetails = Get-CodeCoverageDetails -ProjectPath $ProjectPath
+    $lifecycle = Get-LifecycleAnalysis -ProjectPath $ProjectPath
+    
+    # Update main metrics with detailed coverage
+    if ($coverageDetails.Overall.Percentage -gt 0) {
+        $metrics.Coverage.Percentage = $coverageDetails.Overall.Percentage
+        $metrics.Coverage.CoveredLines = $coverageDetails.Overall.CoveredLines
+        $metrics.Coverage.TotalLines = $coverageDetails.Overall.TotalLines
+    }
+    
+    # Update main metrics with actual code lines (excluding docs and comments)
+    if ($lifecycle.LineCountAnalysis.ActualCode -gt 0) {
+        Write-Host "`n📊 Line Count Analysis:" -ForegroundColor Cyan
+        Write-Host "  Actual Code Lines: $($lifecycle.LineCountAnalysis.ActualCode.ToString('N0'))" -ForegroundColor Green
+        Write-Host "  PowerShell Files Total: $($lifecycle.LineCountAnalysis.PowerShellCode.ToString('N0'))" -ForegroundColor White
+        Write-Host "  Documentation (.md): $($lifecycle.LineCountAnalysis.Documentation.ToString('N0'))" -ForegroundColor White
+        Write-Host "  Comments: $($lifecycle.LineCountAnalysis.CommentedCode.ToString('N0'))" -ForegroundColor White
+        Write-Host "  Blank Lines: $($lifecycle.LineCountAnalysis.BlankLines.ToString('N0'))" -ForegroundColor White
+        Write-Host "  Documentation Ratio: $($lifecycle.LineCountAnalysis.DocumentationRatio)%" -ForegroundColor $(if($lifecycle.LineCountAnalysis.DocumentationRatio -gt 30){'Yellow'}else{'White'})
+    }
 
     # Generate dashboards based on format selection
     switch ($Format) {
@@ -2068,12 +2774,12 @@ try {
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
         }
         'JSON' {
-            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
+            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
         'All' {
             New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
-            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
+            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
     }
 
