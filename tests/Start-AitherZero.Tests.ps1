@@ -686,3 +686,30 @@ Describe "Version and Help Commands" {
         }
     }
 }
+
+Describe "Script Number Shortcuts" {
+    Context "Auto-Detection Logic" {
+        It "Should accept script numbers as Target parameter" {
+            # Test that the script number shortcut feature is implemented
+            $script:ScriptContent | Should -BeLike "*Auto-detect target type if RunTarget looks like a script number*"
+            $script:ScriptContent | Should -BeLike "*`$ScriptNum = `$RunTarget*"
+        }
+
+        It "Should match 3-4 digit patterns" {
+            $script:ScriptContent | Should -BeLike "*'^\d{3,4}`$'*"
+        }
+    }
+
+    Context "Error Messages" {
+        It "Should provide helpful examples in error messages" {
+            $script:ScriptContent | Should -BeLike "*Or use shortcut:*"
+            $script:ScriptContent | Should -BeLike "*Start-AitherZero.ps1 -Mode Run -Target 0501*"
+        }
+
+        It "Should show examples for all target types" {
+            $script:ScriptContent | Should -BeLike "*-Target script -ScriptNumber 0501*"
+            $script:ScriptContent | Should -BeLike "*-Target playbook -Playbook tech-debt-analysis*"
+            $script:ScriptContent | Should -BeLike "*-Target sequence -Sequence 0400-0499*"
+        }
+    }
+}
