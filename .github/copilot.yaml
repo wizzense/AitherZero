@@ -246,12 +246,12 @@ routing:
   by_files:
     priority: high
     # Match agents based on file_patterns defined above
-    
+
   # Secondary routing based on PR title/description keywords
   by_keywords:
     priority: medium
     # Match agents based on keywords defined above
-    
+
   # Tertiary routing based on labels
   by_labels:
     priority: low
@@ -262,15 +262,15 @@ routing:
     infrastructure_setup:
       agents: ["maya", "sarah", "jessica", "olivia"]
       trigger_keywords: ["infrastructure setup", "lab setup", "vm deployment"]
-      
+
     feature_development:
       agents: ["david", "marcus", "rachel", "jessica", "olivia"]
       trigger_keywords: ["new feature", "feature request", "enhancement"]
-      
+
     ui_development:
       agents: ["emma", "marcus", "jessica", "olivia"]
       trigger_keywords: ["ui", "user interface", "menu", "wizard"]
-      
+
     security_enhancement:
       agents: ["sarah", "maya", "marcus", "jessica"]
       trigger_keywords: ["security", "vulnerability", "certificate", "credential"]
