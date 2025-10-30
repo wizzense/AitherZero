@@ -171,7 +171,7 @@ try {
         if ($ExcludeDataFiles) {
             $originalCount = $filesToValidate.Count
             $filesToValidate = @($filesToValidate | Where-Object { 
-                [System.IO.Path]::GetExtension($_) -ne '.psd1' 
+                [System.IO.Path]::GetExtension($_).ToLower() -ne '.psd1' 
             })
             $excludedCount = $originalCount - $filesToValidate.Count
             if ($excludedCount -gt 0) {

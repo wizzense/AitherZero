@@ -701,11 +701,8 @@ function Test-PSScriptAnalyzerCompliance {
             Write-QualityLog -Message "No PSScriptAnalyzer settings file found, using defaults" -Level Debug
         }
 
-        # Run analysis
-        $analysisResults = Invoke-ScriptAnalyzer @analyzerParams
-        
-        # Ensure results is always an array for consistent handling
-        $analysisResults = @($analysisResults)
+        # Run analysis - wrap in array for consistent handling
+        $analysisResults = @(Invoke-ScriptAnalyzer @analyzerParams)
         
         $result.Details.TotalIssues = $analysisResults.Count
         
