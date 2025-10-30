@@ -12,9 +12,21 @@
 
     
 
-    By default, runs in non-interactive List mode showing available scripts and playbooks.
+    By default, displays comprehensive usage information with command examples.
 
     Use -Mode Interactive to access the interactive menu interface.
+    
+    
+    
+    TAB COMPLETION: The script includes intelligent tab completion for parameters:
+    
+    - Target: Suggests script numbers, 'script', 'playbook', 'sequence', etc.
+    
+    - Playbook: Auto-completes available playbook names
+    
+    - ScriptNumber: Shows script numbers with descriptions
+    
+    - Query: Suggests common search terms
 
 
 
@@ -44,7 +56,7 @@
 
 .PARAMETER Playbook
 
-    Name of the playbook to execute
+    Name of the playbook to execute (supports tab completion)
 
 .PARAMETER PlaybookProfile
 
@@ -56,7 +68,7 @@
 
 .EXAMPLE
 
-    # List all available scripts and playbooks (default)
+    # Show comprehensive usage information (default)
 
     .\Start-AitherZero.ps1
 
@@ -205,6 +217,81 @@ param(
     [object[]]$RemainingArguments
 
 )
+
+#region Argument Completers for Tab Completion
+
+# Register argument completer for Target parameter
+Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'Target' -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    
+    $targets = @('script', 'playbook', 'sequence', 'scripts', 'playbooks', 'all')
+    
+    # Also suggest script numbers if they exist
+    $scriptDir = Join-Path $PSScriptRoot 'automation-scripts'
+    if (Test-Path $scriptDir) {
+        $scripts = Get-ChildItem $scriptDir -Filter "*.ps1" | Where-Object { $_.Name -match '^\d{4}_' } | ForEach-Object {
+            if ($_.Name -match '^(\d{4})_') {
+                $matches[1]
+            }
+        } | Select-Object -First 10
+        $targets += $scripts
+    }
+    
+    $targets | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+    }
+}
+
+# Register argument completer for Playbook parameter
+Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'Playbook' -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    
+    $playbookDir = Join-Path $PSScriptRoot 'orchestration/playbooks'
+    if (Test-Path $playbookDir) {
+        Get-ChildItem $playbookDir -Filter "*.json" -Recurse | ForEach-Object {
+            try {
+                $pb = Get-Content $_.FullName | ConvertFrom-Json
+                $name = if ($pb.Name) { $pb.Name } else { $pb.name }
+                if ($name -and $name -like "$wordToComplete*") {
+                    [System.Management.Automation.CompletionResult]::new($name, $name, 'ParameterValue', $name)
+                }
+            } catch {
+                # Skip invalid playbooks
+            }
+        }
+    }
+}
+
+# Register argument completer for ScriptNumber parameter
+Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'ScriptNumber' -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    
+    $scriptDir = Join-Path $PSScriptRoot 'automation-scripts'
+    if (Test-Path $scriptDir) {
+        Get-ChildItem $scriptDir -Filter "*.ps1" | Where-Object { $_.Name -match '^\d{4}_' } | ForEach-Object {
+            if ($_.Name -match '^(\d{4})_(.+)\.ps1$') {
+                $number = $matches[1]
+                $description = $matches[2].Replace('_', ' ').Replace('-', ' ')
+                if ($number -like "$wordToComplete*") {
+                    [System.Management.Automation.CompletionResult]::new($number, $number, 'ParameterValue', "$number - $description")
+                }
+            }
+        } | Select-Object -First 20
+    }
+}
+
+# Register argument completer for Query parameter (suggest common search terms)
+Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'Query' -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    
+    $commonSearches = @('test', 'security', 'git', 'docker', 'infrastructure', 'deploy', 'validate', 'report', 'install', 'setup')
+    
+    $commonSearches | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', "Search for: $_")
+    }
+}
+
+#endregion
 
 
 
@@ -1008,6 +1095,99 @@ function Write-ModernCLI {
 
 
 
+function Show-Usage {
+    # Comprehensive usage information with command suggestions
+    
+    if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+        try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
+    }
+    
+    Write-Host ""
+    Write-ModernCLI "AitherZero - PowerShell Automation Platform" -Type 'Accent'
+    Write-Host ""
+    Write-ModernCLI "USAGE:" -Type 'Info'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode <command> [options]" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "COMMON COMMANDS:" -Type 'Info'
+    Write-Host ""
+    
+    Write-ModernCLI "  Interactive Mode" -Type 'Accent'
+    Write-ModernCLI "    -Mode Interactive" -Type 'Muted'
+    Write-ModernCLI "    Launch the interactive menu interface" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  Run Scripts" -Type 'Accent'
+    Write-ModernCLI "    -Mode Run -Target 0402" -Type 'Muted'
+    Write-ModernCLI "    -Mode Run -Target script -ScriptNumber 0402" -Type 'Muted'
+    Write-ModernCLI "    Execute automation scripts by number" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  Orchestration" -Type 'Accent'
+    Write-ModernCLI "    -Mode Orchestrate -Sequence '0400-0499'" -Type 'Muted'
+    Write-ModernCLI "    -Mode Orchestrate -Playbook infrastructure-lab" -Type 'Muted'
+    Write-ModernCLI "    Run sequences or playbooks for complex workflows" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  List Resources" -Type 'Accent'
+    Write-ModernCLI "    -Mode List" -Type 'Muted'
+    Write-ModernCLI "    -Mode List -Target scripts" -Type 'Muted'
+    Write-ModernCLI "    -Mode List -Target playbooks" -Type 'Muted'
+    Write-ModernCLI "    Browse available scripts and playbooks" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  Search" -Type 'Accent'
+    Write-ModernCLI "    -Mode Search -Query security" -Type 'Muted'
+    Write-ModernCLI "    Find scripts and playbooks by keyword" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  Testing & Validation" -Type 'Accent'
+    Write-ModernCLI "    -Mode Test" -Type 'Muted'
+    Write-ModernCLI "    -Mode Validate" -Type 'Muted'
+    Write-ModernCLI "    Run tests or validate environment" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "OPTIONS:" -Type 'Info'
+    Write-ModernCLI "  -Help              Show this help message" -Type 'Muted'
+    Write-ModernCLI "  -Version           Display version information" -Type 'Muted'
+    Write-ModernCLI "  -NonInteractive    Run without user prompts" -Type 'Muted'
+    Write-ModernCLI "  -DryRun            Preview actions without executing" -Type 'Muted'
+    Write-ModernCLI "  -Verbose           Show detailed execution information" -Type 'Muted'
+    Write-ModernCLI "  -ProfileName       Specify execution profile (Minimal, Standard, Developer, Full)" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "SCRIPT CATEGORIES:" -Type 'Info'
+    Write-ModernCLI "  0000-0099  Environment & Setup" -Type 'Muted'
+    Write-ModernCLI "  0100-0199  Infrastructure (Hyper-V, WSL, etc.)" -Type 'Muted'
+    Write-ModernCLI "  0200-0299  Development Tools (Git, Docker, VS Code)" -Type 'Muted'
+    Write-ModernCLI "  0300-0399  Deployment" -Type 'Muted'
+    Write-ModernCLI "  0400-0499  Testing & Validation" -Type 'Muted'
+    Write-ModernCLI "  0500-0599  Reporting & Metrics" -Type 'Muted'
+    Write-ModernCLI "  0700-0799  Git & Development Automation" -Type 'Muted'
+    Write-ModernCLI "  9000-9999  Maintenance & Cleanup" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "EXAMPLES:" -Type 'Info'
+    Write-ModernCLI "  # Run unit tests" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target 0402" -Type 'Muted'
+    Write-Host ""
+    Write-ModernCLI "  # Deploy infrastructure" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook infrastructure-lab" -Type 'Muted'
+    Write-Host ""
+    Write-ModernCLI "  # Search for security tools" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Search -Query security" -Type 'Muted'
+    Write-Host ""
+    Write-ModernCLI "  # Interactive mode for guided workflows" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "MORE INFORMATION:" -Type 'Info'
+    Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Full" -Type 'Muted'
+    Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Examples" -Type 'Muted'
+    Write-ModernCLI "  Documentation: ./docs/" -Type 'Muted'
+    Write-Host ""
+}
+
 function Show-ModernHelp {
 
     param([string]$ActionHelp)
@@ -1048,46 +1228,8 @@ function Show-ModernHelp {
 
 
 
-    Write-ModernCLI "AitherZero Modern CLI" -Type 'Accent'
-
-    Write-ModernCLI "Usage: .\Start-AitherZero.ps1 -Mode <action> [options]" -Type 'Info'
-
-    Write-Host ""
-
-
-
-    Write-ModernCLI "Available Modes:" -Type 'Info'
-
-    Write-ModernCLI "  List" -Type 'Accent' -NoNewline
-
-    Write-ModernCLI " - List available resources (scripts, playbooks)" -Type 'Muted'
-
-    Write-ModernCLI "  Run" -Type 'Accent' -NoNewline
-
-    Write-ModernCLI " - Execute scripts, playbooks, or sequences" -Type 'Muted'
-
-    Write-ModernCLI "  Search" -Type 'Accent' -NoNewline
-
-    Write-ModernCLI " - Find resources by name or description" -Type 'Muted'
-
-    Write-ModernCLI "  Interactive" -Type 'Accent' -NoNewline
-
-    Write-ModernCLI " - Traditional menu interface" -Type 'Muted'
-
-
-
-    Write-Host ""
-
-    Write-ModernCLI "Examples:" -Type 'Info'
-
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode List -Target scripts" -Type 'Muted'
-
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402" -Type 'Muted'
-
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Search -Query security" -Type 'Muted'
-
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Muted'
-
+    # Call the comprehensive usage function
+    Show-Usage
 }
 
 
@@ -3539,6 +3681,12 @@ try {
 
 
         'List' {
+
+            # If no target specified and Mode wasn't explicitly set, show usage
+            if (-not $Target -and -not $PSBoundParameters.ContainsKey('Mode')) {
+                Show-Usage
+                exit 0
+            }
 
             if (-not $Target) {
 
