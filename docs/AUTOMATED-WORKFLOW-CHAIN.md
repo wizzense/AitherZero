@@ -382,14 +382,8 @@ Describe "Test That Fails" {
 ### Method 3: Test Issue Creation Script
 
 ```powershell
-# Run the issue generation script
-./automation-scripts/0830_Generate-IssueFiles.ps1
-
-# Check generated issues
-ls ./generated-issues/
-
-# Create issues manually or via workflow
-./automation-scripts/0835_Create-Issues-Now.ps1 -Force
+# Note: Issue generation scripts were removed as part of documentation cleanup
+# Issues should be created manually via GitHub Issues UI or gh CLI
 ```
 
 ## Monitoring and Debugging

@@ -33,7 +33,7 @@ BeforeAll {
                 MinimumPercent = 80
                 OutputPath = './tests/coverage'
                 Format = @('JaCoCo', 'Cobertura')
-                ExcludePaths = @('*/tests/*', '*/legacy-to-migrate/*', '*/examples/*')
+                ExcludePaths = @('*/tests/*', '*/examples/*')
             }
             PSScriptAnalyzer = @{
                 Enabled = $true

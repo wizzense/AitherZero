@@ -92,10 +92,9 @@ try {
     } else {
         Write-Log "Discovering .psd1 files in project..." -Level Information
         
-        # Find all .psd1 files, excluding legacy migration folders, test fixtures, and config files
+        # Find all .psd1 files, excluding test fixtures and config files
         $manifestFiles = Get-ChildItem -Path $projectRoot -Filter "*.psd1" -Recurse | 
             Where-Object { 
-                $_.FullName -notlike "*legacy-to-migrate*" -and 
                 $_.FullName -notlike "*test-fixtures*" -and
                 $_.FullName -notlike "*examples*" -and
                 $_.Name -notlike "config*.psd1" -and
