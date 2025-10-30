@@ -1,179 +1,87 @@
-# AitherZero CI/CD Workflows
+# Gemini CLI Workflows
 
-This directory contains the essential GitHub Actions workflows for AitherZero. The workflows have been streamlined to provide real value without over-automation or noise.
+This directory contains a collection of example workflows that demonstrate how to use the [Google Gemini CLI GitHub Action](https://github.com/google-github-actions/run-gemini-cli). These workflows are designed to be reusable and customizable for your own projects.
 
-## 🚀 Workflow Overview
+- [Gemini CLI Workflows](#gemini-cli-workflows)
+  - [Available Workflows](#available-workflows)
+  - [Setup](#setup)
+  - [Customizing Workflows](#customizing-workflows)
+  - [Awesome Workflows](#awesome-workflows)
+    - [Share Your Workflow](#share-your-workflow)
 
-### Quality & Validation
+## Available Workflows
 
-| Workflow | Purpose | Triggers | Duration |
-|----------|---------|----------|----------|
-| `quality-validation.yml` | Code quality checks (PSScriptAnalyzer, tests) | PR, Manual | 10-15 min |
-| `pr-validation.yml` | PR validation and security checks | PR events | 3-5 min |
-| `validate-manifests.yml` | PowerShell manifest validation | Push, PR, Manual | 2-3 min |
-| `validate-config.yml` | Configuration file validation | Push, PR, Manual | 1-2 min |
+*   **[Gemini Dispatch](./gemini-dispatch)**: A central dispatcher that routes requests to the appropriate workflow based on the triggering event and the command provided in the comment.
+*   **[Issue Triage](./issue-triage)**: Automatically triage GitHub issues using Gemini. This workflow can be configured to run on a schedule or be triggered by issue events.
+*   **[Pull Request Review](./pr-review)**: Automatically review pull requests using Gemini. This workflow can be triggered by pull request events and provides a comprehensive review of the changes.
+*   **[Gemini CLI Assistant](./gemini-assistant)**: A general-purpose, conversational AI assistant that can be invoked within pull requests and issues to perform a wide range of tasks.
 
-### Issue Management
+## Setup
 
-| Workflow | Purpose | Triggers | Duration |
-|----------|---------|----------|----------|
-| `auto-create-issues-from-failures.yml` | Creates issues from test failures | Quality Validation completion, Schedule, Manual | 3-5 min |
+For detailed setup instructions, including prerequisites and authentication, please refer to the main [Authentication documentation](../../docs/authentication.md).
 
-### Documentation & Publishing
+To use a workflow, you can utilize either of the following steps:
+- Run the `/setup-github` command in Gemini CLI on your terminal to set up workflows for your repository.
+- Copy the workflow files into your repository's `.github/workflows` directory.
 
-| Workflow | Purpose | Triggers | Duration |
-|----------|---------|----------|----------|
-| `documentation-automation.yml` | Generate documentation from code | Push, PR, Manual | 5-10 min |
-| `index-automation.yml` | Generate project indexes | Push, PR, Manual | 3-5 min |
-| `jekyll-gh-pages.yml` | GitHub Pages deployment | Push, Manual | 3-5 min |
-| `publish-test-reports.yml` | Publish test results to Pages | Manual, Workflow completion | 2-3 min |
+## Customizing Workflows
 
-### Deployment & Release
+Gemini CLI workflows are highly configurable. You can adjust their behavior by editing the corresponding `.yml` files in your repository.
 
-| Workflow | Purpose | Triggers | Duration |
-|----------|---------|----------|----------|
-| `deploy-pr-environment.yml` | Deploy PR preview environments | PR events, Manual | 5-10 min |
-| `release-automation.yml` | Automated release creation and packaging | Tags, Manual | 10-15 min |
-| `docker-publish.yml` | Build and publish Docker images to GHCR | Tags, Releases, Manual | 15-20 min |
+For detailed configuration options, including Gemini CLI settings, timeouts, and permissions, see our [Configuration Guide](./CONFIGURATION.md).
 
-## 📋 Workflow Details
+## Awesome Workflows
 
-### Quality Validation (`quality-validation.yml`)
+Discover awesome workflows created by the community! These are publicly available workflows that showcase creative and powerful uses of the Gemini CLI GitHub Action.
 
-**Purpose:** Runs PSScriptAnalyzer and comprehensive code quality checks on pull requests.
+👉 **[View all Awesome Workflows](./AWESOME.md)**
 
-**Features:**
-- 🔍 **PSScriptAnalyzer**: Full static analysis of PowerShell code
-- 🧪 **Unit Tests**: Runs Pester tests for changed code
-- 📊 **Reports**: Generates quality reports as artifacts
-- 🐛 **Issue Creation**: Creates GitHub issues for quality failures (when configured)
+### Share Your Workflow
 
-**Triggers:**
-- Pull requests with code changes
-- Manual dispatch for full analysis
+Have you created an awesome workflow using Gemini CLI? We'd love to feature it in our [Awesome Workflows](./AWESOME.md) page! 
 
-### PR Validation (`pr-validation.yml`)
+**Submission Process:**
+1. **Ensure your workflow is public** and well-documented
+2. **Fork this repository** and create a new branch
+3. **Add your workflow** to the appropriate category section in [AWESOME.md](./AWESOME.md) using the [workflow template](./AWESOME.md#workflow-template)
+   - If none of the existing categories fit your workflow, feel free to propose a new category
+4. **Open a pull request** with your addition
+5. **Include a brief summary** in your PR description of what your workflow does and why it's awesome
 
-**Purpose:** Fast validation for external/fork pull requests with security focus.
+**What makes a workflow "awesome"?**
+- Solves a real problem or provides significant value
+- Is well-documented with clear setup instructions
+- Follows best practices for security and performance
+- Has been tested and is actively maintained
+- Includes example configurations or use cases
 
-**Features:**
-- 🔒 **Security**: Safe validation without code execution for fork PRs
-- 📝 **Comments**: Automated PR feedback
-- ✅ **Quick Checks**: Basic validation before deeper analysis
+**Note:** This process is specifically for sharing community workflows. We also recommend reading our [CONTRIBUTING.md](../../CONTRIBUTING.md) file for general contribution guidelines and best practices that apply to all pull requests.
 
-### Auto-Create Issues from Failures (`auto-create-issues-from-failures.yml`)
+**Workflow Template:**
 
-**Purpose:** Automatically creates GitHub issues for test failures and code quality problems.
+When adding your workflow to [AWESOME.md](./AWESOME.md), use this format:
 
-**Features:**
-- 📊 **Test Analysis**: Analyzes test results and creates targeted issues
-- 🔍 **Quality Issues**: Creates issues for PSScriptAnalyzer findings
-- 📅 **Daily Check**: Runs daily to catch missed failures
-- 🎯 **Smart Deduplication**: Avoids creating duplicate issues
+```markdown
+#### <Workflow Name>
 
-**Triggers:**
-- When Quality Validation completes
-- Daily schedule (7 AM UTC)
-- Manual dispatch with dry-run option
+**Repository:** [<owner>/<repo>](https://github.com/<owner>/<repo>)  
 
-### Documentation Automation (`documentation-automation.yml`)
+Brief description of what the workflow does and its key features.
 
-**Purpose:** Automatically generates documentation from PowerShell code comments.
+**Key Features:**
+- Feature 1
+- Feature 2
+- Feature 3
 
-**Triggers:**
-- Changes to PowerShell code
-- Changes to documentation files
-- Manual dispatch
+**Setup Requirements:**
+- Requirement 1
+- Requirement 2 (if any)
 
-### Release Automation (`release-automation.yml`)
+**Example Use Cases:**
+- Use case 1
+- Use case 2
 
-**Purpose:** Automates the release process including versioning, packaging, and GitHub release creation.
-
-**Triggers:**
-- Version tags (v*)
-- Manual dispatch
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Workflows use consistent environment variables:
-
-```yaml
-env:
-  AITHERZERO_CI: true                    # Enable CI mode
-  AITHERZERO_NONINTERACTIVE: true       # Disable interactive prompts
+**Workflow File:** [View on GitHub](https://github.com/<owner>/<repo>/blob/main/.github/workflows/<workflow-name>.yml)
 ```
 
-## 🧹 Recent Cleanup
-
-The following over-engineered "AI coordination" workflows were removed as they provided no real value and generated noise:
-
-**Removed workflows (11):**
-- `ai-agent-coordinator.yml` - Wrapper around existing tools
-- `automated-copilot-agent.yml` - Auto-assigned copilot to issues
-- `intelligent-ci-orchestrator.yml` - Over-complex CI duplicating simpler workflows
-- `qa-lifecycle-coordinator.yml` - Redundant validation layer
-- `copilot-issue-commenter.yml` - Auto-commented on issues
-- `copilot-pr-automation.yml` - Over-automated PR creation
-- `intelligent-report-analyzer.yml` - Redundant analysis
-- `auto-create-prs-for-issues.yml` - Over-automation
-- `create-issues-now.yml` - Manual force issue creation
-- `close-auto-issues.yml` - Cleaned up spam from above workflows
-- `enhanced-cost-optimizer.yml` - Fake cost analysis with simulated data
-
-**What was preserved:**
-- `quality-validation.yml` - Real quality checks
-- `auto-create-issues-from-failures.yml` - Legitimate issue tracking for real problems
-- Other essential workflows for validation, documentation, and release management
-
-## 📚 Resources
-
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [AitherZero Documentation](../../README.md)
-- [PowerShell CI/CD Best Practices](https://docs.microsoft.com/en-us/powershell/scripting/dev-cross-plat/ci-cd-pipeline)
-
-### Docker Image Publishing (`docker-publish.yml`)
-
-**Purpose:** Build and publish multi-platform Docker images to GitHub Container Registry.
-
-**Features:**
-- 🐳 **Multi-Platform**: Builds for linux/amd64 and linux/arm64
-- 📦 **GHCR Publishing**: Publishes to ghcr.io/wizzense/aitherzero
-- 🏷️ **Smart Tagging**: Creates version, major.minor, major, latest, and SHA tags
-- 🔒 **Security Scanning**: Trivy integration for vulnerability detection
-- 🧪 **Automated Testing**: Smoke tests verify image functionality
-- ⚡ **Build Caching**: GitHub Actions cache for faster builds
-
-**Triggers:**
-- Push of version tags (e.g., `v1.1.0`)
-- GitHub Release published
-- Manual workflow dispatch
-
-**Image Tags Created:**
-```
-ghcr.io/wizzense/aitherzero:v1.1.0   # Specific version
-ghcr.io/wizzense/aitherzero:1.1      # Major.minor
-ghcr.io/wizzense/aitherzero:1        # Major version
-ghcr.io/wizzense/aitherzero:latest   # Latest stable release
-ghcr.io/wizzense/aitherzero:sha-abc  # Specific commit
-```
-
-**Usage:**
-```bash
-# Pull and run the latest image
-docker pull ghcr.io/wizzense/aitherzero:latest
-docker run -it --rm ghcr.io/wizzense/aitherzero:latest pwsh
-
-# Pull specific version
-docker pull ghcr.io/wizzense/aitherzero:v1.1.0
-```
-
-**Jobs:**
-1. `build-and-push`: Builds multi-platform images and pushes to GHCR
-2. `security-scan`: Scans images with Trivy and uploads results to GitHub Security
-
-**Artifacts:**
-- Docker images in GitHub Container Registry
-- Security scan results (SARIF format) in GitHub Security tab
-
+Browse our [Awesome Workflows](./AWESOME.md) page to see what the community has created!
