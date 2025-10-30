@@ -1,71 +1,114 @@
-# Documentation Index
+# generated
 
-## Project Documentation
-- [Main Project Documentation](PROJECT-DOCUMENTATION.md)
+**Navigation**: [🏠 Root](../../index.md) → [docs](../index.md) → **generated**
 
-## Module Documentation
-### ai-agents
-- [AIWorkflowOrchestrator](modules/AIWorkflowOrchestrator.md)
-- [ClaudeCodeIntegration](modules/ClaudeCodeIntegration.md)
-- [CopilotOrchestrator](modules/CopilotOrchestrator.md)
+⬆️ **Parent**: [docs](../index.md)
 
-### automation
-- [DeploymentAutomation](modules/DeploymentAutomation.md)
-- [OrchestrationEngine](modules/OrchestrationEngine.md)
+## 📖 Overview
 
-### configuration
-- [Configuration](modules/Configuration.md)
+*This directory contains AitherZero project files.*
 
-### development
-- [DeveloperTools](modules/DeveloperTools.md)
-- [GitAutomation](modules/GitAutomation.md)
-- [IssueTracker](modules/IssueTracker.md)
-- [PullRequestManager](modules/PullRequestManager.md)
+### 📊 Contents
 
-### documentation
-- [DocumentationEngine](modules/DocumentationEngine.md)
-- [ProjectIndexer](modules/ProjectIndexer.md)
+- **Subdirectories**: 2
+- **Files**: 82
 
-### experience
-- [BetterMenu](modules/BetterMenu.md)
-- [UserInterface](modules/UserInterface.md)
+## 📁 Subdirectories
 
-### infrastructure
-- [Infrastructure](modules/Infrastructure.md)
+- [📂 **automation-scripts**](./automation-scripts/index.md)
+- [📂 **modules**](./modules/index.md)
 
-### reporting
-- [ReportingEngine](modules/ReportingEngine.md)
-- [TechDebtAnalysis](modules/TechDebtAnalysis.md)
+## 📄 Files
 
-### security
-- [Security](modules/Security.md)
+### .html Files
 
-### testing
-- [AitherTestFramework](modules/AitherTestFramework.md)
-- [CoreTestSuites](modules/CoreTestSuites.md)
-- [QualityValidator](modules/QualityValidator.md)
-- [TestCacheManager](modules/TestCacheManager.md)
-- [TestGenerator](modules/TestGenerator.md)
-- [TestingFramework](modules/TestingFramework.md)
+- 📄 [AitherTestFramework.html](./AitherTestFramework.html)
+- 📄 [AitherZero.html](./AitherZero.html)
+- 📄 [AIWorkflowOrchestrator.html](./AIWorkflowOrchestrator.html)
+- 📄 [BetterMenu.html](./BetterMenu.html)
+- 📄 [Bootstrap.html](./Bootstrap.html)
+- 📄 [ClaudeCodeIntegration.html](./ClaudeCodeIntegration.html)
+- 📄 [ComponentRegistry.html](./ComponentRegistry.html)
+- 📄 [Configuration.html](./Configuration.html)
+- 📄 [CopilotOrchestrator.html](./CopilotOrchestrator.html)
+- 📄 [CoreTestSuites.html](./CoreTestSuites.html)
+- 📄 [DeploymentAutomation.html](./DeploymentAutomation.html)
+- 📄 [DeveloperTools.html](./DeveloperTools.html)
+- 📄 [DocumentationEngine.html](./DocumentationEngine.html)
+- 📄 [GitAutomation.html](./GitAutomation.html)
+- 📄 [Infrastructure.html](./Infrastructure.html)
+- 📄 [InteractiveMenu.html](./InteractiveMenu.html)
+- 📄 [IssueTracker.html](./IssueTracker.html)
+- 📄 [LayoutManager.html](./LayoutManager.html)
+- 📄 [Logging.html](./Logging.html)
+- 📄 [LoggingDashboard.html](./LoggingDashboard.html)
+- 📄 [LoggingEnhancer.html](./LoggingEnhancer.html)
+- 📄 [LogViewer.html](./LogViewer.html)
+- 📄 [Maintenance.html](./Maintenance.html)
+- 📄 [OrchestrationEngine.html](./OrchestrationEngine.html)
+- 📄 [PackageManager.html](./PackageManager.html)
+- 📄 [Performance.html](./Performance.html)
+- 📄 [ProjectIndexer.html](./ProjectIndexer.html)
+- 📄 [PullRequestManager.html](./PullRequestManager.html)
+- 📄 [QualityValidator.html](./QualityValidator.html)
+- 📄 [ReportingEngine.html](./ReportingEngine.html)
+- 📄 [Security.html](./Security.html)
+- 📄 [TechDebtAnalysis.html](./TechDebtAnalysis.html)
+- 📄 [TestCacheManager.html](./TestCacheManager.html)
+- 📄 [TestGenerator.html](./TestGenerator.html)
+- 📄 [TestingFramework.html](./TestingFramework.html)
+- 📄 [TextUtilities.html](./TextUtilities.html)
+- 📄 [ThemeRegistry.html](./ThemeRegistry.html)
+- 📄 [UIComponent.html](./UIComponent.html)
+- 📄 [UIContext.html](./UIContext.html)
+- 📄 [UserInterface.html](./UserInterface.html)
 
-### utilities
-- [Bootstrap](modules/Bootstrap.md)
-- [Logging](modules/Logging.md)
-- [LoggingDashboard](modules/LoggingDashboard.md)
-- [LoggingEnhancer](modules/LoggingEnhancer.md)
-- [LogViewer](modules/LogViewer.md)
-- [Maintenance](modules/Maintenance.md)
-- [PackageManager](modules/PackageManager.md)
-- [Performance](modules/Performance.md)
-- [TextUtilities](modules/TextUtilities.md)
+### .md Files
 
-## Navigation
-- [Installation Guide](../README.md#installation)
-- [Quick Start](../README.md#quick-start)
-- [Configuration](CONFIGURATION.md)
-- [Development Guide](DEVELOPMENT-SETUP.md)
+- 📝 [AitherTestFramework.md](./AitherTestFramework.md)
+- 📝 [AitherZero.md](./AitherZero.md)
+- 📝 [AIWorkflowOrchestrator.md](./AIWorkflowOrchestrator.md)
+- 📝 [BetterMenu.md](./BetterMenu.md)
+- 📝 [Bootstrap.md](./Bootstrap.md)
+- 📝 [ClaudeCodeIntegration.md](./ClaudeCodeIntegration.md)
+- 📝 [ComponentRegistry.md](./ComponentRegistry.md)
+- 📝 [Configuration.md](./Configuration.md)
+- 📝 [CopilotOrchestrator.md](./CopilotOrchestrator.md)
+- 📝 [CoreTestSuites.md](./CoreTestSuites.md)
+- 📝 [DeploymentAutomation.md](./DeploymentAutomation.md)
+- 📝 [DeveloperTools.md](./DeveloperTools.md)
+- 📝 [DocumentationEngine.md](./DocumentationEngine.md)
+- 📝 [GitAutomation.md](./GitAutomation.md)
+- 📝 [index.md](./index.md)
+- 📝 [Infrastructure.md](./Infrastructure.md)
+- 📝 [InteractiveMenu.md](./InteractiveMenu.md)
+- 📝 [IssueTracker.md](./IssueTracker.md)
+- 📝 [LayoutManager.md](./LayoutManager.md)
+- 📝 [Logging.md](./Logging.md)
+- 📝 [LoggingDashboard.md](./LoggingDashboard.md)
+- 📝 [LoggingEnhancer.md](./LoggingEnhancer.md)
+- 📝 [LogViewer.md](./LogViewer.md)
+- 📝 [Maintenance.md](./Maintenance.md)
+- 📝 [OrchestrationEngine.md](./OrchestrationEngine.md)
+- 📝 [PackageManager.md](./PackageManager.md)
+- 📝 [Performance.md](./Performance.md)
+- 📝 [PROJECT-DOCUMENTATION.md](./PROJECT-DOCUMENTATION.md)
+- 📝 [ProjectIndexer.md](./ProjectIndexer.md)
+- 📝 [PullRequestManager.md](./PullRequestManager.md)
+- 📝 [QualityValidator.md](./QualityValidator.md)
+- 📝 [ReportingEngine.md](./ReportingEngine.md)
+- 📝 [Security.md](./Security.md)
+- 📝 [TechDebtAnalysis.md](./TechDebtAnalysis.md)
+- 📝 [TestCacheManager.md](./TestCacheManager.md)
+- 📝 [TestGenerator.md](./TestGenerator.md)
+- 📝 [TestingFramework.md](./TestingFramework.md)
+- 📝 [TextUtilities.md](./TextUtilities.md)
+- 📝 [ThemeRegistry.md](./ThemeRegistry.md)
+- 📝 [UIComponent.md](./UIComponent.md)
+- 📝 [UIContext.md](./UIContext.md)
+- 📝 [UserInterface.md](./UserInterface.md)
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-10-30 00:56:01 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-10-30 04:29:50 UTC
 
