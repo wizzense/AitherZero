@@ -10,6 +10,12 @@
 
     Provides interactive menu and number-based orchestration capabilities.
 
+    
+
+    By default, runs in non-interactive List mode showing available scripts and playbooks.
+
+    Use -Mode Interactive to access the interactive menu interface.
+
 
 
     Note: This script requires PowerShell 7.0 or higher. If running from PowerShell 5.1,
@@ -18,7 +24,7 @@
 
 .PARAMETER Mode
 
-    Startup mode: Interactive (default), Orchestrate, Validate
+    Startup mode: List (default), Interactive, Orchestrate, Validate, Deploy, Test, Search, Run
 
 .PARAMETER Sequence
 
@@ -50,9 +56,17 @@
 
 .EXAMPLE
 
-    # Interactive mode
+    # List all available scripts and playbooks (default)
 
     .\Start-AitherZero.ps1
+
+
+
+.EXAMPLE
+
+    # Interactive menu mode
+
+    .\Start-AitherZero.ps1 -Mode Interactive
 
 
 
@@ -82,6 +96,14 @@
 
 .EXAMPLE
 
+    # Run a specific script (shortcut)
+
+    .\Start-AitherZero.ps1 -Mode Run -Target 0501
+
+
+
+.EXAMPLE
+
     # Modern CLI - Search for security tools
 
     .\Start-AitherZero.ps1 -Mode Search -Query security
@@ -102,7 +124,7 @@ param(
 
     [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
 
-    [string]$Mode = 'Interactive',
+    [string]$Mode = 'List',
 
 
 
@@ -442,9 +464,11 @@ function Get-SmartExecutionMode {
 
 
 
-    # If mode is explicitly set, respect it
+    # If mode is explicitly set to something other than the default 'List', respect it
 
-    if ($CurrentMode -ne 'Interactive') {
+    # This allows users to explicitly request Interactive mode if needed
+
+    if ($CurrentMode -ne 'List') {
 
         return $CurrentMode
 
@@ -498,9 +522,11 @@ function Get-SmartExecutionMode {
 
 
 
-    # Default to interactive for user sessions
+    # Default to List mode for non-interactive execution
 
-    return 'Interactive'
+    # Users can explicitly use -Mode Interactive if they want the interactive menu
+
+    return 'List'
 
 }
 
@@ -3286,13 +3312,15 @@ try {
 
         } else {
 
-            # Manual execution: Interactive by default for user experience
+            # Manual execution: Non-interactive list mode by default
+
+            # Users can explicitly use -Mode Interactive for the interactive menu
 
             $NonInteractive = $false
 
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
 
-                Write-CustomLog "Manual execution detected - starting interactive mode" -Level 'Information'
+                Write-CustomLog "Manual execution detected - defaulting to non-interactive mode" -Level 'Information'
 
             }
 
@@ -3521,6 +3549,24 @@ try {
             }
 
             Invoke-ModernListAction -ListTarget $Target
+
+            
+
+            # Add helpful guidance for next steps
+
+            Write-Host ""
+
+            Write-ModernCLI "Quick Start:" -Type 'Accent'
+
+            Write-ModernCLI "  Run a script:     .\Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber 0402" -Type 'Info'
+
+            Write-ModernCLI "  Run a playbook:   .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook infrastructure-lab" -Type 'Info'
+
+            Write-ModernCLI "  Interactive menu: .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Info'
+
+            Write-ModernCLI "  Show help:        .\Start-AitherZero.ps1 -Help" -Type 'Info'
+
+            Write-Host ""
 
         }
 
