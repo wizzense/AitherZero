@@ -543,7 +543,20 @@ function New-DirectoryIndex {
     $config = $script:IndexerState.Config
     $indexPath = Join-Path $Path $config.IndexFileName
     
-    # Check if update is needed based on directory content changes
+    # Skip root index.md - it's managed manually for GitHub Pages dashboard redirect
+    $isRoot = ($Path -eq $config.RootPath) -or 
+              ([System.IO.Path]::GetFullPath($Path) -eq [System.IO.Path]::GetFullPath($config.RootPath))
+    if ($isRoot) {
+        Write-IndexLog "Skipping root index.md (managed manually for GitHub Pages)" -Level Information
+        return @{
+            Success = $true
+            Updated = $false
+            Path = $indexPath
+            Reason = 'RootProtected'
+        }
+    }
+    
+    # Check if update is needed
     if (-not $Force -and -not (Test-ContentChanged -Path $Path)) {
         Write-IndexLog "No changes detected for: $Path - skipping" -Level Debug
         return @{
