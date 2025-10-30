@@ -1,141 +1,107 @@
-# AitherZero
-
-## 📖 Overview
-
-See [README.md](./README.md) for detailed information about this directory.
-
-### 📊 Contents
-
-- **Subdirectories**: 18
-- **Files**: 41
-- **PowerShell Scripts**: 12
-
-## 📁 Subdirectories
-
-- [📂 **_layouts**](./_layouts/index.md)
-- [📂 **.claude**](./.claude/index.md)
-  - *This directory contains the Claude Code hooks configuration for AitherZero, providing intelligent...*
-- 📂 **.github**
-  - *This directory contains GitHub-specific configuration files, workflows, and the GitHub Copilot ag...*
-- [📂 **aithercore**](./aithercore/index.md)
-  - *The `aithercore` directory contains the consolidated essential modules required for basic AitherZ...*
-- [📂 **assets**](./assets/index.md)
-- [📂 **automation-scripts**](./automation-scripts/index.md)
-  - *This directory contains all automated installation and configuration scripts used by the AitherZe...*
-- [📂 **demos**](./demos/index.md)
-- [📂 **docs**](./docs/index.md)
-- [📂 **domains**](./domains/index.md)
-  - *This directory contains all domain modules for the AitherZero platform, organized by functional a...*
-- [📂 **examples**](./examples/index.md)
-- [📂 **generated-issues**](./generated-issues/index.md)
-- [📂 **infrastructure**](./infrastructure/index.md)
-  - *This directory contains infrastructure-as-code definitions for deploying AitherZero environments.*
-- [📂 **legacy-to-migrate**](./legacy-to-migrate/index.md)
-- [📂 **logs**](./logs/index.md)
-- [📂 **orchestration**](./orchestration/index.md)
-  - *A powerful number-based orchestration language for automating complex deployments and configurati...*
-- [📂 **reports**](./reports/index.md)
-  - *- [📊 HTML Dashboard](dashboard.html) - Interactive web dashboard*
-- [📂 **tests**](./tests/index.md)
-  - *This directory contains all tests for the AitherZero project, organized by domain and test type.*
-- [📂 **tools**](./tools/index.md)
-
-## 📄 Files
-
-### (no extension) Files
-
-- 📄 [Dockerfile](./Dockerfile)
-- 📄 [Gemfile](./Gemfile)
-- 📄 [LICENSE](./LICENSE)
-- 📄 [VERSION](./VERSION)
-
-### .dockerignore Files
-
-- 📄 [.dockerignore](./.dockerignore)
-
-### .example Files
-
-- 📄 [.env.example](./.env.example)
-
-### .gitignore Files
-
-- 📄 [.gitignore](./.gitignore)
-
-### .gz Files
-
-- 📄 [actionlint.tar.gz](./actionlint.tar.gz)
-
-### .jpg Files
-
-- 📄 [aitherium_logo.jpg](./aitherium_logo.jpg)
-
-### .json Files
-
-- ⚙️ [.aitherzero-index-cache.json](./.aitherzero-index-cache.json)
-- ⚙️ [.aitherzero-index-report.json](./.aitherzero-index-report.json)
-
-### .md Files
-
-- 📝 [BUILD-AND-RELEASE-SUMMARY.md](./BUILD-AND-RELEASE-SUMMARY.md)
-- 📝 [CROSS-PLATFORM-VALIDATION.md](./CROSS-PLATFORM-VALIDATION.md)
-- 📝 [DOCKER.md](./DOCKER.md)
-- 📝 [FUNCTIONALITY-INDEX.md](./FUNCTIONALITY-INDEX.md)
-- 📝 [IMPLEMENTATION-COMPLETE.md](./IMPLEMENTATION-COMPLETE.md)
-- 📝 [IMPLEMENTATION-SUMMARY.md](./IMPLEMENTATION-SUMMARY.md)
-- 📝 [index.md](./index.md)
-- 📝 [QUICKSTART-AUTOMATED-REPORTS.md](./QUICKSTART-AUTOMATED-REPORTS.md)
-- 📝 [README-ModernCLI.md](./README-ModernCLI.md)
-- 📝 [README.md](./README.md)
-- 📝 [RELEASE-1.0.0.0-FINAL-SUMMARY.md](./RELEASE-1.0.0.0-FINAL-SUMMARY.md)
-- 📝 [TROUBLESHOOTING-WORKFLOW-FAILURES.md](./TROUBLESHOOTING-WORKFLOW-FAILURES.md)
-- 📝 [WORKFLOW-CONSOLIDATION-FIX.md](./WORKFLOW-CONSOLIDATION-FIX.md)
-
-### .ps1 Files
-
-- ⚙️ [bootstrap.ps1](./bootstrap.ps1)
-  - *AitherZero Bootstrap Script - One-liner installation and setup*
-- ⚙️ [container-welcome.ps1](./container-welcome.ps1)
-  - *Container welcome script for AitherZero*
-- ⚙️ [docker-entrypoint.ps1](./docker-entrypoint.ps1)
-  - *Docker container entrypoint script for AitherZero*
-- ⚙️ [docker-start.ps1](./docker-start.ps1)
-  - *Simplified Docker container startup script for AitherZero*
-- ⚙️ [Invoke-AitherTests.ps1](./Invoke-AitherTests.ps1)
-  - *AitherZero Next-Generation Test Runner*
-- ⚙️ [Start-AitherZero.ps1](./Start-AitherZero.ps1)
-  - *AitherZero Platform Launcher with Orchestration Engine*
-
-### .psd1 Files
-
-- ⚙️ [.psscriptanalyzer-fast.psd1](./.psscriptanalyzer-fast.psd1)
-- ⚙️ [AitherZero.psd1](./AitherZero.psd1)
-- ⚙️ [config.example.psd1](./config.example.psd1)
-- ⚙️ [config.psd1](./config.psd1)
-- ⚙️ [PSScriptAnalyzerSettings.psd1](./PSScriptAnalyzerSettings.psd1)
-
-### .psm1 Files
-
-- ⚙️ [AitherZero.psm1](./AitherZero.psm1)
-  - *AitherZero root module that loads all nested modules*
-
-### .sh Files
-
-- 📄 [bootstrap.sh](./bootstrap.sh)
-
-### .txt Files
-
-- 📋 [.psscriptanalyzer-exclude.txt](./.psscriptanalyzer-exclude.txt)
-
-### .xml Files
-
-- 📄 [testResults.xml](./testResults.xml)
-
-### .yml Files
-
-- ⚙️ [_config.yml](./_config.yml)
-- ⚙️ [docker-compose.yml](./docker-compose.yml)
-
+---
+layout: default
+title: AitherZero Dashboard
+redirect_to: /AitherZero/reports/dashboard.html
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-10-30 00:57:36 UTC
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=reports/dashboard.html">
+    <title>AitherZero - Infrastructure Automation Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        .link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid #ffffff;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚀</div>
+        <h1>AitherZero</h1>
+        <p>Infrastructure Automation Platform</p>
+        <div class="spinner"></div>
+        <p style="font-size: 1rem; opacity: 0.8;">Redirecting to dashboard...</p>
+        <a href="reports/dashboard.html" class="link">
+            Click here if not redirected automatically
+        </a>
+    </div>
+</body>
+</html>
 
