@@ -1,0 +1,125 @@
+{
+  "$schema": "https://github.com/modelcontextprotocol/specification/blob/main/schema/mcp-config.schema.json",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ],
+      "description": "Provides filesystem access to the AitherZero repository",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "config": {
+        "allowedDirectories": [
+          "${workspaceFolder}",
+          "${workspaceFolder}/domains",
+          "${workspaceFolder}/automation-scripts",
+          "${workspaceFolder}/tests",
+          "${workspaceFolder}/docs",
+          "${workspaceFolder}/infrastructure",
+          "${workspaceFolder}/orchestration"
+        ],
+        "readOnly": false
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "description": "Provides GitHub API access for repository operations",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      },
+      "config": {
+        "owner": "wizzense",
+        "repo": "AitherZero"
+      }
+    },
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git"
+      ],
+      "description": "Provides Git operations for version control",
+      "capabilities": {
+        "tools": true
+      },
+      "config": {
+        "repository": "${workspaceFolder}"
+      }
+    },
+    "powershell-docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ],
+      "description": "Fetches PowerShell documentation and references",
+      "capabilities": {
+        "tools": true
+      },
+      "config": {
+        "allowedDomains": [
+          "docs.microsoft.com",
+          "learn.microsoft.com",
+          "github.com/PowerShell"
+        ]
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Enables detailed thinking and reasoning for complex infrastructure tasks",
+      "capabilities": {
+        "prompts": true
+      }
+    }
+  },
+  "defaultServers": [
+    "filesystem",
+    "github",
+    "git"
+  ],
+  "contextProviders": {
+    "codebase": {
+      "enabled": true,
+      "paths": [
+        "${workspaceFolder}/domains/**/*.psm1",
+        "${workspaceFolder}/automation-scripts/**/*.ps1",
+        "${workspaceFolder}/tests/**/*.Tests.ps1"
+      ]
+    },
+    "documentation": {
+      "enabled": true,
+      "paths": [
+        "${workspaceFolder}/docs/**/*.md",
+        "${workspaceFolder}/*.md",
+        "${workspaceFolder}/.github/**/*.md"
+      ]
+    },
+    "configuration": {
+      "enabled": true,
+      "paths": [
+        "${workspaceFolder}/config.psd1",
+        "${workspaceFolder}/config.example.psd1",
+        "${workspaceFolder}/PSScriptAnalyzerSettings.psd1",
+        "${workspaceFolder}/.github/copilot-instructions.md",
+        "${workspaceFolder}/.github/copilot.yaml"
+      ]
+    }
+  }
+}
