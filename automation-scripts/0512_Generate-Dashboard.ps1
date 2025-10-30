@@ -149,6 +149,11 @@ function Get-ProjectMetrics {
             Unit = 0
             Integration = 0
             Total = 0
+            LastRun = $null
+            Passed = 0
+            Failed = 0
+            Skipped = 0
+            SuccessRate = 0
         }
         Coverage = @{
             Percentage = 0
@@ -159,6 +164,8 @@ function Get-ProjectMetrics {
         Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { "Windows" }
         PSVersion = $PSVersionTable.PSVersion.ToString()
         LastUpdated = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        Domains = @()
+        AutomationScripts = 0
     }
 
     # Calculate total files
@@ -188,12 +195,55 @@ function Get-ProjectMetrics {
         }
     }
 
+    # Count automation scripts
+    $automationPath = Join-Path $ProjectPath "automation-scripts"
+    if (Test-Path $automationPath) {
+        $metrics.AutomationScripts = @(Get-ChildItem -Path $automationPath -Filter "*.ps1").Count
+    }
+
+    # Count domain modules
+    $domainsPath = Join-Path $ProjectPath "domains"
+    if (Test-Path $domainsPath) {
+        $domainDirs = Get-ChildItem -Path $domainsPath -Directory
+        foreach ($domain in $domainDirs) {
+            $moduleCount = @(Get-ChildItem -Path $domain.FullName -Filter "*.psm1").Count
+            if ($moduleCount -gt 0) {
+                $metrics.Domains += @{
+                    Name = $domain.Name
+                    Modules = $moduleCount
+                    Path = $domain.FullName
+                }
+            }
+        }
+    }
+
     # Count test files
     $testPath = Join-Path $ProjectPath "tests"
     if (Test-Path $testPath) {
         $metrics.Tests.Unit = @(Get-ChildItem -Path $testPath -Filter "*Tests.ps1" -Recurse | Where-Object { $_.FullName -match 'unit' }).Count
         $metrics.Tests.Integration = @(Get-ChildItem -Path $testPath -Filter "*Tests.ps1" -Recurse | Where-Object { $_.FullName -match 'integration' }).Count
         $metrics.Tests.Total = $metrics.Tests.Unit + $metrics.Tests.Integration
+    }
+
+    # Get latest test results
+    $testReportPath = Join-Path $ProjectPath "reports"
+    $latestTestReport = Get-ChildItem -Path $testReportPath -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | 
+                        Sort-Object LastWriteTime -Descending | 
+                        Select-Object -First 1
+    
+    if ($latestTestReport) {
+        try {
+            $testData = Get-Content $latestTestReport.FullName | ConvertFrom-Json
+            if ($testData.TestResults.Summary) {
+                $metrics.Tests.Passed = $testData.TestResults.Summary.Passed
+                $metrics.Tests.Failed = $testData.TestResults.Summary.Failed
+                $metrics.Tests.Skipped = $testData.TestResults.Summary.Skipped
+                $metrics.Tests.SuccessRate = $testData.TestResults.Summary.SuccessRate
+                $metrics.Tests.LastRun = $latestTestReport.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse test report: $_"
+        }
     }
 
     # Get coverage information if available
@@ -368,6 +418,57 @@ function Get-QualityMetrics {
     return $qualityMetrics
 }
 
+function Get-PSScriptAnalyzerMetrics {
+    <#
+    .SYNOPSIS
+        Get PSScriptAnalyzer metrics from latest report
+    #>
+    Write-ScriptLog -Message "Collecting PSScriptAnalyzer metrics"
+    
+    $metrics = @{
+        TotalIssues = 0
+        Errors = 0
+        Warnings = 0
+        Information = 0
+        FilesAnalyzed = 0
+        LastRun = $null
+        TopIssues = @()
+    }
+    
+    # Find latest PSScriptAnalyzer results
+    $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+    if (Test-Path $pssaPath) {
+        try {
+            $pssaData = Get-Content $pssaPath | ConvertFrom-Json
+            $metrics.TotalIssues = $pssaData.Summary.TotalIssues
+            $metrics.Errors = $pssaData.Summary.Errors
+            $metrics.Warnings = $pssaData.Summary.Warnings
+            $metrics.Information = $pssaData.Summary.Information
+            $metrics.FilesAnalyzed = $pssaData.FilesAnalyzed
+            $metrics.LastRun = $pssaData.GeneratedAt
+            
+            # Get top issues by count
+            if ($pssaData.Issues) {
+                $issueGroups = $pssaData.Issues | Group-Object -Property RuleName | 
+                               Sort-Object Count -Descending | 
+                               Select-Object -First 5
+                
+                $metrics.TopIssues = $issueGroups | ForEach-Object {
+                    @{
+                        Rule = $_.Name
+                        Count = $_.Count
+                        Severity = ($_.Group | Select-Object -First 1).Severity
+                    }
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse PSScriptAnalyzer results: $_"
+        }
+    }
+    
+    return $metrics
+}
+
 function Get-BuildStatus {
     Write-ScriptLog -Message "Determining build status"
 
@@ -464,6 +565,7 @@ function New-HTMLDashboard {
         [hashtable]$Status,
         [hashtable]$Activity,
         [hashtable]$QualityMetrics,
+        [hashtable]$PSScriptAnalyzerMetrics,
         [string]$OutputPath
     )
 
@@ -1563,6 +1665,7 @@ function New-JSONReport {
         [hashtable]$Status,
         [hashtable]$Activity,
         [hashtable]$QualityMetrics,
+        [hashtable]$PSScriptAnalyzerMetrics,
         [string]$OutputPath
     )
 
@@ -1579,6 +1682,7 @@ function New-JSONReport {
         Status = $Status
         Activity = $Activity
         QualityMetrics = $QualityMetrics
+        PSScriptAnalyzerMetrics = $PSScriptAnalyzerMetrics
         Environment = @{
             CI = [bool]$env:AITHERZERO_CI
             Platform = $Metrics.Platform
@@ -1608,22 +1712,23 @@ try {
     $status = Get-BuildStatus
     $activity = Get-RecentActivity
     $qualityMetrics = Get-QualityMetrics
+    $pssaMetrics = Get-PSScriptAnalyzerMetrics
 
     # Generate dashboards based on format selection
     switch ($Format) {
         'HTML' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
         }
         'Markdown' {
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
         }
         'JSON' {
-            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
+            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
         }
         'All' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
-            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
+            New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
         }
     }
 
