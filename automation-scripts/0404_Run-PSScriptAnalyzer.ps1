@@ -25,7 +25,7 @@ param(
     [switch]$DryRun,
     [switch]$Fix,
     [switch]$IncludeSuppressed,
-    [string[]]$ExcludePaths = @('tests', 'legacy-to-migrate'),
+    [string[]]$ExcludePaths = @('tests'),
     [string[]]$Severity,
     [string[]]$ExcludeRules,
     [string[]]$IncludeRules
@@ -132,10 +132,10 @@ try {
         # In CI, maintain full analysis but optimize for performance
         # Exclude legacy directories and temp files for cleaner analysis
         if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
-            $ExcludePaths = @('legacy-to-migrate', '.archive', 'temp', 'logs', 'reports', '.git', 'node_modules')
+            $ExcludePaths = @('.archive', 'temp', 'logs', 'reports', '.git', 'node_modules')
         } else {
             # Ensure legacy directories are always excluded in CI
-            $ExcludePaths = @($ExcludePaths) + @('legacy-to-migrate', '.archive', 'temp', 'logs', 'reports')
+            $ExcludePaths = @($ExcludePaths) + @('.archive', 'temp', 'logs', 'reports')
         }
         Write-ScriptLog -Message "CI mode: Full analysis with performance optimizations, excluded $($ExcludePaths.Count) path patterns"
     }
