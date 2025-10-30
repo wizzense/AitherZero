@@ -166,42 +166,52 @@ function Invoke-FullDocumentationGeneration {
 }
 
 function Invoke-IncrementalDocumentationGeneration {
-    Write-DocLog "Starting incremental documentation generation..."
+    Write-DocLog "Starting incremental documentation generation..." -Level Information
 
     try {
         # Find recently changed files
+        Write-DocLog "Checking for files modified in the last 24 hours..." -Level Information
         $changedFiles = Get-RecentlyChangedFile -Hours 24
 
         if ($changedFiles.Count -eq 0) {
-            Write-DocLog "No recent changes detected, skipping incremental generation"
+            Write-DocLog "No recent changes detected, skipping incremental generation" -Level Information
             return $true
         }
 
-        Write-DocLog "Found $($changedFiles.Count) recently changed files"
+        Write-DocLog "Found $($changedFiles.Count) recently changed files" -Level Information
 
         # Process each changed file
+        $processedCount = 0
         foreach ($file in $changedFiles) {
             try {
                 if ($file.FullName -like "*.psm1") {
+                    Write-DocLog "Processing module: $($file.BaseName)" -Level Information
                     New-ModuleDocumentation -ModulePath $file.FullName -OutputPath $script:OutputPath -Format $Format
-                    Write-DocLog "Updated documentation for module: $($file.BaseName)"
+                    Write-DocLog "Updated documentation for module: $($file.BaseName)" -Level Information
+                    $processedCount++
                 } elseif ($file.FullName -like "*.ps1" -and $file.FullName -like "*automation-scripts*") {
+                    Write-DocLog "Processing script: $($file.BaseName)" -Level Information
                     Update-ScriptDocumentation -ScriptPath $file.FullName
-                    Write-DocLog "Updated documentation for script: $($file.BaseName)"
+                    Write-DocLog "Updated documentation for script: $($file.BaseName)" -Level Information
+                    $processedCount++
                 } elseif ($file.Name -eq "README.md") {
+                    Write-DocLog "Processing main README file" -Level Information
                     Update-MainDocumentation
-                    Write-DocLog "Updated main documentation due to README changes"
+                    Write-DocLog "Updated main documentation due to README changes" -Level Information
+                    $processedCount++
                 }
             } catch {
                 Write-DocLog "Failed to update documentation for $($file.Name): $_" -Level Warning
+                Write-DocLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
             }
         }
 
-        Write-DocLog "Incremental documentation generation completed"
+        Write-DocLog "Incremental documentation generation completed successfully - Processed $processedCount files" -Level Information
         return $true
 
     } catch {
         Write-DocLog "Incremental documentation generation failed: $_" -Level Error
+        Write-DocLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
         return $false
     }
 }
@@ -290,26 +300,31 @@ function Invoke-ReactiveDocumentationMode {
 }
 
 function Invoke-ScriptDocumentationGeneration {
-    Write-DocLog "Generating automation script documentation..."
+    Write-DocLog "Generating automation script documentation..." -Level Information
 
     try {
         $scriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
+        Write-DocLog "Checking scripts path: $scriptsPath" -Level Information
         if (-not (Test-Path $scriptsPath)) {
-            Write-DocLog "Automation scripts directory not found" -Level Warning
+            Write-DocLog "Automation scripts directory not found at: $scriptsPath" -Level Warning
             return
         }
 
         # Get all automation scripts
+        Write-DocLog "Scanning for automation scripts..." -Level Information
         $scripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" | Where-Object {
             $_.Name -match '^\d{4}_'
         } | Sort-Object Name
+        Write-DocLog "Found $($scripts.Count) automation scripts to document" -Level Information
 
         # Generate script index documentation
+        Write-DocLog "Generating script index documentation..." -Level Information
         $scriptIndex = New-ScriptIndexDocumentation -Scripts $scripts
 
         # Save script index
         $scriptIndexPath = Join-Path $script:OutputPath "automation-scripts"
         if (-not (Test-Path $scriptIndexPath)) {
+            Write-DocLog "Creating script index directory: $scriptIndexPath" -Level Information
             New-Item -Path $scriptIndexPath -ItemType Directory -Force | Out-Null
         }
 
@@ -440,6 +455,7 @@ function Get-ScriptInformation {
             Tags = $tags
         }
     } catch {
+        Write-DocLog "Failed to read script information from $ScriptPath : $_" -Level Error
         return @{
             Description = "Error reading script information"
             Tags = @()
@@ -484,32 +500,41 @@ function Get-RecentlyChangedFile {
 }
 
 function Update-MainDocumentation {
-    Write-DocLog "Updating main documentation files..."
+    Write-DocLog "Updating main documentation files..." -Level Information
 
     try {
         # Generate new README sections based on current state
         $readmePath = Join-Path $script:ProjectRoot "README.md"
+        Write-DocLog "Checking README at: $readmePath" -Level Information
         if (Test-Path $readmePath) {
             # Update functionality index reference
+            Write-DocLog "Updating functionality index..." -Level Information
             Update-FunctionalityIndex
-            Write-DocLog "Updated functionality index"
+            Write-DocLog "Updated functionality index" -Level Information
+        } else {
+            Write-DocLog "README not found, skipping functionality index update" -Level Information
         }
 
         # Update documentation index if function is available
         $indexPath = Join-Path $script:OutputPath "index.md"
+        Write-DocLog "Checking for documentation index at: $indexPath" -Level Information
         if (Test-Path $indexPath) {
             try {
                 # Try to regenerate index with current documentation
                 if (Get-Command Get-ProjectAnalysis -ErrorAction SilentlyContinue) {
+                    Write-DocLog "Generating project analysis..." -Level Information
                     $projectInfo = Get-ProjectAnalysis
                     New-DocumentationIndex -OutputPath $script:OutputPath -ProjectInfo $projectInfo
-                    Write-DocLog "Updated documentation index"
+                    Write-DocLog "Updated documentation index" -Level Information
                 } else {
                     Write-DocLog "Get-ProjectAnalysis function not available, skipping index update" -Level Warning
                 }
             } catch {
                 Write-DocLog "Failed to update documentation index: $_" -Level Warning
+                Write-DocLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
             }
+        } else {
+            Write-DocLog "Documentation index not found, skipping index update" -Level Information
         }
 
     } catch {
