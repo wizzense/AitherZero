@@ -303,7 +303,7 @@
             IssueManagement = @{
                 Creation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0800', '0810', '0825', '0830', '0832', '0835')
+                    Scripts = @('0800', '0810', '0825', '0831', '0832')
                     Description = 'Issue creation from tests, manual triggers, file generation, and prompt generation'
                 }
                 Analysis = @{
@@ -425,10 +425,10 @@
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
+            '0400-0499' = @{ Count = 25; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
+            '0800-0899' = @{ Count = 18; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
