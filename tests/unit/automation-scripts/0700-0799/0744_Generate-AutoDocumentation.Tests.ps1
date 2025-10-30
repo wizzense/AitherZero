@@ -15,10 +15,9 @@ BeforeAll {
         throw "0744_Generate-AutoDocumentation.ps1 not found at $script:script0744"
     }
     
-    # Extract the Write-DocLog function from the script for testing
-    $scriptContent = Get-Content $script:script0744 -Raw
-    
-    # Create a test module with the Write-DocLog function
+    # Note: We duplicate the Write-DocLog function here for testing rather than sourcing the script
+    # because the main script contains executable code that would run during sourcing.
+    # This is intentional to keep tests isolated and fast.
     $functionCode = @'
 function Write-DocLog {
     param([string]$Message, [string]$Level = 'Information', [hashtable]$Data = @{})
