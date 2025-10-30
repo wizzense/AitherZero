@@ -221,6 +221,33 @@ Describe "Index Generation" {
         $result = New-DirectoryIndex -Path $testDir
         $result.Updated | Should -Be $true
     }
+    
+    It "Protects root index.md from regeneration" {
+        # Initialize with root path
+        Initialize-ProjectIndexer -RootPath $script:TestRoot
+        
+        # Try to generate index for root directory
+        $result = New-DirectoryIndex -Path $script:TestRoot
+        
+        # Should be skipped with RootProtected reason
+        $result.Success | Should -Be $true
+        $result.Updated | Should -Be $false
+        $result.Reason | Should -Be 'RootProtected'
+    }
+    
+    It "Allows subdirectory index generation when root is protected" {
+        # Initialize with root path
+        Initialize-ProjectIndexer -RootPath $script:TestRoot
+        
+        # Root should be protected
+        $rootResult = New-DirectoryIndex -Path $script:TestRoot
+        $rootResult.Reason | Should -Be 'RootProtected'
+        
+        # But subdirectories should still work
+        $subdirResult = New-DirectoryIndex -Path $testDir
+        $subdirResult.Success | Should -Be $true
+        $subdirResult.Updated | Should -Be $true
+    }
 }
 
 Describe "Project-wide Index Generation" {
@@ -247,10 +274,12 @@ Describe "Project-wide Index Generation" {
         $results.FailedIndexes | Should -Be 0
     }
     
-    It "Creates index files in all directories" {
+    It "Creates index files in all directories except root" {
         New-ProjectIndexes -RootPath $script:TestRoot -Recursive | Out-Null
         
-        Test-Path (Join-Path $script:TestRoot "index.md") | Should -Be $true
+        # Root index.md should NOT be created (protected)
+        Test-Path (Join-Path $script:TestRoot "index.md") | Should -Be $false
+        # But subdirectories should have indexes
         Test-Path (Join-Path $script:TestRoot "dir1/index.md") | Should -Be $true
         Test-Path (Join-Path $script:TestRoot "dir2/index.md") | Should -Be $true
         Test-Path (Join-Path $script:TestRoot "dir1/subdir/index.md") | Should -Be $true
