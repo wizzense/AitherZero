@@ -843,6 +843,15 @@ $manifestTagsSection
             background: var(--bg-darker);
             color: var(--text-primary);
             line-height: 1.6;
+            padding: 20px;
+            margin-left: 290px;
+        }
+        
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+                padding: 10px;
+            }
         }
 
         /* Navigation TOC */
@@ -1008,8 +1017,8 @@ $manifestTagsSection
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 25px;
+            margin-top: 25px;
         }
 
         .metric-card {
@@ -1020,6 +1029,9 @@ $manifestTagsSection
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
         }
 
         .metric-card::before {
@@ -1052,12 +1064,15 @@ $manifestTagsSection
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            line-height: 1.2;
         }
 
         .metric-label {
             color: var(--text-secondary);
             font-size: 0.9rem;
+            line-height: 1.5;
+            flex-grow: 1;
         }
 
         .info-grid {

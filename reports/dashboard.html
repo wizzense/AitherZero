@@ -31,6 +31,15 @@
             background: var(--bg-darker);
             color: var(--text-primary);
             line-height: 1.6;
+            padding: 20px;
+            margin-left: 290px;
+        }
+        
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+                padding: 10px;
+            }
         }
 
         /* Navigation TOC */
@@ -196,8 +205,8 @@
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 25px;
+            margin-top: 25px;
         }
 
         .metric-card {
@@ -208,6 +217,9 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
         }
 
         .metric-card::before {
@@ -240,12 +252,15 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            line-height: 1.2;
         }
 
         .metric-label {
             color: var(--text-secondary);
             font-size: 0.9rem;
+            line-height: 1.5;
+            flex-grow: 1;
         }
 
         .info-grid {
@@ -548,7 +563,7 @@
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-30 08:11:38
+        🔄 Last updated: 2025-10-30 08:13:51
     </div>
 
     <div class="container">
@@ -599,12 +614,12 @@
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">85,396</div>
+                        <div class="metric-value">85,411</div>
                         <div class="metric-label">
                             966 Functions
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            💬 7,125 Comments (8.3%) | ⚪ 14,463 Blank Lines
+                            💬 7,125 Comments (8.3%) | ⚪ 14,464 Blank Lines
                         </div>
                     </div>
                     
@@ -658,7 +673,7 @@
                     
                                         <div class="metric-card">
                         <h3>🌿 Git Repository</h3>
-                        <div class="metric-value" style="font-size: 1.8rem;">3</div>
+                        <div class="metric-value" style="font-size: 1.8rem;">4</div>
                         <div class="metric-label">Total Commits</div>
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
@@ -668,7 +683,7 @@
                                 👥 2 Contributors
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Latest: fae33be - Initial plan for dashboard improvements (5 minutes ago)
+                                Latest: 7bda24c - Improve dashboard metrics collection and display (88 seconds ago)
                             </div>
                         </div>
                     </div>
@@ -908,7 +923,7 @@
                         <div class="info-card-header">📊 Repository Statistics</div>
                         <div class="info-card-body">
                             <p><strong>Branch:</strong> <code>copilot/fix-aitherzero-dashboard-issues</code></p>
-                            <p><strong>Total Commits:</strong> 3</p>
+                            <p><strong>Total Commits:</strong> 4</p>
                             <p><strong>Contributors:</strong> 2</p>
                             <p><strong>Automation Scripts:</strong> 125</p>
                             <p><strong>GitHub Workflows:</strong> 14</p>
@@ -919,7 +934,7 @@
                         <div class="info-card-header">📝 Latest Commit</div>
                         <div class="info-card-body">
                             <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
-                                fae33be - Initial plan for dashboard improvements (5 minutes ago)
+                                7bda24c - Improve dashboard metrics collection and display (88 seconds ago)
                             </p>
                         </div>
                     </div>
@@ -931,6 +946,10 @@
                     <div class="info-card-header">🔄 Recent Activity</div>
                     <div class="info-card-body">
                         <ul class="commit-list">
+                            <li class='commit-item'>
+                                <span class='commit-hash'>7bda24c</span>
+                                <span class='commit-message'>Improve dashboard metrics collection and display</span>
+                            </li>
                             <li class='commit-item'>
                                 <span class='commit-hash'>fae33be</span>
                                 <span class='commit-message'>Initial plan for dashboard improvements</span>
@@ -964,7 +983,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.12</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-30 08:11:38</p>
+                        <p><strong>Last Scan:</strong> 2025-10-30 08:13:51</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -984,7 +1003,7 @@
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-30 08:11:38 |
+            Generated by AitherZero Dashboard | 2025-10-30 08:13:51 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
