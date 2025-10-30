@@ -29,7 +29,7 @@
        .\0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
        
     3. Run Tests:
-       .\0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "./az.ps1 0402"
+       .\0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "az 0402"
        
     4. Monitor Activity:
        .\0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
@@ -76,8 +76,8 @@
     Open interactive PowerShell shell in the container (easiest way to explore)
 
 .EXAMPLE
-    .\0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "./az.ps1 0402"
-    Execute unit tests in the running container
+    .\0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "az 0402"
+    Execute unit tests in the running container (module auto-loads, so 'az' alias is available)
 
 .EXAMPLE
     .\0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
@@ -338,10 +338,10 @@ function Invoke-RunContainer {
                 Write-Host "   Port: $($Config.Port)" -ForegroundColor White
                 Write-Host "   URL:  http://localhost:$($Config.Port)" -ForegroundColor White
                 Write-Host "`n💡 Quick commands:" -ForegroundColor Cyan
-                Write-Host "   Open shell: az 0854 -Action Shell -PRNumber $PRNumber" -ForegroundColor Gray
-                Write-Host "   View logs:  az 0854 -Action Logs -PRNumber $PRNumber" -ForegroundColor Gray
-                Write-Host "   Run tests:  az 0854 -Action Exec -PRNumber $PRNumber -Command './az.ps1 0402'" -ForegroundColor Gray
-                Write-Host "   Cleanup:    az 0854 -Action Cleanup -PRNumber $PRNumber" -ForegroundColor Gray
+                Write-Host "   Open shell: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber $PRNumber" -ForegroundColor Gray
+                Write-Host "   View logs:  pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber $PRNumber" -ForegroundColor Gray
+                Write-Host "   Run tests:  pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber $PRNumber -Command 'az 0402'" -ForegroundColor Gray
+                Write-Host "   Cleanup:    pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber $PRNumber" -ForegroundColor Gray
                 return $true
             } else {
                 Write-LogMessage "Container started but exited unexpectedly" -Level 'Error'
@@ -428,13 +428,13 @@ function Invoke-ExecCommand {
     
     if (-not (Test-ContainerRunning -ContainerName $Config.Name)) {
         Write-LogMessage "Container is not running: $($Config.Name)" -Level 'Error'
-        Write-Host "`nStart the container first: az 0854 -Action Run -PRNumber $PRNumber" -ForegroundColor Yellow
+        Write-Host "`nStart the container first: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Run -PRNumber $PRNumber" -ForegroundColor Yellow
         return $false
     }
     
     if ([string]::IsNullOrWhiteSpace($Cmd)) {
         Write-LogMessage "No command specified" -Level 'Error'
-        Write-Host "`nUsage: az 0854 -Action Exec -PRNumber $PRNumber -Command '<your-command>'" -ForegroundColor Yellow
+        Write-Host "`nUsage: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber $PRNumber -Command '<your-command>'" -ForegroundColor Yellow
         return $false
     }
     
@@ -557,7 +557,7 @@ function Invoke-InteractiveShell {
     
     if (-not (Test-ContainerRunning -ContainerName $Config.Name)) {
         Write-LogMessage "Container is not running: $($Config.Name)" -Level 'Error'
-        Write-Host "`nStart the container first: az 0854 -Action Run -PRNumber $PRNumber" -ForegroundColor Yellow
+        Write-Host "`nStart the container first: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Run -PRNumber $PRNumber" -ForegroundColor Yellow
         return $false
     }
     
@@ -611,10 +611,10 @@ function Invoke-QuickStart {
     
     Write-LogMessage "`n✅ QuickStart complete! Container is ready for testing." -Level 'Success'
     Write-Host "`n💡 Next steps:" -ForegroundColor Cyan
-    Write-Host "   Open shell: az 0854 -Action Shell -PRNumber $PRNumber" -ForegroundColor Gray
-    Write-Host "   Run tests:  az 0854 -Action Exec -PRNumber $PRNumber -Command './az.ps1 0402'" -ForegroundColor Gray
-    Write-Host "   View logs:  az 0854 -Action Logs -PRNumber $PRNumber" -ForegroundColor Gray
-    Write-Host "   Cleanup:    az 0854 -Action Cleanup -PRNumber $PRNumber" -ForegroundColor Gray
+    Write-Host "   Open shell: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber $PRNumber" -ForegroundColor Gray
+    Write-Host "   Run tests:  pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber $PRNumber -Command 'az 0402'" -ForegroundColor Gray
+    Write-Host "   View logs:  pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber $PRNumber" -ForegroundColor Gray
+    Write-Host "   Cleanup:    pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber $PRNumber" -ForegroundColor Gray
     
     return $true
 }

@@ -547,7 +547,7 @@ jobs:
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber ${prNumber}
             
             # Execute commands
-            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "./az.ps1 0402"
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "az 0402"
             
             # Check status
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber ${prNumber}
@@ -568,9 +568,9 @@ jobs:
             docker pull ${{ needs.build-container.outputs.image-tag }}
             docker run -it --name aitherzero-pr-${prNumber} ${{ needs.build-container.outputs.image-tag }}
             
-            # You'll see the welcome screen and can use commands directly:
-            # ./az.ps1 0402              # Run unit tests
-            # ./az.ps1 0510 -ShowAll     # Generate reports
+            # You'll see the welcome screen. Module is already loaded, so use:
+            # az 0402                    # Run unit tests
+            # az 0510 -ShowAll           # Generate reports
             # Start-AitherZero           # Interactive menu
             \`\`\`
 
@@ -578,10 +578,10 @@ jobs:
             
             Inside the container or via \`docker exec\`, you can run:
             
-            - \`./az.ps1 0402\` - Run unit tests
-            - \`./az.ps1 0404\` - Run PSScriptAnalyzer linting
-            - \`./az.ps1 0407\` - Validate PowerShell syntax
-            - \`./az.ps1 0510 -ShowAll\` - Generate detailed project report
+            - \`az 0402\` - Run unit tests
+            - \`az 0404\` - Run PSScriptAnalyzer linting
+            - \`az 0407\` - Validate PowerShell syntax
+            - \`az 0510 -ShowAll\` - Generate detailed project report
             - \`Start-AitherZero\` - Launch interactive menu
             - \`Get-Command -Module AitherZero\` - List all available commands
 

@@ -33,8 +33,8 @@ docker run -d --name aitherzero-pr-1677 -p 8087:8080 ghcr.io/wizzense/aitherzero
 # Wait a few seconds for startup
 sleep 5
 
-# Run tests in the container using the az.ps1 wrapper
-docker exec aitherzero-pr-1677 pwsh /opt/aitherzero/az.ps1 0402
+# Run tests in the container (when module is loaded, 'az' alias is available)
+docker exec aitherzero-pr-1677 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
 
 # Open interactive shell to explore
 docker exec -it aitherzero-pr-1677 pwsh
@@ -66,7 +66,7 @@ pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber 167
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
 
 # Execute commands in container
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "./az.ps1 0402"
+pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "az 0402"
 
 # Cleanup when done
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1677
@@ -77,37 +77,38 @@ pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 16
 The best experience for exploring and testing:
 
 ```bash
-# Pull and run PR container
+# Pull and run PR container interactively
 docker pull ghcr.io/wizzense/aitherzero:pr-1677
 docker run -it --name aitherzero-pr-1677 ghcr.io/wizzense/aitherzero:pr-1677
 
 # You'll immediately see the AitherZero welcome screen!
 # ✅ AitherZero loaded. Module is ready to use.
 
-# Inside the container, use these commands:
+# Inside the container, the module is already loaded, so use:
 Start-AitherZero                    # Launch interactive menu
-./az.ps1 0402                       # Run unit tests  
-./az.ps1 0510 -ShowAll              # Generate project report
+az 0402                             # Run unit tests  
+az 0510 -ShowAll                    # Generate project report
 Get-Command -Module AitherZero      # List all available commands
 ```
 
-## Understanding the `az` Wrapper
+## Understanding the `az` Alias
 
-The `az` command (and `az.ps1` script) is a convenient shortcut for running numbered automation scripts:
+The `az` command is an alias automatically created when the AitherZero module is loaded:
 
-### In Containers
-Inside containers, use the `./az.ps1` script directly:
-```bash
-docker exec aitherzero-pr-1677 pwsh /opt/aitherzero/az.ps1 0402
-```
-
-### With Module Loaded
-When the AitherZero module is imported, the `az` alias is automatically available:
+### How It Works
+When the AitherZero module is imported (which happens automatically in containers), the `az` alias is created:
 ```powershell
-# Inside PowerShell with module loaded
+# Inside containers or when module is loaded
 az 0402        # Runs automation-scripts/0402_Run-UnitTests.ps1
 az 0404        # Runs automation-scripts/0404_Run-PSScriptAnalyzer.ps1
 az 0510        # Runs automation-scripts/0510_Generate-ProjectReport.ps1
+```
+
+### Using from Outside Container
+When executing commands from outside the container, ensure the module is loaded:
+```bash
+# Import module first, then use az alias
+docker exec aitherzero-pr-1677 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
 ```
 
 ### Available Commands
