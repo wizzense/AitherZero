@@ -223,13 +223,13 @@ jobs:
           }
           
           # Copy directories
-          $dirsToСopy = @(
+          $dirsToCopy = @(
             "domains"
             "orchestration"
             "automation-scripts"
           )
           
-          foreach ($dir in $dirsToСopy) {
+          foreach ($dir in $dirsToCopy) {
             if (Test-Path $dir) {
               Copy-Item -Path $dir -Destination $moduleDir -Recurse -Force
               Write-Host "    ✅ Copied: $dir/" -ForegroundColor Green
