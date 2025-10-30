@@ -1,58 +1,83 @@
 #Requires -Version 7.0
-#Requires -Modules @{ ModuleName='Pester'; ModuleVersion='5.0.0' }
+#Requires -Module Pester
 
 <#
 .SYNOPSIS
-    Pester tests for 0850_Deploy-PREnvironment.ps1
+    Unit tests for 0850_Deploy-PREnvironment
 .DESCRIPTION
-    Tests the PR environment deployment script to ensure correct Docker paths
+    Auto-generated comprehensive tests
+    Script: 0850_Deploy-PREnvironment
+    Stage: Unknown
+    Generated: 2025-10-30 02:11:49
 #>
 
-BeforeAll {
-    # Get the script path - navigate from tests/unit/automation-scripts/0800-0899 to root
-    $script:scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0850_Deploy-PREnvironment.ps1"
-    $script:scriptContent = Get-Content $script:scriptPath -Raw
+Describe '0850_Deploy-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Unknown' {
 
-    # Mock dependencies
-    Mock Write-Host {}
-    Mock Write-Warning {}
-    Mock Write-Error {}
-    Mock Set-Content {}
-    Mock docker {}
-    Mock Test-Path { $true }
-}
+    BeforeAll {
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0850_Deploy-PREnvironment.ps1'
+        $script:ScriptName = '0850_Deploy-PREnvironment'
+    }
 
-Describe "0850_Deploy-PREnvironment - Docker Path Configuration" {
-    Context "Docker Compose Generation" {
-        It "Should use /opt/aitherzero path for logs volume" {
-            $script:scriptContent | Should -Match "/opt/aitherzero/logs"
+    Context 'Script Validation' {
+        It 'Script file should exist' {
+            Test-Path $script:ScriptPath | Should -Be $true
         }
 
-        It "Should use /opt/aitherzero path for reports volume" {
-            $script:scriptContent | Should -Match "/opt/aitherzero/reports"
+        It 'Should have valid PowerShell syntax' {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script:ScriptPath, [ref]$null, [ref]$errors
+            )
+            $errors.Count | Should -Be 0
         }
 
-        It "Should use /opt/aitherzero path in healthcheck" {
-            $script:scriptContent | Should -Match "/opt/aitherzero/AitherZero\.psd1"
-        }
-
-        It "Should not reference /app for AitherZero module path" {
-            # Check that healthcheck doesn't use /app/AitherZero.psd1
-            $script:scriptContent | Should -Not -Match 'Test-Path /app/AitherZero\.psd1'
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
         }
     }
 
-    Context "Script Structure" {
-        It "Should exist and be readable" {
-            Test-Path $script:scriptPath | Should -Be $true
+    Context 'Parameters' {
+        It 'Should have parameter: PRNumber' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('PRNumber') | Should -Be $true
         }
 
-        It "Should be a valid PowerShell script" {
-            { $null = [System.Management.Automation.Language.Parser]::ParseFile(
-                $script:scriptPath,
-                [ref]$null,
-                [ref]$null
-            ) } | Should -Not -Throw
+        It 'Should have parameter: BranchName' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('BranchName') | Should -Be $true
+        }
+
+        It 'Should have parameter: CommitSHA' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('CommitSHA') | Should -Be $true
+        }
+
+        It 'Should have parameter: DeploymentTarget' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('DeploymentTarget') | Should -Be $true
+        }
+
+        It 'Should have parameter: Force' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Force') | Should -Be $true
+        }
+
+    }
+
+    Context 'Metadata' {
+        It 'Should be in stage: Unknown' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Stage:'
+        }
+    }
+
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }

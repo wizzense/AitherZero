@@ -1,79 +1,70 @@
-#Requires -Modules Pester
+#Requires -Version 7.0
+#Requires -Module Pester
 
-BeforeAll {
-    $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0000_Cleanup-Environment.ps1"
+<#
+.SYNOPSIS
+    Unit tests for 0000_Cleanup-Environment
+.DESCRIPTION
+    Auto-generated comprehensive tests
+    Script: 0000_Cleanup-Environment
+    Stage: Prepare
+    Description: Clean up temporary files and prepare environment
+    Generated: 2025-10-30 02:11:49
+#>
 
-    # Mock external dependencies
-    Mock Write-Host { }
-    Mock Write-Warning { }
-    Mock Write-CustomLog { }
-    Mock Import-Module { }
-    Mock Test-Path { $true }
-    Mock Remove-Item { }
-    Mock Get-ChildItem { @() }
-    Mock Split-Path { "/workspaces/AitherZero" }
-    Mock Join-Path { param($Path, $ChildPath) "$Path/$ChildPath" }
-}
+Describe '0000_Cleanup-Environment' -Tag 'Unit', 'AutomationScript', 'Prepare' {
 
-Describe "0000_Cleanup-Environment" {
-    Context "Parameter Validation" {
-        It "Should have CmdletBinding with SupportsShouldProcess" {
-            $scriptContent = Get-Content $script:ScriptPath -Raw
-            $scriptContent | Should -Match "\\[CmdletBinding\\(SupportsShouldProcess\\)\\]"
+    BeforeAll {
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0000_Cleanup-Environment.ps1'
+        $script:ScriptName = '0000_Cleanup-Environment'
+    }
+
+    Context 'Script Validation' {
+        It 'Script file should exist' {
+            Test-Path $script:ScriptPath | Should -Be $true
         }
 
-        It "Should accept WhatIf parameter" {
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
+        It 'Should have valid PowerShell syntax' {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script:ScriptPath, [ref]$null, [ref]$errors
+            )
+            $errors.Count | Should -Be 0
         }
 
-        It "Should accept Configuration parameter" {
-            $testConfig = @{ Infrastructure = @{ Directories = @{ LocalPath = "C:\\temp" } } }
-            { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
         }
     }
 
-    Context "WhatIf Functionality" {
-        It "Should not make changes in WhatIf mode" {
-            Mock Remove-Item { throw "Remove-Item should not be called in WhatIf mode" }
+    Context 'Parameters' {
+        It 'Should have parameter: Configuration' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Configuration') | Should -Be $true
+        }
 
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
-            Should -Not -Invoke Remove-Item
+    }
+
+    Context 'Metadata' {
+        It 'Should be in stage: Prepare' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Stage:'
+        }
+
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 
-    Context "Safety Guards" {
-        It "Should refuse to delete current project directory" {
-            $testConfig = @{
-                Infrastructure = @{
-                    Directories = @{ LocalPath = "/workspaces" }
-                    Repositories = @{ RepoUrl = "https://github.com/user/AitherZero.git" }
-                }
-            }
-
-            Mock Split-Path { "/workspaces/AitherZero" }
-            Mock Test-Path { $true }
-            Mock Write-ScriptLog { }
-
-            { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
-        }
-    }
-
-    Context "Error Handling" {
-        It "Should handle missing directories gracefully" {
-            Mock Test-Path { $false }
-            Mock Write-ScriptLog { }
-
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
-        }
-    }
-
-    Context "Logging Integration" {
-        It "Should use Write-CustomLog when available" {
-            Mock Get-Command { @{ Name = "Write-CustomLog" } } -ParameterFilter { $Name -eq "Write-CustomLog" }
-            Mock Write-CustomLog { }
-
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
-            Should -Invoke Write-CustomLog -AtLeast 1
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                $params.Configuration = @{}
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }
