@@ -6,13 +6,13 @@
     Integration tests for 0405_Validate-ModuleManifests
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-10-30 02:35:27
 #>
 
 Describe '0405_Validate-ModuleManifests Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0405_Validate-ModuleManifests.ps1'
+        $script:ScriptPath = './automation-scripts/0405_Validate-ModuleManifests.ps1'
         $script:TestConfig = @{ Automation = @{ DryRun = $true } }
     }
 

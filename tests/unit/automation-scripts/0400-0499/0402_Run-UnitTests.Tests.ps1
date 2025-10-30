@@ -7,14 +7,15 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0402_Run-UnitTests
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Runs all unit tests using Pester framework with code coverage
+    Generated: 2025-10-30 02:34:24
 #>
 
-Describe '0402_Run-UnitTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0402_Run-UnitTests' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0402_Run-UnitTests.ps1'
+        $script:ScriptPath = './automation-scripts/0402_Run-UnitTests.ps1'
         $script:ScriptName = '0402_Run-UnitTests'
     }
 
@@ -91,9 +92,14 @@ Describe '0402_Run-UnitTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Testing' {
             $content = Get-Content $script:ScriptPath -First 20
             ($content -join ' ') | Should -Match 'Stage:'
+        }
+
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

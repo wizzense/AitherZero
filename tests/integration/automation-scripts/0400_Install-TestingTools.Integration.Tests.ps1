@@ -6,13 +6,13 @@
     Integration tests for 0400_Install-TestingTools
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-10-30 02:34:25
 #>
 
 Describe '0400_Install-TestingTools Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0400_Install-TestingTools.ps1'
+        $script:ScriptPath = './automation-scripts/0400_Install-TestingTools.ps1'
         $script:TestConfig = @{ Automation = @{ DryRun = $true } }
     }
 

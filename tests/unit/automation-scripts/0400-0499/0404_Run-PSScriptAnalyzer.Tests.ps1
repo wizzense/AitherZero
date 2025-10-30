@@ -7,14 +7,15 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0404_Run-PSScriptAnalyzer
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Performs static code analysis to identify potential issues and ensure code quality
+    Generated: 2025-10-30 02:34:25
 #>
 
-Describe '0404_Run-PSScriptAnalyzer' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0404_Run-PSScriptAnalyzer' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0404_Run-PSScriptAnalyzer.ps1'
+        $script:ScriptPath = './automation-scripts/0404_Run-PSScriptAnalyzer.ps1'
         $script:ScriptName = '0404_Run-PSScriptAnalyzer'
     }
 
@@ -86,9 +87,14 @@ Describe '0404_Run-PSScriptAnalyzer' -Tag 'Unit', 'AutomationScript', 'Unknown' 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Testing' {
             $content = Get-Content $script:ScriptPath -First 20
             ($content -join ' ') | Should -Match 'Stage:'
+        }
+
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

@@ -7,14 +7,15 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0406_Generate-Coverage
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Creates comprehensive code coverage reports in multiple formats
+    Generated: 2025-10-30 02:34:25
 #>
 
-Describe '0406_Generate-Coverage' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0406_Generate-Coverage' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0406_Generate-Coverage.ps1'
+        $script:ScriptPath = './automation-scripts/0406_Generate-Coverage.ps1'
         $script:ScriptName = '0406_Generate-Coverage'
     }
 
@@ -76,9 +77,14 @@ Describe '0406_Generate-Coverage' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Testing' {
             $content = Get-Content $script:ScriptPath -First 20
             ($content -join ' ') | Should -Match 'Stage:'
+        }
+
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

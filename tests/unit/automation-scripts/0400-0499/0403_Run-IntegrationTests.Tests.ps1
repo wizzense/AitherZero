@@ -7,14 +7,15 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0403_Run-IntegrationTests
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Runs all integration tests that validate component interactions
+    Generated: 2025-10-30 02:34:25
 #>
 
-Describe '0403_Run-IntegrationTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0403_Run-IntegrationTests' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0403_Run-IntegrationTests.ps1'
+        $script:ScriptPath = './automation-scripts/0403_Run-IntegrationTests.ps1'
         $script:ScriptName = '0403_Run-IntegrationTests'
     }
 
@@ -66,9 +67,14 @@ Describe '0403_Run-IntegrationTests' -Tag 'Unit', 'AutomationScript', 'Unknown' 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Testing' {
             $content = Get-Content $script:ScriptPath -First 20
             ($content -join ' ') | Should -Match 'Stage:'
+        }
+
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

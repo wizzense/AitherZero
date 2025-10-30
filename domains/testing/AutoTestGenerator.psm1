@@ -73,12 +73,23 @@ function New-AutoTest {
     }
 
     # Extract metadata
-    $contentLines = Get-Content $ScriptPath -First 30
+    $contentLines = Get-Content $ScriptPath -First 40
     $content = $contentLines -join "`n"
-    $stage = if ($content -match '# Stage:\s*(.+)') { $Matches[1].Trim() } else { 'Unknown' }
-    $description = if ($content -match '# Description:\s*(.+)') { $Matches[1].Trim() } else { '' }
+    # Match "# Stage:", ".NOTES Stage:", or "Category:" formats
+    $stage = 'Unknown'
+    if ($content -match '(?:#\s*Stage:|Stage:)\s*(.+)') { 
+        $stage = $Matches[1].Trim() 
+    } elseif ($content -match 'Category:\s*(.+?)(?:\r?\n|$)') {
+        # Extract stage from Category field (e.g., "Testing & Validation" -> "Testing")
+        $category = $Matches[1].Trim()
+        if ($category -match '^(Testing|Development|Infrastructure|Validation|Reporting|Automation)') {
+            $stage = $Matches[1]
+        }
+    }
+    
+    $description = if ($content -match '(?:#\s*Description:|\.DESCRIPTION\s+)(.+?)(?:\r?\n|$)') { $Matches[1].Trim() } else { '' }
     $dependencies = @()
-    if ($content -match '# Dependencies:\s*(.+)') { 
+    if ($content -match '(?:#\s*Dependencies:|Dependencies:)\s*(.+)') { 
         $dependencies = @($Matches[1].Split(',') | ForEach-Object { $_.Trim() })
     }
 
