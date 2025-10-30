@@ -7,8 +7,8 @@ The v1.0.0.0 release was created successfully, but the workflow was cancelled be
 ## ✅ The Release Workflow is Working
 
 Good news: The release automation workflow (`release-automation.yml`) is correctly configured and functional. It creates:
-- ✅ `AitherZero-v{version}.zip` - Windows compatible package
-- ✅ `AitherZero-v{version}.tar.gz` - Unix/Linux/macOS compatible package
+- ✅ `AitherZero-v1.0.0.0.zip` - Windows compatible package
+- ✅ `AitherZero-v1.0.0.0.tar.gz` - Unix/Linux/macOS compatible package
 - ✅ `build-info.json` - Build metadata and version information
 - ✅ Comprehensive release notes with changelog and installation instructions
 
