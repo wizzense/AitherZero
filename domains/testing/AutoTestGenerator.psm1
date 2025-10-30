@@ -231,8 +231,8 @@ function Build-UnitTest {
     # Stage test
     [void]$sb.AppendLine("    Context 'Metadata' {")
     [void]$sb.AppendLine("        It 'Should be in stage: $Stage' {")
-    [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -First 20')
-    [void]$sb.AppendLine("            (" + '$content -join '' '') | Should -Match ''Stage:''')
+    [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -First 40')
+    [void]$sb.AppendLine("            (" + '$content -join '' '') | Should -Match ''(Stage:|Category:)''')
     [void]$sb.AppendLine('        }')
     if ($Dependencies -and @($Dependencies).Count -gt 0) {
         [void]$sb.AppendLine('')

@@ -6,7 +6,7 @@
     Integration tests for 0405_Validate-ModuleManifests
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-10-30 02:35:27
+    Generated: 2025-10-30 03:41:21
 #>
 
 Describe '0405_Validate-ModuleManifests Integration' -Tag 'Integration', 'AutomationScript' {
