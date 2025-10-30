@@ -11,7 +11,7 @@
     - Error handling and reporting
 #>
 
-Describe "0405_Validate-ModuleManifests Tests" {
+Describe "0405_Validate-ModuleManifests" {
     BeforeAll {
         # Set up test environment
         $scriptPath = "$PSScriptRoot/../../../../automation-scripts/0405_Validate-ModuleManifests.ps1"
@@ -22,6 +22,38 @@ Describe "0405_Validate-ModuleManifests Tests" {
         # Ensure the scripts exist
         $scriptPath | Should -Exist
         $toolPath | Should -Exist
+    }
+
+    Context "Script Validation" {
+        It "Should have valid PowerShell syntax" {
+            $errors = $null
+            $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $scriptPath -Raw), [ref]$errors)
+            $errors | Should -BeNullOrEmpty
+        }
+
+        It "Should support WhatIf" {
+            $scriptContent = Get-Content $scriptPath -Raw
+            $scriptContent | Should -Match 'SupportsShouldProcess'
+        }
+    }
+
+    Context "Metadata" {
+        It "Should be in stage: Testing" {
+            $content = Get-Content $scriptPath
+            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Testing'
+        }
+
+        It "Should have order: 0405" {
+            $content = Get-Content $scriptPath
+            ($content -join ' ') | Should -Match 'Order.*0405'
+        }
+    }
+
+    Context "Execution" {
+        It "Should execute with WhatIf" {
+            { & $scriptPath -WhatIf } | Should -Not -Throw
+        }
     }
 
     Context "Valid Manifest Validation" {

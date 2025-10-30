@@ -22,6 +22,10 @@
     az 0405 -Fix
     Validates and automatically fixes all Unicode issues found
 .NOTES
+    Stage: Testing
+    Order: 0405
+    Dependencies: 0400
+    Tags: testing, validation, manifest, unicode
     Script ID: 0405
     Category: Testing & Validation
     Requires: PowerShell 7.0+
@@ -31,11 +35,19 @@
     restricted language parser, especially on Windows systems.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [switch]$Fix,
     [string[]]$Path
 )
+
+# Script metadata (kept as comment for documentation)
+# Stage: Testing
+# Order: 0405
+# Dependencies: 0400
+# Tags: testing, validation, manifest, unicode
+# RequiresAdmin: No
+# SupportsWhatIf: Yes
 
 # Import required functions
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -70,6 +82,16 @@ try {
             }
             Write-Host $Message -ForegroundColor $colors[$Level]
         }
+    }
+
+    # WhatIf support
+    if ($WhatIfPreference) {
+        Write-Log "WhatIf: Would validate module manifests" -Level Information
+        if ($Fix) {
+            Write-Log "WhatIf: Would automatically fix Unicode issues" -Level Information
+        }
+        Write-Log "WhatIf: No changes will be made" -Level Information
+        exit 0
     }
 
     Write-Log "Starting module manifest validation..." -Level Information
