@@ -1868,14 +1868,55 @@ function New-MarkdownDashboard {
 
 ---
 
-## 📊 Project Overview
+## 📊 Project Metrics
 
+### File Statistics
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📁 **Total Files** | **$($Metrics.Files.Total)** | $($Metrics.Files.PowerShell) Scripts, $($Metrics.Files.Modules) Modules, $($Metrics.Files.Data) Data Files |
-| 📝 **Lines of Code** | **$($Metrics.LinesOfCode.ToString('N0'))** | $($Metrics.Functions) Functions |
-| 🧪 **Tests** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
-| 📈 **Coverage** | **$($Metrics.Coverage.Percentage)%** | $($Metrics.Coverage.CoveredLines)/$($Metrics.Coverage.TotalLines) Lines |
+| 📁 **Total Files** | **$($Metrics.Files.Total)** | $($Metrics.Files.PowerShell) Scripts, $($Metrics.Files.Modules) Modules, $($Metrics.Files.Data) Data |
+| 📄 **Documentation** | **$($Metrics.Files.Markdown)** | Markdown files |
+| 🔧 **Configuration** | **$($Metrics.Files.YAML + $Metrics.Files.JSON)** | $($Metrics.Files.YAML) YAML, $($Metrics.Files.JSON) JSON |
+
+### Code Statistics
+| Metric | Value | Details |
+|--------|-------|---------|
+| 📝 **Lines of Code** | **$($Metrics.LinesOfCode.ToString('N0'))** | Total lines across all PowerShell files |
+| 🔨 **Functions** | **$($Metrics.Functions)** | Public and private functions |
+$(if ($Metrics.Classes -gt 0) { "| 🏗️ **Classes** | **$($Metrics.Classes)** | PowerShell classes |`n" })| 💬 **Comments** | **$($Metrics.CommentLines.ToString('N0'))** | $(if($Metrics.LinesOfCode -gt 0){[math]::Round(($Metrics.CommentLines / $Metrics.LinesOfCode) * 100, 1)})% of total code |
+| ⚪ **Blank Lines** | **$($Metrics.BlankLines.ToString('N0'))** | Whitespace and formatting |
+
+### Automation & Infrastructure  
+| Metric | Value | Details |
+|--------|-------|---------|
+| 🤖 **Automation Scripts** | **$($Metrics.AutomationScripts)** | Number-based orchestration (0000-9999) |
+| ⚡ **GitHub Workflows** | **$($Metrics.Workflows)** | CI/CD automation |
+| 🗂️ **Domain Modules** | **$(@($Metrics.Domains).Count)** | $(($Metrics.Domains | ForEach-Object { $_.Modules } | Measure-Object -Sum).Sum) total modules |
+
+### Testing & Quality
+| Metric | Value | Details |
+|--------|-------|---------|
+| 🧪 **Test Suite** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
+$(if ($Metrics.Tests.LastRun) {
+"| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$($Metrics.Tests.Passed + $Metrics.Tests.Failed)** | Success Rate: $($Metrics.Tests.SuccessRate)% | Duration: $($Metrics.Tests.Duration) |
+| 📊 **Last Test Run** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+"
+} else {
+"| ⚠️ **Test Results** | **N/A** | No test results available. Run ``./az 0402`` |
+"
+})| 📈 **Code Coverage** | **$($Metrics.Coverage.Percentage)%** | $(if($Metrics.Coverage.TotalLines -gt 0){"$($Metrics.Coverage.CoveredLines)/$($Metrics.Coverage.TotalLines) lines covered"}else{"No coverage data available"}) |
+
+$(if ($Metrics.Git.Branch -ne "Unknown") {
+@"
+### Git Repository
+| Metric | Value | Details |
+|--------|-------|---------|
+| 🌿 **Branch** | **``$($Metrics.Git.Branch)``** | Current working branch |
+| 📝 **Total Commits** | **$($Metrics.Git.CommitCount.ToString('N0'))** | Repository history |
+| 👥 **Contributors** | **$($Metrics.Git.Contributors)** | Unique contributors |
+| 🔄 **Latest Commit** | **$($Metrics.Git.LastCommit)** | Most recent change |
+
+"@
+})
 
 ## ✨ Code Quality Validation
 
@@ -1906,6 +1947,8 @@ $(switch ($Status.Overall) {
 - **Tests:** $(switch ($Status.Tests) { 'Passing' { '✅ Passing' } 'Failing' { '❌ Failing' } default { '❓ Unknown' } })
 - **Security:** 🛡️ Scanned
 - **Coverage:** 📊 $($Metrics.Coverage.Percentage)%
+- **Platform:** 💻 $($Metrics.Platform)
+- **PowerShell:** ⚡ $($Metrics.PSVersion)
 
 ## 🔄 Recent Activity
 
