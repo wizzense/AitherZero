@@ -1,0 +1,216 @@
+---
+name: Publish to Docker Hub
+
+# Automatically publish Docker images to Docker Hub for releases
+# Makes AitherZero easily accessible via Docker Desktop on Windows, Linux, and macOS
+on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to publish (e.g., 1.0.0)'
+        required: true
+        type: string
+      push_latest:
+        description: 'Also tag as latest'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOCKER_HUB_REPOSITORY: wizzense/aitherzero
+  GHCR_REPOSITORY: ghcr.io/wizzense/aitherzero
+
+jobs:
+  publish-docker-hub:
+    name: Build and Publish to Docker Hub
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Determine Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          elif [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          else
+            VERSION=$(cat VERSION | tr -d '[:space:]')
+          fi
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 Publishing version: ${VERSION}"
+
+      - name: 🔤 Set Lowercase Repository Names
+        id: repo-names
+        run: |
+          DOCKER_HUB_REPO_LOWER=$(echo "${{ env.DOCKER_HUB_REPOSITORY }}" | tr '[:upper:]' '[:lower:]')
+          GHCR_REPO_LOWER=$(echo "${{ env.GHCR_REPOSITORY }}" | tr '[:upper:]' '[:lower:]')
+          echo "docker-hub=${DOCKER_HUB_REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "ghcr=${GHCR_REPO_LOWER}" >> $GITHUB_OUTPUT
+
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ steps.repo-names.outputs.docker-hub }}
+            ${{ steps.repo-names.outputs.ghcr }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}},value=v${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ github.event.inputs.push_latest != 'false' }}
+          labels: |
+            org.opencontainers.image.title=AitherZero
+            org.opencontainers.image.description=Aitherium Enterprise Infrastructure Automation Platform
+            org.opencontainers.image.vendor=Wizzense
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build and Push to Docker Hub & GHCR
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ steps.repo-names.outputs.ghcr }}:buildcache
+          cache-to: type=registry,ref=${{ steps.repo-names.outputs.ghcr }}:buildcache,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            RELEASE_TAG=v${{ steps.version.outputs.version }}
+            COMMIT_SHA=${{ github.sha }}
+
+      - name: 🔍 Test Docker Hub Image
+        run: |
+          echo "🧪 Testing published image from Docker Hub..."
+          
+          # Pull the image
+          docker pull ${{ steps.repo-names.outputs.docker-hub }}:${{ steps.version.outputs.version }}
+          
+          # Run basic test
+          docker run --rm ${{ steps.repo-names.outputs.docker-hub }}:${{ steps.version.outputs.version }} \
+            pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1 -ErrorAction Stop; Write-Host '✅ Image test passed'"
+          
+          echo "✅ Docker Hub image verified successfully"
+
+      - name: 📊 Generate Summary
+        run: |
+          echo "## 🐳 Docker Hub Publication Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Published Images" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Hub** (Public - No authentication required):" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ steps.repo-names.outputs.docker-hub }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**GitHub Container Registry** (Authentication required):" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ steps.repo-names.outputs.ghcr }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Start" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Pull and run from Docker Hub" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ steps.repo-names.outputs.docker-hub }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -it --name aitherzero ${{ steps.repo-names.outputs.docker-hub }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Image Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms**: linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Hub**: https://hub.docker.com/r/${{ steps.repo-names.outputs.docker-hub }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **GHCR**: https://github.com/${{ github.repository }}/pkgs/container/aitherzero" >> $GITHUB_STEP_SUMMARY
+
+      - name: 💬 Comment on Release (if applicable)
+        if: github.event_name == 'release'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.version }}';
+            const dockerHubRepo = '${{ steps.repo-names.outputs.docker-hub }}';
+            const ghcrRepo = '${{ steps.repo-names.outputs.ghcr }}';
+            
+            const comment = `## 🐳 Docker Images Published
+            
+            The Docker images for this release are now available on Docker Hub and GitHub Container Registry!
+            
+            ### 📥 Pull from Docker Hub (Public - Recommended for Docker Desktop)
+            
+            \`\`\`bash
+            docker pull ${dockerHubRepo}:${version}
+            docker pull ${dockerHubRepo}:latest
+            \`\`\`
+            
+            ### 🚀 Quick Start
+            
+            \`\`\`bash
+            # Run AitherZero interactively
+            docker run -it --name aitherzero ${dockerHubRepo}:${version}
+            
+            # Run tests
+            docker run --rm ${dockerHubRepo}:${version} pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
+            \`\`\`
+            
+            ### 📦 Also Available on GHCR
+            
+            \`\`\`bash
+            docker pull ${ghcrRepo}:${version}
+            \`\`\`
+            
+            ### 🔗 Links
+            - **Docker Hub**: https://hub.docker.com/r/${dockerHubRepo}
+            - **Documentation**: [DOCKER.md](https://github.com/${{ github.repository }}/blob/main/DOCKER.md)
+            - **Platforms**: linux/amd64, linux/arm64
+            
+            Perfect for Docker Desktop on Windows, Linux, and macOS! 🎉`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.release.id,
+              body: comment
+            });
