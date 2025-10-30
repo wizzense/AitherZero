@@ -459,4 +459,28 @@ try {
             $content | Should -Match 'IsRelaunch flag to prevent'
         }
     }
+
+    Context "Script Number Shortcuts" {
+        It "Should accept script numbers as Target parameter" {
+            # Test that the script number shortcut feature is implemented
+            $content = Get-Content $script:EntryScript -Raw
+            # Check for the auto-detection logic
+            $content | Should -Match 'if \(\$RunTarget -and \$RunTarget -match'
+            $content | Should -Match '\$ScriptNum = \$RunTarget'
+        }
+
+        It "Should provide helpful examples in error messages" {
+            # Test that error messages show both verbose and shortcut syntax
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match 'Or use shortcut:'
+            $content | Should -Match 'Start-AitherZero.ps1 -Mode Run -Target 0501'
+        }
+
+        It "Should document script number shortcuts in help" {
+            # Test that the help documentation includes the shortcut syntax
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match '\.EXAMPLE'
+            $content | Should -Match 'Run a specific script \(shortcut'
+        }
+    }
 }
