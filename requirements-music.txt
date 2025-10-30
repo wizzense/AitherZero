@@ -1,0 +1,16 @@
+# Python dependencies for AitherZero sheet music to MIDI conversion
+# Install with: pip install -r requirements-music.txt
+
+# Music processing and MIDI generation
+music21>=9.1.0          # Comprehensive music theory and notation library
+mido>=1.3.0             # Lightweight MIDI file I/O
+
+# Image processing
+Pillow>=10.0.0          # Image manipulation and preprocessing
+
+# Numerical operations
+numpy>=1.24.0           # Required for image processing operations
+
+# Optional dependencies for enhanced features
+# matplotlib>=3.7.0     # For visualizing sheet music (optional)
+# opencv-python>=4.8.0  # For advanced image preprocessing (optional)

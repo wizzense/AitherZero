@@ -733,6 +733,70 @@
                     Model = 'gemini-pro'
                 }
             }
+            Ollama = @{
+                Enabled = $false
+                InstallScript = '0219'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = 'Ollama AI runtime for vision models'
+                Configuration = @{
+                    APIUrl = 'http://localhost:11434'
+                    DefaultModels = @('llava', 'bakllava')
+                    ModelPath = ''  # Use system default
+                    Timeout = 300  # API timeout in seconds
+                    MaxRetries = 3
+                }
+                Installer = @{
+                    Windows = 'https://ollama.ai/download/OllamaSetup.exe'
+                    Linux = 'https://ollama.ai/install.sh'
+                    macOS = 'https://ollama.ai/download/Ollama-darwin.zip'
+                }
+            }
+        }
+        
+        # Music Processing Tools
+        MusicProcessing = @{
+            SheetMusicToMIDI = @{
+                Enabled = $false
+                InstallScript = '0220'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                RequiresPython = $true
+                RequiresOllama = $true
+                Description = 'Convert sheet music images to MIDI files using AI vision'
+                Configuration = @{
+                    # Input settings
+                    SupportedFormats = @('png', 'jpg', 'jpeg', 'pdf')
+                    MaxImageSize = '10MB'
+                    
+                    # Processing settings
+                    DefaultModel = 'llava'
+                    FallbackModel = 'bakllava'
+                    PreprocessImages = $true
+                    ImageDPI = 300
+                    
+                    # Output settings
+                    OutputPath = './output/midi'
+                    DefaultTempo = 120
+                    DefaultInstrument = 'AcousticGuitar'
+                    InstrumentMap = @{
+                        'AcousticGuitar' = 24
+                        'ElectricGuitar' = 27
+                        'Guitar' = 24
+                    }
+                    
+                    # Quality settings
+                    ValidateOutput = $true
+                    MinimumConfidence = 0.7
+                    GenerateReport = $true
+                    
+                    # Performance
+                    BatchProcessing = $true
+                    MaxParallel = 4
+                    CleanupTemp = $true
+                }
+                Dependencies = @{
+                    Python = @('music21', 'mido', 'pillow', 'numpy')
+                }
+            }
         }
         
         # Additional Development Tools
