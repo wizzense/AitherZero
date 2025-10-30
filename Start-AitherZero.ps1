@@ -554,11 +554,17 @@ if (-not $CI -and -not $NonInteractive) {
 
 
 
-# Apply smart mode detection
+# Apply smart mode detection only if Mode is default (List) and not explicitly set by user
 
 $originalMode = $Mode
 
-$Mode = Get-SmartExecutionMode -CurrentMode $Mode -NonInteractive $NonInteractive
+# Only apply smart detection if user didn't explicitly set the Mode parameter
+
+if (-not $PSBoundParameters.ContainsKey('Mode')) {
+
+    $Mode = Get-SmartExecutionMode -CurrentMode $Mode -NonInteractive $NonInteractive
+
+}
 
 
 
