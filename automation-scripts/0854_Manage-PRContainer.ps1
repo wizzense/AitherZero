@@ -443,7 +443,8 @@ function Invoke-ExecCommand {
     
     try {
         # Execute command from /opt/aitherzero directory
-        docker exec $Config.Name pwsh -Command "cd /opt/aitherzero; $Cmd"
+        # Import module first so 'az' alias is available
+        docker exec $Config.Name pwsh -Command "cd /opt/aitherzero; Import-Module /opt/aitherzero/AitherZero.psd1 -WarningAction SilentlyContinue; $Cmd"
         
         if ($LASTEXITCODE -eq 0) {
             Write-LogMessage "`nCommand executed successfully" -Level 'Success'
