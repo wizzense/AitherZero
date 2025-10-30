@@ -1,209 +1,109 @@
 {
   "Status": {
-    "Overall": "Unknown",
     "LastSuccess": "Unknown",
-    "LastBuild": "Unknown",
-    "Deployment": "Unknown",
-    "Coverage": "Unknown",
-    "Badges": {
-      "Tests": "https://img.shields.io/badge/tests-unknown-lightgrey",
-      "Security": "https://img.shields.io/badge/security-unknown-lightgrey",
-      "Coverage": "https://img.shields.io/badge/coverage-unknown-lightgrey",
-      "Build": "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI"
-    },
+    "Overall": "Unknown",
     "Tests": "Unknown",
+    "Deployment": "Unknown",
+    "Badges": {
+      "Security": "https://img.shields.io/badge/security-unknown-lightgrey",
+      "Build": "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI",
+      "Coverage": "https://img.shields.io/badge/coverage-unknown-lightgrey",
+      "Tests": "https://img.shields.io/badge/tests-unknown-lightgrey"
+    },
+    "LastBuild": "Unknown",
+    "Coverage": "Unknown",
     "Security": "Unknown"
   },
-  "Project": {
-    "Repository": "https://github.com/wizzense/AitherZero",
-    "Description": "Infrastructure Automation Platform",
-    "Name": "AitherZero"
-  },
-  "QualityMetrics": {
-    "FailedFiles": 0,
-    "OverallScore": 0,
-    "RecentReports": [],
-    "PassedFiles": 0,
-    "AverageScore": 0,
-    "WarningFiles": 0,
-    "Trends": {
-      "PassRateHistory": [],
-      "ScoreHistory": []
-    },
-    "LastValidation": null,
-    "TotalFiles": 0,
-    "Checks": {
-      "ErrorHandling": {
-        "Failed": 0,
-        "AvgScore": 0,
-        "Passed": 0,
-        "Warnings": 0
-      },
-      "TestCoverage": {
-        "Failed": 0,
-        "AvgScore": 0,
-        "Passed": 0,
-        "Warnings": 0
-      },
-      "UIIntegration": {
-        "Failed": 0,
-        "AvgScore": 0,
-        "Passed": 0,
-        "Warnings": 0
-      },
-      "PSScriptAnalyzer": {
-        "Failed": 0,
-        "AvgScore": 0,
-        "Passed": 0,
-        "Warnings": 0
-      },
-      "Logging": {
-        "Failed": 0,
-        "AvgScore": 0,
-        "Passed": 0,
-        "Warnings": 0
-      },
-      "GitHubActions": {
-        "Failed": 0,
-        "AvgScore": 0,
-        "Passed": 0,
-        "Warnings": 0
-      }
-    }
-  },
-  "Activity": {
-    "Issues": [],
-    "Releases": [],
-    "LastUpdate": "2025-10-30 03:39:05",
-    "Commits": [
-      {
-        "Date": "2025-10-30 03:30:23 +0000",
-        "Message": "Initial plan",
-        "Hash": "6b71d56"
-      },
-      {
-        "Date": "2025-10-29 20:29:32 -0700",
-        "Message": "Fix GitHub Pages production outage - restore dashboard redirect (#1685)",
-        "Hash": "f50b8e5"
-      }
-    ]
-  },
-  "Environment": {
-    "CI": false,
-    "PowerShell": "7.4.12",
-    "WorkingDirectory": "/home/runner/work/AitherZero/AitherZero",
-    "Platform": "Unix"
-  },
   "Metrics": {
-    "Files": {
-      "Modules": 60,
-      "PowerShell": 132,
-      "Data": 10,
-      "Total": 202
-    },
-    "AutomationScripts": 124,
-    "PSVersion": "7.4.12",
-    "Coverage": {
-      "Percentage": 0,
-      "TotalLines": 0,
-      "CoveredLines": 0
-    },
+    "LinesOfCode": 83712,
     "Domains": [
       {
         "Modules": 3,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/ai-agents",
-        "Name": "ai-agents"
+        "Name": "ai-agents",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/ai-agents"
       },
       {
         "Modules": 2,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/automation",
-        "Name": "automation"
+        "Name": "automation",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/automation"
       },
       {
         "Modules": 1,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/configuration",
-        "Name": "configuration"
+        "Name": "configuration",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/configuration"
       },
       {
         "Modules": 4,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/development",
-        "Name": "development"
+        "Name": "development",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/development"
       },
       {
         "Modules": 2,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/documentation",
-        "Name": "documentation"
+        "Name": "documentation",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/documentation"
       },
       {
         "Modules": 2,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/experience",
-        "Name": "experience"
+        "Name": "experience",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/experience"
       },
       {
         "Modules": 1,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/infrastructure",
-        "Name": "infrastructure"
+        "Name": "infrastructure",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/infrastructure"
       },
       {
         "Modules": 2,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/reporting",
-        "Name": "reporting"
+        "Name": "reporting",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/reporting"
       },
       {
         "Modules": 1,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/security",
-        "Name": "security"
+        "Name": "security",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/security"
       },
       {
         "Modules": 6,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/testing",
-        "Name": "testing"
+        "Name": "testing",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/testing"
       },
       {
         "Modules": 9,
-        "Path": "/home/runner/work/AitherZero/AitherZero/domains/utilities",
-        "Name": "utilities"
+        "Name": "utilities",
+        "Path": "/home/runner/work/AitherZero/AitherZero/domains/utilities"
       }
     ],
-    "LastUpdated": "2025-10-30 03:39:03",
-    "LinesOfCode": 83630,
-    "Tests": {
-      "Passed": 9500,
-      "SuccessRate": 95.0,
-      "Unit": 103,
-      "Integration": 14,
-      "Skipped": 0,
-      "Failed": 500,
-      "Total": 117,
-      "LastRun": "2025-10-30 03:31:15"
-    },
     "Dependencies": {},
     "Functions": 0,
-    "Platform": "Unix"
+    "PSVersion": "7.4.12",
+    "Coverage": {
+      "CoveredLines": 0,
+      "TotalLines": 0,
+      "Percentage": 0
+    },
+    "Platform": "Unix",
+    "Tests": {
+      "SuccessRate": 95.0,
+      "Passed": 9500,
+      "Unit": 103,
+      "Integration": 14,
+      "Failed": 500,
+      "Skipped": 0,
+      "LastRun": "2025-10-30 03:31:15",
+      "Total": 117
+    },
+    "LastUpdated": "2025-10-30 03:45:02",
+    "Files": {
+      "Modules": 60,
+      "Data": 10,
+      "PowerShell": 132,
+      "Total": 202
+    },
+    "AutomationScripts": 124
   },
+  "Generated": "2025-10-30T03:45:03Z",
   "PSScriptAnalyzerMetrics": {
-    "TopIssues": [
-      {
-        "Severity": 1,
-        "Count": 11,
-        "Rule": "PSUseDeclaredVarsMoreThanAssignments"
-      },
-      {
-        "Severity": 1,
-        "Count": 7,
-        "Rule": "PSPossibleIncorrectComparisonWithNull"
-      },
-      {
-        "Severity": 1,
-        "Count": 4,
-        "Rule": "PSAvoidGlobalVars"
-      }
-    ],
-    "Warnings": 22,
-    "Errors": 0,
-    "TotalIssues": 22,
-    "Information": 0,
-    "LastRun": "2025-10-26 22:29:41 UTC",
+    "FilesAnalyzedCount": 22,
     "FilesAnalyzed": [
       "Start-AitherZero.ps1",
       "az.ps1",
@@ -227,7 +127,118 @@
       "AitherTestFramework.psm1",
       "CoreTestSuites.psm1",
       "TestCacheManager.psm1"
+    ],
+    "Errors": 0,
+    "TopIssues": [
+      {
+        "Count": 11,
+        "Rule": "PSUseDeclaredVarsMoreThanAssignments",
+        "Severity": 1
+      },
+      {
+        "Count": 7,
+        "Rule": "PSPossibleIncorrectComparisonWithNull",
+        "Severity": 1
+      },
+      {
+        "Count": 4,
+        "Rule": "PSAvoidGlobalVars",
+        "Severity": 1
+      }
+    ],
+    "Warnings": 22,
+    "Information": 0,
+    "TotalIssues": 22,
+    "LastRun": "2025-10-26 22:29:41 UTC"
+  },
+  "Activity": {
+    "Issues": [],
+    "LastUpdate": "2025-10-30 03:45:03",
+    "Releases": [],
+    "Commits": [
+      {
+        "Date": "2025-10-30 03:44:11 +0000",
+        "Message": "Add PSScriptAnalyzer section and enhance test metrics display",
+        "Hash": "0885932"
+      },
+      {
+        "Date": "2025-10-30 03:39:46 +0000",
+        "Message": "Add PSScriptAnalyzer metrics and enhance data collection in dashboard",
+        "Hash": "9bd98bd"
+      },
+      {
+        "Date": "2025-10-30 03:30:23 +0000",
+        "Message": "Initial plan",
+        "Hash": "6b71d56"
+      },
+      {
+        "Date": "2025-10-29 20:29:32 -0700",
+        "Message": "Fix GitHub Pages production outage - restore dashboard redirect (#1685)",
+        "Hash": "f50b8e5"
+      }
     ]
   },
-  "Generated": "2025-10-30T03:39:05Z"
+  "Project": {
+    "Name": "AitherZero",
+    "Repository": "https://github.com/wizzense/AitherZero",
+    "Description": "Infrastructure Automation Platform"
+  },
+  "Environment": {
+    "Platform": "Unix",
+    "CI": false,
+    "PowerShell": "7.4.12",
+    "WorkingDirectory": "/home/runner/work/AitherZero/AitherZero"
+  },
+  "QualityMetrics": {
+    "LastValidation": null,
+    "AverageScore": 0,
+    "Trends": {
+      "ScoreHistory": [],
+      "PassRateHistory": []
+    },
+    "OverallScore": 0,
+    "FailedFiles": 0,
+    "TotalFiles": 0,
+    "WarningFiles": 0,
+    "RecentReports": [],
+    "Checks": {
+      "TestCoverage": {
+        "AvgScore": 0,
+        "Passed": 0,
+        "Warnings": 0,
+        "Failed": 0
+      },
+      "PSScriptAnalyzer": {
+        "AvgScore": 0,
+        "Passed": 0,
+        "Warnings": 0,
+        "Failed": 0
+      },
+      "Logging": {
+        "AvgScore": 0,
+        "Passed": 0,
+        "Warnings": 0,
+        "Failed": 0
+      },
+      "UIIntegration": {
+        "AvgScore": 0,
+        "Passed": 0,
+        "Warnings": 0,
+        "Failed": 0
+      },
+      "ErrorHandling": {
+        "AvgScore": 0,
+        "Passed": 0,
+        "Warnings": 0,
+        "Failed": 0
+      },
+      "GitHubActions": {
+        "AvgScore": 0,
+        "Passed": 0,
+        "Warnings": 0,
+        "Failed": 0
+      }
+    },
+    "PassedFiles": 0
+  }
 }
