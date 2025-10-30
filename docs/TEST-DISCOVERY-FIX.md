@@ -158,11 +158,11 @@ Describe 'MyComponent' -Tag 'Unit', 'Core' {
 
 ## Key Takeaways
 
-1. **Empty array `@()` in Pester Filter.Tag means "run everything"** - not "use default"
-2. **Use `ContainsKey()` for hashtables**, not `PSObject.Properties`
-3. **Dashboard labels matter** - distinguish between infrastructure and execution
-4. **Explicit configuration** prevents unexpected defaults
-5. **Test discovery** depends on proper tag filtering configuration
+1. **Empty array `@()` in Pester Filter.Tag means "run everything"** - not "use default".
+2. **Use `ContainsKey()` for hashtables** - not `PSObject.Properties`.
+3. **Dashboard labels matter** - distinguish between infrastructure and execution.
+4. **Explicit configuration prevents unexpected defaults**.
+5. **Test discovery depends on proper tag filtering configuration**.
 
 ## Related Files
 
