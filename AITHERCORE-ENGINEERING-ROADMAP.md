@@ -1,741 +1,771 @@
 # AitherCore Engineering Roadmap
+## Based on Google Software Engineering Principles
 
-**Vision**: Transform AitherZero into AitherCore - a reusable, standalone core engine that powers multiple independent systems and development projects.
-
-**Goal**: Create a "just start it and it works" engine that can be used as a foundation for building derivative projects or as a template repository.
+**Document Version**: 2.0  
+**Last Updated**: October 30, 2025  
+**Status**: Proposal  
+**References**: "Software Engineering at Google", "Site Reliability Engineering"
 
 ---
 
 ## Executive Summary
 
-**Current State**: AitherZero is a monolithic automation platform with 966 functions across 11 domains, tightly coupled to infrastructure automation use cases.
+Transform AitherZero into AitherCore using proven software engineering principles from Google's approach to building large-scale, maintainable systems.
 
-**Target State**: AitherCore is a modular, extensible engine with:
-- **Core engine** that "just starts up and works"
-- **Plugin architecture** for extending functionality
-- **Template repository** capability for derivative projects
-- **Zero-configuration startup** with sensible defaults
-- **Clean separation** between core and application-specific code
+**Vision**: A production-grade core engine that "just works" - reliable, simple, measurable, testable, and automated.
 
-**Timeline**: 12-16 weeks for core transformation  
-**Effort**: ~200-300 engineering hours
+**Investment**: 16 weeks, 2-3 engineers, ~400 engineering hours  
+**Outcome**: Reusable core + plugin ecosystem + project templates
 
 ---
 
-## Architecture Transformation
+## Part 1: Engineering Principles (Google SWE Book)
 
-### Phase 1: Core Engine Extraction (Weeks 1-4)
+### 1.1 Core Tenets
 
-**Goal**: Extract the essential "engine" from AitherZero into a standalone AitherCore module.
+**Tenet 1: Simplicity First**
+> "Complexity is the enemy of reliability" - Ben Treynor (Google SRE)
 
-#### 1.1 Identify Core vs. Application Components
+- **Small APIs**: Minimal public surface area
+- **Single Responsibility**: One component, one job
+- **Delete Code**: Aggressively remove unused features
+- **Boring Solutions**: Prefer maintainable over clever
 
-**Core Components** (Keep in AitherCore):
-```
-✅ Configuration System (domains/configuration/)
-✅ Logging Framework (domains/utilities/Logging.psm1)
-✅ Orchestration Engine (domains/automation/)
-✅ Testing Framework (domains/testing/AitherTestFramework.psm1)
-✅ Plugin System (NEW - to be created)
-✅ Event System (NEW - to be created)
-✅ State Management (NEW - to be created)
-```
+**Tenet 2: Test Everything**
+> "Testing is the engineering rigor of software development"
 
-**Application Components** (Move to AitherZero or plugins):
-```
-❌ Infrastructure management (domains/infrastructure/)
-❌ Lab VM automation (specific use case)
-❌ OpenTofu/Terraform integration (plugin)
-❌ Hyper-V management (plugin)
-❌ Certificate automation (plugin)
-❌ Git automation (plugin)
-```
+- **Test Pyramid**: 70% unit, 20% integration, 10% E2E
+- **Hermetic Tests**: No external dependencies
+- **Coverage**: >80% line, 100% critical paths
+- **Fast Feedback**: Unit tests <10s, integration <2min
 
-#### 1.2 Create AitherCore Module Structure
+**Tenet 3: Measure Everything**
+- **Logs**: Structured, leveled, searchable
+- **Metrics**: SLIs, SLOs, error budgets
+- **Traces**: Distributed request tracing
+- **Profiling**: Continuous performance monitoring
 
-**New Repository Structure**:
-```
-aithercore/
-├── AitherCore.psd1                 # Core manifest
-├── AitherCore.psm1                 # Core initialization
-├── core/
-│   ├── Engine.psm1                 # Main engine controller
-│   ├── Configuration.psm1          # Config system
-│   ├── Logging.psm1                # Logging system
-│   ├── Orchestration.psm1          # Task orchestration
-│   ├── PluginManager.psm1          # Plugin loading & management
-│   ├── EventBus.psm1               # Event-driven communication
-│   └── StateManager.psm1           # Application state
-├── plugins/
-│   └── README.md                   # Plugin development guide
-├── templates/
-│   ├── minimal-project/            # Minimal starter template
-│   ├── automation-project/         # Automation-focused template
-│   └── cli-application/            # CLI app template
-├── tests/
-│   └── core/                       # Core engine tests
-└── docs/
-    ├── ENGINE-DESIGN.md
-    ├── PLUGIN-DEVELOPMENT.md
-    └── GETTING-STARTED.md
-```
+**Tenet 4: Automate Toil**
+- **CI/CD**: Every commit tested and deployable
+- **Code Review**: Required, automated checks
+- **Dependencies**: Auto-update, vulnerability scan
+- **Documentation**: Generated from code
 
-#### 1.3 Design Principles
+**Tenet 5: Design for Failure**
+- **Graceful Degradation**: Core works when plugins fail
+- **Circuit Breakers**: Prevent cascade failures
+- **Retry Logic**: Exponential backoff with jitter
+- **Error Budgets**: Define acceptable failure rates
 
-**Engine Startup Requirements**:
-1. **Zero-configuration default**: `Import-Module AitherCore` just works
-2. **Self-initializing**: Creates necessary directories/files on first run
-3. **Graceful degradation**: Missing components don't break core functionality
-4. **Hot-reload support**: Plugins can be added/removed at runtime
-5. **Minimal dependencies**: Only PowerShell 7.0+ required
+### 1.2 Architecture Patterns
 
-**Code Example**:
+**Pattern 1: Dependency Injection (Google Guice)**
 ```powershell
-# Simple "just start it" usage
+# Define service interfaces
+interface ILogger {
+    [void] Log([string]$Message, [LogLevel]$Level)
+}
+
+interface IConfig {
+    [object] Get([string]$Key)
+}
+
+# Service container manages dependencies
+class ServiceContainer {
+    [hashtable] $Bindings = @{}
+    
+    [void] Bind([type]$Interface, [scriptblock]$Factory) {
+        $this.Bindings[$Interface.FullName] = $Factory
+    }
+    
+    [object] Resolve([type]$Interface) {
+        return & $this.Bindings[$Interface.FullName] $this
+    }
+}
+
+# Usage: Testable and mockable
+$container = [ServiceContainer]::new()
+$container.Bind([ILogger], { [FileLogger]::new("/var/log") })
+$logger = $container.Resolve([ILogger])  # Gets FileLogger
+
+# In tests: Easy to mock
+$container.Bind([ILogger], { [MockLogger]::new() })
+```
+
+**Pattern 2: Plugin Architecture (OSGi-Inspired)**
+```powershell
+# Plugin manifest (declarative)
+# Infrastructure.plugin.psd1
+@{
+    Name = "Infrastructure"
+    Version = "1.0.0"
+    Dependencies = @{
+        "AitherCore" = ">=1.0.0"
+    }
+    Provides = @{
+        Services = @("IVMManager", "ICloudProvider")
+        Commands = @("Deploy-Infrastructure", "New-VM")
+    }
+    OnLoad = "Initialize-InfrastructurePlugin"
+}
+
+# Plugin implementation
+class InfrastructurePlugin {
+    [ILogger] $Logger
+    
+    # Constructor injection
+    InfrastructurePlugin([ILogger]$logger) {
+        $this.Logger = $logger
+    }
+    
+    [void] Initialize([IEventBus]$events) {
+        # Register handlers
+        $events.On("VM.Deploy", { $this.DeployVM($args[0]) })
+    }
+}
+```
+
+**Pattern 3: Event-Driven (Pub/Sub)**
+```powershell
+class EventBus {
+    [hashtable] $Handlers = @{}
+    
+    [void] On([string]$Event, [scriptblock]$Handler) {
+        if (-not $this.Handlers[$Event]) {
+            $this.Handlers[$Event] = @()
+        }
+        $this.Handlers[$Event] += $Handler
+    }
+    
+    [void] Emit([string]$Event, [object]$Data) {
+        foreach ($handler in $this.Handlers[$Event]) {
+            try {
+                & $handler $Data
+            } catch {
+                # Log error but don't crash
+            }
+        }
+    }
+}
+
+# Decoupled components
+$events.On("Config.Changed", { Reload-Configuration })
+$events.Emit("Config.Changed", @{ Key = "LogLevel" })
+```
+
+### 1.3 Quality Standards
+
+**Code Review Checklist** (Google Style):
+- [ ] Design: Solves the right problem?
+- [ ] Functionality: Behaves correctly?
+- [ ] Complexity: Could be simpler?
+- [ ] Tests: Sufficient and correct?
+- [ ] Naming: Clear and consistent?
+- [ ] Comments: Explain "why", not "what"
+- [ ] Style: Follows conventions?
+- [ ] Documentation: Public APIs documented?
+
+**Testing Standards**:
+```powershell
+# Good test (AAA pattern)
+Describe "ConfigProvider" {
+    It "Returns value for existing key" {
+        # Arrange
+        $config = [ConfigProvider]::new(@{ "Key1" = "Value1" })
+        
+        # Act
+        $result = $config.Get("Key1")
+        
+        # Assert
+        $result | Should -Be "Value1"
+    }
+    
+    It "Throws for missing key without default" {
+        # Arrange
+        $config = [ConfigProvider]::new(@{})
+        
+        # Act & Assert
+        { $config.Get("Missing") } | Should -Throw -ExceptionType "KeyNotFoundException"
+    }
+}
+```
+
+---
+
+## Part 2: Implementation Roadmap
+
+### Milestone 1: Foundation (Weeks 1-4)
+
+#### Week 1: Architecture & Design
+
+**Deliverables**:
+- [ ] Architecture Decision Record (ADR)
+- [ ] Core service interfaces
+- [ ] Dependency graph analysis
+- [ ] Prototype implementation
+
+**Activities**:
+1. Analyze current codebase dependencies
+2. Define interface contracts for core services
+3. Build minimal working prototype
+4. Validate design with stakeholders
+
+**Success Criteria**:
+- Design approved
+- Prototype demonstrates key concepts
+- No unresolved questions
+
+#### Week 2: Core Services
+
+**Deliverables**:
+- [ ] Logging framework (ILogger)
+- [ ] Configuration system (IConfig)
+- [ ] Service container (DI)
+- [ ] Unit tests (>80% coverage)
+
+**Implementation**:
+```powershell
+# core/Logging.psm1
+class StructuredLogger : ILogger {
+    [LogLevel] $MinLevel
+    [ILogSink[]] $Sinks
+    
+    [void] Log([string]$msg, [LogLevel]$level, [hashtable]$context = @{}) {
+        if ($level -lt $this.MinLevel) { return }
+        
+        $entry = @{
+            Timestamp = [DateTime]::UtcNow
+            Level = $level
+            Message = $msg
+            Context = $context
+        }
+        
+        foreach ($sink in $this.Sinks) {
+            try { $sink.Write($entry) }
+            catch { Write-Error "Sink failed: $_" }
+        }
+    }
+}
+
+# Sinks
+class ConsoleSink : ILogSink {
+    [void] Write([hashtable]$entry) {
+        Write-Host "[$($entry.Level)] $($entry.Message)"
+    }
+}
+
+class FileSink : ILogSink {
+    [string] $Path
+    [void] Write([hashtable]$entry) {
+        $entry | ConvertTo-Json | Add-Content $this.Path
+    }
+}
+```
+
+**Tests**:
+```powershell
+Describe "StructuredLogger" {
+    BeforeEach {
+        $testSink = [TestSink]::new()
+        $logger = [StructuredLogger]::new([LogLevel]::Info)
+        $logger.Sinks = @($testSink)
+    }
+    
+    It "Logs at or above min level" {
+        $logger.Log("Info", [LogLevel]::Info)
+        $logger.Log("Debug", [LogLevel]::Debug)
+        
+        $testSink.Entries.Count | Should -Be 1
+    }
+    
+    It "Continues if sink fails" {
+        $faultySink = [FaultySink]::new()
+        $logger.Sinks = @($faultySink, $testSink)
+        
+        $logger.Log("Test", [LogLevel]::Info)
+        
+        $testSink.Entries.Count | Should -Be 1
+    }
+}
+```
+
+#### Week 3: Plugin System
+
+**Deliverables**:
+- [ ] Plugin discovery
+- [ ] Dependency resolution
+- [ ] Lifecycle management
+- [ ] Plugin isolation
+
+**Implementation**:
+```powershell
+class PluginManager {
+    [ServiceContainer] $Container
+    [ILogger] $Logger
+    [hashtable] $Loaded = @{}
+    
+    [void] Discover([string]$path) {
+        Get-ChildItem $path -Filter "*.plugin.psd1" | ForEach-Object {
+            $manifest = Import-PowerShellDataFile $_.FullName
+            # Validate and register
+        }
+    }
+    
+    [void] Load([string]$name) {
+        # Check dependencies
+        foreach ($dep in $manifest.Dependencies.Keys) {
+            if (-not $this.Loaded[$dep]) {
+                $this.Load($dep)  # Recursive
+            }
+        }
+        
+        # Import module
+        Import-Module $pluginPath
+        
+        # Call OnLoad hook
+        & $manifest.OnLoad $this.Container
+        
+        $this.Loaded[$name] = $manifest
+    }
+}
+```
+
+#### Week 4: Integration & CI/CD
+
+**Deliverables**:
+- [ ] Integration tests
+- [ ] Performance benchmarks
+- [ ] CI/CD pipeline
+- [ ] API documentation
+
+**CI/CD Pipeline**:
+```yaml
+# .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v1
+      - name: Unit Tests
+        run: Invoke-Pester tests/unit -Output Detailed
+      - name: Integration Tests
+        run: Invoke-Pester tests/integration
+      - name: Code Coverage
+        run: Invoke-Pester -CodeCoverage **/*.psm1
+```
+
+**Performance Targets**:
+- Cold start: <2 seconds
+- Plugin load: <500ms each
+- Memory: <50MB without plugins
+
+---
+
+### Milestone 2: Plugin Migration (Weeks 5-8)
+
+#### Week 5-6: Infrastructure Plugin
+
+**Goal**: Convert domains/infrastructure to standalone plugin
+
+**Structure**:
+```
+plugins/Infrastructure/
+├── Infrastructure.plugin.psd1   # Manifest
+├── Infrastructure.psm1          # Implementation
+├── providers/
+│   ├── HyperV.psm1
+│   └── Cloud.psm1
+├── tests/
+│   └── Infrastructure.Tests.ps1
+└── README.md
+```
+
+**Manifest**:
+```powershell
+@{
+    Name = "Infrastructure"
+    Version = "1.0.0"
+    Dependencies = @{ "AitherCore" = ">=1.0.0" }
+    Provides = @{
+        Services = @("IVMManager", "ICloudProvider")
+        Commands = @("Deploy-Infrastructure", "New-VM")
+    }
+    OnLoad = { param($container)
+        $container.Bind([IVMManager], { [VMManager]::new() })
+    }
+}
+```
+
+**Migration Checklist**:
+- [ ] Extract from domains/
+- [ ] Create plugin manifest
+- [ ] Update imports to use DI
+- [ ] Write plugin-specific tests
+- [ ] Update documentation
+
+#### Week 7: Additional Plugins
+
+**Plugins to migrate**:
+- [ ] Git automation
+- [ ] Reporting
+- [ ] Documentation
+- [ ] Testing framework
+
+**Same pattern**: Extract, manifest, DI, tests
+
+#### Week 8: Compatibility Layer
+
+**AitherZero v2.0** (compatibility wrapper):
+```powershell
+# AitherZero.psm1
 Import-Module AitherCore
 
-# Engine auto-initializes and is ready
-$core = Start-AitherEngine
+$core = Start-AitherEngine -Plugins @(
+    "Infrastructure",
+    "Git",
+    "Reporting",
+    "Documentation"
+)
 
-# Use core services
-$core.Log("Engine started")
-$core.Config.Get("AppName")
-$core.LoadPlugin("MyCustomPlugin")
+# Export for backward compat
+Export-ModuleMember -Function $core.GetCommands()
+
+Write-Warning "AitherZero v2.0 uses AitherCore. Migrate to AitherCore for new projects."
 ```
 
 ---
 
-### Phase 2: Plugin Architecture (Weeks 5-8)
+### Milestone 3: Templates & Tooling (Weeks 9-12)
 
-**Goal**: Create a robust plugin system that allows extending AitherCore without modifying the core.
+#### Week 9-10: Project Templates
 
-#### 2.1 Plugin System Design
+**Templates to create**:
+1. **Minimal**: Basic AitherCore project
+2. **Automation**: Infrastructure automation
+3. **CLI**: Command-line tool
+4. **Service**: Background service
 
-**Plugin Interface**:
-```powershell
-# plugins/PluginInterface.psm1
-class AitherPlugin {
-    [string] $Name
-    [string] $Version
-    [string[]] $Dependencies
-    [hashtable] $Metadata
-    
-    # Lifecycle methods
-    [void] Initialize([object]$Core) { }
-    [void] Start() { }
-    [void] Stop() { }
-    [void] Unload() { }
-    
-    # Command registration
-    [hashtable] GetCommands() { return @{} }
-    
-    # Event handlers
-    [hashtable] GetEventHandlers() { return @{} }
-}
+**Template structure**:
 ```
-
-**Plugin Discovery**:
-- Scan `./plugins/` directory on startup
-- Support external plugin paths via config
-- Manifest-based metadata (`.plugin.psd1` files)
-- Dependency resolution and load ordering
-
-**Plugin Types**:
-1. **Extension Plugins**: Add new functionality (e.g., Infrastructure, Git)
-2. **Provider Plugins**: Implement interfaces (e.g., CloudProvider, SourceControl)
-3. **UI Plugins**: Add interface components (e.g., Dashboards, Menus)
-4. **Integration Plugins**: Connect to external systems (e.g., GitHub, Azure)
-
-#### 2.2 Core Services API
-
-**Services Available to Plugins**:
-```powershell
-class AitherCore {
-    [LoggingService] $Log
-    [ConfigurationService] $Config
-    [OrchestrationService] $Orchestrate
-    [EventBus] $Events
-    [StateManager] $State
-    [PluginManager] $Plugins
-    
-    # Service access
-    [object] GetService([string]$ServiceName) { }
-    
-    # Event system
-    [void] Emit([string]$Event, [object]$Data) { }
-    [void] On([string]$Event, [scriptblock]$Handler) { }
-}
-```
-
-**Plugin Registration Example**:
-```powershell
-# plugins/InfrastructurePlugin/InfrastructurePlugin.psm1
-class InfrastructurePlugin : AitherPlugin {
-    InfrastructurePlugin() {
-        $this.Name = "Infrastructure"
-        $this.Version = "1.0.0"
-        $this.Dependencies = @()
-    }
-    
-    [void] Initialize([object]$Core) {
-        # Register commands
-        $Core.Plugins.RegisterCommand("Deploy-Infrastructure", {
-            param($Params)
-            # Implementation
-        })
-        
-        # Subscribe to events
-        $Core.Events.On("PreDeploy", {
-            param($Event)
-            # Handle event
-        })
-    }
-}
-```
-
-#### 2.3 Migration Strategy
-
-**Convert Existing Domains to Plugins**:
-1. Infrastructure → `InfrastructurePlugin`
-2. Git Automation → `GitPlugin`
-3. Reporting → `ReportingPlugin`
-4. Documentation → `DocumentationPlugin`
-
-**Maintain Backward Compatibility**:
-- Create `AitherZero` meta-package that loads AitherCore + all legacy plugins
-- Existing users import `AitherZero`, new users import `AitherCore`
-- Deprecation warnings for old module paths
-
----
-
-### Phase 3: Template Repository System (Weeks 9-12)
-
-**Goal**: Enable AitherCore to be used as a GitHub template for creating new projects.
-
-#### 3.1 Template Types
-
-**1. Minimal Project Template**:
-```
-minimal-project/
-├── .github/
-│   └── workflows/
-│       └── test.yml
-├── src/
-│   └── MyApp.ps1
-├── config/
-│   └── app.config.psd1
+templates/minimal/
+├── .github/workflows/ci.yml
+├── src/MyProject.ps1
+├── config/app.config.psd1
 ├── plugins/
-│   └── README.md
 ├── tests/
-│   └── App.Tests.ps1
 ├── bootstrap.ps1
 └── README.md
 ```
 
-**Features**:
-- AitherCore as submodule or package
-- Basic logging and configuration
-- Testing framework included
-- CI/CD workflow template
-
-**2. Automation Project Template**:
-- Number-based script organization
-- Orchestration playbooks
-- Quality validation
-- Report generation
-
-**3. CLI Application Template**:
-- Command-line argument parsing
-- Interactive UI support
-- Help system
-- Error handling
-
-#### 3.2 Template Generator
-
-**Script**: `New-AitherProject.ps1`
+**Generator tool**:
 ```powershell
 function New-AitherProject {
     param(
-        [Parameter(Mandatory)]
         [string]$Name,
-        
-        [ValidateSet('Minimal', 'Automation', 'CLI', 'Service')]
-        [string]$Template = 'Minimal',
-        
-        [string]$OutputPath = ".",
-        
-        [switch]$InitializeGit
+        [ValidateSet('Minimal','Automation','CLI','Service')]
+        [string]$Template = 'Minimal'
     )
     
-    # Create project from template
-    # Set up AitherCore dependency
-    # Initialize configuration
-    # Create README with next steps
-}
-```
-
-**Usage**:
-```powershell
-# Create new automation project
-New-AitherProject -Name "MyAutomation" -Template Automation
-
-# Creates:
-# ./MyAutomation/
-#   ├── Uses AitherCore engine
-#   ├── Pre-configured for automation workflows
-#   ├── Ready to run
-#   └── Documentation included
-```
-
-#### 3.3 Dependency Management
-
-**Options for AitherCore Integration**:
-
-**Option A: Git Submodule**
-```bash
-git submodule add https://github.com/wizzense/AitherCore.git core/engine
-```
-- Pros: Version pinning, full source access
-- Cons: Git submodule complexity
-
-**Option B: PowerShell Module**
-```powershell
-# In project bootstrap
-Install-Module AitherCore -Scope CurrentUser
-Import-Module AitherCore
-```
-- Pros: Simple, uses PSGallery
-- Cons: Requires internet, less control
-
-**Option C: Vendored Copy**
-```
-Copy AitherCore into project tree
-```
-- Pros: Self-contained, no external dependencies
-- Cons: Updates require manual sync
-
-**Recommendation**: Hybrid approach
-- Templates include vendored copy (for offline/air-gapped)
-- Bootstrap script can update from PSGallery
-- Git submodule for developers
-
----
-
-### Phase 4: Core Engine Features (Weeks 13-16)
-
-**Goal**: Implement missing core features to make the engine production-ready.
-
-#### 4.1 State Management System
-
-**Purpose**: Track application state across sessions
-
-```powershell
-class StateManager {
-    [hashtable] $State
-    [string] $StatePath
+    # Copy template
+    Copy-Template -Name $Template -Destination $Name
     
-    [object] Get([string]$Key, [object]$Default = $null)
-    [void] Set([string]$Key, [object]$Value)
-    [void] Remove([string]$Key)
-    [void] Save()
-    [void] Load()
-    [void] Clear()
-}
-```
-
-**Features**:
-- Persistent state storage (JSON/PSD1)
-- In-memory caching
-- Thread-safe operations
-- Automatic save on shutdown
-
-#### 4.2 Event Bus System
-
-**Purpose**: Decouple components via event-driven architecture
-
-```powershell
-class EventBus {
-    [hashtable] $Handlers
+    # Replace placeholders
+    Update-ProjectFiles -Path $Name -ProjectName $Name
     
-    [void] On([string]$Event, [scriptblock]$Handler)
-    [void] Off([string]$Event, [scriptblock]$Handler)
-    [void] Emit([string]$Event, [object]$Data)
-    [void] EmitAsync([string]$Event, [object]$Data)
-}
-```
-
-**Built-in Events**:
-- `Engine:Starting`
-- `Engine:Started`
-- `Engine:Stopping`
-- `Plugin:Loading`
-- `Plugin:Loaded`
-- `Config:Changed`
-- `State:Changed`
-
-**Usage**:
-```powershell
-# Plugin listens for config changes
-$core.Events.On("Config:Changed", {
-    param($Event)
-    Write-Host "Config changed: $($Event.Data.Key)"
-    # Reload plugin settings
-})
-
-# Core emits event when config changes
-$core.Config.Set("Theme", "Dark")
-$core.Events.Emit("Config:Changed", @{ Key = "Theme"; Value = "Dark" })
-```
-
-#### 4.3 Service Container
-
-**Purpose**: Dependency injection for testability and flexibility
-
-```powershell
-class ServiceContainer {
-    [hashtable] $Services
+    # Initialize git
+    git init $Name
     
-    [void] Register([string]$Name, [scriptblock]$Factory)
-    [void] RegisterSingleton([string]$Name, [object]$Instance)
-    [object] Resolve([string]$Name)
-    [bool] Has([string]$Name)
+    Write-Host "Project created: $Name"
+    Write-Host "Next: cd $Name && ./bootstrap.ps1"
 }
 ```
 
-**Usage**:
-```powershell
-# Register services
-$core.Services.Register("Database", {
-    # Factory creates new instance
-    return New-DatabaseConnection -Config $core.Config
-})
+#### Week 11: Documentation & Examples
 
-# Plugins resolve services
-$db = $core.Services.Resolve("Database")
+**Deliverables**:
+- [ ] Getting started guide
+- [ ] API reference (auto-generated)
+- [ ] Plugin development guide
+- [ ] Migration guide
+- [ ] Example projects
+
+**Documentation structure**:
+```
+docs/
+├── getting-started.md
+├── architecture/
+│   ├── overview.md
+│   ├── core-services.md
+│   └── plugin-system.md
+├── guides/
+│   ├── creating-plugins.md
+│   ├── using-templates.md
+│   └── migration.md
+├── reference/
+│   └── api/  (auto-generated)
+└── examples/
+    ├── simple-automation/
+    ├── custom-plugin/
+    └── template-project/
 ```
 
-#### 4.4 Configuration Schema Validation
+#### Week 12: Polish & Release Prep
 
-**Purpose**: Ensure configuration files are valid
-
-```powershell
-# Define schema
-$schema = @{
-    Engine = @{
-        LogLevel = @{ Type = 'String'; Values = @('Debug', 'Info', 'Warning', 'Error') }
-        PluginPath = @{ Type = 'String'; Required = $false }
-    }
-}
-
-# Validate config
-$core.Config.ValidateSchema($schema)
-```
-
----
-
-## Implementation Roadmap
-
-### Week 1-2: Planning & Design
-- [x] Architectural review of current AitherZero
-- [ ] Define core vs. application boundaries
-- [ ] Design plugin interface and API
-- [ ] Create module structure prototype
-- [ ] Write design documentation
-
-### Week 3-4: Core Extraction
-- [ ] Create `aithercore` repository
-- [ ] Extract and refactor Configuration system
-- [ ] Extract and refactor Logging system
-- [ ] Extract and refactor Orchestration engine
-- [ ] Implement basic initialization logic
-- [ ] Unit tests for core modules
-
-### Week 5-6: Plugin System
-- [ ] Implement PluginManager
-- [ ] Create plugin interface/base class
-- [ ] Implement plugin discovery
-- [ ] Implement dependency resolution
-- [ ] Create example plugin
-- [ ] Plugin system documentation
-
-### Week 7-8: Plugin Migration
-- [ ] Convert Infrastructure domain → plugin
-- [ ] Convert Git automation → plugin
-- [ ] Convert Reporting → plugin
-- [ ] Create AitherZero compatibility layer
-- [ ] Integration tests
-
-### Week 9-10: Template System
-- [ ] Create minimal project template
-- [ ] Create automation project template
-- [ ] Create CLI application template
-- [ ] Implement New-AitherProject script
-- [ ] Template documentation
-
-### Week 11-12: Core Features
-- [ ] Implement StateManager
-- [ ] Implement EventBus
-- [ ] Implement ServiceContainer
-- [ ] Configuration schema validation
-- [ ] Comprehensive testing
-
-### Week 13-14: Integration & Testing
-- [ ] End-to-end integration tests
-- [ ] Performance benchmarking
-- [ ] Create example projects
-- [ ] Documentation review
-- [ ] Security audit
-
-### Week 15-16: Release Preparation
+**Activities**:
 - [ ] Beta testing with real projects
-- [ ] Bug fixes and polish
-- [ ] Final documentation
-- [ ] Migration guide for AitherZero users
-- [ ] v1.0.0 release
+- [ ] Bug fixes from beta
+- [ ] Performance optimization
+- [ ] Security audit
+- [ ] Final documentation review
+
+**Release checklist**:
+- [ ] All tests pass
+- [ ] Performance targets met
+- [ ] Documentation complete
+- [ ] Examples working
+- [ ] Migration guide tested
+- [ ] Security review passed
 
 ---
 
-## Success Criteria
+### Milestone 4: Release & Adoption (Weeks 13-16)
+
+#### Week 13-14: Beta Release
+
+**Activities**:
+- [ ] v1.0.0-beta.1 release
+- [ ] Beta testers recruited
+- [ ] Feedback collection
+- [ ] Bug triage and fixes
+
+**Beta testing plan**:
+1. Internal: Team uses for real projects
+2. Early adopters: 5-10 community members
+3. Feedback: GitHub Discussions + surveys
+4. Fixes: Rapid iteration on issues
+
+#### Week 15: v1.0.0 RC
+
+**Deliverables**:
+- [ ] Release candidate
+- [ ] All beta issues resolved
+- [ ] Final performance testing
+- [ ] Release notes drafted
+
+**Quality gates**:
+- Zero P0 bugs
+- <5 P1 bugs (documented workarounds)
+- All tests passing
+- Performance within targets
+
+#### Week 16: v1.0.0 Release
+
+**Launch activities**:
+- [ ] Tag v1.0.0
+- [ ] Publish to PowerShell Gallery
+- [ ] Update documentation site
+- [ ] Blog post announcement
+- [ ] Community outreach (Reddit, Twitter)
+
+**Post-launch**:
+- Monitor for issues
+- Rapid response to bugs
+- Community support
+- Gather feedback for v1.1
+
+---
+
+## Part 3: Success Criteria
 
 ### Technical Requirements
 
 **Core Engine**:
-- ✅ Starts up with zero configuration
-- ✅ Loads in <2 seconds on average hardware
-- ✅ Memory footprint <50MB without plugins
+- ✅ Zero-config startup
+- ✅ <2 second cold start
+- ✅ <50MB memory without plugins
 - ✅ Cross-platform (Windows, Linux, macOS)
-- ✅ 100% test coverage on core modules
+- ✅ >80% test coverage
 
 **Plugin System**:
-- ✅ Plugins can be loaded/unloaded at runtime
-- ✅ Dependency resolution works correctly
-- ✅ Isolated plugin failures don't crash engine
-- ✅ Plugin API is stable and versioned
-- ✅ Documentation covers all plugin hooks
+- ✅ Runtime plugin load/unload
+- ✅ Dependency resolution
+- ✅ Plugin failures don't crash core
+- ✅ Versioned plugin API
+- ✅ Complete documentation
 
-**Templates**:
-- ✅ New project from template in <5 minutes
-- ✅ Template projects run without modification
-- ✅ Clear upgrade path for AitherCore updates
-- ✅ Examples for common use cases
-- ✅ CI/CD workflows included
+**Quality**:
+- ✅ All tests passing
+- ✅ No P0 bugs
+- ✅ Performance targets met
+- ✅ Security audit passed
+- ✅ Documentation complete
 
-### User Experience Goals
+### User Experience
 
-**Developer Experience**:
+**Developer**:
 ```powershell
-# Goal: This should "just work"
+# Goal: This just works
 Import-Module AitherCore
 $core = Start-AitherEngine
-# Engine is ready, no config needed
+# Ready to use
 ```
 
-**Project Creation**:
+**Project creation**:
 ```powershell
-# Goal: Create new project in seconds
+# Goal: New project in seconds
 New-AitherProject -Name "MyApp" -Template CLI
 cd MyApp
-./bootstrap.ps1  # Everything works
+./bootstrap.ps1
+# Working project
 ```
 
-**Plugin Development**:
+**Plugin development**:
 ```powershell
 # Goal: Simple plugin creation
 New-AitherPlugin -Name "MyFeature"
-# Template created with all boilerplate
-# Developer just fills in logic
+# Template with all boilerplate
 ```
 
 ---
 
-## Migration Strategy
+## Part 4: Migration Strategy
 
-### For Existing AitherZero Users
+### For Existing Users
 
-**Phase 1: Compatibility Layer** (Weeks 1-8)
+**Phase 1: Compatibility (Immediate)**
 - AitherZero v2.0 uses AitherCore internally
-- All existing functions still work
+- All existing functions work
+- Deprecation warnings
 - No breaking changes
-- Deprecation warnings for old patterns
 
-**Phase 2: Migration Tools** (Weeks 9-12)
-- Script to convert AitherZero scripts to plugins
-- Automated refactoring tools
-- Migration documentation
-- Example migration projects
+**Phase 2: Migration Tools (Month 1)**
+- Convert-ToAitherCore script
+- Automated refactoring
+- Migration guide
+- Example migrations
 
-**Phase 3: Full Migration** (Weeks 13-16)
-- AitherZero becomes a plugin collection on AitherCore
+**Phase 3: Full Adoption (Month 3)**
+- AitherZero becomes plugin collection
 - Clear upgrade path
-- Support for both old and new patterns
-- Community migration support
+- Support both patterns
+- Community support
 
-### Communication Plan
+### Communication
 
-**Documentation**:
-- Migration guide for existing users
-- "Why AitherCore?" explanation
+**Docs**:
+- "Why AitherCore?" guide
 - Benefits comparison
-- Step-by-step migration tutorial
+- Migration tutorial
+- FAQ
 
-**Community Engagement**:
-- Blog post announcing AitherCore
-- Video walkthrough of new architecture
-- Discord/Slack for migration support
-- Regular progress updates
+**Community**:
+- Blog post
+- Video walkthrough
+- Discord support
+- Regular updates
 
 ---
 
-## Risk Assessment
+## Part 5: Risk Management
 
 | Risk | Impact | Probability | Mitigation |
 |------|--------|-------------|------------|
-| Breaking changes alienate users | High | Medium | Maintain compatibility layer, clear migration path |
-| Plugin system too complex | High | Low | Simple examples, comprehensive docs, helper tools |
-| Performance regression | Medium | Low | Benchmarking, optimization, lazy loading |
-| Incomplete migration | Medium | Medium | Phased approach, beta testing, rollback plan |
-| Resource constraints | High | Medium | Clear prioritization, MVP approach, community contributions |
+| Breaking changes | High | Low | Compat layer, gradual migration |
+| Complex plugin system | High | Medium | Simple API, good docs, examples |
+| Performance regression | Medium | Low | Benchmarks, profiling, optimization |
+| Adoption resistance | High | Medium | Clear benefits, easy migration |
+| Resource constraints | Medium | High | Phased approach, community help |
 
 ---
 
-## Resource Requirements
+## Part 6: References
 
-### Engineering Effort
+### Google Engineering Resources
 
-**Core Team** (2-3 engineers):
-- Lead architect: 16 weeks @ 30 hrs/week = 480 hours
-- Developer 1: 12 weeks @ 30 hrs/week = 360 hours
-- Developer 2: 8 weeks @ 20 hrs/week = 160 hours
-- **Total**: ~1000 engineering hours
+**Books**:
+- "Software Engineering at Google" - Building maintainable software
+- "Site Reliability Engineering" - Designing for reliability
+- "The Site Reliability Workbook" - Practical SRE
 
-**Testing & QA**:
-- Manual testing: 40 hours
-- Automated test development: 80 hours
-- Beta testing coordination: 20 hours
-- **Total**: 140 hours
+**Key concepts applied**:
+- **Simplicity**: Minimal APIs, clear contracts
+- **Testing**: Hermetic, fast, comprehensive
+- **Observability**: Logs, metrics, traces
+- **Automation**: CI/CD, code review, tooling
+- **Reliability**: Error budgets, graceful degradation
 
-**Documentation**:
-- Architecture docs: 20 hours
-- API reference: 30 hours
-- Tutorials and guides: 40 hours
-- Migration guide: 20 hours
-- **Total**: 110 hours
+### PowerShell Resources
 
-**Grand Total**: ~1250 hours (equivalent to 2-3 engineers for 4 months)
-
-### Infrastructure
-
-- GitHub repository setup
-- CI/CD pipelines
-- Test infrastructure
-- Documentation hosting
-- Community forum/chat
-
-**Cost**: Mostly free tier services, <$100/month
-
----
-
-## Expected Benefits
-
-### For Project Owner
-
-**Reusability**:
-- Use AitherCore for multiple projects without duplicating code
-- Template new projects in minutes instead of hours
-- Maintain core engine separately from applications
-
-**Flexibility**:
-- Build domain-specific tools on same foundation
-- Experiment with new ideas using proven core
-- Share common functionality across projects
-
-**Maintainability**:
-- Fix bugs once in core, benefits all projects
-- Clear separation of concerns
-- Easier testing and validation
-
-### For Community
-
-**Lower Barrier to Entry**:
-- Start new projects with battle-tested foundation
-- Focus on business logic, not infrastructure
-- Learn from working examples
-
-**Extensibility**:
-- Create plugins without forking
-- Share plugins with community
-- Build ecosystem around core
-
-**Collaboration**:
-- Common foundation enables collaboration
-- Shared patterns and practices
-- Knowledge transfer between projects
-
----
-
-## Next Steps
-
-### Immediate Actions (This Week)
-
-1. **Review and approve this roadmap**
-   - Confirm architectural direction
-   - Agree on timeline and resources
-   - Identify any missing requirements
-
-2. **Set up AitherCore repository**
-   - Create new repo on GitHub
-   - Set up basic structure
-   - Configure CI/CD
-
-3. **Create proof of concept**
-   - Minimal working engine
-   - Simple plugin example
-   - Basic template
-
-4. **Define API contracts**
-   - Plugin interface
-   - Core services API
-   - Configuration schema
-
-### Week 1-2 Deliverables
-
-- [ ] AitherCore repository created
-- [ ] Design documents finalized
-- [ ] Proof of concept working
-- [ ] API specifications written
-- [ ] Team assigned and onboarded
-
----
-
-## Appendix
-
-### A. Glossary
-
-- **AitherCore**: The reusable core engine
-- **AitherZero**: The original monolithic platform (becomes a AitherCore application)
-- **Plugin**: Loadable module that extends AitherCore
-- **Template**: Project starter using AitherCore as foundation
-- **Core Services**: Built-in services (logging, config, events, etc.)
-- **Service Container**: Dependency injection system
-
-### B. References
-
-- Current AitherZero architecture documentation
 - PowerShell module best practices
-- Plugin architecture patterns
-- Template repository examples
-
-### C. Related Documents
-
-- `ENGINE-DESIGN.md`: Detailed technical design
-- `PLUGIN-DEVELOPMENT.md`: Plugin developer guide
-- `MIGRATION-GUIDE.md`: AitherZero to AitherCore migration
-- `API-REFERENCE.md`: Complete API documentation
+- Pester testing framework
+- PSScriptAnalyzer
+- PowerShell Gallery publishing
 
 ---
 
-**Document Version**: 1.0  
-**Created**: October 30, 2025  
+## Appendix: Quick Reference
+
+### Key Commands
+
+```powershell
+# Install AitherCore
+Install-Module AitherCore
+
+# Create new project
+New-AitherProject -Name "MyApp" -Template Automation
+
+# Develop plugin
+New-AitherPlugin -Name "MyFeature"
+
+# Run tests
+Invoke-Pester tests/
+
+# Start engine
+Import-Module AitherCore
+$core = Start-AitherEngine
+```
+
+### Architecture Overview
+
+```
+AitherCore (Core Engine)
+├── Configuration (IConfig)
+├── Logging (ILogger)
+├── Events (IEventBus)
+├── Services (ServiceContainer)
+└── Plugins (PluginManager)
+
+Plugins (Separate repositories)
+├── Infrastructure
+├── Git
+├── Reporting
+└── [Custom]
+
+Templates (Project starters)
+├── Minimal
+├── Automation
+├── CLI
+└── Service
+```
+
+### Timeline Summary
+
+- **Weeks 1-4**: Foundation (Core + Plugin System)
+- **Weeks 5-8**: Migration (Convert domains to plugins)
+- **Weeks 9-12**: Templates & Docs
+- **Weeks 13-16**: Beta, RC, v1.0.0 release
+
+---
+
+**Document Status**: Proposal awaiting feedback  
 **Author**: David (Project Manager Agent)  
-**Status**: Proposal - Awaiting Approval  
-**Next Review**: After stakeholder feedback
+**Date**: October 30, 2025  
+**Next Review**: After stakeholder approval
