@@ -1,0 +1,410 @@
+---
+name: Copilot Agent Router
+
+# Automatically suggest and route work to appropriate custom agents
+# based on PR content, file changes, and keywords
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: agent-router-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-suggest:
+    name: Analyze PR and Suggest Agents
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request)
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+
+      - name: 📋 Load Agent Configuration
+        id: load-config
+        shell: pwsh
+        run: |
+          Write-Host "📋 Loading agent configuration..." -ForegroundColor Cyan
+          
+          # Load YAML configuration
+          $configPath = ".github/copilot.yaml"
+          if (-not (Test-Path $configPath)) {
+            Write-Host "❌ Configuration file not found: $configPath" -ForegroundColor Red
+            exit 1
+          }
+          
+          # Read and parse YAML (basic parsing for this context)
+          $config = Get-Content $configPath -Raw
+          Write-Host "✅ Configuration loaded successfully" -ForegroundColor Green
+          
+          # Store for next steps
+          echo "config-loaded=true" >> $env:GITHUB_OUTPUT
+
+      - name: 🔍 Analyze PR Changes
+        id: analyze
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Analyzing PR changes..." -ForegroundColor Cyan
+          
+          $prNumber = "${{ github.event.pull_request.number || github.event.issue.number }}"
+          $apiUrl = "https://api.github.com/repos/${{ github.repository }}/pulls/$prNumber"
+          
+          try {
+            # Get PR details
+            $pr = Invoke-RestMethod -Uri $apiUrl -Headers @{
+              'Accept' = 'application/vnd.github.v3+json'
+              'Authorization' = 'Bearer ${{ secrets.GITHUB_TOKEN }}'
+            }
+            
+            # Get changed files
+            $filesUrl = "$apiUrl/files"
+            $files = Invoke-RestMethod -Uri $filesUrl -Headers @{
+              'Accept' = 'application/vnd.github.v3+json'
+              'Authorization' = 'Bearer ${{ secrets.GITHUB_TOKEN }}'
+            }
+            
+            $changedFiles = $files | ForEach-Object { $_.filename }
+            
+            # Analyze file patterns
+            $patterns = @{
+              infrastructure = @($changedFiles | Where-Object { 
+                $_ -match 'infrastructure/' -or 
+                $_ -match 'automation-scripts/01[0-9][0-9]' -or
+                $_ -match '(vm|network|hyperv|infrastructure).*\.ps1' -or
+                $_ -match '\.(tf|tfvars)$'
+              })
+              security = @($changedFiles | Where-Object { 
+                $_ -match 'domains/security/' -or 
+                $_ -match '(security|certificate|credential|secret).*\.ps1'
+              })
+              testing = @($changedFiles | Where-Object { 
+                $_ -match 'tests/' -or 
+                $_ -match '\.Tests\.ps1$' -or
+                $_ -match 'automation-scripts/04[0-9][0-9]'
+              })
+              ui = @($changedFiles | Where-Object { 
+                $_ -match 'domains/experience/' -or 
+                $_ -match '(ui|menu|interface|wizard).*\.ps1'
+              })
+              backend = @($changedFiles | Where-Object { 
+                $_ -match 'domains/.*\.psm1$' -or 
+                $_ -match 'automation-scripts/02[0-9][0-9]' -or
+                $_ -match '(api|module).*\.ps1'
+              })
+              documentation = @($changedFiles | Where-Object { 
+                $_ -match '\.md$' -or 
+                $_ -match 'docs/' -or
+                $_ -match 'automation-scripts/05[0-9][0-9]'
+              })
+              powershell = @($changedFiles | Where-Object { 
+                $_ -match '\.(ps1|psm1|psd1)$' -or 
+                $_ -match 'orchestration/' -or
+                $_ -match 'automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|90[0-9][0-9])'
+              })
+              projectmgmt = @($changedFiles | Where-Object { 
+                $_ -match '\.github/workflows/' -or 
+                $_ -match '(roadmap|planning)\.md$'
+              })
+            }
+            
+            # Analyze keywords in PR title and body
+            $prText = "$($pr.title) $($pr.body)".ToLower()
+            $keywords = @{
+              infrastructure = $prText -match '(vm|virtual machine|hyper-v|network|infrastructure|opentofu|terraform|lab)'
+              security = $prText -match '(security|certificate|credential|secret|vulnerability|compliance)'
+              testing = $prText -match '(test|pester|quality|coverage|qa)'
+              ui = $prText -match '(ui|ux|menu|interface|user experience|wizard)'
+              backend = $prText -match '(api|module|backend|performance|optimization)'
+              documentation = $prText -match '(documentation|readme|guide|docs|tutorial)'
+              powershell = $prText -match '(powershell|automation|orchestration|script|workflow)'
+              projectmgmt = $prText -match '(project|planning|roadmap|sprint|release|milestone)'
+            }
+            
+            # Calculate scores for each agent
+            $agentScores = @{}
+            
+            # Maya - Infrastructure
+            $score = 0
+            if ($patterns.infrastructure.Count -gt 0) { $score += $patterns.infrastructure.Count * 3 }
+            if ($keywords.infrastructure) { $score += 2 }
+            $agentScores['maya'] = $score
+            
+            # Sarah - Security
+            $score = 0
+            if ($patterns.security.Count -gt 0) { $score += $patterns.security.Count * 3 }
+            if ($keywords.security) { $score += 2 }
+            $agentScores['sarah'] = $score
+            
+            # Jessica - Testing
+            $score = 0
+            if ($patterns.testing.Count -gt 0) { $score += $patterns.testing.Count * 3 }
+            if ($keywords.testing) { $score += 2 }
+            $agentScores['jessica'] = $score
+            
+            # Emma - UI
+            $score = 0
+            if ($patterns.ui.Count -gt 0) { $score += $patterns.ui.Count * 3 }
+            if ($keywords.ui) { $score += 2 }
+            $agentScores['emma'] = $score
+            
+            # Marcus - Backend
+            $score = 0
+            if ($patterns.backend.Count -gt 0) { $score += $patterns.backend.Count * 3 }
+            if ($keywords.backend) { $score += 2 }
+            $agentScores['marcus'] = $score
+            
+            # Olivia - Documentation
+            $score = 0
+            if ($patterns.documentation.Count -gt 0) { $score += $patterns.documentation.Count * 3 }
+            if ($keywords.documentation) { $score += 2 }
+            $agentScores['olivia'] = $score
+            
+            # Rachel - PowerShell
+            $score = 0
+            if ($patterns.powershell.Count -gt 0) { $score += $patterns.powershell.Count * 2 }
+            if ($keywords.powershell) { $score += 2 }
+            $agentScores['rachel'] = $score
+            
+            # David - Project Management
+            $score = 0
+            if ($patterns.projectmgmt.Count -gt 0) { $score += $patterns.projectmgmt.Count * 3 }
+            if ($keywords.projectmgmt) { $score += 2 }
+            $agentScores['david'] = $score
+            
+            # Get top 3 agents (with score > 0)
+            $topAgents = $agentScores.GetEnumerator() | 
+              Where-Object { $_.Value -gt 0 } | 
+              Sort-Object -Property Value -Descending | 
+              Select-Object -First 3
+            
+            # Format results
+            $results = @{
+              TotalFiles = $changedFiles.Count
+              Agents = @()
+              Analysis = @{
+                Infrastructure = $patterns.infrastructure.Count
+                Security = $patterns.security.Count
+                Testing = $patterns.testing.Count
+                UI = $patterns.ui.Count
+                Backend = $patterns.backend.Count
+                Documentation = $patterns.documentation.Count
+                PowerShell = $patterns.powershell.Count
+                ProjectMgmt = $patterns.projectmgmt.Count
+              }
+            }
+            
+            foreach ($agent in $topAgents) {
+              $agentInfo = switch ($agent.Key) {
+                'maya' { @{ Name = 'Maya'; Role = 'Infrastructure & DevOps'; File = 'maya-infrastructure.md'; Icon = '🏗️' } }
+                'sarah' { @{ Name = 'Sarah'; Role = 'Security & Compliance'; File = 'sarah-security.md'; Icon = '🔒' } }
+                'jessica' { @{ Name = 'Jessica'; Role = 'Testing & QA'; File = 'jessica-testing.md'; Icon = '🧪' } }
+                'emma' { @{ Name = 'Emma'; Role = 'Frontend & UX'; File = 'emma-frontend.md'; Icon = '🎨' } }
+                'marcus' { @{ Name = 'Marcus'; Role = 'Backend & API'; File = 'marcus-backend.md'; Icon = '⚙️' } }
+                'olivia' { @{ Name = 'Olivia'; Role = 'Documentation'; File = 'olivia-documentation.md'; Icon = '📚' } }
+                'rachel' { @{ Name = 'Rachel'; Role = 'PowerShell & Automation'; File = 'rachel-powershell.md'; Icon = '⚡' } }
+                'david' { @{ Name = 'David'; Role = 'Project Management'; File = 'david-project-manager.md'; Icon = '📋' } }
+              }
+              $results.Agents += @{
+                Id = $agent.Key
+                Name = $agentInfo.Name
+                Role = $agentInfo.Role
+                File = $agentInfo.File
+                Icon = $agentInfo.Icon
+                Score = $agent.Value
+              }
+            }
+            
+            # Save results
+            $results | ConvertTo-Json -Depth 5 | Set-Content './agent-analysis.json'
+            
+            # Set outputs
+            echo "has-suggestions=$($results.Agents.Count -gt 0)" >> $env:GITHUB_OUTPUT
+            echo "agent-count=$($results.Agents.Count)" >> $env:GITHUB_OUTPUT
+            
+            Write-Host "✅ Analysis complete: $($results.Agents.Count) agents suggested" -ForegroundColor Green
+            
+          } catch {
+            Write-Host "❌ Error analyzing PR: $_" -ForegroundColor Red
+            echo "has-suggestions=false" >> $env:GITHUB_OUTPUT
+            exit 0  # Don't fail the workflow
+          }
+
+      - name: 💬 Post Agent Suggestions
+        if: steps.analyze.outputs.has-suggestions == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Load analysis results
+            let analysis = { Agents: [], Analysis: {}, TotalFiles: 0 };
+            try {
+              analysis = JSON.parse(fs.readFileSync('./agent-analysis.json', 'utf8'));
+            } catch (e) {
+              console.log('Error loading analysis:', e);
+              return;
+            }
+            
+            if (analysis.Agents.length === 0) {
+              console.log('No agents to suggest');
+              return;
+            }
+            
+            const prNumber = context.payload.pull_request?.number || context.payload.issue?.number;
+            if (!prNumber) {
+              console.log('No PR number found');
+              return;
+            }
+            
+            // Build comment
+            let comment = `## 🤖 Recommended GitHub Copilot Agents\n\n`;
+            comment += `Based on the changes in this PR (**${analysis.TotalFiles} files**), here are the recommended custom agents to assist with review and development:\n\n`;
+            
+            // List recommended agents
+            for (const agent of analysis.Agents) {
+              comment += `### ${agent.Icon} ${agent.Name} - *${agent.Role}*\n`;
+              comment += `**File:** [\`.github/agents/${agent.File}\`](.github/agents/${agent.File})\n`;
+              comment += `**Relevance Score:** ${agent.Score}\n\n`;
+              comment += `**To engage this agent:**\n`;
+              comment += `\`\`\`\n`;
+              comment += `@${agent.Id.toLowerCase()}, please review this PR\n`;
+              comment += `\`\`\`\n`;
+              comment += `or use the command: \`/${agent.Id.toLowerCase()}\`\n\n`;
+            }
+            
+            // Add analysis breakdown
+            comment += `\n---\n\n`;
+            comment += `### 📊 Change Analysis\n\n`;
+            comment += `| Category | Files Changed |\n`;
+            comment += `|----------|---------------|\n`;
+            if (analysis.Analysis.Infrastructure > 0) comment += `| 🏗️ Infrastructure | ${analysis.Analysis.Infrastructure} |\n`;
+            if (analysis.Analysis.Security > 0) comment += `| 🔒 Security | ${analysis.Analysis.Security} |\n`;
+            if (analysis.Analysis.Testing > 0) comment += `| 🧪 Testing | ${analysis.Analysis.Testing} |\n`;
+            if (analysis.Analysis.UI > 0) comment += `| 🎨 UI/UX | ${analysis.Analysis.UI} |\n`;
+            if (analysis.Analysis.Backend > 0) comment += `| ⚙️ Backend | ${analysis.Analysis.Backend} |\n`;
+            if (analysis.Analysis.Documentation > 0) comment += `| 📚 Documentation | ${analysis.Analysis.Documentation} |\n`;
+            if (analysis.Analysis.PowerShell > 0) comment += `| ⚡ PowerShell | ${analysis.Analysis.PowerShell} |\n`;
+            if (analysis.Analysis.ProjectMgmt > 0) comment += `| 📋 Project Mgmt | ${analysis.Analysis.ProjectMgmt} |\n`;
+            
+            comment += `\n### 💡 How to Use Custom Agents\n\n`;
+            comment += `1. **Review Agent Profile**: Click on the agent file link above to see their expertise\n`;
+            comment += `2. **Engage Agent**: Use \`@agent-name\` in a comment to request their assistance\n`;
+            comment += `3. **Collaboration**: Multiple agents can work together on complex tasks\n\n`;
+            comment += `For more information, see [Agent Routing Guide](.github/AGENT-ROUTING-GUIDE.md)\n\n`;
+            comment += `---\n`;
+            comment += `*🤖 Automated agent suggestion powered by GitHub Copilot routing system*\n`;
+            
+            // Check for existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('🤖 Recommended GitHub Copilot Agents')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+              console.log('Updated existing agent suggestion comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+              console.log('Created new agent suggestion comment');
+            }
+
+  handle-agent-commands:
+    name: Handle Agent Command
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    
+    steps:
+      - name: 🔍 Parse Agent Command
+        id: parse
+        shell: bash
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+          echo "Comment: $COMMENT"
+          
+          # Check for agent mentions or commands
+          AGENT=""
+          if [[ "$COMMENT" =~ @(maya|sarah|jessica|emma|marcus|olivia|rachel|david) ]]; then
+            AGENT="${BASH_REMATCH[1]}"
+          elif [[ "$COMMENT" =~ ^/(maya|sarah|jessica|emma|marcus|olivia|rachel|david|infrastructure|security|testing|ui|backend|docs|powershell|pm) ]]; then
+            CMD="${BASH_REMATCH[1]}"
+            # Map command aliases to agents
+            case "$CMD" in
+              infrastructure) AGENT="maya" ;;
+              security) AGENT="sarah" ;;
+              testing) AGENT="jessica" ;;
+              ui) AGENT="emma" ;;
+              backend) AGENT="marcus" ;;
+              docs) AGENT="olivia" ;;
+              powershell) AGENT="rachel" ;;
+              pm) AGENT="david" ;;
+              *) AGENT="$CMD" ;;
+            esac
+          fi
+          
+          if [ -n "$AGENT" ]; then
+            echo "agent=$AGENT" >> $GITHUB_OUTPUT
+            echo "has-command=true" >> $GITHUB_OUTPUT
+            echo "✅ Detected agent command: $AGENT"
+          else
+            echo "has-command=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 👍 React to Command
+        if: steps.parse.outputs.has-command == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: eyes
+
+      - name: 💬 Acknowledge Agent Request
+        if: steps.parse.outputs.has-command == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## 🤖 Agent Request Received
+            
+            **Agent:** ${{ steps.parse.outputs.agent }}
+            **Requested by:** @${{ github.event.comment.user.login }}
+            
+            The **${{ steps.parse.outputs.agent }}** agent has been notified and will be available for this PR.
+            
+            To work with this agent effectively:
+            1. Review their profile at `.github/agents/${{ steps.parse.outputs.agent }}-*.md`
+            2. Provide clear context and specific questions
+            3. Tag them with `@${{ steps.parse.outputs.agent }}` in future comments
+            
+            The agent will use their specialized expertise to assist with your request.
+            
+            ---
+            *Agent routing powered by GitHub Copilot custom agents*
