@@ -10,6 +10,7 @@ on:
       - 'README.md'
       - 'docs/**'
   pull_request:
+    types: [opened, synchronize, reopened, closed]
     branches: [ main, develop ]
     paths:
       - 'domains/**/*.psm1'
@@ -38,8 +39,80 @@ on:
         - Both
 
 jobs:
+  cleanup-auto-prs:
+    name: 🧹 Cleanup Auto PRs
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      pull-requests: write
+      
+    steps:
+    - name: 🔍 Find and Close Auto PRs
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const prNumber = context.issue.number;
+          const autoBranchName = `auto-docs/${prNumber}`;
+          const repo = context.repo;
+          
+          core.info(`Parent PR #${prNumber} was closed, searching for auto-docs PRs...`);
+          
+          // Find all open PRs from the auto-docs branch
+          const { data: allPRs } = await github.rest.pulls.list({
+            owner: repo.owner,
+            repo: repo.repo,
+            state: 'open'
+          });
+          
+          const autoPRs = allPRs.filter(pr => pr.head.ref === autoBranchName);
+          
+          if (autoPRs.length === 0) {
+            core.info(`No open auto-docs PRs found for branch ${autoBranchName}`);
+            return;
+          }
+          
+          for (const autoPR of autoPRs) {
+            core.info(`Closing auto-docs PR #${autoPR.number}`);
+            
+            // Add a comment explaining why it's being closed
+            await github.rest.issues.createComment({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: autoPR.number,
+              body: `🔒 Automatically closing this PR because the parent PR #${prNumber} was closed.`
+            });
+            
+            // Close the PR
+            await github.rest.pulls.update({
+              owner: repo.owner,
+              repo: repo.repo,
+              pull_number: autoPR.number,
+              state: 'closed'
+            });
+            
+            core.info(`✅ Closed auto-docs PR #${autoPR.number}`);
+          }
+          
+          // Delete the auto branch
+          try {
+            await github.rest.git.deleteRef({
+              owner: repo.owner,
+              repo: repo.repo,
+              ref: `heads/${autoBranchName}`
+            });
+            core.info(`✅ Deleted branch ${autoBranchName}`);
+          } catch (error) {
+            if (error.status === 404) {
+              core.info(`Branch ${autoBranchName} does not exist`);
+            } else {
+              core.warning(`Failed to delete branch ${autoBranchName}: ${error.message}`);
+            }
+          }
+
   generate-documentation:
     name: 🔄 Generate Documentation
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     
     permissions:
@@ -311,7 +384,7 @@ jobs:
             - **HTML files**: ${htmlCount}
             
             ### Automation Details
-            This PR was automatically created by the documentation automation workflow. It will be automatically merged into the parent PR branch once all checks pass.
+            This PR was automatically created by the documentation automation workflow. Please review and merge this PR into the parent branch to apply the documentation updates.
             
             ### Important
             - Do not modify this PR manually

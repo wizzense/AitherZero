@@ -131,11 +131,14 @@
 2. Close the original PR without merging
 
 ### Expected Behavior
-1. Auto PRs should ideally be closed automatically
-2. Auto branches can be manually cleaned up
+1. Auto PRs are automatically closed when parent PR is closed
+2. Auto branches are automatically deleted
+3. A comment is added to each auto PR explaining why it was closed
 
 ### Validation
-- [ ] Auto branches can be safely deleted
+- [ ] Auto PRs are automatically closed
+- [ ] Auto branches are automatically deleted
+- [ ] Comment added explaining closure
 - [ ] No orphaned PRs remain
 - [ ] Workflow doesn't error on closed PR
 
@@ -208,13 +211,12 @@ Before marking implementation as complete:
 1. **Branch Permissions**: Requires `contents: write` permission
 2. **PR Permissions**: Requires `pull-requests: write` permission
 3. **Re-run Behavior**: Old auto branches are deleted and recreated
-4. **Manual Cleanup**: Auto branches may need manual cleanup if PR is closed
-5. **Nested PRs**: Auto PRs are PRs to feature branches, not to main
+4. **Nested PRs**: Auto PRs are PRs to feature branches, not to main
 
 ## Future Enhancements
 
 - [ ] Auto-merge auto PRs when all checks pass
-- [ ] Auto-close auto PRs when parent PR is closed
+- [x] Auto-close auto PRs when parent PR is closed (implemented)
 - [ ] Add GitHub Status Check for auto PR state
 - [ ] Notification when auto PRs are ready for review
 - [ ] Dashboard showing all active auto PRs
