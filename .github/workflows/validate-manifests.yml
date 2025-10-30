@@ -24,14 +24,6 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
 
-      - name: 'Setup PowerShell'
-        uses: azure/powershell@v2
-        with:
-          pwsh: true
-          azPSVersion: 'latest'
-          inlineScript: |
-            Write-Host "PowerShell $($PSVersionTable.PSVersion) ready"
-
       - name: 'Validate All Module Manifests'
         shell: pwsh
         run: |
@@ -66,7 +58,7 @@ jobs:
           # Run validation tool tests
           $testResult = Invoke-Pester -Path './tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1' -PassThru
 
-          if ($testResult.Failed -gt 0) {
+          if ($testResult.FailedCount -gt 0) {
             Write-Host "❌ Validation tool tests failed!" -ForegroundColor Red
             exit 1
           } else {

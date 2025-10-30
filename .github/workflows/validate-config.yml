@@ -99,30 +99,33 @@ jobs:
         run: |
           if ($env:GITHUB_STEP_SUMMARY) {
             $status = "${{ job.status }}"
-            $summary = @"
-          ## Config Manifest Validation Results
-
-          The config.psd1 manifest has been validated for:
-          - ✅ Syntax correctness
-          - ✅ Required structure
-          - ✅ Domain/module count accuracy
-          - ✅ Script inventory accuracy
-          - ✅ Script reference validity
-          - ✅ Synchronization with automation scripts
-          - ✅ PSScriptAnalyzer compliance
-
-          **Status**: $status
-
-          ### What This Checks
-
-          1. **Config Validation (0413)**: Validates structure, counts, and references
-          2. **Config Sync (0003)**: Ensures all automation scripts are registered in config.psd1
-
-          If validation fails, run the sync script locally to identify missing scripts:
-          ```powershell
-          ./automation-scripts/0003_Sync-ConfigManifest.ps1
-          ```
-          "@
-
+            
+            # Build summary using array to avoid here-string issues
+            $summaryLines = @(
+              "## Config Manifest Validation Results"
+              ""
+              "The config.psd1 manifest has been validated for:"
+              "- ✅ Syntax correctness"
+              "- ✅ Required structure"
+              "- ✅ Domain/module count accuracy"
+              "- ✅ Script inventory accuracy"
+              "- ✅ Script reference validity"
+              "- ✅ Synchronization with automation scripts"
+              "- ✅ PSScriptAnalyzer compliance"
+              ""
+              "Status: $status"
+              ""
+              "### What This Checks"
+              ""
+              "1. **Config Validation (0413)**: Validates structure, counts, and references"
+              "2. **Config Sync (0003)**: Ensures all automation scripts are registered in config.psd1"
+              ""
+              "If validation fails, run the sync script locally to identify missing scripts:"
+              ""
+              "    ./automation-scripts/0003_Sync-ConfigManifest.ps1"
+              ""
+            )
+            
+            $summary = $summaryLines -join "`n"
             $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
           }

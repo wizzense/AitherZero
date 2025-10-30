@@ -250,3 +250,81 @@ All code changes must meet these requirements:
 4. **Handoff**: Ensure reviewer has all context needed
 
 This consolidated architecture ensures reliable module loading and provides powerful orchestration capabilities through the number-based system.
+
+## GitHub Copilot Integration
+
+AitherZero includes comprehensive GitHub Copilot enhancement features to make AI-assisted development more effective.
+
+### Custom Agent Routing
+
+The repository uses `.github/copilot.yaml` to route work to specialized agents based on expertise:
+
+- **Maya** (Infrastructure): Hyper-V, OpenTofu/Terraform, networking, VM management
+- **Sarah** (Security): Certificates, credentials, compliance, vulnerability scanning
+- **Jessica** (Testing): Pester, test automation, quality assurance
+- **Emma** (Frontend/UX): Console UI, menus, wizards, user experience
+- **Marcus** (Backend): PowerShell modules, APIs, performance optimization
+- **Olivia** (Documentation): Technical writing, guides, documentation
+- **Rachel** (PowerShell): Scripting, automation, orchestration
+- **David** (Project Manager): Planning, coordination, releases
+
+**Usage**: Agents are auto-suggested based on file patterns. Invoke manually with `/agent-name` or `@agent-name` in Copilot Chat.
+
+### Model Context Protocol (MCP) Servers
+
+MCP servers provide enhanced context and capabilities. Configuration in `.github/mcp-servers.json`:
+
+- **filesystem**: Repository navigation and file operations
+- **github**: Issues, PRs, repository metadata via GitHub API
+- **git**: Version control operations and history
+- **powershell-docs**: PowerShell best practices and documentation
+- **sequential-thinking**: Complex problem-solving and planning
+
+**Setup**: Requires Node.js 18+ and `GITHUB_TOKEN` environment variable. See [docs/COPILOT-MCP-SETUP.md](../docs/COPILOT-MCP-SETUP.md) for details.
+
+### Development Environment
+
+Optimized VS Code and DevContainer configurations available:
+
+- **`.devcontainer/`**: Pre-configured development container with all tools
+- **`.vscode/settings.json`**: PowerShell, Copilot, and editor settings
+- **`.vscode/tasks.json`**: Common operations (test, lint, validate, report)
+- **`.vscode/launch.json`**: Debug configurations for scripts and tests
+- **`.vscode/extensions.json`**: Recommended extensions list
+
+**Quick Start**: Open in VS Code and use "Reopen in Container" or install recommended extensions for local setup.
+
+See [docs/COPILOT-DEV-ENVIRONMENT.md](../docs/COPILOT-DEV-ENVIRONMENT.md) for complete setup guide.
+
+### Effective Copilot Usage
+
+**Leverage agents for specialized work**:
+```
+/infrastructure Help design a VM network topology
+@sarah Review certificate storage security
+@jessica Create Pester tests for new module
+```
+
+**Use MCP servers for context**:
+```
+@workspace Show recent commits to testing domain
+@workspace What's PowerShell best practice for error handling?
+@workspace Create issue for documentation update
+```
+
+**Provide architectural context**:
+```
+@workspace Following AitherZero patterns, create a new utility 
+function with proper logging, error handling, and cross-platform support
+```
+
+### AI Development Guidelines
+
+When using AI assistance:
+
+1. **Always reference architecture**: Mention number-based system, domain structure
+2. **Specify quality requirements**: Logging, error handling, tests, cross-platform
+3. **Use appropriate agents**: Route to specialist for better results
+4. **Validate AI suggestions**: Run linters, tests, and manual verification
+5. **Iterate incrementally**: Make small changes, test frequently
+6. **Document decisions**: Update comments and docs for AI context

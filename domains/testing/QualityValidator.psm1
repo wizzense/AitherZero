@@ -263,11 +263,12 @@ function Test-LoggingImplementation {
     }
     
     # Check for logging at different levels
-    $infoLevelPattern = 'Write-.*(Log|Verbose|Information).*-Level.*[''"]Information[''"]'
+    # Updated patterns to match both quoted and unquoted level values
+    $infoLevelPattern = 'Write-.*(Log|Verbose|Information).*-Level\s+[''"]?Information[''"]?'
     $infoFunctionPattern = 'Write-(Verbose|Information)'
-    $warningLevelPattern = 'Write-.*(Log|Warning).*-Level.*[''"]Warning[''"]'
+    $warningLevelPattern = 'Write-.*(Log|Warning).*-Level\s+[''"]?Warning[''"]?'
     $warningFunctionPattern = 'Write-Warning'
-    $errorLevelPattern = 'Write-.*(Log|Error).*-Level.*[''"]Error[''"]'
+    $errorLevelPattern = 'Write-.*(Log|Error).*-Level\s+[''"]?Error[''"]?'
     $errorFunctionPattern = 'Write-Error'
 
     $hasInfo = $content -match $infoLevelPattern -or 
@@ -361,6 +362,16 @@ function Test-TestCoverage {
     
     # For automation scripts
     if ($fileDir -like "*automation-scripts*") {
+        # Check for range-based unit test organization (e.g., 0000-0099, 0900-0999)
+        if ($fileName -match '^(\d{4})_') {
+            $scriptNum = [int]$Matches[1]
+            $rangeStart = [Math]::Floor($scriptNum / 100) * 100
+            $rangeEnd = $rangeStart + 99
+            $rangeDir = "$($rangeStart.ToString('0000'))-$($rangeEnd.ToString('0000'))"
+            $possibleTestPaths += Join-Path $TestsPath "unit/automation-scripts/$rangeDir/$fileName.Tests.ps1"
+        }
+        $possibleTestPaths += Join-Path $TestsPath "integration/automation-scripts/$fileName.Integration.Tests.ps1"
+        $possibleTestPaths += Join-Path $TestsPath "unit/automation-scripts/$fileName.Tests.ps1"
         $possibleTestPaths += Join-Path $TestsPath "integration/$fileName.Tests.ps1"
         $possibleTestPaths += Join-Path $TestsPath "unit/$fileName.Tests.ps1"
     }
@@ -684,13 +695,28 @@ function Test-PSScriptAnalyzerCompliance {
     
     try {
         Import-Module PSScriptAnalyzer -ErrorAction Stop
+
+        # Check for project PSScriptAnalyzer settings file
+        $settingsFile = Join-Path $script:ProjectRoot "PSScriptAnalyzerSettings.psd1"
+        $analyzerParams = @{
+            Path = $Path
+            Severity = 'Error', 'Warning'
+            ErrorAction = 'SilentlyContinue'
+        }
+
+        if (Test-Path $settingsFile) {
+            Write-QualityLog -Message "Using PSScriptAnalyzer settings from: $settingsFile" -Level Debug
+            $analyzerParams.Settings = $settingsFile
+        } else {
+            Write-QualityLog -Message "No PSScriptAnalyzer settings file found, using defaults" -Level Debug
+        }
+
+        # Run analysis - wrap in array for consistent handling
+        $analysisResults = @(Invoke-ScriptAnalyzer @analyzerParams)
         
-        # Run analysis
-        $analysisResults = Invoke-ScriptAnalyzer -Path $Path -Severity Error, Warning -ErrorAction SilentlyContinue
+        $result.Details.TotalIssues = $analysisResults.Count
         
-        $result.Details.TotalIssues = if ($analysisResults) { $analysisResults.Count } else { 0 }
-        
-        if ($analysisResults) {
+        if ($analysisResults.Count -gt 0) {
             $errorCount = @($analysisResults | Where-Object { $_.Severity -eq 'Error' }).Count
             $warningCount = @($analysisResults | Where-Object { $_.Severity -eq 'Warning' }).Count
             
@@ -781,19 +807,44 @@ function Invoke-QualityValidation {
                 Summary = @{}
             }
             
+            # Detect file type - .psd1 files are data files and should skip certain checks
+            $fileExtension = [System.IO.Path]::GetExtension($filePath).ToLower()
+            $isDataFile = $fileExtension -eq '.psd1'
+            
+            if ($isDataFile) {
+                Write-QualityLog -Message "Detected PowerShell data file (.psd1), adjusting validation checks" -Level Debug
+            }
+            
             # Run all checks
             $checks = @(
-                @{ Name = 'ErrorHandling'; Function = 'Test-ErrorHandling' }
-                @{ Name = 'Logging'; Function = 'Test-LoggingImplementation' }
-                @{ Name = 'TestCoverage'; Function = 'Test-TestCoverage' }
-                @{ Name = 'UIIntegration'; Function = 'Test-UIIntegration' }
-                @{ Name = 'GitHubActions'; Function = 'Test-GitHubActionsIntegration' }
-                @{ Name = 'PSScriptAnalyzer'; Function = 'Test-PSScriptAnalyzerCompliance' }
+                @{ Name = 'ErrorHandling'; Function = 'Test-ErrorHandling'; SkipForDataFiles = $true }
+                @{ Name = 'Logging'; Function = 'Test-LoggingImplementation'; SkipForDataFiles = $true }
+                @{ Name = 'TestCoverage'; Function = 'Test-TestCoverage'; SkipForDataFiles = $true }
+                @{ Name = 'UIIntegration'; Function = 'Test-UIIntegration'; SkipForDataFiles = $true }
+                @{ Name = 'GitHubActions'; Function = 'Test-GitHubActionsIntegration'; SkipForDataFiles = $true }
+                @{ Name = 'PSScriptAnalyzer'; Function = 'Test-PSScriptAnalyzerCompliance'; SkipForDataFiles = $false }
             )
             
             foreach ($check in $checks) {
+                # Skip if explicitly in SkipChecks parameter
                 if ($check.Name -in $SkipChecks) {
                     Write-QualityLog -Message "Skipping check: $($check.Name)"
+                    continue
+                }
+                
+                # Skip checks that don't apply to data files
+                if ($isDataFile -and $check.SkipForDataFiles) {
+                    Write-QualityLog -Message "Skipping $($check.Name) for data file (.psd1)" -Level Debug
+                    
+                    # Add a skipped result for reporting
+                    $skippedResult = [PSCustomObject]@{
+                        CheckName = $check.Name
+                        Status = 'Skipped'
+                        Findings = @("Skipped for PowerShell data file (.psd1)")
+                        Score = 100
+                        Details = @{ Reason = 'Data files do not require this check' }
+                    }
+                    $report.Checks += $skippedResult
                     continue
                 }
                 

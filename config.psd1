@@ -255,8 +255,8 @@
                 }
                 GitWorkflow = @{
                     DependsOn = @('Core.Git')
-                    Scripts = @('0701', '0702', '0703', '0704', '0705', '0709')
-                    Description = 'Branch creation, commits, PRs, and comments'
+                    Scripts = @('0701', '0702', '0703', '0704', '0705', '0709', '0798', '0799')
+                    Description = 'Branch creation, commits, PRs, comments, changelog generation, and tag cleanup'
                 }
                 GitHubRunners = @{
                     DependsOn = @('Core.Git', 'Core.PowerShell7')
@@ -284,8 +284,8 @@
                 }
                 Documentation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0733', '0744', '0745')
-                    Description = 'AI-powered documentation generation, auto-documentation, and project indexing'
+                    Scripts = @('0733', '0744', '0745', '0746')
+                    Description = 'AI-powered documentation generation, auto-documentation, project indexing, and orchestration'
                 }
                 Optimization = @{
                     DependsOn = @('Core.PowerShell7')
@@ -323,8 +323,8 @@
                 }
                 PRDeployment = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts = @('0850', '0851', '0852', '0853')
-                    Description = 'Ephemeral PR environment deployment, cleanup, and Docker validation'
+                    Scripts = @('0850', '0851', '0852', '0853', '0854')
+                    Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, and container management'
                 }
             }
             
@@ -339,6 +339,11 @@
                     DependsOn = @('Core.PowerShell7')
                     Scripts = @('0900', '0901')
                     Description = 'Self-deployment and local deployment testing'
+                }
+                TestGeneration = @{
+                    DependsOn = @('Core.PowerShell7', 'Testing.Pester')
+                    Scripts = @('0950')
+                    Description = 'Automatic test generation system - generates unit and integration tests for all automation scripts'
                 }
             }
             
@@ -410,11 +415,11 @@
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
-            'testing' = @{ Modules = 6; Description = 'Testing framework, quality validation, and test generation' }
+            'testing' = @{ Modules = 8; Description = 'Testing framework, quality validation, and test generation' }
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (118 total files, 118 unique numbers - all numbers now unique)
+        # Script inventory by range (125 total files, 125 unique numbers - all numbers now unique)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
@@ -422,15 +427,15 @@
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 27; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 2; Category = 'Validation' }
+            '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
+            '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
+            '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
         
         # Configuration schema version for validation
         SchemaVersion = '2.0'
-        LastUpdated = '2025-10-27'
+        LastUpdated = '2025-10-29'
     }
     
     # ===================================================================
@@ -813,6 +818,21 @@
                     ReportPath = './reports/quality'
                     AutoCreateIssues = $true  # Create GitHub issues for failures in CI
                     IssueLabels = @('quality-validation', 'automated', 'needs-fix')
+                }
+            }
+            AutoTestGenerator = @{
+                Enabled = $true  # Automatic test generation system
+                InstallScript = '0950'
+                Required = $false
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Description = '100% automatic test generation for all automation scripts'
+                Configuration = @{
+                    Mode = 'Full'  # Full, Quick, Changed, Watch
+                    Force = $false  # Regenerate existing tests
+                    RunTests = $false  # Run tests after generation
+                    AutoGenerate = $true  # Auto-generate on script changes
+                    TestsPath = './tests'
+                    CoverageTarget = 100  # Target test coverage percentage
                 }
             }
         }

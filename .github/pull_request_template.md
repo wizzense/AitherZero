@@ -8,6 +8,22 @@
 Fixes #
 Related to #
 
+## 🤖 Custom Agent Assistance
+<!-- The agent routing system will automatically suggest relevant agents based on your changes -->
+<!-- You can also manually request specific agents: -->
+<!-- Use @agent-name (e.g., @maya, @sarah) or /command (e.g., /infrastructure, /security) -->
+<!-- See .github/AGENT-ROUTING-GUIDE.md for full details -->
+
+**Need specialized review?** Request agents here:
+- Infrastructure/DevOps: `@maya` or `/infrastructure`
+- Security/Compliance: `@sarah` or `/security`
+- Testing/QA: `@jessica` or `/testing`
+- UI/UX: `@emma` or `/ui`
+- Backend/API: `@marcus` or `/backend`
+- Documentation: `@olivia` or `/docs`
+- PowerShell/Automation: `@rachel` or `/powershell`
+- Project Management: `@david` or `/pm`
+
 ## Type of Change
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)

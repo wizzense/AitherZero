@@ -225,6 +225,11 @@ jobs:
             type=semver,pattern={{major}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
             type=raw,value=latest,enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
 
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
       - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -234,6 +239,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -292,10 +298,10 @@ jobs:
         run: |
           echo "🚀 Deploying PR #${PR_NUMBER} environment..."
 
-          # Calculate dynamic port (8080-8089 range, max 10 concurrent PRs)
-          # Note: Port collision occurs when PR numbers share the same modulo 10 value (e.g., PR #5 and #15 both use port 8085)
-          # Consider port management strategy for high-concurrency scenarios
-          DYNAMIC_PORT="808$((${PR_NUMBER} % 10))"
+          # Calculate unique port for each PR with automatic rollover
+          # Port range: 8080-8179 (100 ports available)
+          # Formula: 8080 + (PR_NUMBER % 100) ensures ports roll over after 100 PRs
+          DYNAMIC_PORT="$((8080 + (${PR_NUMBER} % 100)))"
           echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
 
           # Create environment-specific compose file
@@ -433,6 +439,11 @@ jobs:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
             
+            // Calculate unique port for each PR with automatic rollover
+            // Port range: 8080-8179 (100 ports available)
+            // Formula: 8080 + (prNumber % 100) ensures ports roll over after 100 PRs
+            const dynamicPort = 8080 + (prNumber % 100);
+            
             // Get job results
             const validationResult = '${{ needs.validate-docker-config.result }}';
             const buildResult = '${{ needs.build-container.result }}';
@@ -491,74 +502,88 @@ jobs:
             ${deploymentSuccessful ? `
             ### 🔗 Access Your Environment
             - **Container Package**: [${{ needs.build-container.outputs.package-url }}](${{ needs.build-container.outputs.package-url }})
-            - **Local Testing URL**: http://localhost:808${prNumber.toString().slice(-1)}
             - **Container Name**: \`aitherzero-pr-${prNumber}\`
+            - **Port**: ${dynamicPort} (formula: 8080 + PR# % 100)
 
-            ### 🧪 Testing Commands
+            ### 🧪 How to Test This PR
+
+            Choose the method that works best for you:
+
+            #### ⚡ Method 1: Quick Docker Commands (No Clone Required)
             
-            #### Option A: Container already running (automated deployment)
-            If the deployment workflow already started the container, use these commands:
+            Fastest way to test - just use Docker directly:
+            
             \`\`\`bash
-            docker logs aitherzero-pr-${prNumber}
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List"
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
+            # Pull and run the container
+            docker pull ${{ needs.build-container.outputs.image-tag }}
+            docker run -d --name aitherzero-pr-${prNumber} -p ${dynamicPort}:8080 ${{ needs.build-container.outputs.image-tag }}
+            
+            # Wait for startup
+            sleep 5
+            
+            # Run tests (import module first to get az alias)
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
+            
+            # Open interactive shell to explore (module auto-loads)
+            docker exec -it aitherzero-pr-${prNumber} pwsh
+            
+            # Cleanup when done
+            docker stop aitherzero-pr-${prNumber} && docker rm aitherzero-pr-${prNumber}
             \`\`\`
             
-            #### Option B: Manual local testing (start container yourself)
-            If you want to test locally, follow ALL steps in order:
+            #### 🎯 Method 2: Container Manager (After Cloning Repo)
             
-            **🚀 QuickStart (Automated - pull + run + verify):**
+            For automated workflows with the container manager:
+            
             \`\`\`bash
-            # Clone AitherZero repo and run the container manager
+            # Clone the repo
             git clone https://github.com/wizzense/AitherZero.git
             cd AitherZero
+            
+            # QuickStart: Pull + Run + Verify automatically
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber ${prNumber}
-            \`\`\`
             
-            **📋 Manual Steps (if you prefer step-by-step):**
-            
-            **Step 1: Pull the image**
-            \`\`\`bash
-            docker pull ${{ needs.build-container.outputs.image-tag }}
-            \`\`\`
-
-            **Step 2: Start the container** (REQUIRED - container won't exist until you run this)
-            \`\`\`bash
-            docker run -d --name aitherzero-pr-${prNumber} -p 808${prNumber.toString().slice(-1)}:8080 ${{ needs.build-container.outputs.image-tag }}
-            \`\`\`
-
-            **Step 3: Wait for startup and check logs**
-            \`\`\`bash
-            sleep 5
-            docker logs aitherzero-pr-${prNumber}
-            \`\`\`
-
-            **Step 4: Run commands in the container**
-            \`\`\`bash
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./Start-AitherZero.ps1 -Mode List"
-            docker exec aitherzero-pr-${prNumber} pwsh -Command "cd /opt/aitherzero && ./az.ps1 0402"
-            \`\`\`
-
-            **Step 5: Cleanup when done**
-            \`\`\`bash
-            docker stop aitherzero-pr-${prNumber}
-            docker rm aitherzero-pr-${prNumber}
-            \`\`\`
-            
-            **💡 Advanced: Use the container manager for all operations**
-            \`\`\`bash
-            # After cloning the repo, use the integrated container manager:
-            cd AitherZero
-            
-            # Interactive shell (easiest way to explore)
+            # Open interactive shell
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber ${prNumber}
             
-            # Other useful commands
+            # Execute commands
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "az 0402"
+            
+            # Check status
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber ${prNumber}
-            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber ${prNumber} -Follow
-            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "./az.ps1 0402"
+            
+            # View logs
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber ${prNumber}
+            
+            # Cleanup when done
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber ${prNumber}
             \`\`\`
+
+            #### 🖥️ Method 3: Interactive Testing (Recommended)
+            
+            Best for exploring and development:
+            
+            \`\`\`bash
+            # Pull and start interactively
+            docker pull ${{ needs.build-container.outputs.image-tag }}
+            docker run -it --name aitherzero-pr-${prNumber} ${{ needs.build-container.outputs.image-tag }}
+            
+            # You'll see the welcome screen. Module is already loaded, so use:
+            # az 0402                    # Run unit tests
+            # az 0510 -ShowAll           # Generate reports
+            # Start-AitherZero           # Interactive menu
+            \`\`\`
+
+            ### 📚 Available Test Commands
+            
+            Inside the container or via \`docker exec\`, you can run:
+            
+            - \`az 0402\` - Run unit tests
+            - \`az 0404\` - Run PSScriptAnalyzer linting
+            - \`az 0407\` - Validate PowerShell syntax
+            - \`az 0510 -ShowAll\` - Generate detailed project report
+            - \`Start-AitherZero\` - Launch interactive menu
+            - \`Get-Command -Module AitherZero\` - List all available commands
 
             ### 🛠️ Management Commands
             - **Redeploy**: Comment \`/deploy\` on this PR

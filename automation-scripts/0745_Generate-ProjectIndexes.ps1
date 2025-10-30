@@ -12,6 +12,10 @@
     - Bidirectional navigation between directories
     - Automatic README.md generation for empty directories
     - Integration with Git workflows
+    
+    IMPORTANT: Generated index.md files use 'merge=ours' strategy in .gitattributes
+    to prevent merge conflicts. After merging branches, regenerate indexes by running:
+    ./0745_Generate-ProjectIndexes.ps1 -Mode Full
 .PARAMETER Mode
     Generation mode:
     - Full: Regenerate all indexes regardless of changes
@@ -199,7 +203,7 @@ try {
             Write-IndexLog "Running FULL index generation..." -Level Information
             Write-Host ""
             
-            $results = New-ProjectIndexes -RootPath $RootPath -Recursive -Force:$Force
+            $results = New-ProjectIndex -RootPath $RootPath -Recursive -Force:$Force
             
             Show-Statistics -Results $results
             Show-UpdatedFiles -Results $results
@@ -219,7 +223,7 @@ try {
             Write-IndexLog "Running INCREMENTAL index generation..." -Level Information
             Write-Host ""
             
-            $results = New-ProjectIndexes -RootPath $RootPath -Recursive
+            $results = New-ProjectIndex -RootPath $RootPath -Recursive
             
             Show-Statistics -Results $results
             Show-UpdatedFiles -Results $results

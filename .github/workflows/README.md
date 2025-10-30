@@ -163,7 +163,7 @@ ghcr.io/wizzense/aitherzero:sha-abc  # Specific commit
 ```bash
 # Pull and run the latest image
 docker pull ghcr.io/wizzense/aitherzero:latest
-docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest pwsh
 
 # Pull specific version
 docker pull ghcr.io/wizzense/aitherzero:v1.1.0
