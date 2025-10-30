@@ -282,7 +282,7 @@ jobs:
         find . -name 'index.md' -exec git add {} +
         
         # Create commit message with details
-        UPDATED_COUNT="${{ env.UPDATED_INDEXES }}"
+        UPDATED_COUNT="${{ env.UNCOMMITTED_COUNT }}"
         git commit -m "docs: update project indexes [auto-generated]" \
           -m "Automated index generation for PR #${{ github.event.pull_request.number }}" \
           -m "" \
