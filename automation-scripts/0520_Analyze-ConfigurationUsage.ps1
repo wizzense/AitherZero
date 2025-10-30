@@ -19,7 +19,7 @@ param(
     [string]$OutputPath = "./reports/tech-debt/analysis",
     [switch]$UseCache,
     [switch]$Detailed = $false,
-    [string[]]$ExcludePaths = @('tests', 'legacy-to-migrate', 'examples', 'reports')
+    [string[]]$ExcludePaths = @('tests', 'examples', 'reports')
 )
 
 # Initialize

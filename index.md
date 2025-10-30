@@ -6,8 +6,8 @@ See [README.md](./README.md) for detailed information about this directory.
 
 ### 📊 Contents
 
-- **Subdirectories**: 18
-- **Files**: 39
+- **Subdirectories**: 16
+- **Files**: 29
 - **PowerShell Scripts**: 12
 
 ## 📁 Subdirectories
@@ -27,10 +27,8 @@ See [README.md](./README.md) for detailed information about this directory.
 - [📂 **domains**](./domains/index.md)
   - *This directory contains all domain modules for the AitherZero platform, organized by functional a...*
 - [📂 **examples**](./examples/index.md)
-- [📂 **generated-issues**](./generated-issues/index.md)
 - [📂 **infrastructure**](./infrastructure/index.md)
   - *This directory contains infrastructure-as-code definitions for deploying AitherZero environments.*
-- [📂 **legacy-to-migrate**](./legacy-to-migrate/index.md)
 - 📂 **logs**
 - [📂 **orchestration**](./orchestration/index.md)
   - *A powerful number-based orchestration language for automating complex deployments and configurati...*
@@ -71,19 +69,11 @@ See [README.md](./README.md) for detailed information about this directory.
 
 ### .md Files
 
-- 📝 [BUILD-AND-RELEASE-SUMMARY.md](./BUILD-AND-RELEASE-SUMMARY.md)
-- 📝 [CROSS-PLATFORM-VALIDATION.md](./CROSS-PLATFORM-VALIDATION.md)
 - 📝 [DOCKER.md](./DOCKER.md)
 - 📝 [FUNCTIONALITY-INDEX.md](./FUNCTIONALITY-INDEX.md)
-- 📝 [IMPLEMENTATION-COMPLETE.md](./IMPLEMENTATION-COMPLETE.md)
-- 📝 [IMPLEMENTATION-SUMMARY.md](./IMPLEMENTATION-SUMMARY.md)
 - 📝 [index.md](./index.md)
-- 📝 [QUICKSTART-AUTOMATED-REPORTS.md](./QUICKSTART-AUTOMATED-REPORTS.md)
-- 📝 [README-ModernCLI.md](./README-ModernCLI.md)
+- 📝 [QUICK-REFERENCE.md](./QUICK-REFERENCE.md)
 - 📝 [README.md](./README.md)
-- 📝 [RELEASE-1.0.0.0-FINAL-SUMMARY.md](./RELEASE-1.0.0.0-FINAL-SUMMARY.md)
-- 📝 [TROUBLESHOOTING-WORKFLOW-FAILURES.md](./TROUBLESHOOTING-WORKFLOW-FAILURES.md)
-- 📝 [WORKFLOW-CONSOLIDATION-FIX.md](./WORKFLOW-CONSOLIDATION-FIX.md)
 
 ### .ps1 Files
 
