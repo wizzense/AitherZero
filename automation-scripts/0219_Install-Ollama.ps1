@@ -369,10 +369,10 @@ try {
     
     if (Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue) {
         # Use new configuration system
-        $shouldInstall = Test-FeatureEnabled -FeatureName 'Ollama' -Category 'Development'
+        $shouldInstall = Test-FeatureEnabled -FeatureName 'AITools.Ollama' -Category 'Development'
         if ($shouldInstall) {
-            $ollamaConfig = Get-FeatureConfiguration -FeatureName 'Ollama' -Category 'Development'
-            Write-ScriptLog "Ollama installation enabled via Features.Development.Ollama configuration"
+            $ollamaConfig = Get-FeatureConfiguration -FeatureName 'AITools.Ollama' -Category 'Development'
+            Write-ScriptLog "Ollama installation enabled via Features.Development.AITools.Ollama configuration"
         }
     } else {
         # Fallback to legacy configuration
