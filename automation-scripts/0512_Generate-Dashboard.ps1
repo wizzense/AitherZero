@@ -1904,7 +1904,7 @@ $(if ($Metrics.Classes -gt 0) {
 $(if ($Metrics.Tests.LastRun) {
     $totalTests = $Metrics.Tests.Passed + $Metrics.Tests.Failed
     @"
-| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$totalTests** | Success Rate: $($Metrics.Tests.SuccessRate)% | Duration: $($Metrics.Tests.Duration) |
+| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$totalTests** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
 | 📊 **Last Test Run** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
 "@
 } else {
