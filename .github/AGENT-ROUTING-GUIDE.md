@@ -152,7 +152,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 ---
 
 ### 👩‍💻 Rachel - PowerShell & Automation Expert
-**File:** [`.github/agents/rachel-powershell.md`](.github/agents/rachel-powershell.md)
+**File:** [`./agents/rachel-powershell.md`](./agents/rachel-powershell.md)
 
 **Best for:**
 - Advanced PowerShell scripting
