@@ -285,9 +285,8 @@ jobs:
         git fetch origin "$PR_BRANCH" 2>&1 || { echo "Failed to fetch branch"; exit 1; }
         git checkout "$PR_BRANCH" 2>&1 || { echo "Failed to checkout branch"; exit 1; }
         
-        # Add and commit index changes (only index.md files, not cache/report)
-        # Add all index.md files recursively in a portable way
-        find . -name 'index.md' -exec git add {} +
+        # Add and commit index changes
+        git add **/index.md .aitherzero-index-cache.json .aitherzero-index-report.json
         
         # Create commit message with details
         git commit -m "docs: update project indexes [auto-generated]" \
