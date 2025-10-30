@@ -10,14 +10,10 @@
 
     Provides interactive menu and number-based orchestration capabilities.
 
-    
-
     By default, displays comprehensive usage information with command examples.
 
     Use -Mode Interactive to access the interactive menu interface.
-    
-    
-    
+
     TAB COMPLETION: The script includes intelligent tab completion for parameters:
     
     - Target: Suggests script numbers, 'script', 'playbook', 'sequence', etc.
@@ -27,8 +23,6 @@
     - ScriptNumber: Shows script numbers with descriptions
     
     - Query: Suggests common search terms
-
-
 
     Note: This script requires PowerShell 7.0 or higher. If running from PowerShell 5.1,
 
@@ -1103,88 +1097,160 @@ function Show-Usage {
     }
     
     Write-Host ""
-    Write-ModernCLI "AitherZero - PowerShell Automation Platform" -Type 'Accent'
+    Write-ModernCLI "╔════════════════════════════════════════════════════════════════╗" -Type 'Accent'
+    Write-ModernCLI "║  AitherZero - PowerShell Automation Platform                  ║" -Type 'Accent'
+    Write-ModernCLI "╚════════════════════════════════════════════════════════════════╝" -Type 'Accent'
     Write-Host ""
+    
     Write-ModernCLI "USAGE:" -Type 'Info'
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode <command> [options]" -Type 'Muted'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 <command> [args...]        (positional syntax)" -Type 'Muted'
     Write-Host ""
     
-    Write-ModernCLI "COMMON COMMANDS:" -Type 'Info'
+    Write-ModernCLI "QUICK START:" -Type 'Success'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Interactive     " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Launch menu interface" -Type 'Info'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode List            " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Browse all resources" -Type 'Info'
+    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target 0402" -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Run unit tests" -Type 'Info'
     Write-Host ""
     
-    Write-ModernCLI "  Interactive Mode" -Type 'Accent'
+    Write-ModernCLI "COMMANDS:" -Type 'Info'
+    Write-Host ""
+    
+    Write-ModernCLI "  Interactive" -Type 'Accent'
     Write-ModernCLI "    -Mode Interactive" -Type 'Muted'
-    Write-ModernCLI "    Launch the interactive menu interface" -Type 'Muted'
+    Write-ModernCLI "    Launch full-featured menu with guided workflows" -Type 'Info'
     Write-Host ""
     
-    Write-ModernCLI "  Run Scripts" -Type 'Accent'
-    Write-ModernCLI "    -Mode Run -Target 0402" -Type 'Muted'
-    Write-ModernCLI "    -Mode Run -Target script -ScriptNumber 0402" -Type 'Muted'
-    Write-ModernCLI "    Execute automation scripts by number" -Type 'Muted'
+    Write-ModernCLI "  Run" -Type 'Accent'
+    Write-ModernCLI "    -Mode Run -Target <script-number>                    " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Quick run by number" -Type 'Info'
+    Write-ModernCLI "    -Mode Run -Target script -ScriptNumber <number>      " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Explicit syntax" -Type 'Info'
+    Write-ModernCLI "    Execute automation scripts (supports tab completion)" -Type 'Info'
     Write-Host ""
     
-    Write-ModernCLI "  Orchestration" -Type 'Accent'
-    Write-ModernCLI "    -Mode Orchestrate -Sequence '0400-0499'" -Type 'Muted'
-    Write-ModernCLI "    -Mode Orchestrate -Playbook infrastructure-lab" -Type 'Muted'
-    Write-ModernCLI "    Run sequences or playbooks for complex workflows" -Type 'Muted'
+    Write-ModernCLI "  Orchestrate" -Type 'Accent'
+    Write-ModernCLI "    -Mode Orchestrate -Sequence '0400-0499'              " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Run range" -Type 'Info'
+    Write-ModernCLI "    -Mode Orchestrate -Playbook <name>                   " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Run playbook" -Type 'Info'
+    Write-ModernCLI "    -Mode Orchestrate -Playbook <name> -PlaybookProfile quick" -Type 'Muted'
+    Write-ModernCLI "    Execute complex workflows and automation sequences" -Type 'Info'
     Write-Host ""
     
-    Write-ModernCLI "  List Resources" -Type 'Accent'
-    Write-ModernCLI "    -Mode List" -Type 'Muted'
-    Write-ModernCLI "    -Mode List -Target scripts" -Type 'Muted'
-    Write-ModernCLI "    -Mode List -Target playbooks" -Type 'Muted'
-    Write-ModernCLI "    Browse available scripts and playbooks" -Type 'Muted'
+    Write-ModernCLI "  List" -Type 'Accent'
+    Write-ModernCLI "    -Mode List                                           " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# All resources" -Type 'Info'
+    Write-ModernCLI "    -Mode List -Target scripts                           " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Scripts only" -Type 'Info'
+    Write-ModernCLI "    -Mode List -Target playbooks                         " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Playbooks only" -Type 'Info'
+    Write-ModernCLI "    Browse available automation resources" -Type 'Info'
     Write-Host ""
     
     Write-ModernCLI "  Search" -Type 'Accent'
-    Write-ModernCLI "    -Mode Search -Query security" -Type 'Muted'
-    Write-ModernCLI "    Find scripts and playbooks by keyword" -Type 'Muted'
+    Write-ModernCLI "    -Mode Search -Query <term>                           " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Find by keyword" -Type 'Info'
+    Write-ModernCLI "    Search scripts and playbooks by name or description" -Type 'Info'
     Write-Host ""
     
-    Write-ModernCLI "  Testing & Validation" -Type 'Accent'
-    Write-ModernCLI "    -Mode Test" -Type 'Muted'
-    Write-ModernCLI "    -Mode Validate" -Type 'Muted'
-    Write-ModernCLI "    Run tests or validate environment" -Type 'Muted'
+    Write-ModernCLI "  Test" -Type 'Accent'
+    Write-ModernCLI "    -Mode Test                                           " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Run test suite" -Type 'Info'
+    Write-ModernCLI "    -Mode Test -Sequence '0402,0404'                     " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Specific tests" -Type 'Info'
+    Write-ModernCLI "    Execute unit tests, integration tests, and validation" -Type 'Info'
+    Write-Host ""
+    
+    Write-ModernCLI "  Validate" -Type 'Accent'
+    Write-ModernCLI "    -Mode Validate                                       " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Check environment" -Type 'Info'
+    Write-ModernCLI "    Validate system requirements and dependencies" -Type 'Info'
     Write-Host ""
     
     Write-ModernCLI "OPTIONS:" -Type 'Info'
-    Write-ModernCLI "  -Help              Show this help message" -Type 'Muted'
-    Write-ModernCLI "  -Version           Display version information" -Type 'Muted'
-    Write-ModernCLI "  -NonInteractive    Run without user prompts" -Type 'Muted'
-    Write-ModernCLI "  -DryRun            Preview actions without executing" -Type 'Muted'
-    Write-ModernCLI "  -Verbose           Show detailed execution information" -Type 'Muted'
-    Write-ModernCLI "  -ProfileName       Specify execution profile (Minimal, Standard, Developer, Full)" -Type 'Muted'
+    Write-ModernCLI "  -Help                Show this help message" -Type 'Muted'
+    Write-ModernCLI "  -Version             Display version information" -Type 'Muted'
+    Write-ModernCLI "  -NonInteractive      Run without user prompts (auto-detected in CI)" -Type 'Muted'
+    Write-ModernCLI "  -DryRun              Preview actions without executing" -Type 'Muted'
+    Write-ModernCLI "  -Verbose             Show detailed execution information" -Type 'Muted'
+    Write-ModernCLI "  -ProfileName <name>  Execution profile: Minimal|Standard|Developer|Full" -Type 'Muted'
+    Write-ModernCLI "  -Variables <hash>    Pass custom variables to scripts" -Type 'Muted'
     Write-Host ""
     
     Write-ModernCLI "SCRIPT CATEGORIES:" -Type 'Info'
-    Write-ModernCLI "  0000-0099  Environment & Setup" -Type 'Muted'
-    Write-ModernCLI "  0100-0199  Infrastructure (Hyper-V, WSL, etc.)" -Type 'Muted'
-    Write-ModernCLI "  0200-0299  Development Tools (Git, Docker, VS Code)" -Type 'Muted'
-    Write-ModernCLI "  0300-0399  Deployment" -Type 'Muted'
-    Write-ModernCLI "  0400-0499  Testing & Validation" -Type 'Muted'
-    Write-ModernCLI "  0500-0599  Reporting & Metrics" -Type 'Muted'
-    Write-ModernCLI "  0700-0799  Git & Development Automation" -Type 'Muted'
-    Write-ModernCLI "  9000-9999  Maintenance & Cleanup" -Type 'Muted'
+    Write-ModernCLI "  0000-0099  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Environment & Setup (PowerShell 7, directories)" -Type 'Muted'
+    Write-ModernCLI "  0100-0199  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Infrastructure (Hyper-V, WSL, certificates, networking)" -Type 'Muted'
+    Write-ModernCLI "  0200-0299  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Development Tools (Git, Node, Docker, VS Code, Python)" -Type 'Muted'
+    Write-ModernCLI "  0300-0399  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Deployment & Infrastructure as Code" -Type 'Muted'
+    Write-ModernCLI "  0400-0499  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Testing & Validation (unit, integration, linting)" -Type 'Muted'
+    Write-ModernCLI "  0500-0599  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Reporting & Metrics (dashboards, analytics)" -Type 'Muted'
+    Write-ModernCLI "  0700-0799  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Git & Development Automation (branches, PRs, AI tools)" -Type 'Muted'
+    Write-ModernCLI "  9000-9999  " -Type 'Accent' -NoNewline
+    Write-ModernCLI "Maintenance & Cleanup" -Type 'Muted'
     Write-Host ""
     
-    Write-ModernCLI "EXAMPLES:" -Type 'Info'
-    Write-ModernCLI "  # Run unit tests" -Type 'Muted'
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target 0402" -Type 'Muted'
+    Write-ModernCLI "EXAMPLES:" -Type 'Success'
     Write-Host ""
-    Write-ModernCLI "  # Deploy infrastructure" -Type 'Muted'
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook infrastructure-lab" -Type 'Muted'
-    Write-Host ""
-    Write-ModernCLI "  # Search for security tools" -Type 'Muted'
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Search -Query security" -Type 'Muted'
-    Write-Host ""
-    Write-ModernCLI "  # Interactive mode for guided workflows" -Type 'Muted'
-    Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Muted'
+    Write-ModernCLI "  1. Run unit tests:" -Type 'Info'
+    Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Run -Target 0402" -Type 'Muted'
     Write-Host ""
     
-    Write-ModernCLI "MORE INFORMATION:" -Type 'Info'
-    Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Full" -Type 'Muted'
-    Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Examples" -Type 'Muted'
-    Write-ModernCLI "  Documentation: ./docs/" -Type 'Muted'
+    Write-ModernCLI "  2. Deploy infrastructure with playbook:" -Type 'Info'
+    Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook infrastructure-lab" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  3. Search for security-related scripts:" -Type 'Info'
+    Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Search -Query security" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  4. Run test sequence with dry-run:" -Type 'Info'
+    Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Orchestrate -Sequence '0400-0499' -DryRun" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "  5. Interactive menu for guided workflows:" -Type 'Info'
+    Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "TAB COMPLETION:" -Type 'Success'
+    Write-ModernCLI "  Press [Tab] after parameter names to auto-complete:" -Type 'Info'
+    Write-ModernCLI "  • -Target      " -Type 'Accent' -NoNewline
+    Write-ModernCLI "→ Script numbers (0000-9999), 'script', 'playbook', 'sequence'" -Type 'Muted'
+    Write-ModernCLI "  • -Playbook    " -Type 'Accent' -NoNewline
+    Write-ModernCLI "→ Available playbook names from repository" -Type 'Muted'
+    Write-ModernCLI "  • -ScriptNumber" -Type 'Accent' -NoNewline
+    Write-ModernCLI "→ Script numbers with descriptions" -Type 'Muted'
+    Write-ModernCLI "  • -Query       " -Type 'Accent' -NoNewline
+    Write-ModernCLI "→ Common search terms (test, security, git, docker...)" -Type 'Muted'
+    Write-Host ""
+    
+    Write-ModernCLI "MORE HELP:" -Type 'Info'
+    Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Full      " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Complete documentation" -Type 'Info'
+    Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Examples  " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Usage examples" -Type 'Info'
+    Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Parameter Mode" -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Parameter help" -Type 'Info'
+    Write-ModernCLI "  Documentation: ./docs/                     " -Type 'Muted' -NoNewline
+    Write-ModernCLI "# Project documentation" -Type 'Info'
+    Write-Host ""
+    
+    Write-ModernCLI "TIP: " -Type 'Success' -NoNewline
+    Write-ModernCLI "Use " -Type 'Info' -NoNewline
+    Write-ModernCLI "-Verbose" -Type 'Accent' -NoNewline
+    Write-ModernCLI " for detailed execution logs or " -Type 'Info' -NoNewline
+    Write-ModernCLI "-DryRun" -Type 'Accent' -NoNewline
+    Write-ModernCLI " to preview actions safely!" -Type 'Info'
     Write-Host ""
 }
 
