@@ -310,12 +310,15 @@ If a release workflow was cancelled or failed to upload assets:
 **Option 1: Re-trigger via GitHub UI (Easiest)**
 1. Go to Actions → Release Automation
 2. Click "Run workflow"
-3. Enter the version number (e.g., 1.0.0.0)
-4. Click "Run workflow"
+3. **Important:** Select "Use workflow from" = the release tag (e.g., `v1.0.0.0`), NOT `main`
+4. Enter the version number (e.g., 1.0.0.0)
+5. Click "Run workflow"
 
 **Option 2: Re-trigger via GitHub CLI**
 ```bash
+# Use --ref to specify the tag (IMPORTANT!)
 gh workflow run release-automation.yml \
+  --ref v1.0.0.0 \
   -f version=1.0.0.0 \
   -f prerelease=false \
   -f run_full_tests=false

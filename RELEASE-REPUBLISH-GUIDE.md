@@ -29,7 +29,8 @@ This is the **easiest and safest** method:
 2. **Trigger the workflow**
    - Click the **"Run workflow"** button (top right)
    - Fill in the form:
-     - **Use workflow from:** `main`
+     - **Use workflow from:** Select the release tag (e.g., `v1.0.0.0`) **NOT** `main`
+       - ⚠️ **IMPORTANT**: You must select the tag to ensure the release assets match the tagged code
      - **Release version:** Enter the version number without 'v' prefix (e.g., `1.0.0.0`)
      - **Mark as pre-release:** `false` (unchecked for stable releases)
      - **Run comprehensive tests:** `false` (unchecked - code already validated)
@@ -43,8 +44,12 @@ This is the **easiest and safest** method:
 
 **Why this works:**
 - The `softprops/action-gh-release@v2` action automatically updates existing releases
+- Running from the tag ensures artifacts match the tagged code
 - No need to delete/recreate tags
 - Preserves the original release timestamp and description
+
+**Critical Note:**
+> ⚠️ Always run the workflow from the release tag (e.g., `v1.0.0.0`), not from `main`. Running from `main` will package the current state of main, which may include changes made after the tag was created, resulting in mislabeled release assets.
 
 ---
 
@@ -53,13 +58,17 @@ This is the **easiest and safest** method:
 If you have the GitHub CLI installed:
 
 ```bash
+# Run workflow from the specific tag (IMPORTANT!)
 gh workflow run release-automation.yml \
+  --ref vX.Y.Z \
   -f version=X.Y.Z \
   -f prerelease=false \
   -f run_full_tests=false
 ```
 
 Replace `X.Y.Z` with your version number (e.g., `1.0.0.0`).
+
+**Important:** The `--ref vX.Y.Z` flag ensures the workflow runs from the tagged commit, not from main.
 
 Then monitor the workflow:
 ```bash
