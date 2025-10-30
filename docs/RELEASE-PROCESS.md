@@ -303,6 +303,40 @@ Each release includes:
 3. Ensure VERSION and manifest are updated
 4. Check for syntax errors with `./automation-scripts/0407_validate-powershell-syntax.ps1`
 
+### Release Workflow Cancelled or Incomplete
+
+If a release workflow was cancelled or failed to upload assets:
+
+**Option 1: Re-trigger via GitHub UI (Easiest)**
+1. Go to Actions → Release Automation
+2. Click "Run workflow"
+3. **Important:** Select "Use workflow from" = the release tag (e.g., `v1.0.0.0`), NOT `main`
+4. Enter the version number (e.g., 1.0.0.0)
+5. Click "Run workflow"
+
+**Option 2: Re-trigger via GitHub CLI**
+```bash
+# Use --ref to specify the tag (IMPORTANT!)
+gh workflow run release-automation.yml \
+  --ref v1.0.0.0 \
+  -f version=1.0.0.0 \
+  -f prerelease=false \
+  -f run_full_tests=false
+```
+
+**Option 3: Delete and recreate tag**
+```bash
+# Delete existing tag
+git tag -d v1.0.0.0
+git push origin --delete v1.0.0.0
+
+# Recreate tag
+git tag -a v1.0.0.0 -m "Release v1.0.0.0"
+git push origin v1.0.0.0
+```
+
+**Note:** The workflow will automatically update the existing GitHub release if the tag already exists.
+
 ### Docker Build Failed
 
 1. Test Docker build locally: `docker build -t test .`
