@@ -605,7 +605,7 @@ Create a Docker Hub access token (more secure than password):
 1. Go to https://hub.docker.com/settings/security
 2. Click "New Access Token"
 3. Give it a descriptive name (e.g., "AitherZero Publishing")
-4. Set permissions: "Read, Write, Delete"
+4. Set permissions: "Read, Write" (Delete not required for publishing)
 5. Copy the token and set environment variable:
 
 ```powershell

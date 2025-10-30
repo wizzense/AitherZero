@@ -111,7 +111,7 @@ After publishing version 1.0.0, these tags are created:
 
 ### "Permission denied" when pushing
 - Verify your Docker Hub token is correct
-- Ensure token has "Read, Write, Delete" permissions
+- Ensure token has "Read, Write" permissions (Delete not required)
 - Try logging in manually: `docker login`
 
 ### "Buildx not found"
@@ -119,8 +119,10 @@ After publishing version 1.0.0, these tags are created:
 - Or use Docker Desktop which includes Buildx
 
 ### Multi-platform build fails
-- Ensure QEMU is installed: `docker run --privileged --rm tonistiigi/binfmt --install all`
-- Or build for single platform: `-Platform linux/amd64`
+- **SECURITY WARNING**: The following command uses `--privileged` which grants extensive system access to the container. Only run on trusted systems.
+- Install QEMU for multi-platform emulation: `docker run --privileged --rm tonistiigi/binfmt --install all`
+- Alternative: Build for single platform only: `-Platform linux/amd64`
+- Note: Docker Desktop includes QEMU/buildx, so this is usually not needed
 
 ## See Also
 
