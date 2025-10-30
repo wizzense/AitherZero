@@ -12,29 +12,69 @@
     Generated: 2025-10-30 03:41:21
 #>
 
-Describe '0405_Validate-ModuleManifests' -Tag 'Unit', 'AutomationScript', 'Testing' {
-
+Describe "0405_Validate-ModuleManifests" {
     BeforeAll {
         $script:ScriptPath = './automation-scripts/0405_Validate-ModuleManifests.ps1'
         $script:ScriptName = '0405_Validate-ModuleManifests'
+        $script:ToolPath = './tools/Validate-ModuleManifest.ps1'
+        $script:TestTempDir = Join-Path $TestDrive "manifest-tests"
+        New-Item -Path $script:TestTempDir -ItemType Directory -Force | Out-Null
     }
 
-    Context 'Script Validation' {
-        It 'Script file should exist' {
-            Test-Path $script:ScriptPath | Should -Be $true
-        }
-
-        It 'Should have valid PowerShell syntax' {
+    Context "Script Validation" {
+        It "Should have valid PowerShell syntax" {
             $errors = $null
-            $null = [System.Management.Automation.Language.Parser]::ParseFile(
-                $script:ScriptPath, [ref]$null, [ref]$errors
-            )
-            $errors.Count | Should -Be 0
+            $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $scriptPath -Raw), [ref]$errors)
+            $errors | Should -BeNullOrEmpty
         }
 
-        It 'Should support WhatIf' {
-            $content = Get-Content $script:ScriptPath -Raw
-            $content | Should -Match 'SupportsShouldProcess'
+        It "Should support WhatIf" {
+            $scriptContent = Get-Content $scriptPath -Raw
+            $scriptContent | Should -Match 'SupportsShouldProcess'
+        }
+    }
+
+    Context "Metadata" {
+        It "Should be in stage: Testing" {
+            $content = Get-Content $scriptPath
+            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Testing'
+        }
+
+        It "Should have order: 0405" {
+            $content = Get-Content $scriptPath
+            ($content -join ' ') | Should -Match 'Order.*0405'
+        }
+    }
+
+    Context "Execution" {
+        It "Should execute with WhatIf" {
+            { & $scriptPath -WhatIf } | Should -Not -Throw
+        }
+    }
+
+    Context "Valid Manifest Validation" {
+        It "Should pass validation for a clean manifest" {
+            $validManifest = @"
+@{
+    ModuleVersion = '1.0.0'
+    GUID = 'a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a'
+    Author = 'Test Author'
+    Description = 'Test module without Unicode issues'
+    PowerShellVersion = '7.0'
+    RootModule = 'TestModule.psm1'
+    FunctionsToExport = @('*')
+}
+"@
+            $manifestPath = Join-Path $script:TestTempDir "valid-manifest.psd1"
+            Set-Content -Path $manifestPath -Value $validManifest -Encoding UTF8
+            
+            # Create a dummy module file to satisfy Test-ModuleManifest
+            $modulePath = Join-Path $script:TestTempDir "TestModule.psm1"
+            Set-Content -Path $modulePath -Value "# Test module" -Encoding UTF8
+            
+            $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $script:ToolPath -Path $manifestPath 2>&1
+            $LASTEXITCODE | Should -Be 0
         }
     }
 
@@ -47,23 +87,6 @@ Describe '0405_Validate-ModuleManifests' -Tag 'Unit', 'AutomationScript', 'Testi
         It 'Should have parameter: Path' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Path') | Should -Be $true
-        }
-
-    }
-
-    Context 'Metadata' {
-        It 'Should be in stage: Testing' {
-            $content = Get-Content $script:ScriptPath -First 40
-            ($content -join ' ') | Should -Match '(Stage:|Category:)'
-        }
-    }
-
-    Context 'Execution' {
-        It 'Should execute with WhatIf' {
-            {
-                $params = @{ WhatIf = $true }
-                & $script:ScriptPath @params
-            } | Should -Not -Throw
         }
     }
 }
