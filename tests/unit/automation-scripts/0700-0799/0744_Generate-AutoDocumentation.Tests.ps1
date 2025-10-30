@@ -86,8 +86,8 @@ Describe "0744_Generate-AutoDocumentation - Write-DocLog Function Fix" {
             } -ParameterFilter { $Name -eq 'Write-CustomLog' }
 
             # Load the extracted function definition into the test scope
-            # Note: Invoke-Expression is safe here - we're executing a function definition
-            # extracted via AST from a known source file, not arbitrary user input
+            # Note: Invoke-Expression is safe here - AST parsing guarantees we're executing
+            # a valid FunctionDefinitionAst from a known source file, not arbitrary code
             Invoke-Expression $functionDefinition
         }
 
