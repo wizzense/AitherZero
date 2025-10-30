@@ -351,7 +351,8 @@ jobs:
         git checkout "$AUTO_BRANCH"
         
         # Add and commit index changes (only index.md files, cache files are gitignored)
-        git add **/index.md
+        # Use find to add only non-ignored index.md files
+        find . -name "index.md" -type f ! -path "./.git/*" -exec git add {} + 2>/dev/null || true
         
         # Create commit message with details
         UPDATED_COUNT="${{ env.UPDATED_INDEXES }}"

@@ -75,7 +75,7 @@ function Initialize-ProjectIndexer {
     [CmdletBinding()]
     param(
         [string]$RootPath = $script:ProjectRoot,
-        [string[]]$ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build'),
+        [string[]]$ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'reports', 'logs'),
         [switch]$EnableAI
     )
     
