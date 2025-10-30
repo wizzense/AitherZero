@@ -574,6 +574,12 @@ function Get-BuildStatus {
         Security = "Unknown"
         Coverage = "Unknown"
         Deployment = "Unknown"
+        Workflows = @{
+            Quality = "Unknown"
+            PRValidation = "Unknown"
+            GitHubPages = "Unknown"
+            DockerPublish = "Unknown"
+        }
         Badges = @{
             Build = "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI"
             Tests = "https://img.shields.io/badge/tests-unknown-lightgrey"
@@ -582,40 +588,127 @@ function Get-BuildStatus {
         }
     }
 
-    # Check recent test results
-    $testResultsPath = Join-Path $ProjectPath "tests/results"
+    # Check recent test results from testResults.xml at project root
+    $testResultsPath = Join-Path $ProjectPath "testResults.xml"
     if (Test-Path $testResultsPath) {
-        $latestResults = Get-ChildItem -Path $testResultsPath -Filter "*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        try {
+            [xml]$testXml = Get-Content $testResultsPath
+            
+            # Parse NUnit format test results
+            if ($testXml.'test-results') {
+                $results = $testXml.'test-results'
+                $totalTests = [int]$results.total
+                $failures = [int]$results.failures
+                $errors = [int]$results.errors
+                $skipped = [int]$results.skipped
+
+                if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
+                    $status.Tests = "Passing"
+                    $status.Badges.Tests = "https://img.shields.io/badge/tests-passing-brightgreen"
+                } elseif (($failures + $errors) -gt 0) {
+                    $status.Tests = "Failing"
+                    $status.Badges.Tests = "https://img.shields.io/badge/tests-failing-red"
+                } else {
+                    $status.Tests = "No Tests"
+                    $status.Badges.Tests = "https://img.shields.io/badge/tests-none-yellow"
+                }
+                
+                $status.LastBuild = (Get-Item $testResultsPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse test results from testResults.xml: $_"
+        }
+    }
+    
+    # Also check tests/results directory for additional test data
+    $testResultsDir = Join-Path $ProjectPath "tests/results"
+    if (Test-Path $testResultsDir) {
+        $latestResults = Get-ChildItem -Path $testResultsDir -Filter "*.xml" -ErrorAction SilentlyContinue | 
+                        Sort-Object LastWriteTime -Descending | 
+                        Select-Object -First 1
         if ($latestResults) {
             try {
                 [xml]$testXml = Get-Content $latestResults.FullName
-                $testSuites = $testXml.testsuites
-                if ($testSuites) {
-                    $totalTests = $testSuites.tests -as [int]
-                    $failures = $testSuites.failures -as [int]
-                    $errors = $testSuites.errors -as [int]
+                if ($testXml.'test-results' -and $status.Tests -eq "Unknown") {
+                    $results = $testXml.'test-results'
+                    $totalTests = [int]$results.total
+                    $failures = [int]$results.failures
+                    $errors = [int]$results.errors
 
-                    if (($failures + $errors) -eq 0) {
+                    if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
                         $status.Tests = "Passing"
                         $status.Badges.Tests = "https://img.shields.io/badge/tests-passing-brightgreen"
-                    } else {
+                    } elseif (($failures + $errors) -gt 0) {
                         $status.Tests = "Failing"
                         $status.Badges.Tests = "https://img.shields.io/badge/tests-failing-red"
                     }
                 }
             } catch {
-                Write-ScriptLog -Level Warning -Message "Failed to parse test results"
+                Write-ScriptLog -Level Warning -Message "Failed to parse test results from tests/results"
             }
         }
     }
 
+    # Check code coverage
+    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
+                    Sort-Object LastWriteTime -Descending |
+                    Select-Object -First 1
+    if ($coverageFiles) {
+        try {
+            [xml]$coverageXml = Get-Content $coverageFiles.FullName
+            if ($coverageXml.coverage) {
+                $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                $status.Coverage = "${coveragePercent}%"
+                
+                if ($coveragePercent -ge 80) {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
+                } elseif ($coveragePercent -ge 50) {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
+                } else {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data"
+        }
+    }
+    
+    # Check PSScriptAnalyzer results for security/quality
+    $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+    if (Test-Path $pssaPath) {
+        try {
+            $pssaData = Get-Content $pssaPath | ConvertFrom-Json
+            $errorCount = $pssaData.Summary.Errors
+            
+            if ($errorCount -eq 0) {
+                $status.Security = "Clean"
+                $status.Badges.Security = "https://img.shields.io/badge/security-clean-brightgreen"
+            } elseif ($errorCount -lt 5) {
+                $status.Security = "Minor Issues"
+                $status.Badges.Security = "https://img.shields.io/badge/security-minor_issues-yellow"
+            } else {
+                $status.Security = "Issues Found"
+                $status.Badges.Security = "https://img.shields.io/badge/security-issues-red"
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse PSScriptAnalyzer results for security status"
+        }
+    }
+
     # Determine overall status
-    if ($status.Tests -eq "Passing") {
+    if ($status.Tests -eq "Passing" -and $status.Security -eq "Clean") {
         $status.Overall = "Healthy"
-    } elseif ($status.Tests -eq "Failing") {
+    } elseif ($status.Tests -eq "Failing" -or $status.Security -eq "Issues Found") {
         $status.Overall = "Issues"
+    } elseif ($status.Tests -eq "Passing" -or $status.Security -eq "Minor Issues") {
+        $status.Overall = "Warning"
     } else {
         $status.Overall = "Unknown"
+    }
+    
+    # Check if we're in a CI environment to set deployment status
+    if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
+        $status.Deployment = "CI/CD Active"
     }
 
     return $status
@@ -1024,7 +1117,7 @@ Run './az 0402' to execute the full test suite.
 function Get-CodeCoverageDetails {
     <#
     .SYNOPSIS
-        Get detailed code coverage information
+        Get detailed code coverage information from JaCoCo or Cobertura format
     #>
     param(
         [string]$ProjectPath
@@ -1037,24 +1130,121 @@ function Get-CodeCoverageDetails {
             Percentage = 0
             CoveredLines = 0
             TotalLines = 0
+            MissedLines = 0
         }
         ByFile = @()
         ByDomain = @{}
+        Format = "Unknown"
     }
     
-    # Look for latest coverage XML
-    $coverageFiles = Get-ChildItem -Path (Join-Path $ProjectPath "tests/results") -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
-                     Where-Object { $_.Length -gt 100 } |  # Skip empty files
-                     Sort-Object LastWriteTime -Descending |
-                     Select-Object -First 1
+    # Look for latest coverage XML - check both tests/results and tests/coverage
+    $searchPaths = @(
+        (Join-Path $ProjectPath "tests/results"),
+        (Join-Path $ProjectPath "tests/coverage")
+    )
     
-    if ($coverageFiles) {
+    $coverageFiles = @()
+    foreach ($searchPath in $searchPaths) {
+        if (Test-Path $searchPath) {
+            $coverageFiles += Get-ChildItem -Path $searchPath -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
+                             Where-Object { $_.Length -gt 100 }  # Skip empty files
+        }
+    }
+    
+    $latestCoverage = $coverageFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    
+    if ($latestCoverage) {
         try {
-            [xml]$coverageXml = Get-Content $coverageFiles.FullName
+            [xml]$coverageXml = Get-Content $latestCoverage.FullName
             
-            # Parse JaCoCo or Cobertura format
-            if ($coverageXml.coverage) {
-                # Cobertura format
+            # Check for JaCoCo format (used by Pester)
+            if ($coverageXml.report) {
+                Write-ScriptLog -Message "Parsing JaCoCo coverage format"
+                $coverage.Format = "JaCoCo"
+                
+                # Get counters from report root - handle both single and multiple counters
+                $counters = @($coverageXml.report.counter)
+                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                
+                if ($lineCounter) {
+                    $missedLines = [int]$lineCounter.missed
+                    $coveredLines = [int]$lineCounter.covered
+                    $totalLines = $missedLines + $coveredLines
+                    
+                    if ($totalLines -gt 0) {
+                        $coverage.Overall.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                        $coverage.Overall.CoveredLines = $coveredLines
+                        $coverage.Overall.TotalLines = $totalLines
+                        $coverage.Overall.MissedLines = $missedLines
+                        
+                        Write-ScriptLog -Message "Coverage: $($coverage.Overall.Percentage)% ($coveredLines/$totalLines lines)"
+                    }
+                }
+                
+                # Extract file-level coverage from classes
+                $packages = $coverageXml.SelectNodes("//package")
+                foreach ($package in $packages) {
+                    $classes = $package.SelectNodes(".//class")
+                    foreach ($class in $classes) {
+                        $filename = $class.sourcefilename
+                        if (-not $filename) { continue }
+                        
+                        # Get line counter for this class
+                        $classLineCounter = $class.counter | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                        if ($classLineCounter) {
+                            $classMissed = [int]$classLineCounter.missed
+                            $classCovered = [int]$classLineCounter.covered
+                            $classTotal = $classMissed + $classCovered
+                            
+                            $fileCoverage = if ($classTotal -gt 0) { 
+                                [math]::Round(($classCovered / $classTotal) * 100, 1)
+                            } else { 0 }
+                            
+                            $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
+                                     elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
+                                     else { 'other' }
+                            
+                            $coverage.ByFile += @{
+                                File = $filename
+                                Coverage = $fileCoverage
+                                Domain = $domain
+                                CoveredLines = $classCovered
+                                TotalLines = $classTotal
+                            }
+                            
+                            # Track by domain
+                            if (-not $coverage.ByDomain.ContainsKey($domain)) {
+                                $coverage.ByDomain[$domain] = @{ 
+                                    Files = 0
+                                    TotalCoverage = 0
+                                    AverageCoverage = 0
+                                    CoveredLines = 0
+                                    TotalLines = 0
+                                }
+                            }
+                            $coverage.ByDomain[$domain].Files++
+                            $coverage.ByDomain[$domain].TotalCoverage += $fileCoverage
+                            $coverage.ByDomain[$domain].CoveredLines += $classCovered
+                            $coverage.ByDomain[$domain].TotalLines += $classTotal
+                        }
+                    }
+                }
+                
+                # Calculate domain averages
+                foreach ($domain in $coverage.ByDomain.Keys) {
+                    if ($coverage.ByDomain[$domain].Files -gt 0) {
+                        $coverage.ByDomain[$domain].AverageCoverage = [math]::Round(
+                            $coverage.ByDomain[$domain].TotalCoverage / $coverage.ByDomain[$domain].Files,
+                            1
+                        )
+                    }
+                }
+            }
+            # Check for Cobertura format
+            elseif ($coverageXml.coverage) {
+                Write-ScriptLog -Message "Parsing Cobertura coverage format"
+                $coverage.Format = "Cobertura"
+                
                 $coverage.Overall.Percentage = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
                 
                 # Extract file-level coverage
@@ -1098,9 +1288,14 @@ function Get-CodeCoverageDetails {
                     }
                 }
             }
+            else {
+                Write-ScriptLog -Level Warning -Message "Unrecognized coverage file format"
+            }
         } catch {
             Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
+    } else {
+        Write-ScriptLog -Level Warning -Message "No coverage files found in tests/results or tests/coverage"
     }
     
     return $coverage
@@ -1657,6 +1852,10 @@ $manifestTagsSection
             background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
             border-color: var(--error);
         }
+        .status-warning { 
+            background: linear-gradient(135deg, rgba(210, 153, 34, 0.3), rgba(210, 153, 34, 0.1)); 
+            border-color: var(--warning);
+        }
         .status-unknown { 
             background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
             border-color: var(--text-secondary);
@@ -2021,6 +2220,198 @@ $manifestTagsSection
         a {
             color: var(--info);
         }
+
+        /* Roadmap Styles */
+        .roadmap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .roadmap-priority {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .roadmap-priority:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .priority-header {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--card-border);
+            user-select: none;
+        }
+
+        .priority-header:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.1));
+        }
+
+        .priority-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .priority-header.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .priority-content {
+            padding: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .progress-indicator {
+            margin-bottom: 20px;
+        }
+
+        .roadmap-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 15px 0;
+        }
+
+        .roadmap-item {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .roadmap-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .roadmap-item.completed .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .roadmap-item.in-progress .status-dot {
+            background: var(--warning);
+            box-shadow: 0 0 8px var(--warning);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .roadmap-item.pending .status-dot {
+            background: var(--text-secondary);
+            opacity: 0.3;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .timeline {
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--bg-darker);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Interactive enhancements */
+        .metric-card {
+            cursor: pointer;
+            transition: all 0.3s ease, transform 0.2s ease;
+        }
+
+        .metric-card.expanded {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(102, 126, 234, 0.05) 100%);
+        }
+
+        .metric-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--card-border);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .metric-card.expanded .metric-details {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Chart styles */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            min-height: 20px;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: translateY(-5px);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -2041,6 +2432,8 @@ $manifestTagsSection
             <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#system">System Info</a></li>
             <li><a href="#resources">Resources</a></li>
+            <li><a href="#roadmap">🗺️ Roadmap</a></li>
+            <li><a href="#github-activity">🌟 GitHub</a></li>
         </ul>
     </nav>
 
@@ -2070,10 +2463,10 @@ $manifestTagsSection
                 <div class="status-badge status-$(if($Status.Tests -eq 'Passing'){'healthy'}elseif($Status.Tests -eq 'Failing'){'issues'}else{'unknown'})">
                     🧪 Tests: $($Status.Tests)
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-$(if($Status.Security -eq 'Clean'){'healthy'}elseif($Status.Security -match 'Issues'){'issues'}elseif($Status.Security -match 'Minor'){'warning'}else{'unknown'})">
                     🔒 Security: $($Status.Security)
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-$(if($Status.Deployment -match 'Active'){'healthy'}else{'unknown'})">
                     📦 Deployment: $($Status.Deployment)
                 </div>
             </div>
@@ -2131,7 +2524,7 @@ $manifestTagsSection
                     </div>
 
                     <div class="metric-card">
-                        <h3>🧪 Test Suite</h3>
+                        <h3>🧪 Test Files</h3>
                         <div class="metric-value">$($Metrics.Tests.Total)</div>
                         <div class="metric-label">
                             $($Metrics.Tests.Unit) Unit | $($Metrics.Tests.Integration) Integration
@@ -2142,7 +2535,10 @@ $manifestTagsSection
                                               else { 'var(--error)' }
                             @"
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid $testStatusColor;">
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                                Last Test Run Results:
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
                                 ✅ $($Metrics.Tests.Passed) Passed | ❌ $($Metrics.Tests.Failed) Failed$(if($Metrics.Tests.Skipped -gt 0){" | ⏭️ $($Metrics.Tests.Skipped) Skipped"})
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
@@ -2150,6 +2546,9 @@ $manifestTagsSection
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
                                 Last run: $($Metrics.Tests.LastRun)
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--warning); margin-top: 8px; font-style: italic;">
+                                ⚠️ Only $($Metrics.Tests.Passed + $Metrics.Tests.Failed) test cases executed. Run <code>./az 0402</code> for full test suite.
                             </div>
                         </div>
 "@
@@ -2441,6 +2840,192 @@ $commitsHTML
                     </div>
                 </div>
             </div>
+
+            <!-- Strategic Roadmap Section -->
+            <section class="section" id="roadmap" style="margin-top: 30px;">
+                <h2>🗺️ Strategic Roadmap</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                    Current strategic priorities and project direction
+                </p>
+                
+                <div class="roadmap-container">
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority1')">
+                            <h3>🚀 Priority 1: Expand Distribution & Discoverability</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority1" class="priority-content">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 30%">30%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Make AitherZero easily discoverable across all platforms</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Publish to PowerShell Gallery (<code>Install-Module -Name AitherZero</code>)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Create Windows installer (MSI/EXE) with WinGet integration
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Submit to package managers (Homebrew consideration)
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 2-3 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority2')">
+                            <h3>📚 Priority 2: Enhance Documentation & Onboarding</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority2" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%">45%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Reduce time-to-value for new users from hours to minutes</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Comprehensive documentation structure
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Quick start guide for common scenarios
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Video tutorials and interactive demos
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    API reference documentation
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 3-4 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority3')">
+                            <h3>🎯 Priority 3: Build Community & Ecosystem</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority3" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 15%">15%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Foster active community and enable contributions</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community contribution guidelines (CONTRIBUTING.md)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Plugin/extension system for community additions
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    User showcase and case studies
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community Discord or Discussions forum
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 4-6 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority4')">
+                            <h3>⚡ Priority 4: Advanced Features & Integrations</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority4" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 20%">20%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Expand capabilities and integrations</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Cross-platform support (Windows, Linux, macOS)
+                                </li>
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Docker containerization with multi-arch support
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Web-based dashboard and monitoring (this page!)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Enhanced cloud provider integrations
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Metrics and telemetry for usage insights
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 6-8 weeks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);">
+                    <h4 style="color: var(--info); margin-bottom: 10px;">📊 Overall Progress</h4>
+                    <div class="progress-bar" style="height: 30px; margin-bottom: 10px;">
+                        <div class="progress-fill" style="width: 28%; font-size: 0.9rem;">28% Complete</div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Based on strategic priorities outlined in <a href="https://github.com/wizzense/AitherZero/blob/main/STRATEGIC-ROADMAP.md" target="_blank" style="color: var(--info);">STRATEGIC-ROADMAP.md</a>
+                    </p>
+                </div>
+            </section>
+
+            <!-- GitHub Activity Section -->
+            <section class="section" id="github-activity" style="margin-top: 30px;">
+                <h2>🌟 GitHub Activity</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>⭐ Stars</h3>
+                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-label">GitHub Stars</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🍴 Forks</h3>
+                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-label">Repository Forks</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>👥 Contributors</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($Metrics.Git.Contributors)</div>
+                        <div class="metric-label">Active Contributors</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🔀 Pull Requests</h3>
+                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-label">Open PRs</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 <em>GitHub API integration coming soon for real-time stats</em>
+                </p>
+            </section>
         </div>
 
         <div class="footer">
@@ -2453,6 +3038,20 @@ $commitsHTML
         // TOC toggle for mobile
         function toggleToc() {
             document.getElementById('toc').classList.toggle('open');
+        }
+
+        // Roadmap priority toggle
+        function togglePriority(id) {
+            const content = document.getElementById(id);
+            const header = content.previousElementSibling;
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                header.classList.add('active');
+            } else {
+                content.style.display = 'none';
+                header.classList.remove('active');
+            }
         }
 
         // Highlight active section in TOC
@@ -2480,19 +3079,115 @@ $commitsHTML
         window.addEventListener('scroll', highlightToc);
         highlightToc();
 
-        // Auto-refresh every 5 minutes
-        setTimeout(() => {
-            window.location.reload();
-        }, 300000);
-
-        // Add interactive elements
+        // Interactive card expansion
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.metric-card, .domain-card');
+            const cards = document.querySelectorAll('.metric-card');
             cards.forEach(card => {
-                card.addEventListener('click', function() {
+                // Add click animation
+                card.addEventListener('click', function(e) {
+                    // Don't expand if clicking on a link
+                    if (e.target.tagName === 'A' || e.target.closest('a')) {
+                        return;
+                    }
+                    
                     this.style.transform = 'scale(0.98)';
                     setTimeout(() => {
                         this.style.transform = '';
+                    }, 150);
+                });
+
+                // Add hover effects
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.25)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '';
+                });
+            });
+
+            // Smooth scroll for TOC links
+            document.querySelectorAll('.toc a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Close mobile TOC after navigation
+                        if (window.innerWidth < 768) {
+                            document.getElementById('toc').classList.remove('open');
+                        }
+                    }
+                });
+            });
+
+            // Add copy-to-clipboard for code blocks
+            document.querySelectorAll('code').forEach(code => {
+                code.style.cursor = 'pointer';
+                code.title = 'Click to copy';
+                code.addEventListener('click', function() {
+                    navigator.clipboard.writeText(this.textContent).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = '✓ Copied!';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 1500);
+                    });
+                });
+            });
+
+            // Animate progress bars on scroll
+            const progressBars = document.querySelectorAll('.progress-fill');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transition = 'width 1.5s ease-out';
+                        const width = entry.target.style.width;
+                        entry.target.style.width = '0%';
+                        setTimeout(() => {
+                            entry.target.style.width = width;
+                        }, 100);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            progressBars.forEach(bar => observer.observe(bar));
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K to toggle TOC
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    toggleToc();
+                }
+                // Escape to close TOC
+                if (e.key === 'Escape') {
+                    document.getElementById('toc').classList.remove('open');
+                }
+            });
+
+            // Add search functionality hint (for future enhancement)
+            console.log('💡 Dashboard Pro Tip: Use Ctrl+F to search this dashboard');
+            console.log('🔍 Keyboard shortcuts:');
+            console.log('  - Ctrl/Cmd + K: Toggle navigation');
+            console.log('  - Escape: Close navigation');
+            console.log('  - Click code blocks to copy');
+        });
+
+        // Auto-refresh every 5 minutes (optional - can be disabled)
+        // setTimeout(() => {
+        //     window.location.reload();
+        // }, 300000);
+
+        // Add live timestamp update
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            document.title = 'AitherZero Dashboard - Updated ' + timeString;
+        }
+        setInterval(updateTimestamp, 60000); // Update every minute
                     }, 150);
                 });
             });
@@ -2570,12 +3265,13 @@ $(if ($Metrics.Classes -gt 0) {
 ### Testing & Quality
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🧪 **Test Suite** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
+| 🧪 **Test Files** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
 $(if ($Metrics.Tests.LastRun) {
     $totalTests = $Metrics.Tests.Passed + $Metrics.Tests.Failed
     @"
-| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$totalTests** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
-| 📊 **Last Test Run** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+| ✅ **Last Test Run** | **$($Metrics.Tests.Passed)/$totalTests cases** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
+| 📊 **Test Details** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+| ⚠️ **Note** | **Partial Run** | Only $totalTests test cases executed from available test files. Run ``./az 0402`` for full suite. |
 
 "@
 } else {
