@@ -74,11 +74,13 @@ function Initialize-Documentation {
         Format = $Format
         OutputPath = $OutputPath
     }
+    Write-DocLog "Starting initialization process..." -Level Information
     
     # Initialize documentation engine
     try {
+        Write-DocLog "Importing and initializing documentation engine..." -Level Debug
         Initialize-DocumentationEngine -TemplateDirectory (Join-Path $script:ProjectRoot "docs/templates")
-        Write-DocLog "Documentation engine initialized successfully"
+        Write-DocLog "Documentation engine initialized successfully" -Level Information
     } catch {
         Write-DocLog "Failed to initialize documentation engine: $_" -Level Error
         throw
@@ -87,42 +89,63 @@ function Initialize-Documentation {
     # Set default output path if not specified
     if (-not $OutputPath) {
         $script:OutputPath = Join-Path $script:ProjectRoot "docs/generated"
+        Write-DocLog "Using default output path: $script:OutputPath" -Level Debug
     } else {
         $script:OutputPath = $OutputPath
+        Write-DocLog "Using provided output path: $script:OutputPath" -Level Debug
     }
     
     # Ensure output directory exists
     if (-not (Test-Path $script:OutputPath)) {
+        Write-DocLog "Creating output directory..." -Level Information
         New-Item -Path $script:OutputPath -ItemType Directory -Force | Out-Null
-        Write-DocLog "Created output directory: $script:OutputPath"
+        Write-DocLog "Created output directory: $script:OutputPath" -Level Information
+    } else {
+        Write-DocLog "Output directory already exists: $script:OutputPath" -Level Debug
     }
+    
+    Write-DocLog "Initialization completed successfully" -Level Information
 }
 
 function Invoke-FullDocumentationGeneration {
-    Write-DocLog "Starting full documentation generation..."
+    Write-DocLog "Starting full documentation generation..." -Level Information
+    Write-DocLog "Mode: Full regeneration of all documentation" -Level Debug
     
     try {
         # Generate complete project documentation
+        Write-DocLog "Generating project-level documentation..." -Level Information
         $projectDocPath = New-ProjectDocumentation -OutputPath $script:OutputPath
-        Write-DocLog "Generated project documentation: $projectDocPath"
+        Write-DocLog "Generated project documentation: $projectDocPath" -Level Information
         
         # Generate individual module documentation
         $domainsPath = Join-Path $script:ProjectRoot "domains"
+        Write-DocLog "Scanning for modules in: $domainsPath" -Level Debug
+        
         if (Test-Path $domainsPath) {
+            $domains = Get-ChildItem -Path $domainsPath -Directory
+            Write-DocLog "Found $($domains.Count) domains to process" -Level Information
+            
             $moduleCount = 0
             Get-ChildItem -Path $domainsPath -Directory | ForEach-Object {
                 $domainPath = $_.FullName
-                Get-ChildItem -Path $domainPath -Filter "*.psm1" | ForEach-Object {
+                $domainName = $_.Name
+                Write-DocLog "Processing domain: $domainName" -Level Debug
+                
+                $domainModules = Get-ChildItem -Path $domainPath -Filter "*.psm1"
+                Write-DocLog "Found $($domainModules.Count) modules in domain: $domainName" -Level Debug
+                
+                $domainModules | ForEach-Object {
                     try {
+                        Write-DocLog "Generating docs for: $($_.BaseName)" -Level Debug
                         $moduleDocPath = New-ModuleDocumentation -ModulePath $_.FullName -OutputPath $script:OutputPath -Format $Format
                         $moduleCount++
-                        Write-DocLog "Generated documentation for module: $($_.BaseName)"
+                        Write-DocLog "Generated documentation for module: $($_.BaseName)" -Level Debug
                     } catch {
                         Write-DocLog "Failed to generate documentation for module $($_.BaseName): $_" -Level Warning
                     }
                 }
             }
-            Write-DocLog "Generated documentation for $moduleCount modules"
+            Write-DocLog "Generated documentation for $moduleCount modules" -Level Information
         }
         
         # Generate automation script documentation
@@ -286,7 +309,7 @@ function Invoke-ScriptDocumentationGeneration {
             New-Item -Path $scriptIndexPath -ItemType Directory -Force | Out-Null
         }
         
-        $indexFile = Join-Path $scriptIndexPath "INDEX.md"
+        $indexFile = Join-Path $scriptIndexPath "index.md"
         $scriptIndex | Set-Content $indexFile -Encoding UTF8
         
         Write-DocLog "Generated automation script documentation index: $indexFile"
@@ -469,7 +492,7 @@ function Update-MainDocumentation {
         }
         
         # Update documentation index if function is available
-        $indexPath = Join-Path $script:OutputPath "INDEX.md"
+        $indexPath = Join-Path $script:OutputPath "index.md"
         if (Test-Path $indexPath) {
             try {
                 # Try to regenerate index with current documentation
