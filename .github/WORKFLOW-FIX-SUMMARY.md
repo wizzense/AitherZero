@@ -114,7 +114,7 @@ workflow_run:
 13. ✅ **validate-config.yml** - Config validation
 14. ✅ **validate-manifests.yml** - PowerShell manifest validation
 
-### Subdirectory Workflows (4)
+### Subdirectory Workflows (5)
 1. ✅ **gemini-dispatch/gemini-dispatch.yml** - Gemini workflow dispatcher (FIXED)
 2. ✅ **gemini-assistant/gemini-invoke.yml** - General Gemini assistant
 3. ✅ **pr-review/gemini-review.yml** - Gemini PR review (called by dispatch)

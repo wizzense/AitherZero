@@ -10,7 +10,7 @@ on:
   pull_request:
     types:
       - 'opened'
-      - 'synchronize'  # FIXED: Added to trigger on PR updates (including base branch updates)
+      - 'synchronize'  # FIXED: Added to trigger when new commits are pushed to PR branch
       - 'reopened'     # FIXED: Added to trigger when PR is reopened
   issues:
     types:
