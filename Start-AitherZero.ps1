@@ -8,7 +8,7 @@
 
     Main entry point for the AitherZero automation platform.
 
-    Provides interactive menu and number-based orchestration capabilities.
+    Provides interactive menu and number-based orchestration capabilities for infrastructure automation.
 
 
 
