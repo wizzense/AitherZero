@@ -195,6 +195,14 @@ try {
 
         foreach ($dirKey in $config.Infrastructure.Directories.Keys) {
             $dirPath = [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories[$dirKey])
+            
+            # Skip Windows-specific paths (drive-letter or UNC) on non-Windows platforms.
+            # Accept both forward and backward slashes intentionally; also match UNC paths.
+            if (-not $IsWindows -and ($dirPath -match '^[A-Za-z]:[\\/]' -or $dirPath -match '^\\\\')) {
+                Write-ScriptLog "Skipping Windows-specific directory on non-Windows platform: $dirPath" -Level 'Debug'
+                continue
+            }
+            
             if (-not (Test-Path $dirPath)) {
                 # Try to create the directory
                 try {
