@@ -4,7 +4,7 @@ name: 📊 Publish Test Reports to GitHub Pages
 # Publish comprehensive test reports and dashboards to GitHub Pages
 on:
   workflow_run:
-    workflows: ["Intelligent CI Orchestrator", "Quality Validation"]
+    workflows: ["Quality Validation"]
     types: [completed]
   push:
     branches: [main, develop]
