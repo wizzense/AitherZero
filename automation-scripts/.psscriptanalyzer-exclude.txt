@@ -1,0 +1,14 @@
+# PSScriptAnalyzer exclusion patterns
+# Exclude directories that contain legacy, archived, or non-production code
+.archive/
+legacy-to-migrate/
+tests/
+.claude/
+examples/
+tools/
+reports/
+logs/
+temp/
+*.Tests.ps1
+*test*.ps1
+*Test*.ps1

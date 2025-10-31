@@ -1,0 +1,108 @@
+# Temporary files created for debugging/fixes (prefix with TEMP_)
+TEMP_*
+
+# Temporary files and debugging scripts
+temp-*
+*-temp.*
+Fix-*
+Demo-*
+Test-*
+# Exception: Critical CI test files
+!tests/Test-LauncherFunctionality.ps1
+!tests/Test-WindowsFeatures.ps1
+!tests/Test-LinuxFeatures.ps1
+!tests/Test-MacOSFeatures.ps1
+*test.ps1
+*debug.ps1
+cleanup-*
+Remove-*
+
+# Log files
+*.log
+logs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# PowerShell cache
+*.psm1_cache
+
+# Backup files
+*.bak
+*.backup
+backups/
+
+# Test artifacts
+test-output/
+test-results/
+
+# Generated test reports
+reports/*.json
+!reports/dashboard.json
+!reports/psscriptanalyzer-fast-results.json
+tests/reports/*.json
+
+# IDE files
+# Allow workspace VS Code settings for Copilot integration
+# .vscode/settings.json - Now tracked for team collaboration
+# Exclude user-specific VS Code files
+.vscode/*.code-workspace
+.vscode/launch.local.json
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (Docker and local configs)
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+build-output/
+*.egg-info/
+kicker-git-backup.ps1
+
+# CI/CD artifacts
+AitherZero-v*.zip
+AitherZero-v*.tar.gz
+build-info.json
+pr-analysis.json
+release-notes.md
+
+# Legacy files
+*.old
+*-legacy.*
+
+# Claude Requirements System
+
+# PowerShell Security Scripts (Private - Never Commit)
+powershellsec/
+tests/results/
+
+# Quality reports (generated artifacts - linting results, analysis output)
+reports/quality/
+
+# Linting tools (downloaded binaries)
+actionlint
+
+# Jekyll build artifacts
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+Gemfile.lock
+
+# Index cache
+.aitherzero-index-cache.json
+.aitherzero-index-report.json
+actionlint*
+tests/coverage/*.xml
+# Analysis results
+tests/analysis/*.csv
+tests/analysis/*.json

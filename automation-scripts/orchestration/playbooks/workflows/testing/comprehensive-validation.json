@@ -1,0 +1,166 @@
+{
+  "metadata": {
+    "name": "comprehensive-validation",
+    "description": "Full validation suite with tests, analysis, and reporting",
+    "version": "2.0.0",
+    "category": "testing",
+    "author": "AitherZero Testing Team",
+    "tags": ["testing", "validation", "quality", "comprehensive"],
+    "estimatedDuration": "15-30 minutes",
+    "lastUpdated": "2025-10-26T22:25:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester", "PSScriptAnalyzer", "TestingFramework"],
+    "requiredTools": [],
+    "platforms": ["CrossPlatform"],
+    "permissions": ["ReadCode", "WriteReports"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "TestPath": "./tests",
+      "OutputPath": "./tests/results",
+      "CoverageThreshold": 70,
+      "FailOnThreshold": false
+    },
+    "profiles": {
+      "ci": {
+        "description": "CI/CD pipeline optimized",
+        "variables": {
+          "CoverageThreshold": 80,
+          "FailOnThreshold": true,
+          "ExcludePaths": ["examples", "legacy-to-migrate"]
+        }
+      },
+      "dev": {
+        "description": "Developer-friendly validation",
+        "variables": {
+          "CoverageThreshold": 60,
+          "FailOnThreshold": false,
+          "SkipIntegration": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Testing Environment",
+        "description": "Ensure testing tools are available",
+        "sequences": ["0400"],
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Unit Tests",
+        "description": "Run comprehensive unit test suite",
+        "sequences": ["0402"],
+        "variables": {
+          "Path": "{{TestPath}}",
+          "OutputFormat": "JUnitXml",
+          "Coverage": true,
+          "CodeCoverage": "./domains/**/*.psm1"
+        },
+        "continueOnError": false,
+        "timeout": 900
+      },
+      {
+        "name": "Integration Tests", 
+        "description": "Run integration test suite",
+        "sequences": ["0403"],
+        "condition": "-not $SkipIntegration",
+        "variables": {
+          "Path": "./tests/integration",
+          "OutputFormat": "JUnitXml"
+        },
+        "continueOnError": true,
+        "timeout": 1200
+      },
+      {
+        "name": "Static Analysis",
+        "description": "PSScriptAnalyzer code quality check",
+        "sequences": ["0404"],
+        "variables": {
+          "ExcludePaths": "{{ExcludePaths:=@('tests', 'examples')}}",
+          "Severity": "Warning",
+          "FailOnIssues": "{{FailOnThreshold}}"
+        },
+        "continueOnError": true,
+        "parallel": true,
+        "timeout": 600
+      },
+      {
+        "name": "AST Validation",
+        "description": "Advanced syntax and structure validation",
+        "sequences": ["0405", "0407"],
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Coverage Analysis",
+        "description": "Generate detailed coverage reports",
+        "sequences": ["0406", "0408"],
+        "variables": {
+          "Threshold": "{{CoverageThreshold}}",
+          "FailBelowThreshold": "{{FailOnThreshold}}"
+        },
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Quality Reports",
+        "description": "Generate comprehensive quality reports",
+        "sequences": ["0522", "0510"],
+        "variables": {
+          "Format": "All",
+          "IncludeCoverage": true,
+          "IncludeMetrics": true,
+          "ShowDashboard": false
+        },
+        "continueOnError": true,
+        "timeout": 600
+      }
+    ]
+  },
+  "validation": {
+    "thresholds": {
+      "CriticalIssues": {
+        "maxCount": 0,
+        "action": "fail"
+      },
+      "HighIssues": {
+        "maxCount": 5,
+        "action": "warn"
+      },
+      "CoverageBelow": {
+        "maxCount": 1,
+        "action": "warn"
+      }
+    }
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🧪 Starting comprehensive validation suite...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ All validations passed! Code quality is excellent.",
+      "level": "Success"
+    },
+    "onFailure": {
+      "message": "❌ Validation failures detected. Review reports for details.",
+      "level": "Error"
+    },
+    "onWarning": {
+      "message": "⚠️ Some validation warnings found. Consider addressing them.",
+      "level": "Warning"
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "Markdown"],
+    "outputPath": "./reports/validation",
+    "includeMetrics": true,
+    "includeLogs": true
+  }
+}

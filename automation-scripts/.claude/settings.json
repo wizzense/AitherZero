@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "PreToolUse": ".claude/hooks/pre-tool-use.ps1",
+    "PostToolUse": ".claude/hooks/post-tool-use.ps1",
+    "UserPromptSubmit": ".claude/hooks/user-prompt-submit.ps1",
+    "SessionStart": ".claude/hooks/session-start.ps1",
+    "SubagentStop": ".claude/hooks/subagent-stop.ps1"
+  }
+}

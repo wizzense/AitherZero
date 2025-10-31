@@ -1,0 +1,118 @@
+#Requires -Version 7.0
+#Requires -Module Pester
+
+<#
+.SYNOPSIS
+    Unit tests for 0414_Test-Optimized
+.DESCRIPTION
+    Auto-generated comprehensive tests
+    Script: 0414_Test-Optimized
+    Stage: Unknown
+    Generated: 2025-10-30 02:11:49
+#>
+
+Describe '0414_Test-Optimized' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+
+    BeforeAll {
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0414_Test-Optimized.ps1'
+        $script:ScriptName = '0414_Test-Optimized'
+    }
+
+    Context 'Script Validation' {
+        It 'Script file should exist' {
+            Test-Path $script:ScriptPath | Should -Be $true
+        }
+
+        It 'Should have valid PowerShell syntax' {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                $script:ScriptPath, [ref]$null, [ref]$errors
+            )
+            $errors.Count | Should -Be 0
+        }
+
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
+        }
+    }
+
+    Context 'Parameters' {
+        It 'Should have parameter: TestPath' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('TestPath') | Should -Be $true
+        }
+
+        It 'Should have parameter: TestType' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('TestType') | Should -Be $true
+        }
+
+        It 'Should have parameter: MaxWorkers' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('MaxWorkers') | Should -Be $true
+        }
+
+        It 'Should have parameter: BatchSize' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('BatchSize') | Should -Be $true
+        }
+
+        It 'Should have parameter: NoCoverage' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('NoCoverage') | Should -Be $true
+        }
+
+        It 'Should have parameter: FastFail' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('FastFail') | Should -Be $true
+        }
+
+        It 'Should have parameter: UseCache' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('UseCache') | Should -Be $true
+        }
+
+        It 'Should have parameter: CacheMinutes' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('CacheMinutes') | Should -Be $true
+        }
+
+        It 'Should have parameter: OutputPath' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
+        }
+
+        It 'Should have parameter: CI' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('CI') | Should -Be $true
+        }
+
+        It 'Should have parameter: Verbose' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Verbose') | Should -Be $true
+        }
+
+        It 'Should have parameter: DryRun' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('DryRun') | Should -Be $true
+        }
+
+    }
+
+    Context 'Metadata' {
+        It 'Should be in stage: Unknown' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Stage:'
+        }
+    }
+
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
+        }
+    }
+}

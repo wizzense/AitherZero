@@ -1,0 +1,241 @@
+{
+  "Summary": {
+    "Errors": 0,
+    "Information": 0,
+    "Warnings": 22,
+    "TotalIssues": 22
+  },
+  "GeneratedAt": "2025-10-26 22:29:41 UTC",
+  "FilesAnalyzed": [
+    "Start-AitherZero.ps1",
+    "az.ps1",
+    "0000_Cleanup-Environment.ps1",
+    "0001_Ensure-PowerShell7.ps1",
+    "0002_Setup-Directories.ps1",
+    "0006_Install-ValidationTools.ps1",
+    "0007_Install-Go.ps1",
+    "0008_Install-OpenTofu.ps1",
+    "0009_Initialize-OpenTofu.ps1",
+    "0100_Configure-System.ps1",
+    "0104_Install-CertificateAuthority.ps1",
+    "0105_Install-HyperV.ps1",
+    "0106_Install-WindowsAdminCenter.ps1",
+    "0106_Install-WSL2.ps1",
+    "0112_Enable-PXE.ps1",
+    "0201_Install-Node.ps1",
+    "0204_Install-Poetry.ps1",
+    "ReportingEngine.psm1",
+    "TechDebtAnalysis.psm1",
+    "AitherTestFramework.psm1",
+    "CoreTestSuites.psm1",
+    "TestCacheManager.psm1"
+  ],
+  "Strategy": "CoreOnly",
+  "Performance": {
+    "PerformanceImprovement": "-248 %",
+    "SpeedReason": "Analyzing 22 core files instead of 462 total files",
+    "TotalFilesInRepo": 462,
+    "FilesAnalyzed": 22,
+    "DurationSeconds": 208.97
+  },
+  "Issues": [
+    {
+      "Message": "Found global variable 'global:AitherZeroModuleLoaded'.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSAvoidGlobalVars",
+      "Severity": 1,
+      "Line": 242,
+      "Column": 83,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "Found global variable 'global:AitherZeroModuleLoaded'.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSAvoidGlobalVars",
+      "Severity": 1,
+      "Line": 246,
+      "Column": 13,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "Found global variable 'global:AitherUIInitialized'.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSAvoidGlobalVars",
+      "Severity": 1,
+      "Line": 252,
+      "Column": 22,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "Found global variable 'global:AitherUIInitialized'.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSAvoidGlobalVars",
+      "Severity": 1,
+      "Line": 254,
+      "Column": 17,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "$null should be on the left side of equality comparisons.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "Line": 259,
+      "Column": 23,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "$null should be on the left side of equality comparisons.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "Line": 260,
+      "Column": 29,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "$null should be on the left side of equality comparisons.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "Line": 261,
+      "Column": 18,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "$null should be on the left side of equality comparisons.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "Line": 262,
+      "Column": 29,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "The variable 'isAutomated' is assigned but never used.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 108,
+      "Column": 5,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "The variable 'result' is assigned but never used.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 492,
+      "Column": 13,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "The variable 'result' is assigned but never used.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 650,
+      "Column": 17,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "The variable 'result' is assigned but never used.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 696,
+      "Column": 13,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "The variable 'result' is assigned but never used.",
+      "ScriptName": "Start-AitherZero.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 786,
+      "Column": 13,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/Start-AitherZero.ps1"
+    },
+    {
+      "Message": "The variable 'transcriptActive' is assigned but never used.",
+      "ScriptName": "az.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 16,
+      "Column": 5,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/az.ps1"
+    },
+    {
+      "Message": "The variable 'exitCode' is assigned but never used.",
+      "ScriptName": "az.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 64,
+      "Column": 9,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/az.ps1"
+    },
+    {
+      "Message": "The variable 'wacInstalled' is assigned but never used.",
+      "ScriptName": "0106_Install-WindowsAdminCenter.ps1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 96,
+      "Column": 5,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0106_Install-WindowsAdminCenter.ps1"
+    },
+    {
+      "Message": "$null should be on the left side of equality comparisons.",
+      "ScriptName": "0106_Install-WSL2.ps1",
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "Line": 290,
+      "Column": 13,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0106_Install-WSL2.ps1"
+    },
+    {
+      "Message": "$null should be on the left side of equality comparisons.",
+      "ScriptName": "ReportingEngine.psm1",
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "Line": 42,
+      "Column": 28,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/domains/reporting/ReportingEngine.psm1"
+    },
+    {
+      "Message": "$null should be on the left side of equality comparisons.",
+      "ScriptName": "ReportingEngine.psm1",
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "Line": 50,
+      "Column": 27,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/domains/reporting/ReportingEngine.psm1"
+    },
+    {
+      "Message": "The variable 'framework' is assigned but never used.",
+      "ScriptName": "AitherTestFramework.psm1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 300,
+      "Column": 9,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/domains/testing/AitherTestFramework.psm1"
+    },
+    {
+      "Message": "The variable 'scriptsPath' is assigned but never used.",
+      "ScriptName": "CoreTestSuites.psm1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 219,
+      "Column": 17,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/domains/testing/CoreTestSuites.psm1"
+    },
+    {
+      "Message": "The variable 'config' is assigned but never used.",
+      "ScriptName": "CoreTestSuites.psm1",
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "Line": 379,
+      "Column": 23,
+      "ScriptPath": "/home/runner/work/AitherZero/AitherZero/domains/testing/CoreTestSuites.psm1"
+    }
+  ]
+}

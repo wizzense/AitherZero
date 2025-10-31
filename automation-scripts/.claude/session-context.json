@@ -1,0 +1,826 @@
+{
+  "Git": {
+    "Remotes": [
+      "origin\thttps://github.com/wizzense/AitherZero (fetch)",
+      "origin\thttps://github.com/wizzense/AitherZero (push)"
+    ],
+    "RecentCommits": [
+      "9fd91d41 feat: comprehensive cleanup and consolidation of infrastructure components (#593)",
+      "c58b0ab2 fix: Resolve all UI testing bugs for stable operation (#592)",
+      "d2afea3a CRITICAL FIX: Bootstrap handles dirty environments with conflicting modules (#591)",
+      "d79f00d1 fix: Complete orchestration engine overhaul (#590)",
+      "d41e3551 fix: streamlined CI workflows and project restructure (#589)",
+      "414be41c Fix audit data sections in comprehensive report dashboard (#586)",
+      "4737a479 Fix dashboard data population and resolve merge conflicts (#585)",
+      "eecf6e82 Improve: Address GitHub Copilot code quality feedback (#584)",
+      "6f3500a1 Fix: Complete domain architecture support for comprehensive reporting (#583)",
+      "73410ed5 Add comprehensive defensive null checks for FeatureMap to fix ModulesWithTests error (#582)"
+    ],
+    "DiffSummary": [
+      " automation-scripts/0400_Install-TestingTools.ps1   | 31 +++++--",
+      " automation-scripts/0402_Run-UnitTests.ps1          | 20 ++++-",
+      " automation-scripts/0403_Run-IntegrationTests.ps1   | 36 ++++++--",
+      " automation-scripts/0404_Run-PSScriptAnalyzer.ps1   | 66 ++++++++++-----",
+      " automation-scripts/0405_Validate-AST.ps1           | 37 ++++----",
+      " automation-scripts/0406_Generate-Coverage.ps1      |  7 +-",
+      " automation-scripts/0501_Get-SystemInfo.ps1         |  2 +-",
+      " automation-scripts/0510_Generate-ProjectReport.ps1 | 20 +++--",
+      " automation-scripts/0511_Show-ProjectDashboard.ps1  |  8 +-",
+      " .../0512_Schedule-ReportGeneration.ps1             | 98 ++++++++++++----------",
+      " .../0513_Enable-ContinuousReporting.ps1            | 48 +++++++----",
+      " .../0520_Analyze-ConfigurationUsage.ps1            | 13 ++-",
+      " .../0521_Analyze-DocumentationCoverage.ps1         |  9 +-",
+      " automation-scripts/0522_Analyze-CodeQuality.ps1    |  9 +-",
+      " automation-scripts/0523_Analyze-SecurityIssues.ps1 |  9 +-",
+      " .../0524_Generate-TechDebtReport.ps1               | 45 ++++++----",
+      " automation-scripts/0530_View-Logs.ps1              |  8 +-",
+      " automation-scripts/0730_Setup-AIAgents.ps1         | 41 ++++++---",
+      " automation-scripts/0731_Invoke-AICodeReview.ps1    | 34 ++++++--",
+      " automation-scripts/0732_Generate-AITests.ps1       | 17 +++-",
+      " automation-scripts/0733_Create-AIDocs.ps1          | 59 +++++++++----",
+      " automation-scripts/0734_Optimize-AIPerformance.ps1 | 27 ++++++",
+      " automation-scripts/0735_Analyze-AISecurity.ps1     | 16 +++-",
+      " automation-scripts/0736_Generate-AIWorkflow.ps1    | 21 ++++-",
+      " automation-scripts/0737_Monitor-AIUsage.ps1        | 14 ++++",
+      " automation-scripts/0738_Train-AIContext.ps1        | 16 +++-",
+      " automation-scripts/0739_Validate-AIOutput.ps1      | 45 ++++++----",
+      " .../0741_Generate-AICommitMessage.ps1              | 56 +++++++------",
+      " automation-scripts/0742_Create-AIPoweredPR.ps1     | 68 ++++++++++-----",
+      " automation-scripts/0820_Save-WorkContext.ps1       | 14 +++-",
+      " .../0821_Generate-ContinuationPrompt.ps1           | 10 ++-",
+      " .../0830_Generate-PromptFromData.ps1               | 14 +++-",
+      " automation-scripts/0831_Prompt-Templates.ps1       |  8 +-",
+      " 33 files changed, 653 insertions(+), 273 deletions(-)"
+    ],
+    "ModifiedFiles": {
+      "automation-scripts/0522_Analyze-CodeQuality.ps1": {
+        "Status": "M",
+        "Lines": 412
+      },
+      "automation-scripts/0735_Analyze-AISecurity.ps1": {
+        "Status": "M",
+        "Lines": 68
+      },
+      "automation-scripts/0733_Create-AIDocs.ps1": {
+        "Status": "M",
+        "Lines": 119
+      },
+      "automation-scripts/0523_Analyze-SecurityIssues.ps1": {
+        "Status": "M",
+        "Lines": 398
+      },
+      "automation-scripts/0404_Run-PSScriptAnalyzer.ps1": {
+        "Status": "M",
+        "Lines": 337
+      },
+      "automation-scripts/0730_Setup-AIAgents.ps1": {
+        "Status": "M",
+        "Lines": 446
+      },
+      "automation-scripts/0405_Validate-AST.ps1": {
+        "Status": "M",
+        "Lines": 471
+      },
+      "automation-scripts/0742_Create-AIPoweredPR.ps1": {
+        "Status": "M",
+        "Lines": 424
+      },
+      "automation-scripts/0734_Optimize-AIPerformance.ps1": {
+        "Status": "M",
+        "Lines": 80
+      },
+      "automation-scripts/0402_Run-UnitTests.ps1": {
+        "Status": "M",
+        "Lines": 334
+      },
+      "test-whatif.txt": {
+        "Status": "A",
+        "Lines": 1
+      },
+      "automation-scripts/0821_Generate-ContinuationPrompt.ps1": {
+        "Status": "M",
+        "Lines": 391
+      },
+      "automation-scripts/0513_Enable-ContinuousReporting.ps1": {
+        "Status": "M",
+        "Lines": 336
+      },
+      "automation-scripts/0739_Validate-AIOutput.ps1": {
+        "Status": "M",
+        "Lines": 88
+      },
+      "automation-scripts/0501_Get-SystemInfo.ps1": {
+        "Status": "M",
+        "Lines": 281
+      },
+      "automation-scripts/0520_Analyze-ConfigurationUsage.ps1": {
+        "Status": "M",
+        "Lines": 224
+      },
+      "automation-scripts/0820_Save-WorkContext.ps1": {
+        "Status": "M",
+        "Lines": 344
+      },
+      "automation-scripts/0741_Generate-AICommitMessage.ps1": {
+        "Status": "M",
+        "Lines": 401
+      },
+      "automation-scripts/0530_View-Logs.ps1": {
+        "Status": "M",
+        "Lines": 241
+      },
+      "automation-scripts/0511_Show-ProjectDashboard.ps1": {
+        "Status": "M",
+        "Lines": 212
+      },
+      "automation-scripts/0731_Invoke-AICodeReview.ps1": {
+        "Status": "M",
+        "Lines": 608
+      },
+      "automation-scripts/0524_Generate-TechDebtReport.ps1": {
+        "Status": "M",
+        "Lines": 809
+      },
+      "automation-scripts/0403_Run-IntegrationTests.ps1": {
+        "Status": "M",
+        "Lines": 273
+      },
+      "automation-scripts/0738_Train-AIContext.ps1": {
+        "Status": "M",
+        "Lines": 74
+      },
+      "automation-scripts/0736_Generate-AIWorkflow.ps1": {
+        "Status": "M",
+        "Lines": 75
+      },
+      "automation-scripts/0831_Prompt-Templates.ps1": {
+        "Status": "M",
+        "Lines": 580
+      },
+      "automation-scripts/0830_Generate-PromptFromData.ps1": {
+        "Status": "M",
+        "Lines": 754
+      },
+      "automation-scripts/0512_Schedule-ReportGeneration.ps1": {
+        "Status": "M",
+        "Lines": 212
+      },
+      "automation-scripts/0400_Install-TestingTools.ps1": {
+        "Status": "M",
+        "Lines": 223
+      },
+      "automation-scripts/0737_Monitor-AIUsage.ps1": {
+        "Status": "M",
+        "Lines": 75
+      },
+      "backups/": {
+        "Status": "??",
+        "Lines": 0
+      },
+      "automation-scripts/0521_Analyze-DocumentationCoverage.ps1": {
+        "Status": "M",
+        "Lines": 278
+      },
+      "automation-scripts/0732_Generate-AITests.ps1": {
+        "Status": "M",
+        "Lines": 94
+      },
+      "automation-scripts/0406_Generate-Coverage.ps1": {
+        "Status": "M",
+        "Lines": 401
+      },
+      "automation-scripts/0510_Generate-ProjectReport.ps1": {
+        "Status": "M",
+        "Lines": 330
+      }
+    },
+    "LastCommit": "9fd91d41 feat: comprehensive cleanup and consolidation of infrastructure components (#593)",
+    "StashList": [
+      "stash@{0}: On fix/ci-psscriptanalyzer-v121: Stashing all changes before reset to v0.5-beta",
+      "stash@{1}: WIP on optimize/ci-parallel-execution: c1613747 Implement GitHub Copilot integration and fix remaining errors",
+      "stash@{2}: WIP on optimize/ci-parallel-execution: 9c3855fe Save comprehensive optimization analysis and roadmap work",
+      "stash@{3}: WIP on fix/parallel-test-execution: 9c3855fe Save comprehensive optimization analysis and roadmap work",
+      "stash@{4}: WIP on fix/security-quality-improvements: 9c3855fe Save comprehensive optimization analysis and roadmap work"
+    ],
+    "UntrackedFiles": [
+      "backups/20250811_215012/0000_Cleanup-Environment.ps1",
+      "backups/20250811_215012/0001_Ensure-PowerShell7.ps1",
+      "backups/20250811_215012/0002_Setup-Directories.ps1",
+      "backups/20250811_215012/0006_Install-ValidationTools.ps1",
+      "backups/20250811_215012/0007_Install-Go.ps1",
+      "backups/20250811_215012/0008_Install-OpenTofu.ps1",
+      "backups/20250811_215012/0009_Initialize-OpenTofu.ps1",
+      "backups/20250811_215012/0100_Configure-System.ps1",
+      "backups/20250811_215012/0104_Install-CertificateAuthority.ps1",
+      "backups/20250811_215012/0105_Install-HyperV.ps1",
+      "backups/20250811_215012/0106_Install-WSL2.ps1",
+      "backups/20250811_215012/0106_Install-WindowsAdminCenter.ps1",
+      "backups/20250811_215012/0112_Enable-PXE.ps1",
+      "backups/20250811_215012/0201_Install-Node.ps1",
+      "backups/20250811_215012/0204_Install-Poetry.ps1",
+      "backups/20250811_215012/0205_Install-Sysinternals.ps1",
+      "backups/20250811_215012/0206_Install-Python.ps1",
+      "backups/20250811_215012/0207_Install-Git.ps1",
+      "backups/20250811_215012/0208_Install-Docker.ps1",
+      "backups/20250811_215012/0209_Install-7Zip.ps1",
+      "backups/20250811_215012/0210_Install-VSCode.ps1",
+      "backups/20250811_215012/0211_Install-VSBuildTools.ps1",
+      "backups/20250811_215012/0212_Install-AzureCLI.ps1",
+      "backups/20250811_215012/0213_Install-AWSCLI.ps1",
+      "backups/20250811_215012/0214_Install-Packer.ps1",
+      "backups/20250811_215012/0215_Install-Chocolatey.ps1",
+      "backups/20250811_215012/0216_Set-PowerShellProfile.ps1",
+      "backups/20250811_215012/0217_Install-ClaudeCode.ps1",
+      "backups/20250811_215012/0218_Install-GeminiCLI.ps1",
+      "backups/20250811_215012/0300_Deploy-Infrastructure.ps1",
+      "backups/20250811_215012/0400_Install-TestingTools.ps1",
+      "backups/20250811_215012/0402_Run-UnitTests.ps1",
+      "backups/20250811_215012/0403_Run-IntegrationTests.ps1",
+      "backups/20250811_215012/0404_Run-PSScriptAnalyzer.ps1",
+      "backups/20250811_215012/0405_Validate-AST.ps1",
+      "backups/20250811_215012/0406_Generate-Coverage.ps1",
+      "backups/20250811_215012/0407_Validate-Syntax.ps1",
+      "backups/20250811_215012/0408_Generate-TestCoverage.ps1",
+      "backups/20250811_215012/0409_Run-AllTests.ps1",
+      "backups/20250811_215012/0411_Test-Smart.ps1",
+      "backups/20250811_215012/0500_Validate-Environment.ps1",
+      "backups/20250811_215012/0501_Get-SystemInfo.ps1",
+      "backups/20250811_215012/0510_Generate-ProjectReport.ps1",
+      "backups/20250811_215012/0511_Show-ProjectDashboard.ps1",
+      "backups/20250811_215012/0512_Schedule-ReportGeneration.ps1",
+      "backups/20250811_215012/0513_Enable-ContinuousReporting.ps1",
+      "backups/20250811_215012/0520_Analyze-ConfigurationUsage.ps1",
+      "backups/20250811_215012/0521_Analyze-DocumentationCoverage.ps1",
+      "backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+      "backups/20250811_215012/0523_Analyze-SecurityIssues.ps1",
+      "backups/20250811_215012/0524_Generate-TechDebtReport.ps1",
+      "backups/20250811_215012/0530_View-Logs.ps1",
+      "backups/20250811_215012/0700_Setup-GitEnvironment.ps1",
+      "backups/20250811_215012/0701_Create-FeatureBranch.ps1",
+      "backups/20250811_215012/0702_Create-Commit.ps1",
+      "backups/20250811_215012/0703_Create-PullRequest.ps1",
+      "backups/20250811_215012/0704_Stage-Files.ps1",
+      "backups/20250811_215012/0705_Push-Branch.ps1",
+      "backups/20250811_215012/0720_Setup-GitHubRunners.ps1",
+      "backups/20250811_215012/0721_Configure-RunnerEnvironment.ps1",
+      "backups/20250811_215012/0722_Install-RunnerServices.ps1",
+      "backups/20250811_215012/0723_Setup-MatrixRunners.ps1",
+      "backups/20250811_215012/0730_Setup-AIAgents.ps1",
+      "backups/20250811_215012/0731_Invoke-AICodeReview.ps1",
+      "backups/20250811_215012/0732_Generate-AITests.ps1",
+      "backups/20250811_215012/0733_Create-AIDocs.ps1",
+      "backups/20250811_215012/0734_Optimize-AIPerformance.ps1",
+      "backups/20250811_215012/0735_Analyze-AISecurity.ps1",
+      "backups/20250811_215012/0736_Generate-AIWorkflow.ps1",
+      "backups/20250811_215012/0737_Monitor-AIUsage.ps1",
+      "backups/20250811_215012/0738_Train-AIContext.ps1",
+      "backups/20250811_215012/0739_Validate-AIOutput.ps1",
+      "backups/20250811_215012/0741_Generate-AICommitMessage.ps1",
+      "backups/20250811_215012/0742_Create-AIPoweredPR.ps1",
+      "backups/20250811_215012/0800_Create-TestIssues.ps1",
+      "backups/20250811_215012/0801_Parse-PesterResults.ps1",
+      "backups/20250811_215012/0805_Analyze-OpenIssues.ps1",
+      "backups/20250811_215012/0810_Create-IssueFromTestFailure.ps1",
+      "backups/20250811_215012/0820_Save-WorkContext.ps1",
+      "backups/20250811_215012/0821_Generate-ContinuationPrompt.ps1",
+      "backups/20250811_215012/0830_Generate-PromptFromData.ps1",
+      "backups/20250811_215012/0831_Prompt-Templates.ps1",
+      "backups/20250811_215012/9999_Reset-Machine.ps1"
+    ],
+    "Status": [
+      " M automation-scripts/0400_Install-TestingTools.ps1",
+      " M automation-scripts/0402_Run-UnitTests.ps1",
+      " M automation-scripts/0403_Run-IntegrationTests.ps1",
+      " M automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+      " M automation-scripts/0405_Validate-AST.ps1",
+      " M automation-scripts/0406_Generate-Coverage.ps1",
+      " M automation-scripts/0501_Get-SystemInfo.ps1",
+      " M automation-scripts/0510_Generate-ProjectReport.ps1",
+      " M automation-scripts/0511_Show-ProjectDashboard.ps1",
+      " M automation-scripts/0512_Schedule-ReportGeneration.ps1",
+      " M automation-scripts/0513_Enable-ContinuousReporting.ps1",
+      " M automation-scripts/0520_Analyze-ConfigurationUsage.ps1",
+      " M automation-scripts/0521_Analyze-DocumentationCoverage.ps1",
+      " M automation-scripts/0522_Analyze-CodeQuality.ps1",
+      " M automation-scripts/0523_Analyze-SecurityIssues.ps1",
+      " M automation-scripts/0524_Generate-TechDebtReport.ps1",
+      " M automation-scripts/0530_View-Logs.ps1",
+      " M automation-scripts/0730_Setup-AIAgents.ps1",
+      " M automation-scripts/0731_Invoke-AICodeReview.ps1",
+      " M automation-scripts/0732_Generate-AITests.ps1",
+      " M automation-scripts/0733_Create-AIDocs.ps1",
+      " M automation-scripts/0734_Optimize-AIPerformance.ps1",
+      " M automation-scripts/0735_Analyze-AISecurity.ps1",
+      " M automation-scripts/0736_Generate-AIWorkflow.ps1",
+      " M automation-scripts/0737_Monitor-AIUsage.ps1",
+      " M automation-scripts/0738_Train-AIContext.ps1",
+      " M automation-scripts/0739_Validate-AIOutput.ps1",
+      " M automation-scripts/0741_Generate-AICommitMessage.ps1",
+      " M automation-scripts/0742_Create-AIPoweredPR.ps1",
+      " M automation-scripts/0820_Save-WorkContext.ps1",
+      " M automation-scripts/0821_Generate-ContinuationPrompt.ps1",
+      " M automation-scripts/0830_Generate-PromptFromData.ps1",
+      " M automation-scripts/0831_Prompt-Templates.ps1",
+      "A  test-whatif.txt",
+      "?? backups/"
+    ],
+    "Branch": "feature/whatif-parallel",
+    "StagedFiles": "test-whatif.txt"
+  },
+  "User": "codespace",
+  "Platform": "Linux",
+  "Timestamp": "2025-08-11 22:04:48",
+  "SessionId": "537cd83e-34ea-44f0-bbc6-361816408336",
+  "PowerShell": {
+    "EnvironmentVariables": {
+      "PATH": "/workspaces/AitherZero/automation-scripts:/opt/microsoft/powershell/7:/usr/local/rvm/gems/ruby-3.4.1/bin:/usr/local/rvm/gems/ruby-3.4.1@global/bin:/usr/local/rvm/rubies/ruby-3.4.1/bin:/vscode/bin/linux-x64/e3550cfac4b63ca4eafca7b601f0d2885817fd1f/bin/remote-cli:/home/codespace/.local/bin:/home/codespace/.dotnet:/home/codespace/nvm/current/bin:/home/codespace/.php/current/bin:/home/codespace/.python/current/bin:/home/codespace/java/current/bin:/home/codespace/.ruby/current/bin:/home/codespace/.local/bin:/usr/local/python/current/bin:/usr/local/py-utils/bin:/usr/local/jupyter:/usr/local/oryx:/usr/local/go/bin:/go/bin:/usr/local/sdkman/bin:/usr/local/sdkman/candidates/java/current/bin:/usr/local/sdkman/candidates/gradle/current/bin:/usr/local/sdkman/candidates/maven/current/bin:/usr/local/sdkman/candidates/ant/current/bin:/usr/local/rvm/gems/default/bin:/usr/local/rvm/gems/default@global/bin:/usr/local/rvm/rubies/default/bin:/usr/local/share/rbenv/bin:/usr/local/php/current/bin:/opt/conda/bin:/usr/local/nvs:/usr/local/share/nvm/versions/node/v22.17.0/bin:/usr/local/hugo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/dotnet:/home/codespace/.dotnet/tools:/usr/local/rvm/bin:/home/codespace/.vscode-remote/data/User/globalStorage/github.copilot-chat/debugCommand",
+      "AITHERZERO_INITIALIZED": "1",
+      "AITHERZERO_ROOT": "/workspaces/AitherZero",
+      "PSModulePath": "/home/codespace/.local/share/powershell/Modules:/usr/local/share/powershell/Modules:/opt/microsoft/powershell/7/Modules"
+    },
+    "RecentErrors": [
+      {
+        "Line": 77,
+        "Message": "Unable to get content because it is a directory: '/workspaces/AitherZero/backups/'. Please use 'Get-ChildItem' instead.",
+        "Category": 7,
+        "Script": "/workspaces/AitherZero/automation-scripts/0820_Save-WorkContext.ps1",
+        "Target": ""
+      },
+      {
+        "Line": 30,
+        "Message": "The term 'terraform' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+        "Category": 13,
+        "Script": "/workspaces/AitherZero/domains/infrastructure/Infrastructure.psm1",
+        "Target": "terraform"
+      },
+      {
+        "Line": 29,
+        "Message": "The term 'tofu' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+        "Category": 13,
+        "Script": "/workspaces/AitherZero/domains/infrastructure/Infrastructure.psm1",
+        "Target": "tofu"
+      },
+      {
+        "Line": 26,
+        "Message": "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+        "Category": 13,
+        "Script": "/workspaces/AitherZero/domains/configuration/Configuration.psm1",
+        "Target": "Write-CustomLog"
+      },
+      {
+        "Line": 26,
+        "Message": "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+        "Category": 13,
+        "Script": "/workspaces/AitherZero/domains/configuration/Configuration.psm1",
+        "Target": "Write-CustomLog"
+      }
+    ],
+    "LoadedModules": [
+      {
+        "Name": "AitherZero",
+        "Version": {
+          "Major": 1,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/AitherZero.psm1"
+      },
+      {
+        "Name": "BetterMenu",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/experience/BetterMenu.psm1"
+      },
+      {
+        "Name": "Configuration",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/configuration/Configuration.psm1"
+      },
+      {
+        "Name": "DeploymentAutomation",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/automation/DeploymentAutomation.psm1"
+      },
+      {
+        "Name": "Infrastructure",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/infrastructure/Infrastructure.psm1"
+      },
+      {
+        "Name": "IssueTracker",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/development/IssueTracker.psm1"
+      },
+      {
+        "Name": "Logging",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/utilities/Logging.psm1"
+      },
+      {
+        "Name": "Microsoft.PowerShell.Host",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        },
+        "Path": "/opt/microsoft/powershell/7/Modules/Microsoft.PowerShell.Host/Microsoft.PowerShell.Host.psd1"
+      },
+      {
+        "Name": "Microsoft.PowerShell.Management",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        },
+        "Path": "/opt/microsoft/powershell/7/Modules/Microsoft.PowerShell.Management/Microsoft.PowerShell.Management.psd1"
+      },
+      {
+        "Name": "Microsoft.PowerShell.Utility",
+        "Version": {
+          "Major": 7,
+          "Minor": 0,
+          "Build": 0,
+          "Revision": 0,
+          "MajorRevision": 0,
+          "MinorRevision": 0
+        },
+        "Path": "/opt/microsoft/powershell/7/Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1"
+      },
+      {
+        "Name": "OrchestrationEngine",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/automation/OrchestrationEngine.psm1"
+      },
+      {
+        "Name": "PullRequestManager",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/development/PullRequestManager.psm1"
+      },
+      {
+        "Name": "ReportingEngine",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/reporting/ReportingEngine.psm1"
+      },
+      {
+        "Name": "TechDebtAnalysis",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/reporting/TechDebtAnalysis.psm1"
+      },
+      {
+        "Name": "TestingFramework",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/testing/TestingFramework.psm1"
+      },
+      {
+        "Name": "UserInterface",
+        "Version": {
+          "Major": 0,
+          "Minor": 0,
+          "Build": -1,
+          "Revision": -1,
+          "MajorRevision": -1,
+          "MinorRevision": -1
+        },
+        "Path": "/workspaces/AitherZero/domains/experience/UserInterface.psm1"
+      }
+    ],
+    "ErrorCount": 11,
+    "CurrentDirectory": "/workspaces/AitherZero"
+  },
+  "Machine": "codespaces-4ce466",
+  "Project": {
+    "LastModified": {
+      "./automation-scripts/0739_Validate-AIOutput.ps1": "2025-08-11T21:59:52.8166516+00:00",
+      "./automation-scripts/0510_Generate-ProjectReport.ps1": "2025-08-11T21:58:38.8606545+00:00",
+      "./automation-scripts/0742_Create-AIPoweredPR.ps1": "2025-08-11T22:04:19.5216413+00:00",
+      "./automation-scripts/0730_Setup-AIAgents.ps1": "2025-08-11T21:59:14.3856531+00:00",
+      "./automation-scripts/0522_Analyze-CodeQuality.ps1": "2025-08-11T21:59:04.6186535+00:00",
+      "./automation-scripts/0731_Invoke-AICodeReview.ps1": "2025-08-11T21:59:36.6486523+00:00",
+      "./automation-scripts/0732_Generate-AITests.ps1": "2025-08-11T21:59:54.8346516+00:00",
+      "./automation-scripts/0521_Analyze-DocumentationCoverage.ps1": "2025-08-11T21:58:51.283654+00:00",
+      "./automation-scripts/0735_Analyze-AISecurity.ps1": "2025-08-11T21:58:37.5226546+00:00",
+      "./automation-scripts/0738_Train-AIContext.ps1": "2025-08-11T21:59:31.0016525+00:00",
+      "./automation-scripts/0523_Analyze-SecurityIssues.ps1": "2025-08-11T21:59:18.992653+00:00",
+      "./automation-scripts/0736_Generate-AIWorkflow.ps1": "2025-08-11T21:58:54.1006539+00:00",
+      "./automation-scripts/0512_Schedule-ReportGeneration.ps1": "2025-08-11T22:02:02.2766466+00:00",
+      "./automation-scripts/0520_Analyze-ConfigurationUsage.ps1": "2025-08-11T21:58:38.2656545+00:00",
+      "./automation-scripts/0524_Generate-TechDebtReport.ps1": "2025-08-11T21:59:50.7156517+00:00",
+      "./automation-scripts/0734_Optimize-AIPerformance.ps1": "2025-08-11T22:00:31.8406501+00:00",
+      "./automation-scripts/0511_Show-ProjectDashboard.ps1": "2025-08-11T21:58:52.342654+00:00",
+      "./automation-scripts/0737_Monitor-AIUsage.ps1": "2025-08-11T21:59:12.4586532+00:00",
+      "./automation-scripts/0530_View-Logs.ps1": "2025-08-11T22:00:06.8956511+00:00",
+      "./automation-scripts/0733_Create-AIDocs.ps1": "2025-08-11T22:00:14.6936508+00:00"
+    },
+    "TodoList": [
+      {
+        "Line": 150,
+        "File": "./automation-scripts/0208_Install-Docker.ps1",
+        "Text": "Write-ScriptLog \"NOTE: You may need to log out and back in for Docker to work properly\" -Level 'Warning'"
+      },
+      {
+        "Line": 43,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "TODOs = @('TODO:', 'TODO\\s*\\(', '\\[TODO\\]', '#\\s*TODO')"
+      },
+      {
+        "Line": 44,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "FIXMEs = @('FIXME:', 'FIXME\\s*\\(', '\\[FIXME\\]', '#\\s*FIXME')"
+      },
+      {
+        "Line": 45,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "HACKs = @('HACK:', 'HACK\\s*\\(', '\\[HACK\\]', '#\\s*HACK')"
+      },
+      {
+        "Line": 223,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "TODOs = @('TODO:', 'TODO\\s*\\(', '\\[TODO\\]', '#\\s*TODO')"
+      },
+      {
+        "Line": 224,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "FIXMEs = @('FIXME:', 'FIXME\\s*\\(', '\\[FIXME\\]', '#\\s*FIXME')"
+      },
+      {
+        "Line": 225,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "HACKs = @('HACK:', 'HACK\\s*\\(', '\\[HACK\\]', '#\\s*HACK')"
+      },
+      {
+        "Line": 433,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "$criticalIssues += $results.FIXMEs | ForEach-Object { \"FIXME: $($_.File):$($_.Line) - $($_.Content)\" }"
+      },
+      {
+        "Line": 434,
+        "File": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Text": "$criticalIssues += $results.HACKs | ForEach-Object { \"HACK: $($_.File):$($_.Line) - $($_.Content)\" }"
+      },
+      {
+        "Line": 205,
+        "File": "./automation-scripts/0701_Create-FeatureBranch.ps1",
+        "Text": "$($Description ?? \"TODO: Add description\")"
+      },
+      {
+        "Line": 217,
+        "File": "./automation-scripts/0701_Create-FeatureBranch.ps1",
+        "Text": "TODO: Define acceptance criteria"
+      },
+      {
+        "Line": 243,
+        "File": "./automation-scripts/0701_Create-FeatureBranch.ps1",
+        "Text": "$($Description ?? \"TODO: Add description\")"
+      },
+      {
+        "Line": 248,
+        "File": "./automation-scripts/0701_Create-FeatureBranch.ps1",
+        "Text": "TODO: Add implementation notes"
+      },
+      {
+        "Line": 251,
+        "File": "./automation-scripts/0701_Create-FeatureBranch.ps1",
+        "Text": "TODO: Describe testing approach"
+      },
+      {
+        "Line": 202,
+        "File": "./automation-scripts/0820_Save-WorkContext.ps1",
+        "Text": "$todoPattern = 'TODO:|FIXME:|HACK:|NOTE:'"
+      },
+      {
+        "Line": 150,
+        "File": "./backups/20250811_215012/0208_Install-Docker.ps1",
+        "Text": "Write-ScriptLog \"NOTE: You may need to log out and back in for Docker to work properly\" -Level 'Warning'"
+      },
+      {
+        "Line": 40,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "TODOs = @('TODO:', 'TODO\\s*\\(', '\\[TODO\\]', '#\\s*TODO')"
+      },
+      {
+        "Line": 41,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "FIXMEs = @('FIXME:', 'FIXME\\s*\\(', '\\[FIXME\\]', '#\\s*FIXME')"
+      },
+      {
+        "Line": 42,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "HACKs = @('HACK:', 'HACK\\s*\\(', '\\[HACK\\]', '#\\s*HACK')"
+      },
+      {
+        "Line": 220,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "TODOs = @('TODO:', 'TODO\\s*\\(', '\\[TODO\\]', '#\\s*TODO')"
+      },
+      {
+        "Line": 221,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "FIXMEs = @('FIXME:', 'FIXME\\s*\\(', '\\[FIXME\\]', '#\\s*FIXME')"
+      },
+      {
+        "Line": 222,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "HACKs = @('HACK:', 'HACK\\s*\\(', '\\[HACK\\]', '#\\s*HACK')"
+      },
+      {
+        "Line": 428,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "$criticalIssues += $results.FIXMEs | ForEach-Object { \"FIXME: $($_.File):$($_.Line) - $($_.Content)\" }"
+      },
+      {
+        "Line": 429,
+        "File": "./backups/20250811_215012/0522_Analyze-CodeQuality.ps1",
+        "Text": "$criticalIssues += $results.HACKs | ForEach-Object { \"HACK: $($_.File):$($_.Line) - $($_.Content)\" }"
+      },
+      {
+        "Line": 205,
+        "File": "./backups/20250811_215012/0701_Create-FeatureBranch.ps1",
+        "Text": "$($Description ?? \"TODO: Add description\")"
+      },
+      {
+        "Line": 217,
+        "File": "./backups/20250811_215012/0701_Create-FeatureBranch.ps1",
+        "Text": "TODO: Define acceptance criteria"
+      },
+      {
+        "Line": 243,
+        "File": "./backups/20250811_215012/0701_Create-FeatureBranch.ps1",
+        "Text": "$($Description ?? \"TODO: Add description\")"
+      },
+      {
+        "Line": 248,
+        "File": "./backups/20250811_215012/0701_Create-FeatureBranch.ps1",
+        "Text": "TODO: Add implementation notes"
+      },
+      {
+        "Line": 251,
+        "File": "./backups/20250811_215012/0701_Create-FeatureBranch.ps1",
+        "Text": "TODO: Describe testing approach"
+      },
+      {
+        "Line": 200,
+        "File": "./backups/20250811_215012/0820_Save-WorkContext.ps1",
+        "Text": "$todoPattern = 'TODO:|FIXME:|HACK:|NOTE:'"
+      },
+      {
+        "Line": 321,
+        "File": "./domains/experience/Registry/ComponentRegistry.psm1",
+        "Text": "# Note: This only imports metadata, not the actual factories"
+      },
+      {
+        "Line": 973,
+        "File": "./domains/experience/UserInterface.psm1",
+        "Text": "# Note: Initialize-AitherUI is called lazily when first UI function is used"
+      },
+      {
+        "Line": 114,
+        "File": "./examples/test-new-ui.ps1",
+        "Text": "# Note: In a non-interactive context, this will fall back to classic mode"
+      },
+      {
+        "Line": 177,
+        "File": "./legacy-to-migrate/mig_LabRunner/Public/Invoke-ParallelLabRunner.ps1",
+        "Text": "# Note: ProgressTracking functions need to be available in the runspace"
+      },
+      {
+        "Line": 113,
+        "File": "./legacy-to-migrate/mig_PatchManager/Legacy/CopilotIntegration.ps1",
+        "Text": "# TODO: Add logic to implement suggestion"
+      },
+      {
+        "Line": 126,
+        "File": "./legacy-to-migrate/mig_PatchManager/Legacy/ErrorHandling.ps1",
+        "Text": "# Note: Export-ModuleMember is handled by the parent module"
+      },
+      {
+        "Line": 580,
+        "File": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ComprehensiveIssueTracking.ps1",
+        "Text": "*Note: Some errors affect the entire system or environment rather than specific files.*"
+      },
+      {
+        "Line": 664,
+        "File": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ComprehensiveIssueTracking.ps1",
+        "Text": "# Note: This would typically integrate with GitHub Actions or webhooks"
+      },
+      {
+        "Line": 632,
+        "File": "./tests/unit/domains/development/Git.Tests.ps1",
+        "Text": "# Note: Some git calls still happen for branch validation"
+      },
+      {
+        "Line": 414,
+        "File": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Text": "# Note: Custom assertions would be registered with Pester in a real implementation"
+      },
+      {
+        "Line": 493,
+        "File": "./tests/unit/domains/reporting/TechDebt.Tests.ps1",
+        "Text": "Issues = @(\"TODO: Implement feature\", \"FIXME: Handle edge case\")"
+      },
+      {
+        "Line": 37,
+        "File": "./Initialize-AitherEnvironment.ps1",
+        "Text": "Write-Host \"Note: Use bootstrap.ps1 for persistent installation\" -ForegroundColor Yellow"
+      }
+    ],
+    "OpenIssues": null,
+    "Version": "0.5-minimal"
+  },
+  "Test": {
+    "TestResults": {
+      "Skipped": 2,
+      "Failed": 12,
+      "Duration": 28.4310165,
+      "TotalTests": 57,
+      "Passed": 42
+    },
+    "LastTestRun": "2025-08-11T18:55:30.7910797+00:00",
+    "Coverage": null,
+    "AnalyzerResults": null
+  }
+}

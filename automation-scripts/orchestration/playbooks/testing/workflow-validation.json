@@ -1,0 +1,80 @@
+{
+  "Name": "workflow-validation",
+  "Description": "Validate and test GitHub Actions workflows locally before committing",
+  "Author": "AitherZero",
+  "Version": "1.0.0",
+  "Tags": ["ci", "validation", "workflows", "testing"],
+  "Requirements": {
+    "PowerShellVersion": "7.0",
+    "Modules": [],
+    "Scripts": ["0440", "0441", "0407", "0404"]
+  },
+  "Variables": {
+    "WorkflowPath": ".github/workflows",
+    "ValidateAll": true,
+    "TestLocally": false,
+    "StrictMode": false,
+    "OutputFormat": "Console"
+  },
+  "Sequence": [
+    {
+      "Step": "0440",
+      "Description": "Validate workflow YAML syntax and schema",
+      "Parameters": {
+        "Path": "{{WorkflowPath}}",
+        "All": "{{ValidateAll}}",
+        "Strict": "{{StrictMode}}",
+        "OutputFormat": "{{OutputFormat}}"
+      },
+      "ContinueOnError": false
+    },
+    {
+      "Step": "0407",
+      "Description": "Validate PowerShell syntax in workflows",
+      "Parameters": {
+        "CI": true
+      },
+      "ContinueOnError": true
+    },
+    {
+      "Step": "0404",
+      "Description": "Run PSScriptAnalyzer on workflow scripts",
+      "Parameters": {
+        "OutputFormat": "Console",
+        "ContinueOnError": true
+      },
+      "ContinueOnError": true
+    },
+    {
+      "Step": "0441",
+      "Description": "Test workflows locally with act",
+      "Parameters": {
+        "InstallDependencies": true,
+        "DryRun": true
+      },
+      "Condition": "{{TestLocally}}",
+      "ContinueOnError": true
+    }
+  ],
+  "OnSuccess": {
+    "Message": "✅ All workflow validations passed! Safe to commit.",
+    "Actions": [
+      {
+        "Type": "Log",
+        "Level": "Success",
+        "Message": "Workflows validated successfully"
+      }
+    ]
+  },
+  "OnFailure": {
+    "Message": "❌ Workflow validation failed. Please fix issues before committing.",
+    "Actions": [
+      {
+        "Type": "Log",
+        "Level": "Error",
+        "Message": "Workflow validation failed - check logs for details"
+      }
+    ]
+  },
+  "Profile": "Quick"
+}
