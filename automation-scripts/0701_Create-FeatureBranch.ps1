@@ -147,10 +147,10 @@ if ($existingBranch -or $remoteBranch) {
         'recreate' {
             Write-Host "Deleting existing branch..." -ForegroundColor Yellow
 
-            # Switch to main/master first if we're on the branch to delete
+            # Switch to dev/main/master first if we're on the branch to delete
             $currentBranch = git rev-parse --abbrev-ref HEAD 2>$null
             if ($currentBranch -eq $branchName) {
-                git checkout main 2>$null || git checkout master 2>$null
+                git checkout dev 2>$null || git checkout main 2>$null || git checkout master 2>$null
             }
 
             # Delete local branch

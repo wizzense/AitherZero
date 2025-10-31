@@ -2,7 +2,7 @@ name: 🗂️ Project Index Automation
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, dev ]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'
@@ -15,7 +15,7 @@ on:
       - '**/*.psm1'
   pull_request:
     types: [opened, synchronize, reopened, closed]
-    branches: [ main, develop ]
+    branches: [ main, dev ]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'
@@ -82,8 +82,8 @@ jobs:
           '${{ github.event.inputs.mode }}'
         } elseif ('${{ github.event_name }}' -eq 'pull_request') {
           'Incremental'
-        } elseif ('${{ github.event_name }}' -eq 'push' -and ('${{ github.ref }}' -eq 'refs/heads/main' -or '${{ github.ref }}' -eq 'refs/heads/develop')) {
-          # Use Full mode on main/develop to regenerate all indexes after merge
+        } elseif ('${{ github.event_name }}' -eq 'push' -and ('${{ github.ref }}' -eq 'refs/heads/main' -or '${{ github.ref }}' -eq 'refs/heads/dev')) {
+          # Use Full mode on main/dev to regenerate all indexes after merge
           # This resolves any conflicts from feature branch merges
           'Full'
         } else {
@@ -94,7 +94,7 @@ jobs:
         Write-Host "Event: ${{ github.event_name }}" -ForegroundColor White
         Write-Host "Ref: ${{ github.ref }}" -ForegroundColor White
         
-        # Run index generation with Force flag on main/develop pushes
+        # Run index generation with Force flag on main/dev pushes
         try {
           if ($mode -eq 'Full') {
             ./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode $mode -Force
@@ -154,8 +154,8 @@ jobs:
           echo "UPDATED_PATHS=" >> $env:GITHUB_ENV
         }
         
-    - name: ✅ Validate Index Updates (Main/Develop Branch)
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    - name: ✅ Validate Index Updates (Main/Dev Branch)
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
       shell: pwsh
       run: |
         Write-Host "Validating index updates..." -ForegroundColor Cyan

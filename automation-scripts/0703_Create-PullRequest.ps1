@@ -18,7 +18,7 @@ param(
 
     [string]$Body,
 
-    [string]$Base,
+    [string]$Base = 'dev',
 
     [ValidateSet('feature', 'bugfix', 'hotfix', 'docs', 'refactor')]
     [string]$Template,
