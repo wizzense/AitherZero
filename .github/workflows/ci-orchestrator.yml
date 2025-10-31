@@ -1,0 +1,345 @@
+---
+name: 'CI/CD Orchestrator'
+
+# World-class CI/CD pipeline orchestrator
+# Coordinates all validation, testing, review, and deployment workflows
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip test execution'
+        type: boolean
+        default: false
+      skip_reviews:
+        description: 'Skip automated reviews'
+        type: boolean
+        default: false
+
+# Prevent concurrent runs on same PR/branch
+concurrency:
+  group: ci-orchestrator-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+  statuses: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  # Analyze what changed to optimize pipeline execution
+  change-detection:
+    name: 'Detect Changes'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has-powershell: ${{ steps.detect.outputs.has-powershell }}
+      has-workflows: ${{ steps.detect.outputs.has-workflows }}
+      has-docs: ${{ steps.detect.outputs.has-docs }}
+      has-tests: ${{ steps.detect.outputs.has-tests }}
+      has-config: ${{ steps.detect.outputs.has-config }}
+      change-count: ${{ steps.detect.outputs.change-count }}
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Detect Changes'
+        id: detect
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Analyzing changes..." -ForegroundColor Cyan
+
+          # Get changed files
+          $changedFiles = @()
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            $changedFiles = git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD
+          } else {
+            $changedFiles = git diff --name-only HEAD~1..HEAD
+          }
+
+          # Categorize changes
+          $hasPowerShell = $changedFiles -match '\.(ps1|psm1|psd1)$' | Measure-Object | Select-Object -ExpandProperty Count
+          $hasWorkflows = $changedFiles -match '\.github/workflows/.*\.yml$' | Measure-Object | Select-Object -ExpandProperty Count
+          $hasDocs = $changedFiles -match '\.(md|txt)$' | Measure-Object | Select-Object -ExpandProperty Count
+          $hasTests = $changedFiles -match '\.Tests\.ps1$' | Measure-Object | Select-Object -ExpandProperty Count
+          $hasConfig = $changedFiles -match 'config\.psd1$' | Measure-Object | Select-Object -ExpandProperty Count
+
+          # Output results
+          echo "has-powershell=$($hasPowerShell -gt 0)" >> $env:GITHUB_OUTPUT
+          echo "has-workflows=$($hasWorkflows -gt 0)" >> $env:GITHUB_OUTPUT
+          echo "has-docs=$($hasDocs -gt 0)" >> $env:GITHUB_OUTPUT
+          echo "has-tests=$($hasTests -gt 0)" >> $env:GITHUB_OUTPUT
+          echo "has-config=$($hasConfig -gt 0)" >> $env:GITHUB_OUTPUT
+          echo "change-count=$($changedFiles.Count)" >> $env:GITHUB_OUTPUT
+
+          Write-Host "✅ Changes detected:" -ForegroundColor Green
+          Write-Host "   PowerShell files: $hasPowerShell" -ForegroundColor White
+          Write-Host "   Workflows: $hasWorkflows" -ForegroundColor White
+          Write-Host "   Documentation: $hasDocs" -ForegroundColor White
+          Write-Host "   Tests: $hasTests" -ForegroundColor White
+          Write-Host "   Config: $hasConfig" -ForegroundColor White
+          Write-Host "   Total changes: $($changedFiles.Count)" -ForegroundColor White
+
+  # Fast validation checks (parallel execution)
+  fast-validation:
+    name: 'Fast Validation'
+    needs: change-detection
+    if: needs.change-detection.outputs.has-powershell == 'true' || needs.change-detection.outputs.has-workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        validation: [syntax, linting, manifests]
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Bootstrap Environment'
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Bootstrapping minimal environment..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+
+      - name: 'Cache Modules'
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-powershell-${{ matrix.validation }}-v1
+
+      - name: 'Run Validation - ${{ matrix.validation }}'
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+
+          switch ("${{ matrix.validation }}") {
+            "syntax" {
+              Write-Host "🔍 Running syntax validation..." -ForegroundColor Cyan
+              & ./automation-scripts/0407_Validate-Syntax.ps1 -All
+            }
+            "linting" {
+              Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
+              if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+                Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+              }
+              & ./automation-scripts/0404_Invoke-PSScriptAnalyzer.ps1
+            }
+            "manifests" {
+              Write-Host "🔍 Validating manifests..." -ForegroundColor Cyan
+              & ./automation-scripts/0405_Validate-ModuleManifests.ps1
+            }
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ ${{ matrix.validation }} validation failed!" -ForegroundColor Red
+            exit 1
+          }
+
+  # Quality validation (runs after fast validation)
+  quality-check:
+    name: 'Quality Check'
+    needs: [change-detection, fast-validation]
+    if: needs.change-detection.outputs.has-powershell == 'true' && !inputs.skip_tests
+    uses: ./.github/workflows/quality-validation.yml
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+      issues: write
+
+  # Comprehensive testing
+  test-suite:
+    name: 'Test Suite'
+    needs: [change-detection, fast-validation]
+    if: needs.change-detection.outputs.has-powershell == 'true' && !inputs.skip_tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        test-type: [unit, integration, domain]
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Bootstrap'
+        shell: pwsh
+        run: |
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Standard
+
+      - name: 'Run Tests - ${{ matrix.test-type }}'
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+
+          $testPath = switch ("${{ matrix.test-type }}") {
+            "unit" { "./tests/unit" }
+            "integration" { "./tests/integration" }
+            "domain" { "./tests/domains" }
+          }
+
+          if (Test-Path $testPath) {
+            Write-Host "🧪 Running ${{ matrix.test-type }} tests..." -ForegroundColor Cyan
+            $result = Invoke-Pester -Path $testPath -Output Detailed -PassThru
+
+            if ($result.FailedCount -gt 0) {
+              Write-Host "❌ Tests failed: $($result.FailedCount)" -ForegroundColor Red
+              exit 1
+            }
+
+            Write-Host "✅ All tests passed!" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️ No tests found at $testPath" -ForegroundColor Yellow
+          }
+
+      - name: 'Upload Test Results'
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.test-type }}
+          path: |
+            tests/results/**/*.xml
+            tests/results/**/*.json
+          retention-days: 30
+
+  # Automated PR reviews (parallel)
+  automated-reviews:
+    name: 'Automated Reviews'
+    needs: change-detection
+    if: github.event_name == 'pull_request' && !inputs.skip_reviews
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        reviewer: [copilot, gemini]
+
+    steps:
+      - name: 'Trigger ${{ matrix.reviewer }} Review'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reviewer = '${{ matrix.reviewer }}';
+            const prNumber = context.payload.pull_request.number;
+
+            core.info(`🤖 Triggering ${reviewer} review for PR #${prNumber}`);
+
+            // Post comment to trigger review workflow
+            const triggerCommand = reviewer === 'copilot'
+              ? '@copilot /review'
+              : '@gemini-cli /review';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `${triggerCommand}\n\nAutomated review triggered by CI/CD orchestrator.`
+            });
+
+            core.info(`✅ ${reviewer} review triggered successfully`);
+
+  # Security scanning
+  security-scan:
+    name: 'Security Scan'
+    needs: fast-validation
+    if: needs.change-detection.outputs.has-powershell == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Run Security Scan'
+        shell: pwsh
+        run: |
+          Write-Host "🔒 Running security scan..." -ForegroundColor Cyan
+
+          # Check for secrets
+          $files = Get-ChildItem -Recurse -Include *.ps1,*.psm1,*.psd1
+          $issues = @()
+
+          foreach ($file in $files) {
+            $content = Get-Content $file.FullName -Raw
+
+            # Basic secret detection patterns
+            if ($content -match 'password\s*=\s*[''"][^''"]') {
+              $issues += "Potential hardcoded password in $($file.Name)"
+            }
+            if ($content -match 'apikey\s*=\s*[''"][^''"]') {
+              $issues += "Potential API key in $($file.Name)"
+            }
+          }
+
+          if ($issues.Count -gt 0) {
+            Write-Host "⚠️ Security issues found:" -ForegroundColor Yellow
+            $issues | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+            Write-Host ""
+            Write-Host "Please review and remove any hardcoded secrets." -ForegroundColor Yellow
+          } else {
+            Write-Host "✅ No obvious security issues detected" -ForegroundColor Green
+          }
+
+  # Pipeline summary and status
+  ci-summary:
+    name: 'CI Summary'
+    needs: [change-detection, fast-validation, quality-check, test-suite, automated-reviews, security-scan]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Generate Summary'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `# 🚀 CI/CD Pipeline Summary
+
+            ## 📊 Execution Results
+
+            | Stage | Status |
+            |-------|--------|
+            | Change Detection | ${{ needs.change-detection.result }} |
+            | Fast Validation | ${{ needs.fast-validation.result }} |
+            | Quality Check | ${{ needs.quality-check.result }} |
+            | Test Suite | ${{ needs.test-suite.result }} |
+            | Automated Reviews | ${{ needs.automated-reviews.result }} |
+            | Security Scan | ${{ needs.security-scan.result }} |
+
+            ## 📈 Change Analysis
+
+            - PowerShell Changes: ${{ needs.change-detection.outputs.has-powershell }}
+            - Workflow Changes: ${{ needs.change-detection.outputs.has-workflows }}
+            - Documentation: ${{ needs.change-detection.outputs.has-docs }}
+            - Total Files: ${{ needs.change-detection.outputs.change-count }}
+
+            ## 🎯 Next Steps
+
+            ${context.eventName === 'pull_request'
+              ? '- Review automated feedback from Copilot and Gemini\n- Address any validation or test failures\n- Ensure all quality gates pass'
+              : '- Monitor deployment\n- Check production metrics\n- Review release notes'
+            }
+            `;
+
+            core.summary.addRaw(summary);
+            await core.summary.write();
+
+      - name: 'Set Final Status'
+        if: contains(needs.*.result, 'failure')
+        run: |
+          echo "::error::One or more CI/CD stages failed"
+          exit 1
