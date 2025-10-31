@@ -237,10 +237,18 @@ jobs:
                       const baseName = fileName.replace(/\.(ps1|psm1|psd1)$/, '');
                       const detailedReportFiles = fs.readdirSync(reportsDir)
                         .filter(f => {
-                          // Match files that contain the base name followed by .json (not summary)
-                          // Use word boundary-like matching to avoid substring matches
-                          const namePattern = new RegExp(`-${baseName.replace(/[.*+?^${}()|\\[\\]\\\\]/g, '\\$&')}\\.json$`, 'i');
-                          return namePattern.test(f) && !f.includes('summary');
+                          try {
+                            // Match files that contain the base name followed by .json (not summary)
+                            // Use word boundary-like matching to avoid substring matches
+                            // Escape special regex characters to prevent syntax errors
+                            const escapedName = baseName.replace(/[.*+?^${}()|\\[\]\\]/g, '\\$&');
+                            const namePattern = new RegExp(`-${escapedName}\\.json$`, 'i');
+                            return namePattern.test(f) && !f.includes('summary');
+                          } catch (regexError) {
+                            // If regex construction fails, fall back to simple string matching
+                            console.error(`Regex error for ${fileName}: ${regexError.message}`);
+                            return f.includes(baseName) && f.endsWith('.json') && !f.includes('summary');
+                          }
                         });
 
                       if (detailedReportFiles.length > 0) {

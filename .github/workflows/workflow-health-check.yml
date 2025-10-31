@@ -1,0 +1,165 @@
+name: Workflow Health Check
+
+# Validates all workflows for syntax errors before they run
+# This prevents one broken workflow from hiding other workflow statuses
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: workflow-health-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-workflows:
+    name: Validate All Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: |
+          pip install yamllint
+          yamllint --version
+
+      - name: Validate YAML Syntax
+        id: yaml-check
+        run: |
+          echo "🔍 Checking YAML syntax for all workflows..."
+          
+          # Count files
+          total_files=$(find .github/workflows -name "*.yml" -o -name "*.yaml" | wc -l)
+          echo "📝 Found $total_files workflow files"
+          
+          # Validate each file
+          failed_files=()
+          passed_files=()
+          
+          while IFS= read -r file; do
+            echo "Checking: $file"
+            if yamllint -d relaxed "$file" > /dev/null 2>&1; then
+              passed_files+=("$file")
+              echo "  ✅ PASS"
+            else
+              failed_files+=("$file")
+              echo "  ❌ FAIL"
+              echo "Error details:"
+              yamllint -d relaxed "$file" 2>&1 | head -10
+            fi
+          done < <(find .github/workflows -name "*.yml" -o -name "*.yaml")
+          
+          # Summary
+          echo ""
+          echo "========================================="
+          echo "VALIDATION SUMMARY"
+          echo "========================================="
+          echo "✅ Passed: ${#passed_files[@]}"
+          echo "❌ Failed: ${#failed_files[@]}"
+          echo "📊 Total:  $total_files"
+          
+          if [ ${#failed_files[@]} -gt 0 ]; then
+            echo ""
+            echo "❌ Failed files:"
+            printf '%s\n' "${failed_files[@]}"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All workflow files have valid YAML syntax!"
+
+      - name: Validate GitHub Actions Syntax
+        id: actions-check
+        run: |
+          echo "🔍 Checking for common GitHub Actions syntax issues..."
+          
+          errors_found=0
+          
+          # Check for common issues
+          while IFS= read -r file; do
+            echo "Checking: $file"
+            
+            # Check for unescaped regex in JavaScript
+            if grep -n 'new RegExp.*\[.*\].*\]' "$file" 2>/dev/null; then
+              echo "  ⚠️  WARNING: Potential unescaped regex character class"
+              errors_found=$((errors_found + 1))
+            fi
+            
+            # Check for inputs usage outside workflow_dispatch
+            if grep -n 'inputs\.' "$file" | grep -v 'workflow_dispatch' | grep -v 'workflow_call' 2>/dev/null; then
+              echo "  ⚠️  WARNING: 'inputs' context used without workflow_dispatch/workflow_call"
+              errors_found=$((errors_found + 1))
+            fi
+            
+          done < <(find .github/workflows -name "*.yml" -o -name "*.yaml")
+          
+          if [ $errors_found -gt 0 ]; then
+            echo ""
+            echo "⚠️  Found $errors_found potential issues (warnings only)"
+          else
+            echo ""
+            echo "✅ No common syntax issues detected!"
+          fi
+
+      - name: Comment on PR with Results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const yamlCheck = '${{ steps.yaml-check.outcome }}';
+            const actionsCheck = '${{ steps.actions-check.outcome }}';
+            
+            const statusIcon = yamlCheck === 'success' && actionsCheck === 'success' ? '✅' : '❌';
+            const statusText = yamlCheck === 'success' && actionsCheck === 'success' ? 'Passed' : 'Failed';
+            
+            const comment = `## ${statusIcon} Workflow Health Check: ${statusText}
+            
+            | Check | Status |
+            |-------|--------|
+            | YAML Syntax | ${yamlCheck === 'success' ? '✅ Passed' : '❌ Failed'} |
+            | Actions Syntax | ${actionsCheck === 'success' ? '✅ Passed' : '⚠️ Warnings'} |
+            
+            ${yamlCheck !== 'success' ? '⚠️ **YAML validation failed** - Workflows with syntax errors cannot run and will not show as checks in the PR!' : ''}
+            
+            <details>
+            <summary>ℹ️ About This Check</summary>
+            
+            This workflow validates all GitHub Actions workflows before they run. This ensures:
+            - All workflows have valid YAML syntax
+            - No common syntax errors that prevent execution
+            - All workflow checks will appear in PR status
+            
+            If this check fails, **other workflows may not run** or appear as checks.
+            </details>
+            `;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });
+
+      - name: Fail if Errors Found
+        if: steps.yaml-check.outcome != 'success'
+        run: |
+          echo "❌ Workflow validation failed!"
+          echo ""
+          echo "⚠️  CRITICAL: Workflows with syntax errors will NOT appear as PR checks!"
+          echo "This is why you see checks 'disappearing' - they never started due to syntax errors."
+          exit 1
