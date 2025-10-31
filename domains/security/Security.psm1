@@ -283,10 +283,11 @@ function ConvertFrom-SecureStringSecurely {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [ValidateNotNull()]
         [System.Security.SecureString]$SecureString
     )
     
-    if ($null -eq $SecureString -or $SecureString.Length -eq 0) {
+    if ($SecureString.Length -eq 0) {
         return [string]::Empty
     }
     
