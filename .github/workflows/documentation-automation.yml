@@ -3,21 +3,9 @@ name: 📚 Documentation Automation
 on:
   push:
     branches: [ main, develop ]
-    paths:
-      - 'domains/**/*.psm1'
-      - 'automation-scripts/**/*.ps1'
-      - 'AitherZero.psd1'
-      - 'README.md'
-      - 'docs/**'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [ main, develop ]
-    paths:
-      - 'domains/**/*.psm1'
-      - 'automation-scripts/**/*.ps1'
-      - 'AitherZero.psd1'
-      - 'README.md'
-      - 'docs/**'
   workflow_dispatch:
     inputs:
       mode:

@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Supports PowerShell 5.1+ but will install PowerShell 7
 
 <#
@@ -205,7 +205,7 @@ function Get-DefaultInstallPath {
     return $InstallPath
 }
 
-function Test-Dependencies {
+function Test-Dependency {
     Write-BootstrapLog "Checking system dependencies..." -Level Info
 
     $missing = @()
@@ -270,7 +270,7 @@ function Test-Dependencies {
 
         if ($shouldInstall) {
             Write-BootstrapLog "Will attempt to install missing dependencies ($reason)" -Level Info
-            Install-Dependencies -Missing $missing
+            Install-Dependency -Missing $missing
         } else {
             Write-BootstrapLog "Automatic dependency installation not enabled" -Level Warning
             Write-BootstrapLog "To enable automatic installation, use: bootstrap.ps1 -AutoInstallDeps" -Level Info
@@ -294,7 +294,7 @@ function Test-Dependencies {
     }
 }
 
-function Install-Dependencies {
+function Install-Dependency {
     param([string[]]$Missing)
 
     Write-BootstrapLog "Installing missing dependencies: $($Missing -join ', ')" -Level Info
@@ -727,7 +727,7 @@ function Install-AitherZero {
         Push-Location $scriptRootPath
         try {
             Initialize-Configuration
-            Setup-DevelopmentEnvironment
+            Initialize-DevelopmentEnvironment
             return $scriptRootPath
         } finally { Pop-Location }
     }
@@ -743,7 +743,7 @@ function Install-AitherZero {
         Initialize-Configuration
 
         # Set up development environment
-        Setup-DevelopmentEnvironment
+        Initialize-DevelopmentEnvironment
 
         return $installPath
     }
@@ -768,7 +768,7 @@ function Install-AitherZero {
             try {
                 # Just set up environment
                 Initialize-Configuration
-                Setup-DevelopmentEnvironment
+                Initialize-DevelopmentEnvironment
             } finally {
                 Pop-Location
             }
@@ -831,7 +831,7 @@ function Install-AitherZero {
         Initialize-Configuration
 
         # Set up development environment
-        Setup-DevelopmentEnvironment
+        Initialize-DevelopmentEnvironment
     } finally {
         Pop-Location
     }
@@ -882,7 +882,7 @@ function Initialize-Configuration {
     }
 }
 
-function Setup-DevelopmentEnvironment {
+function Initialize-DevelopmentEnvironment {
     Write-BootstrapLog "Setting up development environment..." -Level Info
 
     # 1. Add to PowerShell profile for automatic loading
@@ -1137,7 +1137,12 @@ function Remove-AitherZero {
 try {
     # Only clear host in interactive sessions
     if (-not $NonInteractive -and -not $env:CI -and $host.UI.RawUI) {
-        try { Clear-Host } catch { }
+        try { 
+            Clear-Host 
+        } catch { 
+            # Silently ignore errors when clearing host in non-interactive environments
+            Write-Verbose "Could not clear host: $_"
+        }
     }
     Write-BootstrapLog @"
     _    _ _   _               ______
@@ -1180,7 +1185,7 @@ try {
         Write-BootstrapLog "Installing AitherZero..." -Level Info
 
         # Test dependencies
-        Test-Dependencies
+        Test-Dependency
 
         # Install AitherZero
         $installPath = Install-AitherZero

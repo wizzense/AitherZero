@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 #Requires -Version 7.0
 
 <#
@@ -11,9 +11,6 @@
     - Properly imports and initializes the module
     - Provides an interactive PowerShell session with AitherZero ready to use
     - Automatically runs Start-AitherZero if needed
-
-.PARAMETER Interactive
-    Start an interactive PowerShell session (default)
 
 .PARAMETER Command
     Execute a specific command instead of starting interactive session
@@ -28,10 +25,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$Command = "",
-    
-    [Parameter(Mandatory = $false)]
-    [switch]$Interactive
+    [string]$Command = ""
 )
 
 # Always work from the AitherZero installation directory
@@ -49,7 +43,9 @@ if (-not (Get-Module -Name AitherZero)) {
 # If a command was provided, execute it
 if (-not [string]::IsNullOrWhiteSpace($Command)) {
     Write-Host "🚀 Executing: $Command" -ForegroundColor Cyan
-    Invoke-Expression $Command
+    # Use script block invocation instead of Invoke-Expression for security
+    $scriptBlock = [scriptblock]::Create($Command)
+    & $scriptBlock
     exit $LASTEXITCODE
 }
 
