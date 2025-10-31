@@ -303,7 +303,7 @@
             IssueManagement = @{
                 Creation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0800', '0810', '0825', '0831', '0832')
+                    Scripts = @('0800', '0810', '0825', '0832')
                     Description = 'Issue creation from tests, manual triggers, file generation, and prompt generation'
                 }
                 Analysis = @{
@@ -1302,8 +1302,14 @@
         CompressReports = $false
         IncludeSystemInfo = $true
         IncludeExecutionLogs = $true
+        IncludeScreenshots = $false
         MetricsCollection = $true
         MetricsRetentionDays = 90
+        TemplateEngine = 'Default'
+        
+        # Report distribution
+        EmailReports = $false
+        UploadToCloud = $false
         
         # Dashboard
         DashboardEnabled = $true
