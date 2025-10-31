@@ -16,6 +16,12 @@ if (Test-Path $textUtilsPath) {
     Import-Module $textUtilsPath -Force -ErrorAction SilentlyContinue
 }
 
+# Import security module for secure SecureString handling (if available in domains)
+$securityModulePath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/security/Security.psm1"
+if (Test-Path $securityModulePath) {
+    Import-Module $securityModulePath -Force -ErrorAction SilentlyContinue
+}
+
 # Module state
 $script:UIState = @{
     Theme = 'Default'
@@ -717,9 +723,21 @@ function Show-UIPrompt {
 
         if ($Secret) {
             $response = Read-Host -AsSecureString
-            $response = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                [Runtime.InteropServices.Marshal]::SecureStringToBSTR($response)
-            )
+            # Use secure conversion that properly cleans up memory
+            if (Get-Command ConvertFrom-SecureStringSecurely -ErrorAction SilentlyContinue) {
+                $response = ConvertFrom-SecureStringSecurely -SecureString $response
+            } else {
+                # Fallback with proper cleanup if Security module not loaded
+                $bstr = [IntPtr]::Zero
+                try {
+                    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($response)
+                    $response = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+                } finally {
+                    if ($bstr -ne [IntPtr]::Zero) {
+                        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+                    }
+                }
+            }
     } else {
             $response = Read-Host
         }

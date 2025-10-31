@@ -131,7 +131,18 @@ function Get-GitHubToken {
         Write-Host "GitHub Personal Access Token required with 'repo' and 'admin:org' scopes"
         Write-Host "Create one at: https://github.com/settings/tokens"
         $secureToken = Read-Host "Enter token" -AsSecureString
-        return [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken))
+        
+        # Securely convert with proper memory cleanup
+        $bstr = [IntPtr]::Zero
+        try {
+            $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+            return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+        } finally {
+            # Always zero and free BSTR memory
+            if ($bstr -ne [IntPtr]::Zero) {
+                [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+            }
+        }
     } else {
         throw "GitHub token required. Set -Token parameter or authenticate with 'gh auth login'"
     }
