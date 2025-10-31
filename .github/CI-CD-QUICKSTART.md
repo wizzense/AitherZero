@@ -61,16 +61,16 @@ On every PR update:
 Before pushing, run local tests:
 ```powershell
 # Run unit tests
-./az.ps1 0402
+az 0402
 
 # Run syntax validation
-./az.ps1 0407
+az 0407
 
 # Run PSScriptAnalyzer
-./az.ps1 0404
+az 0404
 
 # Generate project report
-./az.ps1 0510 -ShowAll
+az 0510 -ShowAll
 ```
 
 ## For Maintainers
