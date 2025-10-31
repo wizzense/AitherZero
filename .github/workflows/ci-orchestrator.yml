@@ -358,7 +358,13 @@ jobs:
             await core.summary.write();
 
       - name: 'Set Final Status'
-        if: contains(needs.*.result, 'failure')
+        if: |
+          needs.change-detection.result == 'failure' ||
+          needs.fast-validation.result == 'failure' ||
+          needs.quality-check.result == 'failure' ||
+          needs.test-suite.result == 'failure' ||
+          needs.automated-reviews.result == 'failure' ||
+          needs.security-scan.result == 'failure'
         run: |
           echo "::error::One or more CI/CD stages failed"
           exit 1
