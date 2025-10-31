@@ -3,7 +3,6 @@ name: 'Validate Config Manifest'
 
 on:
   push:
-    # Only run on base branches to avoid duplicate runs with pull_request events
     branches: [main, develop]
     paths:
       - 'config.psd1'
@@ -12,6 +11,7 @@ on:
       - 'domains/**/*.psm1'
       - 'automation-scripts/*.ps1'
   pull_request:
+    types: [opened, synchronize, reopened]
     paths:
       - 'config.psd1'
       - 'automation-scripts/0003_Sync-ConfigManifest.ps1'
@@ -20,10 +20,20 @@ on:
       - 'automation-scripts/*.ps1'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: validate-config-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-config:
     name: 'Validate Config.psd1'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: 'Checkout Repository'

@@ -239,7 +239,7 @@ jobs:
                         .filter(f => {
                           // Match files that contain the base name followed by .json (not summary)
                           // Use word boundary-like matching to avoid substring matches
-                          const namePattern = new RegExp(`-${baseName.replace(/[.*+?^${}()|[\]\]/g, '\\$&')}\\.json$`, 'i');
+                          const namePattern = new RegExp(`-${baseName.replace(/[.*+?^${}()|\\[\\]\\\\]/g, '\\$&')}\\.json$`, 'i');
                           return namePattern.test(f) && !f.includes('summary');
                         });
 
