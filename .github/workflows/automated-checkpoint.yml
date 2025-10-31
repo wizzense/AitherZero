@@ -1,0 +1,135 @@
+name: Automated Repository Checkpoints
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual checkpoint'
+        required: false
+        default: 'Manual checkpoint'
+
+permissions:
+  contents: write
+
+jobs:
+  create-checkpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create checkpoint branch
+        id: checkpoint
+        run: |
+          # Generate timestamp-based branch name
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          BRANCH_NAME="checkpoint/main/${TIMESTAMP}"
+          
+          # Get current commit info
+          COMMIT_SHA=$(git rev-parse HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          
+          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
+          echo "commit_msg=${COMMIT_MSG}" >> $GITHUB_OUTPUT
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
+          
+          # Create and push checkpoint branch
+          git checkout -b "${BRANCH_NAME}"
+          git push origin "${BRANCH_NAME}"
+          
+          echo "✅ Created checkpoint branch: ${BRANCH_NAME}"
+          echo "📌 Commit: ${COMMIT_SHA}"
+          echo "💬 Message: ${COMMIT_MSG}"
+
+      - name: Cleanup old checkpoints
+        run: |
+          # Keep checkpoints for the last 7 days only
+          # Use Python for cross-platform compatibility (works on Ubuntu, macOS, BSD)
+          CUTOFF_DATE=$(python3 -c "from datetime import datetime, timedelta; print((datetime.utcnow() - timedelta(days=7)).strftime('%Y%m%d'))")
+          
+          echo "🧹 Cleaning up checkpoints older than ${CUTOFF_DATE}..."
+          
+          # List all checkpoint branches
+          git fetch origin
+          CHECKPOINT_BRANCHES=$(git branch -r | grep 'origin/checkpoint/main/' | sed 's|origin/||' | sort)
+          
+          DELETED_COUNT=0
+          for branch in $CHECKPOINT_BRANCHES; do
+            # Extract date from branch name (format: checkpoint/main/YYYYMMDD-HHMMSS)
+            # Using sed for better portability across systems
+            BRANCH_DATE=$(echo "$branch" | sed -n 's|^checkpoint/main/\([0-9]\{8\}\)-.*$|\1|p' || echo "")
+            
+            if [[ -n "$BRANCH_DATE" && "$BRANCH_DATE" < "$CUTOFF_DATE" ]]; then
+              echo "  Deleting old checkpoint: $branch (date: $BRANCH_DATE)"
+              git push origin --delete "$branch" 2>/dev/null || echo "  ⚠️  Failed to delete $branch"
+              DELETED_COUNT=$((DELETED_COUNT + 1))
+            fi
+          done
+          
+          echo "✅ Cleanup complete. Deleted ${DELETED_COUNT} old checkpoint(s)."
+
+      - name: Create checkpoint summary
+        run: |
+          cat << EOF > checkpoint-summary.md
+          # 🔖 Automated Checkpoint Created
+          
+          **Branch:** \`${{ steps.checkpoint.outputs.branch_name }}\`  
+          **Timestamp:** ${{ steps.checkpoint.outputs.timestamp }} UTC  
+          **Commit:** \`${{ steps.checkpoint.outputs.commit_sha }}\`  
+          **Message:** ${{ steps.checkpoint.outputs.commit_msg }}
+          
+          ## 🎯 Purpose
+          
+          This checkpoint provides an automated backup of the repository state for easy recovery.
+          
+          ## 🔄 Restore Instructions
+          
+          To restore from this checkpoint:
+          
+          \`\`\`bash
+          # Restore entire repository
+          git fetch origin
+          git checkout ${{ steps.checkpoint.outputs.branch_name }}
+          git checkout -b restore-from-checkpoint
+          git push origin restore-from-checkpoint
+          
+          # Or restore specific directory (e.g., workflows)
+          git fetch origin
+          git checkout ${{ steps.checkpoint.outputs.branch_name }} -- .github/workflows/
+          git commit -m "Restore workflows from checkpoint ${{ steps.checkpoint.outputs.timestamp }}"
+          \`\`\`
+          
+          ## 📋 Checkpoint Details
+          
+          - **Frequency:** Every 15 minutes
+          - **Retention:** 7 days
+          - **Branch Pattern:** \`checkpoint/main/YYYYMMDD-HHMMSS\`
+          
+          ---
+          
+          *This checkpoint was automatically created by the [Automated Repository Checkpoints](.github/workflows/automated-checkpoint.yml) workflow.*
+          EOF
+          
+          echo "📄 Checkpoint summary:"
+          cat checkpoint-summary.md
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Checkpoint workflow completed successfully"
+          else
+            echo "❌ Checkpoint workflow failed"
+          fi
