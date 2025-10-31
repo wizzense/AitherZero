@@ -302,5 +302,5 @@ For open PRs targeting `main`:
 ## See Also
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contributor guide
-- [.github/workflows/](. github/workflows/) - CI/CD workflow definitions
+- [.github/workflows/](.github/workflows/) - CI/CD workflow definitions
 - [automation-scripts/070x](automation-scripts/) - Git automation scripts
