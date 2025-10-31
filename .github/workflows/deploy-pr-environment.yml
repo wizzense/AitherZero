@@ -1,0 +1,644 @@
+---
+name: Deploy PR Environment and Releases
+
+# Deploy ephemeral test environments for PRs AND build/publish release images
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, develop]
+  push:
+    tags: ["v*"]
+  release:
+    types: [published]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to deploy (leave empty for release)"
+        required: false
+        type: number
+      release_tag:
+        description: "Release tag (e.g., v1.0.0)"
+        required: false
+        type: string
+      force_redeploy:
+        description: "Force redeployment even if environment exists"
+        type: boolean
+        default: false
+
+# Prevent concurrent deployments for the same PR or release
+concurrency:
+  group: deploy-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.release.tag_name || github.ref_name }}
+  cancel-in-progress: false # Don't cancel in-progress deployments
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+  deployments: write
+  packages: write # Required to push to GitHub Container Registry
+  id-token: write # For OIDC authentication to cloud providers
+
+env:
+  DEPLOYMENT_TYPE: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') && 'release' || 'preview' }}
+  CONTAINER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/aitherzero
+
+jobs:
+  # Determine if deployment should proceed
+  check-deployment-trigger:
+    name: Check Deployment Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.check.outputs.should-deploy }}
+      pr-number: ${{ steps.check.outputs.pr-number }}
+      deployment-comment: ${{ steps.check.outputs.deployment-comment }}
+      is-release: ${{ steps.check.outputs.is-release }}
+      release-tag: ${{ steps.check.outputs.release-tag }}
+
+    steps:
+      - name: 🔍 Check Deployment Conditions
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let shouldDeploy = false;
+            let prNumber = null;
+            let isDeploymentComment = false;
+            let isRelease = false;
+            let releaseTag = null;
+
+            // Handle different trigger types
+            if (context.eventName === 'pull_request') {
+              // Auto-deploy on PR events (except drafts)
+              shouldDeploy = !context.payload.pull_request.draft;
+              prNumber = context.payload.pull_request.number;
+              core.info(`PR event: #${prNumber}, Draft: ${context.payload.pull_request.draft}`);
+
+            } else if (context.eventName === 'push' && context.ref.startsWith('refs/tags/')) {
+              // Tag push - this is a release
+              shouldDeploy = true;
+              isRelease = true;
+              releaseTag = context.ref.replace('refs/tags/', '');
+              core.info(`Tag push event: ${releaseTag}`);
+
+            } else if (context.eventName === 'release') {
+              // Release event
+              shouldDeploy = true;
+              isRelease = true;
+              releaseTag = context.payload.release.tag_name;
+              core.info(`Release event: ${releaseTag}`);
+
+            } else if (context.eventName === 'issue_comment') {
+              // Deploy on comment commands
+              const comment = context.payload.comment.body.toLowerCase();
+              const isPR = !!context.payload.issue.pull_request;
+
+              isDeploymentComment = (
+                comment.includes('/deploy') ||
+                comment.includes('@deploy') ||
+                comment.includes('deploy environment')
+              );
+
+              shouldDeploy = isPR && isDeploymentComment;
+              prNumber = context.payload.issue.number;
+              core.info(`Comment event on ${isPR ? 'PR' : 'issue'} #${prNumber}: Deploy command: ${isDeploymentComment}`);
+
+            } else if (context.eventName === 'workflow_dispatch') {
+              // Manual deployment trigger
+              shouldDeploy = true;
+              if (context.payload.inputs.pr_number) {
+                prNumber = context.payload.inputs.pr_number;
+                core.info(`Manual deployment trigger for PR #${prNumber}`);
+              } else if (context.payload.inputs.release_tag) {
+                isRelease = true;
+                releaseTag = context.payload.inputs.release_tag;
+                core.info(`Manual deployment trigger for release ${releaseTag}`);
+              }
+            }
+
+            core.setOutput('should-deploy', shouldDeploy);
+            core.setOutput('pr-number', prNumber);
+            core.setOutput('deployment-comment', isDeploymentComment);
+            core.setOutput('is-release', isRelease);
+            core.setOutput('release-tag', releaseTag);
+
+            if (!shouldDeploy) {
+              core.notice('Deployment skipped: Conditions not met');
+            }
+
+  # Validate Docker configuration
+  validate-docker-config:
+    name: Validate Docker Configuration
+    runs-on: ubuntu-latest
+    needs: check-deployment-trigger
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true'
+    outputs:
+      validation-passed: ${{ steps.validate.outputs.passed }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check-deployment-trigger.outputs.is-release == 'true' && needs.check-deployment-trigger.outputs.release-tag || format('refs/pull/{0}/head', needs.check-deployment-trigger.outputs.pr-number) }}
+          fetch-depth: 0
+
+      - name: 🔍 Run Quick Docker Validation
+        id: validate
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Running Docker configuration validation..." -ForegroundColor Cyan
+
+          try {
+            # Run the quick validation script with explicit -File parameter
+            pwsh -File ./automation-scripts/0853_Quick-Docker-Validation.ps1
+
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "✅ Validation passed" -ForegroundColor Green
+              echo "passed=true" >> $GITHUB_OUTPUT
+            } else {
+              Write-Host "❌ Validation failed" -ForegroundColor Red
+              echo "passed=false" >> $GITHUB_OUTPUT
+              exit 1
+            }
+          } catch {
+            Write-Host "❌ Validation error: $_" -ForegroundColor Red
+            echo "passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          }
+
+      - name: 📊 Upload Validation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-validation-report-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
+          path: reports/pr-docker-quick-validation.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  # Build and push container image
+  build-container:
+    name: Build Container Image
+    runs-on: ubuntu-latest
+    needs: [check-deployment-trigger, validate-docker-config]
+    if: needs.check-deployment-trigger.result == 'success' && needs.validate-docker-config.result == 'success'
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.tag }}
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-url: ${{ steps.image-tag.outputs.image-url }}
+      package-url: ${{ steps.image-tag.outputs.package-url }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check-deployment-trigger.outputs.is-release == 'true' && needs.check-deployment-trigger.outputs.release-tag || format('refs/pull/{0}/head', needs.check-deployment-trigger.outputs.pr-number) }}
+          fetch-depth: 0
+
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔤 Set Lowercase Image Name
+        id: image-name
+        run: |
+          # Convert repository name to lowercase for Docker
+          IMAGE_NAME_LOWER=$(echo "${{ github.repository_owner }}/aitherzero" | tr '[:upper:]' '[:lower:]')
+          echo "image-name=${IMAGE_NAME_LOWER}" >> $GITHUB_OUTPUT
+          echo "Using image name: ${IMAGE_NAME_LOWER}"
+
+      - name: 🏷️ Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}
+          tags: |
+            type=ref,event=pr,prefix=pr-
+            type=sha,prefix=pr-${{ needs.check-deployment-trigger.outputs.pr-number }}-,enable=${{ needs.check-deployment-trigger.outputs.is-release != 'true' }}
+            type=semver,pattern={{version}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+            type=semver,pattern={{major}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+            type=raw,value=latest,enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build and Push Container
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}:buildcache
+          cache-to: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}:buildcache,mode=max
+          build-args: |
+            PR_NUMBER=${{ needs.check-deployment-trigger.outputs.pr-number || '' }}
+            RELEASE_TAG=${{ needs.check-deployment-trigger.outputs.release-tag || '' }}
+            VERSION=${{ needs.check-deployment-trigger.outputs.is-release == 'true' && needs.check-deployment-trigger.outputs.release-tag || '0.0.0.0' }}
+            COMMIT_SHA=${{ github.sha }}
+
+      - name: 📊 Image Build Summary
+        id: image-tag
+        run: |
+          # Extract the first tag (pr-{number}) for deployment
+          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+          echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "Using image tag for deployment: ${IMAGE_TAG}"
+
+          # Generate package URL for GitHub Container Registry
+          # Note: Package name matches the hardcoded image name 'aitherzero'
+          # This ensures consistency between the image push and package URL
+          PACKAGE_URL="https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
+          echo "package-url=${PACKAGE_URL}" >> $GITHUB_OUTPUT
+
+          # Full image URL with registry
+          IMAGE_URL="${IMAGE_TAG}"
+          echo "image-url=${IMAGE_URL}" >> $GITHUB_OUTPUT
+
+          echo "### 🐳 Container Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package URL**: ${PACKAGE_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Labels**: ${{ steps.meta.outputs.labels }}" >> $GITHUB_STEP_SUMMARY
+  # Deploy to Docker Compose (local/simple deployment) - PR only
+  deploy-docker-compose:
+    name: Deploy with Docker Compose
+    runs-on: ubuntu-latest
+    needs: [check-deployment-trigger, build-container]
+    if: needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.check-deployment-trigger.outputs.is-release != 'true'
+    environment:
+      name: pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
+      url: ${{ needs.build-container.outputs.package-url }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy with Docker Compose
+        id: deploy
+        env:
+          PR_NUMBER: ${{ needs.check-deployment-trigger.outputs.pr-number }}
+          BRANCH_NAME: ${{ github.head_ref }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          echo "🚀 Deploying PR #${PR_NUMBER} environment..."
+
+          # Calculate unique port for each PR with automatic rollover
+          # Port range: 8080-8179 (100 ports available)
+          # Formula: 8080 + (PR_NUMBER % 100) ensures ports roll over after 100 PRs
+          DYNAMIC_PORT="$((8080 + (${PR_NUMBER} % 100)))"
+          echo "📡 Dynamic port for PR #${PR_NUMBER}: ${DYNAMIC_PORT}"
+
+          # Create environment-specific compose file
+          cat > docker-compose.pr-${PR_NUMBER}.yml <<EOF
+          services:
+            aitherzero:
+              image: ${{ needs.build-container.outputs.image-tag }}
+              container_name: aitherzero-pr-${PR_NUMBER}
+              environment:
+                - PR_NUMBER=${PR_NUMBER}
+                - BRANCH_NAME=${BRANCH_NAME}
+                - COMMIT_SHA=${COMMIT_SHA}
+                - DEPLOYMENT_ENVIRONMENT=preview
+              ports:
+                - "${DYNAMIC_PORT}:8080"
+              restart: unless-stopped
+          EOF
+
+          # Deploy
+          docker compose -f docker-compose.pr-${PR_NUMBER}.yml up -d
+
+          # Wait for container to be healthy
+          echo "⏳ Waiting for environment to be ready..."
+
+          # Give container time to start (Docker healthcheck has 5s start-period + 30s intervals)
+          echo "⏳ Waiting for initial startup (40 seconds)..."
+          sleep 40
+
+          # Check health status
+          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "no-health")
+          CONTAINER_RUNNING=$(docker inspect --format='{{.State.Running}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "false")
+
+          echo "Container running: ${CONTAINER_RUNNING}"
+          echo "Health status: ${HEALTH_STATUS}"
+
+          if [ "$CONTAINER_RUNNING" = "true" ]; then
+            if [ "$HEALTH_STATUS" = "healthy" ] || [ "$HEALTH_STATUS" = "starting" ] || [ "$HEALTH_STATUS" = "no-health" ]; then
+              echo "✅ Container is running and responsive"
+              docker logs aitherzero-pr-${PR_NUMBER} --tail 20
+            else
+              echo "⚠️ Container is running but health check shows: ${HEALTH_STATUS}"
+              docker logs aitherzero-pr-${PR_NUMBER}
+              # Don't fail - container might still be functional
+            fi
+          else
+            echo "❌ Container failed to start or exited"
+            docker ps -a --filter "name=aitherzero-pr-${PR_NUMBER}"
+            docker logs aitherzero-pr-${PR_NUMBER}
+            exit 1
+          fi
+
+          echo "✅ Environment deployed successfully"
+
+          # Set deployment outputs with package information
+          # Note: Environment URL now points to GitHub Container Registry package page
+          # Local testing URL is included in PR comment instead
+          LOCAL_URL="http://localhost:${DYNAMIC_PORT}"
+          echo "local-url=${LOCAL_URL}" >> $GITHUB_OUTPUT
+          echo "✅ Local testing URL: ${LOCAL_URL}"
+          echo "✅ Package URL: ${{ needs.build-container.outputs.package-url }}"
+
+      - name: 🧪 Run Smoke Tests
+        run: |
+          echo "🧪 Running smoke tests against deployed environment..."
+
+          # Test container health
+          docker ps -a --filter "name=aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}"
+
+          # Test PowerShell module loading with timeout
+          echo "Testing PowerShell module loading..."
+          timeout 30s docker exec aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }} \
+            pwsh -Command "try { Import-Module /opt/aitherzero/AitherZero.psd1 -ErrorAction Stop; Write-Host '✅ Module loaded successfully' -ForegroundColor Green; exit 0 } catch { Write-Error \$_.Exception.Message; exit 1 }" || {
+            echo "❌ Module loading failed or timed out"
+            docker logs aitherzero-pr-${{ needs.check-deployment-trigger.outputs.pr-number }}
+            exit 1
+          }
+
+  # Security scan for release images
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [check-deployment-trigger, build-container]
+    if: needs.check-deployment-trigger.outputs.is-release == 'true'
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build-container.outputs.image-tag }}
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+
+      - name: 📤 Upload Trivy Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: 📊 Generate Security Summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Security scan completed using Trivy" >> $GITHUB_STEP_SUMMARY
+          echo "Check the Security tab for detailed results" >> $GITHUB_STEP_SUMMARY
+
+  # Comment on PR with deployment status
+  comment-deployment-status:
+    name: Update PR with Deployment Status
+    runs-on: ubuntu-latest
+    needs:
+      [
+        check-deployment-trigger,
+        validate-docker-config,
+        build-container,
+        deploy-docker-compose,
+      ]
+    if: always() && needs.check-deployment-trigger.outputs.should-deploy == 'true' && needs.check-deployment-trigger.outputs.is-release != 'true'
+
+    steps:
+      - name: 💬 Post Deployment Status
+        uses: actions/github-script@v7
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+          COMMIT_SHA: ${{ github.sha }}
+          IMAGE_TAG: ${{ needs.build-container.outputs.image-tag }}
+        with:
+          script: |
+            const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
+
+            // Calculate unique port for each PR with automatic rollover
+            // Port range: 8080-8179 (100 ports available)
+            // Formula: 8080 + (prNumber % 100) ensures ports roll over after 100 PRs
+            const dynamicPort = 8080 + (prNumber % 100);
+
+            // Get job results
+            const validationResult = '${{ needs.validate-docker-config.result }}';
+            const buildResult = '${{ needs.build-container.result }}';
+            const deployResult = '${{ needs.deploy-docker-compose.result }}';
+
+            // Check for actual failures (not skipped)
+            const validationFailed = validationResult === 'failure' || validationResult === 'cancelled';
+            const buildFailed = buildResult === 'failure' || buildResult === 'cancelled';
+            const deployFailed = deployResult === 'failure' || deployResult === 'cancelled';
+
+            // Check for successful deployment (all completed successfully)
+            const deploymentSuccessful = validationResult === 'success' &&
+                buildResult === 'success' &&
+                deployResult === 'success';
+
+            // Check if deployment was skipped (jobs didn't run but no failures)
+            const deploymentSkipped = !validationFailed && !buildFailed && !deployFailed && !deploymentSuccessful;
+
+            let status = '🚀';
+            let title = 'Deployment Successful';
+            let message = 'Your PR environment has been deployed and is ready for testing!';
+
+            if (validationFailed || buildFailed || deployFailed) {
+              status = '❌';
+              title = 'Deployment Failed';
+              message = 'There was an issue deploying your PR environment. Please check the workflow logs.';
+            } else if (deploymentSkipped) {
+              status = '⏭️';
+              title = 'Deployment Skipped';
+              message = 'Deployment was skipped. This may be because the PR is already closed or conditions were not met.';
+            }
+
+            const comment = `## ${status} PR Environment Deployment
+
+            **Status**: ${title}
+
+            ${message}
+
+            ### 📋 Deployment Details
+            - **PR Number**: #${prNumber}
+            - **Branch**: \`${{ github.head_ref }}\`
+            - **Commit**: \`${{ github.sha }}\`
+            - **Deployed**: ${new Date().toLocaleString()}
+
+            ### 📦 Container Package Information
+            - **Image Tag**: \`${{ needs.build-container.outputs.image-tag }}\`
+            - **Image Digest**: \`${{ needs.build-container.outputs.image-digest }}\`
+            - **Package URL**: [${{ needs.build-container.outputs.package-url }}](${{ needs.build-container.outputs.package-url }})
+            - **Registry**: GitHub Container Registry (\`ghcr.io\`)
+
+            #### 📥 Pull Command
+            \`\`\`bash
+            docker pull ${{ needs.build-container.outputs.image-tag }}
+            \`\`\`
+
+            ${deploymentSuccessful ? `
+            ### 🔗 Access Your Environment
+            - **Container Package**: [${{ needs.build-container.outputs.package-url }}](${{ needs.build-container.outputs.package-url }})
+            - **Container Name**: \`aitherzero-pr-${prNumber}\`
+            - **Port**: ${dynamicPort} (formula: 8080 + PR# % 100)
+
+            ### 🧪 How to Test This PR
+
+            Choose the method that works best for you:
+
+            #### ⚡ Method 1: Quick Docker Commands (No Clone Required)
+
+            Fastest way to test - just use Docker directly:
+
+            \`\`\`bash
+            # Pull and run the container
+            docker pull ${{ needs.build-container.outputs.image-tag }}
+            docker run -d --name aitherzero-pr-${prNumber} -p ${dynamicPort}:8080 ${{ needs.build-container.outputs.image-tag }}
+
+            # Wait for startup
+            sleep 5
+
+            # Run tests (import module first to get az alias)
+            docker exec aitherzero-pr-${prNumber} pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
+
+            # Open interactive shell to explore (module auto-loads)
+            docker exec -it aitherzero-pr-${prNumber} pwsh
+
+            # Cleanup when done
+            docker stop aitherzero-pr-${prNumber} && docker rm aitherzero-pr-${prNumber}
+            \`\`\`
+
+            #### 🎯 Method 2: Container Manager (After Cloning Repo)
+
+            For automated workflows with the container manager:
+
+            \`\`\`bash
+            # Clone the repo
+            git clone https://github.com/wizzense/AitherZero.git
+            cd AitherZero
+
+            # QuickStart: Pull + Run + Verify automatically
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber ${prNumber}
+
+            # Open interactive shell
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber ${prNumber}
+
+            # Execute commands
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "az 0402"
+
+            # Check status
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber ${prNumber}
+
+            # View logs
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber ${prNumber}
+
+            # Cleanup when done
+            pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber ${prNumber}
+            \`\`\`
+
+            #### 🖥️ Method 3: Interactive Testing (Recommended)
+
+            Best for exploring and development:
+
+            \`\`\`bash
+            # Pull and start interactively
+            docker pull ${{ needs.build-container.outputs.image-tag }}
+            docker run -it --name aitherzero-pr-${prNumber} ${{ needs.build-container.outputs.image-tag }}
+
+            # You'll see the welcome screen. Module is already loaded, so use:
+            # az 0402                    # Run unit tests
+            # az 0510 -ShowAll           # Generate reports
+            # Start-AitherZero           # Interactive menu
+            \`\`\`
+
+            ### 📚 Available Test Commands
+
+            Inside the container or via \`docker exec\`, you can run:
+
+            - \`az 0402\` - Run unit tests
+            - \`az 0404\` - Run PSScriptAnalyzer linting
+            - \`az 0407\` - Validate PowerShell syntax
+            - \`az 0510 -ShowAll\` - Generate detailed project report
+            - \`Start-AitherZero\` - Launch interactive menu
+            - \`Get-Command -Module AitherZero\` - List all available commands
+
+            ### 🛠️ Management Commands
+            - **Redeploy**: Comment \`/deploy\` on this PR
+            - **Destroy**: Will auto-cleanup when PR is closed
+            - **View Package**: [GitHub Container Registry](${{ needs.build-container.outputs.package-url }})
+            ` : deploymentSkipped ? `
+            ### ⏭️ Deployment Skipped
+            - **Validation Status**: ${validationResult === 'success' ? '✅ Success' : validationResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Build Status**: ${buildResult === 'success' ? '✅ Success' : buildResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Deploy Status**: ${deployResult === 'success' ? '✅ Success' : deployResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+
+            [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            ` : `
+            ### ❌ Deployment Failed
+            - **Validation Status**: ${validationResult === 'success' ? '✅ Success' : validationResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Build Status**: ${buildResult === 'success' ? '✅ Success' : buildResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+            - **Deploy Status**: ${deployResult === 'success' ? '✅ Success' : deployResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
+
+            [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `}
+
+            ---
+            *Automated PR Environment Deployment* • [Workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            // Find and update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const botComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('PR Environment Deployment')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
