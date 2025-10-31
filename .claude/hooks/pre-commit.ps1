@@ -22,12 +22,18 @@
 
 [CmdletBinding()]
 param(
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification='Reserved for future commit message validation')]
     [string]$CommitMessage = $env:CLAUDE_COMMIT_MESSAGE,
+
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification='Reserved for future branch-specific rules')]
     [string]$Branch = (git branch --show-current)
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Cache command availability check
+$script:HasCustomLog = $null -ne (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)
 
 # Logging helper function
 function Write-HookLog {
@@ -37,7 +43,7 @@ function Write-HookLog {
     )
 
     # Try using the project logging system first
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+    if ($script:HasCustomLog) {
         Write-CustomLog -Level $Level -Message $Message -Source 'PreCommitHook'
     } else {
         $color = @{
@@ -51,14 +57,6 @@ function Write-HookLog {
 
 try {
     Write-HookLog -Message "Claude Pre-Commit Hook: Enforcing orchestrated workflow..." -Level Information
-
-    # Parameters are available for future enhancements (e.g., commit message validation, branch-specific rules)
-    if ($CommitMessage) {
-        Write-HookLog -Message "Processing commit with message length: $($CommitMessage.Length)" -Level Information
-    }
-    if ($Branch) {
-        Write-HookLog -Message "Current branch: $Branch" -Level Information
-    }
 
     # Check if we're in a CI environment
     if ($env:CI -eq 'true' -or $env:CLAUDE_CI -eq 'true') {
