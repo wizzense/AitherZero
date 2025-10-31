@@ -50,23 +50,20 @@ jobs:
           env | grep '^DEBUG_'
 
   dispatch:
-    # For PRs: only if not from a fork AND gemini is configured
-    # For issues: only on open/reopen AND gemini is configured
+    # For PRs: only if not from a fork
+    # For issues: only on open/reopen
     # For comments: only if user types @gemini-cli and is OWNER/MEMBER/COLLABORATOR
-    # Gracefully skips if GEMINI_API_KEY or APP_PRIVATE_KEY not configured
     if: |-
-      (vars.GEMINI_API_KEY != '' || secrets.GEMINI_API_KEY != '') && (
-        (
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.fork == false
-        ) || (
-          github.event_name == 'issues' &&
-          contains(fromJSON('["opened", "reopened"]'), github.event.action)
-        ) || (
-          github.event.sender.type == 'User' &&
-          startsWith(github.event.comment.body || github.event.review.body || github.event.issue.body, '@gemini-cli') &&
-          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association)
-        )
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.fork == false
+      ) || (
+        github.event_name == 'issues' &&
+        contains(fromJSON('["opened", "reopened"]'), github.event.action)
+      ) || (
+        github.event.sender.type == 'User' &&
+        startsWith(github.event.comment.body || github.event.review.body || github.event.issue.body, '@gemini-cli') &&
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association)
       )
     runs-on: 'ubuntu-latest'
     permissions:
@@ -137,7 +134,7 @@ jobs:
   review:
     needs: 'dispatch'
     if: |-
-      ${{ needs.dispatch.outputs.command == 'review' }}
+      ${{ always() && needs.dispatch.outputs.command == 'review' }}
     uses: './.github/workflows/pr-review/gemini-review.yml'
     permissions:
       contents: 'read'
@@ -151,7 +148,7 @@ jobs:
   triage:
     needs: 'dispatch'
     if: |-
-      ${{ needs.dispatch.outputs.command == 'triage' }}
+      ${{ always() && needs.dispatch.outputs.command == 'triage' }}
     uses: './.github/workflows/issue-triage/gemini-triage.yml'
     permissions:
       contents: 'read'
@@ -165,7 +162,7 @@ jobs:
   invoke:
     needs: 'dispatch'
     if: |-
-      ${{ needs.dispatch.outputs.command == 'invoke' }}
+      ${{ always() && needs.dispatch.outputs.command == 'invoke' }}
     uses: './.github/workflows/gemini-assistant/gemini-invoke.yml'
     permissions:
       contents: 'read'
