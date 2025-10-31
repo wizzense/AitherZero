@@ -22,7 +22,7 @@ on:
         default: false
 
 concurrency:
-  group: deploy-${{ inputs.environment || 'auto' }}-${{ github.ref }}
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'auto' }}-${{ github.ref }}
   cancel-in-progress: false  # Never cancel deployments
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
     name: 'Pre-Deployment Validation'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ !inputs.skip_tests }}
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_tests }}
 
     steps:
       - name: 'Checkout'
@@ -117,7 +117,7 @@ jobs:
   build-package:
     name: 'Build Package'
     needs: [pre-deploy-validation, determine-environment]
-    if: always() && (needs.pre-deploy-validation.result == 'success' || inputs.skip_tests)
+    if: always() && (needs.pre-deploy-validation.result == 'success' || needs.pre-deploy-validation.result == 'skipped' || (github.event_name == 'workflow_dispatch' && inputs.skip_tests))
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

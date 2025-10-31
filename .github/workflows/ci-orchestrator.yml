@@ -171,7 +171,7 @@ jobs:
   quality-check:
     name: 'Quality Check'
     needs: [change-detection, fast-validation]
-    if: needs.change-detection.outputs.has-powershell == 'true' && !inputs.skip_tests
+    if: needs.change-detection.outputs.has-powershell == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.skip_tests)
     uses: ./.github/workflows/quality-validation.yml
     permissions:
       contents: read
@@ -183,7 +183,7 @@ jobs:
   test-suite:
     name: 'Test Suite'
     needs: [change-detection, fast-validation]
-    if: needs.change-detection.outputs.has-powershell == 'true' && !inputs.skip_tests
+    if: needs.change-detection.outputs.has-powershell == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.skip_tests)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -239,7 +239,7 @@ jobs:
   automated-reviews:
     name: 'Automated Reviews'
     needs: change-detection
-    if: github.event_name == 'pull_request' && !inputs.skip_reviews
+    if: github.event_name == 'pull_request' && (github.event_name != 'workflow_dispatch' || !inputs.skip_reviews)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
