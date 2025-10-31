@@ -2,24 +2,6 @@
 
 This directory contains the essential GitHub Actions workflows for AitherZero. The workflows have been streamlined to provide real value without over-automation or noise.
 
-## 🔖 Automated Checkpoint System
-
-**NEW:** Automated repository checkpoints are created every 15 minutes for easy recovery from accidental changes!
-
-- **Branch Pattern:** `checkpoint/main/YYYYMMDD-HHMMSS`
-- **Retention:** 7 days (automatically cleaned up)
-- **Recovery:** Simple git checkout commands
-
-📖 **[Read the full Checkpoint System documentation](./CHECKPOINT-SYSTEM.md)** for recovery instructions and best practices.
-
-**Quick Recovery Example:**
-```bash
-# Restore workflows directory from a checkpoint
-git fetch origin
-git checkout checkpoint/main/20241031-143000 -- .github/workflows/
-git commit -m "Restore workflows from checkpoint"
-```
-
 ## 🚀 Workflow Overview
 
 ### Quality & Validation

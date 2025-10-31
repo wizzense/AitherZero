@@ -103,7 +103,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ steps.version.outputs.version_number }}
-            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            BUILD_DATE=${{ github.event.repository.updated_at }}
             VCS_REF=${{ github.sha }}
 
       - name: 📝 Generate Image Summary
