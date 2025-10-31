@@ -45,11 +45,7 @@ reports/*.json
 tests/reports/*.json
 
 # IDE files
-# Allow workspace VS Code settings for Copilot integration
-# .vscode/settings.json - Now tracked for team collaboration
-# Exclude user-specific VS Code files
-.vscode/*.code-workspace
-.vscode/launch.local.json
+.vscode/settings.json
 .idea/
 
 # OS files
@@ -106,11 +102,3 @@ tests/coverage/*.xml
 # Analysis results
 tests/analysis/*.csv
 tests/analysis/*.json
-
-# Gemini
-
-# gemini-cli settings
-.gemini/
-
-# GitHub App credentials
-gha-creds-*.json

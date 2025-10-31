@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -75,7 +75,7 @@ function Initialize-ProjectIndexer {
     [CmdletBinding()]
     param(
         [string]$RootPath = $script:ProjectRoot,
-        [string[]]$ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'logs'),
+        [string[]]$ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build'),
         [switch]$EnableAI
     )
     
@@ -111,7 +111,7 @@ function Initialize-ProjectIndexer {
 function Get-DefaultIndexerConfig {
     return @{
         RootPath = $script:ProjectRoot
-        ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'logs')
+        ExcludePaths = @('.git', 'node_modules', '.vscode', 'bin', 'obj', 'dist', 'build', 'reports', 'logs')
         EnableAI = $false
         IndexFileName = 'index.md'
         ReadmeFileName = 'README.md'
@@ -640,7 +640,7 @@ function New-DirectoryIndex {
     }
 }
 
-function New-ProjectIndex {
+function New-ProjectIndexes {
     <#
     .SYNOPSIS
         Generate indexes for entire project tree
@@ -654,14 +654,9 @@ function New-ProjectIndex {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [string]$RootPath = $script:IndexerState.Config.RootPath,
-        [switch]$Recursive,
+        [switch]$Recursive = $true,
         [switch]$Force
     )
-    
-    # Default Recursive to true if not explicitly set
-    if (-not $PSBoundParameters.ContainsKey('Recursive')) {
-        $Recursive = $true
-    }
     
     Write-IndexLog "Starting project indexing" -Data @{
         RootPath = $RootPath
@@ -772,7 +767,7 @@ function Update-ProjectManifest {
     
     $functionsToExport = @(
         'Initialize-ProjectIndexer',
-        'New-ProjectIndex',
+        'New-ProjectIndexes',
         'New-DirectoryIndex',
         'Get-DirectoryContent',
         'Test-ContentChanged',
@@ -807,12 +802,6 @@ function Update-ProjectManifest {
         return $true
     }
     
-    # Use ShouldProcess to confirm the update
-    if (-not $PSCmdlet.ShouldProcess($ManifestPath, "Update manifest with missing functions: $($missingFunctions -join ', ')")) {
-        Write-IndexLog "Manifest update cancelled by user"
-        return $false
-    }
-    
     # Note: Actual manifest update would require careful parsing of the .psd1 file
     # For now, we'll just report what needs to be added
     Write-IndexLog "Manifest update required - add these functions to FunctionsToExport:" -Level Warning
@@ -828,7 +817,7 @@ function Update-ProjectManifest {
 # Export module members
 Export-ModuleMember -Function @(
     'Initialize-ProjectIndexer',
-    'New-ProjectIndex',
+    'New-ProjectIndexes',
     'New-DirectoryIndex',
     'Compare-IndexContent',
     'Get-DirectoryContent',

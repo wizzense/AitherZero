@@ -268,14 +268,14 @@ Describe "Project-wide Index Generation" {
     }
     
     It "Generates indexes recursively" {
-        $results = New-ProjectIndex -RootPath $script:TestRoot -Recursive
+        $results = New-ProjectIndexes -RootPath $script:TestRoot -Recursive
         $results.TotalDirectories | Should -BeGreaterThan 1
         $results.UpdatedIndexes | Should -BeGreaterThan 1
         $results.FailedIndexes | Should -Be 0
     }
     
     It "Creates index files in all directories except root" {
-        New-ProjectIndex -RootPath $script:TestRoot -Recursive | Out-Null
+        New-ProjectIndexes -RootPath $script:TestRoot -Recursive | Out-Null
         
         # Root index.md should NOT be created (protected)
         Test-Path (Join-Path $script:TestRoot "index.md") | Should -Be $false
@@ -286,7 +286,7 @@ Describe "Project-wide Index Generation" {
     }
     
     It "Saves hash cache after generation" {
-        New-ProjectIndex -RootPath $script:TestRoot -Recursive | Out-Null
+        New-ProjectIndexes -RootPath $script:TestRoot -Recursive | Out-Null
         
         $cacheFile = Join-Path $script:TestRoot ".aitherzero-index-cache.json"
         Test-Path $cacheFile | Should -Be $true
@@ -294,7 +294,7 @@ Describe "Project-wide Index Generation" {
     
     It "Loads hash cache on initialization" {
         # First run creates cache
-        New-ProjectIndex -RootPath $script:TestRoot -Recursive | Out-Null
+        New-ProjectIndexes -RootPath $script:TestRoot -Recursive | Out-Null
         
         # Re-initialize and check cache loaded
         Initialize-ProjectIndexer -RootPath $script:TestRoot
@@ -403,7 +403,7 @@ Describe "Edge Cases and Error Handling" {
         $gitDir = Join-Path $script:TestRoot ".git"
         New-Item -ItemType Directory -Path $gitDir -Force | Out-Null
         
-        $results = New-ProjectIndex -RootPath $script:TestRoot -Recursive
+        $results = New-ProjectIndexes -RootPath $script:TestRoot -Recursive
         
         # Should not have created index in .git
         Test-Path (Join-Path $gitDir "index.md") | Should -Be $false
