@@ -105,7 +105,7 @@ function Test-Prerequisites {
         throw "Prerequisites validation failed"
     }
 
-    Write-RunnerLog "Prerequisites validated successfully" -Level Success
+    Write-RunnerLog "Prerequisites validated successfully" -Level Information
 }
 
 function Get-GitHubToken {
@@ -217,7 +217,7 @@ function Install-RunnerBinary {
             }
         }
 
-        Write-RunnerLog "Runner binary installed successfully" -Level Success
+        Write-RunnerLog "Runner binary installed successfully" -Level Information
         return $runnerDir
     } catch {
         Write-RunnerLog "Failed to install runner binary: $($_.Exception.Message)" -Level Error
@@ -280,7 +280,7 @@ function Register-Runner {
         & $configScript @configArgs
 
         if ($LASTEXITCODE -eq 0) {
-            Write-RunnerLog "Runner registered successfully: $RunnerName" -Level Success
+            Write-RunnerLog "Runner registered successfully: $RunnerName" -Level Information
             return $true
         } else {
             Write-RunnerLog "Runner registration failed with exit code: $LASTEXITCODE" -Level Error
@@ -314,7 +314,7 @@ function Install-RunnerService {
             & .\svc.sh install $RunnerName
             if ($LASTEXITCODE -eq 0) {
                 & .\svc.sh start $RunnerName
-                Write-RunnerLog "Windows service installed and started: $RunnerName" -Level Success
+                Write-RunnerLog "Windows service installed and started: $RunnerName" -Level Information
             } else {
                 Write-RunnerLog "Failed to install Windows service" -Level Error
             }
@@ -323,7 +323,7 @@ function Install-RunnerService {
             & sudo ./svc.sh install $RunnerName
             if ($LASTEXITCODE -eq 0) {
                 & sudo ./svc.sh start $RunnerName
-                Write-RunnerLog "Systemd service installed and started: $RunnerName" -Level Success
+                Write-RunnerLog "Systemd service installed and started: $RunnerName" -Level Information
             } else {
                 Write-RunnerLog "Failed to install systemd service" -Level Error
             }
@@ -431,7 +431,7 @@ try {
         }
     }
 
-    Write-RunnerLog "GitHub Actions runner setup completed successfully!" -Level Success
+    Write-RunnerLog "GitHub Actions runner setup completed successfully!" -Level Information
 
     if (-not $CI) {
         Write-Host "`nNext steps:" -ForegroundColor Cyan
