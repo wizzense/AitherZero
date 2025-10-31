@@ -54,9 +54,6 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ```
 
 **Note**: After cloning, run `bash tools/setup-git-merge.sh` to configure Git to handle auto-generated `index.md` files correctly. This prevents merge conflicts. See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) for details.
-cd AitherZero
-./bootstrap.sh
-```
 
 **Option 3: Git Clone**
 ```bash

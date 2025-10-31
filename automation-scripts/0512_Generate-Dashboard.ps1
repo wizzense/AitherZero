@@ -563,6 +563,59 @@ function Get-PSScriptAnalyzerMetrics {
     return $metrics
 }
 
+function Parse-TestResultsXml {
+    <#
+    .SYNOPSIS
+    Parses NUnit format test results XML and returns test status
+    
+    .PARAMETER XmlPath
+    Path to the test results XML file
+    
+    .OUTPUTS
+    Hashtable with TestStatus, BadgeUrl, and LastWriteTime
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$XmlPath
+    )
+    
+    try {
+        [xml]$testXml = Get-Content $XmlPath
+        
+        # Parse NUnit format test results
+        if ($testXml.'test-results') {
+            $results = $testXml.'test-results'
+            $totalTests = [int]$results.total
+            $failures = [int]$results.failures
+            $errors = [int]$results.errors
+            
+            $testStatus = $null
+            $badgeUrl = $null
+            
+            if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
+                $testStatus = "Passing"
+                $badgeUrl = "https://img.shields.io/badge/tests-passing-brightgreen"
+            } elseif (($failures + $errors) -gt 0) {
+                $testStatus = "Failing"
+                $badgeUrl = "https://img.shields.io/badge/tests-failing-red"
+            } else {
+                $testStatus = "No Tests"
+                $badgeUrl = "https://img.shields.io/badge/tests-none-yellow"
+            }
+            
+            return @{
+                TestStatus = $testStatus
+                BadgeUrl = $badgeUrl
+                LastWriteTime = (Get-Item $XmlPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            }
+        }
+    } catch {
+        Write-ScriptLog -Level Warning -Message "Failed to parse test results from $XmlPath : $_"
+    }
+    
+    return $null
+}
+
 function Get-BuildStatus {
     Write-ScriptLog -Message "Determining build status"
 
@@ -591,60 +644,28 @@ function Get-BuildStatus {
     # Check recent test results from testResults.xml at project root
     $testResultsPath = Join-Path $ProjectPath "testResults.xml"
     if (Test-Path $testResultsPath) {
-        try {
-            [xml]$testXml = Get-Content $testResultsPath
-            
-            # Parse NUnit format test results
-            if ($testXml.'test-results') {
-                $results = $testXml.'test-results'
-                $totalTests = [int]$results.total
-                $failures = [int]$results.failures
-                $errors = [int]$results.errors
-                $skipped = [int]$results.skipped
-
-                if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
-                    $status.Tests = "Passing"
-                    $status.Badges.Tests = "https://img.shields.io/badge/tests-passing-brightgreen"
-                } elseif (($failures + $errors) -gt 0) {
-                    $status.Tests = "Failing"
-                    $status.Badges.Tests = "https://img.shields.io/badge/tests-failing-red"
-                } else {
-                    $status.Tests = "No Tests"
-                    $status.Badges.Tests = "https://img.shields.io/badge/tests-none-yellow"
-                }
-                
-                $status.LastBuild = (Get-Item $testResultsPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
-            }
-        } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse test results from testResults.xml: $_"
+        $result = Parse-TestResultsXml -XmlPath $testResultsPath
+        if ($result) {
+            $status.Tests = $result.TestStatus
+            $status.Badges.Tests = $result.BadgeUrl
+            $status.LastBuild = $result.LastWriteTime
         }
     }
     
-    # Also check tests/results directory for additional test data
-    $testResultsDir = Join-Path $ProjectPath "tests/results"
-    if (Test-Path $testResultsDir) {
-        $latestResults = Get-ChildItem -Path $testResultsDir -Filter "*.xml" -ErrorAction SilentlyContinue | 
-                        Sort-Object LastWriteTime -Descending | 
-                        Select-Object -First 1
-        if ($latestResults) {
-            try {
-                [xml]$testXml = Get-Content $latestResults.FullName
-                if ($testXml.'test-results' -and $status.Tests -eq "Unknown") {
-                    $results = $testXml.'test-results'
-                    $totalTests = [int]$results.total
-                    $failures = [int]$results.failures
-                    $errors = [int]$results.errors
-
-                    if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
-                        $status.Tests = "Passing"
-                        $status.Badges.Tests = "https://img.shields.io/badge/tests-passing-brightgreen"
-                    } elseif (($failures + $errors) -gt 0) {
-                        $status.Tests = "Failing"
-                        $status.Badges.Tests = "https://img.shields.io/badge/tests-failing-red"
-                    }
+    # Also check tests/results directory for additional test data if no results yet
+    if ($status.Tests -eq "Unknown") {
+        $testResultsDir = Join-Path $ProjectPath "tests/results"
+        if (Test-Path $testResultsDir) {
+            $latestResults = Get-ChildItem -Path $testResultsDir -Filter "*.xml" -ErrorAction SilentlyContinue | 
+                            Sort-Object LastWriteTime -Descending | 
+                            Select-Object -First 1
+            if ($latestResults) {
+                $result = Parse-TestResultsXml -XmlPath $latestResults.FullName
+                if ($result) {
+                    $status.Tests = $result.TestStatus
+                    $status.Badges.Tests = $result.BadgeUrl
+                    $status.LastBuild = $result.LastWriteTime
                 }
-            } catch {
-                Write-ScriptLog -Level Warning -Message "Failed to parse test results from tests/results"
             }
         }
     }
