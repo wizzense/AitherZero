@@ -9,10 +9,7 @@ on:
       - 'tools/Validate-ModuleManifest.ps1'
       - 'automation-scripts/0405_Validate-ModuleManifests.ps1'
   pull_request:
-    paths:
-      - '**/*.psd1'
-      - 'tools/Validate-ModuleManifest.ps1'
-      - 'automation-scripts/0405_Validate-ModuleManifests.ps1'
+    # Run on all PRs to validate manifests
   workflow_dispatch:
 
 jobs:
