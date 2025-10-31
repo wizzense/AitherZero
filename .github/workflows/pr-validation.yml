@@ -4,8 +4,10 @@ name: PR Validation
 # Optimized for cost efficiency - only essential PR validations
 on:
   pull_request:
-    # Trigger on all PR events to ensure checks run
-    types: [opened, synchronize, reopened, ready_for_review]
+    # Only trigger on specific events to avoid redundancy with quality-validation
+    types: [opened, ready_for_review]
+    # Only for external/fork PRs where we need special handling
+    # Internal PRs are handled by quality-validation.yml
   issue_comment:
     types: [created]
 
