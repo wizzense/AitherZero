@@ -196,6 +196,82 @@ if (Test-Path './automation-scripts') {
     Write-ValidationResult "Automation scripts directory not found, skipping script validation" -Level Warning
 }
 
+# 5a. Non-Numbered Helper Scripts Validation
+Write-Host ""
+Write-Host "5a. NON-NUMBERED HELPER SCRIPTS VALIDATION" -ForegroundColor Yellow
+
+if (Test-Path './automation-scripts') {
+    $allScripts = Get-ChildItem -Path './automation-scripts' -Filter '*.ps1'
+    $nonNumberedScripts = $allScripts | Where-Object { $_.Name -notmatch '^\d{4}_' }
+    
+    Write-Host "  Non-numbered helper scripts: $($nonNumberedScripts.Count)" -ForegroundColor Gray
+    
+    if ($nonNumberedScripts.Count -gt 0) {
+        $syntaxErrors = @()
+        $analyzerIssues = @()
+        
+        foreach ($script in $nonNumberedScripts) {
+            Write-Host "    Validating: $($script.Name)" -ForegroundColor Gray
+            
+            # Syntax validation
+            $scriptContent = Get-Content -Path $script.FullName -Raw -ErrorAction SilentlyContinue
+            if ($scriptContent) {
+                $syntaxCheck = [System.Management.Automation.PSParser]::Tokenize($scriptContent, [ref]$null)
+                $errors = $null
+                [void][System.Management.Automation.PSParser]::Tokenize($scriptContent, [ref]$errors)
+                
+                if ($errors -and $errors.Count -gt 0) {
+                    $syntaxErrors += @{
+                        Script = $script.Name
+                        Errors = $errors
+                    }
+                }
+            }
+            
+            # PSScriptAnalyzer check if available
+            if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
+                $analysis = Invoke-ScriptAnalyzer -Path $script.FullName -Severity Error,Warning -ErrorAction SilentlyContinue
+                if ($analysis) {
+                    $analyzerIssues += @{
+                        Script = $script.Name
+                        Issues = $analysis
+                    }
+                }
+            }
+        }
+        
+        # Report syntax errors
+        if ($syntaxErrors.Count -gt 0) {
+            Write-ValidationResult "Found syntax errors in $($syntaxErrors.Count) helper script(s)" -Level Error
+            foreach ($item in $syntaxErrors) {
+                Write-Host "    ❌ $($item.Script):" -ForegroundColor Red
+                foreach ($error in $item.Errors) {
+                    Write-Host "       Line $($error.Token.StartLine): $($error.Message)" -ForegroundColor Yellow
+                }
+            }
+        } else {
+            Write-ValidationResult "All helper scripts have valid syntax" -Level Success
+        }
+        
+        # Report analyzer issues
+        if ($analyzerIssues.Count -gt 0) {
+            Write-Host "  ⚠️  Found PSScriptAnalyzer issues in $($analyzerIssues.Count) helper script(s):" -ForegroundColor Yellow
+            foreach ($item in $analyzerIssues) {
+                Write-Host "    $($item.Script):" -ForegroundColor Yellow
+                foreach ($issue in $item.Issues) {
+                    Write-Host "      [$($issue.Severity)] $($issue.RuleName): $($issue.Message)" -ForegroundColor Gray
+                }
+            }
+        } else {
+            Write-ValidationResult "No PSScriptAnalyzer issues in helper scripts" -Level Success
+        }
+    } else {
+        Write-ValidationResult "No non-numbered helper scripts found" -Level Warning
+    }
+} else {
+    Write-ValidationResult "Automation scripts directory not found" -Level Warning
+}
+
 # 6. Script Reference Validation
 Write-Host ""
 Write-Host "6. SCRIPT REFERENCE VALIDATION" -ForegroundColor Yellow
