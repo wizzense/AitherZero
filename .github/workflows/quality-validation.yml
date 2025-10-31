@@ -10,6 +10,8 @@ on:
       - 'domains/**/*.ps1'
       - 'automation-scripts/*.ps1'
       - 'Start-AitherZero.ps1'
+  workflow_call:
+    # Allow this workflow to be called by other workflows
   workflow_dispatch:
     inputs:
       path:

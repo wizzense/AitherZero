@@ -67,7 +67,7 @@ jobs:
             const runId = context.payload.workflow_run.id;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
 
-            // Check if issue already exists
+            // Check if issue already exists for this workflow (by name only to avoid duplicates for recurring failures)
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -77,9 +77,7 @@ jobs:
             });
 
             const existingIssue = issues.data.find(issue =>
-              issue.title.includes(workflowName) &&
-              issue.body &&
-              issue.body.includes(runId.toString())
+              issue.title.includes(workflowName)
             );
 
             if (!existingIssue) {
@@ -113,7 +111,25 @@ jobs:
 
               core.info(`✅ Created failure issue #${issue.data.number}`);
             } else {
-              core.info(`ℹ️ Issue already exists for this failure: #${existingIssue.number}`);
+              // Update existing issue with new failure information
+              core.info(`ℹ️ Issue already exists for this workflow: #${existingIssue.number}`);
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## 🔄 Recurring Failure Detected
+                
+                **Run ID:** ${runId}
+                **Duration:** ${{ needs.analyze-workflow.outputs.duration }} minutes
+                **Timestamp:** ${new Date().toISOString()}
+                
+                [View failed workflow run](${runUrl})
+                
+                This workflow continues to fail. Please investigate and resolve the underlying issue.`
+              });
+              
+              core.info(`✅ Added comment to existing issue #${existingIssue.number}`);
             }
 
   # Daily health report
