@@ -1,0 +1,9 @@
+# Local Git Configuration for AitherZero
+# This file should be included in your git config to enable custom merge strategies
+
+[merge "ours"]
+	name = Always use our version for auto-generated files
+	driver = true
+
+# To enable this configuration, run:
+# git config --local include.path ../.gitconfig.local
