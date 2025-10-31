@@ -147,9 +147,12 @@ Write-Host "5. SCRIPT INVENTORY VALIDATION" -ForegroundColor Yellow
 
 if (Test-Path './automation-scripts') {
     $allScripts = Get-ChildItem -Path './automation-scripts' -Filter '*.ps1'
-    $uniqueNumbers = $allScripts | ForEach-Object { [int]($_.Name -replace '(\d+)_.*', '$1') } | Sort-Object -Unique
+    # Filter only numbered scripts (e.g., 0100_ScriptName.ps1), exclude non-numbered helpers
+    $numberedScripts = $allScripts | Where-Object { $_.Name -match '^\d{4}_' }
+    $uniqueNumbers = $numberedScripts | ForEach-Object { [int]($_.Name -replace '(\d+)_.*', '$1') } | Sort-Object -Unique
     
     Write-Host "  Total script files: $($allScripts.Count)" -ForegroundColor Gray
+    Write-Host "  Numbered scripts: $($numberedScripts.Count)" -ForegroundColor Gray
     Write-Host "  Unique script numbers: $($uniqueNumbers.Count)" -ForegroundColor Gray
     
     $inventorySum = ($config.Manifest.ScriptInventory.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
