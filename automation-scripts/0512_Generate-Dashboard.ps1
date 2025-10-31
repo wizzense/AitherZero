@@ -1530,6 +1530,106 @@ function Get-LifecycleAnalysis {
     return $lifecycle
 }
 
+function Get-GitHubRepositoryData {
+    param(
+        [string]$Owner = "wizzense",
+        [string]$Repo = "AitherZero"
+    )
+    
+    Write-ScriptLog -Message "Fetching GitHub repository data for $Owner/$Repo"
+    
+    $repoData = @{
+        Stars = 0
+        Forks = 0
+        OpenIssues = 0
+        OpenPRs = 0
+        Watchers = 0
+        LastUpdated = "Unknown"
+        DefaultBranch = "main"
+        License = "Unknown"
+        Language = "PowerShell"
+        Topics = @()
+        Error = $null
+    }
+    
+    try {
+        # Check if we're in GitHub Actions with access to API
+        $apiUrl = "https://api.github.com/repos/$Owner/$Repo"
+        
+        # Use gh CLI if available for authenticated requests
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            Write-ScriptLog -Message "Using GitHub CLI for authenticated request"
+            $response = gh api $apiUrl 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $repoInfo = $response | ConvertFrom-Json
+            } else {
+                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
+                $repoInfo = $null
+            }
+        } else {
+            # Fallback to direct API call (rate limited)
+            Write-ScriptLog -Message "Using direct API request (rate limited)"
+            $headers = @{
+                'User-Agent' = 'AitherZero-Dashboard'
+                'Accept' = 'application/vnd.github.v3+json'
+            }
+            
+            # Add auth token if available
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            }
+            
+            $repoInfo = Invoke-RestMethod -Uri $apiUrl -Headers $headers -ErrorAction Stop
+        }
+        
+        if ($repoInfo) {
+            $repoData.Stars = $repoInfo.stargazers_count
+            $repoData.Forks = $repoInfo.forks_count
+            $repoData.OpenIssues = $repoInfo.open_issues_count
+            $repoData.Watchers = $repoInfo.watchers_count
+            $repoData.DefaultBranch = $repoInfo.default_branch
+            $repoData.LastUpdated = $repoInfo.updated_at
+            
+            if ($repoInfo.license) {
+                $repoData.License = $repoInfo.license.name
+            }
+            
+            if ($repoInfo.language) {
+                $repoData.Language = $repoInfo.language
+            }
+            
+            if ($repoInfo.topics) {
+                $repoData.Topics = $repoInfo.topics
+            }
+            
+            Write-ScriptLog -Message "Successfully fetched GitHub data: $($repoData.Stars) stars, $($repoData.Forks) forks"
+            
+            # Fetch pull requests separately
+            try {
+                $prUrl = "https://api.github.com/repos/$Owner/$Repo/pulls?state=open"
+                if (Get-Command gh -ErrorAction SilentlyContinue) {
+                    $prResponse = gh api $prUrl 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        $prs = $prResponse | ConvertFrom-Json
+                        $repoData.OpenPRs = @($prs).Count
+                    }
+                } else {
+                    $prs = Invoke-RestMethod -Uri $prUrl -Headers $headers -ErrorAction Stop
+                    $repoData.OpenPRs = @($prs).Count
+                }
+                Write-ScriptLog -Message "Fetched PR data: $($repoData.OpenPRs) open PRs"
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to fetch PR data: $($_.Exception.Message)"
+            }
+        }
+    } catch {
+        $repoData.Error = $_.Exception.Message
+        Write-ScriptLog -Level Warning -Message "Failed to fetch GitHub data: $($_.Exception.Message)"
+    }
+    
+    return $repoData
+}
+
 function New-HTMLDashboard {
     param(
         [hashtable]$Metrics,
@@ -3011,16 +3111,16 @@ $commitsHTML
 
             <!-- GitHub Activity Section -->
             <section class="section" id="github-activity" style="margin-top: 30px;">
-                <h2>🌟 GitHub Activity</h2>
+                <h2>🌟 GitHub Activity & Metrics</h2>
                 <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                     <div class="metric-card">
                         <h3>⭐ Stars</h3>
-                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.Stars)</div>
                         <div class="metric-label">GitHub Stars</div>
                     </div>
                     <div class="metric-card">
                         <h3>🍴 Forks</h3>
-                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.Forks)</div>
                         <div class="metric-label">Repository Forks</div>
                     </div>
                     <div class="metric-card">
@@ -3030,12 +3130,22 @@ $commitsHTML
                     </div>
                     <div class="metric-card">
                         <h3>🔀 Pull Requests</h3>
-                        <div class="metric-value" style="font-size: 2rem;">--</div>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.OpenPRs)</div>
                         <div class="metric-label">Open PRs</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🐛 Issues</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.OpenIssues)</div>
+                        <div class="metric-label">Open Issues</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>👀 Watchers</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.Watchers)</div>
+                        <div class="metric-label">Repository Watchers</div>
                     </div>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
-                    💡 <em>GitHub API integration coming soon for real-time stats</em>
+                    ✅ <em>Live data from GitHub API$(if($githubData.Error){" | ⚠️ Fallback mode: $($githubData.Error)"}else{" | Updated in real-time"})</em>
                 </p>
             </section>
         </div>
@@ -3434,6 +3544,10 @@ try {
     $activity = Get-RecentActivity
     $qualityMetrics = Get-QualityMetrics
     $pssaMetrics = Get-PSScriptAnalyzerMetrics
+    
+    # Fetch GitHub repository data
+    Write-ScriptLog -Message "Fetching live GitHub repository data..."
+    $githubData = Get-GitHubRepositoryData -Owner "wizzense" -Repo "AitherZero"
     
     # Collect comprehensive detailed metrics
     Write-ScriptLog -Message "Collecting comprehensive project intelligence..."
