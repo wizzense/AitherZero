@@ -3,19 +3,19 @@ name: Release Automation
 
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., 1.2.3)'
+        description: "Release version (e.g., 1.2.3)"
         required: true
         type: string
       prerelease:
-        description: 'Mark as pre-release'
+        description: "Mark as pre-release"
         type: boolean
         default: false
       run_full_tests:
-        description: 'Run comprehensive tests before release'
+        description: "Run comprehensive tests before release"
         type: boolean
         default: true
 
@@ -68,7 +68,7 @@ jobs:
           # Syntax validation
           try {
             Write-Host "  📝 Syntax validation..." -ForegroundColor Cyan
-            & "./automation-scripts/0407_*.ps1"
+            Get-ChildItem "./automation-scripts/0407_*.ps1" | ForEach-Object { & $_.FullName }
             Write-Host "  ✅ Syntax validation passed" -ForegroundColor Green
           } catch {
             $errors += "Syntax validation failed: $_"
@@ -89,7 +89,7 @@ jobs:
           # Core tests
           try {
             Write-Host "  🧪 Core functionality tests..." -ForegroundColor Cyan
-            & "./automation-scripts/0402_*.ps1"
+            Get-ChildItem "./automation-scripts/0402_*.ps1" | ForEach-Object { & $_.FullName }
             Write-Host "  ✅ Core tests passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Core tests had issues (not blocking): $_" -ForegroundColor Yellow
@@ -98,7 +98,7 @@ jobs:
           # Code analysis
           try {
             Write-Host "  🔬 Code quality analysis..." -ForegroundColor Cyan
-            & "./automation-scripts/0404_*.ps1"
+            Get-ChildItem "./automation-scripts/0404_*.ps1" | ForEach-Object { & $_.FullName }
             Write-Host "  ✅ Code analysis passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Code analysis had issues (not blocking): $_" -ForegroundColor Yellow
@@ -190,7 +190,7 @@ jobs:
             # Bootstrap for installation
             "bootstrap.ps1", "bootstrap.sh",
             # Container support
-            "Dockerfile", "docker-compose.yml", "docker-entrypoint.ps1", 
+            "Dockerfile", "docker-compose.yml", "docker-entrypoint.ps1",
             "docker-start.ps1", "container-welcome.ps1",
             # Documentation (user-facing only)
             "README.md", "LICENSE", "VERSION",
@@ -206,7 +206,7 @@ jobs:
           )
 
           Write-Host "📦 Creating clean runtime package (no dev/test files)..." -ForegroundColor Cyan
-          
+
           foreach ($pattern in $releaseFiles) {
             if (Test-Path $pattern) {
               Copy-Item -Path $pattern -Destination "./$packageName" -Recurse -Force
@@ -218,13 +218,13 @@ jobs:
 
           # Exclude development/internal files from domains and scripts
           Write-Host "🧹 Cleaning development files from package..." -ForegroundColor Cyan
-          
+
           # Remove test files if they exist
           if (Test-Path "./$packageName/domains/*/tests") {
             Remove-Item "./$packageName/domains/*/tests" -Recurse -Force -ErrorAction SilentlyContinue
             Write-Host "  ✅ Removed domain test files" -ForegroundColor Green
           }
-          
+
           # Remove any .git directories
           if (Test-Path "./$packageName/.git*") {
             Remove-Item "./$packageName/.git*" -Recurse -Force -ErrorAction SilentlyContinue
