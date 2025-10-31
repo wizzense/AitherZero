@@ -5,8 +5,9 @@ name: Deploy PR Environment and Releases
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main, develop]
+    branches: [main, dev]
   push:
+    branches: [main]
     tags: ["v*"]
   release:
     types: [published]
@@ -83,6 +84,13 @@ jobs:
               isRelease = true;
               releaseTag = context.ref.replace('refs/tags/', '');
               core.info(`Tag push event: ${releaseTag}`);
+
+            } else if (context.eventName === 'push' && context.ref === 'refs/heads/main') {
+              // Push to main branch - treat as release (latest)
+              shouldDeploy = true;
+              isRelease = true;
+              releaseTag = 'latest';
+              core.info(`Push to main branch - building latest release`);
 
             } else if (context.eventName === 'release') {
               // Release event

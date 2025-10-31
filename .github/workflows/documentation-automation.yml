@@ -2,7 +2,7 @@ name: 📚 Documentation Automation
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, dev ]
     paths:
       - 'domains/**/*.psm1'
       - 'automation-scripts/**/*.ps1'
@@ -11,7 +11,7 @@ on:
       - 'docs/**'
   pull_request:
     types: [opened, synchronize, reopened, closed]
-    branches: [ main, develop ]
+    branches: [ main, dev ]
     paths:
       - 'domains/**/*.psm1'
       - 'automation-scripts/**/*.ps1'

@@ -293,6 +293,20 @@ rm ~/.local/bin/aitherzero
 # Edit ~/.bashrc, ~/.zshrc, ~/.profile and remove AITHERZERO_ROOT lines
 ```
 
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- Development workflow (using `dev` branch for all PRs)
+- Code standards and testing requirements
+- Pull request process
+- Release management
+
+**Quick Links:**
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Detailed contributor guide
+- [BRANCHING-STRATEGY.md](BRANCHING-STRATEGY.md) - Branch management for maintainers
+- [FUNCTIONALITY-INDEX.md](FUNCTIONALITY-INDEX.md) - Complete function reference
+
 ## License
 
 MIT License - see LICENSE file for details.
