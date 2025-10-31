@@ -10,7 +10,7 @@ on:
   pull_request:
     types:
       - 'opened'
-      - 'synchronize'  # FIXED: Added to trigger when new commits are pushed to PR branch
+      - 'synchronize'  # FIXED: Added to trigger on PR updates (including base branch updates)
       - 'reopened'     # FIXED: Added to trigger when PR is reopened
   issues:
     types:
@@ -23,6 +23,10 @@ on:
 defaults:
   run:
     shell: 'bash'
+
+concurrency:
+  group: 'gemini-dispatch-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}'
+  cancel-in-progress: true
 
 jobs:
   debugger:
