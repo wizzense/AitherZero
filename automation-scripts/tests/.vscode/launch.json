@@ -1,0 +1,72 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PowerShell: Launch Current File",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${file}",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": false,
+            "args": []
+        },
+        {
+            "name": "PowerShell: Debug Pester Tests",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/tests/Run-AllModuleTests.ps1",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": false,
+            "args": []
+        },
+        {
+            "name": "PowerShell: Run Pester Tests (Legacy)",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "Invoke-Pester",
+            "createTemporaryIntegratedConsole": true,
+            "attachDotnetDebugger": true
+        },
+        {
+            "name": "PowerShell: Debug Specific Module",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/tests/helpers/TestFramework.ps1",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": false,
+            "args": [
+                "-ModuleName",
+                "${input:moduleName}"
+            ]
+        },
+        {
+            "name": "PowerShell: Core Runner Bootstrap",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/core-runner/kicker-bootstrap.ps1",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": false,
+            "args": []
+        },
+        {
+            "name": "PowerShell: Setup Test Environment",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/core-runner/setup-test-env.ps1",
+            "cwd": "${workspaceFolder}",
+            "createTemporaryIntegratedConsole": false,
+            "args": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "moduleName",
+            "description": "Enter the module name to debug",
+            "default": "Logging",
+            "type": "promptString"
+        }
+    ]
+}

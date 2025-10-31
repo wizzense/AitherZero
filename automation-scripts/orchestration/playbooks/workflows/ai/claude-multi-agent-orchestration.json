@@ -1,0 +1,266 @@
+{
+  "metadata": {
+    "name": "claude-multi-agent-orchestration",
+    "description": "Advanced multi-agent Claude Code orchestration with specialized agent personas",
+    "version": "2.0.0",
+    "category": "ai",
+    "author": "AitherZero AI Team",
+    "tags": ["claude", "multi-agent", "orchestration", "ai", "personas", "collaborative"],
+    "estimatedDuration": "20-45 minutes",
+    "lastUpdated": "2025-10-26T23:06:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["AIWorkflowOrchestrator", "ClaudeIntegration"],
+    "requiredTools": ["claude"],
+    "platforms": ["CrossPlatform"],
+    "permissions": ["ReadCode", "WriteCode", "ExecuteAI", "ManageAgents"],
+    "apiKeys": ["ANTHROPIC_API_KEY"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "ProjectPath": ".",
+      "AgentCount": 3,
+      "CollaborationMode": "sequential",
+      "OutputPath": "./ai-agents/output",
+      "EnablePersonas": true,
+      "TaskComplexity": "advanced",
+      "MaxIterations": 5
+    },
+    "profiles": {
+      "development": {
+        "description": "Multi-agent development workflow with specialized coding agents",
+        "variables": {
+          "AgentCount": 4,
+          "CollaborationMode": "parallel",
+          "AgentPersonas": ["architect", "developer", "tester", "reviewer"],
+          "TaskType": "development",
+          "EnableCodeReview": true,
+          "AutoGenTests": true
+        }
+      },
+      "analysis": {
+        "description": "Multi-agent code analysis and optimization workflow",
+        "variables": {
+          "AgentCount": 3,
+          "CollaborationMode": "sequential", 
+          "AgentPersonas": ["analyzer", "optimizer", "security-expert"],
+          "TaskType": "analysis",
+          "DeepAnalysis": true,
+          "SecurityFocus": true
+        }
+      },
+      "research": {
+        "description": "Multi-agent research and documentation workflow",
+        "variables": {
+          "AgentCount": 3,
+          "CollaborationMode": "collaborative",
+          "AgentPersonas": ["researcher", "technical-writer", "reviewer"],
+          "TaskType": "research",
+          "GenerateReport": true,
+          "IncludeExamples": true
+        }
+      },
+      "problem-solving": {
+        "description": "Multi-agent problem solving with diverse perspectives",
+        "variables": {
+          "AgentCount": 5,
+          "CollaborationMode": "debate",
+          "AgentPersonas": ["analyst", "creative-thinker", "pragmatist", "critic", "synthesizer"],
+          "TaskType": "problem-solving",
+          "EnableDebate": true,
+          "RequireConsensus": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Claude Code Installation",
+        "description": "Install and configure Claude Code CLI with latest features",
+        "sequences": ["0217"],
+        "variables": {
+          "InstallLatest": true,
+          "ConfigureExtensions": true,
+          "EnableBetaFeatures": true
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "AI Agent Environment Setup",
+        "description": "Initialize AI agents and configure collaboration environment",
+        "sequences": ["0730"],
+        "variables": {
+          "Provider": "Claude",
+          "MultiAgentMode": true,
+          "AgentCount": "{{AgentCount}}",
+          "CollaborationMode": "{{CollaborationMode}}"
+        },
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Agent Persona Configuration",
+        "description": "Configure specialized agent personas and roles",
+        "sequences": ["0738"],
+        "condition": "$EnablePersonas",
+        "variables": {
+          "PersonaTypes": "{{AgentPersonas:=@('architect', 'developer', 'tester')}}",
+          "PersonaConfig": "detailed",
+          "EnableRoleSpecialization": true,
+          "TrainCustomPersonas": true
+        },
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "Multi-Agent Workflow Generation",
+        "description": "Generate collaborative workflow for multi-agent execution",
+        "sequences": ["0736"],
+        "variables": {
+          "Requirements": "Multi-agent {{TaskType:=development}} workflow with {{AgentCount}} specialized agents",
+          "WorkflowType": "Custom",
+          "MultiAgent": true,
+          "OutputPath": "{{OutputPath}}/workflows"
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Agent Coordination Setup",
+        "description": "Configure agent coordination and communication protocols",
+        "sequences": ["0740"],
+        "variables": {
+          "CoordinationMode": "{{CollaborationMode}}",
+          "EnableInterAgentComm": true,
+          "ConflictResolution": "consensus",
+          "TaskDistribution": "automatic"
+        },
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Multi-Agent Task Execution",
+        "description": "Execute collaborative tasks using multiple Claude agents",
+        "sequences": ["0731", "0732", "0733"],
+        "variables": {
+          "Path": "{{ProjectPath}}",
+          "TaskType": "{{TaskType}}",
+          "MultiAgent": true,
+          "MaxIterations": "{{MaxIterations}}",
+          "EnableCollaboration": true
+        },
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 1800
+      },
+      {
+        "name": "Agent Performance Monitoring",
+        "description": "Monitor multi-agent performance and collaboration metrics",
+        "sequences": ["0737", "0734"],
+        "variables": {
+          "MonitorCollaboration": true,
+          "TrackAgentMetrics": true,
+          "OptimizePerformance": true,
+          "GenerateInsights": true
+        },
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Output Validation and Integration",
+        "description": "Validate multi-agent outputs and integrate results",
+        "sequences": ["0739"],
+        "variables": {
+          "Path": "{{OutputPath}}",
+          "ValidationType": "All",
+          "CrossAgentValidation": true,
+          "IntegrateResults": true,
+          "QualityThreshold": "high"
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Collaboration Report Generation",
+        "description": "Generate comprehensive multi-agent collaboration report",
+        "sequences": ["0733"],
+        "variables": {
+          "DocType": "Collaboration-Report",
+          "OutputPath": "{{OutputPath}}/reports",
+          "IncludeMetrics": true,
+          "IncludeAgentInsights": true,
+          "GenerateSummary": true
+        },
+        "continueOnError": true,
+        "timeout": 300
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "Claude API Access",
+        "condition": "$env:ANTHROPIC_API_KEY -and $env:ANTHROPIC_API_KEY.Length -gt 0",
+        "message": "ANTHROPIC_API_KEY environment variable is required for Claude integration"
+      },
+      {
+        "name": "Sufficient Agent Count",
+        "condition": "$AgentCount -ge 2 -and $AgentCount -le 10",
+        "message": "Agent count must be between 2 and 10 for effective collaboration"
+      }
+    ],
+    "postConditions": [
+      {
+        "name": "Multi-Agent Output Generated",
+        "condition": "Test-Path '{{OutputPath}}/workflows' -and (Get-ChildItem '{{OutputPath}}/workflows').Count -gt 0",
+        "message": "Multi-agent workflow output should be generated"
+      },
+      {
+        "name": "Collaboration Metrics Available",
+        "condition": "Test-Path '{{OutputPath}}/reports'",
+        "message": "Collaboration metrics and reports should be generated"
+      }
+    ],
+    "thresholds": {
+      "AgentFailures": {
+        "maxCount": 1,
+        "action": "warn"
+      },
+      "CollaborationScore": {
+        "maxCount": 70,
+        "action": "continue"
+      }
+    }
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🤖 Starting Claude multi-agent orchestration with {{AgentCount}} agents...",
+      "level": "Information",
+      "channels": ["console", "log"]
+    },
+    "onSuccess": {
+      "message": "✅ Multi-agent collaboration completed successfully! {{AgentCount}} agents worked together effectively.",
+      "level": "Success",
+      "channels": ["console", "log"]
+    },
+    "onFailure": {
+      "message": "❌ Multi-agent orchestration failed. Check agent configurations and API connectivity.",
+      "level": "Error",
+      "channels": ["console", "log"]
+    },
+    "onWarning": {
+      "message": "⚠️ Some agents encountered issues during collaboration. Review individual agent outputs.",
+      "level": "Warning",
+      "channels": ["console", "log"]
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "Markdown"],
+    "outputPath": "./reports/multi-agent",
+    "includeMetrics": true,
+    "includeLogs": true
+  }
+}

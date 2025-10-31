@@ -1,0 +1,47 @@
+{
+    "recommendations": [
+        // Core PowerShell Development
+        "ms-vscode.powershell",
+        "ms-vscode.vscode-powershell",
+        // AI and Code Assistance
+        "github.copilot",
+        "github.copilot-chat",
+        // Testing and Quality
+        "pester.pester",
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        // Infrastructure as Code
+        "hashicorp.terraform",
+        "ms-vscode.vscode-json",
+        // Code Quality and Analysis
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker",
+        "ms-vsliveshare.vsliveshare",
+        // Git and Version Control
+        "mhutchie.git-graph",
+        "github.vscode-pull-request-github",
+        "eamodio.gitlens",
+        // Productivity and UI
+        "ms-vscode.vscode-theme-generator",
+        "vscode-icons-team.vscode-icons",
+        "gruntfuggly.todo-tree",
+        "alefragnani.bookmarks",
+        // Documentation and Markdown
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        "bierner.markdown-mermaid",
+        // File Management and Search
+        "ms-vscode.vscode-file-utils",
+        "christian-kohler.path-intellisense",
+        "formulahendry.auto-rename-tag",
+        // PowerShell Specific
+        "ms-vscode.powershell-preview",
+        "ironmansoftware.powershellprotools"
+    ],
+    "unwantedRecommendations": [
+        // Remove conflicting or unnecessary extensions
+        "ms-python.python",
+        "ms-python.flake8",
+        "ms-python.pylint"
+    ]
+}

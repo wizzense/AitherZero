@@ -1,0 +1,313 @@
+# GitHub Copilot Agent Routing Configuration
+# This file configures automatic routing of work to specialized custom agents
+# based on file patterns, keywords, PR labels, and other criteria
+
+version: 1
+
+# Custom agents available for task routing
+agents:
+  # Infrastructure & DevOps Specialist
+  maya:
+    name: "Maya"
+    description: "Infrastructure & DevOps Specialist"
+    file: ".github/agents/maya-infrastructure.md"
+    expertise:
+      - infrastructure
+      - opentofu
+      - terraform
+      - hyper-v
+      - virtualization
+      - networking
+      - devops
+    file_patterns:
+      - "infrastructure/**/*"
+      - "**/*infrastructure*.ps1"
+      - "**/*vm*.ps1"
+      - "**/*network*.ps1"
+      - "**/*hyperv*.ps1"
+      - "automation-scripts/01[0-9][0-9]_*.ps1"  # 0100-0199 range
+      - "**/*.tf"
+      - "**/*.tfvars"
+    keywords:
+      - "vm"
+      - "virtual machine"
+      - "hyper-v"
+      - "network"
+      - "infrastructure"
+      - "opentofu"
+      - "terraform"
+      - "lab automation"
+    labels:
+      - infrastructure
+      - devops
+      - networking
+
+  # Security & Compliance Expert
+  sarah:
+    name: "Sarah"
+    description: "Security & Compliance Expert"
+    file: ".github/agents/sarah-security.md"
+    expertise:
+      - security
+      - certificates
+      - credentials
+      - compliance
+      - vulnerability-scanning
+    file_patterns:
+      - "domains/security/**/*"
+      - "**/*security*.ps1"
+      - "**/*certificate*.ps1"
+      - "**/*credential*.ps1"
+      - "**/*secret*.ps1"
+    keywords:
+      - "security"
+      - "certificate"
+      - "credential"
+      - "secret"
+      - "vulnerability"
+      - "compliance"
+      - "authentication"
+      - "authorization"
+    labels:
+      - security
+      - vulnerability
+      - compliance
+
+  # Testing & QA Engineer
+  jessica:
+    name: "Jessica"
+    description: "Testing & QA Engineer"
+    file: ".github/agents/jessica-testing.md"
+    expertise:
+      - testing
+      - pester
+      - quality-assurance
+      - test-automation
+    file_patterns:
+      - "tests/**/*"
+      - "**/*.Tests.ps1"
+      - "automation-scripts/04[0-9][0-9]_*.ps1"  # 0400-0499 range
+      - "**/Invoke-AitherTests.ps1"
+    keywords:
+      - "test"
+      - "pester"
+      - "quality"
+      - "coverage"
+      - "assertion"
+      - "mock"
+    labels:
+      - testing
+      - qa
+      - quality
+
+  # Frontend & UX Developer
+  emma:
+    name: "Emma"
+    description: "Frontend & UX Developer"
+    file: ".github/agents/emma-frontend.md"
+    expertise:
+      - ui
+      - ux
+      - console-interface
+      - accessibility
+    file_patterns:
+      - "domains/experience/**/*"
+      - "**/*ui*.ps1"
+      - "**/*menu*.ps1"
+      - "**/*interface*.ps1"
+      - "**/*wizard*.ps1"
+    keywords:
+      - "ui"
+      - "ux"
+      - "menu"
+      - "interface"
+      - "console"
+      - "user experience"
+      - "accessibility"
+      - "wizard"
+    labels:
+      - ui
+      - ux
+      - user-experience
+
+  # Backend & API Developer
+  marcus:
+    name: "Marcus"
+    description: "Backend & API Developer"
+    file: ".github/agents/marcus-backend.md"
+    expertise:
+      - backend
+      - api
+      - powershell-modules
+      - performance
+    file_patterns:
+      - "domains/**/*.psm1"
+      - "**/*api*.ps1"
+      - "**/*module*.ps1"
+      - "automation-scripts/02[0-9][0-9]_*.ps1"  # 0200-0299 range
+    keywords:
+      - "api"
+      - "module"
+      - "backend"
+      - "performance"
+      - "optimization"
+      - "function"
+    labels:
+      - backend
+      - api
+      - performance
+
+  # Documentation & Technical Writing
+  olivia:
+    name: "Olivia"
+    description: "Documentation & Technical Writing Specialist"
+    file: ".github/agents/olivia-documentation.md"
+    expertise:
+      - documentation
+      - technical-writing
+      - markdown
+    file_patterns:
+      - "**/*.md"
+      - "docs/**/*"
+      - "**/README.md"
+      - "**/*guide*.md"
+      - "automation-scripts/05[0-9][0-9]_*.ps1"  # 0500-0599 range
+    keywords:
+      - "documentation"
+      - "readme"
+      - "guide"
+      - "tutorial"
+      - "docs"
+      - "comments"
+    labels:
+      - documentation
+      - docs
+
+  # PowerShell & Automation Expert
+  rachel:
+    name: "Rachel"
+    description: "PowerShell & Automation Expert"
+    file: ".github/agents/rachel-powershell.md"
+    expertise:
+      - powershell
+      - automation
+      - orchestration
+      - scripting
+    file_patterns:
+      - "**/*.ps1"
+      - "**/*.psm1"
+      - "orchestration/**/*"
+      - "automation-scripts/00[0-9][0-9]_*.ps1"  # 0000-0099 range
+      - "automation-scripts/07[0-9][0-9]_*.ps1"  # 0700-0799 range
+      - "automation-scripts/90[0-9][0-9]_*.ps1"  # 9000-9999 range
+    keywords:
+      - "powershell"
+      - "automation"
+      - "orchestration"
+      - "script"
+      - "workflow"
+      - "cross-platform"
+    labels:
+      - automation
+      - powershell
+      - scripting
+
+  # Project Manager & Coordinator
+  david:
+    name: "David"
+    description: "Project Manager & Coordinator"
+    file: ".github/agents/david-project-manager.md"
+    expertise:
+      - project-management
+      - coordination
+      - planning
+      - agile
+    file_patterns:
+      - ".github/**/*.yml"
+      - ".github/**/*.yaml"
+      - "**/roadmap.md"
+      - "**/planning.md"
+    keywords:
+      - "project"
+      - "planning"
+      - "roadmap"
+      - "sprint"
+      - "release"
+      - "milestone"
+      - "coordination"
+    labels:
+      - project-management
+      - planning
+      - release
+
+# Routing rules for automatic agent suggestion
+routing:
+  # Primary routing based on file changes
+  by_files:
+    priority: high
+    # Match agents based on file_patterns defined above
+
+  # Secondary routing based on PR title/description keywords
+  by_keywords:
+    priority: medium
+    # Match agents based on keywords defined above
+
+  # Tertiary routing based on labels
+  by_labels:
+    priority: low
+    # Match agents based on labels defined above
+
+  # Collaboration patterns - suggest multiple agents for complex tasks
+  collaboration:
+    infrastructure_setup:
+      agents: ["maya", "sarah", "jessica", "olivia"]
+      trigger_keywords: ["infrastructure setup", "lab setup", "vm deployment"]
+
+    feature_development:
+      agents: ["david", "marcus", "rachel", "jessica", "olivia"]
+      trigger_keywords: ["new feature", "feature request", "enhancement"]
+
+    ui_development:
+      agents: ["emma", "marcus", "jessica", "olivia"]
+      trigger_keywords: ["ui", "user interface", "menu", "wizard"]
+
+    security_enhancement:
+      agents: ["sarah", "maya", "marcus", "jessica"]
+      trigger_keywords: ["security", "vulnerability", "certificate", "credential"]
+
+# Comment triggers for manual agent invocation
+commands:
+  # Format: /agent-name or @agent-name
+  enabled: true
+  prefix: "/"
+  aliases:
+    "/infrastructure": "maya"
+    "/security": "sarah"
+    "/testing": "jessica"
+    "/ui": "emma"
+    "/backend": "marcus"
+    "/docs": "olivia"
+    "/powershell": "rachel"
+    "/pm": "david"
+    "@maya": "maya"
+    "@sarah": "sarah"
+    "@jessica": "jessica"
+    "@emma": "emma"
+    "@marcus": "marcus"
+    "@olivia": "olivia"
+    "@rachel": "rachel"
+    "@david": "david"
+
+# Automatic suggestions in PR comments
+suggestions:
+  enabled: true
+  # Suggest agents when PR is opened or updated
+  trigger_events:
+    - opened
+    - reopened
+    - synchronize
+    - ready_for_review
+  # Minimum confidence threshold (0.0 - 1.0)
+  confidence_threshold: 0.6
+  # Maximum number of agents to suggest
+  max_suggestions: 3

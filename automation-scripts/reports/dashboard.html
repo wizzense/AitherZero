@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AitherZero - Project Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --bg-dark: #0d1117;
+            --bg-darker: #010409;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --success: #238636;
+            --warning: #d29922;
+            --error: #da3633;
+            --info: #1f6feb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            margin-left: 290px;
+        }
+        
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+                padding: 10px;
+            }
+        }
+
+        /* Navigation TOC */
+        .toc {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 250px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .toc-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 101;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .toc h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 10px;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .toc a:hover {
+            color: var(--primary-color);
+        }
+
+        .toc a.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .badges-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .badges-container img {
+            height: 20px;
+            transition: transform 0.2s;
+        }
+
+        .badges-container img:hover {
+            transform: scale(1.05);
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .status-badge {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+
+        .status-healthy { 
+            background: linear-gradient(135deg, rgba(35, 134, 54, 0.3), rgba(35, 134, 54, 0.1)); 
+            border-color: var(--success);
+        }
+        .status-issues { 
+            background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
+            border-color: var(--error);
+        }
+        .status-unknown { 
+            background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
+            border-color: var(--text-secondary);
+        }
+
+        .content {
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            scroll-margin-top: 20px;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(22, 27, 34, 0.5) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .metric-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .info-card-header {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px 20px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-primary);
+        }
+
+        .info-card-body {
+            padding: 20px;
+        }
+
+        .info-card-body p {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .info-card-body strong {
+            color: var(--text-primary);
+        }
+
+        .info-card-body a {
+            color: var(--info);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .info-card-body a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .info-card-body code {
+            background: var(--bg-darker);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--primary-color);
+        }
+
+        .commit-list {
+            list-style: none;
+        }
+
+        .commit-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .commit-item:last-child {
+            border-bottom: none;
+        }
+
+        .commit-hash {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            background: var(--bg-darker);
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 12px;
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+
+        .commit-message {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .progress-bar {
+            background: var(--bg-darker);
+            border-radius: 10px;
+            height: 24px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid var(--card-border);
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-grid {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: var(--success);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .badge.warning { 
+            background: var(--warning); 
+            color: var(--bg-darker); 
+        }
+        .badge.error { 
+            background: var(--error); 
+        }
+        .badge.info { 
+            background: var(--info); 
+        }
+
+        .manifest-info {
+            background: var(--bg-darker);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .manifest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .manifest-item {
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-item .label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .manifest-item .value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .domains-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .domain-card {
+            background: var(--bg-darker);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            transition: all 0.2s;
+        }
+
+        .domain-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .domain-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .domain-card .module-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--info);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--primary-color);
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--card-border);
+            z-index: 100;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+            }
+
+            .toc {
+                transform: translateX(-270px);
+            }
+
+            .toc.open {
+                transform: translateX(0);
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Link styling */
+        a {
+            color: var(--info);
+        }
+    </style>
+</head>
+<body>
+    <div class="toc-toggle" onclick="toggleToc()">☰</div>
+    
+    <nav class="toc" id="toc">
+        <h3>📑 Contents</h3>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#quality">Code Quality</a></li>
+            <li><a href="#pssa">PSScriptAnalyzer</a></li>
+            <li><a href="#manifest">Module Manifest</a></li>
+            <li><a href="#domains">Domain Modules</a></li>
+            <li><a href="#health">Project Health</a></li>
+            <li><a href="#git">Git & VCS</a></li>
+            <li><a href="#activity">Recent Activity</a></li>
+            <li><a href="#actions">Quick Actions</a></li>
+            <li><a href="#system">System Info</a></li>
+            <li><a href="#resources">Resources</a></li>
+        </ul>
+    </nav>
+
+    <div class="refresh-indicator">
+        🔄 Last updated: 2025-10-30 08:17:24
+    </div>
+
+    <div class="container">
+        <div class="header" id="overview">
+            <h1>🚀 AitherZero</h1>
+            <div class="subtitle">Infrastructure Automation Platform</div>
+
+            <div class="badges-container">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
+                <img src="https://img.shields.io/badge/tests-unknown-lightgrey" alt="Tests Status">
+                <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
+                <img src="https://img.shields.io/github/license/wizzense/AitherZero" alt="License">
+                <img src="https://img.shields.io/github/last-commit/wizzense/AitherZero" alt="Last Commit">
+            </div>
+
+            <div class="status-bar">
+                <div class="status-badge status-unknown">
+                    🎯 Overall: Unknown
+                </div>
+                <div class="status-badge status-unknown">
+                    🧪 Tests: Unknown
+                </div>
+                <div class="status-badge status-unknown">
+                    🔒 Security: Unknown
+                </div>
+                <div class="status-badge status-unknown">
+                    📦 Deployment: Unknown
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <section class="section" id="metrics">
+                <h2>📊 Project Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Project Files</h3>
+                        <div class="metric-value">204</div>
+                        <div class="metric-label">
+                            132 Scripts | 62 Modules | 10 Data
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            📄 295 Markdown | 🔧 3 YAML | 📋 93 JSON
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Lines of Code</h3>
+                        <div class="metric-value">85,454</div>
+                        <div class="metric-label">
+                            966 Functions
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            💬 7,130 Comments (8.3%) | ⚪ 14,469 Blank Lines
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🤖 Automation Scripts</h3>
+                        <div class="metric-value">125</div>
+                        <div class="metric-label">Number-based orchestration (0000-9999)</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚡ 14 GitHub Workflows
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🗂️ Domain Modules</h3>
+                        <div class="metric-value">11</div>
+                        <div class="metric-label">
+                            35 Total Modules
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Consolidated architecture
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Suite</h3>
+                        <div class="metric-value">281</div>
+                        <div class="metric-label">
+                            142 Unit | 139 Integration
+                        </div>
+                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--success);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                ✅ 12 Passed | ❌ 0 Failed
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                Success Rate: <span style="color: var(--success); font-weight: 600;">100%</span> | Duration: 0.98s
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Last run: 2025-10-30 08:03:38
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📊 Code Coverage</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            No coverage data available
+                        </div>
+                        
+                    </div>
+                    
+                                        <div class="metric-card">
+                        <h3>🌿 Git Repository</h3>
+                        <div class="metric-value" style="font-size: 1.8rem;">6</div>
+                        <div class="metric-label">Total Commits</div>
+                        <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/fix-aitherzero-dashboard-issues</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                👥 2 Contributors
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Latest: befe167 - Enhance Markdown dashboard with comprehensive metrics (18 seconds ago)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>💻 Platform</h3>
+                        <div class="metric-value" style="font-size: 2rem;">Unix</div>
+                        <div class="metric-label">PowerShell 7.4.12</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Environment: Development
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="quality">
+                <h2>✨ Code Quality Validation</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card error">
+                        <h3>📈 Quality Score</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            Average across 0 validated files
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%; background: var(--error)">
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>✅ Validation Results</h3>
+                        <div class="metric-value">0</div>
+                        <div class="metric-label">
+                            ✅ 0 Passed | 
+                            ⚠️ 0 Warnings | 
+                            ❌ 0 Failed
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔍 Error Handling</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Logging</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔬 PSScriptAnalyzer</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+                </div>
+                
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>
+            </section>
+
+            <section class="section" id="pssa">
+                <h2>🔬 PSScriptAnalyzer Analysis</h2>
+                                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Files Analyzed</h3>
+                        <div class="metric-value">22</div>
+                        <div class="metric-label">Last run: 2025-10-26 22:29:41 UTC</div>
+                    </div>
+                    
+                    <div class="metric-card" style="border-left-color: var(--warning);">
+                        <h3>⚠️ Total Issues</h3>
+                        <div class="metric-value" style="color: var(--warning);">22</div>
+                        <div class="metric-label">
+                            ❌ 0 Errors | 
+                            ⚠️ 22 Warnings | 
+                            ℹ️ 0 Info
+                        </div>
+                    </div>
+                </div>
+                
+                                <div style="margin-top: 20px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 15px;">🔝 Top Issues</h3>
+                    <div style="background: var(--bg-darker); padding: 20px; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <ul style="list-style: none; margin: 0;">
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSUseDeclaredVarsMoreThanAssignments</strong> - 11 instances</li>
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSPossibleIncorrectComparisonWithNull</strong> - 7 instances</li>
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSAvoidGlobalVars</strong> - 4 instances</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./az 0404</code> to analyze code quality</p>
+            </section>
+
+            <section class="section" id="manifest">
+                <h2>📦 Module Manifest</h2>
+                <div class="manifest-info">
+                    <h4>AitherZero.psd1</h4>
+                    <div class="manifest-grid">
+                        <div class="manifest-item">
+                            <div class="label">Version</div>
+                            <div class="value">1.0.0.0</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">GUID</div>
+                            <div class="value">a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Author</div>
+                            <div class="value">AitherZero Team</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">PowerShell Version</div>
+                            <div class="value">7.0+</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Functions Exported</div>
+                            <div class="value">57</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Aliases</div>
+                            <div class="value">az, seq</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div class="label" style="margin-bottom: 10px;">Description</div>
+                        <div class="value" style="color: var(--text-secondary);">AitherZero Automation Platform - Infrastructure automation with number-based orchestration</div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <div class="label" style="margin-bottom: 10px;">Tags</div>
+                        <div class="badge-grid">
+                            <span class='badge info'>Automation</span> <span class='badge info'>Infrastructure</span> <span class='badge info'>DevOps</span> <span class='badge info'>OpenTofu</span> <span class='badge info'>Terraform</span> <span class='badge info'>Orchestration</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="domains">
+                <h2>🗂️ Domain Modules</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Consolidated domain-based module architecture with 11 domains
+                </p>
+                <div class="domains-list">
+                    <div class="domain-card">
+                        <h4>ai-agents</h4>
+                        <div class="module-count">3 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>automation</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>configuration</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>development</h4>
+                        <div class="module-count">4 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>documentation</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>experience</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>infrastructure</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>reporting</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>security</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>testing</h4>
+                        <div class="module-count">8 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>utilities</h4>
+                        <div class="module-count">9 modules</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="health">
+                <h2>📈 Project Health</h2>
+                <div class="badge-grid">
+                    <div class="badge warning">
+                        Build: Unknown
+                    </div>
+                    <div class="badge warning">
+                        Tests: Unknown
+                    </div>
+                    <div class="badge info">Coverage: 0%</div>
+                    <div class="badge">Security: Scanned</div>
+                    <div class="badge">Platform: Unix</div>
+                    <div class="badge">PowerShell: 7.4.12</div>
+                    <div class='badge info'>Workflows: 14</div>
+                </div>
+            </section>
+            
+                        <section class="section" id="git">
+                <h2>🌿 Git Repository & Version Control</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                    <div class="info-card">
+                        <div class="info-card-header">📊 Repository Statistics</div>
+                        <div class="info-card-body">
+                            <p><strong>Branch:</strong> <code>copilot/fix-aitherzero-dashboard-issues</code></p>
+                            <p><strong>Total Commits:</strong> 6</p>
+                            <p><strong>Contributors:</strong> 2</p>
+                            <p><strong>Automation Scripts:</strong> 125</p>
+                            <p><strong>GitHub Workflows:</strong> 14</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-card-header">📝 Latest Commit</div>
+                        <div class="info-card-body">
+                            <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
+                                befe167 - Enhance Markdown dashboard with comprehensive metrics (18 seconds ago)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="info-grid">
+                <div class="info-card" id="activity">
+                    <div class="info-card-header">🔄 Recent Activity</div>
+                    <div class="info-card-body">
+                        <ul class="commit-list">
+                            <li class='commit-item'>
+                                <span class='commit-hash'>befe167</span>
+                                <span class='commit-message'>Enhance Markdown dashboard with comprehensive metrics</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>d9863c9</span>
+                                <span class='commit-message'>Improve dashboard layout and spacing</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>7bda24c</span>
+                                <span class='commit-message'>Improve dashboard metrics collection and display</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>fae33be</span>
+                                <span class='commit-message'>Initial plan for dashboard improvements</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>d65ed5d</span>
+                                <span class='commit-message'>Initial plan</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card" id="actions">
+                    <div class="info-card-header">🎯 Quick Actions</div>
+                    <div class="info-card-body">
+                        <p><strong>Run Tests:</strong> <code>./az 0402</code></p>
+                        <p><strong>Generate Report:</strong> <code>./az 0510</code></p>
+                        <p><strong>View Dashboard:</strong> <code>./az 0511</code></p>
+                        <p><strong>Validate Code:</strong> <code>./az 0404</code></p>
+                        <p><strong>Update Project:</strong> <code>git pull && ./bootstrap.ps1</code></p>
+                    </div>
+                </div>
+
+                <div class="info-card" id="system">
+                    <div class="info-card-header">📋 System Information</div>
+                    <div class="info-card-body">
+                        <p><strong>Platform:</strong> Unix</p>
+                        <p><strong>PowerShell:</strong> 7.4.12</p>
+                        <p><strong>Environment:</strong> Development</p>
+                        <p><strong>Last Scan:</strong> 2025-10-30 08:17:24</p>
+                        <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
+                    </div>
+                </div>
+
+                <div class="info-card" id="resources">
+                    <div class="info-card-header">🔗 Resources</div>
+                    <div class="info-card-body">
+                        <p><a href="https://github.com/wizzense/AitherZero" target="_blank">🏠 GitHub Repository</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/actions" target="_blank">⚡ CI/CD Pipeline</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/releases" target="_blank">📦 Releases</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/issues" target="_blank">🐛 Issues</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/tree/main/docs" target="_blank">📖 Documentation</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/blob/main/README.md" target="_blank">📄 README</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Generated by AitherZero Dashboard | 2025-10-30 08:17:24 |
+            <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
+        </div>
+    </div>
+
+    <script>
+        // TOC toggle for mobile
+        function toggleToc() {
+            document.getElementById('toc').classList.toggle('open');
+        }
+
+        // Highlight active section in TOC
+        const sections = document.querySelectorAll('.section, .header');
+        const tocLinks = document.querySelectorAll('.toc a');
+
+        function highlightToc() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightToc);
+        highlightToc();
+
+        // Auto-refresh every 5 minutes
+        setTimeout(() => {
+            window.location.reload();
+        }, 300000);
+
+        // Add interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.metric-card, .domain-card');
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+
+            // Close TOC when clicking a link on mobile
+            tocLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 1024) {
+                        document.getElementById('toc').classList.remove('open');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

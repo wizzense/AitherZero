@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "AitherZero Automation Scripts Configuration Template",
+  "projectName": "AitherZero",
+  "version": "1.0.0",
+  
+  "// Environment & Prerequisites": "0000-0099 scripts configuration",
+  "Environment": {
+    "CleanupBeforeStart": true,
+    "TempDirectories": [
+      "%TEMP%/AitherZero",
+      "/tmp/aitherzero"
+    ],
+    "LogRetentionDays": 30
+  },
+  
+  "Directories": {
+    "CreateDefaultStructure": true,
+    "ProjectRoot": "%PROJECT_ROOT%",
+    "AdditionalPaths": []
+  },
+  
+  "Validation": {
+    "CheckForUpdates": true,
+    "ToolVersions": {
+      "PSScriptAnalyzer": null,
+      "Pester": "5.5.0"
+    },
+    "AdditionalTools": []
+  },
+  
+  "// Infrastructure": "0100-0199 scripts configuration",
+  "System": {
+    "SetComputerName": false,
+    "ComputerName": "AITHER-DEV",
+    "SetDNSServers": false,
+    "DNSServers": "8.8.8.8,8.8.4.4",
+    "SetTrustedHosts": false,
+    "TrustedHosts": "*",
+    "DisableTCPIP6": false,
+    "AllowRemoteDesktop": false,
+    "EnableWinRM": false,
+    "ConfigureFirewall": false,
+    "FirewallPorts": [3389, 5985, 5986, "8080-8090"]
+  },
+  
+  "CertificateAuthority": {
+    "InstallCA": false,
+    "CAType": "EnterpriseRootCA",
+    "CAName": "AitherZero-CA",
+    "ValidityPeriod": 10,
+    "KeyLength": 4096,
+    "HashAlgorithm": "SHA256"
+  },
+  
+  "InstallationOptions": {
+    "HyperV": {
+      "Install": false,
+      "PrepareHost": true
+    },
+    "WSL2": {
+      "Install": false,
+      "DefaultDistribution": "Ubuntu-22.04",
+      "DefaultUser": "aitherzero"
+    },
+    "WindowsAdminCenter": {
+      "Install": false,
+      "Port": 6516
+    }
+  },
+  
+  "NetworkServices": {
+    "PXE": {
+      "Enable": false,
+      "UpdateExistingRules": true,
+      "AllowedRemoteAddresses": null,
+      "AdditionalPorts": []
+    }
+  },
+  
+  "Infrastructure": {
+    "DefaultVMPath": "%USERPROFILE%\\VMs",
+    "DefaultVHDPath": "%USERPROFILE%\\VHDs",
+    "DeploymentMethod": "OpenTofu",
+    "TargetProvider": "hyperv"
+  },
+  
+  "// Development Tools": "0200-0299 scripts configuration",
+  "DevelopmentTools": {
+    "NodeJS": {
+      "Install": true,
+      "Version": "lts",
+      "GlobalPackages": ["npm", "yarn", "typescript"],
+      "UseNVM": false
+    },
+    "Python": {
+      "Install": true,
+      "Version": "3.12",
+      "AddToPath": true,
+      "InstallPip": true,
+      "GlobalPackages": ["virtualenv", "pipenv"]
+    },
+    "Poetry": {
+      "Install": false,
+      "Version": null,
+      "CheckForUpdates": true,
+      "Settings": {
+        "virtualenvs.in-project": true
+      }
+    },
+    "Git": {
+      "Install": true,
+      "ConfigureUser": true,
+      "UserName": "Developer",
+      "UserEmail": "developer@aitherzero.local",
+      "DefaultBranch": "main"
+    },
+    "Docker": {
+      "Install": false,
+      "Edition": "Desktop",
+      "EnableWSL2Backend": true,
+      "EnableKubernetes": false
+    },
+    "VSCode": {
+      "Install": false,
+      "Extensions": [
+        "ms-vscode.powershell",
+        "ms-python.python",
+        "ms-azuretools.vscode-docker"
+      ],
+      "AddToPath": true
+    },
+    "Sysinternals": {
+      "Install": false,
+      "InstallPath": "C:\\Tools\\Sysinternals",
+      "AddToPath": true,
+      "AcceptEula": true
+    },
+    "7Zip": {
+      "Install": false,
+      "AddToPath": true
+    },
+    "VSBuildTools": {
+      "Install": false,
+      "InstallPath": "C:\\BuildTools",
+      "Workloads": [
+        "Microsoft.VisualStudio.Workload.MSBuildTools",
+        "Microsoft.VisualStudio.Workload.NetCoreBuildTools"
+      ],
+      "IncludeRecommended": true
+    },
+    "PowerShellProfile": {
+      "Enable": false,
+      "ProfileScope": "CurrentUserAllHosts",
+      "IncludeAliases": true,
+      "IncludeFunctions": true,
+      "IncludeModulePaths": true,
+      "CustomPrompt": false,
+      "BackupExisting": true
+    }
+  },
+  
+  "CloudTools": {
+    "AzureCLI": {
+      "Install": false,
+      "CheckForUpdates": true,
+      "Extensions": [],
+      "DefaultSettings": {}
+    },
+    "AWSCLI": {
+      "Install": false,
+      "DefaultSettings": {}
+    }
+  },
+  
+  "InfrastructureTools": {
+    "OpenTofu": {
+      "Install": true,
+      "Version": "latest",
+      "MirrorURL": null
+    },
+    "Packer": {
+      "Install": false,
+      "Version": null,
+      "Plugins": []
+    },
+    "Go": {
+      "Install": false,
+      "Version": "1.21",
+      "GOPATH": "%USERPROFILE%\\go"
+    }
+  },
+  
+  "PackageManagers": {
+    "Chocolatey": {
+      "Install": false,
+      "InstallPath": null,
+      "Settings": {
+        "cacheLocation": true,
+        "commandExecutionTimeoutSeconds": 2700
+      },
+      "Sources": [],
+      "InitialPackages": []
+    }
+  },
+  
+  "AITools": {
+    "ClaudeCode": {
+      "Install": false,
+      "Version": null,
+      "CheckForUpdates": true,
+      "ApiKey": null,
+      "WSLIntegration": false
+    },
+    "GeminiCLI": {
+      "Install": false,
+      "Version": null,
+      "CheckForUpdates": true,
+      "ApiKey": null
+    }
+  },
+  
+  "// Validation & Testing": "0500-0599 scripts configuration",
+  "Testing": {
+    "RunValidation": true,
+    "StrictMode": false,
+    "CoverageGeneration": {
+      "Enable": false,
+      "TargetCoverage": 80,
+      "OutputPath": "./tests/generated",
+      "GenerateBaseline": true,
+      "RunCoverageAnalysis": true,
+      "GenerateHtmlReport": false
+    }
+  },
+  
+  "// Maintenance": "9000-9999 scripts configuration",
+  "Maintenance": {
+    "MachineReset": {
+      "Enable": false,
+      "AllowReset": false,
+      "PrepareForRemoteAccess": true,
+      "WindowsSysprepMode": "oobe",
+      "CreateRestorePoint": true,
+      "BackupUserData": false
+    }
+  }
+}

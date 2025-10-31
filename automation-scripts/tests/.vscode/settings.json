@@ -1,0 +1,33 @@
+{
+  "terminal.integrated.env.linux": {
+    "AITHERZERO_ROOT": "${workspaceFolder}"
+  },
+  "terminal.integrated.profiles.linux": {
+    "PowerShell": {
+      "path": "pwsh",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "& { if (Test-Path ./Initialize-AitherModules.ps1) { & ./Initialize-AitherModules.ps1 -Silent } }"
+      ]
+    }
+  },
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "args": [
+        "-NoExit",
+        "-Command",
+        "& { if (Test-Path ./Initialize-AitherModules.ps1) { & ./Initialize-AitherModules.ps1 -Silent } }"
+      ],
+      "source": "PowerShell"
+    }
+  },
+  "powershell.startAutomatically": false,
+  "terminal.integrated.env.windows": {
+    "AITHERZERO_ROOT": "${workspaceFolder}"
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.env.osx": {
+    "AITHERZERO_ROOT": "${workspaceFolder}"
+  }
+}

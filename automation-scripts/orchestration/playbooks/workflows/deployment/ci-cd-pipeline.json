@@ -1,0 +1,190 @@
+{
+  "metadata": {
+    "name": "ci-cd-pipeline",
+    "description": "Complete CI/CD pipeline with testing, analysis, and deployment",
+    "version": "2.0.0", 
+    "category": "deployment",
+    "author": "AitherZero DevOps Team",
+    "tags": ["cicd", "automation", "pipeline", "github", "deployment"],
+    "estimatedDuration": "10-20 minutes",
+    "lastUpdated": "2025-10-26T22:25:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["OrchestrationEngine", "PullRequestManager", "TestingFramework"],
+    "requiredTools": ["git", "gh"],
+    "platforms": ["CrossPlatform"],
+    "permissions": ["ReadCode", "WriteReports", "GitHubAPI"],
+    "apiKeys": ["GITHUB_TOKEN"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "TestScope": "full",
+      "CreatePR": true,
+      "PostComments": true,
+      "Environment": "CI"
+    },
+    "profiles": {
+      "pr-validation": {
+        "description": "Pull request validation workflow",
+        "variables": {
+          "TestScope": "quick",
+          "CreatePR": false,
+          "PostComments": true,
+          "SkipIntegration": true
+        }
+      },
+      "main-branch": {
+        "description": "Main branch comprehensive pipeline",
+        "variables": {
+          "TestScope": "comprehensive",
+          "CreatePR": false,
+          "PostComments": false,
+          "GenerateReports": true
+        }
+      },
+      "release": {
+        "description": "Release deployment pipeline",
+        "variables": {
+          "TestScope": "comprehensive",
+          "CreatePR": false,
+          "PostComments": false,
+          "TagRelease": true,
+          "DeployDocs": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Workflow Validation",
+        "description": "Validate GitHub Actions workflows",
+        "sequences": ["0440", "0441"],
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Code Quality Check",
+        "description": "Run syntax validation and static analysis",
+        "sequences": ["0407", "0404"], 
+        "variables": {
+          "ContinueOnError": false,
+          "Severity": "Error"
+        },
+        "parallel": true,
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Test Execution",
+        "description": "Execute test suite based on scope",
+        "sequences": ["0402", "0403"],
+        "condition": "$TestScope -in @('full', 'comprehensive')",
+        "variables": {
+          "Coverage": true,
+          "OutputPath": "./test-results",
+          "CI": true
+        },
+        "continueOnError": false,
+        "timeout": 900
+      },
+      {
+        "name": "Quick Tests",
+        "description": "Run quick validation tests",
+        "sequences": ["0480"],
+        "condition": "$TestScope -eq 'quick'",
+        "variables": {
+          "CI": true,
+          "FastMode": true
+        },
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Report Generation",
+        "description": "Generate comprehensive reports",
+        "sequences": ["0510", "0522"],
+        "variables": {
+          "ShowAll": true,
+          "Format": "HTML,JSON,Markdown",
+          "CI": true
+        },
+        "condition": "$GenerateReports -or $TestScope -eq 'comprehensive'",
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "PR Management",
+        "description": "Create or update pull request",
+        "sequences": ["0703", "0709"],
+        "condition": "$CreatePR -or $PostComments",
+        "variables": {
+          "NonInteractive": true,
+          "IncludeTestResults": true
+        },
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Documentation Deploy",
+        "description": "Deploy documentation if enabled",
+        "sequences": ["0520"],
+        "condition": "$DeployDocs",
+        "continueOnError": true,
+        "timeout": 600
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "Git Repository",
+        "condition": "Test-Path '.git'",
+        "message": "Must be run from within a git repository"
+      },
+      {
+        "name": "GitHub Token",
+        "condition": "$env:GITHUB_TOKEN -or (gh auth status 2>$null)",
+        "message": "GitHub authentication is required"
+      }
+    ],
+    "thresholds": {
+      "FailedTests": {
+        "maxCount": 0,
+        "action": "fail"
+      },
+      "CriticalIssues": {
+        "maxCount": 0, 
+        "action": "fail"
+      },
+      "HighIssues": {
+        "maxCount": 3,
+        "action": "warn"
+      }
+    }
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🚀 Starting CI/CD pipeline...",
+      "level": "Information",
+      "channels": ["console", "log", "github"]
+    },
+    "onSuccess": {
+      "message": "✅ CI/CD pipeline completed successfully!",
+      "level": "Success", 
+      "channels": ["console", "log", "github"]
+    },
+    "onFailure": {
+      "message": "❌ CI/CD pipeline failed. Check logs and reports.",
+      "level": "Error",
+      "channels": ["console", "log", "github"]
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "Markdown"],
+    "outputPath": "./reports/cicd",
+    "includeMetrics": true,
+    "includeLogs": true
+  }
+}

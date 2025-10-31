@@ -1,0 +1,37 @@
+{
+  "Name": "ai-development",
+  "Description": "Development environment with AI coding assistants",
+  "Sequence": [
+    "0001",
+    "0002",
+    "0207",
+    "0206",
+    "0201",
+    "0210",
+    "0217",
+    "0218"
+  ],
+  "Variables": {
+    "Profile": "AIAssisted",
+    "Environment": "Development",
+    "Features": ["Git", "Python", "Node", "VSCode", "ClaudeCode", "GeminiCLI"],
+    "AITools": {
+      "ClaudeCode": {
+        "AutoConfigure": true,
+        "DefaultModel": "claude-3-opus"
+      },
+      "GeminiCLI": {
+        "AutoConfigure": true
+      }
+    }
+  },
+  "Profile": "AIAssisted",
+  "Created": "2025-01-08T00:00:00Z",
+  "Version": "1.0",
+  "Tags": ["development", "ai", "claude", "gemini"],
+  "Prerequisites": {
+    "MinPowerShellVersion": "7.0",
+    "RequiredSpace": "15GB",
+    "InternetConnection": true
+  }
+}

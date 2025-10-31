@@ -1,0 +1,307 @@
+{
+  "metadata": {
+    "name": "claude-custom-commands",
+    "description": "Create and deploy custom Claude Code CLI commands with advanced capabilities",
+    "version": "2.0.0",
+    "category": "ai",
+    "author": "AitherZero AI Team", 
+    "tags": ["claude", "custom-commands", "cli", "automation", "extensions", "tools"],
+    "estimatedDuration": "20-35 minutes",
+    "lastUpdated": "2025-10-26T23:06:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["AIWorkflowOrchestrator", "ClaudeIntegration", "CommandBuilder"],
+    "requiredTools": ["claude", "git"],
+    "platforms": ["CrossPlatform"],
+    "permissions": ["ReadCode", "WriteCode", "ExecuteAI", "InstallCommands", "ModifySystem"],
+    "apiKeys": ["ANTHROPIC_API_KEY"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "CommandType": "general",
+      "Complexity": "intermediate",
+      "OutputPath": "./claude-commands",
+      "EnableIntegrations": true,
+      "CommandCategory": "development",
+      "InstallGlobally": false,
+      "EnableTesting": true,
+      "GenerateDocumentation": true
+    },
+    "profiles": {
+      "development-tools": {
+        "description": "Create development-focused custom commands",
+        "variables": {
+          "CommandType": "development",
+          "CommandCategory": "development",
+          "Commands": ["code-review", "refactor", "optimize", "document", "test-generate"],
+          "Integrations": ["git", "ide", "ci-cd"],
+          "EnableHotkeys": true,
+          "ContextAware": true
+        }
+      },
+      "project-management": {
+        "description": "Create project management and coordination commands",
+        "variables": {
+          "CommandType": "project-management", 
+          "CommandCategory": "management",
+          "Commands": ["project-analyze", "task-breakdown", "estimate", "risk-assess", "report-generate"],
+          "Integrations": ["github", "jira", "teams"],
+          "EnableReporting": true,
+          "ScheduleSupport": true
+        }
+      },
+      "security-analysis": {
+        "description": "Create security analysis and compliance commands",
+        "variables": {
+          "CommandType": "security",
+          "CommandCategory": "security",
+          "Commands": ["security-scan", "compliance-check", "threat-model", "vulnerability-assess"],
+          "Integrations": ["scanners", "compliance-tools"],
+          "EnableAlerts": true,
+          "ComplianceFrameworks": true
+        }
+      },
+      "data-analysis": {
+        "description": "Create data analysis and visualization commands", 
+        "variables": {
+          "CommandType": "data-analysis",
+          "CommandCategory": "analytics",
+          "Commands": ["data-explore", "visualize", "pattern-detect", "predict", "report"],
+          "Integrations": ["databases", "apis", "visualization-tools"],
+          "EnableCharts": true,
+          "MachineLearning": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Claude CLI Environment Setup",
+        "description": "Setup Claude Code CLI with extension capabilities",
+        "sequences": ["0217"],
+        "variables": {
+          "EnableExtensions": true,
+          "InstallDevMode": true,
+          "ConfigureCustomCommands": true,
+          "EnablePluginSystem": true
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "AI Agent Configuration",
+        "description": "Configure AI agents for command development and testing",
+        "sequences": ["0730", "0738"],
+        "variables": {
+          "Provider": "Claude",
+          "CommandDeveloper": true,
+          "PersonaType": "command-developer",
+          "EnableCommandGeneration": true
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Command Architecture Generation",
+        "description": "Generate command architecture and structure using AI",
+        "sequences": ["0736"],
+        "variables": {
+          "Requirements": "Custom {{CommandType}} commands for {{CommandCategory}} with {{Integrations:=@('general')}} integrations",
+          "WorkflowType": "Custom",
+          "CommandArchitecture": true,
+          "GenerateStructure": true
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Custom Command Development",
+        "description": "Develop custom Claude commands with AI assistance",
+        "sequences": ["0731", "0732"],
+        "variables": {
+          "CommandType": "{{CommandType}}",
+          "Commands": "{{Commands:=@('analyze', 'optimize', 'generate')}}",
+          "EnableAIAssistance": true,
+          "GenerateHelpers": true,
+          "IncludeExamples": true
+        },
+        "parallel": true,
+        "continueOnError": true,
+        "timeout": 1200
+      },
+      {
+        "name": "Command Integration Setup",
+        "description": "Setup integrations with external tools and systems",
+        "sequences": ["0740"],
+        "variables": {
+          "Integrations": "{{Integrations}}",
+          "EnableAPIConnections": true,
+          "ConfigureWebhooks": "{{EnableReporting:=false}}",
+          "SetupAuthentication": true
+        },
+        "condition": "$EnableIntegrations",
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "Command Testing Framework",
+        "description": "Create comprehensive testing framework for custom commands",
+        "sequences": ["0732"],
+        "variables": {
+          "TestType": "Custom-Commands",
+          "GenerateUnitTests": true,
+          "GenerateIntegrationTests": true,
+          "TestAllScenarios": true,
+          "EnableAutomatedTesting": true
+        },
+        "condition": "$EnableTesting",
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "Command Validation",
+        "description": "Validate custom commands functionality and performance",
+        "sequences": ["0739"],
+        "variables": {
+          "Path": "{{OutputPath}}/commands",
+          "ValidationType": "Commands",
+          "TestExecution": true,
+          "PerformanceTesting": true,
+          "SecurityValidation": true
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Command Optimization",
+        "description": "Optimize command performance and user experience",
+        "sequences": ["0734"],
+        "variables": {
+          "OptimizePerformance": true,
+          "ImproveUX": true,
+          "EnableCaching": true,
+          "OptimizeMemory": true
+        },
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Documentation Generation",
+        "description": "Generate comprehensive documentation for custom commands",
+        "sequences": ["0733"],
+        "variables": {
+          "DocType": "Command-Documentation",
+          "OutputPath": "{{OutputPath}}/docs",
+          "IncludeExamples": "{{IncludeExamples:=true}}",
+          "IncludeUsage": true,
+          "GenerateREADME": true,
+          "CreateTutorials": true
+        },
+        "condition": "$GenerateDocumentation",
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Command Deployment",
+        "description": "Deploy custom commands for production use",
+        "sequences": ["0743"],
+        "variables": {
+          "CommandPath": "{{OutputPath}}/commands",
+          "InstallGlobally": "{{InstallGlobally}}",
+          "EnableInProduction": true,
+          "ConfigurePermissions": true,
+          "SetupMonitoring": true
+        },
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Command Usage Analytics",
+        "description": "Setup analytics and monitoring for custom command usage",
+        "sequences": ["0737"],
+        "variables": {
+          "MonitorUsage": true,
+          "TrackPerformance": true,
+          "GenerateInsights": true,
+          "EnableFeedback": true
+        },
+        "continueOnError": true,
+        "timeout": 180
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "Claude API Access",
+        "condition": "$env:ANTHROPIC_API_KEY -and $env:ANTHROPIC_API_KEY.Length -gt 0",
+        "message": "ANTHROPIC_API_KEY is required for command development"
+      },
+      {
+        "name": "Valid Command Type",
+        "condition": "$CommandType -in @('general', 'development', 'project-management', 'security', 'data-analysis')",
+        "message": "CommandType must be a supported command category"
+      }
+    ],
+    "postConditions": [
+      {
+        "name": "Commands Created",
+        "condition": "Test-Path '{{OutputPath}}/commands' -and (Get-ChildItem '{{OutputPath}}/commands' -Filter '*.ps1').Count -gt 0",
+        "message": "Custom command files should be created"
+      },
+      {
+        "name": "Documentation Available",
+        "condition": "-not $GenerateDocumentation -or (Test-Path '{{OutputPath}}/docs')",
+        "message": "Command documentation should be generated if enabled"
+      },
+      {
+        "name": "Tests Created",
+        "condition": "-not $EnableTesting -or (Test-Path '{{OutputPath}}/tests')",
+        "message": "Command tests should be created if testing is enabled"
+      }
+    ],
+    "thresholds": {
+      "CommandQuality": {
+        "maxCount": 80,
+        "action": "continue"
+      },
+      "ValidationErrors": {
+        "maxCount": 3,
+        "action": "warn"
+      },
+      "PerformanceScore": {
+        "maxCount": 70,
+        "action": "continue"
+      }
+    }
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🛠️ Creating custom Claude commands for {{CommandCategory}} with {{CommandType}} capabilities...",
+      "level": "Information",
+      "channels": ["console", "log"]
+    },
+    "onSuccess": {
+      "message": "✅ Custom Claude commands created successfully! Commands are ready for use in {{CommandCategory}} workflows.",
+      "level": "Success", 
+      "channels": ["console", "log"]
+    },
+    "onFailure": {
+      "message": "❌ Custom command creation failed. Check command specifications and API connectivity.",
+      "level": "Error",
+      "channels": ["console", "log"]
+    },
+    "onWarning": {
+      "message": "⚠️ Some commands created with limitations. Review validation results for optimization opportunities.",
+      "level": "Warning",
+      "channels": ["console", "log"]
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "Markdown"],
+    "outputPath": "./reports/custom-commands",
+    "includeMetrics": true,
+    "includeLogs": true
+  }
+}
