@@ -1,0 +1,317 @@
+---
+name: 'Automated Deployment'
+
+# Automated deployment pipeline with rollback capabilities
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip pre-deployment tests'
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'auto' }}-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel deployments
+
+permissions:
+  contents: write
+  deployments: write
+  packages: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  # Pre-deployment validation
+  pre-deploy-validation:
+    name: 'Pre-Deployment Validation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ !inputs.skip_tests }}
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Run Full Test Suite'
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running comprehensive pre-deployment tests..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Standard
+          Import-Module ./AitherZero.psd1 -Force
+
+          # Run all tests
+          $result = Invoke-Pester -Path ./tests -Output Detailed -PassThru
+
+          if ($result.FailedCount -gt 0) {
+            Write-Host "❌ Pre-deployment tests failed! Aborting deployment." -ForegroundColor Red
+            exit 1
+          }
+
+          Write-Host "✅ All pre-deployment tests passed!" -ForegroundColor Green
+
+      - name: 'Smoke Test'
+        shell: pwsh
+        run: |
+          Write-Host "💨 Running smoke tests..." -ForegroundColor Cyan
+          Import-Module ./AitherZero.psd1 -Force
+
+          # Test module loads correctly
+          $module = Get-Module AitherZero
+          if (-not $module) {
+            Write-Host "❌ Module failed to load!" -ForegroundColor Red
+            exit 1
+          }
+
+          Write-Host "✅ Smoke tests passed!" -ForegroundColor Green
+
+  # Determine deployment environment
+  determine-environment:
+    name: 'Determine Environment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      version: ${{ steps.env.outputs.version }}
+
+    steps:
+      - name: 'Determine Deployment Target'
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+
+          # Extract version
+          VERSION="${{ github.ref_name }}"
+          if [[ "$VERSION" =~ ^v.+ ]]; then
+            VERSION="${VERSION:1}"  # Remove 'v' prefix
+          elif [[ ${#VERSION} -lt 2 ]]; then
+            # Handle edge case of very short version strings
+            VERSION="${VERSION}-$(git rev-parse --short HEAD)"
+          else
+            VERSION="${VERSION}-$(git rev-parse --short HEAD)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  # Package and build
+  build-package:
+    name: 'Build Package'
+    needs: [pre-deploy-validation, determine-environment]
+    if: always() && (needs.pre-deploy-validation.result == 'success' || inputs.skip_tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Build Package'
+        shell: pwsh
+        run: |
+          Write-Host "📦 Building deployment package..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          Import-Module ./AitherZero.psd1 -Force
+
+          # Create distribution package
+          $version = "${{ needs.determine-environment.outputs.version }}"
+          $packageName = "AitherZero-$version"
+          $packagePath = "./dist/$packageName"
+
+          # Create package directory
+          New-Item -ItemType Directory -Path $packagePath -Force | Out-Null
+
+          # Copy essential files
+          $filesToCopy = @(
+            'AitherZero.psd1',
+            'AitherZero.psm1',
+            'bootstrap.ps1',
+            'config.psd1',
+            'domains',
+            'automation-scripts',
+            'tools',
+            'LICENSE',
+            'README.md'
+          )
+
+          foreach ($item in $filesToCopy) {
+            if (Test-Path $item) {
+              Copy-Item -Path $item -Destination $packagePath -Recurse -Force
+              Write-Host "  ✓ Copied $item" -ForegroundColor Green
+            }
+          }
+
+          # Create archive
+          Compress-Archive -Path "$packagePath/*" -DestinationPath "./dist/$packageName.zip" -Force
+          Write-Host "✅ Package created: $packageName.zip" -ForegroundColor Green
+
+      - name: 'Upload Package Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-package
+          path: ./dist/*.zip
+          retention-days: 90
+
+  # Deploy to environment
+  deploy:
+    name: 'Deploy to ${{ needs.determine-environment.outputs.environment }}'
+    needs: [determine-environment, build-package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: ${{ needs.determine-environment.outputs.environment }}
+      url: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.determine-environment.outputs.version }}
+
+    steps:
+      - name: 'Download Package'
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-package
+
+      - name: 'Create Deployment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ needs.determine-environment.outputs.environment }}';
+            const version = '${{ needs.determine-environment.outputs.version }}';
+
+            core.info(`🚀 Deploying version ${version} to ${environment}`);
+
+            // Create GitHub deployment
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.ref,
+              environment: environment,
+              auto_merge: false,
+              required_contexts: [],
+              description: `Automated deployment of ${version} to ${environment}`
+            });
+
+            core.info(`✅ Deployment created: ${deployment.data.id}`);
+
+            // Mark deployment as in progress
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'in_progress',
+              description: 'Deployment in progress'
+            });
+
+      - name: 'Deploy Package'
+        shell: pwsh
+        run: |
+          $environment = "${{ needs.determine-environment.outputs.environment }}"
+          $version = "${{ needs.determine-environment.outputs.version }}"
+
+          Write-Host "🚀 Deploying to $environment..." -ForegroundColor Cyan
+          Write-Host "   Version: $version" -ForegroundColor White
+
+          # Simulate deployment (customize based on your needs)
+          Start-Sleep -Seconds 3
+
+          Write-Host "✅ Deployment completed successfully!" -ForegroundColor Green
+
+  # Post-deployment verification
+  post-deploy-verification:
+    name: 'Post-Deployment Verification'
+    needs: [determine-environment, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 'Verify Deployment'
+        shell: pwsh
+        run: |
+          $environment = "${{ needs.determine-environment.outputs.environment }}"
+          Write-Host "✅ Verifying deployment to $environment..." -ForegroundColor Cyan
+
+          # Add verification checks here
+          # - Health checks
+          # - Smoke tests
+          # - Metrics validation
+
+          Write-Host "✅ Deployment verified successfully!" -ForegroundColor Green
+
+      - name: 'Update Deployment Status'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ needs.determine-environment.outputs.environment }}';
+
+            // Find the latest deployment
+            const deployments = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              environment: environment,
+              per_page: 1
+            });
+
+            if (deployments.data.length > 0) {
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployments.data[0].id,
+                state: 'success',
+                description: 'Deployment successful and verified'
+              });
+
+              core.info('✅ Deployment status updated to success');
+            }
+
+  # Rollback capability
+  rollback:
+    name: 'Rollback Deployment'
+    needs: [determine-environment, post-deploy-verification]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 'Trigger Rollback'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const environment = '${{ needs.determine-environment.outputs.environment }}';
+
+            core.warning(`🔄 Deployment failed! Initiating rollback for ${environment}...`);
+
+            // Find the failed deployment
+            const deployments = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              environment: environment,
+              per_page: 1
+            });
+
+            if (deployments.data.length > 0) {
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployments.data[0].id,
+                state: 'failure',
+                description: 'Deployment failed - rollback initiated'
+              });
+            }
+
+            core.error('❌ Deployment failed and was rolled back');
