@@ -1,0 +1,302 @@
+name: Build AitherCore Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (e.g., 1.0.0)'
+        required: true
+        type: string
+      include_examples:
+        description: 'Include example scripts'
+        type: boolean
+        default: false
+      create_release:
+        description: 'Create GitHub Release'
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'aithercore-v*'
+  workflow_call:
+    inputs:
+      version:
+        description: 'Package version'
+        required: true
+        type: string
+      include_examples:
+        description: 'Include example scripts'
+        type: boolean
+        default: false
+      create_release:
+        description: 'Create GitHub Release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aithercore-build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  build-packages:
+    name: Build AitherCore Packages
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: Linux
+          - os: windows-latest
+            platform: Windows
+          - os: macos-latest
+            platform: macOS
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
+          Write-Host "Platform: ${{ matrix.platform }}" -ForegroundColor Cyan
+      
+      - name: 📦 Build Package
+        shell: pwsh
+        run: |
+          $params = @{
+            Platforms = '${{ matrix.platform }}'
+            OutputPath = './dist/aithercore'
+            ErrorAction = 'Stop'
+          }
+          
+          if ('${{ github.event.inputs.version }}') {
+            $params['Version'] = '${{ github.event.inputs.version }}'
+          }
+          
+          if ('${{ github.event.inputs.include_examples }}' -eq 'true') {
+            $params['IncludeExamples'] = $true
+          }
+          
+          ./tools/Build-AitherCorePackage.ps1 @params
+      
+      - name: 📤 Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aithercore-${{ matrix.platform }}
+          path: ./dist/aithercore/*
+          retention-days: 30
+      
+      - name: 🧪 Test Package
+        shell: pwsh
+        run: |
+          Write-Host "Testing package contents..." -ForegroundColor Cyan
+          
+          $packages = Get-ChildItem ./dist/aithercore -File
+          if ($packages.Count -eq 0) {
+            Write-Error "No packages found!"
+            exit 1
+          }
+          
+          foreach ($package in $packages) {
+            Write-Host "✅ Found: $($package.Name) ($([math]::Round($package.Length/1MB, 2)) MB)" -ForegroundColor Green
+          }
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-packages
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+      needs.build-packages.result == 'success' &&
+      (github.event.inputs.create_release == 'true' || startsWith(github.ref, 'refs/tags/aithercore-v'))
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 📦 Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-packages
+      
+      - name: 📋 Prepare Release
+        id: prep
+        shell: pwsh
+        run: |
+          # Determine version
+          $version = if ('${{ github.event.inputs.version }}') {
+            '${{ github.event.inputs.version }}'
+          } elseif ('${{ github.ref_name }}' -match 'aithercore-v(.+)') {
+            $matches[1]
+          } else {
+            '1.0.0'
+          }
+          
+          Write-Host "Release version: $version"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          
+          # Create release notes
+          $releaseNotes = @"
+          # AitherCore v$version
+          
+          **Lightweight AitherZero Distribution - 11 Essential Modules**
+          
+          ## What's Included
+          
+          **11 core modules (7,477 lines, 90 functions):**
+          
+          ### Layer 1 - Foundation (3 modules)
+          - **Logging.psm1** - Centralized logging and audit trails
+          - **Configuration.psm1** - Configuration management and environment switching
+          - **TextUtilities.psm1** - Text formatting utilities
+          
+          ### Layer 2 - Platform Services (5 modules)
+          - **Performance.psm1** - Runtime performance monitoring
+          - **Bootstrap.psm1** - Platform initialization and setup
+          - **PackageManager.psm1** - Cross-platform package management
+          - **BetterMenu.psm1** - Interactive menu system
+          - **UserInterface.psm1** - Complete UI framework
+          
+          ### Layer 3 - Operations (3 modules)
+          - **Infrastructure.psm1** - Infrastructure tool detection (OpenTofu/Terraform)
+          - **Security.psm1** - SSH operations and security
+          - **OrchestrationEngine.psm1** - Workflow orchestration
+          
+          ## Platform Support
+          
+          - ✅ Windows (PowerShell 7+)
+          - ✅ Linux (PowerShell 7+)
+          - ✅ macOS (PowerShell 7+)
+          
+          ## Installation
+          
+          ### Windows
+          ``````powershell
+          # Extract the ZIP file
+          Expand-Archive -Path AitherCore-v$version-Windows.zip -DestinationPath .
+          cd AitherCore
+          
+          # Run installer
+          ./Install-Windows.ps1
+          
+          # Verify installation
+          Import-Module AitherCore
+          Get-Module AitherCore
+          ``````
+          
+          ### Linux/macOS
+          ``````bash
+          # Extract the archive
+          tar -xzf AitherCore-v$version-Linux.tar.gz  # or macOS.tar.gz
+          cd AitherCore
+          
+          # Run installer
+          pwsh ./Install-Unix.ps1
+          
+          # Verify installation
+          pwsh -c "Import-Module AitherCore; Get-Module AitherCore"
+          ``````
+          
+          ## Features
+          
+          - ✅ **Complete Foundation** - All essential platform services
+          - ✅ **Production Ready** - Includes monitoring, initialization, package management
+          - ✅ **89.4% Script Compatible** - Works with 110 of 123 automation scripts
+          - ✅ **Zero Dependencies** - Standalone installation
+          - ✅ **Extensible** - Clear module boundaries for custom extensions
+          - ✅ **Cross-Platform** - Works on Windows, Linux, and macOS
+          
+          ## Quick Start
+          
+          ``````powershell
+          # Import the module
+          Import-Module AitherCore
+          
+          # Use logging
+          Write-CustomLog "Application started" -Source "MyApp"
+          
+          # Use configuration
+          `$config = Get-Configuration
+          
+          # Use UI
+          `$choice = Show-UIMenu -Title "Main Menu" -Items @("Start", "Stop", "Exit")
+          
+          # Monitor performance
+          Start-PerformanceTimer -Name "Operation"
+          # ... your code ...
+          Stop-PerformanceTimer -Name "Operation"
+          
+          # Orchestrate workflows
+          Invoke-OrchestrationSequence -Sequence "0000-0099"
+          ``````
+          
+          ## Documentation
+          
+          Included in package:
+          - README.md - Overview and module descriptions
+          - USAGE-EXAMPLES.md - Practical code examples
+          - QUICKSTART.md - 5-minute quick start guide
+          - ARCHITECTURAL-REVIEW-COMPLETE.md - Detailed architectural analysis
+          - ARCHITECTURE-DECISION.md - Design decisions and rationale
+          
+          ## What's NOT Included
+          
+          AitherCore is a lightweight distribution. The following are available in the full AitherZero platform:
+          - Development tools (Git automation, Issue tracking, PR management)
+          - Testing frameworks
+          - Documentation generation
+          - Reporting and analytics
+          - AI integration (Claude, Copilot)
+          - Advanced UI components
+          
+          ## System Requirements
+          
+          - PowerShell 7.0 or higher
+          - Windows 10/11, Linux (any modern distro), or macOS 10.15+
+          
+          ## Support
+          
+          - **Full Platform**: https://github.com/wizzense/AitherZero
+          - **Issues**: https://github.com/wizzense/AitherZero/issues
+          - **Documentation**: https://wizzense.github.io/AitherZero/
+          
+          ---
+          
+          **Build Date**: $(Get-Date -Format "yyyy-MM-dd")
+          **Total Size**: ~200 KB per platform
+          **License**: See LICENSE file in package
+          "@
+          
+          Set-Content -Path ./RELEASE_NOTES.md -Value $releaseNotes
+      
+      - name: 🏷️ Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: AitherCore v${{ steps.prep.outputs.version }}
+          tag_name: aithercore-v${{ steps.prep.outputs.version }}
+          body_path: ./RELEASE_NOTES.md
+          files: |
+            ./release-packages/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: ✅ Release Complete
+        run: |
+          echo "🎉 AitherCore v${{ steps.prep.outputs.version }} released successfully!"
+          echo "📦 Packages available for: Windows, Linux, macOS"

@@ -1,0 +1,260 @@
+name: Archive Documentation to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'docs/archive/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "archive-pages"
+  cancel-in-progress: false
+
+jobs:
+  check-archive:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+      archive_count: ${{ steps.check.outputs.archive_count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Check for archive changes
+        id: check
+        run: |
+          # Check if archive directory exists and has files
+          if [ -d "docs/archive" ] && [ "$(ls -A docs/archive 2>/dev/null)" ]; then
+            ARCHIVE_COUNT=$(find docs/archive -type f -name "*.md" | wc -l)
+            echo "archive_count=$ARCHIVE_COUNT" >> $GITHUB_OUTPUT
+            
+            # Check if there are changes in the archive directory
+            if git diff --name-only HEAD~1 HEAD | grep -q "^docs/archive/"; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+              echo "✅ Archive changes detected: $ARCHIVE_COUNT files"
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+              echo "ℹ️  No archive changes in this push"
+            fi
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "archive_count=0" >> $GITHUB_OUTPUT
+            echo "ℹ️  No archive directory or files found"
+          fi
+
+  create-archive:
+    needs: check-archive
+    if: needs.check-archive.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Create archive metadata
+        run: |
+          mkdir -p _archive_staging
+          
+          # Generate archive index with metadata
+          cat > _archive_staging/ARCHIVE-INDEX.md << 'EOF'
+          # AitherZero Documentation Archive
+          
+          **Generated**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Total Files**: ${{ needs.check-archive.outputs.archive_count }}
+          **Branch**: ${{ github.ref_name }}
+          **Commit**: ${{ github.sha }}
+          
+          ## About This Archive
+          
+          This archive contains historical documentation from the AitherZero project that has been superseded by newer content or is no longer actively maintained. The files are preserved for reference and historical context.
+          
+          ## Archived Files
+          
+          EOF
+          
+          # List all archived files with details
+          cd docs/archive
+          for file in *.md; do
+            if [ "$file" != "README.md" ] && [ "$file" != "index.md" ]; then
+              SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+              MODIFIED=$(stat -f%Sm -t "%Y-%m-%d" "$file" 2>/dev/null || stat -c%y "$file" | cut -d' ' -f1)
+              echo "- **$file** - ${SIZE} bytes, last modified: ${MODIFIED}" >> ../../_archive_staging/ARCHIVE-INDEX.md
+            fi
+          done
+          cd ../..
+          
+          echo "" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "## Retrieval Instructions" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "To access these archived documents:" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "1. **Download the archive**: \`wget https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/archives/documentation-archive-$(date +%Y%m%d).zip\`" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "2. **Extract**: \`unzip documentation-archive-$(date +%Y%m%d).zip\`" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "3. **Browse**: Open the extracted markdown files in your preferred editor" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "## Direct File Access" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "Individual files can also be viewed directly from the GitHub repository:" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "\`https://github.com/${{ github.repository }}/tree/${{ github.sha }}/docs/archive\`" >> _archive_staging/ARCHIVE-INDEX.md
+      
+      - name: Create documentation archive
+        run: |
+          ARCHIVE_DATE=$(date +%Y%m%d)
+          ARCHIVE_NAME="documentation-archive-${ARCHIVE_DATE}.zip"
+          
+          echo "📦 Creating archive: ${ARCHIVE_NAME}"
+          cd docs/archive
+          
+          # Create zip file with all markdown files except README and index
+          zip -r "../../_archive_staging/${ARCHIVE_NAME}" *.md \
+            -x "README.md" "index.md" \
+            || echo "⚠️  Some files may have been skipped"
+          
+          cd ../..
+          
+          # Verify archive was created
+          if [ -f "_archive_staging/${ARCHIVE_NAME}" ]; then
+            SIZE=$(stat -f%z "_archive_staging/${ARCHIVE_NAME}" 2>/dev/null || stat -c%s "_archive_staging/${ARCHIVE_NAME}")
+            echo "✅ Archive created: ${ARCHIVE_NAME} (${SIZE} bytes)"
+            echo "ARCHIVE_NAME=${ARCHIVE_NAME}" >> $GITHUB_ENV
+          else
+            echo "❌ Failed to create archive"
+            exit 1
+          fi
+      
+      - name: Create archive directory structure
+        run: |
+          mkdir -p _site/archives
+          cp _archive_staging/*.zip _site/archives/ 2>/dev/null || echo "No zip files to copy"
+          cp _archive_staging/ARCHIVE-INDEX.md _site/archives/
+          
+          # Create a simple HTML index
+          cat > _site/archives/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>AitherZero Documentation Archives</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #f5f5f5;
+              }
+              .container {
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+              h2 { color: #34495e; margin-top: 30px; }
+              .archive-info {
+                background: #ecf0f1;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 20px 0;
+              }
+              .download-btn {
+                display: inline-block;
+                background: #3498db;
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 5px;
+                margin: 10px 5px;
+                font-weight: bold;
+              }
+              .download-btn:hover {
+                background: #2980b9;
+              }
+              code {
+                background: #f8f8f8;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: 'Courier New', monospace;
+              }
+              pre {
+                background: #2c3e50;
+                color: #ecf0f1;
+                padding: 15px;
+                border-radius: 5px;
+                overflow-x: auto;
+              }
+              pre code {
+                background: transparent;
+                color: inherit;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>📦 AitherZero Documentation Archives</h1>
+              
+              <div class="archive-info">
+                <strong>Latest Archive:</strong> documentation-archive-$(date +%Y%m%d).zip<br>
+                <strong>Generated:</strong> $(date -u +"%Y-%m-%d %H:%M:%S UTC")<br>
+                <strong>Files:</strong> ${{ needs.check-archive.outputs.archive_count }} documents
+              </div>
+              
+              <h2>Download Archive</h2>
+              <p>Click below to download the complete documentation archive:</p>
+              <a href="./documentation-archive-$(date +%Y%m%d).zip" class="download-btn">📥 Download Archive</a>
+              <a href="./ARCHIVE-INDEX.md" class="download-btn">📄 View Index</a>
+              
+              <h2>What's Archived?</h2>
+              <p>This archive contains historical documentation including:</p>
+              <ul>
+                <li>Implementation summaries from completed features</li>
+                <li>Historical roadmaps and planning documents</li>
+                <li>Workflow fixes and one-time improvements</li>
+                <li>Release notes from previous versions</li>
+              </ul>
+              
+              <h2>Quick Access</h2>
+              <p>Download and extract using command line:</p>
+              <pre><code>wget https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/archives/documentation-archive-$(date +%Y%m%d).zip
+          unzip documentation-archive-$(date +%Y%m%d).zip</code></pre>
+              
+              <h2>Browse on GitHub</h2>
+              <p>You can also view the archived files directly in the repository:</p>
+              <p><a href="https://github.com/${{ github.repository }}/tree/${{ github.sha }}/docs/archive">View on GitHub</a></p>
+            </div>
+          </body>
+          </html>
+          EOF
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: [check-archive, create-archive]
+    if: needs.check-archive.outputs.has_changes == 'true'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}archives/
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        
+      - name: Report Deployment
+        run: |
+          echo "✅ Archive deployed to GitHub Pages!"
+          echo "🔗 Archive URL: ${{ steps.deployment.outputs.page_url }}archives/"
+          echo "📦 Download: ${{ steps.deployment.outputs.page_url }}archives/documentation-archive-$(date +%Y%m%d).zip"
