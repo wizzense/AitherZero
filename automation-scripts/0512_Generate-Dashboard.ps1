@@ -563,6 +563,59 @@ function Get-PSScriptAnalyzerMetrics {
     return $metrics
 }
 
+function Parse-TestResultsXml {
+    <#
+    .SYNOPSIS
+    Parses NUnit format test results XML and returns test status
+    
+    .PARAMETER XmlPath
+    Path to the test results XML file
+    
+    .OUTPUTS
+    Hashtable with TestStatus, BadgeUrl, and LastWriteTime
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$XmlPath
+    )
+    
+    try {
+        [xml]$testXml = Get-Content $XmlPath
+        
+        # Parse NUnit format test results
+        if ($testXml.'test-results') {
+            $results = $testXml.'test-results'
+            $totalTests = [int]$results.total
+            $failures = [int]$results.failures
+            $errors = [int]$results.errors
+            
+            $testStatus = $null
+            $badgeUrl = $null
+            
+            if (($failures + $errors) -eq 0 -and $totalTests -gt 0) {
+                $testStatus = "Passing"
+                $badgeUrl = "https://img.shields.io/badge/tests-passing-brightgreen"
+            } elseif (($failures + $errors) -gt 0) {
+                $testStatus = "Failing"
+                $badgeUrl = "https://img.shields.io/badge/tests-failing-red"
+            } else {
+                $testStatus = "No Tests"
+                $badgeUrl = "https://img.shields.io/badge/tests-none-yellow"
+            }
+            
+            return @{
+                TestStatus = $testStatus
+                BadgeUrl = $badgeUrl
+                LastWriteTime = (Get-Item $XmlPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            }
+        }
+    } catch {
+        Write-ScriptLog -Level Warning -Message "Failed to parse test results from $XmlPath : $_"
+    }
+    
+    return $null
+}
+
 function Get-BuildStatus {
     Write-ScriptLog -Message "Determining build status"
 
@@ -574,6 +627,12 @@ function Get-BuildStatus {
         Security = "Unknown"
         Coverage = "Unknown"
         Deployment = "Unknown"
+        Workflows = @{
+            Quality = "Unknown"
+            PRValidation = "Unknown"
+            GitHubPages = "Unknown"
+            DockerPublish = "Unknown"
+        }
         Badges = @{
             Build = "https://img.shields.io/github/workflow/status/wizzense/AitherZero/CI"
             Tests = "https://img.shields.io/badge/tests-unknown-lightgrey"
@@ -582,40 +641,98 @@ function Get-BuildStatus {
         }
     }
 
-    # Check recent test results
-    $testResultsPath = Join-Path $ProjectPath "tests/results"
+    # Check recent test results from testResults.xml at project root
+    $testResultsPath = Join-Path $ProjectPath "testResults.xml"
     if (Test-Path $testResultsPath) {
-        $latestResults = Get-ChildItem -Path $testResultsPath -Filter "*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-        if ($latestResults) {
-            try {
-                [xml]$testXml = Get-Content $latestResults.FullName
-                $testSuites = $testXml.testsuites
-                if ($testSuites) {
-                    $totalTests = $testSuites.tests -as [int]
-                    $failures = $testSuites.failures -as [int]
-                    $errors = $testSuites.errors -as [int]
-
-                    if (($failures + $errors) -eq 0) {
-                        $status.Tests = "Passing"
-                        $status.Badges.Tests = "https://img.shields.io/badge/tests-passing-brightgreen"
-                    } else {
-                        $status.Tests = "Failing"
-                        $status.Badges.Tests = "https://img.shields.io/badge/tests-failing-red"
-                    }
+        $result = Parse-TestResultsXml -XmlPath $testResultsPath
+        if ($result) {
+            $status.Tests = $result.TestStatus
+            $status.Badges.Tests = $result.BadgeUrl
+            $status.LastBuild = $result.LastWriteTime
+        }
+    }
+    
+    # Also check tests/results directory for additional test data if no results yet
+    if ($status.Tests -eq "Unknown") {
+        $testResultsDir = Join-Path $ProjectPath "tests/results"
+        if (Test-Path $testResultsDir) {
+            $latestResults = Get-ChildItem -Path $testResultsDir -Filter "*.xml" -ErrorAction SilentlyContinue | 
+                            Sort-Object LastWriteTime -Descending | 
+                            Select-Object -First 1
+            if ($latestResults) {
+                $result = Parse-TestResultsXml -XmlPath $latestResults.FullName
+                if ($result) {
+                    $status.Tests = $result.TestStatus
+                    $status.Badges.Tests = $result.BadgeUrl
+                    $status.LastBuild = $result.LastWriteTime
                 }
-            } catch {
-                Write-ScriptLog -Level Warning -Message "Failed to parse test results"
             }
         }
     }
 
+    # Check code coverage
+    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
+                    Sort-Object LastWriteTime -Descending |
+                    Select-Object -First 1
+    if ($coverageFiles) {
+        try {
+            [xml]$coverageXml = Get-Content $coverageFiles.FullName
+            if ($coverageXml.coverage) {
+                $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                $status.Coverage = "${coveragePercent}%"
+                
+                if ($coveragePercent -ge 80) {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
+                } elseif ($coveragePercent -ge 50) {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
+                } else {
+                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data"
+        }
+    }
+    
+    # Check PSScriptAnalyzer results for security/quality
+    $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+    if (Test-Path $pssaPath) {
+        try {
+            $pssaData = Get-Content $pssaPath | ConvertFrom-Json
+            $errorCount = $pssaData.Summary.Errors
+            
+            if ($errorCount -eq 0) {
+                $status.Security = "Clean"
+                $status.Badges.Security = "https://img.shields.io/badge/security-clean-brightgreen"
+            } elseif ($errorCount -lt 5) {
+                $status.Security = "Minor Issues"
+                $status.Badges.Security = "https://img.shields.io/badge/security-minor_issues-yellow"
+            } else {
+                $status.Security = "Issues Found"
+                $status.Badges.Security = "https://img.shields.io/badge/security-issues-red"
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse PSScriptAnalyzer results for security status"
+        }
+    }
+
     # Determine overall status
-    if ($status.Tests -eq "Passing") {
+    if ($status.Tests -eq "Passing" -and $status.Security -eq "Clean") {
         $status.Overall = "Healthy"
-    } elseif ($status.Tests -eq "Failing") {
+    } elseif ($status.Tests -eq "Failing" -or $status.Security -eq "Issues Found") {
         $status.Overall = "Issues"
+    } elseif (
+        ($status.Tests -eq "Passing" -and $status.Security -eq "Minor Issues") -or
+        ($status.Tests -ne "Failing" -and $status.Security -eq "Clean")
+    ) {
+        $status.Overall = "Warning"
     } else {
         $status.Overall = "Unknown"
+    }
+    
+    # Check if we're in a CI environment to set deployment status
+    if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
+        $status.Deployment = "CI/CD Active"
     }
 
     return $status
@@ -1024,7 +1141,7 @@ Run './az 0402' to execute the full test suite.
 function Get-CodeCoverageDetails {
     <#
     .SYNOPSIS
-        Get detailed code coverage information
+        Get detailed code coverage information from JaCoCo or Cobertura format
     #>
     param(
         [string]$ProjectPath
@@ -1037,25 +1154,131 @@ function Get-CodeCoverageDetails {
             Percentage = 0
             CoveredLines = 0
             TotalLines = 0
+            MissedLines = 0
         }
         ByFile = @()
         ByDomain = @{}
+        Format = "Unknown"
     }
     
-    # Look for latest coverage XML
-    $coverageFiles = Get-ChildItem -Path (Join-Path $ProjectPath "tests/results") -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
-                     Where-Object { $_.Length -gt 100 } |  # Skip empty files
-                     Sort-Object LastWriteTime -Descending |
-                     Select-Object -First 1
+    # Look for latest coverage XML - check both tests/results and tests/coverage
+    $searchPaths = @(
+        (Join-Path $ProjectPath "tests/results"),
+        (Join-Path $ProjectPath "tests/coverage")
+    )
     
-    if ($coverageFiles) {
+    $coverageFiles = @()
+    foreach ($searchPath in $searchPaths) {
+        if (Test-Path $searchPath) {
+            $coverageFiles += Get-ChildItem -Path $searchPath -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
+                             Where-Object { $_.Length -gt 100 }  # Skip empty files
+        }
+    }
+    
+    $latestCoverage = $coverageFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    
+    if ($latestCoverage) {
         try {
-            [xml]$coverageXml = Get-Content $coverageFiles.FullName
+            [xml]$coverageXml = Get-Content $latestCoverage.FullName
             
-            # Parse JaCoCo or Cobertura format
-            if ($coverageXml.coverage) {
-                # Cobertura format
+            # Check for JaCoCo format (used by Pester)
+            if ($coverageXml.report) {
+                Write-ScriptLog -Message "Parsing JaCoCo coverage format"
+                $coverage.Format = "JaCoCo"
+                
+                # Get counters from report root - handle both single and multiple counters
+                $counters = @($coverageXml.report.counter)
+                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                
+                if (-not $lineCounter) {
+                    Write-ScriptLog -Level Warning -Message 'No LINE counter found in JaCoCo report'
+                } elseif ($lineCounter) {
+                    $missedLines = [int]$lineCounter.missed
+                    $coveredLines = [int]$lineCounter.covered
+                    $totalLines = $missedLines + $coveredLines
+                    
+                    if ($totalLines -gt 0) {
+                        $coverage.Overall.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                        $coverage.Overall.CoveredLines = $coveredLines
+                        $coverage.Overall.TotalLines = $totalLines
+                        $coverage.Overall.MissedLines = $missedLines
+                        
+                        Write-ScriptLog -Message "Coverage: $($coverage.Overall.Percentage)% ($coveredLines/$totalLines lines)"
+                    }
+                }
+                
+                # Extract file-level coverage from classes
+                $packages = $coverageXml.SelectNodes("//package")
+                foreach ($package in $packages) {
+                    $classes = $package.SelectNodes(".//class")
+                    foreach ($class in $classes) {
+                        $filename = $class.sourcefilename
+                        if (-not $filename) { continue }
+                        
+                        # Get line counter for this class
+                        $classLineCounter = $class.counter | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                        if ($classLineCounter) {
+                            $classMissed = [int]$classLineCounter.missed
+                            $classCovered = [int]$classLineCounter.covered
+                            $classTotal = $classMissed + $classCovered
+                            
+                            $fileCoverage = if ($classTotal -gt 0) { 
+                                [math]::Round(($classCovered / $classTotal) * 100, 1)
+                            } else { 0 }
+                            
+                            $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
+                                     elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
+                                     else { 'other' }
+                            
+                            $coverage.ByFile += @{
+                                File = $filename
+                                Coverage = $fileCoverage
+                                Domain = $domain
+                                CoveredLines = $classCovered
+                                TotalLines = $classTotal
+                            }
+                            
+                            # Track by domain
+                            if (-not $coverage.ByDomain.ContainsKey($domain)) {
+                                $coverage.ByDomain[$domain] = @{ 
+                                    Files = 0
+                                    TotalCoverage = 0
+                                    AverageCoverage = 0
+                                    CoveredLines = 0
+                                    TotalLines = 0
+                                }
+                            }
+                            $coverage.ByDomain[$domain].Files++
+                            $coverage.ByDomain[$domain].TotalCoverage += $fileCoverage
+                            $coverage.ByDomain[$domain].CoveredLines += $classCovered
+                            $coverage.ByDomain[$domain].TotalLines += $classTotal
+                        }
+                    }
+                }
+                
+                # Calculate domain averages
+                foreach ($domain in $coverage.ByDomain.Keys) {
+                    if ($coverage.ByDomain[$domain].Files -gt 0) {
+                        $coverage.ByDomain[$domain].AverageCoverage = [math]::Round(
+                            $coverage.ByDomain[$domain].TotalCoverage / $coverage.ByDomain[$domain].Files,
+                            1
+                        )
+                    }
+                }
+            }
+            # Check for Cobertura format
+            elseif ($coverageXml.coverage) {
+                Write-ScriptLog -Message "Parsing Cobertura coverage format"
+                $coverage.Format = "Cobertura"
+                
                 $coverage.Overall.Percentage = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                
+                # Calculate total and covered lines for Cobertura format
+                if ($coverageXml.coverage.'lines-covered' -and $coverageXml.coverage.'lines-valid') {
+                    $coverage.Overall.CoveredLines = [int]$coverageXml.coverage.'lines-covered'
+                    $coverage.Overall.TotalLines = [int]$coverageXml.coverage.'lines-valid'
+                    $coverage.Overall.MissedLines = $coverage.Overall.TotalLines - $coverage.Overall.CoveredLines
+                }
                 
                 # Extract file-level coverage
                 $packages = $coverageXml.SelectNodes("//package")
@@ -1098,9 +1321,14 @@ function Get-CodeCoverageDetails {
                     }
                 }
             }
+            else {
+                Write-ScriptLog -Level Warning -Message "Unrecognized coverage file format"
+            }
         } catch {
             Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
+    } else {
+        Write-ScriptLog -Level Warning -Message "No coverage files found in tests/results or tests/coverage"
     }
     
     return $coverage
@@ -1323,6 +1551,258 @@ function Get-LifecycleAnalysis {
     return $lifecycle
 }
 
+function Get-GitHubRepositoryData {
+    param(
+        [string]$Owner = "wizzense",
+        [string]$Repo = "AitherZero"
+    )
+    
+    Write-ScriptLog -Message "Fetching GitHub repository data for $Owner/$Repo"
+    
+    $repoData = @{
+        Stars = 0
+        Forks = 0
+        OpenIssues = 0
+        OpenPRs = 0
+        Watchers = 0
+        LastUpdated = "Unknown"
+        DefaultBranch = "main"
+        License = "Unknown"
+        Language = "PowerShell"
+        Topics = @()
+        Error = $null
+    }
+    
+    try {
+        # Check if we're in GitHub Actions with access to API
+        $apiUrl = "https://api.github.com/repos/$Owner/$Repo"
+        
+        # Use gh CLI if available for authenticated requests
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            Write-ScriptLog -Message "Using GitHub CLI for authenticated request"
+            $response = gh api $apiUrl 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $repoInfo = $response | ConvertFrom-Json
+            } else {
+                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
+                $repoInfo = $null
+            }
+        } else {
+            # Fallback to direct API call (rate limited)
+            Write-ScriptLog -Message "Using direct API request (rate limited)"
+            $headers = @{
+                'User-Agent' = 'AitherZero-Dashboard'
+                'Accept' = 'application/vnd.github.v3+json'
+            }
+            
+            # Add auth token if available
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            }
+            
+            $repoInfo = Invoke-RestMethod -Uri $apiUrl -Headers $headers -ErrorAction Stop
+        }
+        
+        if ($repoInfo) {
+            $repoData.Stars = $repoInfo.stargazers_count
+            $repoData.Forks = $repoInfo.forks_count
+            $repoData.OpenIssues = $repoInfo.open_issues_count
+            $repoData.Watchers = $repoInfo.watchers_count
+            $repoData.DefaultBranch = $repoInfo.default_branch
+            $repoData.LastUpdated = $repoInfo.updated_at
+            
+            if ($repoInfo.license) {
+                $repoData.License = $repoInfo.license.name
+            }
+            
+            if ($repoInfo.language) {
+                $repoData.Language = $repoInfo.language
+            }
+            
+            if ($repoInfo.topics) {
+                $repoData.Topics = $repoInfo.topics
+            }
+            
+            Write-ScriptLog -Message "Successfully fetched GitHub data: $($repoData.Stars) stars, $($repoData.Forks) forks"
+            
+            # Fetch pull requests separately
+            try {
+                $prUrl = "https://api.github.com/repos/$Owner/$Repo/pulls?state=open"
+                if (Get-Command gh -ErrorAction SilentlyContinue) {
+                    $prResponse = gh api $prUrl 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        $prs = $prResponse | ConvertFrom-Json
+                        $repoData.OpenPRs = @($prs).Count
+                    }
+                } else {
+                    $prs = Invoke-RestMethod -Uri $prUrl -Headers $headers -ErrorAction Stop
+                    $repoData.OpenPRs = @($prs).Count
+                }
+                Write-ScriptLog -Message "Fetched PR data: $($repoData.OpenPRs) open PRs"
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to fetch PR data: $($_.Exception.Message)"
+            }
+        }
+    } catch {
+        $repoData.Error = $_.Exception.Message
+        Write-ScriptLog -Level Warning -Message "Failed to fetch GitHub data: $($_.Exception.Message)"
+    }
+    
+    return $repoData
+}
+
+function Get-GitHubWorkflowStatus {
+    param(
+        [string]$Owner = "wizzense",
+        [string]$Repo = "AitherZero"
+    )
+    
+    Write-ScriptLog -Message "Fetching GitHub Actions workflow status"
+    
+    $workflowData = @{
+        TotalWorkflows = 0
+        SuccessfulRuns = 0
+        FailedRuns = 0
+        LastRunStatus = "Unknown"
+        LastRunTime = "Unknown"
+        Workflows = @()
+        Error = $null
+    }
+    
+    try {
+        $workflowsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/workflows"
+        
+        # Use gh CLI if available
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            $response = gh api $workflowsUrl 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $workflowsList = $response | ConvertFrom-Json
+            } else {
+                Write-ScriptLog -Level Warning -Message "Failed to fetch workflows via gh CLI"
+                $workflowsList = $null
+            }
+        } else {
+            $headers = @{
+                'User-Agent' = 'AitherZero-Dashboard'
+                'Accept' = 'application/vnd.github.v3+json'
+            }
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            }
+            $workflowsList = Invoke-RestMethod -Uri $workflowsUrl -Headers $headers -ErrorAction Stop
+        }
+        
+        if ($workflowsList -and $workflowsList.workflows) {
+            $workflowData.TotalWorkflows = $workflowsList.workflows.Count
+            
+            # Get status of recent workflow runs
+            $runsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/runs?per_page=10"
+            
+            if (Get-Command gh -ErrorAction SilentlyContinue) {
+                $runsResponse = gh api $runsUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $runsData = $runsResponse | ConvertFrom-Json
+                }
+            } else {
+                $runsData = Invoke-RestMethod -Uri $runsUrl -Headers $headers -ErrorAction Stop
+            }
+            
+            if ($runsData -and $runsData.workflow_runs) {
+                $runs = $runsData.workflow_runs
+                $workflowData.SuccessfulRuns = @($runs | Where-Object { $_.conclusion -eq 'success' }).Count
+                $workflowData.FailedRuns = @($runs | Where-Object { $_.conclusion -eq 'failure' }).Count
+                
+                if ($runs.Count -gt 0) {
+                    $lastRun = $runs[0]
+                    $workflowData.LastRunStatus = $lastRun.conclusion
+                    $workflowData.LastRunTime = $lastRun.created_at
+                }
+            }
+            
+            Write-ScriptLog -Message "Fetched workflow status: $($workflowData.TotalWorkflows) workflows, $($workflowData.SuccessfulRuns) successful"
+        }
+    } catch {
+        $workflowData.Error = $_.Exception.Message
+        Write-ScriptLog -Level Warning -Message "Failed to fetch workflow status: $($_.Exception.Message)"
+    }
+    
+    return $workflowData
+}
+
+function Get-HistoricalMetrics {
+    param(
+        [string]$ReportsPath = "./reports"
+    )
+    
+    Write-ScriptLog -Message "Loading historical metrics data"
+    
+    $history = @{
+        TestTrends = @()
+        CoverageTrends = @()
+        LOCTrends = @()
+        QualityTrends = @()
+        LastNDays = 30
+    }
+    
+    try {
+        # Load dashboard.json if it exists for current metrics
+        $dashboardJsonPath = Join-Path $ReportsPath "dashboard.json"
+        if (Test-Path $dashboardJsonPath) {
+            $currentData = Get-Content $dashboardJsonPath -Raw | ConvertFrom-Json
+            
+            # Add current data point
+            $timestamp = Get-Date -Format "yyyy-MM-dd"
+            
+            if ($currentData.Metrics) {
+                $history.TestTrends += @{
+                    Date = $timestamp
+                    Total = $currentData.Metrics.Tests.Total
+                    Passed = $currentData.Metrics.Tests.Passed
+                    Failed = $currentData.Metrics.Tests.Failed
+                }
+                
+                $history.CoverageTrends += @{
+                    Date = $timestamp
+                    Percentage = $currentData.Metrics.Coverage.Percentage
+                }
+                
+                $history.LOCTrends += @{
+                    Date = $timestamp
+                    Total = $currentData.Metrics.Files.LinesOfCode
+                    Functions = $currentData.Metrics.Files.Functions
+                }
+            }
+        }
+        
+        # Look for historical test reports
+        $testReports = Get-ChildItem -Path $ReportsPath -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | 
+                       Sort-Object LastWriteTime -Descending | 
+                       Select-Object -First 10
+        
+        foreach ($report in $testReports) {
+            try {
+                $reportData = Get-Content $report.FullName -Raw | ConvertFrom-Json
+                if ($reportData.TotalCount) {
+                    $history.TestTrends += @{
+                        Date = $report.LastWriteTime.ToString("yyyy-MM-dd")
+                        Total = $reportData.TotalCount
+                        Passed = $reportData.PassedCount
+                        Failed = $reportData.FailedCount
+                    }
+                }
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to parse report: $($report.Name)"
+            }
+        }
+        
+        Write-ScriptLog -Message "Loaded $($history.TestTrends.Count) historical test data points"
+    } catch {
+        Write-ScriptLog -Level Warning -Message "Failed to load historical metrics: $($_.Exception.Message)"
+    }
+    
+    return $history
+}
+
 function New-HTMLDashboard {
     param(
         [hashtable]$Metrics,
@@ -1330,6 +1810,9 @@ function New-HTMLDashboard {
         [hashtable]$Activity,
         [hashtable]$QualityMetrics,
         [hashtable]$PSScriptAnalyzerMetrics,
+        [hashtable]$GitHubData,
+        [hashtable]$WorkflowStatus,
+        [hashtable]$HistoricalMetrics,
         [string]$OutputPath
     )
 
@@ -1656,6 +2139,10 @@ $manifestTagsSection
         .status-issues { 
             background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
             border-color: var(--error);
+        }
+        .status-warning { 
+            background: linear-gradient(135deg, rgba(210, 153, 34, 0.3), rgba(210, 153, 34, 0.1)); 
+            border-color: var(--warning);
         }
         .status-unknown { 
             background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
@@ -2021,6 +2508,198 @@ $manifestTagsSection
         a {
             color: var(--info);
         }
+
+        /* Roadmap Styles */
+        .roadmap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .roadmap-priority {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .roadmap-priority:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .priority-header {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--card-border);
+            user-select: none;
+        }
+
+        .priority-header:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.1));
+        }
+
+        .priority-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .priority-header.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .priority-content {
+            padding: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .progress-indicator {
+            margin-bottom: 20px;
+        }
+
+        .roadmap-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 15px 0;
+        }
+
+        .roadmap-item {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .roadmap-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .roadmap-item.completed .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .roadmap-item.in-progress .status-dot {
+            background: var(--warning);
+            box-shadow: 0 0 8px var(--warning);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .roadmap-item.pending .status-dot {
+            background: var(--text-secondary);
+            opacity: 0.3;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .timeline {
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--bg-darker);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Interactive enhancements */
+        .metric-card {
+            cursor: pointer;
+            transition: all 0.3s ease, transform 0.2s ease;
+        }
+
+        .metric-card.expanded {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(102, 126, 234, 0.05) 100%);
+        }
+
+        .metric-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--card-border);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .metric-card.expanded .metric-details {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Chart styles */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            min-height: 20px;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: translateY(-5px);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -2041,6 +2720,10 @@ $manifestTagsSection
             <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#system">System Info</a></li>
             <li><a href="#resources">Resources</a></li>
+            <li><a href="#roadmap">🗺️ Roadmap</a></li>
+            <li><a href="#github-activity">🌟 GitHub</a></li>
+            <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#trends">📈 Trends</a></li>
         </ul>
     </nav>
 
@@ -2070,10 +2753,10 @@ $manifestTagsSection
                 <div class="status-badge status-$(if($Status.Tests -eq 'Passing'){'healthy'}elseif($Status.Tests -eq 'Failing'){'issues'}else{'unknown'})">
                     🧪 Tests: $($Status.Tests)
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-$(if($Status.Security -eq 'Clean'){'healthy'}elseif($Status.Security -match 'Issues'){'issues'}elseif($Status.Security -match 'Minor'){'warning'}else{'unknown'})">
                     🔒 Security: $($Status.Security)
                 </div>
-                <div class="status-badge status-unknown">
+                <div class="status-badge status-$(if($Status.Deployment -match 'Active'){'healthy'}else{'unknown'})">
                     📦 Deployment: $($Status.Deployment)
                 </div>
             </div>
@@ -2131,7 +2814,7 @@ $manifestTagsSection
                     </div>
 
                     <div class="metric-card">
-                        <h3>🧪 Test Suite</h3>
+                        <h3>🧪 Test Files</h3>
                         <div class="metric-value">$($Metrics.Tests.Total)</div>
                         <div class="metric-label">
                             $($Metrics.Tests.Unit) Unit | $($Metrics.Tests.Integration) Integration
@@ -2142,7 +2825,10 @@ $manifestTagsSection
                                               else { 'var(--error)' }
                             @"
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid $testStatusColor;">
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                                Last Test Run Results:
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
                                 ✅ $($Metrics.Tests.Passed) Passed | ❌ $($Metrics.Tests.Failed) Failed$(if($Metrics.Tests.Skipped -gt 0){" | ⏭️ $($Metrics.Tests.Skipped) Skipped"})
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
@@ -2150,6 +2836,9 @@ $manifestTagsSection
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
                                 Last run: $($Metrics.Tests.LastRun)
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--warning); margin-top: 8px; font-style: italic;">
+                                ⚠️ Only $($Metrics.Tests.Passed + $Metrics.Tests.Failed) test cases executed. Run <code>./az 0402</code> for full test suite.
                             </div>
                         </div>
 "@
@@ -2441,6 +3130,292 @@ $commitsHTML
                     </div>
                 </div>
             </div>
+
+            <!-- Strategic Roadmap Section -->
+            <section class="section" id="roadmap" style="margin-top: 30px;">
+                <h2>🗺️ Strategic Roadmap</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                    Current strategic priorities and project direction
+                </p>
+                
+                <div class="roadmap-container">
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority1')">
+                            <h3>🚀 Priority 1: Expand Distribution & Discoverability</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority1" class="priority-content">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 30%">30%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Make AitherZero easily discoverable across all platforms</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Publish to PowerShell Gallery (<code>Install-Module -Name AitherZero</code>)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Create Windows installer (MSI/EXE) with WinGet integration
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Submit to package managers (Homebrew consideration)
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 2-3 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority2')">
+                            <h3>📚 Priority 2: Enhance Documentation & Onboarding</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority2" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%">45%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Reduce time-to-value for new users from hours to minutes</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Comprehensive documentation structure
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Quick start guide for common scenarios
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Video tutorials and interactive demos
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    API reference documentation
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 3-4 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority3')">
+                            <h3>🎯 Priority 3: Build Community & Ecosystem</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority3" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 15%">15%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Foster active community and enable contributions</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community contribution guidelines (CONTRIBUTING.md)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Plugin/extension system for community additions
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    User showcase and case studies
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community Discord or Discussions forum
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 4-6 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority4')">
+                            <h3>⚡ Priority 4: Advanced Features & Integrations</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority4" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 20%">20%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Expand capabilities and integrations</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Cross-platform support (Windows, Linux, macOS)
+                                </li>
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Docker containerization with multi-arch support
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Web-based dashboard and monitoring (this page!)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Enhanced cloud provider integrations
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Metrics and telemetry for usage insights
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 6-8 weeks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);">
+                    <h4 style="color: var(--info); margin-bottom: 10px;">📊 Overall Progress</h4>
+                    <div class="progress-bar" style="height: 30px; margin-bottom: 10px;">
+                        <div class="progress-fill" style="width: 28%; font-size: 0.9rem;">28% Complete</div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Based on strategic priorities outlined in <a href="https://github.com/wizzense/AitherZero/blob/main/STRATEGIC-ROADMAP.md" target="_blank" style="color: var(--info);">STRATEGIC-ROADMAP.md</a>
+                    </p>
+                </div>
+            </section>
+
+            <!-- GitHub Activity Section -->
+            <section class="section" id="github-activity" style="margin-top: 30px;">
+                <h2>🌟 GitHub Activity & Metrics</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>⭐ Stars</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.Stars)</div>
+                        <div class="metric-label">GitHub Stars</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🍴 Forks</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.Forks)</div>
+                        <div class="metric-label">Repository Forks</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>👥 Contributors</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($Metrics.Git.Contributors)</div>
+                        <div class="metric-label">Active Contributors</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🔀 Pull Requests</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.OpenPRs)</div>
+                        <div class="metric-label">Open PRs</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🐛 Issues</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.OpenIssues)</div>
+                        <div class="metric-label">Open Issues</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>👀 Watchers</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($githubData.Watchers)</div>
+                        <div class="metric-label">Repository Watchers</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    ✅ <em>Live data from GitHub API$(if($GitHubData.Error){" | ⚠️ Fallback mode: $($GitHubData.Error)"}else{" | Updated in real-time"})</em>
+                </p>
+            </section>
+
+            <!-- GitHub Actions Workflow Status Section -->
+            <section class="section" id="workflow-status" style="margin-top: 30px;">
+                <h2>⚙️ CI/CD Workflow Status</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>📋 Total Workflows</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($WorkflowStatus.TotalWorkflows)</div>
+                        <div class="metric-label">Active Workflows</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>✅ Successful</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">$($WorkflowStatus.SuccessfulRuns)</div>
+                        <div class="metric-label">Recent Successes</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>❌ Failed</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: $(if($WorkflowStatus.FailedRuns -gt 0){'var(--danger)'}else{'var(--text-secondary)'});">$($WorkflowStatus.FailedRuns)</div>
+                        <div class="metric-label">Recent Failures</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🕐 Last Run</h3>
+                        <div class="metric-value" style="font-size: 1.2rem;">$($WorkflowStatus.LastRunStatus)</div>
+                        <div class="metric-label">Status</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    $(if($WorkflowStatus.Error){"⚠️ <em>Unable to fetch workflow data: $($WorkflowStatus.Error)</em>"}else{"✅ <em>Live workflow data from GitHub Actions API</em>"})
+                </p>
+            </section>
+
+            <!-- Historical Trends Section -->
+            <section class="section" id="trends" style="margin-top: 30px;">
+                <h2>📈 Historical Trends</h2>
+                <div class="info-card">
+                    <div class="info-card-header">📊 Test Execution Trends</div>
+                    <div class="info-card-content">
+                        $(if($HistoricalMetrics.TestTrends.Count -gt 0){
+                            $testTrendHTML = ""
+                            foreach($trend in ($HistoricalMetrics.TestTrends | Select-Object -First 5)){
+                                $passRate = if($trend.Total -gt 0){[math]::Round(($trend.Passed / $trend.Total) * 100, 1)}else{0}
+                                $testTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
+                                $testTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Passed)/$($trend.Total) passed ($passRate%)"
+                                $testTrendHTML += "</div>"
+                            }
+                            $testTrendHTML
+                        }else{
+                            "<p style='color: var(--text-secondary);'>No historical test data available yet. Data will accumulate over time.</p>"
+                        })
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="info-card-header">📈 Code Coverage Trends</div>
+                    <div class="info-card-content">
+                        $(if($HistoricalMetrics.CoverageTrends.Count -gt 0){
+                            $coverageTrendHTML = ""
+                            foreach($trend in ($HistoricalMetrics.CoverageTrends | Select-Object -First 5)){
+                                $coverageTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
+                                $coverageTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Percentage)% coverage"
+                                $coverageTrendHTML += "</div>"
+                            }
+                            $coverageTrendHTML
+                        }else{
+                            "<p style='color: var(--text-secondary);'>No historical coverage data available yet. Run tests with coverage to populate.</p>"
+                        })
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="info-card-header">📏 Lines of Code Growth</div>
+                    <div class="info-card-content">
+                        $(if($HistoricalMetrics.LOCTrends.Count -gt 0){
+                            $locTrendHTML = ""
+                            foreach($trend in ($HistoricalMetrics.LOCTrends | Select-Object -First 5)){
+                                $locTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
+                                $locTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Total.ToString('N0')) LOC, $($trend.Functions) functions"
+                                $locTrendHTML += "</div>"
+                            }
+                            $locTrendHTML
+                        }else{
+                            "<p style='color: var(--text-secondary);'>No historical LOC data available yet. Data will be tracked going forward.</p>"
+                        })
+                    </div>
+                </div>
+                
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 <em>Historical data accumulates automatically with each dashboard generation</em>
+                </p>
+            </section>
         </div>
 
         <div class="footer">
@@ -2453,6 +3428,20 @@ $commitsHTML
         // TOC toggle for mobile
         function toggleToc() {
             document.getElementById('toc').classList.toggle('open');
+        }
+
+        // Roadmap priority toggle
+        function togglePriority(id) {
+            const content = document.getElementById(id);
+            const header = content.previousElementSibling;
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                header.classList.add('active');
+            } else {
+                content.style.display = 'none';
+                header.classList.remove('active');
+            }
         }
 
         // Highlight active section in TOC
@@ -2480,32 +3469,115 @@ $commitsHTML
         window.addEventListener('scroll', highlightToc);
         highlightToc();
 
-        // Auto-refresh every 5 minutes
-        setTimeout(() => {
-            window.location.reload();
-        }, 300000);
-
-        // Add interactive elements
+        // Interactive card expansion
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.metric-card, .domain-card');
+            const cards = document.querySelectorAll('.metric-card');
             cards.forEach(card => {
-                card.addEventListener('click', function() {
+                // Add click animation
+                card.addEventListener('click', function(e) {
+                    // Don't expand if clicking on a link
+                    if (e.target.tagName === 'A' || e.target.closest('a')) {
+                        return;
+                    }
+                    
                     this.style.transform = 'scale(0.98)';
                     setTimeout(() => {
                         this.style.transform = '';
                     }, 150);
                 });
+
+                // Add hover effects
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.25)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '';
+                });
             });
 
-            // Close TOC when clicking a link on mobile
-            tocLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    if (window.innerWidth <= 1024) {
-                        document.getElementById('toc').classList.remove('open');
+            // Smooth scroll for TOC links
+            document.querySelectorAll('.toc a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Close mobile TOC after navigation
+                        if (window.innerWidth < 768) {
+                            document.getElementById('toc').classList.remove('open');
+                        }
                     }
                 });
             });
+
+            // Add copy-to-clipboard for code blocks
+            document.querySelectorAll('code').forEach(code => {
+                code.style.cursor = 'pointer';
+                code.title = 'Click to copy';
+                code.addEventListener('click', function() {
+                    navigator.clipboard.writeText(this.textContent).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = '✓ Copied!';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 1500);
+                    });
+                });
+            });
+
+            // Animate progress bars on scroll
+            const progressBars = document.querySelectorAll('.progress-fill');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transition = 'width 1.5s ease-out';
+                        const width = entry.target.style.width;
+                        entry.target.style.width = '0%';
+                        setTimeout(() => {
+                            entry.target.style.width = width;
+                        }, 100);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            progressBars.forEach(bar => observer.observe(bar));
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K to toggle TOC
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    toggleToc();
+                }
+                // Escape to close TOC
+                if (e.key === 'Escape') {
+                    document.getElementById('toc').classList.remove('open');
+                }
+            });
+
+            // Add search functionality hint (for future enhancement)
+            console.log('💡 Dashboard Pro Tip: Use Ctrl+F to search this dashboard');
+            console.log('🔍 Keyboard shortcuts:');
+            console.log('  - Ctrl/Cmd + K: Toggle navigation');
+            console.log('  - Escape: Close navigation');
+            console.log('  - Click code blocks to copy');
         });
+
+        // Auto-refresh every 5 minutes (optional - can be disabled)
+        // setTimeout(() => {
+        //     window.location.reload();
+        // }, 300000);
+
+        // Add live timestamp update
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            document.title = 'AitherZero Dashboard - Updated ' + timeString;
+        }
+        setInterval(updateTimestamp, 60000); // Update every minute
     </script>
 </body>
 </html>
@@ -2570,12 +3642,13 @@ $(if ($Metrics.Classes -gt 0) {
 ### Testing & Quality
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🧪 **Test Suite** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
+| 🧪 **Test Files** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
 $(if ($Metrics.Tests.LastRun) {
     $totalTests = $Metrics.Tests.Passed + $Metrics.Tests.Failed
     @"
-| ✅ **Test Results** | **$($Metrics.Tests.Passed)/$totalTests** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
-| 📊 **Last Test Run** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+| ✅ **Last Test Run** | **$($Metrics.Tests.Passed)/$totalTests cases** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
+| 📊 **Test Details** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
+| ⚠️ **Note** | **Partial Run** | Only $totalTests test cases executed from available test files. Run ``./az 0402`` for full suite. |
 
 "@
 } else {
@@ -2740,6 +3813,18 @@ try {
     $qualityMetrics = Get-QualityMetrics
     $pssaMetrics = Get-PSScriptAnalyzerMetrics
     
+    # Fetch GitHub repository data
+    Write-ScriptLog -Message "Fetching live GitHub repository data..."
+    $githubData = Get-GitHubRepositoryData -Owner "wizzense" -Repo "AitherZero"
+    
+    # Fetch GitHub Actions workflow status
+    Write-ScriptLog -Message "Fetching GitHub Actions workflow status..."
+    $workflowStatus = Get-GitHubWorkflowStatus -Owner "wizzense" -Repo "AitherZero"
+    
+    # Load historical metrics for trend analysis
+    Write-ScriptLog -Message "Loading historical metrics data..."
+    $historicalMetrics = Get-HistoricalMetrics -ReportsPath $OutputPath
+    
     # Collect comprehensive detailed metrics
     Write-ScriptLog -Message "Collecting comprehensive project intelligence..."
     $fileMetrics = Get-FileLevelMetrics -ProjectPath $ProjectPath
@@ -2769,7 +3854,7 @@ try {
     # Generate dashboards based on format selection
     switch ($Format) {
         'HTML' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
         }
         'Markdown' {
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
@@ -2778,7 +3863,7 @@ try {
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
         'All' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
