@@ -1630,6 +1630,158 @@ function Get-GitHubRepositoryData {
     return $repoData
 }
 
+function Get-GitHubWorkflowStatus {
+    param(
+        [string]$Owner = "wizzense",
+        [string]$Repo = "AitherZero"
+    )
+    
+    Write-ScriptLog -Message "Fetching GitHub Actions workflow status"
+    
+    $workflowData = @{
+        TotalWorkflows = 0
+        SuccessfulRuns = 0
+        FailedRuns = 0
+        LastRunStatus = "Unknown"
+        LastRunTime = "Unknown"
+        Workflows = @()
+        Error = $null
+    }
+    
+    try {
+        $workflowsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/workflows"
+        
+        # Use gh CLI if available
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            $response = gh api $workflowsUrl 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $workflowsList = $response | ConvertFrom-Json
+            } else {
+                Write-ScriptLog -Level Warning -Message "Failed to fetch workflows via gh CLI"
+                $workflowsList = $null
+            }
+        } else {
+            $headers = @{
+                'User-Agent' = 'AitherZero-Dashboard'
+                'Accept' = 'application/vnd.github.v3+json'
+            }
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            }
+            $workflowsList = Invoke-RestMethod -Uri $workflowsUrl -Headers $headers -ErrorAction Stop
+        }
+        
+        if ($workflowsList -and $workflowsList.workflows) {
+            $workflowData.TotalWorkflows = $workflowsList.workflows.Count
+            
+            # Get status of recent workflow runs
+            $runsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/runs?per_page=10"
+            
+            if (Get-Command gh -ErrorAction SilentlyContinue) {
+                $runsResponse = gh api $runsUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $runsData = $runsResponse | ConvertFrom-Json
+                }
+            } else {
+                $runsData = Invoke-RestMethod -Uri $runsUrl -Headers $headers -ErrorAction Stop
+            }
+            
+            if ($runsData -and $runsData.workflow_runs) {
+                $runs = $runsData.workflow_runs
+                $workflowData.SuccessfulRuns = @($runs | Where-Object { $_.conclusion -eq 'success' }).Count
+                $workflowData.FailedRuns = @($runs | Where-Object { $_.conclusion -eq 'failure' }).Count
+                
+                if ($runs.Count -gt 0) {
+                    $lastRun = $runs[0]
+                    $workflowData.LastRunStatus = $lastRun.conclusion
+                    $workflowData.LastRunTime = $lastRun.created_at
+                }
+            }
+            
+            Write-ScriptLog -Message "Fetched workflow status: $($workflowData.TotalWorkflows) workflows, $($workflowData.SuccessfulRuns) successful"
+        }
+    } catch {
+        $workflowData.Error = $_.Exception.Message
+        Write-ScriptLog -Level Warning -Message "Failed to fetch workflow status: $($_.Exception.Message)"
+    }
+    
+    return $workflowData
+}
+
+function Get-HistoricalMetrics {
+    param(
+        [string]$ReportsPath = "./reports"
+    )
+    
+    Write-ScriptLog -Message "Loading historical metrics data"
+    
+    $history = @{
+        TestTrends = @()
+        CoverageTrends = @()
+        LOCTrends = @()
+        QualityTrends = @()
+        LastNDays = 30
+    }
+    
+    try {
+        # Load dashboard.json if it exists for current metrics
+        $dashboardJsonPath = Join-Path $ReportsPath "dashboard.json"
+        if (Test-Path $dashboardJsonPath) {
+            $currentData = Get-Content $dashboardJsonPath -Raw | ConvertFrom-Json
+            
+            # Add current data point
+            $timestamp = Get-Date -Format "yyyy-MM-dd"
+            
+            if ($currentData.Metrics) {
+                $history.TestTrends += @{
+                    Date = $timestamp
+                    Total = $currentData.Metrics.Tests.Total
+                    Passed = $currentData.Metrics.Tests.Passed
+                    Failed = $currentData.Metrics.Tests.Failed
+                }
+                
+                $history.CoverageTrends += @{
+                    Date = $timestamp
+                    Percentage = $currentData.Metrics.Coverage.Percentage
+                }
+                
+                $history.LOCTrends += @{
+                    Date = $timestamp
+                    Total = $currentData.Metrics.Files.LinesOfCode
+                    Functions = $currentData.Metrics.Files.Functions
+                }
+            }
+        }
+        
+        # Look for historical test reports
+        $testReports = Get-ChildItem -Path $ReportsPath -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | 
+                       Sort-Object LastWriteTime -Descending | 
+                       Select-Object -First 10
+        
+        foreach ($report in $testReports) {
+            try {
+                $reportData = Get-Content $report.FullName -Raw | ConvertFrom-Json
+                if ($reportData.TotalCount) {
+                    $history.TestTrends += @{
+                        Date = $report.LastWriteTime.ToString("yyyy-MM-dd")
+                        Total = $reportData.TotalCount
+                        Passed = $reportData.PassedCount
+                        Failed = $reportData.FailedCount
+                    }
+                }
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to parse report: $($report.Name)"
+            }
+        }
+        
+        Write-ScriptLog -Message "Loaded $($history.TestTrends.Count) historical test data points"
+    } catch {
+        Write-ScriptLog -Level Warning -Message "Failed to load historical metrics: $($_.Exception.Message)"
+    }
+    
+    return $history
+}
+
 function New-HTMLDashboard {
     param(
         [hashtable]$Metrics,
@@ -1637,6 +1789,9 @@ function New-HTMLDashboard {
         [hashtable]$Activity,
         [hashtable]$QualityMetrics,
         [hashtable]$PSScriptAnalyzerMetrics,
+        [hashtable]$GitHubData,
+        [hashtable]$WorkflowStatus,
+        [hashtable]$HistoricalMetrics,
         [string]$OutputPath
     )
 
@@ -2546,6 +2701,8 @@ $manifestTagsSection
             <li><a href="#resources">Resources</a></li>
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
             <li><a href="#github-activity">🌟 GitHub</a></li>
+            <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#trends">📈 Trends</a></li>
         </ul>
     </nav>
 
@@ -3145,7 +3302,97 @@ $commitsHTML
                     </div>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
-                    ✅ <em>Live data from GitHub API$(if($githubData.Error){" | ⚠️ Fallback mode: $($githubData.Error)"}else{" | Updated in real-time"})</em>
+                    ✅ <em>Live data from GitHub API$(if($GitHubData.Error){" | ⚠️ Fallback mode: $($GitHubData.Error)"}else{" | Updated in real-time"})</em>
+                </p>
+            </section>
+
+            <!-- GitHub Actions Workflow Status Section -->
+            <section class="section" id="workflow-status" style="margin-top: 30px;">
+                <h2>⚙️ CI/CD Workflow Status</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>📋 Total Workflows</h3>
+                        <div class="metric-value" style="font-size: 2rem;">$($WorkflowStatus.TotalWorkflows)</div>
+                        <div class="metric-label">Active Workflows</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>✅ Successful</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">$($WorkflowStatus.SuccessfulRuns)</div>
+                        <div class="metric-label">Recent Successes</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>❌ Failed</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: $(if($WorkflowStatus.FailedRuns -gt 0){'var(--danger)'}else{'var(--text-secondary)'});">$($WorkflowStatus.FailedRuns)</div>
+                        <div class="metric-label">Recent Failures</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🕐 Last Run</h3>
+                        <div class="metric-value" style="font-size: 1.2rem;">$($WorkflowStatus.LastRunStatus)</div>
+                        <div class="metric-label">Status</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    $(if($WorkflowStatus.Error){"⚠️ <em>Unable to fetch workflow data: $($WorkflowStatus.Error)</em>"}else{"✅ <em>Live workflow data from GitHub Actions API</em>"})
+                </p>
+            </section>
+
+            <!-- Historical Trends Section -->
+            <section class="section" id="trends" style="margin-top: 30px;">
+                <h2>📈 Historical Trends</h2>
+                <div class="info-card">
+                    <div class="info-card-header">📊 Test Execution Trends</div>
+                    <div class="info-card-content">
+                        $(if($HistoricalMetrics.TestTrends.Count -gt 0){
+                            $testTrendHTML = ""
+                            foreach($trend in ($HistoricalMetrics.TestTrends | Select-Object -First 5)){
+                                $passRate = if($trend.Total -gt 0){[math]::Round(($trend.Passed / $trend.Total) * 100, 1)}else{0}
+                                $testTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
+                                $testTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Passed)/$($trend.Total) passed ($passRate%)"
+                                $testTrendHTML += "</div>"
+                            }
+                            $testTrendHTML
+                        }else{
+                            "<p style='color: var(--text-secondary);'>No historical test data available yet. Data will accumulate over time.</p>"
+                        })
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="info-card-header">📈 Code Coverage Trends</div>
+                    <div class="info-card-content">
+                        $(if($HistoricalMetrics.CoverageTrends.Count -gt 0){
+                            $coverageTrendHTML = ""
+                            foreach($trend in ($HistoricalMetrics.CoverageTrends | Select-Object -First 5)){
+                                $coverageTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
+                                $coverageTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Percentage)% coverage"
+                                $coverageTrendHTML += "</div>"
+                            }
+                            $coverageTrendHTML
+                        }else{
+                            "<p style='color: var(--text-secondary);'>No historical coverage data available yet. Run tests with coverage to populate.</p>"
+                        })
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="info-card-header">📏 Lines of Code Growth</div>
+                    <div class="info-card-content">
+                        $(if($HistoricalMetrics.LOCTrends.Count -gt 0){
+                            $locTrendHTML = ""
+                            foreach($trend in ($HistoricalMetrics.LOCTrends | Select-Object -First 5)){
+                                $locTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
+                                $locTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Total.ToString('N0')) LOC, $($trend.Functions) functions"
+                                $locTrendHTML += "</div>"
+                            }
+                            $locTrendHTML
+                        }else{
+                            "<p style='color: var(--text-secondary);'>No historical LOC data available yet. Data will be tracked going forward.</p>"
+                        })
+                    </div>
+                </div>
+                
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 <em>Historical data accumulates automatically with each dashboard generation</em>
                 </p>
             </section>
         </div>
@@ -3549,6 +3796,14 @@ try {
     Write-ScriptLog -Message "Fetching live GitHub repository data..."
     $githubData = Get-GitHubRepositoryData -Owner "wizzense" -Repo "AitherZero"
     
+    # Fetch GitHub Actions workflow status
+    Write-ScriptLog -Message "Fetching GitHub Actions workflow status..."
+    $workflowStatus = Get-GitHubWorkflowStatus -Owner "wizzense" -Repo "AitherZero"
+    
+    # Load historical metrics for trend analysis
+    Write-ScriptLog -Message "Loading historical metrics data..."
+    $historicalMetrics = Get-HistoricalMetrics -ReportsPath $OutputPath
+    
     # Collect comprehensive detailed metrics
     Write-ScriptLog -Message "Collecting comprehensive project intelligence..."
     $fileMetrics = Get-FileLevelMetrics -ProjectPath $ProjectPath
@@ -3578,7 +3833,7 @@ try {
     # Generate dashboards based on format selection
     switch ($Format) {
         'HTML' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
         }
         'Markdown' {
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
@@ -3587,7 +3842,7 @@ try {
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
         'All' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }

@@ -757,11 +757,13 @@
             <li><a href="#resources">Resources</a></li>
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
             <li><a href="#github-activity">🌟 GitHub</a></li>
+            <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#trends">📈 Trends</a></li>
         </ul>
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-31 19:24:23
+        🔄 Last updated: 2025-10-31 19:37:08
     </div>
 
     <div class="container">
@@ -812,12 +814,12 @@
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">86,502</div>
+                        <div class="metric-value">86,757</div>
                         <div class="metric-label">
-                            971 Functions
+                            973 Functions
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            💬 7,127 Comments (8.2%) | ⚪ 14,598 Blank Lines
+                            💬 7,134 Comments (8.2%) | ⚪ 14,629 Blank Lines
                         </div>
                     </div>
                     
@@ -858,7 +860,7 @@
                                 Success Rate: <span style="color: var(--success); font-weight: 600;">100%</span> | Duration: 0.98s
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Last run: 2025-10-31 19:19:32
+                                Last run: 2025-10-31 19:33:04
                             </div>
                             <div style="font-size: 0.75rem; color: var(--warning); margin-top: 8px; font-style: italic;">
                                 ⚠️ Only 12 test cases executed. Run <code>./az 0402</code> for full test suite.
@@ -877,7 +879,7 @@
                     
                                         <div class="metric-card">
                         <h3>🌿 Git Repository</h3>
-                        <div class="metric-value" style="font-size: 1.8rem;">44</div>
+                        <div class="metric-value" style="font-size: 1.8rem;">45</div>
                         <div class="metric-label">Total Commits</div>
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
@@ -887,7 +889,7 @@
                                 👥 4 Contributors
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Latest: 8048168 - Restore interactive roadmap and GitHub activity sections with all code review fixes (8 minutes ago)
+                                Latest: b930021 - Phase 2: Add GitHub API integration for live repository metrics (11 minutes ago)
                             </div>
                         </div>
                     </div>
@@ -1127,7 +1129,7 @@
                         <div class="info-card-header">📊 Repository Statistics</div>
                         <div class="info-card-body">
                             <p><strong>Branch:</strong> <code>copilot/update-dashboard-data-fidelity</code></p>
-                            <p><strong>Total Commits:</strong> 44</p>
+                            <p><strong>Total Commits:</strong> 45</p>
                             <p><strong>Contributors:</strong> 4</p>
                             <p><strong>Automation Scripts:</strong> 124</p>
                             <p><strong>GitHub Workflows:</strong> 15</p>
@@ -1138,7 +1140,7 @@
                         <div class="info-card-header">📝 Latest Commit</div>
                         <div class="info-card-body">
                             <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
-                                8048168 - Restore interactive roadmap and GitHub activity sections with all code review fixes (8 minutes ago)
+                                b930021 - Phase 2: Add GitHub API integration for live repository metrics (11 minutes ago)
                             </p>
                         </div>
                     </div>
@@ -1150,6 +1152,10 @@
                     <div class="info-card-header">🔄 Recent Activity</div>
                     <div class="info-card-body">
                         <ul class="commit-list">
+                            <li class='commit-item'>
+                                <span class='commit-hash'>b930021</span>
+                                <span class='commit-message'>Phase 2: Add GitHub API integration for live repository metrics</span>
+                            </li>
                             <li class='commit-item'>
                                 <span class='commit-hash'>8048168</span>
                                 <span class='commit-message'>Restore interactive roadmap and GitHub activity sections with all code review fixes</span>
@@ -1165,10 +1171,6 @@
                             <li class='commit-item'>
                                 <span class='commit-hash'>6a8cc82</span>
                                 <span class='commit-message'>Merge 9b0700b7ae2f2bc42cac3710280cd53704588dbe into d33d0ccce7fe34af8066fdd1b25340343f0bd153</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>9b0700b</span>
-                                <span class='commit-message'>Merge branch 'copilot/update-dashboard-data-fidelity' of https://github.com/wizzense/AitherZero into copilot/update-dashboard-data-fidelity</span>
                             </li>
                         </ul>
                     </div>
@@ -1191,7 +1193,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.13</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-31 19:24:23</p>
+                        <p><strong>Last Scan:</strong> 2025-10-31 19:37:08</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -1404,10 +1406,69 @@
                     ✅ <em>Live data from GitHub API | Updated in real-time</em>
                 </p>
             </section>
+
+            <!-- GitHub Actions Workflow Status Section -->
+            <section class="section" id="workflow-status" style="margin-top: 30px;">
+                <h2>⚙️ CI/CD Workflow Status</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>📋 Total Workflows</h3>
+                        <div class="metric-value" style="font-size: 2rem;">0</div>
+                        <div class="metric-label">Active Workflows</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>✅ Successful</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">0</div>
+                        <div class="metric-label">Recent Successes</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>❌ Failed</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--text-secondary);">0</div>
+                        <div class="metric-label">Recent Failures</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🕐 Last Run</h3>
+                        <div class="metric-value" style="font-size: 1.2rem;">Unknown</div>
+                        <div class="metric-label">Status</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    ✅ <em>Live workflow data from GitHub Actions API</em>
+                </p>
+            </section>
+
+            <!-- Historical Trends Section -->
+            <section class="section" id="trends" style="margin-top: 30px;">
+                <h2>📈 Historical Trends</h2>
+                <div class="info-card">
+                    <div class="info-card-header">📊 Test Execution Trends</div>
+                    <div class="info-card-content">
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-10-31</strong>: 12/281 passed (4.3%)</div>
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="info-card-header">📈 Code Coverage Trends</div>
+                    <div class="info-card-content">
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-10-31</strong>: 0% coverage</div>
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="info-card-header">📏 Lines of Code Growth</div>
+                    <div class="info-card-content">
+                        <p style='color: var(--text-secondary);'>No historical LOC data available yet. Data will be tracked going forward.</p>
+                    </div>
+                </div>
+                
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 <em>Historical data accumulates automatically with each dashboard generation</em>
+                </p>
+            </section>
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-31 19:24:23 |
+            Generated by AitherZero Dashboard | 2025-10-31 19:37:08 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
