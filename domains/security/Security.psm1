@@ -259,8 +259,64 @@ function Test-SSHConnection {
     }
 }
 
+<#
+.SYNOPSIS
+    Securely converts a SecureString to plain text with proper memory cleanup
+
+.DESCRIPTION
+    Converts a SecureString to plain text while properly managing unmanaged memory.
+    Immediately zeros the BSTR memory after conversion to minimize exposure time.
+    This is the recommended way to convert SecureString when plain text is required.
+
+.PARAMETER SecureString
+    The SecureString to convert
+
+.EXAMPLE
+    $securePassword = Read-Host -AsSecureString
+    $plainPassword = ConvertFrom-SecureStringSecurely -SecureString $securePassword
+
+.NOTES
+    This function uses proper memory cleanup with try/finally to ensure the 
+    unmanaged BSTR pointer is always zeroed and freed, even if an error occurs.
+#>
+function ConvertFrom-SecureStringSecurely {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Security.SecureString]$SecureString
+    )
+    
+    if ($null -eq $SecureString -or $SecureString.Length -eq 0) {
+        return [string]::Empty
+    }
+    
+    $bstr = [IntPtr]::Zero
+    try {
+        # Convert SecureString to BSTR (unmanaged memory)
+        $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString)
+        
+        # Convert BSTR to managed string - use PtrToStringBSTR for proper BSTR handling
+        $plainText = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+        
+        return $plainText
+    }
+    catch {
+        Write-SecurityLog -Level Error -Message "Failed to convert SecureString securely" -Data @{
+            Error = $_.Exception.Message
+        }
+        throw
+    }
+    finally {
+        # Always zero and free the BSTR memory to minimize exposure
+        if ($bstr -ne [IntPtr]::Zero) {
+            [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+        }
+    }
+}
+
 # Export module functions
 Export-ModuleMember -Function @(
     'Invoke-SSHCommand',
-    'Test-SSHConnection'
+    'Test-SSHConnection',
+    'ConvertFrom-SecureStringSecurely'
 )

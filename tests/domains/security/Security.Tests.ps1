@@ -98,4 +98,60 @@ Describe "Security Module - Remote Command Execution" {
             $result | Should -Be $false
         }
     }
+    
+    Context "ConvertFrom-SecureStringSecurely" {
+        It "Should convert SecureString to plain text" {
+            $plainText = "MySecretPassword123"
+            $secureString = ConvertTo-SecureString -String $plainText -AsPlainText -Force
+            
+            $result = ConvertFrom-SecureStringSecurely -SecureString $secureString
+            
+            $result | Should -Be $plainText
+        }
+        
+        It "Should handle empty SecureString" {
+            $secureString = ConvertTo-SecureString -String "a" -AsPlainText -Force
+            # Clear the secure string by creating an empty one
+            $emptySecure = New-Object System.Security.SecureString
+            
+            $result = ConvertFrom-SecureStringSecurely -SecureString $emptySecure
+            
+            $result | Should -Be ([string]::Empty)
+        }
+        
+        It "Should properly clean up memory" {
+            # This test verifies the function completes without errors
+            # Memory cleanup is handled in the finally block
+            $secureString = ConvertTo-SecureString -String "TestPassword" -AsPlainText -Force
+            
+            {
+                $result = ConvertFrom-SecureStringSecurely -SecureString $secureString
+                $result | Should -Not -BeNullOrEmpty
+            } | Should -Not -Throw
+        }
+        
+        It "Should require SecureString parameter" {
+            {
+                ConvertFrom-SecureStringSecurely -SecureString $null
+            } | Should -Throw
+        }
+        
+        It "Should handle special characters" {
+            $specialText = "P@ssw0rd!#$%^&*()"
+            $secureString = ConvertTo-SecureString -String $specialText -AsPlainText -Force
+            
+            $result = ConvertFrom-SecureStringSecurely -SecureString $secureString
+            
+            $result | Should -Be $specialText
+        }
+        
+        It "Should handle Unicode characters" {
+            $unicodeText = "密码Пароль🔐"
+            $secureString = ConvertTo-SecureString -String $unicodeText -AsPlainText -Force
+            
+            $result = ConvertFrom-SecureStringSecurely -SecureString $secureString
+            
+            $result | Should -Be $unicodeText
+        }
+    }
 }

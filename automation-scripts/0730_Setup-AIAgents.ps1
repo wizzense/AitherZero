@@ -342,9 +342,17 @@ function Main {
             Write-AILog "API key not found for $p. Please enter it now (or press Enter to skip):" -Level Warning
             $secureKey = Read-Host -AsSecureString
             if ($secureKey.Length -gt 0) {
-                $apiKey = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                    [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
-                )
+                # Securely convert with proper memory cleanup
+                $bstr = [IntPtr]::Zero
+                try {
+                    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
+                    $apiKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+                } finally {
+                    # Always zero and free BSTR memory
+                    if ($bstr -ne [IntPtr]::Zero) {
+                        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+                    }
+                }
             }
         }
 
