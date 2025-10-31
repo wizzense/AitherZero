@@ -139,12 +139,12 @@ try {
             $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $validationScript @validationArgs 2>&1
             
             if ($LASTEXITCODE -eq 0) {
-                Write-Log "✓ Validation passed: $(Split-Path $manifestFile -Leaf)" -Level Success
+                Write-Log "✓ Validation passed: $(Split-Path $manifestFile -Leaf)" -Level Information
                 
                 # Check if the validation output indicates fixes were applied
                 if ($Fix -and ($result -join "`n") -like "*Applied fixes*") {
                     $fixedFiles++
-                    Write-Log "  → Unicode issues were automatically fixed" -Level Success
+                    Write-Log "  → Unicode issues were automatically fixed" -Level Information
                 }
             } else {
                 $failedFiles++
@@ -166,10 +166,10 @@ try {
     # Summary
     Write-Log "`nValidation Summary:" -Level Information
     Write-Log "Files validated: $($manifestFiles.Count)" -Level Information
-    Write-Log "Files passed: $($manifestFiles.Count - $failedFiles)" -Level Success
+    Write-Log "Files passed: $($manifestFiles.Count - $failedFiles)" -Level Information
     
     if ($fixedFiles -gt 0) {
-        Write-Log "Files fixed: $fixedFiles" -Level Success
+        Write-Log "Files fixed: $fixedFiles" -Level Information
     }
     
     if ($failedFiles -gt 0) {
@@ -177,7 +177,7 @@ try {
     }
 
     if ($totalIssues -eq 0) {
-        Write-Log "✓ All module manifests are valid and free of Unicode issues!" -Level Success
+        Write-Log "✓ All module manifests are valid and free of Unicode issues!" -Level Information
         exit 0
     } else {
         Write-Log "✗ Found issues in $totalIssues manifest file(s)" -Level Error

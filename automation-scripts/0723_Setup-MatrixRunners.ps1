@@ -181,7 +181,7 @@ function Read-MatrixConfiguration {
     if (Test-Path $MatrixPath) {
         try {
             $content = Get-Content $MatrixPath -Raw | ConvertFrom-Json
-            Write-MatrixLog "Matrix configuration loaded from file" -Level Success
+            Write-MatrixLog "Matrix configuration loaded from file" -Level Information
             return $content
         } catch {
             Write-MatrixLog "Failed to parse matrix file: $($_.Exception.Message)" -Level Error
@@ -246,7 +246,7 @@ function Test-MatrixConfiguration {
         return $false
     }
 
-    Write-MatrixLog "Matrix configuration validated - $totalRunners total runners" -Level Success
+    Write-MatrixLog "Matrix configuration validated - $totalRunners total runners" -Level Information
     return $true
 }
 
@@ -325,7 +325,7 @@ function Setup-RunnerConfiguration {
         }
 
         if ($setupResult.Success) {
-            Write-MatrixLog "✓ Runner setup completed: $runnerName" -Level Success
+            Write-MatrixLog "✓ Runner setup completed: $runnerName" -Level Information
 
             # Configure environment using 0721 script
             if (-not $DryRun) {
@@ -338,7 +338,7 @@ function Setup-RunnerConfiguration {
                 $envScript = "$PSScriptRoot/0721_Configure-RunnerEnvironment.ps1"
                 if (Test-Path $envScript) {
                     & $envScript @envArgs
-                    Write-MatrixLog "✓ Runner environment configured: $runnerName" -Level Success
+                    Write-MatrixLog "✓ Runner environment configured: $runnerName" -Level Information
                 } else {
                     Write-MatrixLog "Warning: Environment configuration script not found" -Level Warning
                 }
@@ -352,7 +352,7 @@ function Setup-RunnerConfiguration {
                 $serviceScript = "$PSScriptRoot/0722_Install-RunnerServices.ps1"
                 if (Test-Path $serviceScript) {
                     & $serviceScript @serviceArgs
-                    Write-MatrixLog "✓ Runner service installed: $runnerName" -Level Success
+                    Write-MatrixLog "✓ Runner service installed: $runnerName" -Level Information
                 } else {
                     Write-MatrixLog "Warning: Service installation script not found" -Level Warning
                 }
@@ -515,13 +515,13 @@ try {
     $failed = @($results | Where-Object { -not $_.Success })
 
     Write-MatrixLog "Matrix runner setup completed:" -Level Information
-    Write-MatrixLog "  Successful: $($successful.Count)" -Level Success
+    Write-MatrixLog "  Successful: $($successful.Count)" -Level Information
     Write-MatrixLog "  Failed: $($failed.Count)" -Level $(if ($failed.Count -gt 0) { 'Warning' } else { 'Success' })
 
     if ($successful.Count -gt 0) {
-        Write-MatrixLog "Successfully configured runners:" -Level Success
+        Write-MatrixLog "Successfully configured runners:" -Level Information
         $successful | ForEach-Object {
-            Write-MatrixLog "  - $($_.Name) [$($_.Platform)] {$($_.Labels)}" -Level Success
+            Write-MatrixLog "  - $($_.Name) [$($_.Platform)] {$($_.Labels)}" -Level Information
         }
     }
 
