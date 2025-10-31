@@ -5,11 +5,7 @@ name: Quality Validation
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "domains/**/*.psm1"
-      - "domains/**/*.ps1"
-      - "automation-scripts/*.ps1"
-      - "Start-AitherZero.ps1"
+    # Run on ALL PRs - no path restrictions
   workflow_dispatch:
     inputs:
       path:
