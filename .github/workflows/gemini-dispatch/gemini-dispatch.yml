@@ -1,14 +1,22 @@
 name: '🔀 Gemini Dispatch'
 
 on:
-  # Only trigger when explicitly invoked via comments
-  # Do NOT trigger automatically on PRs or issues to avoid interfering with other workflows
+  # Gemini runs alongside other workflows - no conflicts
   pull_request_review_comment:
     types:
       - 'created'
   pull_request_review:
     types:
       - 'submitted'
+  pull_request:
+    types:
+      - 'opened'
+      - 'synchronize'
+      - 'reopened'
+  issues:
+    types:
+      - 'opened'
+      - 'reopened'
   issue_comment:
     types:
       - 'created'
@@ -42,20 +50,23 @@ jobs:
           env | grep '^DEBUG_'
 
   dispatch:
-    # For PRs: only if not from a fork
-    # For issues: only on open/reopen
+    # For PRs: only if not from a fork AND gemini is configured
+    # For issues: only on open/reopen AND gemini is configured
     # For comments: only if user types @gemini-cli and is OWNER/MEMBER/COLLABORATOR
+    # Gracefully skips if GEMINI_API_KEY or APP_PRIVATE_KEY not configured
     if: |-
-      (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.fork == false
-      ) || (
-        github.event_name == 'issues' &&
-        contains(fromJSON('["opened", "reopened"]'), github.event.action)
-      ) || (
-        github.event.sender.type == 'User' &&
-        startsWith(github.event.comment.body || github.event.review.body || github.event.issue.body, '@gemini-cli') &&
-        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association)
+      (vars.GEMINI_API_KEY != '' || secrets.GEMINI_API_KEY != '') && (
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.fork == false
+        ) || (
+          github.event_name == 'issues' &&
+          contains(fromJSON('["opened", "reopened"]'), github.event.action)
+        ) || (
+          github.event.sender.type == 'User' &&
+          startsWith(github.event.comment.body || github.event.review.body || github.event.issue.body, '@gemini-cli') &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association)
+        )
       )
     runs-on: 'ubuntu-latest'
     permissions:
