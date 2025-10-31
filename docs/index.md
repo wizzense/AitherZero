@@ -11,7 +11,7 @@ See [README.md](./README.md) for detailed information about this directory.
 ### 📊 Contents
 
 - **Subdirectories**: 7
-- **Files**: 38
+- **Files**: 39
 
 ## 📁 Subdirectories
 
@@ -52,6 +52,7 @@ See [README.md](./README.md) for detailed information about this directory.
 - 📝 [DOCKER-FIX-DETAILS.md](./DOCKER-FIX-DETAILS.md)
 - 📝 [DOCKER-USAGE.md](./DOCKER-USAGE.md)
 - 📝 [DOCUMENTATION-AUTOMATION.md](./DOCUMENTATION-AUTOMATION.md)
+- 📝 [GIT-MERGE-SETUP.md](./GIT-MERGE-SETUP.md)
 - 📝 [index-md-merge-strategy.md](./index-md-merge-strategy.md)
 - 📝 [index.md](./index.md)
 - 📝 [modern-cli-design.md](./modern-cli-design.md)

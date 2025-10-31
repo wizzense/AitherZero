@@ -11,7 +11,7 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 9
+- **Files**: 10
 - **PowerShell Scripts**: 7
 
 ## 📄 Files
@@ -37,6 +37,10 @@
   - *Validates PowerShell module manifest files for common issues including Unicode characters*
 - ⚙️ [Validate-WorkflowIntegration.ps1](./Validate-WorkflowIntegration.ps1)
   - *Validate AitherCore workflow integration with existing GitHub Actions workflows*
+
+### .sh Files
+
+- 📄 [setup-git-merge.sh](./setup-git-merge.sh)
 
 ---
 
