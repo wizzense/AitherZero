@@ -4,8 +4,7 @@ name: PR Validation
 # Optimized for cost efficiency - only essential PR validations
 on:
   pull_request:
-    # Trigger on all PR lifecycle events for comprehensive validation
-    # Works alongside quality-validation.yml which handles specific file types
+    # Run on all PRs - removed overly restrictive conditions
     types: [opened, synchronize, reopened, ready_for_review]
   issue_comment:
     types: [created]

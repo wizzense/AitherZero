@@ -12,12 +12,7 @@ on:
       - 'domains/**/*.psm1'
       - 'automation-scripts/*.ps1'
   pull_request:
-    paths:
-      - 'config.psd1'
-      - 'automation-scripts/0003_Sync-ConfigManifest.ps1'
-      - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
-      - 'domains/**/*.psm1'
-      - 'automation-scripts/*.ps1'
+    # Run on all PRs to ensure config validation
   workflow_dispatch:
 
 jobs:

@@ -55,6 +55,14 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
         
+    - name: 🔧 Configure Git Merge Strategy
+      shell: bash
+      run: |
+        echo "Configuring merge strategy for index.md files..."
+        git config --local merge.ours.name "Always use our version for auto-generated files"
+        git config --local merge.ours.driver true
+        echo "✅ Merge strategy configured"
+        
     - name: ⚡ Setup PowerShell
       shell: pwsh
       run: |

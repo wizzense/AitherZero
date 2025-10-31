@@ -5,19 +5,15 @@ name: Quality Validation
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "domains/**/*.psm1"
-      - "domains/**/*.ps1"
-      - "automation-scripts/*.ps1"
-      - "Start-AitherZero.ps1"
+    # Run on all PRs - removed overly restrictive path filters
   workflow_dispatch:
     inputs:
       path:
-        description: "Path to validate (file or directory)"
+        description: 'Path to validate (file or directory)'
         required: false
-        default: "./domains"
+        default: './domains'
       recursive:
-        description: "Validate recursively"
+        description: 'Validate recursively'
         type: boolean
         default: true
 
@@ -40,12 +36,12 @@ jobs:
     name: Quality Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
+    
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Need base for diff
+          fetch-depth: 2  # Need base for diff
 
       - name: 🔧 Bootstrap Environment
         shell: pwsh
@@ -77,10 +73,10 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Detecting changed PowerShell files..." -ForegroundColor Cyan
-
+          
           # Get changed files from git diff
           $changedFiles = @()
-
+          
           if ("${{ github.event_name }}" -eq "pull_request") {
             # For PRs, compare with base branch (no origin/ prefix needed in GitHub Actions)
             $gitDiff = git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD
@@ -92,29 +88,29 @@ jobs:
             # For workflow_dispatch, use input path
             $path = "${{ github.event.inputs.path || './domains' }}"
             $recursive = "${{ github.event.inputs.recursive }}" -eq "true"
-
+            
             $params = @{
               Path = $path
               Include = '*.ps1', '*.psm1', '*.psd1'
               File = $true
             }
-
+            
             if ($recursive) {
               $params.Recurse = $true
             }
-
+            
             $changedFiles = Get-ChildItem @params | Select-Object -ExpandProperty FullName
           }
-
+          
           if (-not $changedFiles) {
             Write-Host "⚠️ No PowerShell files to validate" -ForegroundColor Yellow
             echo "has-files=false" >> $env:GITHUB_OUTPUT
             exit 0
           }
-
+          
           Write-Host "Found $($changedFiles.Count) PowerShell file(s) to validate:" -ForegroundColor Green
           $changedFiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor White }
-
+          
           # Save files to output
           $filesJson = $changedFiles | ConvertTo-Json -Compress
           echo "has-files=true" >> $env:GITHUB_OUTPUT
@@ -127,21 +123,21 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Running quality validation..." -ForegroundColor Cyan
-
+          
           # Import AitherZero module
           Import-Module ./AitherZero.psd1 -Force
-
+          
           # Get changed files
           $filesJson = '${{ steps.changes.outputs.files }}'
           $files = $filesJson | ConvertFrom-Json
-
+          
           # Run validation on each file
           $allResults = @()
           $exitCode = 0
-
+          
           foreach ($file in $files) {
             Write-Host "`nValidating: $file" -ForegroundColor Yellow
-
+            
             try {
               # Run quality validation
               $result = & ./automation-scripts/0420_Validate-ComponentQuality.ps1 `
@@ -149,20 +145,20 @@ jobs:
                 -Format JSON `
                 -MinimumScore 70 `
                 -ErrorAction Stop
-
+              
               if ($LASTEXITCODE -ne 0) {
                 $exitCode = 1
               }
-
+              
             } catch {
               Write-Host "❌ Validation failed for $file : $_" -ForegroundColor Red
               $exitCode = 1
             }
           }
-
+          
           # Set output
           echo "exit-code=$exitCode" >> $env:GITHUB_OUTPUT
-
+          
           if ($exitCode -ne 0) {
             Write-Host "`n❌ Quality validation failed for one or more files" -ForegroundColor Red
           } else {
@@ -187,30 +183,30 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-
+            
             // Read quality reports
             const reportsDir = './reports/quality';
             const prNumber = context.payload.pull_request.number;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const repoUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
-
+            
             let reportContent = '## 🔍 Quality Validation Report\n\n';
-
+            
             try {
               if (fs.existsSync(reportsDir)) {
                 const summaryFiles = fs.readdirSync(reportsDir)
                   .filter(f => f.endsWith('-summary.json'));
-
+                
                 if (summaryFiles.length > 0) {
                   const summaryPath = path.join(reportsDir, summaryFiles[0]);
                   const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
-
+                  
                   // Status Badge
-                  const statusIcon = summary.OverallStatus === 'Passed' ? '✅' :
+                  const statusIcon = summary.OverallStatus === 'Passed' ? '✅' : 
                                     summary.OverallStatus === 'Warning' ? '⚠️' : '❌';
-                  const scoreColor = summary.AverageScore >= 90 ? '🟢' :
+                  const scoreColor = summary.AverageScore >= 90 ? '🟢' : 
                                     summary.AverageScore >= 70 ? '🟡' : '🔴';
-
+                  
                   reportContent += `### ${statusIcon} Overall Status: **${summary.OverallStatus}**\n\n`;
                   reportContent += `| Metric | Value |\n`;
                   reportContent += `|--------|-------|\n`;
@@ -219,19 +215,19 @@ jobs:
                   reportContent += `| ✅ **Passed** | ${summary.Passed || 0} |\n`;
                   reportContent += `| ⚠️ **Warnings** | ${summary.Warnings || 0} |\n`;
                   reportContent += `| ❌ **Failed** | ${summary.Failed || 0} |\n\n`;
-
+                  
                   // File-by-file breakdown with detailed findings
                   if (summary.Files && Array.isArray(summary.Files) && summary.Files.length > 0) {
                     reportContent += `### 📋 Detailed File Analysis\n\n`;
-
+                    
                     for (const fileInfo of summary.Files) {
                       const fileName = path.basename(fileInfo.FilePath);
-                      const icon = fileInfo.Status === 'Passed' ? '✅' :
+                      const icon = fileInfo.Status === 'Passed' ? '✅' : 
                                   fileInfo.Status === 'Warning' ? '⚠️' : '❌';
-
+                      
                       reportContent += `<details>\n`;
                       reportContent += `<summary>${icon} <strong>${fileName}</strong> - Score: ${fileInfo.Score}% (${fileInfo.Status})</summary>\n\n`;
-
+                      
                       // Try to find detailed report for this file
                       // Use more precise filename matching to avoid false positives
                       const baseName = fileName.replace(/\.(ps1|psm1|psd1)$/, '');
@@ -239,23 +235,23 @@ jobs:
                         .filter(f => {
                           // Match files that contain the base name followed by .json (not summary)
                           // Use word boundary-like matching to avoid substring matches
-                          const namePattern = new RegExp(`-${baseName.replace(/[.*+?^${}()|[\]\]/g, '\\$&')}\\.json$`, 'i');
+                          const namePattern = new RegExp(`-${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.json$`, 'i');
                           return namePattern.test(f) && !f.includes('summary');
                         });
-
+                      
                       if (detailedReportFiles.length > 0) {
                         try {
                           const detailedPath = path.join(reportsDir, detailedReportFiles[0]);
                           const detailed = JSON.parse(fs.readFileSync(detailedPath, 'utf8'));
-
+                          
                           if (detailed.Checks && detailed.Checks.length > 0) {
                             reportContent += `#### Quality Checks\n\n`;
                             reportContent += `| Check | Status | Score | Findings |\n`;
                             reportContent += `|-------|--------|-------|----------|\n`;
-
+                            
                             for (const check of detailed.Checks) {
-                              const checkIcon = check.Status === 'Passed' ? '✅' :
-                                              check.Status === 'Warning' ? '⚠️' :
+                              const checkIcon = check.Status === 'Passed' ? '✅' : 
+                                              check.Status === 'Warning' ? '⚠️' : 
                                               check.Status === 'Skipped' ? '⏭️' : '❌';
                               // Escape findings to prevent markdown/HTML breaking
                               let findings = 'None';
@@ -269,7 +265,7 @@ jobs:
                               }
                               reportContent += `| ${checkIcon} ${check.CheckName} | ${check.Status} | ${check.Score}% | ${findings} |\n`;
                             }
-
+                            
                             // Add actionable recommendations
                             const failedChecks = detailed.Checks.filter(c => c.Status === 'Failed' || c.Status === 'Warning');
                             if (failedChecks.length > 0) {
@@ -288,11 +284,11 @@ jobs:
                           reportContent += `*Unable to load detailed findings: ${err.message}*\n`;
                         }
                       }
-
+                      
                       reportContent += `\n</details>\n\n`;
                     }
                   }
-
+                  
                   // Quick Actions section
                   reportContent += `### 🚀 Quick Actions\n\n`;
                   if (summary.OverallStatus === 'Failed' || summary.Warnings > 0) {
@@ -303,7 +299,7 @@ jobs:
                   } else {
                     reportContent += `✨ **All quality checks passed!** Your code meets our quality standards.\n\n`;
                   }
-
+                  
                   // Quality Standards Reference
                   reportContent += `### 📚 Quality Standards\n\n`;
                   reportContent += `- **Error Handling**: Proper try/catch blocks, error logging\n`;
@@ -312,7 +308,7 @@ jobs:
                   reportContent += `- **PSScriptAnalyzer**: No critical issues\n`;
                   reportContent += `- **Documentation**: Function help and comments\n\n`;
                   reportContent += `📖 [View Quality Guidelines](${repoUrl}/blob/main/docs/QUALITY-QUICK-REFERENCE.md)\n\n`;
-
+                  
                 } else {
                   reportContent += '⚠️ No quality reports found.\n';
                 }
@@ -323,24 +319,24 @@ jobs:
               reportContent += `⚠️ Error reading reports: ${error.message}\n`;
               console.error('Error generating quality report:', error);
             }
-
+            
             reportContent += `---\n`;
             reportContent += `📊 [View Dashboard](https://wizzense.github.io/AitherZero/reports/dashboard.html) | `;
             reportContent += `📁 [Detailed Reports](${runUrl}) | `;
             reportContent += `🔄 [Workflow Run](${runUrl})\n`;
-
+            
             // Find and update existing comment or create new one
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber
             });
-
-            const botComment = comments.find(c =>
-              c.user.login === 'github-actions[bot]' &&
+            
+            const botComment = comments.find(c => 
+              c.user.login === 'github-actions[bot]' && 
               c.body.includes('🔍 Quality Validation Report')
             );
-
+            
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -364,63 +360,63 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-
+            
             // Read quality reports
             const reportsDir = './reports/quality';
-
+            
             try {
               if (!fs.existsSync(reportsDir)) {
                 console.log('No reports directory found');
                 return;
               }
-
+              
               const summaryFiles = fs.readdirSync(reportsDir)
                 .filter(f => f.endsWith('-summary.json'));
-
+              
               if (summaryFiles.length === 0) {
                 console.log('No summary files found');
                 return;
               }
-
+              
               const summaryPath = path.join(reportsDir, summaryFiles[0]);
               const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
-
+              
               // Only create issue if there are failed files
               if (!summary.Files || summary.Failed === 0) {
                 console.log('No failed files to report');
                 return;
               }
-
+              
               // Read detailed reports for failed files
-              const failedFiles = Array.isArray(summary.Files)
+              const failedFiles = Array.isArray(summary.Files) 
                 ? summary.Files.filter(f => f.Status === 'Failed')
                 : (summary.Files.Status === 'Failed' ? [summary.Files] : []);
-
+              
               if (failedFiles.length === 0) {
                 console.log('No failed files found in details');
                 return;
               }
-
+              
               // Create issue for each failed file or one consolidated issue
               for (const file of failedFiles) {
                 const fileName = path.basename(file.FilePath);
-
+                
                 // Find the detailed report
                 const detailedReportFiles = fs.readdirSync(reportsDir)
                   .filter(f => f.includes(fileName.replace(/\.(ps1|psm1|psd1)$/, '')) && f.endsWith('.txt'));
-
+                
                 let detailedFindings = '';
                 if (detailedReportFiles.length > 0) {
                   const reportPath = path.join(reportsDir, detailedReportFiles[0]);
                   const reportContent = fs.readFileSync(reportPath, 'utf8');
-
+                  
                   // Extract the detailed results section
                   const match = reportContent.match(/DETAILED RESULTS[\s\S]*?={50,}/);
                   if (match) {
                     detailedFindings = match[0].replace(/={50,}/, '').trim();
                   }
                 }
-
+                
                 const issueTitle = 'Quality Validation Failed: ' + fileName + ' (Score: ' + file.Score + '%)';
                 const prNumber = context.payload.pull_request?.number || 'N/A';
                 const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
@@ -445,7 +441,7 @@ jobs:
                   '*This issue was automatically created by the Quality Validation System*\n' +
                   '*Related PR: #${{ github.event.pull_request.number }}*\n' +
                   '*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*';
-
+                
                 // Create the issue
                 const issue = await github.rest.issues.create({
                   owner: context.repo.owner,
@@ -455,9 +451,9 @@ jobs:
                   labels: ['quality-validation', 'automated', 'needs-fix'],
                   assignees: ['${{ github.event.pull_request.user.login }}']
                 });
-
+                
                 console.log(`Created issue #${issue.data.number} for ${fileName}`);
-
+                
                 // Link issue to PR by adding a comment
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -466,7 +462,7 @@ jobs:
                   body: `📋 Created issue #${issue.data.number} to track quality validation failures for \`${fileName}\``
                 });
               }
-
+              
             } catch (error) {
               console.error('Error creating quality issues:', error);
               core.setFailed(`Failed to create quality issues: ${error.message}`);
@@ -485,10 +481,10 @@ jobs:
           Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
           Write-Host "║              QUALITY VALIDATION SUMMARY                      ║" -ForegroundColor Cyan
           Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-
+          
           $hasFiles = "${{ steps.changes.outputs.has-files }}"
           $exitCode = "${{ steps.validation.outputs.exit-code }}"
-
+          
           if ($hasFiles -eq "false") {
             Write-Host "`n⚠️ No PowerShell files found to validate" -ForegroundColor Yellow
           } elseif ($exitCode -eq "0") {
@@ -496,5 +492,5 @@ jobs:
           } else {
             Write-Host "`n❌ Quality checks FAILED" -ForegroundColor Red
           }
-
+          
           Write-Host "`n📊 View detailed reports in workflow artifacts" -ForegroundColor Cyan

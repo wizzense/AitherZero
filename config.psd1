@@ -202,8 +202,8 @@
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414')
-                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests'
+                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0425')
+                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, documentation structure validation'
                 }
                 WorkflowTesting = @{
                     DependsOn = @('Core.PowerShell7')
@@ -303,7 +303,7 @@
             IssueManagement = @{
                 Creation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0800', '0810', '0825', '0830', '0832', '0835')
+                    Scripts = @('0800', '0810', '0825', '0832')
                     Description = 'Issue creation from tests, manual triggers, file generation, and prompt generation'
                 }
                 Analysis = @{
@@ -425,10 +425,10 @@
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 24; Category = 'Testing & Quality' }
+            '0400-0499' = @{ Count = 25; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
+            '0800-0899' = @{ Count = 18; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
@@ -1001,6 +1001,13 @@
                 TestExtension = '.Tests.ps1'  # Test file extension
             }
             
+            # Filter settings - control which tests to run
+            # NOTE: To run ALL tests, leave Tag empty or set to @()
+            Filter = @{
+                Tag = @()  # Empty array = run all tests regardless of tags
+                ExcludeTag = @('Skip', 'Disabled')  # Only exclude explicitly disabled tests
+            }
+            
             # Should assertion settings
             Should = @{
                 ErrorAction = 'Stop'  # Stop, Continue, SilentlyContinue
@@ -1295,8 +1302,14 @@
         CompressReports = $false
         IncludeSystemInfo = $true
         IncludeExecutionLogs = $true
+        IncludeScreenshots = $false
         MetricsCollection = $true
         MetricsRetentionDays = 90
+        TemplateEngine = 'Default'
+        
+        # Report distribution
+        EmailReports = $false
+        UploadToCloud = $false
         
         # Dashboard
         DashboardEnabled = $true
