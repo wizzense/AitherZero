@@ -202,8 +202,8 @@
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414')
-                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests'
+                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0425')
+                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, documentation structure validation'
                 }
                 WorkflowTesting = @{
                     DependsOn = @('Core.PowerShell7')
