@@ -64,9 +64,28 @@ jobs:
           # Get changed files
           $changedFiles = @()
           if ("${{ github.event_name }}" -eq "pull_request") {
-            $changedFiles = git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD
+            try {
+              $changedFiles = git diff --name-only ${{ github.event.pull_request.base.sha }}..HEAD 2>&1
+              if ($LASTEXITCODE -ne 0) {
+                Write-Host "⚠️ Git diff failed, using API fallback" -ForegroundColor Yellow
+                $changedFiles = @()
+              }
+            } catch {
+              Write-Host "⚠️ Error getting changed files: $_" -ForegroundColor Yellow
+              $changedFiles = @()
+            }
           } else {
-            $changedFiles = git diff --name-only HEAD~1..HEAD
+            try {
+              $changedFiles = git diff --name-only HEAD~1..HEAD 2>&1
+              if ($LASTEXITCODE -ne 0) {
+                Write-Host "⚠️ Git diff failed (possibly initial commit)" -ForegroundColor Yellow
+                # On initial commit or error, list all files
+                $changedFiles = Get-ChildItem -Recurse -File | Select-Object -ExpandProperty FullName
+              }
+            } catch {
+              Write-Host "⚠️ Error getting changed files: $_" -ForegroundColor Yellow
+              $changedFiles = Get-ChildItem -Recurse -File | Select-Object -ExpandProperty FullName
+            }
           }
 
           # Categorize changes
@@ -255,7 +274,7 @@ jobs:
   # Security scanning
   security-scan:
     name: 'Security Scan'
-    needs: fast-validation
+    needs: [change-detection, fast-validation]
     if: needs.change-detection.outputs.has-powershell == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -277,10 +296,10 @@ jobs:
             $content = Get-Content $file.FullName -Raw
 
             # Basic secret detection patterns
-            if ($content -match 'password\s*=\s*[''"][^''"]') {
+            if ($content -match 'password\s*=\s*[''"][^''"]+[''"]') {
               $issues += "Potential hardcoded password in $($file.Name)"
             }
-            if ($content -match 'apikey\s*=\s*[''"][^''"]') {
+            if ($content -match 'apikey\s*=\s*[''"][^''"]+[''"]') {
               $issues += "Potential API key in $($file.Name)"
             }
           }

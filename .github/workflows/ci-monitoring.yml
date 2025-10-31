@@ -78,6 +78,7 @@ jobs:
 
             const existingIssue = issues.data.find(issue =>
               issue.title.includes(workflowName) &&
+              issue.body &&
               issue.body.includes(runId.toString())
             );
 

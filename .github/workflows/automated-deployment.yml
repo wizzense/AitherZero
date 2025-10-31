@@ -103,8 +103,11 @@ jobs:
 
           # Extract version
           VERSION="${{ github.ref_name }}"
-          if [[ "$VERSION" == v* ]]; then
+          if [[ "$VERSION" =~ ^v.+ ]]; then
             VERSION="${VERSION:1}"  # Remove 'v' prefix
+          elif [[ ${#VERSION} -lt 2 ]]; then
+            # Handle edge case of very short version strings
+            VERSION="${VERSION}-$(git rev-parse --short HEAD)"
           else
             VERSION="${VERSION}-$(git rev-parse --short HEAD)"
           fi
