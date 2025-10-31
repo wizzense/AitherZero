@@ -96,4 +96,43 @@ Describe "Config Manifest (config.psd1)" {
             }
         }
     }
+    
+    Context "Reporting Configuration" {
+        BeforeAll {
+            $script:config = Import-PowerShellDataFile -Path $script:configPath
+        }
+        
+        It "Has Reporting section" {
+            $script:config.ContainsKey('Reporting') | Should -Be $true
+        }
+        
+        It "Has required Reporting properties" {
+            $reporting = $script:config.Reporting
+            $requiredProps = @(
+                'AutoGenerateReports',
+                'DefaultFormat',
+                'ReportPath',
+                'IncludeScreenshots',
+                'EmailReports',
+                'UploadToCloud',
+                'TemplateEngine'
+            )
+            
+            foreach ($prop in $requiredProps) {
+                $reporting.ContainsKey($prop) | Should -Be $true -Because "Property '$prop' is required by ReportingEngine.psm1"
+            }
+        }
+        
+        It "IncludeScreenshots has valid boolean value" {
+            $script:config.Reporting.IncludeScreenshots | Should -BeOfType [bool]
+        }
+        
+        It "EmailReports has valid boolean value" {
+            $script:config.Reporting.EmailReports | Should -BeOfType [bool]
+        }
+        
+        It "UploadToCloud has valid boolean value" {
+            $script:config.Reporting.UploadToCloud | Should -BeOfType [bool]
+        }
+    }
 }

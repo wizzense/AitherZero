@@ -21,4 +21,37 @@ Describe '0500_Validate-Environment Integration' -Tag 'Integration', 'Automation
             { & $script:ScriptPath -Configuration $script:TestConfig -WhatIf } | Should -Not -Throw
         }
     }
+    
+    Context 'Cross-Platform Directory Validation' {
+        It 'Should skip Windows paths on non-Windows platforms' {
+            if (-not $IsWindows) {
+                $testConfig = @{
+                    Infrastructure = @{
+                        Directories = @{
+                            WindowsPath = 'C:/temp'
+                            LocalPath = '/tmp/test'
+                        }
+                    }
+                }
+                
+                # The script should not throw when encountering Windows paths on Linux
+                { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
+            }
+        }
+        
+        It 'Should handle Windows paths on Windows platforms' {
+            if ($IsWindows) {
+                $testConfig = @{
+                    Infrastructure = @{
+                        Directories = @{
+                            TempPath = 'C:/temp'
+                        }
+                    }
+                }
+                
+                # The script should process Windows paths normally on Windows
+                { & $script:ScriptPath -Configuration $testConfig -WhatIf } | Should -Not -Throw
+            }
+        }
+    }
 }

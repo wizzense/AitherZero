@@ -1295,8 +1295,14 @@
         CompressReports = $false
         IncludeSystemInfo = $true
         IncludeExecutionLogs = $true
+        IncludeScreenshots = $false
         MetricsCollection = $true
         MetricsRetentionDays = 90
+        TemplateEngine = 'Default'
+        
+        # Report distribution
+        EmailReports = $false
+        UploadToCloud = $false
         
         # Dashboard
         DashboardEnabled = $true
