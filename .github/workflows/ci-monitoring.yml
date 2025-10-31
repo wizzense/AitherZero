@@ -1,0 +1,284 @@
+---
+name: 'CI/CD Monitoring & Notifications'
+
+# Monitor pipeline health and send notifications
+on:
+  workflow_run:
+    workflows: ["CI/CD Orchestrator", "Quality Validation", "Automated Deployment"]
+    types: [completed]
+  schedule:
+    # Daily health check at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  # Analyze workflow run results
+  analyze-workflow:
+    name: 'Analyze Workflow Results'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'workflow_run'
+    outputs:
+      status: ${{ steps.analyze.outputs.status }}
+      duration: ${{ steps.analyze.outputs.duration }}
+      workflow-name: ${{ steps.analyze.outputs.workflow-name }}
+
+    steps:
+      - name: 'Analyze Workflow Run'
+        id: analyze
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+
+            core.setOutput('status', run.conclusion);
+            core.setOutput('workflow-name', run.name);
+
+            // Calculate duration
+            const start = new Date(run.created_at);
+            const end = new Date(run.updated_at);
+            const duration = Math.round((end - start) / 1000 / 60); // minutes
+            core.setOutput('duration', duration);
+
+            core.info(`Workflow: ${run.name}`);
+            core.info(`Status: ${run.conclusion}`);
+            core.info(`Duration: ${duration} minutes`);
+
+  # Send notifications for failures
+  notify-failure:
+    name: 'Notify on Failure'
+    needs: analyze-workflow
+    if: needs.analyze-workflow.outputs.status == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Create Failure Issue'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowName = '${{ needs.analyze-workflow.outputs.workflow-name }}';
+            const runId = context.payload.workflow_run.id;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+
+            // Check if issue already exists for this workflow (by name only to avoid duplicates for recurring failures)
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'ci-failure',
+              per_page: 100
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes(workflowName)
+            );
+
+            if (!existingIssue) {
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 CI Failure: ${workflowName}`,
+                body: `## CI/CD Pipeline Failure
+
+                **Workflow:** ${workflowName}
+                **Run ID:** ${runId}
+                **Duration:** ${{ needs.analyze-workflow.outputs.duration }} minutes
+                **Status:** Failure
+
+                ### Details
+                [View failed workflow run](${runUrl})
+
+                ### Recommended Actions
+                1. Review the workflow logs for error details
+                2. Check if this is a flaky test or genuine failure
+                3. Address the root cause
+                4. Re-run the workflow if it was environmental
+
+                ### Auto-Assignment
+                This issue has been automatically created and labeled for triage.
+
+                ---
+                *Automated notification from CI/CD Monitoring*`,
+                labels: ['ci-failure', 'automated', 'needs-triage']
+              });
+
+              core.info(`✅ Created failure issue #${issue.data.number}`);
+            } else {
+              // Update existing issue with new failure information
+              core.info(`ℹ️ Issue already exists for this workflow: #${existingIssue.number}`);
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## 🔄 Recurring Failure Detected
+                
+                **Run ID:** ${runId}
+                **Duration:** ${{ needs.analyze-workflow.outputs.duration }} minutes
+                **Timestamp:** ${new Date().toISOString()}
+                
+                [View failed workflow run](${runUrl})
+                
+                This workflow continues to fail. Please investigate and resolve the underlying issue.`
+              });
+              
+              core.info(`✅ Added comment to existing issue #${existingIssue.number}`);
+            }
+
+  # Daily health report
+  health-report:
+    name: 'Generate Health Report'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 'Generate CI/CD Health Report'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.info('📊 Generating CI/CD health report...');
+
+            // Get workflow runs from last 24 hours
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              created: `>=${oneDayAgo}`,
+              per_page: 100
+            });
+
+            // Analyze results
+            const total = runs.data.workflow_runs.length;
+            const successful = runs.data.workflow_runs.filter(r => r.conclusion === 'success').length;
+            const failed = runs.data.workflow_runs.filter(r => r.conclusion === 'failure').length;
+            const cancelled = runs.data.workflow_runs.filter(r => r.conclusion === 'cancelled').length;
+
+            const successRate = total > 0 ? ((successful / total) * 100).toFixed(1) : 0;
+
+            // Calculate average duration
+            const durations = runs.data.workflow_runs
+              .filter(r => r.run_started_at && r.updated_at)
+              .map(r => {
+                const start = new Date(r.run_started_at);
+                const end = new Date(r.updated_at);
+                return (end - start) / 1000 / 60; // minutes
+              });
+
+            const avgDuration = durations.length > 0
+              ? (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)
+              : 0;
+
+            // Create summary
+            const summary = `# 📊 CI/CD Health Report
+
+            **Report Date:** ${new Date().toISOString().split('T')[0]}
+            **Period:** Last 24 hours
+
+            ## Metrics
+
+            | Metric | Value |
+            |--------|-------|
+            | Total Runs | ${total} |
+            | ✅ Successful | ${successful} |
+            | ❌ Failed | ${failed} |
+            | ⏹️ Cancelled | ${cancelled} |
+            | **Success Rate** | **${successRate}%** |
+            | Average Duration | ${avgDuration} minutes |
+
+            ## Health Status
+
+            ${successRate >= 95 ? '🟢 **Excellent** - CI/CD pipeline is healthy' :
+              successRate >= 85 ? '🟡 **Good** - Minor issues detected' :
+              successRate >= 70 ? '🟠 **Warning** - Multiple failures detected' :
+              '🔴 **Critical** - CI/CD pipeline requires immediate attention'}
+
+            ## Recent Failures
+
+            ${failed > 0 ? 'Review failed workflows and address issues promptly.' : 'No failures in the last 24 hours! 🎉'}
+
+            ---
+            *Generated automatically by CI/CD Monitoring*
+            `;
+
+            core.summary.addRaw(summary);
+            await core.summary.write();
+
+            core.info(`✅ Health report generated`);
+            core.info(`   Success Rate: ${successRate}%`);
+            core.info(`   Total Runs: ${total}`);
+
+  # Performance tracking
+  track-performance:
+    name: 'Track Pipeline Performance'
+    if: github.event_name == 'workflow_run'
+    needs: analyze-workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Track Metrics'
+        shell: pwsh
+        run: |
+          $workflowName = "${{ needs.analyze-workflow.outputs.workflow-name }}"
+          $duration = "${{ needs.analyze-workflow.outputs.duration }}"
+          $status = "${{ needs.analyze-workflow.outputs.status }}"
+
+          Write-Host "📈 Tracking performance metrics..." -ForegroundColor Cyan
+          Write-Host "   Workflow: $workflowName" -ForegroundColor White
+          Write-Host "   Duration: $duration minutes" -ForegroundColor White
+          Write-Host "   Status: $status" -ForegroundColor White
+
+          # Create metrics directory if it doesn't exist
+          $metricsDir = "./metrics/ci-performance"
+          if (-not (Test-Path $metricsDir)) {
+            New-Item -ItemType Directory -Path $metricsDir -Force | Out-Null
+          }
+
+          # Append metrics to file
+          $date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          $metricsFile = "$metricsDir/performance.csv"
+
+          if (-not (Test-Path $metricsFile)) {
+            "Date,Workflow,Duration,Status" | Out-File -FilePath $metricsFile -Encoding utf8
+          }
+
+          "$date,$workflowName,$duration,$status" | Out-File -FilePath $metricsFile -Append -Encoding utf8
+
+          Write-Host "✅ Metrics tracked successfully" -ForegroundColor Green
+
+      - name: 'Check for Performance Degradation'
+        shell: pwsh
+        run: |
+          $duration = [int]"${{ needs.analyze-workflow.outputs.duration }}"
+          $workflowName = "${{ needs.analyze-workflow.outputs.workflow-name }}"
+
+          # Alert if workflow takes too long
+          $thresholds = @{
+            'CI/CD Orchestrator' = 20
+            'Quality Validation' = 15
+            'Automated Deployment' = 20
+          }
+
+          $threshold = $thresholds[$workflowName]
+
+          if ($threshold -and $duration -gt $threshold) {
+            Write-Host "⚠️ Performance degradation detected!" -ForegroundColor Yellow
+            Write-Host "   Workflow: $workflowName" -ForegroundColor Yellow
+            Write-Host "   Duration: $duration minutes (threshold: $threshold minutes)" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "Consider investigating and optimizing the workflow." -ForegroundColor Yellow
+          } else {
+            Write-Host "✅ Performance is within acceptable range" -ForegroundColor Green
+          }
