@@ -154,7 +154,7 @@ jobs:
               if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
                 Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
               }
-              & ./automation-scripts/0404_Invoke-PSScriptAnalyzer.ps1
+              & ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
             }
             "manifests" {
               Write-Host "🔍 Validating manifests..." -ForegroundColor Cyan

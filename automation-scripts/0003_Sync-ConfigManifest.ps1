@@ -98,7 +98,7 @@ $discoveredScripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" -ErrorActi
     } |
     Sort-Object { [int]$_.Number }
 
-Write-SyncLog "Found $($discoveredScripts.Count) automation scripts" -Level Success
+Write-SyncLog "Found $($discoveredScripts.Count) automation scripts" -Level Information
 
 # Load config.psd1
 Write-SyncLog "Loading config.psd1..." -Level Info
@@ -134,7 +134,7 @@ $config.Manifest.FeatureDependencies.GetEnumerator() | ForEach-Object {
     }
 }
 
-Write-SyncLog "Found $($registeredScripts.Count) scripts registered in config.psd1" -Level Success
+Write-SyncLog "Found $($registeredScripts.Count) scripts registered in config.psd1" -Level Information
 
 # Compare discovered vs registered
 $missingScripts = @()
@@ -211,7 +211,7 @@ if ($missingScripts.Count -gt 0) {
     
     exit 1
 } else {
-    Write-SyncLog "All automation scripts are registered in config.psd1!" -Level Success
+    Write-SyncLog "All automation scripts are registered in config.psd1!" -Level Information
     Write-Host ""
     Write-Host "✅ Configuration is in sync" -ForegroundColor Green
     exit 0
