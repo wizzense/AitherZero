@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 <#
 .SYNOPSIS
     AitherZero Core UI Module
@@ -13,13 +13,21 @@ $ErrorActionPreference = 'Stop'
 # Import shared text utilities (from aithercore)
 $textUtilsPath = Join-Path $PSScriptRoot "TextUtilities.psm1"
 if (Test-Path $textUtilsPath) {
-    Import-Module $textUtilsPath -Force -ErrorAction SilentlyContinue
+    try {
+        Import-Module $textUtilsPath -Force -ErrorAction Stop
+    } catch {
+        Write-Verbose "Failed to import TextUtilities module: $_"
+    }
 }
 
 # Import security module for secure SecureString handling (if available in domains)
 $securityModulePath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/security/Security.psm1"
 if (Test-Path $securityModulePath) {
-    Import-Module $securityModulePath -Force -ErrorAction SilentlyContinue
+    try {
+        Import-Module $securityModulePath -Force -ErrorAction Stop
+    } catch {
+        Write-Verbose "Failed to import Security module: $_"
+    }
 }
 
 # Module state
@@ -33,7 +41,12 @@ $script:UIState = @{
     SupportsEmoji = $false
     MenuStyle = 'Interactive'
     ProgressBarStyle = 'Classic'
+    ShowWelcomeMessage = $false  # Default to false to avoid hanging in tests
+    ShowHints = $false  # Default to false
 }
+
+# Module initialization flag
+$script:UIModuleInitialized = $false
 
 # Default color themes
 $script:Themes = @{
@@ -110,7 +123,8 @@ function Write-UILog {
 }
 
 # Log module initialization (only once per session)
-if (-not (Get-Variable -Name 'AitherZeroUIInitialized' -Scope Global -ErrorAction SilentlyContinue)) {
+# Use script-scoped variable instead of global to avoid PSScriptAnalyzer warning
+if (-not $script:UIModuleInitialized) {
     # Ensure UIState is properly initialized before accessing its properties
     if ($script:UIState -and $script:UIState -is [hashtable]) {
         $logData = @{
@@ -126,7 +140,7 @@ if (-not (Get-Variable -Name 'AitherZeroUIInitialized' -Scope Global -ErrorActio
     } else {
         Write-UILog -Message "User interface module initialized"
     }
-    $global:AitherZeroUIInitialized = $true
+    $script:UIModuleInitialized = $true
 }
 
 # Import configuration module (lazy-loaded) - using aithercore version
@@ -145,8 +159,12 @@ function Import-ConfigurationModule {
         Lazy-load the configuration module only when needed
     #>
     if (-not $script:ConfigModuleLoaded -and (Test-Path $script:ConfigModule)) {
-        Import-Module $script:ConfigModule -Force -ErrorAction SilentlyContinue
-        $script:ConfigModuleLoaded = $true
+        try {
+            Import-Module $script:ConfigModule -Force -ErrorAction Stop
+            $script:ConfigModuleLoaded = $true
+        } catch {
+            Write-UILog -Level Warning -Message "Failed to import Configuration module: $_"
+        }
     }
 }
 
@@ -345,7 +363,7 @@ function Write-UIText {
     }
     catch {
         # If any error, just use white
-        Write-Debug "Error resolving color: $_"
+        Write-UILog -Level Debug -Message "Error resolving color: $_"
         $resolvedColor = 'White'
     }
 
@@ -359,6 +377,7 @@ function Write-UIText {
     }
     catch {
         # Final fallback - just write without color
+        Write-UILog -Level Debug -Message "Unable to write with color: $_"
         Write-Host $Message -NoNewline:$NoNewline
     }
 }
@@ -412,7 +431,12 @@ function Show-UIMenu {
         if (Test-Path $betterMenuModule) {
             # Import BetterMenu module if not already loaded
             if (-not (Get-Module -Name BetterMenu)) {
-                Import-Module $betterMenuModule -Force -Global -ErrorAction Stop
+                try {
+                    Import-Module $betterMenuModule -Force -Global -ErrorAction Stop
+                } catch {
+                    Write-UILog -Level Error -Message "Failed to import BetterMenu module: $_"
+                    throw "BetterMenu.psm1 could not be loaded. Interactive menu system is unavailable."
+                }
             }
 
             $result = Show-BetterMenu -Title $Title -Items $Items `
@@ -866,7 +890,7 @@ function Get-TerminalWidth {
             return $script:UIState.TerminalWidth
         }
     } catch { 
-        Write-Verbose "Unable to determine terminal width: $_"
+        Write-UILog -Level Debug -Message "Unable to determine terminal width: $_"
     }
 
     $script:UIState.TerminalWidth = 80  # Default fallback
@@ -896,6 +920,7 @@ function Test-EmojiSupport {
         $script:UIState.SupportsEmoji = $measure.Characters -eq 1
         return $script:UIState.SupportsEmoji
     } catch {
+        Write-UILog -Level Debug -Message "Unable to test emoji support: $_"
         $script:UIState.SupportsEmoji = $false
         return $script:UIState.SupportsEmoji
     }
