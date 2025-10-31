@@ -56,7 +56,8 @@ jobs:
       - name: Cleanup old checkpoints
         run: |
           # Keep checkpoints for the last 7 days only
-          CUTOFF_DATE=$(date -u -d '7 days ago' +"%Y%m%d")
+          # Use Python for cross-platform compatibility (works on Ubuntu, macOS, BSD)
+          CUTOFF_DATE=$(python3 -c "from datetime import datetime, timedelta; print((datetime.utcnow() - timedelta(days=7)).strftime('%Y%m%d'))")
           
           echo "🧹 Cleaning up checkpoints older than ${CUTOFF_DATE}..."
           
@@ -67,7 +68,8 @@ jobs:
           DELETED_COUNT=0
           for branch in $CHECKPOINT_BRANCHES; do
             # Extract date from branch name (format: checkpoint/main/YYYYMMDD-HHMMSS)
-            BRANCH_DATE=$(echo "$branch" | grep -oP 'checkpoint/main/\K\d{8}' || echo "")
+            # Using sed for better portability across systems
+            BRANCH_DATE=$(echo "$branch" | sed -n 's|^checkpoint/main/\([0-9]\{8\}\)-.*$|\1|p' || echo "")
             
             if [[ -n "$BRANCH_DATE" && "$BRANCH_DATE" < "$CUTOFF_DATE" ]]; then
               echo "  Deleting old checkpoint: $branch (date: $BRANCH_DATE)"

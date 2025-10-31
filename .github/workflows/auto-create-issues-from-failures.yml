@@ -28,10 +28,8 @@ jobs:
   analyze-test-failures:
     name: 🔍 Analyze Test Failures
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'workflow_run'
+    # Only run on workflow_dispatch since workflow_run and schedule triggers are disabled
+    if: github.event_name == 'workflow_dispatch'
     
     outputs:
       has-test-failures: ${{ steps.analysis.outputs.has-test-failures }}
@@ -41,15 +39,6 @@ jobs:
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
-      - name: 📊 Download Test Artifacts
-        if: github.event.workflow_run
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_id: ${{ github.event.workflow_run.id }}
-          path: ./test-artifacts
-        continue-on-error: true
         
       - name: 🔍 Analyze Test Results
         id: analysis

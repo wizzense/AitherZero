@@ -16,7 +16,7 @@ This directory contains the essential GitHub Actions workflows for AitherZero. T
 ```bash
 # Restore workflows directory from a checkpoint
 git fetch origin
-git checkout checkpoint/main/20251031-143000 -- .github/workflows/
+git checkout checkpoint/main/20241031-143000 -- .github/workflows/
 git commit -m "Restore workflows from checkpoint"
 ```
 

@@ -2,7 +2,7 @@
 
 ## What Happened
 
-On October 30, 2025, a file upload (commit `710a2cb1`, PR #1713) added Gemini workflow files that broke existing workflows. This document summarizes the recovery and preventive measures implemented.
+On October 30, 2024, a file upload (commit `710a2cb1`, PR #1713) added Gemini workflow files that broke existing workflows. This document summarizes the recovery and preventive measures implemented.
 
 ## Recovery Actions Completed
 
