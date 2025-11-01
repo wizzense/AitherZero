@@ -81,7 +81,19 @@ try {
     $configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
     if (Test-Path $configPath) {
         $config = Import-PowerShellDataFile $configPath
-        $testingConfig = $config.Testing
+        # Get Pester version from the correct location in the configuration
+        $pesterMinVersion = if ($config.Manifest -and $config.Manifest.FeatureDependencies -and $config.Manifest.FeatureDependencies.Testing -and $config.Manifest.FeatureDependencies.Testing.Pester) {
+            $config.Manifest.FeatureDependencies.Testing.Pester.MinVersion
+        } elseif ($config.Features -and $config.Features.Testing -and $config.Features.Testing.Pester -and $config.Features.Testing.Pester.Version) {
+            $config.Features.Testing.Pester.Version -replace '\+$', ''  # Remove trailing + if present
+        } else {
+            '5.0.0'
+        }
+
+        $testingConfig = @{
+            Framework = 'Pester'
+            MinVersion = $pesterMinVersion
+        }
     } else {
         Write-ScriptLog -Level Warning -Message "Configuration file not found, using defaults"
         $testingConfig = @{
