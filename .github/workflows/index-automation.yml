@@ -27,6 +27,10 @@ on:
       - '**/*.ps1'
       - '**/*.psm1'
   workflow_dispatch:
+
+concurrency:
+  group: index-automation-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
     inputs:
       mode:
         description: 'Index generation mode'
