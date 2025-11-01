@@ -104,7 +104,6 @@ Write-Host ""
 if ($issues.Count -eq 0 -and $warnings.Count -eq 0) {
     Write-Host "✅ All checks passed! Workflows are healthy." -ForegroundColor Green
 exit 0
-    exit 0
 }
 
 if ($issues.Count -gt 0) {
