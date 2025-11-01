@@ -35,6 +35,12 @@
     Order: 0512
     Dependencies: 0510
     Tags: reporting, dashboard, monitoring, html, markdown
+    
+    Future Enhancements:
+    - IncludeMetrics: Enable/disable metrics collection
+    - IncludeTrends: Include historical trend analysis
+    - RefreshData: Force refresh of cached data
+    - ThemeColor: Customize dashboard color scheme
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -47,11 +53,6 @@ param(
     [ValidateSet('HTML', 'Markdown', 'JSON', 'All')]
     [string]$Format = 'All',
     [switch]$Open
-    # Future parameters (not yet implemented):
-    # [switch]$IncludeMetrics
-    # [switch]$IncludeTrends
-    # [switch]$RefreshData
-    # [string]$ThemeColor
 )
 
 $ErrorActionPreference = 'Stop'
@@ -134,7 +135,8 @@ function Open-HTMLDashboard {
     }
 }
 
-function Get-ProjectMetrics [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')] {
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
+function Get-ProjectMetrics {
     Write-ScriptLog -Message "Collecting project metrics"
 
     $metrics = @{
@@ -358,7 +360,8 @@ function Get-ProjectMetrics [Diagnostics.CodeAnalysis.SuppressMessageAttribute('
     return $metrics
 }
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')] function Get-QualityMetrics {
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
+function Get-QualityMetrics {
     <#
     .SYNOPSIS
         Collect code quality validation metrics from recent reports
@@ -567,7 +570,7 @@ function Get-PSScriptAnalyzerMetrics {
 function ConvertFrom-TestResultsXml {
     <#
     .SYNOPSIS
-    Parses NUnit format test results XML and returns test status
+    Converts NUnit format test results XML to test status object
 
     .PARAMETER XmlPath
     Path to the test results XML file
