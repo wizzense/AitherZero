@@ -1,5 +1,5 @@
 ---
-name: 🚀 Phase 2: Intelligent Issue Creation
+name: 'Phase 2 - Intelligent Issue Creation'
 
 # Comprehensive automated issue creation system that captures ALL failure types
 # and creates intelligent, deduplicated issues with agent routing and rich context
@@ -11,11 +11,11 @@ on:
       - "✅ PR Validation"
       - "🔍 Quality Validation"
     types: [completed]
-  
+
   schedule:
     # Daily analysis to catch any missed failures
     - cron: '0 3 * * *'  # 3 AM UTC daily
-  
+
   workflow_dispatch:
     inputs:
       dry_run:
@@ -41,16 +41,16 @@ jobs:
   comprehensive-failure-analysis:
     name: 🔍 Comprehensive Failure Analysis
     runs-on: ubuntu-latest
-    
+
     outputs:
       has-failures: ${{ steps.analysis.outputs.has-failures }}
       total-issues-to-create: ${{ steps.analysis.outputs.total-issues-to-create }}
       analysis-artifact: ${{ steps.analysis.outputs.analysis-artifact }}
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-      
+
       - name: 📊 Download Workflow Artifacts
         if: github.event.workflow_run
         uses: dawidd6/action-download-artifact@v6
@@ -59,23 +59,23 @@ jobs:
           run_id: ${{ github.event.workflow_run.id }}
           path: ./artifacts
         continue-on-error: true
-      
+
       - name: 📥 Download Existing Issue State
         uses: actions/download-artifact@v4
         with:
           name: issue-state-db
           path: ${{ env.ISSUE_STATE_DIR }}
         continue-on-error: true
-      
+
       - name: 🔍 Comprehensive Analysis
         id: analysis
         shell: pwsh
         run: |
           Write-Host "🔍 Starting comprehensive failure analysis..." -ForegroundColor Cyan
-          
+
           # Create issue state directory if it doesn't exist
           New-Item -ItemType Directory -Force -Path "$env:ISSUE_STATE_DIR" | Out-Null
-          
+
           # Initialize analysis results
           $analysisResults = @{
             Timestamp = Get-Date -Format 'o'
@@ -97,7 +97,7 @@ jobs:
             }
             IssueGroups = @()
           }
-          
+
           if ("${{ github.event_name }}" -eq "workflow_run") {
             $analysisResults.WorkflowContext.TriggeredBy = @{
               WorkflowName = "${{ github.event.workflow_run.name }}"
@@ -107,17 +107,17 @@ jobs:
               HtmlUrl = "${{ github.event.workflow_run.html_url }}"
             }
           }
-          
+
           Write-Host "📂 Searching for failure artifacts..." -ForegroundColor Yellow
-          
+
           # 1. ANALYZE TEST FAILURES
           Write-Host "`n🧪 Analyzing test failures..." -ForegroundColor Cyan
           $testReportFiles = Get-ChildItem -Path "./reports", "./artifacts" -Filter "TestReport*.json" -Recurse -ErrorAction SilentlyContinue
-          
+
           foreach ($reportFile in $testReportFiles) {
             try {
               $report = Get-Content $reportFile.FullName -Raw | ConvertFrom-Json
-              
+
               if ($report.TestResults.Details) {
                 foreach ($result in $report.TestResults.Details) {
                   if ($result.Result -eq 'Failed') {
@@ -139,15 +139,15 @@ jobs:
             }
           }
           Write-Host "  Found $($analysisResults.Failures.Tests.Count) test failures" -ForegroundColor $(if ($analysisResults.Failures.Tests.Count -gt 0) { 'Red' } else { 'Green' })
-          
+
           # 2. ANALYZE SYNTAX ERRORS
           Write-Host "`n📝 Analyzing syntax errors..." -ForegroundColor Cyan
           $syntaxReportFiles = Get-ChildItem -Path "./reports", "./artifacts" -Filter "*syntax*.json" -Recurse -ErrorAction SilentlyContinue
-          
+
           foreach ($reportFile in $syntaxReportFiles) {
             try {
               $report = Get-Content $reportFile.FullName -Raw | ConvertFrom-Json
-              
+
               if ($report.Errors) {
                 foreach ($error in $report.Errors) {
                   $analysisResults.Failures.Syntax += @{
@@ -164,22 +164,22 @@ jobs:
             }
           }
           Write-Host "  Found $($analysisResults.Failures.Syntax.Count) syntax errors" -ForegroundColor $(if ($analysisResults.Failures.Syntax.Count -gt 0) { 'Red' } else { 'Green' })
-          
+
           # 3. ANALYZE CODE QUALITY ISSUES
           Write-Host "`n⚠️  Analyzing code quality issues..." -ForegroundColor Cyan
           $qualityReportFiles = Get-ChildItem -Path "./reports", "./artifacts" -Filter "*psscriptanalyzer*.json" -Recurse -ErrorAction SilentlyContinue
-          
+
           foreach ($reportFile in $qualityReportFiles) {
             try {
               $report = Get-Content $reportFile.FullName -Raw | ConvertFrom-Json
-              
+
               if ($report.Results) {
                 $groupedByFile = $report.Results | Group-Object -Property ScriptPath
-                
+
                 foreach ($group in $groupedByFile) {
                   $errors = @($group.Group | Where-Object { $_.Severity -eq 'Error' })
                   $warnings = @($group.Group | Where-Object { $_.Severity -eq 'Warning' })
-                  
+
                   if ($errors.Count -gt 0 -or $warnings.Count -gt 10) {
                     $analysisResults.Failures.CodeQuality += @{
                       File = $group.Name
@@ -202,15 +202,15 @@ jobs:
             }
           }
           Write-Host "  Found $($analysisResults.Failures.CodeQuality.Count) files with quality issues" -ForegroundColor $(if ($analysisResults.Failures.CodeQuality.Count -gt 0) { 'Yellow' } else { 'Green' })
-          
+
           # 4. ANALYZE SECURITY ISSUES
           Write-Host "`n🔒 Analyzing security issues..." -ForegroundColor Cyan
           $securityReportFiles = Get-ChildItem -Path "./reports", "./artifacts" -Filter "*security*.json" -Recurse -ErrorAction SilentlyContinue
-          
+
           foreach ($reportFile in $securityReportFiles) {
             try {
               $report = Get-Content $reportFile.FullName -Raw | ConvertFrom-Json
-              
+
               if ($report.Vulnerabilities) {
                 foreach ($vuln in $report.Vulnerabilities) {
                   $analysisResults.Failures.Security += @{
@@ -227,7 +227,7 @@ jobs:
             }
           }
           Write-Host "  Found $($analysisResults.Failures.Security.Count) security issues" -ForegroundColor $(if ($analysisResults.Failures.Security.Count -gt 0) { 'Red' } else { 'Green' })
-          
+
           # 5. ANALYZE WORKFLOW FAILURES
           Write-Host "`n🔄 Analyzing workflow failures..." -ForegroundColor Cyan
           if ("${{ github.event.workflow_run.conclusion }}" -eq "failure") {
@@ -240,14 +240,14 @@ jobs:
             }
           }
           Write-Host "  Found $($analysisResults.Failures.Workflows.Count) workflow failures" -ForegroundColor $(if ($analysisResults.Failures.Workflows.Count -gt 0) { 'Red' } else { 'Green' })
-          
+
           # Calculate total failures
-          $totalFailures = $analysisResults.Failures.Tests.Count + 
-                          $analysisResults.Failures.Syntax.Count + 
-                          $analysisResults.Failures.CodeQuality.Count + 
-                          $analysisResults.Failures.Security.Count + 
+          $totalFailures = $analysisResults.Failures.Tests.Count +
+                          $analysisResults.Failures.Syntax.Count +
+                          $analysisResults.Failures.CodeQuality.Count +
+                          $analysisResults.Failures.Security.Count +
                           $analysisResults.Failures.Workflows.Count
-          
+
           Write-Host "`n📊 Analysis Summary:" -ForegroundColor Green
           Write-Host "  Total Failures: $totalFailures" -ForegroundColor White
           Write-Host "    • Test Failures: $($analysisResults.Failures.Tests.Count)" -ForegroundColor White
@@ -255,17 +255,17 @@ jobs:
           Write-Host "    • Code Quality: $($analysisResults.Failures.CodeQuality.Count)" -ForegroundColor White
           Write-Host "    • Security Issues: $($analysisResults.Failures.Security.Count)" -ForegroundColor White
           Write-Host "    • Workflow Failures: $($analysisResults.Failures.Workflows.Count)" -ForegroundColor White
-          
+
           # Save analysis results
           $analysisResults | ConvertTo-Json -Depth 20 | Out-File -FilePath "./comprehensive-failure-analysis.json"
-          
+
           # Set outputs
           "has-failures=$($totalFailures -gt 0)" >> $env:GITHUB_OUTPUT
           "total-issues-to-create=0" >> $env:GITHUB_OUTPUT
           "analysis-artifact=comprehensive-failure-analysis" >> $env:GITHUB_OUTPUT
-          
+
           Write-Host "`n✅ Comprehensive analysis complete!" -ForegroundColor Green
-      
+
       - name: 📤 Upload Analysis Results
         uses: actions/upload-artifact@v4
         with:
@@ -278,27 +278,27 @@ jobs:
     runs-on: ubuntu-latest
     needs: comprehensive-failure-analysis
     if: needs.comprehensive-failure-analysis.outputs.has-failures == 'true'
-    
+
     outputs:
       issue-count: ${{ steps.grouping.outputs.issue-count }}
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-      
+
       - name: 📊 Download Analysis Results
         uses: actions/download-artifact@v4
         with:
           name: comprehensive-failure-analysis
           path: ./
-      
+
       - name: 📥 Download Issue State
         uses: actions/download-artifact@v4
         with:
           name: issue-state-db
           path: ${{ env.ISSUE_STATE_DIR }}
         continue-on-error: true
-      
+
       - name: 🧠 Intelligent Grouping
         id: grouping
         uses: actions/github-script@v7
@@ -306,11 +306,11 @@ jobs:
           script: |
             const fs = require('fs');
             const crypto = require('crypto');
-            
+
             // Load analysis results
             const analysis = JSON.parse(fs.readFileSync('./comprehensive-failure-analysis.json', 'utf8'));
             console.log('📊 Loaded analysis with', Object.keys(analysis.Failures).length, 'failure categories');
-            
+
             // Load existing issues to check for duplicates
             const { data: existingIssues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -319,9 +319,9 @@ jobs:
               state: 'open',
               per_page: 100
             });
-            
+
             console.log(`Found ${existingIssues.length} existing automated issues`);
-            
+
             // Helper: Create fingerprint for deduplication
             function createFingerprint(failure) {
               const normalizedData = JSON.stringify({
@@ -330,83 +330,83 @@ jobs:
                 error: (failure.ErrorMessage || failure.Message || '').replace(/\d+/g, 'N').toLowerCase(),
                 category: failure.Category || failure.RuleName || 'general'
               });
-              
+
               return crypto.createHash('sha256').update(normalizedData).digest('hex').substring(0, 16);
             }
-            
+
             // Helper: Determine agent based on file and error type
             function determineAgent(failure) {
               const file = (failure.File || '').toLowerCase();
               const error = (failure.ErrorMessage || failure.Message || '').toLowerCase();
-              
+
               // Infrastructure issues
               if (file.includes('infrastructure') || file.includes('vm') || file.includes('network') || file.includes('hyperv')) {
                 return { agent: 'maya', name: 'Maya Infrastructure', mention: '@maya' };
               }
-              
+
               // Security issues
               if (file.includes('security') || file.includes('certificate') || file.includes('credential') || error.includes('security')) {
                 return { agent: 'sarah', name: 'Sarah Security', mention: '@sarah' };
               }
-              
+
               // Test infrastructure issues
               if (file.includes('tests/') || file.includes('.Tests.ps1') || error.includes('pester')) {
                 return { agent: 'jessica', name: 'Jessica Testing', mention: '@jessica' };
               }
-              
+
               // UI/UX issues
               if (file.includes('experience/') || file.includes('ui') || file.includes('menu') || file.includes('wizard')) {
                 return { agent: 'emma', name: 'Emma Frontend', mention: '@emma' };
               }
-              
+
               // Backend/Module issues
               if (file.includes('.psm1') || file.includes('api') || file.includes('backend')) {
                 return { agent: 'marcus', name: 'Marcus Backend', mention: '@marcus' };
               }
-              
+
               // Documentation issues
               if (file.endsWith('.md') || file.includes('docs/')) {
                 return { agent: 'olivia', name: 'Olivia Documentation', mention: '@olivia' };
               }
-              
+
               // Default to PowerShell expert
               return { agent: 'rachel', name: 'Rachel PowerShell', mention: '@rachel' };
             }
-            
+
             // Group failures intelligently
             const issueGroups = [];
             const processedFingerprints = new Set();
-            
+
             // Process each failure type
             for (const [category, failures] of Object.entries(analysis.Failures)) {
               if (!failures || failures.length === 0) continue;
-              
+
               console.log(`\nProcessing ${failures.length} ${category} failures...`);
-              
+
               for (const failure of failures) {
                 const fingerprint = createFingerprint(failure);
-                
+
                 // Check if already processed
                 if (processedFingerprints.has(fingerprint)) {
                   console.log(`  Skipping duplicate: ${fingerprint}`);
                   continue;
                 }
-                
+
                 // Check if issue already exists
-                const existingIssue = existingIssues.find(i => 
+                const existingIssue = existingIssues.find(i =>
                   i.body && i.body.includes(`<!-- fingerprint:${fingerprint} -->`)
                 );
-                
+
                 if (existingIssue) {
                   console.log(`  Issue already exists for fingerprint: ${fingerprint} (#${existingIssue.number})`);
                   continue;
                 }
-                
+
                 processedFingerprints.add(fingerprint);
-                
+
                 // Determine assigned agent
                 const agent = determineAgent(failure);
-                
+
                 // Create issue group
                 issueGroups.push({
                   fingerprint,
@@ -417,16 +417,16 @@ jobs:
                 });
               }
             }
-            
+
             console.log(`\n✅ Created ${issueGroups.length} unique issue groups`);
-            
+
             // Save grouped issues
             fs.writeFileSync('./issue-groups.json', JSON.stringify({ issueGroups, analysis }, null, 2));
-            
+
             core.setOutput('issue-count', issueGroups.length);
-            
+
             return issueGroups.length;
-      
+
       - name: 📤 Upload Issue Groups
         uses: actions/upload-artifact@v4
         with:
@@ -441,36 +441,36 @@ jobs:
     if: |
       needs.intelligent-issue-grouping.outputs.issue-count > 0 &&
       github.event.inputs.dry_run != 'true'
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-      
+
       - name: 📊 Download Issue Groups
         uses: actions/download-artifact@v4
         with:
           name: issue-groups
           path: ./
-      
+
       - name: 📝 Create Issues with Agent Assignment
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            
+
             // Load issue groups
             const data = JSON.parse(fs.readFileSync('./issue-groups.json', 'utf8'));
             const { issueGroups, analysis } = data;
-            
+
             console.log(`📝 Creating ${issueGroups.length} intelligent issues...`);
-            
+
             let createdCount = 0;
-            
+
             for (const group of issueGroups) {
               const { fingerprint, category, failure, agent, priority } = group;
-              
+
               // Build issue title
-              const title = category === 'Tests' 
+              const title = category === 'Tests'
                 ? `🧪 Test Failure: ${failure.TestName}`
                 : category === 'Syntax'
                 ? `📝 Syntax Error in ${failure.File.split('/').pop()}`
@@ -479,61 +479,61 @@ jobs:
                 : category === 'Security'
                 ? `🔒 Security Issue: ${failure.Type}`
                 : `🔄 Workflow Failure: ${failure.WorkflowName}`;
-              
+
               // Build issue body with rich context
-              const workflowContext = analysis.WorkflowContext.TriggeredBy 
+              const workflowContext = analysis.WorkflowContext.TriggeredBy
                 ? `- **Workflow:** [${analysis.WorkflowContext.TriggeredBy.WorkflowName}](${analysis.WorkflowContext.TriggeredBy.HtmlUrl})
             - **Run ID:** ${analysis.WorkflowContext.TriggeredBy.WorkflowId}
             - **Status:** ${analysis.WorkflowContext.TriggeredBy.Conclusion}`
                 : `- **Manual Analysis:** Scheduled analysis`;
-              
+
               const body = `## ${category} Failure Detected
-            
+
             **Category:** ${category}
             **Priority:** ${priority}
             **Detected:** ${analysis.Timestamp}
             **File:** \`${failure.File || 'N/A'}\`
             ${failure.Line ? `**Line:** ${failure.Line}` : ''}
-            
+
             ### Error Details
-            
+
             ${failure.ErrorMessage || failure.Message || failure.Description || 'See details below'}
-            
+
             ${failure.StackTrace ? `\`\`\`
             ${failure.StackTrace}
             \`\`\`` : ''}
-            
+
             ### 🤖 AI Agent Assignment
-            
+
             ${agent.mention} This issue has been automatically assigned to you based on the failure category and affected files.
-            
+
             **Agent:** ${agent.name}
             **Expertise:** ${agent.agent}
-            
+
             #### Recommended Actions:
-            
+
             1. **Analyze** the failure details and identify the root cause
             2. **Review** related code in \`${failure.File || 'affected files'}\`
             3. **Fix** the underlying issue
             4. **Test** to verify the fix works
             5. **Submit** a PR that references this issue with \`Fixes #ISSUE_NUMBER\`
-            
+
             ${category === 'Security' ? '⚠️ **Security Issue:** Please prioritize this fix for security reasons.' : ''}
-            
+
             ### Workflow Context
-            
+
             ${workflowContext}
-            
+
             ---
             *This issue was automatically created by the Phase 2 Intelligent Issue Creation System*
             <!-- fingerprint:${fingerprint} -->`;
-              
+
               try {
                 const labels = ['automated-issue', category.toLowerCase(), priority];
-                
+
                 // Add agent-specific label
                 labels.push(`agent-${agent.agent}`);
-                
+
                 const newIssue = await github.rest.issues.create({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -541,50 +541,50 @@ jobs:
                   body,
                   labels
                 });
-                
+
                 console.log(`✅ Created issue #${newIssue.data.number}: ${title}`);
                 createdCount++;
-                
+
               } catch (error) {
                 console.error(`❌ Failed to create issue: ${error.message}`);
               }
             }
-            
+
             console.log(`\n✅ Created ${createdCount} intelligent issues!`);
-      
+
       - name: 📊 Update Issue State Database
         shell: pwsh
         run: |
           Write-Host "📊 Updating issue state database..." -ForegroundColor Cyan
-          
+
           $issueStateFile = "$env:ISSUE_STATE_DIR/issue-fingerprints.json"
-          
+
           # Load existing state
           $issueState = if (Test-Path $issueStateFile) {
             Get-Content $issueStateFile -Raw | ConvertFrom-Json
           } else {
             @{ fingerprints = @(); lastUpdated = $null }
           }
-          
+
           # Load created issues
           $issueGroups = Get-Content "./issue-groups.json" -Raw | ConvertFrom-Json
-          
+
           # Add new fingerprints
           foreach ($group in $issueGroups.issueGroups) {
             if ($group.fingerprint -notin $issueState.fingerprints) {
               $issueState.fingerprints += $group.fingerprint
             }
           }
-          
+
           $issueState.lastUpdated = Get-Date -Format 'o'
           $issueState.totalTracked = $issueState.fingerprints.Count
-          
+
           # Save updated state
           New-Item -ItemType Directory -Force -Path "$env:ISSUE_STATE_DIR" | Out-Null
           $issueState | ConvertTo-Json -Depth 10 | Out-File -FilePath $issueStateFile
-          
+
           Write-Host "✅ Updated issue state database with $($issueState.fingerprints.Count) fingerprints" -ForegroundColor Green
-      
+
       - name: 📤 Upload Issue State Database
         uses: actions/upload-artifact@v4
         with:
@@ -599,27 +599,27 @@ jobs:
     if: |
       github.event.inputs.dry_run == 'true' &&
       needs.intelligent-issue-grouping.outputs.issue-count > 0
-    
+
     steps:
       - name: 📊 Download Issue Groups
         uses: actions/download-artifact@v4
         with:
           name: issue-groups
           path: ./
-      
+
       - name: 📋 Preview Issues
         shell: pwsh
         run: |
           Write-Host "🧪 DRY RUN MODE - Previewing issues that would be created" -ForegroundColor Yellow
           Write-Host "============================================================" -ForegroundColor Yellow
           Write-Host ""
-          
+
           $data = Get-Content "./issue-groups.json" -Raw | ConvertFrom-Json
-          
+
           Write-Host "📊 Summary:" -ForegroundColor Cyan
           Write-Host "  Total Issues to Create: $($data.issueGroups.Count)" -ForegroundColor White
           Write-Host ""
-          
+
           foreach ($group in $data.issueGroups) {
             Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
             Write-Host "  Category: $($group.category)" -ForegroundColor Yellow
@@ -629,7 +629,7 @@ jobs:
             Write-Host "  Fingerprint: $($group.fingerprint)" -ForegroundColor DarkGray
             Write-Host ""
           }
-          
+
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
           Write-Host ""
           Write-Host "💡 Run without dry_run to create these issues" -ForegroundColor Blue
