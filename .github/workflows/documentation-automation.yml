@@ -19,6 +19,10 @@ on:
       - 'README.md'
       - 'docs/**'
   workflow_dispatch:
+
+concurrency:
+  group: documentation-automation-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
     inputs:
       mode:
         description: 'Documentation generation mode'

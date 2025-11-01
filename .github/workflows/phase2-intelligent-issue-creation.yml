@@ -8,8 +8,8 @@ on:
   workflow_run:
     workflows:
       - "🧪 Comprehensive Test Execution"
-      - "✅ PR Validation"
-      - "🔍 Quality Validation"
+      - "PR Validation"
+      - "Quality Validation"
     types: [completed]
 
   schedule:
@@ -33,6 +33,10 @@ permissions:
   actions: read
   checks: write
   pull-requests: write
+
+concurrency:
+  group: phase2-issue-creation-${{ github.run_id }}
+  cancel-in-progress: false  # Don't cancel - we want all failure analysis to complete
 
 env:
   ISSUE_STATE_DIR: ./reports/issue-state
