@@ -1070,13 +1070,9 @@ function Invoke-SequentialOrchestration {
                         }
                     }
                 } else {
-                    # Fallback if Get-Command fails - pass all non-empty variables
-                    Write-OrchestrationLog "Warning: Could not get script info for $($script.Path), passing all variables" -Level 'Warning'
-                    foreach ($key in $scriptVars.Keys) {
-                        if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
-                            $params[$key] = $scriptVars[$key]
-                        }
-                    }
+                    # If Get-Command fails, don't pass any parameters to avoid parameter binding errors
+                    Write-OrchestrationLog "Warning: Could not get script info for $($script.Path). Script will run without parameters to avoid parameter binding errors." -Level 'Warning'
+                    # Don't pass any variables - let the script use defaults or environment detection
                 }
 
                 Write-OrchestrationLog "Script: $($script.Number) - Parameters being passed: $($params.Keys -join ', ')" -Level 'Debug'
