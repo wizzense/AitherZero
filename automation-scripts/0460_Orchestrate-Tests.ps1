@@ -198,7 +198,6 @@ if ($PSCmdlet.ShouldProcess("Test orchestration ($Profile profile)", "Execute te
             $orchestrationArgs = @(
                 '-Mode', 'Orchestrate'
                 '-Playbook', $selectedProfile.Playbook
-                '-NonInteractive'
             )
 
             if ($ShowProgress) { $orchestrationArgs += '-Verbose' }

@@ -7,7 +7,7 @@ on:
     workflows: ["Intelligent CI Orchestrator", "Quality Validation", "🧪 Comprehensive Test Execution"]
     types: [completed]
   push:
-    branches: [main, develop]
+    branches: [main, dev]
     paths:
       - 'reports/**'
   workflow_dispatch:
