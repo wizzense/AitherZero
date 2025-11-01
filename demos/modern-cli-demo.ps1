@@ -77,7 +77,7 @@ try {
     Write-Host "> Start-AitherZero.ps1 -Mode List -Target scripts" -ForegroundColor Gray
     Write-Host ""
     
-    & ".\Start-AitherZero.ps1" -Mode List -Target scripts -NonInteractive
+    & ".\Start-AitherZero.ps1" -Mode List -Target scripts
     
     Wait-ForUser "`nPress Enter to see playbooks..."
     
@@ -85,7 +85,7 @@ try {
     Write-Host "> Start-AitherZero.ps1 -Mode List -Target playbooks" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI $script:StartAither -NonInteractive -Mode List -Target playbooks
+    & $script:ModernCLI $script:StartAither -Mode List -Target playbooks
     
     Wait-ForUser
     
@@ -96,7 +96,7 @@ try {
     Write-Host "> Start-AitherZero.ps1 -Mode Search -Query test" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI $script:StartAither -NonInteractive -Mode Search -Query test
+    & $script:ModernCLI $script:StartAither -Mode Search -Query test
     
     Wait-ForUser "`nPress Enter to search for security items..."
     
@@ -104,7 +104,7 @@ try {
     Write-Host "> Start-AitherZero.ps1 -Mode Search -Query security" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI $script:StartAither -NonInteractive -Mode Search -Query security
+    & $script:ModernCLI $script:StartAither -Mode Search -Query security
     
     Wait-ForUser
     
@@ -115,7 +115,7 @@ try {
     Write-Host "> Start-AitherZero.ps1 -Mode Config -Action get" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI $script:StartAither -NonInteractive -Mode Config -Action get
+    & $script:ModernCLI $script:StartAither -Mode Config -Action get
     
     Wait-ForUser "`nPress Enter to change theme..."
     
@@ -123,7 +123,7 @@ try {
     Write-Host "> Start-AitherZero.ps1 -Mode config set theme dark" -ForegroundColor Gray
     Write-Host ""
     
-    & $script:ModernCLI $script:StartAither -NonInteractive -Mode config set theme dark
+    & $script:ModernCLI $script:StartAither -Mode config set theme dark
     
     Wait-ForUser
     

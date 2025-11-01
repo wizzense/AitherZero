@@ -171,11 +171,11 @@ function Test-BootstrapProcess {
                 throw "Bootstrap script not found: $bootstrapScript"
             }
 
-            # Run bootstrap in non-interactive mode
+            # Run bootstrap in non-interactive mode (auto-detected by CI environment)
             Write-ScriptLog -Message "Running bootstrap process..."
             $startTime = Get-Date
 
-            & pwsh -c "$bootstrapScript -Mode New -NonInteractive"
+            & pwsh -c "$bootstrapScript -Mode New"
 
             if ($LASTEXITCODE -ne 0) {
                 throw "Bootstrap process failed with exit code: $LASTEXITCODE"
