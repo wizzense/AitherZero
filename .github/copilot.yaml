@@ -8,7 +8,7 @@ version: 1
 agents:
   # Infrastructure & DevOps Specialist
   maya:
-    name: "Maya"
+    name: "Maya Infrastructure"
     description: "Infrastructure & DevOps Specialist"
     file: ".github/agents/maya-infrastructure.md"
     expertise:
@@ -44,7 +44,7 @@ agents:
 
   # Security & Compliance Expert
   sarah:
-    name: "Sarah"
+    name: "Sarah Security"
     description: "Security & Compliance Expert"
     file: ".github/agents/sarah-security.md"
     expertise:
@@ -75,7 +75,7 @@ agents:
 
   # Testing & QA Engineer
   jessica:
-    name: "Jessica"
+    name: "Jessica Testing"
     description: "Testing & QA Engineer"
     file: ".github/agents/jessica-testing.md"
     expertise:
@@ -102,7 +102,7 @@ agents:
 
   # Frontend & UX Developer
   emma:
-    name: "Emma"
+    name: "Emma Frontend"
     description: "Frontend & UX Developer"
     file: ".github/agents/emma-frontend.md"
     expertise:
@@ -132,7 +132,7 @@ agents:
 
   # Backend & API Developer
   marcus:
-    name: "Marcus"
+    name: "Marcus Backend"
     description: "Backend & API Developer"
     file: ".github/agents/marcus-backend.md"
     expertise:
@@ -159,7 +159,7 @@ agents:
 
   # Documentation & Technical Writing
   olivia:
-    name: "Olivia"
+    name: "Olivia Documentation"
     description: "Documentation & Technical Writing Specialist"
     file: ".github/agents/olivia-documentation.md"
     expertise:
@@ -185,7 +185,7 @@ agents:
 
   # PowerShell & Automation Expert
   rachel:
-    name: "Rachel"
+    name: "Rachel PowerShell"
     description: "PowerShell & Automation Expert"
     file: ".github/agents/rachel-powershell.md"
     expertise:
@@ -214,7 +214,7 @@ agents:
 
   # Project Manager & Coordinator
   david:
-    name: "David"
+    name: "David ProjectManager"
     description: "Project Manager & Coordinator"
     file: ".github/agents/david-project-manager.md"
     expertise:

@@ -259,14 +259,14 @@ AitherZero includes comprehensive GitHub Copilot enhancement features to make AI
 
 The repository uses `.github/copilot.yaml` to route work to specialized agents based on expertise:
 
-- **Maya** (Infrastructure): Hyper-V, OpenTofu/Terraform, networking, VM management
-- **Sarah** (Security): Certificates, credentials, compliance, vulnerability scanning
-- **Jessica** (Testing): Pester, test automation, quality assurance
-- **Emma** (Frontend/UX): Console UI, menus, wizards, user experience
-- **Marcus** (Backend): PowerShell modules, APIs, performance optimization
-- **Olivia** (Documentation): Technical writing, guides, documentation
-- **Rachel** (PowerShell): Scripting, automation, orchestration
-- **David** (Project Manager): Planning, coordination, releases
+- **Maya Infrastructure** (Infrastructure): Hyper-V, OpenTofu/Terraform, networking, VM management
+- **Sarah Security** (Security): Certificates, credentials, compliance, vulnerability scanning
+- **Jessica Testing** (Testing): Pester, test automation, quality assurance
+- **Emma Frontend** (Frontend/UX): Console UI, menus, wizards, user experience
+- **Marcus Backend** (Backend): PowerShell modules, APIs, performance optimization
+- **Olivia Documentation** (Documentation): Technical writing, guides, documentation
+- **Rachel PowerShell** (PowerShell): Scripting, automation, orchestration
+- **David ProjectManager** (Project Manager): Planning, coordination, releases
 
 **Usage**: Agents are auto-suggested based on file patterns. Invoke manually with `/agent-name` or `@agent-name` in Copilot Chat.
 
