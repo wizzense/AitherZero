@@ -1,4 +1,7 @@
 ﻿#Requires -Version 7.0
+# PSScriptAnalyzer suppressions for dashboard generation script
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Scope='Function', Target='*', Justification='Dashboard functions intentionally use plural names for collections of metrics')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Scope='Function', Target='*', Justification='ShouldProcess handled at script level, not individual helper functions')]
 
 <#
 .SYNOPSIS
