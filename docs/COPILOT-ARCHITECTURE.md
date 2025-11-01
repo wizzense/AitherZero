@@ -166,16 +166,16 @@ Copilot Request → MCP Server Manager
 
 ## Agent Specialization Matrix
 
-| Agent    | Domain              | File Patterns           | Keywords              |
-|----------|---------------------|-------------------------|-----------------------|
-| Maya     | Infrastructure      | infrastructure/*, *.tf  | vm, network, opentofu |
-| Sarah    | Security            | security/*, *cert*      | certificate, secret   |
-| Jessica  | Testing             | tests/*, *.Tests.ps1    | test, pester, qa      |
-| Emma     | Frontend/UX         | experience/*, *ui*      | ui, menu, wizard      |
-| Marcus   | Backend/API         | domains/*.psm1, *api*   | module, function      |
-| Olivia   | Documentation       | docs/*, *.md            | documentation, guide  |
-| Rachel   | PowerShell          | *.ps1, *.psm1           | script, automation    |
-| David    | Project Management  | .github/*.yml, *plan*   | project, roadmap      |
+| Agent              | Domain              | File Patterns           | Keywords              |
+|--------------------|---------------------|-------------------------|-----------------------|
+| Maya Infrastructure | Infrastructure      | infrastructure/*, *.tf  | vm, network, opentofu |
+| Sarah Security     | Security            | security/*, *cert*      | certificate, secret   |
+| Jessica Testing    | Testing             | tests/*, *.Tests.ps1    | test, pester, qa      |
+| Emma Frontend      | Frontend/UX         | experience/*, *ui*      | ui, menu, wizard      |
+| Marcus Backend     | Backend/API         | domains/*.psm1, *api*   | module, function      |
+| Olivia Documentation | Documentation     | docs/*, *.md            | documentation, guide  |
+| Rachel PowerShell  | PowerShell          | *.ps1, *.psm1           | script, automation    |
+| David ProjectManager | Project Management| .github/*.yml, *plan*   | project, roadmap      |
 
 ## MCP Server Capabilities
 

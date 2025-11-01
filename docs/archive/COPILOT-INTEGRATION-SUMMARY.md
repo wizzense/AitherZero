@@ -22,14 +22,14 @@ Enhanced the existing custom instructions file with:
 **Status**: ✅ Already Existed, Now Documented
 
 The repository already had sophisticated agent routing with 8 specialized agents:
-- **Maya**: Infrastructure & DevOps
-- **Sarah**: Security & Compliance
-- **Jessica**: Testing & QA
-- **Emma**: Frontend & UX
-- **Marcus**: Backend & API
-- **Olivia**: Documentation
-- **Rachel**: PowerShell & Automation
-- **David**: Project Management
+- **Maya Infrastructure**: Infrastructure & DevOps
+- **Sarah Security**: Security & Compliance
+- **Jessica Testing**: Testing & QA
+- **Emma Frontend**: Frontend & UX
+- **Marcus Backend**: Backend & API
+- **Olivia Documentation**: Documentation
+- **Rachel PowerShell**: PowerShell & Automation
+- **David ProjectManager**: Project Management
 
 **Impact**: Routes work to domain experts, improving code quality and relevance.
 

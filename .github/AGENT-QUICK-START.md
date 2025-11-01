@@ -33,14 +33,14 @@ When you **open or update a PR**, the system automatically:
 
 | Icon | Agent | Expertise | When to Use |
 |------|-------|-----------|-------------|
-| 🏗️ | **Maya** | Infrastructure & DevOps | VMs, networks, Terraform, lab automation |
-| 🔒 | **Sarah** | Security & Compliance | Certificates, credentials, vulnerabilities |
-| 🧪 | **Jessica** | Testing & QA | Pester tests, coverage, quality metrics |
-| 🎨 | **Emma** | Frontend & UX | Console UI, menus, user experience |
-| ⚙️ | **Marcus** | Backend & API | PowerShell modules, APIs, performance |
-| 📚 | **Olivia** | Documentation | READMEs, guides, technical writing |
-| ⚡ | **Rachel** | PowerShell & Automation | Advanced scripts, orchestration |
-| 📋 | **David** | Project Management | Planning, coordination, releases |
+| 🏗️ | **Maya Infrastructure** | Infrastructure & DevOps | VMs, networks, Terraform, lab automation |
+| 🔒 | **Sarah Security** | Security & Compliance | Certificates, credentials, vulnerabilities |
+| 🧪 | **Jessica Testing** | Testing & QA | Pester tests, coverage, quality metrics |
+| 🎨 | **Emma Frontend** | Frontend & UX | Console UI, menus, user experience |
+| ⚙️ | **Marcus Backend** | Backend & API | PowerShell modules, APIs, performance |
+| 📚 | **Olivia Documentation** | Documentation | READMEs, guides, technical writing |
+| ⚡ | **Rachel PowerShell** | PowerShell & Automation | Advanced scripts, orchestration |
+| 📋 | **David ProjectManager** | Project Management | Planning, coordination, releases |
 
 ## 📁 Automatic Routing by File Type
 

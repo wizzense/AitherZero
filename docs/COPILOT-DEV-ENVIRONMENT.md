@@ -92,14 +92,14 @@ Located at `.github/copilot-instructions.md`, these provide Copilot with:
 
 Located at `.github/copilot.yaml`, this routes work to specialized agents:
 
-- **Maya**: Infrastructure & DevOps (Hyper-V, OpenTofu, networking)
-- **Sarah**: Security & Compliance (certificates, credentials)
-- **Jessica**: Testing & QA (Pester, test automation)
-- **Emma**: Frontend & UX (console UI, menus)
-- **Marcus**: Backend & API (PowerShell modules)
-- **Olivia**: Documentation (technical writing)
-- **Rachel**: PowerShell & Automation (scripting, orchestration)
-- **David**: Project Management (planning, coordination)
+- **Maya Infrastructure**: Infrastructure & DevOps (Hyper-V, OpenTofu, networking)
+- **Sarah Security**: Security & Compliance (certificates, credentials)
+- **Jessica Testing**: Testing & QA (Pester, test automation)
+- **Emma Frontend**: Frontend & UX (console UI, menus)
+- **Marcus Backend**: Backend & API (PowerShell modules)
+- **Olivia Documentation**: Documentation (technical writing)
+- **Rachel PowerShell**: PowerShell & Automation (scripting, orchestration)
+- **David ProjectManager**: Project Management (planning, coordination)
 
 **How to use**: Agents are auto-suggested based on file patterns and keywords. Invoke manually:
 
