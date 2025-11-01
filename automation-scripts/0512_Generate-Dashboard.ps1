@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -3960,7 +3960,8 @@ try {
     exit 0
 
 } catch {
-    $errorMsg = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
-    Write-ScriptLog -Level Error -Message "Dashboard generation failed: $_" -Data @{ Exception = $errorMsg }
+    Write-ScriptLog -Level Error -Message "Dashboard generation failed: $_" -Data @{
+        Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+    }
     exit 1
 }
