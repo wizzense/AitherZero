@@ -134,8 +134,7 @@ function Open-HTMLDashboard {
     }
 }
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
-function Get-ProjectMetrics {
+function Get-ProjectMetrics [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')] {
     Write-ScriptLog -Message "Collecting project metrics"
 
     $metrics = @{
