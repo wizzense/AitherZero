@@ -35,30 +35,28 @@
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'OutputPath', Justification='Used in main script body')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Format', Justification='Used in switch statement')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Open', Justification='Used to open HTML dashboard')]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
     [string]$OutputPath = (Join-Path $ProjectPath "reports"),
     [ValidateSet('HTML', 'Markdown', 'JSON', 'All')]
     [string]$Format = 'All',
-    [switch]$IncludeMetrics,
-    [switch]$IncludeTrends,
-    [switch]$RefreshData,
-    [string]$ThemeColor = '#667eea',
     [switch]$Open
+    # Future parameters (not yet implemented):
+    # [switch]$IncludeMetrics
+    # [switch]$IncludeTrends
+    # [switch]$RefreshData
+    # [string]$ThemeColor
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-# Script metadata
-$scriptMetadata = @{
-    Stage = 'Reporting'
-    Order = 0512
-    Dependencies = @('0510')
-    Tags = @('reporting', 'dashboard', 'monitoring')
-    RequiresAdmin = $false
-    SupportsWhatIf = $true
-}
+# Script metadata (used for orchestration system documentation)
+# Note: Metadata is referenced by automation infrastructure
+# Stage: Reporting, Order: 0512, Dependencies: 0510
 
 # Import modules
 $loggingModule = Join-Path $ProjectPath "domains/utilities/Logging.psm1"
@@ -133,6 +131,7 @@ function Open-HTMLDashboard {
     }
 }
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
 function Get-ProjectMetrics {
     Write-ScriptLog -Message "Collecting project metrics"
 
@@ -357,6 +356,7 @@ function Get-ProjectMetrics {
     return $metrics
 }
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
 function Get-QualityMetrics {
     <#
     .SYNOPSIS
@@ -563,14 +563,14 @@ function Get-PSScriptAnalyzerMetrics {
     return $metrics
 }
 
-function Parse-TestResultsXml {
+function ConvertFrom-TestResultsXml {
     <#
     .SYNOPSIS
     Parses NUnit format test results XML and returns test status
-    
+
     .PARAMETER XmlPath
     Path to the test results XML file
-    
+
     .OUTPUTS
     Hashtable with TestStatus, BadgeUrl, and LastWriteTime
     #>
@@ -644,7 +644,7 @@ function Get-BuildStatus {
     # Check recent test results from testResults.xml at project root
     $testResultsPath = Join-Path $ProjectPath "testResults.xml"
     if (Test-Path $testResultsPath) {
-        $result = Parse-TestResultsXml -XmlPath $testResultsPath
+        $result = ConvertFrom-TestResultsXml -XmlPath $testResultsPath
         if ($result) {
             $status.Tests = $result.TestStatus
             $status.Badges.Tests = $result.BadgeUrl
@@ -660,7 +660,7 @@ function Get-BuildStatus {
                             Sort-Object LastWriteTime -Descending | 
                             Select-Object -First 1
             if ($latestResults) {
-                $result = Parse-TestResultsXml -XmlPath $latestResults.FullName
+                $result = ConvertFrom-TestResultsXml -XmlPath $latestResults.FullName
                 if ($result) {
                     $status.Tests = $result.TestStatus
                     $status.Badges.Tests = $result.BadgeUrl
