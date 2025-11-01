@@ -122,7 +122,7 @@ Updated to consume results from the new workflow:
 
 ### Local Validation
 
-Run the Phase 1 validation playbook:
+Run the Phase 1 validation playbook for quick local testing:
 
 ```powershell
 # Full validation with test execution
@@ -134,6 +134,41 @@ Run the Phase 1 validation playbook:
 # Show detailed report contents
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-validation -Variables @{showReports=$true}
 ```
+
+### Production Execution
+
+Run the comprehensive production playbook for full test execution:
+
+```powershell
+# Production-ready comprehensive test execution
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-production
+
+# With custom variables
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-production -Variables @{
+    minimumCoverage = 80
+    failOnTestFailure = $true
+    generateDashboard = $true
+}
+
+# Continue on test failures (for analysis)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-production -Variables @{
+    continueOnError = $true
+    failOnTestFailure = $false
+}
+```
+
+**Production Playbook Features:**
+- ✅ Pre-flight environment validation
+- ✅ Clean state (removes previous results)
+- ✅ Comprehensive test discovery
+- ✅ Syntax validation before tests
+- ✅ Parallel-capable execution
+- ✅ Code quality analysis (PSScriptAnalyzer)
+- ✅ Automatic result aggregation
+- ✅ Dashboard generation
+- ✅ Coverage analysis
+- ✅ Detailed production summary
+- ✅ Configurable failure handling
 
 ### CI/CD Execution
 
@@ -219,7 +254,8 @@ Once Phase 1 is validated, Phase 2 will add:
 
 ### New Files
 - `.github/workflows/comprehensive-test-execution.yml` - Main CI workflow
-- `orchestration/playbooks/testing/test-phase1-validation.json` - Local validation playbook
+- `orchestration/playbooks/testing/test-phase1-validation.json` - Quick validation playbook
+- `orchestration/playbooks/testing/test-phase1-production.json` - Production execution playbook
 - `PHASE1-IMPLEMENTATION.md` - This documentation
 
 ### Modified Files
