@@ -93,13 +93,11 @@ try {
         }
 
         $testingConfig = @{
-            Framework = 'Pester'
             MinVersion = $pesterMinVersion
         }
     } else {
         Write-ScriptLog -Level Warning -Message "Configuration file not found, using defaults"
         $testingConfig = @{
-            Framework = 'Pester'
             MinVersion = '5.0.0'
         }
     }
