@@ -283,10 +283,17 @@ jobs:
           
           foreach ($file in $resultFiles) {
             try {
-              $result = Get-Content $file.FullName | ConvertFrom-Json
+              $result = Get-Content $file.FullName -Raw | ConvertFrom-Json
               
-              if ($result.TotalCount) {
-                $testType = if ($file.FullName -match 'unit') { 'Unit' } else { 'Integration' }
+              if ($null -ne $result.TotalCount) {
+                if ($file.Name -match 'TestReport-Unit|unit-test-results') {
+                  $testType = 'Unit'
+                } elseif ($file.Name -match 'TestReport-Integration|integration-test-results') {
+                  $testType = 'Integration'
+                } else {
+                  $testType = 'Unknown'
+                  Write-Warning "Could not determine test type for: $($file.Name). Defaulting to 'Unknown'."
+                }
                 
                 # Add to summary
                 $aggregatedReport.TestResults.Summary.Total += $result.TotalCount

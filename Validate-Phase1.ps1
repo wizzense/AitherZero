@@ -82,6 +82,8 @@ if (-not $SkipTests) {
     # Bootstrap if needed
     if (-not (Test-Path "./AitherZero.psd1")) {
         Write-Host "⚠️ Module not loaded. Run ./bootstrap.ps1 first" -ForegroundColor Yellow
+        Write-Host "Skipping test execution..." -ForegroundColor Gray
+        return
     }
 
     # Run unit tests

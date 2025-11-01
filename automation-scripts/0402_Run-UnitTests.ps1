@@ -599,7 +599,7 @@ try {
             foreach ($failedTest in $result.Failed) {
                 $testDetail = @{
                     Result = 'Failed'
-                    Name = $failedTest.Name ?? $failedTest.ExpandedName ?? $failedTest.ExpandedPath
+                    Name = $failedTest.Name ?? $failedTest.ExpandedName ?? $failedTest.ExpandedPath ?? 'Unknown Test'
                     ExpandedPath = $failedTest.ExpandedPath
                     ErrorRecord = if ($failedTest.ErrorRecord) {
                         @{
