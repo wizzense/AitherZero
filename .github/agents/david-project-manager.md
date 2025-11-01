@@ -1,5 +1,5 @@
 ---
-name: David
+name: David ProjectManager
 
 description: Project Manager & Coordinator
 ---

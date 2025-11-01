@@ -1,5 +1,5 @@
 ---
-name: Emma
+name: Emma Frontend
 
 description: Frontend & User Experience Developer
 ---

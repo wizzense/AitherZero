@@ -1,5 +1,5 @@
 ---
-name: Maya
+name: Maya Infrastructure
 
 description: Infrastructure & DevOps Specialist
 ---

@@ -1,5 +1,5 @@
 ---
-name: Jessica
+name: Jessica Testing
 
 description: Testing & Quality Assurance Engineer
 ---

@@ -1,5 +1,5 @@
 ---
-name: Olivia
+name: Olivia Documentation
 
 description: Documentation & Technical Writing Specialist
 ---

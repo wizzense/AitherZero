@@ -19,18 +19,18 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 | Name | Role | Gender | Primary Expertise |
 |------|------|--------|-------------------|
-| 👩‍💻 Maya | Infrastructure & DevOps Specialist | Female | OpenTofu/Terraform, Hyper-V, Network Architecture |
-| 👩‍💻 Sarah | Security & Compliance Expert | Female | Certificate Management, Security Auditing, Vulnerability Assessment |
-| 👩‍💻 Jessica | Testing & QA Engineer | Female | Pester Testing, Test Automation, Quality Metrics |
-| 👩‍💻 Emma | Frontend & UX Developer | Female | Console UI/UX, Terminal Interfaces, Accessibility |
-| 👨‍💻 Marcus | Backend & API Developer | Male | PowerShell Modules, API Design, Performance Optimization |
-| 👩‍💻 Olivia | Documentation & Technical Writing | Female | Technical Documentation, API Docs, User Guides |
-| 👩‍💻 Rachel | PowerShell & Automation Expert | Female | Advanced PowerShell, Orchestration, Cross-platform Scripts |
-| 👨‍💻 David | Project Manager & Coordinator | Male | Agile Management, Team Coordination, Sprint Planning |
+| 👩‍💻 Maya Infrastructure | Infrastructure & DevOps Specialist | Female | OpenTofu/Terraform, Hyper-V, Network Architecture |
+| 👩‍💻 Sarah Security | Security & Compliance Expert | Female | Certificate Management, Security Auditing, Vulnerability Assessment |
+| 👩‍💻 Jessica Testing | Testing & QA Engineer | Female | Pester Testing, Test Automation, Quality Metrics |
+| 👩‍💻 Emma Frontend | Frontend & UX Developer | Female | Console UI/UX, Terminal Interfaces, Accessibility |
+| 👨‍💻 Marcus Backend | Backend & API Developer | Male | PowerShell Modules, API Design, Performance Optimization |
+| 👩‍💻 Olivia Documentation | Documentation & Technical Writing | Female | Technical Documentation, API Docs, User Guides |
+| 👩‍💻 Rachel PowerShell | PowerShell & Automation Expert | Female | Advanced PowerShell, Orchestration, Cross-platform Scripts |
+| 👨‍💻 David ProjectManager | Project Manager & Coordinator | Male | Agile Management, Team Coordination, Sprint Planning |
 
 ## Agent Profiles
 
-### 👩‍💻 Maya - Infrastructure & DevOps Specialist
+### 👩‍💻 Maya Infrastructure - Infrastructure & DevOps Specialist
 
 **Experience:** 12 years in infrastructure engineering
 
@@ -49,7 +49,7 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 ---
 
-### 👩‍💻 Sarah - Security & Compliance Expert
+### 👩‍💻 Sarah Security - Security & Compliance Expert
 
 **Experience:** 10 years in cybersecurity
 
@@ -68,7 +68,7 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 ---
 
-### 👩‍💻 Jessica - Testing & QA Engineer
+### 👩‍💻 Jessica Testing - Testing & QA Engineer
 
 **Experience:** 8 years in software quality assurance
 
@@ -87,7 +87,7 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 ---
 
-### 👩‍💻 Emma - Frontend & UX Developer
+### 👩‍💻 Emma Frontend - Frontend & UX Developer
 
 **Experience:** 7 years in frontend development and UX design
 
@@ -106,7 +106,7 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 ---
 
-### 👨‍💻 Marcus - Backend & API Developer
+### 👨‍💻 Marcus Backend - Backend & API Developer
 
 **Experience:** 9 years in backend development
 
@@ -125,7 +125,7 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 ---
 
-### 👩‍💻 Olivia - Documentation & Technical Writing Specialist
+### 👩‍💻 Olivia Documentation - Documentation & Technical Writing Specialist
 
 **Experience:** 6 years in technical writing
 
@@ -144,7 +144,7 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 ---
 
-### 👩‍💻 Rachel - PowerShell & Automation Expert
+### 👩‍💻 Rachel PowerShell - PowerShell & Automation Expert
 
 **Experience:** 11 years in PowerShell development
 
@@ -163,7 +163,7 @@ Our AI workforce consists of 8 specialized agents each bringing unique expertise
 
 ---
 
-### 👨‍💻 David - Project Manager & Coordinator
+### 👨‍💻 David ProjectManager - Project Manager & Coordinator
 
 **Experience:** 13 years in project and product management
 
