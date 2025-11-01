@@ -122,15 +122,18 @@ Updated to consume results from the new workflow:
 
 ### Local Validation
 
-Run the validation script to test locally:
+Run the Phase 1 validation playbook:
 
 ```powershell
-./Validate-Phase1.ps1
-```
+# Full validation with test execution
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-validation
 
-Options:
-- `-SkipTests`: Skip test execution, only validate structure
-- `-ShowReports`: Display full report contents
+# Structure validation only (skip tests)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-validation -Variables @{skipTests=$true}
+
+# Show detailed report contents
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-validation -Variables @{showReports=$true}
+```
 
 ### CI/CD Execution
 
@@ -216,7 +219,7 @@ Once Phase 1 is validated, Phase 2 will add:
 
 ### New Files
 - `.github/workflows/comprehensive-test-execution.yml` - Main CI workflow
-- `Validate-Phase1.ps1` - Local validation script
+- `orchestration/playbooks/testing/test-phase1-validation.json` - Local validation playbook
 - `PHASE1-IMPLEMENTATION.md` - This documentation
 
 ### Modified Files
@@ -228,7 +231,7 @@ Once Phase 1 is validated, Phase 2 will add:
 
 For questions or issues:
 1. Check workflow logs in GitHub Actions
-2. Run `./Validate-Phase1.ps1 -ShowReports` locally
+2. Run playbook locally: `./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-phase1-validation -Variables @{showReports=$true}`
 3. Review test report JSON files in `tests/results/`
 4. Check dashboard at GitHub Pages URL
 
