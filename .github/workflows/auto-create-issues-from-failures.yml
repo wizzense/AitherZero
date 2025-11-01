@@ -83,8 +83,8 @@ jobs:
                   foreach ($result in $report.TestResults.Details) {
                     if ($result.Result -eq 'Failed') {
                       $testFailures += @{
-                        TestName = $result.ExpandedName
-                        ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } else { "Test failed" }
+                        TestName = $result.ExpandedName ?? $result.Name ?? 'Unknown Test'
+                        ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } elseif ($result.Error) { $result.Error } else { "Test failed" }
                         File = if ($result.ScriptBlock) { $result.ScriptBlock.File } else { "Unknown" }
                         Line = if ($result.ScriptBlock) { $result.ScriptBlock.StartPosition.Line } else { 0 }
                       }
