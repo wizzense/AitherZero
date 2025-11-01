@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -35,15 +35,9 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-# Script metadata
-$scriptMetadata = @{
-    Stage = 'Testing'
-    Order = 0402
-    Dependencies = @('0400')
-    Tags = @('testing', 'unit-tests', 'pester', 'coverage')
-    RequiresAdmin = $false
-    SupportsWhatIf = $true
-}
+# Script metadata (used for orchestration)
+# Note: Script metadata is defined for orchestration system documentation
+# It is referenced by automation infrastructure even if not directly used in this script
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
@@ -290,8 +284,8 @@ try {
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
-    $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
+    $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
+    $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
 
 
     # Apply output settings from config
@@ -333,7 +327,7 @@ try {
 
     # Apply filter settings from config or use defaults for unit tests
     # Ensure pesterConfig is properly initialized
-    if ($pesterConfig -and ($pesterConfig.PSObject.Properties['Filter'] -ne $null)) {
+    if ($pesterConfig -and ($null -ne $pesterConfig.PSObject.Properties['Filter'])) {
         # Check if pesterSettings has Filter property
         # Note: pesterSettings may be hashtable or PSCustomObject depending on Get-Configuration implementation
         $hasFilterProperty = $false
@@ -341,7 +335,7 @@ try {
             if ($pesterSettings -is [hashtable]) {
                 $hasFilterProperty = $pesterSettings.ContainsKey('Filter')
             } else {
-                $hasFilterProperty = $pesterSettings.PSObject.Properties['Filter'] -ne $null
+                $hasFilterProperty = $null -ne $pesterSettings.PSObject.Properties['Filter']
             }
         }
         
@@ -352,7 +346,7 @@ try {
             if ($pesterSettings.Filter -is [hashtable]) {
                 $hasTagProperty = $pesterSettings.Filter.ContainsKey('Tag')
             } else {
-                $hasTagProperty = $pesterSettings.Filter.PSObject.Properties['Tag'] -ne $null
+                $hasTagProperty = $null -ne $pesterSettings.Filter.PSObject.Properties['Tag']
             }
             
             if ($hasTagProperty) {
@@ -373,7 +367,7 @@ try {
             if ($pesterSettings.Filter -is [hashtable]) {
                 $hasExcludeTagProperty = $pesterSettings.Filter.ContainsKey('ExcludeTag')
             } else {
-                $hasExcludeTagProperty = $pesterSettings.Filter.PSObject.Properties['ExcludeTag'] -ne $null
+                $hasExcludeTagProperty = $null -ne $pesterSettings.Filter.PSObject.Properties['ExcludeTag']
             }
             
             if ($hasExcludeTagProperty) {
@@ -642,7 +636,8 @@ try {
     }
 }
 catch {
-    $errorMsg = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
-    Write-ScriptLog -Level Error -Message "Unit test execution failed: $_" -Data @{ Exception = $errorMsg }
+    Write-ScriptLog -Level Error -Message "Unit test execution failed: $_" -Data @{
+        Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+    }
     exit 2
 }
