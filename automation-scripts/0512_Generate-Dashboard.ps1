@@ -2852,6 +2852,7 @@ $manifestTagsSection
                             </div>
                         </div>
 "@
+                            })
                         } else {
                             @"
                             <div style="padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--text-secondary);">
