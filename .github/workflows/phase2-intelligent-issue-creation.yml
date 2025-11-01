@@ -48,7 +48,6 @@ jobs:
 
     outputs:
       has-failures: ${{ steps.analysis.outputs.has-failures }}
-      total-issues-to-create: ${{ steps.analysis.outputs.total-issues-to-create }}
       analysis-artifact: ${{ steps.analysis.outputs.analysis-artifact }}
 
     steps:
@@ -265,7 +264,6 @@ jobs:
 
           # Set outputs
           "has-failures=$($totalFailures -gt 0)" >> $env:GITHUB_OUTPUT
-          "total-issues-to-create=0" >> $env:GITHUB_OUTPUT
           "analysis-artifact=comprehensive-failure-analysis" >> $env:GITHUB_OUTPUT
 
           Write-Host "`n✅ Comprehensive analysis complete!" -ForegroundColor Green
