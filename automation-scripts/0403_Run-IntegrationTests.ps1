@@ -289,7 +289,7 @@ try {
         }
     }
 
-    # Save result summary
+    # Save result summary (legacy format)
     $summaryPath = Join-Path $OutputPath "IntegrationTests-Summary-$timestamp.json"
     $extendedSummary = $testSummary + @{
         TestCategories = $result.Tests | Group-Object { $_.Tags -join ',' } | ForEach-Object {
@@ -304,6 +304,61 @@ try {
         $extendedSummary | ConvertTo-Json -Depth 5 | Set-Content -Path $summaryPath
     }
     Write-ScriptLog -Message "Test summary saved to: $summaryPath"
+
+    # Save comprehensive report for dashboard/CI (TestReport format)
+    $testReportPath = Join-Path $OutputPath "TestReport-Integration-$timestamp.json"
+    if ($PSCmdlet.ShouldProcess($testReportPath, "Save comprehensive test report")) {
+        $comprehensiveReport = @{
+            TestType = 'Integration'
+            Timestamp = (Get-Date).ToString('o')
+            TotalCount = $result.TotalCount
+            PassedCount = $result.PassedCount
+            FailedCount = $result.FailedCount
+            SkippedCount = $result.SkippedCount
+            Duration = $result.Duration.TotalSeconds
+            TestResults = @{
+                Summary = @{
+                    Total = $result.TotalCount
+                    Passed = $result.PassedCount
+                    Failed = $result.FailedCount
+                    Skipped = $result.SkippedCount
+                }
+                Details = @()
+            }
+        }
+
+        # Add failed test details
+        if ($result.Failed -and $result.Failed.Count -gt 0) {
+            foreach ($failedTest in $result.Failed) {
+                $testDetail = @{
+                    Result = 'Failed'
+                    Name = $failedTest.Name ?? $failedTest.ExpandedName ?? $failedTest.ExpandedPath
+                    ExpandedPath = $failedTest.ExpandedPath
+                    ErrorRecord = if ($failedTest.ErrorRecord) {
+                        @{
+                            Exception = @{
+                                Message = $failedTest.ErrorRecord.Exception.Message
+                            }
+                            ScriptStackTrace = $failedTest.ErrorRecord.ScriptStackTrace
+                        }
+                    } else { $null }
+                    ScriptBlock = if ($failedTest.ScriptBlock) {
+                        @{
+                            File = $failedTest.ScriptBlock.File
+                            StartPosition = @{
+                                Line = $failedTest.ScriptBlock.StartPosition.StartLine
+                            }
+                        }
+                    } else { $null }
+                    Duration = if ($failedTest.Duration) { $failedTest.Duration.TotalSeconds } else { 0 }
+                }
+                $comprehensiveReport.TestResults.Details += $testDetail
+            }
+        }
+
+        $comprehensiveReport | ConvertTo-Json -Depth 10 | Set-Content -Path $testReportPath
+        Write-ScriptLog -Message "Comprehensive test report saved to: $testReportPath"
+    }
 
     # Return result if PassThru
     if ($PassThru) {
