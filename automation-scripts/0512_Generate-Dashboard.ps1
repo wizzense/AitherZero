@@ -358,8 +358,7 @@ function Get-ProjectMetrics [Diagnostics.CodeAnalysis.SuppressMessageAttribute('
     return $metrics
 }
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
-function Get-QualityMetrics {
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')] function Get-QualityMetrics {
     <#
     .SYNOPSIS
         Collect code quality validation metrics from recent reports
