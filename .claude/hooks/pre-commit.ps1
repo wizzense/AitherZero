@@ -30,7 +30,7 @@ if (-not (Test-Path $orchestrationMarker)) {
     # Provide quick action
     $response = Read-Host "Would you like to run the orchestration now? (y/n)"
     if ($response -eq 'y') {
-        ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook claude-commit-workflow -NonInteractive
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook claude-commit-workflow
         exit $LASTEXITCODE
     }
     exit 1

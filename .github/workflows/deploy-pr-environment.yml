@@ -5,7 +5,7 @@ name: Deploy PR Environment and Releases
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main, develop]
+    branches: [main, dev]
   push:
     tags: ['v*']
   release:

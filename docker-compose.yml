@@ -61,7 +61,7 @@ services:
     
     # Override default command for specific operations
     # Uncomment and modify as needed:
-    # command: ["pwsh", "-Command", "./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402 -NonInteractive"]
+    # command: ["pwsh", "-Command", "./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402"]
 
   # Redis cache for future enhancements
   redis:
