@@ -448,8 +448,9 @@ jobs:
                   repo: context.repo.repo,
                   title: issueTitle,
                   body: issueBody,
-                  labels: ['quality-validation', 'automated', 'needs-fix'],
-                  assignees: ['${{ github.event.pull_request.user.login }}']
+                  labels: ['quality-validation', 'automated', 'needs-fix']
+                  # Note: Cannot assign to @copilot as it's not a regular user
+                  # Instead, we mention @copilot in the issue body (line 439)
                 });
                 
                 console.log(`Created issue #${issue.data.number} for ${fileName}`);
