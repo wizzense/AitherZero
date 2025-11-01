@@ -1071,8 +1071,14 @@ function Invoke-SequentialOrchestration {
                     }
                 } else {
                     # If Get-Command fails, don't pass any parameters to avoid parameter binding errors
-                    $errorDetails = if ($getCommandError) { " Error: $($getCommandError[0].Exception.Message)" } else { "" }
-                    Write-OrchestrationLog "Warning: Could not get script parameter info for $($script.Path).$errorDetails This may indicate the script is inaccessible, has syntax errors, or execution policy restrictions. Script will run without parameters to avoid parameter binding errors. Verify script exists and has valid PowerShell syntax." -Level 'Warning'
+                    Write-OrchestrationLog "Warning: Could not get script parameter info for $($script.Path). Script will run without parameters to avoid parameter binding errors." -Level 'Warning'
+                    
+                    # Log diagnostic details
+                    if ($getCommandError -and $getCommandError.Count -gt 0) {
+                        Write-OrchestrationLog "Get-Command error: $($getCommandError[0].Exception.Message)" -Level 'Debug'
+                    }
+                    Write-OrchestrationLog "Possible causes: script inaccessible, syntax errors, or execution policy restrictions. Verify script exists and has valid PowerShell syntax." -Level 'Debug'
+                    
                     # Don't pass any variables - let the script use defaults or environment detection
                 }
 
