@@ -4,7 +4,7 @@ name: 🧪 Comprehensive Test Execution
 # Run ALL tests (unit + integration) and aggregate results for reporting
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, dev]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'
@@ -12,7 +12,7 @@ on:
       - '**.ps1'
       - '**.psm1'
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, dev]
   schedule:
     # Run daily to catch any regressions
     - cron: '0 2 * * *'  # 2 AM UTC daily
