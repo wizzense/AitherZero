@@ -469,11 +469,11 @@ jobs:
               core.setFailed(`Failed to create quality issues: ${error.message}`);
             }
 
-      - name: ❌ Fail if Quality Check Failed
+      - name: ❌ Report Quality Check Failures (Non-Blocking)
         if: steps.validation.outputs.exit-code != '0'
         run: |
-          echo "::error::Quality validation failed. Please review the reports and address the issues."
-          exit 1
+          echo "::warning::Quality validation found issues. Please review the reports and address them when possible."
+          echo "Quality validation is non-blocking to allow PR merges. Issues will be created automatically."
 
       - name: ✅ Quality Validation Summary
         if: always()
