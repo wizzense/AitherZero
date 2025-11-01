@@ -565,12 +565,76 @@ try {
         }
     }
 
-    # Save result summary
+    # Save result summary (legacy format)
     $summaryPath = Join-Path $OutputPath "UnitTests-Summary-$timestamp.json"
     if ($PSCmdlet.ShouldProcess($summaryPath, "Save test summary")) {
         $testSummary | ConvertTo-Json | Set-Content -Path $summaryPath
     }
     Write-ScriptLog -Message "Test summary saved to: $summaryPath"
+
+    # Save comprehensive report in expected format for automated issue creation
+    $testReportPath = Join-Path $OutputPath "TestReport-Unit-$timestamp.json"
+    if ($PSCmdlet.ShouldProcess($testReportPath, "Save comprehensive test report")) {
+        $comprehensiveReport = @{
+            TestType = 'Unit'
+            Timestamp = (Get-Date).ToString('o')
+            TestResults = @{
+                Summary = @{
+                    Total = $result.TotalCount
+                    Passed = $result.PassedCount
+                    Failed = $result.FailedCount
+                    Skipped = $result.SkippedCount
+                }
+                Details = @()
+            }
+            CodeCoverage = if ($pesterConfig.CodeCoverage.Enabled -and $result.CodeCoverage) {
+                @{
+                    CoveragePercent = $result.CodeCoverage.CoveragePercent
+                    CommandsAnalyzed = if ($result.CodeCoverage.PSObject.Properties['CommandsAnalyzedCount']) { 
+                        $result.CodeCoverage.CommandsAnalyzedCount 
+                    } else { 
+                        $result.CodeCoverage.NumberOfCommandsAnalyzed 
+                    }
+                    CommandsExecuted = if ($result.CodeCoverage.PSObject.Properties['CommandsExecutedCount']) { 
+                        $result.CodeCoverage.CommandsExecutedCount 
+                    } else { 
+                        $result.CodeCoverage.NumberOfCommandsAnalyzed - $result.CodeCoverage.NumberOfCommandsMissed 
+                    }
+                }
+            } else { $null }
+        }
+
+        # Add detailed test results for failed tests
+        if ($result.Failed -and $result.Failed.Count -gt 0) {
+            foreach ($failedTest in $result.Failed) {
+                $testDetail = @{
+                    Result = 'Failed'
+                    ExpandedName = $failedTest.ExpandedPath ?? $failedTest.ExpandedName ?? $failedTest.Name
+                    ErrorRecord = if ($failedTest.ErrorRecord) {
+                        @{
+                            Exception = @{
+                                Message = $failedTest.ErrorRecord.Exception.Message
+                            }
+                            ScriptStackTrace = $failedTest.ErrorRecord.ScriptStackTrace
+                        }
+                    } else { $null }
+                    ScriptBlock = if ($failedTest.ScriptBlock) {
+                        @{
+                            File = $failedTest.ScriptBlock.File
+                            StartPosition = @{
+                                Line = $failedTest.ScriptBlock.StartPosition.StartLine
+                            }
+                        }
+                    } else { $null }
+                    Duration = $failedTest.Duration.TotalSeconds
+                }
+                $comprehensiveReport.TestResults.Details += $testDetail
+            }
+        }
+
+        $comprehensiveReport | ConvertTo-Json -Depth 10 | Set-Content -Path $testReportPath
+        Write-ScriptLog -Message "Comprehensive test report saved to: $testReportPath"
+    }
 
     # Return result if PassThru
     if ($PassThru) {

@@ -537,7 +537,7 @@ try {
             Write-ScriptLog -Message "Analysis results saved to: $csvPath"
         }
 
-        # Save as JSON with summary
+        # Save as JSON with summary (legacy format)
         $jsonPath = Join-Path $OutputPath "PSScriptAnalyzer-Summary-$timestamp.json"
         if ($PSCmdlet.ShouldProcess($jsonPath, "Save analysis summary as JSON")) {
             @{
@@ -546,6 +546,28 @@ try {
                 Details = $results | Select-Object RuleName, Severity, ScriptName, Line, Column, Message
             } | ConvertTo-Json -Depth 5 | Set-Content -Path $jsonPath
             Write-ScriptLog -Message "Analysis summary saved to: $jsonPath"
+        }
+
+        # Save in format expected by automated issue creation
+        $reportPath = Join-Path $OutputPath "TestReport-PSScriptAnalyzer-$timestamp.json"
+        if ($PSCmdlet.ShouldProcess($reportPath, "Save PSScriptAnalyzer report for issue creation")) {
+            $issueReport = @{
+                TestType = 'PSScriptAnalyzer'
+                Timestamp = (Get-Date).ToString('o')
+                Summary = @{
+                    BySeverity = @{
+                        Error = $resultSummary.Error
+                        Warning = $resultSummary.Warning
+                        Information = $resultSummary.Information
+                    }
+                    TotalViolations = $totalIssues
+                }
+                Violations = @($results | Select-Object @{N='RuleName';E={$_.RuleName}}, @{N='Severity';E={$_.Severity}}, 
+                    @{N='ScriptPath';E={$_.ScriptName}}, @{N='Line';E={$_.Line}}, @{N='Column';E={$_.Column}}, 
+                    @{N='Message';E={$_.Message}})
+            }
+            $issueReport | ConvertTo-Json -Depth 5 | Set-Content -Path $reportPath
+            Write-ScriptLog -Message "PSScriptAnalyzer issue report saved to: $reportPath"
         }
 
         # Generate SARIF format for integration with other tools

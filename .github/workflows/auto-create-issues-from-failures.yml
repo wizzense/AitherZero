@@ -3,18 +3,22 @@ name: 🚨 Auto-Create Issues from Test Failures
 
 # Automatically analyze test results and create targeted GitHub issues
 on:
-  # DISABLED: workflow_run trigger was creating duplicate issues
-  # workflow_run:
-  #   workflows: ["Quality Validation"]
-  #   types: [completed]
-  # DISABLED: Daily cron was creating duplicate issues
-  # schedule:
-  #   # Run daily to catch any missed failures
-  #   - cron: '0 7 * * *'  # 7 AM UTC daily
+  # Re-enabled with improved deduplication
+  workflow_run:
+    workflows: ["Quality Validation", "PR Validation"]
+    types: [completed]
+  # Re-enabled with hash-based deduplication to prevent duplicates
+  schedule:
+    # Run daily to catch any missed failures
+    - cron: '0 7 * * *'  # 7 AM UTC daily
   workflow_dispatch:
     inputs:
       dry_run:
         description: 'Dry run - preview issues without creating them'
+        type: boolean
+        default: false
+      skip_deduplication:
+        description: 'Skip deduplication checks (testing only)'
         type: boolean
         default: false
 
@@ -57,14 +61,27 @@ jobs:
         run: |
           Write-Host "🔍 Analyzing test results for failures..." -ForegroundColor Cyan
           
+          # Helper function to generate unique hash for test failures
+          function Get-FailureHash {
+              param($TestName, $File, $ErrorMessage)
+              $hashInput = "$TestName|$File|$($ErrorMessage -replace '\d+', 'N')"  # Normalize error messages with numbers
+              $bytes = [System.Text.Encoding]::UTF8.GetBytes($hashInput)
+              $hasher = [System.Security.Cryptography.SHA256]::Create()
+              $hashBytes = $hasher.ComputeHash($bytes)
+              return [System.BitConverter]::ToString($hashBytes).Replace('-', '').Substring(0, 16)
+          }
+          
           $testFailures = @()
           $codeQualityIssues = @()
           
-          # Analyze test report files
-          $testReportFiles = Get-ChildItem -Path "./reports", "./test-artifacts" -Filter "TestReport*.json" -Recurse -ErrorAction SilentlyContinue
+          # Analyze test report files (NEW FORMAT)
+          $testReportFiles = Get-ChildItem -Path "./reports", "./test-artifacts", "./tests/results" -Filter "TestReport*.json" -Recurse -ErrorAction SilentlyContinue
+          
+          Write-Host "Found $($testReportFiles.Count) test report files" -ForegroundColor Yellow
           
           foreach ($reportFile in $testReportFiles) {
             try {
+              Write-Host "  Processing: $($reportFile.Name)" -ForegroundColor Gray
               $report = Get-Content $reportFile.FullName | ConvertFrom-Json
               
               # Check for test results in the expected structure
@@ -76,17 +93,33 @@ jobs:
               }
               
               if ($failedCount -gt 0) {
-                Write-Host "Found $failedCount test failures in $($reportFile.Name)" -ForegroundColor Red
+                Write-Host "  Found $failedCount test failures" -ForegroundColor Red
                 
                 # Extract failure details from Details array
                 if ($report.TestResults.Details) {
                   foreach ($result in $report.TestResults.Details) {
                     if ($result.Result -eq 'Failed') {
+                      $testName = $result.ExpandedName ?? "Unknown Test"
+                      $errorMsg = if ($result.ErrorRecord) { 
+                        $result.ErrorRecord.Exception.Message 
+                      } else { 
+                        "Test failed" 
+                      }
+                      $file = if ($result.ScriptBlock) { 
+                        $result.ScriptBlock.File 
+                      } else { 
+                        "Unknown" 
+                      }
+                      
+                      $failureHash = Get-FailureHash -TestName $testName -File $file -ErrorMessage $errorMsg
+                      
                       $testFailures += @{
-                        TestName = $result.ExpandedName
-                        ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } else { "Test failed" }
-                        File = if ($result.ScriptBlock) { $result.ScriptBlock.File } else { "Unknown" }
+                        Hash = $failureHash
+                        TestName = $testName
+                        ErrorMessage = $errorMsg
+                        File = $file
                         Line = if ($result.ScriptBlock) { $result.ScriptBlock.StartPosition.Line } else { 0 }
+                        TestType = $report.TestType ?? 'Unknown'
                       }
                     }
                   }
@@ -97,42 +130,71 @@ jobs:
             }
           }
           
-          # Analyze PSScriptAnalyzer results
-          $psAnalysisFiles = Get-ChildItem -Path "./reports", "./test-artifacts" -Filter "*psscriptanalyzer*.json" -Recurse -ErrorAction SilentlyContinue
+          # Analyze PSScriptAnalyzer results (NEW FORMAT)
+          $psAnalysisFiles = Get-ChildItem -Path "./reports", "./test-artifacts", "./tests/results" -Filter "TestReport-PSScriptAnalyzer*.json" -Recurse -ErrorAction SilentlyContinue
+          
+          Write-Host "Found $($psAnalysisFiles.Count) PSScriptAnalyzer report files" -ForegroundColor Yellow
+          
+          Write-Host "Found $($psAnalysisFiles.Count) PSScriptAnalyzer report files" -ForegroundColor Yellow
           
           foreach ($analysisFile in $psAnalysisFiles) {
             try {
+              Write-Host "  Processing: $($analysisFile.Name)" -ForegroundColor Gray
               $analysis = Get-Content $analysisFile.FullName | ConvertFrom-Json
               
+              # NEW FORMAT: Check Summary.BySeverity structure
               if ($analysis.Summary -and $analysis.Summary.BySeverity) {
-                $errorCount = $analysis.Summary.BySeverity.Error
-                $warningCount = $analysis.Summary.BySeverity.Warning
+                $errorCount = $analysis.Summary.BySeverity.Error ?? 0
+                $warningCount = $analysis.Summary.BySeverity.Warning ?? 0
+                
+                Write-Host "  Errors: $errorCount, Warnings: $warningCount" -ForegroundColor Gray
                 
                 if ($errorCount -gt 0) {
-                  Write-Host "Found $errorCount PSScriptAnalyzer errors" -ForegroundColor Red
+                  Write-Host "  Found $errorCount PSScriptAnalyzer errors" -ForegroundColor Red
                   $codeQualityIssues += @{
                     Type = "PSScriptAnalyzer"
                     Severity = "Error"
                     Count = $errorCount
+                    Violations = @($analysis.Violations | Where-Object { $_.Severity -eq 'Error' })
                   }
                 }
                 
                 if ($warningCount -gt 50) {
-                  Write-Host "Found $warningCount PSScriptAnalyzer warnings (threshold: 50)" -ForegroundColor Yellow
+                  Write-Host "  Found $warningCount PSScriptAnalyzer warnings (threshold: 50)" -ForegroundColor Yellow
                   $codeQualityIssues += @{
                     Type = "PSScriptAnalyzer"
                     Severity = "Warning"
                     Count = $warningCount
+                    Violations = @($analysis.Violations | Where-Object { $_.Severity -eq 'Warning' } | Select-Object -First 50)
                   }
                 }
               }
             } catch {
-              Write-Warning "Failed to parse analysis: $($analysisFile.Name)"
+              Write-Warning "Failed to parse analysis: $($analysisFile.Name) - $_"
             }
           }
           
-          # Group failures by category
-          $failuresByFile = $testFailures | Group-Object -Property File
+          # Group failures by hash to identify unique issues
+          $uniqueFailures = @{}
+          foreach ($failure in $testFailures) {
+            $hash = $failure.Hash
+            if (-not $uniqueFailures.ContainsKey($hash)) {
+              $uniqueFailures[$hash] = @{
+                Hash = $hash
+                TestName = $failure.TestName
+                ErrorMessage = $failure.ErrorMessage
+                File = $failure.File
+                Line = $failure.Line
+                TestType = $failure.TestType
+                Occurrences = 1
+              }
+            } else {
+              $uniqueFailures[$hash].Occurrences++
+            }
+          }
+          
+          # Group failures by file for better issue organization
+          $failuresByFile = $uniqueFailures.Values | Group-Object -Property File
           
           # Save analysis results
           $analysisResults = @{
