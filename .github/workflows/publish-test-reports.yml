@@ -41,7 +41,7 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
           
       - name: 📊 Download Workflow Artifacts
-        if: github.event.workflow_run
+        if: github.event_name == 'workflow_run'
         uses: dawidd6/action-download-artifact@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
