@@ -2848,11 +2848,10 @@ $manifestTagsSection
                                     ⚠️ Only $totalTestsRun test cases executed. Run <code>./az 0402</code> for full test suite.
                                 </div>
                             </div>
+"@
+                            })
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
                                 Last run: $($Metrics.Tests.LastRun)
-                            </div>
-                            <div style="font-size: 0.75rem; color: var(--warning); margin-top: 8px; font-style: italic;">
-                                ⚠️ Only $($Metrics.Tests.Passed + $Metrics.Tests.Failed) test cases executed. Run <code>./az 0402</code> for full test suite.
                             </div>
                         </div>
 "@
