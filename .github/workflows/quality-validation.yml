@@ -449,8 +449,8 @@ jobs:
                   title: issueTitle,
                   body: issueBody,
                   labels: ['quality-validation', 'automated', 'needs-fix']
-                  // Note: Cannot assign to @copilot as it's not a regular user
-                  // Instead, we mention @copilot in the issue body (line 439)
+                  # Note: Cannot assign to @copilot as it's not a regular user
+                  # Instead, we mention @copilot in the issue body (line 439)
                 });
                 
                 console.log(`Created issue #${issue.data.number} for ${fileName}`);

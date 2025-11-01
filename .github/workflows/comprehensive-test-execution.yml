@@ -263,6 +263,7 @@ jobs:
               ByType = @{
                 Unit = @{ Total = 0; Passed = 0; Failed = 0; Skipped = 0 }
                 Integration = @{ Total = 0; Passed = 0; Failed = 0; Skipped = 0 }
+                Unknown = @{ Total = 0; Passed = 0; Failed = 0; Skipped = 0 }
               }
               Details = @()
             }
