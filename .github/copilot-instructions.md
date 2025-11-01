@@ -255,6 +255,65 @@ This consolidated architecture ensures reliable module loading and provides powe
 
 AitherZero includes comprehensive GitHub Copilot enhancement features to make AI-assisted development more effective.
 
+### Copilot Prompt Library
+
+**IMPORTANT**: The `.github/prompts/` directory contains reusable one-shot prompts for common tasks. **Use these prompts first** before attempting manual troubleshooting.
+
+#### Available Prompts
+
+**Troubleshooting:**
+- `github-actions-troubleshoot.md` - Fix workflow failures, missing PR checks
+- `test-failure-triage.md` - Analyze and fix test failures
+- `pr-validation-failures.md` - Resolve PR validation issues
+- `troubleshoot-ci-cd.md` - Debug CI/CD pipeline problems
+
+**Development:**
+- `use-aitherzero-workflows.md` - **START HERE** - Learn number-based scripts and playbooks
+- `add-new-feature.md` - Add features following AitherZero patterns
+- `fix-powershell-quality.md` - Address PSScriptAnalyzer warnings
+- `refactor-function.md` - Refactor PowerShell code
+
+**Testing & Quality:**
+- `manage-test-reports.md` - Test results, dashboard, GitHub Pages
+- `write-pester-tests.md` - Create Pester tests
+- `fix-test-infrastructure.md` - Fix test system issues
+
+**Documentation:**
+- `generate-docs.md` - Generate function documentation
+- `update-readme.md` - Update README files
+
+#### How to Use Prompts
+
+1. **Reference by name in chat:**
+   ```
+   @copilot Use the github-actions-troubleshoot prompt to fix workflows
+   ```
+
+2. **Follow prompt instructions:**
+   Each prompt contains step-by-step commands and checks
+
+3. **Start with use-aitherzero-workflows:**
+   If you're new to AitherZero, use this prompt first to learn the system
+
+4. **Combine prompts:**
+   ```
+   @copilot Use use-aitherzero-workflows to run tests, 
+   then use test-failure-triage if any fail
+   ```
+
+#### When Workflows Break
+
+**ALWAYS** use `github-actions-troubleshoot.md` prompt first when:
+- PR checks disappear or don't run
+- Workflows fail with YAML errors
+- All workflows suddenly stop working
+
+This prompt systematically diagnoses and fixes common issues like:
+- YAML syntax errors (emoji in names, unescaped colons)
+- Branch trigger mismatches
+- Circular workflow dependencies
+- Trailing whitespace
+
 ### Custom Agent Routing
 
 The repository uses `.github/copilot.yaml` to route work to specialized agents based on expertise:
