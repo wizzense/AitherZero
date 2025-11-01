@@ -82,12 +82,14 @@ try {
     if (Test-Path $configPath) {
         $config = Import-PowerShellDataFile $configPath
         # Get Pester version from the correct location in the configuration
-        $pesterMinVersion = if ($config.Manifest -and $config.Manifest.FeatureDependencies -and $config.Manifest.FeatureDependencies.Testing -and $config.Manifest.FeatureDependencies.Testing.Pester) {
-            $config.Manifest.FeatureDependencies.Testing.Pester.MinVersion
-        } elseif ($config.Features -and $config.Features.Testing -and $config.Features.Testing.Pester -and $config.Features.Testing.Pester.Version) {
-            $config.Features.Testing.Pester.Version -replace '\+$', ''  # Remove trailing + if present
-        } else {
-            '5.0.0'
+        $pesterMinVersion = $config.Manifest?.FeatureDependencies?.Testing?.Pester?.MinVersion
+        if (-not $pesterMinVersion) {
+            $pesterMinVersion = $config.Features?.Testing?.Pester?.Version
+            if ($pesterMinVersion) {
+                $pesterMinVersion = $pesterMinVersion -replace '\+$', ''  # Remove trailing + if present
+            } else {
+                $pesterMinVersion = '5.0.0'
+            }
         }
 
         $testingConfig = @{
