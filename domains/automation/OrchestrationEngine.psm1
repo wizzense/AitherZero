@@ -1048,7 +1048,7 @@ function Invoke-SequentialOrchestration {
                 }
 
                 # Filter variables to only include parameters the script accepts
-                $scriptInfo = Get-Command $script.Path -ErrorAction SilentlyContinue
+                $scriptInfo = Get-Command $script.Path -ErrorAction SilentlyContinue -ErrorVariable getCommandError
                 $params = @{}
 
                 # Debug logging
@@ -1070,13 +1070,16 @@ function Invoke-SequentialOrchestration {
                         }
                     }
                 } else {
-                    # Fallback if Get-Command fails - pass all non-empty variables
-                    Write-OrchestrationLog "Warning: Could not get script info for $($script.Path), passing all variables" -Level 'Warning'
-                    foreach ($key in $scriptVars.Keys) {
-                        if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
-                            $params[$key] = $scriptVars[$key]
-                        }
+                    # If Get-Command fails, don't pass any parameters to avoid parameter binding errors
+                    Write-OrchestrationLog "Warning: Could not get script parameter info for $($script.Path). Script will run without parameters to avoid parameter binding errors." -Level 'Warning'
+                    
+                    # Log diagnostic details
+                    if ($getCommandError -and $getCommandError.Count -gt 0) {
+                        Write-OrchestrationLog "Get-Command error: $($getCommandError[0].Exception.Message)" -Level 'Debug'
                     }
+                    Write-OrchestrationLog "Possible causes: script inaccessible, syntax errors, or execution policy restrictions. Verify script exists and has valid PowerShell syntax." -Level 'Debug'
+                    
+                    # Don't pass any variables - let the script use defaults or environment detection
                 }
 
                 Write-OrchestrationLog "Script: $($script.Number) - Parameters being passed: $($params.Keys -join ', ')" -Level 'Debug'
