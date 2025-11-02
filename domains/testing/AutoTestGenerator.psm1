@@ -130,6 +130,7 @@ function New-AutoTest {
         Write-GenLog "Test exists for $scriptName (use -Force to overwrite)" -Level Warning
         return @{
             ScriptName = $scriptName
+            Generated = $false
             Skipped = $true
         }
     }
@@ -154,6 +155,7 @@ function New-AutoTest {
             UnitTestPath = $unitTestPath
             IntegrationTestPath = $integrationTestPath
             Generated = $true
+            Skipped = $false
         }
     } catch {
         Write-GenLog "Failed to write tests for $scriptName : $_" -Level Error
