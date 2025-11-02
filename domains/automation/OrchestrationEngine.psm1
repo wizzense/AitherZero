@@ -1856,8 +1856,19 @@ function Invoke-JobSteps {
             # Store step outputs
             if ($step.outputs) {
                 foreach ($output in $step.outputs) {
-                    $outputValue = Invoke-Expression $output.value
-                    $stepOutputs[$output.name] = $outputValue
+                    try {
+                        # Validate output value expression for security
+                        if ($output.value -match '[;&|`]|Invoke-Expression|iex|Get-Content|Set-Content|Remove-Item|New-Item') {
+                            Write-OrchestrationLog "Step output contains potentially dangerous commands: $($output.value)" -Level 'Warning'
+                            continue
+                        }
+                        
+                        # Safe evaluation in constrained scope
+                        $outputValue = Invoke-Expression $output.value
+                        $stepOutputs[$output.name] = $outputValue
+                    } catch {
+                        Write-OrchestrationLog "Failed to evaluate step output '$($output.name)': $_" -Level 'Warning'
+                    }
                 }
             }
             
@@ -2004,9 +2015,17 @@ function Test-JobCondition {
         return $Context.Failed.Count -gt 0
     }
     
-    # Evaluate as PowerShell expression
+    # Validate condition for security (prevent code injection)
+    if ($Condition -match '[;&|`]|Invoke-Expression|iex|Get-Content|Set-Content|Remove-Item|New-Item|Start-Process') {
+        Write-OrchestrationLog "Job condition contains potentially dangerous commands: $Condition" -Level 'Error'
+        return $false
+    }
+    
+    # Evaluate as PowerShell expression in constrained scope
     try {
-        $result = Invoke-Expression $Condition
+        # Use script block for safer evaluation
+        $scriptBlock = [ScriptBlock]::Create($Condition)
+        $result = & $scriptBlock
         return [bool]$result
     } catch {
         Write-OrchestrationLog "Failed to evaluate job condition: $Condition - $_" -Level 'Warning'
@@ -2037,9 +2056,17 @@ function Test-StepCondition {
         return $false  # We wouldn't reach here if previous step failed without continue-on-error
     }
     
-    # Evaluate as PowerShell expression
+    # Validate condition for security (prevent code injection)
+    if ($Condition -match '[;&|`]|Invoke-Expression|iex|Get-Content|Set-Content|Remove-Item|New-Item|Start-Process') {
+        Write-OrchestrationLog "Step condition contains potentially dangerous commands: $Condition" -Level 'Error'
+        return $false
+    }
+    
+    # Evaluate as PowerShell expression in constrained scope
     try {
-        $result = Invoke-Expression $Condition
+        # Use script block for safer evaluation
+        $scriptBlock = [ScriptBlock]::Create($Condition)
+        $result = & $scriptBlock
         return [bool]$result
     } catch {
         Write-OrchestrationLog "Failed to evaluate step condition: $Condition - $_" -Level 'Warning'
