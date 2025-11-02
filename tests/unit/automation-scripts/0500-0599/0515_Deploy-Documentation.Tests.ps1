@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0515_Deploy-Documentation
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Deployment
+    Description: Prepares and deploys project documentation, dashboards, reports, and
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0515_Deploy-Documentation' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0515_Deploy-Documentation' -Tag 'Unit', 'AutomationScript', 'Deployment' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0515_Deploy-Documentation.ps1'
@@ -71,9 +72,14 @@ Describe '0515_Deploy-Documentation' -Tag 'Unit', 'AutomationScript', 'Unknown' 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Deployment' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

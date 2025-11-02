@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0705_Push-Branch
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Development
+    Description: Pushes the current or specified branch to remote repository with
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0705_Push-Branch.ps1'
@@ -95,9 +96,9 @@ Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Development' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

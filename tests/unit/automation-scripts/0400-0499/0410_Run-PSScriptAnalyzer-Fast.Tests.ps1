@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0410_Run-PSScriptAnalyzer-Fast
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Optimized PSScriptAnalyzer that excludes slow directories and focuses on critical issues only.
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0410_Run-PSScriptAnalyzer-Fast' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0410_Run-PSScriptAnalyzer-Fast' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0410_Run-PSScriptAnalyzer-Fast.ps1'
@@ -56,9 +57,9 @@ Describe '0410_Run-PSScriptAnalyzer-Fast' -Tag 'Unit', 'AutomationScript', 'Unkn
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

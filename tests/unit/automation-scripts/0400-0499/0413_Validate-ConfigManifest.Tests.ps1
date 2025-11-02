@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0413_Validate-ConfigManifest
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Performs comprehensive validation of config.psd1 including:
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0413_Validate-ConfigManifest' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0413_Validate-ConfigManifest' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0413_Validate-ConfigManifest.ps1'
@@ -51,9 +52,9 @@ Describe '0413_Validate-ConfigManifest' -Tag 'Unit', 'AutomationScript', 'Unknow
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

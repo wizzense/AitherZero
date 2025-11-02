@@ -9,13 +9,13 @@
     Script: 0405_Validate-ModuleManifests
     Stage: Testing
     Description: This script validates all .psd1 module manifest files in the AitherZero project to ensure:
-    Generated: 2025-10-30 03:41:21
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0405_Validate-ModuleManifests' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0405_Validate-ModuleManifests.ps1'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0405_Validate-ModuleManifests.ps1'
         $script:ScriptName = '0405_Validate-ModuleManifests'
     }
 
@@ -55,6 +55,11 @@ Describe '0405_Validate-ModuleManifests' -Tag 'Unit', 'AutomationScript', 'Testi
         It 'Should be in stage: Testing' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 20
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0816_Monitor-AutomationHealth
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Integration
+    Description: Tracks automated issue creation, PR generation, resolution rates, and system performance
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0816_Monitor-AutomationHealth' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0816_Monitor-AutomationHealth' -Tag 'Unit', 'AutomationScript', 'Integration' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0816_Monitor-AutomationHealth.ps1'
@@ -56,9 +57,9 @@ Describe '0816_Monitor-AutomationHealth' -Tag 'Unit', 'AutomationScript', 'Unkno
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Integration' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 
