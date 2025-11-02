@@ -148,7 +148,6 @@ function Invoke-AitherScript {
             'CacheMinutes' = [int]
             'CoverageThreshold' = [int]
             'ShowAll' = [switch]
-            'NonInteractive' = [switch]
             'Force' = [switch]
             'Type' = [string]
             'Name' = [string]

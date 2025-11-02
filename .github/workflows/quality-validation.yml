@@ -47,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
       - name: 💾 Cache PowerShell Modules
         uses: actions/cache@v4

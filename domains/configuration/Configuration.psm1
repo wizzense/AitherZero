@@ -98,7 +98,6 @@ function Initialize-CIEnvironment {
         # Set CI defaults for Core section
         $script:CIDefaults = @{
             Profile = 'Full'
-            NonInteractive = $true
             CI = $true
             OutputFormat = 'JSON'
             VerboseOutput = $false
