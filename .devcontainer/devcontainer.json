@@ -43,7 +43,7 @@
             "args": ["-NoLogo"]
           }
         },
-        "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+        "powershell.powerShellDefaultVersion": "PowerShell",
         "powershell.integratedConsole.showOnStartup": false,
         "files.eol": "\n",
         "files.trimTrailingWhitespace": true,
@@ -75,7 +75,7 @@
     }
   },
 
-  "postCreateCommand": "pwsh -Command 'Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser; Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser'",
+  "postCreateCommand": "pwsh -Command 'Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser; Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser; cd mcp-server && npm install --silent'",
 
   "remoteEnv": {
     "AITHERZERO_ROOT": "${containerWorkspaceFolder}",
@@ -84,5 +84,6 @@
 
   "forwardPorts": [8080, 8443],
 
-  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
+  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && pwsh -File ${containerWorkspaceFolder}/automation-scripts/0009_Setup-MCPServers.ps1"
 }
+

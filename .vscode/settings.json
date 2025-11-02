@@ -12,14 +12,12 @@
     "**/logs": true,
     "**/testResults.xml": true
   },
-
   // PowerShell settings
-  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+  "powershell.powerShellDefaultVersion": "PowerShell",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
   "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
-
   // Language-specific settings
   "[powershell]": {
     "editor.tabSize": 4,
@@ -44,7 +42,6 @@
       "other": "off"
     }
   },
-
   // GitHub Copilot settings
   "github.copilot.enable": {
     "*": true,
@@ -56,7 +53,6 @@
   "github.copilot.editor.enableAutoCompletions": true,
   "github.copilot.chat.mcp.enabled": true,
   "github.copilot.chat.mcp.configFile": "${workspaceFolder}/.vscode/mcp-servers.json",
-
   // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.defaultProfile.linux": "pwsh",
@@ -92,12 +88,10 @@
       "icon": "terminal-powershell"
     }
   },
-
   // Git settings
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
-
   // Search settings
   "search.exclude": {
     "**/node_modules": true,
