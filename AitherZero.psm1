@@ -50,9 +50,11 @@ $modulesToLoad = @(
     # Configuration
     './domains/configuration/Configuration.psm1',
 
-    # User interface (BetterMenu first, then UserInterface)
+    # User interface (BetterMenu first, then UserInterface, CLI Helper, Interactive UI)
     './domains/experience/BetterMenu.psm1',
     './domains/experience/UserInterface.psm1',
+    './domains/experience/CLIHelper.psm1',
+    './domains/experience/InteractiveUI.psm1',
 
     # Development tools
     './domains/development/GitAutomation.psm1',
