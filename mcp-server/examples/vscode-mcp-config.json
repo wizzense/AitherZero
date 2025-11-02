@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/mcp-server/dist/index.js"
+      ],
+      "description": "AitherZero infrastructure automation platform",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "AITHERZERO_ROOT": "${workspaceFolder}"
+      }
+    }
+  }
+}

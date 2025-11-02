@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "/Users/yourname/AitherZero/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "AITHERZERO_ROOT": "/Users/yourname/AitherZero"
+      }
+    }
+  }
+}

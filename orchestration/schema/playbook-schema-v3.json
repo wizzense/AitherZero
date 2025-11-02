@@ -1,0 +1,383 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AitherZero Orchestration Playbook Schema v3.0",
+  "description": "GitHub Actions-inspired schema for AitherZero orchestration with jobs, steps, and enhanced workflow capabilities",
+  "type": "object",
+  "required": ["metadata", "orchestration"],
+  "additionalProperties": false,
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["name", "description", "version", "category"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Playbook identifier (kebab-case)"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "description": "Brief description of playbook purpose"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
+          "description": "Semantic version"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["development", "infrastructure", "testing", "deployment", "maintenance", "security", "analysis", "operations"],
+          "description": "Playbook category"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author or team name"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Searchable tags"
+        },
+        "estimatedDuration": {
+          "type": "string",
+          "pattern": "^\\d+(-\\d+)?\\s+(seconds?|minutes?|hours?)$",
+          "description": "Expected execution time"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification date"
+        }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "minimumPowerShellVersion": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "default": "7.0"
+        },
+        "requiredModules": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requiredTools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Windows", "Linux", "macOS", "CrossPlatform"]
+          },
+          "default": ["CrossPlatform"]
+        },
+        "permissions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "oneOf": [
+        { "required": ["jobs"] },
+        { "required": ["stages"] }
+      ],
+      "properties": {
+        "defaults": {
+          "type": "object",
+          "description": "Default settings for all jobs",
+          "properties": {
+            "continueOnError": { "type": "boolean", "default": false },
+            "timeout": { "type": "integer", "minimum": 30 },
+            "retries": { "type": "integer", "minimum": 0, "maximum": 5, "default": 0 },
+            "shell": { "type": "string", "default": "pwsh" }
+          }
+        },
+        "env": {
+          "type": "object",
+          "description": "Global environment variables for all jobs"
+        },
+        "concurrency": {
+          "type": "object",
+          "description": "Concurrency control settings",
+          "properties": {
+            "group": { "type": "string" },
+            "cancelInProgress": { "type": "boolean", "default": false },
+            "maxConcurrency": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "jobs": {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_-]*$": {
+              "$ref": "#/definitions/job"
+            }
+          },
+          "description": "Named jobs in the orchestration workflow"
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/stage" },
+          "description": "Legacy stages format (v2.0 compatibility)"
+        },
+        "defaultVariables": {
+          "type": "object",
+          "description": "Default variable values (v2.0 compatibility)"
+        },
+        "profiles": {
+          "type": "object",
+          "description": "Execution profiles (v2.0 compatibility)"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "preConditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/condition" }
+        },
+        "postConditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/condition" }
+        }
+      }
+    },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "onStart": { "$ref": "#/definitions/notification" },
+        "onSuccess": { "$ref": "#/definitions/notification" },
+        "onFailure": { "$ref": "#/definitions/notification" },
+        "onWarning": { "$ref": "#/definitions/notification" }
+      }
+    },
+    "reporting": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["HTML", "JSON", "Markdown", "XML", "CSV"]
+          },
+          "default": ["JSON", "Markdown"]
+        },
+        "outputPath": { "type": "string", "default": "./reports" },
+        "includeMetrics": { "type": "boolean", "default": true },
+        "includeLogs": { "type": "boolean", "default": false },
+        "summary": { "type": "boolean", "default": true }
+      }
+    }
+  },
+  "definitions": {
+    "job": {
+      "type": "object",
+      "required": ["name", "steps"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable job name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Job purpose and context"
+        },
+        "needs": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ],
+          "description": "Job dependencies (job IDs this job depends on)"
+        },
+        "if": {
+          "type": "string",
+          "description": "Condition for running this job"
+        },
+        "env": {
+          "type": "object",
+          "description": "Job-specific environment variables"
+        },
+        "outputs": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9_-]*$": {
+              "type": "string",
+              "description": "Output value expression"
+            }
+          },
+          "description": "Job outputs that can be consumed by dependent jobs"
+        },
+        "permissions": {
+          "type": "object",
+          "description": "Permissions required by this job",
+          "properties": {
+            "filesystem": { "type": "array", "items": { "type": "string" } },
+            "network": { "type": "array", "items": { "type": "string" } },
+            "registry": { "type": "boolean" }
+          }
+        },
+        "strategy": {
+          "type": "object",
+          "description": "Matrix execution strategy",
+          "properties": {
+            "matrix": {
+              "type": "object",
+              "description": "Matrix dimensions for parallel execution"
+            },
+            "failFast": {
+              "type": "boolean",
+              "default": true,
+              "description": "Cancel all matrix jobs if one fails"
+            },
+            "maxParallel": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum parallel matrix jobs"
+            }
+          }
+        },
+        "continueOnError": {
+          "type": "boolean",
+          "default": false,
+          "description": "Continue workflow if job fails"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 30,
+          "description": "Job timeout in seconds"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/step" },
+          "description": "Sequential steps in this job"
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+          "description": "Step identifier for referencing outputs"
+        },
+        "name": {
+          "type": "string",
+          "description": "Step name"
+        },
+        "if": {
+          "type": "string",
+          "description": "Condition for running this step"
+        },
+        "run": {
+          "type": "string",
+          "description": "Automation script number or sequence (e.g., '0402', '0401-0404')"
+        },
+        "uses": {
+          "type": "string",
+          "description": "Reusable action or playbook to invoke"
+        },
+        "script": {
+          "type": "string",
+          "description": "Inline PowerShell script to execute"
+        },
+        "with": {
+          "type": "object",
+          "description": "Parameters passed to the script/action"
+        },
+        "env": {
+          "type": "object",
+          "description": "Step-specific environment variables"
+        },
+        "continueOnError": {
+          "type": "boolean",
+          "default": false,
+          "description": "Continue job if step fails"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Step timeout in seconds"
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 0,
+          "description": "Number of retry attempts on failure"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "value"],
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": "string" }
+            }
+          },
+          "description": "Step outputs"
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "description": "Legacy stage format for v2.0 compatibility",
+      "required": ["name", "description", "sequences"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "sequences": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "variables": { "type": "object" },
+        "condition": { "type": "string" },
+        "continueOnError": { "type": "boolean" },
+        "parallel": { "type": "boolean" },
+        "timeout": { "type": "integer" },
+        "retries": { "type": "integer" }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "required": ["name", "condition"],
+      "properties": {
+        "name": { "type": "string" },
+        "condition": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    },
+    "notification": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "level": {
+          "type": "string",
+          "enum": ["Information", "Warning", "Error", "Success"],
+          "default": "Information"
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["console", "log", "email", "teams", "slack", "github"]
+          },
+          "default": ["console", "log"]
+        }
+      }
+    }
+  }
+}

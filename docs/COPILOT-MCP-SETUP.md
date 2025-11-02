@@ -116,13 +116,12 @@ echo "GITHUB_TOKEN=your_token" >> .env
    - Verify extensions are active in VS Code
 
 2. **Node.js 18+**: Required for running MCP servers
-
    ```bash
    # Check if Node.js is installed
    node --version  # Should be version 18.0.0+ (outputs as "v18.0.0")
    npm --version   # Should be version 9.0.0+ (outputs as "9.0.0")
    # Note: node outputs a 'v' prefix (e.g., "v18.0.0"), npm does not.
-
+   
    # Install Node.js if needed
    # Windows: Download from https://nodejs.org/
    # Linux: sudo apt install nodejs npm
@@ -130,27 +129,25 @@ echo "GITHUB_TOKEN=your_token" >> .env
    ```
 
 3. **PowerShell 7+**: Required for AitherZero operations
-
    ```bash
    # Check PowerShell version
    pwsh --version  # Should be 7.0 or higher
-
+   
    # AitherZero requires PowerShell 7+ for cross-platform support
    ```
 
 4. **GitHub Token**: For GitHub API access
-
    ```bash
    # Create a personal access token at:
    # https://github.com/settings/tokens
    # Required scopes: repo, read:org; recommended: read:project (for project boards)
-
+   
    export GITHUB_TOKEN="your_token"
-
+   
    # Or add to your shell profile for persistence
    echo 'export GITHUB_TOKEN="your_token"' >> ~/.bashrc  # Linux
    echo 'export GITHUB_TOKEN="your_token"' >> ~/.zshrc   # macOS
-
+   
    # Windows PowerShell
    [Environment]::SetEnvironmentVariable("GITHUB_TOKEN", "your_token", "User")
    ```
@@ -200,7 +197,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 #### Working with AitherZero Architecture
 
 **Understand domain organization:**
-
 ```
 @workspace How is the infrastructure module organized?
 # Uses filesystem server to analyze /domains/infrastructure/
@@ -213,7 +209,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 ```
 
 **Track changes and history:**
-
 ```
 @workspace Show me recent changes to the testing domain
 # Uses git server to show commit history
@@ -226,7 +221,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 ```
 
 **Issue and PR management:**
-
 ```
 @workspace Create an issue for improving error handling in LabVM.psm1
 # Uses github server to create issue with context
@@ -239,7 +233,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 ```
 
 **PowerShell best practices:**
-
 ```
 @workspace What's the best practice for parameter validation in PowerShell?
 # Uses powershell-docs server to fetch documentation
@@ -252,7 +245,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 ```
 
 **Complex planning and design:**
-
 ```
 @workspace Help me design a complex VM deployment workflow
 # Uses sequential-thinking server for structured problem-solving
@@ -267,7 +259,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 #### Number-Based Script Integration
 
 **Understanding automation scripts:**
-
 ```
 @workspace Explain what script 0402 does
 # Uses filesystem to read and analyze the script
@@ -280,7 +271,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 ```
 
 **Execution context and troubleshooting:**
-
 ```
 @workspace Script 0404 failed - show me recent changes
 # Uses git + filesystem to diagnose
@@ -295,7 +285,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 #### Orchestration and Playbooks
 
 **Playbook management:**
-
 ```
 @workspace Show me the structure of the test-quick playbook
 # Uses filesystem to read orchestration/playbooks/
@@ -308,7 +297,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 ```
 
 **Workflow optimization:**
-
 ```
 @workspace Analyze the orchestration engine for performance bottlenecks
 # Uses filesystem + sequential-thinking
@@ -320,7 +308,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 #### Testing and Quality
 
 **Test analysis:**
-
 ```
 @workspace Show me test coverage for the infrastructure domain
 # Uses filesystem to analyze test files
@@ -333,7 +320,6 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 ```
 
 **Quality checks:**
-
 ```
 @workspace Run PSScriptAnalyzer rules on recent changes
 # Can integrate with filesystem + git
@@ -348,9 +334,8 @@ Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZe
 #### Combining Multiple Servers
 
 **Full context analysis:**
-
 ```
-@workspace Analyze OrchestrationEngine.psm1: show recent changes,
+@workspace Analyze OrchestrationEngine.psm1: show recent changes, 
 check PowerShell best practices, and suggest improvements
 # Uses: git (history) + filesystem (code) + powershell-docs (practices)
 
@@ -418,7 +403,7 @@ Additional servers can be activated on-demand through Copilot Chat.
    ```bash
    # Validate JSON syntax
    cat .github/mcp-servers.json | jq .
-
+   
    # If jq not installed, install with:
    #   brew install jq      # macOS
    #   sudo apt install jq  # Linux
@@ -437,11 +422,10 @@ Additional servers can be activated on-demand through Copilot Chat.
    - Ensure MCP servers initialize on startup
 
 5. **Verify PowerShell availability**:
-
    ```bash
    # MCP servers need PowerShell for some operations
    pwsh --version
-
+   
    # Should be 7.0+
    ```
 
@@ -452,15 +436,15 @@ Additional servers can be activated on-demand through Copilot Chat.
    ```bash
    # Linux/macOS
    echo $GITHUB_TOKEN
-
+   
    # Windows PowerShell
    $env:GITHUB_TOKEN
-
+   
    # Should output your token (not empty)
    ```
 
 2. **Check token permissions**:
-   - Visit <https://github.com/settings/tokens>
+   - Visit https://github.com/settings/tokens
    - Ensure token has required scopes:
      - `repo` (required for private repos)
      - `read:org` (required for organization access)
@@ -473,24 +457,23 @@ Additional servers can be activated on-demand through Copilot Chat.
    # Linux - Add to shell profile
    echo 'export GITHUB_TOKEN="your_token"' >> ~/.bashrc
    source ~/.bashrc
-
+   
    # macOS - Add to shell profile
    echo 'export GITHUB_TOKEN="your_token"' >> ~/.zshrc
    source ~/.zshrc
-
+   
    # Windows - Set user environment variable
    [Environment]::SetEnvironmentVariable("GITHUB_TOKEN", "your_token", "User")
-
+   
    # Restart VS Code after setting
    ```
 
 4. **Test GitHub API access**:
-
    ```bash
    # Test token
    curl -H "Authorization: token $GITHUB_TOKEN" \
      https://api.github.com/repos/wizzense/AitherZero
-
+   
    # Should return repository information
    ```
 
@@ -503,11 +486,10 @@ If you get permission errors with filesystem operations:
    - Ensure paths use correct separators for your OS
 
 2. **Verify file permissions** on the repository
-
    ```bash
    # Check repository permissions
    ls -la /path/to/AitherZero
-
+   
    # Should be readable/writable by your user
    ```
 
@@ -518,23 +500,21 @@ If you get permission errors with filesystem operations:
 ### AitherZero-Specific Issues
 
 1. **MCP servers can't find PowerShell modules**:
-
    ```bash
    # Ensure AitherZero is initialized
    ./Initialize-AitherEnvironment.ps1
-
+   
    # Check module paths
    pwsh -c '$env:PSModulePath'
-
+   
    # Should include AitherZero domains
    ```
 
 2. **Filesystem server can't access automation scripts**:
-
    ```bash
    # Verify scripts are in PATH
    echo $PATH | grep automation-scripts
-
+   
    # Manually add if needed
    export PATH="$PWD/automation-scripts:$PATH"
    ```
@@ -552,28 +532,24 @@ If you get permission errors with filesystem operations:
 ### Common Error Messages
 
 **"MCP server 'X' failed to start"**:
-
 - Check that Node.js/PowerShell is in PATH
 - Verify the command in mcp-servers.json is correct
 - Check VS Code output for specific error
 
 **"Context too large" errors**:
-
 - MCP servers may provide too much context
 - Be more specific in your queries
 - Use filters: "Show only .psm1 files" instead of "Show all files"
 
 **"Rate limit exceeded" (GitHub server)**:
-
 - GitHub API has rate limits
 - Authenticated requests: 5000/hour
 - Wait or use token with higher limits
-- Check: curl -H "Authorization: Bearer $GITHUB_TOKEN" <https://api.github.com/rate_limit>
+- Check: curl -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/rate_limit
 
 **"Command not found: pwsh"**:
-
 - PowerShell 7+ not installed or not in PATH
-- Install: <https://aka.ms/powershell>
+- Install: https://aka.ms/powershell
 - Add to PATH after installation
 
 ## Security Considerations

@@ -222,6 +222,16 @@ function Invoke-OrchestrationSequence {
                 throw "Playbook not found: $LoadPlaybook"
             }
 
+            # Check if this is a v3.0 job-based playbook
+            if ($playbook.IsJobBased) {
+                Write-OrchestrationLog "Detected v3.0 job-based playbook - routing to job orchestration engine" -Level 'Information'
+                
+                # Route to job-based orchestration
+                $result = Invoke-JobBasedOrchestration -Playbook $playbook -Variables $Variables -Configuration $config -DryRun:$DryRun
+                
+                return $result
+            }
+
             # Handle playbook profiles (support both v1 and v2 formats)
             $profilesSource = $null
             if ($playbook.Profiles) {
@@ -1350,8 +1360,39 @@ function ConvertTo-StandardPlaybookFormat {
         [hashtable]$Playbook
     )
 
-    # Check if this is a v2.0 playbook (has metadata and orchestration sections)
-    if ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
+    # Check if this is a v3.0 playbook (has jobs in orchestration)
+    if ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration') -and $Playbook.orchestration.ContainsKey('jobs')) {
+        Write-OrchestrationLog "Loading v3.0 playbook (job-based): $($Playbook.metadata.name)" -Level 'Information'
+        
+        # Return v3.0 playbook as-is (no conversion needed)
+        # The playbook will be processed by Invoke-JobBasedOrchestration
+        $standardPlaybook = @{
+            # Metadata
+            Name = $Playbook.metadata.name
+            Description = $Playbook.metadata.description
+            Version = $Playbook.metadata.version
+            Category = $Playbook.metadata.category
+            Author = $Playbook.metadata.author
+            Tags = $Playbook.metadata.tags
+            EstimatedDuration = $Playbook.metadata.estimatedDuration
+            
+            # Requirements
+            Requirements = $Playbook.requirements
+            
+            # Orchestration with jobs (v3.0)
+            IsJobBased = $true
+            Orchestration = $Playbook.orchestration
+            
+            # Validation and notifications
+            Validation = $Playbook.validation
+            Notifications = $Playbook.notifications
+            Reporting = $Playbook.reporting
+        }
+        
+        return $standardPlaybook
+    }
+    # Check if this is a v2.0 playbook (has metadata and orchestration sections with stages)
+    elseif ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
         Write-OrchestrationLog "Loading v2.0 playbook: $($Playbook.metadata.name)" -Level 'Information'
         
         # Convert v2.0 format to internal format
@@ -1476,6 +1517,810 @@ function Invoke-Sequence {
     Invoke-OrchestrationSequence -Sequence $Numbers
 }
 
+# ================================
+# GitHub Actions-style Job Execution (v3.0)
+# ================================
+
+function Invoke-JobBasedOrchestration {
+    <#
+    .SYNOPSIS
+    Execute orchestration using GitHub Actions-style jobs and steps (v3.0 schema)
+    
+    .DESCRIPTION
+    Processes v3.0 playbooks with jobs, steps, outputs, and matrix strategies.
+    Provides enhanced dependency management, output propagation, and observability.
+    
+    .PARAMETER Playbook
+    The v3.0 playbook object containing jobs
+    
+    .PARAMETER Variables
+    Variables to pass to jobs and steps
+    
+    .PARAMETER Configuration
+    Configuration hashtable
+    
+    .PARAMETER DryRun
+    Show what would be executed without running
+    
+    .EXAMPLE
+    $playbook = Get-OrchestrationPlaybook -Name 'test-quick-v3'
+    Invoke-JobBasedOrchestration -Playbook $playbook
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Playbook,
+        
+        [Parameter()]
+        [hashtable]$Variables = @{},
+        
+        [Parameter()]
+        [hashtable]$Configuration = @{},
+        
+        [Parameter()]
+        [switch]$DryRun
+    )
+    
+    Write-OrchestrationLog "Starting job-based orchestration (v3.0)" -Level 'Information'
+    
+    # Extract orchestration section
+    $orchestration = $Playbook.orchestration
+    if (-not $orchestration -or -not $orchestration.jobs) {
+        throw "Invalid v3.0 playbook: missing orchestration.jobs"
+    }
+    
+    # Merge global environment variables
+    $globalEnv = @{}
+    if ($orchestration.env) {
+        foreach ($key in $orchestration.env.Keys) {
+            $globalEnv[$key] = $orchestration.env[$key]
+        }
+    }
+    
+    # Build job dependency graph
+    $jobs = $orchestration.jobs
+    $jobGraph = Build-JobDependencyGraph -Jobs $jobs
+    
+    if ($DryRun) {
+        Write-OrchestrationLog "DRY RUN MODE - Showing execution plan" -Level 'Information'
+        Show-JobExecutionPlan -Jobs $jobs -Graph $jobGraph
+        return
+    }
+    
+    # Initialize execution context
+    $context = @{
+        Jobs = @{}        # Job results
+        Outputs = @{}     # Job outputs
+        Steps = @{}       # Step outputs within jobs
+        StartTime = Get-Date
+        Failed = @()      # Failed jobs
+        Skipped = @()     # Skipped jobs
+    }
+    
+    # Execute jobs respecting dependencies
+    $result = Invoke-JobGraphExecution -Jobs $jobs -Graph $jobGraph -Context $context -GlobalEnv $globalEnv -Variables $Variables -Configuration $Configuration
+    
+    # Generate summary
+    $duration = New-TimeSpan -Start $context.StartTime -End (Get-Date)
+    
+    Write-OrchestrationLog "Job-based orchestration completed" -Level 'Information' -Data @{
+        TotalJobs = $jobs.Count
+        Completed = $context.Jobs.Count
+        Failed = $context.Failed.Count
+        Skipped = $context.Skipped.Count
+        Duration = $duration.TotalSeconds
+    }
+    
+    return [PSCustomObject]@{
+        Total = $jobs.Count
+        Completed = $context.Jobs.Count
+        Failed = $context.Failed.Count
+        Skipped = $context.Skipped.Count
+        Duration = $duration
+        Results = $context.Jobs
+        Outputs = $context.Outputs
+    }
+}
+
+function Build-JobDependencyGraph {
+    <#
+    .SYNOPSIS
+    Build dependency graph for jobs (similar to GitHub Actions 'needs')
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Jobs
+    )
+    
+    $graph = @{}
+    
+    foreach ($jobId in $Jobs.Keys) {
+        $job = $Jobs[$jobId]
+        
+        $graph[$jobId] = @{
+            Job = $job
+            JobId = $jobId
+            Dependencies = @()
+            Dependents = @()
+        }
+        
+        # Parse 'needs' field
+        if ($job.needs) {
+            if ($job.needs -is [string]) {
+                $graph[$jobId].Dependencies += $job.needs
+            } elseif ($job.needs -is [array]) {
+                $graph[$jobId].Dependencies += $job.needs
+            }
+        }
+    }
+    
+    # Build reverse dependencies (dependents)
+    foreach ($jobId in $graph.Keys) {
+        foreach ($dep in $graph[$jobId].Dependencies) {
+            if ($graph.ContainsKey($dep)) {
+                $graph[$dep].Dependents += $jobId
+            }
+        }
+    }
+    
+    return $graph
+}
+
+function Invoke-JobGraphExecution {
+    <#
+    .SYNOPSIS
+    Execute jobs respecting dependency graph (parallel where possible)
+    #>
+    param(
+        [hashtable]$Jobs,
+        [hashtable]$Graph,
+        [hashtable]$Context,
+        [hashtable]$GlobalEnv,
+        [hashtable]$Variables,
+        [hashtable]$Configuration
+    )
+    
+    $completed = @{}
+    $failed = @{}
+    $running = @{}
+    
+    while ($completed.Count + $failed.Count + $Context.Skipped.Count -lt $Jobs.Count) {
+        # Find jobs ready to run (all dependencies completed)
+        $ready = @()
+        foreach ($jobId in $Jobs.Keys) {
+            if ($jobId -notin $completed.Keys -and 
+                $jobId -notin $failed.Keys -and 
+                $jobId -notin $running.Keys -and
+                $jobId -notin $Context.Skipped) {
+                
+                # Check if all dependencies are met
+                $node = $Graph[$jobId]
+                $depsMet = $true
+                
+                foreach ($dep in $node.Dependencies) {
+                    if ($dep -notin $completed.Keys) {
+                        # Check if dependency failed
+                        if ($dep -in $failed.Keys) {
+                            # Skip this job if dependency failed
+                            Write-OrchestrationLog "Skipping job '$jobId' - dependency '$dep' failed" -Level 'Warning'
+                            $Context.Skipped += $jobId
+                            $depsMet = $false
+                            break
+                        }
+                        $depsMet = $false
+                        break
+                    }
+                }
+                
+                if ($depsMet) {
+                    $ready += $jobId
+                }
+            }
+        }
+        
+        # Execute ready jobs
+        foreach ($jobId in $ready) {
+            $job = $Jobs[$jobId]
+            
+            Write-OrchestrationLog "Starting job: $jobId - $($job.name)" -Level 'Information'
+            
+            try {
+                # Evaluate job condition
+                if ($job.if) {
+                    $conditionMet = Test-JobCondition -Condition $job.if -Context $Context
+                    if (-not $conditionMet) {
+                        Write-OrchestrationLog "Skipping job '$jobId' - condition not met: $($job.if)" -Level 'Information'
+                        $Context.Skipped += $jobId
+                        continue
+                    }
+                }
+                
+                # Execute job steps
+                $jobResult = Invoke-JobSteps -Job $job -JobId $jobId -Context $Context -GlobalEnv $GlobalEnv -Variables $Variables -Configuration $Configuration
+                
+                if ($jobResult.Success) {
+                    $completed[$jobId] = $jobResult
+                    $Context.Jobs[$jobId] = $jobResult
+                    
+                    # Store job outputs
+                    if ($job.outputs) {
+                        $Context.Outputs[$jobId] = Resolve-JobOutputs -Job $job -JobResult $jobResult -Context $Context
+                    }
+                    
+                    Write-OrchestrationLog "Completed job: $jobId" -Level 'Information' -Data @{
+                        Duration = $jobResult.Duration.TotalSeconds
+                        Steps = $jobResult.Steps.Count
+                    }
+                } else {
+                    $failed[$jobId] = $jobResult
+                    $Context.Failed += $jobId
+                    
+                    Write-OrchestrationLog "Failed job: $jobId - $($jobResult.Error)" -Level 'Error'
+                    
+                    # Check continue-on-error
+                    if (-not $job.continueOnError) {
+                        Write-OrchestrationLog "Aborting orchestration - job failed without continue-on-error" -Level 'Error'
+                        return
+                    }
+                }
+            } catch {
+                $failed[$jobId] = @{ Success = $false; Error = $_.ToString() }
+                $Context.Failed += $jobId
+                Write-OrchestrationLog "Exception in job '$jobId': $_" -Level 'Error'
+                
+                if (-not $job.continueOnError) {
+                    throw
+                }
+            }
+        }
+        
+        # Prevent infinite loop if no progress
+        if ($ready.Count -eq 0 -and $running.Count -eq 0) {
+            # Check if we have unprocessed jobs (circular dependency or missing dependency)
+            $unprocessed = $Jobs.Keys | Where-Object { $_ -notin $completed.Keys -and $_ -notin $failed.Keys -and $_ -notin $Context.Skipped }
+            if ($unprocessed.Count -gt 0) {
+                Write-OrchestrationLog "Deadlock detected - unprocessed jobs: $($unprocessed -join ', ')" -Level 'Error'
+                break
+            } else {
+                break
+            }
+        }
+    }
+}
+
+function Invoke-JobSteps {
+    <#
+    .SYNOPSIS
+    Execute steps within a job sequentially
+    #>
+    param(
+        [hashtable]$Job,
+        [string]$JobId,
+        [hashtable]$Context,
+        [hashtable]$GlobalEnv,
+        [hashtable]$Variables,
+        [hashtable]$Configuration
+    )
+    
+    $startTime = Get-Date
+    $stepResults = @{}
+    $stepOutputs = @{}
+    
+    # Merge environment variables (global + job-specific)
+    $jobEnv = $GlobalEnv.Clone()
+    if ($Job.env) {
+        foreach ($key in $Job.env.Keys) {
+            $jobEnv[$key] = $Job.env[$key]
+        }
+    }
+    
+    foreach ($step in $Job.steps) {
+        $stepId = if ($step.id) { $step.id } else { "step_$($stepResults.Count + 1)" }
+        $stepName = $step.name
+        
+        Write-OrchestrationLog "  Step: $stepName" -Level 'Information'
+        
+        try {
+            # Evaluate step condition
+            if ($step.if) {
+                $conditionMet = Test-StepCondition -Condition $step.if -Context $Context -JobId $JobId -StepOutputs $stepOutputs
+                if (-not $conditionMet) {
+                    Write-OrchestrationLog "    Skipping step '$stepName' - condition not met" -Level 'Debug'
+                    $stepResults[$stepId] = @{ Skipped = $true }
+                    continue
+                }
+            }
+            
+            # Merge step environment
+            $stepEnv = $jobEnv.Clone()
+            if ($step.env) {
+                foreach ($key in $step.env.Keys) {
+                    $stepEnv[$key] = $step.env[$key]
+                }
+            }
+            
+            # Execute step based on type (run, uses, script)
+            $stepResult = if ($step.run) {
+                # Execute automation script
+                Invoke-AutomationScript -ScriptNumber $step.run -Parameters $step.with -Environment $stepEnv
+            } elseif ($step.script) {
+                # Execute inline script
+                Invoke-InlineScript -Script $step.script -Environment $stepEnv
+            } elseif ($step.uses) {
+                # Execute reusable action/playbook
+                Invoke-ReusableAction -Action $step.uses -Parameters $step.with -Environment $stepEnv
+            } else {
+                throw "Step '$stepName' has no executable content (run, script, or uses)"
+            }
+            
+            # Store step outputs
+            if ($step.outputs) {
+                foreach ($output in $step.outputs) {
+                    try {
+                        # Only allow output values that are simple variable references or literals
+                        $outputValue = $null
+                        if ($output.value -match '^\s*\$result\.(\w+)\s*$') {
+                            # Result property reference (e.g., $result.TotalCount)
+                            $propName = $Matches[1]
+                            if ($stepResult -and $stepResult -is [hashtable] -and $stepResult.ContainsKey($propName)) {
+                                $outputValue = $stepResult[$propName]
+                            } elseif ($stepResult -and $stepResult.PSObject.Properties.Name -contains $propName) {
+                                $outputValue = $stepResult.$propName
+                            } else {
+                                Write-OrchestrationLog "Step output references unknown result property: $($output.value)" -Level 'Warning'
+                                continue
+                            }
+                        } elseif ($output.value -match '^\s*\$([A-Za-z_][A-Za-z0-9_]*)\s*$') {
+                            # Variable reference (e.g., $varName)
+                            $varName = $Matches[1]
+                            if ($stepEnv.ContainsKey($varName)) {
+                                $outputValue = $stepEnv[$varName]
+                            } elseif ($stepOutputs.ContainsKey($varName)) {
+                                $outputValue = $stepOutputs[$varName]
+                            } else {
+                                Write-OrchestrationLog "Step output references unknown variable: $($output.value)" -Level 'Warning'
+                                continue
+                            }
+                        } elseif ($output.value -match "^\s*['\x22]?[0-9A-Za-z _\-\.]+['\x22]?\s*$") {
+                            # Literal value (string, number, etc.)
+                            $outputValue = $output.value.Trim().Trim('"').Trim("'")
+                        } else {
+                            Write-OrchestrationLog "Step output value is not a simple variable or literal: $($output.value)" -Level 'Warning'
+                            continue
+                        }
+                        
+                        $stepOutputs[$output.name] = $outputValue
+                    } catch {
+                        Write-OrchestrationLog "Failed to evaluate step output '$($output.name)': $_" -Level 'Warning'
+                    }
+                }
+            }
+            
+            $stepResults[$stepId] = @{
+                Success = $true
+                Result = $stepResult
+                Outputs = if ($stepOutputs.Count -gt 0) { $stepOutputs.Clone() } else { @{} }
+            }
+            
+        } catch {
+            $stepResults[$stepId] = @{
+                Success = $false
+                Error = $_.ToString()
+            }
+            
+            Write-OrchestrationLog "    Step failed: $stepName - $_" -Level 'Error'
+            
+            if (-not $step.continueOnError) {
+                # Job fails if step fails without continue-on-error
+                return @{
+                    Success = $false
+                    Error = "Step '$stepName' failed: $_"
+                    Steps = $stepResults
+                    Duration = New-TimeSpan -Start $startTime -End (Get-Date)
+                }
+            }
+        }
+    }
+    
+    # Store step outputs in context for this job
+    $Context.Steps[$JobId] = $stepOutputs
+    
+    return @{
+        Success = $true
+        Steps = $stepResults
+        StepOutputs = $stepOutputs
+        Duration = New-TimeSpan -Start $startTime -End (Get-Date)
+    }
+}
+
+function Invoke-AutomationScript {
+    <#
+    .SYNOPSIS
+    Execute an automation script by number
+    #>
+    param(
+        [string]$ScriptNumber,
+        [hashtable]$Parameters,
+        [hashtable]$Environment
+    )
+    
+    $scriptPath = Get-ChildItem -Path $script:ScriptsPath -Filter "${ScriptNumber}_*.ps1" | Select-Object -First 1
+    if (-not $scriptPath) {
+        throw "Automation script not found: $ScriptNumber"
+    }
+    
+    # Set environment variables
+    foreach ($key in $Environment.Keys) {
+        Set-Item -Path "env:$key" -Value $Environment[$key]
+    }
+    
+    try {
+        & $scriptPath.FullName @Parameters
+        return @{ ExitCode = $LASTEXITCODE; Output = "Script executed" }
+    } finally {
+        # Clean up environment variables
+        foreach ($key in $Environment.Keys) {
+            Remove-Item -Path "env:$key" -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Invoke-InlineScript {
+    <#
+    .SYNOPSIS
+    Execute inline PowerShell script
+    #>
+    param(
+        [string]$Script,
+        [hashtable]$Environment
+    )
+    
+    # Set environment variables
+    foreach ($key in $Environment.Keys) {
+        Set-Item -Path "env:$key" -Value $Environment[$key]
+    }
+    
+    try {
+        $scriptBlock = [ScriptBlock]::Create($Script)
+        $result = & $scriptBlock
+        return @{ Success = $true; Output = $result }
+    } finally {
+        # Clean up environment variables
+        foreach ($key in $Environment.Keys) {
+            Remove-Item -Path "env:$key" -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Invoke-ReusableAction {
+    <#
+    .SYNOPSIS
+    Execute a reusable action or playbook
+    #>
+    param(
+        [string]$Action,
+        [hashtable]$Parameters,
+        [hashtable]$Environment
+    )
+    
+    # Check if it's a playbook reference
+    if ($Action.StartsWith('playbook:')) {
+        $playbookName = $Action.Substring(9)
+        $playbook = Get-OrchestrationPlaybook -Name $playbookName
+        if (-not $playbook) {
+            throw "Playbook not found: $playbookName"
+        }
+        
+        # Execute nested playbook
+        Invoke-OrchestrationSequence -LoadPlaybook $playbookName -Variables $Parameters
+    } else {
+        throw "Unknown action type: $Action"
+    }
+}
+
+function Test-SafeExpression {
+    <#
+    .SYNOPSIS
+    Validate that an expression is safe to execute using AST parsing
+    
+    .DESCRIPTION
+    Uses PowerShell's Abstract Syntax Tree parsing to analyze expression structure
+    and reject expressions containing dangerous cmdlets or patterns.
+    
+    .PARAMETER Expression
+    The expression to validate
+    
+    .PARAMETER AllowedCommands
+    List of cmdlet names that are allowed (whitelist approach)
+    
+    .RETURNS
+    $true if expression is safe, $false otherwise
+    #>
+    param(
+        [string]$Expression,
+        [string[]]$AllowedCommands = @()
+    )
+    
+    if ([string]::IsNullOrWhiteSpace($Expression)) {
+        return $false
+    }
+    
+    # Quick pattern-based rejection for obvious危险 patterns
+    $dangerousPatterns = @(
+        '[;&|`]',                           # Command chaining
+        'Invoke-Expression', 'iex',         # Dynamic execution
+        'Get-Content', 'Set-Content',       # File operations
+        'Remove-Item', 'New-Item',
+        'Start-Process', 'Invoke-Command',  # Process execution
+        'Download', 'WebRequest',           # Network operations
+        'Registry', 'Get-Item.*HKLM',      # Registry access
+        '\$\(','\$\{',                      # Variable expansion in strings (potential injection)
+        '\.exe', '\.bat', '\.cmd', '\.ps1' # Executable references
+    )
+    
+    foreach ($pattern in $dangerousPatterns) {
+        if ($Expression -match $pattern) {
+            Write-OrchestrationLog "Expression contains dangerous pattern: $pattern" -Level 'Warning'
+            return $false
+        }
+    }
+    
+    # Use AST parsing for deeper analysis
+    try {
+        $tokens = $null
+        $errors = $null
+        $ast = [System.Management.Automation.Language.Parser]::ParseInput(
+            $Expression,
+            [ref]$tokens,
+            [ref]$errors
+        )
+        
+        if ($errors.Count -gt 0) {
+            Write-OrchestrationLog "Expression has syntax errors: $($errors[0].Message)" -Level 'Warning'
+            return $false
+        }
+        
+        # Check for command invocations
+        $commandAsts = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
+        
+        foreach ($cmdAst in $commandAsts) {
+            $cmdName = $cmdAst.GetCommandName()
+            
+            # If whitelist provided, check against it
+            if ($AllowedCommands.Count -gt 0 -and $cmdName -notin $AllowedCommands) {
+                Write-OrchestrationLog "Command '$cmdName' not in whitelist" -Level 'Warning'
+                return $false
+            }
+            
+            # Check against known dangerous commands
+            $dangerousCmdlets = @(
+                'Invoke-Expression', 'iex', 'Invoke-Command', 'icm',
+                'Start-Process', 'saps',
+                'Remove-Item', 'rm', 'del',
+                'New-Item', 'ni',
+                'Set-Content', 'sc',
+                'Get-Content', 'gc', 'cat',
+                'Invoke-WebRequest', 'iwr', 'wget', 'curl',
+                'Start-Job', 'Start-ThreadJob',
+                'Register-ScheduledTask'
+            )
+            
+            if ($cmdName -in $dangerousCmdlets) {
+                Write-OrchestrationLog "Expression contains dangerous cmdlet: $cmdName" -Level 'Warning'
+                return $false
+            }
+        }
+        
+        return $true
+        
+    } catch {
+        Write-OrchestrationLog "Failed to parse expression: $_" -Level 'Warning'
+        return $false
+    }
+}
+
+function Test-JobCondition {
+    <#
+    .SYNOPSIS
+    Evaluate job-level condition
+    #>
+    param(
+        [string]$Condition,
+        [hashtable]$Context
+    )
+    
+    # Handle special conditions
+    if ($Condition -eq 'always()') {
+        return $true
+    }
+    if ($Condition -eq 'success()') {
+        return $Context.Failed.Count -eq 0
+    }
+    if ($Condition -eq 'failure()') {
+        return $Context.Failed.Count -gt 0
+    }
+    
+    # Only support safe environment variable comparisons
+    # Pattern: $env:VAR -eq "value" or $env:VAR -ne "value"
+    if ($Condition -match '^\$env:(\w+)\s+(-eq|-ne)\s+[''"]([^''"]*)[''"]$') {
+        $varName = $Matches[1]
+        $operator = $Matches[2]
+        $value = $Matches[3]
+        $envValue = [Environment]::GetEnvironmentVariable($varName)
+        
+        if ($operator -eq '-eq') {
+            return $envValue -eq $value
+        } else {
+            return $envValue -ne $value
+        }
+    }
+    
+    Write-OrchestrationLog "Job condition uses unsupported syntax: $Condition (only 'always()', 'success()', 'failure()', or simple env var comparisons are supported)" -Level 'Warning'
+    return $false
+}
+
+function Test-StepCondition {
+    <#
+    .SYNOPSIS
+    Evaluate step-level condition
+    #>
+    param(
+        [string]$Condition,
+        [hashtable]$Context,
+        [string]$JobId,
+        [hashtable]$StepOutputs
+    )
+    
+    # Handle special conditions
+    if ($Condition -eq 'always()') {
+        return $true
+    }
+    if ($Condition -eq 'success()') {
+        return $true  # Within job, success means previous steps succeeded
+    }
+    if ($Condition -eq 'failure()') {
+        return $false  # We wouldn't reach here if previous step failed without continue-on-error
+    }
+    
+    # Only support safe variable comparisons
+    # Pattern: $StepOutputs.var -eq value or $env:VAR -eq "value"
+    if ($Condition -match '^\$StepOutputs\.(\w+)\s+(-eq|-ne)\s+(\d+|true|false)$') {
+        $varName = $Matches[1]
+        $operator = $Matches[2]
+        $expectedValue = $Matches[3]
+        
+        $actualValue = $null
+        if ($StepOutputs.ContainsKey($varName)) {
+            $actualValue = $StepOutputs[$varName]
+        }
+        
+        # Convert string "true"/"false" to boolean
+        if ($expectedValue -eq 'true') { $expectedValue = $true }
+        if ($expectedValue -eq 'false') { $expectedValue = $false }
+        
+        if ($operator -eq '-eq') {
+            return $actualValue -eq $expectedValue
+        } else {
+            return $actualValue -ne $expectedValue
+        }
+    }
+    
+    if ($Condition -match '^\$env:(\w+)\s+(-eq|-ne)\s+[''"]([^''"]*)[''"]$') {
+        $varName = $Matches[1]
+        $operator = $Matches[2]
+        $value = $Matches[3]
+        $envValue = [Environment]::GetEnvironmentVariable($varName)
+        
+        if ($operator -eq '-eq') {
+            return $envValue -eq $value
+        } else {
+            return $envValue -ne $value
+        }
+    }
+    
+    Write-OrchestrationLog "Step condition uses unsupported syntax: $Condition (only 'always()', 'success()', 'failure()', or simple comparisons are supported)" -Level 'Warning'
+    return $false
+}
+
+function Resolve-JobOutputs {
+    <#
+    .SYNOPSIS
+    Resolve job output expressions
+    #>
+    param(
+        [hashtable]$Job,
+        [hashtable]$JobResult,
+        [hashtable]$Context
+    )
+    
+    $outputs = @{}
+    
+    foreach ($outputName in $Job.outputs.Keys) {
+        $expression = $Job.outputs[$outputName]
+        
+        # Simple output resolution - would need more sophisticated parsing for full GitHub Actions syntax
+        try {
+            # For now, look up step outputs directly
+            if ($expression -match 'steps\.(\w+)\.outputs\.(\w+)') {
+                $stepId = $Matches[1]
+                $outputKey = $Matches[2]
+                
+                if ($JobResult.StepOutputs.ContainsKey($outputKey)) {
+                    $outputs[$outputName] = $JobResult.StepOutputs[$outputKey]
+                }
+            }
+        } catch {
+            Write-OrchestrationLog "Failed to resolve output '$outputName': $_" -Level 'Warning'
+        }
+    }
+    
+    return $outputs
+}
+
+function Show-JobExecutionPlan {
+    <#
+    .SYNOPSIS
+    Display job execution plan with dependencies
+    #>
+    param(
+        [hashtable]$Jobs,
+        [hashtable]$Graph
+    )
+    
+    Write-Host "`nJob Execution Plan (v3.0):" -ForegroundColor Cyan
+    Write-Host "==========================" -ForegroundColor Cyan
+    
+    # Topological sort for display order
+    $visited = @{}
+    $sorted = @()
+    
+    function Visit-Job($jobId) {
+        if ($visited.ContainsKey($jobId)) {
+            return
+        }
+        
+        $visited[$jobId] = $true
+        
+        # Visit dependencies first
+        foreach ($dep in $Graph[$jobId].Dependencies) {
+            Visit-Job $dep
+        }
+        
+        $sorted += $jobId
+    }
+    
+    foreach ($jobId in $Jobs.Keys) {
+        Visit-Job $jobId
+    }
+    
+    # Display jobs in execution order
+    foreach ($jobId in $sorted) {
+        $job = $Jobs[$jobId]
+        $node = $Graph[$jobId]
+        
+        Write-Host "`nJob: $jobId" -ForegroundColor Yellow
+        Write-Host "  Name: $($job.name)" -ForegroundColor White
+        if ($job.description) {
+            Write-Host "  Description: $($job.description)" -ForegroundColor Gray
+        }
+        if ($node.Dependencies.Count -gt 0) {
+            Write-Host "  Depends on: $($node.Dependencies -join ', ')" -ForegroundColor DarkGray
+        }
+        Write-Host "  Steps: $($job.steps.Count)" -ForegroundColor White
+        
+        foreach ($step in $job.steps) {
+            $stepType = if ($step.run) { "run: $($step.run)" } elseif ($step.script) { "script" } elseif ($step.uses) { "uses: $($step.uses)" } else { "unknown" }
+            Write-Host "    - $($step.name) ($stepType)" -ForegroundColor DarkGray
+        }
+    }
+    
+    Write-Host "`nTotal jobs: $($Jobs.Count)" -ForegroundColor Green
+}
+
+# ================================
+# End GitHub Actions-style Job Execution
+# ================================
+
 # Create alias for seq
 Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
 
@@ -1488,4 +2333,9 @@ Export-ModuleMember -Function @(
     'ConvertTo-StandardPlaybookFormat'
     'Test-PlaybookConditions'
     'Send-PlaybookNotification'
+    'Invoke-JobBasedOrchestration'
+    'Build-JobDependencyGraph'
+    'Invoke-JobGraphExecution'
+    'Invoke-JobSteps'
+    'Show-JobExecutionPlan'
 ) -Alias @('seq')

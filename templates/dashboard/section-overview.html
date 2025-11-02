@@ -1,0 +1,66 @@
+<section class="section" id="overview">
+    <h2>📊 Project Overview</h2>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>📁 Project Files</h3>
+            <div class="metric-value">{{FILES_TOTAL}}</div>
+            <div class="metric-label">
+                {{FILES_PS1}} Scripts | {{FILES_PSM1}} Modules | {{FILES_PSD1}} Manifests
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <h3>📝 Lines of Code</h3>
+            <div class="metric-value">{{LOC_TOTAL}}</div>
+            <div class="metric-label">
+                {{FUNCTIONS}} Functions{{CLASSES_INFO}}
+            </div>
+            {{COMMENT_INFO}}
+        </div>
+
+        <div class="metric-card">
+            <h3>🤖 Automation Scripts</h3>
+            <div class="metric-value">{{AUTOMATION_SCRIPTS}}</div>
+            <div class="metric-label">
+                Organized in {{SCRIPT_CATEGORIES}} categories (0000-9999)
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <h3>⚙️ Playbooks</h3>
+            <div class="metric-value">{{PLAYBOOKS}}</div>
+            <div class="metric-label">
+                Orchestration workflows for common tasks
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <h3>🧪 Test Coverage</h3>
+            <div class="metric-value">{{TESTS_TOTAL}}</div>
+            <div class="metric-label">
+                {{TEST_STATUS_INFO}}
+            </div>
+            {{TEST_DETAILS}}
+        </div>
+
+        <div class="metric-card">
+            <h3>📊 Code Coverage</h3>
+            <div class="metric-value">{{COVERAGE_PERCENTAGE}}%</div>
+            <div class="metric-label">
+                {{COVERAGE_INFO}}
+            </div>
+            {{COVERAGE_BAR}}
+        </div>
+
+        {{GIT_CARD}}
+
+        <div class="metric-card">
+            <h3>💻 Platform</h3>
+            <div class="metric-value" style="font-size: 2rem;">{{PLATFORM}}</div>
+            <div class="metric-label">PowerShell {{PS_VERSION}}</div>
+            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                Environment: {{ENVIRONMENT}}
+            </div>
+        </div>
+    </div>
+</section>

@@ -93,8 +93,6 @@ Describe '0702_Create-Commit' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('SignOff') | Should -Be $true
         }
 
-        }
-
         It 'Should have parameter: Force' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Force') | Should -Be $true

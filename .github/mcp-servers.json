@@ -1,6 +1,21 @@
 {
   "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-06-18/schema.json",
   "mcpServers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+      ],
+      "description": "AitherZero infrastructure automation platform - run scripts, playbooks, tests, and quality checks (auto-builds on first use)",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "AITHERZERO_ROOT": "${workspaceFolder}",
+        "AITHERZERO_NONINTERACTIVE": "1"
+      }
+    },
     "filesystem": {
       "command": "npx",
       "args": [
@@ -90,6 +105,7 @@
     }
   },
   "defaultServers": [
+    "aitherzero",
     "filesystem",
     "github",
     "git"

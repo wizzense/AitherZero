@@ -13,6 +13,7 @@
     "**/testResults.xml": true
   },
   // PowerShell settings
+  "powershell.powerShellDefaultVersion": "PowerShell",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
@@ -50,56 +51,50 @@
     "powershell": true
   },
   "github.copilot.editor.enableAutoCompletions": true,
-  // Model Context Protocol (MCP) servers for enhanced Copilot capabilities
-  "github.copilot.advanced": {
-    "debug.overrideProxyUrl": "http://localhost:5001",
-    "debug.showTools": true
-  },
-  "github.copilot.chat.advanced": {
-    "tools": {
-      "filesystem": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-filesystem",
-          "${workspaceFolder}"
-        ]
+  "github.copilot.chat.mcp.enabled": true,
+  "github.copilot.chat.mcp.servers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+      ],
+      "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
+      "capabilities": {
+        "resources": true,
+        "tools": true
       },
-      "github": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-github"
-        ],
-        "env": {
-          "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
-        }
-      },
-      "git": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-git",
-          "${workspaceFolder}"
-        ]
-      },
-      "powershell-docs": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-fetch"
-        ],
-        "env": {
-          "ALLOWED_DOMAINS": "docs.microsoft.com,learn.microsoft.com,github.com"
-        }
-      },
-      "sequential-thinking": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-sequential-thinking"
-        ]
+      "env": {
+        "AITHERZERO_ROOT": "${workspaceFolder}",
+        "AITHERZERO_NONINTERACTIVE": "1"
       }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ],
+      "description": "Filesystem access to AitherZero repository"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "description": "GitHub API access",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Detailed reasoning for complex tasks"
     }
   },
   // Terminal settings

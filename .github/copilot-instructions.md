@@ -441,11 +441,11 @@ See [docs/COPILOT-DEV-ENVIRONMENT.md](../docs/COPILOT-DEV-ENVIRONMENT.md) for co
 **Combine MCP servers with AitherZero workflows**:
 ```
 # Leverage filesystem + git + sequential-thinking together
-@workspace Analyze the OrchestrationEngine module structure, recent changes,
+@workspace Analyze the OrchestrationEngine module structure, recent changes, 
 and help me design a new workflow for parallel test execution
 
 # Use github + powershell-docs for quality improvements
-@workspace Review open issues related to error handling and suggest
+@workspace Review open issues related to error handling and suggest 
 PowerShell best practices for improving them
 
 # Integrate with number-based scripts
