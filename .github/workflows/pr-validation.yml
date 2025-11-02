@@ -14,8 +14,8 @@ permissions:
   pull-requests: write
   issues: write
   checks: write
+  actions: read
   # Explicitly deny dangerous permissions
-  actions: none
   security-events: none
 
 # Cost-optimized concurrency to prevent conflicts with main CI
