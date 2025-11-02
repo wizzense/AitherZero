@@ -53,7 +53,11 @@ function createFingerprint(failure) {
     file: normalizeFile(failure.File),
     error: normalizeError(failure.ErrorMessage || failure.Message),
     category: failure.Category || failure.RuleName || 'general',
-    testName: failure.TestName ? normalizeTestName(failure.TestName) : undefined
+    testName: failure.TestName ? normalizeTestName(failure.TestName) : undefined,
+    // Add stack trace hash for additional uniqueness when file is unknown
+    stackHash: (failure.StackTrace && failure.File === 'Unknown') 
+      ? crypto.createHash('md5').update(failure.StackTrace).digest('hex').substring(0, 8)
+      : undefined
   };
 
   // Remove undefined values for stable hashing
