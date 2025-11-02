@@ -632,12 +632,21 @@ Describe "CI/CD Integration" {
             $script:ScriptContent | Should -BeLike "*env:TF_BUILD*"
         }
 
+<<<<<<< HEAD
         It "Should auto-detect CI mode" {
             $script:ScriptContent | Should -BeLike "*isCI*"
         }
 
         It "Should not clear screen in CI" {
             $script:ScriptContent | Should -BeLike "*-not*CI*"
+=======
+        It "Should support non-interactive mode in CI" {
+            $script:ScriptContent | Should -BeLike "*NonInteractive*"
+        }
+
+        It "Should not clear screen in CI" {
+            $script:ScriptContent | Should -BeLike "*-not `$env:CI*"
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
         }
     }
 

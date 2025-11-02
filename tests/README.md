@@ -2,11 +2,14 @@
 
 This directory contains all tests for the AitherZero project, organized by domain and test type.
 
+<<<<<<< HEAD
 ## Quick Links
 
 - **[End-to-End Test Guide](./integration/E2E-TEST-GUIDE.md)** - Complete guide for E2E tests covering UI, CLI, and Orchestration
 - **[Test Best Practices](./TEST-BEST-PRACTICES.md)** - Guidelines for writing effective tests
 
+=======
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
 ## Test Structure
 
 ```
@@ -108,6 +111,7 @@ Tests are automatically run on:
 - Medium execution time
 - End-to-end scenarios
 
+<<<<<<< HEAD
 **New E2E Tests** (68 tests):
 - `integration/CLI-E2E.Tests.ps1` - CLI functionality (15 tests)
 - `integration/InteractiveUI-E2E.Tests.ps1` - Interactive UI (22 tests)
@@ -115,6 +119,8 @@ Tests are automatically run on:
 
 See [E2E Test Guide](./integration/E2E-TEST-GUIDE.md) for complete documentation.
 
+=======
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
 ### Performance Tests
 - Measure execution time
 - Monitor resource usage

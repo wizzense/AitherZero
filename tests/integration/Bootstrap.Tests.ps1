@@ -212,6 +212,7 @@ Describe "Bootstrap Configuration" {
         }
     }
 
+<<<<<<< HEAD
     Context "CI Environment Detection" {
         It "Should auto-detect CI environments" {
             $script:BootstrapContent | Should -BeLike "*env:CI*"
@@ -220,6 +221,15 @@ Describe "Bootstrap Configuration" {
 
         It "Should skip prompts in CI environments" {
             $script:BootstrapContent | Should -BeLike "*if*-not*IsCI*"
+=======
+    Context "Non-Interactive Mode" {
+        It "Should support non-interactive mode" {
+            $script:BootstrapContent | Should -BeLike "*NonInteractive*"
+        }
+
+        It "Should skip prompts in non-interactive mode" {
+            $script:BootstrapContent | Should -BeLike "*if*-not*NonInteractive*"
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
         }
     }
 }
@@ -394,6 +404,10 @@ Describe "Bootstrap Execution" {
             $params | Should -Contain 'InstallProfile'
             $params | Should -Contain 'InstallPath'
             $params | Should -Contain 'Branch'
+<<<<<<< HEAD
+=======
+            $params | Should -Contain 'NonInteractive'
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
             $params | Should -Contain 'AutoInstallDeps'
             $params | Should -Contain 'SkipAutoStart'
         }
