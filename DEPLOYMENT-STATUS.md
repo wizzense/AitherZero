@@ -1,6 +1,6 @@
 # Deployment Status - Quick Answer
 
-**Your Question**: "I haver deen a girhub pahe deployment for 3 hours. Is thsr expected"
+**Your Question**: "I haven't seen a github page deployment for 3 hours. Is this expected"
 
 ## Direct Answer
 
