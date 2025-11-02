@@ -9,53 +9,43 @@ Scripts are organized by priority number (0000-9999) and follow this naming conv
 
 ### Priority Ranges
 
-- **0000-0099**: Environment preparation and prerequisites (7 scripts)
+- **0000-0099**: Environment preparation and prerequisites
   - PowerShell 7 installation
   - Environment cleanup
   - Directory setup
   
-- **0100-0199**: Core infrastructure components (7 scripts)
+- **0100-0199**: Core infrastructure components
   - Hyper-V installation
   - Network configuration
   - Certificate authority
   
-- **0200-0299**: Development tools and utilities (17 scripts)
+- **0200-0299**: Development tools and utilities
   - Git
   - Node.js
   - Python
   - Docker
-  - VS Code
-  - MCP server configuration
   
-- **0300-0399**: Services and applications (1 script)
-  - Infrastructure deployment
+- **0300-0399**: Services and applications (reserved)
 
-- **0400-0499**: Testing and validation (23 scripts)
+- **0400-0499**: Testing and validation
   - Unit tests
   - PSScriptAnalyzer
   - Syntax validation
   - Quality checks
   
-- **0500-0599**: Reporting and metrics (18 scripts)
+- **0500-0599**: Reporting and metrics
   - Project reports
   - Dashboard generation
   - Metrics collection
   
-- **0700-0799**: Git automation, AI tools, and MCP servers (36 scripts)
+- **0700-0799**: Git automation and release management
   - Feature branch creation
   - Conventional commits
   - Pull request automation
   - Changelog generation
-  - AI-powered development tools
-  - MCP server management
+  - Tag cleanup
 
-- **0800-0899**: Issue management and PR deployment (19 scripts)
-  - Automated issue creation
-  - Test failure tracking
-  - PR environment deployment
-  - Docker validation
-
-- **9000-9999**: Cleanup and maintenance (1 script)
+- **9000-9999**: Cleanup and maintenance
 
 ## Script Metadata
 

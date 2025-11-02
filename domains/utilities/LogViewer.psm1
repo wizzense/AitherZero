@@ -202,12 +202,18 @@ function Show-LogDashboard {
     )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     # Check if we're in non-interactive mode (CI or headless environment)
     $isNonInteractive = -not [Environment]::UserInteractive -or
                         $env:AITHERZERO_NONINTERACTIVE -eq 'true' -or
                         $env:CI -eq 'true' -or
                         $env:GITHUB_ACTIONS -eq 'true' -or
                         $env:TF_BUILD -eq 'true'
+=======
+    # Check if we're in non-interactive mode
+    $isNonInteractive = -not [Environment]::UserInteractive -or
+                        $env:AITHERZERO_NONINTERACTIVE -eq 'true'
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
 =======
     # Check if we're in non-interactive mode
     $isNonInteractive = -not [Environment]::UserInteractive -or

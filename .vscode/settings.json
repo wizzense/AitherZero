@@ -12,12 +12,14 @@
     "**/logs": true,
     "**/testResults.xml": true
   },
+
   // PowerShell settings
-  "powershell.powerShellDefaultVersion": "PowerShell",
+  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
   "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
+
   // Language-specific settings
   "[powershell]": {
     "editor.tabSize": 4,
@@ -42,6 +44,7 @@
       "other": "off"
     }
   },
+
   // GitHub Copilot settings
   "github.copilot.enable": {
     "*": true,
@@ -51,52 +54,7 @@
     "powershell": true
   },
   "github.copilot.editor.enableAutoCompletions": true,
-  "github.copilot.chat.mcp.enabled": true,
-  "github.copilot.chat.mcp.servers": {
-    "aitherzero": {
-      "command": "node",
-      "args": [
-        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
-      ],
-      "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
-      "capabilities": {
-        "resources": true,
-        "tools": true
-      },
-      "env": {
-        "AITHERZERO_ROOT": "${workspaceFolder}",
-        "AITHERZERO_NONINTERACTIVE": "1"
-      }
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "${workspaceFolder}"
-      ],
-      "description": "Filesystem access to AitherZero repository"
-    },
-    "github": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "description": "GitHub API access",
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
-      }
-    },
-    "sequential-thinking": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
-      "description": "Detailed reasoning for complex tasks"
-    }
-  },
+
   // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.defaultProfile.linux": "pwsh",
@@ -132,10 +90,12 @@
       "icon": "terminal-powershell"
     }
   },
+
   // Git settings
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
+
   // Search settings
   "search.exclude": {
     "**/node_modules": true,

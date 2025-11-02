@@ -31,31 +31,6 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-# Helper function to safely get Pester version from config
-function Get-PesterVersionFromConfig {
-    param([hashtable]$Config)
-    
-    # Try Manifest path first
-    if ($Config.Manifest -and 
-        $Config.Manifest.FeatureDependencies -and 
-        $Config.Manifest.FeatureDependencies.Testing -and 
-        $Config.Manifest.FeatureDependencies.Testing.Pester -and
-        $Config.Manifest.FeatureDependencies.Testing.Pester.MinVersion) {
-        return $Config.Manifest.FeatureDependencies.Testing.Pester.MinVersion
-    }
-    
-    # Try Features path as fallback
-    if ($Config.Features -and 
-        $Config.Features.Testing -and 
-        $Config.Features.Testing.Pester -and 
-        $Config.Features.Testing.Pester.Version) {
-        return $Config.Features.Testing.Pester.Version -replace '\+$', ''
-    }
-    
-    # Default
-    return '5.0.0'
-}
-
 # Script metadata
 $scriptMetadata = @{
     Stage = 'Testing'
@@ -144,22 +119,7 @@ try {
     $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
         $config = Import-PowerShellDataFile $configPath
-        
-        # Get Pester version using helper function
-        $pesterMinVersion = Get-PesterVersionFromConfig -Config $config
-        
-        @{
-            Framework = if ($config.Testing -and $config.Testing.Framework) { $config.Testing.Framework } else { 'Pester' }
-            MinVersion = $pesterMinVersion
-            CodeCoverage = if ($config.Testing -and $config.Testing.CodeCoverage) {
-                $config.Testing.CodeCoverage
-            } else {
-                @{
-                    Enabled = $true
-                    MinimumPercent = 80
-                }
-            }
-        }
+        $config.Testing
     } else {
         @{
             Framework = 'Pester'

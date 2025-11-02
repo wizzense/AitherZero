@@ -14,8 +14,8 @@ permissions:
   pull-requests: write
   issues: write
   checks: write
-  actions: read  # Required for workflow status checks and PR validation
   # Explicitly deny dangerous permissions
+  actions: none
   security-events: none
 
 # Cost-optimized concurrency to prevent conflicts with main CI
@@ -168,7 +168,7 @@ jobs:
           }
 
           # Minimal bootstrap for validation
-          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
 
           # Test syntax with -All switch to validate all PowerShell files
           try {

@@ -47,8 +47,13 @@
 - ⚙️ [0214_Install-Packer.Tests.ps1](./0214_Install-Packer.Tests.ps1)
   - *Unit tests for 0214_Install-Packer*
 <<<<<<< HEAD
+<<<<<<< HEAD
 - ⚙️ [0219_Install-Chocolatey.Tests.ps1](./0219_Install-Chocolatey.Tests.ps1)
   - *Unit tests for 0219_Install-Chocolatey*
+=======
+- ⚙️ [0215_Install-Chocolatey.Tests.ps1](./0215_Install-Chocolatey.Tests.ps1)
+  - *Unit tests for 0215_Install-Chocolatey*
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
 =======
 - ⚙️ [0215_Install-Chocolatey.Tests.ps1](./0215_Install-Chocolatey.Tests.ps1)
   - *Unit tests for 0215_Install-Chocolatey*
