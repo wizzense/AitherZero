@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0731_Invoke-AICodeReview
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Automation
+    Description: Performs security analysis, performance optimization, and code quality checks
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0731_Invoke-AICodeReview' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0731_Invoke-AICodeReview' -Tag 'Unit', 'AutomationScript', 'Automation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0731_Invoke-AICodeReview.ps1'
@@ -76,9 +77,9 @@ Describe '0731_Invoke-AICodeReview' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Automation' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

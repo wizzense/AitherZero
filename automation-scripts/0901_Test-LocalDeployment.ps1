@@ -15,23 +15,14 @@
     Tags: local-deployment, validation, offline, end-to-end
 #>
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding()]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
-    [switch]$QuickTest,
-    
-    [Parameter(Mandatory = $false)]
-    [hashtable]$Configuration
+    [switch]$QuickTest
 )
 
 $ErrorActionPreference = 'Continue'  # Don't stop on individual test failures
 Set-StrictMode -Version Latest
-
-# Handle test mode (WhatIf or DryRun)
-if ($WhatIfPreference -or ($Configuration -and $Configuration.Automation.DryRun)) {
-    Write-Verbose "Running in test mode (WhatIf/DryRun) - script would test local deployment"
-    return
-}
 
 function Write-TestLog {
     param(

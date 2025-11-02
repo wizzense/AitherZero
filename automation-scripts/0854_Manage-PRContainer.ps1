@@ -107,9 +107,9 @@
     See DOCKER.md for complete documentation and alternative methods.
 #>
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [ValidateSet('Pull', 'Run', 'Stop', 'Logs', 'Exec', 'Cleanup', 'Status', 'List', 'QuickStart', 'Shell')]
     [string]$Action,
     
@@ -129,10 +129,7 @@ param(
     [switch]$Follow,
     
     [Parameter(Mandatory = $false)]
-    [switch]$Force,
-    
-    [Parameter(Mandatory = $false)]
-    [hashtable]$Configuration
+    [switch]$Force
 )
 
 Set-StrictMode -Version Latest
@@ -141,12 +138,6 @@ $ErrorActionPreference = 'Stop'
 # Script metadata
 $ScriptVersion = "1.0.0"
 $ScriptName = "Manage-PRContainer"
-
-# Handle test mode (WhatIf or DryRun)
-if ($WhatIfPreference -or ($Configuration -and $Configuration.Automation.DryRun)) {
-    Write-Verbose "Running in test mode (WhatIf/DryRun) - script would execute PR container management"
-    return
-}
 
 # Helper function for logging
 function Write-LogMessage {

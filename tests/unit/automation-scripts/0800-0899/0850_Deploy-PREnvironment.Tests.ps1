@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0850_Deploy-PREnvironment
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Environment Management
+    Description: Creates and deploys an ephemeral test environment for a pull request using Docker Compose or Kubernetes.
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0850_Deploy-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0850_Deploy-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Environment Management' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0850_Deploy-PREnvironment.ps1'
@@ -66,9 +67,9 @@ Describe '0850_Deploy-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Unknown' 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Environment Management' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

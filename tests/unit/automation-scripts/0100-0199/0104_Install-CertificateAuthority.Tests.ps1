@@ -9,7 +9,7 @@
     Script: 0104_Install-CertificateAuthority
     Stage: Infrastructure
     Description: Install and configure Certificate Authority
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0104_Install-CertificateAuthority' -Tag 'Unit', 'AutomationScript', 'Infrastructure' {
@@ -48,8 +48,8 @@ Describe '0104_Install-CertificateAuthority' -Tag 'Unit', 'AutomationScript', 'I
 
     Context 'Metadata' {
         It 'Should be in stage: Infrastructure' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

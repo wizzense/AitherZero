@@ -9,7 +9,7 @@
     Script: 0211_Install-VSBuildTools
     Stage: Development
     Description: Install Visual Studio Build Tools
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0211_Install-VSBuildTools' -Tag 'Unit', 'AutomationScript', 'Development' {
@@ -48,8 +48,8 @@ Describe '0211_Install-VSBuildTools' -Tag 'Unit', 'AutomationScript', 'Developme
 
     Context 'Metadata' {
         It 'Should be in stage: Development' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

@@ -7,12 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0751_Start-MCPServer
-    Stage: Unknown
+    Stage: AI Tools & Automation
     Description: Starts the MCP server and keeps it running, or tests it with a sample request.
-    Generated: 2025-11-02 16:23:20
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0751_Start-MCPServer' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0751_Start-MCPServer' -Tag 'Unit', 'AutomationScript', 'AI Tools & Automation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0751_Start-MCPServer.ps1'
@@ -47,7 +47,7 @@ Describe '0751_Start-MCPServer' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: AI Tools & Automation' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
