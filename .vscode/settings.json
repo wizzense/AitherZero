@@ -54,6 +54,8 @@
     "powershell": true
   },
   "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.chat.mcp.enabled": true,
+  "github.copilot.chat.mcp.configFile": "${workspaceFolder}/.vscode/mcp-servers.json",
 
   // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",
