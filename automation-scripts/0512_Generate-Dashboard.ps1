@@ -1,7 +1,7 @@
 ﻿#Requires -Version 7.0
 # PSScriptAnalyzer suppressions for dashboard generation script
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Scope='Function', Target='*', Justification='Dashboard functions intentionally use plural names for collections of metrics')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Scope='Function', Target='*', Justification='ShouldProcess handled at script level, not individual helper functions')]
+# PSScriptAnalyzer: PSUseSingularNouns - Dashboard functions intentionally use plural names for collections of metrics
+# PSScriptAnalyzer: PSShouldProcess - ShouldProcess handled at script level, not individual helper functions
 
 <#
 .SYNOPSIS
@@ -44,9 +44,7 @@
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'OutputPath', Justification='Used in main script body')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Format', Justification='Used in switch statement')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Open', Justification='Used to open HTML dashboard')]
+# PSScriptAnalyzer: PSReviewUnusedParameter - Parameters used in main script body and switch statements
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
     [string]$OutputPath = (Join-Path $ProjectPath "reports"),
