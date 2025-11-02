@@ -102,8 +102,9 @@ echo "GITHUB_TOKEN=your_token" >> .env
 2. **Node.js 18+**: Required for running MCP servers
    ```bash
    # Check if Node.js is installed
-   node --version  # Should be v18.0.0 or higher
-   npm --version   # Should be 9.0.0 or higher
+   node --version  # Should be version 18.0.0+ (outputs as "v18.0.0")
+   npm --version   # Should be version 9.0.0+ (outputs as "9.0.0")
+   # Note: node outputs a 'v' prefix (e.g., "v18.0.0"), npm does not.
    
    # Install Node.js if needed
    # Windows: Download from https://nodejs.org/
@@ -123,7 +124,7 @@ echo "GITHUB_TOKEN=your_token" >> .env
    ```bash
    # Create a personal access token at:
    # https://github.com/settings/tokens
-   # Required scopes: repo, read:org, read:project
+   # Required scopes: repo, read:org; recommended: read:project (for project boards)
    
    export GITHUB_TOKEN="your_token"
    
@@ -353,7 +354,10 @@ Additional servers can be activated on-demand through Copilot Chat.
    # Validate JSON syntax
    cat .github/mcp-servers.json | jq .
    
-   # If jq not installed: npm install -g jq
+   # If jq not installed, install with:
+   #   brew install jq      # macOS
+   #   sudo apt install jq  # Linux
+   #   choco install jq     # Windows
    ```
 
 3. **Check VS Code Output**:
@@ -489,7 +493,7 @@ If you get permission errors with filesystem operations:
 - GitHub API has rate limits
 - Authenticated requests: 5000/hour
 - Wait or use token with higher limits
-- Check: curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit
+- Check: curl -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/rate_limit
 
 **"Command not found: pwsh"**:
 - PowerShell 7+ not installed or not in PATH
