@@ -399,7 +399,6 @@
                 Features = @('Core', 'Testing', 'Development.Node')
                 ScriptRanges = @('0000-0010', '0201', '0400-0450')
                 Parallel = $true
-                NonInteractive = $true
                 EstimatedTime = '3-8 minutes'
             }
         }
@@ -453,8 +452,7 @@
         
         # Behavior settings
         AutoStart = $true
-        NonInteractive = $false  # Automatically set to true in CI environments
-        CI = $false  # Automatically detected in CI environments
+        CI = $false  # Automatically detected in CI environments (via $env:CI, $env:GITHUB_ACTIONS, etc.)
         
         # User experience
         ClearScreenOnStart = $true  # Clear screen when starting interactive mode

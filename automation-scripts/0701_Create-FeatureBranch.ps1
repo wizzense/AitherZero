@@ -30,9 +30,7 @@ param(
 
     [switch]$Push,
 
-    [switch]$Force,
-
-    [switch]$NonInteractive
+    [switch]$Force
 )
 
 Set-StrictMode -Version Latest
@@ -50,8 +48,9 @@ $normalizedName = $Name -replace '\s+', '-' -replace '[^a-zA-Z0-9-]', '' -replac
 $branchName = "$Type/$normalizedName"
 
 # Check if we're on a clean state
+$isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
 $status = Get-GitStatus
-if (-not $status.Clean -and -not $Force -and -not $NonInteractive) {
+if (-not $status.Clean -and -not $Force -and -not $isCI) {
     Write-Warning "You have uncommitted changes. Please commit or stash them first."
     Write-Host "Changed files:" -ForegroundColor Yellow
     $status.Modified + $status.Staged | ForEach-Object { Write-Host "  $($_.Path)" }
@@ -62,7 +61,7 @@ if (-not $status.Clean -and -not $Force -and -not $NonInteractive) {
         exit 0
     }
 } elseif (-not $status.Clean) {
-    Write-Warning "Uncommitted changes detected. Proceeding due to Force/NonInteractive mode."
+    Write-Warning "Uncommitted changes detected. Proceeding due to Force or CI mode."
 }
 
 # Default to checkout unless explicitly disabled
@@ -82,8 +81,8 @@ if ($existingBranch -or $remoteBranch) {
     # Get branch conflict resolution preference from config or parameters
     $conflictResolution = if ($Force) {
         'checkout'
-    } elseif ($NonInteractive) {
-        # In non-interactive mode, check config for preference
+    } elseif ($isCI) {
+        # In CI mode, check config for preference
         $config = if (Get-Command Get-AitherConfiguration -ErrorAction SilentlyContinue) {
             Get-AitherConfiguration
         } else {

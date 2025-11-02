@@ -168,7 +168,7 @@ jobs:
           }
 
           # Minimal bootstrap for validation
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
           # Test syntax with -All switch to validate all PowerShell files
           try {

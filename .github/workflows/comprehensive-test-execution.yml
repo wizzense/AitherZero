@@ -105,7 +105,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Bootstrapping environment..." -ForegroundColor Cyan
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
       
       - name: 📦 Install Testing Tools
         shell: pwsh
@@ -174,7 +174,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Bootstrapping environment..." -ForegroundColor Cyan
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
       
       - name: 📦 Install Testing Tools
         shell: pwsh

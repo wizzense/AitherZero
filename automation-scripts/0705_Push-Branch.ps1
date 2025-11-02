@@ -27,13 +27,14 @@ param(
 
     [switch]$All,
 
-    [switch]$DryRun,
-
-    [switch]$NonInteractive
+    [switch]$DryRun
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Detect CI environment
+$isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
 
 # Import Git module
 $devModulePath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/development"
@@ -61,7 +62,7 @@ $remoteBranches = git branch -r 2>$null | ForEach-Object { $_.Trim() }
 $remoteBranchExists = $remoteBranches -contains "$Remote/$Branch"
 
 # Check for uncommitted changes
-if (-not $status.Clean -and -not $NonInteractive -and -not $Force) {
+if (-not $status.Clean -and -not $isCI -and -not $Force) {
     Write-Warning "You have uncommitted changes:"
     $allChanges = @()
     if ($status.Modified) { $allChanges += $status.Modified }
