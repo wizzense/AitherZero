@@ -12,7 +12,10 @@
 Describe '0860_Validate-Deployments Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0860_Validate-Deployments.ps1'
+        # Resolve script path relative to repository root
+        $script:TestRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+        $script:ProjectRoot = Split-Path $script:TestRoot -Parent
+        $script:ScriptPath = Join-Path $script:ProjectRoot "automation-scripts/0860_Validate-Deployments.ps1"
         $script:TestConfig = @{ Automation = @{ DryRun = $true } }
     }
 

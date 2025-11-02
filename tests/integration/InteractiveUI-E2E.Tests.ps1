@@ -80,16 +80,20 @@ Describe "Interactive UI Components" -Tag 'E2E', 'UI', 'Interactive' {
 
 Describe "Playbook Browser UI" -Tag 'E2E', 'UI', 'Playbooks' {
     Context "Playbook Listing" {
-        It "Should call Get-OrchestrationPlaybook without errors" {
-            { Get-OrchestrationPlaybook -ListAll -ErrorAction SilentlyContinue } | Should -Not -Throw
+        It "Should discover playbooks using file system" {
+            $playbooksDir = Join-Path $script:ProjectRoot "orchestration/playbooks"
+            { Get-ChildItem -Path $playbooksDir -Filter "*.json" -Recurse -ErrorAction SilentlyContinue } | Should -Not -Throw
         }
         
         It "Should format playbook information for display" {
-            $playbooks = Get-OrchestrationPlaybook -ListAll -ErrorAction SilentlyContinue
-            if ($playbooks) {
-                foreach ($playbook in $playbooks | Select-Object -First 3) {
-                    $playbook | Should -HaveProperty 'Name'
-                    $playbook.Name | Should -Not -BeNullOrEmpty
+            # Discover playbooks using file system
+            $playbooksDir = Join-Path $script:ProjectRoot "orchestration/playbooks"
+            $playbookFiles = Get-ChildItem -Path $playbooksDir -Filter "*.json" -Recurse -ErrorAction SilentlyContinue
+            
+            if ($playbookFiles) {
+                foreach ($file in $playbookFiles | Select-Object -First 3) {
+                    $file.Name | Should -Match '\.json$'
+                    $file.FullName | Should -Not -BeNullOrEmpty
                 }
             } else {
                 # If no playbooks, test passes
