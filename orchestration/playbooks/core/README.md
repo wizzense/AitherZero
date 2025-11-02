@@ -121,13 +121,29 @@ Environment setup for different scenarios:
 
 ### 🚀 Operations (`operations/`)
 
-CI/CD and deployment automation:
+CI/CD and deployment automation (mirrors GitHub Actions workflows):
 
-| Playbook | Purpose |
-|----------|---------|
-| **ci-pipeline** | Standard CI/CD pipeline |
-| **deployment** | Infrastructure deployment |
-| **session-management** | Work session management |
+| Playbook | Purpose | GitHub Workflow |
+|----------|---------|-----------------|
+| **ci-pr-validation** | PR validation checks | pr-validation.yml |
+| **ci-comprehensive-test** | Full test suite execution | comprehensive-test-execution.yml |
+| **ci-quality-validation** | Quality and linting checks | quality-validation.yml |
+| **ci-release** | Release automation | release-automation.yml |
+| **ci-documentation** | Documentation generation | documentation-automation.yml |
+| **ci-deploy-pr** | PR environment deployment | deploy-pr-environment.yml |
+| **session-management** | Work session management | - |
+
+**Example Usage:**
+```powershell
+# Run PR validation locally before pushing
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-pr-validation
+
+# Run comprehensive tests (matches CI)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-comprehensive-test
+
+# Generate documentation
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-documentation
+```
 
 ### 📊 Analysis (`analysis/`)
 
