@@ -247,7 +247,7 @@ function Get-CommandSuggestion {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string]$Input,
+        [string]$InputText,
         
         [int]$MaxSuggestions = 5
     )
@@ -290,7 +290,7 @@ function Get-CommandSuggestion {
     $suggestions = [System.Collections.ArrayList]::new()
     
     foreach ($cmd in $validCommands) {
-        $distance = Get-Distance -s1 $Input -s2 $cmd
+        $distance = Get-Distance -s1 $InputText -s2 $cmd
         if ($distance -le 2) {  # Max 2 character difference
             [void]$suggestions.Add([PSCustomObject]@{
                 Command = $cmd
@@ -301,7 +301,7 @@ function Get-CommandSuggestion {
     }
     
     foreach ($target in $validTargets) {
-        $distance = Get-Distance -s1 $Input -s2 $target
+        $distance = Get-Distance -s1 $InputText -s2 $target
         if ($distance -le 2) {
             [void]$suggestions.Add([PSCustomObject]@{
                 Command = $target
