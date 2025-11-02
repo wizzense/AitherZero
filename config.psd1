@@ -1028,6 +1028,21 @@
             
             # Severity levels to check
             Severity = @('Error', 'Warning', 'Information')
+            
+            # Rule-specific settings
+            Rules = @{
+                PSProvideCommentHelp = @{
+                    Enable = $true
+                    ExportedOnly = $false
+                    BlockComment = $true
+                    Placement = "begin"
+                }
+
+                PSUseCompatibleSyntax = @{
+                    Enable = $true
+                    TargetVersions = @('7.0')
+                }
+            }
         }
         
         # Code coverage

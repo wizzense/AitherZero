@@ -116,3 +116,7 @@ tests/coverage/*.xml
 # Analysis results
 tests/analysis/*.csv
 tests/analysis/*.json
+
+# Configuration consolidation - PSScriptAnalyzer settings now in config.psd1
+PSScriptAnalyzerSettings.psd1
+.psscriptanalyzer-fast.psd1
