@@ -1139,6 +1139,433 @@ function Show-InlineHelp {
 
 #endregion
 
+#region Quality of Life Features - Phase 2 (Features 6-10)
+
+# Feature 6: Status Indicators - Check prerequisites before running
+function Test-Prerequisites {
+    <#
+    .SYNOPSIS
+        Check if prerequisites are met for script execution
+    .DESCRIPTION
+        Tests for required tools, services, and configurations
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ScriptNumber,
+        
+        [switch]$Detailed
+    )
+    
+    $status = @{
+        Overall = $true
+        Checks = @()
+    }
+    
+    # Get script metadata to determine requirements
+    $metadata = Get-ScriptMetadata -ScriptNumber $ScriptNumber
+    
+    if (-not $metadata) {
+        return $status
+    }
+    
+    # Check based on script category
+    $category = $metadata.Category
+    
+    # Common checks
+    $checks = @()
+    
+    # PowerShell version check
+    $psVersion = $PSVersionTable.PSVersion
+    $psCheck = @{
+        Name = "PowerShell 7+"
+        Required = $true
+        Status = $psVersion.Major -ge 7
+        Details = "Current: $($psVersion.ToString())"
+    }
+    $checks += $psCheck
+    
+    # Admin privileges check (if required)
+    if ($metadata.RequiresAdmin) {
+        $isAdmin = if ($IsWindows) {
+            ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        } elseif ($IsLinux -or $IsMacOS) {
+            (id -u) -eq 0
+        } else {
+            $false
+        }
+        
+        $adminCheck = @{
+            Name = "Administrator Privileges"
+            Required = $true
+            Status = $isAdmin
+            Details = if ($isAdmin) { "Running as admin" } else { "Not running as admin" }
+        }
+        $checks += $adminCheck
+    }
+    
+    # Category-specific checks
+    switch -Regex ($category) {
+        'Infrastructure' {
+            # Check for Hyper-V on Windows
+            if ($IsWindows -and $ScriptNumber -match '010[5-9]') {
+                $hyperVCheck = @{
+                    Name = "Hyper-V"
+                    Required = $false
+                    Status = (Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue).State -eq 'Enabled'
+                    Details = "Windows feature"
+                }
+                $checks += $hyperVCheck
+            }
+        }
+        
+        'Development' {
+            # Check for Git
+            if ($ScriptNumber -match '^070') {
+                $gitCheck = @{
+                    Name = "Git"
+                    Required = $true
+                    Status = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
+                    Details = if (Get-Command git -ErrorAction SilentlyContinue) { "Installed" } else { "Not installed" }
+                }
+                $checks += $gitCheck
+            }
+            
+            # Check for Docker
+            if ($ScriptNumber -match '0208') {
+                $dockerCheck = @{
+                    Name = "Docker"
+                    Required = $false
+                    Status = $null -ne (Get-Command docker -ErrorAction SilentlyContinue)
+                    Details = if (Get-Command docker -ErrorAction SilentlyContinue) { "Installed" } else { "Not installed" }
+                }
+                $checks += $dockerCheck
+            }
+        }
+        
+        'Testing' {
+            # Check for Pester
+            $pesterCheck = @{
+                Name = "Pester 5.0+"
+                Required = $true
+                Status = $null -ne (Get-Module -ListAvailable Pester | Where-Object Version -ge '5.0')
+                Details = if ($m = Get-Module -ListAvailable Pester | Sort-Object Version -Descending | Select-Object -First 1) { "v$($m.Version)" } else { "Not installed" }
+            }
+            $checks += $pesterCheck
+        }
+    }
+    
+    $status.Checks = $checks
+    $status.Overall = -not ($checks | Where-Object { $_.Required -and -not $_.Status })
+    
+    return [PSCustomObject]$status
+}
+
+function Show-PrerequisiteStatus {
+    <#
+    .SYNOPSIS
+        Display prerequisite status with visual indicators
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ScriptNumber
+    )
+    
+    $prereqs = Test-Prerequisites -ScriptNumber $ScriptNumber
+    
+    if ($prereqs.Checks.Count -eq 0) {
+        Write-Host "  ℹ️  No prerequisites to check" -ForegroundColor Gray
+        return $true
+    }
+    
+    Write-Host ""
+    Write-Host "  📋 Prerequisites Check:" -ForegroundColor Cyan
+    
+    $allMet = $true
+    foreach ($check in $prereqs.Checks) {
+        $icon = if ($check.Status) { "✅" } else { if ($check.Required) { "❌" } else { "⚠️" } }
+        $color = if ($check.Status) { "Green" } else { if ($check.Required) { "Red" } else { "Yellow" } }
+        
+        Write-Host "    $icon " -NoNewline -ForegroundColor $color
+        Write-Host "$($check.Name): " -NoNewline -ForegroundColor White
+        Write-Host $check.Details -ForegroundColor Gray
+        
+        if ($check.Required -and -not $check.Status) {
+            $allMet = $false
+        }
+    }
+    
+    Write-Host ""
+    
+    if (-not $allMet) {
+        Write-Host "  ⚠️  Some required prerequisites are not met" -ForegroundColor Yellow
+    }
+    
+    return $allMet
+}
+
+# Feature 7: Execution History - Track run history with duration
+function Get-ExecutionHistory {
+    <#
+    .SYNOPSIS
+        Get execution history with duration and status
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$ScriptNumber,
+        [int]$Count = 10
+    )
+    
+    $historyFile = Join-Path $env:HOME ".aitherzero_execution_history.json"
+    
+    if (Test-Path $historyFile) {
+        try {
+            $history = Get-Content $historyFile -Raw | ConvertFrom-Json
+            
+            if ($ScriptNumber) {
+                $history = $history | Where-Object { $_.ScriptNumber -eq $ScriptNumber }
+            }
+            
+            return $history | Select-Object -Last $Count
+        } catch {
+            return @()
+        }
+    }
+    
+    return @()
+}
+
+function Add-ExecutionHistory {
+    <#
+    .SYNOPSIS
+        Add execution to history
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ScriptNumber,
+        
+        [Parameter(Mandatory)]
+        [string]$ScriptName,
+        
+        [Parameter(Mandatory)]
+        [datetime]$StartTime,
+        
+        [Parameter(Mandatory)]
+        [datetime]$EndTime,
+        
+        [Parameter(Mandatory)]
+        [string]$Status,
+        
+        [string]$ErrorMessage
+    )
+    
+    $historyFile = Join-Path $env:HOME ".aitherzero_execution_history.json"
+    $maxHistory = 100
+    
+    $history = @()
+    if (Test-Path $historyFile) {
+        try {
+            $history = Get-Content $historyFile -Raw | ConvertFrom-Json
+        } catch {
+            $history = @()
+        }
+    }
+    
+    $duration = $EndTime - $StartTime
+    
+    $newEntry = [PSCustomObject]@{
+        ScriptNumber = $ScriptNumber
+        ScriptName = $ScriptName
+        StartTime = $StartTime.ToString('o')
+        EndTime = $EndTime.ToString('o')
+        Duration = $duration.TotalSeconds
+        Status = $Status
+        ErrorMessage = $ErrorMessage
+    }
+    
+    $history = @($history) + @($newEntry) | Select-Object -Last $maxHistory
+    
+    try {
+        $history | ConvertTo-Json -Depth 10 | Set-Content $historyFile -ErrorAction SilentlyContinue
+    } catch {
+        # Silently ignore history save errors
+    }
+}
+
+function Show-ExecutionHistory {
+    <#
+    .SYNOPSIS
+        Display execution history in a formatted table
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$ScriptNumber,
+        [int]$Count = 5
+    )
+    
+    $history = Get-ExecutionHistory -ScriptNumber $ScriptNumber -Count $Count
+    
+    if ($history.Count -eq 0) {
+        Write-Host "  ℹ️  No execution history found" -ForegroundColor Gray
+        return
+    }
+    
+    Write-Host ""
+    Write-Host "  📊 Execution History:" -ForegroundColor Cyan
+    Write-Host ""
+    
+    foreach ($entry in $history) {
+        $startTime = [DateTime]::Parse($entry.StartTime)
+        $icon = if ($entry.Status -eq 'Success') { '✅' } else { '❌' }
+        $color = if ($entry.Status -eq 'Success') { 'Green' } else { 'Red' }
+        $durationStr = if ($entry.Duration -lt 60) {
+            "{0:F1}s" -f $entry.Duration
+        } else {
+            "{0:F1}m" -f ($entry.Duration / 60)
+        }
+        
+        Write-Host "    $icon " -NoNewline -ForegroundColor $color
+        Write-Host "$($startTime.ToString('MM/dd HH:mm')) " -NoNewline -ForegroundColor Gray
+        Write-Host "[$durationStr] " -NoNewline -ForegroundColor Cyan
+        Write-Host $entry.ScriptName -ForegroundColor White
+    }
+    
+    Write-Host ""
+}
+
+# Feature 9: Command History Export - Save session commands to script
+function Export-CommandHistory {
+    <#
+    .SYNOPSIS
+        Export recent commands to a PowerShell script file
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$OutputPath,
+        
+        [int]$Count = 10,
+        
+        [switch]$IncludeComments
+    )
+    
+    $recentActions = Get-RecentActions -Count $Count
+    
+    if ($recentActions.Count -eq 0) {
+        Write-Host "  ⚠️  No recent actions to export" -ForegroundColor Yellow
+        return
+    }
+    
+    $scriptContent = @"
+#!/usr/bin/env pwsh
+#Requires -Version 7.0
+<#
+.SYNOPSIS
+    Exported AitherZero command history
+.DESCRIPTION
+    Generated on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+    Contains $($recentActions.Count) recent commands
+#>
+
+"@
+    
+    foreach ($action in $recentActions) {
+        if ($IncludeComments) {
+            $timestamp = [DateTime]::Parse($action.Timestamp).ToString('yyyy-MM-dd HH:mm:ss')
+            $scriptContent += "# $($action.Name) - $timestamp - Status: $($action.Status)`n"
+        }
+        
+        $scriptContent += "$($action.Command)`n`n"
+    }
+    
+    try {
+        $scriptContent | Set-Content -Path $OutputPath -Encoding UTF8
+        Write-Host "  ✅ Exported $($recentActions.Count) commands to: " -NoNewline -ForegroundColor Green
+        Write-Host $OutputPath -ForegroundColor Cyan
+        return $true
+    } catch {
+        Write-Host "  ❌ Failed to export: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+# Feature 10: Profile Switcher - Quick profile switching
+function Switch-AitherZeroProfile {
+    <#
+    .SYNOPSIS
+        Switch execution profile quickly
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateSet('Minimal', 'Standard', 'Developer', 'Full')]
+        [string]$Profile
+    )
+    
+    $configPath = if ($env:AITHERZERO_ROOT) {
+        Join-Path $env:AITHERZERO_ROOT "config.json"
+    } else {
+        Join-Path (Split-Path $PSScriptRoot -Parent | Split-Path -Parent) "config.json"
+    }
+    
+    if (-not (Test-Path $configPath)) {
+        Write-Host "  ❌ Config file not found: $configPath" -ForegroundColor Red
+        return $false
+    }
+    
+    try {
+        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        $oldProfile = $config.Core.Profile
+        $config.Core.Profile = $Profile
+        
+        $config | ConvertTo-Json -Depth 100 | Set-Content $configPath -Encoding UTF8
+        
+        Write-Host ""
+        Write-Host "  ✅ Profile switched: " -NoNewline -ForegroundColor Green
+        Write-Host "$oldProfile" -NoNewline -ForegroundColor Yellow
+        Write-Host " → " -NoNewline -ForegroundColor Gray
+        Write-Host $Profile -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  💡 Restart AitherZero for changes to take effect" -ForegroundColor Gray
+        Write-Host ""
+        
+        return $true
+    } catch {
+        Write-Host "  ❌ Failed to switch profile: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Get-AitherZeroProfile {
+    <#
+    .SYNOPSIS
+        Get current execution profile
+    #>
+    [CmdletBinding()]
+    param()
+    
+    $configPath = if ($env:AITHERZERO_ROOT) {
+        Join-Path $env:AITHERZERO_ROOT "config.json"
+    } else {
+        Join-Path (Split-Path $PSScriptRoot -Parent | Split-Path -Parent) "config.json"
+    }
+    
+    if (Test-Path $configPath) {
+        try {
+            $config = Get-Content $configPath -Raw | ConvertFrom-Json
+            return $config.Core.Profile
+        } catch {
+            return "Unknown"
+        }
+    }
+    
+    return "Unknown"
+}
+
+#endregion
+
 # Export functions
 Export-ModuleMember -Function @(
     'Show-ModernHelp'
@@ -1158,4 +1585,12 @@ Export-ModuleMember -Function @(
     'Get-ScriptMetadata'
     'Invoke-QuickJump'
     'Show-InlineHelp'
+    'Test-Prerequisites'
+    'Show-PrerequisiteStatus'
+    'Get-ExecutionHistory'
+    'Add-ExecutionHistory'
+    'Show-ExecutionHistory'
+    'Export-CommandHistory'
+    'Switch-AitherZeroProfile'
+    'Get-AitherZeroProfile'
 )

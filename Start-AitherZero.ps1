@@ -1791,6 +1791,22 @@ function Show-InteractiveMenu {
                 Description = "⚡ Jump directly to a script by number"
 
             },
+            
+            [PSCustomObject]@{
+
+                Name = "Profile Switcher"
+
+                Description = "⚙️ Switch execution profile (Current: $(Get-AitherZeroProfile))"
+
+            },
+            
+            [PSCustomObject]@{
+
+                Name = "Export Commands"
+
+                Description = "💾 Save command history to script file"
+
+            },
 
             [PSCustomObject]@{
 
@@ -1934,6 +1950,10 @@ function Show-InteractiveMenu {
                 'Recent Actions' { Invoke-RecentActionsMenu -Config $Config }
                 
                 'Quick Jump' { Invoke-QuickJumpMenu -Config $Config }
+                
+                'Profile Switcher' { Invoke-ProfileSwitcherMenu -Config $Config }
+                
+                'Export Commands' { Invoke-ExportCommandsMenu -Config $Config }
 
                 'Health Dashboard' {
 
@@ -2437,12 +2457,33 @@ function Invoke-TestingMenu {
         if ($cliCommand) {
             Show-CLICommand -Command $cliCommand -Description "Run this command to execute the same action from CLI"
             
+            # Show prerequisites if available
+            if ($selection.Sequence) {
+                $prereqsMet = Show-PrerequisiteStatus -ScriptNumber $selection.Sequence
+                
+                if (-not $prereqsMet) {
+                    $continue = Show-UIPrompt -Message "Prerequisites not met. Continue anyway?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
+                    if ($continue -eq 'No') {
+                        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+                        return
+                    }
+                }
+            }
+            
+            # Show execution history if available
+            if ($selection.Sequence) {
+                Show-ExecutionHistory -ScriptNumber $selection.Sequence -Count 3
+            }
+            
             # Pause to let user see the command
             if (Test-CLILearningMode) {
                 Write-Host "  Press Enter to execute..." -ForegroundColor DarkGray
                 Read-Host
             }
         }
+        
+        # Track execution time
+        $startTime = Get-Date
 
         if ($selection.Sequence) {
 
@@ -2452,6 +2493,13 @@ function Invoke-TestingMenu {
 
             $result = Invoke-OrchestrationSequence -LoadPlaybook $selection.Playbook -Configuration $Config
 
+        }
+        
+        # Record execution history
+        $endTime = Get-Date
+        if ($selection.Sequence) {
+            $status = if ($result -and $result.Failed -eq 0) { 'Success' } else { 'Failed' }
+            Add-ExecutionHistory -ScriptNumber $selection.Sequence -ScriptName $selection.Name -StartTime $startTime -EndTime $endTime -Status $status -ErrorMessage ""
         }
 
 
@@ -3098,6 +3146,116 @@ function Invoke-QuickJumpMenu {
             Add-RecentAction -Name $metadata.Name -Command $cliCommand -Type 'Script'
             Invoke-OrchestrationSequence -Sequence $scriptNumber -Configuration $Config
         }
+    }
+    
+    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+}
+
+# Profile Switcher Menu - Feature 10
+function Invoke-ProfileSwitcherMenu {
+    param($Config)
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                      Profile Switcher                             ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $currentProfile = Get-AitherZeroProfile
+    Write-Host "  Current Profile: " -NoNewline -ForegroundColor Gray
+    Write-Host $currentProfile -ForegroundColor Cyan
+    Write-Host ""
+    
+    $profiles = @(
+        [PSCustomObject]@{
+            Name = "Minimal"
+            Description = "Essential features only, fastest startup"
+        },
+        [PSCustomObject]@{
+            Name = "Standard"
+            Description = "Balanced features and performance"
+        },
+        [PSCustomObject]@{
+            Name = "Developer"
+            Description = "Full development tools and features"
+        },
+        [PSCustomObject]@{
+            Name = "Full"
+            Description = "All features enabled, complete platform"
+        }
+    )
+    
+    $selection = Show-UIMenu -Title "Select Profile" -Items $profiles -ShowNumbers
+    
+    if ($selection) {
+        Write-Host ""
+        Write-Host "  Switching to profile: " -NoNewline -ForegroundColor Gray
+        Write-Host $selection.Name -ForegroundColor Cyan
+        Write-Host ""
+        
+        $result = Switch-AitherZeroProfile -Profile $selection.Name
+        
+        if ($result) {
+            Write-Host "  ✅ Profile switched successfully!" -ForegroundColor Green
+            Write-Host "  💡 Restart the interactive menu to apply changes" -ForegroundColor Gray
+        }
+    }
+    
+    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+}
+
+# Export Commands Menu - Feature 9
+function Invoke-ExportCommandsMenu {
+    param($Config)
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                    Export Command History                         ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $recentActions = Get-RecentActions -Count 10
+    
+    if ($recentActions.Count -eq 0) {
+        Show-UINotification -Message "No commands to export" -Type 'Warning'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        return
+    }
+    
+    Write-Host "  Found $($recentActions.Count) recent commands" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Show preview
+    Write-Host "  Preview (latest 5):" -ForegroundColor Gray
+    $recentActions | Select-Object -Last 5 | ForEach-Object {
+        $timestamp = [DateTime]::Parse($_.Timestamp).ToString('MM/dd HH:mm')
+        Write-Host "    [$timestamp] " -NoNewline -ForegroundColor DarkGray
+        Write-Host $_.Name -ForegroundColor White
+    }
+    Write-Host ""
+    
+    $outputPath = Show-UIPrompt -Message "Output file path (default: ./exported-commands.ps1)" -DefaultValue "./exported-commands.ps1"
+    
+    if ([string]::IsNullOrWhiteSpace($outputPath)) {
+        return
+    }
+    
+    # Resolve relative path
+    if (-not [System.IO.Path]::IsPathRooted($outputPath)) {
+        $outputPath = Join-Path (Get-Location) $outputPath
+    }
+    
+    $includeComments = Show-UIPrompt -Message "Include comments with timestamps? (Yes/No)" -ValidateSet @('Yes', 'No') -DefaultValue 'Yes'
+    
+    Write-Host ""
+    Write-Host "  Exporting..." -ForegroundColor Cyan
+    
+    $result = Export-CommandHistory -OutputPath $outputPath -Count 10 -IncludeComments:($includeComments -eq 'Yes')
+    
+    if ($result) {
+        Write-Host ""
+        Write-Host "  💡 You can now run: " -NoNewline -ForegroundColor Gray
+        Write-Host "pwsh $outputPath" -ForegroundColor Yellow
     }
     
     Show-UIPrompt -Message "Press Enter to continue" | Out-Null
