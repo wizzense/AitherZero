@@ -95,7 +95,7 @@ function Set-TemplateVariables {
     return $result
 }
 
-# PSScriptAnalyzer suppress rule for plural noun (returns multiple metrics)
+# PSScriptAnalyzer suppression: PSUseSingularNouns - Function returns multiple metrics
 function Get-ProjectMetrics {
     Write-ScriptLog -Message "Collecting project metrics"
 
@@ -193,7 +193,7 @@ function Get-ProjectMetrics {
     return $metrics
 }
 
-# PSScriptAnalyzer suppress rule for plural noun (returns multiple metrics)
+# PSScriptAnalyzer suppression: PSUseSingularNouns - Function returns multiple metrics
 function Get-QualityMetrics {
     Write-ScriptLog -Message "Collecting quality metrics"
     

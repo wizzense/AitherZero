@@ -95,22 +95,45 @@ echo "GITHUB_TOKEN=your_token" >> .env
 ### Prerequisites
 
 1. **VS Code with GitHub Copilot Extensions**:
-   - Install `GitHub.copilot` extension
-   - Install `GitHub.copilot-chat` extension
+   - Install `GitHub.copilot` extension (required)
+   - Install `GitHub.copilot-chat` extension (required)
+   - Verify extensions are active in VS Code
 
-2. **Node.js**: Required for running MCP servers
+2. **Node.js 18+**: Required for running MCP servers
    ```bash
    # Check if Node.js is installed
-   node --version  # Should be v18+ or higher
+   node --version  # Should be version 18.0.0+ (outputs as "v18.0.0")
+   npm --version   # Should be version 9.0.0+ (outputs as "9.0.0")
+   # Note: node outputs a 'v' prefix (e.g., "v18.0.0"), npm does not.
+   
+   # Install Node.js if needed
+   # Windows: Download from https://nodejs.org/
+   # Linux: sudo apt install nodejs npm
+   # macOS: brew install node
    ```
 
-3. **GitHub Token**: For GitHub API access
+3. **PowerShell 7+**: Required for AitherZero operations
+   ```bash
+   # Check PowerShell version
+   pwsh --version  # Should be 7.0 or higher
+   
+   # AitherZero requires PowerShell 7+ for cross-platform support
+   ```
+
+4. **GitHub Token**: For GitHub API access
    ```bash
    # Create a personal access token at:
    # https://github.com/settings/tokens
-   # Required scopes: repo, read:org
+   # Required scopes: repo, read:org; recommended: read:project (for project boards)
    
    export GITHUB_TOKEN="your_token"
+   
+   # Or add to your shell profile for persistence
+   echo 'export GITHUB_TOKEN="your_token"' >> ~/.bashrc  # Linux
+   echo 'export GITHUB_TOKEN="your_token"' >> ~/.zshrc   # macOS
+   
+   # Windows PowerShell
+   [Environment]::SetEnvironmentVariable("GITHUB_TOKEN", "your_token", "User")
    ```
 
 ### Enabling MCP Servers
@@ -128,25 +151,161 @@ If MCP servers don't activate automatically:
 
 ### Using MCP Servers in Copilot Chat
 
-Once configured, you can leverage MCP servers in Copilot Chat:
+Once configured, you can leverage MCP servers in Copilot Chat. Here are AitherZero-specific examples:
 
-**Example prompts that use MCP servers**:
+#### Working with AitherZero Architecture
 
+**Understand domain organization:**
 ```
 @workspace How is the infrastructure module organized?
 # Uses filesystem server to analyze /domains/infrastructure/
 
+@workspace Show me all functions in the OrchestrationEngine.psm1
+# Uses filesystem + code analysis
+
+@workspace What are the dependencies between automation and testing domains?
+# Uses filesystem to analyze imports and relationships
+```
+
+**Track changes and history:**
+```
 @workspace Show me recent changes to the testing domain
 # Uses git server to show commit history
 
-@workspace Create an issue for improving error handling in LabVM.psm1
-# Uses github server to create issue
+@workspace Who modified LabVM.psm1 and why?
+# Uses git server with blame/log information
 
+@workspace Compare the current OrchestrationEngine with version from last week
+# Uses git server for historical comparison
+```
+
+**Issue and PR management:**
+```
+@workspace Create an issue for improving error handling in LabVM.psm1
+# Uses github server to create issue with context
+
+@workspace Show me open issues related to testing infrastructure
+# Uses github server to search and filter issues
+
+@workspace What PRs are waiting for review?
+# Uses github server to list PR status
+```
+
+**PowerShell best practices:**
+```
 @workspace What's the best practice for parameter validation in PowerShell?
 # Uses powershell-docs server to fetch documentation
 
+@workspace How should I implement error handling in a PowerShell module?
+# Uses powershell-docs for official guidance
+
+@workspace What's the recommended way to handle cross-platform paths?
+# Uses powershell-docs + searches Microsoft Learn
+```
+
+**Complex planning and design:**
+```
 @workspace Help me design a complex VM deployment workflow
 # Uses sequential-thinking server for structured problem-solving
+
+@workspace Break down the steps needed to add a new orchestration playbook
+# Uses sequential-thinking for multi-step planning
+
+@workspace Design a parallel test execution system for Pester
+# Uses sequential-thinking + filesystem for architecture design
+```
+
+#### Number-Based Script Integration
+
+**Understanding automation scripts:**
+```
+@workspace Explain what script 0402 does
+# Uses filesystem to read and analyze the script
+
+@workspace Show me all testing scripts (0400-0499 range)
+# Uses filesystem to list and categorize
+
+@workspace What's the difference between az 0402 and az 0407?
+# Uses filesystem to compare scripts
+```
+
+**Execution context and troubleshooting:**
+```
+@workspace Script 0404 failed - show me recent changes
+# Uses git + filesystem to diagnose
+
+@workspace Why is az 0510 taking so long to complete?
+# Uses filesystem to analyze script logic
+
+@workspace Create a new script in the 0700-0799 range for Git automation
+# Uses filesystem + sequential-thinking for guided creation
+```
+
+#### Orchestration and Playbooks
+
+**Playbook management:**
+```
+@workspace Show me the structure of the test-quick playbook
+# Uses filesystem to read orchestration/playbooks/
+
+@workspace Compare test-quick and test-full playbooks
+# Uses filesystem for comparison
+
+@workspace Create a new playbook for infrastructure validation
+# Uses filesystem + sequential-thinking for creation
+```
+
+**Workflow optimization:**
+```
+@workspace Analyze the orchestration engine for performance bottlenecks
+# Uses filesystem + sequential-thinking
+
+@workspace Suggest improvements to parallel execution in playbooks
+# Uses filesystem + powershell-docs for recommendations
+```
+
+#### Testing and Quality
+
+**Test analysis:**
+```
+@workspace Show me test coverage for the infrastructure domain
+# Uses filesystem to analyze test files
+
+@workspace Which modules are missing Pester tests?
+# Uses filesystem to compare domains vs tests
+
+@workspace Help me write tests for the new Security.psm1 functions
+# Uses filesystem + powershell-docs for test patterns
+```
+
+**Quality checks:**
+```
+@workspace Run PSScriptAnalyzer rules on recent changes
+# Can integrate with filesystem + git
+
+@workspace Show me all TODO comments in the codebase
+# Uses filesystem to search
+
+@workspace Check if all public functions have comment-based help
+# Uses filesystem to validate documentation
+```
+
+#### Combining Multiple Servers
+
+**Full context analysis:**
+```
+@workspace Analyze OrchestrationEngine.psm1: show recent changes, 
+check PowerShell best practices, and suggest improvements
+# Uses: git (history) + filesystem (code) + powershell-docs (practices)
+
+@workspace Review the testing domain: list all functions, show coverage,
+check for open issues, and create a quality improvement plan
+# Uses: filesystem + github + sequential-thinking
+
+@workspace I want to refactor LabVM.psm1 for better error handling.
+Show me the current code, relevant PowerShell patterns, and create
+an issue to track the work
+# Uses: filesystem + powershell-docs + github
 ```
 
 ## Context Providers
@@ -186,43 +345,84 @@ Additional servers can be activated on-demand through Copilot Chat.
 
 1. **Check Node.js installation**:
    ```bash
-   node --version
-   npm --version
+   node --version  # v18+ required
+   npm --version   # v9+ required
    ```
 
 2. **Verify configuration syntax**:
    ```bash
+   # Validate JSON syntax
    cat .github/mcp-servers.json | jq .
+   
+   # If jq not installed, install with:
+   #   brew install jq      # macOS
+   #   sudo apt install jq  # Linux
+   #   choco install jq     # Windows
    ```
 
 3. **Check VS Code Output**:
-   - Open VS Code Output panel
+   - Open VS Code Output panel (`Ctrl+Shift+U` or `Cmd+Shift+U`)
    - Select "GitHub Copilot" from dropdown
    - Look for MCP-related messages
+   - Check for connection errors or initialization failures
 
 4. **Restart VS Code**:
    - Completely close and reopen VS Code
-   - Reload window: `Ctrl+Shift+P` → "Reload Window"
+   - Or reload window: `Ctrl+Shift+P` → "Reload Window"
+   - Ensure MCP servers initialize on startup
+
+5. **Verify PowerShell availability**:
+   ```bash
+   # MCP servers need PowerShell for some operations
+   pwsh --version
+   
+   # Should be 7.0+
+   ```
 
 ### GitHub Server Authentication Issues
 
 1. **Verify token is set**:
    ```bash
+   # Linux/macOS
    echo $GITHUB_TOKEN
+   
+   # Windows PowerShell
+   $env:GITHUB_TOKEN
+   
+   # Should output your token (not empty)
    ```
 
 2. **Check token permissions**:
    - Visit https://github.com/settings/tokens
-   - Ensure token has `repo` scope
+   - Ensure token has required scopes:
+     - `repo` (required for private repos)
+     - `read:org` (required for organization access)
+     - `read:project` (recommended for project boards)
    - Token should not be expired
 
 3. **Update environment**:
    ```bash
-   # Add to shell profile (~/.bashrc, ~/.zshrc)
-   export GITHUB_TOKEN="your_token"
+   # Linux - Add to shell profile
+   echo 'export GITHUB_TOKEN="your_token"' >> ~/.bashrc
+   source ~/.bashrc
    
-   # Or use .env file
-   echo "GITHUB_TOKEN=your_token" >> .env
+   # macOS - Add to shell profile
+   echo 'export GITHUB_TOKEN="your_token"' >> ~/.zshrc
+   source ~/.zshrc
+   
+   # Windows - Set user environment variable
+   [Environment]::SetEnvironmentVariable("GITHUB_TOKEN", "your_token", "User")
+   
+   # Restart VS Code after setting
+   ```
+
+4. **Test GitHub API access**:
+   ```bash
+   # Test token
+   curl -H "Authorization: token $GITHUB_TOKEN" \
+     https://api.github.com/repos/wizzense/AitherZero
+   
+   # Should return repository information
    ```
 
 ### Permission Errors
@@ -230,8 +430,75 @@ Additional servers can be activated on-demand through Copilot Chat.
 If you get permission errors with filesystem operations:
 
 1. **Check allowed directories** in `mcp-servers.json`
+   - Verify paths exist: `domains`, `automation-scripts`, `tests`, etc.
+   - Ensure paths use correct separators for your OS
+
 2. **Verify file permissions** on the repository
+   ```bash
+   # Check repository permissions
+   ls -la /path/to/AitherZero
+   
+   # Should be readable/writable by your user
+   ```
+
 3. **Ensure `readOnly` is set to `false`** for write operations
+   - Check `.github/mcp-servers.json`
+   - `filesystem.config.readOnly` should be `false`
+
+### AitherZero-Specific Issues
+
+1. **MCP servers can't find PowerShell modules**:
+   ```bash
+   # Ensure AitherZero is initialized
+   ./Initialize-AitherEnvironment.ps1
+   
+   # Check module paths
+   pwsh -c '$env:PSModulePath'
+   
+   # Should include AitherZero domains
+   ```
+
+2. **Filesystem server can't access automation scripts**:
+   ```bash
+   # Verify scripts are in PATH
+   echo $PATH | grep automation-scripts
+   
+   # Manually add if needed
+   export PATH="$PWD/automation-scripts:$PATH"
+   ```
+
+3. **Sequential-thinking timeouts on complex tasks**:
+   - Break down requests into smaller steps
+   - Use intermediate prompts to guide thinking
+   - Sequential-thinking works best with focused questions
+
+4. **PowerShell-docs server returns outdated information**:
+   - Microsoft Learn is cached by the server
+   - Restart VS Code to refresh cache
+   - Specify version in queries: "PowerShell 7.4 best practices"
+
+### Common Error Messages
+
+**"MCP server 'X' failed to start"**:
+- Check that Node.js/PowerShell is in PATH
+- Verify the command in mcp-servers.json is correct
+- Check VS Code output for specific error
+
+**"Context too large" errors**:
+- MCP servers may provide too much context
+- Be more specific in your queries
+- Use filters: "Show only .psm1 files" instead of "Show all files"
+
+**"Rate limit exceeded" (GitHub server)**:
+- GitHub API has rate limits
+- Authenticated requests: 5000/hour
+- Wait or use token with higher limits
+- Check: curl -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/rate_limit
+
+**"Command not found: pwsh"**:
+- PowerShell 7+ not installed or not in PATH
+- Install: https://aka.ms/powershell
+- Add to PATH after installation
 
 ## Security Considerations
 
@@ -257,9 +524,9 @@ If you get permission errors with filesystem operations:
 
 MCP servers complement the custom agent routing in `.github/copilot.yaml`:
 
-1. **MCP Servers**: Provide context and capabilities
-2. **Custom Agents**: Provide domain expertise and routing
-3. **Custom Instructions**: Provide architectural guidance
+1. **MCP Servers**: Provide context and capabilities (data access layer)
+2. **Custom Agents**: Provide domain expertise and routing (specialized intelligence)
+3. **Custom Instructions**: Provide architectural guidance (project patterns)
 
 Together, they create a comprehensive AI-assisted development environment:
 
@@ -273,6 +540,112 @@ Agent Router (.github/copilot.yaml) → Custom Agent
 MCP Servers (.github/mcp-servers.json) → Context
      ↓
 Copilot Response with Full Context
+```
+
+### AitherZero-Specific Integration Patterns
+
+#### Pattern 1: Domain-Aware Development
+
+When working on a specific domain (e.g., infrastructure, testing, security):
+
+```
+@maya Show me the infrastructure domain structure
+# Custom agent (Maya) + filesystem MCP server
+
+@maya Design a new Hyper-V VM deployment function
+# Maya's expertise + filesystem (existing code) + sequential-thinking (design)
+```
+
+#### Pattern 2: Quality-Focused Workflows
+
+Combining testing expertise with MCP capabilities:
+
+```
+@jessica Analyze test coverage for OrchestrationEngine
+# Custom agent (Jessica) + filesystem (code) + git (changes)
+
+@jessica Create tests for recent security module changes
+# Jessica's expertise + git (changes) + powershell-docs (patterns)
+```
+
+#### Pattern 3: Documentation and Knowledge
+
+Using documentation expertise with context:
+
+```
+@olivia Generate documentation for the new automation functions
+# Custom agent (Olivia) + filesystem (code) + powershell-docs (standards)
+
+@olivia Update README with latest playbook examples
+# Olivia's expertise + filesystem (playbooks) + github (existing docs)
+```
+
+#### Pattern 4: Security-Aware Development
+
+Leveraging security expertise with full context:
+
+```
+@sarah Review certificate management code for vulnerabilities
+# Custom agent (Sarah) + filesystem (code) + git (history) + github (issues)
+
+@sarah Audit the security domain for compliance with best practices
+# Sarah's expertise + filesystem + powershell-docs
+```
+
+### MCP Server + Agent Workflow Examples
+
+**Example 1: Adding a New Feature**
+
+```
+1. @david Plan a new VM snapshot orchestration feature
+   # David (project manager) uses sequential-thinking + filesystem
+
+2. @maya Implement the snapshot functionality in infrastructure domain
+   # Maya uses filesystem (existing code) + powershell-docs (patterns)
+
+3. @jessica Create comprehensive tests for snapshot feature
+   # Jessica uses filesystem (implementation) + existing test patterns
+
+4. @sarah Review snapshot code for security issues
+   # Sarah uses filesystem + git (changes) + security knowledge
+
+5. @olivia Document the new snapshot feature
+   # Olivia uses filesystem (code) + examples + standards
+```
+
+**Example 2: Debugging a Test Failure**
+
+```
+1. @workspace Show me failing test logs from az 0402
+   # Filesystem server retrieves logs
+
+2. @jessica Analyze the test failure and identify root cause
+   # Jessica's expertise + filesystem (test code) + git (recent changes)
+
+3. @marcus Fix the underlying issue in the module
+   # Marcus uses filesystem + powershell-docs
+
+4. @jessica Verify fix and add regression tests
+   # Jessica validates with test expertise
+```
+
+**Example 3: Improving Infrastructure**
+
+```
+1. @workspace Analyze infrastructure domain performance
+   # Sequential-thinking + filesystem
+
+2. @maya Identify optimization opportunities
+   # Maya's infrastructure expertise + code analysis
+
+3. @workspace Check PowerShell best practices for async operations
+   # PowerShell-docs server
+
+4. @maya Implement optimizations following best practices
+   # Maya combines expertise with docs
+
+5. @jessica Validate performance improvements with tests
+   # Jessica ensures quality
 ```
 
 ## Schema Versioning and Updates
