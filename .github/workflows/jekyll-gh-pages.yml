@@ -42,6 +42,16 @@ jobs:
         with:
           source: ./
           destination: ./_site
+      
+      - name: Build Diagnostics
+        run: |
+          echo "::notice::📦 Build Artifact Information"
+          echo "::notice::Site size: $(du -sh _site | cut -f1)"
+          echo "::notice::Total files: $(find _site -type f | wc -l)"
+          echo "::notice::HTML files: $(find _site -name "*.html" | wc -l)"
+          echo "::notice::JSON files: $(find _site -name "*.json" | wc -l)"
+          echo "::notice::Reports: $(ls -1 _site/reports/ 2>/dev/null | wc -l) files"
+          ls -lh _site/reports/*.html 2>/dev/null || echo "::warning::No HTML reports found"
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -54,11 +64,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Pre-deployment Check
+        run: |
+          echo "::notice::Starting GitHub Pages deployment"
+          echo "::notice::Repository: ${{ github.repository }}"
+          echo "::notice::Branch: ${{ github.ref_name }}"
+          echo "::notice::Commit: ${{ github.sha }}"
+          
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        
-      - name: Report Deployment
+          
+      - name: Report Deployment Success
+        if: success()
         shell: pwsh
         run: |
           Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
@@ -68,3 +86,21 @@ jobs:
           Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}reports/dashboard.html"
           Write-Host "  - Reports: ${{ steps.deployment.outputs.page_url }}reports/"
           Write-Host "  - Docs: ${{ steps.deployment.outputs.page_url }}docs/"
+          Write-Host ""
+          Write-Host "⏱️ Deployment Duration: <5 minutes is normal" -ForegroundColor Cyan
+          
+      - name: Diagnose Deployment Failure
+        if: failure()
+        run: |
+          echo "::error::❌ GitHub Pages deployment failed!"
+          echo "::error::"
+          echo "::error::Common causes:"
+          echo "::error::  1. GitHub Pages not enabled in repository settings"
+          echo "::error::  2. Workflow permissions insufficient (need write access)"
+          echo "::error::  3. Pages source not set to 'GitHub Actions'"
+          echo "::error::"
+          echo "::error::Resolution steps:"
+          echo "::error::  • Settings → Pages → Source → 'GitHub Actions'"
+          echo "::error::  • Settings → Actions → General → 'Read and write permissions'"
+          echo "::error::"
+          echo "::error::See DEPLOYMENT-DIAGNOSIS.md for detailed troubleshooting"
