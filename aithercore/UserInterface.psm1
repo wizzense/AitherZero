@@ -399,7 +399,6 @@ function Show-UIMenu {
 
         [hashtable]$CustomActions = @{},
 
-        [switch]$NonInteractive
     )
 
     # Always use better menu system unless in non-interactive mode
