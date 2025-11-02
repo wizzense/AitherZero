@@ -525,8 +525,18 @@ jobs:
         working-directory: mcp-server
         run: |
           echo "🧪 Testing MCP server..."
-          npm test || echo "⚠️ Tests failed but continuing (non-blocking)"
-          echo "✅ Testing complete"
+          npm test
+          
+          TEST_EXIT_CODE=$?
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::warning::⚠️ MCP server tests failed with exit code: $TEST_EXIT_CODE"
+            echo "::warning::Tests are non-blocking, but should be investigated before release"
+          else
+            echo "✅ All tests passed"
+          fi
+          
+          # Don't fail the workflow, but warn prominently
+          exit 0
 
       - name: 📦 Create Package Archive
         working-directory: mcp-server
@@ -555,8 +565,28 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "📢 Publishing to GitHub Packages..."
-          npm publish --access public || echo "⚠️ Publish failed (may already exist)"
-          echo "✅ Publishing complete"
+          
+          # First, validate the package with dry-run
+          npm publish --dry-run
+          DRY_RUN_EXIT=$?
+          
+          if [ $DRY_RUN_EXIT -ne 0 ]; then
+            echo "::error::Package validation failed - dry-run detected issues"
+            exit 1
+          fi
+          
+          # Attempt to publish
+          npm publish --access public
+          PUBLISH_EXIT=$?
+          
+          if [ $PUBLISH_EXIT -eq 0 ]; then
+            echo "✅ Successfully published to GitHub Packages"
+          elif grep -q "Cannot publish over existing version" <<< "$(npm publish --access public 2>&1)"; then
+            echo "::warning::⚠️ Version already exists in registry - this is expected for re-runs"
+          else
+            echo "::error::❌ Publishing failed with unexpected error (exit code: $PUBLISH_EXIT)"
+            exit 1
+          fi
 
       - name: 📊 MCP Server Build Summary
         shell: bash
