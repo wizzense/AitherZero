@@ -47,6 +47,11 @@ Describe '0215_Configure-MCPServers' -Tag 'Unit', 'AutomationScript', 'Developme
             $content = Get-Content $script:ScriptPath -First 5
             $content -join ' ' | Should -Match '#Requires -Version 7'
         }
+
+        It 'Should support WhatIf' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'SupportsShouldProcess'
+        }
     }
 
     Context 'Parameters' {
@@ -247,6 +252,15 @@ Describe '0215_Configure-MCPServers' -Tag 'Unit', 'AutomationScript', 'Developme
         It 'Should have EXAMPLE sections' {
             $content = Get-Content $script:ScriptPath -First 50
             ($content -join ' ') | Should -Match '\.EXAMPLE'
+        }
+    }
+
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }
