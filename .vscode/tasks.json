@@ -92,7 +92,9 @@
       "args": [
         "-NoProfile",
         "-File",
-        "./Initialize-AitherEnvironment.ps1"
+        "./bootstrap.ps1",
+        "-Mode",
+        "Update"
       ],
       "presentation": {
         "reveal": "always",

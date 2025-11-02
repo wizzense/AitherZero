@@ -54,6 +54,57 @@
     "powershell": true
   },
   "github.copilot.editor.enableAutoCompletions": true,
+  
+  // Model Context Protocol (MCP) servers for enhanced Copilot capabilities
+  "github.copilot.chat.mcp.enabled": true,
+  "github.copilot.chat.mcp.servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ],
+      "env": {}
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    },
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "${workspaceFolder}"
+      ],
+      "env": {}
+    },
+    "powershell-docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ],
+      "env": {
+        "ALLOWED_DOMAINS": "docs.microsoft.com,learn.microsoft.com,github.com"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "env": {}
+    }
+  },
 
   // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",

@@ -14,7 +14,9 @@ Model Context Protocol (MCP) servers provide AI coding assistants like GitHub Co
 
 ## Configured MCP Servers
 
-AitherZero includes the following MCP servers in `.github/mcp-servers.json`:
+AitherZero configures the following MCP servers in VS Code settings. The `.github/mcp-servers.json` file serves as documentation and reference but is not automatically loaded by VS Code.
+
+**Note**: MCP servers are configured in `.vscode/settings.json` (workspace) or user `settings.json` (global), not from `.github/mcp-servers.json`.
 
 ### 1. Filesystem Server
 **Purpose**: Provides read/write access to the repository filesystem
@@ -138,9 +140,33 @@ echo "GITHUB_TOKEN=your_token" >> .env
 
 ### Enabling MCP Servers
 
-MCP servers are automatically discovered by GitHub Copilot when configured in `.github/mcp-servers.json`. The configuration file follows the MCP specification.
+MCP servers are configured in VS Code settings (`.vscode/settings.json` for workspace or user `settings.json` for global). AitherZero provides an automation script to set this up properly.
 
-#### Manual Activation (if needed)
+#### Automated Setup (Recommended)
+
+Use the automation script to configure MCP servers:
+
+```bash
+# Configure for current workspace (recommended)
+./automation-scripts/0215_Configure-MCPServers.ps1
+
+# Or using the az wrapper
+az 0215
+
+# Configure globally for all projects
+./automation-scripts/0215_Configure-MCPServers.ps1 -Scope User
+
+# Verify configuration
+./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
+```
+
+The script will:
+1. Check prerequisites (Node.js 18+, GITHUB_TOKEN)
+2. Configure MCP servers in VS Code settings
+3. Validate the configuration
+4. Provide next steps
+
+#### Manual Setup (if needed)
 
 If MCP servers don't activate automatically:
 
