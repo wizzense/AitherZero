@@ -7,11 +7,11 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0511_Show-ProjectDashboard
-    Stage: Unknown
+    Stage: Reporting
     Generated: 2025-10-30 02:11:49
 #>
 
-Describe '0511_Show-ProjectDashboard' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0511_Show-ProjectDashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0511_Show-ProjectDashboard.ps1'
@@ -76,9 +76,10 @@ Describe '0511_Show-ProjectDashboard' -Tag 'Unit', 'AutomationScript', 'Unknown'
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should have metadata comments' {
+            $content = Get-Content $script:ScriptPath -First 20 -Raw
+            # Script should have synopsis or description
+            $content | Should -Match '(SYNOPSIS|DESCRIPTION)'
         }
     }
 

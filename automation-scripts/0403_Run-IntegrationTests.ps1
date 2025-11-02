@@ -184,8 +184,8 @@ try {
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
-    $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
+    $pesterConfig.Run.PassThru = if ($pesterSettings.Run -and ($null -ne $pesterSettings.Run.PassThru)) { $pesterSettings.Run.PassThru } else { $true }
+    $pesterConfig.Run.Exit = if ($pesterSettings.Run -and ($null -ne $pesterSettings.Run.Exit)) { $pesterSettings.Run.Exit } else { $false }
 
     # Apply parallel execution settings from config (if supported)
     if ($pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {

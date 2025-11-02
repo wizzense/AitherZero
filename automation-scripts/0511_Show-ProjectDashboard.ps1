@@ -84,23 +84,39 @@ function Show-TestResults {
     Write-Host ("-" * 40) -ForegroundColor Gray
 
     $testResultsPath = Join-Path $ProjectPath "tests/results"
+    if (-not (Test-Path $testResultsPath)) {
+        Write-Host "Test results directory not found" -ForegroundColor Yellow
+        Write-Host ""
+        return
+    }
+
     $testSummaries = Get-ChildItem -Path $testResultsPath -Filter "*Summary*.json" -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 5
 
     if ($testSummaries) {
         foreach ($summary in $testSummaries) {
-            $data = Get-Content $summary.FullName | ConvertFrom-Json
-            $timestamp = $summary.BaseName -replace '.*-(\d{8}-\d{6}).*', '$1'
+            try {
+                $data = Get-Content $summary.FullName -Raw | ConvertFrom-Json
+                $timestamp = $summary.BaseName -replace '.*-(\d{8}-\d{6}).*', '$1'
 
-            Write-Host "[$timestamp] " -NoNewline -ForegroundColor Gray
+                Write-Host "[$timestamp] " -NoNewline -ForegroundColor Gray
 
-            if ($data.Failed -gt 0) {
-                Write-Host "FAILED" -ForegroundColor Red -NoNewline
-            } else {
-                Write-Host "PASSED" -ForegroundColor Green -NoNewline
+                # Support multiple property name variations
+                $failed = if ($null -ne $data.Failed) { $data.Failed } elseif ($null -ne $data.FailedCount) { $data.FailedCount } else { 0 }
+                $passed = if ($null -ne $data.Passed) { $data.Passed } elseif ($null -ne $data.PassedCount) { $data.PassedCount } else { 0 }
+                $total = if ($null -ne $data.TotalTests) { $data.TotalTests } elseif ($null -ne $data.TotalCount) { $data.TotalCount } else { $passed + $failed }
+                
+                if ($failed -gt 0) {
+                    Write-Host "FAILED" -ForegroundColor Red -NoNewline
+                } else {
+                    Write-Host "PASSED" -ForegroundColor Green -NoNewline
+                }
+
+                Write-Host " - Total: $total, Passed: $passed, Failed: $failed"
             }
-
-            Write-Host " - Total: $($data.TotalTests), Passed: $($data.Passed), Failed: $($data.Failed)"
+            catch {
+                Write-Verbose "Could not parse test summary: $($summary.Name) - $_"
+            }
         }
     } else {
         Write-Host "No test results found" -ForegroundColor Yellow
