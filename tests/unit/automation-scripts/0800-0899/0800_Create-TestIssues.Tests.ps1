@@ -88,8 +88,6 @@ Describe '0800_Create-TestIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('Assignees') | Should -Be $true
         }
 
-        }
-
     }
 
     Context 'Metadata' {
