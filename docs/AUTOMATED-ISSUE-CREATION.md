@@ -145,7 +145,7 @@ Both formats are supported with proper fallbacks.
 ### 3. Test Name Parsing
 **Problem**: Only used `ExpandedName` which may not exist in all reports
 **Fix**: Added fallback chain: `Name ?? ExpandedName ?? 'Unknown Test'`
-**Impact**: Test names always captured correctly
+**Impact**: Test names now consistently captured
 
 ## Usage
 
