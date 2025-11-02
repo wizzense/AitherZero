@@ -331,15 +331,79 @@ The repository uses `.github/copilot.yaml` to route work to specialized agents b
 
 ### Model Context Protocol (MCP) Servers
 
-MCP servers provide enhanced context and capabilities. Configuration in `.github/mcp-servers.json`:
+MCP servers provide enhanced context and capabilities for AI-assisted development. Configuration in `.github/mcp-servers.json`:
 
-- **filesystem**: Repository navigation and file operations
-- **github**: Issues, PRs, repository metadata via GitHub API
-- **git**: Version control operations and history
-- **powershell-docs**: PowerShell best practices and documentation
-- **sequential-thinking**: Complex problem-solving and planning
+#### Available MCP Servers
 
-**Setup**: Requires Node.js 18+ and `GITHUB_TOKEN` environment variable. See [docs/COPILOT-MCP-SETUP.md](../docs/COPILOT-MCP-SETUP.md) for details.
+1. **filesystem** - Repository navigation and file operations
+   - Read/write access to AitherZero codebase
+   - Navigate domain structure, automation scripts, tests
+   - Search across PowerShell modules and configurations
+
+2. **github** - Issues, PRs, repository metadata via GitHub API
+   - Create and manage issues, pull requests
+   - Access repository metadata, labels, milestones
+   - Search code and commit history
+   - Requires `GITHUB_TOKEN` environment variable
+
+3. **git** - Version control operations and history
+   - View commit history and diffs
+   - Check branch status and changes
+   - Analyze repository structure
+   - Track code evolution
+
+4. **powershell-docs** - PowerShell best practices and documentation
+   - Fetch cmdlet documentation from Microsoft Learn
+   - Access PowerShell GitHub repository info
+   - Get best practices for PowerShell development
+   - Restricted to Microsoft and GitHub domains
+
+5. **sequential-thinking** - Complex problem-solving and planning
+   - Break down complex infrastructure tasks
+   - Structured multi-step planning
+   - Architecture design thinking
+   - Problem decomposition for automation
+
+#### Using MCP Servers with AitherZero
+
+MCP servers integrate seamlessly with AitherZero's workflows:
+
+**Example workflows using MCP servers:**
+
+```
+# Use filesystem server to analyze domain structure
+@workspace How is the infrastructure domain organized?
+
+# Use git server to track changes
+@workspace Show recent changes to OrchestrationEngine.psm1
+
+# Use github server for issue management
+@workspace Create issue for improving VM deployment error handling
+
+# Use powershell-docs for best practices
+@workspace What's the best practice for parameter validation in PowerShell 7?
+
+# Use sequential-thinking for complex tasks
+@workspace Help me design a multi-VM deployment workflow with network isolation
+
+# Combine multiple servers
+@workspace Review recent commits to testing domain, check for best practices, and suggest improvements
+```
+
+**Integration with number-based scripts:**
+
+```
+# MCP servers can help understand and execute automation scripts
+@workspace Explain what script 0402 does and show me how to run it
+
+# Get context for orchestration
+@workspace Show me the playbook structure and explain test-quick playbook
+
+# Troubleshoot failures
+@workspace Script 0404 failed - show me the recent changes and PSScriptAnalyzer errors
+```
+
+**Setup**: Requires Node.js 18+ and `GITHUB_TOKEN` environment variable. See [docs/COPILOT-MCP-SETUP.md](../docs/COPILOT-MCP-SETUP.md) for complete setup instructions.
 
 ### Development Environment
 
@@ -371,11 +435,41 @@ See [docs/COPILOT-DEV-ENVIRONMENT.md](../docs/COPILOT-DEV-ENVIRONMENT.md) for co
 @workspace Create issue for documentation update
 ```
 
+**Combine MCP servers with AitherZero workflows**:
+```
+# Leverage filesystem + git + sequential-thinking together
+@workspace Analyze the OrchestrationEngine module structure, recent changes, 
+and help me design a new workflow for parallel test execution
+
+# Use github + powershell-docs for quality improvements
+@workspace Review open issues related to error handling and suggest 
+PowerShell best practices for improving them
+
+# Integrate with number-based scripts
+@workspace Explain how scripts 0400-0499 work together and create a test report
+```
+
 **Provide architectural context**:
 ```
 @workspace Following AitherZero patterns, create a new utility 
 function with proper logging, error handling, and cross-platform support
 ```
+
+### MCP Server Best Practices for AitherZero
+
+When working with MCP servers in AitherZero:
+
+1. **Filesystem server**: Use to understand domain organization and find related functions
+2. **Git server**: Track changes before making modifications, understand code evolution
+3. **GitHub server**: Manage issues/PRs without leaving VS Code, link code to tasks
+4. **PowerShell-docs server**: Validate PowerShell patterns against best practices
+5. **Sequential-thinking server**: Break down complex infrastructure tasks into steps
+
+**Common patterns**:
+- Start with filesystem to explore, then git to understand history
+- Use sequential-thinking for architectural decisions
+- Verify PowerShell code against documentation server
+- Create issues via GitHub server for tracking work
 
 ### AI Development Guidelines
 
