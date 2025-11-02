@@ -311,13 +311,14 @@ jobs:
               $result = Get-Content $file.FullName -Raw | ConvertFrom-Json
               
               if ($null -ne $result.TotalCount) {
-                if ($file.Name -match 'TestReport-Unit|unit-test-results') {
+                # Determine test type by checking parent directory name or file name
+                if ($file.FullName -match 'unit-test-results|TestReport-Unit') {
                   $testType = 'Unit'
-                } elseif ($file.Name -match 'TestReport-Integration|integration-test-results') {
+                } elseif ($file.FullName -match 'integration-test-results|TestReport-Integration') {
                   $testType = 'Integration'
                 } else {
                   $testType = 'Unknown'
-                  Write-Warning "Could not determine test type for: $($file.Name). Defaulting to 'Unknown'."
+                  Write-Warning "Could not determine test type for: $($file.FullName). Defaulting to 'Unknown'."
                 }
                 
                 # Track unique test files if available
