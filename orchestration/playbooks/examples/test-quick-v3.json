@@ -101,7 +101,7 @@
             "id": "summary",
             "name": "Display Test Summary",
             "if": "always()",
-            "script": "Write-Host \"Tests: ${{ steps.runTests.outputs.totalCount }}, Passed: ${{ steps.runTests.outputs.passedCount }}, Failed: ${{ steps.runTests.outputs.failedCount }}\" -ForegroundColor $(if (${{ steps.runTests.outputs.failedCount }} -eq 0) { 'Green' } else { 'Red' })"
+            "script": "Write-Host 'Unit Tests Complete' -ForegroundColor Green"
           }
         ]
       },
@@ -154,7 +154,7 @@
           {
             "id": "aggregate",
             "name": "Create Summary Report",
-            "script": "Write-Host '\\n=== Test Execution Summary ===' -ForegroundColor Cyan; Write-Host 'Unit Tests: ${{ jobs.unit_tests.outputs.testCount }} total, ${{ jobs.unit_tests.outputs.passedCount }} passed' -ForegroundColor Green; Write-Host 'Static Analysis: Completed' -ForegroundColor $(if ('${{ jobs.static_analysis.result }}' -eq 'success') { 'Green' } else { 'Yellow' }); Write-Host 'Syntax Validation: Completed' -ForegroundColor $(if ('${{ jobs.syntax_validation.result }}' -eq 'success') { 'Green' } else { 'Yellow' })"
+            "script": "Write-Host 'Test Execution Summary' -ForegroundColor Cyan"
           }
         ]
       }

@@ -1857,15 +1857,38 @@ function Invoke-JobSteps {
             if ($step.outputs) {
                 foreach ($output in $step.outputs) {
                     try {
-                        # Validate output value expression using AST parsing
-                        if (-not (Test-SafeExpression -Expression $output.value)) {
-                            Write-OrchestrationLog "Step output failed security validation: $($output.value)" -Level 'Warning'
+                        # Only allow output values that are simple variable references or literals
+                        $outputValue = $null
+                        if ($output.value -match '^\s*\$result\.(\w+)\s*$') {
+                            # Result property reference (e.g., $result.TotalCount)
+                            $propName = $Matches[1]
+                            if ($stepResult -and $stepResult -is [hashtable] -and $stepResult.ContainsKey($propName)) {
+                                $outputValue = $stepResult[$propName]
+                            } elseif ($stepResult -and $stepResult.PSObject.Properties.Name -contains $propName) {
+                                $outputValue = $stepResult.$propName
+                            } else {
+                                Write-OrchestrationLog "Step output references unknown result property: $($output.value)" -Level 'Warning'
+                                continue
+                            }
+                        } elseif ($output.value -match '^\s*\$([A-Za-z_][A-Za-z0-9_]*)\s*$') {
+                            # Variable reference (e.g., $varName)
+                            $varName = $Matches[1]
+                            if ($stepEnv.ContainsKey($varName)) {
+                                $outputValue = $stepEnv[$varName]
+                            } elseif ($stepOutputs.ContainsKey($varName)) {
+                                $outputValue = $stepOutputs[$varName]
+                            } else {
+                                Write-OrchestrationLog "Step output references unknown variable: $($output.value)" -Level 'Warning'
+                                continue
+                            }
+                        } elseif ($output.value -match "^\s*['\x22]?[0-9A-Za-z _\-\.]+['\x22]?\s*$") {
+                            # Literal value (string, number, etc.)
+                            $outputValue = $output.value.Trim().Trim('"').Trim("'")
+                        } else {
+                            Write-OrchestrationLog "Step output value is not a simple variable or literal: $($output.value)" -Level 'Warning'
                             continue
                         }
                         
-                        # Safe evaluation using script block
-                        $scriptBlock = [ScriptBlock]::Create($output.value)
-                        $outputValue = & $scriptBlock
                         $stepOutputs[$output.name] = $outputValue
                     } catch {
                         Write-OrchestrationLog "Failed to evaluate step output '$($output.name)': $_" -Level 'Warning'
@@ -2117,22 +2140,23 @@ function Test-JobCondition {
         return $Context.Failed.Count -gt 0
     }
     
-    # Validate condition using AST parsing for enhanced security
-    if (-not (Test-SafeExpression -Expression $Condition)) {
-        Write-OrchestrationLog "Job condition failed security validation: $Condition" -Level 'Error'
-        return $false
+    # Only support safe environment variable comparisons
+    # Pattern: $env:VAR -eq "value" or $env:VAR -ne "value"
+    if ($Condition -match '^\$env:(\w+)\s+(-eq|-ne)\s+[''"]([^''"]*)[''"]$') {
+        $varName = $Matches[1]
+        $operator = $Matches[2]
+        $value = $Matches[3]
+        $envValue = [Environment]::GetEnvironmentVariable($varName)
+        
+        if ($operator -eq '-eq') {
+            return $envValue -eq $value
+        } else {
+            return $envValue -ne $value
+        }
     }
     
-    # Evaluate as PowerShell expression in constrained scope
-    try {
-        # Use script block for safer evaluation
-        $scriptBlock = [ScriptBlock]::Create($Condition)
-        $result = & $scriptBlock
-        return [bool]$result
-    } catch {
-        Write-OrchestrationLog "Failed to evaluate job condition: $Condition - $_" -Level 'Warning'
-        return $false
-    }
+    Write-OrchestrationLog "Job condition uses unsupported syntax: $Condition (only 'always()', 'success()', 'failure()', or simple env var comparisons are supported)" -Level 'Warning'
+    return $false
 }
 
 function Test-StepCondition {
@@ -2158,22 +2182,44 @@ function Test-StepCondition {
         return $false  # We wouldn't reach here if previous step failed without continue-on-error
     }
     
-    # Validate condition using AST parsing for enhanced security
-    if (-not (Test-SafeExpression -Expression $Condition)) {
-        Write-OrchestrationLog "Step condition failed security validation: $Condition" -Level 'Error'
-        return $false
+    # Only support safe variable comparisons
+    # Pattern: $StepOutputs.var -eq value or $env:VAR -eq "value"
+    if ($Condition -match '^\$StepOutputs\.(\w+)\s+(-eq|-ne)\s+(\d+|true|false)$') {
+        $varName = $Matches[1]
+        $operator = $Matches[2]
+        $expectedValue = $Matches[3]
+        
+        $actualValue = $null
+        if ($StepOutputs.ContainsKey($varName)) {
+            $actualValue = $StepOutputs[$varName]
+        }
+        
+        # Convert string "true"/"false" to boolean
+        if ($expectedValue -eq 'true') { $expectedValue = $true }
+        if ($expectedValue -eq 'false') { $expectedValue = $false }
+        
+        if ($operator -eq '-eq') {
+            return $actualValue -eq $expectedValue
+        } else {
+            return $actualValue -ne $expectedValue
+        }
     }
     
-    # Evaluate as PowerShell expression in constrained scope
-    try {
-        # Use script block for safer evaluation
-        $scriptBlock = [ScriptBlock]::Create($Condition)
-        $result = & $scriptBlock
-        return [bool]$result
-    } catch {
-        Write-OrchestrationLog "Failed to evaluate step condition: $Condition - $_" -Level 'Warning'
-        return $false
+    if ($Condition -match '^\$env:(\w+)\s+(-eq|-ne)\s+[''"]([^''"]*)[''"]$') {
+        $varName = $Matches[1]
+        $operator = $Matches[2]
+        $value = $Matches[3]
+        $envValue = [Environment]::GetEnvironmentVariable($varName)
+        
+        if ($operator -eq '-eq') {
+            return $envValue -eq $value
+        } else {
+            return $envValue -ne $value
+        }
     }
+    
+    Write-OrchestrationLog "Step condition uses unsupported syntax: $Condition (only 'always()', 'success()', 'failure()', or simple comparisons are supported)" -Level 'Warning'
+    return $false
 }
 
 function Resolve-JobOutputs {
