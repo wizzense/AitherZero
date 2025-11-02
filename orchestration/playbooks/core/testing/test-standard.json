@@ -1,0 +1,181 @@
+{
+  "metadata": {
+    "name": "test-standard",
+    "description": "Standard pre-commit validation with unit, integration, and analysis",
+    "version": "2.0.0",
+    "category": "testing",
+    "author": "AitherZero Testing Framework",
+    "tags": ["testing", "standard", "pre-commit", "validation", "comprehensive"],
+    "estimatedDuration": "15-20 minutes",
+    "lastUpdated": "2025-11-02T06:00:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester", "PSScriptAnalyzer"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "testPath": "./tests",
+      "outputPath": "./tests/results",
+      "skipCoverage": true,
+      "failFast": false,
+      "continueOnError": true,
+      "minimumCoverage": 70
+    },
+    "profiles": {
+      "quick": {
+        "description": "Skip integration tests for speed",
+        "variables": {
+          "skipIntegration": true,
+          "continueOnError": true
+        }
+      },
+      "strict": {
+        "description": "Strict validation - fail on any error",
+        "variables": {
+          "failFast": true,
+          "continueOnError": false
+        }
+      },
+      "standard": {
+        "description": "Standard balanced validation",
+        "variables": {
+          "failFast": false,
+          "continueOnError": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Environment Setup",
+        "description": "Ensure all testing tools are installed",
+        "sequences": ["0400"],
+        "continueOnError": false,
+        "timeout": 90
+      },
+      {
+        "name": "Syntax Validation",
+        "description": "Validate PowerShell syntax before running tests",
+        "sequences": ["0407"],
+        "variables": {
+          "CheckSyntax": true,
+          "CheckParameters": true,
+          "CheckCommands": true,
+          "ExcludePaths": ["legacy-to-migrate"]
+        },
+        "continueOnError": "{{continueOnError}}",
+        "timeout": 120
+      },
+      {
+        "name": "Unit Tests",
+        "description": "Execute all unit tests without coverage",
+        "sequences": ["0402"],
+        "variables": {
+          "NoCoverage": true,
+          "OutputFormat": "NUnitXml"
+        },
+        "continueOnError": "{{continueOnError}}",
+        "timeout": 300
+      },
+      {
+        "name": "Integration Tests",
+        "description": "Execute integration tests",
+        "sequences": ["0403"],
+        "condition": "!{{skipIntegration:=false}}",
+        "variables": {
+          "IncludeE2E": false
+        },
+        "continueOnError": "{{continueOnError}}",
+        "timeout": 300
+      },
+      {
+        "name": "Code Analysis",
+        "description": "Complete PSScriptAnalyzer analysis",
+        "sequences": ["0404"],
+        "variables": {
+          "IncludeSuppressed": false,
+          "ExcludePaths": ["tests", "legacy-to-migrate", "examples"],
+          "FailOnWarning": false
+        },
+        "continueOnError": "{{continueOnError}}",
+        "timeout": 240
+      },
+      {
+        "name": "Module Manifest Validation",
+        "description": "Validate PowerShell module manifests",
+        "sequences": ["0405"],
+        "variables": {
+          "CheckSyntax": true,
+          "CheckParameters": true,
+          "CheckModuleDependencies": true
+        },
+        "continueOnError": "{{continueOnError}}",
+        "timeout": 120
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [],
+    "postConditions": [
+      {
+        "name": "Tests Executed",
+        "condition": "$results.TotalTests -gt 0",
+        "message": "Tests should have been executed"
+      },
+      {
+        "name": "No Critical Failures",
+        "condition": "$results.CriticalFailures -eq 0",
+        "message": "No critical failures allowed"
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🔍 Starting standard validation suite...",
+      "level": "Information",
+      "channels": ["console", "log"]
+    },
+    "onSuccess": {
+      "message": "✅ Standard validation completed successfully! Code is ready for PR.",
+      "level": "Success",
+      "channels": ["console", "log"],
+      "includeMetrics": true
+    },
+    "onFailure": {
+      "message": "❌ Validation completed with issues - review before creating PR",
+      "level": "Warning",
+      "channels": ["console", "log"],
+      "includeFailures": true
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["HTML", "JSON", "Markdown"],
+    "outputPath": "./tests/reports",
+    "includeMetrics": true,
+    "includeLogs": true,
+    "aggregateResults": true
+  },
+  "postActions": [
+    {
+      "description": "Generate consolidated test report",
+      "type": "script",
+      "inline": "@('\\nStandard Validation Results:', '==========================') | Write-Host -ForegroundColor Cyan; Get-ChildItem './tests/results' -Filter '*Summary*.json' -ErrorAction SilentlyContinue | ForEach-Object { $data = Get-Content $_.FullName | ConvertFrom-Json; Write-Host \"\\n$($_.Name -replace '-Summary.*', ''):\"; $data | Format-List }"
+    },
+    {
+      "description": "Display next steps",
+      "type": "script",
+      "inline": "Write-Host '\\n💡 Next Steps:' -ForegroundColor Yellow; Write-Host '  - Review test results and fix any failures'; Write-Host '  - Run test-full for coverage analysis before major PRs'; Write-Host '  - Use az 0702 to commit changes with AI-generated message'"
+    }
+  ],
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "commentOnPR": false,
+      "uploadArtifacts": false
+    }
+  }
+}
