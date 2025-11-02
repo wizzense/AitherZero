@@ -457,13 +457,15 @@ jobs:
                 if (!errorMsg) return 'unknown';
                 return errorMsg
                   .toLowerCase()
-                  .replace(/\d+/g, 'N')  // Replace all numbers with 'N'
+                  // Replace specific patterns FIRST before general number replacement
+                  .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'GUID')  // Replace GUIDs
+                  .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?/g, 'TIMESTAMP')  // Replace ISO timestamps
+                  .replace(/\d{4}-\d{2}-\d{2}/g, 'DATE')  // Replace dates
+                  .replace(/\b[0-9a-f]{32,}\b/gi, 'HASH')  // Replace long hex strings (hashes)
+                  // THEN replace general patterns
                   .replace(/line \d+/gi, 'line N')  // Normalize line numbers
                   .replace(/at \d+:\d+/g, 'at N:N')  // Normalize position references
-                  .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'GUID')  // Replace GUIDs
-                  .replace(/\b[0-9a-f]{32,}\b/gi, 'HASH')  // Replace long hex strings (hashes)
-                  .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/g, 'TIMESTAMP')  // Replace timestamps
-                  .replace(/\d{4}-\d{2}-\d{2}/g, 'DATE')  // Replace dates
+                  .replace(/\d+/g, 'N')  // Replace all remaining numbers with 'N'
                   .replace(/\s+/g, ' ')  // Normalize whitespace
                   .trim();
               };
