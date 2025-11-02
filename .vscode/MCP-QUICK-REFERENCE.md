@@ -2,27 +2,30 @@
 
 ## Automated Setup
 
-MCP servers are now **automatically built and configured** when you:
+MCP servers are **automatically built and configured** when you:
 
 1. **Open dev container** - `postCreateCommand` builds MCP server
-2. **Start VS Code** - `postStartCommand` runs setup script
+2. **Start VS Code** - `postStartCommand` runs idempotent setup script
 3. **Run task** - Use VS Code task "Setup MCP Servers"
 
-## Manual Commands
+## One Command Does It All
 
 ```powershell
-# Full setup with validation
+# Idempotent setup - safe to run anytime
 ./automation-scripts/0009_Setup-MCPServers.ps1
 
 # Force rebuild
 ./automation-scripts/0009_Setup-MCPServers.ps1 -Force
 
-# Show activation instructions
-./.vscode/activate-mcp.ps1
-
-# Quick build (bash)
-./.vscode/mcp-setup.sh
+# Auto-fix config issues (removes non-existent packages)
+./automation-scripts/0009_Setup-MCPServers.ps1 -FixConfig
 ```
+
+**The script is idempotent** - run it as many times as you want, it will:
+- Only build if needed (or with `-Force`)
+- Detect and warn about config issues
+- Auto-fix known problems with `-FixConfig`
+- Always show activation instructions
 
 ## VS Code Tasks
 
@@ -62,14 +65,18 @@ After building/configuring MCP servers:
 
 ## Available MCP Servers
 
-| Server | Description | Tools |
-|--------|-------------|-------|
-| **aitherzero** | AitherZero automation platform | 8 tools (run_script, list_scripts, search_scripts, execute_playbook, get_configuration, run_tests, run_quality_check, get_project_report) |
-| **filesystem** | Repository file access | Standard filesystem operations |
-| **github** | GitHub API integration | Issues, PRs, repository metadata |
-| **git** | Version control operations | Commits, branches, diffs |
-| **powershell-docs** | PowerShell documentation | Cmdlet references, best practices |
-| **sequential-thinking** | Complex problem solving | Multi-step reasoning |
+| Server | Description | Status |
+|--------|-------------|--------|
+| **aitherzero** | AitherZero automation platform | ✅ Custom server with 8 tools |
+| **filesystem** | Repository file access | ✅ Standard MCP server |
+| **github** | GitHub API integration | ✅ Standard MCP server |
+| **sequential-thinking** | Complex problem solving | ✅ Standard MCP server |
+
+**Removed servers** (non-existent packages that caused Sentry errors):
+- ❌ `git` - Used `@modelcontextprotocol/server-git` (doesn't exist)
+- ❌ `powershell-docs` - Used `@modelcontextprotocol/server-fetch` (doesn't exist)
+
+These caused the error: `Error sending message to https://mcp.sentry.dev/sse: TypeError: Failed to fetch`
 
 ## Troubleshooting
 
