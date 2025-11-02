@@ -321,7 +321,7 @@ try {
         $env:AITHERZERO_QUIET_MODE = 'true'   # Suppress verbose module initialization
         
         # Enable parallel execution in CI for better performance
-        if (-not $pesterSettings.Parallel) {
+        if (-not ($pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel)) {
             $pesterSettings.Parallel = @{}
         }
         $pesterSettings.Parallel.Enabled = $true

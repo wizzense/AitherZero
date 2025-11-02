@@ -18,13 +18,13 @@ AitherZero.psd1 (Module Manifest)
         └── Sequentially loads domain modules: experience → development → testing → reporting → automation → infrastructure
 ```
 
-**Critical**: Always run `./Initialize-AitherEnvironment.ps1` first in new sessions - it loads the module manifest and sets up the environment.
+**Critical**: For new installations, run `./bootstrap.ps1` to set up the environment. For existing installations, the module is auto-loaded via `Import-Module` or `Start-AitherZero.ps1`.
 
 ### Number-Based Orchestration System
 
 Scripts in `/automation-scripts/` follow numeric ranges:
 - **0000-0099**: Environment prep (PowerShell 7, directories)
-- **0100-0199**: Infrastructure (Hyper-V, certificates, networking)  
+- **0100-0199**: Infrastructure (Hyper-V, certificates, networking)
 - **0200-0299**: Dev tools (Git, Node, Python, Docker, VS Code)
 - **0400-0499**: Testing & validation
 - **0500-0599**: Reporting & metrics
@@ -37,7 +37,7 @@ Use the `az` wrapper for script execution: `az 0402` runs unit tests, `az 0404` 
 
 Located in `/domains/` (legacy references may point to `aither-core/`):
 - **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management (57 functions)
-- **configuration/**: Config management with environment switching (36 functions)  
+- **configuration/**: Config management with environment switching (36 functions)
 - **utilities/**: Logging, maintenance, cross-platform helpers (24 functions)
 - **security/**: Credentials, certificates (41 functions)
 - **experience/**: UI components, menus, wizards (22 functions)
@@ -51,7 +51,7 @@ Functions in scriptblocks may lose module scope. Call directly:
 # Wrong - may fail in scriptblocks
 Show-UISpinner { Write-CustomLog "Processing..." }
 
-# Right - call functions directly  
+# Right - call functions directly
 Write-CustomLog "Processing..."
 Show-UISpinner { Start-Process $command }
 ```
@@ -76,15 +76,18 @@ if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
 
 ### Essential Commands
 ```powershell
-# Environment setup (always first)
-./Initialize-AitherEnvironment.ps1
+# Environment setup (new installations)
+./bootstrap.ps1 -Mode New -AutoInstallDeps
+
+# Environment update (existing installations)
+./bootstrap.ps1 -Mode Update
 
 # Main interactive entry
 ./Start-AitherZero.ps1
 
 # Run numbered scripts
 az 0402              # Unit tests
-az 0404              # PSScriptAnalyzer  
+az 0404              # PSScriptAnalyzer
 az 0407              # Syntax validation
 az 0510 -ShowAll     # Project report
 
@@ -112,7 +115,7 @@ Invoke-Pester -Path "./tests"
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick   # Fast validation
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full    # Complete tests
 
-# Direct sequence execution  
+# Direct sequence execution
 Invoke-OrchestrationSequence -Sequence "0000-0099" -Configuration $Config
 ```
 
@@ -120,13 +123,13 @@ Invoke-OrchestrationSequence -Sequence "0000-0099" -Configuration $Config
 
 Hierarchical config loading:
 1. Default values in code
-2. `/config.json` file  
+2. `/config.json` file
 3. Playbook variables
 4. Command-line parameters
 
 Key sections:
 - `Core.Profile`: Minimal, Standard, Developer, Full
-- `Automation.MaxConcurrency`: Parallel execution limit  
+- `Automation.MaxConcurrency`: Parallel execution limit
 - `Testing.Profile`: Quick, Standard, Full, CI
 
 ## Common Issues & Solutions
@@ -148,7 +151,7 @@ Key sections:
 ## File Locations to Know
 
 - **Main entry**: `/Start-AitherZero.ps1`
-- **Environment setup**: `/Initialize-AitherEnvironment.ps1` 
+- **Environment setup**: `/bootstrap.ps1`
 - **Module manifest**: `/AitherZero.psd1`
 - **Scripts**: `/automation-scripts/` (numbered 0000-9999)
 - **Config**: `/config.json`
@@ -159,7 +162,7 @@ Key sections:
 
 Use platform checks for Windows-specific features:
 - Hyper-V: Windows only
-- WSL2: Windows only  
+- WSL2: Windows only
 - Certificate Authority: Windows only
 - All other tools: Cross-platform (PowerShell 7+)
 
@@ -167,7 +170,7 @@ Check exit codes: 0=success, 1=error, 3010=restart required
 
 ## Before Making Changes
 
-1. Run `./Initialize-AitherEnvironment.ps1` 
+1. Ensure environment is set up (`./bootstrap.ps1 -Mode Update` if needed)
 2. Validate with `az 0404` (PSScriptAnalyzer)
 3. Test with appropriate domain tests
 4. Check transcript logs in `logs/transcript-*.log` for errors
@@ -297,7 +300,7 @@ AitherZero includes comprehensive GitHub Copilot enhancement features to make AI
 
 4. **Combine prompts:**
    ```
-   @copilot Use use-aitherzero-workflows to run tests, 
+   @copilot Use use-aitherzero-workflows to run tests,
    then use test-failure-triage if any fail
    ```
 
@@ -451,7 +454,7 @@ PowerShell best practices for improving them
 
 **Provide architectural context**:
 ```
-@workspace Following AitherZero patterns, create a new utility 
+@workspace Following AitherZero patterns, create a new utility
 function with proper logging, error handling, and cross-platform support
 ```
 
