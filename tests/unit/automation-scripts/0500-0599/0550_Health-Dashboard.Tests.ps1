@@ -48,7 +48,6 @@ Describe '0550_Health-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('ShowAll') | Should -Be $true
         }
-
     }
 
     Context 'Metadata' {

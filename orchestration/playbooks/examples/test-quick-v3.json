@@ -1,0 +1,209 @@
+{
+  "metadata": {
+    "name": "test-quick-v3",
+    "description": "Fast validation using GitHub Actions-style jobs and steps - demonstrates v3.0 schema",
+    "version": "3.0.0",
+    "category": "testing",
+    "author": "AitherZero Testing Framework",
+    "tags": ["testing", "quick", "development", "validation", "v3"],
+    "estimatedDuration": "5-10 minutes",
+    "lastUpdated": "2025-01-02T00:00:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester", "PSScriptAnalyzer"],
+    "platforms": ["CrossPlatform"]
+  },
+  "orchestration": {
+    "env": {
+      "AITHERZERO_CI": "true",
+      "testPath": "./tests",
+      "outputPath": "./tests/results"
+    },
+    "concurrency": {
+      "group": "test-quick",
+      "cancelInProgress": true,
+      "maxConcurrency": 4
+    },
+    "defaults": {
+      "continueOnError": false,
+      "timeout": 600,
+      "retries": 0,
+      "shell": "pwsh"
+    },
+    "jobs": {
+      "setup": {
+        "name": "Setup Testing Environment",
+        "description": "Verify testing tools are installed and environment is ready",
+        "outputs": {
+          "pesterVersion": "${{ steps.checkTools.outputs.pesterVersion }}",
+          "psaVersion": "${{ steps.checkTools.outputs.psaVersion }}"
+        },
+        "steps": [
+          {
+            "id": "checkTools",
+            "name": "Check Testing Tools",
+            "run": "0400",
+            "with": {
+              "Validate": true
+            },
+            "outputs": [
+              {
+                "name": "pesterVersion",
+                "value": "(Get-Module Pester -ListAvailable | Select-Object -First 1).Version.ToString()"
+              },
+              {
+                "name": "psaVersion",
+                "value": "(Get-Module PSScriptAnalyzer -ListAvailable | Select-Object -First 1).Version.ToString()"
+              }
+            ]
+          }
+        ]
+      },
+      "unit_tests": {
+        "name": "Unit Tests",
+        "description": "Run all unit tests without coverage",
+        "needs": ["setup"],
+        "env": {
+          "NoCoverage": "true"
+        },
+        "outputs": {
+          "testCount": "${{ steps.runTests.outputs.totalCount }}",
+          "passedCount": "${{ steps.runTests.outputs.passedCount }}",
+          "failedCount": "${{ steps.runTests.outputs.failedCount }}"
+        },
+        "steps": [
+          {
+            "id": "runTests",
+            "name": "Execute Unit Tests",
+            "run": "0402",
+            "with": {
+              "NoCoverage": true,
+              "OutputFormat": "NUnitXml"
+            },
+            "timeout": 300,
+            "outputs": [
+              {
+                "name": "totalCount",
+                "value": "$result.TotalCount"
+              },
+              {
+                "name": "passedCount",
+                "value": "$result.PassedCount"
+              },
+              {
+                "name": "failedCount",
+                "value": "$result.FailedCount"
+              }
+            ]
+          },
+          {
+            "id": "summary",
+            "name": "Display Test Summary",
+            "if": "always()",
+            "script": "Write-Host 'Unit Tests Complete' -ForegroundColor Green"
+          }
+        ]
+      },
+      "static_analysis": {
+        "name": "Static Analysis",
+        "description": "Run PSScriptAnalyzer for code quality",
+        "needs": ["setup"],
+        "continueOnError": true,
+        "env": {
+          "ExcludePaths": "tests,legacy-to-migrate,examples"
+        },
+        "steps": [
+          {
+            "id": "analyzer",
+            "name": "Run PSScriptAnalyzer",
+            "run": "0404",
+            "with": {
+              "ExcludePaths": ["tests", "legacy-to-migrate", "examples"],
+              "Severity": "Warning"
+            },
+            "continueOnError": true
+          }
+        ]
+      },
+      "syntax_validation": {
+        "name": "AST Validation",
+        "description": "Validate PowerShell syntax",
+        "needs": ["setup"],
+        "continueOnError": true,
+        "steps": [
+          {
+            "id": "syntaxCheck",
+            "name": "Validate Syntax",
+            "run": "0405",
+            "with": {
+              "CheckSyntax": true,
+              "CheckParameters": false,
+              "CheckCommands": false,
+              "CheckModuleDependencies": false
+            }
+          }
+        ]
+      },
+      "summary": {
+        "name": "Test Summary",
+        "description": "Aggregate and display final results",
+        "needs": ["unit_tests", "static_analysis", "syntax_validation"],
+        "if": "always()",
+        "steps": [
+          {
+            "id": "aggregate",
+            "name": "Create Summary Report",
+            "script": "Write-Host 'Test Execution Summary' -ForegroundColor Cyan"
+          }
+        ]
+      }
+    }
+  },
+  "validation": {
+    "preConditions": [
+      {
+        "name": "PowerShell Version",
+        "condition": "$PSVersionTable.PSVersion.Major -ge 7",
+        "message": "PowerShell 7.0 or higher is required"
+      }
+    ],
+    "postConditions": [
+      {
+        "name": "Tests Passed",
+        "condition": "$jobs.unit_tests.outputs.failedCount -eq 0",
+        "message": "All unit tests must pass"
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🚀 Starting quick validation tests...",
+      "level": "Information",
+      "channels": ["console", "log"]
+    },
+    "onSuccess": {
+      "message": "✅ Quick validation passed! All tests completed successfully.",
+      "level": "Success",
+      "channels": ["console", "log"]
+    },
+    "onFailure": {
+      "message": "❌ Quick validation failed - check test results for details",
+      "level": "Error",
+      "channels": ["console", "log"]
+    },
+    "onWarning": {
+      "message": "⚠️ Quick validation completed with warnings",
+      "level": "Warning",
+      "channels": ["console", "log"]
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["JSON", "Markdown"],
+    "outputPath": "./reports/test-quick",
+    "includeMetrics": true,
+    "includeLogs": false,
+    "summary": true
+  }
+}
