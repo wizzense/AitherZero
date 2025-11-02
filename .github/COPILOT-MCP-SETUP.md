@@ -17,7 +17,7 @@ The AitherZero MCP (Model Context Protocol) server is automatically loaded when 
 
 ## Configuration
 
-The MCP server is configured in `.github/mcp-servers.json`:
+The MCP server is configured in `.vscode/mcp-servers.json` (workspace-level):
 
 ```json
 {
