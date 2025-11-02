@@ -73,9 +73,16 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # Get script root (AitherZero root)
-$AitherZeroRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+# This script is in automation-scripts/, so parent is AitherZero root
+$AitherZeroRoot = Split-Path $PSScriptRoot -Parent
 $TemplatePath = Join-Path $AitherZeroRoot "templates" "mcp-server-template"
-$TargetPath = Join-Path $OutputPath "$ServerName-mcp-server"
+
+# Create output path if it doesn't exist, then get absolute path
+if (-not (Test-Path $OutputPath)) {
+    New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+}
+$OutputPathResolved = (Resolve-Path $OutputPath).Path
+$TargetPath = Join-Path $OutputPathResolved "$ServerName-mcp-server"
 
 Write-Host "╔══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║                                                                      ║" -ForegroundColor Cyan
@@ -119,7 +126,10 @@ if (Test-Path $TargetPath) {
 # Create target directory
 Write-Host "📁 Creating directory structure..." -ForegroundColor Cyan
 try {
+    # Suppress progress bar for cleaner output
+    $ProgressPreference = 'SilentlyContinue'
     Copy-Item -Path $TemplatePath -Destination $TargetPath -Recurse -Force
+    $ProgressPreference = 'Continue'
     Write-Host "   ✓ Directory created" -ForegroundColor Green
 } catch {
     Write-Host "   ❌ Failed to create directory: $_" -ForegroundColor Red

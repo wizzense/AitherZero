@@ -1,7 +1,7 @@
 {
   "name": "@YOURORG/SERVERNAME-mcp-server",
   "version": "0.1.0",
-  "description": "Model Context Protocol server for DESCRIPTION",
+  "description": "DESCRIPTION",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
