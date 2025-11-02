@@ -3,6 +3,15 @@ name: 'Phase 2 - Intelligent Issue Creation'
 
 # Comprehensive automated issue creation system that captures ALL failure types
 # and creates intelligent, deduplicated issues with agent routing and rich context
+#
+# IMPORTANT: Issue creation is RESTRICTED to specific PR contexts:
+# - Only creates issues for PRs from dev/develop → main branch
+# - Manual workflow_dispatch runs are always allowed
+# - Scheduled runs are always allowed
+# - Direct pushes to main/dev branches are allowed
+#
+# This prevents issue spam for feature branches and ensures issues are only
+# created for release-candidate and production-bound changes.
 
 on:
   workflow_run:
@@ -42,9 +51,101 @@ env:
   ISSUE_STATE_DIR: ./reports/issue-state
 
 jobs:
+  check-pr-context:
+    name: 🔍 Check PR Context (dev→main only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    outputs:
+      should-create-issues: ${{ steps.check.outputs.should-create-issues }}
+      pr-context: ${{ steps.check.outputs.pr-context }}
+
+    steps:
+      - name: 🔍 Check if PR is dev→main
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventName = context.eventName;
+
+            // Always allow manual runs and scheduled runs
+            if (eventName === 'workflow_dispatch' || eventName === 'schedule') {
+              console.log('✅ Manual or scheduled run - allowing issue creation');
+              core.setOutput('should-create-issues', 'true');
+              core.setOutput('pr-context', JSON.stringify({ type: 'manual', allowed: true }));
+              return;
+            }
+
+            // For workflow_run events, check the PR context
+            if (eventName === 'workflow_run') {
+              const workflowRun = context.payload.workflow_run;
+
+              // Get the pull requests associated with this workflow run
+              const pullRequests = workflowRun.pull_requests || [];
+
+              if (pullRequests.length === 0) {
+                // Not a PR - could be a direct push to main/dev
+                console.log('ℹ️ No PR associated with this workflow run');
+
+                // Check if it's a push to main or dev branch
+                const headBranch = workflowRun.head_branch;
+                if (headBranch === 'main' || headBranch === 'develop' || headBranch === 'dev') {
+                  console.log(`✅ Direct push to ${headBranch} - allowing issue creation`);
+                  core.setOutput('should-create-issues', 'true');
+                  core.setOutput('pr-context', JSON.stringify({
+                    type: 'push',
+                    branch: headBranch,
+                    allowed: true
+                  }));
+                } else {
+                  console.log(`❌ Push to ${headBranch} - skipping issue creation`);
+                  core.setOutput('should-create-issues', 'false');
+                  core.setOutput('pr-context', JSON.stringify({
+                    type: 'push',
+                    branch: headBranch,
+                    allowed: false
+                  }));
+                }
+                return;
+              }
+
+              // Check each PR - we only want dev→main PRs
+              for (const pr of pullRequests) {
+                console.log(`Checking PR #${pr.number}: ${pr.head.ref} → ${pr.base.ref}`);
+
+                // Check if this is a dev→main PR
+                const baseBranch = pr.base.ref;
+                const headBranch = pr.head.ref;
+
+                if (baseBranch === 'main' && (headBranch === 'dev' || headBranch === 'develop')) {
+                  console.log(`✅ Found dev→main PR #${pr.number} - allowing issue creation`);
+                  core.setOutput('should-create-issues', 'true');
+                  core.setOutput('pr-context', JSON.stringify({
+                    type: 'pr',
+                    number: pr.number,
+                    base: baseBranch,
+                    head: headBranch,
+                    allowed: true
+                  }));
+                  return;
+                }
+              }
+
+              // No matching PR found
+              console.log('❌ No dev→main PR found - skipping issue creation');
+              console.log('Issue creation is only enabled for PRs from dev/develop to main');
+              core.setOutput('should-create-issues', 'false');
+              core.setOutput('pr-context', JSON.stringify({
+                type: 'pr',
+                allowed: false,
+                reason: 'Not a dev→main PR'
+              }));
+            }
+
   comprehensive-failure-analysis:
     name: 🔍 Comprehensive Failure Analysis
     runs-on: ubuntu-latest
+    needs: check-pr-context
+    if: needs.check-pr-context.outputs.should-create-issues == 'true'
 
     outputs:
       has-failures: ${{ steps.analysis.outputs.has-failures }}
@@ -53,6 +154,21 @@ jobs:
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+
+      - name: 📋 Log PR Context
+        shell: pwsh
+        run: |
+          Write-Host "🔍 PR Context Information:" -ForegroundColor Cyan
+          $prContext = '${{ needs.check-pr-context.outputs.pr-context }}' | ConvertFrom-Json
+          Write-Host "  Type: $($prContext.type)" -ForegroundColor White
+          if ($prContext.number) {
+            Write-Host "  PR Number: $($prContext.number)" -ForegroundColor White
+            Write-Host "  Base Branch: $($prContext.base)" -ForegroundColor White
+            Write-Host "  Head Branch: $($prContext.head)" -ForegroundColor White
+          } elseif ($prContext.branch) {
+            Write-Host "  Branch: $($prContext.branch)" -ForegroundColor White
+          }
+          Write-Host "  Allowed: $($prContext.allowed)" -ForegroundColor $(if ($prContext.allowed) { 'Green' } else { 'Red' })
 
       - name: 📊 Download Workflow Artifacts
         if: github.event_name == 'workflow_run'
@@ -324,16 +440,71 @@ jobs:
 
             console.log(`Found ${existingIssues.length} existing automated issues`);
 
-            // Helper: Create fingerprint for deduplication
+            // Helper: Create fingerprint for deduplication with enhanced normalization
             function createFingerprint(failure) {
-              const normalizedData = JSON.stringify({
+              // Normalize file paths - remove absolute paths, keep only relative structure
+              const normalizeFile = (filePath) => {
+                if (!filePath) return 'unknown';
+                return filePath
+                  .replace(/\\/g, '/')  // Normalize path separators
+                  .replace(/^.*?(domains|tests|automation-scripts|infrastructure)/i, '$1')  // Remove prefix before key directories
+                  .toLowerCase()
+                  .trim();
+              };
+
+              // Normalize error messages - remove volatile data that changes between runs
+              const normalizeError = (errorMsg) => {
+                if (!errorMsg) return 'unknown';
+                return errorMsg
+                  .toLowerCase()
+                  .replace(/\d+/g, 'N')  // Replace all numbers with 'N'
+                  .replace(/line \d+/gi, 'line N')  // Normalize line numbers
+                  .replace(/at \d+:\d+/g, 'at N:N')  // Normalize position references
+                  .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'GUID')  // Replace GUIDs
+                  .replace(/\b[0-9a-f]{32,}\b/gi, 'HASH')  // Replace long hex strings (hashes)
+                  .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/g, 'TIMESTAMP')  // Replace timestamps
+                  .replace(/\d{4}-\d{2}-\d{2}/g, 'DATE')  // Replace dates
+                  .replace(/\s+/g, ' ')  // Normalize whitespace
+                  .trim();
+              };
+
+              // Normalize test names - keep the test name but remove parameters
+              const normalizeTestName = (testName) => {
+                if (!testName) return 'unknown';
+                return testName
+                  .replace(/\s*\[.*?\]\s*/g, '')  // Remove parameterized test data in brackets
+                  .replace(/\s+\d+\s+/g, ' ')  // Remove numbers between words
+                  .toLowerCase()
+                  .trim();
+              };
+
+              // Build stable fingerprint from normalized data
+              const fingerprintData = {
                 type: failure.Type || failure.TestType || 'unknown',
-                file: (failure.File || '').replace(/\\/g, '/').toLowerCase(),
-                error: (failure.ErrorMessage || failure.Message || '').replace(/\d+/g, 'N').toLowerCase(),
-                category: failure.Category || failure.RuleName || 'general'
+                file: normalizeFile(failure.File),
+                error: normalizeError(failure.ErrorMessage || failure.Message),
+                category: failure.Category || failure.RuleName || 'general',
+                testName: failure.TestName ? normalizeTestName(failure.TestName) : undefined
+              };
+
+              // Remove undefined values for stable hashing
+              Object.keys(fingerprintData).forEach(key => {
+                if (fingerprintData[key] === undefined) {
+                  delete fingerprintData[key];
+                }
               });
 
-              return crypto.createHash('sha256').update(normalizedData).digest('hex').substring(0, 16);
+              const normalizedData = JSON.stringify(fingerprintData, Object.keys(fingerprintData).sort());
+              const fingerprint = crypto.createHash('sha256').update(normalizedData).digest('hex').substring(0, 16);
+
+              // Log fingerprint generation for debugging
+              console.log(`  Generated fingerprint ${fingerprint} for:`, {
+                file: fingerprintData.file,
+                type: fingerprintData.type,
+                category: fingerprintData.category
+              });
+
+              return fingerprint;
             }
 
             // Helper: Determine agent based on file and error type
