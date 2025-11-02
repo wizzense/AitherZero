@@ -29,7 +29,16 @@
         "@modelcontextprotocol/server-filesystem",
         "."
       ],
-      "tools": []
+      "tools": [
+        "read_file",
+        "read_multiple_files",
+        "write_file",
+        "create_directory",
+        "list_directory",
+        "move_file",
+        "search_files",
+        "get_file_info"
+      ]
     },
     "github": {
       "type": "stdio",
@@ -41,7 +50,17 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       },
-      "tools": []
+      "tools": [
+        "create_or_update_file",
+        "search_repositories",
+        "create_repository",
+        "get_file_contents",
+        "push_files",
+        "create_issue",
+        "create_pull_request",
+        "fork_repository",
+        "create_branch"
+      ]
     },
     "git": {
       "type": "stdio",
@@ -52,7 +71,15 @@
         "--repository",
         "."
       ],
-      "tools": []
+      "tools": [
+        "git_status",
+        "git_diff",
+        "git_commit",
+        "git_add",
+        "git_reset",
+        "git_log",
+        "git_show"
+      ]
     },
     "powershell-docs": {
       "type": "stdio",
@@ -61,7 +88,11 @@
         "-y",
         "@modelcontextprotocol/server-powershell-docs"
       ],
-      "tools": []
+      "tools": [
+        "search_powershell_docs",
+        "get_command_help",
+        "get_about_topic"
+      ]
     }
   }
 }
