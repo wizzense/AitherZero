@@ -43,7 +43,7 @@
             "args": ["-NoLogo"]
           }
         },
-        "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+        "powershell.powerShellDefaultVersion": "PowerShell",
         "powershell.integratedConsole.showOnStartup": false,
         "files.eol": "\n",
         "files.trimTrailingWhitespace": true,
@@ -86,3 +86,4 @@
 
   "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
 }
+

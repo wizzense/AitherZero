@@ -12,13 +12,11 @@
     "**/logs": true,
     "**/testResults.xml": true
   },
-  // PowerShell settings
-  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+  "powershell.powerShellDefaultVersion": "PowerShell",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
   "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
-  // Language-specific settings
   "[powershell]": {
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
@@ -42,7 +40,6 @@
       "other": "off"
     }
   },
-  // GitHub Copilot settings
   "github.copilot.enable": {
     "*": true,
     "yaml": true,
@@ -51,59 +48,6 @@
     "powershell": true
   },
   "github.copilot.editor.enableAutoCompletions": true,
-  // Model Context Protocol (MCP) servers for enhanced Copilot capabilities
-  "github.copilot.advanced": {
-    "debug.overrideProxyUrl": "http://localhost:5001",
-    "debug.showTools": true
-  },
-  "github.copilot.chat.advanced": {
-    "tools": {
-      "filesystem": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-filesystem",
-          "${workspaceFolder}"
-        ]
-      },
-      "github": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-github"
-        ],
-        "env": {
-          "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
-        }
-      },
-      "git": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-git",
-          "${workspaceFolder}"
-        ]
-      },
-      "powershell-docs": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-fetch"
-        ],
-        "env": {
-          "ALLOWED_DOMAINS": "docs.microsoft.com,learn.microsoft.com,github.com"
-        }
-      },
-      "sequential-thinking": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-sequential-thinking"
-        ]
-      }
-    }
-  },
-  // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.defaultProfile.linux": "pwsh",
   "terminal.integrated.profiles.windows": {
@@ -138,16 +82,49 @@
       "icon": "terminal-powershell"
     }
   },
-  // Git settings
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
-  // Search settings
   "search.exclude": {
     "**/node_modules": true,
     "**/logs": true,
     "**/*.log": true,
     "**/testResults.xml": true,
     "**/reports": true
+  },
+  "github.copilot.chat.mcp.enabled": true,
+  "github.copilot.chat.mcp.servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "everything": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    }
   }
 }
