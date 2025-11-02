@@ -9,7 +9,7 @@
     Script: 0530_View-Logs
     Stage: Reporting
     Description: View and manage AitherZero logs
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0530_View-Logs' -Tag 'Unit', 'AutomationScript', 'Reporting' {
@@ -73,8 +73,8 @@ Describe '0530_View-Logs' -Tag 'Unit', 'AutomationScript', 'Reporting' {
 
     Context 'Metadata' {
         It 'Should be in stage: Reporting' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

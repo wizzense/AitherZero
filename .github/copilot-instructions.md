@@ -18,13 +18,13 @@ AitherZero.psd1 (Module Manifest)
         └── Sequentially loads domain modules: experience → development → testing → reporting → automation → infrastructure
 ```
 
-**Critical**: For new installations, run `./bootstrap.ps1` to set up the environment. For existing installations, the module is auto-loaded via `Import-Module` or `Start-AitherZero.ps1`.
+**Critical**: Always run `./Initialize-AitherEnvironment.ps1` first in new sessions - it loads the module manifest and sets up the environment.
 
 ### Number-Based Orchestration System
 
 Scripts in `/automation-scripts/` follow numeric ranges:
 - **0000-0099**: Environment prep (PowerShell 7, directories)
-- **0100-0199**: Infrastructure (Hyper-V, certificates, networking)
+- **0100-0199**: Infrastructure (Hyper-V, certificates, networking)  
 - **0200-0299**: Dev tools (Git, Node, Python, Docker, VS Code)
 - **0400-0499**: Testing & validation
 - **0500-0599**: Reporting & metrics
@@ -37,7 +37,7 @@ Use the `az` wrapper for script execution: `az 0402` runs unit tests, `az 0404` 
 
 Located in `/domains/` (legacy references may point to `aither-core/`):
 - **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management (57 functions)
-- **configuration/**: Config management with environment switching (36 functions)
+- **configuration/**: Config management with environment switching (36 functions)  
 - **utilities/**: Logging, maintenance, cross-platform helpers (24 functions)
 - **security/**: Credentials, certificates (41 functions)
 - **experience/**: UI components, menus, wizards (22 functions)
@@ -51,7 +51,7 @@ Functions in scriptblocks may lose module scope. Call directly:
 # Wrong - may fail in scriptblocks
 Show-UISpinner { Write-CustomLog "Processing..." }
 
-# Right - call functions directly
+# Right - call functions directly  
 Write-CustomLog "Processing..."
 Show-UISpinner { Start-Process $command }
 ```
@@ -76,18 +76,15 @@ if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
 
 ### Essential Commands
 ```powershell
-# Environment setup (new installations)
-./bootstrap.ps1 -Mode New -AutoInstallDeps
-
-# Environment update (existing installations)
-./bootstrap.ps1 -Mode Update
+# Environment setup (always first)
+./Initialize-AitherEnvironment.ps1
 
 # Main interactive entry
 ./Start-AitherZero.ps1
 
 # Run numbered scripts
 az 0402              # Unit tests
-az 0404              # PSScriptAnalyzer
+az 0404              # PSScriptAnalyzer  
 az 0407              # Syntax validation
 az 0510 -ShowAll     # Project report
 
@@ -115,7 +112,7 @@ Invoke-Pester -Path "./tests"
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick   # Fast validation
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full    # Complete tests
 
-# Direct sequence execution
+# Direct sequence execution  
 Invoke-OrchestrationSequence -Sequence "0000-0099" -Configuration $Config
 ```
 
@@ -123,13 +120,13 @@ Invoke-OrchestrationSequence -Sequence "0000-0099" -Configuration $Config
 
 Hierarchical config loading:
 1. Default values in code
-2. `/config.json` file
+2. `/config.json` file  
 3. Playbook variables
 4. Command-line parameters
 
 Key sections:
 - `Core.Profile`: Minimal, Standard, Developer, Full
-- `Automation.MaxConcurrency`: Parallel execution limit
+- `Automation.MaxConcurrency`: Parallel execution limit  
 - `Testing.Profile`: Quick, Standard, Full, CI
 
 ## Common Issues & Solutions
@@ -151,7 +148,7 @@ Key sections:
 ## File Locations to Know
 
 - **Main entry**: `/Start-AitherZero.ps1`
-- **Environment setup**: `/bootstrap.ps1`
+- **Environment setup**: `/Initialize-AitherEnvironment.ps1` 
 - **Module manifest**: `/AitherZero.psd1`
 - **Scripts**: `/automation-scripts/` (numbered 0000-9999)
 - **Config**: `/config.json`
@@ -162,7 +159,7 @@ Key sections:
 
 Use platform checks for Windows-specific features:
 - Hyper-V: Windows only
-- WSL2: Windows only
+- WSL2: Windows only  
 - Certificate Authority: Windows only
 - All other tools: Cross-platform (PowerShell 7+)
 
@@ -170,7 +167,7 @@ Check exit codes: 0=success, 1=error, 3010=restart required
 
 ## Before Making Changes
 
-1. Ensure environment is set up (`./bootstrap.ps1 -Mode Update` if needed)
+1. Run `./Initialize-AitherEnvironment.ps1` 
 2. Validate with `az 0404` (PSScriptAnalyzer)
 3. Test with appropriate domain tests
 4. Check transcript logs in `logs/transcript-*.log` for errors
@@ -300,7 +297,7 @@ AitherZero includes comprehensive GitHub Copilot enhancement features to make AI
 
 4. **Combine prompts:**
    ```
-   @copilot Use use-aitherzero-workflows to run tests,
+   @copilot Use use-aitherzero-workflows to run tests, 
    then use test-failure-triage if any fail
    ```
 
@@ -334,79 +331,15 @@ The repository uses `.github/copilot.yaml` to route work to specialized agents b
 
 ### Model Context Protocol (MCP) Servers
 
-MCP servers provide enhanced context and capabilities for AI-assisted development. Configuration in `.github/mcp-servers.json`:
+MCP servers provide enhanced context and capabilities. Configuration in `.github/mcp-servers.json`:
 
-#### Available MCP Servers
+- **filesystem**: Repository navigation and file operations
+- **github**: Issues, PRs, repository metadata via GitHub API
+- **git**: Version control operations and history
+- **powershell-docs**: PowerShell best practices and documentation
+- **sequential-thinking**: Complex problem-solving and planning
 
-1. **filesystem** - Repository navigation and file operations
-   - Read/write access to AitherZero codebase
-   - Navigate domain structure, automation scripts, tests
-   - Search across PowerShell modules and configurations
-
-2. **github** - Issues, PRs, repository metadata via GitHub API
-   - Create and manage issues, pull requests
-   - Access repository metadata, labels, milestones
-   - Search code and commit history
-   - Requires `GITHUB_TOKEN` environment variable
-
-3. **git** - Version control operations and history
-   - View commit history and diffs
-   - Check branch status and changes
-   - Analyze repository structure
-   - Track code evolution
-
-4. **powershell-docs** - PowerShell best practices and documentation
-   - Fetch cmdlet documentation from Microsoft Learn
-   - Access PowerShell GitHub repository info
-   - Get best practices for PowerShell development
-   - Restricted to Microsoft and GitHub domains
-
-5. **sequential-thinking** - Complex problem-solving and planning
-   - Break down complex infrastructure tasks
-   - Structured multi-step planning
-   - Architecture design thinking
-   - Problem decomposition for automation
-
-#### Using MCP Servers with AitherZero
-
-MCP servers integrate seamlessly with AitherZero's workflows:
-
-**Example workflows using MCP servers:**
-
-```
-# Use filesystem server to analyze domain structure
-@workspace How is the infrastructure domain organized?
-
-# Use git server to track changes
-@workspace Show recent changes to OrchestrationEngine.psm1
-
-# Use github server for issue management
-@workspace Create issue for improving VM deployment error handling
-
-# Use powershell-docs for best practices
-@workspace What's the best practice for parameter validation in PowerShell 7?
-
-# Use sequential-thinking for complex tasks
-@workspace Help me design a multi-VM deployment workflow with network isolation
-
-# Combine multiple servers
-@workspace Review recent commits to testing domain, check for best practices, and suggest improvements
-```
-
-**Integration with number-based scripts:**
-
-```
-# MCP servers can help understand and execute automation scripts
-@workspace Explain what script 0402 does and show me how to run it
-
-# Get context for orchestration
-@workspace Show me the playbook structure and explain test-quick playbook
-
-# Troubleshoot failures
-@workspace Script 0404 failed - show me the recent changes and PSScriptAnalyzer errors
-```
-
-**Setup**: Requires Node.js 18+ and `GITHUB_TOKEN` environment variable. See [docs/COPILOT-MCP-SETUP.md](../docs/COPILOT-MCP-SETUP.md) for complete setup instructions.
+**Setup**: Requires Node.js 18+ and `GITHUB_TOKEN` environment variable. See [docs/COPILOT-MCP-SETUP.md](../docs/COPILOT-MCP-SETUP.md) for details.
 
 ### Development Environment
 
@@ -438,41 +371,11 @@ See [docs/COPILOT-DEV-ENVIRONMENT.md](../docs/COPILOT-DEV-ENVIRONMENT.md) for co
 @workspace Create issue for documentation update
 ```
 
-**Combine MCP servers with AitherZero workflows**:
-```
-# Leverage filesystem + git + sequential-thinking together
-@workspace Analyze the OrchestrationEngine module structure, recent changes, 
-and help me design a new workflow for parallel test execution
-
-# Use github + powershell-docs for quality improvements
-@workspace Review open issues related to error handling and suggest 
-PowerShell best practices for improving them
-
-# Integrate with number-based scripts
-@workspace Explain how scripts 0400-0499 work together and create a test report
-```
-
 **Provide architectural context**:
 ```
-@workspace Following AitherZero patterns, create a new utility
+@workspace Following AitherZero patterns, create a new utility 
 function with proper logging, error handling, and cross-platform support
 ```
-
-### MCP Server Best Practices for AitherZero
-
-When working with MCP servers in AitherZero:
-
-1. **Filesystem server**: Use to understand domain organization and find related functions
-2. **Git server**: Track changes before making modifications, understand code evolution
-3. **GitHub server**: Manage issues/PRs without leaving VS Code, link code to tasks
-4. **PowerShell-docs server**: Validate PowerShell patterns against best practices
-5. **Sequential-thinking server**: Break down complex infrastructure tasks into steps
-
-**Common patterns**:
-- Start with filesystem to explore, then git to understand history
-- Use sequential-thinking for architectural decisions
-- Verify PowerShell code against documentation server
-- Create issues via GitHub server for tracking work
 
 ### AI Development Guidelines
 

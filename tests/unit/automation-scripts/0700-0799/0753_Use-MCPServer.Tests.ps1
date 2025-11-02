@@ -7,12 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0753_Use-MCPServer
-    Stage: Unknown
+    Stage: AI Tools & Automation
     Description: This demonstrates REAL usage of the MCP server by calling actual tools
-    Generated: 2025-11-02 16:23:20
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0753_Use-MCPServer' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0753_Use-MCPServer' -Tag 'Unit', 'AutomationScript', 'AI Tools & Automation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0753_Use-MCPServer.ps1'
@@ -39,7 +39,7 @@ Describe '0753_Use-MCPServer' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: AI Tools & Automation' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }

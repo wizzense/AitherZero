@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0420_Validate-ComponentQuality
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Comprehensive quality validation tool that checks:
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0420_Validate-ComponentQuality' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0420_Validate-ComponentQuality' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0420_Validate-ComponentQuality.ps1'
@@ -53,6 +54,11 @@ Describe '0420_Validate-ComponentQuality' -Tag 'Unit', 'AutomationScript', 'Unkn
             $cmd.Parameters.ContainsKey('SkipChecks') | Should -Be $true
         }
 
+        It 'Should have parameter: ExcludeDataFiles' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('ExcludeDataFiles') | Should -Be $true
+        }
+
         It 'Should have parameter: OutputPath' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
@@ -81,9 +87,9 @@ Describe '0420_Validate-ComponentQuality' -Tag 'Unit', 'AutomationScript', 'Unkn
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

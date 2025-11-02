@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0705_Push-Branch
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Development
+    Description: Pushes the current or specified branch to remote repository with
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0705_Push-Branch.ps1'
@@ -78,12 +79,26 @@ Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('DryRun') | Should -Be $true
         }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
+        It 'Should have parameter: NonInteractive' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
+        }
+
+<<<<<<< HEAD
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
+=======
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Development' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

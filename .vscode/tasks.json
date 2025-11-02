@@ -92,9 +92,7 @@
       "args": [
         "-NoProfile",
         "-File",
-        "./bootstrap.ps1",
-        "-Mode",
-        "Update"
+        "./Initialize-AitherEnvironment.ps1"
       ],
       "presentation": {
         "reveal": "always",
@@ -146,37 +144,6 @@
         "-Mode",
         "New",
         "-AutoInstallDeps"
-      ],
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Setup MCP Servers",
-      "type": "shell",
-      "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "./automation-scripts/0009_Setup-MCPServers.ps1"
-      ],
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Rebuild MCP Servers",
-      "type": "shell",
-      "command": "pwsh",
-      "args": [
-        "-NoProfile",
-        "-File",
-        "./automation-scripts/0009_Setup-MCPServers.ps1",
-        "-Force"
       ],
       "presentation": {
         "reveal": "always",

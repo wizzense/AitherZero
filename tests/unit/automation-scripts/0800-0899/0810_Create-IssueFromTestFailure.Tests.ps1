@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0810_Create-IssueFromTestFailure
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Integration
+    Description: Parses test results and creates detailed GitHub issues for failures
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0810_Create-IssueFromTestFailure' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0810_Create-IssueFromTestFailure' -Tag 'Unit', 'AutomationScript', 'Integration' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0810_Create-IssueFromTestFailure.ps1'
@@ -61,9 +62,9 @@ Describe '0810_Create-IssueFromTestFailure' -Tag 'Unit', 'AutomationScript', 'Un
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Integration' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

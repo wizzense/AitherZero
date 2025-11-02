@@ -44,6 +44,8 @@ param(
 
     [switch]$OpenInBrowser,
 
+    [switch]$NonInteractive,
+
     [switch]$Force
 )
 
@@ -57,9 +59,6 @@ Import-Module (Join-Path $devModulePath "PullRequestManager.psm1") -Force
 Import-Module (Join-Path $devModulePath "IssueTracker.psm1") -Force
 
 Write-Host "Creating pull request..." -ForegroundColor Cyan
-
-# Detect CI environment
-$isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
 
 # Check GitHub CLI
 try {
@@ -80,7 +79,7 @@ if (-not $gitStatus.Branch -or $gitStatus.Branch -eq 'main' -or $gitStatus.Branc
 
 # Check for uncommitted changes
 if (-not $gitStatus.Clean) {
-    if (-not $isCI -and -not $Force) {
+    if (-not $NonInteractive -and -not $Force) {
         Write-Warning "You have uncommitted changes:"
         $gitStatus.Modified + $gitStatus.Untracked | ForEach-Object {
             Write-Host "  $($_.Path)" -ForegroundColor Yellow

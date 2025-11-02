@@ -12,12 +12,14 @@
     "**/logs": true,
     "**/testResults.xml": true
   },
+
   // PowerShell settings
-  "powershell.powerShellDefaultVersion": "PowerShell",
+  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
   "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
+
   // Language-specific settings
   "[powershell]": {
     "editor.tabSize": 4,
@@ -42,6 +44,7 @@
       "other": "off"
     }
   },
+
   // GitHub Copilot settings
   "github.copilot.enable": {
     "*": true,
@@ -144,10 +147,12 @@
       "icon": "terminal-powershell"
     }
   },
+
   // Git settings
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
+
   // Search settings
   "search.exclude": {
     "**/node_modules": true,

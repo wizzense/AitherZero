@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0800_Create-TestIssues
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Parses test results and creates GitHub issues for failures,
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0800_Create-TestIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0800_Create-TestIssues' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0800_Create-TestIssues.ps1'
@@ -88,12 +89,31 @@ Describe '0800_Create-TestIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('Assignees') | Should -Be $true
         }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
+        It 'Should have parameter: NonInteractive' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
+        }
+
+<<<<<<< HEAD
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
+=======
+>>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

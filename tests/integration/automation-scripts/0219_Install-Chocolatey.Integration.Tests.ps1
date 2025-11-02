@@ -3,16 +3,16 @@
 
 <#
 .SYNOPSIS
-    Integration tests for 0215_Install-Chocolatey
+    Integration tests for 0219_Install-Chocolatey
 .DESCRIPTION
     Auto-generated integration tests
     Generated: 2025-10-30 02:11:49
 #>
 
-Describe '0215_Install-Chocolatey Integration' -Tag 'Integration', 'AutomationScript' {
+Describe '0219_Install-Chocolatey Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0215_Install-Chocolatey.ps1'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0219_Install-Chocolatey.ps1'
         $script:TestConfig = @{ Automation = @{ DryRun = $true } }
     }
 

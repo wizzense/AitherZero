@@ -9,13 +9,13 @@
     Script: 0403_Run-IntegrationTests
     Stage: Testing
     Description: Runs all integration tests that validate component interactions
-    Generated: 2025-10-30 02:34:25
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0403_Run-IntegrationTests' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0403_Run-IntegrationTests.ps1'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0403_Run-IntegrationTests.ps1'
         $script:ScriptName = '0403_Run-IntegrationTests'
     }
 
@@ -68,8 +68,8 @@ Describe '0403_Run-IntegrationTests' -Tag 'Unit', 'AutomationScript', 'Testing' 
 
     Context 'Metadata' {
         It 'Should be in stage: Testing' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

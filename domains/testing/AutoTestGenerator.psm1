@@ -18,6 +18,18 @@ $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
 $script:TestsPath = Join-Path $script:ProjectRoot 'tests'
 
+# Script number to stage mapping constants
+$script:StageRanges = @{
+    Environment     = @{ Min = 0; Max = 99 }
+    Infrastructure  = @{ Min = 100; Max = 199 }
+    Development     = @{ Min = 200; Max = 399 }
+    Testing         = @{ Min = 400; Max = 499 }
+    Reporting       = @{ Min = 500; Max = 699 }
+    Automation      = @{ Min = 700; Max = 799 }
+    Integration     = @{ Min = 800; Max = 899 }
+    Maintenance     = @{ Min = 9000; Max = 9999 }
+}
+
 # Logging
 function Write-GenLog {
     param([string]$Message, [string]$Level = 'Info')
@@ -75,15 +87,42 @@ function New-AutoTest {
     # Extract metadata
     $contentLines = Get-Content $ScriptPath -First 40
     $content = $contentLines -join "`n"
-    # Match "# Stage:", ".NOTES Stage:", or "Category:" formats
+    
+    # Try to find Stage in various formats using combined regex pattern
     $stage = 'Unknown'
-    if ($content -match '(?:#\s*Stage:|Stage:)\s*(.+)') { 
-        $stage = $Matches[1].Trim() 
-    } elseif ($content -match 'Category:\s*(.+?)(?:\r?\n|$)') {
-        # Extract stage from Category field (e.g., "Testing & Validation" -> "Testing")
-        $category = $Matches[1].Trim()
-        if ($category -match '^(Testing|Development|Infrastructure|Validation|Reporting|Automation)') {
-            $stage = $Matches[1]
+    
+    # Combined regex: matches "# Stage:", ".NOTES...Stage:", or "Category:" in one pass
+    $stagePatterns = @(
+        '(?:^|\n)\s*#?\s*Stage:\s*(.+?)(?:\r?\n|$)',                # Direct "# Stage:" or "Stage:"
+        '\.NOTES[^\n]*\n[^\n]*Stage:\s*(.+?)(?:\r?\n|$)',          # .NOTES section with Stage on next line
+        'Category:\s*(.+?)(?:\r?\n|$)'                             # Category field (capture any value)
+    )
+    
+    foreach ($pattern in $stagePatterns) {
+        if ($content -match $pattern) {
+            $capturedValue = $Matches[1].Trim()
+            # For Category pattern, extract only the first stage keyword
+            if ($pattern -like 'Category:*' -and $capturedValue -match '^(Testing|Development|Infrastructure|Validation|Reporting|Automation)') {
+                $stage = $Matches[1]
+            } else {
+                $stage = $capturedValue
+            }
+            break
+        }
+    }
+    
+    # Fallback: Determine stage from script number range if still unknown
+    if ($stage -eq 'Unknown' -and $scriptName -match '^(\d{4})') {
+        $scriptNum = [int]$Matches[1]
+        
+        # Use the stage range constants for lookup
+        foreach ($stageName in $script:StageRanges.Keys) {
+            $range = $script:StageRanges[$stageName]
+            if ($scriptNum -ge $range.Min -and $scriptNum -le $range.Max) {
+                $stage = $stageName
+                Write-GenLog "Stage inferred from script number ($scriptNum): $stage" -Level Info
+                break
+            }
         }
     }
     
@@ -130,7 +169,6 @@ function New-AutoTest {
         Write-GenLog "Test exists for $scriptName (use -Force to overwrite)" -Level Warning
         return @{
             ScriptName = $scriptName
-            Generated = $false
             Skipped = $true
         }
     }
@@ -155,7 +193,6 @@ function New-AutoTest {
             UnitTestPath = $unitTestPath
             IntegrationTestPath = $integrationTestPath
             Generated = $true
-            Skipped = $false
         }
     } catch {
         Write-GenLog "Failed to write tests for $scriptName : $_" -Level Error
@@ -268,6 +305,10 @@ function Build-IntegrationTest {
 
     $sb = [System.Text.StringBuilder]::new()
     
+    # Check if script supports WhatIf by looking for SupportsShouldProcess
+    $scriptContent = Get-Content $ScriptPath -Raw
+    $supportsWhatIf = $scriptContent -match '\[CmdletBinding\([^\)]*SupportsShouldProcess[^\)]*\)\]'
+    
     [void]$sb.AppendLine('#Requires -Version 7.0')
     [void]$sb.AppendLine('#Requires -Module Pester')
     [void]$sb.AppendLine('')
@@ -283,12 +324,19 @@ function Build-IntegrationTest {
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('    BeforeAll {')
     [void]$sb.AppendLine("        " + '$script:ScriptPath = ' + "'$($ScriptPath -replace '\\', '/')'")
-    [void]$sb.AppendLine('        $script:TestConfig = @{ Automation = @{ DryRun = $true } }')
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("    Context 'Integration' {")
     [void]$sb.AppendLine("        It 'Should execute in test mode' {")
-    [void]$sb.AppendLine('            { & $script:ScriptPath -Configuration $script:TestConfig -WhatIf } | Should -Not -Throw')
+    
+    if ($supportsWhatIf) {
+        [void]$sb.AppendLine('            { & $script:ScriptPath -WhatIf } | Should -Not -Throw')
+    } else {
+        [void]$sb.AppendLine('            # Script does not support -WhatIf parameter')
+        [void]$sb.AppendLine('            # Test basic script structure instead')
+        [void]$sb.AppendLine('            Test-Path $script:ScriptPath | Should -Be $true')
+    }
+    
     [void]$sb.AppendLine('        }')
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('}')

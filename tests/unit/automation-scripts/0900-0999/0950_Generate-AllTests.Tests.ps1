@@ -9,13 +9,13 @@
     Script: 0950_Generate-AllTests
     Stage: Unknown
     Description: This script automatically generates and maintains tests for ALL AitherZero components:
-    Generated: 2025-10-30 03:24:50
+    Generated: 2025-11-02 21:41:16
 #>
 
 Describe '0950_Generate-AllTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0950_Generate-AllTests.ps1'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0950_Generate-AllTests.ps1'
         $script:ScriptName = '0950_Generate-AllTests'
     }
 
@@ -63,8 +63,8 @@ Describe '0950_Generate-AllTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
 
     Context 'Metadata' {
         It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

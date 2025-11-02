@@ -7,11 +7,11 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0510_Generate-ProjectReport
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Reporting
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0510_Generate-ProjectReport' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0510_Generate-ProjectReport' -Tag 'Unit', 'AutomationScript', 'Reporting' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0510_Generate-ProjectReport.ps1'
@@ -56,9 +56,9 @@ Describe '0510_Generate-ProjectReport' -Tag 'Unit', 'AutomationScript', 'Unknown
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Reporting' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 
