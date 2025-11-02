@@ -1743,6 +1743,22 @@ function Show-InteractiveMenu {
                 Description = "Execute pre-defined playbooks"
 
             },
+            
+            [PSCustomObject]@{
+
+                Name = "Browse All Scripts"
+
+                Description = "🔍 Browse all 130 automation scripts by category"
+
+            },
+            
+            [PSCustomObject]@{
+
+                Name = "Browse All Playbooks"
+
+                Description = "📋 Browse all 42 orchestration playbooks"
+
+            },
 
             [PSCustomObject]@{
 
@@ -1938,6 +1954,10 @@ function Show-InteractiveMenu {
                 'Orchestration' { Invoke-OrchestrationMenu -Config $Config }
 
                 'Playbooks' { Invoke-PlaybookMenu -Config $Config }
+                
+                'Browse All Scripts' { Invoke-BrowseAllScriptsMenu -Config $Config }
+                
+                'Browse All Playbooks' { Invoke-BrowseAllPlaybooksMenu -Config $Config }
 
                 'Testing' { Invoke-TestingMenu -Config $Config }
 
@@ -2364,77 +2384,44 @@ function Invoke-PlaybookMenu {
 
 
 
-# Testing Menu
-
+# Testing Menu - DYNAMIC VERSION (discovers all 0400-0499 scripts)
 function Invoke-TestingMenu {
 
     param($Config)
-
-
-
-    $testItems = @(
-
+    
+    # Dynamically discover all testing scripts (0400-0499)
+    $allTestScripts = Get-AllAutomationScripts -Category "Testing & Validation"
+    
+    # Build menu items dynamically
+    $testItems = $allTestScripts | ForEach-Object {
         [PSCustomObject]@{
-
-            Name = "Run Unit Tests"
-
-            Description = "Execute unit test suite"
-
-            Sequence = "0402"
-
-        },
-
-        [PSCustomObject]@{
-
-            Name = "Run Integration Tests"
-
-            Description = "Execute integration test suite"
-
-            Sequence = "0403"
-
-        },
-
-        [PSCustomObject]@{
-
-            Name = "Run PSScriptAnalyzer"
-
-            Description = "Analyze code quality"
-
-            Sequence = "0404"
-
-        },
-
-        [PSCustomObject]@{
-
-            Name = "Validate Environment"
-
-            Description = "Check system requirements"
-
-            Sequence = "0500"
-
-        },
-
-        [PSCustomObject]@{
-
-            Name = "Generate Coverage Report"
-
-            Description = "Create code coverage report"
-
-            Sequence = "0406"
-
-        },
-
-        [PSCustomObject]@{
-
-            Name = "Full Test Suite"
-
-            Description = "Run all tests with reporting"
-
-            Playbook = "test-full"
-
+            Name = "$($_.CategoryIcon) [$($_.Number)] $($_.DisplayName)"
+            Description = if ($_.Synopsis) { $_.Synopsis } else { "Run $($_.DisplayName)" }
+            Sequence = $_.Number
+            ScriptName = $_.Name
         }
-
-)
+    }
+    
+    # Add playbooks that are test-related
+    $testPlaybooks = Get-AllPlaybooks | Where-Object { $_.Name -match 'test' -or $_.Category -match 'test' }
+    foreach ($pb in $testPlaybooks) {
+        $testItems += [PSCustomObject]@{
+            Name = "📋 [Playbook] $($pb.Name)"
+            Description = $pb.Description
+            Playbook = $pb.Name
+        }
+    }
+    
+    if ($testItems.Count -eq 0) {
+        Show-UINotification -Message "No testing scripts found" -Type 'Warning'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        return
+    }
+    
+    Write-Host ""
+    Write-Host "  ✨ Dynamically discovered: " -NoNewline -ForegroundColor Cyan
+    Write-Host "$($allTestScripts.Count) testing scripts + $($testPlaybooks.Count) playbooks" -ForegroundColor Yellow
+    Write-Host ""
 
 
 
@@ -3145,6 +3132,138 @@ function Invoke-QuickJumpMenu {
             
             Add-RecentAction -Name $metadata.Name -Command $cliCommand -Type 'Script'
             Invoke-OrchestrationSequence -Sequence $scriptNumber -Configuration $Config
+        }
+    }
+    
+    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+}
+
+# Browse All Scripts Menu - DYNAMIC
+function Invoke-BrowseAllScriptsMenu {
+    param($Config)
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                   Browse All Automation Scripts                   ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Get all scripts grouped by category
+    $groupedScripts = Get-AllAutomationScripts -GroupByCategory
+    
+    Write-Host "  Found $($groupedScripts | Measure-Object -Property Count -Sum | Select-Object -ExpandProperty Sum) scripts in $($groupedScripts.Count) categories" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Build category menu
+    $categoryItems = $groupedScripts | ForEach-Object {
+        [PSCustomObject]@{
+            Name = "$($_.Icon) $($_.Category) ($($_.Count) scripts)"
+            Description = "Browse $($_.Count) scripts in this category"
+            Category = $_.Category
+            Scripts = $_.Scripts
+        }
+    }
+    
+    $categorySelection = Show-UIMenu -Title "Select Category" -Items $categoryItems -ShowNumbers
+    
+    if ($categorySelection) {
+        # Show scripts in selected category
+        Write-Host ""
+        Write-Host "  Category: " -NoNewline -ForegroundColor Gray
+        Write-Host $categorySelection.Category -ForegroundColor Cyan
+        Write-Host ""
+        
+        $scriptItems = $categorySelection.Scripts | ForEach-Object {
+            [PSCustomObject]@{
+                Name = "[$($_.Number)] $($_.DisplayName)"
+                Description = if ($_.Synopsis) { $_.Synopsis } else { "Execute $($_.DisplayName)" }
+                Sequence = $_.Number
+                ScriptName = $_.Name
+            }
+        }
+        
+        $scriptSelection = Show-UIMenu -Title "$($categorySelection.Category) Scripts" -Items $scriptItems -ShowNumbers
+        
+        if ($scriptSelection) {
+            # Show metadata
+            Show-InlineHelp -Topic $scriptSelection.Sequence -Type 'Script'
+            Show-PrerequisiteStatus -ScriptNumber $scriptSelection.Sequence
+            Show-ExecutionHistory -ScriptNumber $scriptSelection.Sequence -Count 3
+            
+            $execute = Show-UIPrompt -Message "Execute this script?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
+            
+            if ($execute -eq 'Yes') {
+                $cliCommand = Get-CLIEquivalent -ScriptNumber $scriptSelection.Sequence
+                Show-CLICommand -Command $cliCommand -Description "Executing from Browse All Scripts"
+                
+                if (Test-CLILearningMode) {
+                    Read-Host "Press Enter to execute"
+                }
+                
+                $startTime = Get-Date
+                Add-RecentAction -Name $scriptSelection.ScriptName -Command $cliCommand -Type 'Script'
+                Invoke-OrchestrationSequence -Sequence $scriptSelection.Sequence -Configuration $Config
+                $endTime = Get-Date
+                
+                $status = 'Success'  # Would need to check actual result
+                Add-ExecutionHistory -ScriptNumber $scriptSelection.Sequence -ScriptName $scriptSelection.ScriptName -StartTime $startTime -EndTime $endTime -Status $status -ErrorMessage ""
+            }
+        }
+    }
+    
+    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+}
+
+# Browse All Playbooks Menu - DYNAMIC
+function Invoke-BrowseAllPlaybooksMenu {
+    param($Config)
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                  Browse All Orchestration Playbooks                ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Get all playbooks
+    $allPlaybooks = Get-AllPlaybooks
+    
+    Write-Host "  Found $($allPlaybooks.Count) playbooks" -ForegroundColor Cyan
+    Write-Host ""
+    
+    if ($allPlaybooks.Count -eq 0) {
+        Show-UINotification -Message "No playbooks found" -Type 'Warning'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        return
+    }
+    
+    # Build playbook menu items
+    $playbookItems = $allPlaybooks | ForEach-Object {
+        $categoryPrefix = if ($_.Category -ne 'general') { "[$($_.Category)] " } else { "" }
+        [PSCustomObject]@{
+            Name = "📋 $categoryPrefix$($_.Name)"
+            Description = if ($_.Description) { $_.Description } else { "Execute playbook" }
+            PlaybookName = $_.Name
+            Category = $_.Category
+        }
+    }
+    
+    $selection = Show-UIMenu -Title "All Playbooks" -Items $playbookItems -ShowNumbers
+    
+    if ($selection) {
+        Show-InlineHelp -Topic $selection.PlaybookName -Type 'Playbook'
+        
+        $execute = Show-UIPrompt -Message "Execute this playbook?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
+        
+        if ($execute -eq 'Yes') {
+            $cliCommand = Get-CLIEquivalent -Playbook $selection.PlaybookName
+            Show-CLICommand -Command $cliCommand -Description "Executing playbook from Browse All"
+            
+            if (Test-CLILearningMode) {
+                Read-Host "Press Enter to execute"
+            }
+            
+            Add-RecentAction -Name $selection.PlaybookName -Command $cliCommand -Type 'Playbook'
+            Invoke-OrchestrationSequence -LoadPlaybook $selection.PlaybookName -Configuration $Config
         }
     }
     

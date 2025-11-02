@@ -25,16 +25,176 @@ $script:CLIState = @{
         'full-test' = @{ Mode = 'Orchestrate'; Playbook = 'test-full' }
     }
     Categories = @{
-        '0000-0099' = @{ Name = 'Environment Setup'; Icon = '🔧'; Color = 'Cyan' }
-        '0100-0199' = @{ Name = 'Infrastructure'; Icon = '🏗️'; Color = 'Blue' }
-        '0200-0299' = @{ Name = 'Development Tools'; Icon = '💻'; Color = 'Green' }
-        '0300-0399' = @{ Name = 'Deployment & IaC'; Icon = '🚀'; Color = 'Magenta' }
-        '0400-0499' = @{ Name = 'Testing & Validation'; Icon = '✅'; Color = 'Yellow' }
-        '0500-0599' = @{ Name = 'Reports & Metrics'; Icon = '📊'; Color = 'Cyan' }
-        '0700-0799' = @{ Name = 'Git & Dev Automation'; Icon = '🔀'; Color = 'Blue' }
-        '9000-9999' = @{ Name = 'Maintenance'; Icon = '🧹'; Color = 'Gray' }
+        '0000-0099' = @{ Name = 'Environment Setup'; Icon = '🔧'; Color = 'Cyan'; Description = 'PowerShell 7, directories, configuration' }
+        '0100-0199' = @{ Name = 'Infrastructure'; Icon = '🏗️'; Color = 'Blue'; Description = 'Hyper-V, certificates, networking, WSL2' }
+        '0200-0299' = @{ Name = 'Development Tools'; Icon = '💻'; Color = 'Green'; Description = 'Git, Node, Python, Docker, VS Code' }
+        '0300-0399' = @{ Name = 'Deployment & IaC'; Icon = '🚀'; Color = 'Magenta'; Description = 'OpenTofu/Terraform, deployments' }
+        '0400-0499' = @{ Name = 'Testing & Validation'; Icon = '✅'; Color = 'Yellow'; Description = 'Unit tests, linting, validation' }
+        '0500-0599' = @{ Name = 'Reports & Metrics'; Icon = '📊'; Color = 'Cyan'; Description = 'Dashboards, logs, analytics' }
+        '0700-0799' = @{ Name = 'Git & Dev Automation'; Icon = '🔀'; Color = 'Blue'; Description = 'Git workflows, branches, PRs' }
+        '9000-9999' = @{ Name = 'Maintenance'; Icon = '🧹'; Color = 'Gray'; Description = 'Cleanup, reset, system maintenance' }
     }
 }
+
+#region Dynamic Resource Discovery
+
+function Get-AllAutomationScripts {
+    <#
+    .SYNOPSIS
+        Dynamically discover all automation scripts
+    .DESCRIPTION
+        Scans automation-scripts directory and returns categorized list
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$Category,
+        [switch]$GroupByCategory
+    )
+    
+    $projectRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { Split-Path $PSScriptRoot -Parent | Split-Path -Parent }
+    $scriptPath = Join-Path $projectRoot "automation-scripts"
+    
+    if (-not (Test-Path $scriptPath)) {
+        return @()
+    }
+    
+    $scripts = Get-ChildItem -Path $scriptPath -Filter "*.ps1" | ForEach-Object {
+        $fileName = $_.Name
+        $number = if ($fileName -match '^(\d{4})') { $matches[1] } else { '9999' }
+        $numInt = [int]$number
+        
+        # Determine category
+        $scriptCategory = 'Maintenance'
+        $categoryIcon = '🧹'
+        $categoryColor = 'Gray'
+        
+        foreach ($range in $script:CLIState.Categories.Keys | Sort-Object) {
+            if ($range -match '^(\d+)-(\d+)$') {
+                $min = [int]$matches[1]
+                $max = [int]$matches[2]
+                if ($numInt -ge $min -and $numInt -le $max) {
+                    $scriptCategory = $script:CLIState.Categories[$range].Name
+                    $categoryIcon = $script:CLIState.Categories[$range].Icon
+                    $categoryColor = $script:CLIState.Categories[$range].Color
+                    break
+                }
+            }
+        }
+        
+        # Extract synopsis
+        $synopsis = ""
+        try {
+            $content = Get-Content $_.FullName -TotalCount 30 -ErrorAction SilentlyContinue
+            $inHelp = $false
+            foreach ($line in $content) {
+                if ($line -match '<#') { $inHelp = $true }
+                if ($line -match '#>') { break }
+                if ($inHelp -and $line -match '\.SYNOPSIS') {
+                    $synopsisIdx = [array]::IndexOf($content, $line)
+                    if ($synopsisIdx -ge 0 -and $synopsisIdx + 1 -lt $content.Count) {
+                        $synopsis = $content[$synopsisIdx + 1].Trim()
+                        break
+                    }
+                }
+            }
+        } catch {}
+        
+        [PSCustomObject]@{
+            Number = $number
+            Name = $fileName
+            DisplayName = $fileName -replace '\.ps1$', ''
+            Synopsis = $synopsis
+            Category = $scriptCategory
+            CategoryIcon = $categoryIcon
+            CategoryColor = $categoryColor
+            Path = $_.FullName
+        }
+    }
+    
+    # Filter by category if specified
+    if ($Category) {
+        $scripts = $scripts | Where-Object { $_.Category -eq $Category }
+    }
+    
+    # Group by category if requested
+    if ($GroupByCategory) {
+        return $scripts | Group-Object -Property Category | ForEach-Object {
+            [PSCustomObject]@{
+                Category = $_.Name
+                Icon = $_.Group[0].CategoryIcon
+                Color = $_.Group[0].CategoryColor
+                Scripts = $_.Group
+                Count = $_.Count
+            }
+        }
+    }
+    
+    return $scripts | Sort-Object Number
+}
+
+function Get-AllPlaybooks {
+    <#
+    .SYNOPSIS
+        Dynamically discover all playbooks
+    .DESCRIPTION
+        Scans orchestration/playbooks directory and returns categorized list
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$GroupByCategory
+    )
+    
+    $projectRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { Split-Path $PSScriptRoot -Parent | Split-Path -Parent }
+    $playbookPath = Join-Path $projectRoot "orchestration/playbooks"
+    
+    if (-not (Test-Path $playbookPath)) {
+        return @()
+    }
+    
+    $playbooks = Get-ChildItem -Path $playbookPath -Filter "*.json" -Recurse | ForEach-Object {
+        try {
+            $pbContent = Get-Content $_.FullName -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+            $pbName = if ($pbContent.PSObject.Properties['Name']) { $pbContent.Name } 
+                     elseif ($pbContent.PSObject.Properties['name']) { $pbContent.name } 
+                     else { $_.BaseName }
+            $pbDesc = if ($pbContent.PSObject.Properties['Description']) { $pbContent.Description } 
+                     elseif ($pbContent.PSObject.Properties['description']) { $pbContent.description } 
+                     else { "" }
+            
+            # Get category from parent directory
+            $category = if ($_.Directory.Name -ne 'playbooks') {
+                $_.Directory.Name
+            } else {
+                'general'
+            }
+            
+            [PSCustomObject]@{
+                Name = $pbName
+                Description = $pbDesc
+                Category = $category
+                Path = $_.FullName
+                FileName = $_.Name
+            }
+        } catch {
+            # Skip invalid JSON
+            $null
+        }
+    } | Where-Object { $_ -ne $null }
+    
+    if ($GroupByCategory) {
+        return $playbooks | Group-Object -Property Category | ForEach-Object {
+            [PSCustomObject]@{
+                Category = $_.Name
+                Playbooks = $_.Group
+                Count = $_.Count
+            }
+        }
+    }
+    
+    return $playbooks | Sort-Object Category, Name
+}
+
+#endregion
 
 function Show-ModernHelp {
     <#
@@ -1593,4 +1753,6 @@ Export-ModuleMember -Function @(
     'Export-CommandHistory'
     'Switch-AitherZeroProfile'
     'Get-AitherZeroProfile'
+    'Get-AllAutomationScripts'
+    'Get-AllPlaybooks'
 )
