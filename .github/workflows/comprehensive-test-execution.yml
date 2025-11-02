@@ -247,12 +247,27 @@ jobs:
         run: |
           Write-Host "📊 Aggregating all test results..." -ForegroundColor Cyan
           
+          # Parse test discovery outputs with proper error handling
+          $discoveryTotal = '${{ needs.test-discovery.outputs.total-count }}'
+          $discoveryUnit = '${{ needs.test-discovery.outputs.unit-test-count }}'
+          $discoveryIntegration = '${{ needs.test-discovery.outputs.integration-count }}'
+          
+          # Convert to integers with fallback to 0
+          $totalTestFiles = if ($discoveryTotal -and $discoveryTotal -match '^\d+$') { [int]$discoveryTotal } else { 0 }
+          $unitTestFiles = if ($discoveryUnit -and $discoveryUnit -match '^\d+$') { [int]$discoveryUnit } else { 0 }
+          $integrationTestFiles = if ($discoveryIntegration -and $discoveryIntegration -match '^\d+$') { [int]$discoveryIntegration } else { 0 }
+          
+          Write-Host "Test discovery outputs:" -ForegroundColor Yellow
+          Write-Host "  Total: $totalTestFiles" -ForegroundColor White
+          Write-Host "  Unit: $unitTestFiles" -ForegroundColor White
+          Write-Host "  Integration: $integrationTestFiles" -ForegroundColor White
+          
           # Create aggregated report structure
           $aggregatedReport = @{
             Timestamp = (Get-Date).ToString('o')
-            TotalTestFiles = [int]'${{ needs.test-discovery.outputs.total-count }}'
-            UnitTestFiles = [int]'${{ needs.test-discovery.outputs.unit-test-count }}'
-            IntegrationTestFiles = [int]'${{ needs.test-discovery.outputs.integration-count }}'
+            TotalTestFiles = $totalTestFiles
+            UnitTestFiles = $unitTestFiles
+            IntegrationTestFiles = $integrationTestFiles
             TestResults = @{
               Summary = @{
                 Total = 0
@@ -277,6 +292,10 @@ jobs:
             }
           }
           
+          # Track unique test files processed
+          $processedUnitFiles = @{}
+          $processedIntegrationFiles = @{}
+          
           # Parse all test result files
           $resultFiles = Get-ChildItem -Path "./test-artifacts" -Filter "*.json" -Recurse -ErrorAction SilentlyContinue
           
@@ -294,6 +313,17 @@ jobs:
                 } else {
                   $testType = 'Unknown'
                   Write-Warning "Could not determine test type for: $($file.Name). Defaulting to 'Unknown'."
+                }
+                
+                # Track unique test files if available
+                if ($result.TestFiles) {
+                  foreach ($testFile in $result.TestFiles) {
+                    if ($testType -eq 'Unit') {
+                      $processedUnitFiles[$testFile] = $true
+                    } elseif ($testType -eq 'Integration') {
+                      $processedIntegrationFiles[$testFile] = $true
+                    }
+                  }
                 }
                 
                 # Add to summary
@@ -314,6 +344,25 @@ jobs:
             catch {
               Write-Warning "Failed to parse: $($file.Name)"
             }
+          }
+          
+          # Fallback: If discovery didn't capture test files, count from processed results
+          if ($aggregatedReport.TotalTestFiles -eq 0 -and ($processedUnitFiles.Count -gt 0 -or $processedIntegrationFiles.Count -gt 0)) {
+            $aggregatedReport.UnitTestFiles = $processedUnitFiles.Count
+            $aggregatedReport.IntegrationTestFiles = $processedIntegrationFiles.Count
+            $aggregatedReport.TotalTestFiles = $processedUnitFiles.Count + $processedIntegrationFiles.Count
+            Write-Host "Using fallback test file counts from processed results" -ForegroundColor Yellow
+          }
+          
+          # Additional fallback: Count test files directly if still 0
+          if ($aggregatedReport.TotalTestFiles -eq 0) {
+            Write-Host "Discovery and result parsing failed to find test files, counting directly..." -ForegroundColor Yellow
+            $unitTests = @(Get-ChildItem -Path "./tests/unit" -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue)
+            $integrationTests = @(Get-ChildItem -Path "./tests/integration" -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue)
+            $aggregatedReport.UnitTestFiles = $unitTests.Count
+            $aggregatedReport.IntegrationTestFiles = $integrationTests.Count
+            $aggregatedReport.TotalTestFiles = $unitTests.Count + $integrationTests.Count
+            Write-Host "Direct count: Unit=$($unitTests.Count), Integration=$($integrationTests.Count)" -ForegroundColor Cyan
           }
           
           # Save aggregated report
@@ -373,31 +422,89 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const reportFile = fs.readdirSync('./reports').find(f => f.startsWith('TestReport-Aggregated'));
-            const report = JSON.parse(fs.readFileSync(`./reports/${reportFile}`, 'utf8'));
             
-            const passRate = ((report.TestResults.Summary.Passed / report.TestResults.Summary.Total) * 100).toFixed(1);
-            const statusIcon = report.TestResults.Summary.Failed === 0 ? '✅' : '❌';
-            
-            const comment = `## ${statusIcon} Comprehensive Test Results
-            
-            **Test Discovery:** ${report.TotalTestFiles} test files found
-            **Tests Executed:** ${report.TestResults.Summary.Total}
-            **Pass Rate:** ${passRate}%
-            
-            | Type | Total | ✅ Passed | ❌ Failed | ⏭️ Skipped |
-            |------|-------|----------|----------|-----------|
-            | **Unit** | ${report.TestResults.ByType.Unit.Total} | ${report.TestResults.ByType.Unit.Passed} | ${report.TestResults.ByType.Unit.Failed} | ${report.TestResults.ByType.Unit.Skipped} |
-            | **Integration** | ${report.TestResults.ByType.Integration.Total} | ${report.TestResults.ByType.Integration.Passed} | ${report.TestResults.ByType.Integration.Failed} | ${report.TestResults.ByType.Integration.Skipped} |
-            | **Total** | ${report.TestResults.Summary.Total} | ${report.TestResults.Summary.Passed} | ${report.TestResults.Summary.Failed} | ${report.TestResults.Summary.Skipped} |
-            
-            ---
-            📊 [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            `;
-            
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: comment
-            });
+            try {
+              const reportFile = fs.readdirSync('./reports').find(f => f.startsWith('TestReport-Aggregated'));
+              
+              if (!reportFile) {
+                throw new Error('No aggregated test report found');
+              }
+              
+              const report = JSON.parse(fs.readFileSync(`./reports/${reportFile}`, 'utf8'));
+              
+              // Safely calculate pass rate with proper null/zero checks
+              const totalTests = report.TestResults?.Summary?.Total || 0;
+              const passedTests = report.TestResults?.Summary?.Passed || 0;
+              const failedTests = report.TestResults?.Summary?.Failed || 0;
+              const skippedTests = report.TestResults?.Summary?.Skipped || 0;
+              
+              const passRate = totalTests > 0 
+                ? ((passedTests / totalTests) * 100).toFixed(1) 
+                : '0.0';
+              
+              const statusIcon = failedTests === 0 && totalTests > 0 ? '✅' : '❌';
+              
+              // Get test file counts with fallback values
+              const totalTestFiles = report.TotalTestFiles || 0;
+              const unitTestFiles = report.UnitTestFiles || 0;
+              const integrationTestFiles = report.IntegrationTestFiles || 0;
+              
+              // Get by-type results with safe fallbacks
+              const unitTotal = report.TestResults?.ByType?.Unit?.Total || 0;
+              const unitPassed = report.TestResults?.ByType?.Unit?.Passed || 0;
+              const unitFailed = report.TestResults?.ByType?.Unit?.Failed || 0;
+              const unitSkipped = report.TestResults?.ByType?.Unit?.Skipped || 0;
+              
+              const integrationTotal = report.TestResults?.ByType?.Integration?.Total || 0;
+              const integrationPassed = report.TestResults?.ByType?.Integration?.Passed || 0;
+              const integrationFailed = report.TestResults?.ByType?.Integration?.Failed || 0;
+              const integrationSkipped = report.TestResults?.ByType?.Integration?.Skipped || 0;
+              
+              // Build test file discovery message
+              const discoveryMessage = totalTestFiles > 0
+                ? `${totalTestFiles} test files found (${unitTestFiles} unit, ${integrationTestFiles} integration)`
+                : `Test files: ${unitTestFiles} unit, ${integrationTestFiles} integration`;
+              
+              const comment = `## ${statusIcon} Comprehensive Test Results
+              
+              **Test Discovery:** ${discoveryMessage}
+              **Tests Executed:** ${totalTests}
+              **Pass Rate:** ${passRate}%
+              
+              | Type | Total | ✅ Passed | ❌ Failed | ⏭️ Skipped |
+              |------|-------|----------|----------|-----------|
+              | **Unit** | ${unitTotal} | ${unitPassed} | ${unitFailed} | ${unitSkipped} |
+              | **Integration** | ${integrationTotal} | ${integrationPassed} | ${integrationFailed} | ${integrationSkipped} |
+              | **Total** | ${totalTests} | ${passedTests} | ${failedTests} | ${skippedTests} |
+              
+              ---
+              📊 [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              `;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+              
+            } catch (error) {
+              console.error('Failed to create PR comment:', error);
+              
+              // Create a fallback comment with basic info
+              const fallbackComment = `## ⚠️ Test Results
+              
+              Test execution completed, but the aggregated report could not be loaded.
+              
+              Please check the [workflow run logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.
+              
+              Error: ${error.message}
+              `;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: fallbackComment
+              });
+            }
