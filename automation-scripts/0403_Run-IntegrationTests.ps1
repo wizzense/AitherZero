@@ -30,6 +30,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Ensure TERM is set for terminal operations (required in CI environments)
+if (-not $env:TERM) {
+    $env:TERM = 'xterm-256color'
+}
+
 # Script metadata
 $scriptMetadata = @{
     Stage = 'Testing'

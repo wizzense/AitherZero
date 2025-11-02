@@ -35,6 +35,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Ensure TERM is set for terminal operations (required in CI environments)
+if (-not $env:TERM) {
+    $env:TERM = 'xterm-256color'
+}
+
 # Script metadata (used for orchestration)
 # Note: Script metadata is defined for orchestration system documentation
 # It is referenced by automation infrastructure even if not directly used in this script
