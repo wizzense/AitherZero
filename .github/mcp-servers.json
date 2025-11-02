@@ -4,9 +4,9 @@
     "aitherzero": {
       "command": "node",
       "args": [
-        "${workspaceFolder}/mcp-server/dist/index.js"
+        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
       ],
-      "description": "AitherZero infrastructure automation platform - run scripts, playbooks, tests, and quality checks",
+      "description": "AitherZero infrastructure automation platform - run scripts, playbooks, tests, and quality checks (auto-builds on first use)",
       "capabilities": {
         "resources": true,
         "tools": true
@@ -14,9 +14,6 @@
       "env": {
         "AITHERZERO_ROOT": "${workspaceFolder}",
         "AITHERZERO_NONINTERACTIVE": "1"
-      },
-      "initializationOptions": {
-        "buildCommand": "cd ${workspaceFolder}/mcp-server && npm install && npm run build"
       }
     },
     "filesystem": {
