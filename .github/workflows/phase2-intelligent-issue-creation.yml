@@ -458,10 +458,10 @@ jobs:
                 return errorMsg
                   .toLowerCase()
                   // Replace specific patterns FIRST before general number replacement
-                  .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'GUID')  // Replace GUIDs
+                  .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, 'GUID')  // Replace GUIDs (lowercase only after toLowerCase)
                   .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?/g, 'TIMESTAMP')  // Replace ISO timestamps
                   .replace(/\d{4}-\d{2}-\d{2}/g, 'DATE')  // Replace dates
-                  .replace(/\b[0-9a-f]{32,}\b/gi, 'HASH')  // Replace long hex strings (hashes)
+                  .replace(/\b[0-9a-f]{32,}\b/g, 'HASH')  // Replace long hex strings (hashes, lowercase only after toLowerCase)
                   // THEN replace general patterns
                   .replace(/line \d+/gi, 'line N')  // Normalize line numbers
                   .replace(/at \d+:\d+/g, 'at N:N')  // Normalize position references
@@ -657,8 +657,8 @@ jobs:
                 title = `🧪 Test Failure: ${testName} in ${fileName}`;
               } else if (category === 'Syntax') {
                 const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
-                // Include brief error context
-                const errorSnippet = (failure.Message || failure.ErrorMessage || '').split('\n')[0].substring(0, 80);
+                // Include brief error context (using slice for Unicode safety)
+                const errorSnippet = (failure.Message || failure.ErrorMessage || '').split('\n')[0].slice(0, 80);
                 title = `📝 Syntax Error: ${fileName} - ${errorSnippet || 'Parse error'}`;
               } else if (category === 'CodeQuality') {
                 const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
@@ -771,8 +771,11 @@ jobs:
                     body: updateComment
                   });
 
+                  // Helper to normalize titles by trimming and collapsing whitespace
+                  const normalizeTitle = (str) => str.trim().replace(/\s+/g, ' ');
+
                   // Update title if it's different (more descriptive now)
-                  if (existingIssueTitle !== title) {
+                  if (normalizeTitle(existingIssueTitle) !== normalizeTitle(title)) {
                     await github.rest.issues.update({
                       owner: context.repo.owner,
                       repo: context.repo.repo,

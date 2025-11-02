@@ -25,10 +25,10 @@ function createFingerprint(failure) {
     return errorMsg
       .toLowerCase()
       // Replace specific patterns FIRST before general number replacement
-      .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, 'GUID')  // Replace GUIDs
+      .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, 'GUID')  // Replace GUIDs (lowercase only after toLowerCase)
       .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?/g, 'TIMESTAMP')  // Replace ISO timestamps
       .replace(/\d{4}-\d{2}-\d{2}/g, 'DATE')  // Replace dates
-      .replace(/\b[0-9a-f]{32,}\b/gi, 'HASH')  // Replace long hex strings
+      .replace(/\b[0-9a-f]{32,}\b/g, 'HASH')  // Replace long hex strings (lowercase only after toLowerCase)
       // THEN replace general patterns
       .replace(/line \d+/gi, 'line N')  // Normalize line numbers
       .replace(/at \d+:\d+/g, 'at N:N')  // Normalize position references
