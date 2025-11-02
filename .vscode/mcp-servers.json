@@ -60,38 +60,6 @@
         "repo": "AitherZero"
       }
     },
-    "git": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-git"
-      ],
-      "description": "Provides Git operations for version control",
-      "capabilities": {
-        "tools": true
-      },
-      "config": {
-        "repository": "${workspaceFolder}"
-      }
-    },
-    "powershell-docs": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-fetch"
-      ],
-      "description": "Fetches PowerShell documentation and references",
-      "capabilities": {
-        "tools": true
-      },
-      "config": {
-        "allowedDomains": [
-          "docs.microsoft.com",
-          "learn.microsoft.com",
-          "github.com/PowerShell"
-        ]
-      }
-    },
     "sequential-thinking": {
       "command": "npx",
       "args": [
@@ -108,7 +76,7 @@
     "aitherzero",
     "filesystem",
     "github",
-    "git"
+    "sequential-thinking"
   ],
   "contextProviders": {
     "codebase": {

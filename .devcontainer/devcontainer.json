@@ -1,7 +1,6 @@
 {
   "name": "AitherZero Development",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
   "features": {
     "ghcr.io/devcontainers/features/powershell:1": {
       "version": "latest"
@@ -19,7 +18,6 @@
       "version": "lts"
     }
   },
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -40,10 +38,12 @@
           "pwsh": {
             "path": "pwsh",
             "icon": "terminal-powershell",
-            "args": ["-NoLogo"]
+            "args": [
+              "-NoLogo"
+            ]
           }
         },
-        "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+        "powershell.powerShellDefaultVersion": "PowerShell",
         "powershell.integratedConsole.showOnStartup": false,
         "files.eol": "\n",
         "files.trimTrailingWhitespace": true,
@@ -74,15 +74,14 @@
       }
     }
   },
-
-  "postCreateCommand": "pwsh -Command 'Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser; Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser'",
-
+  "postCreateCommand": "pwsh -Command 'Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser; Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser; cd mcp-server && npm install --silent'",
   "remoteEnv": {
     "AITHERZERO_ROOT": "${containerWorkspaceFolder}",
     "AITHERZERO_ENVIRONMENT": "development"
   },
-
-  "forwardPorts": [8080, 8443],
-
-  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
+  "forwardPorts": [
+    8080,
+    8443
+  ],
+  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && pwsh -File ${containerWorkspaceFolder}/automation-scripts/0009_Setup-MCPServers.ps1"
 }

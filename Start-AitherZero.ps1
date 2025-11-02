@@ -1106,13 +1106,7 @@ function Write-ModernCLI {
 function Show-Usage {
     # Comprehensive usage information with command suggestions
     
-    # Try to use modern help system if available
-    if (Get-Command Show-ModernHelp -ErrorAction SilentlyContinue) {
-        Show-ModernHelp -HelpType 'full'
-        return
-    }
-    
-    # Fallback to classic display
+    # Direct display - no recursive calls
     if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
         try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
     }
