@@ -18,6 +18,18 @@ $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
 $script:TestsPath = Join-Path $script:ProjectRoot 'tests'
 
+# Script number to stage mapping constants
+$script:StageRanges = @{
+    Environment     = @{ Min = 0; Max = 99 }
+    Infrastructure  = @{ Min = 100; Max = 199 }
+    Development     = @{ Min = 200; Max = 399 }
+    Testing         = @{ Min = 400; Max = 499 }
+    Reporting       = @{ Min = 500; Max = 699 }
+    Automation      = @{ Min = 700; Max = 799 }
+    Integration     = @{ Min = 800; Max = 899 }
+    Maintenance     = @{ Min = 9000; Max = 9999 }
+}
+
 # Logging
 function Write-GenLog {
     param([string]$Message, [string]$Level = 'Info')
@@ -76,38 +88,36 @@ function New-AutoTest {
     $contentLines = Get-Content $ScriptPath -First 40
     $content = $contentLines -join "`n"
     
-    # Match "# Stage:", ".NOTES" section with "Stage:", or "Category:" formats
+    # Try to find Stage in various formats using combined regex pattern
     $stage = 'Unknown'
     
-    # Try to find Stage in various formats
-    if ($content -match '(?:^|\n)\s*#?\s*Stage:\s*(.+?)(?:\r?\n|$)') { 
-        $stage = $Matches[1].Trim()
-    } elseif ($content -match '\.NOTES[^\n]*\n[^\n]*Stage:\s*(.+?)(?:\r?\n|$)') {
-        # Handle .NOTES section with Stage on next line
-        $stage = $Matches[1].Trim()
-    } elseif ($content -match 'Category:\s*(.+?)(?:\r?\n|$)') {
-        # Extract stage from Category field (e.g., "Testing & Validation" -> "Testing")
-        $category = $Matches[1].Trim()
-        if ($category -match '^(Testing|Development|Infrastructure|Validation|Reporting|Automation)') {
-            $stage = $Matches[1]
+    # Combined regex: matches "# Stage:", ".NOTES...Stage:", or "Category:" in one pass
+    $stagePatterns = @(
+        '(?:^|\n)\s*#?\s*Stage:\s*(.+?)(?:\r?\n|$)',                # Direct "# Stage:" or "Stage:"
+        '\.NOTES[^\n]*\n[^\n]*Stage:\s*(.+?)(?:\r?\n|$)',          # .NOTES section with Stage on next line
+        'Category:\s*(Testing|Development|Infrastructure|Validation|Reporting|Automation)' # Category field
+    )
+    
+    foreach ($pattern in $stagePatterns) {
+        if ($content -match $pattern) {
+            $stage = $Matches[1].Trim()
+            break
         }
     }
     
     # Fallback: Determine stage from script number range if still unknown
     if ($stage -eq 'Unknown' -and $scriptName -match '^(\d{4})') {
         $scriptNum = [int]$Matches[1]
-        $stage = switch ($scriptNum) {
-            { $_ -lt 100 } { 'Environment' }
-            { $_ -ge 100 -and $_ -lt 200 } { 'Infrastructure' }
-            { $_ -ge 200 -and $_ -lt 400 } { 'Development' }
-            { $_ -ge 400 -and $_ -lt 500 } { 'Testing' }
-            { $_ -ge 500 -and $_ -lt 700 } { 'Reporting' }
-            { $_ -ge 700 -and $_ -lt 800 } { 'Automation' }
-            { $_ -ge 800 -and $_ -lt 900 } { 'Integration' }
-            { $_ -ge 9000 } { 'Maintenance' }
-            default { 'Unknown' }
+        
+        # Use the stage range constants for lookup
+        foreach ($stageName in $script:StageRanges.Keys) {
+            $range = $script:StageRanges[$stageName]
+            if ($scriptNum -ge $range.Min -and $scriptNum -le $range.Max) {
+                $stage = $stageName
+                Write-GenLog "Stage inferred from script number ($scriptNum): $stage" -Level Info
+                break
+            }
         }
-        Write-GenLog "Stage inferred from script number: $stage" -Level Info
     }
     
     $description = if ($content -match '(?:#\s*Description:|\.DESCRIPTION\s+)(.+?)(?:\r?\n|$)') { $Matches[1].Trim() } else { '' }
