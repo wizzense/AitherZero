@@ -57,14 +57,14 @@ function Write-ColorOutput {
         [string]$Message,
         [string]$Level = 'Info'
     )
-    
+
     $colors = @{
         'Info'    = 'Cyan'
         'Success' = 'Green'
         'Warning' = 'Yellow'
         'Error'   = 'Red'
     }
-    
+
     $color = $colors[$Level]
     Write-Host $Message -ForegroundColor $color
 }
@@ -75,7 +75,7 @@ function Write-LogMessage {
         [string]$Message,
         [string]$Level = 'Information'
     )
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message $Message -Level $Level
     }
@@ -143,7 +143,7 @@ try {
     # If verify mode, check existing configuration
     if ($Verify) {
         Write-ColorOutput "`nVerifying MCP configuration..." -Level 'Info'
-        
+
         $settingsPath = if ($Scope -eq 'Workspace') {
             Join-Path $workspaceRoot ".vscode/settings.json"
         } else {
@@ -214,53 +214,53 @@ try {
 
     # Add or update MCP configuration
     $settings | Add-Member -NotePropertyName 'github.copilot.chat.mcp.enabled' -NotePropertyValue $true -Force
-    
+
     $mcpServers = [PSCustomObject]@{
-        filesystem = [PSCustomObject]@{
+        filesystem            = [PSCustomObject]@{
             command = "npx"
-            args = @(
+            args    = @(
                 "-y"
                 "@modelcontextprotocol/server-filesystem"
                 "`${workspaceFolder}"
             )
-            env = [PSCustomObject]@{}
+            env     = [PSCustomObject]@{}
         }
-        github = [PSCustomObject]@{
+        github                = [PSCustomObject]@{
             command = "npx"
-            args = @(
+            args    = @(
                 "-y"
                 "@modelcontextprotocol/server-github"
             )
-            env = [PSCustomObject]@{
+            env     = [PSCustomObject]@{
                 GITHUB_PERSONAL_ACCESS_TOKEN = "`${env:GITHUB_TOKEN}"
             }
         }
-        git = [PSCustomObject]@{
+        git                   = [PSCustomObject]@{
             command = "npx"
-            args = @(
+            args    = @(
                 "-y"
                 "@modelcontextprotocol/server-git"
                 "`${workspaceFolder}"
             )
-            env = [PSCustomObject]@{}
+            env     = [PSCustomObject]@{}
         }
-        'powershell-docs' = [PSCustomObject]@{
+        'powershell-docs'     = [PSCustomObject]@{
             command = "npx"
-            args = @(
+            args    = @(
                 "-y"
                 "@modelcontextprotocol/server-fetch"
             )
-            env = [PSCustomObject]@{
+            env     = [PSCustomObject]@{
                 ALLOWED_DOMAINS = "docs.microsoft.com,learn.microsoft.com,github.com"
             }
         }
         'sequential-thinking' = [PSCustomObject]@{
             command = "npx"
-            args = @(
+            args    = @(
                 "-y"
                 "@modelcontextprotocol/server-sequential-thinking"
             )
-            env = [PSCustomObject]@{}
+            env     = [PSCustomObject]@{}
         }
     }
 
