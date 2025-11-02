@@ -1695,7 +1695,7 @@ function Invoke-JobGraphExecution {
                 
                 # Check if all dependencies are met
                 $node = $Graph[$jobId]
-                $depsM et = $true
+                $depsMet = $true
                 
                 foreach ($dep in $node.Dependencies) {
                     if ($dep -notin $completed.Keys) {
