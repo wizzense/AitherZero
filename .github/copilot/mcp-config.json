@@ -1,15 +1,46 @@
 {
-  "$schema": "https://github.com/modelcontextprotocol/servers/blob/main/schema.json",
-  "mcpServers": {
-    "aitherzero": {
-      "command": "node",
-      "args": [
-        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
-      ],
-      "env": {
-        "AITHERZERO_ROOT": "${workspaceFolder}",
-        "NODE_ENV": "production"
-      }
+  "aitherzero": {
+    "command": "node",
+    "args": [
+      "mcp-server/scripts/start-with-build.mjs"
+    ],
+    "env": {
+      "AITHERZERO_ROOT": ".",
+      "AITHERZERO_NONINTERACTIVE": "1"
     }
+  },
+  "filesystem": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-filesystem",
+      "."
+    ]
+  },
+  "github": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-github"
+    ],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+    }
+  },
+  "git": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-git",
+      "--repository",
+      "."
+    ]
+  },
+  "powershell-docs": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-powershell-docs"
+    ]
   }
 }

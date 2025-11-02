@@ -13,21 +13,54 @@ The required JSON is in `.github/copilot/mcp-config.json`:
 
 ```json
 {
-  "$schema": "https://github.com/modelcontextprotocol/servers/blob/main/schema.json",
-  "mcpServers": {
-    "aitherzero": {
-      "command": "node",
-      "args": [
-        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
-      ],
-      "env": {
-        "AITHERZERO_ROOT": "${workspaceFolder}",
-        "NODE_ENV": "production"
-      }
+  "aitherzero": {
+    "command": "node",
+    "args": [
+      "mcp-server/scripts/start-with-build.mjs"
+    ],
+    "env": {
+      "AITHERZERO_ROOT": ".",
+      "AITHERZERO_NONINTERACTIVE": "1"
     }
+  },
+  "filesystem": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-filesystem",
+      "."
+    ]
+  },
+  "github": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-github"
+    ],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+    }
+  },
+  "git": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-git",
+      "--repository",
+      "."
+    ]
+  },
+  "powershell-docs": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-powershell-docs"
+    ]
   }
 }
 ```
+
+**Note**: The JSON format for Repository Settings is simplified - no `$schema` property or nested `mcpServers` object. Just the server definitions directly.
 
 ### Step 2: Add to Repository Settings
 
@@ -37,15 +70,23 @@ The required JSON is in `.github/copilot/mcp-config.json`:
 
 ### Step 3: Verify
 
-After saving, new Copilot agent tasks will automatically:
+After saving, new Copilot agent tasks will automatically start multiple MCP servers:
 
+**AitherZero MCP Server:**
 ```
 [MCP] Starting server: aitherzero
 🔨 Building AitherZero MCP Server... (first time)
 ✅ MCP Server built successfully
 AitherZero MCP Server running on stdio
-[MCP] 8 tools available: run_script, list_scripts, search_scripts, execute_playbook, get_configuration, run_tests, run_quality_check, get_project_report
+[MCP] 8 tools available: run_script, list_scripts, search_scripts, execute_playbook, 
+      get_configuration, run_tests, run_quality_check, get_project_report
 ```
+
+**Additional MCP Servers:**
+- **filesystem**: Repository file access and manipulation
+- **github**: GitHub API operations (issues, PRs, commits)
+- **git**: Git operations (status, diff, log, commit)
+- **powershell-docs**: PowerShell documentation and best practices
 
 ## Why This Configuration Location?
 
