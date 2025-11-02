@@ -78,9 +78,6 @@ Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('DryRun') | Should -Be $true
         }
 
-        It 'Should have parameter: NonInteractive' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
         }
 
     }

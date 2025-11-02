@@ -88,9 +88,6 @@ Describe '0800_Create-TestIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('Assignees') | Should -Be $true
         }
 
-        It 'Should have parameter: NonInteractive' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
         }
 
     }

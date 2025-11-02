@@ -93,9 +93,6 @@ Describe '0702_Create-Commit' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('SignOff') | Should -Be $true
         }
 
-        It 'Should have parameter: NonInteractive' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
         }
 
         It 'Should have parameter: Force' {

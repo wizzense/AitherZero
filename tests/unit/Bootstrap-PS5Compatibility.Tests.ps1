@@ -135,7 +135,7 @@ Describe "Relaunch Parameter Preservation" {
 
         It "Should define valid parameters for main script" {
             # Ensure the bootstrap script defines which parameters are valid
-            $script:BootstrapContent | Should -BeLike "*Mode*InstallProfile*InstallPath*Branch*NonInteractive*AutoInstallDeps*SkipAutoStart*IsRelaunch*"
+            $script:BootstrapContent | Should -BeLike "*Mode*InstallProfile*InstallPath*Branch*AutoInstallDeps*SkipAutoStart*IsRelaunch*"
         }
     }
 }

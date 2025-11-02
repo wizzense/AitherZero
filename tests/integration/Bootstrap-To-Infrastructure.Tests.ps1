@@ -540,20 +540,22 @@ Describe "Orchestration Engine Features" {
             $menuOptions.CustomActions | Should -Contain "Create Custom"
         }
 
-        It "Should support non-interactive execution" {
+        It "Should support CI environment execution" {
             # Test CLI parameters
             $cliExecution = @{
                 Command = "Start-OrchestrationUI.ps1"
                 Parameters = @{
                     Playbook = "infrastructure-lab"
-                    NonInteractive = $true
                     WhatIf = $true
                 }
                 Success = $true
+                Environment = @{
+                    CI = "true"
+                }
             }
 
-            $cliExecution.Parameters.NonInteractive | Should -BeTrue
             $cliExecution.Parameters.WhatIf | Should -BeTrue
+            $cliExecution.Environment.CI | Should -Be "true"
         }
     }
 
