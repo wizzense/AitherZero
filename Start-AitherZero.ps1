@@ -1799,6 +1799,15 @@ function Show-InteractiveMenu {
         # Show menu using UI module
 
         try {
+            
+            # Show learning mode status if enabled
+            if (Test-CLILearningMode) {
+                Write-Host ""
+                Write-Host "  🎓 " -NoNewline -ForegroundColor Yellow
+                Write-Host "CLI Learning Mode: " -NoNewline -ForegroundColor Gray
+                Write-Host "ON" -NoNewline -ForegroundColor Green
+                Write-Host "  (Shows CLI commands for each action)" -ForegroundColor DarkGray
+            }
 
             $menuParams = @{
 
@@ -1813,6 +1822,8 @@ function Show-InteractiveMenu {
                     'Q' = 'Quit'
 
                     'H' = 'Help'
+                    
+                    'L' = 'Toggle CLI Learning Mode'
 
                 }
 
@@ -1865,6 +1876,18 @@ function Show-InteractiveMenu {
             Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 
         }
+        
+    elseif ($selection.Action -eq 'L') {
+            
+            # Toggle learning mode
+            if (Test-CLILearningMode) {
+                Disable-CLILearningMode
+            } else {
+                Enable-CLILearningMode
+            }
+            
+            Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        }
 
     elseif ($selection.Name) {
 
@@ -1887,6 +1910,16 @@ function Show-InteractiveMenu {
                     # Show the consolidated health dashboard
 
                     $healthScript = Join-Path $script:ProjectRoot "automation-scripts/0550_Health-Dashboard.ps1"
+                    
+                    # Show CLI equivalent
+                    $cliCommand = Get-CLIEquivalent -ScriptNumber "0550"
+                    if ($cliCommand) {
+                        Show-CLICommand -Command $cliCommand -Description "View health dashboard from CLI"
+                        if (Test-CLILearningMode) {
+                            Write-Host "  Press Enter to execute..." -ForegroundColor DarkGray
+                            Read-Host
+                        }
+                    }
 
                     if (Test-Path $healthScript) {
 
@@ -2221,14 +2254,23 @@ function Invoke-PlaybookMenu {
     if ($selection) {
 
         Show-UINotification -Message "Executing playbook: $($selection.Name)" -Type 'Info'
+        
+        # Show CLI equivalent
+        $playbookName = if ($selection.OriginalName) { $selection.OriginalName } else { $selection.Name }
+        $cliCommand = Get-CLIEquivalent -Playbook $playbookName
+        if ($cliCommand) {
+            Show-CLICommand -Command $cliCommand -Description "Execute this playbook from CLI"
+            if (Test-CLILearningMode) {
+                Write-Host "  Press Enter to execute..." -ForegroundColor DarkGray
+                Read-Host
+            }
+        }
 
         $variables = @{}
 
         if ($CI) { $variables['CI'] = $true }
 
         # Use OriginalName to avoid category prefix issues like "[analysis] name"
-
-        $playbookName = if ($selection.OriginalName) { $selection.OriginalName } else { $selection.Name }
 
 
 
@@ -2354,7 +2396,23 @@ function Invoke-TestingMenu {
 
         Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
 
-
+        # Show CLI command equivalent (learning mode)
+        $cliCommand = $null
+        if ($selection.Sequence) {
+            $cliCommand = Get-CLIEquivalent -Sequence $selection.Sequence
+        } elseif ($selection.Playbook) {
+            $cliCommand = Get-CLIEquivalent -Playbook $selection.Playbook
+        }
+        
+        if ($cliCommand) {
+            Show-CLICommand -Command $cliCommand -Description "Run this command to execute the same action from CLI"
+            
+            # Pause to let user see the command
+            if (Test-CLILearningMode) {
+                Write-Host "  Press Enter to execute..." -ForegroundColor DarkGray
+                Read-Host
+            }
+        }
 
         if ($selection.Sequence) {
 
@@ -2449,6 +2507,22 @@ function Invoke-InfrastructureMenu {
         if ($confirm -eq 'Yes') {
 
             Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
+            
+            # Show CLI equivalent
+            $cliCommand = $null
+            if ($selection.Sequence) {
+                $cliCommand = Get-CLIEquivalent -Sequence $selection.Sequence
+            } elseif ($selection.Playbook) {
+                $cliCommand = Get-CLIEquivalent -Playbook $selection.Playbook
+            }
+            
+            if ($cliCommand) {
+                Show-CLICommand -Command $cliCommand -Description "Execute this infrastructure task from CLI"
+                if (Test-CLILearningMode) {
+                    Write-Host "  Press Enter to execute..." -ForegroundColor DarkGray
+                    Read-Host
+                }
+            }
 
 
 
@@ -2539,6 +2613,20 @@ function Invoke-DevelopmentMenu {
 
 
     if ($selection) {
+        
+        # Show CLI equivalent
+        $cliCommand = $null
+        if ($selection.Sequence) {
+            $cliCommand = Get-CLIEquivalent -Sequence $selection.Sequence
+        }
+        
+        if ($cliCommand) {
+            Show-CLICommand -Command $cliCommand -Description "Execute this development tool from CLI"
+            if (Test-CLILearningMode) {
+                Write-Host "  Press Enter to execute..." -ForegroundColor DarkGray
+                Read-Host
+            }
+        }
 
         if ($selection.Command) {
 
@@ -2715,6 +2803,24 @@ function Invoke-ReportsAndLogsMenu {
     if ($selection) {
 
         Show-UINotification -Message "Starting: $($selection.Name)" -Type 'Info'
+        
+        # Show CLI equivalent
+        $cliCommand = $null
+        if ($selection.Sequence) {
+            $cliCommand = Get-CLIEquivalent -Sequence $selection.Sequence
+        } elseif ($selection.Action -eq 'HealthDashboard') {
+            $cliCommand = Get-CLIEquivalent -ScriptNumber "0550"
+        } elseif ($selection.Action -eq 'ViewLogs') {
+            $cliCommand = Get-CLIEquivalent -ScriptNumber "0530"
+        }
+        
+        if ($cliCommand) {
+            Show-CLICommand -Command $cliCommand -Description "Generate this report from CLI"
+            if (Test-CLILearningMode) {
+                Write-Host "  Press Enter to execute..." -ForegroundColor DarkGray
+                Read-Host
+            }
+        }
 
 
 

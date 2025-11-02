@@ -114,8 +114,86 @@ Describe "CLIHelper Module" {
             Get-Command Show-VersionInfo -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
         
+        It "Should export Show-CLICommand" {
+            Get-Command Show-CLICommand -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+        
+        It "Should export Get-CLIEquivalent" {
+            Get-Command Get-CLIEquivalent -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+        
+        It "Should export Enable-CLILearningMode" {
+            Get-Command Enable-CLILearningMode -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+        
+        It "Should export Disable-CLILearningMode" {
+            Get-Command Disable-CLILearningMode -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+        
+        It "Should export Test-CLILearningMode" {
+            Get-Command Test-CLILearningMode -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+        
         # Note: Get-CommandSuggestion is exported but has known issues - skipping test
     }
+
+Describe "CLI Learning Features" {
+    
+    Context "Show-CLICommand" {
+        It "Should display CLI command without throwing" {
+            { Show-CLICommand -Command "./Start-AitherZero.ps1 -Mode Run -Target 0402" } | Should -Not -Throw
+        }
+        
+        It "Should support compact mode" {
+            { Show-CLICommand -Command "./Start-AitherZero.ps1 -Version" -Compact } | Should -Not -Throw
+        }
+    }
+    
+    Context "Get-CLIEquivalent" {
+        It "Should generate command for sequence" {
+            $cmd = Get-CLIEquivalent -Sequence "0402"
+            $cmd | Should -Match "Start-AitherZero.ps1"
+            $cmd | Should -Match "-Mode Orchestrate"
+            $cmd | Should -Match "0402"
+        }
+        
+        It "Should generate command for playbook" {
+            $cmd = Get-CLIEquivalent -Playbook "test-quick"
+            $cmd | Should -Match "Start-AitherZero.ps1"
+            $cmd | Should -Match "-Playbook"
+            $cmd | Should -Match "test-quick"
+        }
+        
+        It "Should generate command for script number" {
+            $cmd = Get-CLIEquivalent -ScriptNumber "0404"
+            $cmd | Should -Match "Start-AitherZero.ps1"
+            $cmd | Should -Match "-Mode Run"
+            $cmd | Should -Match "0404"
+        }
+    }
+    
+    Context "CLI Learning Mode" {
+        It "Should enable learning mode" {
+            Enable-CLILearningMode 6>$null
+            Test-CLILearningMode | Should -Be $true
+        }
+        
+        It "Should disable learning mode" {
+            Disable-CLILearningMode 6>$null
+            Test-CLILearningMode | Should -Be $false
+        }
+        
+        It "Should toggle learning mode" {
+            Enable-CLILearningMode 6>$null
+            $enabled = Test-CLILearningMode
+            Disable-CLILearningMode 6>$null
+            $disabled = Test-CLILearningMode
+            
+            $enabled | Should -Be $true
+            $disabled | Should -Be $false
+        }
+    }
+}
 }
 
 Describe "CLIHelper Integration" {

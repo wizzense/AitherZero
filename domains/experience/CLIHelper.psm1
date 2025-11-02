@@ -495,6 +495,233 @@ function Show-VersionInfo {
     Write-Host ""
 }
 
+function Show-CLICommand {
+    <#
+    .SYNOPSIS
+        Display the CLI command equivalent for an interactive action
+    .DESCRIPTION
+        Shows a formatted command bar that teaches users the CLI equivalent
+        of what they're doing interactively, similar to AD Admin Center
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Command,
+        
+        [string]$Description,
+        
+        [switch]$Compact,
+        
+        [switch]$CopyToClipboard
+    )
+
+    if ($Compact) {
+        # Compact mode - single line at bottom of screen
+        Write-Host ""
+        Write-Host "  💡 CLI: " -NoNewline -ForegroundColor DarkGray
+        Write-Host $Command -ForegroundColor Cyan
+    } else {
+        # Full mode - prominent display
+        Write-Host ""
+        Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor DarkCyan
+        Write-Host "║ " -NoNewline -ForegroundColor DarkCyan
+        Write-Host "💡 CLI Command Equivalent" -NoNewline -ForegroundColor Yellow
+        Write-Host (" " * (62 - "💡 CLI Command Equivalent".Length)) -NoNewline
+        Write-Host " ║" -ForegroundColor DarkCyan
+        
+        if ($Description) {
+            Write-Host "║ " -NoNewline -ForegroundColor DarkCyan
+            Write-Host $Description -NoNewline -ForegroundColor Gray
+            Write-Host (" " * (66 - $Description.Length)) -NoNewline
+            Write-Host "║" -ForegroundColor DarkCyan
+            Write-Host "╠═══════════════════════════════════════════════════════════════════╣" -ForegroundColor DarkCyan
+        }
+        
+        Write-Host "║ " -NoNewline -ForegroundColor DarkCyan
+        Write-Host $Command -NoNewline -ForegroundColor Cyan
+        
+        # Calculate padding
+        $padding = 66 - $Command.Length
+        if ($padding -gt 0) {
+            Write-Host (" " * $padding) -NoNewline
+        }
+        Write-Host "║" -ForegroundColor DarkCyan
+        Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor DarkCyan
+    }
+    
+    # Copy to clipboard if requested (cross-platform)
+    if ($CopyToClipboard) {
+        try {
+            if ($IsWindows) {
+                $Command | Set-Clipboard
+            } elseif ($IsMacOS) {
+                $Command | pbcopy
+            } elseif ($IsLinux) {
+                if (Get-Command xclip -ErrorAction SilentlyContinue) {
+                    $Command | xclip -selection clipboard
+                }
+            }
+            Write-Host "  ✓ Copied to clipboard" -ForegroundColor Green
+        } catch {
+            # Silently ignore clipboard errors
+        }
+    }
+    
+    Write-Host ""
+}
+
+function Show-ExecutionBar {
+    <#
+    .SYNOPSIS
+        Show a persistent bar at the top showing current execution
+    .DESCRIPTION
+        Creates a status bar similar to IDE debuggers showing what's running
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Action,
+        
+        [string]$Command,
+        
+        [ValidateSet('Running', 'Success', 'Error', 'Info')]
+        [string]$Status = 'Running'
+    )
+
+    $statusIcon = @{
+        'Running' = '⚙️'
+        'Success' = '✅'
+        'Error' = '❌'
+        'Info' = 'ℹ️'
+    }[$Status]
+    
+    $statusColor = @{
+        'Running' = 'Yellow'
+        'Success' = 'Green'
+        'Error' = 'Red'
+        'Info' = 'Cyan'
+    }[$Status]
+
+    # Save cursor position
+    Write-Host "`n" -NoNewline
+    
+    # Draw bar
+    Write-Host "┌─────────────────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
+    Write-Host "│ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "$statusIcon $Action" -NoNewline -ForegroundColor $statusColor
+    Write-Host (" " * (68 - $Action.Length - 3)) -NoNewline
+    Write-Host "│" -ForegroundColor DarkGray
+    
+    if ($Command) {
+        Write-Host "│ " -NoNewline -ForegroundColor DarkGray
+        Write-Host "CLI: " -NoNewline -ForegroundColor DarkGray
+        Write-Host $Command -NoNewline -ForegroundColor Cyan
+        $padding = 63 - $Command.Length
+        if ($padding -gt 0) {
+            Write-Host (" " * $padding) -NoNewline
+        }
+        Write-Host "│" -ForegroundColor DarkGray
+    }
+    
+    Write-Host "└─────────────────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+function Get-CLIEquivalent {
+    <#
+    .SYNOPSIS
+        Generate the CLI command equivalent for menu actions
+    .DESCRIPTION
+        Translates interactive menu selections into their CLI equivalents
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$Sequence,
+        [string]$Playbook,
+        [string]$ScriptNumber,
+        [hashtable]$Parameters = @{}
+    )
+
+    $baseCommand = "./Start-AitherZero.ps1"
+    
+    if ($Sequence) {
+        $cmd = "$baseCommand -Mode Orchestrate -Sequence '$Sequence'"
+    } elseif ($Playbook) {
+        $cmd = "$baseCommand -Mode Orchestrate -Playbook '$Playbook'"
+    } elseif ($ScriptNumber) {
+        $cmd = "$baseCommand -Mode Run -Target $ScriptNumber"
+    } else {
+        return $null
+    }
+    
+    # Add additional parameters
+    foreach ($param in $Parameters.GetEnumerator()) {
+        if ($param.Value -is [bool] -or $param.Value -is [switch]) {
+            if ($param.Value) {
+                $cmd += " -$($param.Key)"
+            }
+        } else {
+            $cmd += " -$($param.Key) '$($param.Value)'"
+        }
+    }
+    
+    return $cmd
+}
+
+function Enable-CLILearningMode {
+    <#
+    .SYNOPSIS
+        Enable CLI learning mode to show commands for all actions
+    #>
+    [CmdletBinding()]
+    param()
+    
+    $global:AITHERZERO_CLI_LEARNING_MODE = $true
+    $env:AITHERZERO_CLI_LEARNING_MODE = '1'
+    
+    Write-Host ""
+    Write-Host "═══════════════════════════════════════════════════════════════════" -ForegroundColor Green
+    Write-Host "  🎓 CLI Learning Mode Enabled!" -ForegroundColor Yellow
+    Write-Host "═══════════════════════════════════════════════════════════════════" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "  You'll now see the CLI command for every action you take." -ForegroundColor White
+    Write-Host "  This helps you learn how to use AitherZero from the command line!" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  💡 Tip: Copy the commands to build your own automation scripts" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  To disable: " -NoNewline -ForegroundColor Gray
+    Write-Host "Disable-CLILearningMode" -ForegroundColor Yellow
+    Write-Host ""
+}
+
+function Disable-CLILearningMode {
+    <#
+    .SYNOPSIS
+        Disable CLI learning mode
+    #>
+    [CmdletBinding()]
+    param()
+    
+    $global:AITHERZERO_CLI_LEARNING_MODE = $false
+    $env:AITHERZERO_CLI_LEARNING_MODE = '0'
+    
+    Write-Host ""
+    Write-Host "  🎓 CLI Learning Mode Disabled" -ForegroundColor Yellow
+    Write-Host ""
+}
+
+function Test-CLILearningMode {
+    <#
+    .SYNOPSIS
+        Check if CLI learning mode is enabled
+    #>
+    [CmdletBinding()]
+    param()
+    
+    return ($global:AITHERZERO_CLI_LEARNING_MODE -eq $true) -or 
+           ($env:AITHERZERO_CLI_LEARNING_MODE -eq '1')
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Show-ModernHelp'
@@ -502,4 +729,10 @@ Export-ModuleMember -Function @(
     'Get-CommandSuggestion'
     'Format-CLIOutput'
     'Show-VersionInfo'
+    'Show-CLICommand'
+    'Show-ExecutionBar'
+    'Get-CLIEquivalent'
+    'Enable-CLILearningMode'
+    'Disable-CLILearningMode'
+    'Test-CLILearningMode'
 )
