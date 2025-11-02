@@ -3,6 +3,13 @@
 <#
 .SYNOPSIS
     Display comprehensive project dashboard with logs, tests, and metrics
+.DESCRIPTION
+    Shows an interactive dashboard with project metrics, test results,
+    recent logs, module status, and recent activity.
+.NOTES
+    Stage: Reporting
+    Order: 0511
+    Tags: reporting, dashboard, monitoring, metrics
 #>
 
 [CmdletBinding(SupportsShouldProcess)]

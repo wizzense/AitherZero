@@ -77,7 +77,7 @@ Describe '0511_Show-ProjectDashboard' -Tag 'Unit', 'AutomationScript', 'Reportin
 
     Context 'Metadata' {
         It 'Should have metadata comments' {
-            $content = Get-Content $script:ScriptPath -First 20 -Raw
+            $content = (Get-Content $script:ScriptPath -First 20) -join "`n"
             # Script should have synopsis or description
             $content | Should -Match '(SYNOPSIS|DESCRIPTION)'
         }
