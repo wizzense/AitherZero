@@ -3507,8 +3507,6 @@ try {
 
     }
 
-    }
-
 
 
     # Validate mode compatibility
