@@ -1,0 +1,306 @@
+#!/usr/bin/env node
+
+/**
+ * SERVERNAME MCP Server
+ * 
+ * DESCRIPTION
+ * 
+ * This server exposes tools and resources through the Model Context Protocol,
+ * allowing AI assistants to interact with SERVERNAME capabilities.
+ */
+
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import { log, logError } from './utils/logger.js';
+import { executeCommand } from './utils/executor.js';
+
+// Configuration - customize these for your server
+const SERVER_NAME = 'SERVERNAME-server';
+const SERVER_VERSION = '0.1.0';
+const SERVER_ROOT = process.env.SERVERNAME_ROOT || process.cwd();
+
+/**
+ * Example tool function - Replace with your actual implementation
+ * 
+ * This function demonstrates:
+ * - Input validation
+ * - Command execution
+ * - Error handling
+ * - Result formatting
+ */
+async function exampleTool(param1: string, param2?: string): Promise<string> {
+  log(`Executing example tool with param1=${param1}, param2=${param2}`);
+  
+  try {
+    // Validate inputs
+    if (!param1) {
+      throw new Error('param1 is required');
+    }
+    
+    // Execute your logic here
+    // Example: Call external command, API, or internal function
+    const result = await executeCommand(`echo "Example: ${param1} ${param2 || ''}"`, SERVER_ROOT);
+    
+    return result.stdout;
+  } catch (error) {
+    logError('Error in exampleTool:', error);
+    throw error;
+  }
+}
+
+/**
+ * Example resource function - Replace with your actual implementation
+ * 
+ * Resources provide read-only data that can be cached.
+ * Use them for configuration, status, lists, etc.
+ */
+async function getExampleResource(): Promise<string> {
+  log('Reading example resource');
+  
+  try {
+    // Return your resource data as a string
+    // Can be JSON, plain text, or other formats
+    const data = {
+      serverName: SERVER_NAME,
+      version: SERVER_VERSION,
+      status: 'running',
+      timestamp: new Date().toISOString()
+    };
+    
+    return JSON.stringify(data, null, 2);
+  } catch (error) {
+    logError('Error reading example resource:', error);
+    throw error;
+  }
+}
+
+// Create MCP server instance
+const server = new Server(
+  {
+    name: SERVER_NAME,
+    version: SERVER_VERSION,
+  },
+  {
+    capabilities: {
+      tools: {},
+      resources: {},
+    },
+  }
+);
+
+/**
+ * Register tool handlers
+ * 
+ * Tools are actions that the AI assistant can invoke.
+ * Each tool should:
+ * - Have a clear, descriptive name (use snake_case)
+ * - Include a detailed description for the AI
+ * - Define an input schema with types and descriptions
+ * - Handle errors gracefully
+ */
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: [
+    {
+      name: 'example_tool',
+      description: 'Example tool that demonstrates the MCP tool pattern. Replace this with your actual tool. Describe what it does clearly so the AI knows when to use it.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          param1: {
+            type: 'string',
+            description: 'First parameter - required. Describe what this parameter is used for.',
+          },
+          param2: {
+            type: 'string',
+            description: 'Second parameter - optional. Describe what this parameter is used for.',
+          },
+        },
+        required: ['param1'],
+      },
+    },
+    // Add more tools here
+    // {
+    //   name: 'another_tool',
+    //   description: 'Description of another tool',
+    //   inputSchema: { /* ... */ },
+    // },
+  ],
+}));
+
+/**
+ * Handle tool calls
+ * 
+ * This is where tool execution happens. The pattern:
+ * 1. Extract tool name and arguments
+ * 2. Validate arguments exist
+ * 3. Call the appropriate function
+ * 4. Return formatted result or error
+ */
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  try {
+    let result: string;
+
+    if (!args) {
+      throw new Error('Missing arguments');
+    }
+
+    // Route to the appropriate tool handler
+    switch (name) {
+      case 'example_tool':
+        result = await exampleTool(args.param1 as string, args.param2 as string | undefined);
+        break;
+
+      // Add more tool handlers here
+      // case 'another_tool':
+      //   result = await anotherTool(args.someParam as string);
+      //   break;
+
+      default:
+        throw new Error(`Unknown tool: ${name}`);
+    }
+
+    // Return successful result
+    return {
+      content: [
+        {
+          type: 'text',
+          text: result,
+        },
+      ],
+    };
+  } catch (error) {
+    // Return error to the client
+    logError(`Tool error (${name}):`, error);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+});
+
+/**
+ * Register resource handlers
+ * 
+ * Resources provide read-only data that can be queried by the AI.
+ * Use resources for:
+ * - Configuration data
+ * - Status information
+ * - Lists of available items
+ * - Any cacheable, read-only data
+ */
+server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+  resources: [
+    {
+      uri: 'SERVERNAME://example',
+      name: 'Example Resource',
+      description: 'Example resource that demonstrates the MCP resource pattern. Replace this with your actual resource.',
+      mimeType: 'application/json',
+    },
+    // Add more resources here
+    // {
+    //   uri: 'SERVERNAME://another-resource',
+    //   name: 'Another Resource',
+    //   description: 'Description of another resource',
+    //   mimeType: 'text/plain',
+    // },
+  ],
+}));
+
+/**
+ * Handle resource reads
+ * 
+ * This is where resource data is retrieved. The pattern:
+ * 1. Extract resource URI
+ * 2. Route to appropriate function
+ * 3. Return formatted data
+ */
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const { uri } = request.params;
+
+  try {
+    let content: string;
+
+    // Route to the appropriate resource reader
+    switch (uri) {
+      case 'SERVERNAME://example':
+        content = await getExampleResource();
+        break;
+
+      // Add more resource handlers here
+      // case 'SERVERNAME://another-resource':
+      //   content = await getAnotherResource();
+      //   break;
+
+      default:
+        throw new Error(`Unknown resource: ${uri}`);
+    }
+
+    // Return resource content
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'application/json',
+          text: content,
+        },
+      ],
+    };
+  } catch (error) {
+    logError(`Resource error (${uri}):`, error);
+    throw error;
+  }
+});
+
+/**
+ * Start the server
+ * 
+ * This sets up the stdio transport and starts listening for requests.
+ * The server communicates over stdin/stdout using JSON-RPC.
+ */
+async function main() {
+  try {
+    log(`Starting ${SERVER_NAME} v${SERVER_VERSION}`);
+    log(`Server root: ${SERVER_ROOT}`);
+    
+    // Create stdio transport
+    const transport = new StdioServerTransport();
+    
+    // Connect server to transport
+    await server.connect(transport);
+    
+    log('Server started successfully');
+    log('Listening for MCP requests on stdio...');
+  } catch (error) {
+    logError('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Handle process signals gracefully
+process.on('SIGINT', async () => {
+  log('Received SIGINT, shutting down...');
+  await server.close();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  log('Received SIGTERM, shutting down...');
+  await server.close();
+  process.exit(0);
+});
+
+// Start the server
+main();

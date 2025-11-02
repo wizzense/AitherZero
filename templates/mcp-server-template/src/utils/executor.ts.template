@@ -1,0 +1,96 @@
+/**
+ * Command Executor Utility
+ * 
+ * Provides functions for executing shell commands safely.
+ * Includes proper error handling and output capture.
+ */
+
+import { promisify } from 'util';
+import { exec as execCallback } from 'child_process';
+import { logDebug, logError } from './logger.js';
+
+const exec = promisify(execCallback);
+
+export interface CommandResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+/**
+ * Execute a shell command
+ * 
+ * @param command - The command to execute
+ * @param cwd - Working directory for command execution
+ * @param timeout - Timeout in milliseconds (default: 30000)
+ * @returns Command result with stdout, stderr, and exit code
+ */
+export async function executeCommand(
+  command: string,
+  cwd?: string,
+  timeout: number = 30000
+): Promise<CommandResult> {
+  logDebug(`Executing command: ${command}`);
+  logDebug(`Working directory: ${cwd || process.cwd()}`);
+  
+  try {
+    const { stdout, stderr } = await exec(command, {
+      cwd: cwd || process.cwd(),
+      timeout,
+      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+    });
+    
+    logDebug(`Command succeeded with stdout length: ${stdout.length}`);
+    
+    return {
+      stdout: stdout.trim(),
+      stderr: stderr.trim(),
+      exitCode: 0,
+    };
+  } catch (error: any) {
+    logError(`Command failed: ${command}`, error);
+    
+    return {
+      stdout: error.stdout || '',
+      stderr: error.stderr || error.message,
+      exitCode: error.code || 1,
+    };
+  }
+}
+
+/**
+ * Execute a command with streaming output (for long-running commands)
+ * 
+ * Note: This is a placeholder. Implement if you need streaming.
+ * Streaming requires different handling and may not work with all MCP clients.
+ */
+export async function executeCommandStreaming(
+  command: string,
+  cwd?: string
+): Promise<CommandResult> {
+  // TODO: Implement streaming execution if needed
+  // For now, fall back to regular execution
+  return executeCommand(command, cwd);
+}
+
+/**
+ * Sanitize a command string to prevent injection
+ * 
+ * Basic sanitization - adjust based on your security needs.
+ * Consider using a more robust solution for production.
+ */
+export function sanitizeCommand(input: string): string {
+  // Remove potentially dangerous characters
+  // This is a basic example - adjust for your use case
+  return input.replace(/[;&|`$(){}[\]]/g, '');
+}
+
+/**
+ * Build a command with safe argument escaping
+ * 
+ * Example: buildCommand('echo', ['hello', 'world']) => 'echo "hello" "world"'
+ */
+export function buildCommand(executable: string, args: string[]): string {
+  const escapedArgs = args.map(arg => `"${arg.replace(/"/g, '\\"')}"`);
+  return `${executable} ${escapedArgs.join(' ')}`;
+}

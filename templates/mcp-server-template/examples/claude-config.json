@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "SERVERNAME": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/your-mcp-server/scripts/start-with-build.mjs"
+      ],
+      "env": {
+        "SERVERNAME_ROOT": "/absolute/path/to/your-mcp-server",
+        "DEBUG": "0"
+      }
+    }
+  }
+}

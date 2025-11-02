@@ -1,0 +1,426 @@
+# SERVERNAME MCP Server - Troubleshooting
+
+Common issues and solutions for the SERVERNAME MCP server.
+
+## Installation Issues
+
+### Node.js Not Found
+
+**Symptom**: `command not found: node` or `command not found: npm`
+
+**Solution**:
+```bash
+# Check if Node.js is installed
+which node
+node --version
+
+# Install Node.js if missing
+# macOS: brew install node
+# Ubuntu: sudo apt install nodejs npm
+# Windows: Download from nodejs.org
+```
+
+### TypeScript Compilation Fails
+
+**Symptom**: `npm run build` fails with TypeScript errors
+
+**Solution**:
+```bash
+# Check TypeScript version
+npx tsc --version
+
+# Clean and reinstall
+rm -rf node_modules package-lock.json dist
+npm install
+
+# Verify tsconfig.json is valid
+npx tsc --showConfig
+```
+
+### Permission Errors
+
+**Symptom**: "EACCES: permission denied"
+
+**Solution**:
+```bash
+# Fix file ownership
+sudo chown -R $USER:$USER .
+
+# Make scripts executable
+chmod +x scripts/*.mjs
+
+# Check npm permissions
+npm config get prefix
+# If needed, change npm prefix to user directory
+```
+
+## Configuration Issues
+
+### AI Assistant Doesn't See Server
+
+**Symptom**: Server not listed in AI assistant capabilities
+
+**Possible Causes & Solutions**:
+
+1. **Invalid JSON syntax**
+   ```bash
+   # Validate JSON
+   cat config.json | python -m json.tool
+   # Or use online JSON validator
+   ```
+
+2. **Wrong file path**
+   ```bash
+   # Verify path exists
+   ls -la /path/to/server/scripts/start-with-build.mjs
+   
+   # Use absolute paths (Claude)
+   # Use ${workspaceFolder} (VS Code)
+   ```
+
+3. **Server not built**
+   ```bash
+   # Build the server
+   cd /path/to/server
+   npm run build
+   
+   # Verify dist exists
+   ls -la dist/index.js
+   ```
+
+4. **AI assistant not restarted**
+   - Restart Claude Desktop completely
+   - Reload VS Code window
+   - Check AI assistant logs for errors
+
+### Environment Variables Not Working
+
+**Symptom**: Server can't access environment variables
+
+**Solutions**:
+
+```bash
+# For Claude Desktop (set in shell before starting Claude)
+export SERVERNAME_API_KEY="your_key"
+open -a Claude  # macOS
+
+# For VS Code (use proper format in config)
+"env": {
+  "SERVERNAME_API_KEY": "${env:SERVERNAME_API_KEY}"
+}
+
+# Set in shell profile for persistence
+echo 'export SERVERNAME_API_KEY="your_key"' >> ~/.bashrc
+```
+
+## Runtime Issues
+
+### Server Starts But Tools Not Available
+
+**Symptom**: Server responds but tools don't appear
+
+**Debug Steps**:
+
+1. **Test manually**
+   ```bash
+   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/index.js
+   ```
+
+2. **Check response format**
+   - Should return JSON with `result.tools` array
+   - Each tool should have `name`, `description`, `inputSchema`
+
+3. **Verify tool registration**
+   - Check `ListToolsRequestSchema` handler in code
+   - Ensure tools array is populated
+   - Verify tool definitions are valid
+
+### Tool Execution Fails
+
+**Symptom**: Tool call returns error
+
+**Debug Steps**:
+
+1. **Check error message**
+   - Error should describe what went wrong
+   - Look for "Invalid parameters", "Command failed", etc.
+
+2. **Verify parameters**
+   ```bash
+   # Test with manual request
+   echo '{
+     "jsonrpc":"2.0",
+     "id":1,
+     "method":"tools/call",
+     "params":{
+       "name":"your_tool",
+       "arguments":{"param":"value"}
+     }
+   }' | node dist/index.js
+   ```
+
+3. **Check logs**
+   - Enable debug mode: `DEBUG=1`
+   - Review stderr output
+   - Check for validation errors
+
+### Resource Not Found
+
+**Symptom**: Resource read fails or returns empty
+
+**Debug Steps**:
+
+1. **Verify resource URI**
+   - Must match exactly (case-sensitive)
+   - Format: `servername://resource-name`
+
+2. **Check resource handler**
+   - Ensure resource is in `ListResourcesRequestSchema`
+   - Verify URI in `ReadResourceRequestSchema` switch
+
+3. **Test manually**
+   ```bash
+   echo '{
+     "jsonrpc":"2.0",
+     "id":1,
+     "method":"resources/read",
+     "params":{"uri":"servername://example"}
+   }' | node dist/index.js
+   ```
+
+### Timeout Errors
+
+**Symptom**: Operations time out or hang
+
+**Solutions**:
+
+1. **Increase timeout**
+   ```typescript
+   // In executor.ts
+   await executeCommand(cmd, cwd, 60000); // 60 seconds
+   ```
+
+2. **Check for hanging processes**
+   ```bash
+   ps aux | grep node
+   kill <pid>
+   ```
+
+3. **Async handling**
+   - Ensure all promises are awaited
+   - Check for blocking operations
+
+## Performance Issues
+
+### High Memory Usage
+
+**Symptom**: Node.js process uses excessive memory
+
+**Solutions**:
+
+```bash
+# Increase memory limit
+node --max-old-space-size=4096 dist/index.js
+
+# Profile memory usage
+node --inspect dist/index.js
+# Use Chrome DevTools to profile
+```
+
+**Check for**:
+- Memory leaks in long-running operations
+- Large data structures not being freed
+- Caching without limits
+
+### Slow Response Times
+
+**Symptom**: Tools take too long to execute
+
+**Solutions**:
+
+1. **Profile execution**
+   ```typescript
+   const start = Date.now();
+   const result = await operation();
+   logDebug(`Operation took ${Date.now() - start}ms`);
+   ```
+
+2. **Optimize commands**
+   - Use faster alternatives
+   - Cache results when possible
+   - Parallelize independent operations
+
+3. **Add progress indicators**
+   - For long operations, consider streaming updates
+   - Log progress to stderr
+
+## Debugging
+
+### Enable Debug Logging
+
+```bash
+# Set environment variable
+export DEBUG=1
+
+# Or in MCP config
+"env": {
+  "DEBUG": "1"
+}
+```
+
+### Inspect JSON-RPC Communication
+
+```bash
+# Log all stdio communication
+node dist/index.js 2>debug.log
+
+# View debug log
+tail -f debug.log
+```
+
+### Use Node.js Inspector
+
+```bash
+# Start with inspector
+node --inspect-brk dist/index.js
+
+# Open chrome://inspect in Chrome
+# Set breakpoints and debug
+```
+
+### Test Individual Functions
+
+```typescript
+// Add test script
+import { myTool } from './dist/index.js';
+
+async function test() {
+  try {
+    const result = await myTool('param1', 'param2');
+    console.log('Result:', result);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+test();
+```
+
+## Common Error Messages
+
+### "Module not found"
+
+**Cause**: Import path incorrect or dependency missing
+
+**Solution**:
+- Check import paths use `.js` extension
+- Verify dependency installed: `npm install`
+- Check package.json dependencies
+
+### "Cannot find module '@modelcontextprotocol/sdk'"
+
+**Cause**: MCP SDK not installed
+
+**Solution**:
+```bash
+npm install @modelcontextprotocol/sdk
+```
+
+### "SyntaxError: Unexpected token"
+
+**Cause**: TypeScript not compiled or using wrong Node.js version
+
+**Solution**:
+```bash
+# Rebuild
+npm run build
+
+# Check Node.js version
+node --version  # Must be 18+
+```
+
+### "ENOENT: no such file or directory"
+
+**Cause**: File path incorrect
+
+**Solution**:
+- Use absolute paths
+- Check SERVER_ROOT environment variable
+- Verify files exist: `ls -la /path/to/file`
+
+## Getting More Help
+
+### Check Documentation
+
+- README.md - Overview
+- SETUP.md - Installation and configuration
+- USAGE.md - Usage examples
+- ARCHITECTURE.md - Technical details
+
+### Enable Verbose Output
+
+```bash
+# Run with verbose npm
+npm run start --verbose
+
+# Check system info
+node --version
+npm --version
+pwd
+env | grep SERVERNAME
+```
+
+### Collect Debug Information
+
+When reporting issues, include:
+
+1. **System info**
+   - OS and version
+   - Node.js version
+   - npm version
+
+2. **Error output**
+   - Full error message
+   - Stack trace
+   - Debug logs
+
+3. **Configuration**
+   - MCP server config (sanitize secrets!)
+   - Environment variables
+   - package.json
+
+4. **Steps to reproduce**
+   - What you did
+   - What you expected
+   - What actually happened
+
+### Community Resources
+
+- GitHub Issues: [repository issues page]
+- Discussions: [repository discussions page]
+- MCP Community: https://github.com/modelcontextprotocol
+- Stack Overflow: Tag with `mcp` and `SERVERNAME`
+
+## Reset and Clean Start
+
+If all else fails, try a clean start:
+
+```bash
+# Backup any custom code
+cp -r src src.backup
+
+# Clean everything
+rm -rf node_modules package-lock.json dist
+
+# Reinstall
+npm install
+
+# Rebuild
+npm run build
+
+# Test
+npm run test:manual
+
+# Restore customizations
+# (carefully merge src.backup changes)
+```

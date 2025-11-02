@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-06-18/schema.json",
+  "mcpServers": {
+    "SERVERNAME": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/your-mcp-server/scripts/start-with-build.mjs"
+      ],
+      "description": "DESCRIPTION",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "SERVERNAME_ROOT": "${workspaceFolder}",
+        "DEBUG": "0"
+      }
+    }
+  }
+}
