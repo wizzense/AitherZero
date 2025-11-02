@@ -43,7 +43,6 @@
             "args": ["-NoLogo"]
           }
         },
-        "powershell.powerShellDefaultVersion": "PowerShell (x64)",
         "powershell.integratedConsole.showOnStartup": false,
         "files.eol": "\n",
         "files.trimTrailingWhitespace": true,
