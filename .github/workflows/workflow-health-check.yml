@@ -13,6 +13,11 @@ on:
       - '.github/scripts/monitor-workflow-health.ps1'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 concurrency:
   group: workflow-health-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
