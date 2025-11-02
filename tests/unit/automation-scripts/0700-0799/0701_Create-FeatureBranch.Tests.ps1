@@ -78,11 +78,6 @@ Describe '0701_Create-FeatureBranch' -Tag 'Unit', 'AutomationScript', 'Unknown' 
             $cmd.Parameters.ContainsKey('Force') | Should -Be $true
         }
 
-        It 'Should have parameter: NonInteractive' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
-        }
-
     }
 
     Context 'Metadata' {

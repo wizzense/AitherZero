@@ -40,10 +40,6 @@
 
     Path to configuration file
 
-.PARAMETER NonInteractive
-
-    Run without user prompts (automatically detected in CI environments)
-
 .PARAMETER Profile
 
     Execution profile to use
@@ -139,10 +135,6 @@ param(
 
 
     [string]$ConfigPath,
-
-
-
-    [switch]$NonInteractive,
 
 
 
@@ -541,7 +533,7 @@ if ([string]::IsNullOrEmpty($ProfileName)) {
 
 function Get-SmartExecutionMode {
 
-    param($CurrentMode, $NonInteractive)
+    param($CurrentMode)
 
 
 
@@ -583,7 +575,7 @@ function Get-SmartExecutionMode {
 
 
 
-    if ($isHeadless -or $NonInteractive) {
+    if ($isHeadless) {
 
         # Headless environment - likely server deployment
 
@@ -615,21 +607,11 @@ function Get-SmartExecutionMode {
 
 # Auto-detect CI if not explicitly set
 
-if (-not $CI -and -not $NonInteractive) {
+if (-not $CI) {
 
-    if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
+    # Detect CI environment
 
-        # Let Configuration module detect CI
-
-        $nonInteractiveValue = Get-ConfiguredValue -Name 'NonInteractive' -Section 'Automation' -Default $false
-
-        if ($nonInteractiveValue -eq $true -or $nonInteractiveValue -eq '1' -or $nonInteractiveValue -eq 'true') {
-
-            $NonInteractive = $true
-
-        }
-
-    }
+    $CI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
 
 }
 
@@ -640,7 +622,7 @@ $originalMode = $Mode
 
 # Only apply smart detection if user didn't explicitly set the Mode parameter
 if (-not $PSBoundParameters.ContainsKey('Mode')) {
-    $Mode = Get-SmartExecutionMode -CurrentMode $Mode -NonInteractive $NonInteractive
+    $Mode = Get-SmartExecutionMode -CurrentMode $Mode
 }
 
 if ($Mode -ne $originalMode) {
@@ -785,7 +767,7 @@ function Show-Help {
 
     Write-UIText "  -Mode Orchestrate -Playbook 'tech-debt-analysis' -PlaybookProfile 'quick'" -Color 'Info'
 
-    Write-UIText "  -NonInteractive -Profile Developer" -Color 'Info'
+    Write-UIText "  -Profile Developer" -Color 'Info'
 
     Write-UIText "  -DryRun    # Preview without executing" -Color 'Info'
 
@@ -1174,7 +1156,6 @@ function Show-Usage {
     Write-ModernCLI "OPTIONS:" -Type 'Info'
     Write-ModernCLI "  -Help                Show this help message" -Type 'Muted'
     Write-ModernCLI "  -Version             Display version information" -Type 'Muted'
-    Write-ModernCLI "  -NonInteractive      Run without user prompts (auto-detected in CI)" -Type 'Muted'
     Write-ModernCLI "  -DryRun              Preview actions without executing" -Type 'Muted'
     Write-ModernCLI "  -Verbose             Show detailed execution information" -Type 'Muted'
     Write-ModernCLI "  -ProfileName <name>  Execution profile: Minimal|Standard|Developer|Full" -Type 'Muted'
@@ -3406,7 +3387,7 @@ try {
 
     # Initialize
 
-    if (-not $NonInteractive) {
+    if (-not $CI) {
 
         Show-Banner
 
@@ -3460,75 +3441,67 @@ try {
 
     # Smart execution mode detection based on environment context
 
-    if (-not $PSBoundParameters.ContainsKey('NonInteractive')) {
+    # CI environments are always non-interactive and should avoid banner display
 
-        # Detect CI environment using standard CI environment variables
+    # Detect CI environment using standard CI environment variables
 
-        $isCI = ($env:CI -eq 'true') -or
+    $isCI = ($env:CI -eq 'true') -or
 
-                ($env:GITHUB_ACTIONS -eq 'true') -or
+            ($env:GITHUB_ACTIONS -eq 'true') -or
 
-                ($env:TF_BUILD -eq 'true') -or
+            ($env:TF_BUILD -eq 'true') -or
 
-                ($env:GITLAB_CI -eq 'true') -or
+            ($env:GITLAB_CI -eq 'true') -or
 
-                ($env:JENKINS_URL) -or
+            ($env:JENKINS_URL) -or
 
-                ($env:TRAVIS -eq 'true') -or
+            ($env:TRAVIS -eq 'true') -or
 
-                ($env:CIRCLECI -eq 'true')
+            ($env:CIRCLECI -eq 'true')
 
 
 
-        if ($isCI) {
+    if ($isCI) {
 
-            # CI environment detected
+        # CI environment detected - runs non-interactive by default
 
-            if ($PSBoundParameters.ContainsKey('Mode') -and $Mode -eq 'Interactive') {
+        if ($PSBoundParameters.ContainsKey('Mode') -and $Mode -eq 'Interactive') {
 
-                # User explicitly requested Interactive mode in CI - allow it for testing
+            # User explicitly requested Interactive mode in CI - allow it for testing
 
-                $NonInteractive = $false
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
 
-                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-
-                    Write-CustomLog "CI environment detected, but Interactive mode explicitly requested - allowing interactive mode" -Level 'Information'
-
-                }
-
-            } else {
-
-                # Default CI behavior: Non-interactive with validation mode for automated logging
-
-                $NonInteractive = $true
-
-                if ($Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
-
-                    $Mode = 'Validate'
-
-                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-
-                        Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
-
-                    }
-
-                }
+                Write-CustomLog "CI environment detected, but Interactive mode explicitly requested - allowing interactive mode" -Level 'Information'
 
             }
 
         } else {
 
-            # Manual execution: Non-interactive list mode by default
+            # Default CI behavior: Non-interactive with validation mode for automated logging
 
-            # Users can explicitly use -Mode Interactive for the interactive menu
+            if ($Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
 
-            $NonInteractive = $false
+                $Mode = 'Validate'
 
-            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
 
-                Write-CustomLog "Manual execution detected - defaulting to non-interactive mode" -Level 'Information'
+                    Write-CustomLog "CI environment detected - running non-interactive validation with logging to files" -Level 'Information'
+
+                }
 
             }
+
+        }
+
+    } else {
+
+        # Manual execution: Non-interactive list mode by default
+
+        # Users can explicitly use -Mode Interactive for the interactive menu
+
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+
+            Write-CustomLog "Manual execution detected - defaulting to non-interactive mode" -Level 'Information'
 
         }
 
@@ -3538,9 +3511,9 @@ try {
 
     # Validate mode compatibility
 
-    if ($NonInteractive -and $Mode -eq 'Interactive') {
+    if ($isCI -and $Mode -eq 'Interactive' -and -not $PSBoundParameters.ContainsKey('Mode')) {
 
-        Write-Warning "Interactive mode is not compatible with NonInteractive flag. Use -Mode Validate, Orchestrate, or Test instead."
+        Write-Warning "Interactive mode is not compatible with CI environments. Use -Mode Validate, Orchestrate, or Test instead."
 
         exit 1
 
@@ -3554,9 +3527,9 @@ try {
 
         'Interactive' {
 
-            if ($NonInteractive) {
+            if ($isCI -and -not $PSBoundParameters.ContainsKey('Mode')) {
 
-                Write-Warning "Cannot run interactive mode with -NonInteractive flag"
+                Write-Warning "Cannot run interactive mode in CI environment without explicit -Mode Interactive"
 
                 exit 1
 

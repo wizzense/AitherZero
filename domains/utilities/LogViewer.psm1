@@ -201,9 +201,12 @@ function Show-LogDashboard {
         [switch]$AutoRefresh
     )
 
-    # Check if we're in non-interactive mode
+    # Check if we're in non-interactive mode (CI or headless environment)
     $isNonInteractive = -not [Environment]::UserInteractive -or
-                        $env:AITHERZERO_NONINTERACTIVE -eq 'true'
+                        $env:AITHERZERO_NONINTERACTIVE -eq 'true' -or
+                        $env:CI -eq 'true' -or
+                        $env:GITHUB_ACTIONS -eq 'true' -or
+                        $env:TF_BUILD -eq 'true'
 
     if ($isNonInteractive) {
         # Non-interactive mode - just show summary and exit
