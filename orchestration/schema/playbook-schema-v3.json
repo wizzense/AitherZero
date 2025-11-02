@@ -28,7 +28,7 @@
         },
         "category": {
           "type": "string",
-          "enum": ["development", "infrastructure", "testing", "deployment", "maintenance", "security", "analysis"],
+          "enum": ["development", "infrastructure", "testing", "deployment", "maintenance", "security", "analysis", "operations"],
           "description": "Playbook category"
         },
         "author": {

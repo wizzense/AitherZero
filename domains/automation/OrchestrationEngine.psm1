@@ -1857,14 +1857,15 @@ function Invoke-JobSteps {
             if ($step.outputs) {
                 foreach ($output in $step.outputs) {
                     try {
-                        # Validate output value expression for security
-                        if ($output.value -match '[;&|`]|Invoke-Expression|iex|Get-Content|Set-Content|Remove-Item|New-Item') {
-                            Write-OrchestrationLog "Step output contains potentially dangerous commands: $($output.value)" -Level 'Warning'
+                        # Validate output value expression using AST parsing
+                        if (-not (Test-SafeExpression -Expression $output.value)) {
+                            Write-OrchestrationLog "Step output failed security validation: $($output.value)" -Level 'Warning'
                             continue
                         }
                         
-                        # Safe evaluation in constrained scope
-                        $outputValue = Invoke-Expression $output.value
+                        # Safe evaluation using script block
+                        $scriptBlock = [ScriptBlock]::Create($output.value)
+                        $outputValue = & $scriptBlock
                         $stepOutputs[$output.name] = $outputValue
                     } catch {
                         Write-OrchestrationLog "Failed to evaluate step output '$($output.name)': $_" -Level 'Warning'
@@ -1994,6 +1995,107 @@ function Invoke-ReusableAction {
     }
 }
 
+function Test-SafeExpression {
+    <#
+    .SYNOPSIS
+    Validate that an expression is safe to execute using AST parsing
+    
+    .DESCRIPTION
+    Uses PowerShell's Abstract Syntax Tree parsing to analyze expression structure
+    and reject expressions containing dangerous cmdlets or patterns.
+    
+    .PARAMETER Expression
+    The expression to validate
+    
+    .PARAMETER AllowedCommands
+    List of cmdlet names that are allowed (whitelist approach)
+    
+    .RETURNS
+    $true if expression is safe, $false otherwise
+    #>
+    param(
+        [string]$Expression,
+        [string[]]$AllowedCommands = @()
+    )
+    
+    if ([string]::IsNullOrWhiteSpace($Expression)) {
+        return $false
+    }
+    
+    # Quick pattern-based rejection for obvious危险 patterns
+    $dangerousPatterns = @(
+        '[;&|`]',                           # Command chaining
+        'Invoke-Expression', 'iex',         # Dynamic execution
+        'Get-Content', 'Set-Content',       # File operations
+        'Remove-Item', 'New-Item',
+        'Start-Process', 'Invoke-Command',  # Process execution
+        'Download', 'WebRequest',           # Network operations
+        'Registry', 'Get-Item.*HKLM',      # Registry access
+        '\$\(','\$\{',                      # Variable expansion in strings (potential injection)
+        '\.exe', '\.bat', '\.cmd', '\.ps1' # Executable references
+    )
+    
+    foreach ($pattern in $dangerousPatterns) {
+        if ($Expression -match $pattern) {
+            Write-OrchestrationLog "Expression contains dangerous pattern: $pattern" -Level 'Warning'
+            return $false
+        }
+    }
+    
+    # Use AST parsing for deeper analysis
+    try {
+        $tokens = $null
+        $errors = $null
+        $ast = [System.Management.Automation.Language.Parser]::ParseInput(
+            $Expression,
+            [ref]$tokens,
+            [ref]$errors
+        )
+        
+        if ($errors.Count -gt 0) {
+            Write-OrchestrationLog "Expression has syntax errors: $($errors[0].Message)" -Level 'Warning'
+            return $false
+        }
+        
+        # Check for command invocations
+        $commandAsts = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
+        
+        foreach ($cmdAst in $commandAsts) {
+            $cmdName = $cmdAst.GetCommandName()
+            
+            # If whitelist provided, check against it
+            if ($AllowedCommands.Count -gt 0 -and $cmdName -notin $AllowedCommands) {
+                Write-OrchestrationLog "Command '$cmdName' not in whitelist" -Level 'Warning'
+                return $false
+            }
+            
+            # Check against known dangerous commands
+            $dangerousCmdlets = @(
+                'Invoke-Expression', 'iex', 'Invoke-Command', 'icm',
+                'Start-Process', 'saps',
+                'Remove-Item', 'rm', 'del',
+                'New-Item', 'ni',
+                'Set-Content', 'sc',
+                'Get-Content', 'gc', 'cat',
+                'Invoke-WebRequest', 'iwr', 'wget', 'curl',
+                'Start-Job', 'Start-ThreadJob',
+                'Register-ScheduledTask'
+            )
+            
+            if ($cmdName -in $dangerousCmdlets) {
+                Write-OrchestrationLog "Expression contains dangerous cmdlet: $cmdName" -Level 'Warning'
+                return $false
+            }
+        }
+        
+        return $true
+        
+    } catch {
+        Write-OrchestrationLog "Failed to parse expression: $_" -Level 'Warning'
+        return $false
+    }
+}
+
 function Test-JobCondition {
     <#
     .SYNOPSIS
@@ -2015,9 +2117,9 @@ function Test-JobCondition {
         return $Context.Failed.Count -gt 0
     }
     
-    # Validate condition for security (prevent code injection)
-    if ($Condition -match '[;&|`]|Invoke-Expression|iex|Get-Content|Set-Content|Remove-Item|New-Item|Start-Process') {
-        Write-OrchestrationLog "Job condition contains potentially dangerous commands: $Condition" -Level 'Error'
+    # Validate condition using AST parsing for enhanced security
+    if (-not (Test-SafeExpression -Expression $Condition)) {
+        Write-OrchestrationLog "Job condition failed security validation: $Condition" -Level 'Error'
         return $false
     }
     
@@ -2056,9 +2158,9 @@ function Test-StepCondition {
         return $false  # We wouldn't reach here if previous step failed without continue-on-error
     }
     
-    # Validate condition for security (prevent code injection)
-    if ($Condition -match '[;&|`]|Invoke-Expression|iex|Get-Content|Set-Content|Remove-Item|New-Item|Start-Process') {
-        Write-OrchestrationLog "Step condition contains potentially dangerous commands: $Condition" -Level 'Error'
+    # Validate condition using AST parsing for enhanced security
+    if (-not (Test-SafeExpression -Expression $Condition)) {
+        Write-OrchestrationLog "Step condition failed security validation: $Condition" -Level 'Error'
         return $false
     }
     
