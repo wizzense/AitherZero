@@ -15,13 +15,13 @@
     Use -Mode Interactive to access the interactive menu interface.
 
     TAB COMPLETION: The script includes intelligent tab completion for parameters:
-    
+
     - Target: Suggests script numbers, 'script', 'playbook', 'sequence', etc.
-    
+
     - Playbook: Auto-completes available playbook names
-    
+
     - ScriptNumber: Shows script numbers with descriptions
-    
+
     - Query: Suggests common search terms
 
     Note: This script requires PowerShell 7.0 or higher. If running from PowerShell 5.1,
@@ -233,9 +233,9 @@ param(
 # Register argument completer for Target parameter
 Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'Target' -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    
+
     $targets = @('script', 'playbook', 'sequence', 'scripts', 'playbooks', 'all')
-    
+
     # Also suggest script numbers if they exist
     $scriptDir = Join-Path $PSScriptRoot 'automation-scripts'
     if (Test-Path $scriptDir) {
@@ -246,7 +246,7 @@ Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'T
         } | Select-Object -First 10
         $targets += $scripts
     }
-    
+
     $targets | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
         [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
     }
@@ -255,7 +255,7 @@ Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'T
 # Register argument completer for Playbook parameter
 Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'Playbook' -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    
+
     $playbookDir = Join-Path $PSScriptRoot 'orchestration/playbooks'
     if (Test-Path $playbookDir) {
         Get-ChildItem $playbookDir -Filter "*.json" -Recurse | ForEach-Object {
@@ -275,7 +275,7 @@ Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'P
 # Register argument completer for ScriptNumber parameter
 Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'ScriptNumber' -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    
+
     $scriptDir = Join-Path $PSScriptRoot 'automation-scripts'
     if (Test-Path $scriptDir) {
         Get-ChildItem $scriptDir -Filter "*.ps1" | Where-Object { $_.Name -match '^\d{4}_' } | ForEach-Object {
@@ -293,9 +293,9 @@ Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'S
 # Register argument completer for Query parameter (suggest common search terms)
 Register-ArgumentCompleter -CommandName 'Start-AitherZero.ps1' -ParameterName 'Query' -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    
+
     $commonSearches = @('test', 'security', 'git', 'docker', 'infrastructure', 'deploy', 'validate', 'report', 'install', 'setup')
-    
+
     $commonSearches | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
         [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', "Search for: $_")
     }
@@ -877,11 +877,11 @@ function Initialize-CoreModule {
 
         return @{
 
-            Logging = $null -ne (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)
+            Logging       = $null -ne (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)
 
             Configuration = $null -ne (Get-Command Get-Configuration -ErrorAction SilentlyContinue)
 
-            UI = $null -ne (Get-Command Show-UIMenu -ErrorAction SilentlyContinue)
+            UI            = $null -ne (Get-Command Show-UIMenu -ErrorAction SilentlyContinue)
 
             Orchestration = $null -ne (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue)
 
@@ -893,11 +893,11 @@ function Initialize-CoreModule {
 
         return @{
 
-            Logging = $false
+            Logging       = $false
 
             Configuration = $false
 
-            UI = $false
+            UI            = $false
 
             Orchestration = $false
 
@@ -1023,7 +1023,7 @@ function Get-AitherConfiguration {
 
         Core = @{
 
-            Name = "AitherZero"
+            Name    = "AitherZero"
 
             Version = "1.0.0"
 
@@ -1031,7 +1031,7 @@ function Get-AitherConfiguration {
 
         }
 
-}
+    }
 
 }
 
@@ -1059,11 +1059,11 @@ function Write-ModernCLI {
 
     $colors = if ($env:CI -eq 'true') {
 
-        @{ Info='White'; Success='White'; Warning='White'; Error='White'; Accent='White'; Muted='White' }
+        @{ Info = 'White'; Success = 'White'; Warning = 'White'; Error = 'White'; Accent = 'White'; Muted = 'White' }
 
     } else {
 
-        @{ Info='White'; Success='Green'; Warning='Yellow'; Error='Red'; Accent='Cyan'; Muted='DarkGray' }
+        @{ Info = 'White'; Success = 'Green'; Warning = 'Yellow'; Error = 'Red'; Accent = 'Cyan'; Muted = 'DarkGray' }
 
     }
 
@@ -1105,23 +1105,23 @@ function Write-ModernCLI {
 
 function Show-Usage {
     # Comprehensive usage information with command suggestions
-    
+
     # Direct display - no recursive calls
     if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
         try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
     }
-    
+
     Write-Host ""
     Write-ModernCLI "╔════════════════════════════════════════════════════════════════╗" -Type 'Accent'
     Write-ModernCLI "║  AitherZero - PowerShell Automation Platform                  ║" -Type 'Accent'
     Write-ModernCLI "╚════════════════════════════════════════════════════════════════╝" -Type 'Accent'
     Write-Host ""
-    
+
     Write-ModernCLI "USAGE:" -Type 'Info'
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode <command> [options]" -Type 'Muted'
     Write-ModernCLI "  .\Start-AitherZero.ps1 <command> [args...]        (positional syntax)" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "QUICK START:" -Type 'Success'
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Interactive     " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Launch menu interface" -Type 'Info'
@@ -1130,15 +1130,15 @@ function Show-Usage {
     Write-ModernCLI "  .\Start-AitherZero.ps1 -Mode Run -Target 0402" -Type 'Muted' -NoNewline
     Write-ModernCLI "# Run unit tests" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "COMMANDS:" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "  Interactive" -Type 'Accent'
     Write-ModernCLI "    -Mode Interactive" -Type 'Muted'
     Write-ModernCLI "    Launch full-featured menu with guided workflows" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "  Run" -Type 'Accent'
     Write-ModernCLI "    -Mode Run -Target <script-number>                    " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Quick run by number" -Type 'Info'
@@ -1146,7 +1146,7 @@ function Show-Usage {
     Write-ModernCLI "# Explicit syntax" -Type 'Info'
     Write-ModernCLI "    Execute automation scripts (supports tab completion)" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "  Orchestrate" -Type 'Accent'
     Write-ModernCLI "    -Mode Orchestrate -Sequence '0400-0499'              " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Run range" -Type 'Info'
@@ -1155,7 +1155,7 @@ function Show-Usage {
     Write-ModernCLI "    -Mode Orchestrate -Playbook <name> -PlaybookProfile quick" -Type 'Muted'
     Write-ModernCLI "    Execute complex workflows and automation sequences" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "  List" -Type 'Accent'
     Write-ModernCLI "    -Mode List                                           " -Type 'Muted' -NoNewline
     Write-ModernCLI "# All resources" -Type 'Info'
@@ -1165,13 +1165,13 @@ function Show-Usage {
     Write-ModernCLI "# Playbooks only" -Type 'Info'
     Write-ModernCLI "    Browse available automation resources" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "  Search" -Type 'Accent'
     Write-ModernCLI "    -Mode Search -Query <term>                           " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Find by keyword" -Type 'Info'
     Write-ModernCLI "    Search scripts and playbooks by name or description" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "  Test" -Type 'Accent'
     Write-ModernCLI "    -Mode Test                                           " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Run test suite" -Type 'Info'
@@ -1179,13 +1179,13 @@ function Show-Usage {
     Write-ModernCLI "# Specific tests" -Type 'Info'
     Write-ModernCLI "    Execute unit tests, integration tests, and validation" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "  Validate" -Type 'Accent'
     Write-ModernCLI "    -Mode Validate                                       " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Check environment" -Type 'Info'
     Write-ModernCLI "    Validate system requirements and dependencies" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "OPTIONS:" -Type 'Info'
     Write-ModernCLI "  -Help                Show this help message" -Type 'Muted'
     Write-ModernCLI "  -Version             Display version information" -Type 'Muted'
@@ -1194,7 +1194,7 @@ function Show-Usage {
     Write-ModernCLI "  -ProfileName <name>  Execution profile: Minimal|Standard|Developer|Full" -Type 'Muted'
     Write-ModernCLI "  -Variables <hash>    Pass custom variables to scripts" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "SCRIPT CATEGORIES:" -Type 'Info'
     Write-ModernCLI "  0000-0099  " -Type 'Accent' -NoNewline
     Write-ModernCLI "Environment & Setup (PowerShell 7, directories)" -Type 'Muted'
@@ -1213,29 +1213,29 @@ function Show-Usage {
     Write-ModernCLI "  9000-9999  " -Type 'Accent' -NoNewline
     Write-ModernCLI "Maintenance & Cleanup" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "EXAMPLES:" -Type 'Success'
     Write-Host ""
     Write-ModernCLI "  1. Run unit tests:" -Type 'Info'
     Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Run -Target 0402" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "  2. Deploy infrastructure with playbook:" -Type 'Info'
     Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook infrastructure-lab" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "  3. Search for security-related scripts:" -Type 'Info'
     Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Search -Query security" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "  4. Run test sequence with dry-run:" -Type 'Info'
     Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Orchestrate -Sequence '0400-0499' -DryRun" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "  5. Interactive menu for guided workflows:" -Type 'Info'
     Write-ModernCLI "     .\Start-AitherZero.ps1 -Mode Interactive" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "TAB COMPLETION:" -Type 'Success'
     Write-ModernCLI "  Press [Tab] after parameter names to auto-complete:" -Type 'Info'
     Write-ModernCLI "  • -Target      " -Type 'Accent' -NoNewline
@@ -1247,7 +1247,7 @@ function Show-Usage {
     Write-ModernCLI "  • -Query       " -Type 'Accent' -NoNewline
     Write-ModernCLI "→ Common search terms (test, security, git, docker...)" -Type 'Muted'
     Write-Host ""
-    
+
     Write-ModernCLI "MORE HELP:" -Type 'Info'
     Write-ModernCLI "  Get-Help .\Start-AitherZero.ps1 -Full      " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Complete documentation" -Type 'Info'
@@ -1258,7 +1258,7 @@ function Show-Usage {
     Write-ModernCLI "  Documentation: ./docs/                     " -Type 'Muted' -NoNewline
     Write-ModernCLI "# Project documentation" -Type 'Info'
     Write-Host ""
-    
+
     Write-ModernCLI "TIP: " -Type 'Success' -NoNewline
     Write-ModernCLI "Use " -Type 'Info' -NoNewline
     Write-ModernCLI "-Verbose" -Type 'Accent' -NoNewline
@@ -1362,7 +1362,7 @@ function Invoke-ModernListAction {
 
             if (Test-Path "orchestration/playbooks") {
 
-                $playbooks = Get-ChildItem "orchestration/playbooks" -Filter "*.json" -Recurse | Sort-Object Directory,Name
+                $playbooks = Get-ChildItem "orchestration/playbooks" -Filter "*.json" -Recurse | Sort-Object Directory, Name
 
                 Write-ModernCLI "Available Playbooks ($($playbooks.Count)):" -Type 'Accent'
 
@@ -1530,11 +1530,11 @@ function Invoke-ModernSearchAction {
 
                     [PSCustomObject]@{
 
-                        Name = $name
+                        Name        = $name
 
                         Description = $desc
 
-                        Category = $_.Directory.Name
+                        Category    = $_.Directory.Name
 
                     }
 
@@ -1904,7 +1904,7 @@ try {
 
             Write-CustomLog -Level 'Error' -Message $errorMsg -Source "Start-AitherZero" -Data @{
 
-                Mode = $Mode
+                Mode          = $Mode
 
                 ModulesLoaded = $modules
 
@@ -1938,17 +1938,17 @@ try {
 
     $isCI = ($env:CI -eq 'true') -or
 
-            ($env:GITHUB_ACTIONS -eq 'true') -or
+    ($env:GITHUB_ACTIONS -eq 'true') -or
 
-            ($env:TF_BUILD -eq 'true') -or
+    ($env:TF_BUILD -eq 'true') -or
 
-            ($env:GITLAB_CI -eq 'true') -or
+    ($env:GITLAB_CI -eq 'true') -or
 
-            ($env:JENKINS_URL) -or
+    ($env:JENKINS_URL) -or
 
-            ($env:TRAVIS -eq 'true') -or
+    ($env:TRAVIS -eq 'true') -or
 
-            ($env:CIRCLECI -eq 'true')
+    ($env:CIRCLECI -eq 'true')
 
 
 
@@ -2082,35 +2082,35 @@ try {
 
                 $params = @{
 
-                    LoadPlaybook = $Playbook
+                    LoadPlaybook  = $Playbook
 
                     Configuration = $config
 
-                    Variables = $variables
+                    Variables     = $variables
 
-                    DryRun = $DryRun
+                    DryRun        = $DryRun
 
                 }
 
-            if ($PlaybookProfile) {
+                if ($PlaybookProfile) {
 
                     $params['PlaybookProfile'] = $PlaybookProfile
 
                 }
 
-            if ($Sequential) {
+                if ($Sequential) {
 
                     $params['Parallel'] = $false
 
                 }
 
-            if ($Parallel) {
+                if ($Parallel) {
 
                     $params['Parallel'] = $true
 
                 }
 
-            $result = Invoke-OrchestrationSequence @params
+                $result = Invoke-OrchestrationSequence @params
 
             } else {
 
@@ -2232,7 +2232,7 @@ try {
 
             Invoke-ModernListAction -ListTarget $Target
 
-            
+
 
             # Add helpful guidance for next steps
 
@@ -2368,15 +2368,15 @@ try {
 
     $errorDetails = @{
 
-        Message = $_.Exception.Message
+        Message        = $_.Exception.Message
 
-        Type = $_.Exception.GetType().FullName
+        Type           = $_.Exception.GetType().FullName
 
-        StackTrace = $_.ScriptStackTrace
+        StackTrace     = $_.ScriptStackTrace
 
         InvocationInfo = $_.InvocationInfo | ConvertTo-Json -Compress
 
-        TargetObject = $_.TargetObject
+        TargetObject   = $_.TargetObject
 
     }
 
