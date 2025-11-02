@@ -22,6 +22,7 @@ MCP servers are **automatically built and configured** when you:
 ```
 
 **The script is idempotent** - run it as many times as you want, it will:
+
 - Only build if needed (or with `-Force`)
 - Detect and warn about config issues
 - Auto-fix known problems with `-FixConfig`
@@ -39,14 +40,17 @@ Open Command Palette (`Ctrl+Shift+P`) and run:
 After building/configuring MCP servers:
 
 ### 1. Reload VS Code Window
+
 - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS)
 - Type: `Developer: Reload Window`
 - Press `Enter`
 
 ### 2. Verify MCP Servers Loaded
+
 - Open: **View > Output** (`Ctrl+Shift+U`)
 - Select: **"GitHub Copilot"** from dropdown
 - Look for:
+
   ```
   [MCP] Starting server: aitherzero
   AitherZero MCP Server running on stdio
@@ -54,8 +58,10 @@ After building/configuring MCP servers:
   ```
 
 ### 3. Test in Copilot Chat
+
 - Open Copilot Chat (`Ctrl+Shift+I`)
 - Try commands:
+
   ```
   @workspace List all automation scripts
   @workspace Search scripts for "test"
@@ -73,6 +79,7 @@ After building/configuring MCP servers:
 | **sequential-thinking** | Complex problem solving | ✅ Standard MCP server |
 
 **Removed servers** (non-existent packages that caused Sentry errors):
+
 - ❌ `git` - Used `@modelcontextprotocol/server-git` (doesn't exist)
 - ❌ `powershell-docs` - Used `@modelcontextprotocol/server-fetch` (doesn't exist)
 
@@ -85,10 +92,12 @@ These caused the error: `Error sending message to https://mcp.sentry.dev/sse: Ty
 1. **Verify built**: Check `mcp-server/dist/index.js` exists
 2. **Check config**: `.vscode/mcp-servers.json` should exist
 3. **Verify settings**: `.vscode/settings.json` should have:
+
    ```json
    "github.copilot.chat.mcp.enabled": true,
    "github.copilot.chat.mcp.configFile": "${workspaceFolder}/.vscode/mcp-servers.json"
    ```
+
 4. **Reload window**: Must reload after configuration changes
 5. **Check Output**: View > Output > "GitHub Copilot" for errors
 
