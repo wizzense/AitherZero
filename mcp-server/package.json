@@ -15,7 +15,8 @@
     "dev": "tsc && node dist/index.js",
     "test": "node test/basic-test.mjs",
     "test:manual": "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}' | node dist/index.js",
-    "postinstall": "npm run build"
+    "postinstall": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -23,8 +24,25 @@
     "aitherzero",
     "infrastructure",
     "automation",
-    "powershell"
+    "powershell",
+    "devops",
+    "ai-assistant",
+    "claude",
+    "copilot"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wizzense/AitherZero.git",
+    "directory": "mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/wizzense/AitherZero/issues"
+  },
+  "homepage": "https://github.com/wizzense/AitherZero/tree/main/mcp-server#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
   "author": "Aitherium Corporation",
   "license": "MIT",
   "dependencies": {
@@ -36,5 +54,10 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ]
 }
