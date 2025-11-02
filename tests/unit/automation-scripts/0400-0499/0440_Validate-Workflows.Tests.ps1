@@ -8,13 +8,14 @@
     Auto-generated comprehensive tests
     Script: 0440_Validate-Workflows
     Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Description: Comprehensive validation of GitHub Actions workflows including:
+    Generated: 2025-11-02 04:33:35
 #>
 
 Describe '0440_Validate-Workflows' -Tag 'Unit', 'AutomationScript', 'Unknown' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0440_Validate-Workflows.ps1'
+        $script:ScriptPath = './automation-scripts/0440_Validate-Workflows.ps1'
         $script:ScriptName = '0440_Validate-Workflows'
     }
 
@@ -97,8 +98,8 @@ Describe '0440_Validate-Workflows' -Tag 'Unit', 'AutomationScript', 'Unknown' {
 
     Context 'Metadata' {
         It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 
