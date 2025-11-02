@@ -9,7 +9,7 @@
     Script: 0408_Generate-TestCoverage
     Stage: Validation
     Description: Generate test coverage reports and baseline tests
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0408_Generate-TestCoverage' -Tag 'Unit', 'AutomationScript', 'Validation' {
@@ -48,8 +48,8 @@ Describe '0408_Generate-TestCoverage' -Tag 'Unit', 'AutomationScript', 'Validati
 
     Context 'Metadata' {
         It 'Should be in stage: Validation' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

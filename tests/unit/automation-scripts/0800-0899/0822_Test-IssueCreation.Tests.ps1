@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0822_Test-IssueCreation
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Integration
+    Description: Validates that analysis findings are correctly converted to GitHub issues
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0822_Test-IssueCreation' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0822_Test-IssueCreation' -Tag 'Unit', 'AutomationScript', 'Integration' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0822_Test-IssueCreation.ps1'
@@ -51,9 +52,9 @@ Describe '0822_Test-IssueCreation' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Integration' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

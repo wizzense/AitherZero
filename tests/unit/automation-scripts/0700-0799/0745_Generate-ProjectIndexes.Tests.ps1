@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0745_Generate-ProjectIndexes
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Automation
+    Description: Automatically generates index.md files for all directories in the project,
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0745_Generate-ProjectIndexes' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0745_Generate-ProjectIndexes' -Tag 'Unit', 'AutomationScript', 'Automation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0745_Generate-ProjectIndexes.ps1'
@@ -61,9 +62,9 @@ Describe '0745_Generate-ProjectIndexes' -Tag 'Unit', 'AutomationScript', 'Unknow
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Automation' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

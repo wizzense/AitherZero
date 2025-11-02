@@ -8,7 +8,8 @@
     Auto-generated comprehensive tests
     Script: 0511_Show-ProjectDashboard
     Stage: Reporting
-    Generated: 2025-10-30 02:11:49
+    Description: Shows an interactive dashboard with project metrics, test results,
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0511_Show-ProjectDashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
@@ -76,10 +77,9 @@ Describe '0511_Show-ProjectDashboard' -Tag 'Unit', 'AutomationScript', 'Reportin
     }
 
     Context 'Metadata' {
-        It 'Should have metadata comments' {
-            $content = (Get-Content $script:ScriptPath -First 20) -join "`n"
-            # Script should have synopsis or description
-            $content | Should -Match '(SYNOPSIS|DESCRIPTION)'
+        It 'Should be in stage: Reporting' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

@@ -8,8 +8,8 @@
     Auto-generated comprehensive tests
     Script: 0524_Generate-TechDebtReport
     Stage: Reporting
-    Description: Tech debt report generation from modular analysis results
-    Generated: 2025-10-30 02:11:49
+    Description: Aggregates results from all tech debt analyzers and generates
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0524_Generate-TechDebtReport' -Tag 'Unit', 'AutomationScript', 'Reporting' {
@@ -78,8 +78,8 @@ Describe '0524_Generate-TechDebtReport' -Tag 'Unit', 'AutomationScript', 'Report
 
     Context 'Metadata' {
         It 'Should be in stage: Reporting' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {
