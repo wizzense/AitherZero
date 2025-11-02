@@ -123,10 +123,15 @@ try {
             $config = Import-PowerShellDataFile $configPath
             
             # Try multiple locations for MinVersion in config structure
-            if ($config.Manifest.FeatureDependencies.Testing.Pester.MinVersion) {
+            if ($config.Manifest -and $config.Manifest.FeatureDependencies -and 
+                $config.Manifest.FeatureDependencies.Testing -and 
+                $config.Manifest.FeatureDependencies.Testing.Pester -and
+                $config.Manifest.FeatureDependencies.Testing.Pester.MinVersion) {
                 $pesterMinVersion = $config.Manifest.FeatureDependencies.Testing.Pester.MinVersion
             }
-            elseif ($config.Features.Testing.Pester.Version) {
+            elseif ($config.Features -and $config.Features.Testing -and 
+                    $config.Features.Testing.Pester -and 
+                    $config.Features.Testing.Pester.Version) {
                 # Parse version string like '5.0.0+' to '5.0.0'
                 $versionString = $config.Features.Testing.Pester.Version
                 $pesterMinVersion = $versionString -replace '\+$', ''
