@@ -118,13 +118,37 @@
 
     .\Start-AitherZero.ps1 -Mode Orchestrate -Playbook tech-debt-analysis -PlaybookProfile quick
 
+
+
+.EXAMPLE
+
+    # MCP Server - Build and start
+
+    .\Start-AitherZero.ps1 -Mode MCP -Target build
+
+
+
+.EXAMPLE
+
+    # MCP Server - Demonstrate real functionality
+
+    .\Start-AitherZero.ps1 -Mode MCP -Target demo
+
+
+
+.EXAMPLE
+
+    # MCP Server - Use with actual tool calls
+
+    .\Start-AitherZero.ps1 -Mode MCP -Target use
+
 #>
 
 [CmdletBinding()]
 
 param(
 
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
+    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run', 'MCP')]
 
     [string]$Mode = 'List',
 
@@ -2263,6 +2287,80 @@ try {
             }
 
             Invoke-ModernRunAction -RunTarget $Target -ScriptNum $ScriptNumber -PlaybookName $Playbook -SequenceRange $Sequence
+
+        }
+
+
+
+        'MCP' {
+
+            # MCP Server operations integrated into CLI
+
+            if (-not $Target) {
+
+                Write-ModernCLI "MCP target required. Use -Target <build|start|demo|use>" -Type 'Error'
+
+                Write-ModernCLI "  build - Build MCP server" -Type 'Info'
+
+                Write-ModernCLI "  start - Start MCP server (test mode)" -Type 'Info'
+
+                Write-ModernCLI "  demo  - Demonstrate MCP server" -Type 'Info'
+
+                Write-ModernCLI "  use   - Use MCP server with real calls" -Type 'Info'
+
+                exit 1
+
+            }
+
+
+
+            $mcpScriptMap = @{
+
+                'build' = '0750'
+
+                'start' = '0751'
+
+                'demo'  = '0752'
+
+                'use'   = '0753'
+
+            }
+
+
+
+            if ($mcpScriptMap.ContainsKey($Target.ToLower())) {
+
+                $scriptNumber = $mcpScriptMap[$Target.ToLower()]
+
+                $scriptPath = Join-Path $script:ProjectRoot "automation-scripts" "${scriptNumber}_*.ps1"
+
+                $script = Get-Item $scriptPath -ErrorAction SilentlyContinue | Select-Object -First 1
+
+
+
+                if ($script) {
+
+                    Write-ModernCLI "Executing MCP: $Target" -Type 'Accent'
+
+                    & $script.FullName
+
+                } else {
+
+                    Write-ModernCLI "MCP script not found for: $Target" -Type 'Error'
+
+                    exit 1
+
+                }
+
+            } else {
+
+                Write-ModernCLI "Unknown MCP target: $Target" -Type 'Error'
+
+                Write-ModernCLI "Valid targets: build, start, demo, use" -Type 'Info'
+
+                exit 1
+
+            }
 
         }
 
