@@ -29,6 +29,22 @@
         'Show-UIMenu', 'Show-UIProgress', 'Show-UINotification', 'Show-UIWizard',
         'Initialize-AitherUI', 'Show-UIBorder', 'Write-UIText',
 
+        # From CLIHelper (Modern CLI Features)
+        'Show-ModernHelp', 'Show-CommandCard', 'Format-CLIOutput', 'Show-VersionInfo',
+        'Show-CLICommand', 'Get-CLIEquivalent', 'Enable-CLILearningMode', 'Disable-CLILearningMode', 'Test-CLILearningMode',
+        'Search-AitherZeroResources', 'Get-RecentActions', 'Add-RecentAction', 'Get-ScriptMetadata',
+        'Invoke-QuickJump', 'Show-InlineHelp', 'Test-Prerequisites', 'Show-PrerequisiteStatus',
+        'Get-ExecutionHistory', 'Add-ExecutionHistory', 'Show-ExecutionHistory',
+        'Export-CommandHistory', 'Switch-AitherZeroProfile', 'Get-AitherZeroProfile',
+        'Get-AllAutomationScripts', 'Get-AllPlaybooks',
+        'Invoke-SmartSearchMenu', 'Invoke-RecentActionsMenu', 'Invoke-QuickJumpMenu',
+        'Invoke-ProfileSwitcherMenu', 'Invoke-CommandExportMenu',
+
+        # From InteractiveUI (Config-driven Interactive System)
+        'Start-InteractiveUI', 'Show-MainMenu', 'Show-CategoryMenu',
+        'Show-BrowseScriptsMenu', 'Show-BrowsePlaybooksMenu',
+        'Invoke-ScriptWithChecks', 'Invoke-PlaybookWithChecks',
+
         # From GitAutomation
         'New-FeatureBranch', 'New-ConventionalCommit', 'Sync-GitRepository',
 
