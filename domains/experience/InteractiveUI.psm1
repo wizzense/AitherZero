@@ -688,7 +688,7 @@ function Invoke-ScriptWithChecks {
     if (Get-Command Test-CLILearningMode -ErrorAction SilentlyContinue) {
         if (Test-CLILearningMode) {
             if (Get-Command Show-CLICommand -ErrorAction SilentlyContinue) {
-                $cliCommand = "./Start-AitherZero.ps1 -Mode Run -Target script -ScriptNumber $ScriptNumber"
+                $cliCommand = "./Start-AitherZero.ps1 -Mode Run -Target $ScriptNumber"
                 Show-CLICommand -Command $cliCommand -Description "Run $ScriptName from CLI"
                 Write-Host ""
             }
@@ -733,7 +733,7 @@ function Invoke-ScriptWithChecks {
     
     # Execute the script
     Write-Host "`nExecuting..." -ForegroundColor Green
-    $scriptPath = Join-Path $PSScriptRoot "../../automation-scripts" "$ScriptNumber-*.ps1"
+    $scriptPath = Join-Path $PSScriptRoot "../../automation-scripts" "$ScriptNumber_*.ps1"
     $scriptFile = Get-Item $scriptPath -ErrorAction SilentlyContinue
     
     if ($scriptFile) {

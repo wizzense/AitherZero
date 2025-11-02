@@ -715,7 +715,7 @@ function Show-CLICommand {
             if ($IsWindows) {
                 $Command | Set-Clipboard
             } elseif ($IsMacOS) {
-                $Command | pbcopy
+                $Command | & pbcopy
             } elseif ($IsLinux) {
                 if (Get-Command xclip -ErrorAction SilentlyContinue) {
                     $Command | xclip -selection clipboard
@@ -1766,11 +1766,4 @@ Export-ModuleMember -Function @(
     # Dynamic Resource Discovery
     'Get-AllAutomationScripts'
     'Get-AllPlaybooks'
-    
-    # Interactive Menu Functions (when called from InteractiveUI)
-    'Invoke-SmartSearchMenu'
-    'Invoke-RecentActionsMenu'
-    'Invoke-QuickJumpMenu'
-    'Invoke-ProfileSwitcherMenu'
-    'Invoke-CommandExportMenu'
 )
