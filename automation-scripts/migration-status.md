@@ -32,7 +32,7 @@
 - ✅ `0212_Install-AzureCLI.ps1` - Azure CLI for cloud management
 - ✅ `0213_Install-AWSCLI.ps1` - AWS CLI v2 for cloud management
 - ✅ `0214_Install-Packer.ps1` - HashiCorp Packer for machine images
-- ✅ `0215_Install-Chocolatey.ps1` - Chocolatey package manager
+- ✅ `0219_Install-Chocolatey.ps1` - Chocolatey package manager
 - ✅ `0216_Set-PowerShellProfile.ps1` - PowerShell profile configuration
 - ✅ `0217_Install-ClaudeCode.ps1` - Claude Code CLI for AI development
 - ✅ `0218_Install-GeminiCLI.ps1` - Google Gemini CLI for AI development

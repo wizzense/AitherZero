@@ -74,8 +74,8 @@
   - *Integration tests for 0213_Install-AWSCLI*
 - ⚙️ [0214_Install-Packer.Integration.Tests.ps1](./0214_Install-Packer.Integration.Tests.ps1)
   - *Integration tests for 0214_Install-Packer*
-- ⚙️ [0215_Install-Chocolatey.Integration.Tests.ps1](./0215_Install-Chocolatey.Integration.Tests.ps1)
-  - *Integration tests for 0215_Install-Chocolatey*
+- ⚙️ [0219_Install-Chocolatey.Integration.Tests.ps1](./0219_Install-Chocolatey.Integration.Tests.ps1)
+  - *Integration tests for 0219_Install-Chocolatey*
 - ⚙️ [0216_Set-PowerShellProfile.Integration.Tests.ps1](./0216_Set-PowerShellProfile.Integration.Tests.ps1)
   - *Integration tests for 0216_Set-PowerShellProfile*
 - ⚙️ [0217_Install-ClaudeCode.Integration.Tests.ps1](./0217_Install-ClaudeCode.Integration.Tests.ps1)

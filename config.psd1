@@ -113,7 +113,7 @@
                 }
                 DevTools = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0205', '0209', '0211', '0214', '0215', '0216')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
+                    Scripts = @('0205', '0209', '0211', '0214', '0216', '0219')  # Sysinternals, 7Zip, VS Build Tools, Packer, PowerShell Profile, Chocolatey
                     Description = 'Additional development utilities'
                 }
                 AITools = @{
@@ -762,7 +762,7 @@
             }
             Chocolatey = @{
                 Enabled = $false
-                InstallScript = '0215'
+                InstallScript = '0219'
                 Platforms = @('Windows')
                 Description = 'Windows package manager'
                 RequiresElevation = $true

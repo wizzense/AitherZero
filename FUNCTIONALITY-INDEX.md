@@ -80,7 +80,7 @@
 - 0212_Install-AzureCLI.ps1 - Azure CLI installation
 - 0213_Install-AWSCLI.ps1 - AWS CLI installation
 - 0214_Install-Packer.ps1 - Packer installation
-- 0215_Install-Chocolatey.ps1 - Chocolatey installation
+- 0219_Install-Chocolatey.ps1 - Chocolatey installation
 - 0216_Set-PowerShellProfile.ps1 - PowerShell profile configuration
 - 0217_Install-ClaudeCode.ps1 - Claude Code installation
 - 0218_Install-GeminiCLI.ps1 - Gemini CLI installation

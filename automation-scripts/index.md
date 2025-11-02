@@ -56,7 +56,7 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0212_Install-AzureCLI.ps1](./0212_Install-AzureCLI.ps1)
 - ⚙️ [0213_Install-AWSCLI.ps1](./0213_Install-AWSCLI.ps1)
 - ⚙️ [0214_Install-Packer.ps1](./0214_Install-Packer.ps1)
-- ⚙️ [0215_Install-Chocolatey.ps1](./0215_Install-Chocolatey.ps1)
+- ⚙️ [0219_Install-Chocolatey.ps1](./0219_Install-Chocolatey.ps1)
 - ⚙️ [0216_Set-PowerShellProfile.ps1](./0216_Set-PowerShellProfile.ps1)
 - ⚙️ [0217_Install-ClaudeCode.ps1](./0217_Install-ClaudeCode.ps1)
 - ⚙️ [0218_Install-GeminiCLI.ps1](./0218_Install-GeminiCLI.ps1)

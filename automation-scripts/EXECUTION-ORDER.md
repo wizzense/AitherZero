@@ -80,10 +80,10 @@ Development tools and environments
 11. **0213_Install-AWSCLI.ps1** - AWS CLI
 12. **0214_Install-Packer.ps1** - Image builder
 13. **0215_Configure-MCPServers.ps1** - MCP server setup
-14. **0215_Install-Chocolatey.ps1** - Package manager
-15. **0216_Set-PowerShellProfile.ps1** - PS profile
-16. **0217_Install-ClaudeCode.ps1** - AI assistant
-17. **0218_Install-GeminiCLI.ps1** - Google AI
+14. **0216_Set-PowerShellProfile.ps1** - PS profile
+15. **0217_Install-ClaudeCode.ps1** - AI assistant
+16. **0218_Install-GeminiCLI.ps1** - Google AI
+17. **0219_Install-Chocolatey.ps1** - Package manager
 
 ### Stage 4: Services (0300-0399)
 Service deployment and configuration
@@ -192,7 +192,7 @@ foreach ($script in $scripts) {
 $jobs = @(
     { ./0205_Install-Sysinternals.ps1 -Configuration $config },
     { ./0209_Install-7Zip.ps1 -Configuration $config },
-    { ./0215_Install-Chocolatey.ps1 -Configuration $config }
+    { ./0219_Install-Chocolatey.ps1 -Configuration $config }
 ) | ForEach-Object { Start-Job -ScriptBlock $_ }
 
 # Wait for all jobs

@@ -3,20 +3,20 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0215_Install-Chocolatey
+    Unit tests for 0219_Install-Chocolatey
 .DESCRIPTION
     Auto-generated comprehensive tests
-    Script: 0215_Install-Chocolatey
+    Script: 0219_Install-Chocolatey
     Stage: Development
     Description: Install Chocolatey package manager for Windows
     Generated: 2025-10-30 02:11:49
 #>
 
-Describe '0215_Install-Chocolatey' -Tag 'Unit', 'AutomationScript', 'Development' {
+Describe '0219_Install-Chocolatey' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0215_Install-Chocolatey.ps1'
-        $script:ScriptName = '0215_Install-Chocolatey'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0219_Install-Chocolatey.ps1'
+        $script:ScriptName = '0219_Install-Chocolatey'
     }
 
     Context 'Script Validation' {
