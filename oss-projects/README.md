@@ -12,7 +12,7 @@ Each project in this workspace has:
 
 ## Usage
 
-``powershell
+```powershell
 # List all workspace projects
 az 0603
 
@@ -23,7 +23,7 @@ az 0602 -Project "project-name"
 az 0402  # Run tests
 az 0404  # PSScriptAnalyzer
 az 0510  # Generate report
-``
+```
 
 ## Managed by AitherZero
 

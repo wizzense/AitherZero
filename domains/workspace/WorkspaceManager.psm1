@@ -113,13 +113,13 @@ This directory contains external open-source projects managed by AitherZero.
 
 Each project in this workspace has:
 - Project files (source code, tests, documentation)
-- ``.aitherzero/`` directory with:
-  - ``config.psd1`` - Project-specific configuration
-  - ``workspace.psd1`` - Workspace metadata
+- `.aitherzero/` directory with:
+  - `config.psd1` - Project-specific configuration
+  - `workspace.psd1` - Workspace metadata
 
 ## Usage
 
-````powershell
+```powershell
 # List all workspace projects
 az 0603
 
@@ -130,7 +130,7 @@ az 0602 -Project "project-name"
 az 0402  # Run tests
 az 0404  # PSScriptAnalyzer
 az 0510  # Generate report
-````
+```
 
 ## Managed by AitherZero
 

@@ -50,6 +50,9 @@ $modulesToLoad = @(
     # Configuration
     './domains/configuration/Configuration.psm1',
 
+    # Workspace management
+    './domains/workspace/WorkspaceManager.psm1',
+
     # User interface (BetterMenu first, then UserInterface)
     './domains/experience/BetterMenu.psm1',
     './domains/experience/UserInterface.psm1',
