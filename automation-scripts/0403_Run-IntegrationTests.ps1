@@ -116,34 +116,52 @@ try {
 
     # Load configuration
     $configPath = Join-Path $projectRoot "config.psd1"
-    $testingConfig = if (Test-Path $configPath) {
-        $config = Import-PowerShellDataFile $configPath
-        $config.Testing
-    } else {
-        @{
-            Framework = 'Pester'
-            MinVersion = '5.0.0'
-            Parallel = $false  # Integration tests often can't run in parallel
+    $pesterMinVersion = '5.0.0'  # Default minimum version
+    
+    if (Test-Path $configPath) {
+        try {
+            $config = Import-PowerShellDataFile $configPath
+            
+            # Try multiple locations for MinVersion in config structure
+            if ($config.Manifest.FeatureDependencies.Testing.Pester.MinVersion) {
+                $pesterMinVersion = $config.Manifest.FeatureDependencies.Testing.Pester.MinVersion
+            }
+            elseif ($config.Features.Testing.Pester.Version) {
+                # Parse version string like '5.0.0+' to '5.0.0'
+                $versionString = $config.Features.Testing.Pester.Version
+                $pesterMinVersion = $versionString -replace '\+$', ''
+            }
+        }
+        catch {
+            Write-ScriptLog -Level Warning -Message "Could not parse config file, using default Pester version: $_"
         }
     }
+    
+    Write-ScriptLog -Message "Using Pester minimum version: $pesterMinVersion"
 
     # Ensure Pester is available
-    $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]$testingConfig.MinVersion } | Sort-Object Version -Descending | Select-Object -First 1
+    $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]$pesterMinVersion } | Sort-Object Version -Descending | Select-Object -First 1
 
     if (-not $pesterModule) {
-        Write-ScriptLog -Level Error -Message "Pester $($testingConfig.MinVersion) or higher is required. Run 0400_Install-TestingTools.ps1 first."
+        Write-ScriptLog -Level Error -Message "Pester $pesterMinVersion or higher is required. Run 0400_Install-TestingTools.ps1 first."
         exit 2
     }
 
     Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
-    Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
+    Import-Module Pester -MinimumVersion $pesterMinVersion -Force
 
     # Import all domain modules for integration testing
     Write-ScriptLog -Message "Loading domain modules for integration testing"
     $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "domains") -Filter "*.psm1" -Recurse
     foreach ($module in $domainModules) {
-        Write-ScriptLog -Level Debug -Message "Loading module: $($module.Name)"
-        Import-Module $module.FullName -Force
+        try {
+            Write-ScriptLog -Level Debug -Message "Loading module: $($module.Name)"
+            Import-Module $module.FullName -Force -ErrorAction Stop
+        }
+        catch {
+            Write-ScriptLog -Level Warning -Message "Failed to load module $($module.Name): $_"
+            # Continue with other modules - some may have parse errors
+        }
     }
 
     # Get Pester settings from configuration
@@ -164,13 +182,18 @@ try {
     $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
     $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
 
-    # Apply parallel execution settings from config
+    # Apply parallel execution settings from config (if supported)
     if ($pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
-        $pesterConfig.Run.Parallel = $true
-        if ($pesterSettings.Parallel.BlockSize) {
-            $pesterConfig.Run.ParallelBlockSize = $pesterSettings.Parallel.BlockSize
+        try {
+            $pesterConfig.Run.Parallel = $true
+            if ($pesterSettings.Parallel.BlockSize) {
+                $pesterConfig.Run.ParallelBlockSize = $pesterSettings.Parallel.BlockSize
+            }
+            Write-ScriptLog -Message "Parallel execution enabled with block size: $($pesterSettings.Parallel.BlockSize ?? 4)"
         }
-        Write-ScriptLog -Message "Parallel execution enabled with block size: $($pesterSettings.Parallel.BlockSize ?? 4)"
+        catch {
+            Write-ScriptLog -Level Warning -Message "Parallel execution not supported in this Pester version"
+        }
     }
 
     # Filter for integration tests
@@ -183,8 +206,13 @@ try {
     $pesterConfig.Filter.Tag = $tags
     $pesterConfig.Filter.ExcludeTag = @('Unit', 'Performance')
 
-    # Disable parallel execution for integration tests
-    $pesterConfig.Run.Parallel = $false
+    # Disable parallel execution for integration tests (if supported)
+    try {
+        $pesterConfig.Run.Parallel = $false
+    }
+    catch {
+        Write-ScriptLog -Level Debug -Message "Parallel execution setting not available in this Pester version"
+    }
 
     # Output configuration
     if (-not $OutputPath) {
@@ -269,35 +297,64 @@ try {
         Write-Host "`nFailed Tests:" -ForegroundColor Red
         $result.Failed | ForEach-Object {
             Write-Host "  - $($_.ExpandedPath)" -ForegroundColor Red
-            Write-Host "    $($_.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
+            
+            # Get error message safely
+            $errorMessage = if ($_.ErrorRecord) {
+                if ($_.ErrorRecord.Exception) {
+                    $_.ErrorRecord.Exception.Message
+                } elseif ($_.ErrorRecord.DisplayErrorMessage) {
+                    $_.ErrorRecord.DisplayErrorMessage
+                } else {
+                    $_.ErrorRecord.ToString()
+                }
+            } else {
+                "Test failed"
+            }
+            Write-Host "    $errorMessage" -ForegroundColor DarkRed
 
             # For integration tests, provide more context
-            if ($_.ErrorRecord.TargetObject) {
+            if ($_.ErrorRecord -and $_.ErrorRecord.TargetObject) {
                 Write-Host "    Context: $($_.ErrorRecord.TargetObject)" -ForegroundColor DarkYellow
             }
         }
     }
 
     # Check for specific integration test results
-    $criticalTests = $result.Tests | Where-Object { $_.Tags -contains 'Critical' }
-    if ($criticalTests) {
-        $criticalFailed = $criticalTests | Where-Object { $_.Result -eq 'Failed' }
-        if ($criticalFailed.Count -gt 0) {
-            Write-ScriptLog -Level Error -Message "Critical integration tests failed!" -Data @{
-                FailedCritical = $criticalFailed.Name
+    if ($result.Tests) {
+        try {
+            $criticalTests = $result.Tests | Where-Object { 
+                $_ -and (Get-Member -InputObject $_ -Name 'Tags' -MemberType Properties) -and ($_.Tags -contains 'Critical')
             }
+            if ($criticalTests) {
+                $criticalFailed = $criticalTests | Where-Object { $_.Result -eq 'Failed' }
+                if ($criticalFailed.Count -gt 0) {
+                    Write-ScriptLog -Level Error -Message "Critical integration tests failed!" -Data @{
+                        FailedCritical = $criticalFailed.Name
+                    }
+                }
+            }
+        }
+        catch {
+            Write-ScriptLog -Level Debug -Message "Could not check for critical tests: $_"
         }
     }
 
     # Save result summary (legacy format)
     $summaryPath = Join-Path $OutputPath "IntegrationTests-Summary-$timestamp.json"
     $extendedSummary = $testSummary + @{
-        TestCategories = $result.Tests | Group-Object { $_.Tags -join ',' } | ForEach-Object {
-            @{
-                Tags = $_.Name
-                Count = $_.Count
-                Failed = ($_.Group | Where-Object { $_.Result -eq 'Failed' }).Count
+        TestCategories = try {
+            $result.Tests | Where-Object { Get-Member -InputObject $_ -Name 'Tags' -MemberType Properties } | Group-Object { 
+                if ($_.Tags) { $_.Tags -join ',' } else { 'Untagged' }
+            } | ForEach-Object {
+                @{
+                    Tags = $_.Name
+                    Count = $_.Count
+                    Failed = ($_.Group | Where-Object { $_.Result -eq 'Failed' }).Count
+                }
             }
+        }
+        catch {
+            @()
         }
     }
     if ($PSCmdlet.ShouldProcess($summaryPath, "Save test summary")) {
@@ -337,7 +394,11 @@ try {
                     ErrorRecord = if ($failedTest.ErrorRecord) {
                         @{
                             Exception = @{
-                                Message = $failedTest.ErrorRecord.Exception.Message
+                                Message = if ($failedTest.ErrorRecord.Exception) {
+                                    $failedTest.ErrorRecord.Exception.Message
+                                } else {
+                                    $failedTest.ErrorRecord.ToString()
+                                }
                             }
                             ScriptStackTrace = $failedTest.ErrorRecord.ScriptStackTrace
                         }

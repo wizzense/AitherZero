@@ -119,7 +119,27 @@ try {
     $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
         $config = Import-PowerShellDataFile $configPath
-        $config.Testing
+        # Get Pester version from the correct location
+        $pesterMinVersion = if ($config.Manifest -and $config.Manifest.FeatureDependencies -and $config.Manifest.FeatureDependencies.Testing -and $config.Manifest.FeatureDependencies.Testing.Pester) {
+            $config.Manifest.FeatureDependencies.Testing.Pester.MinVersion
+        } elseif ($config.Features -and $config.Features.Testing -and $config.Features.Testing.Pester -and $config.Features.Testing.Pester.Version) {
+            $config.Features.Testing.Pester.Version -replace '\+$', ''  # Remove trailing + if present
+        } else {
+            '5.0.0'
+        }
+        
+        @{
+            Framework = if ($config.Testing -and $config.Testing.Framework) { $config.Testing.Framework } else { 'Pester' }
+            MinVersion = $pesterMinVersion
+            CodeCoverage = if ($config.Testing -and $config.Testing.CodeCoverage) {
+                $config.Testing.CodeCoverage
+            } else {
+                @{
+                    Enabled = $true
+                    MinimumPercent = 80
+                }
+            }
+        }
     } else {
         @{
             Framework = 'Pester'
