@@ -1,0 +1,147 @@
+{
+  "metadata": {
+    "name": "test-quick",
+    "description": "Fast validation for development - optimized for quick iteration cycles",
+    "version": "2.0.0",
+    "category": "testing",
+    "author": "AitherZero Testing Framework",
+    "tags": ["testing", "quick", "development", "validation", "fast"],
+    "estimatedDuration": "2-5 minutes",
+    "lastUpdated": "2025-11-02T06:00:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester", "PSScriptAnalyzer"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "testPath": "./tests",
+      "outputPath": "./tests/results",
+      "skipCoverage": true,
+      "failFast": true,
+      "fastMode": true,
+      "changedFilesOnly": false
+    },
+    "profiles": {
+      "lightning": {
+        "description": "Ultra-fast - changed files only",
+        "variables": {
+          "changedFilesOnly": true,
+          "failFast": true,
+          "skipAnalysis": false
+        }
+      },
+      "standard": {
+        "description": "Standard quick validation",
+        "variables": {
+          "changedFilesOnly": false,
+          "failFast": true
+        }
+      },
+      "thorough": {
+        "description": "More thorough but still quick",
+        "variables": {
+          "failFast": false,
+          "skipAnalysis": false
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Environment Check",
+        "description": "Verify testing tools are installed",
+        "sequences": ["0400"],
+        "continueOnError": false,
+        "timeout": 60
+      },
+      {
+        "name": "Unit Tests",
+        "description": "Run unit tests without coverage",
+        "sequences": ["0402"],
+        "variables": {
+          "NoCoverage": true,
+          "FastMode": "{{fastMode}}",
+          "FailFast": "{{failFast}}"
+        },
+        "continueOnError": false,
+        "timeout": 180
+      },
+      {
+        "name": "Static Analysis",
+        "description": "Quick PSScriptAnalyzer check",
+        "sequences": ["0410"],
+        "condition": "!{{skipAnalysis:=false}}",
+        "variables": {
+          "Fast": true,
+          "ExcludePaths": ["tests", "legacy-to-migrate", "examples"],
+          "FailOnWarning": false
+        },
+        "continueOnError": true,
+        "timeout": 120
+      },
+      {
+        "name": "Syntax Validation",
+        "description": "Fast syntax check",
+        "sequences": ["0407"],
+        "variables": {
+          "CheckSyntax": true,
+          "CheckParameters": false,
+          "CheckCommands": false,
+          "ChangedFilesOnly": "{{changedFilesOnly:=false}}"
+        },
+        "continueOnError": true,
+        "timeout": 60
+      }
+    ]
+  },
+  "validation": {
+    "preConditions": [],
+    "postConditions": [
+      {
+        "name": "Tests Passed",
+        "condition": "$results.TestsPassed -gt 0",
+        "message": "At least some tests should have passed"
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🚀 Starting quick validation...",
+      "level": "Information",
+      "channels": ["console"]
+    },
+    "onSuccess": {
+      "message": "✅ Quick validation passed! Ready to commit.",
+      "level": "Success",
+      "channels": ["console"],
+      "includeMetrics": true
+    },
+    "onFailure": {
+      "message": "❌ Quick validation failed - review results before committing",
+      "level": "Error",
+      "channels": ["console"],
+      "includeFailures": true
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["Console", "JSON"],
+    "outputPath": "./tests/results",
+    "includeMetrics": true,
+    "includeLogs": false
+  },
+  "postActions": [
+    {
+      "description": "Display test summary",
+      "type": "script",
+      "inline": "if (Test-Path './tests/results/*Summary*.json') { Get-ChildItem './tests/results' -Filter '*Summary*.json' | Select-Object -Last 1 | Get-Content | ConvertFrom-Json | Format-List }"
+    }
+  ],
+  "optimizations": {
+    "enabled": true,
+    "strategies": ["parallel-execution", "test-caching", "minimal-logging"]
+  }
+}
