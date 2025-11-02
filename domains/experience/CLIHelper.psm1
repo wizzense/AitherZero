@@ -1728,31 +1728,49 @@ function Get-AitherZeroProfile {
 
 # Export functions
 Export-ModuleMember -Function @(
+    # Modern CLI Help System
     'Show-ModernHelp'
     'Show-CommandCard'
     'Get-CommandSuggestion'
     'Format-CLIOutput'
     'Show-VersionInfo'
+    
+    # CLI Learning Mode
     'Show-CLICommand'
     'Show-ExecutionBar'
     'Get-CLIEquivalent'
     'Enable-CLILearningMode'
     'Disable-CLILearningMode'
     'Test-CLILearningMode'
+    
+    # Quality of Life Features
     'Search-AitherZeroResources'
     'Get-RecentActions'
     'Add-RecentAction'
     'Get-ScriptMetadata'
     'Invoke-QuickJump'
     'Show-InlineHelp'
+    
+    # Prerequisites & Execution Tracking
     'Test-Prerequisites'
     'Show-PrerequisiteStatus'
     'Get-ExecutionHistory'
     'Add-ExecutionHistory'
     'Show-ExecutionHistory'
+    
+    # Configuration & Export
     'Export-CommandHistory'
     'Switch-AitherZeroProfile'
     'Get-AitherZeroProfile'
+    
+    # Dynamic Resource Discovery
     'Get-AllAutomationScripts'
     'Get-AllPlaybooks'
+    
+    # Interactive Menu Functions (when called from InteractiveUI)
+    'Invoke-SmartSearchMenu'
+    'Invoke-RecentActionsMenu'
+    'Invoke-QuickJumpMenu'
+    'Invoke-ProfileSwitcherMenu'
+    'Invoke-CommandExportMenu'
 )
