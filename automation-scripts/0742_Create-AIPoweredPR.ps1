@@ -33,14 +33,14 @@ param(
     [switch]$Draft,
 
     [Parameter()]
-    [switch]$NonInteractive,
-
-    [Parameter()]
     [switch]$Force
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Detect CI environment
+$isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
 
 # Initialize logging
 $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
@@ -349,7 +349,7 @@ try {
         $prArgs += "--draft"
     }
 
-    if ($NonInteractive) {
+    if ($isCI) {
         $prArgs += "--no-maintainer-edit"
     }
 

@@ -34,13 +34,14 @@ param(
 
     [string]$Milestone,
 
-    [string[]]$Assignees,
-
-    [switch]$NonInteractive
+    [string[]]$Assignees
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Detect CI environment
+$isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
 
 # Import modules
 $devModulePath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/development"

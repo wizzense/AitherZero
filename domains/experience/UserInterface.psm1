@@ -378,8 +378,6 @@ function Show-UIMenu {
         Show item numbers
     .PARAMETER ReturnIndex
         Return selected index instead of item
-    .PARAMETER NonInteractive
-        Force non-interactive mode (for CI/automation)
     .EXAMPLE
         $selection = Show-UIMenu -Title "Select Environment" -Items @("Development", "Staging", "Production")
     #>
@@ -398,16 +396,14 @@ function Show-UIMenu {
 
         [string]$Prompt = "Select an option",
 
-        [hashtable]$CustomActions = @{},
-
-        [switch]$NonInteractive
+        [hashtable]$CustomActions = @{}
     )
 
     # Always use better menu system unless in non-interactive mode
     $betterMenuModule = Join-Path $PSScriptRoot "BetterMenu.psm1"
 
-    # Check if we're in non-interactive mode
-    $isNonInteractive = $NonInteractive -or $env:CI -or $env:GITHUB_ACTIONS -or $env:TF_BUILD -or $env:AITHERZERO_NONINTERACTIVE
+    # Check if we're in non-interactive mode (automatically detected)
+    $isNonInteractive = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true' -or $env:AITHERZERO_NONINTERACTIVE -eq 'true'
 
     if (-not $isNonInteractive) {
         if (Test-Path $betterMenuModule) {

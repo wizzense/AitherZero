@@ -29,9 +29,9 @@
 
     When CI is detected, these defaults are automatically applied:
     - Profile: 'Full' (all features enabled)
-    - NonInteractive: $true (no user prompts)
     - WhatIf: $false (execute actions)
     - SkipPrerequisites: $false (check all prerequisites)
+    - Scripts run non-interactive by default
 
 .EXAMPLE
     # Set environment variable to override a setting:
@@ -103,8 +103,7 @@
         LogToFile = $true             # Write logs to file
         LogPath = './logs'            # Path for log files
 
-        # CI/CD settings (auto-enabled in CI environments)
-        NonInteractive = $false       # No user prompts (true in CI)
+        # CI/CD settings (auto-detected via environment variables)
         WhatIf = $false              # Preview mode without changes
         SkipPrerequisites = $false   # Skip prerequisite checks
     }
