@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "aitherzero": {
+      "type": "stdio",
       "command": "node",
       "args": [
         "mcp-server/scripts/start-with-build.mjs"
@@ -8,17 +9,30 @@
       "env": {
         "AITHERZERO_ROOT": ".",
         "AITHERZERO_NONINTERACTIVE": "1"
-      }
+      },
+      "tools": [
+        "run_script",
+        "list_scripts",
+        "search_scripts",
+        "execute_playbook",
+        "get_configuration",
+        "run_tests",
+        "run_quality_check",
+        "get_project_report"
+      ]
     },
     "filesystem": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
         "."
-      ]
+      ],
+      "tools": []
     },
     "github": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
@@ -26,23 +40,28 @@
       ],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      }
+      },
+      "tools": []
     },
     "git": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-git",
         "--repository",
         "."
-      ]
+      ],
+      "tools": []
     },
     "powershell-docs": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-powershell-docs"
-      ]
+      ],
+      "tools": []
     }
   }
 }
