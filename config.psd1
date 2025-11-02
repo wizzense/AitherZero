@@ -427,7 +427,7 @@
             '0400-0499' = @{ Count = 25; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 18; Category = 'Issue Management & PR Deployment' }
+            '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
