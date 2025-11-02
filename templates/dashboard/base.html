@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="toc-toggle" onclick="toggleToc()">☰</div>
+    
+    <nav class="toc" id="toc">
+        <h3>📊 Dashboard</h3>
+        <ul>
+            <li><a href="#overview" class="active">Overview</a></li>
+            <li><a href="#quality">Quality Metrics</a></li>
+            <li><a href="#security">Security Status</a></li>
+            <li><a href="#deployment">Deployment</a></li>
+            <li><a href="#git">Git Activity</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <header class="header">
+            <h1>{{PROJECT_NAME}}</h1>
+            <div class="subtitle">{{SUBTITLE}}</div>
+            <div class="timestamp">Generated: {{TIMESTAMP}}</div>
+        </header>
+
+        {{CONTENT}}
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

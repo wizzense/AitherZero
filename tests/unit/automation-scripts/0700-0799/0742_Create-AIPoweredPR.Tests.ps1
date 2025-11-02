@@ -84,8 +84,6 @@ Describe '0742_Create-AIPoweredPR' -Tag 'Unit', 'AutomationScript', 'Development
             $cmd.Parameters.ContainsKey('Draft') | Should -Be $true
         }
 
-        }
-
         It 'Should have parameter: Force' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Force') | Should -Be $true
