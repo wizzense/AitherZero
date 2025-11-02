@@ -21,7 +21,8 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [switch]$DryRun,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$NonInteractive
 )
 
 $ErrorActionPreference = 'Stop'
