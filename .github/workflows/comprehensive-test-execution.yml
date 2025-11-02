@@ -248,14 +248,19 @@ jobs:
           Write-Host "📊 Aggregating all test results..." -ForegroundColor Cyan
           
           # Parse test discovery outputs with proper error handling
-          $discoveryTotal = '${{ needs.test-discovery.outputs.total-count }}'
+          $discoveryTotal = '${{ needs.test-discovery.outputs.total-test-count }}'
           $discoveryUnit = '${{ needs.test-discovery.outputs.unit-test-count }}'
-          $discoveryIntegration = '${{ needs.test-discovery.outputs.integration-count }}'
+          $discoveryIntegration = '${{ needs.test-discovery.outputs.integration-test-count }}'
+          
+          # Helper function to convert string to int or zero
+          function ConvertToIntOrZero($value) {
+            if ($value -match '^\d+$') { return [int]$value } else { return 0 }
+          }
           
           # Convert to integers with fallback to 0
-          $totalTestFiles = if ($discoveryTotal -and $discoveryTotal -match '^\d+$') { [int]$discoveryTotal } else { 0 }
-          $unitTestFiles = if ($discoveryUnit -and $discoveryUnit -match '^\d+$') { [int]$discoveryUnit } else { 0 }
-          $integrationTestFiles = if ($discoveryIntegration -and $discoveryIntegration -match '^\d+$') { [int]$discoveryIntegration } else { 0 }
+          $totalTestFiles = ConvertToIntOrZero $discoveryTotal
+          $unitTestFiles = ConvertToIntOrZero $discoveryUnit
+          $integrationTestFiles = ConvertToIntOrZero $discoveryIntegration
           
           Write-Host "Test discovery outputs:" -ForegroundColor Yellow
           Write-Host "  Total: $totalTestFiles" -ForegroundColor White
@@ -442,7 +447,7 @@ jobs:
                 ? ((passedTests / totalTests) * 100).toFixed(1) 
                 : '0.0';
               
-              const statusIcon = failedTests === 0 && totalTests > 0 ? '✅' : '❌';
+              const statusIcon = totalTests === 0 ? '⚠️' : (failedTests === 0 ? '✅' : '❌');
               
               // Get test file counts with fallback values
               const totalTestFiles = report.TotalTestFiles || 0;
