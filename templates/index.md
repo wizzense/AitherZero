@@ -1,6 +1,6 @@
-# generated-issues
+# templates
 
-**Navigation**: [🏠 Root](../index.md) → **generated-issues**
+**Navigation**: [🏠 Root](../index.md) → **templates**
 
 ⬆️ **Parent**: [Root](../index.md)
 
@@ -10,14 +10,12 @@
 
 ### 📊 Contents
 
-- **Subdirectories**: 0
-- **Files**: 1
+- **Subdirectories**: 1
+- **Files**: 0
 
-## 📄 Files
+## 📁 Subdirectories
 
-### .md Files
-
-- 📝 [index.md](./index.md)
+- 📂 **dashboard**
 
 ---
 
