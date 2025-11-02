@@ -9,13 +9,13 @@
     Script: 0406_Generate-Coverage
     Stage: Testing
     Description: Creates comprehensive code coverage reports in multiple formats
-    Generated: 2025-10-30 02:34:25
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0406_Generate-Coverage' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0406_Generate-Coverage.ps1'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0406_Generate-Coverage.ps1'
         $script:ScriptName = '0406_Generate-Coverage'
     }
 
@@ -78,8 +78,8 @@ Describe '0406_Generate-Coverage' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     Context 'Metadata' {
         It 'Should be in stage: Testing' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

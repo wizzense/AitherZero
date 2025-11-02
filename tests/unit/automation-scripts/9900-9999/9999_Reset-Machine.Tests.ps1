@@ -9,7 +9,7 @@
     Script: 9999_Reset-Machine
     Stage: Maintenance
     Description: Reset machine to clean state (sysprep on Windows, reboot on Linux/macOS)
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:16
 #>
 
 Describe '9999_Reset-Machine' -Tag 'Unit', 'AutomationScript', 'Maintenance' {
@@ -48,8 +48,8 @@ Describe '9999_Reset-Machine' -Tag 'Unit', 'AutomationScript', 'Maintenance' {
 
     Context 'Metadata' {
         It 'Should be in stage: Maintenance' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

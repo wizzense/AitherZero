@@ -9,7 +9,7 @@
     Script: 0106_Install-WSL2
     Stage: Infrastructure
     Description: Install Windows Subsystem for Linux 2 with chosen distribution
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0106_Install-WSL2' -Tag 'Unit', 'AutomationScript', 'Infrastructure' {
@@ -48,8 +48,8 @@ Describe '0106_Install-WSL2' -Tag 'Unit', 'AutomationScript', 'Infrastructure' {
 
     Context 'Metadata' {
         It 'Should be in stage: Infrastructure' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

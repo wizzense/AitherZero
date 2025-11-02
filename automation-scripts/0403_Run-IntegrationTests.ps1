@@ -30,6 +30,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Ensure TERM is set for terminal operations (required in CI environments)
+if (-not $env:TERM) {
+    $env:TERM = 'xterm-256color'
+}
+
 # Script metadata
 $scriptMetadata = @{
     Stage = 'Testing'
@@ -184,11 +189,18 @@ try {
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
-    $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
+    
+    # Check for Run settings with StrictMode-safe access
+    if ($pesterSettings.ContainsKey('Run') -and $pesterSettings.Run) {
+        $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
+        $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
+    } else {
+        $pesterConfig.Run.PassThru = $true
+        $pesterConfig.Run.Exit = $false
+    }
 
     # Apply parallel execution settings from config (if supported)
-    if ($pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
+    if ($pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
         try {
             $pesterConfig.Run.Parallel = $true
             if ($pesterSettings.Parallel.BlockSize) {

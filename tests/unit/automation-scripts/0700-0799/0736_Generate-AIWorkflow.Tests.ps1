@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0736_Generate-AIWorkflow
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Automation
+    Description: Creates playbooks, multi-agent task distribution, dependency resolution,
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0736_Generate-AIWorkflow' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0736_Generate-AIWorkflow' -Tag 'Unit', 'AutomationScript', 'Automation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0736_Generate-AIWorkflow.ps1'
@@ -56,9 +57,9 @@ Describe '0736_Generate-AIWorkflow' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Automation' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

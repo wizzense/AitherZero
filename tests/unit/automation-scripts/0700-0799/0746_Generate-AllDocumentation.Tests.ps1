@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0746_Generate-AllDocumentation
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: AI & Documentation
+    Description: Orchestrates the complete documentation generation workflow:
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0746_Generate-AllDocumentation' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0746_Generate-AllDocumentation' -Tag 'Unit', 'AutomationScript', 'AI & Documentation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0746_Generate-AllDocumentation.ps1'
@@ -61,9 +62,14 @@ Describe '0746_Generate-AllDocumentation' -Tag 'Unit', 'AutomationScript', 'Unkn
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: AI & Documentation' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

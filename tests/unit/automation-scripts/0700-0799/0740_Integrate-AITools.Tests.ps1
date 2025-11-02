@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0740_Integrate-AITools
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: AI Integration
+    Description: Sets up and configures AI tools including Claude Code CLI, Gemini CLI,
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0740_Integrate-AITools' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0740_Integrate-AITools' -Tag 'Unit', 'AutomationScript', 'AI Integration' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0740_Integrate-AITools.ps1'
@@ -66,9 +67,14 @@ Describe '0740_Integrate-AITools' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: AI Integration' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

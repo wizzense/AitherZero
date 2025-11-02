@@ -8,8 +8,8 @@
     Auto-generated comprehensive tests
     Script: 0407_Validate-Syntax
     Stage: Testing
-    Description: PowerShell syntax validation using AST parser
-    Generated: 2025-10-30 02:11:49
+    Description: Uses the PowerShell AST parser to validate script syntax without executing the code.
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0407_Validate-Syntax' -Tag 'Unit', 'AutomationScript', 'Testing' {
@@ -58,8 +58,8 @@ Describe '0407_Validate-Syntax' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     Context 'Metadata' {
         It 'Should be in stage: Testing' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

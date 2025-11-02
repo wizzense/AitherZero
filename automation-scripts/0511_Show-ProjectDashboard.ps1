@@ -3,6 +3,13 @@
 <#
 .SYNOPSIS
     Display comprehensive project dashboard with logs, tests, and metrics
+.DESCRIPTION
+    Shows an interactive dashboard with project metrics, test results,
+    recent logs, module status, and recent activity.
+.NOTES
+    Stage: Reporting
+    Order: 0511
+    Tags: reporting, dashboard, monitoring, metrics
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -40,6 +47,35 @@ function Show-Header {
     Write-Host " AitherZero Project Dashboard " -ForegroundColor Cyan
     Write-Host $line -ForegroundColor Cyan
     Write-Host ""
+}
+
+function Get-PropertyWithFallback {
+    <#
+    .SYNOPSIS
+        Get property value from object with fallback to alternative property names
+    .PARAMETER Object
+        The object to get the property from
+    .PARAMETER PropertyNames
+        Array of property names to try in order
+    .PARAMETER DefaultValue
+        Default value if no property found (default: 0)
+    #>
+    param(
+        [Parameter(Mandatory)]
+        $Object,
+        
+        [Parameter(Mandatory)]
+        [string[]]$PropertyNames,
+        
+        $DefaultValue = 0
+    )
+    
+    foreach ($propName in $PropertyNames) {
+        if ($null -ne $Object.$propName) {
+            return $Object.$propName
+        }
+    }
+    return $DefaultValue
 }
 
 function Show-ProjectMetrics {
@@ -84,23 +120,39 @@ function Show-TestResults {
     Write-Host ("-" * 40) -ForegroundColor Gray
 
     $testResultsPath = Join-Path $ProjectPath "tests/results"
+    if (-not (Test-Path $testResultsPath)) {
+        Write-Host "Test results directory not found" -ForegroundColor Yellow
+        Write-Host ""
+        return
+    }
+
     $testSummaries = Get-ChildItem -Path $testResultsPath -Filter "*Summary*.json" -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 5
 
     if ($testSummaries) {
         foreach ($summary in $testSummaries) {
-            $data = Get-Content $summary.FullName | ConvertFrom-Json
-            $timestamp = $summary.BaseName -replace '.*-(\d{8}-\d{6}).*', '$1'
+            try {
+                $data = Get-Content $summary.FullName -Raw | ConvertFrom-Json
+                $timestamp = $summary.BaseName -replace '.*-(\d{8}-\d{6}).*', '$1'
 
-            Write-Host "[$timestamp] " -NoNewline -ForegroundColor Gray
+                Write-Host "[$timestamp] " -NoNewline -ForegroundColor Gray
 
-            if ($data.Failed -gt 0) {
-                Write-Host "FAILED" -ForegroundColor Red -NoNewline
-            } else {
-                Write-Host "PASSED" -ForegroundColor Green -NoNewline
+                # Support multiple property name variations using helper function
+                $failed = Get-PropertyWithFallback -Object $data -PropertyNames @('Failed', 'FailedCount')
+                $passed = Get-PropertyWithFallback -Object $data -PropertyNames @('Passed', 'PassedCount')
+                $total = Get-PropertyWithFallback -Object $data -PropertyNames @('TotalTests', 'TotalCount') -DefaultValue ($passed + $failed)
+                
+                if ($failed -gt 0) {
+                    Write-Host "FAILED" -ForegroundColor Red -NoNewline
+                } else {
+                    Write-Host "PASSED" -ForegroundColor Green -NoNewline
+                }
+
+                Write-Host " - Total: $total, Passed: $passed, Failed: $failed"
             }
-
-            Write-Host " - Total: $($data.TotalTests), Passed: $($data.Passed), Failed: $($data.Failed)"
+            catch {
+                Write-Verbose "Could not parse test summary: $($summary.Name) - $_"
+            }
         }
     } else {
         Write-Host "No test results found" -ForegroundColor Yellow

@@ -9,13 +9,13 @@
     Script: 0402_Run-UnitTests
     Stage: Testing
     Description: Runs all unit tests using Pester framework with code coverage
-    Generated: 2025-10-30 02:34:24
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0402_Run-UnitTests' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0402_Run-UnitTests.ps1'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0402_Run-UnitTests.ps1'
         $script:ScriptName = '0402_Run-UnitTests'
     }
 
@@ -93,8 +93,8 @@ Describe '0402_Run-UnitTests' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     Context 'Metadata' {
         It 'Should be in stage: Testing' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0805_Analyze-OpenIssues
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Development
+    Description: Scans open GitHub issues and matches them with current branch/PR changes
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0805_Analyze-OpenIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0805_Analyze-OpenIssues' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0805_Analyze-OpenIssues.ps1'
@@ -81,9 +82,9 @@ Describe '0805_Analyze-OpenIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Development' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

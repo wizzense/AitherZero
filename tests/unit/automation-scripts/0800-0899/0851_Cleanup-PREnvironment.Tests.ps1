@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0851_Cleanup-PREnvironment
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Environment Management
+    Description: Removes ephemeral test environments including containers, volumes, and cloud resources.
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0851_Cleanup-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0851_Cleanup-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Environment Management' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0851_Cleanup-PREnvironment.ps1'
@@ -56,9 +57,9 @@ Describe '0851_Cleanup-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Unknown'
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Environment Management' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

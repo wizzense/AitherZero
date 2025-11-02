@@ -117,20 +117,22 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🧪 Running ALL unit tests..." -ForegroundColor Cyan
-          $result = ./automation-scripts/0402_Run-UnitTests.ps1 `
-            -OutputPath "./tests/results" `
-            -PassThru `
-            -ErrorAction Continue
           
-          # Display results
-          Write-Host "`n📊 Unit Test Results:" -ForegroundColor Green
-          Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
-          Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
-          Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-          Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-          
-          # Set job summary
-          @"
+          try {
+            $result = ./automation-scripts/0402_Run-UnitTests.ps1 `
+              -OutputPath "./tests/results" `
+              -PassThru `
+              -ErrorAction Stop
+            
+            # Display results
+            Write-Host "`n📊 Unit Test Results:" -ForegroundColor Green
+            Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
+            Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+            
+            # Set job summary
+            @"
           ## 🧪 Unit Test Results
           
           | Metric | Count |
@@ -141,10 +143,31 @@ jobs:
           | ⏭️ Skipped | $($result.SkippedCount) |
           | ⏱️ Duration | $($result.Duration.TotalSeconds)s |
           "@ >> $env:GITHUB_STEP_SUMMARY
+            
+            # Exit with failure if tests failed
+            if ($result.FailedCount -gt 0) {
+              Write-Host "::error::$($result.FailedCount) unit tests failed"
+              exit 1
+            }
+          }
+          catch {
+            Write-Host "::error::Unit test execution failed: $_" -ForegroundColor Red
+            Write-Host "`n📊 Unit Test Results:" -ForegroundColor Red
+            Write-Host "  Total: N/A (execution failed)" -ForegroundColor Red
+            Write-Host "  Passed: N/A" -ForegroundColor Red
+            Write-Host "  Failed: N/A" -ForegroundColor Red
+            Write-Host "  Skipped: N/A" -ForegroundColor Red
+            
+            @"
+          ## 🧪 Unit Test Results
           
-          # Exit with failure if tests failed
-          if ($result.FailedCount -gt 0) {
-            Write-Host "::error::$($result.FailedCount) unit tests failed"
+          ❌ **Test execution failed**
+          
+          Error: $_
+          
+          Please check the logs for details.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+            
             exit 1
           }
       
@@ -186,20 +209,22 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔗 Running ALL integration tests..." -ForegroundColor Cyan
-          $result = ./automation-scripts/0403_Run-IntegrationTests.ps1 `
-            -OutputPath "./tests/results" `
-            -PassThru `
-            -ErrorAction Continue
           
-          # Display results
-          Write-Host "`n📊 Integration Test Results:" -ForegroundColor Green
-          Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
-          Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
-          Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-          Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-          
-          # Set job summary
-          @"
+          try {
+            $result = ./automation-scripts/0403_Run-IntegrationTests.ps1 `
+              -OutputPath "./tests/results" `
+              -PassThru `
+              -ErrorAction Stop
+            
+            # Display results
+            Write-Host "`n📊 Integration Test Results:" -ForegroundColor Green
+            Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
+            Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+            
+            # Set job summary
+            @"
           ## 🔗 Integration Test Results
           
           | Metric | Count |
@@ -210,10 +235,31 @@ jobs:
           | ⏭️ Skipped | $($result.SkippedCount) |
           | ⏱️ Duration | $($result.Duration.TotalSeconds)s |
           "@ >> $env:GITHUB_STEP_SUMMARY
+            
+            # Exit with failure if tests failed
+            if ($result.FailedCount -gt 0) {
+              Write-Host "::error::$($result.FailedCount) integration tests failed"
+              exit 1
+            }
+          }
+          catch {
+            Write-Host "::error::Integration test execution failed: $_" -ForegroundColor Red
+            Write-Host "`n📊 Integration Test Results:" -ForegroundColor Red
+            Write-Host "  Total: N/A (execution failed)" -ForegroundColor Red
+            Write-Host "  Passed: N/A" -ForegroundColor Red
+            Write-Host "  Failed: N/A" -ForegroundColor Red
+            Write-Host "  Skipped: N/A" -ForegroundColor Red
+            
+            @"
+          ## 🔗 Integration Test Results
           
-          # Exit with failure if tests failed
-          if ($result.FailedCount -gt 0) {
-            Write-Host "::error::$($result.FailedCount) integration tests failed"
+          ❌ **Test execution failed**
+          
+          Error: $_
+          
+          Please check the logs for details.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+            
             exit 1
           }
       
