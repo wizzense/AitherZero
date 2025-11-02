@@ -52,7 +52,51 @@
   },
   "github.copilot.editor.enableAutoCompletions": true,
   "github.copilot.chat.mcp.enabled": true,
-  "github.copilot.chat.mcp.configFile": "${workspaceFolder}/.vscode/mcp-servers.json",
+  "github.copilot.chat.mcp.servers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+      ],
+      "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "AITHERZERO_ROOT": "${workspaceFolder}",
+        "AITHERZERO_NONINTERACTIVE": "1"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ],
+      "description": "Filesystem access to AitherZero repository"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "description": "GitHub API access",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Detailed reasoning for complex tasks"
+    }
+  },
   // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.defaultProfile.linux": "pwsh",

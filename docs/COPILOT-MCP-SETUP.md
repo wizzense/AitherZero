@@ -14,22 +14,27 @@ Model Context Protocol (MCP) servers provide AI coding assistants like GitHub Co
 
 ## Configured MCP Servers
 
-AitherZero includes the following MCP servers in `.github/mcp-servers.json`:
+AitherZero configures the following MCP servers in VS Code settings. The `.github/mcp-servers.json` file serves as documentation and reference but is not automatically loaded by VS Code.
+
+**Note**: MCP servers are configured in `.vscode/settings.json` (workspace) or user `settings.json` (global), not from `.github/mcp-servers.json`.
 
 ### 1. Filesystem Server
+
 **Purpose**: Provides read/write access to the repository filesystem
 
 **Capabilities**:
+
 - Navigate directory structure
 - Read and analyze files
 - Create, update, and delete files
 - Search across the codebase
 
 **Configuration**:
+
 ```json
 {
   "allowedDirectories": [
-    "domains", "automation-scripts", "tests", 
+    "domains", "automation-scripts", "tests",
     "docs", "infrastructure", "orchestration"
   ],
   "readOnly": false
@@ -37,9 +42,11 @@ AitherZero includes the following MCP servers in `.github/mcp-servers.json`:
 ```
 
 ### 2. GitHub Server
+
 **Purpose**: Enables GitHub API operations
 
 **Capabilities**:
+
 - Read issues, pull requests, and discussions
 - Create and update issues
 - Manage labels and milestones
@@ -47,10 +54,12 @@ AitherZero includes the following MCP servers in `.github/mcp-servers.json`:
 - Search code and commits
 
 **Requirements**:
+
 - GitHub Personal Access Token in `GITHUB_TOKEN` environment variable
 - Token needs `repo` scope for full functionality
 
 **Setup**:
+
 ```bash
 # Set your GitHub token
 export GITHUB_TOKEN="your_github_token_here"
@@ -60,31 +69,38 @@ echo "GITHUB_TOKEN=your_token" >> .env
 ```
 
 ### 3. Git Server
+
 **Purpose**: Provides Git version control operations
 
 **Capabilities**:
+
 - View commit history
 - Check branch status
 - Show diffs and changes
 - Analyze repository structure
 
 ### 4. PowerShell Documentation Server
+
 **Purpose**: Fetches PowerShell documentation and best practices
 
 **Capabilities**:
+
 - Retrieve PowerShell cmdlet documentation
 - Access Microsoft Learn articles
 - Get PowerShell GitHub repository information
 
 **Allowed Domains**:
+
 - `docs.microsoft.com`
 - `learn.microsoft.com`
 - `github.com/PowerShell`
 
 ### 5. Sequential Thinking Server
+
 **Purpose**: Enables detailed reasoning for complex infrastructure tasks
 
 **Capabilities**:
+
 - Break down complex problems
 - Structured problem-solving approach
 - Infrastructure design thinking
@@ -138,9 +154,34 @@ echo "GITHUB_TOKEN=your_token" >> .env
 
 ### Enabling MCP Servers
 
-MCP servers are automatically discovered by GitHub Copilot when configured in `.github/mcp-servers.json`. The configuration file follows the MCP specification.
+MCP servers are configured in VS Code settings (`.vscode/settings.json` for workspace or user `settings.json` for global). AitherZero provides an automation script to set this up properly.
 
-#### Manual Activation (if needed)
+#### Automated Setup (Recommended)
+
+Use the automation script to configure MCP servers:
+
+```bash
+# Configure for current workspace (recommended)
+./automation-scripts/0215_Configure-MCPServers.ps1
+
+# Or using the az wrapper
+az 0215
+
+# Configure globally for all projects
+./automation-scripts/0215_Configure-MCPServers.ps1 -Scope User
+
+# Verify configuration
+./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
+```
+
+The script will:
+
+1. Check prerequisites (Node.js 18+, GITHUB_TOKEN)
+2. Configure MCP servers in VS Code settings
+3. Validate the configuration
+4. Provide next steps
+
+#### Manual Setup (if needed)
 
 If MCP servers don't activate automatically:
 
@@ -313,19 +354,25 @@ an issue to track the work
 The configuration also includes context providers that help Copilot understand different parts of the codebase:
 
 ### Codebase Provider
+
 Focuses Copilot on PowerShell modules and scripts:
+
 - Domain modules (`domains/**/*.psm1`)
 - Automation scripts (`automation-scripts/**/*.ps1`)
 - Test files (`tests/**/*.Tests.ps1`)
 
 ### Documentation Provider
+
 Provides access to project documentation:
+
 - Documentation files (`docs/**/*.md`)
 - README files (`*.md`)
 - GitHub configuration (`/.github/**/*.md`)
 
 ### Configuration Provider
+
 Exposes configuration and settings:
+
 - Main configuration (`config.psd1`)
 - Script analyzer settings
 - Copilot instructions and routing
@@ -333,6 +380,7 @@ Exposes configuration and settings:
 ## Default Servers
 
 By default, these servers are always active:
+
 - `filesystem` - Core repository access
 - `github` - GitHub API integration
 - `git` - Version control operations
@@ -344,12 +392,14 @@ Additional servers can be activated on-demand through Copilot Chat.
 ### MCP Servers Not Loading
 
 1. **Check Node.js installation**:
+
    ```bash
    node --version  # v18+ required
    npm --version   # v9+ required
    ```
 
 2. **Verify configuration syntax**:
+
    ```bash
    # Validate JSON syntax
    cat .github/mcp-servers.json | jq .
@@ -382,6 +432,7 @@ Additional servers can be activated on-demand through Copilot Chat.
 ### GitHub Server Authentication Issues
 
 1. **Verify token is set**:
+
    ```bash
    # Linux/macOS
    echo $GITHUB_TOKEN
@@ -401,6 +452,7 @@ Additional servers can be activated on-demand through Copilot Chat.
    - Token should not be expired
 
 3. **Update environment**:
+
    ```bash
    # Linux - Add to shell profile
    echo 'export GITHUB_TOKEN="your_token"' >> ~/.bashrc
@@ -655,6 +707,7 @@ The MCP configuration uses a versioned JSON schema to validate the configuration
 ### Current Schema Version
 
 The schema is currently set to `2025-06-18` version:
+
 ```json
 {
   "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-06-18/schema.json"
@@ -665,7 +718,7 @@ The schema is currently set to `2025-06-18` version:
 
 To check if a new schema version is available:
 
-1. **Visit the schema repository**: https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/schema
+1. **Visit the schema repository**: <https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/schema>
 2. **Look for newer dated folders** (format: YYYY-MM-DD)
 3. **Review the changelog** for breaking changes
 
@@ -674,6 +727,7 @@ To check if a new schema version is available:
 When a new schema version is released:
 
 1. **Update the schema URL** in `.github/mcp-servers.json`:
+
    ```json
    {
      "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/YYYY-MM-DD/schema.json"
@@ -681,6 +735,7 @@ When a new schema version is released:
    ```
 
 2. **Validate configuration**:
+
    ```bash
    cat .github/mcp-servers.json | jq .
    ```
