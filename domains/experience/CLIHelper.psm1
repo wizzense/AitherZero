@@ -722,6 +722,423 @@ function Test-CLILearningMode {
            ($env:AITHERZERO_CLI_LEARNING_MODE -eq '1')
 }
 
+#region Quality of Life Features
+
+# Feature 1: Smart Search - Fuzzy search across scripts and playbooks
+function Search-AitherZeroResources {
+    <#
+    .SYNOPSIS
+        Smart search across scripts, playbooks, and functions with fuzzy matching
+    .DESCRIPTION
+        Provides interactive search with preview and filtering capabilities
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Query,
+        
+        [ValidateSet('All', 'Scripts', 'Playbooks', 'Functions')]
+        [string]$Type = 'All',
+        
+        [int]$MaxResults = 20,
+        
+        [switch]$ShowPreview
+    )
+    
+    $results = @()
+    $projectRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { Split-Path $PSScriptRoot -Parent | Split-Path -Parent }
+    
+    # Search scripts
+    if ($Type -in @('All', 'Scripts')) {
+        $scriptPath = Join-Path $projectRoot "automation-scripts"
+        if (Test-Path $scriptPath) {
+            Get-ChildItem -Path $scriptPath -Filter "*.ps1" | ForEach-Object {
+                $fileName = $_.Name
+                $number = if ($fileName -match '^\d{4}') { $matches[0] } else { $null }
+                
+                # Fuzzy match on name
+                if ($fileName -match [regex]::Escape($Query) -or 
+                    ($number -and $number -match $Query)) {
+                    
+                    # Extract description from file
+                    $description = ""
+                    try {
+                        $content = Get-Content $_.FullName -TotalCount 20 -ErrorAction SilentlyContinue
+                        $synopsisLine = $content | Where-Object { $_ -match '\.SYNOPSIS' }
+                        if ($synopsisLine) {
+                            $idx = [array]::IndexOf($content, $synopsisLine)
+                            if ($idx -ge 0 -and $idx + 1 -lt $content.Count) {
+                                $description = $content[$idx + 1].Trim()
+                            }
+                        }
+                    } catch {}
+                    
+                    $results += [PSCustomObject]@{
+                        Type = 'Script'
+                        Number = $number
+                        Name = $fileName
+                        Description = $description
+                        Path = $_.FullName
+                        Score = if ($fileName -match "^$Query") { 100 } else { 50 }
+                    }
+                }
+            }
+        }
+    }
+    
+    # Search playbooks
+    if ($Type -in @('All', 'Playbooks')) {
+        $playbookPath = Join-Path $projectRoot "orchestration/playbooks"
+        if (Test-Path $playbookPath) {
+            Get-ChildItem -Path $playbookPath -Filter "*.json" -Recurse | ForEach-Object {
+                try {
+                    $pbContent = Get-Content $_.FullName -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+                    $pbName = if ($pbContent.PSObject.Properties['Name']) { $pbContent.Name } 
+                             elseif ($pbContent.PSObject.Properties['name']) { $pbContent.name } 
+                             else { $_.BaseName }
+                    $pbDesc = if ($pbContent.PSObject.Properties['Description']) { $pbContent.Description } 
+                             elseif ($pbContent.PSObject.Properties['description']) { $pbContent.description } 
+                             else { "" }
+                    
+                    if ($pbName -match [regex]::Escape($Query) -or $pbDesc -match [regex]::Escape($Query)) {
+                        $results += [PSCustomObject]@{
+                            Type = 'Playbook'
+                            Number = $null
+                            Name = $pbName
+                            Description = $pbDesc
+                            Path = $_.FullName
+                            Score = if ($pbName -match "^$Query") { 100 } else { 50 }
+                        }
+                    }
+                } catch {
+                    # Skip invalid JSON files
+                }
+            }
+        }
+    }
+    
+    # Return top results
+    $results | Sort-Object -Property Score, Name -Descending | Select-Object -First $MaxResults
+}
+
+# Feature 2: Recent Actions - Track and quick-access recent commands
+function Get-RecentActions {
+    <#
+    .SYNOPSIS
+        Get recently executed actions for quick re-run
+    #>
+    [CmdletBinding()]
+    param(
+        [int]$Count = 10
+    )
+    
+    $historyFile = Join-Path $env:HOME ".aitherzero_history.json"
+    
+    if (Test-Path $historyFile) {
+        try {
+            $history = Get-Content $historyFile -Raw | ConvertFrom-Json
+            return $history | Select-Object -Last $Count
+        } catch {
+            return @()
+        }
+    }
+    
+    return @()
+}
+
+function Add-RecentAction {
+    <#
+    .SYNOPSIS
+        Add an action to recent history
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Name,
+        
+        [Parameter(Mandatory)]
+        [string]$Command,
+        
+        [string]$Type,
+        
+        [string]$Status = 'Success'
+    )
+    
+    $historyFile = Join-Path $env:HOME ".aitherzero_history.json"
+    $maxHistory = 50
+    
+    $history = @()
+    if (Test-Path $historyFile) {
+        try {
+            $history = Get-Content $historyFile -Raw | ConvertFrom-Json
+        } catch {
+            $history = @()
+        }
+    }
+    
+    $newEntry = [PSCustomObject]@{
+        Timestamp = (Get-Date).ToString('o')
+        Name = $Name
+        Command = $Command
+        Type = $Type
+        Status = $Status
+    }
+    
+    $history = @($history) + @($newEntry) | Select-Object -Last $maxHistory
+    
+    try {
+        $history | ConvertTo-Json -Depth 10 | Set-Content $historyFile -ErrorAction SilentlyContinue
+    } catch {
+        # Silently ignore history save errors
+    }
+}
+
+# Feature 3: Script Metadata - Get detailed information about scripts
+function Get-ScriptMetadata {
+    <#
+    .SYNOPSIS
+        Get detailed metadata about automation scripts
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ScriptNumber
+    )
+    
+    $projectRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { Split-Path $PSScriptRoot -Parent | Split-Path -Parent }
+    $scriptPath = Join-Path $projectRoot "automation-scripts"
+    
+    $scriptFile = Get-ChildItem -Path $scriptPath -Filter "${ScriptNumber}_*.ps1" | Select-Object -First 1
+    
+    if (-not $scriptFile) {
+        return $null
+    }
+    
+    $metadata = @{
+        Number = $ScriptNumber
+        Name = $scriptFile.Name
+        Path = $scriptFile.FullName
+        Size = $scriptFile.Length
+        LastModified = $scriptFile.LastWriteTime
+        Synopsis = ""
+        Description = ""
+        Parameters = @()
+        Dependencies = @()
+        EstimatedTime = "Unknown"
+        RequiresAdmin = $false
+        Category = ""
+    }
+    
+    # Parse script content for metadata
+    try {
+        $content = Get-Content $scriptFile.FullName
+        
+        # Get help content
+        $inHelp = $false
+        $currentSection = ""
+        foreach ($line in $content) {
+            if ($line -match '<#') { $inHelp = $true }
+            if ($line -match '#>') { $inHelp = $false }
+            
+            if ($inHelp) {
+                if ($line -match '\.SYNOPSIS') { $currentSection = 'Synopsis' }
+                elseif ($line -match '\.DESCRIPTION') { $currentSection = 'Description' }
+                elseif ($line -match '\.PARAMETER') {
+                    if ($line -match '\.PARAMETER\s+(\w+)') {
+                        $metadata.Parameters += $matches[1]
+                    }
+                }
+                elseif ($currentSection -and $line -notmatch '^\s*\.') {
+                    $metadata[$currentSection] += $line.Trim() + " "
+                }
+            }
+            
+            # Check for requires admin
+            if ($line -match '#Requires\s+-RunAsAdministrator') {
+                $metadata.RequiresAdmin = $true
+            }
+        }
+        
+        # Determine category from number
+        $num = [int]$ScriptNumber
+        if ($num -lt 100) { $metadata.Category = "Environment Setup" }
+        elseif ($num -lt 200) { $metadata.Category = "Infrastructure" }
+        elseif ($num -lt 300) { $metadata.Category = "Development Tools" }
+        elseif ($num -lt 400) { $metadata.Category = "Deployment & IaC" }
+        elseif ($num -lt 500) { $metadata.Category = "Testing & Validation" }
+        elseif ($num -lt 600) { $metadata.Category = "Reports & Metrics" }
+        elseif ($num -lt 800) { $metadata.Category = "Git & Dev Automation" }
+        else { $metadata.Category = "Maintenance" }
+        
+    } catch {
+        # Return basic metadata if parsing fails
+    }
+    
+    return [PSCustomObject]$metadata
+}
+
+# Feature 4: Quick Jump - Direct navigation to script by number
+function Invoke-QuickJump {
+    <#
+    .SYNOPSIS
+        Quick jump to and optionally execute a script by number
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ScriptNumber,
+        
+        [switch]$Execute,
+        
+        [switch]$ShowInfo
+    )
+    
+    if ($ShowInfo) {
+        $metadata = Get-ScriptMetadata -ScriptNumber $ScriptNumber
+        if ($metadata) {
+            Write-Host ""
+            Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+            Write-Host "║ Script $ScriptNumber Information" -NoNewline -ForegroundColor Cyan
+            Write-Host (" " * (55 - "Script $ScriptNumber Information".Length)) -NoNewline
+            Write-Host "║" -ForegroundColor Cyan
+            Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "  Name:        " -NoNewline -ForegroundColor Gray
+            Write-Host $metadata.Name -ForegroundColor White
+            Write-Host "  Category:    " -NoNewline -ForegroundColor Gray
+            Write-Host $metadata.Category -ForegroundColor Cyan
+            Write-Host "  Synopsis:    " -NoNewline -ForegroundColor Gray
+            Write-Host $metadata.Synopsis.Trim() -ForegroundColor White
+            
+            if ($metadata.RequiresAdmin) {
+                Write-Host "  ⚠️  Requires:  " -NoNewline -ForegroundColor Yellow
+                Write-Host "Administrator privileges" -ForegroundColor Red
+            }
+            
+            if ($metadata.Parameters.Count -gt 0) {
+                Write-Host "  Parameters:  " -NoNewline -ForegroundColor Gray
+                Write-Host ($metadata.Parameters -join ", ") -ForegroundColor White
+            }
+            
+            Write-Host ""
+            Write-Host "  CLI Command: " -NoNewline -ForegroundColor Gray
+            Write-Host "./Start-AitherZero.ps1 -Mode Run -Target $ScriptNumber" -ForegroundColor Cyan
+            Write-Host ""
+            
+            return $metadata
+        } else {
+            Write-Host "  ❌ Script $ScriptNumber not found" -ForegroundColor Red
+            return $null
+        }
+    }
+    
+    if ($Execute) {
+        $cliCommand = "./Start-AitherZero.ps1 -Mode Run -Target $ScriptNumber"
+        Write-Host "  Executing: " -NoNewline -ForegroundColor Gray
+        Write-Host $cliCommand -ForegroundColor Cyan
+        
+        # Track in history
+        $metadata = Get-ScriptMetadata -ScriptNumber $ScriptNumber
+        if ($metadata) {
+            Add-RecentAction -Name $metadata.Name -Command $cliCommand -Type 'Script'
+        }
+        
+        return $cliCommand
+    }
+}
+
+# Feature 5: Inline Help - Context-sensitive help for menu items
+function Show-InlineHelp {
+    <#
+    .SYNOPSIS
+        Display inline help for menu items and commands
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Topic,
+        
+        [ValidateSet('Script', 'Playbook', 'Command', 'Menu')]
+        [string]$Type = 'Menu'
+    )
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Blue
+    Write-Host "║ " -NoNewline -ForegroundColor Blue
+    Write-Host "❓ Quick Help: $Topic" -NoNewline -ForegroundColor Yellow
+    Write-Host (" " * (64 - "❓ Quick Help: $Topic".Length)) -NoNewline
+    Write-Host "║" -ForegroundColor Blue
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Blue
+    Write-Host ""
+    
+    switch ($Type) {
+        'Script' {
+            $metadata = Get-ScriptMetadata -ScriptNumber $Topic
+            if ($metadata) {
+                Write-Host "  📝 " -NoNewline -ForegroundColor Cyan
+                Write-Host $metadata.Synopsis.Trim() -ForegroundColor White
+                Write-Host ""
+                if ($metadata.Description) {
+                    Write-Host "  " -NoNewline
+                    Write-Host $metadata.Description.Trim().Substring(0, [Math]::Min(200, $metadata.Description.Length)) -ForegroundColor Gray
+                    Write-Host ""
+                }
+                Write-Host "  Category: " -NoNewline -ForegroundColor Gray
+                Write-Host $metadata.Category -ForegroundColor Cyan
+                Write-Host "  CLI: " -NoNewline -ForegroundColor Gray
+                Write-Host "./Start-AitherZero.ps1 -Mode Run -Target $Topic" -ForegroundColor Yellow
+            }
+        }
+        
+        'Playbook' {
+            $projectRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { Split-Path $PSScriptRoot -Parent | Split-Path -Parent }
+            $playbookPath = Join-Path $projectRoot "orchestration/playbooks"
+            $playbookFile = Get-ChildItem -Path $playbookPath -Filter "*$Topic*.json" -Recurse | Select-Object -First 1
+            
+            if ($playbookFile) {
+                $pb = Get-Content $playbookFile.FullName -Raw | ConvertFrom-Json
+                Write-Host "  📋 " -NoNewline -ForegroundColor Cyan
+                Write-Host ($pb.Description ?? $pb.description) -ForegroundColor White
+                Write-Host ""
+                Write-Host "  CLI: " -NoNewline -ForegroundColor Gray
+                Write-Host "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook '$Topic'" -ForegroundColor Yellow
+            }
+        }
+        
+        'Command' {
+            # Show help for general commands
+            $helpText = @{
+                'Interactive' = "Launch the interactive menu system for guided workflows"
+                'Orchestrate' = "Run automation sequences or playbooks non-interactively"
+                'List' = "Browse available scripts, playbooks, and resources"
+                'Search' = "Find scripts and playbooks by keyword"
+                'Test' = "Run test suites and validation checks"
+                'Run' = "Execute a specific script by number"
+            }
+            
+            if ($helpText.ContainsKey($Topic)) {
+                Write-Host "  💡 " -NoNewline -ForegroundColor Cyan
+                Write-Host $helpText[$Topic] -ForegroundColor White
+            }
+        }
+        
+        'Menu' {
+            # General menu help
+            Write-Host "  💡 Navigation Tips:" -ForegroundColor Cyan
+            Write-Host "     • Use arrow keys to navigate" -ForegroundColor Gray
+            Write-Host "     • Press Enter to select" -ForegroundColor Gray
+            Write-Host "     • Press 'L' to toggle CLI Learning Mode" -ForegroundColor Gray
+            Write-Host "     • Press '?' for item-specific help" -ForegroundColor Gray
+            Write-Host "     • Press 'H' for full help" -ForegroundColor Gray
+            Write-Host "     • Press 'Q' to quit" -ForegroundColor Gray
+        }
+    }
+    
+    Write-Host ""
+}
+
+#endregion
+
 # Export functions
 Export-ModuleMember -Function @(
     'Show-ModernHelp'
@@ -735,4 +1152,10 @@ Export-ModuleMember -Function @(
     'Enable-CLILearningMode'
     'Disable-CLILearningMode'
     'Test-CLILearningMode'
+    'Search-AitherZeroResources'
+    'Get-RecentActions'
+    'Add-RecentAction'
+    'Get-ScriptMetadata'
+    'Invoke-QuickJump'
+    'Show-InlineHelp'
 )

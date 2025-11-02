@@ -1767,6 +1767,30 @@ function Show-InteractiveMenu {
                 Description = "Git automation and AI coding tools"
 
             },
+            
+            [PSCustomObject]@{
+
+                Name = "Smart Search"
+
+                Description = "🔍 Search scripts, playbooks, and functions"
+
+            },
+            
+            [PSCustomObject]@{
+
+                Name = "Recent Actions"
+
+                Description = "⏱️ Quick access to recently executed commands"
+
+            },
+            
+            [PSCustomObject]@{
+
+                Name = "Quick Jump"
+
+                Description = "⚡ Jump directly to a script by number"
+
+            },
 
             [PSCustomObject]@{
 
@@ -1904,6 +1928,12 @@ function Show-InteractiveMenu {
                 'Infrastructure' { Invoke-InfrastructureMenu -Config $Config }
 
                 'Development' { Invoke-DevelopmentMenu -Config $Config }
+                
+                'Smart Search' { Invoke-SmartSearchMenu -Config $Config }
+                
+                'Recent Actions' { Invoke-RecentActionsMenu -Config $Config }
+                
+                'Quick Jump' { Invoke-QuickJumpMenu -Config $Config }
 
                 'Health Dashboard' {
 
@@ -2877,6 +2907,201 @@ function Invoke-ReportsAndLogsMenu {
 }
 
 
+
+# Smart Search Menu - Feature 1
+function Invoke-SmartSearchMenu {
+    param($Config)
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                        Smart Search                               ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $query = Show-UIPrompt -Message "Enter search term (script name, number, or keyword)"
+    
+    if ([string]::IsNullOrWhiteSpace($query)) {
+        return
+    }
+    
+    Write-Host "  🔍 Searching for: " -NoNewline -ForegroundColor Cyan
+    Write-Host $query -ForegroundColor Yellow
+    Write-Host ""
+    
+    $results = Search-AitherZeroResources -Query $query -MaxResults 15
+    
+    if ($results.Count -eq 0) {
+        Show-UINotification -Message "No results found for '$query'" -Type 'Warning'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        return
+    }
+    
+    Write-Host "  Found $($results.Count) result(s):" -ForegroundColor Green
+    Write-Host ""
+    
+    # Build menu items from results
+    $searchItems = $results | ForEach-Object {
+        $displayName = if ($_.Number) {
+            "[$($_.Number)] $($_.Name)"
+        } else {
+            $_.Name
+        }
+        
+        [PSCustomObject]@{
+            Name = $displayName
+            Description = $_.Description
+            Type = $_.Type
+            Number = $_.Number
+            OriginalName = $_.Name
+        }
+    }
+    
+    $selection = Show-UIMenu -Title "Search Results" -Items $searchItems -ShowNumbers
+    
+    if ($selection) {
+        # Show metadata and option to execute
+        if ($selection.Type -eq 'Script' -and $selection.Number) {
+            Show-InlineHelp -Topic $selection.Number -Type 'Script'
+            
+            $execute = Show-UIPrompt -Message "Execute this script?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
+            
+            if ($execute -eq 'Yes') {
+                $cliCommand = Get-CLIEquivalent -ScriptNumber $selection.Number
+                Show-CLICommand -Command $cliCommand -Description "Executing from search"
+                
+                if (Test-CLILearningMode) {
+                    Read-Host "Press Enter to execute"
+                }
+                
+                Add-RecentAction -Name $selection.OriginalName -Command $cliCommand -Type 'Script'
+                Invoke-OrchestrationSequence -Sequence $selection.Number -Configuration $Config
+            }
+        } elseif ($selection.Type -eq 'Playbook') {
+            $pbName = $selection.OriginalName -replace '^\[.*?\]\s*', ''
+            Show-InlineHelp -Topic $pbName -Type 'Playbook'
+            
+            $execute = Show-UIPrompt -Message "Execute this playbook?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
+            
+            if ($execute -eq 'Yes') {
+                $cliCommand = Get-CLIEquivalent -Playbook $pbName
+                Show-CLICommand -Command $cliCommand -Description "Executing playbook from search"
+                
+                if (Test-CLILearningMode) {
+                    Read-Host "Press Enter to execute"
+                }
+                
+                Add-RecentAction -Name $pbName -Command $cliCommand -Type 'Playbook'
+                Invoke-OrchestrationSequence -LoadPlaybook $pbName -Configuration $Config
+            }
+        }
+        
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+    }
+}
+
+# Recent Actions Menu - Feature 2
+function Invoke-RecentActionsMenu {
+    param($Config)
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                      Recent Actions                               ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $recentActions = Get-RecentActions -Count 10
+    
+    if ($recentActions.Count -eq 0) {
+        Show-UINotification -Message "No recent actions found" -Type 'Info'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        return
+    }
+    
+    # Build menu items
+    $actionItems = $recentActions | ForEach-Object {
+        $timestamp = [DateTime]::Parse($_.Timestamp).ToString('MM/dd HH:mm')
+        $statusIcon = if ($_.Status -eq 'Success') { '✅' } else { '❌' }
+        
+        [PSCustomObject]@{
+            Name = "$statusIcon [$timestamp] $($_.Name)"
+            Description = $_.Command
+            Command = $_.Command
+            Type = $_.Type
+            Status = $_.Status
+        }
+    }
+    
+    $selection = Show-UIMenu -Title "Recent Actions (Most Recent First)" -Items $actionItems -ShowNumbers
+    
+    if ($selection) {
+        Write-Host ""
+        Write-Host "  Command: " -NoNewline -ForegroundColor Gray
+        Write-Host $selection.Command -ForegroundColor Cyan
+        Write-Host ""
+        
+        $execute = Show-UIPrompt -Message "Re-run this command?" -ValidateSet @('Yes', 'No') -DefaultValue 'Yes'
+        
+        if ($execute -eq 'Yes') {
+            # Parse and execute the command
+            if ($selection.Command -match '-Mode\s+(\w+)') {
+                $mode = $matches[1]
+                
+                if ($selection.Command -match '-Sequence\s+[''"]?(\d+)[''"]?') {
+                    Invoke-OrchestrationSequence -Sequence $matches[1] -Configuration $Config
+                } elseif ($selection.Command -match '-Playbook\s+[''"]?([\w-]+)[''"]?') {
+                    Invoke-OrchestrationSequence -LoadPlaybook $matches[1] -Configuration $Config
+                } elseif ($selection.Command -match '-Target\s+(\d+)') {
+                    Invoke-OrchestrationSequence -Sequence $matches[1] -Configuration $Config
+                }
+            }
+        }
+        
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+    }
+}
+
+# Quick Jump Menu - Feature 4
+function Invoke-QuickJumpMenu {
+    param($Config)
+    
+    Write-Host ""
+    Write-Host "╔═══════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                        Quick Jump                                 ║" -ForegroundColor Cyan
+    Write-Host "╚═══════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  💡 Tip: Enter a 4-digit script number (e.g., 0402, 0510)" -ForegroundColor Gray
+    Write-Host ""
+    
+    $scriptNumber = Show-UIPrompt -Message "Enter script number"
+    
+    if ([string]::IsNullOrWhiteSpace($scriptNumber)) {
+        return
+    }
+    
+    # Normalize to 4 digits
+    $scriptNumber = $scriptNumber.PadLeft(4, '0')
+    
+    # Show metadata
+    $metadata = Invoke-QuickJump -ScriptNumber $scriptNumber -ShowInfo
+    
+    if ($metadata) {
+        $execute = Show-UIPrompt -Message "Execute this script?" -ValidateSet @('Yes', 'No') -DefaultValue 'Yes'
+        
+        if ($execute -eq 'Yes') {
+            $cliCommand = Get-CLIEquivalent -ScriptNumber $scriptNumber
+            Show-CLICommand -Command $cliCommand -Description "Executing via Quick Jump"
+            
+            if (Test-CLILearningMode) {
+                Read-Host "Press Enter to execute"
+            }
+            
+            Add-RecentAction -Name $metadata.Name -Command $cliCommand -Type 'Script'
+            Invoke-OrchestrationSequence -Sequence $scriptNumber -Configuration $Config
+        }
+    }
+    
+    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+}
 
 # Advanced menu using UI module
 
