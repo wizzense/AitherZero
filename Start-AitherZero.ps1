@@ -793,14 +793,21 @@ function Show-Help {
 
 
 
+# Import CLI helper module for modern features
+$cliHelperPath = Join-Path $PSScriptRoot "domains/experience/CLIHelper.psm1"
+if (Test-Path $cliHelperPath) {
+    Import-Module $cliHelperPath -Force -ErrorAction SilentlyContinue
+}
+
 # Version
 
 if ($Version) {
-
-    Write-Host "AitherZero v1.0" -ForegroundColor Cyan
-
+    if (Get-Command Show-VersionInfo -ErrorAction SilentlyContinue) {
+        Show-VersionInfo
+    } else {
+        Write-Host "AitherZero v1.0" -ForegroundColor Cyan
+    }
     exit 0
-
 }
 
 
@@ -808,11 +815,12 @@ if ($Version) {
 # Help
 
 if ($Help) {
-
-    Get-Help $MyInvocation.MyCommand.Path -Full
-
+    if (Get-Command Show-ModernHelp -ErrorAction SilentlyContinue) {
+        Show-ModernHelp
+    } else {
+        Get-Help $MyInvocation.MyCommand.Path -Full
+    }
     exit 0
-
 }
 
 
@@ -1092,6 +1100,13 @@ function Write-ModernCLI {
 function Show-Usage {
     # Comprehensive usage information with command suggestions
     
+    # Try to use modern help system if available
+    if (Get-Command Show-ModernHelp -ErrorAction SilentlyContinue) {
+        Show-ModernHelp -HelpType 'full'
+        return
+    }
+    
+    # Fallback to classic display
     if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
         try { Clear-Host } catch { Write-Verbose "Unable to clear host in this context" }
     }
