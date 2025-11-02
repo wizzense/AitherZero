@@ -1,0 +1,14 @@
+{
+  "command": "node",
+  "args": [
+    "/path/to/AitherZero/mcp-server/dist/index.js"
+  ],
+  "env": {
+    "AITHERZERO_ROOT": "/path/to/AitherZero"
+  },
+  "description": "AitherZero infrastructure automation platform",
+  "capabilities": {
+    "resources": true,
+    "tools": true
+  }
+}

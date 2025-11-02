@@ -1,0 +1,36 @@
+{
+  "name": "@aitherzero/mcp-server",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for AitherZero infrastructure automation",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "aitherzero-mcp-server": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "aitherzero",
+    "infrastructure",
+    "automation",
+    "powershell"
+  ],
+  "author": "Aitherium Corporation",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
