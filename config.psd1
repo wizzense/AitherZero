@@ -323,8 +323,8 @@
                 }
                 PRDeployment = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts = @('0850', '0851', '0852', '0853', '0854')
-                    Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, and container management'
+                    Scripts = @('0850', '0851', '0852', '0853', '0854', '0860')
+                    Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, container management, and deployment validation'
                 }
             }
             
