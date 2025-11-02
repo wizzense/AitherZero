@@ -2,7 +2,7 @@
 
 **Date**: 2025-11-02
 **Issue**: GitHub Pages deployment failing for 3+ hours
-**Reporter Question**: "I haver deen a girhub pahe deployment for 3 hours. Is thsr expected"
+**Reporter Question**: "I haven't seen a GitHub page deployment for 3 hours. Is this expected"
 
 ## Executive Summary
 
