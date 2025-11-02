@@ -561,7 +561,7 @@ jobs:
               for (const failure of failures) {
                 const fingerprint = createFingerprint(failure);
 
-                // Check if already processed
+                // Check if already processed in this run
                 if (processedFingerprints.has(fingerprint)) {
                   console.log(`  Skipping duplicate: ${fingerprint}`);
                   continue;
@@ -572,24 +572,27 @@ jobs:
                   i.body && i.body.includes(`<!-- fingerprint:${fingerprint} -->`)
                 );
 
-                if (existingIssue) {
-                  console.log(`  Issue already exists for fingerprint: ${fingerprint} (#${existingIssue.number})`);
-                  continue;
-                }
-
                 processedFingerprints.add(fingerprint);
 
                 // Determine assigned agent
                 const agent = determineAgent(failure);
 
-                // Create issue group
+                // Create issue group (includes both new and existing issues for updates)
                 issueGroups.push({
                   fingerprint,
                   category,
                   failure,
                   agent,
-                  priority: category === 'Security' ? 'p0' : category === 'Syntax' ? 'p1' : 'p2'
+                  priority: category === 'Security' ? 'p0' : category === 'Syntax' ? 'p1' : 'p2',
+                  existingIssueNumber: existingIssue ? existingIssue.number : null,
+                  existingIssueTitle: existingIssue ? existingIssue.title : null
                 });
+
+                if (existingIssue) {
+                  console.log(`  Will update existing issue #${existingIssue.number} for fingerprint: ${fingerprint}`);
+                } else {
+                  console.log(`  Will create new issue for fingerprint: ${fingerprint}`);
+                }
               }
             }
 
@@ -640,20 +643,43 @@ jobs:
             console.log(`📝 Creating ${issueGroups.length} intelligent issues...`);
 
             let createdCount = 0;
+            let updatedCount = 0;
 
             for (const group of issueGroups) {
-              const { fingerprint, category, failure, agent, priority } = group;
+              const { fingerprint, category, failure, agent, priority, existingIssueNumber, existingIssueTitle } = group;
 
-              // Build issue title
-              const title = category === 'Tests'
-                ? `🧪 Test Failure: ${failure.TestName}`
-                : category === 'Syntax'
-                ? `📝 Syntax Error in ${failure.File.split('/').pop()}`
-                : category === 'CodeQuality'
-                ? `⚠️ Code Quality Issues in ${failure.File.split('/').pop()}`
-                : category === 'Security'
-                ? `🔒 Security Issue: ${failure.Type}`
-                : `🔄 Workflow Failure: ${failure.WorkflowName}`;
+              // Build descriptive issue title with context
+              let title = '';
+              if (category === 'Tests') {
+                const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
+                const testName = failure.TestName || 'Unknown Test';
+                // Include file and test name for better context
+                title = `🧪 Test Failure: ${testName} in ${fileName}`;
+              } else if (category === 'Syntax') {
+                const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
+                // Include brief error context
+                const errorSnippet = (failure.Message || failure.ErrorMessage || '').split('\n')[0].substring(0, 80);
+                title = `📝 Syntax Error: ${fileName} - ${errorSnippet || 'Parse error'}`;
+              } else if (category === 'CodeQuality') {
+                const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
+                const errorCount = failure.ErrorCount || 0;
+                const warningCount = failure.WarningCount || 0;
+                // Include counts for better understanding
+                title = `⚠️ Code Quality: ${fileName} (${errorCount} errors, ${warningCount} warnings)`;
+              } else if (category === 'Security') {
+                const severity = failure.Severity || 'Unknown';
+                const type = failure.Type || 'Security Issue';
+                // Include severity for prioritization
+                title = `🔒 Security [${severity}]: ${type}`;
+              } else if (category === 'Workflows') {
+                const workflowName = failure.WorkflowName || 'Unknown Workflow';
+                const conclusion = failure.Conclusion || 'failed';
+                // Include workflow name and status
+                title = `🔄 Workflow ${conclusion}: ${workflowName}`;
+              } else {
+                // Fallback for unknown categories
+                title = `❌ ${category} Failure: ${failure.File ? failure.File.split('/').pop() : 'Unknown'}`;
+              }
 
               // Build issue body with rich context
               const workflowContext = analysis.WorkflowContext.TriggeredBy
@@ -709,23 +735,87 @@ jobs:
                 // Add agent-specific label
                 labels.push(`agent-${agent.agent}`);
 
-                const newIssue = await github.rest.issues.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title,
-                  body,
-                  labels
-                });
+                if (existingIssueNumber) {
+                  // Update existing issue with latest information
+                  console.log(`🔄 Updating existing issue #${existingIssueNumber}: ${title}`);
 
-                console.log(`✅ Created issue #${newIssue.data.number}: ${title}`);
-                createdCount++;
+                  // Add a comment with the latest failure information
+                  const updateComment = `## 🔄 Issue Still Occurring (Updated)
+
+            **Last Detected:** ${analysis.Timestamp}
+            **Status:** This issue is still occurring in recent workflow runs.
+
+            ### Latest Failure Details
+
+            **File:** \`${failure.File || 'N/A'}\`
+            ${failure.Line ? `**Line:** ${failure.Line}` : ''}
+
+            ${failure.ErrorMessage || failure.Message || failure.Description || 'See details below'}
+
+            ${failure.StackTrace ? `\`\`\`
+            ${failure.StackTrace}
+            \`\`\`` : ''}
+
+            ### Workflow Context
+
+            ${workflowContext}
+
+            ---
+            *This issue remains open and has been updated with the latest failure information.*
+            <!-- updated:${new Date().toISOString()} -->`;
+
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: existingIssueNumber,
+                    body: updateComment
+                  });
+
+                  // Update title if it's different (more descriptive now)
+                  if (existingIssueTitle !== title) {
+                    await github.rest.issues.update({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: existingIssueNumber,
+                      title: title
+                    });
+                    console.log(`  ✏️ Updated title to: ${title}`);
+                  }
+
+                  // Ensure labels are up to date
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: existingIssueNumber,
+                    labels: labels
+                  });
+
+                  console.log(`✅ Updated issue #${existingIssueNumber}`);
+                  updatedCount++;
+
+                } else {
+                  // Create new issue
+                  const newIssue = await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title,
+                    body,
+                    labels
+                  });
+
+                  console.log(`✅ Created issue #${newIssue.data.number}: ${title}`);
+                  createdCount++;
+                }
 
               } catch (error) {
-                console.error(`❌ Failed to create issue: ${error.message}`);
+                console.error(`❌ Failed to ${existingIssueNumber ? 'update' : 'create'} issue: ${error.message}`);
               }
             }
 
-            console.log(`\n✅ Created ${createdCount} intelligent issues!`);
+            console.log(`\n✅ Issue Creation Summary:`);
+            console.log(`   Created: ${createdCount} new issues`);
+            console.log(`   Updated: ${updatedCount} existing issues`);
+            console.log(`   Total processed: ${createdCount + updatedCount} issues`);
 
       - name: 📊 Update Issue State Database
         shell: pwsh
