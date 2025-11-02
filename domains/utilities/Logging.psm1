@@ -139,7 +139,7 @@ function Write-LogToConsole {
 
     $logMessage = "[$($Entry.Timestamp)] [$($Entry.Level.ToUpper().PadRight(11))] [$($Entry.Source)] $($Entry.Message)"
 
-    if ($Entry.Data.Count -gt 0) {
+    if ($Entry.Data -and ($Entry.Data -is [hashtable] -or $Entry.Data -is [System.Collections.IDictionary]) -and $Entry.Data.Count -gt 0) {
         $logMessage += " | Data: $($Entry.Data | ConvertTo-Json -Compress)"
     }
 
