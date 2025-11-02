@@ -135,7 +135,7 @@ function Open-HTMLDashboard {
     }
 }
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
+# PSScriptAnalyzer suppression: PSUseSingularNouns - Function returns multiple metrics
 function Get-ProjectMetrics {
     Write-ScriptLog -Message "Collecting project metrics"
 
@@ -360,7 +360,7 @@ function Get-ProjectMetrics {
     return $metrics
 }
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
+# PSScriptAnalyzer suppression: PSUseSingularNouns - Function returns multiple metrics
 function Get-QualityMetrics {
     <#
     .SYNOPSIS
