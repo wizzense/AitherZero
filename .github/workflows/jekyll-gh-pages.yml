@@ -10,6 +10,8 @@ on:
       - 'docs/**'
       - 'index.md'
       - '_config.yml'
+      - 'mcp-server/README.md'
+      - 'mcp-server/QUICKSTART.md'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -36,6 +38,23 @@ jobs:
         
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      - name: Copy MCP Server Documentation
+        run: |
+          echo "📄 Copying MCP server documentation to docs..."
+          mkdir -p ./docs/mcp-server
+          if [ -f "./mcp-server/README.md" ]; then
+            cp ./mcp-server/README.md ./docs/mcp-server/index.md
+            echo "✅ Copied MCP server README"
+          fi
+          if [ -f "./mcp-server/QUICKSTART.md" ]; then
+            cp ./mcp-server/QUICKSTART.md ./docs/mcp-server/quickstart.md
+            echo "✅ Copied MCP server quickstart"
+          fi
+          if [ -f "./mcp-server/IMPLEMENTATION-SUMMARY.md" ]; then
+            cp ./mcp-server/IMPLEMENTATION-SUMMARY.md ./docs/mcp-server/implementation.md
+            echo "✅ Copied MCP server implementation summary"
+          fi
         
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
@@ -86,6 +105,7 @@ jobs:
           Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}reports/dashboard.html"
           Write-Host "  - Reports: ${{ steps.deployment.outputs.page_url }}reports/"
           Write-Host "  - Docs: ${{ steps.deployment.outputs.page_url }}docs/"
+          Write-Host "  - MCP Server: ${{ steps.deployment.outputs.page_url }}docs/mcp-server/"
           Write-Host ""
           Write-Host "⏱️ Deployment Duration: <5 minutes is normal" -ForegroundColor Cyan
           
