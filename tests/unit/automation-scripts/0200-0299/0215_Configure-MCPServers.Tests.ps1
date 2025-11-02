@@ -17,13 +17,16 @@ Describe '0215_Configure-MCPServers' -Tag 'Unit', 'AutomationScript', 'Developme
         $script:ScriptPath = Join-Path $PSScriptRoot '../../../../automation-scripts/0215_Configure-MCPServers.ps1'
         $script:ScriptName = '0215_Configure-MCPServers'
 
-        # Load the script content to test the Remove-JsonComment function
+        # Load the script content and extract the Remove-JsonComment function
         $scriptContent = Get-Content $script:ScriptPath -Raw
 
-        # Extract the Remove-JsonComment function
-        $functionMatch = [regex]::Match($scriptContent, '(?s)function Remove-JsonComment \{.*?\n\}')
-        if ($functionMatch.Success) {
-            Invoke-Expression $functionMatch.Value
+        # Extract just the function - this regex handles the function body properly
+        # It matches from 'function Remove-JsonComment' through the return statement and closing brace
+        if ($scriptContent -match '(?s)(function Remove-JsonComment\s*\{.*?return \$JsonContent\s*\})') {
+            $functionCode = $Matches[1]
+            # Invoke-Expression is acceptable here as we're only executing our own trusted code
+            # from the repository to make it available for testing
+            Invoke-Expression $functionCode
         }
     }
 
@@ -107,14 +110,17 @@ Describe '0215_Configure-MCPServers' -Tag 'Unit', 'AutomationScript', 'Developme
             $json = @'
 {
     "url": "https://example.com",
-    "other": "http://test.com"
+    "other": "http://test.com",
+    "local": "file://localhost/path/to/file"
 }
 '@
             $result = Remove-JsonComment -JsonContent $json
             $result | Should -Match 'https://'
             $result | Should -Match 'http://'
+            $result | Should -Match 'file://'
             $parsed = $result | ConvertFrom-Json
             $parsed.url | Should -Be 'https://example.com'
+            $parsed.local | Should -Be 'file://localhost/path/to/file'
         }
 
         It 'Should remove trailing commas' {

@@ -91,9 +91,9 @@ function Remove-JsonComment {
     # Remove multi-line comments (/* ... */) first
     $JsonContent = $JsonContent -replace '(?s)/\*.*?\*/', ''
 
-    # Remove single-line comments (// ...) - both standalone and inline
-    # This preserves URLs like https:// by checking for : before //
-    $JsonContent = $JsonContent -replace '(?<!:)//.*?(?=\r?\n|$)', ''
+    # Remove single-line comments (// ...) while preserving URLs
+    # This regex matches // that is NOT preceded by http: or https: or file:
+    $JsonContent = $JsonContent -replace '(?<!:)(?<!http:)(?<!https:)(?<!file:)//.*?(?=\r?\n|$)', ''
 
     # Remove trailing commas before closing braces/brackets (common in VS Code settings)
     $JsonContent = $JsonContent -replace ',(\s*[\]}])', '$1'
