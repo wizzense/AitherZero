@@ -37,11 +37,21 @@ BeforeAll {
             }
             PSScriptAnalyzer = @{
                 Enabled = $true
-                SettingsPath = './PSScriptAnalyzerSettings.psd1'
                 OutputPath = './tests/analysis'
+                IncludeRules = @('*')
+                ExcludeRules = @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
+                Severity = @('Error', 'Warning', 'Information')
                 Rules = @{
-                    Severity = @('Error', 'Warning')
-                    ExcludeRules = @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
+                    PSProvideCommentHelp = @{
+                        Enable = $true
+                        ExportedOnly = $false
+                        BlockComment = $true
+                        Placement = 'begin'
+                    }
+                    PSUseCompatibleSyntax = @{
+                        Enable = $true
+                        TargetVersions = @('7.0')
+                    }
                 }
             }
             ASTValidation = @{
