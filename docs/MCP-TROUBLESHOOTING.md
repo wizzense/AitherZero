@@ -1,78 +1,120 @@
 # Troubleshooting MCP Servers in GitHub Copilot for VS Code
 
-## Issue
-MCP servers are not visible in GitHub Copilot Chat in VS Code. Unable to enable or see their tools in the MCP configuration menu.
+## Issue RESOLVED
+The MCP configuration script was using an incorrect format. The script has been updated to use the official VS Code MCP configuration format with `.vscode/mcp.json`.
 
-## Root Cause
-The MCP (Model Context Protocol) support in GitHub Copilot for VS Code is currently in **experimental/preview** status and requires specific versions and configuration.
+## Correct Configuration Format
+
+VS Code uses **`.vscode/mcp.json`** (not settings.json) for MCP server configuration.
+
+### Official Format
+```json
+{
+  "servers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "github-token",
+      "type": "promptString",
+      "description": "GitHub Personal Access Token for API access",
+      "password": true
+    }
+  ]
+}
+```
+
+## Quick Start
+
+The updated `0215_Configure-MCPServers.ps1` script now creates the correct format:
+
+```bash
+# Configure MCP servers in workspace
+./automation-scripts/0215_Configure-MCPServers.ps1
+
+# Verify configuration
+./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
+```
+
+## How It Works Now
+
+## How It Works Now
+
+1. **Configuration File**: Creates `.vscode/mcp.json` in your workspace
+2. **Server Discovery**: VS Code automatically detects servers when you reload
+3. **Trust Prompt**: VS Code prompts you to trust each MCP server on first use
+4. **Tool Access**: Use `#` in Copilot Chat to see available MCP tools
+5. **Agent Mode**: MCP tools are automatically invoked when relevant
 
 ## Prerequisites
 
 ### 1. VS Code Version
-- **Minimum**: VS Code 1.87.0 or later
+- **Minimum**: VS Code 1.87.0 or later (current: latest recommended)
 - **Check**: `code --version`
 
-### 2. GitHub Copilot Extension Version
-- **Minimum**: GitHub Copilot v1.154.0 or later (with MCP support)
-- **Check**: In VS Code: Extensions → GitHub Copilot → Check version
-- **Note**: MCP support may not be available in all versions/regions yet
+### 2. GitHub Copilot Extension
+- **Status**: MCP support is now GA (Generally Available)
+- **Install**: From Extensions view or `code --install-extension GitHub.copilot`
 
-### 3. Enable Experimental Features
-MCP support must be explicitly enabled in VS Code settings.
+### 3. Node.js
+- **Minimum**: Node.js 18+
+- **Check**: `node --version`
+- **Required**: For running stdio MCP servers with npx
 
-## Solution Steps
+## Using MCP Servers in VS Code
 
-### Step 1: Update Extensions
+## Using MCP Servers in VS Code
+
+### Step 1: Run Configuration Script
 ```bash
-# Update VS Code extensions
-code --update-extensions
+cd /path/to/AitherZero
+./automation-scripts/0215_Configure-MCPServers.ps1
 ```
 
-Or manually update:
-1. Open VS Code
-2. Extensions (Ctrl+Shift+X / Cmd+Shift+X)
-3. Click "Update" on GitHub Copilot extension
-4. Reload VS Code window
+This creates `.vscode/mcp.json` with 5 MCP servers configured.
 
-### Step 2: Enable MCP Support
-Add to your VS Code **User Settings** (Ctrl+, / Cmd+,):
+### Step 2: Reload VS Code
+- Press `Ctrl+Shift+P` / `Cmd+Shift+P`
+- Type and select: **"Developer: Reload Window"**
 
-```jsonc
-{
-  // Enable MCP experimental features (may be required)
-  "github.copilot.advanced.debug.useElectronMCP": true,
-  
-  // Enable MCP servers
-  "github.copilot.chat.mcp.enabled": true,
-  
-  // MCP servers are configured in workspace settings
-}
-```
+### Step 3: Trust MCP Servers
+VS Code will prompt you to trust each MCP server when it starts for the first time.
+- Review the server configuration
+- Click "Trust" if the source is reliable
 
-**Important**: Add these to **User Settings** (`settings.json`), not workspace settings. The MCP servers themselves are already configured in the workspace `.vscode/settings.json`.
+### Step 4: Access MCP Tools in Copilot Chat
+1. Open Copilot Chat: `Ctrl+Alt+I` / `Cmd+Option+I`
+2. **Agent Mode**: Tools are automatically invoked
+   - Example: "List my GitHub issues" → Uses GitHub MCP server
+3. **Manual Tool Selection**: Type `#` to see all available MCP tools
+4. **MCP Resources**: Select "Add Context" → "MCP Resources"
 
-### Step 3: Verify Workspace Configuration
-The workspace already has MCP servers configured in `.vscode/settings.json`:
-- ✓ `aitherzero` - AitherZero infrastructure automation
-- ✓ `filesystem` - Repository file access
-- ✓ `github` - GitHub API operations
-- ✓ `sequential-thinking` - Complex reasoning
-
-You can verify this by running:
+### Step 5: Verify MCP Servers Are Running
 ```bash
 ./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
 ```
 
-### Step 4: Reload VS Code
-1. Press Ctrl+Shift+P / Cmd+Shift+P
-2. Type and select: "Developer: Reload Window"
-3. Or completely close and reopen VS Code
-
-### Step 5: Check MCP Status
-1. Open Copilot Chat (Ctrl+Shift+I / Cmd+Shift+I or Ctrl+Alt+I / Cmd+Option+I)
-2. Look for MCP indicator or context menu in the chat interface
-3. Try using: `@workspace` to test workspace context
-4. Check Output panel: View → Output → Select "GitHub Copilot Chat" for logs
+Should show:
+```
+✓ 5 MCP server(s) configured
+  - aitherzero (type: stdio)
+  - filesystem (type: stdio)
+  - git (type: stdio)
+  - github (type: stdio)
+  - sequential-thinking (type: stdio)
+```
 
 ## Current Status in AitherZero
 
