@@ -79,24 +79,57 @@ Development tools and environments
 10. **0212_Install-AzureCLI.ps1** - Azure CLI
 11. **0213_Install-AWSCLI.ps1** - AWS CLI
 12. **0214_Install-Packer.ps1** - Image builder
-13. **0215_Install-Chocolatey.ps1** - Package manager
-14. **0216_Set-PowerShellProfile.ps1** - PS profile
-15. **0217_Install-ClaudeCode.ps1** - AI assistant
-16. **0218_Install-GeminiCLI.ps1** - Google AI
-17. **0225_Generate-TestCoverage.ps1** - Test generation
+13. **0215_Configure-MCPServers.ps1** - MCP server setup
+14. **0215_Install-Chocolatey.ps1** - Package manager
+15. **0216_Set-PowerShellProfile.ps1** - PS profile
+16. **0217_Install-ClaudeCode.ps1** - AI assistant
+17. **0218_Install-GeminiCLI.ps1** - Google AI
 
 ### Stage 4: Services (0300-0399)
 Service deployment and configuration
 
 1. **0300_Deploy-Infrastructure.ps1** - Deploy with OpenTofu
 
-### Stage 5: Validation (0500-0599)
-Testing and verification
+### Stage 5: Testing (0400-0499)
+Testing and validation (23 scripts)
 
-1. **0500_Validate-Environment.ps1** - Environment checks
-2. **0501_Get-SystemInfo.ps1** - System information
+Key scripts include:
+- **0402_Run-UnitTests.ps1** - Unit test execution
+- **0403_Run-IntegrationTests.ps1** - Integration tests
+- **0404_Run-PSScriptAnalyzer.ps1** - Static code analysis
+- **0407_Validate-Syntax.ps1** - PowerShell syntax validation
+- **0409_Run-AllTests.ps1** - Complete test suite
 
-### Stage 6: Maintenance (9000-9999)
+### Stage 6: Reporting (0500-0599)
+Reporting and metrics (18 scripts)
+
+Key scripts include:
+- **0500_Validate-Environment.ps1** - Environment checks
+- **0501_Get-SystemInfo.ps1** - System information
+- **0510_Generate-ProjectReport.ps1** - Project reports
+- **0512_Generate-Dashboard.ps1** - Dashboard generation
+
+### Stage 7: Git & AI Tools (0700-0799)
+Git automation, AI tools, and MCP servers (36 scripts)
+
+Key scripts include:
+- **0701_Create-FeatureBranch.ps1** - Branch creation
+- **0702_Create-Commit.ps1** - Conventional commits
+- **0703_Create-PullRequest.ps1** - PR automation
+- **0730-0746**: AI-powered development tools
+- **0750-0753**: MCP server management
+
+### Stage 8: Issue Management (0800-0899)
+Issue management and PR deployment (19 scripts)
+
+Key scripts include:
+- **0800_Create-TestIssues.ps1** - Test issue creation
+- **0810_Create-IssueFromTestFailure.ps1** - Failure tracking
+- **0815_Setup-IssueManagement.ps1** - Issue system setup
+- **0850-0854**: PR environment deployment
+- **0860_Validate-Deployments.ps1** - Deployment validation
+
+### Stage 9: Maintenance (9000-9999)
 Cleanup and maintenance
 
 1. **9999_Reset-Machine.ps1** - System reset/sysprep

@@ -83,21 +83,21 @@ function Write-LogMessage {
 }
 
 # Strip comments from JSON content for safe parsing
-function Remove-JsonComments {
+function Remove-JsonComment {
     param(
         [string]$JsonContent
     )
-    
+
     # Remove multi-line comments (/* ... */) first
     $JsonContent = $JsonContent -replace '(?s)/\*.*?\*/', ''
-    
+
     # Remove single-line comments (// ...) - both standalone and inline
     # This preserves URLs like https:// by checking for : before //
     $JsonContent = $JsonContent -replace '(?<!:)//.*?(?=\r?\n|$)', ''
-    
+
     # Remove trailing commas before closing braces/brackets (common in VS Code settings)
     $JsonContent = $JsonContent -replace ',(\s*[\]}])', '$1'
-    
+
     return $JsonContent
 }
 
@@ -176,7 +176,7 @@ try {
         if (Test-Path $settingsPath) {
             try {
                 $jsonContent = Get-Content $settingsPath -Raw
-                $cleanJson = Remove-JsonComments -JsonContent $jsonContent
+                $cleanJson = Remove-JsonComment -JsonContent $jsonContent
                 $settings = $cleanJson | ConvertFrom-Json
                 $mcpEnabled = $settings.'github.copilot.chat.mcp.enabled'
                 $mcpServers = $settings.'github.copilot.chat.mcp.servers'
@@ -235,7 +235,7 @@ try {
         Write-LogMessage -Message "Reading existing settings from $settingsPath"
         try {
             $jsonContent = Get-Content $settingsPath -Raw
-            $cleanJson = Remove-JsonComments -JsonContent $jsonContent
+            $cleanJson = Remove-JsonComment -JsonContent $jsonContent
             $cleanJson | ConvertFrom-Json
         } catch {
             Write-ColorOutput "  ⚠ Failed to parse existing settings, creating new: $($_.Exception.Message)" -Level 'Warning'
