@@ -135,7 +135,7 @@ function Open-HTMLDashboard {
     }
 }
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
+# PSScriptAnalyzer suppression: PSUseSingularNouns - Function returns multiple metrics
 function Get-ProjectMetrics {
     Write-ScriptLog -Message "Collecting project metrics"
 
@@ -360,7 +360,7 @@ function Get-ProjectMetrics {
     return $metrics
 }
 
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
+# PSScriptAnalyzer suppression: PSUseSingularNouns - Function returns multiple metrics
 function Get-QualityMetrics {
     <#
     .SYNOPSIS
@@ -2833,6 +2833,15 @@ $manifestTagsSection
                                               elseif ($Metrics.Tests.SuccessRate -ge 80) { 'var(--warning)' } 
                                               else { 'var(--error)' }
                             $totalTestsRun = $Metrics.Tests.Passed + $Metrics.Tests.Failed
+                            $testWarning = if ($totalTestsRun -lt 100) {
+                                @"
+                            <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
+                                <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
+                                    ⚠️ Only $totalTestsRun test cases executed. Run <code>./az 0402</code> for full test suite.
+                                </div>
+                            </div>
+"@
+                            } else { "" }
                             @"
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid $testStatusColor;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
@@ -2841,21 +2850,12 @@ $manifestTagsSection
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
                                 ✅ $($Metrics.Tests.Passed) Passed | ❌ $($Metrics.Tests.Failed) Failed$(if($Metrics.Tests.Skipped -gt 0){" | ⏭️ $($Metrics.Tests.Skipped) Skipped"})
                             </div>
-                            $(if ($totalTestsRun -lt 100) {
-                                @"
-                            <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
-                                <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
-                                    ⚠️ Only $totalTestsRun test cases executed. Run <code>./az 0402</code> for full test suite.
-                                </div>
-                            </div>
-"@
-                            })
+                            $testWarning
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
                                 Last run: $($Metrics.Tests.LastRun)
                             </div>
                         </div>
 "@
-                            })
                         } else {
                             @"
                             <div style="padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--text-secondary);">

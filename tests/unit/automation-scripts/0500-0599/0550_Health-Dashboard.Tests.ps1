@@ -44,8 +44,6 @@ Describe '0550_Health-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
             $cmd.Parameters.ContainsKey('Configuration') | Should -Be $true
         }
 
-        }
-
         It 'Should have parameter: ShowAll' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('ShowAll') | Should -Be $true
