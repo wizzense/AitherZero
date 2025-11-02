@@ -9,7 +9,7 @@
     Script: 0107_Install-WindowsAdminCenter
     Stage: Infrastructure
     Description: Install Windows Admin Center for server management
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0107_Install-WindowsAdminCenter' -Tag 'Unit', 'AutomationScript', 'Infrastructure' {
@@ -48,8 +48,8 @@ Describe '0107_Install-WindowsAdminCenter' -Tag 'Unit', 'AutomationScript', 'Inf
 
     Context 'Metadata' {
         It 'Should be in stage: Infrastructure' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

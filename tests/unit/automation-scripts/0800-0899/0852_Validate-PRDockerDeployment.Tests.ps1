@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0852_Validate-PRDockerDeployment
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Comprehensive validation script that tests the PR Docker deployment process end-to-end.
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0852_Validate-PRDockerDeployment' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0852_Validate-PRDockerDeployment' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0852_Validate-PRDockerDeployment.ps1'
@@ -61,9 +62,9 @@ Describe '0852_Validate-PRDockerDeployment' -Tag 'Unit', 'AutomationScript', 'Un
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

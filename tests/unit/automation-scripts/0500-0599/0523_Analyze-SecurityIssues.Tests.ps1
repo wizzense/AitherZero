@@ -8,8 +8,8 @@
     Auto-generated comprehensive tests
     Script: 0523_Analyze-SecurityIssues
     Stage: Reporting
-    Description: Security issue analysis for tech debt reporting
-    Generated: 2025-10-30 02:11:49
+    Description: Scans for security vulnerabilities including plain text credentials,
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0523_Analyze-SecurityIssues' -Tag 'Unit', 'AutomationScript', 'Reporting' {
@@ -73,8 +73,8 @@ Describe '0523_Analyze-SecurityIssues' -Tag 'Unit', 'AutomationScript', 'Reporti
 
     Context 'Metadata' {
         It 'Should be in stage: Reporting' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

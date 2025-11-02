@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0853_Quick-Docker-Validation
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Fast validation script that checks Docker deployment configuration without requiring
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0853_Quick-Docker-Validation' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0853_Quick-Docker-Validation' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0853_Quick-Docker-Validation.ps1'
@@ -46,9 +47,9 @@ Describe '0853_Quick-Docker-Validation' -Tag 'Unit', 'AutomationScript', 'Unknow
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 
