@@ -503,12 +503,12 @@ Focus on practical, actionable advice that fits the AitherZero architecture and 
         }
 
         $analysisPrompt = $prompts[$AnalysisType]
-        $fullMessage = "$analysisPrompt`n`nCode to analyze:`n```powershell`n$Content`n```"
+        $fullMessage = "$analysisPrompt`n`nCode to analyze:`n" + '```powershell' + "`n$Content`n" + '```'
 
         $response = Send-ClaudeMessage -Message $fullMessage -SystemPrompt $systemPrompt
 
         if ($response.Success) {
-            Write-ClaudeLog "$($AnalysisType) analysis completed successfully" -Level Success
+            Write-ClaudeLog ("{0} analysis completed successfully" -f $AnalysisType) -Level Success
             return @{
                 Analysis = $response.Content
                 AnalysisType = $AnalysisType
@@ -521,7 +521,7 @@ Focus on practical, actionable advice that fits the AitherZero architecture and 
         }
 
     } catch {
-        Write-ClaudeLog "$AnalysisType analysis failed: $_" -Level Error
+        Write-ClaudeLog ("{0} analysis failed: {1}" -f $AnalysisType, $_) -Level Error
         throw
     }
 }

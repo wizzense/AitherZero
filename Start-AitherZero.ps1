@@ -3628,8 +3628,6 @@ try {
 
     }
 
-    }
-
 
 
     # Validate mode compatibility
