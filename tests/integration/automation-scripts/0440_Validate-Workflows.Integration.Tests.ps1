@@ -6,13 +6,13 @@
     Integration tests for 0440_Validate-Workflows
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 04:33:35
 #>
 
 Describe '0440_Validate-Workflows Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0440_Validate-Workflows.ps1'
+        $script:ScriptPath = './automation-scripts/0440_Validate-Workflows.ps1'
         $script:TestConfig = @{ Automation = @{ DryRun = $true } }
     }
 
