@@ -82,6 +82,25 @@ function Write-LogMessage {
     Write-Verbose $Message
 }
 
+# Strip comments from JSON content for safe parsing
+function Remove-JsonComments {
+    param(
+        [string]$JsonContent
+    )
+    
+    # Remove multi-line comments (/* ... */) first
+    $JsonContent = $JsonContent -replace '(?s)/\*.*?\*/', ''
+    
+    # Remove single-line comments (// ...) - both standalone and inline
+    # This preserves URLs like https:// by checking for : before //
+    $JsonContent = $JsonContent -replace '(?<!:)//.*?(?=\r?\n|$)', ''
+    
+    # Remove trailing commas before closing braces/brackets (common in VS Code settings)
+    $JsonContent = $JsonContent -replace ',(\s*[\]}])', '$1'
+    
+    return $JsonContent
+}
+
 # Main execution
 try {
     Write-ColorOutput "=== MCP Server Configuration ===" -Level 'Info'
@@ -155,9 +174,17 @@ try {
         }
 
         if (Test-Path $settingsPath) {
-            $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
-            $mcpEnabled = $settings.'github.copilot.chat.mcp.enabled'
-            $mcpServers = $settings.'github.copilot.chat.mcp.servers'
+            try {
+                $jsonContent = Get-Content $settingsPath -Raw
+                $cleanJson = Remove-JsonComments -JsonContent $jsonContent
+                $settings = $cleanJson | ConvertFrom-Json
+                $mcpEnabled = $settings.'github.copilot.chat.mcp.enabled'
+                $mcpServers = $settings.'github.copilot.chat.mcp.servers'
+            } catch {
+                Write-ColorOutput "  ✗ Failed to parse settings file: $($_.Exception.Message)" -Level 'Error'
+                Write-ColorOutput "    File: $settingsPath" -Level 'Warning'
+                exit 1
+            }
 
             if ($mcpEnabled) {
                 Write-ColorOutput "  ✓ MCP is enabled" -Level 'Success'
@@ -206,7 +233,15 @@ try {
     # Read existing settings or create new
     $settings = if (Test-Path $settingsPath) {
         Write-LogMessage -Message "Reading existing settings from $settingsPath"
-        Get-Content $settingsPath -Raw | ConvertFrom-Json
+        try {
+            $jsonContent = Get-Content $settingsPath -Raw
+            $cleanJson = Remove-JsonComments -JsonContent $jsonContent
+            $cleanJson | ConvertFrom-Json
+        } catch {
+            Write-ColorOutput "  ⚠ Failed to parse existing settings, creating new: $($_.Exception.Message)" -Level 'Warning'
+            Write-LogMessage -Message "Failed to parse existing settings: $($_.Exception.Message)" -Level 'Warning'
+            [PSCustomObject]@{}
+        }
     } else {
         Write-LogMessage -Message "Creating new settings file"
         [PSCustomObject]@{}
