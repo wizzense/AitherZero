@@ -49,6 +49,35 @@ function Show-Header {
     Write-Host ""
 }
 
+function Get-PropertyWithFallback {
+    <#
+    .SYNOPSIS
+        Get property value from object with fallback to alternative property names
+    .PARAMETER Object
+        The object to get the property from
+    .PARAMETER PropertyNames
+        Array of property names to try in order
+    .PARAMETER DefaultValue
+        Default value if no property found (default: 0)
+    #>
+    param(
+        [Parameter(Mandatory)]
+        $Object,
+        
+        [Parameter(Mandatory)]
+        [string[]]$PropertyNames,
+        
+        $DefaultValue = 0
+    )
+    
+    foreach ($propName in $PropertyNames) {
+        if ($null -ne $Object.$propName) {
+            return $Object.$propName
+        }
+    }
+    return $DefaultValue
+}
+
 function Show-ProjectMetrics {
     Write-Host "PROJECT METRICS" -ForegroundColor Yellow
     Write-Host ("-" * 40) -ForegroundColor Gray
@@ -108,10 +137,10 @@ function Show-TestResults {
 
                 Write-Host "[$timestamp] " -NoNewline -ForegroundColor Gray
 
-                # Support multiple property name variations
-                $failed = if ($null -ne $data.Failed) { $data.Failed } elseif ($null -ne $data.FailedCount) { $data.FailedCount } else { 0 }
-                $passed = if ($null -ne $data.Passed) { $data.Passed } elseif ($null -ne $data.PassedCount) { $data.PassedCount } else { 0 }
-                $total = if ($null -ne $data.TotalTests) { $data.TotalTests } elseif ($null -ne $data.TotalCount) { $data.TotalCount } else { $passed + $failed }
+                # Support multiple property name variations using helper function
+                $failed = Get-PropertyWithFallback -Object $data -PropertyNames @('Failed', 'FailedCount')
+                $passed = Get-PropertyWithFallback -Object $data -PropertyNames @('Passed', 'PassedCount')
+                $total = Get-PropertyWithFallback -Object $data -PropertyNames @('TotalTests', 'TotalCount') -DefaultValue ($passed + $failed)
                 
                 if ($failed -gt 0) {
                     Write-Host "FAILED" -ForegroundColor Red -NoNewline

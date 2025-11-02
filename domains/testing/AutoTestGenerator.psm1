@@ -95,12 +95,18 @@ function New-AutoTest {
     $stagePatterns = @(
         '(?:^|\n)\s*#?\s*Stage:\s*(.+?)(?:\r?\n|$)',                # Direct "# Stage:" or "Stage:"
         '\.NOTES[^\n]*\n[^\n]*Stage:\s*(.+?)(?:\r?\n|$)',          # .NOTES section with Stage on next line
-        'Category:\s*(Testing|Development|Infrastructure|Validation|Reporting|Automation)' # Category field
+        'Category:\s*(.+?)(?:\r?\n|$)'                             # Category field (capture any value)
     )
     
     foreach ($pattern in $stagePatterns) {
         if ($content -match $pattern) {
-            $stage = $Matches[1].Trim()
+            $capturedValue = $Matches[1].Trim()
+            # For Category pattern, extract only the first stage keyword
+            if ($pattern -like 'Category:*' -and $capturedValue -match '^(Testing|Development|Infrastructure|Validation|Reporting|Automation)') {
+                $stage = $Matches[1]
+            } else {
+                $stage = $capturedValue
+            }
             break
         }
     }

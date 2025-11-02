@@ -184,11 +184,18 @@ try {
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = if ($pesterSettings.Run -and ($null -ne $pesterSettings.Run.PassThru)) { $pesterSettings.Run.PassThru } else { $true }
-    $pesterConfig.Run.Exit = if ($pesterSettings.Run -and ($null -ne $pesterSettings.Run.Exit)) { $pesterSettings.Run.Exit } else { $false }
+    
+    # Check for Run settings with StrictMode-safe access
+    if ($pesterSettings.ContainsKey('Run') -and $pesterSettings.Run) {
+        $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
+        $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
+    } else {
+        $pesterConfig.Run.PassThru = $true
+        $pesterConfig.Run.Exit = $false
+    }
 
     # Apply parallel execution settings from config (if supported)
-    if ($pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
+    if ($pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
         try {
             $pesterConfig.Run.Parallel = $true
             if ($pesterSettings.Parallel.BlockSize) {

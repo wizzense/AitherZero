@@ -284,12 +284,19 @@ try {
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
-    $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
+    
+    # Check for Run settings with StrictMode-safe access
+    if ($pesterSettings.ContainsKey('Run') -and $pesterSettings.Run) {
+        $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
+        $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
+    } else {
+        $pesterConfig.Run.PassThru = $true
+        $pesterConfig.Run.Exit = $false
+    }
 
 
     # Apply output settings from config
-    if ($pesterSettings.Output) {
+    if ($pesterSettings.ContainsKey('Output') -and $pesterSettings.Output) {
         if ($pesterSettings.Output.Verbosity) {
             $pesterConfig.Output.Verbosity = $pesterSettings.Output.Verbosity
         }
@@ -299,7 +306,7 @@ try {
     }
 
     # Apply Should settings from config
-    if ($pesterSettings.Should -and $pesterSettings.Should.ErrorAction) {
+    if ($pesterSettings.ContainsKey('Should') -and $pesterSettings.Should -and $pesterSettings.Should.ErrorAction) {
         $pesterConfig.Should.ErrorAction = $pesterSettings.Should.ErrorAction
     }
 
@@ -436,7 +443,7 @@ try {
     $env:AITHERZERO_TEST_MODE = 'true'
 
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
-    $useParallel = $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
+    $useParallel = $pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
 
     if ($useParallel) {
         $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 6 }
