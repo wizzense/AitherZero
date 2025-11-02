@@ -1,0 +1,15 @@
+{
+  "$schema": "https://github.com/modelcontextprotocol/servers/blob/main/schema.json",
+  "mcpServers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+      ],
+      "env": {
+        "AITHERZERO_ROOT": "${workspaceFolder}",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
