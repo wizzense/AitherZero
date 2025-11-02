@@ -14,7 +14,7 @@
   },
 
   // PowerShell settings
-  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
+  "powershell.powerShellDefaultVersion": "PowerShell",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
