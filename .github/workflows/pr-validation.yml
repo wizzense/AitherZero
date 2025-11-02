@@ -14,7 +14,7 @@ permissions:
   pull-requests: write
   issues: write
   checks: write
-  actions: read
+  actions: read  # Required for workflow status checks and PR validation
   # Explicitly deny dangerous permissions
   security-events: none
 
