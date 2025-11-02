@@ -296,7 +296,7 @@ function Repair-MCPConfiguration {
     }
 }
 
-function Show-ActivationInstructions {
+function Show-ActivationInstruction {
     Write-Host ""
     Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Cyan
     Write-Host "  MCP Servers Setup Complete!" -ForegroundColor Green
@@ -320,6 +320,55 @@ function Show-ActivationInstructions {
     Write-Host ""
     Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Cyan
     Write-Host ""
+}
+
+function Update-GlobalMCPConfig {
+    param([string]$WorkspaceRoot)
+
+    $globalConfigPath = "$env:USERPROFILE/.config/Code/User/mcp.json"
+
+    if (-not (Test-Path $globalConfigPath)) {
+        Write-StatusMessage "Global MCP config file not found. Creating a new one." -Level Info
+        New-Item -ItemType File -Path $globalConfigPath -Force | Out-Null
+    }
+
+    try {
+        $globalConfig = @{}
+        if ((Get-Content $globalConfigPath -Raw) -ne "") {
+            $globalConfig = Get-Content $globalConfigPath -Raw | ConvertFrom-Json
+        }
+
+        $globalConfig.servers = @{
+            "aitherzero"          = @{
+                "command"      = "node"
+                "args"         = @("${WorkspaceRoot}/mcp-server/scripts/start-with-build.mjs")
+                "description"  = "AitherZero infrastructure automation - run scripts, playbooks, tests"
+                "capabilities" = @{ "resources" = $true; "tools" = $true }
+                "env"          = @{ "AITHERZERO_ROOT" = $WorkspaceRoot; "AITHERZERO_NONINTERACTIVE" = "1" }
+            }
+            "filesystem"          = @{
+                "command"     = "npx"
+                "args"        = @("-y", "@modelcontextprotocol/server-filesystem", $WorkspaceRoot)
+                "description" = "Filesystem access to AitherZero repository"
+            }
+            "github"              = @{
+                "command"     = "npx"
+                "args"        = @("-y", "@modelcontextprotocol/server-github")
+                "description" = "GitHub API access"
+                "env"         = @{ "GITHUB_PERSONAL_ACCESS_TOKEN" = "${env:GITHUB_TOKEN}" }
+            }
+            "sequential-thinking" = @{
+                "command"     = "npx"
+                "args"        = @("-y", "@modelcontextprotocol/server-sequential-thinking")
+                "description" = "Detailed reasoning for complex tasks"
+            }
+        }
+
+        $globalConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $globalConfigPath -Encoding UTF8
+        Write-StatusMessage "Global MCP config updated successfully." -Level Success
+    } catch {
+        Write-StatusMessage "Failed to update global MCP config: $_" -Level Error
+    }
 }
 
 # Main execution
@@ -389,8 +438,11 @@ try {
         Write-Host ""
     }
 
+    # Update global MCP config
+    Update-GlobalMCPConfig -WorkspaceRoot $workspaceRoot
+
     # Show activation instructions
-    Show-ActivationInstructions
+    Show-ActivationInstruction
 
     exit 0
 } catch {
