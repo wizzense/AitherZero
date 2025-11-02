@@ -27,11 +27,20 @@ param(
     [switch]$CleanupOnSuccess,
     [switch]$FullTest,
     [switch]$QuickTest,
-    [string]$Branch = "main"
+    [string]$Branch = "main",
+    
+    [Parameter(Mandatory = $false)]
+    [hashtable]$Configuration
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Handle test mode (WhatIf or DryRun)
+if ($WhatIfPreference -or ($Configuration -and $Configuration.Automation.DryRun)) {
+    Write-Verbose "Running in test mode (WhatIf/DryRun) - script would test self-deployment"
+    return
+}
 
 # Script metadata
 $scriptMetadata = @{

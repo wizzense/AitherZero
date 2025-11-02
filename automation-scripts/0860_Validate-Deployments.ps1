@@ -47,13 +47,22 @@
     but requires 'gh' CLI with authentication for remote checks.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [switch]$CheckPages,
     [switch]$CheckContainers,
     [switch]$CheckLocal,
-    [switch]$Detailed
+    [switch]$Detailed,
+    
+    [Parameter(Mandatory = $false)]
+    [hashtable]$Configuration
 )
+
+# Handle test mode (WhatIf or DryRun)
+if ($WhatIfPreference -or ($Configuration -and $Configuration.Automation.DryRun)) {
+    Write-Verbose "Running in test mode (WhatIf/DryRun) - script would validate deployments"
+    return
+}
 
 # If no specific checks selected, run all
 if (-not ($CheckPages -or $CheckContainers -or $CheckLocal)) {
