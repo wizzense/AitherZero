@@ -22,13 +22,12 @@
 #Requires -Version 7.0
 
 BeforeAll {
-    # Import shared test utilities
-    . "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
-    $script:ProjectRoot = Find-ProjectRoot
+    # Calculate project root
+    $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
     # Import required modules
-    Import-Module "$script:ProjectRoot/aither-core/modules/TestingFramework" -Force
-    Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force
+    Import-Module "$script:ProjectRoot/domains/testing/TestingFramework.psm1" -Force
+    Import-Module "$script:ProjectRoot/domains/utilities/Logging.psm1" -Force
 
     # Setup test environment
     $script:TestResults = @{
@@ -40,7 +39,7 @@ BeforeAll {
 
     # Mock functions for testing
     function Write-TestLog {
-        param([string]$Message, [string]$Level = 'INFO')
+        param([string]$Message, [string]$Level = 'Information')
         Write-CustomLog -Level $Level -Message "[Claude Integration Test] $Message"
     }
 }
@@ -415,32 +414,32 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             $integrationComplete | Should -Be $true -Because "All integration components should be present. Missing: $($missingComponents -join ', ')"
         }
 
-        It "Should validate PatchManager integration with Claude Code workflows" {
+        It "Should validate development tools integration with Claude Code workflows" {
             # Arrange
-            $patchManagerModule = Join-Path $script:ProjectRoot "aither-core/modules/PatchManager"
+            $gitAutomationModule = Join-Path $script:ProjectRoot "domains/development/GitAutomation.psm1"
 
             # Act
             $integrationValid = $false
 
-            if (Test-Path $patchManagerModule) {
+            if (Test-Path $gitAutomationModule) {
                 try {
-                    Import-Module $patchManagerModule -Force
-                    $patchManagerCommands = Get-Command -Module PatchManager -ErrorAction SilentlyContinue
-                    if ($patchManagerCommands -and ($patchManagerCommands.Count -gt 0)) {
+                    Import-Module $gitAutomationModule -Force
+                    $gitCommands = Get-Command -Module GitAutomation -ErrorAction SilentlyContinue
+                    if ($gitCommands -and ($gitCommands.Count -gt 0)) {
                         $integrationValid = $true
                     }
                 } catch {
-                    Write-TestLog "Error importing PatchManager: $($_.Exception.Message)" -Level 'WARN'
+                    Write-TestLog "Error importing GitAutomation: $($_.Exception.Message)" -Level 'Warning'
                 }
             }
 
             # Assert
-            $integrationValid | Should -Be $true -Because "PatchManager should be available for Claude Code integration"
+            $integrationValid | Should -Be $true -Because "GitAutomation should be available for Claude Code integration"
         }
 
         It "Should validate TestingFramework integration with validation hooks" {
             # Arrange
-            $testingFramework = Join-Path $script:ProjectRoot "aither-core/modules/TestingFramework"
+            $testingFramework = Join-Path $script:ProjectRoot "domains/testing/TestingFramework.psm1"
 
             # Act
             $frameworkValid = $false
@@ -453,7 +452,7 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                         $frameworkValid = $true
                     }
                 } catch {
-                    Write-TestLog "Error importing TestingFramework: $($_.Exception.Message)" -Level 'WARN'
+                    Write-TestLog "Error importing TestingFramework: $($_.Exception.Message)" -Level 'Warning'
                 }
             }
 
