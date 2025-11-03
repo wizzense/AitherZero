@@ -299,8 +299,8 @@
                 }
                 MCPServer = @{
                     DependsOn = @('Core.PowerShell7', 'Development.Node')
-                    Scripts = @('0750', '0751', '0752', '0753')
-                    Description = 'Model Context Protocol server for AI integration - build, start, demo, and use'
+                    Scripts = @('0750', '0751', '0752', '0753', '0754')
+                    Description = 'Model Context Protocol server for AI integration - build, start, demo, use, and create new servers from template'
                 }
             }
             
