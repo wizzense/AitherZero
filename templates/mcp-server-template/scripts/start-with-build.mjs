@@ -8,7 +8,7 @@
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { spawnSync } from 'child_process';
+import { spawnSync, spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -51,7 +51,6 @@ if (!existsSync(distIndex)) {
 }
 
 // Start the server
-const { spawn } = await import('child_process');
 const serverProcess = spawn('node', [distIndex], {
   stdio: 'inherit',
   shell: false
