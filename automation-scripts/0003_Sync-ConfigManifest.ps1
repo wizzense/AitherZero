@@ -254,20 +254,33 @@ Write-SyncLog "Checking config.psd1 for duplicate references..." -Level Info
 $configDuplicates = $registeredScripts.GetEnumerator() | Where-Object { $_.Value.Count -gt 1 }
 if ($configDuplicates) {
     Write-Host ""
-    Write-SyncLog "WARNING: Script numbers referenced in multiple places in config.psd1!" -Level Warning
+    Write-SyncLog "CRITICAL: Duplicate script number references in config.psd1!" -Level Error
+    Write-Host ""
+    Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║        DUPLICATE REFERENCES IN CONFIG.PSD1 FOUND            ║" -ForegroundColor Red
+    Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Red
     Write-Host ""
     
     foreach ($dup in $configDuplicates) {
-        Write-Host "Script Number: $($dup.Key)" -ForegroundColor Yellow
+        Write-Host "Script Number: $($dup.Key)" -ForegroundColor Red
         foreach ($location in $dup.Value) {
-            Write-Host "  • Referenced in: $location" -ForegroundColor Gray
+            Write-Host "  • Referenced in: $location" -ForegroundColor Yellow
         }
         Write-Host ""
     }
     
-    Write-Host "💡 This may be intentional if the script serves multiple purposes." -ForegroundColor Cyan
-    Write-Host "   Review to ensure this is correct." -ForegroundColor White
+    Write-Host "💥 FAILURE: Duplicate references will break script execution!" -ForegroundColor Red
     Write-Host ""
+    Write-Host "Each script number can only be referenced ONCE in config.psd1." -ForegroundColor White
+    Write-Host "Multiple references cause ambiguity and execution failures." -ForegroundColor White
+    Write-Host ""
+    Write-Host "🔧 Action Required:" -ForegroundColor Red
+    Write-Host "  1. Review the duplicate references listed above" -ForegroundColor White
+    Write-Host "  2. Determine which feature should own each script" -ForegroundColor White
+    Write-Host "  3. Remove duplicate entries from config.psd1" -ForegroundColor White
+    Write-Host "  4. Re-run this validation script" -ForegroundColor White
+    Write-Host ""
+    exit 2
 }
 
 Write-Host ""
