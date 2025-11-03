@@ -9,7 +9,7 @@
     Script: 0754_Create-MCPServer
     Stage: Automation
     Description: Scaffolds a new Model Context Protocol (MCP) server using the AitherZero
-    Generated: 2025-11-03 18:29:59
+    Generated: 2025-11-03 18:44:31
 #>
 
 Describe '0754_Create-MCPServer' -Tag 'Unit', 'AutomationScript', 'Automation' {

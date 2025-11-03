@@ -141,7 +141,12 @@ jobs:
             Removed test files that reference non-existent automation scripts.
             This prevents test execution failures from missing script files."
 
-            git push
+            # Push to the appropriate branch (works even in detached HEAD state)
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              git push origin HEAD:${{ github.event.pull_request.head.ref }}
+            else
+              git push origin HEAD:${{ github.ref_name }}
+            fi
             echo "✅ Orphaned tests removed and committed"
           else
             echo "ℹ️  No changes to commit"

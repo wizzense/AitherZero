@@ -6,7 +6,7 @@
     Integration tests for 0754_Create-MCPServer
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-03 18:29:59
+    Generated: 2025-11-03 18:44:32
 #>
 
 Describe '0754_Create-MCPServer Integration' -Tag 'Integration', 'AutomationScript' {
