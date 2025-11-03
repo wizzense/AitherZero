@@ -1379,6 +1379,69 @@
     }
     
     # ===================================================================
+    # INTEGRATIONS - External Service Integrations
+    # ===================================================================
+    Integrations = @{
+        # Slack integration for notifications
+        Slack = @{
+            Enabled = $true
+            Webhooks = @{
+                # Container build notifications
+                ContainerBuilds = @{
+                    Enabled = $true
+                    Url = 'https://hooks.slack.com/triggers/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'
+                    PayloadKey = 'aitherzero_new_build'
+                    NotifyOnSuccess = $true
+                    NotifyOnFailure = $false
+                    IncludeDetails = $true
+                }
+                # General notifications (template for future use)
+                General = @{
+                    Enabled = $false
+                    Url = ''
+                    PayloadKey = 'message'
+                }
+            }
+        }
+        
+        # Microsoft Teams integration (placeholder)
+        Teams = @{
+            Enabled = $false
+            Webhooks = @{
+                Deployments = @{
+                    Enabled = $false
+                    Url = ''
+                }
+            }
+        }
+        
+        # Discord integration (placeholder)
+        Discord = @{
+            Enabled = $false
+            Webhooks = @{
+                Releases = @{
+                    Enabled = $false
+                    Url = ''
+                }
+            }
+        }
+        
+        # Generic webhook integration (template)
+        CustomWebhooks = @{
+            Enabled = $false
+            Endpoints = @(
+                # Example:
+                # @{
+                #     Name = 'MyService'
+                #     Url = 'https://example.com/webhook'
+                #     Events = @('build', 'deploy', 'release')
+                #     Enabled = $true
+                # }
+            )
+        }
+    }
+    
+    # ===================================================================
     # DEPENDENCIES - Module and Package Dependencies
     # ===================================================================
     Dependencies = @{
