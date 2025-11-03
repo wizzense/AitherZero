@@ -74,12 +74,21 @@ export async function executeCommandStreaming(
 }
 
 /**
- * Sanitize a command string to prevent injection
+ * [DEPRECATED] Do not use string sanitization for shell commands.
  * 
- * Basic sanitization - adjust based on your security needs.
- * Consider using a more robust solution for production.
+ * String sanitization is insufficient for preventing command injection.
+ * Instead, use safe command execution patterns:
+ * - Use buildCommand() with proper argument escaping
+ * - Use spawn() with array arguments instead of exec()
+ * - Avoid shell execution entirely when possible
+ * 
+ * This function is kept for backwards compatibility but should not be used.
+ * It will be removed in a future version.
+ * 
+ * @deprecated Use buildCommand() or spawn with array arguments instead
  */
 export function sanitizeCommand(input: string): string {
+  console.warn('[DEPRECATED] sanitizeCommand() is deprecated. Use buildCommand() or spawn with array arguments instead.');
   // Remove potentially dangerous characters
   // This is a basic example - adjust for your use case
   return input.replace(/[;&|`$(){}[\]]/g, '');

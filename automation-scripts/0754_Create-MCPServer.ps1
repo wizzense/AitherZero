@@ -81,7 +81,8 @@ $TemplatePath = Join-Path $AitherZeroRoot "templates" "mcp-server-template"
 if (-not (Test-Path $OutputPath)) {
     New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
 }
-$OutputPathResolved = (Resolve-Path $OutputPath).Path
+# Use GetFullPath for reliable absolute path resolution (works with newly created directories)
+$OutputPathResolved = [System.IO.Path]::GetFullPath($OutputPath)
 $TargetPath = Join-Path $OutputPathResolved "$ServerName-mcp-server"
 
 Write-Host "╔══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -247,9 +248,21 @@ if (-not $SkipGit) {
     Write-Host "🔧 Initializing git repository..." -ForegroundColor Cyan
     Push-Location $TargetPath
     try {
-        git init 2>&1 | Out-Null
-        git add . 2>&1 | Out-Null
-        git commit -m "Initial commit: Scaffold from AitherZero MCP template" 2>&1 | Out-Null
+        git init
+        if ($LASTEXITCODE -ne 0) {
+            throw "git init failed (exit code $LASTEXITCODE)"
+        }
+        
+        git add .
+        if ($LASTEXITCODE -ne 0) {
+            throw "git add failed (exit code $LASTEXITCODE)"
+        }
+        
+        git commit -m "Initial commit: Scaffold from AitherZero MCP template"
+        if ($LASTEXITCODE -ne 0) {
+            throw "git commit failed (exit code $LASTEXITCODE)"
+        }
+        
         Write-Host "   ✓ Git repository initialized" -ForegroundColor Green
     } catch {
         Write-Host "   ⚠️  Git initialization skipped: $_" -ForegroundColor Yellow
