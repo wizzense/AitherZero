@@ -68,6 +68,14 @@ build-output/
 *.egg-info/
 kicker-git-backup.ps1
 
+# Go build artifacts
+go-modules/bin/
+go-modules/coverage.out
+go-modules/coverage.html
+bin/go-modules/*.exe
+bin/go-modules/*
+!bin/go-modules/.gitkeep
+
 # Node.js / MCP Server
 node_modules/
 npm-debug.log*
