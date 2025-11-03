@@ -4253,16 +4253,17 @@ $(if ($Metrics.Classes -gt 0) {
 |--------|-------|---------|
 | 🧪 **Test Files** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
 $(if ($Metrics.Tests.LastRun) {
-    $totalTestsRun = $Metrics.Tests.Passed + $Metrics.Tests.Failed
+    $totalTestsRun = $Metrics.Tests.Passed + $Metrics.Tests.Failed + $Metrics.Tests.Skipped
     $partialRunWarning = if ($totalTestsRun -lt 100) { " ⚠️ **Partial Run** (only $totalTestsRun tests executed)" } else { "" }
     @"
-| ✅ **Last Test Run** | **$($Metrics.Tests.Passed)/$totalTests cases** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
+| ✅ **Last Test Run** | **$($Metrics.Tests.Passed)/$totalTestsRun cases** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
 | 📊 **Test Details** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
-| ⚠️ **Note** | **Partial Run** | Only $totalTests test cases executed from available test files. Run ``./az 0402`` for full suite. |
 
 "@
     if ($totalTestsRun -lt 100) {
         @"
+| ⚠️ **Note** | **Partial Run** | Only $totalTestsRun test cases executed from available test files. Run ``./az 0402`` for full suite. |
+
 > **⚠️ Only $totalTestsRun test cases executed.** Run ``./az 0402`` for full test suite.
 
 "@
