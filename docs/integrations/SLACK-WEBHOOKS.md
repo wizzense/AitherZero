@@ -19,7 +19,11 @@ AitherZero supports Slack webhook notifications for key events such as container
 
 ### Location
 
-All Slack webhook configurations are in `config.psd1` under the `Integrations.Slack` section:
+All Slack webhook configurations are in `config.psd1` under the `Integrations.Slack` section.
+
+**🔒 Security Note**: The `Url` field in `config.psd1` is intentionally empty. Set your webhook URL using:
+- **GitHub Secrets**: `SLACK_WEBHOOK_URL` (for CI/CD workflows)
+- **Local Override**: `config.local.psd1` (for local development, gitignored)
 
 ```powershell
 Integrations = @{
@@ -28,7 +32,7 @@ Integrations = @{
         Webhooks = @{
             ContainerBuilds = @{
                 Enabled = $true
-                Url = 'https://hooks.slack.com/triggers/...'
+                Url = ''  # Set via SLACK_WEBHOOK_URL secret or config.local.psd1
                 PayloadKey = 'aitherzero_new_build'
                 NotifyOnSuccess = $true
                 NotifyOnFailure = $false
@@ -104,6 +108,24 @@ Pull command: `docker pull ghcr.io/wizzense/aitherzero:pr-123`
 
 ## Setting Up Slack Webhooks
 
+### Security Best Practice
+
+**⚠️ IMPORTANT**: Never commit webhook URLs to version control. Use one of these secure methods:
+
+#### Method 1: GitHub Secrets (Recommended for CI/CD)
+
+1. Go to your repository **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Name: `SLACK_WEBHOOK_URL`
+4. Value: Your Slack webhook URL
+5. The workflow will automatically use this secret
+
+#### Method 2: Local Config Override (For Local Development)
+
+1. Copy `config.local.psd1.example` to `config.local.psd1`
+2. Edit `config.local.psd1` and set your webhook URL
+3. This file is gitignored and won't be committed
+
 ### Option 1: Slack Workflow Builder (Recommended)
 
 1. Go to your Slack workspace
@@ -132,23 +154,35 @@ The Slack webhook integration is automatically used in GitHub Actions workflows.
 
 ### In `deploy-pr-environment.yml`
 
+The workflow securely accesses the webhook URL from GitHub Secrets:
+
 ```yaml
 - name: 📢 Notify Slack of New Build
   if: success()
   shell: pwsh
+  env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # Secure secret
   run: |
     # Load configuration
     Import-Module ./AitherZero.psd1
     $config = Get-Configuration
     
-    # Get webhook settings
+    # Get webhook URL from environment (GitHub secret)
+    $webhookUrl = $env:SLACK_WEBHOOK_URL
+    
+    # Get other settings from config
     $webhookConfig = $config.Integrations.Slack.Webhooks.ContainerBuilds
     
     # Send notification if enabled
-    if ($webhookConfig.Enabled) {
-      Invoke-RestMethod -Uri $webhookConfig.Url -Method Post -Body $payload
+    if ($webhookConfig.Enabled -and $webhookUrl) {
+      Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $payload
     }
 ```
+
+**Priority Order**:
+1. GitHub Secret (`SLACK_WEBHOOK_URL`) - Used in CI/CD
+2. Local config (`config.local.psd1`) - Used for local testing
+3. Disabled if neither is set
 
 ### In PowerShell Scripts
 
@@ -299,11 +333,47 @@ $message = New-SlackBuildNotification -BuildType "Release" -Version "v1.0.0" -Im
 
 ## Security Considerations
 
-1. **Webhook URLs are secrets** - Don't commit them to public repositories
-2. **Use local overrides** - Create `config.local.psd1` for sensitive values (gitignored)
-3. **Rotate regularly** - Regenerate webhook URLs periodically
-4. **Limit permissions** - Use webhooks with minimal required permissions
-5. **Monitor usage** - Check Slack audit logs for unusual activity
+**🔒 Critical Security Requirements**
+
+1. **Never commit webhook URLs** - These are credentials that provide access to your Slack workspace
+2. **Use GitHub Secrets for CI/CD** - Set `SLACK_WEBHOOK_URL` in repository secrets
+3. **Use local config for development** - Create `config.local.psd1` (gitignored) for local testing
+4. **Rotate webhooks regularly** - Regenerate webhook URLs every 90 days
+5. **Limit webhook permissions** - Use webhooks with minimal required access
+6. **Monitor webhook usage** - Review Slack audit logs for unexpected activity
+7. **Don't share URLs** - Each environment should have its own webhook
+
+### Secure Setup Methods
+
+#### For CI/CD (GitHub Actions):
+```bash
+# Repository Settings → Secrets → New secret
+# Name: SLACK_WEBHOOK_URL
+# Value: https://hooks.slack.com/triggers/...
+```
+
+#### For Local Development:
+```powershell
+# Copy the example file
+cp config.local.psd1.example config.local.psd1
+
+# Edit config.local.psd1 (gitignored)
+# Set Integrations.Slack.Webhooks.ContainerBuilds.Url
+```
+
+### What NOT to Do
+
+❌ **DON'T**: Commit webhook URLs in `config.psd1`
+❌ **DON'T**: Share webhook URLs in public channels
+❌ **DON'T**: Use the same webhook across multiple projects
+❌ **DON'T**: Hardcode URLs in scripts
+
+### What TO Do
+
+✅ **DO**: Use GitHub Secrets for CI/CD
+✅ **DO**: Use `config.local.psd1` for local development
+✅ **DO**: Rotate webhooks regularly
+✅ **DO**: Use separate webhooks per environment
 
 ## Examples
 

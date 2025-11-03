@@ -1389,7 +1389,7 @@
                 # Container build notifications
                 ContainerBuilds = @{
                     Enabled = $true
-                    Url = 'https://hooks.slack.com/triggers/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'
+                    Url = ''  # Set via SLACK_WEBHOOK_URL secret or config.local.psd1
                     PayloadKey = 'aitherzero_new_build'
                     NotifyOnSuccess = $true
                     NotifyOnFailure = $false

@@ -60,6 +60,7 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+config.local.psd1  # Local configuration overrides with sensitive data
 
 # Build artifacts
 dist/
