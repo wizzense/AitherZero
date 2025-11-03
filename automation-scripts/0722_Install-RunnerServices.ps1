@@ -22,6 +22,9 @@
     Validate configuration without making changes
 .PARAMETER CI
     Run in CI mode with minimal output
+.NOTES
+    Stage: Infrastructure
+    Category: GitHub
 .EXAMPLE
     ./0722_Install-RunnerServices.ps1 -RunnerName "myorg-runner-1"
 .EXAMPLE

@@ -22,6 +22,9 @@
     Maximum number of parallel operations (default: 4)
 .PARAMETER CI
     Run in CI mode with minimal output
+.NOTES
+    Stage: Infrastructure
+    Category: GitHub
 .EXAMPLE
     ./0723_Setup-MatrixRunners.ps1 -Organization "myorg" -Matrix "standard"
 .EXAMPLE

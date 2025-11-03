@@ -18,6 +18,10 @@
 .PARAMETER ConfigPath
     Path to AI configuration file
 
+.NOTES
+    Stage: Automation
+    Category: AI
+
 .EXAMPLE
     ./0730_Setup-AIAgents.ps1 -Provider All
 
