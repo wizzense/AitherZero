@@ -338,7 +338,7 @@ try {
         
         $scanParams = @{
             Path = $Path
-            Include = '*.ps1', '*.psm1', '*.psd1'
+            Filter = '*.ps*'
             File = $true
         }
         
@@ -346,10 +346,12 @@ try {
             $scanParams.Recurse = $true
         }
         
-        $filesToValidate = Get-ChildItem @scanParams | Select-Object -ExpandProperty FullName
+        $allFiles = Get-ChildItem @scanParams
         
-        # Ensure it's an array
-        $filesToValidate = @($filesToValidate)
+        # Filter to only .ps1, .psm1, .psd1 files
+        $filesToValidate = @($allFiles | Where-Object { 
+            $_.Extension -match '\.(ps1|psm1|psd1)$' 
+        } | Select-Object -ExpandProperty FullName)
         
         # Filter out .psd1 files if requested
         if ($ExcludeDataFiles) {
