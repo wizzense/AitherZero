@@ -519,6 +519,8 @@ try {
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         $duration = Stop-PerformanceTrace -Name "UnitTests"
+    } else {
+        $duration = $null
     }
 
     # Verify result object exists and has expected properties
