@@ -300,7 +300,7 @@ function Get-ProjectMetrics {
         $metrics.Tests.Total = $metrics.Tests.Unit + $metrics.Tests.Integration
     }
     
-    # Calculate test coverage (what % of code files have tests)
+    # Calculate test coverage (what % of code files have meaningful tests)
     $allCodeFiles = @(
         Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
         Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
@@ -309,7 +309,7 @@ function Get-ProjectMetrics {
     $metrics.TestCoverage.TotalFiles = $allCodeFiles.Count
     
     foreach ($codeFile in $allCodeFiles) {
-        # Check if a corresponding test file exists
+        # Check if a corresponding test file exists AND has meaningful content
         $relativePath = $codeFile.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
         $testFileName = $codeFile.Name -replace '\.ps(m?)1$', '.Tests.ps1'
         
@@ -325,8 +325,23 @@ function Get-ProjectMetrics {
         $hasTest = $false
         foreach ($testFilePath in $possibleTestPaths) {
             if (Test-Path $testFilePath) {
-                $hasTest = $true
-                break
+                # Check if test file has meaningful content (not just boilerplate)
+                try {
+                    $testContent = Get-Content $testFilePath -Raw -ErrorAction SilentlyContinue
+                    if ($testContent) {
+                        # Check for actual test blocks (It, Describe, Context)
+                        $hasDescribe = $testContent -match 'Describe\s+'
+                        $hasIt = $testContent -match '\bIt\s+[''"]'
+                        
+                        # Must have both Describe and It blocks to count as meaningful test
+                        if ($hasDescribe -and $hasIt) {
+                            $hasTest = $true
+                            break
+                        }
+                    }
+                } catch {
+                    # If we can't read it, don't count it
+                }
             }
         }
         
@@ -343,6 +358,8 @@ function Get-ProjectMetrics {
             1
         )
     }
+    
+    Write-ScriptLog -Message "Test coverage: $($metrics.TestCoverage.FilesWithTests) of $($metrics.TestCoverage.TotalFiles) files have meaningful tests"
     
     # Calculate documentation coverage (what % of functions have help documentation)
     $metrics.DocumentationCoverage.TotalFunctions = $metrics.Functions
@@ -391,72 +408,93 @@ function Get-ProjectMetrics {
         )
     }
     
-    # Calculate quality coverage from PSScriptAnalyzer results
-    $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
-    if (Test-Path $pssaPath) {
+    # Calculate quality coverage from PSScriptAnalyzer baseline results
+    # Priority: Use full baseline results from tests/results, fallback to fast results
+    $pssaSummaryPath = Join-Path $ProjectPath "tests/results"
+    $latestPssaSummary = Get-ChildItem -Path $pssaSummaryPath -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
+                         Sort-Object LastWriteTime -Descending | 
+                         Select-Object -First 1
+    
+    if ($latestPssaSummary) {
         try {
-            $pssaData = Get-Content $pssaPath -Raw | ConvertFrom-Json
+            $pssaData = Get-Content $latestPssaSummary.FullName -Raw | ConvertFrom-Json
             if ($pssaData.Summary) {
                 $totalIssues = $pssaData.Summary.TotalIssues
-                $errors = $pssaData.Summary.Errors
-                $warnings = $pssaData.Summary.Warnings
-                $info = $pssaData.Summary.Information
+                $errors = if ($pssaData.Summary.BySeverity.Error) { $pssaData.Summary.BySeverity.Error } else { 0 }
+                $warnings = if ($pssaData.Summary.BySeverity.Warning) { $pssaData.Summary.BySeverity.Warning } else { 0 }
+                $info = if ($pssaData.Summary.BySeverity.Information) { $pssaData.Summary.BySeverity.Information } else { 0 }
                 
-                # Calculate quality score (100 - weighted penalties)
-                $errorPenalty = $errors * 10
-                $warningPenalty = $warnings * 2
-                $infoPenalty = $info * 0.5
-                $totalPenalty = $errorPenalty + $warningPenalty + $infoPenalty
+                # Count files from ByScript hash
+                $filesWithIssues = if ($pssaData.Summary.ByScript) { $pssaData.Summary.ByScript.PSObject.Properties.Count } else { 0 }
                 
-                # Files analyzed
-                $filesAnalyzed = if ($pssaData.FilesAnalyzed) { @($pssaData.FilesAnalyzed).Count } else { 0 }
-                $metrics.QualityCoverage.TotalValidated = $filesAnalyzed
+                # Total files is all PowerShell files in project
+                $totalPSFiles = $allPSFiles.Count
+                $metrics.QualityCoverage.TotalValidated = $totalPSFiles
                 
-                # Categorize files by severity
-                $metrics.QualityCoverage.FailedFiles = if ($errors -gt 0) { [math]::Min($errors, $filesAnalyzed) } else { 0 }
-                $metrics.QualityCoverage.WarningFiles = if ($warnings -gt 0) { [math]::Min($warnings / 2, $filesAnalyzed) } else { 0 }
-                $metrics.QualityCoverage.PassedFiles = [math]::Max(0, $filesAnalyzed - $metrics.QualityCoverage.FailedFiles - $metrics.QualityCoverage.WarningFiles)
+                # Files without issues are clean
+                $cleanFiles = $totalPSFiles - $filesWithIssues
                 
-                # Calculate quality percentage
-                if ($filesAnalyzed -gt 0) {
-                    $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($totalPenalty / $filesAnalyzed), 1))
+                # Categorize files: Clean, with warnings, with errors
+                $filesWithErrors = if ($errors -gt 0 -and $pssaData.Summary.ByScript) {
+                    # Count scripts that have at least one error
+                    $scriptsWithErrors = @()
+                    foreach ($script in $pssaData.Summary.ByScript.PSObject.Properties) {
+                        # Would need detailed data to know which files have errors vs warnings
+                        # For now, estimate based on error ratio
+                    }
+                    [math]::Ceiling($errors / [math]::Max(1, ($totalIssues / $filesWithIssues)))
+                } else { 0 }
+                
+                $metrics.QualityCoverage.FailedFiles = $filesWithErrors
+                $metrics.QualityCoverage.WarningFiles = [math]::Max(0, $filesWithIssues - $filesWithErrors)
+                $metrics.QualityCoverage.PassedFiles = $cleanFiles
+                
+                # Calculate quality score: penalize based on issues per file
+                $avgIssuesPerFile = if ($totalPSFiles -gt 0) { $totalIssues / $totalPSFiles } else { 0 }
+                $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 5), 1))
+                
+                # Quality percentage: files without major issues
+                if ($totalPSFiles -gt 0) {
                     $metrics.QualityCoverage.Percentage = [math]::Round(
-                        (($metrics.QualityCoverage.PassedFiles + ($metrics.QualityCoverage.WarningFiles * 0.5)) / $filesAnalyzed) * 100,
+                        (($cleanFiles + ($metrics.QualityCoverage.WarningFiles * 0.3)) / $totalPSFiles) * 100,
                         1
                     )
                 }
+                
+                Write-ScriptLog -Message "Quality coverage calculated from baseline: $totalIssues issues across $filesWithIssues files (of $totalPSFiles total)"
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse quality results for coverage calculation: $_"
+            Write-ScriptLog -Level Warning -Message "Failed to parse baseline quality results: $_"
         }
     }
     
-    # Also check for quality validation summary files
-    $qualityReportsPath = Join-Path $ProjectPath "reports/quality"
-    if (Test-Path $qualityReportsPath) {
-        $latestQuality = Get-ChildItem -Path $qualityReportsPath -Filter "*-summary.json" -ErrorAction SilentlyContinue | 
-                        Sort-Object LastWriteTime -Descending | 
-                        Select-Object -First 1
-        
-        if ($latestQuality) {
+    # Fallback to fast results if baseline not available
+    if ($metrics.QualityCoverage.TotalValidated -eq 0) {
+        $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+        if (Test-Path $pssaPath) {
             try {
-                $qualityData = Get-Content $latestQuality.FullName -Raw | ConvertFrom-Json
-                if ($qualityData) {
-                    $metrics.QualityCoverage.TotalValidated = if ($qualityData.FilesValidated) { $qualityData.FilesValidated } else { $metrics.QualityCoverage.TotalValidated }
-                    $metrics.QualityCoverage.PassedFiles = if ($qualityData.Passed) { $qualityData.Passed } else { $metrics.QualityCoverage.PassedFiles }
-                    $metrics.QualityCoverage.WarningFiles = if ($qualityData.Warnings) { $qualityData.Warnings } else { $metrics.QualityCoverage.WarningFiles }
-                    $metrics.QualityCoverage.FailedFiles = if ($qualityData.Failed) { $qualityData.Failed } else { $metrics.QualityCoverage.FailedFiles }
-                    $metrics.QualityCoverage.AverageScore = if ($qualityData.AverageScore) { $qualityData.AverageScore } else { $metrics.QualityCoverage.AverageScore }
+                $pssaData = Get-Content $pssaPath -Raw | ConvertFrom-Json
+                if ($pssaData.Summary) {
+                    $totalIssues = $pssaData.Summary.TotalIssues
+                    $errors = $pssaData.Summary.Errors
+                    $warnings = $pssaData.Summary.Warnings
                     
-                    if ($metrics.QualityCoverage.TotalValidated -gt 0) {
-                        $metrics.QualityCoverage.Percentage = [math]::Round(
-                            (($metrics.QualityCoverage.PassedFiles + ($metrics.QualityCoverage.WarningFiles * 0.5)) / $metrics.QualityCoverage.TotalValidated) * 100,
-                            1
-                        )
+                    $filesAnalyzed = if ($pssaData.FilesAnalyzed) { @($pssaData.FilesAnalyzed).Count } else { 0 }
+                    $metrics.QualityCoverage.TotalValidated = $filesAnalyzed
+                    $metrics.QualityCoverage.FailedFiles = if ($errors -gt 0) { 1 } else { 0 }
+                    $metrics.QualityCoverage.WarningFiles = if ($warnings -gt 0) { $filesAnalyzed - $metrics.QualityCoverage.FailedFiles } else { 0 }
+                    $metrics.QualityCoverage.PassedFiles = [math]::Max(0, $filesAnalyzed - $metrics.QualityCoverage.FailedFiles - $metrics.QualityCoverage.WarningFiles)
+                    
+                    if ($filesAnalyzed -gt 0) {
+                        $avgIssuesPerFile = $totalIssues / $filesAnalyzed
+                        $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 10), 1))
+                        $metrics.QualityCoverage.Percentage = [math]::Round(($metrics.QualityCoverage.PassedFiles / $filesAnalyzed) * 100, 1)
                     }
+                    
+                    Write-ScriptLog -Level Warning -Message "Using fast results only - run './az 0404' for full baseline analysis"
                 }
             } catch {
-                Write-ScriptLog -Level Warning -Message "Failed to parse quality summary for coverage: $_"
+                Write-ScriptLog -Level Warning -Message "Failed to parse fast quality results: $_"
             }
         }
     }
@@ -896,6 +934,8 @@ function Get-BuildStatus {
         try {
             [xml]$coverageXml = Get-Content $coverageFiles.FullName
             $coveragePercent = 0
+            $hasCoverageData = $false
+            $totalLines = 0
             
             # Check for JaCoCo format (used by Pester)
             if ($coverageXml.report -and $coverageXml.report.counter) {
@@ -910,14 +950,17 @@ function Get-BuildStatus {
                     if ($totalLines -gt 0) {
                         $coveragePercent = [math]::Round(($coveredLines / $totalLines) * 100, 1)
                     }
+                    $hasCoverageData = $true
                 }
             }
             # Check for Cobertura format (alternative)
             elseif ($coverageXml.coverage) {
                 $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                $hasCoverageData = $true
             }
             
-            if ($coveragePercent -gt 0 -or $totalLines -gt 0) {
+            # Show coverage if we have data, even if it's 0%
+            if ($hasCoverageData) {
                 $status.Coverage = "${coveragePercent}%"
                 
                 if ($coveragePercent -ge 80) {
@@ -1985,71 +2028,125 @@ function Get-GitHubWorkflowStatus {
 
 function Get-HistoricalMetrics {
     param(
-        [string]$ReportsPath = "./reports"
+        [string]$ReportsPath = "./reports",
+        [hashtable]$CurrentMetrics = @{}
     )
     
     Write-ScriptLog -Message "Loading historical metrics data"
     
     $history = @{
         TestTrends = @()
-        CoverageTrends = @()
-        LOCTrends = @()
+        TestCoverageTrends = @()
+        DocumentationCoverageTrends = @()
         QualityTrends = @()
+        LineCoverageTrends = @()
+        SyntaxTrends = @()
+        WorkflowTrends = @()
+        LOCTrends = @()
         LastNDays = 30
     }
     
     try {
-        # Load dashboard.json if it exists for current metrics
-        $dashboardJsonPath = Join-Path $ReportsPath "dashboard.json"
-        if (Test-Path $dashboardJsonPath) {
-            $currentData = Get-Content $dashboardJsonPath -Raw | ConvertFrom-Json
-            
-            # Add current data point
-            $timestamp = Get-Date -Format "yyyy-MM-dd"
-            
-            if ($currentData.Metrics) {
-                $history.TestTrends += @{
-                    Date = $timestamp
-                    Total = if ($currentData.Metrics.Tests.Total) { $currentData.Metrics.Tests.Total } else { 0 }
-                    Passed = if ($currentData.Metrics.Tests.Passed) { $currentData.Metrics.Tests.Passed } else { 0 }
-                    Failed = if ($currentData.Metrics.Tests.Failed) { $currentData.Metrics.Tests.Failed } else { 0 }
-                }
-                
-                $history.CoverageTrends += @{
-                    Date = $timestamp
-                    Percentage = if ($currentData.Metrics.Coverage.Percentage) { $currentData.Metrics.Coverage.Percentage } else { 0 }
-                }
-                
-                $history.LOCTrends += @{
-                    Date = $timestamp
-                    Total = if ($currentData.Metrics.LinesOfCode) { $currentData.Metrics.LinesOfCode } else { 0 }
-                    Functions = if ($currentData.Metrics.Functions) { $currentData.Metrics.Functions } else { 0 }
-                }
-            }
+        # Save current metrics to history file
+        $historyPath = Join-Path $ReportsPath "metrics-history"
+        if (-not (Test-Path $historyPath)) {
+            New-Item -ItemType Directory -Path $historyPath -Force | Out-Null
         }
         
-        # Look for historical test reports
-        $testReports = Get-ChildItem -Path $ReportsPath -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | 
-                       Sort-Object LastWriteTime -Descending | 
-                       Select-Object -First 10
+        $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+        $dateOnly = Get-Date -Format "yyyy-MM-dd"
         
-        foreach ($report in $testReports) {
+        # Save current snapshot if we have metrics
+        if ($CurrentMetrics.Count -gt 0) {
+            $snapshot = @{
+                Timestamp = (Get-Date).ToString('o')
+                Date = $dateOnly
+                TestCoverage = $CurrentMetrics.TestCoverage
+                DocumentationCoverage = $CurrentMetrics.DocumentationCoverage
+                QualityCoverage = $CurrentMetrics.QualityCoverage
+                LineCoverage = $CurrentMetrics.Coverage
+                Tests = $CurrentMetrics.Tests
+                LinesOfCode = $CurrentMetrics.LinesOfCode
+                Functions = $CurrentMetrics.Functions
+            }
+            
+            $snapshotFile = Join-Path $historyPath "snapshot-$timestamp.json"
+            $snapshot | ConvertTo-Json -Depth 10 | Set-Content -Path $snapshotFile
+            Write-ScriptLog -Message "Saved metrics snapshot: $snapshotFile"
+        }
+        
+        # Load historical snapshots from last 30 days
+        $cutoffDate = (Get-Date).AddDays(-30)
+        $snapshotFiles = Get-ChildItem -Path $historyPath -Filter "snapshot-*.json" -ErrorAction SilentlyContinue |
+                        Where-Object { $_.LastWriteTime -gt $cutoffDate } |
+                        Sort-Object LastWriteTime -Descending
+        
+        foreach ($file in $snapshotFiles) {
             try {
-                $reportData = Get-Content $report.FullName -Raw | ConvertFrom-Json
-                if ($reportData.TotalCount) {
+                $data = Get-Content $file.FullName -Raw | ConvertFrom-Json
+                
+                # Test trends
+                if ($data.Tests) {
                     $history.TestTrends += @{
-                        Date = $report.LastWriteTime.ToString("yyyy-MM-dd")
-                        Total = $reportData.TotalCount
-                        Passed = $reportData.PassedCount
-                        Failed = $reportData.FailedCount
+                        Date = $data.Date
+                        Total = if ($data.Tests.Total) { $data.Tests.Total } else { 0 }
+                        Passed = if ($data.Tests.Passed) { $data.Tests.Passed } else { 0 }
+                        Failed = if ($data.Tests.Failed) { $data.Tests.Failed } else { 0 }
                     }
                 }
+                
+                # Test coverage trends
+                if ($data.TestCoverage) {
+                    $history.TestCoverageTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.TestCoverage.Percentage) { $data.TestCoverage.Percentage } else { 0 }
+                        FilesWithTests = if ($data.TestCoverage.FilesWithTests) { $data.TestCoverage.FilesWithTests } else { 0 }
+                        TotalFiles = if ($data.TestCoverage.TotalFiles) { $data.TestCoverage.TotalFiles } else { 0 }
+                    }
+                }
+                
+                # Documentation coverage trends
+                if ($data.DocumentationCoverage) {
+                    $history.DocumentationCoverageTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.DocumentationCoverage.Percentage) { $data.DocumentationCoverage.Percentage } else { 0 }
+                        FunctionsWithDocs = if ($data.DocumentationCoverage.FunctionsWithDocs) { $data.DocumentationCoverage.FunctionsWithDocs } else { 0 }
+                        TotalFunctions = if ($data.DocumentationCoverage.TotalFunctions) { $data.DocumentationCoverage.TotalFunctions } else { 0 }
+                    }
+                }
+                
+                # Quality trends
+                if ($data.QualityCoverage) {
+                    $history.QualityTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.QualityCoverage.Percentage) { $data.QualityCoverage.Percentage } else { 0 }
+                        AverageScore = if ($data.QualityCoverage.AverageScore) { $data.QualityCoverage.AverageScore } else { 0 }
+                        PassedFiles = if ($data.QualityCoverage.PassedFiles) { $data.QualityCoverage.PassedFiles } else { 0 }
+                    }
+                }
+                
+                # Line coverage trends
+                if ($data.LineCoverage) {
+                    $history.LineCoverageTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.LineCoverage.Percentage) { $data.LineCoverage.Percentage } else { 0 }
+                        CoveredLines = if ($data.LineCoverage.CoveredLines) { $data.LineCoverage.CoveredLines } else { 0 }
+                        TotalLines = if ($data.LineCoverage.TotalLines) { $data.LineCoverage.TotalLines } else { 0 }
+                    }
+                }
+                
+                # LOC trends
+                $history.LOCTrends += @{
+                    Date = $data.Date
+                    Total = if ($data.LinesOfCode) { $data.LinesOfCode } else { 0 }
+                    Functions = if ($data.Functions) { $data.Functions } else { 0 }
+                }
             } catch {
-                Write-ScriptLog -Level Warning -Message "Failed to parse report: $($report.Name)"
+                Write-ScriptLog -Level Warning -Message "Failed to parse historical snapshot: $($file.Name)"
             }
         }
         
-        Write-ScriptLog -Message "Loaded $($history.TestTrends.Count) historical test data points"
+        Write-ScriptLog -Message "Loaded $($snapshotFiles.Count) historical data points"
     } catch {
         Write-ScriptLog -Level Warning -Message "Failed to load historical metrics: $($_.Exception.Message)"
     }
@@ -4165,9 +4262,9 @@ try {
     Write-ScriptLog -Message "Fetching GitHub Actions workflow status..."
     $workflowStatus = Get-GitHubWorkflowStatus -Owner "wizzense" -Repo "AitherZero"
     
-    # Load historical metrics for trend analysis
+    # Load historical metrics for trend analysis (pass current metrics for saving)
     Write-ScriptLog -Message "Loading historical metrics data..."
-    $historicalMetrics = Get-HistoricalMetrics -ReportsPath $OutputPath
+    $historicalMetrics = Get-HistoricalMetrics -ReportsPath $OutputPath -CurrentMetrics $metrics
     
     # Collect comprehensive detailed metrics
     Write-ScriptLog -Message "Collecting comprehensive project intelligence..."
