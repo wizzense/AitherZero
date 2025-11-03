@@ -41,7 +41,7 @@ $latest = (Invoke-RestMethod "https://api.github.com/repos/wizzense/AitherZero/r
 Invoke-WebRequest -Uri $latest.browser_download_url -OutFile "AitherZero-latest.zip"
 Expand-Archive -Path "AitherZero-latest.zip" -DestinationPath ./
 cd AitherZero-*
-./bootstrap.ps1 -Mode New -NonInteractive
+./bootstrap.ps1 -Mode New
 ```
 
 **Option 2: GitHub CLI**

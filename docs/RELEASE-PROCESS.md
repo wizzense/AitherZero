@@ -179,7 +179,7 @@ $url = "https://github.com/wizzense/AitherZero/releases/download/v1.1.0/AitherZe
 Invoke-WebRequest -Uri $url -OutFile "AitherZero-v1.1.0.zip"
 Expand-Archive -Path "AitherZero-v1.1.0.zip" -DestinationPath ./test-install
 cd test-install
-./bootstrap.ps1 -Mode New -NonInteractive
+./bootstrap.ps1 -Mode New
 ```
 
 ### 7. Post-Release Tasks
