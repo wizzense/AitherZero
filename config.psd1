@@ -202,8 +202,8 @@
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0425')
-                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, documentation structure validation'
+                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0420', '0425', '0426')
+                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, component quality, documentation structure validation, test-script synchronization'
                 }
                 WorkflowTesting = @{
                     DependsOn = @('Core.PowerShell7')
@@ -432,7 +432,7 @@
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 25; Category = 'Testing & Quality' }
+            '0400-0499' = @{ Count = 26; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 34; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
@@ -442,7 +442,7 @@
         
         # Configuration schema version for validation
         SchemaVersion = '2.0'
-        LastUpdated = '2025-10-29'
+        LastUpdated = '2025-11-03'
     }
     
     # ===================================================================
