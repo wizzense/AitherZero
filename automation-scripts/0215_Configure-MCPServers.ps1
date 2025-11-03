@@ -16,6 +16,9 @@
     Uses the official VS Code MCP configuration format with .vscode/mcp.json
     or user profile mcp.json file as documented at:
     https://code.visualstudio.com/docs/copilot/customization/mcp-servers
+    
+    Stage: Development
+    Category: Development Environment Setup
 
 .PARAMETER Scope
     Configuration scope: Workspace (project .vscode/mcp.json) or User (global profile)
@@ -39,7 +42,7 @@
     https://code.visualstudio.com/docs/copilot/customization/mcp-servers
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Low')]
 param(
     [Parameter()]
     [ValidateSet('Workspace', 'User')]
@@ -149,8 +152,10 @@ try {
     $mcpJsonPath = if ($Scope -eq 'Workspace') {
         $vscodeDir = Join-Path $workspaceRoot ".vscode"
         if (-not (Test-Path $vscodeDir)) {
-            New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
-            Write-LogMessage -Message "Created .vscode directory"
+            if ($PSCmdlet.ShouldProcess($vscodeDir, "Create .vscode directory")) {
+                New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
+                Write-LogMessage -Message "Created .vscode directory"
+            }
         }
         Join-Path $vscodeDir "mcp.json"
     } else {
@@ -166,8 +171,10 @@ try {
         
         $userDir = Split-Path $userMcpPath -Parent
         if (-not (Test-Path $userDir)) {
-            New-Item -ItemType Directory -Path $userDir -Force | Out-Null
-            Write-LogMessage -Message "Created user settings directory"
+            if ($PSCmdlet.ShouldProcess($userDir, "Create user settings directory")) {
+                New-Item -ItemType Directory -Path $userDir -Force | Out-Null
+                Write-LogMessage -Message "Created user settings directory"
+            }
         }
         $userMcpPath
     }
@@ -320,10 +327,14 @@ try {
 
     # Write mcp.json file with proper formatting
     $json = $mcpConfig | ConvertTo-Json -Depth 10
-    $json | Set-Content -Path $mcpJsonPath -Encoding UTF8
-
-    Write-ColorOutput "  ✓ MCP servers configured successfully" -Level 'Success'
-    Write-LogMessage -Message "MCP servers configured in $mcpJsonPath"
+    
+    if ($PSCmdlet.ShouldProcess($mcpJsonPath, "Write MCP configuration")) {
+        $json | Set-Content -Path $mcpJsonPath -Encoding UTF8
+        Write-ColorOutput "  ✓ MCP servers configured successfully" -Level 'Success'
+        Write-LogMessage -Message "MCP servers configured in $mcpJsonPath"
+    } else {
+        Write-ColorOutput "  [WhatIf] Would write MCP configuration to: $mcpJsonPath" -Level 'Info'
+    }
 
     # Summary
     Write-ColorOutput "`n=== Configuration Complete ===" -Level 'Success'
