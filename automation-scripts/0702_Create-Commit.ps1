@@ -38,6 +38,8 @@ param(
 
     [switch]$SignOff,
 
+    [switch]$NonInteractive,
+
     [switch]$Force
 )
 
@@ -50,13 +52,10 @@ Import-Module (Join-Path $devModulePath "GitAutomation.psm1") -Force
 
 Write-Host "Creating conventional commit..." -ForegroundColor Cyan
 
-# Detect CI environment
-$isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
-
 # Check for changes
 $status = Get-GitStatus
 if ($status.Clean -and -not $AutoStage) {
-    if (-not $isCI -and -not $Force) {
+    if (-not $NonInteractive -and -not $Force) {
         Write-Warning "No changes to commit. Use -AutoStage to stage all changes."
         exit 0
     } else {
@@ -73,7 +72,7 @@ if ($AutoStage) {
     }
 } else {
     if ($status.Staged.Count -eq 0) {
-        if (-not $isCI -and -not $Force) {
+        if (-not $NonInteractive -and -not $Force) {
             Write-Warning "No files staged for commit. Stage files with 'git add' or use -AutoStage"
             exit 0
         } else {
@@ -123,14 +122,14 @@ if ($footer) {
 
 # Validate message length
 if ($commitMessage.Length -gt 72) {
-    if (-not $isCI -and -not $Force) {
+    if (-not $NonInteractive -and -not $Force) {
         Write-Warning "Commit subject is $($commitMessage.Length) chars (recommended: <72)"
         $response = Read-Host "Continue anyway? (y/N)"
         if ($response -ne 'y') {
             exit 0
         }
     } else {
-        Write-Warning "Commit subject is $($commitMessage.Length) chars (recommended: <72). Proceeding in CI mode."
+        Write-Warning "Commit subject is $($commitMessage.Length) chars (recommended: <72). Proceeding in non-interactive mode."
     }
 }
 

@@ -1,0 +1,202 @@
+name: 🔍 Test-Script Sync Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # Run on all PRs to catch any orphaned tests
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      remove_orphaned:
+        description: 'Remove orphaned test files'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+  statuses: write
+
+jobs:
+  validate-sync:
+    name: Test-Script Synchronization
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🔧 Setup PowerShell
+        shell: bash
+        run: |
+          # PowerShell is pre-installed on GitHub runners
+          pwsh -Version
+
+      - name: 🔍 Validate test-script synchronization
+        id: validate
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "🔍 Validating test-script synchronization..." -ForegroundColor Cyan
+          Write-Host ""
+
+          $removeOrphaned = '${{ inputs.remove_orphaned }}' -eq 'true'
+          $params = @{
+            CI = $false  # Show detailed output in CI
+          }
+
+          if ($removeOrphaned) {
+            $params['RemoveOrphaned'] = $true
+            Write-Host "   Mode: Remove orphaned tests" -ForegroundColor Yellow
+          } else {
+            Write-Host "   Mode: Check only" -ForegroundColor Cyan
+          }
+
+          Write-Host ""
+          $result = & ./automation-scripts/0426_Validate-TestScriptSync.ps1 @params
+          $exitCode = $LASTEXITCODE
+
+          # Set outputs for next steps
+          if ($exitCode -eq 1) {
+            Write-Output "orphaned_found=true" >> $env:GITHUB_OUTPUT
+            Write-Output "status=warning" >> $env:GITHUB_OUTPUT
+          } elseif ($exitCode -eq 0) {
+            Write-Output "orphaned_found=false" >> $env:GITHUB_OUTPUT
+            Write-Output "status=success" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "orphaned_found=unknown" >> $env:GITHUB_OUTPUT
+            Write-Output "status=failure" >> $env:GITHUB_OUTPUT
+          }
+
+          exit $exitCode
+
+      - name: 📊 Set PR check status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.validate.outputs.status }}';
+            const orphanedFound = '${{ steps.validate.outputs.orphaned_found }}';
+
+            let conclusion;
+            let summary;
+            let text;
+
+            if (status === 'success') {
+              conclusion = 'success';
+              summary = '✅ All test files are synchronized';
+              text = 'All test files have corresponding automation scripts. No orphaned tests detected.';
+            } else if (status === 'warning') {
+              conclusion = 'neutral';  // Use neutral to not block PR but show warning
+              summary = '⚠️ Orphaned test files detected';
+              text = `Orphaned test files were detected but won't block tests from running.
+
+              These test files reference non-existent scripts and will be skipped during test execution.
+
+              Run the validation script to see details:
+              \`./automation-scripts/0426_Validate-TestScriptSync.ps1\`
+
+              To automatically remove orphaned tests:
+              \`./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned\``;
+            } else {
+              conclusion = 'failure';
+              summary = '❌ Validation failed';
+              text = 'Test-script synchronization validation encountered an error. Check the logs for details.';
+            }
+
+            // Create check run
+            if (context.eventName === 'pull_request') {
+              await github.rest.checks.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'Test-Script Sync',
+                head_sha: context.payload.pull_request.head.sha,
+                status: 'completed',
+                conclusion: conclusion,
+                output: {
+                  title: summary,
+                  summary: summary,
+                  text: text
+                }
+              });
+            }
+
+      - name: Commit removed orphaned tests
+        if: inputs.remove_orphaned == true && steps.validate.outputs.orphaned_found == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          if [[ -n $(git status --porcelain) ]]; then
+            git add -A tests/unit/automation-scripts/
+            git commit -m "chore: Remove orphaned test files [automated]
+
+            Removed test files that reference non-existent automation scripts.
+            This prevents test execution failures from missing script files."
+
+            # Push to the appropriate branch (works even in detached HEAD state)
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              git push origin HEAD:${{ github.event.pull_request.head.ref }}
+            else
+              git push origin HEAD:${{ github.ref_name }}
+            fi
+            echo "✅ Orphaned tests removed and committed"
+          else
+            echo "ℹ️  No changes to commit"
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.validate.outputs.orphaned_found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `## ⚠️ Orphaned Test Files Detected
+
+            This PR includes test files that reference non-existent automation scripts. These tests will be skipped during execution to prevent pipeline failures.
+
+            ### What are orphaned tests?
+            Orphaned tests are test files (*.Tests.ps1) that reference automation scripts that don't exist in the \`automation-scripts/\` directory.
+
+            ### Why is this a problem?
+            - Test execution may fail or skip tests
+            - Confusing test results
+            - Maintenance overhead
+
+            ### How to fix:
+
+            **Option 1: Remove orphaned tests** (if scripts were intentionally deleted)
+            \`\`\`bash
+            ./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned
+            \`\`\`
+
+            **Option 2: Create missing scripts** (if tests are valid)
+            - Create the missing automation scripts in \`automation-scripts/\`
+
+            **Option 3: Let CI handle it automatically**
+            - Re-run this workflow with \`remove_orphaned: true\` input
+
+            ### Validation
+            Run the validation script to check status:
+            \`\`\`bash
+            ./automation-scripts/0426_Validate-TestScriptSync.ps1
+            \`\`\`
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+      - name: Report success
+        if: steps.validate.outputs.orphaned_found == 'false'
+        run: |
+          echo "✅ All test files are synchronized with automation scripts!"

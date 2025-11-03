@@ -399,13 +399,14 @@ function Show-UIMenu {
 
         [hashtable]$CustomActions = @{},
 
+        [switch]$NonInteractive
     )
 
     # Always use better menu system unless in non-interactive mode
     $betterMenuModule = Join-Path $PSScriptRoot "BetterMenu.psm1"
 
-    # Check if we're in non-interactive mode (automatically detected)
-    $isNonInteractive = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true' -or $env:AITHERZERO_NONINTERACTIVE -eq 'true'
+    # Check if we're in non-interactive mode
+    $isNonInteractive = $NonInteractive -or $env:CI -or $env:GITHUB_ACTIONS -or $env:TF_BUILD -or $env:AITHERZERO_NONINTERACTIVE
 
     if (-not $isNonInteractive) {
         if (Test-Path $betterMenuModule) {

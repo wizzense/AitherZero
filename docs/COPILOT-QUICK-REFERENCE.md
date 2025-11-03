@@ -37,37 +37,6 @@ Enhanced context providers (auto-enabled):
 | **powershell-docs** | Best practices | `@workspace PowerShell error handling` |
 | **sequential-thinking** | Complex planning | `@workspace Design deployment workflow` |
 
-### AitherZero-Specific MCP Examples
-
-**Working with number-based scripts:**
-```
-@workspace Explain what script 0402 does
-@workspace Show me all scripts in the 0700-0799 range
-@workspace Compare az 0404 and az 0407
-```
-
-**Analyzing domains:**
-```
-@workspace Show me the structure of the infrastructure domain
-@workspace List all exported functions in OrchestrationEngine.psm1
-@workspace Find all functions that use Write-CustomLog
-```
-
-**Orchestration and playbooks:**
-```
-@workspace Explain the test-quick playbook
-@workspace Show me differences between test-quick and test-full
-@workspace Create a new playbook for infrastructure validation
-```
-
-**Combining multiple servers:**
-```
-@workspace Analyze OrchestrationEngine.psm1: show recent changes,
-check PowerShell best practices, and suggest improvements
-```
-
-See [COPILOT-MCP-SETUP.md](COPILOT-MCP-SETUP.md) for comprehensive examples.
-
 ## Common Prompts
 
 ### Code Generation

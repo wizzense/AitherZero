@@ -87,6 +87,7 @@
                 Git = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207') }
                 Configuration = @{ Required = $true; Internal = $true }
                 Logging = @{ Required = $true; Internal = $true }
+                MCPServers = @{ Required = $false; Scripts = @('0010'); Description = 'MCP server setup and validation' }
             }
             
             # Development environment
@@ -113,7 +114,7 @@
                 }
                 DevTools = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0205', '0209', '0211', '0214', '0215', '0216')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
+                    Scripts = @('0205', '0209', '0211', '0214', '0215', '0216', '0219')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
                     Description = 'Additional development utilities'
                 }
                 AITools = @{
@@ -189,21 +190,21 @@
                     Description = 'Install Pester and PSScriptAnalyzer'
                 }
                 Pester = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0400', '0402', '0403', '0409', '0411', '0480', '0490')
+                    DependsOn = @('Testing.TestingTools')
+                    Scripts = @('0402', '0403', '0409', '0411', '0480', '0490')
                     MinVersion = '5.0.0'
                     Description = 'Unit, integration, and smart testing'
                 }
                 PSScriptAnalyzer = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0400', '0404', '0410')
+                    DependsOn = @('Testing.TestingTools')
+                    Scripts = @('0404', '0410')
                     MinVersion = '1.20.0'
                     Description = 'Static code analysis (standard and fast)'
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0425')
-                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, documentation structure validation'
+                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0420', '0425', '0426')
+                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, component quality, documentation structure validation, test-script synchronization'
                 }
                 WorkflowTesting = @{
                     DependsOn = @('Core.PowerShell7')
@@ -236,8 +237,8 @@
                 }
                 Logging = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0530', '0550')
-                    Description = 'Log viewing and health dashboard'
+                    Scripts = @('0530', '0531', '0550')
+                    Description = 'Log viewing, workflow reports, and health dashboard'
                 }
                 CI = @{
                     DependsOn = @('Core.PowerShell7')
@@ -296,6 +297,11 @@
                     DependsOn = @('Core.PowerShell7')
                     Scripts = @('0736', '0740', '0741', '0742', '0743')
                     Description = 'AI workflow generation, integration, and automation'
+                }
+                MCPServer = @{
+                    DependsOn = @('Core.PowerShell7', 'Development.Node')
+                    Scripts = @('0750', '0751', '0752', '0753', '0754')
+                    Description = 'Model Context Protocol server for AI integration - build, start, demo, use, and create new servers from template'
                 }
             }
             
@@ -361,8 +367,8 @@
                     RequiresElevation = $true
                 }
                 QualityValidation = @{
-                    DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0420')
+                    DependsOn = @('Testing.CodeQuality')
+                    Scripts = @()  # 0420 is part of Testing.CodeQuality
                     Features = @('error-handling', 'logging', 'test-coverage', 'ui-integration', 'github-actions', 'static-analysis')
                 }
             }
@@ -399,6 +405,7 @@
                 Features = @('Core', 'Testing', 'Development.Node')
                 ScriptRanges = @('0000-0010', '0201', '0400-0450')
                 Parallel = $true
+                NonInteractive = $true
                 EstimatedTime = '3-8 minutes'
             }
         }
@@ -410,7 +417,7 @@
             'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
-            'experience' = @{ Modules = 8; Description = 'UI/UX components and interactive menus' }
+            'experience' = @{ Modules = 10; Description = 'UI/UX components and interactive menus' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
@@ -418,15 +425,17 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (125 total files, 125 unique numbers - all numbers now unique)
+        # Script inventory by range (134 total files, 132 unique numbers)
+        # All scripts now have unique numbers
+        # Counts represent unique script NUMBERS, not total files
         ScriptInventory = @{
-            '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
+            '0000-0099' = @{ Count = 9; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
-            '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
+            '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 25; Category = 'Testing & Quality' }
+            '0400-0499' = @{ Count = 26; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
+            '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
@@ -434,7 +443,7 @@
         
         # Configuration schema version for validation
         SchemaVersion = '2.0'
-        LastUpdated = '2025-10-29'
+        LastUpdated = '2025-11-03'
     }
     
     # ===================================================================
@@ -452,7 +461,8 @@
         
         # Behavior settings
         AutoStart = $true
-        CI = $false  # Automatically detected in CI environments (via $env:CI, $env:GITHUB_ACTIONS, etc.)
+        NonInteractive = $false  # Automatically set to true in CI environments
+        CI = $false  # Automatically detected in CI environments
         
         # User experience
         ClearScreenOnStart = $true  # Clear screen when starting interactive mode
@@ -979,9 +989,9 @@
             # Parallel execution settings - optimized for performance
             Parallel = @{
                 Enabled = $true
-                BlockSize = 5   # Smaller batches for faster feedback  
-                Workers = 6     # More workers for better parallelization
-                ProcessIsolation = $true  # Run batches in separate processes
+                BlockSize = 3   # Base block size for Pester parallel execution
+                Workers = 4     # Balanced worker count for CI environments
+                ProcessIsolation = $false  # Disable process isolation for faster execution
             }
             
             # Output settings - optimized for CI/CD
@@ -1028,6 +1038,21 @@
             
             # Severity levels to check
             Severity = @('Error', 'Warning', 'Information')
+            
+            # Rule-specific settings
+            Rules = @{
+                PSProvideCommentHelp = @{
+                    Enable = $true
+                    ExportedOnly = $false
+                    BlockComment = $true
+                    Placement = "begin"
+                }
+
+                PSUseCompatibleSyntax = @{
+                    Enable = $true
+                    TargetVersions = @('7.0')
+                }
+            }
         }
         
         # Code coverage

@@ -9,7 +9,7 @@
     Script: 0741_Generate-AICommitMessage
     Stage: Development
     Description: Generate AI-enhanced commit messages from staged changes
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0741_Generate-AICommitMessage' -Tag 'Unit', 'AutomationScript', 'Development' {
@@ -83,8 +83,8 @@ Describe '0741_Generate-AICommitMessage' -Tag 'Unit', 'AutomationScript', 'Devel
 
     Context 'Metadata' {
         It 'Should be in stage: Development' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

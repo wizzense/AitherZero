@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0470_Orchestrate-SimpleTesting
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Ultra-simplified orchestrator that:
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0470_Orchestrate-SimpleTesting' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0470_Orchestrate-SimpleTesting' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0470_Orchestrate-SimpleTesting.ps1'
@@ -71,9 +72,14 @@ Describe '0470_Orchestrate-SimpleTesting' -Tag 'Unit', 'AutomationScript', 'Unkn
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

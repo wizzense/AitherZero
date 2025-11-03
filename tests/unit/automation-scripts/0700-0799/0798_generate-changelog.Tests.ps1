@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0798_generate-changelog
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Git Automation & Documentation
+    Description: Creates a formatted changelog from git commit history between two tags or commits.
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0798_generate-changelog' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0798_generate-changelog' -Tag 'Unit', 'AutomationScript', 'Git Automation & Documentation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0798_generate-changelog.ps1'
@@ -61,9 +62,9 @@ Describe '0798_generate-changelog' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Git Automation & Documentation' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

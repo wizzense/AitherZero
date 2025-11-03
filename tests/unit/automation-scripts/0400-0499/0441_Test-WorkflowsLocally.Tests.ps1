@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0441_Test-WorkflowsLocally
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Enables local testing of GitHub Actions workflows without pushing to GitHub:
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0441_Test-WorkflowsLocally' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0441_Test-WorkflowsLocally' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0441_Test-WorkflowsLocally.ps1'
@@ -106,9 +107,9 @@ Describe '0441_Test-WorkflowsLocally' -Tag 'Unit', 'AutomationScript', 'Unknown'
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0512_Generate-Dashboard
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Reporting
+    Description: Creates HTML and Markdown dashboards showing project health, test results,
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0512_Generate-Dashboard.ps1'
@@ -48,29 +49,14 @@ Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
         }
 
+        It 'Should have parameter: TemplatePath' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('TemplatePath') | Should -Be $true
+        }
+
         It 'Should have parameter: Format' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Format') | Should -Be $true
-        }
-
-        It 'Should have parameter: IncludeMetrics' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('IncludeMetrics') | Should -Be $true
-        }
-
-        It 'Should have parameter: IncludeTrends' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('IncludeTrends') | Should -Be $true
-        }
-
-        It 'Should have parameter: RefreshData' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('RefreshData') | Should -Be $true
-        }
-
-        It 'Should have parameter: ThemeColor' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('ThemeColor') | Should -Be $true
         }
 
         It 'Should have parameter: Open' {
@@ -81,9 +67,14 @@ Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Reporting' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

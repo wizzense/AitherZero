@@ -41,7 +41,7 @@ $latest = (Invoke-RestMethod "https://api.github.com/repos/wizzense/AitherZero/r
 Invoke-WebRequest -Uri $latest.browser_download_url -OutFile "AitherZero-latest.zip"
 Expand-Archive -Path "AitherZero-latest.zip" -DestinationPath ./
 cd AitherZero-*
-./bootstrap.ps1 -Mode New -NonInteractive
+./bootstrap.ps1 -Mode New
 ```
 
 **Option 2: GitHub CLI**
@@ -53,7 +53,16 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ./bootstrap.sh
 ```
 
-**Note**: After cloning, run `bash tools/setup-git-merge.sh` to configure Git to handle auto-generated `index.md` files correctly. This prevents merge conflicts. See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) for details.
+**Note**: After cloning, run these setup commands:
+```bash
+# Configure Git merge strategy for auto-generated files
+bash tools/setup-git-merge.sh
+
+# Enable pre-commit hooks for validation (recommended for contributors)
+pwsh -File tools/Setup-GitHooks.ps1
+```
+
+See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
 
 **Option 3: Git Clone**
 ```bash
@@ -347,45 +356,13 @@ AitherZero is available in multiple formats for different use cases:
 @workspace Create a new utility function following AitherZero patterns
 ```
 
-### 🆕 Use AitherZero as an MCP Server
-
-Let AI assistants control AitherZero's infrastructure automation:
-
-```bash
-# Build the MCP server
-cd mcp-server && npm install && npm run build
-
-# Configure your AI assistant (Claude, Copilot, etc.)
-# Add to your MCP client config:
-{
-  "aitherzero": {
-    "command": "node",
-    "args": ["/path/to/AitherZero/mcp-server/dist/index.js"]
-  }
-}
-
-# Then ask your AI assistant:
-"Run AitherZero tests"
-"Search for Docker scripts"
-"Execute the quick test playbook"
-"Show me the project report"
-```
-
-AI assistants can now:
-- Execute automation scripts (0000-9999)
-- Run playbooks and orchestration sequences
-- Query configuration and project status
-- Run tests and quality checks
-- Manage infrastructure deployments
-
-**Learn more**: See [docs/AITHERZERO-MCP-SERVER.md](docs/AITHERZERO-MCP-SERVER.md) for complete MCP server setup and usage.
-
 ### Documentation
 - [Development Environment Setup](docs/COPILOT-DEV-ENVIRONMENT.md) - Complete guide
-- [MCP Client Configuration](docs/COPILOT-MCP-SETUP.md) - Using external MCP servers
-- [AitherZero as MCP Server](docs/AITHERZERO-MCP-SERVER.md) - Expose AitherZero to AI 🆕
+- [MCP Server Configuration](docs/COPILOT-MCP-SETUP.md) - Enhanced context setup
 - [Custom Instructions](.github/copilot-instructions.md) - AI coding guidance
 - [Agent Routing](.github/copilot.yaml) - Specialized experts
+
+**Learn more**: See [docs/COPILOT-DEV-ENVIRONMENT.md](docs/COPILOT-DEV-ENVIRONMENT.md) for the complete setup guide.
 
 ## Uninstallation
 

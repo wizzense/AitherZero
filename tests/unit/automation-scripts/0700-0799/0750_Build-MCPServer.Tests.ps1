@@ -7,12 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0750_Build-MCPServer
-    Stage: Unknown
+    Stage: AI Tools & Automation
     Description: Installs dependencies and builds the TypeScript MCP server.
-    Generated: 2025-11-02 16:23:20
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0750_Build-MCPServer' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0750_Build-MCPServer' -Tag 'Unit', 'AutomationScript', 'AI Tools & Automation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0750_Build-MCPServer.ps1'
@@ -47,7 +47,7 @@ Describe '0750_Build-MCPServer' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: AI Tools & Automation' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }

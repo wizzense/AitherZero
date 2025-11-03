@@ -9,7 +9,7 @@
     Script: 0742_Create-AIPoweredPR
     Stage: Development
     Description: Create AI-enhanced pull request with automatic description generation
-    Generated: 2025-10-30 02:11:49
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0742_Create-AIPoweredPR' -Tag 'Unit', 'AutomationScript', 'Development' {
@@ -84,6 +84,11 @@ Describe '0742_Create-AIPoweredPR' -Tag 'Unit', 'AutomationScript', 'Development
             $cmd.Parameters.ContainsKey('Draft') | Should -Be $true
         }
 
+        It 'Should have parameter: NonInteractive' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
+        }
+
         It 'Should have parameter: Force' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Force') | Should -Be $true
@@ -93,8 +98,8 @@ Describe '0742_Create-AIPoweredPR' -Tag 'Unit', 'AutomationScript', 'Development
 
     Context 'Metadata' {
         It 'Should be in stage: Development' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

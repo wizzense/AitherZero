@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0900_Test-SelfDeployment
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Validation
+    Description: Validates that AitherZero can fully deploy and set up itself using its own
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0900_Test-SelfDeployment' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0900_Test-SelfDeployment' -Tag 'Unit', 'AutomationScript', 'Validation' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0900_Test-SelfDeployment.ps1'
@@ -71,9 +72,14 @@ Describe '0900_Test-SelfDeployment' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Validation' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

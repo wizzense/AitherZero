@@ -68,16 +68,6 @@ build-output/
 *.egg-info/
 kicker-git-backup.ps1
 
-# Node.js / MCP Server
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-*.tsbuildinfo
-package-lock.json
-mcp-server/dist/
-mcp-server/node_modules/
-
 # CI/CD artifacts
 AitherZero-v*.zip
 AitherZero-v*.tar.gz
@@ -116,3 +106,7 @@ tests/coverage/*.xml
 # Analysis results
 tests/analysis/*.csv
 tests/analysis/*.json
+
+# Configuration consolidation - PSScriptAnalyzer settings now in config.psd1
+PSScriptAnalyzerSettings.psd1
+.psscriptanalyzer-fast.psd1

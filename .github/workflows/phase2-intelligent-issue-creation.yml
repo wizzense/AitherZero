@@ -3,15 +3,6 @@ name: 'Phase 2 - Intelligent Issue Creation'
 
 # Comprehensive automated issue creation system that captures ALL failure types
 # and creates intelligent, deduplicated issues with agent routing and rich context
-#
-# IMPORTANT: Issue creation is RESTRICTED to specific PR contexts:
-# - Only creates issues for PRs from dev/develop → main branch
-# - Manual workflow_dispatch runs are always allowed
-# - Scheduled runs are always allowed
-# - Direct pushes to main/dev branches are allowed
-#
-# This prevents issue spam for feature branches and ensures issues are only
-# created for release-candidate and production-bound changes.
 
 on:
   workflow_run:
@@ -51,127 +42,21 @@ env:
   ISSUE_STATE_DIR: ./reports/issue-state
 
 jobs:
-  check-pr-context:
-    name: 🔍 Check PR Context (dev→main only)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
-    outputs:
-      should-create-issues: ${{ steps.check.outputs.should-create-issues }}
-      pr-context: ${{ steps.check.outputs.pr-context }}
-
-    steps:
-      - name: 🔍 Check if PR is dev→main
-        id: check
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const eventName = context.eventName;
-
-            // Always allow manual runs and scheduled runs
-            if (eventName === 'workflow_dispatch' || eventName === 'schedule') {
-              console.log('✅ Manual or scheduled run - allowing issue creation');
-              core.setOutput('should-create-issues', 'true');
-              core.setOutput('pr-context', JSON.stringify({ type: 'manual', allowed: true }));
-              return;
-            }
-
-            // For workflow_run events, check the PR context
-            if (eventName === 'workflow_run') {
-              const workflowRun = context.payload.workflow_run;
-
-              // Get the pull requests associated with this workflow run
-              const pullRequests = workflowRun.pull_requests || [];
-
-              if (pullRequests.length === 0) {
-                // Not a PR - could be a direct push to main/dev
-                console.log('ℹ️ No PR associated with this workflow run');
-
-                // Check if it's a push to main or dev branch
-                const headBranch = workflowRun.head_branch;
-                if (headBranch === 'main' || headBranch === 'develop' || headBranch === 'dev') {
-                  console.log(`✅ Direct push to ${headBranch} - allowing issue creation`);
-                  core.setOutput('should-create-issues', 'true');
-                  core.setOutput('pr-context', JSON.stringify({
-                    type: 'push',
-                    branch: headBranch,
-                    allowed: true
-                  }));
-                } else {
-                  console.log(`❌ Push to ${headBranch} - skipping issue creation`);
-                  core.setOutput('should-create-issues', 'false');
-                  core.setOutput('pr-context', JSON.stringify({
-                    type: 'push',
-                    branch: headBranch,
-                    allowed: false
-                  }));
-                }
-                return;
-              }
-
-              // Check each PR - we only want dev→main PRs
-              for (const pr of pullRequests) {
-                console.log(`Checking PR #${pr.number}: ${pr.head.ref} → ${pr.base.ref}`);
-
-                // Check if this is a dev→main PR
-                const baseBranch = pr.base.ref;
-                const headBranch = pr.head.ref;
-
-                if (baseBranch === 'main' && (headBranch === 'dev' || headBranch === 'develop')) {
-                  console.log(`✅ Found dev→main PR #${pr.number} - allowing issue creation`);
-                  core.setOutput('should-create-issues', 'true');
-                  core.setOutput('pr-context', JSON.stringify({
-                    type: 'pr',
-                    number: pr.number,
-                    base: baseBranch,
-                    head: headBranch,
-                    allowed: true
-                  }));
-                  return;
-                }
-              }
-
-              // No matching PR found
-              console.log('❌ No dev→main PR found - skipping issue creation');
-              console.log('Issue creation is only enabled for PRs from dev/develop to main');
-              core.setOutput('should-create-issues', 'false');
-              core.setOutput('pr-context', JSON.stringify({
-                type: 'pr',
-                allowed: false,
-                reason: 'Not a dev→main PR'
-              }));
-            }
-
   comprehensive-failure-analysis:
     name: 🔍 Comprehensive Failure Analysis
     runs-on: ubuntu-latest
-    needs: check-pr-context
-    if: needs.check-pr-context.outputs.should-create-issues == 'true'
 
     outputs:
       has-failures: ${{ steps.analysis.outputs.has-failures }}
+      total-issues-to-create: ${{ steps.analysis.outputs.total-issues-to-create }}
       analysis-artifact: ${{ steps.analysis.outputs.analysis-artifact }}
 
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 📋 Log PR Context
-        shell: pwsh
-        run: |
-          Write-Host "🔍 PR Context Information:" -ForegroundColor Cyan
-          $prContext = '${{ needs.check-pr-context.outputs.pr-context }}' | ConvertFrom-Json
-          Write-Host "  Type: $($prContext.type)" -ForegroundColor White
-          if ($prContext.number) {
-            Write-Host "  PR Number: $($prContext.number)" -ForegroundColor White
-            Write-Host "  Base Branch: $($prContext.base)" -ForegroundColor White
-            Write-Host "  Head Branch: $($prContext.head)" -ForegroundColor White
-          } elseif ($prContext.branch) {
-            Write-Host "  Branch: $($prContext.branch)" -ForegroundColor White
-          }
-          Write-Host "  Allowed: $($prContext.allowed)" -ForegroundColor $(if ($prContext.allowed) { 'Green' } else { 'Red' })
-
       - name: 📊 Download Workflow Artifacts
-        if: github.event_name == 'workflow_run'
+        if: github.event.workflow_run
         uses: dawidd6/action-download-artifact@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -243,7 +128,7 @@ jobs:
                     $analysisResults.Failures.Tests += @{
                       TestName = $result.Name ?? $result.ExpandedName ?? 'Unknown Test'
                       TestType = $report.TestType ?? 'Unknown'
-                      ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } elseif ($result.Error) { $result.Error } else { "Test failed" }
+                      ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } else { "Test failed" }
                       StackTrace = if ($result.ErrorRecord) { $result.ErrorRecord.ScriptStackTrace } else { $null }
                       File = if ($result.ScriptBlock) { $result.ScriptBlock.File } else { "Unknown" }
                       Line = if ($result.ScriptBlock) { $result.ScriptBlock.StartPosition.Line } else { 0 }
@@ -380,6 +265,7 @@ jobs:
 
           # Set outputs
           "has-failures=$($totalFailures -gt 0)" >> $env:GITHUB_OUTPUT
+          "total-issues-to-create=0" >> $env:GITHUB_OUTPUT
           "analysis-artifact=comprehensive-failure-analysis" >> $env:GITHUB_OUTPUT
 
           Write-Host "`n✅ Comprehensive analysis complete!" -ForegroundColor Green
@@ -440,79 +326,16 @@ jobs:
 
             console.log(`Found ${existingIssues.length} existing automated issues`);
 
-            // Helper: Create fingerprint for deduplication with enhanced normalization
+            // Helper: Create fingerprint for deduplication
             function createFingerprint(failure) {
-              // Normalize file paths - remove absolute paths, keep only relative structure
-              const normalizeFile = (filePath) => {
-                if (!filePath) return 'unknown';
-                return filePath
-                  .replace(/\\/g, '/')  // Normalize path separators
-                  .replace(/^.*?(domains|tests|automation-scripts|infrastructure)/i, '$1')  // Remove prefix before key directories
-                  .toLowerCase()
-                  .trim();
-              };
-
-              // Normalize error messages - remove volatile data that changes between runs
-              const normalizeError = (errorMsg) => {
-                if (!errorMsg) return 'unknown';
-                return errorMsg
-                  .toLowerCase()
-                  // Replace specific patterns FIRST before general number replacement
-                  .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, 'GUID')  // Replace GUIDs (lowercase only after toLowerCase)
-                  .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?/g, 'TIMESTAMP')  // Replace ISO timestamps
-                  .replace(/\d{4}-\d{2}-\d{2}/g, 'DATE')  // Replace dates
-                  .replace(/\b[0-9a-f]{32,}\b/g, 'HASH')  // Replace long hex strings (hashes, lowercase only after toLowerCase)
-                  // THEN replace general patterns
-                  .replace(/line \d+/gi, 'line N')  // Normalize line numbers
-                  .replace(/at \d+:\d+/g, 'at N:N')  // Normalize position references
-                  .replace(/\d+/g, 'N')  // Replace all remaining numbers with 'N'
-                  .replace(/\s+/g, ' ')  // Normalize whitespace
-                  .trim();
-              };
-
-              // Normalize test names - keep the test name but remove parameters
-              const normalizeTestName = (testName) => {
-                if (!testName) return 'unknown';
-                return testName
-                  .replace(/\s*\[.*?\]\s*/g, '')  // Remove parameterized test data in brackets
-                  .replace(/\s+\d+\s+/g, ' ')  // Remove numbers between words
-                  .toLowerCase()
-                  .trim();
-              };
-
-              // Build stable fingerprint from normalized data
-              const fingerprintData = {
+              const normalizedData = JSON.stringify({
                 type: failure.Type || failure.TestType || 'unknown',
-                file: normalizeFile(failure.File),
-                error: normalizeError(failure.ErrorMessage || failure.Message),
-                category: failure.Category || failure.RuleName || 'general',
-                testName: failure.TestName ? normalizeTestName(failure.TestName) : undefined,
-                // Add stack trace hash for additional uniqueness when file is unknown
-                stackHash: (failure.StackTrace && failure.File === 'Unknown') 
-                  ? crypto.createHash('md5').update(failure.StackTrace).digest('hex').substring(0, 8)
-                  : undefined
-              };
-
-              // Remove undefined values for stable hashing
-              Object.keys(fingerprintData).forEach(key => {
-                if (fingerprintData[key] === undefined) {
-                  delete fingerprintData[key];
-                }
+                file: (failure.File || '').replace(/\\/g, '/').toLowerCase(),
+                error: (failure.ErrorMessage || failure.Message || '').replace(/\d+/g, 'N').toLowerCase(),
+                category: failure.Category || failure.RuleName || 'general'
               });
 
-              const normalizedData = JSON.stringify(fingerprintData, Object.keys(fingerprintData).sort());
-              const fingerprint = crypto.createHash('sha256').update(normalizedData).digest('hex').substring(0, 16);
-
-              // Log fingerprint generation for debugging
-              console.log(`  Generated fingerprint ${fingerprint} for:`, {
-                file: fingerprintData.file,
-                type: fingerprintData.type,
-                category: fingerprintData.category,
-                testName: fingerprintData.testName,
-                hasStackHash: !!fingerprintData.stackHash
-              });
-
-              return fingerprint;
+              return crypto.createHash('sha256').update(normalizedData).digest('hex').substring(0, 16);
             }
 
             // Helper: Determine agent based on file and error type
@@ -567,7 +390,7 @@ jobs:
               for (const failure of failures) {
                 const fingerprint = createFingerprint(failure);
 
-                // Check if already processed in this run
+                // Check if already processed
                 if (processedFingerprints.has(fingerprint)) {
                   console.log(`  Skipping duplicate: ${fingerprint}`);
                   continue;
@@ -578,27 +401,24 @@ jobs:
                   i.body && i.body.includes(`<!-- fingerprint:${fingerprint} -->`)
                 );
 
+                if (existingIssue) {
+                  console.log(`  Issue already exists for fingerprint: ${fingerprint} (#${existingIssue.number})`);
+                  continue;
+                }
+
                 processedFingerprints.add(fingerprint);
 
                 // Determine assigned agent
                 const agent = determineAgent(failure);
 
-                // Create issue group (includes both new and existing issues for updates)
+                // Create issue group
                 issueGroups.push({
                   fingerprint,
                   category,
                   failure,
                   agent,
-                  priority: category === 'Security' ? 'p0' : category === 'Syntax' ? 'p1' : 'p2',
-                  existingIssueNumber: existingIssue ? existingIssue.number : null,
-                  existingIssueTitle: existingIssue ? existingIssue.title : null
+                  priority: category === 'Security' ? 'p0' : category === 'Syntax' ? 'p1' : 'p2'
                 });
-
-                if (existingIssue) {
-                  console.log(`  Will update existing issue #${existingIssue.number} for fingerprint: ${fingerprint}`);
-                } else {
-                  console.log(`  Will create new issue for fingerprint: ${fingerprint}`);
-                }
               }
             }
 
@@ -649,43 +469,20 @@ jobs:
             console.log(`📝 Creating ${issueGroups.length} intelligent issues...`);
 
             let createdCount = 0;
-            let updatedCount = 0;
 
             for (const group of issueGroups) {
-              const { fingerprint, category, failure, agent, priority, existingIssueNumber, existingIssueTitle } = group;
+              const { fingerprint, category, failure, agent, priority } = group;
 
-              // Build descriptive issue title with context
-              let title = '';
-              if (category === 'Tests') {
-                const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
-                const testName = failure.TestName || 'Unknown Test';
-                // Include file and test name for better context
-                title = `🧪 Test Failure: ${testName} in ${fileName}`;
-              } else if (category === 'Syntax') {
-                const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
-                // Include brief error context (using slice for Unicode safety)
-                const errorSnippet = (failure.Message || failure.ErrorMessage || '').split('\n')[0].slice(0, 80);
-                title = `📝 Syntax Error: ${fileName} - ${errorSnippet || 'Parse error'}`;
-              } else if (category === 'CodeQuality') {
-                const fileName = failure.File ? failure.File.split('/').pop() : 'Unknown';
-                const errorCount = failure.ErrorCount || 0;
-                const warningCount = failure.WarningCount || 0;
-                // Include counts for better understanding
-                title = `⚠️ Code Quality: ${fileName} (${errorCount} errors, ${warningCount} warnings)`;
-              } else if (category === 'Security') {
-                const severity = failure.Severity || 'Unknown';
-                const type = failure.Type || 'Security Issue';
-                // Include severity for prioritization
-                title = `🔒 Security [${severity}]: ${type}`;
-              } else if (category === 'Workflows') {
-                const workflowName = failure.WorkflowName || 'Unknown Workflow';
-                const conclusion = failure.Conclusion || 'failed';
-                // Include workflow name and status
-                title = `🔄 Workflow ${conclusion}: ${workflowName}`;
-              } else {
-                // Fallback for unknown categories
-                title = `❌ ${category} Failure: ${failure.File ? failure.File.split('/').pop() : 'Unknown'}`;
-              }
+              // Build issue title
+              const title = category === 'Tests'
+                ? `🧪 Test Failure: ${failure.TestName}`
+                : category === 'Syntax'
+                ? `📝 Syntax Error in ${failure.File.split('/').pop()}`
+                : category === 'CodeQuality'
+                ? `⚠️ Code Quality Issues in ${failure.File.split('/').pop()}`
+                : category === 'Security'
+                ? `🔒 Security Issue: ${failure.Type}`
+                : `🔄 Workflow Failure: ${failure.WorkflowName}`;
 
               // Build issue body with rich context
               const workflowContext = analysis.WorkflowContext.TriggeredBy
@@ -741,90 +538,23 @@ jobs:
                 // Add agent-specific label
                 labels.push(`agent-${agent.agent}`);
 
-                if (existingIssueNumber) {
-                  // Update existing issue with latest information
-                  console.log(`🔄 Updating existing issue #${existingIssueNumber}: ${title}`);
+                const newIssue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                  labels
+                });
 
-                  // Add a comment with the latest failure information
-                  const updateComment = `## 🔄 Issue Still Occurring (Updated)
-
-            **Last Detected:** ${analysis.Timestamp}
-            **Status:** This issue is still occurring in recent workflow runs.
-
-            ### Latest Failure Details
-
-            **File:** \`${failure.File || 'N/A'}\`
-            ${failure.Line ? `**Line:** ${failure.Line}` : ''}
-
-            ${failure.ErrorMessage || failure.Message || failure.Description || 'See details below'}
-
-            ${failure.StackTrace ? `\`\`\`
-            ${failure.StackTrace}
-            \`\`\`` : ''}
-
-            ### Workflow Context
-
-            ${workflowContext}
-
-            ---
-            *This issue remains open and has been updated with the latest failure information.*
-            <!-- updated:${new Date().toISOString()} -->`;
-
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: existingIssueNumber,
-                    body: updateComment
-                  });
-
-                  // Helper to normalize titles by trimming and collapsing whitespace
-                  const normalizeTitle = (str) => str.trim().replace(/\s+/g, ' ');
-
-                  // Update title if it's different (more descriptive now)
-                  if (normalizeTitle(existingIssueTitle) !== normalizeTitle(title)) {
-                    await github.rest.issues.update({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: existingIssueNumber,
-                      title: title
-                    });
-                    console.log(`  ✏️ Updated title to: ${title}`);
-                  }
-
-                  // Ensure labels are up to date
-                  await github.rest.issues.addLabels({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: existingIssueNumber,
-                    labels: labels
-                  });
-
-                  console.log(`✅ Updated issue #${existingIssueNumber}`);
-                  updatedCount++;
-
-                } else {
-                  // Create new issue
-                  const newIssue = await github.rest.issues.create({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    title,
-                    body,
-                    labels
-                  });
-
-                  console.log(`✅ Created issue #${newIssue.data.number}: ${title}`);
-                  createdCount++;
-                }
+                console.log(`✅ Created issue #${newIssue.data.number}: ${title}`);
+                createdCount++;
 
               } catch (error) {
-                console.error(`❌ Failed to ${existingIssueNumber ? 'update' : 'create'} issue: ${error.message}`);
+                console.error(`❌ Failed to create issue: ${error.message}`);
               }
             }
 
-            console.log(`\n✅ Issue Creation Summary:`);
-            console.log(`   Created: ${createdCount} new issues`);
-            console.log(`   Updated: ${updatedCount} existing issues`);
-            console.log(`   Total processed: ${createdCount + updatedCount} issues`);
+            console.log(`\n✅ Created ${createdCount} intelligent issues!`);
 
       - name: 📊 Update Issue State Database
         shell: pwsh

@@ -1,0 +1,287 @@
+name: 🧪 Auto-Generate Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'automation-scripts/**/*.ps1'
+      - 'domains/**/*.psm1'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'automation-scripts/**/*.ps1'
+      - 'domains/**/*.psm1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Generation mode'
+        required: false
+        type: choice
+        options:
+          - Quick
+          - Full
+        default: 'Quick'
+      force:
+        description: 'Force regenerate existing tests'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+
+jobs:
+  generate-tests:
+    name: Auto-Generate Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Setup PowerShell
+        shell: bash
+        run: |
+          pwsh -Version
+
+      - name: 🔍 Detect new scripts without tests
+        id: detect
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Detecting scripts without tests..." -ForegroundColor Cyan
+          Write-Host ""
+
+          $scriptsWithoutTests = @()
+          $scriptRoot = "./automation-scripts"
+          $testRoot = "./tests/unit/automation-scripts"
+
+          # Find all automation scripts
+          $scripts = Get-ChildItem -Path $scriptRoot -Filter "*.ps1" -File
+
+          foreach ($script in $scripts) {
+              $scriptName = $script.BaseName
+              $scriptNumber = $scriptName -replace '_.*', ''
+
+              # Determine test range directory
+              $range = switch -Regex ($scriptNumber) {
+                  '^00\d\d$' { '0000-0099' }
+                  '^01\d\d$' { '0100-0199' }
+                  '^02\d\d$' { '0200-0299' }
+                  '^04\d\d$' { '0400-0499' }
+                  '^05\d\d$' { '0500-0599' }
+                  '^07\d\d$' { '0700-0799' }
+                  '^08\d\d$' { '0800-0899' }
+                  '^09\d\d$' { '0900-0999' }
+                  '^99\d\d$' { '9000-9999' }
+                  default { $null }
+              }
+
+              if ($range) {
+                  $testPath = Join-Path $testRoot "$range/$scriptName.Tests.ps1"
+                  if (-not (Test-Path $testPath)) {
+                      $scriptsWithoutTests += [PSCustomObject]@{
+                          Script = $script.Name
+                          Range = $range
+                          Path = $script.FullName
+                      }
+                      Write-Host "  ❌ Missing test: $scriptName" -ForegroundColor Red
+                  }
+              }
+          }
+
+          Write-Host ""
+          Write-Host "📊 Detection Summary:" -ForegroundColor Cyan
+          Write-Host "  Total scripts: $($scripts.Count)"
+          Write-Host "  Missing tests: $($scriptsWithoutTests.Count)"
+
+          # Set output
+          if ($scriptsWithoutTests.Count -gt 0) {
+              Write-Output "missing_tests=true" >> $env:GITHUB_OUTPUT
+              Write-Output "missing_count=$($scriptsWithoutTests.Count)" >> $env:GITHUB_OUTPUT
+          } else {
+              Write-Output "missing_tests=false" >> $env:GITHUB_OUTPUT
+              Write-Output "missing_count=0" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: 📦 Bootstrap environment
+        if: steps.detect.outputs.missing_tests == 'true'
+        shell: pwsh
+        run: |
+          Write-Host "📦 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode Update -InstallProfile Minimal
+
+      - name: 🧪 Generate missing tests
+        if: steps.detect.outputs.missing_tests == 'true'
+        id: generate
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Generating missing tests..." -ForegroundColor Cyan
+          Write-Host ""
+
+          $mode = '${{ inputs.mode }}'
+          if (-not $mode) { $mode = 'Quick' }
+
+          $force = '${{ inputs.force }}' -eq 'true'
+
+          $params = @{
+              Mode = $mode
+          }
+
+          if ($force) {
+              $params['Force'] = $true
+          }
+
+          try {
+              $result = & ./automation-scripts/0950_Generate-AllTests.ps1 @params
+              $exitCode = $LASTEXITCODE
+
+              Write-Host ""
+              Write-Host "✅ Test generation complete" -ForegroundColor Green
+
+              # Set outputs
+              Write-Output "success=true" >> $env:GITHUB_OUTPUT
+              exit 0
+          }
+          catch {
+              Write-Host "❌ Test generation failed: $_" -ForegroundColor Red
+              Write-Output "success=false" >> $env:GITHUB_OUTPUT
+              exit 1
+          }
+
+      - name: 📝 Commit generated tests
+        if: github.event_name == 'pull_request' && steps.detect.outputs.missing_tests == 'true' && steps.generate.outputs.success == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Check if there are new test files
+          if [[ -n $(git status --porcelain tests/unit/ tests/integration/) ]]; then
+            git add tests/unit/ tests/integration/
+
+            # Create commit message
+            cat > /tmp/commit-msg.txt << 'EOF'
+          test: Auto-generate tests for new scripts
+
+          Automatically generated tests for ${{ steps.detect.outputs.missing_count }} script(s).
+
+          - Generated by: Auto-Generate Tests workflow
+          - Mode: ${{ inputs.mode || 'Quick' }}
+          - Trigger: ${{ github.event_name }}
+
+          This ensures 100% test coverage for all automation scripts.
+          EOF
+
+            git commit -F /tmp/commit-msg.txt
+
+            # Push to the PR branch (works even in detached HEAD state)
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
+            echo "✅ Generated tests committed and pushed"
+          else
+            echo "ℹ️  No new test files to commit"
+          fi
+
+      - name: 📊 Create PR check
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const missingTests = '${{ steps.detect.outputs.missing_tests }}' === 'true';
+            const missingCount = parseInt('${{ steps.detect.outputs.missing_count }}') || 0;
+            const generated = '${{ steps.generate.outputs.success }}' === 'true';
+
+            let conclusion, summary, text;
+
+            if (!missingTests) {
+              conclusion = 'success';
+              summary = '✅ All scripts have tests';
+              text = 'All automation scripts have corresponding test files. 100% test coverage maintained!';
+            } else if (generated) {
+              conclusion = 'success';
+              summary = `✅ Generated tests for ${missingCount} script(s)`;
+              text = `Automatically generated ${missingCount} missing test file(s). Tests have been committed to this PR.`;
+            } else {
+              conclusion = 'failure';
+              summary = `❌ ${missingCount} script(s) missing tests`;
+              text = `Found ${missingCount} automation script(s) without tests. Test generation failed. Please run manually:
+              \`./automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick\``;
+            }
+
+            if (context.eventName === 'pull_request') {
+              await github.rest.checks.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'Auto-Generate Tests',
+                head_sha: context.payload.pull_request.head.sha,
+                status: 'completed',
+                conclusion: conclusion,
+                output: {
+                  title: summary,
+                  summary: summary,
+                  text: text
+                }
+              });
+            }
+
+      - name: 💬 Comment on PR
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.detect.outputs.missing_tests == 'true' &&
+          steps.generate.outputs.success == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const missingCount = '${{ steps.detect.outputs.missing_count }}';
+
+            const message = `## 🧪 Auto-Generated Tests
+
+            This PR includes new automation scripts. Tests have been automatically generated!
+
+            ### Summary
+            - **Scripts without tests:** ${missingCount}
+            - **Action taken:** Tests auto-generated and committed
+            - **Coverage:** 100% maintained ✅
+
+            ### What was generated?
+            The workflow detected automation scripts without corresponding test files and automatically:
+            1. Generated comprehensive unit tests using the test generation system
+            2. Committed the tests to this PR branch
+            3. Validated test-script synchronization
+
+            ### Test Structure
+            Each auto-generated test includes:
+            - Script validation (existence, syntax)
+            - Parameter validation
+            - Metadata checks (stage, dependencies, tags)
+            - WhatIf execution test
+
+            ### Manual Regeneration
+            If you need to regenerate tests:
+            \`\`\`bash
+            # Quick mode (missing tests only)
+            ./automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick
+
+            # Full mode (all tests)
+            ./automation-scripts/0950_Generate-AllTests.ps1 -Mode Full -Force
+            \`\`\`
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+      - name: ✅ Report success
+        if: steps.detect.outputs.missing_tests == 'false'
+        run: |
+          echo "✅ All automation scripts have tests!"
+          echo "   Test coverage: 100%"

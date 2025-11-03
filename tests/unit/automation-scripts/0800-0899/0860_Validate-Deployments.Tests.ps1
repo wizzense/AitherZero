@@ -7,18 +7,15 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0860_Validate-Deployments
-    Stage: Unknown
+    Stage: Integration
     Description: Comprehensive validation script that checks:
-    Generated: 2025-11-02 08:36:29
+    Generated: 2025-11-02 21:41:16
 #>
 
-Describe '0860_Validate-Deployments' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0860_Validate-Deployments' -Tag 'Unit', 'AutomationScript', 'Integration' {
 
     BeforeAll {
-        # Resolve script path relative to repository root
-        $script:TestRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ProjectRoot = Split-Path $script:TestRoot -Parent
-        $script:ScriptPath = Join-Path $script:ProjectRoot "automation-scripts/0860_Validate-Deployments.ps1"
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0860_Validate-Deployments.ps1'
         $script:ScriptName = '0860_Validate-Deployments'
     }
 
@@ -65,7 +62,7 @@ Describe '0860_Validate-Deployments' -Tag 'Unit', 'AutomationScript', 'Unknown' 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Integration' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
