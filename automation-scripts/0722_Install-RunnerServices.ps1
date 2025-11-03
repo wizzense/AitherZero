@@ -33,8 +33,8 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)]
-    [string]$RunnerName,
+    [Parameter(Mandatory=$false)]
+    [string]$RunnerName = '',
     [ValidateSet('SystemD', 'WindowsService', 'LaunchD', 'Auto')]
     [string]$ServiceType = 'Auto',
     [ValidateSet('Automatic', 'Manual', 'Disabled')]
@@ -66,6 +66,11 @@ function Write-ServiceLog {
     } else {
         Write-Host "[$Level] $Message"
     }
+}
+
+# Validate required parameters
+if ([string]::IsNullOrWhiteSpace($RunnerName) -and -not $WhatIfPreference) {
+    throw "RunnerName is required. Use -RunnerName parameter to specify the runner name."
 }
 
 function Get-ServiceType {

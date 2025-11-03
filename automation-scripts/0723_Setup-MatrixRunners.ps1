@@ -33,8 +33,8 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)]
-    [string]$Organization,
+    [Parameter(Mandatory=$false)]
+    [string]$Organization = '',
     [string]$Repository,
     [string]$Matrix = 'standard',
     [string]$Token,
@@ -63,6 +63,11 @@ function Write-MatrixLog {
     } else {
         Write-Host "[$Level] $Message"
     }
+}
+
+# Validate required parameters
+if ([string]::IsNullOrWhiteSpace($Organization) -and -not $WhatIfPreference) {
+    throw "Organization is required. Use -Organization parameter to specify the GitHub organization."
 }
 
 function Get-PredefinedMatrix {
