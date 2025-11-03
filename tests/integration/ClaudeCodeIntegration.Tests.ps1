@@ -40,9 +40,6 @@ BeforeAll {
     # Mock functions for testing
     function Write-TestLog {
         param([string]$Message, [string]$Level = 'Information')
-        # Map legacy INFO to Information
-        if ($Level -eq 'INFO') { $Level = 'Information' }
-        if ($Level -eq 'WARN') { $Level = 'Warning' }
         Write-CustomLog -Level $Level -Message "[Claude Integration Test] $Message"
     }
 }
@@ -432,7 +429,7 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                         $integrationValid = $true
                     }
                 } catch {
-                    Write-TestLog "Error importing GitAutomation: $($_.Exception.Message)" -Level 'WARN'
+                    Write-TestLog "Error importing GitAutomation: $($_.Exception.Message)" -Level 'Warning'
                 }
             }
 
@@ -455,7 +452,7 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
                         $frameworkValid = $true
                     }
                 } catch {
-                    Write-TestLog "Error importing TestingFramework: $($_.Exception.Message)" -Level 'WARN'
+                    Write-TestLog "Error importing TestingFramework: $($_.Exception.Message)" -Level 'Warning'
                 }
             }
 
