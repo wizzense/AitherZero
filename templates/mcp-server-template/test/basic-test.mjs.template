@@ -1,0 +1,115 @@
+#!/usr/bin/env node
+
+/**
+ * Basic MCP Server Test
+ * 
+ * This test verifies that the server can:
+ * 1. Start successfully
+ * 2. Respond to JSON-RPC requests
+ * 3. List tools correctly
+ * 4. List resources correctly
+ */
+
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = join(__dirname, '..');
+
+console.log('🧪 Testing MCP Server...\n');
+
+/**
+ * Send a JSON-RPC request to the server and get response
+ */
+async function sendRequest(serverProcess, request) {
+  return new Promise((resolve, reject) => {
+    let response = '';
+    const timeout = setTimeout(() => {
+      reject(new Error('Request timeout'));
+    }, 5000);
+
+    serverProcess.stdout.once('data', (data) => {
+      clearTimeout(timeout);
+      response = data.toString();
+      try {
+        resolve(JSON.parse(response));
+      } catch (error) {
+        reject(new Error(`Invalid JSON response: ${response}`));
+      }
+    });
+
+    serverProcess.stdin.write(JSON.stringify(request) + '\n');
+  });
+}
+
+/**
+ * Run the test suite
+ */
+async function runTests() {
+  // Start the server
+  console.log('📡 Starting MCP server...');
+  const serverProcess = spawn('node', [join(rootDir, 'dist', 'index.js')], {
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  try {
+    // Test 1: List tools
+    console.log('\n✓ Test 1: List tools');
+    const toolsRequest = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/list',
+      params: {}
+    };
+    const toolsResponse = await sendRequest(serverProcess, toolsRequest);
+    
+    if (!toolsResponse.result || !Array.isArray(toolsResponse.result.tools)) {
+      throw new Error('Invalid tools response');
+    }
+    
+    console.log(`  Found ${toolsResponse.result.tools.length} tool(s)`);
+    toolsResponse.result.tools.forEach(tool => {
+      console.log(`  - ${tool.name}: ${tool.description}`);
+    });
+
+    // Test 2: List resources
+    console.log('\n✓ Test 2: List resources');
+    const resourcesRequest = {
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'resources/list',
+      params: {}
+    };
+    const resourcesResponse = await sendRequest(serverProcess, resourcesRequest);
+    
+    if (!resourcesResponse.result || !Array.isArray(resourcesResponse.result.resources)) {
+      throw new Error('Invalid resources response');
+    }
+    
+    console.log(`  Found ${resourcesResponse.result.resources.length} resource(s)`);
+    resourcesResponse.result.resources.forEach(resource => {
+      console.log(`  - ${resource.uri}: ${resource.name}`);
+    });
+
+    // All tests passed
+    console.log('\n✅ All tests passed!\n');
+    serverProcess.kill();
+    process.exit(0);
+    
+  } catch (error) {
+    console.error('\n❌ Test failed:', error.message);
+    serverProcess.kill();
+    process.exit(1);
+  }
+}
+
+// Check if dist exists
+import { existsSync } from 'fs';
+if (!existsSync(join(rootDir, 'dist', 'index.js'))) {
+  console.error('❌ Server not built. Run: npm run build');
+  process.exit(1);
+}
+
+runTests();
