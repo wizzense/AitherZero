@@ -521,6 +521,39 @@ try {
         $duration = Stop-PerformanceTrace -Name "UnitTests"
     }
 
+    # Verify result object exists and has expected properties
+    if (-not $result) {
+        Write-ScriptLog -Level Error -Message "Test execution returned null result"
+        Write-Host "`n❌ Unit Test Results:" -ForegroundColor Red
+        Write-Host "  Total: N/A"
+        Write-Host "  Passed: N/A"
+        Write-Host "  Failed: N/A"
+        Write-Host "  Skipped: N/A"
+        exit 2
+    }
+
+    # Ensure result has required properties with defaults
+    if ($null -eq $result.TotalCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing TotalCount property, using 0"
+        $result | Add-Member -NotePropertyName TotalCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.PassedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing PassedCount property, using 0"
+        $result | Add-Member -NotePropertyName PassedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.FailedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing FailedCount property, using 0"
+        $result | Add-Member -NotePropertyName FailedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.SkippedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing SkippedCount property, using 0"
+        $result | Add-Member -NotePropertyName SkippedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.Duration) {
+        Write-ScriptLog -Level Warning -Message "Result missing Duration property, using 0"
+        $result | Add-Member -NotePropertyName Duration -NotePropertyValue ([TimeSpan]::Zero) -Force
+    }
+
     # Log results
     $testSummary = @{
         TotalTests = $result.TotalCount
