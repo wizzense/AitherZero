@@ -61,12 +61,10 @@ function Write-ScriptLog {
 Write-ScriptLog "Starting log viewer in mode: $Mode"
 
 try {
-    # Check if we're in a non-interactive context (CI or headless environment)
+    # Check if we're in a non-interactive context
     $isNonInteractive = -not [Environment]::UserInteractive -or
                         $env:AITHERZERO_NONINTERACTIVE -eq 'true' -or
-                        $env:CI -eq 'true' -or
-                        $env:GITHUB_ACTIONS -eq 'true' -or
-                        $env:TF_BUILD -eq 'true'
+                        $Configuration.NonInteractive -eq $true
 
     switch ($Mode) {
         'Dashboard' {

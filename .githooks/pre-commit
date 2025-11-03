@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook for AitherZero
+# Validates config.psd1 before allowing commits that modify it
+#
+# To install this hook:
+#   git config core.hooksPath .githooks
+#
+# To bypass this hook (not recommended):
+#   git commit --no-verify
+
+set -e
+
+# Check if config.psd1 is being committed
+if git diff --cached --name-only | grep -q "^config.psd1$"; then
+    echo "🔍 Detected changes to config.psd1 - running validation..."
+    echo ""
+    
+    # Run the validation script
+    if pwsh -File ./automation-scripts/0413_Validate-ConfigManifest.ps1; then
+        echo ""
+        echo "✅ Config validation passed - proceeding with commit"
+        echo ""
+    else
+        echo ""
+        echo "❌ Config validation failed - commit blocked"
+        echo ""
+        echo "To fix:"
+        echo "  1. Review the validation errors above"
+        echo "  2. Update config.psd1 to fix the issues"
+        echo "  3. Run: pwsh -File ./automation-scripts/0413_Validate-ConfigManifest.ps1"
+        echo "  4. Try committing again"
+        echo ""
+        echo "To bypass this check (NOT RECOMMENDED):"
+        echo "  git commit --no-verify"
+        echo ""
+        exit 1
+    fi
+fi
+
+exit 0

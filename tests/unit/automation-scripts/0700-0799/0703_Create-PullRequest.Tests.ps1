@@ -109,6 +109,10 @@ Describe '0703_Create-PullRequest' -Tag 'Unit', 'AutomationScript', 'Development
             $cmd.Parameters.ContainsKey('OpenInBrowser') | Should -Be $true
         }
 
+        It 'Should have parameter: NonInteractive' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
+        }
         It 'Should have parameter: Force' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Force') | Should -Be $true

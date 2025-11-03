@@ -5,26 +5,31 @@
 .SYNOPSIS
     Configure Model Context Protocol (MCP) servers for GitHub Copilot
 .DESCRIPTION
-    Sets up MCP servers in VS Code settings to enhance GitHub Copilot with:
+    Sets up MCP servers in VS Code using the .vscode/mcp.json format.
+    Configures MCP servers to enhance GitHub Copilot with:
     - Filesystem access for repository navigation
     - GitHub API integration for issues/PRs
     - Git operations for version control
     - PowerShell documentation fetching
     - Sequential thinking for complex problem-solving
 
-    This script ensures MCP servers are properly configured in both workspace
-    and user settings, with proper environment variable handling.
+    Uses the official VS Code MCP configuration format with .vscode/mcp.json
+    or user profile mcp.json file as documented at:
+    https://code.visualstudio.com/docs/copilot/customization/mcp-servers
+    
+    Stage: Development
+    Category: Development Environment Setup
 
 .PARAMETER Scope
-    Configuration scope: Workspace (project only) or User (global)
+    Configuration scope: Workspace (project .vscode/mcp.json) or User (global profile)
 .PARAMETER Verify
     Verify MCP server configuration and test connectivity
 .EXAMPLE
     ./0215_Configure-MCPServers.ps1
-    Configure MCP servers in workspace settings
+    Configure MCP servers in workspace .vscode/mcp.json
 .EXAMPLE
     ./0215_Configure-MCPServers.ps1 -Scope User
-    Configure MCP servers in user settings (global)
+    Configure MCP servers in user profile mcp.json (global)
 .EXAMPLE
     ./0215_Configure-MCPServers.ps1 -Verify
     Verify MCP configuration and test servers
@@ -32,9 +37,12 @@
     Part of AitherZero Development Environment Setup (0200-0299 range)
     Requires Node.js 18+ for MCP servers
     Requires GITHUB_TOKEN environment variable for GitHub server
+    
+    Format follows VS Code MCP specification:
+    https://code.visualstudio.com/docs/copilot/customization/mcp-servers
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Low')]
 param(
     [Parameter()]
     [ValidateSet('Workspace', 'User')]
@@ -49,7 +57,7 @@ $ErrorActionPreference = 'Stop'
 
 # Script metadata
 $scriptName = 'Configure-MCPServers'
-$scriptVersion = '1.0.0'
+$scriptVersion = '2.0.0'
 
 # Write to console with color
 function Write-ColorOutput {
@@ -140,42 +148,68 @@ try {
         Write-ColorOutput "  ⚠ VS Code command not found" -Level 'Warning'
     }
 
+    # Determine mcp.json path based on scope
+    $mcpJsonPath = if ($Scope -eq 'Workspace') {
+        $vscodeDir = Join-Path $workspaceRoot ".vscode"
+        if (-not (Test-Path $vscodeDir)) {
+            if ($PSCmdlet.ShouldProcess($vscodeDir, "Create .vscode directory")) {
+                New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
+                Write-LogMessage -Message "Created .vscode directory"
+            }
+        }
+        Join-Path $vscodeDir "mcp.json"
+    } else {
+        # User profile mcp.json location
+        if ($IsWindows) {
+            $appData = $env:APPDATA
+            $userMcpPath = Join-Path $appData "Code\User\mcp.json"
+        } elseif ($IsMacOS) {
+            $userMcpPath = Join-Path $HOME "Library/Application Support/Code/User/mcp.json"
+        } else {
+            $userMcpPath = Join-Path $HOME ".config/Code/User/mcp.json"
+        }
+        
+        $userDir = Split-Path $userMcpPath -Parent
+        if (-not (Test-Path $userDir)) {
+            if ($PSCmdlet.ShouldProcess($userDir, "Create user settings directory")) {
+                New-Item -ItemType Directory -Path $userDir -Force | Out-Null
+                Write-LogMessage -Message "Created user settings directory"
+            }
+        }
+        $userMcpPath
+    }
+
+    Write-ColorOutput "MCP config file: $mcpJsonPath" -Level 'Info'
+
     # If verify mode, check existing configuration
     if ($Verify) {
         Write-ColorOutput "`nVerifying MCP configuration..." -Level 'Info'
 
-        $settingsPath = if ($Scope -eq 'Workspace') {
-            Join-Path $workspaceRoot ".vscode/settings.json"
-        } else {
-            if ($IsWindows) {
-                Join-Path $env:APPDATA "Code/User/settings.json"
-            } else {
-                Join-Path $HOME ".config/Code/User/settings.json"
-            }
-        }
-
-        if (Test-Path $settingsPath) {
-            $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
-            $mcpEnabled = $settings.'github.copilot.chat.mcp.enabled'
-            $mcpServers = $settings.'github.copilot.chat.mcp.servers'
-
-            if ($mcpEnabled) {
-                Write-ColorOutput "  ✓ MCP is enabled" -Level 'Success'
-            } else {
-                Write-ColorOutput "  ✗ MCP is not enabled" -Level 'Error'
-            }
-
-            if ($mcpServers) {
-                $serverCount = ($mcpServers | Get-Member -MemberType NoteProperty).Count
-                Write-ColorOutput "  ✓ $serverCount MCP server(s) configured" -Level 'Success'
-                foreach ($server in ($mcpServers | Get-Member -MemberType NoteProperty).Name) {
-                    Write-ColorOutput "    - $server" -Level 'Info'
+        if (Test-Path $mcpJsonPath) {
+            try {
+                $mcpConfig = Get-Content $mcpJsonPath -Raw | ConvertFrom-Json
+                
+                if ($mcpConfig.servers) {
+                    $serverCount = ($mcpConfig.servers | Get-Member -MemberType NoteProperty).Count
+                    Write-ColorOutput "  ✓ $serverCount MCP server(s) configured" -Level 'Success'
+                    foreach ($serverName in ($mcpConfig.servers | Get-Member -MemberType NoteProperty).Name) {
+                        $server = $mcpConfig.servers.$serverName
+                        $serverType = if ($server.type) { $server.type } else { "stdio" }
+                        Write-ColorOutput "    - $serverName (type: $serverType)" -Level 'Info'
+                    }
+                } else {
+                    Write-ColorOutput "  ✗ No MCP servers configured" -Level 'Error'
                 }
-            } else {
-                Write-ColorOutput "  ✗ No MCP servers configured" -Level 'Error'
+
+                if ($mcpConfig.inputs) {
+                    $inputCount = $mcpConfig.inputs.Count
+                    Write-ColorOutput "  ✓ $inputCount input variable(s) defined" -Level 'Success'
+                }
+            } catch {
+                Write-ColorOutput "  ✗ Failed to parse mcp.json: $($_.Exception.Message)" -Level 'Error'
             }
         } else {
-            Write-ColorOutput "  ✗ Settings file not found: $settingsPath" -Level 'Error'
+            Write-ColorOutput "  ✗ MCP config file not found: $mcpJsonPath" -Level 'Error'
         }
 
         Write-ColorOutput "`nVerification complete." -Level 'Success'
@@ -185,112 +219,146 @@ try {
     # Configure MCP servers
     Write-ColorOutput "`nConfiguring MCP servers..." -Level 'Info'
 
-    $settingsPath = if ($Scope -eq 'Workspace') {
-        Join-Path $workspaceRoot ".vscode/settings.json"
+    # Read existing configuration or create new
+    $mcpConfig = if (Test-Path $mcpJsonPath) {
+        Write-LogMessage -Message "Reading existing MCP configuration from $mcpJsonPath"
+        try {
+            Get-Content $mcpJsonPath -Raw | ConvertFrom-Json
+        } catch {
+            Write-ColorOutput "  ⚠ Failed to parse existing mcp.json, creating new: $($_.Exception.Message)" -Level 'Warning'
+            [PSCustomObject]@{
+                servers = [PSCustomObject]@{}
+                inputs = @()
+            }
+        }
     } else {
-        if ($IsWindows) {
-            $userSettings = Join-Path $env:APPDATA "Code/User/settings.json"
-        } else {
-            $userSettings = Join-Path $HOME ".config/Code/User/settings.json"
+        Write-LogMessage -Message "Creating new MCP configuration file"
+        [PSCustomObject]@{
+            servers = [PSCustomObject]@{}
+            inputs = @()
         }
-        # Ensure directory exists
-        $settingsDir = Split-Path $userSettings -Parent
-        if (-not (Test-Path $settingsDir)) {
-            New-Item -ItemType Directory -Path $settingsDir -Force | Out-Null
-        }
-        $userSettings
     }
 
-    Write-ColorOutput "Settings file: $settingsPath" -Level 'Info'
-
-    # Read existing settings or create new
-    $settings = if (Test-Path $settingsPath) {
-        Write-LogMessage -Message "Reading existing settings from $settingsPath"
-        Get-Content $settingsPath -Raw | ConvertFrom-Json
-    } else {
-        Write-LogMessage -Message "Creating new settings file"
-        [PSCustomObject]@{}
+    # Ensure servers object exists
+    if (-not $mcpConfig.servers) {
+        $mcpConfig | Add-Member -NotePropertyName 'servers' -NotePropertyValue ([PSCustomObject]@{}) -Force
     }
 
-    # Add or update MCP configuration
-    $settings | Add-Member -NotePropertyName 'github.copilot.chat.mcp.enabled' -NotePropertyValue $true -Force
-
-    $mcpServers = [PSCustomObject]@{
-        filesystem            = [PSCustomObject]@{
+    # Define MCP servers using official VS Code format
+    $servers = [PSCustomObject]@{
+        'aitherzero' = [PSCustomObject]@{
+            type = "stdio"
+            command = "node"
+            args = @(
+                "`${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+            )
+            env = [PSCustomObject]@{
+                AITHERZERO_ROOT = "`${workspaceFolder}"
+                AITHERZERO_NONINTERACTIVE = "1"
+            }
+        }
+        'filesystem' = [PSCustomObject]@{
+            type = "stdio"
             command = "npx"
-            args    = @(
+            args = @(
                 "-y"
                 "@modelcontextprotocol/server-filesystem"
                 "`${workspaceFolder}"
             )
-            env     = [PSCustomObject]@{}
         }
-        github                = [PSCustomObject]@{
+        'github' = [PSCustomObject]@{
+            type = "stdio"
             command = "npx"
-            args    = @(
+            args = @(
                 "-y"
                 "@modelcontextprotocol/server-github"
             )
-            env     = [PSCustomObject]@{
+            env = [PSCustomObject]@{
                 GITHUB_PERSONAL_ACCESS_TOKEN = "`${env:GITHUB_TOKEN}"
             }
         }
-        git                   = [PSCustomObject]@{
+        'git' = [PSCustomObject]@{
+            type = "stdio"
             command = "npx"
-            args    = @(
+            args = @(
                 "-y"
                 "@modelcontextprotocol/server-git"
+                "--repository"
                 "`${workspaceFolder}"
             )
-            env     = [PSCustomObject]@{}
-        }
-        'powershell-docs'     = [PSCustomObject]@{
-            command = "npx"
-            args    = @(
-                "-y"
-                "@modelcontextprotocol/server-fetch"
-            )
-            env     = [PSCustomObject]@{
-                ALLOWED_DOMAINS = "docs.microsoft.com,learn.microsoft.com,github.com"
-            }
         }
         'sequential-thinking' = [PSCustomObject]@{
+            type = "stdio"
             command = "npx"
-            args    = @(
+            args = @(
                 "-y"
                 "@modelcontextprotocol/server-sequential-thinking"
             )
-            env     = [PSCustomObject]@{}
         }
     }
 
-    $settings | Add-Member -NotePropertyName 'github.copilot.chat.mcp.servers' -NotePropertyValue $mcpServers -Force
+    # Add/update each server
+    foreach ($serverName in ($servers | Get-Member -MemberType NoteProperty).Name) {
+        $mcpConfig.servers | Add-Member -NotePropertyName $serverName -NotePropertyValue $servers.$serverName -Force
+    }
 
-    # Write settings file with proper formatting
-    $json = $settings | ConvertTo-Json -Depth 10
-    $json | Set-Content -Path $settingsPath -Encoding UTF8
+    # Add input variable for GITHUB_TOKEN if not present
+    if (-not $mcpConfig.inputs) {
+        $mcpConfig | Add-Member -NotePropertyName 'inputs' -NotePropertyValue @() -Force
+    }
 
-    Write-ColorOutput "  ✓ MCP servers configured successfully" -Level 'Success'
-    Write-LogMessage -Message "MCP servers configured in $settingsPath"
+    # Check if github-token input already exists
+    $hasGitHubTokenInput = $false
+    foreach ($input in $mcpConfig.inputs) {
+        if ($input.id -eq 'github-token') {
+            $hasGitHubTokenInput = $true
+            break
+        }
+    }
+
+    if (-not $hasGitHubTokenInput) {
+        $mcpConfig.inputs += [PSCustomObject]@{
+            id = "github-token"
+            type = "promptString"
+            description = "GitHub Personal Access Token for API access"
+            password = $true
+        }
+    }
+
+    # Write mcp.json file with proper formatting
+    $json = $mcpConfig | ConvertTo-Json -Depth 10
+    
+    if ($PSCmdlet.ShouldProcess($mcpJsonPath, "Write MCP configuration")) {
+        $json | Set-Content -Path $mcpJsonPath -Encoding UTF8
+        Write-ColorOutput "  ✓ MCP servers configured successfully" -Level 'Success'
+        Write-LogMessage -Message "MCP servers configured in $mcpJsonPath"
+    } else {
+        Write-ColorOutput "  [WhatIf] Would write MCP configuration to: $mcpJsonPath" -Level 'Info'
+    }
 
     # Summary
     Write-ColorOutput "`n=== Configuration Complete ===" -Level 'Success'
-    Write-ColorOutput "MCP Servers Enabled:" -Level 'Info'
+    Write-ColorOutput "MCP Servers Configured (stdio transport):" -Level 'Info'
+    Write-ColorOutput "  • aitherzero - AitherZero infrastructure automation" -Level 'Info'
     Write-ColorOutput "  • filesystem - Repository navigation and file operations" -Level 'Info'
     Write-ColorOutput "  • github - GitHub API for issues/PRs/metadata" -Level 'Info'
     Write-ColorOutput "  • git - Version control operations" -Level 'Info'
-    Write-ColorOutput "  • powershell-docs - PowerShell documentation" -Level 'Info'
     Write-ColorOutput "  • sequential-thinking - Complex problem-solving" -Level 'Info'
 
     Write-ColorOutput "`nNext Steps:" -Level 'Info'
-    Write-ColorOutput "1. Reload VS Code window (Ctrl+Shift+P → 'Reload Window')" -Level 'Info'
-    Write-ColorOutput "2. Open Copilot Chat and try: @workspace Show me the domain structure" -Level 'Info'
-    Write-ColorOutput "3. Verify with: ./automation-scripts/0215_Configure-MCPServers.ps1 -Verify" -Level 'Info'
+    Write-ColorOutput "1. Reload VS Code window (Ctrl+Shift+P → 'Developer: Reload Window')" -Level 'Info'
+    Write-ColorOutput "2. VS Code will prompt you to trust each MCP server on first use" -Level 'Info'
+    Write-ColorOutput "3. Open Copilot Chat (Ctrl+Alt+I) and use agent mode or # to access MCP tools" -Level 'Info'
+    Write-ColorOutput "4. Try: 'List my GitHub issues' (auto-invokes GitHub MCP server)" -Level 'Info'
+    Write-ColorOutput "5. Or type '#' to see available MCP tools" -Level 'Info'
+    Write-ColorOutput "6. Verify with: ./automation-scripts/0215_Configure-MCPServers.ps1 -Verify" -Level 'Info'
 
     if (-not $env:GITHUB_TOKEN) {
-        Write-ColorOutput "`nWarning: Set GITHUB_TOKEN to enable GitHub MCP server" -Level 'Warning'
-        Write-ColorOutput "  export GITHUB_TOKEN='your_github_token'" -Level 'Warning'
+        Write-ColorOutput "`nNote: Set GITHUB_TOKEN environment variable for GitHub MCP server" -Level 'Warning'
+        Write-ColorOutput "  Or VS Code will prompt you for it when starting the server" -Level 'Warning'
     }
+
+    Write-ColorOutput "`nDocumentation: https://code.visualstudio.com/docs/copilot/customization/mcp-servers" -Level 'Info'
 
     exit 0
 

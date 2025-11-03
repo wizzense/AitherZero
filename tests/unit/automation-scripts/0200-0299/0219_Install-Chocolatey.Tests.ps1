@@ -3,19 +3,20 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0835_Create-Issues-Now
+    Unit tests for 0219_Install-Chocolatey
 .DESCRIPTION
     Auto-generated comprehensive tests
-    Script: 0835_Create-Issues-Now
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Script: 0219_Install-Chocolatey
+    Stage: Development
+    Description: Install Chocolatey package manager for Windows
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0835_Create-Issues-Now' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0219_Install-Chocolatey' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0835_Create-Issues-Now.ps1'
-        $script:ScriptName = '0835_Create-Issues-Now'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0219_Install-Chocolatey.ps1'
+        $script:ScriptName = '0219_Install-Chocolatey'
     }
 
     Context 'Script Validation' {
@@ -38,22 +39,22 @@ Describe '0835_Create-Issues-Now' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Parameters' {
-        It 'Should have parameter: Force' {
+        It 'Should have parameter: Configuration' {
             $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('Force') | Should -Be $true
-        }
-
-        It 'Should have parameter: GenerateOnly' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('GenerateOnly') | Should -Be $true
+            $cmd.Parameters.ContainsKey('Configuration') | Should -Be $true
         }
 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Development' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 
@@ -61,6 +62,7 @@ Describe '0835_Create-Issues-Now' -Tag 'Unit', 'AutomationScript', 'Unknown' {
         It 'Should execute with WhatIf' {
             {
                 $params = @{ WhatIf = $true }
+                $params.Configuration = @{}
                 & $script:ScriptPath @params
             } | Should -Not -Throw
         }

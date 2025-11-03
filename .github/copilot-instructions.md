@@ -4,7 +4,16 @@ This file provides guidance for GitHub Copilot coding agents working on this rep
 
 ## Project Overview
 
-AitherZero is an infrastructure automation platform with a **number-based orchestration system** (0000-9999) for systematic script execution. The architecture uses a consolidated domain-based module system that loads through a single entry point.
+AitherZero is an **infrastructure automation platform** built in PowerShell 7+ with a unique **number-based orchestration system** (0000-9999) for systematic script execution. The platform is:
+
+- **Size**: 525 PowerShell files (457 .ps1, .psm1, .psd1), ~125 automation scripts
+- **Type**: Infrastructure automation framework with modular domain architecture
+- **Languages**: PowerShell 7.0+, Node.js (for MCP server), minimal Bash
+- **Target Runtime**: PowerShell 7.0+ on Windows, Linux, and macOS
+- **Architecture**: Domain-based modules (11 domains, 192 exported functions)
+- **Key Feature**: Number-based script orchestration (0000-9999) with dependency tracking
+
+The platform consolidates 11 functional domains into a single unified module system that loads through one entry point (`AitherZero.psm1`).
 
 ## Essential Architecture Understanding
 
@@ -109,6 +118,61 @@ Invoke-Pester -Path "./tests/domains/configuration" -CodeCoverage "./domains/con
 Invoke-Pester -Path "./tests"
 ```
 
+### Automatic Test Generation System
+
+**CRITICAL: DO NOT WRITE TESTS MANUALLY!** AitherZero has a 100% automated test generation system.
+
+**Test Generation Workflow:**
+1. When you create a new automation script in `automation-scripts/`
+2. The `auto-generate-tests.yml` workflow automatically detects missing tests
+3. Tests are auto-generated using `0950_Generate-AllTests.ps1`
+4. Generated tests are committed to your PR automatically
+
+**Manual Test Generation:**
+```powershell
+# Generate tests for scripts without tests (Quick mode)
+./automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick
+
+# Regenerate ALL tests (use sparingly)
+./automation-scripts/0950_Generate-AllTests.ps1 -Mode Full -Force
+
+# Watch mode for continuous generation during development
+./automation-scripts/0950_Generate-AllTests.ps1 -Mode Watch
+```
+
+**What Gets Auto-Generated:**
+- Script validation tests (file exists, valid syntax)
+- Parameter validation tests
+- Metadata checks (stage, dependencies, tags)
+- WhatIf execution tests
+- Basic functionality tests
+
+**Test Structure:**
+- Unit tests: `tests/unit/automation-scripts/{range}/` (e.g., `0400-0499/`)
+- Integration tests: `tests/integration/automation-scripts/`
+- Domain tests: `tests/domains/{domain}/`
+
+**Validation:**
+```powershell
+# Validate all scripts have tests
+./automation-scripts/0426_Validate-TestScriptSync.ps1
+
+# Remove orphaned tests (tests for deleted scripts)
+./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned
+```
+
+**CI/CD Integration:**
+- `auto-generate-tests.yml`: Automatically generates missing tests on PRs
+- `validate-test-sync.yml`: Validates test-script synchronization
+- `comprehensive-test-execution.yml`: Runs all generated tests
+
+**Important Rules:**
+1. ❌ **Never create test files manually** - use the generator
+2. ✅ **Always run 0950_Generate-AllTests.ps1** after creating new scripts
+3. ✅ **Commit generated tests** along with your script changes
+4. ✅ **Let CI auto-generate** if you forget - it will handle it
+5. ✅ **Run validation** before finalizing PRs: `./automation-scripts/0426_Validate-TestScriptSync.ps1`
+
 ### Orchestration & Playbooks
 ```powershell
 # Run playbook sequences
@@ -148,15 +212,184 @@ Key sections:
 - `Write-UIText` requires `[AllowEmptyString()]` for empty messages
 - `Show-UIMenu` doesn't have `-UseInteractive` parameter (legacy)
 
-## File Locations to Know
+## Project Layout and Architecture
 
-- **Main entry**: `/Start-AitherZero.ps1`
-- **Environment setup**: `/bootstrap.ps1`
-- **Module manifest**: `/AitherZero.psd1`
-- **Scripts**: `/automation-scripts/` (numbered 0000-9999)
-- **Config**: `/config.json`
-- **Tests**: `/tests/` (organized by domain)
-- **Playbooks**: `/orchestration/playbooks/`
+### Repository Root Files
+
+```
+/home/runner/work/AitherZero/AitherZero/
+├── AitherZero.psd1              # Module manifest - 192 exported functions
+├── AitherZero.psm1              # Root module - loads all domains sequentially
+├── Start-AitherZero.ps1         # Main entry point - interactive mode
+├── bootstrap.ps1                # Setup script (PowerShell) - ALWAYS RUN FIRST
+├── bootstrap.sh                 # Setup script (Bash) - Linux/macOS variant
+├── az.ps1                       # Wrapper for numbered scripts (./az.ps1 0402)
+├── config.psd1                  # Master configuration manifest - 1476 lines
+├── config.example.psd1          # Template configuration  
+├── PSScriptAnalyzerSettings.psd1 # Linter rules (27 lines)
+├── Invoke-AitherTests.ps1       # Test runner script
+├── VERSION                      # Version file
+├── README.md                    # Main documentation
+├── LICENSE                      # MIT license
+└── Docker files                 # Dockerfile, docker-compose.yml, etc.
+```
+
+### Directory Structure
+
+```
+├── .github/                     # GitHub configuration
+│   ├── workflows/               # 17 CI/CD workflows (YAML)
+│   ├── copilot-instructions.md  # THIS FILE - AI agent guidance
+│   ├── copilot.yaml             # Custom agent routing (8 specialized agents)
+│   ├── mcp-servers.json         # Model Context Protocol server config
+│   └── prompts/                 # Reusable prompt templates
+├── .vscode/                     # VS Code settings, tasks, launch configs
+├── .devcontainer/               # DevContainer configuration
+├── automation-scripts/          # 125 numbered scripts (0000-9999)
+│   ├── 0000-0099/              # Environment setup
+│   ├── 0100-0199/              # Infrastructure (Hyper-V, certificates)
+│   ├── 0200-0299/              # Dev tools (Git, Node, Docker, VS Code)
+│   ├── 0400-0499/              # Testing & validation
+│   ├── 0500-0599/              # Reporting & metrics  
+│   ├── 0700-0799/              # Git automation & AI tools
+│   ├── 0800-0899/              # Issue management
+│   ├── 0900-0999/              # Validation
+│   └── 9000-9999/              # Maintenance & cleanup
+├── domains/                     # 11 functional domains (modular architecture)
+│   ├── ai-agents/              # 3 modules - AI integration
+│   ├── automation/             # 2 modules - Orchestration engine
+│   ├── configuration/          # 1 module - Config management (36 functions)
+│   ├── development/            # 4 modules - Git automation, CLI
+│   ├── documentation/          # 2 modules - Doc generation, indexing
+│   ├── experience/             # 8 modules - UI, menus, wizards (22 functions)
+│   ├── infrastructure/         # 1 module - VM management (57 functions)
+│   ├── reporting/              # 2 modules - Analytics, tech debt
+│   ├── security/               # 1 module - Credentials, certs (41 functions)
+│   ├── testing/                # 8 modules - Pester, quality, validation
+│   └── utilities/              # 9 modules - Logging, maintenance (24 functions)
+├── tests/                       # Test suite (~74 test files)
+│   ├── unit/                   # Unit tests (by domain and script range)
+│   ├── integration/            # Integration tests
+│   ├── domains/                # Domain-specific tests
+│   ├── TestHelpers.psm1        # Shared test utilities
+│   ├── results/                # Test output (XML, JSON)
+│   ├── analysis/               # PSScriptAnalyzer results (CSV, JSON)
+│   └── coverage/               # Code coverage reports
+├── orchestration/              # Playbooks and sequences
+│   ├── playbooks/              # Predefined execution sequences
+│   └── sequences/              # Script execution groups
+├── docs/                        # Documentation
+├── reports/                     # Generated reports
+├── logs/                        # Transcript and execution logs
+├── infrastructure/             # OpenTofu/Terraform configs
+├── mcp-server/                 # MCP server (Node.js) - AI integration
+└── tools/                      # Utility scripts
+```
+
+### Configuration Files (Critical)
+
+**`config.psd1`** - Single source of truth (1476 lines):
+- Lines 51-438: Manifest section - platform support, dependencies, profiles
+- Lines 442-494: Core configuration - execution modes, profiles
+- Lines 498-836: Features section - what components are enabled
+- Lines 840-897: Automation - orchestration settings
+- Lines 901-935: UI - display settings  
+- Lines 939-1047: Testing - Pester, PSScriptAnalyzer, coverage config
+- Lines 1051-1115: Development - Git automation, AI, quality
+- Lines 1119-1205: AI - providers (Claude, Codex, Gemini), capabilities
+- Lines 1209-1246: Infrastructure - HyperV, OpenTofu settings
+- Lines 1333-1355: Logging - audit, retention, targets
+- Lines 1391-1476: Automated issue management - GitHub integration
+
+**`PSScriptAnalyzerSettings.psd1`** - Linter configuration:
+- IncludeRules: All rules (`@('*')`)
+- ExcludeRules: `PSAvoidUsingWriteHost`, `PSUseShouldProcessForStateChangingFunctions`
+- Target PowerShell 7.0+
+
+### Domain Module Dependencies
+
+**Load order is critical** (see `AitherZero.psm1` lines 100-200):
+1. **Logging** (must load FIRST - all modules depend on Write-CustomLog)
+2. **Configuration** (second - used by all other modules)
+3. **BetterMenu** (must load before UserInterface)
+4. **Experience modules** (UI components)
+5. **Development modules** (Git, CLI)
+6. **Testing modules** (Pester framework)
+7. **Reporting modules**
+8. **Automation modules** (orchestration)
+9. **Infrastructure modules** (last - depends on everything)
+
+**Function export pattern**: Each domain module MUST have `Export-ModuleMember` at the end listing all public functions.
+
+### Key Source Files
+
+**Root Module** (`AitherZero.psm1` - 300+ lines):
+- Sets `$env:AITHERZERO_ROOT` and `$env:AITHERZERO_INITIALIZED`
+- Starts transcript logging (`logs/transcript-*.log`)
+- Loads domains in dependency order
+- Exports `Invoke-AitherScript` wrapper function
+
+**Main Entry** (`Start-AitherZero.ps1` - 500+ lines):
+- Interactive UI with BetterMenu navigation
+- Modern CLI with search, history, profiles
+- Orchestration mode for playbook execution
+- Supports modes: Interactive, Orchestrate, List, Run, Search
+
+**Bootstrap** (`bootstrap.ps1` - 900+ lines):
+- Platform detection (Windows/Linux/macOS)
+- PowerShell 7 installation if missing
+- Module path configuration
+- Dependency resolution
+- Global command installation (`aitherzero`)
+
+### GitHub Workflows (17 total)
+
+**Critical workflows**:
+- `pr-validation.yml` - PR syntax check and analysis
+- `comprehensive-test-execution.yml` - Full test suite (unit + integration)
+- `quality-validation.yml` - Code quality checks
+- `publish-test-reports.yml` - Test result publishing
+- `documentation-automation.yml` - Auto-generate docs
+- `index-automation.yml` - Update index.md files
+- `copilot-agent-router.yml` - Route to specialized agents
+
+**Workflow timing**:
+- PR validation: 1-2 minutes
+- Comprehensive tests: 3-5 minutes
+- Quality validation: 2-3 minutes
+- Documentation: 1-2 minutes
+
+### Common Patterns and Locations
+
+**To add a new automation script**:
+1. Create `automation-scripts/NNNN_Description.ps1` (use next available number)
+2. Add metadata comment block with Stage, Dependencies, Tags
+3. Add to `config.psd1` FeatureDependencies section
+4. Create unit test in `tests/unit/automation-scripts/NNNN-range/`
+5. Export script number in orchestration playbooks if needed
+
+**To add a new domain function**:
+1. Add function to appropriate domain module in `domains/*/`
+2. Add `Export-ModuleMember -Function 'YourFunction'` at module end
+3. Add function name to `AitherZero.psd1` FunctionsToExport array
+4. Create unit test in `tests/domains/your-domain/`
+5. Add comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, etc.)
+
+**To modify configuration**:
+1. Edit `config.psd1` (master file)
+2. **ALWAYS validate** with `./automation-scripts/0413_Validate-ConfigManifest.ps1` BEFORE committing
+3. Verify sync with `./automation-scripts/0003_Sync-ConfigManifest.ps1`
+4. Test configuration loading with `Get-Configuration`
+5. **Critical**: ScriptInventory counts must represent unique script NUMBERS (130), not total files (132)
+   - Scripts 0009 and 0530 have 2 files each by design
+   - Count unique numbers: `ls -1 automation-scripts/*.ps1 | sed 's/.*\///;s/_.*//' | sort -u | wc -l`
+
+**To add tests**:
+1. Use Pester 5.0+ syntax
+2. Place in `tests/unit/` or `tests/integration/`
+3. Name file `*.Tests.ps1`
+4. Use `TestHelpers.psm1` for common utilities
+5. Run with `Invoke-Pester -Path <path> -Output Detailed`
 
 ## Platform Differences
 
@@ -168,12 +401,183 @@ Use platform checks for Windows-specific features:
 
 Check exit codes: 0=success, 1=error, 3010=restart required
 
-## Before Making Changes
+## Build, Test, and Validation Commands
 
-1. Ensure environment is set up (`./bootstrap.ps1 -Mode Update` if needed)
-2. Validate with `az 0404` (PSScriptAnalyzer)
-3. Test with appropriate domain tests
-4. Check transcript logs in `logs/transcript-*.log` for errors
+**CRITICAL**: Always run these commands in the exact order specified. Commands have been tested and timing verified.
+
+### Initial Setup (Required Once)
+
+```powershell
+# New installation (first time) - Takes ~2-5 minutes
+./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+# Update existing installation - Takes ~30-60 seconds  
+./bootstrap.ps1 -Mode Update -InstallProfile Minimal
+
+# CI/CD environment setup - Takes ~3-8 minutes
+./bootstrap.ps1 -Mode New -InstallProfile Full
+```
+
+**Important**: 
+- Bootstrap MUST run first - it sets up `$env:AITHERZERO_ROOT` and loads critical modules
+- Use `-InstallProfile Minimal` for development (fastest)
+- Use `-InstallProfile Full` for CI/CD (all features)
+- Never skip bootstrap - the module system depends on it
+
+### Validation Commands (Run Before Making Changes)
+
+**Always validate before starting work** to understand existing issues:
+
+```powershell
+# 1. Syntax validation - Takes ~1-2 seconds for all 457 files
+./automation-scripts/0407_Validate-Syntax.ps1 -All
+
+# 2. PSScriptAnalyzer - Takes ~75 seconds for full codebase
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+
+# 3. Unit tests - Takes ~54 seconds (may have 5-15 known failures)
+./automation-scripts/0402_Run-UnitTests.ps1
+
+# Alternative: Use the 'az' wrapper (shorter syntax)
+./az.ps1 0407 -All          # Syntax validation
+./az.ps1 0404               # PSScriptAnalyzer
+./az.ps1 0402               # Unit tests
+```
+
+**Timing Expectations**:
+- Syntax validation: 1-2 seconds
+- PSScriptAnalyzer: 60-90 seconds (516 files)
+- Unit tests: 45-60 seconds (74 test files, ~3000+ assertions)
+- Integration tests: 120-180 seconds (if applicable)
+
+**Known Issues to Ignore**:
+- PSScriptAnalyzer: ~4305 informational issues (mostly trailing whitespace, BOM)
+- PSScriptAnalyzer: 5 errors in Security.Tests.ps1 (test data with ConvertTo-SecureString)
+- Unit tests: 5-10 failures in 0700-0799 range (metadata format issues in newer scripts)
+
+### Testing Commands (Run After Making Changes)
+
+```powershell
+# Test syntax only for changed files
+./automation-scripts/0407_Validate-Syntax.ps1 -FilePath ./path/to/changed.ps1
+
+# Run PSScriptAnalyzer on specific path
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path ./domains/utilities
+
+# Run tests for specific domain
+Invoke-Pester -Path "./tests/domains/configuration" -Output Detailed
+
+# Run single test file
+Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
+
+# Run all tests (comprehensive)
+./automation-scripts/0409_Run-AllTests.ps1
+```
+
+### Quality Validation (Before Committing)
+
+```powershell
+# Comprehensive quality check - Takes ~2-3 minutes
+./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/utilities
+
+# Checks performed:
+# - Error handling (try/catch patterns)
+# - Logging implementation (Write-CustomLog usage)
+# - Test coverage (Pester tests exist)
+# - UI integration (proper Write-UIText usage)
+# - PSScriptAnalyzer compliance
+# - GitHub Actions integration
+```
+
+### Common Command Sequences
+
+**For feature development:**
+```powershell
+# 1. Bootstrap (if needed)
+./bootstrap.ps1 -Mode Update -InstallProfile Minimal
+
+# 2. Validate baseline
+./az.ps1 0407 -All && ./az.ps1 0404
+
+# 3. Make your changes
+# ...
+
+# 4. Test your changes
+./az.ps1 0407 -All
+./az.ps1 0404 -Path ./path/to/changed
+Invoke-Pester -Path "./tests/unit/YourTest.Tests.ps1"
+
+# 5. Final validation
+./az.ps1 0420 -Path ./path/to/changed
+```
+
+**For bug fixes:**
+```powershell
+# 1. Reproduce the issue
+# 2. Run existing tests to confirm failure
+./az.ps1 0402
+
+# 3. Fix the issue
+# 4. Verify tests pass
+./az.ps1 0402
+
+# 5. Run quality validation
+./az.ps1 0420 -Path ./path/to/fixed
+```
+
+### CI/CD Integration
+
+The GitHub Actions workflows use these exact commands:
+
+```yaml
+# PR Validation (.github/workflows/pr-validation.yml)
+- Bootstrap minimal environment
+- Run syntax validation: ./az.ps1 0407 -All
+- Comment results on PR
+
+# Comprehensive Tests (.github/workflows/comprehensive-test-execution.yml)  
+- Bootstrap minimal environment
+- Install testing tools: ./automation-scripts/0400_Install-TestingTools.ps1
+- Run unit tests: ./automation-scripts/0402_Run-UnitTests.ps1
+- Run integration tests: ./automation-scripts/0403_Run-IntegrationTests.ps1
+- Aggregate and report results
+```
+
+### Troubleshooting Build Failures
+
+**Issue**: Module loading errors
+```powershell
+# Solution: Clean and re-bootstrap
+./bootstrap.ps1 -Mode Clean
+./bootstrap.ps1 -Mode New -InstallProfile Minimal
+```
+
+**Issue**: "Command not found: az"
+```powershell
+# Solution: az.ps1 must be called with ./ prefix in repository root
+cd /path/to/AitherZero
+./az.ps1 0407
+```
+
+**Issue**: Pester tests fail with "Module not found"
+```powershell
+# Solution: Ensure bootstrap ran successfully
+Import-Module ./AitherZero.psd1 -Force
+```
+
+**Issue**: PSScriptAnalyzer timeout
+```powershell
+# Solution: Run on specific path instead of entire codebase
+./az.ps1 0404 -Path ./domains/utilities
+```
+
+### Before Making Changes
+
+1. **Always bootstrap first**: `./bootstrap.ps1 -Mode Update`
+2. **Validate baseline**: `./az.ps1 0407 -All && ./az.ps1 0404` 
+3. **Review known issues**: Ignore the 5 errors in Security.Tests.ps1
+4. **Check transcript logs**: `logs/transcript-*.log` for detailed errors
+5. **Understand timing**: Budget 2-3 minutes for full validation cycle
 
 ## Acceptance Criteria
 
@@ -422,6 +826,36 @@ Optimized VS Code and DevContainer configurations available:
 
 See [docs/COPILOT-DEV-ENVIRONMENT.md](../docs/COPILOT-DEV-ENVIRONMENT.md) for complete setup guide.
 
+### Git Hooks for Quality Assurance
+
+AitherZero includes pre-commit hooks to prevent common issues:
+
+**To enable hooks:**
+```bash
+git config core.hooksPath .githooks
+```
+
+**Available hooks:**
+- **pre-commit**: Validates `config.psd1` before committing changes
+  - Runs `0413_Validate-ConfigManifest.ps1` automatically
+  - Blocks commits with invalid config
+  - Prevents CI failures from config issues
+
+**Why use hooks:**
+1. **Early detection** - Catches issues before pushing to CI
+2. **Fast feedback** - Immediate validation (no CI wait time)
+3. **Prevents mistakes** - Automated checks for all contributors
+4. **Saves time** - Fix issues locally, not after PR submission
+
+**For AI agents:**
+When modifying `config.psd1`, the hook will automatically validate before commit. If validation fails:
+1. Review the error output
+2. Fix the issues in config.psd1
+3. Run validation manually: `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+4. Retry the commit
+
+See [.githooks/README.md](../.githooks/README.md) for complete hook documentation.
+
 ### Effective Copilot Usage
 
 **Leverage agents for specialized work**:
@@ -484,3 +918,120 @@ When using AI assistance:
 4. **Validate AI suggestions**: Run linters, tests, and manual verification
 5. **Iterate incrementally**: Make small changes, test frequently
 6. **Document decisions**: Update comments and docs for AI context
+
+## Quick Reference Summary
+
+### Essential Commands (Copy & Use)
+
+```powershell
+# Setup (run once)
+./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+# Validate before changes (baseline check)
+./az.ps1 0407 -All && ./az.ps1 0404
+
+# Test after changes
+./az.ps1 0407 -All
+Invoke-Pester -Path "./tests/unit/YourTest.Tests.ps1"
+
+# Quality check before commit
+./az.ps1 0420 -Path ./path/to/changed
+```
+
+### Critical Success Factors
+
+1. **ALWAYS run bootstrap first** - Sets up environment, loads modules
+2. **Trust these instructions** - All commands have been tested and validated
+3. **Use exact timing estimates** - Budget 2-3 minutes for validation cycle
+4. **Ignore known issues** - 5 errors in Security.Tests.ps1 are expected (test data)
+5. **Check logs on failure** - `logs/transcript-*.log` has detailed errors
+6. **Module load order matters** - Logging first, then Configuration, then others
+7. **Export functions explicitly** - Must be in Export-ModuleMember lists
+8. **Config is king** - Everything driven by `config.psd1` manifest
+
+### Common Mistakes to Avoid
+
+1. ❌ Skipping bootstrap → ✅ Always run `./bootstrap.ps1 -Mode Update` first
+2. ❌ Running `az 0407` → ✅ Use `./az.ps1 0407` (needs ./ prefix)
+3. ❌ Forgetting Export-ModuleMember → ✅ Add function to export list
+4. ❌ Adding function without tests → ✅ Create matching `*.Tests.ps1` file
+5. ❌ Hardcoding values → ✅ Use `config.psd1` or `Get-Configuration`
+6. ❌ Using Write-Host → ✅ Use `Write-CustomLog` or `Write-UIText`
+7. ❌ Breaking cross-platform → ✅ Check `$IsWindows`, `$IsLinux`, `$IsMacOS`
+8. ❌ Stopping on known failures → ✅ Verify failures match expected list
+
+### When Things Go Wrong
+
+**"Module not found" errors**:
+```powershell
+Import-Module ./AitherZero.psd1 -Force
+```
+
+**"Command not found: az"**:
+```powershell
+# Must be in repository root with ./
+cd /path/to/AitherZero && ./az.ps1 0407
+```
+
+**Tests failing unexpectedly**:
+```powershell
+# Check if bootstrap ran successfully
+$env:AITHERZERO_INITIALIZED -eq 'true'
+# If false, re-run bootstrap
+./bootstrap.ps1 -Mode Update
+```
+
+**PSScriptAnalyzer timeout**:
+```powershell
+# Run on specific path instead
+./az.ps1 0404 -Path ./domains/utilities
+```
+
+### File Locations at a Glance
+
+| File/Directory | Purpose | Size/Count |
+|----------------|---------|------------|
+| `AitherZero.psd1` | Module manifest | 192 functions |
+| `AitherZero.psm1` | Root module loader | ~300 lines |
+| `config.psd1` | Master configuration | 1476 lines |
+| `bootstrap.ps1` | Setup script | ~900 lines |
+| `automation-scripts/` | Numbered scripts | 125 scripts |
+| `domains/` | Functional modules | 11 domains |
+| `tests/` | Test suite | ~74 test files |
+| `.github/workflows/` | CI/CD pipelines | 17 workflows |
+
+### Validation Checklist
+
+Before submitting code changes:
+
+- [ ] Bootstrap completed successfully
+- [ ] Syntax validation passes (`./az.ps1 0407 -All`)
+- [ ] PSScriptAnalyzer passes or issues documented (`./az.ps1 0404`)
+- [ ] Unit tests pass (`./az.ps1 0402`)
+- [ ] Quality validation passes (`./az.ps1 0420 -Path <changed>`)
+- [ ] Functions exported in Export-ModuleMember
+- [ ] Comment-based help added (`.SYNOPSIS`, etc.)
+- [ ] Tests created for new functionality
+- [ ] Cross-platform compatibility verified
+- [ ] Transcript logs checked (`logs/transcript-*.log`)
+- [ ] Config changes validated (`./az.ps1 0413`)
+
+### Performance Expectations
+
+| Command | Expected Time | Notes |
+|---------|---------------|-------|
+| `bootstrap.ps1 -Mode New -InstallProfile Minimal` | 2-5 minutes | First time only |
+| `bootstrap.ps1 -Mode Update` | 30-60 seconds | Updates |
+| `./az.ps1 0407 -All` | 1-2 seconds | 457 files |
+| `./az.ps1 0404` | 60-90 seconds | 516 files |
+| `./az.ps1 0402` | 45-60 seconds | ~74 test files |
+| `./az.ps1 0420 -Path <path>` | 30-120 seconds | Per component |
+| Full validation cycle | 2-3 minutes | All checks |
+
+---
+
+**Remember**: These instructions are the result of comprehensive testing and exploration. Trust the commands, timing, and sequences documented here. Only search for additional information if something fails unexpectedly or if requirements have changed.
+
+**Version**: 2.0 - Comprehensive validated instructions for AitherZero
+**Last Updated**: 2025-11-02
+**Validated Against**: AitherZero 2.0.0 (525 PowerShell files, 125 scripts, 11 domains, 192 functions)

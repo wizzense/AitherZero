@@ -130,8 +130,8 @@ seq 0000-0099 -ContinueOnError
 Perfect for CI/CD and automated deployments:
 
 ```powershell
-# Full automated setup
-./bootstrap.ps1 -Mode New -NonInteractive
+# Full automated setup (auto-detects CI via environment)
+./bootstrap.ps1 -Mode New
 
 # Run specific profile
 Invoke-OrchestrationSequence -Profile "Developer" -Configuration ./config.json

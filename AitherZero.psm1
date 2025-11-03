@@ -15,8 +15,15 @@
 $env:AITHERZERO_ROOT = $PSScriptRoot
 $env:AITHERZERO_INITIALIZED = "1"
 
-# Transcript logging configuration (can be disabled via environment variable)
-$script:TranscriptEnabled = if ($env:AITHERZERO_DISABLE_TRANSCRIPT -eq '1') { $false } else { $true }
+# Performance optimization: Skip transcript in test mode or when disabled
+# Transcripts add I/O overhead (~50-100ms per operation) and are not needed for:
+# - Automated testing (test output is already captured by test frameworks)
+# - CI/CD environments (logs are captured by the CI system)
+# - When explicitly disabled by the user
+$isTestOrCIMode = ($env:AITHERZERO_DISABLE_TRANSCRIPT -eq '1') -or 
+                   ($env:AITHERZERO_TEST_MODE) -or 
+                   ($env:CI)
+$script:TranscriptEnabled = -not $isTestOrCIMode
 
 # Start PowerShell transcription for complete activity logging (if enabled)
 if ($script:TranscriptEnabled) {
@@ -50,11 +57,9 @@ $modulesToLoad = @(
     # Configuration
     './domains/configuration/Configuration.psm1',
 
-    # User interface (BetterMenu first, then UserInterface, CLI Helper, Interactive UI)
+    # User interface (BetterMenu first, then UserInterface)
     './domains/experience/BetterMenu.psm1',
     './domains/experience/UserInterface.psm1',
-    './domains/experience/CLIHelper.psm1',
-    './domains/experience/InteractiveUI.psm1',
 
     # Development tools
     './domains/development/GitAutomation.psm1',
@@ -89,6 +94,10 @@ $modulesToLoad = @(
 $jobs = @()
 $loadedModules = [System.Collections.Concurrent.ConcurrentBag[string]]::new()
 
+# Performance tracking (only in debug mode)
+$script:ModuleLoadTiming = @{}
+$script:LoadStartTime = Get-Date
+
 # Load critical modules first (synchronously)
 $criticalModules = @(
     './domains/utilities/Logging.psm1',
@@ -99,8 +108,14 @@ foreach ($modulePath in $criticalModules) {
     $fullPath = Join-Path $PSScriptRoot $modulePath
     if (Test-Path $fullPath) {
         try {
+            $moduleLoadStart = Get-Date
             # Import without -Global to keep functions in this module's scope
             Import-Module $fullPath -Force -ErrorAction Stop
+            
+            # Track timing in debug mode
+            if ($env:AITHERZERO_DEBUG) {
+                $script:ModuleLoadTiming[$modulePath] = ((Get-Date) - $moduleLoadStart).TotalMilliseconds
+            }
         } catch {
             Write-Error "Failed to load critical module: $modulePath - $_"
         }
@@ -114,14 +129,35 @@ foreach ($modulePath in $parallelModules) {
     $fullPath = Join-Path $PSScriptRoot $modulePath
     if (Test-Path $fullPath) {
         try {
+            $moduleLoadStart = Get-Date
             # Import without -Global to keep functions in this module's scope
             Import-Module $fullPath -Force -ErrorAction Stop
+            
+            # Track timing in debug mode
+            if ($env:AITHERZERO_DEBUG) {
+                $script:ModuleLoadTiming[$modulePath] = ((Get-Date) - $moduleLoadStart).TotalMilliseconds
+            }
         } catch {
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                 Write-CustomLog -Level 'Warning' -Message "Failed to load module: $modulePath" -Source "ModuleLoader" -Data @{ Error = $_.ToString() }
             } else {
                 Write-Warning "Failed to load module: $modulePath - $_"
             }
+        }
+    }
+}
+
+# Report module loading performance in debug mode
+if ($env:AITHERZERO_DEBUG) {
+    $totalLoadTime = ((Get-Date) - $script:LoadStartTime).TotalMilliseconds
+    Write-Host "Module loading completed in $([Math]::Round($totalLoadTime, 2))ms" -ForegroundColor Cyan
+    
+    # Show top 5 slowest modules
+    $slowest = $script:ModuleLoadTiming.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 5
+    if ($slowest) {
+        Write-Host "Slowest modules:" -ForegroundColor Yellow
+        foreach ($module in $slowest) {
+            Write-Host "  $($module.Key): $([Math]::Round($module.Value, 2))ms" -ForegroundColor Gray
         }
     }
 }
@@ -150,6 +186,7 @@ function Invoke-AitherScript {
             'CacheMinutes' = [int]
             'CoverageThreshold' = [int]
             'ShowAll' = [switch]
+            'NonInteractive' = [switch]
             'Force' = [switch]
             'Type' = [string]
             'Name' = [string]

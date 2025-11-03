@@ -201,7 +201,7 @@ function Show-LogDashboard {
         [switch]$AutoRefresh
     )
 
-    # Check if we're in non-interactive mode (CI or headless environment)
+    # Determine non-interactive mode (CI/headless environments or explicit override)
     $isNonInteractive = -not [Environment]::UserInteractive -or
                         $env:AITHERZERO_NONINTERACTIVE -eq 'true' -or
                         $env:CI -eq 'true' -or
