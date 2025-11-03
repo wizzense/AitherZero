@@ -316,17 +316,17 @@ if (-not $SkipGit) {
         if ($LASTEXITCODE -ne 0) {
             throw "git init failed (exit code $LASTEXITCODE)"
         }
-        
+
         git add .
         if ($LASTEXITCODE -ne 0) {
             throw "git add failed (exit code $LASTEXITCODE)"
         }
-        
+
         git commit -m "Initial commit: Scaffold from AitherZero MCP template"
         if ($LASTEXITCODE -ne 0) {
             throw "git commit failed (exit code $LASTEXITCODE)"
         }
-        
+
         Write-Host "   ✓ Git repository initialized" -ForegroundColor Green
         Write-ScriptLog "Git repository initialized successfully"
     } catch {
