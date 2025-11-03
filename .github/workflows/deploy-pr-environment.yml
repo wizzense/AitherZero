@@ -300,8 +300,8 @@ jobs:
           if ($config -and $config.Integrations.Slack.Webhooks.ContainerBuilds) {
             $webhookConfig = $config.Integrations.Slack.Webhooks.ContainerBuilds
             $slackEnabled = $webhookConfig.Enabled
-            # Only use config URL if it's set and not the example URL
-            if ($webhookConfig.Url -and $webhookConfig.Url -ne 'https://hooks.slack.com/triggers/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') {
+            # Only use config URL if it's set and not empty
+            if ($webhookConfig.Url -and $webhookConfig.Url -ne '') {
               $webhookUrl = $webhookConfig.Url
             }
             if ($webhookConfig.PayloadKey) { $payloadKey = $webhookConfig.PayloadKey }
@@ -357,7 +357,7 @@ jobs:
             Write-Host "✅ Slack notification sent successfully" -ForegroundColor Green
           } catch {
             Write-Host "⚠️ Failed to send Slack notification: $_" -ForegroundColor Yellow
-            Write-Host "Webhook URL: $webhookUrl" -ForegroundColor Yellow
+            # Don't log webhook URL for security - don't expose credentials in logs
             # Don't fail the build if notification fails
             exit 0
           }
