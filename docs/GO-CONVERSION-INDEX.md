@@ -6,6 +6,8 @@ This directory contains comprehensive documentation for the PowerShell-to-Go hyb
 
 ### Planning & Analysis
 - [POWERSHELL-TO-GO-FEASIBILITY.md](./POWERSHELL-TO-GO-FEASIBILITY.md) - **START HERE** - Feasibility study and approach analysis
+- [AI-ASSISTED-GO-CONVERSION.md](./AI-ASSISTED-GO-CONVERSION.md) - **NEW: AI-enhanced strategy** - 44% effort reduction with AI coding agents
+- [GO-CONVERSION-QUICK-REFERENCE.md](./GO-CONVERSION-QUICK-REFERENCE.md) - Quick decision guide and summary
 - [GO-CONVERSION-IMPLEMENTATION-GUIDE.md](./GO-CONVERSION-IMPLEMENTATION-GUIDE.md) - Complete implementation guide
 
 ### Module-Specific Guides
@@ -36,18 +38,30 @@ This directory contains comprehensive documentation for the PowerShell-to-Go hyb
 
 - [x] Feasibility study complete
 - [x] Implementation guide created
+- [x] **AI-assisted strategy documented (44% effort reduction)**
 - [x] Infrastructure setup script created
-- [ ] Proof of concept (Phase 1)
-- [ ] Core module conversions (Phase 2)
-- [ ] Integration and optimization (Phase 3)
+- [x] Go modules directory structure initialized
+- [ ] Proof of concept (Phase 1) - **3 weeks with AI vs 4 weeks manual**
+- [ ] Core module conversions (Phase 2) - **6 weeks with AI vs 8 weeks manual**
+- [ ] Integration and optimization (Phase 3) - **4 weeks with AI vs 6 weeks manual**
+
+**Total Timeline with AI: 2.5-3 months** (vs 4 months manual)
 
 ## Next Steps
 
-1. Review feasibility study with stakeholders
-2. Get approval for hybrid approach
-3. Execute Phase 1 (4 weeks)
-4. Validate performance gains
-5. Decide on Phase 2 based on results
+1. **Review AI-assisted strategy** - [AI-ASSISTED-GO-CONVERSION.md](./AI-ASSISTED-GO-CONVERSION.md)
+2. **Review feasibility study** with stakeholders
+3. **Set up AI tools** (GitHub Copilot, Claude, custom agents)
+4. **Get approval** for AI-assisted hybrid approach
+5. **Execute Phase 1** (3 weeks with AI assistance)
+6. **Validate** performance gains and AI effectiveness
+7. **Decide** on Phase 2 based on POC results
+
+**Key Benefits with AI**:
+- 44% effort reduction (780 → 440 hours)
+- 25-38% timeline reduction (4 months → 2.5-3 months)
+- Higher test coverage
+- More consistent code patterns
 
 ## Related Documentation
 
