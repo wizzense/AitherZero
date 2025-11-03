@@ -249,6 +249,8 @@ try {
                 $pesterConfig.Run.Parallel = $true
                 
                 # Use smaller block size for integration tests (they're heavier)
+                # Integration tests load modules and execute scripts, so they need
+                # smaller batches to avoid overwhelming workers and maintain responsiveness
                 $blockSize = if ($pesterSettings.Parallel.BlockSize) { 
                     [Math]::Max(2, [Math]::Floor($pesterSettings.Parallel.BlockSize / 2))
                 } else { 

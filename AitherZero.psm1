@@ -16,13 +16,14 @@ $env:AITHERZERO_ROOT = $PSScriptRoot
 $env:AITHERZERO_INITIALIZED = "1"
 
 # Performance optimization: Skip transcript in test mode or when disabled
-$script:TranscriptEnabled = if ($env:AITHERZERO_DISABLE_TRANSCRIPT -eq '1' -or 
-                                 $env:AITHERZERO_TEST_MODE -or 
-                                 $env:CI) { 
-    $false 
-} else { 
-    $true 
-}
+# Transcripts add I/O overhead (~50-100ms per operation) and are not needed for:
+# - Automated testing (test output is already captured by test frameworks)
+# - CI/CD environments (logs are captured by the CI system)
+# - When explicitly disabled by the user
+$isTestOrCIMode = ($env:AITHERZERO_DISABLE_TRANSCRIPT -eq '1') -or 
+                   ($env:AITHERZERO_TEST_MODE) -or 
+                   ($env:CI)
+$script:TranscriptEnabled = -not $isTestOrCIMode
 
 # Start PowerShell transcription for complete activity logging (if enabled)
 if ($script:TranscriptEnabled) {

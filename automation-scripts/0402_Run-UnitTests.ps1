@@ -332,6 +332,8 @@ try {
         $pesterSettings.Parallel.Enabled = $true
         
         # Optimize worker count based on available CPU cores
+        # Max 6 workers to balance parallelization benefits with memory overhead
+        # (Each worker creates a separate PowerShell process consuming ~100-150MB)
         $availableCores = [Environment]::ProcessorCount
         $pesterSettings.Parallel.Workers = [Math]::Min([Math]::Max(2, $availableCores - 1), 6)  # Use cores-1, max 6
         $pesterSettings.Parallel.BlockSize = 5  # Larger chunks for fewer overhead
