@@ -318,7 +318,7 @@ try {
     # CI mode adjustments (override config if in CI)
     if ($CI) {
         Write-ScriptLog -Message "Running in CI mode - applying performance optimizations"
-        $pesterConfig.Output.Verbosity = 'Normal'  # Show meaningful test output in CI
+        $pesterConfig.Output.Verbosity = 'Minimal'  # Minimal output for faster CI
         $pesterConfig.Should.ErrorAction = 'Continue'
         
         # Reduce excessive logging from modules during test execution
@@ -330,11 +330,16 @@ try {
             $pesterSettings.Parallel = @{}
         }
         $pesterSettings.Parallel.Enabled = $true
-        $pesterSettings.Parallel.Workers = 2  # Reduce to avoid resource contention
+        
+        # Optimize worker count based on available CPU cores
+        $availableCores = [Environment]::ProcessorCount
+        $pesterSettings.Parallel.Workers = [Math]::Min([Math]::Max(2, $availableCores - 1), 6)  # Use cores-1, max 6
         $pesterSettings.Parallel.BlockSize = 5  # Larger chunks for fewer overhead
         
+        Write-ScriptLog -Message "CI mode: Parallel execution with $($pesterSettings.Parallel.Workers) workers (BlockSize: $($pesterSettings.Parallel.BlockSize))"
+        
         # CI adjustments: Enable full testing with optimized reporting
-        Write-ScriptLog -Message "CI mode: Running full test suite with clear output and parallel execution"
+        Write-ScriptLog -Message "CI mode: Running full test suite with minimal output and parallel execution"
     }
 
     # Apply filter settings from config or use defaults for unit tests
