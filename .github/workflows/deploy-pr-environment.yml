@@ -435,6 +435,11 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref }}
           COMMIT_SHA: ${{ github.sha }}
           IMAGE_TAG: ${{ needs.build-container.outputs.image-tag }}
+          IMAGE_DIGEST: ${{ needs.build-container.outputs.image-digest }}
+          PACKAGE_URL: ${{ needs.build-container.outputs.package-url }}
+          SERVER_URL: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
         with:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
@@ -443,6 +448,21 @@ jobs:
             // Port range: 8080-8179 (100 ports available)
             // Formula: 8080 + (prNumber % 100) ensures ports roll over after 100 PRs
             const dynamicPort = 8080 + (prNumber % 100);
+            
+            // Get job results
+            const validationResult = '${{ needs.validate-docker-config.result }}';
+            const buildResult = '${{ needs.build-container.result }}';
+            const deployResult = '${{ needs.deploy-docker-compose.result }}';
+            
+            // Get values from environment
+            const branchName = process.env.BRANCH_NAME;
+            const commitSha = process.env.COMMIT_SHA;
+            const imageTag = process.env.IMAGE_TAG;
+            const imageDigest = process.env.IMAGE_DIGEST;
+            const packageUrl = process.env.PACKAGE_URL;
+            const serverUrl = process.env.SERVER_URL;
+            const repository = process.env.REPOSITORY;
+            const runId = process.env.RUN_ID;
             
             // Get job results
             const validationResult = '${{ needs.validate-docker-config.result }}';
@@ -484,24 +504,24 @@ jobs:
 
             ### 📋 Deployment Details
             - **PR Number**: #${prNumber}
-            - **Branch**: \`${{ github.head_ref }}\`
-            - **Commit**: \`${{ github.sha }}\`
+            - **Branch**: \`${branchName}\`
+            - **Commit**: \`${commitSha}\`
             - **Deployed**: ${new Date().toLocaleString()}
 
             ### 📦 Container Package Information
-            - **Image Tag**: \`${{ needs.build-container.outputs.image-tag }}\`
-            - **Image Digest**: \`${{ needs.build-container.outputs.image-digest }}\`
-            - **Package URL**: [${{ needs.build-container.outputs.package-url }}](${{ needs.build-container.outputs.package-url }})
+            - **Image Tag**: \`${imageTag}\`
+            - **Image Digest**: \`${imageDigest}\`
+            - **Package URL**: [${packageUrl}](${packageUrl})
             - **Registry**: GitHub Container Registry (\`ghcr.io\`)
             
             #### 📥 Pull Command
             \`\`\`bash
-            docker pull ${{ needs.build-container.outputs.image-tag }}
+            docker pull ${imageTag}
             \`\`\`
 
             ${deploymentSuccessful ? `
             ### 🔗 Access Your Environment
-            - **Container Package**: [${{ needs.build-container.outputs.package-url }}](${{ needs.build-container.outputs.package-url }})
+            - **Container Package**: [${packageUrl}](${packageUrl})
             - **Container Name**: \`aitherzero-pr-${prNumber}\`
             - **Port**: ${dynamicPort} (formula: 8080 + PR# % 100)
 
@@ -515,8 +535,8 @@ jobs:
             
             \`\`\`bash
             # Pull and run the container
-            docker pull ${{ needs.build-container.outputs.image-tag }}
-            docker run -d --name aitherzero-pr-${prNumber} -p ${dynamicPort}:8080 ${{ needs.build-container.outputs.image-tag }}
+            docker pull ${imageTag}
+            docker run -d --name aitherzero-pr-${prNumber} -p ${dynamicPort}:8080 ${imageTag}
             
             # Wait for startup
             sleep 5
@@ -565,8 +585,8 @@ jobs:
             
             \`\`\`bash
             # Pull and start interactively
-            docker pull ${{ needs.build-container.outputs.image-tag }}
-            docker run -it --name aitherzero-pr-${prNumber} ${{ needs.build-container.outputs.image-tag }}
+            docker pull ${imageTag}
+            docker run -it --name aitherzero-pr-${prNumber} ${imageTag}
             
             # You'll see the welcome screen. Module is already loaded, so use:
             # az 0402                    # Run unit tests
@@ -588,25 +608,25 @@ jobs:
             ### 🛠️ Management Commands
             - **Redeploy**: Comment \`/deploy\` on this PR
             - **Destroy**: Will auto-cleanup when PR is closed
-            - **View Package**: [GitHub Container Registry](${{ needs.build-container.outputs.package-url }})
+            - **View Package**: [GitHub Container Registry](${packageUrl})
             ` : deploymentSkipped ? `
             ### ⏭️ Deployment Skipped
             - **Validation Status**: ${validationResult === 'success' ? '✅ Success' : validationResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
             - **Build Status**: ${buildResult === 'success' ? '✅ Success' : buildResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
             - **Deploy Status**: ${deployResult === 'success' ? '✅ Success' : deployResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
 
-            [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            [View Workflow Run](https://${serverUrl}/${repository}/actions/runs/${runId})
             ` : `
             ### ❌ Deployment Failed
             - **Validation Status**: ${validationResult === 'success' ? '✅ Success' : validationResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
             - **Build Status**: ${buildResult === 'success' ? '✅ Success' : buildResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
             - **Deploy Status**: ${deployResult === 'success' ? '✅ Success' : deployResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
 
-            [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            [View Workflow Run](https://${serverUrl}/${repository}/actions/runs/${runId})
             `}
 
             ---
-            *Automated PR Environment Deployment* • [Workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            *Automated PR Environment Deployment* • [Workflow](${serverUrl}/${repository}/actions/runs/${runId})
             `;
 
             // Find and update existing comment or create new one

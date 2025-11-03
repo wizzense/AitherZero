@@ -219,7 +219,7 @@ jobs:
                 return '- **Triggered by:** Scheduled analysis';
               }
               
-              const workflowRunUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${workflowRun.Id}`;
+              const workflowRunUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${workflowRun.Id}`;
               return `
             - **Workflow:** ${workflowRun.Workflow}
             - **Run ID:** [${workflowRun.Id}](${workflowRunUrl})

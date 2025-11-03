@@ -438,7 +438,7 @@ jobs:
             | **Total** | ${report.TestResults.Summary.Total} | ${report.TestResults.Summary.Passed} | ${report.TestResults.Summary.Failed} | ${report.TestResults.Summary.Skipped} |
             
             ---
-            📊 [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            📊 [View Full Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             `;
             
             github.rest.issues.createComment({
