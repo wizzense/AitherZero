@@ -45,7 +45,7 @@ jobs:
       - name: Bootstrap AitherZero
         shell: pwsh
         run: |
-          ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
         env:
           AITHERZERO_NONINTERACTIVE: "1"
 
