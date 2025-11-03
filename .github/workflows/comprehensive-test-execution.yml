@@ -107,14 +107,14 @@ jobs:
         timeout-minutes: 3
         run: |
           Write-Host "🚀 Bootstrapping environment..." -ForegroundColor Cyan
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
       
       - name: 📦 Install Testing Tools
         shell: pwsh
         timeout-minutes: 2
         run: |
           Write-Host "📦 Installing testing tools..." -ForegroundColor Cyan
-          ./automation-scripts/0400_Install-TestingTools.ps1 -NonInteractive
+          ./automation-scripts/0400_Install-TestingTools.ps1
       
       - name: 🧪 Run Unit Tests
         shell: pwsh
@@ -203,14 +203,14 @@ jobs:
         timeout-minutes: 3
         run: |
           Write-Host "🚀 Bootstrapping environment..." -ForegroundColor Cyan
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
       
       - name: 📦 Install Testing Tools
         shell: pwsh
         timeout-minutes: 2
         run: |
           Write-Host "📦 Installing testing tools..." -ForegroundColor Cyan
-          ./automation-scripts/0400_Install-TestingTools.ps1 -NonInteractive
+          ./automation-scripts/0400_Install-TestingTools.ps1
       
       - name: 🔗 Run Integration Tests
         shell: pwsh
