@@ -219,11 +219,12 @@ function Get-ProjectMetrics {
     $metrics.Files.Total = $metrics.Files.PowerShell + $metrics.Files.Modules + $metrics.Files.Data
 
     # Count lines of code and functions
-    $allPSFiles = @(
+    # Wrap entire pipeline with @() to ensure array type even when Where-Object filters all results
+    $allPSFiles = @(@(
         Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psd1" -Recurse
-    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy)' }
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy)' })
 
     foreach ($file in $allPSFiles) {
         try {
@@ -316,9 +317,10 @@ function Get-ProjectMetrics {
     }
     
     # Also count domain modules for complete coverage
-    $domainModules = @(
-        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object { $_.FullName -match 'domains/' }
-    )
+    # Wrap entire pipeline with @() to ensure array type even when Where-Object filters all results
+    $domainModules = @(@(
+        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
+    ) | Where-Object { $_.FullName -match 'domains/' })
     
     $allCodeFiles = @($automationScripts) + @($domainModules)
     $metrics.TestCoverage.TotalFiles = $allCodeFiles.Count
@@ -457,8 +459,10 @@ function Get-ProjectMetrics {
                 $warnings = if ($pssaData.Summary.BySeverity.PSObject.Properties['Warning']) { $pssaData.Summary.BySeverity.Warning } else { 0 }
                 $info = if ($pssaData.Summary.BySeverity.PSObject.Properties['Information']) { $pssaData.Summary.BySeverity.Information } else { 0 }
                 
-                # Count files from ByScript hash
-                $filesWithIssues = if ($pssaData.Summary.ByScript) { $pssaData.Summary.ByScript.PSObject.Properties.Count } else { 0 }
+                # Count files from ByScript hash - wrap with @() for StrictMode compatibility
+                $filesWithIssues = if ($pssaData.Summary.ByScript) { 
+                    @($pssaData.Summary.ByScript.PSObject.Properties).Count 
+                } else { 0 }
                 
                 # Total files is all PowerShell files in project
                 $totalPSFiles = $allPSFiles.Count
@@ -1107,11 +1111,11 @@ function Get-FileLevelMetrics {
         }
     }
     
-    # Get all PowerShell files
-    $psFiles = @(
+    # Get all PowerShell files - wrap entire pipeline with @() to ensure array type
+    $psFiles = @(@(
         Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
-    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' })
     
     $fileMetrics.Summary.TotalFiles = $psFiles.Count
     
@@ -1147,8 +1151,9 @@ function Get-FileLevelMetrics {
             
             # Run PSScriptAnalyzer on individual file
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
-                $rawIssues = Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue
-                $issues = if ($rawIssues) { @($rawIssues) } else { @() }
+                # Wrap immediately to handle single object results under StrictMode
+                $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue)
+                $issues = if ($rawIssues.Count -gt 0) { $rawIssues } else { @() }
                 
                 if ($issues.Count -gt 0) {
                     # Wrap in array to ensure consistent type even with single result
@@ -1332,7 +1337,8 @@ function Get-DetailedTestResults {
     }
     
     # Count all test files
-    $allTestFiles = Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+    # Get all test files - wrap with @() to handle empty results under StrictMode
+    $allTestFiles = @(Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue)
     $testResults.TestFiles.Total = $allTestFiles.Count
     $testResults.TestFiles.Unit = @($allTestFiles | Where-Object { $_.FullName -match '/unit/' }).Count
     $testResults.TestFiles.Integration = @($allTestFiles | Where-Object { $_.FullName -match '/integration/' }).Count
@@ -1708,8 +1714,9 @@ function Get-LifecycleAnalysis {
     $now = Get-Date
     
     # Analyze documentation files
-    $docFiles = Get-ChildItem -Path $ProjectPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue |
-                Where-Object { $_.FullName -notmatch '(node_modules|\.git)' }
+    # Get all documentation files - wrap entire pipeline with @() to ensure array type
+    $docFiles = @(@(Get-ChildItem -Path $ProjectPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue) |
+                 Where-Object { $_.FullName -notmatch '(node_modules|\.git)' })
     
     $lifecycle.Documentation.Summary.Total = $docFiles.Count
     
@@ -1753,11 +1760,11 @@ function Get-LifecycleAnalysis {
         )
     }
     
-    # Analyze PowerShell code files
-    $psFiles = @(
+    # Analyze PowerShell code files - wrap entire pipeline with @() to ensure array type
+    $psFiles = @(@(
         Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
-    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' })
     
     $lifecycle.Code.Summary.Total = $psFiles.Count
     
@@ -2191,11 +2198,11 @@ function Get-HistoricalMetrics {
             Write-ScriptLog -Message "Saved metrics snapshot: $snapshotFile"
         }
         
-        # Load historical snapshots from last 30 days
+        # Load historical snapshots from last 30 days - wrap with @() to ensure array type
         $cutoffDate = (Get-Date).AddDays(-30)
-        $snapshotFiles = Get-ChildItem -Path $historyPath -Filter "snapshot-*.json" -ErrorAction SilentlyContinue |
+        $snapshotFiles = @(@(Get-ChildItem -Path $historyPath -Filter "snapshot-*.json" -ErrorAction SilentlyContinue) |
                         Where-Object { $_.LastWriteTime -gt $cutoffDate } |
-                        Sort-Object LastWriteTime -Descending
+                        Sort-Object LastWriteTime -Descending)
         
         foreach ($file in $snapshotFiles) {
             try {
