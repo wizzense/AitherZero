@@ -297,11 +297,11 @@ jobs:
           $payloadKey = 'aitherzero_new_build'
           
           # Override with config if available
-          if ($config -and $config.Integrations.Slack.Webhooks.ContainerBuilds) {
+          if ($config -and $config.Integrations -and $config.Integrations.Slack -and $config.Integrations.Slack.Webhooks.ContainerBuilds) {
             $webhookConfig = $config.Integrations.Slack.Webhooks.ContainerBuilds
             $slackEnabled = $webhookConfig.Enabled
-            # Only use config URL if it's set and not empty
-            if ($webhookConfig.Url -and $webhookConfig.Url -ne '') {
+            # Only use config URL if it's set
+            if ($webhookConfig.Url) {
               $webhookUrl = $webhookConfig.Url
             }
             if ($webhookConfig.PayloadKey) { $payloadKey = $webhookConfig.PayloadKey }
