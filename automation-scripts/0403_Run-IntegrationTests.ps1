@@ -248,25 +248,31 @@ try {
             if ((Get-Command Invoke-Pester).Parameters.ContainsKey('Configuration')) {
                 $pesterConfig.Run.Parallel = $true
                 
-                # Use smaller block size for integration tests (they're heavier)
+                # Use configured block size directly (config already optimized for integration tests)
                 # Integration tests load modules and execute scripts, so they need
                 # smaller batches to avoid overwhelming workers and maintain responsiveness
                 $blockSize = if ($pesterSettings.Parallel.BlockSize) { 
-                    [Math]::Max(2, [Math]::Floor($pesterSettings.Parallel.BlockSize / 2))
+                    [Math]::Max(2, [Math]::Floor($pesterSettings.Parallel.BlockSize))
                 } else { 
                     2 
                 }
                 $pesterConfig.Run.ParallelBlockSize = $blockSize
                 
-                # Optimize for CI performance
+                # Configure worker count
+                # Use config value or optimize for CI performance
                 if ($env:CI -or $env:AITHERZERO_CI) {
                     # Use available CPU cores in CI
                     $workers = [Math]::Min([Environment]::ProcessorCount, 4)
                     Write-ScriptLog -Message "CI detected: Using $workers parallel workers"
+                } elseif ($pesterSettings.Parallel.Workers) {
+                    $workers = $pesterSettings.Parallel.Workers
+                } else {
+                    $workers = 4  # Default
                 }
+                $pesterConfig.Run.ParallelWorkers = $workers
                 
                 $parallelEnabled = $true
-                Write-ScriptLog -Message "Parallel execution enabled for integration tests (block size: $blockSize)" -Level Information
+                Write-ScriptLog -Message "Parallel execution enabled for integration tests (workers: $workers, block size: $blockSize)" -Level Information
             } else {
                 Write-ScriptLog -Level Warning -Message "Parallel execution not supported in this Pester version"
             }

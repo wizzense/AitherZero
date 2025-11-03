@@ -979,7 +979,7 @@
             # Parallel execution settings - optimized for performance
             Parallel = @{
                 Enabled = $true
-                BlockSize = 3   # Smaller batches for integration tests (heavier than unit tests)
+                BlockSize = 3   # Base block size for Pester parallel execution
                 Workers = 4     # Balanced worker count for CI environments
                 ProcessIsolation = $false  # Disable process isolation for faster execution
             }
