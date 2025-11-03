@@ -201,7 +201,10 @@ function Get-ProjectMetrics {
         try {
             $content = Get-Content $file.FullName -ErrorAction Stop
             if ($content) {
-                foreach ($line in $content) {
+                # Ensure content is always an array for consistent .Count behavior
+                $contentArray = @($content)
+                
+                foreach ($line in $contentArray) {
                     $trimmed = $line.Trim()
                     if ($trimmed -eq '') {
                         $metrics.BlankLines++
@@ -210,22 +213,22 @@ function Get-ProjectMetrics {
                     }
                 }
                 
-                $metrics.LinesOfCode += $content.Count
+                $metrics.LinesOfCode += $contentArray.Count
 
-                # Count functions - improved pattern matching
-                $functionMatches = $content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue
-                if ($functionMatches) {
+                # Count functions - improved pattern matching with array wrapping for consistent Count
+                $functionMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
+                if ($functionMatches.Count -gt 0) {
                     $metrics.Functions += $functionMatches.Count
                 }
                 
-                # Count classes
-                $classMatches = $content | Select-String -Pattern '^\s*class\s+' -ErrorAction SilentlyContinue
-                if ($classMatches) {
+                # Count classes - with array wrapping for consistent Count
+                $classMatches = @($content | Select-String -Pattern '^\s*class\s+' -ErrorAction SilentlyContinue)
+                if ($classMatches.Count -gt 0) {
                     $metrics.Classes += $classMatches.Count
                 }
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse file for metrics: $($file.Name) - $_"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze file: $($file.Name) - $_"
         }
     }
     
@@ -828,9 +831,13 @@ function Get-FileLevelMetrics {
             # Count lines and functions
             $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
             if ($content) {
-                $fileData.Lines = $content.Count
-                $funcMatches = $content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue
-                $fileData.Functions = if ($funcMatches) { $funcMatches.Count } else { 0 }
+                # Ensure content is always an array for consistent .Count behavior
+                $contentArray = @($content)
+                $fileData.Lines = $contentArray.Count
+                
+                # Wrap in array for consistent Count property access
+                $funcMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
+                $fileData.Functions = $funcMatches.Count
             }
             
             # Run PSScriptAnalyzer on individual file
@@ -1029,9 +1036,9 @@ function Get-DetailedTestResults {
         try {
             $content = Get-Content $testFile.FullName -ErrorAction SilentlyContinue
             if ($content) {
-                # Count It blocks (actual test cases)
-                $itBlocks = $content | Select-String -Pattern '^\s*It\s+[''"]' -AllMatches
-                if ($itBlocks) {
+                # Ensure array for consistent Count property access
+                $itBlocks = @($content | Select-String -Pattern '^\s*It\s+[''"]' -AllMatches)
+                if ($itBlocks.Count -gt 0) {
                     $testResults.TestFiles.PotentialTests += $itBlocks.Count
                 }
             }
@@ -1194,25 +1201,29 @@ function Get-CodeCoverageDetails {
                 Write-ScriptLog -Message "Parsing JaCoCo coverage format"
                 $coverage.Format = "JaCoCo"
                 
-                # Get counters from report root - handle both single and multiple counters
-                $counters = @($coverageXml.report.counter)
-                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
-                
-                if (-not $lineCounter) {
-                    Write-ScriptLog -Level Warning -Message 'No LINE counter found in JaCoCo report'
-                } elseif ($lineCounter) {
-                    $missedLines = [int]$lineCounter.missed
-                    $coveredLines = [int]$lineCounter.covered
-                    $totalLines = $missedLines + $coveredLines
+                # Get counters from report root - safely handle missing counter elements
+                if ($coverageXml.report.counter) {
+                    $counters = @($coverageXml.report.counter)
+                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
                     
-                    if ($totalLines -gt 0) {
-                        $coverage.Overall.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 1)
-                        $coverage.Overall.CoveredLines = $coveredLines
-                        $coverage.Overall.TotalLines = $totalLines
-                        $coverage.Overall.MissedLines = $missedLines
+                    if ($lineCounter) {
+                        $missedLines = [int]$lineCounter.missed
+                        $coveredLines = [int]$lineCounter.covered
+                        $totalLines = $missedLines + $coveredLines
                         
-                        Write-ScriptLog -Message "Coverage: $($coverage.Overall.Percentage)% ($coveredLines/$totalLines lines)"
+                        if ($totalLines -gt 0) {
+                            $coverage.Overall.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                            $coverage.Overall.CoveredLines = $coveredLines
+                            $coverage.Overall.TotalLines = $totalLines
+                            $coverage.Overall.MissedLines = $missedLines
+                            
+                            Write-ScriptLog -Message "Coverage: $($coverage.Overall.Percentage)% ($coveredLines/$totalLines lines)"
+                        }
+                    } else {
+                        Write-ScriptLog -Level Warning -Message 'No LINE counter found in JaCoCo report'
                     }
+                } else {
+                    Write-ScriptLog -Level Warning -Message 'No counter elements found in JaCoCo report (empty or incomplete coverage data)'
                 }
                 
                 # Extract file-level coverage from classes
@@ -1223,43 +1234,45 @@ function Get-CodeCoverageDetails {
                         $filename = $class.sourcefilename
                         if (-not $filename) { continue }
                         
-                        # Get line counter for this class
-                        $classLineCounter = $class.counter | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
-                        if ($classLineCounter) {
-                            $classMissed = [int]$classLineCounter.missed
-                            $classCovered = [int]$classLineCounter.covered
-                            $classTotal = $classMissed + $classCovered
-                            
-                            $fileCoverage = if ($classTotal -gt 0) { 
-                                [math]::Round(($classCovered / $classTotal) * 100, 1)
-                            } else { 0 }
-                            
-                            $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
-                                     elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
-                                     else { 'other' }
-                            
-                            $coverage.ByFile += @{
-                                File = $filename
-                                Coverage = $fileCoverage
-                                Domain = $domain
-                                CoveredLines = $classCovered
-                                TotalLines = $classTotal
-                            }
-                            
-                            # Track by domain
-                            if (-not $coverage.ByDomain.ContainsKey($domain)) {
-                                $coverage.ByDomain[$domain] = @{ 
-                                    Files = 0
-                                    TotalCoverage = 0
-                                    AverageCoverage = 0
-                                    CoveredLines = 0
-                                    TotalLines = 0
+                        # Get line counter for this class - safely handle missing counter
+                        if ($class.counter) {
+                            $classLineCounter = @($class.counter) | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                            if ($classLineCounter) {
+                                $classMissed = [int]$classLineCounter.missed
+                                $classCovered = [int]$classLineCounter.covered
+                                $classTotal = $classMissed + $classCovered
+                                
+                                $fileCoverage = if ($classTotal -gt 0) { 
+                                    [math]::Round(($classCovered / $classTotal) * 100, 1)
+                                } else { 0 }
+                                
+                                $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
+                                         elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
+                                         else { 'other' }
+                                
+                                $coverage.ByFile += @{
+                                    File = $filename
+                                    Coverage = $fileCoverage
+                                    Domain = $domain
+                                    CoveredLines = $classCovered
+                                    TotalLines = $classTotal
                                 }
+                                
+                                # Track by domain
+                                if (-not $coverage.ByDomain.ContainsKey($domain)) {
+                                    $coverage.ByDomain[$domain] = @{ 
+                                        Files = 0
+                                        TotalCoverage = 0
+                                        AverageCoverage = 0
+                                        CoveredLines = 0
+                                        TotalLines = 0
+                                    }
+                                }
+                                $coverage.ByDomain[$domain].Files++
+                                $coverage.ByDomain[$domain].TotalCoverage += $fileCoverage
+                                $coverage.ByDomain[$domain].CoveredLines += $classCovered
+                                $coverage.ByDomain[$domain].TotalLines += $classTotal
                             }
-                            $coverage.ByDomain[$domain].Files++
-                            $coverage.ByDomain[$domain].TotalCoverage += $fileCoverage
-                            $coverage.ByDomain[$domain].CoveredLines += $classCovered
-                            $coverage.ByDomain[$domain].TotalLines += $classTotal
                         }
                     }
                 }
@@ -1399,7 +1412,9 @@ function Get-LifecycleAnalysis {
             $lastWrite = $doc.LastWriteTime
             $ageDays = ($now - $lastWrite).TotalDays
             $content = Get-Content $doc.FullName -ErrorAction SilentlyContinue
-            $lineCount = if ($content) { $content.Count } else { 0 }
+            # Ensure array for consistent Count property access
+            $contentArray = if ($content) { @($content) } else { @() }
+            $lineCount = $contentArray.Count
             
             $docData = @{
                 Path = $doc.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
@@ -1447,13 +1462,15 @@ function Get-LifecycleAnalysis {
             $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
             
             if ($content) {
-                $totalLines = $content.Count
+                # Ensure array for consistent Count property access
+                $contentArray = @($content)
+                $totalLines = $contentArray.Count
                 $codeLines = 0
                 $commentLines = 0
                 $blankLines = 0
                 $inCommentBlock = $false
                 
-                foreach ($line in $content) {
+                foreach ($line in $contentArray) {
                     $trimmed = $line.Trim()
                     
                     if ($trimmed -eq '') {
@@ -1764,20 +1781,20 @@ function Get-HistoricalMetrics {
             if ($currentData.Metrics) {
                 $history.TestTrends += @{
                     Date = $timestamp
-                    Total = $currentData.Metrics.Tests.Total
-                    Passed = $currentData.Metrics.Tests.Passed
-                    Failed = $currentData.Metrics.Tests.Failed
+                    Total = if ($currentData.Metrics.Tests.Total) { $currentData.Metrics.Tests.Total } else { 0 }
+                    Passed = if ($currentData.Metrics.Tests.Passed) { $currentData.Metrics.Tests.Passed } else { 0 }
+                    Failed = if ($currentData.Metrics.Tests.Failed) { $currentData.Metrics.Tests.Failed } else { 0 }
                 }
                 
                 $history.CoverageTrends += @{
                     Date = $timestamp
-                    Percentage = $currentData.Metrics.Coverage.Percentage
+                    Percentage = if ($currentData.Metrics.Coverage.Percentage) { $currentData.Metrics.Coverage.Percentage } else { 0 }
                 }
                 
                 $history.LOCTrends += @{
                     Date = $timestamp
-                    Total = $currentData.Metrics.Files.LinesOfCode
-                    Functions = $currentData.Metrics.Files.Functions
+                    Total = if ($currentData.Metrics.LinesOfCode) { $currentData.Metrics.LinesOfCode } else { 0 }
+                    Functions = if ($currentData.Metrics.Functions) { $currentData.Metrics.Functions } else { 0 }
                 }
             }
         }
