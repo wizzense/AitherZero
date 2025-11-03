@@ -1169,33 +1169,39 @@ function Get-FileLevelMetrics {
             
             # Run PSScriptAnalyzer on individual file
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
-                # Wrap immediately to handle single object results under StrictMode
-                # Use Measure-Object instead of .Count for maximum StrictMode compatibility
-                $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue)
-                $issueCount = ($rawIssues | Measure-Object).Count
-                $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
-                
-                if (($issues | Measure-Object).Count -gt 0) {
-                    # Wrap in array to ensure consistent type even with single result
-                    $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
-                        @{
-                            Rule = $_.RuleName
-                            Severity = $_.Severity
-                            Line = $_.Line
-                            Message = $_.Message
-                        }
-                    })
+                try {
+                    # Wrap immediately to handle single object results under StrictMode
+                    # Use Measure-Object instead of .Count for maximum StrictMode compatibility
+                    $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Stop)
+                    $issueCount = ($rawIssues | Measure-Object).Count
+                    $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                     
-                    # Calculate score (100 - issues penalty)
-                    $errorCount = @($issues | Where-Object { $_.Severity -eq 'Error' }).Count
-                    $warningCount = @($issues | Where-Object { $_.Severity -eq 'Warning' }).Count
-                    $infoCount = @($issues | Where-Object { $_.Severity -eq 'Information' }).Count
-                    $errorPenalty = $errorCount * 10
-                    $warningPenalty = $warningCount * 3
-                    $infoPenalty = $infoCount * 1
-                    $fileData.Score = [math]::Max(0, 100 - $errorPenalty - $warningPenalty - $infoPenalty)
-                } else {
-                    $fileData.Score = 100  # No issues
+                    if (($issues | Measure-Object).Count -gt 0) {
+                        # Wrap in array to ensure consistent type even with single result
+                        $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
+                            @{
+                                Rule = $_.RuleName
+                                Severity = $_.Severity
+                                Line = $_.Line
+                                Message = $_.Message
+                            }
+                        })
+                        
+                        # Calculate score (100 - issues penalty)
+                        $errorCount = @($issues | Where-Object { $_.Severity -eq 'Error' }).Count
+                        $warningCount = @($issues | Where-Object { $_.Severity -eq 'Warning' }).Count
+                        $infoCount = @($issues | Where-Object { $_.Severity -eq 'Information' }).Count
+                        $errorPenalty = $errorCount * 10
+                        $warningPenalty = $warningCount * 3
+                        $infoPenalty = $infoCount * 1
+                        $fileData.Score = [math]::Max(0, 100 - $errorPenalty - $warningPenalty - $infoPenalty)
+                    } else {
+                        $fileData.Score = 100  # No issues
+                    }
+                } catch {
+                    # Log PSScriptAnalyzer errors but continue with analysis
+                    Write-ScriptLog -Level Warning -Message "Failed to analyze file: $($file.Name) - $_"
+                    $fileData.Score = 0  # Mark as failed analysis
                 }
             } else {
                 $fileData.Score = 100  # No analyzer, assume clean
@@ -1968,6 +1974,14 @@ function Get-GitHubRepositoryData {
         # Use gh CLI if available for authenticated requests
         if (Get-Command gh -ErrorAction SilentlyContinue) {
             Write-ScriptLog -Message "Using GitHub CLI for authenticated request"
+            
+            # Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions compatibility
+            # gh CLI expects GH_TOKEN, but GitHub Actions provides GITHUB_TOKEN
+            if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
+                $env:GH_TOKEN = $env:GITHUB_TOKEN
+                Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
+            }
+            
             $response = gh api $apiUrl 2>&1
             if ($LASTEXITCODE -eq 0) {
                 $repoInfo = $response | ConvertFrom-Json
@@ -1983,9 +1997,11 @@ function Get-GitHubRepositoryData {
                 'Accept' = 'application/vnd.github.v3+json'
             }
             
-            # Add auth token if available
+            # Add auth token if available - GITHUB_TOKEN is the standard in GitHub Actions
             if ($env:GITHUB_TOKEN) {
                 $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            } elseif ($env:GH_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GH_TOKEN"
             }
             
             $repoInfo = Invoke-RestMethod -Uri $apiUrl -Headers $headers -ErrorAction Stop
@@ -2017,6 +2033,11 @@ function Get-GitHubRepositoryData {
             try {
                 $prUrl = "https://api.github.com/repos/$Owner/$Repo/pulls?state=open"
                 if (Get-Command gh -ErrorAction SilentlyContinue) {
+                    # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
+                    if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
+                        $env:GH_TOKEN = $env:GITHUB_TOKEN
+                    }
+                    
                     $prResponse = gh api $prUrl 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         $prs = $prResponse | ConvertFrom-Json
@@ -2062,6 +2083,12 @@ function Get-GitHubWorkflowStatus {
         
         # Use gh CLI if available
         if (Get-Command gh -ErrorAction SilentlyContinue) {
+            # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
+            if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
+                $env:GH_TOKEN = $env:GITHUB_TOKEN
+                Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
+            }
+            
             $response = gh api $workflowsUrl 2>&1
             if ($LASTEXITCODE -eq 0) {
                 $workflowsList = $response | ConvertFrom-Json
@@ -2074,9 +2101,14 @@ function Get-GitHubWorkflowStatus {
                 'User-Agent' = 'AitherZero-Dashboard'
                 'Accept' = 'application/vnd.github.v3+json'
             }
+            
+            # Add auth token if available - GITHUB_TOKEN is the standard in GitHub Actions
             if ($env:GITHUB_TOKEN) {
                 $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            } elseif ($env:GH_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GH_TOKEN"
             }
+            
             $workflowsList = Invoke-RestMethod -Uri $workflowsUrl -Headers $headers -ErrorAction Stop
         }
         
@@ -2087,6 +2119,11 @@ function Get-GitHubWorkflowStatus {
             $runsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/runs?per_page=10"
             
             if (Get-Command gh -ErrorAction SilentlyContinue) {
+                # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
+                if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
+                    $env:GH_TOKEN = $env:GITHUB_TOKEN
+                }
+                
                 $runsResponse = gh api $runsUrl 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     $runsData = $runsResponse | ConvertFrom-Json
@@ -2142,6 +2179,13 @@ function Get-GitHubIssues {
         # Use gh CLI if available for authenticated requests
         if (Get-Command gh -ErrorAction SilentlyContinue) {
             Write-ScriptLog -Message "Using GitHub CLI to fetch issues"
+            
+            # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
+            if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
+                $env:GH_TOKEN = $env:GITHUB_TOKEN
+                Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
+            }
+            
             $response = gh api $issuesUrl 2>&1
             if ($LASTEXITCODE -eq 0) {
                 $issuesList = $response | ConvertFrom-Json
@@ -2157,8 +2201,11 @@ function Get-GitHubIssues {
                 'Accept' = 'application/vnd.github.v3+json'
             }
             
+            # Add auth token if available - GITHUB_TOKEN is the standard in GitHub Actions
             if ($env:GITHUB_TOKEN) {
                 $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            } elseif ($env:GH_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GH_TOKEN"
             }
             
             $issuesList = Invoke-RestMethod -Uri $issuesUrl -Headers $headers -ErrorAction Stop
