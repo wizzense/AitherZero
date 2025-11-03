@@ -322,8 +322,12 @@ Key sections:
 
 **To modify configuration**:
 1. Edit `config.psd1` (master file)
-2. Validate with `./automation-scripts/0413_Validate-ConfigManifest.ps1`
-3. Test configuration loading with `Get-Configuration`
+2. **ALWAYS validate** with `./automation-scripts/0413_Validate-ConfigManifest.ps1` BEFORE committing
+3. Verify sync with `./automation-scripts/0003_Sync-ConfigManifest.ps1`
+4. Test configuration loading with `Get-Configuration`
+5. **Critical**: ScriptInventory counts must represent unique script NUMBERS (130), not total files (132)
+   - Scripts 0009 and 0530 have 2 files each by design
+   - Count unique numbers: `ls -1 automation-scripts/*.ps1 | sed 's/.*\///;s/_.*//' | sort -u | wc -l`
 
 **To add tests**:
 1. Use Pester 5.0+ syntax
@@ -766,6 +770,36 @@ Optimized VS Code and DevContainer configurations available:
 **Quick Start**: Open in VS Code and use "Reopen in Container" or install recommended extensions for local setup.
 
 See [docs/COPILOT-DEV-ENVIRONMENT.md](../docs/COPILOT-DEV-ENVIRONMENT.md) for complete setup guide.
+
+### Git Hooks for Quality Assurance
+
+AitherZero includes pre-commit hooks to prevent common issues:
+
+**To enable hooks:**
+```bash
+git config core.hooksPath .githooks
+```
+
+**Available hooks:**
+- **pre-commit**: Validates `config.psd1` before committing changes
+  - Runs `0413_Validate-ConfigManifest.ps1` automatically
+  - Blocks commits with invalid config
+  - Prevents CI failures from config issues
+
+**Why use hooks:**
+1. **Early detection** - Catches issues before pushing to CI
+2. **Fast feedback** - Immediate validation (no CI wait time)
+3. **Prevents mistakes** - Automated checks for all contributors
+4. **Saves time** - Fix issues locally, not after PR submission
+
+**For AI agents:**
+When modifying `config.psd1`, the hook will automatically validate before commit. If validation fails:
+1. Review the error output
+2. Fix the issues in config.psd1
+3. Run validation manually: `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+4. Retry the commit
+
+See [.githooks/README.md](../.githooks/README.md) for complete hook documentation.
 
 ### Effective Copilot Usage
 

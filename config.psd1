@@ -113,7 +113,7 @@
                 }
                 DevTools = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0205', '0209', '0211', '0214', '0215', '0216')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
+                    Scripts = @('0205', '0209', '0211', '0214', '0215', '0216', '0219')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
                     Description = 'Additional development utilities'
                 }
                 AITools = @{
@@ -297,6 +297,11 @@
                     Scripts = @('0736', '0740', '0741', '0742', '0743')
                     Description = 'AI workflow generation, integration, and automation'
                 }
+                MCPServer = @{
+                    DependsOn = @('Core.PowerShell7', 'Development.Node')
+                    Scripts = @('0750', '0751', '0752', '0753')
+                    Description = 'Model Context Protocol server for AI integration - build, start, demo, and use'
+                }
             }
             
             # Issue management and tracking
@@ -323,8 +328,8 @@
                 }
                 PRDeployment = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts = @('0850', '0851', '0852', '0853', '0854')
-                    Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, and container management'
+                    Scripts = @('0850', '0851', '0852', '0853', '0854', '0860')
+                    Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, container management, and deployment validation'
                 }
             }
             
@@ -419,7 +424,9 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (131 total files, 130 unique numbers - 0215 renamed from Chocolatey to MCP, Chocolatey moved to 0219)
+        # Script inventory by range (132 total files, 130 unique numbers)
+        # Note: Scripts 0009 and 0530 have 2 files each for related functionality
+        # Counts represent unique script NUMBERS, not total files
         ScriptInventory = @{
             '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }

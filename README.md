@@ -53,7 +53,16 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ./bootstrap.sh
 ```
 
-**Note**: After cloning, run `bash tools/setup-git-merge.sh` to configure Git to handle auto-generated `index.md` files correctly. This prevents merge conflicts. See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) for details.
+**Note**: After cloning, run these setup commands:
+```bash
+# Configure Git merge strategy for auto-generated files
+bash tools/setup-git-merge.sh
+
+# Enable pre-commit hooks for validation (recommended for contributors)
+pwsh -File tools/Setup-GitHooks.ps1
+```
+
+See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
 
 **Option 3: Git Clone**
 ```bash
