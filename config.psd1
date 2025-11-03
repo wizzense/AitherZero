@@ -426,14 +426,14 @@
         
         # Script inventory by range (132 total files, 130 unique numbers)
         # Note: Scripts 0009 and 0530 have 2 files each for related functionality
-        # This PR adds: 0219 (Chocolatey), 0750-0753 (MCP Server), 0860 (Deployment Validation)
+        # Counts represent unique script NUMBERS, not total files
         ScriptInventory = @{
-            '0000-0099' = @{ Count = 9; Category = 'Environment Setup' }
+            '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 25; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 17; Category = 'Reporting & Analytics' }
+            '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 34; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
