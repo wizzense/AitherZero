@@ -185,7 +185,15 @@ function Get-ProjectMetrics {
             WarningFiles = 0
             FailedFiles = 0
             TotalValidated = 0
+            TotalIssues = 0
             AverageScore = 0
+        }
+        Issues = @{
+            Open = 0
+            Closed = 0
+            Total = 0
+            ByLabel = @{}
+            Recent = @()
         }
         Coverage = @{
             Percentage = 0
@@ -300,47 +308,72 @@ function Get-ProjectMetrics {
         $metrics.Tests.Total = $metrics.Tests.Unit + $metrics.Tests.Integration
     }
     
-    # Calculate test coverage (what % of code files have meaningful tests)
-    $allCodeFiles = @(
-        Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
-        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
+    # Calculate test coverage for automation scripts specifically (number-based tests in range directories)
+    $automationScriptsPath = Join-Path $ProjectPath "automation-scripts"
+    $automationScripts = @()
+    if (Test-Path $automationScriptsPath) {
+        $automationScripts = @(Get-ChildItem -Path $automationScriptsPath -Filter "*.ps1" -File)
+    }
+    
+    # Also count domain modules for complete coverage
+    $domainModules = @(
+        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object { $_.FullName -match 'domains/' }
     )
     
+    $allCodeFiles = @($automationScripts) + @($domainModules)
     $metrics.TestCoverage.TotalFiles = $allCodeFiles.Count
     
     foreach ($codeFile in $allCodeFiles) {
-        # Check if a corresponding test file exists AND has meaningful content
-        $relativePath = $codeFile.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
-        $testFileName = $codeFile.Name -replace '\.ps(m?)1$', '.Tests.ps1'
-        
-        # Check multiple possible test locations  
-        $relativeDir = Split-Path $relativePath -Parent
-        $possibleTestPaths = @(
-            (Join-Path (Join-Path $ProjectPath "tests/unit") $relativeDir | Join-Path -ChildPath $testFileName),
-            (Join-Path (Join-Path $ProjectPath "tests/integration") $relativeDir | Join-Path -ChildPath $testFileName),
-            (Join-Path (Join-Path $ProjectPath "tests/unit") $testFileName),
-            (Join-Path (Join-Path $ProjectPath "tests/integration") $testFileName)
-        )
-        
         $hasTest = $false
-        foreach ($testFilePath in $possibleTestPaths) {
-            if (Test-Path $testFilePath) {
-                # Check if test file has meaningful content (not just boilerplate)
-                try {
-                    $testContent = Get-Content $testFilePath -Raw -ErrorAction SilentlyContinue
-                    if ($testContent) {
-                        # Check for actual test blocks (It, Describe, Context)
-                        $hasDescribe = $testContent -match 'Describe\s+'
-                        $hasIt = $testContent -match '\bIt\s+[''"]'
-                        
-                        # Must have both Describe and It blocks to count as meaningful test
-                        if ($hasDescribe -and $hasIt) {
+        $relativePath = $codeFile.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
+        
+        # For automation scripts: Check in range-based directories (0000-0099, 0100-0199, etc.)
+        if ($relativePath -match 'automation-scripts') {
+            # Extract script number (e.g., 0402 from 0402_Run-UnitTests.ps1)
+            if ($codeFile.Name -match '^(\d{4})_') {
+                $scriptNumber = [int]$matches[1]
+                $rangeStart = ([int]($scriptNumber / 100)) * 100
+                $rangeEnd = $rangeStart + 99
+                $rangeDir = "$($rangeStart.ToString().PadLeft(4, '0'))-$($rangeEnd.ToString().PadLeft(4, '0'))"
+                $testFileName = $codeFile.Name -replace '\.ps1$', '.Tests.ps1'
+                
+                # Check in the appropriate range directory
+                $testPath = Join-Path $ProjectPath "tests/unit/automation-scripts/$rangeDir/$testFileName"
+                
+                if (Test-Path $testPath) {
+                    # Verify test has meaningful content
+                    try {
+                        $testContent = Get-Content $testPath -Raw -ErrorAction SilentlyContinue
+                        if ($testContent -and $testContent -match 'Describe\s+' -and $testContent -match '\bIt\s+[''"]') {
+                            $hasTest = $true
+                        }
+                    } catch {
+                        # If we can't read it, don't count it
+                    }
+                }
+            }
+        }
+        # For domain modules: Check standard test locations
+        else {
+            $testFileName = $codeFile.Name -replace '\.psm1$', '.Tests.ps1'
+            $relativeDir = Split-Path $relativePath -Parent
+            
+            $possibleTestPaths = @(
+                (Join-Path (Join-Path $ProjectPath "tests/unit") $relativeDir | Join-Path -ChildPath $testFileName),
+                (Join-Path (Join-Path $ProjectPath "tests/domains") ($relativeDir -replace 'domains/', '') | Join-Path -ChildPath $testFileName)
+            )
+            
+            foreach ($testFilePath in $possibleTestPaths) {
+                if (Test-Path $testFilePath) {
+                    try {
+                        $testContent = Get-Content $testFilePath -Raw -ErrorAction SilentlyContinue
+                        if ($testContent -and $testContent -match 'Describe\s+' -and $testContent -match '\bIt\s+[''"]') {
                             $hasTest = $true
                             break
                         }
+                    } catch {
+                        # If we can't read it, don't count it
                     }
-                } catch {
-                    # If we can't read it, don't count it
                 }
             }
         }
@@ -359,7 +392,7 @@ function Get-ProjectMetrics {
         )
     }
     
-    Write-ScriptLog -Message "Test coverage: $($metrics.TestCoverage.FilesWithTests) of $($metrics.TestCoverage.TotalFiles) files have meaningful tests"
+    Write-ScriptLog -Message "Test coverage: $($metrics.TestCoverage.FilesWithTests) of $($metrics.TestCoverage.TotalFiles) files have tests (Automation scripts: $($automationScripts.Count), Domain modules: $($domainModules.Count))"
     
     # Calculate documentation coverage (what % of functions have help documentation)
     $metrics.DocumentationCoverage.TotalFunctions = $metrics.Functions
@@ -420,9 +453,9 @@ function Get-ProjectMetrics {
             $pssaData = Get-Content $latestPssaSummary.FullName -Raw | ConvertFrom-Json
             if ($pssaData.Summary) {
                 $totalIssues = $pssaData.Summary.TotalIssues
-                $errors = if ($pssaData.Summary.BySeverity.Error) { $pssaData.Summary.BySeverity.Error } else { 0 }
-                $warnings = if ($pssaData.Summary.BySeverity.Warning) { $pssaData.Summary.BySeverity.Warning } else { 0 }
-                $info = if ($pssaData.Summary.BySeverity.Information) { $pssaData.Summary.BySeverity.Information } else { 0 }
+                $errors = if ($pssaData.Summary.BySeverity.PSObject.Properties['Error']) { $pssaData.Summary.BySeverity.Error } else { 0 }
+                $warnings = if ($pssaData.Summary.BySeverity.PSObject.Properties['Warning']) { $pssaData.Summary.BySeverity.Warning } else { 0 }
+                $info = if ($pssaData.Summary.BySeverity.PSObject.Properties['Information']) { $pssaData.Summary.BySeverity.Information } else { 0 }
                 
                 # Count files from ByScript hash
                 $filesWithIssues = if ($pssaData.Summary.ByScript) { $pssaData.Summary.ByScript.PSObject.Properties.Count } else { 0 }
@@ -448,6 +481,7 @@ function Get-ProjectMetrics {
                 $metrics.QualityCoverage.FailedFiles = $filesWithErrors
                 $metrics.QualityCoverage.WarningFiles = [math]::Max(0, $filesWithIssues - $filesWithErrors)
                 $metrics.QualityCoverage.PassedFiles = $cleanFiles
+                $metrics.QualityCoverage.TotalIssues = $totalIssues
                 
                 # Calculate quality score: penalize based on issues per file
                 $avgIssuesPerFile = if ($totalPSFiles -gt 0) { $totalIssues / $totalPSFiles } else { 0 }
@@ -461,7 +495,7 @@ function Get-ProjectMetrics {
                     )
                 }
                 
-                Write-ScriptLog -Message "Quality coverage calculated from baseline: $totalIssues issues across $filesWithIssues files (of $totalPSFiles total)"
+                Write-ScriptLog -Message "Quality coverage calculated from baseline: $totalIssues total issues across $filesWithIssues files (of $totalPSFiles total)"
             }
         } catch {
             Write-ScriptLog -Level Warning -Message "Failed to parse baseline quality results: $_"
@@ -2026,6 +2060,88 @@ function Get-GitHubWorkflowStatus {
     return $workflowData
 }
 
+function Get-GitHubIssues {
+    <#
+    .SYNOPSIS
+        Fetch open GitHub issues for the repository
+    #>
+    param(
+        [string]$Owner = "wizzense",
+        [string]$Repo = "AitherZero",
+        [int]$MaxIssues = 10
+    )
+    
+    Write-ScriptLog -Message "Fetching GitHub issues for $Owner/$Repo"
+    
+    $issuesData = @{
+        TotalOpen = 0
+        Issues = @()
+        Error = $null
+    }
+    
+    try {
+        $issuesUrl = "https://api.github.com/repos/$Owner/$Repo/issues?state=open&per_page=$MaxIssues"
+        
+        # Use gh CLI if available for authenticated requests
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            Write-ScriptLog -Message "Using GitHub CLI to fetch issues"
+            $response = gh api $issuesUrl 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $issuesList = $response | ConvertFrom-Json
+            } else {
+                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
+                $issuesList = $null
+            }
+        } else {
+            # Fallback to direct API call
+            Write-ScriptLog -Message "Using direct API request for issues"
+            $headers = @{
+                'User-Agent' = 'AitherZero-Dashboard'
+                'Accept' = 'application/vnd.github.v3+json'
+            }
+            
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            }
+            
+            $issuesList = Invoke-RestMethod -Uri $issuesUrl -Headers $headers -ErrorAction Stop
+        }
+        
+        if ($issuesList) {
+            # Ensure array wrapping for consistent Count property
+            $issuesArray = @($issuesList)
+            $issuesData.TotalOpen = $issuesArray.Count
+            
+            foreach ($issue in $issuesArray) {
+                # Skip pull requests (GitHub API returns them as issues)
+                if ($issue.pull_request) {
+                    continue
+                }
+                
+                $labels = @($issue.labels | ForEach-Object { $_.name })
+                
+                $issuesData.Issues += @{
+                    Number = $issue.number
+                    Title = $issue.title
+                    State = $issue.state
+                    Labels = $labels
+                    CreatedAt = $issue.created_at
+                    UpdatedAt = $issue.updated_at
+                    Url = $issue.html_url
+                    User = $issue.user.login
+                }
+            }
+            
+            Write-ScriptLog -Message "Successfully fetched $($issuesData.Issues.Count) open issues"
+        }
+    } catch {
+        $issuesData.Error = $_.Exception.Message
+        Write-ScriptLog -Level Warning -Message "Failed to fetch GitHub issues: $($_.Exception.Message)"
+    }
+    
+    return $issuesData
+}
+
 function Get-HistoricalMetrics {
     param(
         [string]$ReportsPath = "./reports",
@@ -3074,6 +3190,7 @@ $manifestTagsSection
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
             <li><a href="#github-activity">🌟 GitHub</a></li>
             <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#github-issues">🐛 Issues</a></li>
             <li><a href="#trends">📈 Trends</a></li>
         </ul>
     </nav>
@@ -3256,20 +3373,20 @@ $manifestTagsSection
                     </div>
                     
                     <div class="metric-card">
-                        <h3>✨ Code Quality Coverage</h3>
-                        <div class="metric-value">$($Metrics.QualityCoverage.Percentage)%</div>
+                        <h3>✨ Code Quality</h3>
+                        <div class="metric-value">$($Metrics.QualityCoverage.AverageScore)/100</div>
                         <div class="metric-label">
-                            Quality Score: $($Metrics.QualityCoverage.AverageScore)%
+                            $(if($Metrics.QualityCoverage.TotalIssues -gt 0){"$($Metrics.QualityCoverage.TotalIssues) issues in $($Metrics.QualityCoverage.WarningFiles + $Metrics.QualityCoverage.FailedFiles) files"}else{"No issues found"})
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: $($Metrics.QualityCoverage.Percentage)%; background: $(if($Metrics.QualityCoverage.Percentage -ge 80){'var(--success)'}elseif($Metrics.QualityCoverage.Percentage -ge 60){'var(--warning)'}else{'var(--error)'})">
-                                $($Metrics.QualityCoverage.Percentage)%
+                            <div class="progress-fill" style="width: $($Metrics.QualityCoverage.AverageScore)%; background: $(if($Metrics.QualityCoverage.AverageScore -ge 80){'var(--success)'}elseif($Metrics.QualityCoverage.AverageScore -ge 60){'var(--warning)'}else{'var(--error)'})">
+                                $($Metrics.QualityCoverage.AverageScore)/100
                             </div>
                         </div>
                         $(if($Metrics.QualityCoverage.TotalValidated -gt 0) {
                             @"
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ✅ $($Metrics.QualityCoverage.PassedFiles) passed, ⚠️ $($Metrics.QualityCoverage.WarningFiles) warnings, ❌ $($Metrics.QualityCoverage.FailedFiles) failed
+                            ✅ $($Metrics.QualityCoverage.PassedFiles) clean, ⚠️ $($Metrics.QualityCoverage.WarningFiles) warnings, ❌ $($Metrics.QualityCoverage.FailedFiles) errors
                         </div>
 "@
                         } else {
@@ -3279,26 +3396,6 @@ $manifestTagsSection
                         </div>
 "@
                         })
-                    </div>
-
-                    <div class="metric-card">
-                        <h3>📊 Line Coverage</h3>
-                        <div class="metric-value">$($Metrics.Coverage.Percentage)%</div>
-                        <div class="metric-label">
-                            $(if($Metrics.Coverage.TotalLines -gt 0){"$($Metrics.Coverage.CoveredLines) / $($Metrics.Coverage.TotalLines) Lines Executed"}else{"No execution data available"})
-                        </div>
-                        $(if($Metrics.Coverage.Percentage -gt 0) {
-                            @"
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: $($Metrics.Coverage.Percentage)%">
-                                $($Metrics.Coverage.Percentage)%
-                            </div>
-                        </div>
-"@
-                        })
-                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            From Pester code coverage analysis
-                        </div>
                     </div>
                     
                     $(if ($Metrics.Git.Branch -ne "Unknown") {
@@ -3480,7 +3577,7 @@ $domainsHTML
                     <div class="badge $(if($Status.Tests -eq 'Passing'){''}elseif($Status.Tests -eq 'Failing'){'error'}else{'warning'})">
                         Tests: $($Status.Tests)
                     </div>
-                    <div class="badge info">Coverage: $($Metrics.Coverage.Percentage)%</div>
+                    <div class="badge info">Quality: $($Metrics.QualityCoverage.AverageScore)/100</div>
                     <div class="badge">Security: Scanned</div>
                     <div class="badge">Platform: $($Metrics.Platform)</div>
                     <div class="badge">PowerShell: $($Metrics.PSVersion)</div>
@@ -3788,6 +3885,47 @@ $commitsHTML
                 </p>
             </section>
 
+            <!-- GitHub Issues Section -->
+            <section class="section" id="github-issues" style="margin-top: 30px;">
+                <h2>🐛 Open GitHub Issues</h2>
+                $(if($githubIssues.Error){
+                    "<p style='color: var(--text-secondary); text-align: center;'>⚠️ <em>Unable to fetch issues: $($githubIssues.Error)</em></p>"
+                }elseif($githubIssues.Issues.Count -eq 0){
+                    "<p style='color: var(--text-secondary); text-align: center;'>✅ <em>No open issues! Great job!</em></p>"
+                }else{
+                    $issuesHTML = ""
+                    foreach($issue in $githubIssues.Issues){
+                        $labelsHTML = if($issue.Labels.Count -gt 0){
+                            $issue.Labels | ForEach-Object {
+                                "<span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>$_</span>"
+                            } | Join-String -Separator " "
+                        }else{"<span style='color: var(--text-secondary); font-size: 0.85rem;'>No labels</span>"}
+                        
+                        $issuesHTML += @"
+                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='$($issue.Url)' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #$($issue.Number): $($issue.Title)
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>$($issue.User)</strong> on $([DateTime]::Parse($issue.CreatedAt).ToString('yyyy-MM-dd'))
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        $labelsHTML
+                    </div>
+                </div>
+"@
+                    }
+                    $issuesHTML
+                })
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    Showing up to 10 open issues | <a href="https://github.com/wizzense/AitherZero/issues" target="_blank" style="color: var(--info);">View all issues</a>
+                </p>
+            </section>
+
             <!-- Historical Trends Section -->
             <section class="section" id="trends" style="margin-top: 30px;">
                 <h2>📈 Historical Trends</h2>
@@ -3805,23 +3943,6 @@ $commitsHTML
                             $testTrendHTML
                         }else{
                             "<p style='color: var(--text-secondary);'>No historical test data available yet. Data will accumulate over time.</p>"
-                        })
-                    </div>
-                </div>
-                
-                <div class="info-card" style="margin-top: 20px;">
-                    <div class="info-card-header">📈 Code Coverage Trends</div>
-                    <div class="info-card-content">
-                        $(if($HistoricalMetrics.CoverageTrends.Count -gt 0){
-                            $coverageTrendHTML = ""
-                            foreach($trend in ($HistoricalMetrics.CoverageTrends | Select-Object -First 5)){
-                                $coverageTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
-                                $coverageTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Percentage)% coverage"
-                                $coverageTrendHTML += "</div>"
-                            }
-                            $coverageTrendHTML
-                        }else{
-                            "<p style='color: var(--text-secondary);'>No historical coverage data available yet. Run tests with coverage to populate.</p>"
                         })
                     </div>
                 </div>
@@ -4094,8 +4215,7 @@ $(if ($Metrics.Tests.LastRun) {
 "
 })| 🧪 **Test Coverage** | **$($Metrics.TestCoverage.Percentage)%** | $($Metrics.TestCoverage.FilesWithTests) / $($Metrics.TestCoverage.TotalFiles) files have tests |
 | 📚 **Documentation Coverage** | **$($Metrics.DocumentationCoverage.Percentage)%** | $($Metrics.DocumentationCoverage.FunctionsWithDocs) / $($Metrics.DocumentationCoverage.TotalFunctions) functions documented |
-| ✨ **Code Quality Coverage** | **$($Metrics.QualityCoverage.Percentage)%** | Quality Score: $($Metrics.QualityCoverage.AverageScore)% (✅ $($Metrics.QualityCoverage.PassedFiles) / ⚠️ $($Metrics.QualityCoverage.WarningFiles) / ❌ $($Metrics.QualityCoverage.FailedFiles)) |
-| 📊 **Line Coverage** | **$($Metrics.Coverage.Percentage)%** | $(if($Metrics.Coverage.TotalLines -gt 0){"$($Metrics.Coverage.CoveredLines)/$($Metrics.Coverage.TotalLines) lines executed"}else{"No execution data available"}) |
+| ✨ **Code Quality** | **$($Metrics.QualityCoverage.AverageScore)/100** | $(if($Metrics.QualityCoverage.TotalIssues -gt 0){"$($Metrics.QualityCoverage.TotalIssues) issues in $($Metrics.QualityCoverage.WarningFiles + $Metrics.QualityCoverage.FailedFiles) files"}else{"No issues found"}) (✅ $($Metrics.QualityCoverage.PassedFiles) clean / ⚠️ $($Metrics.QualityCoverage.WarningFiles) warnings / ❌ $($Metrics.QualityCoverage.FailedFiles) errors) |
 
 $(if ($Metrics.Git.Branch -ne "Unknown") {
 @"
@@ -4138,7 +4258,7 @@ $(switch ($Status.Overall) {
 ### Build Status
 - **Tests:** $(switch ($Status.Tests) { 'Passing' { '✅ Passing' } 'Failing' { '❌ Failing' } default { '❓ Unknown' } })
 - **Security:** 🛡️ Scanned
-- **Coverage:** 📊 $($Metrics.Coverage.Percentage)%
+- **Code Quality:** 📊 $($Metrics.QualityCoverage.AverageScore)/100
 - **Platform:** 💻 $($Metrics.Platform)
 - **PowerShell:** ⚡ $($Metrics.PSVersion)
 
@@ -4262,6 +4382,10 @@ try {
     Write-ScriptLog -Message "Fetching GitHub Actions workflow status..."
     $workflowStatus = Get-GitHubWorkflowStatus -Owner "wizzense" -Repo "AitherZero"
     
+    # Fetch GitHub issues
+    Write-ScriptLog -Message "Fetching GitHub issues..."
+    $githubIssues = Get-GitHubIssues -Owner "wizzense" -Repo "AitherZero" -MaxIssues 10
+    
     # Load historical metrics for trend analysis (pass current metrics for saving)
     Write-ScriptLog -Message "Loading historical metrics data..."
     $historicalMetrics = Get-HistoricalMetrics -ReportsPath $OutputPath -CurrentMetrics $metrics
@@ -4357,8 +4481,7 @@ try {
     Write-Host "`n📈 Coverage Metrics:" -ForegroundColor Cyan
     Write-Host "  Test Coverage: $($metrics.TestCoverage.Percentage)% ($($metrics.TestCoverage.FilesWithTests)/$($metrics.TestCoverage.TotalFiles) files)" -ForegroundColor $(if($metrics.TestCoverage.Percentage -ge 80){'Green'}elseif($metrics.TestCoverage.Percentage -ge 60){'Yellow'}else{'Red'})
     Write-Host "  Documentation Coverage: $($metrics.DocumentationCoverage.Percentage)% ($($metrics.DocumentationCoverage.FunctionsWithDocs)/$($metrics.DocumentationCoverage.TotalFunctions) functions)" -ForegroundColor $(if($metrics.DocumentationCoverage.Percentage -ge 80){'Green'}elseif($metrics.DocumentationCoverage.Percentage -ge 60){'Yellow'}else{'Red'})
-    Write-Host "  Code Quality: $($metrics.QualityCoverage.Percentage)% (Score: $($metrics.QualityCoverage.AverageScore)%)" -ForegroundColor $(if($metrics.QualityCoverage.Percentage -ge 80){'Green'}elseif($metrics.QualityCoverage.Percentage -ge 60){'Yellow'}else{'Red'})
-    Write-Host "  Line Coverage: $($metrics.Coverage.Percentage)% $(if($metrics.Coverage.TotalLines -gt 0){"($($metrics.Coverage.CoveredLines)/$($metrics.Coverage.TotalLines) lines)"}else{"(no data)"})" -ForegroundColor $(if($metrics.Coverage.Percentage -ge 80){'Green'}elseif($metrics.Coverage.Percentage -ge 60){'Yellow'}else{'Gray'})
+    Write-Host "  Code Quality: $($metrics.QualityCoverage.AverageScore)/100 $(if($metrics.QualityCoverage.TotalIssues -gt 0){"($($metrics.QualityCoverage.TotalIssues) issues)"}else{"(clean)"})" -ForegroundColor $(if($metrics.QualityCoverage.AverageScore -ge 80){'Green'}elseif($metrics.QualityCoverage.AverageScore -ge 60){'Yellow'}else{'Red'})
     Write-Host "`n  Status: $($status.Overall)" -ForegroundColor $(if($status.Overall -eq 'Healthy'){'Green'}elseif($status.Overall -eq 'Issues'){'Yellow'}else{'Gray'})
 
     Write-ScriptLog -Message "Dashboard generation completed successfully" -Data @{
