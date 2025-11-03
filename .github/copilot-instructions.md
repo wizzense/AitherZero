@@ -118,6 +118,61 @@ Invoke-Pester -Path "./tests/domains/configuration" -CodeCoverage "./domains/con
 Invoke-Pester -Path "./tests"
 ```
 
+### Automatic Test Generation System
+
+**CRITICAL: DO NOT WRITE TESTS MANUALLY!** AitherZero has a 100% automated test generation system.
+
+**Test Generation Workflow:**
+1. When you create a new automation script in `automation-scripts/`
+2. The `auto-generate-tests.yml` workflow automatically detects missing tests
+3. Tests are auto-generated using `0950_Generate-AllTests.ps1`
+4. Generated tests are committed to your PR automatically
+
+**Manual Test Generation:**
+```powershell
+# Generate tests for scripts without tests (Quick mode)
+./automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick
+
+# Regenerate ALL tests (use sparingly)
+./automation-scripts/0950_Generate-AllTests.ps1 -Mode Full -Force
+
+# Watch mode for continuous generation during development
+./automation-scripts/0950_Generate-AllTests.ps1 -Mode Watch
+```
+
+**What Gets Auto-Generated:**
+- Script validation tests (file exists, valid syntax)
+- Parameter validation tests
+- Metadata checks (stage, dependencies, tags)
+- WhatIf execution tests
+- Basic functionality tests
+
+**Test Structure:**
+- Unit tests: `tests/unit/automation-scripts/{range}/` (e.g., `0400-0499/`)
+- Integration tests: `tests/integration/automation-scripts/`
+- Domain tests: `tests/domains/{domain}/`
+
+**Validation:**
+```powershell
+# Validate all scripts have tests
+./automation-scripts/0426_Validate-TestScriptSync.ps1
+
+# Remove orphaned tests (tests for deleted scripts)
+./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned
+```
+
+**CI/CD Integration:**
+- `auto-generate-tests.yml`: Automatically generates missing tests on PRs
+- `validate-test-sync.yml`: Validates test-script synchronization
+- `comprehensive-test-execution.yml`: Runs all generated tests
+
+**Important Rules:**
+1. ❌ **Never create test files manually** - use the generator
+2. ✅ **Always run 0950_Generate-AllTests.ps1** after creating new scripts
+3. ✅ **Commit generated tests** along with your script changes
+4. ✅ **Let CI auto-generate** if you forget - it will handle it
+5. ✅ **Run validation** before finalizing PRs: `./automation-scripts/0426_Validate-TestScriptSync.ps1`
+
 ### Orchestration & Playbooks
 ```powershell
 # Run playbook sequences

@@ -115,7 +115,17 @@ jobs:
         run: |
           Write-Host "📦 Installing testing tools..." -ForegroundColor Cyan
           ./automation-scripts/0400_Install-TestingTools.ps1
-      
+
+      - name: 🔍 Validate Test-Script Synchronization
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "🔍 Validating test-script synchronization..." -ForegroundColor Cyan
+          ./automation-scripts/0426_Validate-TestScriptSync.ps1 -CI
+          if ($LASTEXITCODE -eq 1) {
+            Write-Host "⚠️  Orphaned tests detected but tests will continue" -ForegroundColor Yellow
+          }
+
       - name: 🧪 Run Unit Tests
         shell: pwsh
         timeout-minutes: 5
@@ -211,7 +221,17 @@ jobs:
         run: |
           Write-Host "📦 Installing testing tools..." -ForegroundColor Cyan
           ./automation-scripts/0400_Install-TestingTools.ps1
-      
+
+      - name: 🔍 Validate Test-Script Synchronization
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "🔍 Validating test-script synchronization..." -ForegroundColor Cyan
+          ./automation-scripts/0426_Validate-TestScriptSync.ps1 -CI
+          if ($LASTEXITCODE -eq 1) {
+            Write-Host "⚠️  Orphaned tests detected but tests will continue" -ForegroundColor Yellow
+          }
+
       - name: 🔗 Run Integration Tests
         shell: pwsh
         timeout-minutes: 10
