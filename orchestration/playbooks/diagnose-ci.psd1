@@ -14,7 +14,7 @@
     # Scripts to execute in order
     Scripts = @(
         @{
-            Number = '0530'
+            Number = '0531'
             Name = 'Get-WorkflowRunReport'
             Description = 'Fetch and analyze workflow run failures'
             Parameters = @{

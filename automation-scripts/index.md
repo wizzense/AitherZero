@@ -140,7 +140,7 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Analyzes security issues across the codebase*
 - ⚙️ [0524_Generate-TechDebtReport.ps1](./0524_Generate-TechDebtReport.ps1)
   - *Generates comprehensive tech debt report from analysis results*
-- ⚙️ [0530_Get-WorkflowRunReport.ps1](./0530_Get-WorkflowRunReport.ps1)
+- ⚙️ [0531_Get-WorkflowRunReport.ps1](./0531_Get-WorkflowRunReport.ps1)
   - *Get detailed workflow run reports for CI debugging.*
 - ⚙️ [0530_View-Logs.ps1](./0530_View-Logs.ps1)
 - ⚙️ [0550_Health-Dashboard.ps1](./0550_Health-Dashboard.ps1)

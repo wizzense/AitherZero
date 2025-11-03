@@ -1,0 +1,191 @@
+# SERVERNAME MCP Server - Usage Guide
+
+This guide provides examples of using the SERVERNAME MCP server with AI assistants.
+
+## Available Tools
+
+### Tool 1: example_tool
+
+**Description**: Example tool that demonstrates the MCP tool pattern
+
+**Parameters**:
+- `param1` (required): First parameter description
+- `param2` (optional): Second parameter description
+
+**Example Usage**:
+```
+Ask AI: "Use example_tool with param1 set to 'test'"
+```
+
+**Expected Result**: Description of what the tool returns
+
+---
+
+*Add documentation for each of your tools here*
+
+## Available Resources
+
+### Resource 1: SERVERNAME://example
+
+**Description**: Example resource that provides server status
+
+**MIME Type**: application/json
+
+**Example Usage**:
+```
+Ask AI: "Show me the SERVERNAME example resource"
+```
+
+**Expected Result**: JSON object with server status
+
+---
+
+*Add documentation for each of your resources here*
+
+## Common Workflows
+
+### Workflow 1: [Workflow Name]
+
+**Goal**: Describe what this workflow accomplishes
+
+**Steps**:
+1. Step 1 description
+2. Step 2 description
+3. Step 3 description
+
+**AI Prompt Examples**:
+```
+"[Example prompt that triggers this workflow]"
+```
+
+### Workflow 2: [Another Workflow]
+
+**Goal**: Another workflow description
+
+**Steps**:
+1. Step 1
+2. Step 2
+
+---
+
+*Add your common workflows here*
+
+## Examples by Use Case
+
+### Use Case 1: [Specific Task]
+
+**Scenario**: Describe the scenario
+
+**AI Interaction**:
+```
+User: "[What user asks]"
+AI: [Uses SERVERNAME tools]
+    "[What AI responds]"
+```
+
+**Result**: What gets accomplished
+
+### Use Case 2: [Another Task]
+
+**Scenario**: Another scenario
+
+**AI Interaction**:
+```
+User: "[User request]"
+AI: [Uses SERVERNAME]
+    "[AI response]"
+```
+
+---
+
+*Add realistic usage examples here*
+
+## Best Practices
+
+1. **Clear Requests**: Be specific about what you want
+2. **Validate Results**: Check that operations completed successfully
+3. **Error Handling**: AI will report errors from the server
+4. **Resource Queries**: Use resources for read-only data
+5. **Tool Actions**: Use tools for operations that change state
+
+## Tips for AI Assistants
+
+When using this MCP server:
+
+- **Tool Selection**: Choose tools based on their descriptions
+- **Parameter Validation**: Ensure required parameters are provided
+- **Error Messages**: Parse error messages and suggest fixes
+- **Resource Caching**: Resources can be cached temporarily
+- **Chaining Operations**: Multiple tools can be used in sequence
+
+## Troubleshooting
+
+### "Tool not found"
+
+**Cause**: Tool name doesn't match available tools
+
+**Solution**: Ask AI to list available tools first
+
+### "Invalid parameters"
+
+**Cause**: Required parameters missing or wrong type
+
+**Solution**: Check tool description for parameter requirements
+
+### "Operation failed"
+
+**Cause**: Tool execution encountered an error
+
+**Solution**: Check error message for details, verify prerequisites
+
+## Advanced Usage
+
+### Combining Multiple Tools
+
+Example of using multiple tools together:
+
+```
+User: "First do X, then do Y, and finally check Z"
+AI: [Uses tool_x]
+    [Uses tool_y]
+    [Uses resource_z to verify]
+    "All operations completed successfully"
+```
+
+### Using Resources for Context
+
+Example of using resources to inform actions:
+
+```
+User: "Check the status and take appropriate action"
+AI: [Reads resource://status]
+    [Based on status, uses appropriate tool]
+    "Action taken based on current status"
+```
+
+## Integration Tips
+
+### With Other MCP Servers
+
+SERVERNAME can work alongside other MCP servers:
+
+```
+User: "Use filesystem to find X, then use SERVERNAME to process it"
+AI: [Uses filesystem MCP]
+    [Uses SERVERNAME MCP]
+```
+
+### With AI Assistant Features
+
+Leverage AI assistant capabilities:
+
+- **Code Generation**: Generate code that uses your server
+- **Workflow Automation**: Create workflows using your tools
+- **Documentation**: AI can explain your server's capabilities
+
+## Getting More Help
+
+- Check [SETUP.md](./SETUP.md) for configuration
+- Review [ARCHITECTURE.md](./ARCHITECTURE.md) for technical details
+- See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues
+- Visit [repository] for more examples

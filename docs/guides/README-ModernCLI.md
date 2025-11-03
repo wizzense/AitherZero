@@ -225,7 +225,7 @@ az run script 0510              # Generate system report
 
 # Troubleshooting  
 az search log                   # Find logging tools
-az run script 0530              # View logs
+az run script 0530 or 0531              # View logs
 
 # Maintenance
 az search clean                 # Find cleanup scripts
