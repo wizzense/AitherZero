@@ -52,7 +52,7 @@
     Requires: Node.js 18+
 #>
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding(SupportsShouldProcess, ConfirmImpact='Medium')]
 param(
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^[a-z0-9-]+$')]
@@ -96,7 +96,7 @@ function Write-ScriptLog {
         [string]$Level = 'Information'
     )
 
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+    if ($script:LoggingAvailable) {
         Write-CustomLog -Message $Message -Level $Level
     } else {
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
@@ -193,7 +193,7 @@ if ($PSCmdlet.ShouldProcess($TargetPath, "Create MCP server from template")) {
     }
 } else {
     Write-Host "   (WhatIf) Would create directory: $TargetPath" -ForegroundColor Yellow
-    exit 0
+    Write-ScriptLog "WhatIf: Would create directory structure at $TargetPath"
 }
 
 # Function to replace placeholders in a file
@@ -231,10 +231,14 @@ Write-ScriptLog "Starting template customization with replacements"
 # Process package.json.template
 $packageJsonTemplate = Join-Path $TargetPath "package.json.template"
 $packageJson = Join-Path $TargetPath "package.json"
-if (Update-TemplateFile -FilePath $packageJsonTemplate -Replacements $replacements) {
+if ($WhatIfPreference) {
+    Write-Host "   (WhatIf) Would configure package.json" -ForegroundColor Yellow
+} elseif (Update-TemplateFile -FilePath $packageJsonTemplate -Replacements $replacements) {
     Rename-Item -Path $packageJsonTemplate -NewName "package.json" -Force
     Write-Host "   ✓ package.json configured" -ForegroundColor Green
     Write-ScriptLog "Configured package.json" -Level 'Debug'
+} else {
+    Write-ScriptLog "Failed to configure package.json" -Level 'Warning'
 }
 
 # Process TypeScript files
@@ -310,30 +314,36 @@ if (-not $SkipGit) {
     Write-Host ""
     Write-Host "🔧 Initializing git repository..." -ForegroundColor Cyan
     Write-ScriptLog "Initializing git repository in $TargetPath"
-    Push-Location $TargetPath
-    try {
-        git init
-        if ($LASTEXITCODE -ne 0) {
-            throw "git init failed (exit code $LASTEXITCODE)"
-        }
 
-        git add .
-        if ($LASTEXITCODE -ne 0) {
-            throw "git add failed (exit code $LASTEXITCODE)"
-        }
+    if ($PSCmdlet.ShouldProcess($TargetPath, "Initialize git repository")) {
+        Push-Location $TargetPath
+        try {
+            git init
+            if ($LASTEXITCODE -ne 0) {
+                throw "git init failed (exit code $LASTEXITCODE)"
+            }
 
-        git commit -m "Initial commit: Scaffold from AitherZero MCP template"
-        if ($LASTEXITCODE -ne 0) {
-            throw "git commit failed (exit code $LASTEXITCODE)"
-        }
+            git add .
+            if ($LASTEXITCODE -ne 0) {
+                throw "git add failed (exit code $LASTEXITCODE)"
+            }
 
-        Write-Host "   ✓ Git repository initialized" -ForegroundColor Green
-        Write-ScriptLog "Git repository initialized successfully"
-    } catch {
-        Write-ScriptLog "Git initialization failed: $_" -Level 'Warning'
-        Write-Host "   ⚠️  Git initialization skipped: $_" -ForegroundColor Yellow
+            git commit -m "Initial commit: Scaffold from AitherZero MCP template"
+            if ($LASTEXITCODE -ne 0) {
+                throw "git commit failed (exit code $LASTEXITCODE)"
+            }
+
+            Write-Host "   ✓ Git repository initialized" -ForegroundColor Green
+            Write-ScriptLog "Git repository initialized successfully"
+        } catch {
+            Write-ScriptLog "Git initialization failed: $_" -Level 'Warning'
+            Write-Host "   ⚠️  Git initialization skipped: $_" -ForegroundColor Yellow
+        }
+        Pop-Location
+    } else {
+        Write-Host "   (WhatIf) Would initialize git repository" -ForegroundColor Yellow
+        Write-ScriptLog "WhatIf: Would initialize git repository in $TargetPath"
     }
-    Pop-Location
 }
 
 # Install dependencies and build
@@ -341,50 +351,56 @@ if (-not $SkipInstall) {
     Write-Host ""
     Write-Host "📦 Installing dependencies..." -ForegroundColor Cyan
     Write-ScriptLog "Starting npm install and build process"
-    Push-Location $TargetPath
 
-    try {
-        # Check Node.js
-        $nodeVersion = node --version 2>&1
-        Write-Host "   ℹ️  Using Node.js: $nodeVersion" -ForegroundColor Gray
-        Write-ScriptLog "Node.js version: $nodeVersion" -Level 'Debug'
+    if ($PSCmdlet.ShouldProcess($TargetPath, "Install npm dependencies and build")) {
+        Push-Location $TargetPath
 
-        # Install
-        npm install 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "   ✓ Dependencies installed" -ForegroundColor Green
-            Write-ScriptLog "npm install completed successfully"
-        } else {
-            throw "npm install failed"
+        try {
+            # Check Node.js
+            $nodeVersion = node --version 2>&1
+            Write-Host "   ℹ️  Using Node.js: $nodeVersion" -ForegroundColor Gray
+            Write-ScriptLog "Node.js version: $nodeVersion" -Level 'Debug'
+
+            # Install
+            npm install 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "   ✓ Dependencies installed" -ForegroundColor Green
+                Write-ScriptLog "npm install completed successfully"
+            } else {
+                throw "npm install failed"
+            }
+
+            Write-Host ""
+            Write-Host "🔨 Building TypeScript..." -ForegroundColor Cyan
+            npm run build 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "   ✓ Build successful" -ForegroundColor Green
+                Write-ScriptLog "TypeScript build completed successfully"
+            } else {
+                throw "npm build failed"
+            }
+
+            Write-Host ""
+            Write-Host "🧪 Testing server..." -ForegroundColor Cyan
+            $testOutput = npm run test:manual 2>&1 | Out-String
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "   ✓ Server responds correctly" -ForegroundColor Green
+                Write-ScriptLog "Server test passed"
+            } else {
+                Write-Host "   ⚠️  Test warning (this is normal for new servers)" -ForegroundColor Yellow
+                Write-ScriptLog "Server test had warnings (expected for new servers)" -Level 'Warning'
+            }
+
+        } catch {
+            Write-ScriptLog "Installation/build had issues: $_" -Level 'Warning'
+            Write-Host "   ⚠️  Installation/build had issues: $_" -ForegroundColor Yellow
+            Write-Host "   You can run manually: cd $TargetPath && npm install && npm run build" -ForegroundColor Gray
+        } finally {
+            Pop-Location
         }
-
-        Write-Host ""
-        Write-Host "🔨 Building TypeScript..." -ForegroundColor Cyan
-        npm run build 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "   ✓ Build successful" -ForegroundColor Green
-            Write-ScriptLog "TypeScript build completed successfully"
-        } else {
-            throw "npm build failed"
-        }
-
-        Write-Host ""
-        Write-Host "🧪 Testing server..." -ForegroundColor Cyan
-        $testOutput = npm run test:manual 2>&1 | Out-String
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "   ✓ Server responds correctly" -ForegroundColor Green
-            Write-ScriptLog "Server test passed"
-        } else {
-            Write-Host "   ⚠️  Test warning (this is normal for new servers)" -ForegroundColor Yellow
-            Write-ScriptLog "Server test had warnings (expected for new servers)" -Level 'Warning'
-        }
-
-    } catch {
-        Write-ScriptLog "Installation/build had issues: $_" -Level 'Warning'
-        Write-Host "   ⚠️  Installation/build had issues: $_" -ForegroundColor Yellow
-        Write-Host "   You can run manually: cd $TargetPath && npm install && npm run build" -ForegroundColor Gray
-    } finally {
-        Pop-Location
+    } else {
+        Write-Host "   (WhatIf) Would install dependencies and build" -ForegroundColor Yellow
+        Write-ScriptLog "WhatIf: Would run npm install and build in $TargetPath"
     }
 }
 
