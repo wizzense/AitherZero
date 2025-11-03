@@ -34,7 +34,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory=$false)]
-    [string]$RunnerName = '',
+    [string]$RunnerName = $null,
     [ValidateSet('SystemD', 'WindowsService', 'LaunchD', 'Auto')]
     [string]$ServiceType = 'Auto',
     [ValidateSet('Automatic', 'Manual', 'Disabled')]

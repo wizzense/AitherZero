@@ -34,7 +34,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory=$false)]
-    [string]$Organization = '',
+    [string]$Organization = $null,
     [string]$Repository,
     [string]$Matrix = 'standard',
     [string]$Token,
