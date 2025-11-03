@@ -424,7 +424,9 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (132 total files, 130 unique numbers - 0009 and 0530 have 2 files each)
+        # Script inventory by range (132 total files, 130 unique numbers)
+        # Note: Scripts 0009 and 0530 have 2 files each for related functionality
+        # This PR adds: 0219 (Chocolatey), 0750-0753 (MCP Server), 0860 (Deployment Validation)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 9; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
