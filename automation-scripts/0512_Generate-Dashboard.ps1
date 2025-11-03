@@ -347,18 +347,43 @@ function Get-ProjectMetrics {
     }
 
     # Get coverage information if available
-    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue | 
+                     Where-Object { $_.Length -gt 100 } |  # Skip empty files
+                     Sort-Object LastWriteTime -Descending | 
+                     Select-Object -First 1
     if ($coverageFiles) {
         try {
             [xml]$coverageXml = Get-Content $coverageFiles.FullName
-            $coverage = $coverageXml.coverage
-            if ($coverage) {
+            
+            # Check for JaCoCo format (used by Pester)
+            if ($coverageXml.report) {
+                # Parse JaCoCo format
+                if ($coverageXml.report.counter) {
+                    $counters = @($coverageXml.report.counter)
+                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                    
+                    if ($lineCounter) {
+                        $missedLines = [int]$lineCounter.missed
+                        $coveredLines = [int]$lineCounter.covered
+                        $totalLines = $missedLines + $coveredLines
+                        
+                        if ($totalLines -gt 0) {
+                            $metrics.Coverage.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 2)
+                            $metrics.Coverage.CoveredLines = $coveredLines
+                            $metrics.Coverage.TotalLines = $totalLines
+                        }
+                    }
+                }
+            }
+            # Check for Cobertura format (alternative)
+            elseif ($coverageXml.coverage) {
+                $coverage = $coverageXml.coverage
                 $metrics.Coverage.Percentage = [math]::Round(($coverage.'line-rate' -as [double]) * 100, 2)
                 $metrics.Coverage.CoveredLines = $coverage.'lines-covered' -as [int]
                 $metrics.Coverage.TotalLines = $coverage.'lines-valid' -as [int]
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data"
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
     }
 
@@ -683,13 +708,35 @@ function Get-BuildStatus {
 
     # Check code coverage
     $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
+                    Where-Object { $_.Length -gt 100 } |  # Skip empty files
                     Sort-Object LastWriteTime -Descending |
                     Select-Object -First 1
     if ($coverageFiles) {
         try {
             [xml]$coverageXml = Get-Content $coverageFiles.FullName
-            if ($coverageXml.coverage) {
+            $coveragePercent = 0
+            
+            # Check for JaCoCo format (used by Pester)
+            if ($coverageXml.report -and $coverageXml.report.counter) {
+                $counters = @($coverageXml.report.counter)
+                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                
+                if ($lineCounter) {
+                    $missedLines = [int]$lineCounter.missed
+                    $coveredLines = [int]$lineCounter.covered
+                    $totalLines = $missedLines + $coveredLines
+                    
+                    if ($totalLines -gt 0) {
+                        $coveragePercent = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                    }
+                }
+            }
+            # Check for Cobertura format (alternative)
+            elseif ($coverageXml.coverage) {
                 $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+            }
+            
+            if ($coveragePercent -gt 0 -or $totalLines -gt 0) {
                 $status.Coverage = "${coveragePercent}%"
                 
                 if ($coveragePercent -ge 80) {
@@ -701,7 +748,7 @@ function Get-BuildStatus {
                 }
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data"
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
     }
     
