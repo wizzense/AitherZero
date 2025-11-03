@@ -662,13 +662,19 @@ try {
 
     Write-ScriptLog -Message "Unit test execution completed" -Data $testSummary
 
-    # Display summary
+    # Display summary with safe property access
     Write-Host "`nUnit Test Summary:" -ForegroundColor Cyan
-    Write-Host "  Total Tests: $($result.TotalCount)"
-    Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
-    Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-    Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-    Write-Host "  Duration: $($result.Duration.TotalSeconds.ToString('F2'))s"
+    $totalCount = if ($null -ne $result.TotalCount) { $result.TotalCount } else { 0 }
+    $passedCount = if ($null -ne $result.PassedCount) { $result.PassedCount } else { 0 }
+    $failedCount = if ($null -ne $result.FailedCount) { $result.FailedCount } else { 0 }
+    $skippedCount = if ($null -ne $result.SkippedCount) { $result.SkippedCount } else { 0 }
+    $durationSeconds = if ($null -ne $result.Duration) { $result.Duration.TotalSeconds.ToString('F2') } else { '0.00' }
+    
+    Write-Host "  Total Tests: $totalCount"
+    Write-Host "  Passed: $passedCount" -ForegroundColor Green
+    Write-Host "  Failed: $failedCount" -ForegroundColor $(if ($failedCount -gt 0) { 'Red' } else { 'Green' })
+    Write-Host "  Skipped: $skippedCount" -ForegroundColor Yellow
+    Write-Host "  Duration: ${durationSeconds}s"
 
     if ($pesterConfig.CodeCoverage.Enabled -and $result.CodeCoverage) {
         Write-Host "`nCode Coverage:" -ForegroundColor Cyan
@@ -697,15 +703,20 @@ try {
         }
     }
 
-    # Display failed tests
-    if ($result.FailedCount -gt 0) {
+    # Display failed tests with safe access to Failed collection
+    if ($failedCount -gt 0 -and $result.Failed) {
         Write-Host "`nFailed Tests:" -ForegroundColor Red
-        $result.Failed | ForEach-Object {
-            Write-Host "  - $($_.ExpandedPath)" -ForegroundColor Red
-            if ($_.ErrorRecord -and $_.ErrorRecord.Exception) {
-                Write-Host "    $($_.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
-            } elseif ($_.ErrorRecord) {
-                Write-Host "    $($_.ErrorRecord)" -ForegroundColor DarkRed
+        $failedTests = @($result.Failed)  # Ensure array for safe iteration
+        foreach ($failedTest in $failedTests) {
+            $testPath = if ($failedTest.ExpandedPath) { $failedTest.ExpandedPath } 
+                       elseif ($failedTest.Name) { $failedTest.Name }
+                       else { "Unknown test" }
+            Write-Host "  - $testPath" -ForegroundColor Red
+            
+            if ($failedTest.ErrorRecord -and $failedTest.ErrorRecord.Exception) {
+                Write-Host "    $($failedTest.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
+            } elseif ($failedTest.ErrorRecord) {
+                Write-Host "    $($failedTest.ErrorRecord)" -ForegroundColor DarkRed
             }
         }
     }
@@ -723,33 +734,37 @@ try {
         $comprehensiveReport = @{
             TestType = 'Unit'
             Timestamp = (Get-Date).ToString('o')
-            TotalCount = $result.TotalCount
-            PassedCount = $result.PassedCount
-            FailedCount = $result.FailedCount
-            SkippedCount = $result.SkippedCount
-            Duration = $result.Duration.TotalSeconds
+            TotalCount = $totalCount
+            PassedCount = $passedCount
+            FailedCount = $failedCount
+            SkippedCount = $skippedCount
+            Duration = if ($result.Duration) { $result.Duration.TotalSeconds } else { 0 }
             TestResults = @{
                 Summary = @{
-                    Total = $result.TotalCount
-                    Passed = $result.PassedCount
-                    Failed = $result.FailedCount
-                    Skipped = $result.SkippedCount
+                    Total = $totalCount
+                    Passed = $passedCount
+                    Failed = $failedCount
+                    Skipped = $skippedCount
                 }
                 Details = @()
             }
         }
 
-        # Add failed test details
-        if ($result.Failed -and $result.Failed.Count -gt 0) {
-            foreach ($failedTest in $result.Failed) {
+        # Add failed test details - with safe access to Failed collection
+        if ($failedCount -gt 0 -and $result.Failed) {
+            $failedTests = @($result.Failed)  # Ensure array
+            foreach ($failedTest in $failedTests) {
                 $testDetail = @{
                     Result = 'Failed'
-                    Name = $failedTest.Name ?? $failedTest.ExpandedName ?? $failedTest.ExpandedPath ?? 'Unknown Test'
+                    Name = if ($failedTest.Name) { $failedTest.Name } 
+                           elseif ($failedTest.ExpandedName) { $failedTest.ExpandedName }
+                           elseif ($failedTest.ExpandedPath) { $failedTest.ExpandedPath }
+                           else { 'Unknown Test' }
                     ExpandedPath = $failedTest.ExpandedPath
                     ErrorRecord = if ($failedTest.ErrorRecord) {
                         @{
                             Exception = @{
-                                Message = $failedTest.ErrorRecord.Exception.Message
+                                Message = if ($failedTest.ErrorRecord.Exception) { $failedTest.ErrorRecord.Exception.Message } else { 'No exception message' }
                             }
                             ScriptStackTrace = $failedTest.ErrorRecord.ScriptStackTrace
                         }
@@ -758,7 +773,7 @@ try {
                         @{
                             File = $failedTest.ScriptBlock.File
                             StartPosition = @{
-                                Line = $failedTest.ScriptBlock.StartPosition.StartLine
+                                Line = if ($failedTest.ScriptBlock.StartPosition) { $failedTest.ScriptBlock.StartPosition.StartLine } else { 0 }
                             }
                         }
                     } else { $null }
@@ -777,12 +792,12 @@ try {
         return $result
     }
 
-    # Exit based on test results
-    if ($result.FailedCount -eq 0) {
+    # Exit based on test results - use safe values
+    if ($failedCount -eq 0) {
         Write-ScriptLog -Message "All unit tests passed!"
         exit 0
     } else {
-        Write-ScriptLog -Level Error -Message "$($result.FailedCount) unit tests failed"
+        Write-ScriptLog -Level Error -Message "$failedCount unit tests failed"
         exit 1
     }
 }

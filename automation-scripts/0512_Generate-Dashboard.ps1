@@ -167,6 +167,34 @@ function Get-ProjectMetrics {
             SuccessRate = 0
             Duration = "Unknown"
         }
+        TestCoverage = @{
+            Percentage = 0
+            FilesWithTests = 0
+            FilesWithoutTests = 0
+            TotalFiles = 0
+        }
+        DocumentationCoverage = @{
+            Percentage = 0
+            FunctionsWithDocs = 0
+            FunctionsWithoutDocs = 0
+            TotalFunctions = 0
+        }
+        QualityCoverage = @{
+            Percentage = 0
+            PassedFiles = 0
+            WarningFiles = 0
+            FailedFiles = 0
+            TotalValidated = 0
+            TotalIssues = 0
+            AverageScore = 0
+        }
+        Issues = @{
+            Open = 0
+            Closed = 0
+            Total = 0
+            ByLabel = @{}
+            Recent = @()
+        }
         Coverage = @{
             Percentage = 0
             CoveredLines = 0
@@ -201,7 +229,10 @@ function Get-ProjectMetrics {
         try {
             $content = Get-Content $file.FullName -ErrorAction Stop
             if ($content) {
-                foreach ($line in $content) {
+                # Ensure content is always an array for consistent .Count behavior
+                $contentArray = @($content)
+                
+                foreach ($line in $contentArray) {
                     $trimmed = $line.Trim()
                     if ($trimmed -eq '') {
                         $metrics.BlankLines++
@@ -210,22 +241,22 @@ function Get-ProjectMetrics {
                     }
                 }
                 
-                $metrics.LinesOfCode += $content.Count
+                $metrics.LinesOfCode += $contentArray.Count
 
-                # Count functions - improved pattern matching
-                $functionMatches = $content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue
-                if ($functionMatches) {
+                # Count functions - improved pattern matching with array wrapping for consistent Count
+                $functionMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
+                if ($functionMatches.Count -gt 0) {
                     $metrics.Functions += $functionMatches.Count
                 }
                 
-                # Count classes
-                $classMatches = $content | Select-String -Pattern '^\s*class\s+' -ErrorAction SilentlyContinue
-                if ($classMatches) {
+                # Count classes - with array wrapping for consistent Count
+                $classMatches = @($content | Select-String -Pattern '^\s*class\s+' -ErrorAction SilentlyContinue)
+                if ($classMatches.Count -gt 0) {
                     $metrics.Classes += $classMatches.Count
                 }
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse file for metrics: $($file.Name) - $_"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze file: $($file.Name) - $_"
         }
     }
     
@@ -275,6 +306,231 @@ function Get-ProjectMetrics {
         $metrics.Tests.Unit = @(Get-ChildItem -Path $testPath -Filter "*Tests.ps1" -Recurse | Where-Object { $_.FullName -match 'unit' }).Count
         $metrics.Tests.Integration = @(Get-ChildItem -Path $testPath -Filter "*Tests.ps1" -Recurse | Where-Object { $_.FullName -match 'integration' }).Count
         $metrics.Tests.Total = $metrics.Tests.Unit + $metrics.Tests.Integration
+    }
+    
+    # Calculate test coverage for automation scripts specifically (number-based tests in range directories)
+    $automationScriptsPath = Join-Path $ProjectPath "automation-scripts"
+    $automationScripts = @()
+    if (Test-Path $automationScriptsPath) {
+        $automationScripts = @(Get-ChildItem -Path $automationScriptsPath -Filter "*.ps1" -File)
+    }
+    
+    # Also count domain modules for complete coverage
+    $domainModules = @(
+        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object { $_.FullName -match 'domains/' }
+    )
+    
+    $allCodeFiles = @($automationScripts) + @($domainModules)
+    $metrics.TestCoverage.TotalFiles = $allCodeFiles.Count
+    
+    foreach ($codeFile in $allCodeFiles) {
+        $hasTest = $false
+        $relativePath = $codeFile.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
+        
+        # For automation scripts: Check in range-based directories (0000-0099, 0100-0199, etc.)
+        if ($relativePath -match 'automation-scripts') {
+            # Extract script number (e.g., 0402 from 0402_Run-UnitTests.ps1)
+            if ($codeFile.Name -match '^(\d{4})_') {
+                $scriptNumber = [int]$matches[1]
+                $rangeStart = ([int]($scriptNumber / 100)) * 100
+                $rangeEnd = $rangeStart + 99
+                $rangeDir = "$($rangeStart.ToString().PadLeft(4, '0'))-$($rangeEnd.ToString().PadLeft(4, '0'))"
+                $testFileName = $codeFile.Name -replace '\.ps1$', '.Tests.ps1'
+                
+                # Check in the appropriate range directory
+                $testPath = Join-Path $ProjectPath "tests/unit/automation-scripts/$rangeDir/$testFileName"
+                
+                if (Test-Path $testPath) {
+                    # Verify test has meaningful content
+                    try {
+                        $testContent = Get-Content $testPath -Raw -ErrorAction SilentlyContinue
+                        if ($testContent -and $testContent -match 'Describe\s+' -and $testContent -match '\bIt\s+[''"]') {
+                            $hasTest = $true
+                        }
+                    } catch {
+                        # If we can't read it, don't count it
+                    }
+                }
+            }
+        }
+        # For domain modules: Check standard test locations
+        else {
+            $testFileName = $codeFile.Name -replace '\.psm1$', '.Tests.ps1'
+            $relativeDir = Split-Path $relativePath -Parent
+            
+            $possibleTestPaths = @(
+                (Join-Path (Join-Path $ProjectPath "tests/unit") $relativeDir | Join-Path -ChildPath $testFileName),
+                (Join-Path (Join-Path $ProjectPath "tests/domains") ($relativeDir -replace 'domains/', '') | Join-Path -ChildPath $testFileName)
+            )
+            
+            foreach ($testFilePath in $possibleTestPaths) {
+                if (Test-Path $testFilePath) {
+                    try {
+                        $testContent = Get-Content $testFilePath -Raw -ErrorAction SilentlyContinue
+                        if ($testContent -and $testContent -match 'Describe\s+' -and $testContent -match '\bIt\s+[''"]') {
+                            $hasTest = $true
+                            break
+                        }
+                    } catch {
+                        # If we can't read it, don't count it
+                    }
+                }
+            }
+        }
+        
+        if ($hasTest) {
+            $metrics.TestCoverage.FilesWithTests++
+        } else {
+            $metrics.TestCoverage.FilesWithoutTests++
+        }
+    }
+    
+    if ($metrics.TestCoverage.TotalFiles -gt 0) {
+        $metrics.TestCoverage.Percentage = [math]::Round(
+            ($metrics.TestCoverage.FilesWithTests / $metrics.TestCoverage.TotalFiles) * 100,
+            1
+        )
+    }
+    
+    Write-ScriptLog -Message "Test coverage: $($metrics.TestCoverage.FilesWithTests) of $($metrics.TestCoverage.TotalFiles) files have tests (Automation scripts: $($automationScripts.Count), Domain modules: $($domainModules.Count))"
+    
+    # Calculate documentation coverage (what % of functions have help documentation)
+    $metrics.DocumentationCoverage.TotalFunctions = $metrics.Functions
+    
+    if ($allPSFiles.Count -gt 0) {
+        foreach ($file in $allPSFiles) {
+            try {
+                $content = Get-Content $file.FullName -ErrorAction Stop
+                if ($content) {
+                    $contentArray = @($content)
+                    
+                    # Find all functions
+                    $functionMatches = @($content | Select-String -Pattern '^\s*function\s+([A-Za-z0-9-_]+)' -ErrorAction SilentlyContinue)
+                    
+                    foreach ($match in $functionMatches) {
+                        # Check if function has documentation (look for .SYNOPSIS, .DESCRIPTION, or comment-based help before function)
+                        $lineNum = $match.LineNumber
+                        $hasDoc = $false
+                        
+                        # Look backwards from function line for documentation
+                        for ($i = [math]::Max(0, $lineNum - 20); $i -lt $lineNum; $i++) {
+                            $line = $contentArray[$i]
+                            if ($line -match '\.SYNOPSIS|\.DESCRIPTION|<#') {
+                                $hasDoc = $true
+                                break
+                            }
+                        }
+                        
+                        if ($hasDoc) {
+                            $metrics.DocumentationCoverage.FunctionsWithDocs++
+                        } else {
+                            $metrics.DocumentationCoverage.FunctionsWithoutDocs++
+                        }
+                    }
+                }
+            } catch {
+                # Skip files that can't be read
+            }
+        }
+    }
+    
+    if ($metrics.DocumentationCoverage.TotalFunctions -gt 0) {
+        $metrics.DocumentationCoverage.Percentage = [math]::Round(
+            ($metrics.DocumentationCoverage.FunctionsWithDocs / $metrics.DocumentationCoverage.TotalFunctions) * 100,
+            1
+        )
+    }
+    
+    # Calculate quality coverage from PSScriptAnalyzer baseline results
+    # Priority: Use full baseline results from tests/results, fallback to fast results
+    $pssaSummaryPath = Join-Path $ProjectPath "tests/results"
+    $latestPssaSummary = Get-ChildItem -Path $pssaSummaryPath -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
+                         Sort-Object LastWriteTime -Descending | 
+                         Select-Object -First 1
+    
+    if ($latestPssaSummary) {
+        try {
+            $pssaData = Get-Content $latestPssaSummary.FullName -Raw | ConvertFrom-Json
+            if ($pssaData.Summary) {
+                $totalIssues = $pssaData.Summary.TotalIssues
+                $errors = if ($pssaData.Summary.BySeverity.PSObject.Properties['Error']) { $pssaData.Summary.BySeverity.Error } else { 0 }
+                $warnings = if ($pssaData.Summary.BySeverity.PSObject.Properties['Warning']) { $pssaData.Summary.BySeverity.Warning } else { 0 }
+                $info = if ($pssaData.Summary.BySeverity.PSObject.Properties['Information']) { $pssaData.Summary.BySeverity.Information } else { 0 }
+                
+                # Count files from ByScript hash
+                $filesWithIssues = if ($pssaData.Summary.ByScript) { $pssaData.Summary.ByScript.PSObject.Properties.Count } else { 0 }
+                
+                # Total files is all PowerShell files in project
+                $totalPSFiles = $allPSFiles.Count
+                $metrics.QualityCoverage.TotalValidated = $totalPSFiles
+                
+                # Files without issues are clean
+                $cleanFiles = $totalPSFiles - $filesWithIssues
+                
+                # Categorize files: Clean, with warnings, with errors
+                $filesWithErrors = if ($errors -gt 0 -and $pssaData.Summary.ByScript) {
+                    # Count scripts that have at least one error
+                    $scriptsWithErrors = @()
+                    foreach ($script in $pssaData.Summary.ByScript.PSObject.Properties) {
+                        # Would need detailed data to know which files have errors vs warnings
+                        # For now, estimate based on error ratio
+                    }
+                    [math]::Ceiling($errors / [math]::Max(1, ($totalIssues / $filesWithIssues)))
+                } else { 0 }
+                
+                $metrics.QualityCoverage.FailedFiles = $filesWithErrors
+                $metrics.QualityCoverage.WarningFiles = [math]::Max(0, $filesWithIssues - $filesWithErrors)
+                $metrics.QualityCoverage.PassedFiles = $cleanFiles
+                $metrics.QualityCoverage.TotalIssues = $totalIssues
+                
+                # Calculate quality score: penalize based on issues per file
+                $avgIssuesPerFile = if ($totalPSFiles -gt 0) { $totalIssues / $totalPSFiles } else { 0 }
+                $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 5), 1))
+                
+                # Quality percentage: files without major issues
+                if ($totalPSFiles -gt 0) {
+                    $metrics.QualityCoverage.Percentage = [math]::Round(
+                        (($cleanFiles + ($metrics.QualityCoverage.WarningFiles * 0.3)) / $totalPSFiles) * 100,
+                        1
+                    )
+                }
+                
+                Write-ScriptLog -Message "Quality coverage calculated from baseline: $totalIssues total issues across $filesWithIssues files (of $totalPSFiles total)"
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse baseline quality results: $_"
+        }
+    }
+    
+    # Fallback to fast results if baseline not available
+    if ($metrics.QualityCoverage.TotalValidated -eq 0) {
+        $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+        if (Test-Path $pssaPath) {
+            try {
+                $pssaData = Get-Content $pssaPath -Raw | ConvertFrom-Json
+                if ($pssaData.Summary) {
+                    $totalIssues = $pssaData.Summary.TotalIssues
+                    $errors = $pssaData.Summary.Errors
+                    $warnings = $pssaData.Summary.Warnings
+                    
+                    $filesAnalyzed = if ($pssaData.FilesAnalyzed) { @($pssaData.FilesAnalyzed).Count } else { 0 }
+                    $metrics.QualityCoverage.TotalValidated = $filesAnalyzed
+                    $metrics.QualityCoverage.FailedFiles = if ($errors -gt 0) { 1 } else { 0 }
+                    $metrics.QualityCoverage.WarningFiles = if ($warnings -gt 0) { $filesAnalyzed - $metrics.QualityCoverage.FailedFiles } else { 0 }
+                    $metrics.QualityCoverage.PassedFiles = [math]::Max(0, $filesAnalyzed - $metrics.QualityCoverage.FailedFiles - $metrics.QualityCoverage.WarningFiles)
+                    
+                    if ($filesAnalyzed -gt 0) {
+                        $avgIssuesPerFile = $totalIssues / $filesAnalyzed
+                        $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 10), 1))
+                        $metrics.QualityCoverage.Percentage = [math]::Round(($metrics.QualityCoverage.PassedFiles / $filesAnalyzed) * 100, 1)
+                    }
+                    
+                    Write-ScriptLog -Level Warning -Message "Using fast results only - run './az 0404' for full baseline analysis"
+                }
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to parse fast quality results: $_"
+            }
+        }
     }
 
     # Get latest test results - check multiple possible locations
@@ -344,18 +600,43 @@ function Get-ProjectMetrics {
     }
 
     # Get coverage information if available
-    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue | 
+                     Where-Object { $_.Length -gt 100 } |  # Skip empty files
+                     Sort-Object LastWriteTime -Descending | 
+                     Select-Object -First 1
     if ($coverageFiles) {
         try {
             [xml]$coverageXml = Get-Content $coverageFiles.FullName
-            $coverage = $coverageXml.coverage
-            if ($coverage) {
+            
+            # Check for JaCoCo format (used by Pester)
+            if ($coverageXml.report) {
+                # Parse JaCoCo format
+                if ($coverageXml.report.counter) {
+                    $counters = @($coverageXml.report.counter)
+                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                    
+                    if ($lineCounter) {
+                        $missedLines = [int]$lineCounter.missed
+                        $coveredLines = [int]$lineCounter.covered
+                        $totalLines = $missedLines + $coveredLines
+                        
+                        if ($totalLines -gt 0) {
+                            $metrics.Coverage.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 2)
+                            $metrics.Coverage.CoveredLines = $coveredLines
+                            $metrics.Coverage.TotalLines = $totalLines
+                        }
+                    }
+                }
+            }
+            # Check for Cobertura format (alternative)
+            elseif ($coverageXml.coverage) {
+                $coverage = $coverageXml.coverage
                 $metrics.Coverage.Percentage = [math]::Round(($coverage.'line-rate' -as [double]) * 100, 2)
                 $metrics.Coverage.CoveredLines = $coverage.'lines-covered' -as [int]
                 $metrics.Coverage.TotalLines = $coverage.'lines-valid' -as [int]
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data"
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
     }
 
@@ -680,13 +961,40 @@ function Get-BuildStatus {
 
     # Check code coverage
     $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
+                    Where-Object { $_.Length -gt 100 } |  # Skip empty files
                     Sort-Object LastWriteTime -Descending |
                     Select-Object -First 1
     if ($coverageFiles) {
         try {
             [xml]$coverageXml = Get-Content $coverageFiles.FullName
-            if ($coverageXml.coverage) {
+            $coveragePercent = 0
+            $hasCoverageData = $false
+            $totalLines = 0
+            
+            # Check for JaCoCo format (used by Pester)
+            if ($coverageXml.report -and $coverageXml.report.counter) {
+                $counters = @($coverageXml.report.counter)
+                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                
+                if ($lineCounter) {
+                    $missedLines = [int]$lineCounter.missed
+                    $coveredLines = [int]$lineCounter.covered
+                    $totalLines = $missedLines + $coveredLines
+                    
+                    if ($totalLines -gt 0) {
+                        $coveragePercent = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                    }
+                    $hasCoverageData = $true
+                }
+            }
+            # Check for Cobertura format (alternative)
+            elseif ($coverageXml.coverage) {
                 $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                $hasCoverageData = $true
+            }
+            
+            # Show coverage if we have data, even if it's 0%
+            if ($hasCoverageData) {
                 $status.Coverage = "${coveragePercent}%"
                 
                 if ($coveragePercent -ge 80) {
@@ -698,7 +1006,7 @@ function Get-BuildStatus {
                 }
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data"
+            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
     }
     
@@ -828,9 +1136,13 @@ function Get-FileLevelMetrics {
             # Count lines and functions
             $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
             if ($content) {
-                $fileData.Lines = $content.Count
-                $funcMatches = $content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue
-                $fileData.Functions = if ($funcMatches) { $funcMatches.Count } else { 0 }
+                # Ensure content is always an array for consistent .Count behavior
+                $contentArray = @($content)
+                $fileData.Lines = $contentArray.Count
+                
+                # Wrap in array for consistent Count property access
+                $funcMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
+                $fileData.Functions = $funcMatches.Count
             }
             
             # Run PSScriptAnalyzer on individual file
@@ -839,14 +1151,15 @@ function Get-FileLevelMetrics {
                 $issues = if ($rawIssues) { @($rawIssues) } else { @() }
                 
                 if ($issues.Count -gt 0) {
-                    $fileData.Issues = $issues | Select-Object -First 10 | ForEach-Object {
+                    # Wrap in array to ensure consistent type even with single result
+                    $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
                         @{
                             Rule = $_.RuleName
                             Severity = $_.Severity
                             Line = $_.Line
                             Message = $_.Message
                         }
-                    }
+                    })
                     
                     # Calculate score (100 - issues penalty)
                     $errorCount = @($issues | Where-Object { $_.Severity -eq 'Error' }).Count
@@ -1029,9 +1342,9 @@ function Get-DetailedTestResults {
         try {
             $content = Get-Content $testFile.FullName -ErrorAction SilentlyContinue
             if ($content) {
-                # Count It blocks (actual test cases)
-                $itBlocks = $content | Select-String -Pattern '^\s*It\s+[''"]' -AllMatches
-                if ($itBlocks) {
+                # Ensure array for consistent Count property access
+                $itBlocks = @($content | Select-String -Pattern '^\s*It\s+[''"]' -AllMatches)
+                if ($itBlocks.Count -gt 0) {
                     $testResults.TestFiles.PotentialTests += $itBlocks.Count
                 }
             }
@@ -1194,25 +1507,29 @@ function Get-CodeCoverageDetails {
                 Write-ScriptLog -Message "Parsing JaCoCo coverage format"
                 $coverage.Format = "JaCoCo"
                 
-                # Get counters from report root - handle both single and multiple counters
-                $counters = @($coverageXml.report.counter)
-                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
-                
-                if (-not $lineCounter) {
-                    Write-ScriptLog -Level Warning -Message 'No LINE counter found in JaCoCo report'
-                } elseif ($lineCounter) {
-                    $missedLines = [int]$lineCounter.missed
-                    $coveredLines = [int]$lineCounter.covered
-                    $totalLines = $missedLines + $coveredLines
+                # Get counters from report root - safely handle missing counter elements
+                if ($coverageXml.report.counter) {
+                    $counters = @($coverageXml.report.counter)
+                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
                     
-                    if ($totalLines -gt 0) {
-                        $coverage.Overall.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 1)
-                        $coverage.Overall.CoveredLines = $coveredLines
-                        $coverage.Overall.TotalLines = $totalLines
-                        $coverage.Overall.MissedLines = $missedLines
+                    if ($lineCounter) {
+                        $missedLines = [int]$lineCounter.missed
+                        $coveredLines = [int]$lineCounter.covered
+                        $totalLines = $missedLines + $coveredLines
                         
-                        Write-ScriptLog -Message "Coverage: $($coverage.Overall.Percentage)% ($coveredLines/$totalLines lines)"
+                        if ($totalLines -gt 0) {
+                            $coverage.Overall.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                            $coverage.Overall.CoveredLines = $coveredLines
+                            $coverage.Overall.TotalLines = $totalLines
+                            $coverage.Overall.MissedLines = $missedLines
+                            
+                            Write-ScriptLog -Message "Coverage: $($coverage.Overall.Percentage)% ($coveredLines/$totalLines lines)"
+                        }
+                    } else {
+                        Write-ScriptLog -Level Warning -Message 'No LINE counter found in JaCoCo report'
                     }
+                } else {
+                    Write-ScriptLog -Level Warning -Message 'No counter elements found in JaCoCo report (empty or incomplete coverage data)'
                 }
                 
                 # Extract file-level coverage from classes
@@ -1223,43 +1540,45 @@ function Get-CodeCoverageDetails {
                         $filename = $class.sourcefilename
                         if (-not $filename) { continue }
                         
-                        # Get line counter for this class
-                        $classLineCounter = $class.counter | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
-                        if ($classLineCounter) {
-                            $classMissed = [int]$classLineCounter.missed
-                            $classCovered = [int]$classLineCounter.covered
-                            $classTotal = $classMissed + $classCovered
-                            
-                            $fileCoverage = if ($classTotal -gt 0) { 
-                                [math]::Round(($classCovered / $classTotal) * 100, 1)
-                            } else { 0 }
-                            
-                            $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
-                                     elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
-                                     else { 'other' }
-                            
-                            $coverage.ByFile += @{
-                                File = $filename
-                                Coverage = $fileCoverage
-                                Domain = $domain
-                                CoveredLines = $classCovered
-                                TotalLines = $classTotal
-                            }
-                            
-                            # Track by domain
-                            if (-not $coverage.ByDomain.ContainsKey($domain)) {
-                                $coverage.ByDomain[$domain] = @{ 
-                                    Files = 0
-                                    TotalCoverage = 0
-                                    AverageCoverage = 0
-                                    CoveredLines = 0
-                                    TotalLines = 0
+                        # Get line counter for this class - safely handle missing counter
+                        if ($class.counter) {
+                            $classLineCounter = @($class.counter) | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                            if ($classLineCounter) {
+                                $classMissed = [int]$classLineCounter.missed
+                                $classCovered = [int]$classLineCounter.covered
+                                $classTotal = $classMissed + $classCovered
+                                
+                                $fileCoverage = if ($classTotal -gt 0) { 
+                                    [math]::Round(($classCovered / $classTotal) * 100, 1)
+                                } else { 0 }
+                                
+                                $domain = if ($filename -match 'domains[/\\]([^/\\]+)') { $matches[1] }
+                                         elseif ($filename -match 'automation-scripts') { 'automation-scripts' }
+                                         else { 'other' }
+                                
+                                $coverage.ByFile += @{
+                                    File = $filename
+                                    Coverage = $fileCoverage
+                                    Domain = $domain
+                                    CoveredLines = $classCovered
+                                    TotalLines = $classTotal
                                 }
+                                
+                                # Track by domain
+                                if (-not $coverage.ByDomain.ContainsKey($domain)) {
+                                    $coverage.ByDomain[$domain] = @{ 
+                                        Files = 0
+                                        TotalCoverage = 0
+                                        AverageCoverage = 0
+                                        CoveredLines = 0
+                                        TotalLines = 0
+                                    }
+                                }
+                                $coverage.ByDomain[$domain].Files++
+                                $coverage.ByDomain[$domain].TotalCoverage += $fileCoverage
+                                $coverage.ByDomain[$domain].CoveredLines += $classCovered
+                                $coverage.ByDomain[$domain].TotalLines += $classTotal
                             }
-                            $coverage.ByDomain[$domain].Files++
-                            $coverage.ByDomain[$domain].TotalCoverage += $fileCoverage
-                            $coverage.ByDomain[$domain].CoveredLines += $classCovered
-                            $coverage.ByDomain[$domain].TotalLines += $classTotal
                         }
                     }
                 }
@@ -1399,7 +1718,9 @@ function Get-LifecycleAnalysis {
             $lastWrite = $doc.LastWriteTime
             $ageDays = ($now - $lastWrite).TotalDays
             $content = Get-Content $doc.FullName -ErrorAction SilentlyContinue
-            $lineCount = if ($content) { $content.Count } else { 0 }
+            # Ensure array for consistent Count property access
+            $contentArray = if ($content) { @($content) } else { @() }
+            $lineCount = $contentArray.Count
             
             $docData = @{
                 Path = $doc.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
@@ -1421,7 +1742,7 @@ function Get-LifecycleAnalysis {
             elseif ($ageDays -gt 180) { $lifecycle.Documentation.Summary.Stale++ }
             
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name)"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name) - $_"
         }
     }
     
@@ -1447,13 +1768,15 @@ function Get-LifecycleAnalysis {
             $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
             
             if ($content) {
-                $totalLines = $content.Count
+                # Ensure array for consistent Count property access
+                $contentArray = @($content)
+                $totalLines = $contentArray.Count
                 $codeLines = 0
                 $commentLines = 0
                 $blankLines = 0
                 $inCommentBlock = $false
                 
-                foreach ($line in $content) {
+                foreach ($line in $contentArray) {
                     $trimmed = $line.Trim()
                     
                     if ($trimmed -eq '') {
@@ -1737,73 +2060,209 @@ function Get-GitHubWorkflowStatus {
     return $workflowData
 }
 
+function Get-GitHubIssues {
+    <#
+    .SYNOPSIS
+        Fetch open GitHub issues for the repository
+    #>
+    param(
+        [string]$Owner = "wizzense",
+        [string]$Repo = "AitherZero",
+        [int]$MaxIssues = 10
+    )
+    
+    Write-ScriptLog -Message "Fetching GitHub issues for $Owner/$Repo"
+    
+    $issuesData = @{
+        TotalOpen = 0
+        Issues = @()
+        Error = $null
+    }
+    
+    try {
+        $issuesUrl = "https://api.github.com/repos/$Owner/$Repo/issues?state=open&per_page=$MaxIssues"
+        
+        # Use gh CLI if available for authenticated requests
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            Write-ScriptLog -Message "Using GitHub CLI to fetch issues"
+            $response = gh api $issuesUrl 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $issuesList = $response | ConvertFrom-Json
+            } else {
+                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
+                $issuesList = $null
+            }
+        } else {
+            # Fallback to direct API call
+            Write-ScriptLog -Message "Using direct API request for issues"
+            $headers = @{
+                'User-Agent' = 'AitherZero-Dashboard'
+                'Accept' = 'application/vnd.github.v3+json'
+            }
+            
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+            }
+            
+            $issuesList = Invoke-RestMethod -Uri $issuesUrl -Headers $headers -ErrorAction Stop
+        }
+        
+        if ($issuesList) {
+            # Ensure array wrapping for consistent Count property
+            $issuesArray = @($issuesList)
+            $issuesData.TotalOpen = $issuesArray.Count
+            
+            foreach ($issue in $issuesArray) {
+                # Skip pull requests (GitHub API returns them as issues)
+                if ($issue.pull_request) {
+                    continue
+                }
+                
+                $labels = @($issue.labels | ForEach-Object { $_.name })
+                
+                $issuesData.Issues += @{
+                    Number = $issue.number
+                    Title = $issue.title
+                    State = $issue.state
+                    Labels = $labels
+                    CreatedAt = $issue.created_at
+                    UpdatedAt = $issue.updated_at
+                    Url = $issue.html_url
+                    User = $issue.user.login
+                }
+            }
+            
+            Write-ScriptLog -Message "Successfully fetched $($issuesData.Issues.Count) open issues"
+        }
+    } catch {
+        $issuesData.Error = $_.Exception.Message
+        Write-ScriptLog -Level Warning -Message "Failed to fetch GitHub issues: $($_.Exception.Message)"
+    }
+    
+    return $issuesData
+}
+
 function Get-HistoricalMetrics {
     param(
-        [string]$ReportsPath = "./reports"
+        [string]$ReportsPath = "./reports",
+        [hashtable]$CurrentMetrics = @{}
     )
     
     Write-ScriptLog -Message "Loading historical metrics data"
     
     $history = @{
         TestTrends = @()
-        CoverageTrends = @()
-        LOCTrends = @()
+        TestCoverageTrends = @()
+        DocumentationCoverageTrends = @()
         QualityTrends = @()
+        LineCoverageTrends = @()
+        SyntaxTrends = @()
+        WorkflowTrends = @()
+        LOCTrends = @()
         LastNDays = 30
     }
     
     try {
-        # Load dashboard.json if it exists for current metrics
-        $dashboardJsonPath = Join-Path $ReportsPath "dashboard.json"
-        if (Test-Path $dashboardJsonPath) {
-            $currentData = Get-Content $dashboardJsonPath -Raw | ConvertFrom-Json
-            
-            # Add current data point
-            $timestamp = Get-Date -Format "yyyy-MM-dd"
-            
-            if ($currentData.Metrics) {
-                $history.TestTrends += @{
-                    Date = $timestamp
-                    Total = $currentData.Metrics.Tests.Total
-                    Passed = $currentData.Metrics.Tests.Passed
-                    Failed = $currentData.Metrics.Tests.Failed
-                }
-                
-                $history.CoverageTrends += @{
-                    Date = $timestamp
-                    Percentage = $currentData.Metrics.Coverage.Percentage
-                }
-                
-                $history.LOCTrends += @{
-                    Date = $timestamp
-                    Total = $currentData.Metrics.Files.LinesOfCode
-                    Functions = $currentData.Metrics.Files.Functions
-                }
-            }
+        # Save current metrics to history file
+        $historyPath = Join-Path $ReportsPath "metrics-history"
+        if (-not (Test-Path $historyPath)) {
+            New-Item -ItemType Directory -Path $historyPath -Force | Out-Null
         }
         
-        # Look for historical test reports
-        $testReports = Get-ChildItem -Path $ReportsPath -Filter "TestReport-*.json" -ErrorAction SilentlyContinue | 
-                       Sort-Object LastWriteTime -Descending | 
-                       Select-Object -First 10
+        $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+        $dateOnly = Get-Date -Format "yyyy-MM-dd"
         
-        foreach ($report in $testReports) {
+        # Save current snapshot if we have metrics
+        if ($CurrentMetrics.Count -gt 0) {
+            $snapshot = @{
+                Timestamp = (Get-Date).ToString('o')
+                Date = $dateOnly
+                TestCoverage = $CurrentMetrics.TestCoverage
+                DocumentationCoverage = $CurrentMetrics.DocumentationCoverage
+                QualityCoverage = $CurrentMetrics.QualityCoverage
+                LineCoverage = $CurrentMetrics.Coverage
+                Tests = $CurrentMetrics.Tests
+                LinesOfCode = $CurrentMetrics.LinesOfCode
+                Functions = $CurrentMetrics.Functions
+            }
+            
+            $snapshotFile = Join-Path $historyPath "snapshot-$timestamp.json"
+            $snapshot | ConvertTo-Json -Depth 10 | Set-Content -Path $snapshotFile
+            Write-ScriptLog -Message "Saved metrics snapshot: $snapshotFile"
+        }
+        
+        # Load historical snapshots from last 30 days
+        $cutoffDate = (Get-Date).AddDays(-30)
+        $snapshotFiles = Get-ChildItem -Path $historyPath -Filter "snapshot-*.json" -ErrorAction SilentlyContinue |
+                        Where-Object { $_.LastWriteTime -gt $cutoffDate } |
+                        Sort-Object LastWriteTime -Descending
+        
+        foreach ($file in $snapshotFiles) {
             try {
-                $reportData = Get-Content $report.FullName -Raw | ConvertFrom-Json
-                if ($reportData.TotalCount) {
+                $data = Get-Content $file.FullName -Raw | ConvertFrom-Json
+                
+                # Test trends
+                if ($data.Tests) {
                     $history.TestTrends += @{
-                        Date = $report.LastWriteTime.ToString("yyyy-MM-dd")
-                        Total = $reportData.TotalCount
-                        Passed = $reportData.PassedCount
-                        Failed = $reportData.FailedCount
+                        Date = $data.Date
+                        Total = if ($data.Tests.Total) { $data.Tests.Total } else { 0 }
+                        Passed = if ($data.Tests.Passed) { $data.Tests.Passed } else { 0 }
+                        Failed = if ($data.Tests.Failed) { $data.Tests.Failed } else { 0 }
                     }
                 }
+                
+                # Test coverage trends
+                if ($data.TestCoverage) {
+                    $history.TestCoverageTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.TestCoverage.Percentage) { $data.TestCoverage.Percentage } else { 0 }
+                        FilesWithTests = if ($data.TestCoverage.FilesWithTests) { $data.TestCoverage.FilesWithTests } else { 0 }
+                        TotalFiles = if ($data.TestCoverage.TotalFiles) { $data.TestCoverage.TotalFiles } else { 0 }
+                    }
+                }
+                
+                # Documentation coverage trends
+                if ($data.DocumentationCoverage) {
+                    $history.DocumentationCoverageTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.DocumentationCoverage.Percentage) { $data.DocumentationCoverage.Percentage } else { 0 }
+                        FunctionsWithDocs = if ($data.DocumentationCoverage.FunctionsWithDocs) { $data.DocumentationCoverage.FunctionsWithDocs } else { 0 }
+                        TotalFunctions = if ($data.DocumentationCoverage.TotalFunctions) { $data.DocumentationCoverage.TotalFunctions } else { 0 }
+                    }
+                }
+                
+                # Quality trends
+                if ($data.QualityCoverage) {
+                    $history.QualityTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.QualityCoverage.Percentage) { $data.QualityCoverage.Percentage } else { 0 }
+                        AverageScore = if ($data.QualityCoverage.AverageScore) { $data.QualityCoverage.AverageScore } else { 0 }
+                        PassedFiles = if ($data.QualityCoverage.PassedFiles) { $data.QualityCoverage.PassedFiles } else { 0 }
+                    }
+                }
+                
+                # Line coverage trends
+                if ($data.LineCoverage) {
+                    $history.LineCoverageTrends += @{
+                        Date = $data.Date
+                        Percentage = if ($data.LineCoverage.Percentage) { $data.LineCoverage.Percentage } else { 0 }
+                        CoveredLines = if ($data.LineCoverage.CoveredLines) { $data.LineCoverage.CoveredLines } else { 0 }
+                        TotalLines = if ($data.LineCoverage.TotalLines) { $data.LineCoverage.TotalLines } else { 0 }
+                    }
+                }
+                
+                # LOC trends
+                $history.LOCTrends += @{
+                    Date = $data.Date
+                    Total = if ($data.LinesOfCode) { $data.LinesOfCode } else { 0 }
+                    Functions = if ($data.Functions) { $data.Functions } else { 0 }
+                }
             } catch {
-                Write-ScriptLog -Level Warning -Message "Failed to parse report: $($report.Name)"
+                Write-ScriptLog -Level Warning -Message "Failed to parse historical snapshot: $($file.Name)"
             }
         }
         
-        Write-ScriptLog -Message "Loaded $($history.TestTrends.Count) historical test data points"
+        Write-ScriptLog -Message "Loaded $($snapshotFiles.Count) historical data points"
     } catch {
         Write-ScriptLog -Level Warning -Message "Failed to load historical metrics: $($_.Exception.Message)"
     }
@@ -2731,6 +3190,7 @@ $manifestTagsSection
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
             <li><a href="#github-activity">🌟 GitHub</a></li>
             <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#github-issues">🐛 Issues</a></li>
             <li><a href="#trends">📈 Trends</a></li>
         </ul>
     </nav>
@@ -2873,17 +3333,66 @@ $manifestTagsSection
                     </div>
 
                     <div class="metric-card">
-                        <h3>📊 Code Coverage</h3>
-                        <div class="metric-value">$($Metrics.Coverage.Percentage)%</div>
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">$($Metrics.TestCoverage.Percentage)%</div>
                         <div class="metric-label">
-                            $(if($Metrics.Coverage.TotalLines -gt 0){"$($Metrics.Coverage.CoveredLines) / $($Metrics.Coverage.TotalLines) Lines Covered"}else{"No coverage data available"})
+                            $($Metrics.TestCoverage.FilesWithTests) / $($Metrics.TestCoverage.TotalFiles) Files Have Tests
                         </div>
-                        $(if($Metrics.Coverage.Percentage -gt 0) {
-                            @"
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: $($Metrics.Coverage.Percentage)%">
-                                $($Metrics.Coverage.Percentage)%
+                            <div class="progress-fill" style="width: $($Metrics.TestCoverage.Percentage)%; background: $(if($Metrics.TestCoverage.Percentage -ge 80){'var(--success)'}elseif($Metrics.TestCoverage.Percentage -ge 60){'var(--warning)'}else{'var(--error)'})">
+                                $($Metrics.TestCoverage.Percentage)%
                             </div>
+                        </div>
+                        $(if($Metrics.TestCoverage.FilesWithoutTests -gt 0) {
+                            @"
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ $($Metrics.TestCoverage.FilesWithoutTests) files without tests
+                        </div>
+"@
+                        })
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>📚 Documentation Coverage</h3>
+                        <div class="metric-value">$($Metrics.DocumentationCoverage.Percentage)%</div>
+                        <div class="metric-label">
+                            $($Metrics.DocumentationCoverage.FunctionsWithDocs) / $($Metrics.DocumentationCoverage.TotalFunctions) Functions Documented
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: $($Metrics.DocumentationCoverage.Percentage)%; background: $(if($Metrics.DocumentationCoverage.Percentage -ge 80){'var(--success)'}elseif($Metrics.DocumentationCoverage.Percentage -ge 60){'var(--warning)'}else{'var(--error)'})">
+                                $($Metrics.DocumentationCoverage.Percentage)%
+                            </div>
+                        </div>
+                        $(if($Metrics.DocumentationCoverage.FunctionsWithoutDocs -gt 0) {
+                            @"
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ $($Metrics.DocumentationCoverage.FunctionsWithoutDocs) functions without docs
+                        </div>
+"@
+                        })
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>✨ Code Quality</h3>
+                        <div class="metric-value">$($Metrics.QualityCoverage.AverageScore)/100</div>
+                        <div class="metric-label">
+                            $(if($Metrics.QualityCoverage.TotalIssues -gt 0){"$($Metrics.QualityCoverage.TotalIssues) issues in $($Metrics.QualityCoverage.WarningFiles + $Metrics.QualityCoverage.FailedFiles) files"}else{"No issues found"})
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: $($Metrics.QualityCoverage.AverageScore)%; background: $(if($Metrics.QualityCoverage.AverageScore -ge 80){'var(--success)'}elseif($Metrics.QualityCoverage.AverageScore -ge 60){'var(--warning)'}else{'var(--error)'})">
+                                $($Metrics.QualityCoverage.AverageScore)/100
+                            </div>
+                        </div>
+                        $(if($Metrics.QualityCoverage.TotalValidated -gt 0) {
+                            @"
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ✅ $($Metrics.QualityCoverage.PassedFiles) clean, ⚠️ $($Metrics.QualityCoverage.WarningFiles) warnings, ❌ $($Metrics.QualityCoverage.FailedFiles) errors
+                        </div>
+"@
+                        } else {
+                            @"
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Run <code>./az 0404</code> to analyze code quality
                         </div>
 "@
                         })
@@ -3068,7 +3577,7 @@ $domainsHTML
                     <div class="badge $(if($Status.Tests -eq 'Passing'){''}elseif($Status.Tests -eq 'Failing'){'error'}else{'warning'})">
                         Tests: $($Status.Tests)
                     </div>
-                    <div class="badge info">Coverage: $($Metrics.Coverage.Percentage)%</div>
+                    <div class="badge info">Quality: $($Metrics.QualityCoverage.AverageScore)/100</div>
                     <div class="badge">Security: Scanned</div>
                     <div class="badge">Platform: $($Metrics.Platform)</div>
                     <div class="badge">PowerShell: $($Metrics.PSVersion)</div>
@@ -3376,6 +3885,47 @@ $commitsHTML
                 </p>
             </section>
 
+            <!-- GitHub Issues Section -->
+            <section class="section" id="github-issues" style="margin-top: 30px;">
+                <h2>🐛 Open GitHub Issues</h2>
+                $(if($githubIssues.Error){
+                    "<p style='color: var(--text-secondary); text-align: center;'>⚠️ <em>Unable to fetch issues: $($githubIssues.Error)</em></p>"
+                }elseif($githubIssues.Issues.Count -eq 0){
+                    "<p style='color: var(--text-secondary); text-align: center;'>✅ <em>No open issues! Great job!</em></p>"
+                }else{
+                    $issuesHTML = ""
+                    foreach($issue in $githubIssues.Issues){
+                        $labelsHTML = if($issue.Labels.Count -gt 0){
+                            $issue.Labels | ForEach-Object {
+                                "<span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>$_</span>"
+                            } | Join-String -Separator " "
+                        }else{"<span style='color: var(--text-secondary); font-size: 0.85rem;'>No labels</span>"}
+                        
+                        $issuesHTML += @"
+                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='$($issue.Url)' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #$($issue.Number): $($issue.Title)
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>$($issue.User)</strong> on $([DateTime]::Parse($issue.CreatedAt).ToString('yyyy-MM-dd'))
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        $labelsHTML
+                    </div>
+                </div>
+"@
+                    }
+                    $issuesHTML
+                })
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    Showing up to 10 open issues | <a href="https://github.com/wizzense/AitherZero/issues" target="_blank" style="color: var(--info);">View all issues</a>
+                </p>
+            </section>
+
             <!-- Historical Trends Section -->
             <section class="section" id="trends" style="margin-top: 30px;">
                 <h2>📈 Historical Trends</h2>
@@ -3393,23 +3943,6 @@ $commitsHTML
                             $testTrendHTML
                         }else{
                             "<p style='color: var(--text-secondary);'>No historical test data available yet. Data will accumulate over time.</p>"
-                        })
-                    </div>
-                </div>
-                
-                <div class="info-card" style="margin-top: 20px;">
-                    <div class="info-card-header">📈 Code Coverage Trends</div>
-                    <div class="info-card-content">
-                        $(if($HistoricalMetrics.CoverageTrends.Count -gt 0){
-                            $coverageTrendHTML = ""
-                            foreach($trend in ($HistoricalMetrics.CoverageTrends | Select-Object -First 5)){
-                                $coverageTrendHTML += "<div style='padding: 8px; border-bottom: 1px solid var(--card-border);'>"
-                                $coverageTrendHTML += "<strong>$($trend.Date)</strong>: $($trend.Percentage)% coverage"
-                                $coverageTrendHTML += "</div>"
-                            }
-                            $coverageTrendHTML
-                        }else{
-                            "<p style='color: var(--text-secondary);'>No historical coverage data available yet. Run tests with coverage to populate.</p>"
                         })
                     </div>
                 </div>
@@ -3680,7 +4213,9 @@ $(if ($Metrics.Tests.LastRun) {
 } else {
 "| ⚠️ **Test Results** | **N/A** | No test results available. Run ``./az 0402`` |
 "
-})| 📈 **Code Coverage** | **$($Metrics.Coverage.Percentage)%** | $(if($Metrics.Coverage.TotalLines -gt 0){"$($Metrics.Coverage.CoveredLines)/$($Metrics.Coverage.TotalLines) lines covered"}else{"No coverage data available"}) |
+})| 🧪 **Test Coverage** | **$($Metrics.TestCoverage.Percentage)%** | $($Metrics.TestCoverage.FilesWithTests) / $($Metrics.TestCoverage.TotalFiles) files have tests |
+| 📚 **Documentation Coverage** | **$($Metrics.DocumentationCoverage.Percentage)%** | $($Metrics.DocumentationCoverage.FunctionsWithDocs) / $($Metrics.DocumentationCoverage.TotalFunctions) functions documented |
+| ✨ **Code Quality** | **$($Metrics.QualityCoverage.AverageScore)/100** | $(if($Metrics.QualityCoverage.TotalIssues -gt 0){"$($Metrics.QualityCoverage.TotalIssues) issues in $($Metrics.QualityCoverage.WarningFiles + $Metrics.QualityCoverage.FailedFiles) files"}else{"No issues found"}) (✅ $($Metrics.QualityCoverage.PassedFiles) clean / ⚠️ $($Metrics.QualityCoverage.WarningFiles) warnings / ❌ $($Metrics.QualityCoverage.FailedFiles) errors) |
 
 $(if ($Metrics.Git.Branch -ne "Unknown") {
 @"
@@ -3723,7 +4258,7 @@ $(switch ($Status.Overall) {
 ### Build Status
 - **Tests:** $(switch ($Status.Tests) { 'Passing' { '✅ Passing' } 'Failing' { '❌ Failing' } default { '❓ Unknown' } })
 - **Security:** 🛡️ Scanned
-- **Coverage:** 📊 $($Metrics.Coverage.Percentage)%
+- **Code Quality:** 📊 $($Metrics.QualityCoverage.AverageScore)/100
 - **Platform:** 💻 $($Metrics.Platform)
 - **PowerShell:** ⚡ $($Metrics.PSVersion)
 
@@ -3847,9 +4382,13 @@ try {
     Write-ScriptLog -Message "Fetching GitHub Actions workflow status..."
     $workflowStatus = Get-GitHubWorkflowStatus -Owner "wizzense" -Repo "AitherZero"
     
-    # Load historical metrics for trend analysis
+    # Fetch GitHub issues
+    Write-ScriptLog -Message "Fetching GitHub issues..."
+    $githubIssues = Get-GitHubIssues -Owner "wizzense" -Repo "AitherZero" -MaxIssues 10
+    
+    # Load historical metrics for trend analysis (pass current metrics for saving)
     Write-ScriptLog -Message "Loading historical metrics data..."
-    $historicalMetrics = Get-HistoricalMetrics -ReportsPath $OutputPath
+    $historicalMetrics = Get-HistoricalMetrics -ReportsPath $OutputPath -CurrentMetrics $metrics
     
     # Collect comprehensive detailed metrics
     Write-ScriptLog -Message "Collecting comprehensive project intelligence..."
@@ -3939,8 +4478,11 @@ try {
     Write-Host "  Lines of Code: $($metrics.LinesOfCode.ToString('N0'))" -ForegroundColor White
     Write-Host "  Functions: $($metrics.Functions)" -ForegroundColor White
     Write-Host "  Tests: $($metrics.Tests.Total) ($($metrics.Tests.Unit) unit, $($metrics.Tests.Integration) integration)" -ForegroundColor White
-    Write-Host "  Coverage: $($metrics.Coverage.Percentage)%" -ForegroundColor White
-    Write-Host "  Status: $($status.Overall)" -ForegroundColor $(if($status.Overall -eq 'Healthy'){'Green'}elseif($status.Overall -eq 'Issues'){'Yellow'}else{'Gray'})
+    Write-Host "`n📈 Coverage Metrics:" -ForegroundColor Cyan
+    Write-Host "  Test Coverage: $($metrics.TestCoverage.Percentage)% ($($metrics.TestCoverage.FilesWithTests)/$($metrics.TestCoverage.TotalFiles) files)" -ForegroundColor $(if($metrics.TestCoverage.Percentage -ge 80){'Green'}elseif($metrics.TestCoverage.Percentage -ge 60){'Yellow'}else{'Red'})
+    Write-Host "  Documentation Coverage: $($metrics.DocumentationCoverage.Percentage)% ($($metrics.DocumentationCoverage.FunctionsWithDocs)/$($metrics.DocumentationCoverage.TotalFunctions) functions)" -ForegroundColor $(if($metrics.DocumentationCoverage.Percentage -ge 80){'Green'}elseif($metrics.DocumentationCoverage.Percentage -ge 60){'Yellow'}else{'Red'})
+    Write-Host "  Code Quality: $($metrics.QualityCoverage.AverageScore)/100 $(if($metrics.QualityCoverage.TotalIssues -gt 0){"($($metrics.QualityCoverage.TotalIssues) issues)"}else{"(clean)"})" -ForegroundColor $(if($metrics.QualityCoverage.AverageScore -ge 80){'Green'}elseif($metrics.QualityCoverage.AverageScore -ge 60){'Yellow'}else{'Red'})
+    Write-Host "`n  Status: $($status.Overall)" -ForegroundColor $(if($status.Overall -eq 'Healthy'){'Green'}elseif($status.Overall -eq 'Issues'){'Yellow'}else{'Gray'})
 
     Write-ScriptLog -Message "Dashboard generation completed successfully" -Data @{
         OutputPath = $OutputPath
