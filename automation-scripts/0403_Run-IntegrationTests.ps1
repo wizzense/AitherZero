@@ -160,6 +160,10 @@ try {
     Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
     Import-Module Pester -MinimumVersion $pesterMinVersion -Force
 
+    # Set test mode BEFORE loading modules to prevent transcript I/O overhead
+    # This ensures the AitherZero module skips transcript initialization
+    $env:AITHERZERO_TEST_MODE = "Integration"
+
     # Import AitherZero main module which loads all domains efficiently
     # This is much faster than loading individual modules
     Write-ScriptLog -Message "Loading AitherZero module for integration testing"
@@ -333,9 +337,9 @@ try {
         New-Item -Path $testDrive -ItemType Directory -Force | Out-Null
     }
 
-    # Set environment variables for tests
-    if ($PSCmdlet.ShouldProcess("Environment variables", "Set test mode variables")) {
-        $env:AITHERZERO_TEST_MODE = "Integration"
+    # Set test drive environment variable
+    # Note: AITHERZERO_TEST_MODE is already set earlier before module loading
+    if ($PSCmdlet.ShouldProcess("Environment variables", "Set test drive variable")) {
         $env:AITHERZERO_TEST_DRIVE = $testDrive
     }
 
