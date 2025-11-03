@@ -319,7 +319,22 @@ This file failed quality validation checks. Review the findings below and addres
             }
             return $issueData
         } else {
-            Write-ScriptLog -Level Error -Message "Failed to create issue: $issueJson"
+            # Parse and display user-friendly error message
+            $errorMessage = if ($issueJson -is [string]) {
+                $issueJson
+            } elseif ($issueJson -is [array]) {
+                $issueJson -join "`n"
+            } else {
+                "Unknown error creating issue"
+            }
+            
+            Write-ScriptLog -Level Error -Message "Failed to create issue for $($Report.FileName)" -Data @{
+                Error = $errorMessage
+                ExitCode = $LASTEXITCODE
+            }
+            
+            # Show user-friendly message
+            Write-Host "  ⚠️  Issue creation failed. Check that gh CLI is authenticated and has write access." -ForegroundColor Yellow
             return $null
         }
         
@@ -359,9 +374,9 @@ try {
         
         $allFiles = Get-ChildItem @scanParams
         
-        # Filter to only .ps1, .psm1, .psd1 files
+        # Filter to only .ps1, .psm1, .psd1 files (case-insensitive)
         $filesToValidate = @($allFiles | Where-Object { 
-            $_.Extension -match '\.(ps1|psm1|psd1)$' 
+            $_.Extension -imatch '\.(ps1|psm1|psd1)$' 
         } | Select-Object -ExpandProperty FullName)
         
         # Filter out .psd1 files if requested
@@ -657,7 +672,8 @@ try {
         $config = Get-Configuration -ErrorAction SilentlyContinue
         if ($config -and $config.ContainsKey('AutomatedIssueManagement')) {
             $autoManagement = $config.AutomatedIssueManagement
-            if ($autoManagement.ContainsKey('AutoCreateIssues') -and 
+            if ($autoManagement -and
+                $autoManagement.ContainsKey('AutoCreateIssues') -and 
                 $autoManagement.ContainsKey('CreateFromCodeQuality') -and
                 $autoManagement.AutoCreateIssues -and 
                 $autoManagement.CreateFromCodeQuality) {
