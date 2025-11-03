@@ -3,20 +3,20 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0009_Setup-MCPServers
+    Unit tests for 0010_Setup-MCPServers
 .DESCRIPTION
     Auto-generated comprehensive tests
-    Script: 0009_Setup-MCPServers
+    Script: 0010_Setup-MCPServers
     Stage: Environment
     Description: This script provides complete MCP server lifecycle management:
     Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0009_Setup-MCPServers' -Tag 'Unit', 'AutomationScript', 'Environment' {
+Describe '0010_Setup-MCPServers' -Tag 'Unit', 'AutomationScript', 'Environment' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0009_Setup-MCPServers.ps1'
-        $script:ScriptName = '0009_Setup-MCPServers'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0010_Setup-MCPServers.ps1'
+        $script:ScriptName = '0010_Setup-MCPServers'
     }
 
     Context 'Script Validation' {

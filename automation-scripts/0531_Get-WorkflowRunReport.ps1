@@ -35,15 +35,15 @@
     Path to export report to (optional).
 
 .EXAMPLE
-    ./automation-scripts/0530_Get-WorkflowRunReport.ps1 -RunId 12345678
+    ./automation-scripts/0531_Get-WorkflowRunReport.ps1 -RunId 12345678
     Get detailed report for specific workflow run.
 
 .EXAMPLE
-    ./automation-scripts/0530_Get-WorkflowRunReport.ps1 -List -Status failure -MaxRuns 5
+    ./automation-scripts/0531_Get-WorkflowRunReport.ps1 -List -Status failure -MaxRuns 5
     List the 5 most recent failed workflow runs.
 
 .EXAMPLE
-    ./automation-scripts/0530_Get-WorkflowRunReport.ps1 -WorkflowName "pr-validation" -Branch dev
+    ./automation-scripts/0531_Get-WorkflowRunReport.ps1 -WorkflowName "pr-validation" -Branch dev
     Get report for most recent pr-validation run on dev branch.
 
 .NOTES

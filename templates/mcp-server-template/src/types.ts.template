@@ -1,0 +1,33 @@
+/**
+ * TypeScript Type Definitions
+ * 
+ * Define your custom types here for better type safety
+ * and IntelliSense support.
+ */
+
+/**
+ * Configuration type for the server
+ */
+export interface ServerConfig {
+  serverRoot: string;
+  timeout?: number;
+  debug?: boolean;
+}
+
+/**
+ * Tool result type
+ */
+export interface ToolResult {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+/**
+ * Resource data type
+ */
+export interface ResourceData {
+  [key: string]: any;
+}
+
+// Add more types as needed for your server

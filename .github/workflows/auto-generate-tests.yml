@@ -156,7 +156,7 @@ jobs:
           }
 
       - name: 📝 Commit generated tests
-        if: steps.detect.outputs.missing_tests == 'true' && steps.generate.outputs.success == 'true'
+        if: github.event_name == 'pull_request' && steps.detect.outputs.missing_tests == 'true' && steps.generate.outputs.success == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -179,7 +179,9 @@ jobs:
           EOF
 
             git commit -F /tmp/commit-msg.txt
-            git push
+
+            # Push to the PR branch (works even in detached HEAD state)
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
             echo "✅ Generated tests committed and pushed"
           else

@@ -12,13 +12,13 @@ MCP servers are **automatically built and configured** when you:
 
 ```powershell
 # Idempotent setup - safe to run anytime
-./automation-scripts/0009_Setup-MCPServers.ps1
+./automation-scripts/0010_Setup-MCPServers.ps1
 
 # Force rebuild
-./automation-scripts/0009_Setup-MCPServers.ps1 -Force
+./automation-scripts/0010_Setup-MCPServers.ps1 -Force
 
 # Auto-fix config issues (removes non-existent packages)
-./automation-scripts/0009_Setup-MCPServers.ps1 -FixConfig
+./automation-scripts/0010_Setup-MCPServers.ps1 -FixConfig
 ```
 
 **The script is idempotent** - run it as many times as you want, it will:

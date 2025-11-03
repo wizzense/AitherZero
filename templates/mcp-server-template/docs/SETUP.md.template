@@ -1,0 +1,292 @@
+# SERVERNAME MCP Server - Setup Guide
+
+This guide will help you set up and configure the SERVERNAME MCP server.
+
+## Prerequisites
+
+### Required
+
+- **Node.js 18+**: Download from [nodejs.org](https://nodejs.org/)
+- **npm**: Comes with Node.js
+
+### Optional (depending on your server)
+
+- **PowerShell 7+**: If your server integrates with PowerShell
+- **Docker**: If your server manages containers
+- **API keys**: For external service integration
+- **Database**: If your server needs database access
+
+## Installation
+
+### Option 1: From Source
+
+```bash
+# Clone or download the server
+git clone <repository-url> servername-mcp-server
+cd servername-mcp-server
+
+# Install dependencies
+npm install
+
+# Build the server
+npm run build
+
+# Test the server
+npm run test:manual
+```
+
+### Option 2: From npm (if published)
+
+```bash
+npm install -g @yourorg/servername-mcp-server
+```
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file in the server directory:
+
+```bash
+# Required
+SERVERNAME_ROOT=/path/to/your/server
+SERVERNAME_API_KEY=your_api_key_here
+
+# Optional
+DEBUG=1                    # Enable debug logging
+TIMEOUT=30000             # Command timeout in milliseconds
+LOG_LEVEL=info            # Logging level: debug, info, warn, error
+```
+
+### Configuration File
+
+Some servers may use a `config.json` file:
+
+```json
+{
+  "serverRoot": "/path/to/server",
+  "apiKey": "your_api_key",
+  "timeout": 30000,
+  "features": {
+    "featureA": true,
+    "featureB": false
+  }
+}
+```
+
+## Integrating with AI Assistants
+
+### Claude Desktop
+
+**Location**: Configuration file location varies by OS:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%/Claude/claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+
+**Configuration**:
+```json
+{
+  "mcpServers": {
+    "SERVERNAME": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/servername-mcp-server/scripts/start-with-build.mjs"
+      ],
+      "env": {
+        "SERVERNAME_ROOT": "/absolute/path/to/servername-mcp-server",
+        "SERVERNAME_API_KEY": "your_api_key"
+      }
+    }
+  }
+}
+```
+
+**Steps**:
+1. Edit the configuration file
+2. Replace `/absolute/path/to/` with your actual paths
+3. Add any required environment variables
+4. Save the file
+5. Restart Claude Desktop
+6. Verify server appears in Claude's capabilities
+
+### VS Code / GitHub Copilot
+
+**Location**: Add to your project's configuration:
+- `.github/mcp-servers.json` (recommended)
+- `.vscode/settings.json`
+
+**Configuration** (`.github/mcp-servers.json`):
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-06-18/schema.json",
+  "mcpServers": {
+    "SERVERNAME": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/servername-mcp-server/scripts/start-with-build.mjs"
+      ],
+      "description": "DESCRIPTION",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "SERVERNAME_ROOT": "${workspaceFolder}",
+        "SERVERNAME_API_KEY": "${env:SERVERNAME_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+**Steps**:
+1. Create `.github/mcp-servers.json` in your project
+2. Add the configuration
+3. Set environment variables in your shell
+4. Reload VS Code
+5. Open Copilot Chat
+6. Verify server is available
+
+## Verification
+
+### Test Server Manually
+
+```bash
+# Start the server
+node scripts/start-with-build.mjs
+
+# In another terminal, test with JSON-RPC
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/index.js
+
+# Expected output: JSON response with list of tools
+```
+
+### Test with AI Assistant
+
+After configuration:
+
+1. **Ask about capabilities**: "What tools are available?"
+2. **List tools**: "Show me what SERVERNAME can do"
+3. **Try a tool**: "Use SERVERNAME to [do something]"
+
+## Common Issues
+
+### Server Not Found
+
+**Symptom**: AI assistant doesn't show the server
+
+**Solutions**:
+- Verify configuration file syntax (use a JSON validator)
+- Check that paths are absolute (Claude) or use `${workspaceFolder}` (VS Code)
+- Ensure Node.js is in your PATH
+- Restart the AI assistant application
+- Check application logs for errors
+
+### Build Errors
+
+**Symptom**: `npm run build` fails
+
+**Solutions**:
+```bash
+# Check Node.js version
+node --version  # Should be 18.0.0 or higher
+
+# Clean and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Check TypeScript version
+npx tsc --version
+```
+
+### Permission Errors
+
+**Symptom**: "Permission denied" when running scripts
+
+**Solutions**:
+```bash
+# Make scripts executable
+chmod +x scripts/*.mjs
+
+# Check file ownership
+ls -la scripts/
+
+# Fix ownership if needed
+chown -R $USER:$USER .
+```
+
+### Environment Variable Not Working
+
+**Symptom**: Server can't access environment variables
+
+**Solutions**:
+- Verify variable names match server expectations
+- Check that variables are set in correct configuration
+- For VS Code, use `${env:VARIABLE_NAME}` format
+- For Claude, variables must be set in shell before starting Claude
+- Add variables to shell profile for persistence
+
+### Server Starts But Tools Not Visible
+
+**Symptom**: Server runs but AI can't use tools
+
+**Solutions**:
+- Verify server is built: `ls -la dist/`
+- Check server logs: Look for errors in console
+- Test manually with `npm run test:manual`
+- Verify JSON-RPC responses are valid
+- Restart AI assistant
+
+## Security Considerations
+
+1. **API Keys**: Never commit API keys to version control
+2. **Permissions**: Run server with minimal required privileges
+3. **Validation**: Server validates all inputs
+4. **Logging**: Sensitive data is not logged
+5. **Network**: Consider firewall rules if server makes network requests
+
+## Updates and Maintenance
+
+### Updating the Server
+
+```bash
+# Pull latest changes (if from git)
+git pull
+
+# Update dependencies
+npm install
+
+# Rebuild
+npm run build
+
+# Restart AI assistant
+```
+
+### Monitoring
+
+```bash
+# Check server logs
+tail -f logs/server.log
+
+# Monitor resource usage
+ps aux | grep node
+
+# Check for errors
+grep ERROR logs/server.log
+```
+
+## Getting Help
+
+- **Documentation**: Check `docs/` directory for more guides
+- **Issues**: Report issues at [repository issues page]
+- **Examples**: See `examples/` directory for more configurations
+- **Community**: Join discussions at [community link]
+
+## Next Steps
+
+After setup:
+
+1. Read [USAGE.md](./USAGE.md) for usage examples
+2. Review [ARCHITECTURE.md](./ARCHITECTURE.md) to understand the server
+3. Check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues
+4. Explore available tools and resources in your AI assistant
