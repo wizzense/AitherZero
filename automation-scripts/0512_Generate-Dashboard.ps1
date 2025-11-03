@@ -1128,46 +1128,6 @@ function Get-FileLevelMetrics {
             continue
         }
         
-        # Skip files known to cause PSScriptAnalyzer threading issues
-        # These files contain patterns that cause "WriteObject/WriteError cannot be called outside" errors
-        $problematicFiles = @('bootstrap.ps1', 'bootstrap.sh', 'container-welcome.ps1', '0599_CI-ProgressReporter.ps1')
-        if ($problematicFiles -contains $file.Name) {
-            Write-ScriptLog -Message "Skipping PSScriptAnalyzer for known problematic file: $($file.Name)"
-            # Still collect basic metrics for these files
-            $relativePath = $file.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
-            $domain = if ($relativePath -match '^domains/([^/]+)') { $matches[1] } 
-                     elseif ($relativePath -match '^automation-scripts') { 'automation-scripts' }
-                     else { 'other' }
-            
-            $fileData = @{
-                Path = $relativePath
-                Name = $file.Name
-                Domain = $domain
-                Lines = 0
-                Functions = 0
-                Score = 100  # Assume OK for skipped files
-                Issues = @()
-                HasTests = $false
-            }
-            
-            # Count lines and functions only
-            try {
-                $content = Get-Content $file.FullName -ErrorAction Stop
-                if ($content) {
-                    $contentArray = @($content)
-                    $fileData.Lines = $contentArray.Count
-                    $funcMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
-                    $fileData.Functions = ($funcMatches | Measure-Object).Count
-                }
-            } catch {
-                # Silently skip if can't read
-            }
-            
-            $fileMetrics.Files += $fileData
-            $fileMetrics.Summary.AnalyzedFiles++
-            continue
-        }
-        
         try {
             $relativePath = $file.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
             $domain = if ($relativePath -match '^domains/([^/]+)') { $matches[1] } 
@@ -1209,33 +1169,39 @@ function Get-FileLevelMetrics {
             
             # Run PSScriptAnalyzer on individual file
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
-                # Wrap immediately to handle single object results under StrictMode
-                # Use Measure-Object instead of .Count for maximum StrictMode compatibility
-                $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue)
-                $issueCount = ($rawIssues | Measure-Object).Count
-                $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
-                
-                if (($issues | Measure-Object).Count -gt 0) {
-                    # Wrap in array to ensure consistent type even with single result
-                    $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
-                        @{
-                            Rule = $_.RuleName
-                            Severity = $_.Severity
-                            Line = $_.Line
-                            Message = $_.Message
-                        }
-                    })
+                try {
+                    # Wrap immediately to handle single object results under StrictMode
+                    # Use Measure-Object instead of .Count for maximum StrictMode compatibility
+                    $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Stop)
+                    $issueCount = ($rawIssues | Measure-Object).Count
+                    $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                     
-                    # Calculate score (100 - issues penalty)
-                    $errorCount = @($issues | Where-Object { $_.Severity -eq 'Error' }).Count
-                    $warningCount = @($issues | Where-Object { $_.Severity -eq 'Warning' }).Count
-                    $infoCount = @($issues | Where-Object { $_.Severity -eq 'Information' }).Count
-                    $errorPenalty = $errorCount * 10
-                    $warningPenalty = $warningCount * 3
-                    $infoPenalty = $infoCount * 1
-                    $fileData.Score = [math]::Max(0, 100 - $errorPenalty - $warningPenalty - $infoPenalty)
-                } else {
-                    $fileData.Score = 100  # No issues
+                    if (($issues | Measure-Object).Count -gt 0) {
+                        # Wrap in array to ensure consistent type even with single result
+                        $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
+                            @{
+                                Rule = $_.RuleName
+                                Severity = $_.Severity
+                                Line = $_.Line
+                                Message = $_.Message
+                            }
+                        })
+                        
+                        # Calculate score (100 - issues penalty)
+                        $errorCount = @($issues | Where-Object { $_.Severity -eq 'Error' }).Count
+                        $warningCount = @($issues | Where-Object { $_.Severity -eq 'Warning' }).Count
+                        $infoCount = @($issues | Where-Object { $_.Severity -eq 'Information' }).Count
+                        $errorPenalty = $errorCount * 10
+                        $warningPenalty = $warningCount * 3
+                        $infoPenalty = $infoCount * 1
+                        $fileData.Score = [math]::Max(0, 100 - $errorPenalty - $warningPenalty - $infoPenalty)
+                    } else {
+                        $fileData.Score = 100  # No issues
+                    }
+                } catch {
+                    # Log PSScriptAnalyzer errors but continue with analysis
+                    Write-ScriptLog -Level Warning -Message "Failed to analyze file: $($file.Name) - $_"
+                    $fileData.Score = 0  # Mark as failed analysis
                 }
             } else {
                 $fileData.Score = 100  # No analyzer, assume clean
