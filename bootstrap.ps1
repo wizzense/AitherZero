@@ -14,7 +14,8 @@
     Custom installation path (default: ./AitherZero)
 .PARAMETER Branch
     Git branch to use (default: main)
-
+.PARAMETER NonInteractive
+    Run without prompts
 .PARAMETER AutoInstallDeps
     Automatically install missing dependencies
 .PARAMETER SkipAutoStart
@@ -40,6 +41,8 @@ param(
     [string]$InstallPath,
 
     [string]$Branch = 'main',
+
+    [switch]$NonInteractive = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'),
 
     [switch]$AutoInstallDeps,
 
@@ -364,7 +367,7 @@ function Install-Dependencies {
         $argumentList += "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath
 
         # Define valid parameters for the main bootstrap script
-        $validParameters = @('Mode', 'InstallProfile', 'InstallPath', 'Branch', 'AutoInstallDeps', 'SkipAutoStart', 'IsRelaunch')
+        $validParameters = @('Mode', 'InstallProfile', 'InstallPath', 'Branch', 'NonInteractive', 'AutoInstallDeps', 'SkipAutoStart', 'IsRelaunch')
 
         # Preserve only valid bound parameters and add IsRelaunch flag
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
@@ -772,7 +775,7 @@ function Install-AitherZero {
             return $installPath
         }
 
-        if (-not $script:IsCI) {
+        if (-not $NonInteractive) {
             $response = Read-Host "Directory exists at $installPath. Overwrite? (y/N)"
             if ($response -ne 'y') {
                 Write-BootstrapLog "Installation cancelled" -Level Warning
@@ -1094,7 +1097,7 @@ function Remove-AitherZero {
         return
     }
 
-    if (-not $script:IsCI) {
+    if (-not $NonInteractive) {
         $response = Read-Host "Remove AitherZero from $installPath? (y/N)"
         if ($response -ne 'y') {
             Write-BootstrapLog "Removal cancelled" -Level Warning
@@ -1133,7 +1136,7 @@ function Remove-AitherZero {
 # Main execution
 try {
     # Only clear host in interactive sessions
-    if (-not $script:IsCI -and $host.UI.RawUI) {
+    if (-not $NonInteractive -and -not $env:CI -and $host.UI.RawUI) {
         try { Clear-Host } catch { }
     }
     Write-BootstrapLog @"
@@ -1224,8 +1227,12 @@ try {
                 $env:SKIP_AUTO_MODULES = "1"
                 $env:AITHERZERO_ONLY = "1"
 
-                # Start AitherZero - it will auto-detect CI environment
-                pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 }"
+                if ($NonInteractive) {
+                    # Don't pass -NonInteractive explicitly - let Start-AitherZero.ps1 auto-detect CI environment
+                    pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 }"
+                } else {
+                    pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 }"
+                }
             } else {
                 Write-BootstrapLog "Launcher not found. Please run manually from: $installPath" -Level Warning
             }

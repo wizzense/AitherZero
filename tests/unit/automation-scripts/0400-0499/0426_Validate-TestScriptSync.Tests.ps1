@@ -3,20 +3,20 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0215_Install-Chocolatey
+    Unit tests for 0426_Validate-TestScriptSync
 .DESCRIPTION
     Auto-generated comprehensive tests
-    Script: 0215_Install-Chocolatey
-    Stage: Development
-    Description: Install Chocolatey package manager for Windows
-    Generated: 2025-11-02 21:41:15
+    Script: 0426_Validate-TestScriptSync
+    Stage: Testing
+    Description: Detects and optionally removes orphaned test files (tests that reference non-existent scripts).
+    Generated: 2025-11-03 16:17:50
 #>
 
-Describe '0215_Install-Chocolatey' -Tag 'Unit', 'AutomationScript', 'Development' {
+Describe '0426_Validate-TestScriptSync' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0215_Install-Chocolatey.ps1'
-        $script:ScriptName = '0215_Install-Chocolatey'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0426_Validate-TestScriptSync.ps1'
+        $script:ScriptName = '0426_Validate-TestScriptSync'
     }
 
     Context 'Script Validation' {
@@ -39,22 +39,22 @@ Describe '0215_Install-Chocolatey' -Tag 'Unit', 'AutomationScript', 'Development
     }
 
     Context 'Parameters' {
-        It 'Should have parameter: Configuration' {
+        It 'Should have parameter: RemoveOrphaned' {
             $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('Configuration') | Should -Be $true
+            $cmd.Parameters.ContainsKey('RemoveOrphaned') | Should -Be $true
+        }
+
+        It 'Should have parameter: CI' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('CI') | Should -Be $true
         }
 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Development' {
+        It 'Should be in stage: Testing' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
-        }
-
-        It 'Should declare dependencies' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 
@@ -62,7 +62,6 @@ Describe '0215_Install-Chocolatey' -Tag 'Unit', 'AutomationScript', 'Development
         It 'Should execute with WhatIf' {
             {
                 $params = @{ WhatIf = $true }
-                $params.Configuration = @{}
                 & $script:ScriptPath @params
             } | Should -Not -Throw
         }

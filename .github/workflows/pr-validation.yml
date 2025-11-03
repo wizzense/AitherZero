@@ -14,8 +14,8 @@ permissions:
   pull-requests: write
   issues: write
   checks: write
-  actions: read  # Required for workflow status checks and PR validation
   # Explicitly deny dangerous permissions
+  actions: none
   security-events: none
 
 # Cost-optimized concurrency to prevent conflicts with main CI
@@ -57,7 +57,7 @@ jobs:
             3. **Security review** for any sensitive changes
 
             ### 📋 Contribution Guidelines
-            - Review [Contributing Guidelines](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
+            - Review [Contributing Guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md)
             - Ensure all changes follow project standards
             - Add tests for new functionality when possible
 
@@ -292,14 +292,14 @@ jobs:
               comment += `
             1. ✅ Quick validation passed successfully
             2. 🔄 Comprehensive CI will run automatically
-            3. 📊 Monitor the [CI pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for full results
+            3. 📊 Monitor the [CI pipeline](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for full results
             4. 🧪 Consider running additional local tests: \`./az.ps1 0402\`
             `;
             }
 
             comment += `
             ---
-            *Automated PR validation • [View full CI pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*
+            *Automated PR validation • [View full CI pipeline](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*
             `;
 
             // Find existing comment to update or create new

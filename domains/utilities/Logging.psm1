@@ -139,7 +139,12 @@ function Write-LogToConsole {
 
     $logMessage = "[$($Entry.Timestamp)] [$($Entry.Level.ToUpper().PadRight(11))] [$($Entry.Source)] $($Entry.Message)"
 
-    if ($Entry.Data -and ($Entry.Data -is [hashtable] -or $Entry.Data -is [System.Collections.IDictionary]) -and $Entry.Data.Count -gt 0) {
+    # Append structured Data only when it's a dictionary-like object with entries
+    if ($Entry.Data -and (
+            $Entry.Data -is [hashtable] -or 
+            $Entry.Data -is [System.Collections.IDictionary] -or 
+            $Entry.Data.GetType().FullName -like 'System.Collections.Generic.Dictionary*'
+        ) -and $Entry.Data.Count -gt 0) {
         $logMessage += " | Data: $($Entry.Data | ConvertTo-Json -Compress)"
     }
 

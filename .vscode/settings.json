@@ -12,12 +12,14 @@
     "**/logs": true,
     "**/testResults.xml": true
   },
+
   // PowerShell settings
-  "powershell.powerShellDefaultVersion": "PowerShell",
+  "powershell.powerShellDefaultVersion": "PowerShell (x64)",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
   "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
+
   // Language-specific settings
   "[powershell]": {
     "editor.tabSize": 4,
@@ -42,6 +44,7 @@
       "other": "off"
     }
   },
+
   // GitHub Copilot settings
   "github.copilot.enable": {
     "*": true,
@@ -56,7 +59,7 @@
     "aitherzero": {
       "command": "node",
       "args": [
-        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+        "/workspaces/AitherZero/mcp-server/scripts/start-with-build.mjs"
       ],
       "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
       "capabilities": {
@@ -64,7 +67,7 @@
         "tools": true
       },
       "env": {
-        "AITHERZERO_ROOT": "${workspaceFolder}",
+        "AITHERZERO_ROOT": "/workspaces/AitherZero",
         "AITHERZERO_NONINTERACTIVE": "1"
       }
     },
@@ -73,9 +76,13 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "${workspaceFolder}"
+        "/workspaces/AitherZero"
       ],
-      "description": "Filesystem access to AitherZero repository"
+      "description": "Filesystem access to AitherZero repository",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      }
     },
     "github": {
       "command": "npx",
@@ -84,6 +91,10 @@
         "@modelcontextprotocol/server-github"
       ],
       "description": "GitHub API access",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
       }
@@ -94,7 +105,11 @@
         "-y",
         "@modelcontextprotocol/server-sequential-thinking"
       ],
-      "description": "Detailed reasoning for complex tasks"
+      "description": "Detailed reasoning for complex tasks",
+      "capabilities": {
+        "prompts": true,
+        "tools": true
+      }
     }
   },
   // Terminal settings
@@ -132,10 +147,12 @@
       "icon": "terminal-powershell"
     }
   },
+
   // Git settings
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
+
   // Search settings
   "search.exclude": {
     "**/node_modules": true,

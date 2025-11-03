@@ -384,9 +384,10 @@ clean_environment() {
 initialize_modules() {
     print_log "INFO" "Initializing AitherZero modules..."
     
-    # Run PowerShell bootstrap which handles initialization (runs non-interactive by default in CI)
+    # Run PowerShell bootstrap which handles initialization
     pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1 \
         -InstallProfile "$PROFILE" \
+        -NonInteractive \
         $([ "$AUTO_START" = "false" ] && echo "-SkipAutoStart" || echo "")
     
     print_log "SUCCESS" "Modules initialized"

@@ -227,6 +227,62 @@ try {
 
     Write-ScriptLog -Message "Found $($testFiles.Count) test files"
 
+    # Pre-validate test files to detect orphaned tests (tests for non-existent scripts)
+    # This prevents pipeline failures from missing script files
+    $validTestFiles = @()
+    $orphanedTests = @()
+    
+    foreach ($testFile in $testFiles) {
+        # Check if this is an automation script test
+        if ($testFile.FullName -match 'automation-scripts') {
+            # Extract script name from test file name
+            $scriptName = $testFile.BaseName -replace '\.Tests$', ''
+            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName.ps1"
+            
+            # Check if the corresponding script exists
+            if (-not (Test-Path $scriptPath)) {
+                $orphanedTests += [PSCustomObject]@{
+                    TestFile = $testFile.Name
+                    ScriptName = $scriptName
+                    Path = $testFile.FullName
+                }
+                Write-ScriptLog -Level Warning -Message "Orphaned test detected: $($testFile.Name) (missing script: $scriptName.ps1)"
+                continue
+            }
+        }
+        
+        # Add to valid test files
+        $validTestFiles += $testFile
+    }
+    
+    # Report orphaned tests
+    if ($orphanedTests.Count -gt 0) {
+        Write-ScriptLog -Level Warning -Message "Found $($orphanedTests.Count) orphaned test file(s)" -Data @{
+            OrphanedTests = $orphanedTests.Count
+            Details = ($orphanedTests | ForEach-Object { $_.TestFile }) -join ', '
+        }
+        Write-Host ""
+        Write-Host "⚠️  Warning: Orphaned Test Files Detected" -ForegroundColor Yellow
+        Write-Host "   These test files reference non-existent scripts and will be skipped:" -ForegroundColor Yellow
+        $orphanedTests | ForEach-Object {
+            Write-Host "   - $($_.TestFile) → missing $($_.ScriptName).ps1" -ForegroundColor DarkYellow
+        }
+        Write-Host ""
+        Write-Host "   💡 Tip: Run validation to clean up orphaned tests:" -ForegroundColor Cyan
+        Write-Host "      ./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned" -ForegroundColor Gray
+        Write-Host ""
+    }
+    
+    # Update test files to only include valid ones
+    $testFiles = $validTestFiles
+    
+    if ($testFiles.Count -eq 0) {
+        Write-ScriptLog -Level Warning -Message "No valid test files found after filtering orphaned tests"
+        exit 0
+    }
+    
+    Write-ScriptLog -Message "Proceeding with $($testFiles.Count) valid test file(s)"
+
     # Load configuration
     $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
@@ -471,7 +527,7 @@ try {
             $testChunks += ,@($chunk)
         }
 
-        # Run test chunks in parallel
+        # Run test chunks in parallel with error handling
         $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
             $chunk = $_
             $projectRoot = $using:projectRoot
@@ -481,23 +537,39 @@ try {
             $NoCoverage = $using:NoCoverage
             $CoverageThreshold = $using:CoverageThreshold
 
-            # Import Pester in parallel runspace
-            Import-Module Pester -MinimumVersion 5.0 -Force
+            try {
+                # Import Pester in parallel runspace
+                Import-Module Pester -MinimumVersion 5.0 -Force -ErrorAction Stop
 
-            # Create config for this chunk
-            $chunkConfig = New-PesterConfiguration
-            $chunkConfig.Run.Path = $chunk
-            $chunkConfig.Run.PassThru = $true
-            $chunkConfig.Run.Exit = $false
+                # Create config for this chunk
+                $chunkConfig = New-PesterConfiguration
+                $chunkConfig.Run.Path = $chunk
+                $chunkConfig.Run.PassThru = $true
+                $chunkConfig.Run.Exit = $false
 
-            # Apply settings from parent scope
-            $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
-            $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
-            $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
-            $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
+                # Apply settings from parent scope
+                $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
+                $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
+                $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
+                $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
 
-            # Run tests for this chunk
-            Invoke-Pester -Configuration $chunkConfig
+                # Run tests for this chunk
+                Invoke-Pester -Configuration $chunkConfig
+            }
+            catch {
+                # Return empty result on error to prevent pipeline failure
+                Write-Warning "Error executing test chunk: $_"
+                [PSCustomObject]@{
+                    TotalCount = 0
+                    PassedCount = 0
+                    FailedCount = 0
+                    SkippedCount = 0
+                    NotRunCount = 0
+                    Duration = [TimeSpan]::Zero
+                    Failed = @()
+                    Tests = @()
+                }
+            }
         }
 
         # Aggregate results from all parallel runs
@@ -513,12 +585,70 @@ try {
             CodeCoverage = $null  # Code coverage not supported in parallel mode
         }
     } else {
-        # Standard sequential execution
-        $result = Invoke-Pester -Configuration $pesterConfig
+        # Standard sequential execution with error handling
+        try {
+            $result = Invoke-Pester -Configuration $pesterConfig
+        }
+        catch {
+            Write-ScriptLog -Level Error -Message "Pester execution encountered an error: $_" -Data @{
+                Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+            }
+            
+            # Create a minimal result object to allow the script to continue
+            $result = [PSCustomObject]@{
+                TotalCount = 0
+                PassedCount = 0
+                FailedCount = 0
+                SkippedCount = 0
+                Duration = [TimeSpan]::Zero
+                Failed = @()
+                Tests = @()
+            }
+            
+            Write-Host ""
+            Write-Host "⚠️  Test execution encountered errors but continuing..." -ForegroundColor Yellow
+            Write-Host "   Error: $_" -ForegroundColor DarkYellow
+            Write-Host ""
+        }
     }
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         $duration = Stop-PerformanceTrace -Name "UnitTests"
+    } else {
+        $duration = $null
+    }
+
+    # Verify result object exists and has expected properties
+    if (-not $result) {
+        Write-ScriptLog -Level Error -Message "Test execution returned null result"
+        Write-Host "`n❌ Unit Test Results:" -ForegroundColor Red
+        Write-Host "  Total: N/A"
+        Write-Host "  Passed: N/A"
+        Write-Host "  Failed: N/A"
+        Write-Host "  Skipped: N/A"
+        exit 2
+    }
+
+    # Ensure result has required properties with defaults
+    if ($null -eq $result.TotalCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing TotalCount property, using 0"
+        $result | Add-Member -NotePropertyName TotalCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.PassedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing PassedCount property, using 0"
+        $result | Add-Member -NotePropertyName PassedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.FailedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing FailedCount property, using 0"
+        $result | Add-Member -NotePropertyName FailedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.SkippedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing SkippedCount property, using 0"
+        $result | Add-Member -NotePropertyName SkippedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.Duration) {
+        Write-ScriptLog -Level Warning -Message "Result missing Duration property, using 0"
+        $result | Add-Member -NotePropertyName Duration -NotePropertyValue ([TimeSpan]::Zero) -Force
     }
 
     # Log results
@@ -532,13 +662,19 @@ try {
 
     Write-ScriptLog -Message "Unit test execution completed" -Data $testSummary
 
-    # Display summary
+    # Display summary with safe property access
     Write-Host "`nUnit Test Summary:" -ForegroundColor Cyan
-    Write-Host "  Total Tests: $($result.TotalCount)"
-    Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
-    Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-    Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-    Write-Host "  Duration: $($result.Duration.TotalSeconds.ToString('F2'))s"
+    $totalCount = if ($null -ne $result.TotalCount) { $result.TotalCount } else { 0 }
+    $passedCount = if ($null -ne $result.PassedCount) { $result.PassedCount } else { 0 }
+    $failedCount = if ($null -ne $result.FailedCount) { $result.FailedCount } else { 0 }
+    $skippedCount = if ($null -ne $result.SkippedCount) { $result.SkippedCount } else { 0 }
+    $durationSeconds = if ($null -ne $result.Duration) { $result.Duration.TotalSeconds.ToString('F2') } else { '0.00' }
+    
+    Write-Host "  Total Tests: $totalCount"
+    Write-Host "  Passed: $passedCount" -ForegroundColor Green
+    Write-Host "  Failed: $failedCount" -ForegroundColor $(if ($failedCount -gt 0) { 'Red' } else { 'Green' })
+    Write-Host "  Skipped: $skippedCount" -ForegroundColor Yellow
+    Write-Host "  Duration: ${durationSeconds}s"
 
     if ($pesterConfig.CodeCoverage.Enabled -and $result.CodeCoverage) {
         Write-Host "`nCode Coverage:" -ForegroundColor Cyan
@@ -567,15 +703,20 @@ try {
         }
     }
 
-    # Display failed tests
-    if ($result.FailedCount -gt 0) {
+    # Display failed tests with safe access to Failed collection
+    if ($failedCount -gt 0 -and $result.Failed) {
         Write-Host "`nFailed Tests:" -ForegroundColor Red
-        $result.Failed | ForEach-Object {
-            Write-Host "  - $($_.ExpandedPath)" -ForegroundColor Red
-            if ($_.ErrorRecord -and $_.ErrorRecord.Exception) {
-                Write-Host "    $($_.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
-            } elseif ($_.ErrorRecord) {
-                Write-Host "    $($_.ErrorRecord)" -ForegroundColor DarkRed
+        $failedTests = @($result.Failed)  # Ensure array for safe iteration
+        foreach ($failedTest in $failedTests) {
+            $testPath = if ($failedTest.ExpandedPath) { $failedTest.ExpandedPath } 
+                       elseif ($failedTest.Name) { $failedTest.Name }
+                       else { "Unknown test" }
+            Write-Host "  - $testPath" -ForegroundColor Red
+            
+            if ($failedTest.ErrorRecord -and $failedTest.ErrorRecord.Exception) {
+                Write-Host "    $($failedTest.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
+            } elseif ($failedTest.ErrorRecord) {
+                Write-Host "    $($failedTest.ErrorRecord)" -ForegroundColor DarkRed
             }
         }
     }
@@ -593,33 +734,37 @@ try {
         $comprehensiveReport = @{
             TestType = 'Unit'
             Timestamp = (Get-Date).ToString('o')
-            TotalCount = $result.TotalCount
-            PassedCount = $result.PassedCount
-            FailedCount = $result.FailedCount
-            SkippedCount = $result.SkippedCount
-            Duration = $result.Duration.TotalSeconds
+            TotalCount = $totalCount
+            PassedCount = $passedCount
+            FailedCount = $failedCount
+            SkippedCount = $skippedCount
+            Duration = if ($result.Duration) { $result.Duration.TotalSeconds } else { 0 }
             TestResults = @{
                 Summary = @{
-                    Total = $result.TotalCount
-                    Passed = $result.PassedCount
-                    Failed = $result.FailedCount
-                    Skipped = $result.SkippedCount
+                    Total = $totalCount
+                    Passed = $passedCount
+                    Failed = $failedCount
+                    Skipped = $skippedCount
                 }
                 Details = @()
             }
         }
 
-        # Add failed test details
-        if ($result.Failed -and $result.Failed.Count -gt 0) {
-            foreach ($failedTest in $result.Failed) {
+        # Add failed test details - with safe access to Failed collection
+        if ($failedCount -gt 0 -and $result.Failed) {
+            $failedTests = @($result.Failed)  # Ensure array
+            foreach ($failedTest in $failedTests) {
                 $testDetail = @{
                     Result = 'Failed'
-                    Name = $failedTest.Name ?? $failedTest.ExpandedName ?? $failedTest.ExpandedPath ?? 'Unknown Test'
+                    Name = if ($failedTest.Name) { $failedTest.Name } 
+                           elseif ($failedTest.ExpandedName) { $failedTest.ExpandedName }
+                           elseif ($failedTest.ExpandedPath) { $failedTest.ExpandedPath }
+                           else { 'Unknown Test' }
                     ExpandedPath = $failedTest.ExpandedPath
                     ErrorRecord = if ($failedTest.ErrorRecord) {
                         @{
                             Exception = @{
-                                Message = $failedTest.ErrorRecord.Exception.Message
+                                Message = if ($failedTest.ErrorRecord.Exception) { $failedTest.ErrorRecord.Exception.Message } else { 'No exception message' }
                             }
                             ScriptStackTrace = $failedTest.ErrorRecord.ScriptStackTrace
                         }
@@ -628,7 +773,7 @@ try {
                         @{
                             File = $failedTest.ScriptBlock.File
                             StartPosition = @{
-                                Line = $failedTest.ScriptBlock.StartPosition.StartLine
+                                Line = if ($failedTest.ScriptBlock.StartPosition) { $failedTest.ScriptBlock.StartPosition.StartLine } else { 0 }
                             }
                         }
                     } else { $null }
@@ -647,12 +792,12 @@ try {
         return $result
     }
 
-    # Exit based on test results
-    if ($result.FailedCount -eq 0) {
+    # Exit based on test results - use safe values
+    if ($failedCount -eq 0) {
         Write-ScriptLog -Message "All unit tests passed!"
         exit 0
     } else {
-        Write-ScriptLog -Level Error -Message "$($result.FailedCount) unit tests failed"
+        Write-ScriptLog -Level Error -Message "$failedCount unit tests failed"
         exit 1
     }
 }

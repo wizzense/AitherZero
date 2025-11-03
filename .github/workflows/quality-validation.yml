@@ -439,8 +439,8 @@ jobs:
                   '@copilot please review this file and address the quality issues identified above.\n\n' +
                   '---\n' +
                   '*This issue was automatically created by the Quality Validation System*\n' +
-                  '*Related PR: #${{ github.event.pull_request.number }}*\n' +
-                  '*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*';
+                  '*Related PR: #' + context.payload.pull_request.number + '*\n' +
+                  '*Workflow Run: [' + context.runId + '](' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')*';
                 
                 // Create the issue
                 const issue = await github.rest.issues.create({

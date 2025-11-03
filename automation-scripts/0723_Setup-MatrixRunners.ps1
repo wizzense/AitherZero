@@ -22,6 +22,9 @@
     Maximum number of parallel operations (default: 4)
 .PARAMETER CI
     Run in CI mode with minimal output
+.NOTES
+    Stage: Infrastructure
+    Category: GitHub
 .EXAMPLE
     ./0723_Setup-MatrixRunners.ps1 -Organization "myorg" -Matrix "standard"
 .EXAMPLE
@@ -30,8 +33,8 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)]
-    [string]$Organization,
+    [Parameter(Mandatory=$false)]
+    [string]$Organization = $null,
     [string]$Repository,
     [string]$Matrix = 'standard',
     [string]$Token,
@@ -60,6 +63,11 @@ function Write-MatrixLog {
     } else {
         Write-Host "[$Level] $Message"
     }
+}
+
+# Validate required parameters
+if ([string]::IsNullOrWhiteSpace($Organization) -and -not $WhatIfPreference) {
+    throw "Organization is required. Use -Organization parameter to specify the GitHub organization."
 }
 
 function Get-PredefinedMatrix {

@@ -57,11 +57,9 @@ $modulesToLoad = @(
     # Configuration
     './domains/configuration/Configuration.psm1',
 
-    # User interface (BetterMenu first, then UserInterface, CLI Helper, Interactive UI)
+    # User interface (BetterMenu first, then UserInterface)
     './domains/experience/BetterMenu.psm1',
     './domains/experience/UserInterface.psm1',
-    './domains/experience/CLIHelper.psm1',
-    './domains/experience/InteractiveUI.psm1',
 
     # Development tools
     './domains/development/GitAutomation.psm1',
@@ -188,6 +186,7 @@ function Invoke-AitherScript {
             'CacheMinutes' = [int]
             'CoverageThreshold' = [int]
             'ShowAll' = [switch]
+            'NonInteractive' = [switch]
             'Force' = [switch]
             'Type' = [string]
             'Name' = [string]
