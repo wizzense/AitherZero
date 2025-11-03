@@ -9,7 +9,7 @@
     Script: 0426_Validate-TestScriptSync
     Stage: Testing
     Description: Detects and optionally removes orphaned test files (tests that reference non-existent scripts).
-    Generated: 2025-11-03 16:06:03
+    Generated: 2025-11-03 16:17:50
 #>
 
 Describe '0426_Validate-TestScriptSync' -Tag 'Unit', 'AutomationScript', 'Testing' {

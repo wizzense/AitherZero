@@ -6,7 +6,7 @@
     Integration tests for 0426_Validate-TestScriptSync
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-03 16:06:03
+    Generated: 2025-11-03 16:17:50
 #>
 
 Describe '0426_Validate-TestScriptSync Integration' -Tag 'Integration', 'AutomationScript' {
