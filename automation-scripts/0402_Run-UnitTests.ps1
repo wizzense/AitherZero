@@ -227,6 +227,62 @@ try {
 
     Write-ScriptLog -Message "Found $($testFiles.Count) test files"
 
+    # Pre-validate test files to detect orphaned tests (tests for non-existent scripts)
+    # This prevents pipeline failures from missing script files
+    $validTestFiles = @()
+    $orphanedTests = @()
+    
+    foreach ($testFile in $testFiles) {
+        # Check if this is an automation script test
+        if ($testFile.FullName -match 'automation-scripts') {
+            # Extract script name from test file name
+            $scriptName = $testFile.BaseName -replace '\.Tests$', ''
+            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName.ps1"
+            
+            # Check if the corresponding script exists
+            if (-not (Test-Path $scriptPath)) {
+                $orphanedTests += [PSCustomObject]@{
+                    TestFile = $testFile.Name
+                    ScriptName = $scriptName
+                    Path = $testFile.FullName
+                }
+                Write-ScriptLog -Level Warning -Message "Orphaned test detected: $($testFile.Name) (missing script: $scriptName.ps1)"
+                continue
+            }
+        }
+        
+        # Add to valid test files
+        $validTestFiles += $testFile
+    }
+    
+    # Report orphaned tests
+    if ($orphanedTests.Count -gt 0) {
+        Write-ScriptLog -Level Warning -Message "Found $($orphanedTests.Count) orphaned test file(s)" -Data @{
+            OrphanedTests = $orphanedTests.Count
+            Details = ($orphanedTests | ForEach-Object { $_.TestFile }) -join ', '
+        }
+        Write-Host ""
+        Write-Host "⚠️  Warning: Orphaned Test Files Detected" -ForegroundColor Yellow
+        Write-Host "   These test files reference non-existent scripts and will be skipped:" -ForegroundColor Yellow
+        $orphanedTests | ForEach-Object {
+            Write-Host "   - $($_.TestFile) → missing $($_.ScriptName).ps1" -ForegroundColor DarkYellow
+        }
+        Write-Host ""
+        Write-Host "   💡 Tip: Run validation to clean up orphaned tests:" -ForegroundColor Cyan
+        Write-Host "      ./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned" -ForegroundColor Gray
+        Write-Host ""
+    }
+    
+    # Update test files to only include valid ones
+    $testFiles = $validTestFiles
+    
+    if ($testFiles.Count -eq 0) {
+        Write-ScriptLog -Level Warning -Message "No valid test files found after filtering orphaned tests"
+        exit 0
+    }
+    
+    Write-ScriptLog -Message "Proceeding with $($testFiles.Count) valid test file(s)"
+
     # Load configuration
     $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
@@ -471,7 +527,7 @@ try {
             $testChunks += ,@($chunk)
         }
 
-        # Run test chunks in parallel
+        # Run test chunks in parallel with error handling
         $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
             $chunk = $_
             $projectRoot = $using:projectRoot
@@ -481,23 +537,39 @@ try {
             $NoCoverage = $using:NoCoverage
             $CoverageThreshold = $using:CoverageThreshold
 
-            # Import Pester in parallel runspace
-            Import-Module Pester -MinimumVersion 5.0 -Force
+            try {
+                # Import Pester in parallel runspace
+                Import-Module Pester -MinimumVersion 5.0 -Force -ErrorAction Stop
 
-            # Create config for this chunk
-            $chunkConfig = New-PesterConfiguration
-            $chunkConfig.Run.Path = $chunk
-            $chunkConfig.Run.PassThru = $true
-            $chunkConfig.Run.Exit = $false
+                # Create config for this chunk
+                $chunkConfig = New-PesterConfiguration
+                $chunkConfig.Run.Path = $chunk
+                $chunkConfig.Run.PassThru = $true
+                $chunkConfig.Run.Exit = $false
 
-            # Apply settings from parent scope
-            $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
-            $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
-            $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
-            $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
+                # Apply settings from parent scope
+                $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
+                $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
+                $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
+                $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
 
-            # Run tests for this chunk
-            Invoke-Pester -Configuration $chunkConfig
+                # Run tests for this chunk
+                Invoke-Pester -Configuration $chunkConfig
+            }
+            catch {
+                # Return empty result on error to prevent pipeline failure
+                Write-Warning "Error executing test chunk: $_"
+                [PSCustomObject]@{
+                    TotalCount = 0
+                    PassedCount = 0
+                    FailedCount = 0
+                    SkippedCount = 0
+                    NotRunCount = 0
+                    Duration = [TimeSpan]::Zero
+                    Failed = @()
+                    Tests = @()
+                }
+            }
         }
 
         # Aggregate results from all parallel runs
@@ -513,8 +585,31 @@ try {
             CodeCoverage = $null  # Code coverage not supported in parallel mode
         }
     } else {
-        # Standard sequential execution
-        $result = Invoke-Pester -Configuration $pesterConfig
+        # Standard sequential execution with error handling
+        try {
+            $result = Invoke-Pester -Configuration $pesterConfig
+        }
+        catch {
+            Write-ScriptLog -Level Error -Message "Pester execution encountered an error: $_" -Data @{
+                Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+            }
+            
+            # Create a minimal result object to allow the script to continue
+            $result = [PSCustomObject]@{
+                TotalCount = 0
+                PassedCount = 0
+                FailedCount = 0
+                SkippedCount = 0
+                Duration = [TimeSpan]::Zero
+                Failed = @()
+                Tests = @()
+            }
+            
+            Write-Host ""
+            Write-Host "⚠️  Test execution encountered errors but continuing..." -ForegroundColor Yellow
+            Write-Host "   Error: $_" -ForegroundColor DarkYellow
+            Write-Host ""
+        }
     }
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {

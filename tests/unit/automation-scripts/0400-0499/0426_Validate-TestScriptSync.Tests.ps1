@@ -3,19 +3,20 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0835_Create-Issues-Now
+    Unit tests for 0426_Validate-TestScriptSync
 .DESCRIPTION
     Auto-generated comprehensive tests
-    Script: 0835_Create-Issues-Now
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Script: 0426_Validate-TestScriptSync
+    Stage: Testing
+    Description: Detects and optionally removes orphaned test files (tests that reference non-existent scripts).
+    Generated: 2025-11-03 16:06:03
 #>
 
-Describe '0835_Create-Issues-Now' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0426_Validate-TestScriptSync' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0835_Create-Issues-Now.ps1'
-        $script:ScriptName = '0835_Create-Issues-Now'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0426_Validate-TestScriptSync.ps1'
+        $script:ScriptName = '0426_Validate-TestScriptSync'
     }
 
     Context 'Script Validation' {
@@ -38,22 +39,22 @@ Describe '0835_Create-Issues-Now' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Parameters' {
-        It 'Should have parameter: Force' {
+        It 'Should have parameter: RemoveOrphaned' {
             $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('Force') | Should -Be $true
+            $cmd.Parameters.ContainsKey('RemoveOrphaned') | Should -Be $true
         }
 
-        It 'Should have parameter: GenerateOnly' {
+        It 'Should have parameter: CI' {
             $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('GenerateOnly') | Should -Be $true
+            $cmd.Parameters.ContainsKey('CI') | Should -Be $true
         }
 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 
