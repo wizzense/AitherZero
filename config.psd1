@@ -979,9 +979,9 @@
             # Parallel execution settings - optimized for performance
             Parallel = @{
                 Enabled = $true
-                BlockSize = 5   # Smaller batches for faster feedback  
-                Workers = 6     # More workers for better parallelization
-                ProcessIsolation = $true  # Run batches in separate processes
+                BlockSize = 3   # Base block size for Pester parallel execution
+                Workers = 4     # Balanced worker count for CI environments
+                ProcessIsolation = $false  # Disable process isolation for faster execution
             }
             
             # Output settings - optimized for CI/CD
