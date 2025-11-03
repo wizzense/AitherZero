@@ -47,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Preparing release validation environment..." -ForegroundColor Magenta
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Standard
+          ./bootstrap.ps1 -Mode New -InstallProfile Standard
 
       - name: 📦 Install Release Dependencies
         shell: pwsh
@@ -307,7 +307,7 @@ jobs:
           ### Manual Installation
           1. Download and extract `AitherZero-v$version.zip`
           2. Open PowerShell in the extracted directory
-          3. Run: `./bootstrap.ps1 -Mode New -NonInteractive`
+          3. Run: `./bootstrap.ps1 -Mode New`
 
           ### Verification
           ```powershell

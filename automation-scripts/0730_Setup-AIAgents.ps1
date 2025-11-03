@@ -69,7 +69,22 @@ function Get-AIConfig {
 
     try {
         if (Test-Path $ConfigPath) {
-            $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+            # Load based on file extension
+            if ($ConfigPath -like "*.psd1") {
+                try {
+                    $config = Import-PowerShellDataFile $ConfigPath
+                } catch {
+                    Write-Error "Failed to parse PowerShell data file: $_"
+                    return $null
+                }
+            } else {
+                try {
+                    $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+                } catch {
+                    Write-Error "Failed to parse JSON file: $_"
+                    return $null
+                }
+            }
             return $config.AI
         } else {
             Write-Warning "Config file not found at $ConfigPath"
@@ -342,7 +357,7 @@ function Main {
         $envVar = $providerConfig.ApiKeyEnvVar
         $apiKey = [Environment]::GetEnvironmentVariable($envVar)
 
-        if (-not $apiKey -and -not $ValidateOnly) {
+        if (-not $apiKey -and -not $ValidateOnly -and -not $WhatIfPreference) {
             Write-AILog "API key not found for $p. Please enter it now (or press Enter to skip):" -Level Warning
             $secureKey = Read-Host -AsSecureString
             if ($secureKey.Length -gt 0) {
