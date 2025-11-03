@@ -1,74 +1,72 @@
 # AitherZero Container Image
-# Multi-stage build for optimized image size
+FROM mcr.microsoft.com/powershell:7.4-ubuntu-22.04
 
-FROM mcr.microsoft.com/powershell:7.4-ubuntu-22.04 AS base
-
-# Install system dependencies including Python for web server
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     wget \
-    unzip \
-    openssh-client \
-    ca-certificates \
-    python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
+# Create non-root user
 RUN useradd -m -s /bin/bash aitherzero
 
-# Create AitherZero installation directory (separate from /app working directory)
+# Create installation directory
 RUN mkdir -p /opt/aitherzero && \
     chown -R aitherzero:aitherzero /opt/aitherzero
-
-# Create working directory for user files
-RUN mkdir -p /app && \
-    chown -R aitherzero:aitherzero /app
 
 # Switch to non-root user
 USER aitherzero
 
-# Copy application files to /opt/aitherzero
+# Copy application files
 COPY --chown=aitherzero:aitherzero . /opt/aitherzero/
 
 # Set environment variables
 ENV AITHERZERO_ROOT=/opt/aitherzero \
-    AITHERZERO_NONINTERACTIVE=true \
-    AITHERZERO_CI=false \
-    AITHERZERO_DISABLE_TRANSCRIPT=1 \
-    AITHERZERO_LOG_LEVEL=Warning \
-    PATH="/opt/aitherzero:${PATH}"
+    PATH="/home/aitherzero/.local/bin:${PATH}"
 
-# Install PowerShell modules (optional - modules can be installed at runtime if needed)
-# Note: PSGallery configuration may require network access or additional setup in containerized environments
-# The modules will be installed on first use if not present
+# Work in the installation directory
+WORKDIR /opt/aitherzero
+
+# Bootstrap the environment - this initializes the module and installs the global command
+RUN pwsh -NoProfile -ExecutionPolicy Bypass -Command " \
+    Write-Host '🚀 Bootstrapping AitherZero...' -ForegroundColor Cyan; \
+    ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive -SkipAutoStart; \
+    Write-Host '✅ Bootstrap complete' -ForegroundColor Green"
+
+# Verify the global command was installed
 RUN pwsh -NoProfile -Command " \
-    \$ErrorActionPreference = 'Continue'; \
-    try { \
-        Get-PSRepository -Name PSGallery -ErrorAction Stop | Set-PSRepository -InstallationPolicy Trusted -ErrorAction Stop; \
-        Write-Host 'Attempting to install PowerShell modules...'; \
-        Install-Module -Name Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -SkipPublisherCheck -AllowClobber -ErrorAction Continue; \
-        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck -AllowClobber -ErrorAction Continue; \
-        Get-InstalledModule -ErrorAction SilentlyContinue | Format-Table Name, Version -AutoSize; \
-    } catch { \
-        Write-Host 'Module installation skipped. Modules can be installed at runtime with: Install-Module -Name Pester,PSScriptAnalyzer -Force'; \
-    } \
-    "
+    if (Test-Path '/home/aitherzero/.local/bin/aitherzero') { \
+        Write-Host '✅ Global aitherzero command installed' -ForegroundColor Green; \
+    } else { \
+        Write-Host '⚠️  Warning: Global command not found, attempting manual install...' -ForegroundColor Yellow; \
+        if (Test-Path './tools/Install-GlobalCommand.ps1') { \
+            ./tools/Install-GlobalCommand.ps1 -Action Install -InstallPath /opt/aitherzero; \
+        } \
+    }"
 
-# Create required directories in /opt/aitherzero
-RUN mkdir -p /opt/aitherzero/logs /opt/aitherzero/reports /opt/aitherzero/tests/results
-
-# Set working directory to /app for user files
-WORKDIR /app
-
-# Health check - verify manifest file exists in installation directory
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pwsh -NoProfile -Command "Test-Path /opt/aitherzero/AitherZero.psd1 -PathType Leaf"
+    CMD pwsh -NoProfile -Command "Test-Path /opt/aitherzero/AitherZero.psd1"
 
-# Default command - Automatically loads AitherZero module and provides interactive shell
-# The container imports the module, displays a welcome message, and stays alive
-# This allows `docker exec -it <container> pwsh` to immediately have AitherZero available
-CMD ["pwsh", "-NoLogo", "-WorkingDirectory", "/opt/aitherzero", "-File", "/opt/aitherzero/container-welcome.ps1"]
-
-# Expose ports for potential web interfaces (future use)
-EXPOSE 8080 8443
+# Keep container running and ready for interactive use
+CMD ["pwsh", "-NoLogo", "-NoExit", "-Command", "\
+    Set-Location /opt/aitherzero; \
+    if (-not (Get-Module -Name AitherZero)) { \
+        try { Import-Module /opt/aitherzero/AitherZero.psd1 -Force -WarningAction SilentlyContinue } \
+        catch { Write-Host \"⚠️  Module load warning: $_\" -ForegroundColor Yellow } \
+    }; \
+    Write-Host ''; \
+    Write-Host '╔══════════════════════════════════════════════════════════════╗' -ForegroundColor Cyan; \
+    Write-Host '║                    🚀 AitherZero Container                   ║' -ForegroundColor Cyan; \
+    Write-Host '╚══════════════════════════════════════════════════════════════╝' -ForegroundColor Cyan; \
+    Write-Host ''; \
+    Write-Host '✅ Ready to use!' -ForegroundColor Green; \
+    Write-Host ''; \
+    Write-Host '💡 Quick commands:' -ForegroundColor Cyan; \
+    Write-Host '   aitherzero                 - Launch interactive menu' -ForegroundColor White; \
+    Write-Host '   Start-AitherZero           - Same as above' -ForegroundColor Gray; \
+    Write-Host ''; \
+    Write-Host '📍 Working directory: /opt/aitherzero' -ForegroundColor Gray; \
+    Write-Host ''; \
+    while($true) { Start-Sleep 3600 }"]
