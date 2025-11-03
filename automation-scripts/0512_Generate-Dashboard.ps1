@@ -1122,6 +1122,12 @@ function Get-FileLevelMetrics {
     $fileMetrics.Summary.TotalFiles = $psFiles.Count
     
     foreach ($file in $psFiles) {
+        # Validate file object exists and has required properties
+        if (-not $file -or -not $file.FullName -or -not $file.Name) {
+            Write-ScriptLog -Level Warning -Message "Skipping invalid file object in metrics collection"
+            continue
+        }
+        
         try {
             $relativePath = $file.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
             $domain = if ($relativePath -match '^domains/([^/]+)') { $matches[1] } 
@@ -1139,8 +1145,18 @@ function Get-FileLevelMetrics {
                 HasTests = $false
             }
             
-            # Count lines and functions
-            $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
+            # Count lines and functions with error handling
+            $content = $null
+            try {
+                $content = Get-Content $file.FullName -ErrorAction Stop
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Could not read file for metrics: $($file.Name) - $_"
+                # Continue with empty metrics for this file
+                $fileMetrics.Files += $fileData
+                $fileMetrics.Summary.AnalyzedFiles++
+                continue
+            }
+            
             if ($content) {
                 # Ensure content is always an array for consistent .Count behavior
                 $contentArray = @($content)
@@ -1726,13 +1742,28 @@ function Get-LifecycleAnalysis {
     $lifecycle.Documentation.Summary.Total = $docFiles.Count
     
     foreach ($doc in $docFiles) {
+        # Validate file object exists and has required properties
+        if (-not $doc -or -not $doc.LastWriteTime -or -not $doc.FullName) {
+            Write-ScriptLog -Level Warning -Message "Skipping invalid doc file object in lifecycle analysis"
+            continue
+        }
+        
         try {
             $lastWrite = $doc.LastWriteTime
             $ageDays = ($now - $lastWrite).TotalDays
-            $content = Get-Content $doc.FullName -ErrorAction SilentlyContinue
-            # Ensure array for consistent Count property access
+            
+            # Read content with explicit error handling
+            $content = $null
+            try {
+                $content = Get-Content $doc.FullName -ErrorAction Stop
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Could not read doc file: $($doc.Name) - $_"
+                continue
+            }
+            
+            # Ensure array for consistent Count property access - use Measure-Object for safety
             $contentArray = if ($content) { @($content) } else { @() }
-            $lineCount = $contentArray.Count
+            $lineCount = ($contentArray | Measure-Object).Count
             
             $docData = @{
                 Path = $doc.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
@@ -1754,7 +1785,7 @@ function Get-LifecycleAnalysis {
             elseif ($ageDays -gt 180) { $lifecycle.Documentation.Summary.Stale++ }
             
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name) - $_"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name) - $($_.Exception.Message)"
         }
     }
     
@@ -1774,15 +1805,29 @@ function Get-LifecycleAnalysis {
     $lifecycle.Code.Summary.Total = $psFiles.Count
     
     foreach ($file in $psFiles) {
+        # Validate file object exists and has required properties
+        if (-not $file -or -not $file.LastWriteTime -or -not $file.FullName) {
+            Write-ScriptLog -Level Warning -Message "Skipping invalid PS file object in lifecycle analysis"
+            continue
+        }
+        
         try {
             $lastWrite = $file.LastWriteTime
             $ageDays = ($now - $lastWrite).TotalDays
-            $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
+            
+            # Read content with explicit error handling
+            $content = $null
+            try {
+                $content = Get-Content $file.FullName -ErrorAction Stop
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Could not read PS file: $($file.Name) - $_"
+                continue
+            }
             
             if ($content) {
-                # Ensure array for consistent Count property access
+                # Ensure array for consistent Count property access - use Measure-Object for safety
                 $contentArray = @($content)
-                $totalLines = $contentArray.Count
+                $totalLines = ($contentArray | Measure-Object).Count
                 $codeLines = 0
                 $commentLines = 0
                 $blankLines = 0
@@ -1861,7 +1906,7 @@ function Get-LifecycleAnalysis {
             }
             
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to analyze code: $($file.Name)"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze code: $($file.Name) - $($_.Exception.Message)"
         }
     }
     
