@@ -8,8 +8,10 @@ This directory contains the essential GitHub Actions workflows for AitherZero. T
 
 | Workflow | Purpose | Triggers | Duration |
 |----------|---------|----------|----------|
-| `quality-validation.yml` | Code quality checks (PSScriptAnalyzer, tests) | PR, Manual | 10-15 min |
+| `quality-validation.yml` | Code quality checks (PSScriptAnalyzer, tests) | PR to main/dev, Manual | 10-15 min |
 | `pr-validation.yml` | PR validation and security checks | PR events | 3-5 min |
+| `feature-branch-pr-validation.yml` | Light validation for feature/copilot branch PRs | PR to feature branches | 3-5 min |
+| `comprehensive-test-execution.yml` | Full test suite (unit + integration) | PR to main/dev, Push to main/dev | 10-15 min |
 | `validate-manifests.yml` | PowerShell manifest validation | Push, PR, Manual | 2-3 min |
 | `validate-config.yml` | Configuration file validation | Push, PR, Manual | 1-2 min |
 
@@ -40,26 +42,63 @@ This directory contains the essential GitHub Actions workflows for AitherZero. T
 
 ### Quality Validation (`quality-validation.yml`)
 
-**Purpose:** Runs PSScriptAnalyzer and comprehensive code quality checks on pull requests.
+**Purpose:** Runs PSScriptAnalyzer and comprehensive code quality checks on pull requests **targeting main branches (main, develop, dev)**.
 
 **Features:**
 - 🔍 **PSScriptAnalyzer**: Full static analysis of PowerShell code
 - 🧪 **Unit Tests**: Runs Pester tests for changed code
 - 📊 **Reports**: Generates quality reports as artifacts
 - 🐛 **Issue Creation**: Creates GitHub issues for quality failures (when configured)
+- 🎯 **Branch Aware**: Automatically skips for feature branch PRs (defers to feature-branch-pr-validation.yml)
 
 **Triggers:**
-- Pull requests with code changes
+- Pull requests targeting main/develop/dev
 - Manual dispatch for full analysis
 
 ### PR Validation (`pr-validation.yml`)
 
-**Purpose:** Fast validation for external/fork pull requests with security focus.
+**Purpose:** Fast validation for all pull requests with security focus and branch awareness.
 
 **Features:**
 - 🔒 **Security**: Safe validation without code execution for fork PRs
-- 📝 **Comments**: Automated PR feedback
+- 📝 **Comments**: Automated PR feedback with target branch information
 - ✅ **Quick Checks**: Basic validation before deeper analysis
+- 🎯 **Branch Detection**: Identifies target branch and explains validation level
+
+### Feature Branch PR Validation (`feature-branch-pr-validation.yml`)
+
+**Purpose:** Lightweight validation for PRs targeting feature/copilot branches (not main/dev).
+
+**Features:**
+- ⚡ **Quick Syntax Check**: Fast PowerShell syntax validation
+- 🔍 **Critical Issues Only**: PSScriptAnalyzer error/parse error detection
+- 📊 **Change Analysis**: File impact assessment
+- ⏭️ **Relaxed Requirements**: Skips comprehensive tests and full quality checks
+- 💬 **Clear Communication**: Explains validation strategy and next steps
+
+**Triggers:**
+- Pull requests targeting any branch EXCEPT main/develop/dev
+
+**Use Cases:**
+- Incremental fixes in copilot branches
+- Quick merges between feature branches
+- Addressing specific issues before main branch PR
+
+**See Also:** [Feature Branch PR Workflow Documentation](..FEATURE-BRANCH-PR-WORKFLOW.md)
+
+### Comprehensive Test Execution (`comprehensive-test-execution.yml`)
+
+**Purpose:** Full test suite execution (unit + integration) for PRs targeting main branches.
+
+**Features:**
+- 🧪 **Complete Testing**: All unit and integration tests
+- 📊 **Aggregated Reports**: Comprehensive test result reporting
+- 🎯 **Main Branch Only**: Only runs for PRs to main/develop/dev
+
+**Triggers:**
+- Pull requests targeting main/develop/dev
+- Push to main/develop/dev
+- Daily schedule for regression detection
 
 ### Auto-Create Issues from Failures (`auto-create-issues-from-failures.yml`)
 

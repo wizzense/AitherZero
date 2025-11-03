@@ -24,6 +24,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-pr-target:
+    name: 🎯 Detect PR Target Branch
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      is-main-branch-pr: ${{ steps.detect.outputs.is-main-branch-pr }}
+      target-branch: ${{ steps.detect.outputs.target-branch }}
+
+    steps:
+      - name: 🔍 Detect Target Branch
+        id: detect
+        shell: bash
+        run: |
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          echo "target-branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+
+          # Check if PR targets main branches (main, develop, dev)
+          if [[ "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "develop" || "$BASE_BRANCH" == "dev" ]]; then
+            echo "is-main-branch-pr=true" >> $GITHUB_OUTPUT
+            echo "✅ PR targets main branch: $BASE_BRANCH"
+          else
+            echo "is-main-branch-pr=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  PR targets feature branch: $BASE_BRANCH"
+          fi
+
   # Safe analysis for fork PRs - no code execution
   fork-pr-analysis:
     name: Fork PR Analysis (Safe)
@@ -75,6 +100,7 @@ jobs:
   pr-analysis:
     name: Analyze PR Changes
     runs-on: ubuntu-latest
+    needs: detect-pr-target
     if: github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       has-powershell: ${{ steps.analyze.outputs.has-powershell }}
@@ -215,14 +241,24 @@ jobs:
             const syntaxError = process.env.SYNTAX_ERROR || '';
             const syntaxDetails = process.env.SYNTAX_DETAILS || '';
             const changeSummary = "${{ steps.analyze.outputs.change-summary }}";
+            const targetBranch = "${{ needs.detect-pr-target.outputs.target-branch }}";
+            const isMainBranchPR = "${{ needs.detect-pr-target.outputs.is-main-branch-pr }}" === 'true';
 
             const prNumber = context.payload.pull_request.number;
             const prTitle = context.payload.pull_request.title;
             const prAuthor = context.payload.pull_request.user.login;
 
+            // Determine validation level message
+            const validationLevelNote = isMainBranchPR
+              ? '**Full validation** is applied to PRs targeting main branches.'
+              : `**Note:** This PR targets \`${targetBranch}\` (feature branch). Full validation will run when merging to dev/main.`;
+
             let comment = `## 🔍 PR Validation Results
 
             **#${prNumber}: ${prTitle}** by @${prAuthor}
+            **Target Branch:** \`${targetBranch}\`
+
+            ${validationLevelNote}
 
             ### 📊 Change Summary
             ${changeSummary}

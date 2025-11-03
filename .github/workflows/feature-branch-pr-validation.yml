@@ -1,0 +1,339 @@
+---
+name: Feature Branch PR Validation
+
+# Special workflow for PRs targeting feature/copilot branches (not main/dev)
+# Provides lighter validation to enable incremental fixes before merging to main branches
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    # Explicitly exclude main branches - this workflow is ONLY for feature branch PRs
+    branches-ignore:
+      - main
+      - develop
+      - dev
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
+concurrency:
+  group: feature-branch-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  detect-target-branch:
+    name: 🎯 Detect Target Branch Type
+    runs-on: ubuntu-latest
+    outputs:
+      base-branch: ${{ steps.detect.outputs.base-branch }}
+      is-copilot-branch: ${{ steps.detect.outputs.is-copilot-branch }}
+      is-feature-branch: ${{ steps.detect.outputs.is-feature-branch }}
+      validation-level: ${{ steps.detect.outputs.validation-level }}
+
+    steps:
+      - name: 🔍 Detect Branch Type
+        id: detect
+        shell: bash
+        run: |
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          echo "base-branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+
+          # Detect branch type
+          if [[ "$BASE_BRANCH" =~ ^copilot/ ]]; then
+            echo "is-copilot-branch=true" >> $GITHUB_OUTPUT
+            echo "is-feature-branch=false" >> $GITHUB_OUTPUT
+            echo "validation-level=light" >> $GITHUB_OUTPUT
+            echo "✅ Detected: PR targeting copilot branch ($BASE_BRANCH)"
+          elif [[ "$BASE_BRANCH" =~ ^(feature|fix|bugfix|hotfix)/ ]]; then
+            echo "is-copilot-branch=false" >> $GITHUB_OUTPUT
+            echo "is-feature-branch=true" >> $GITHUB_OUTPUT
+            echo "validation-level=light" >> $GITHUB_OUTPUT
+            echo "✅ Detected: PR targeting feature branch ($BASE_BRANCH)"
+          else
+            echo "is-copilot-branch=false" >> $GITHUB_OUTPUT
+            echo "is-feature-branch=false" >> $GITHUB_OUTPUT
+            echo "validation-level=standard" >> $GITHUB_OUTPUT
+            echo "✅ Detected: PR targeting other branch ($BASE_BRANCH)"
+          fi
+
+          echo "📊 Target Branch: $BASE_BRANCH"
+
+  feature-branch-notice:
+    name: 📢 Feature Branch PR Notice
+    runs-on: ubuntu-latest
+    needs: detect-target-branch
+    if: needs.detect-target-branch.outputs.is-copilot-branch == 'true' || needs.detect-target-branch.outputs.is-feature-branch == 'true'
+
+    steps:
+      - name: 💬 Post Notice Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const baseBranch = '${{ needs.detect-target-branch.outputs.base-branch }}';
+            const isCopilotBranch = '${{ needs.detect-target-branch.outputs.is-copilot-branch }}' === 'true';
+            const prNumber = context.payload.pull_request.number;
+            const prTitle = context.payload.pull_request.title;
+            const prAuthor = context.payload.pull_request.user.login;
+            const headBranch = context.payload.pull_request.head.ref;
+
+            const branchType = isCopilotBranch ? 'Copilot' : 'Feature';
+            const icon = isCopilotBranch ? '🤖' : '🚀';
+
+            const comment = `## ${icon} ${branchType} Branch PR Detected
+
+            **PR #${prNumber}: ${prTitle}**
+            - **Author:** @${prAuthor}
+            - **Source:** \`${headBranch}\`
+            - **Target:** \`${baseBranch}\`
+
+            ### 🎯 Validation Strategy
+            This PR is targeting a **${branchType.toLowerCase()} branch** (not main/dev), so validation has been adjusted:
+
+            #### ✅ Enabled Validations
+            - **Syntax Check** - Ensures PowerShell code parses correctly
+            - **Basic Quality** - Lightweight quality checks
+            - **File Analysis** - Change impact assessment
+
+            #### ⚡ Relaxed Validations (for incremental fixes)
+            - **Comprehensive Tests** - ⏭️ Skipped (will run when merging to dev/main)
+            - **Full PSScriptAnalyzer** - ⏭️ Relaxed (critical issues only)
+            - **Documentation Updates** - ⏭️ Optional
+            - **Coverage Requirements** - ⏭️ Optional
+
+            ### 💡 Workflow Intent
+            This allows you to:
+            - ✅ Make incremental fixes specific to the ${branchType.toLowerCase()} branch
+            - ✅ Merge quickly to address specific issues
+            - ✅ Validate thoroughly when merging to dev/main later
+
+            ### 🔄 Next Steps
+            1. **Complete fixes** for the specific issue this PR addresses
+            2. **Merge** to \`${baseBranch}\` after review
+            3. **Create a subsequent PR** from \`${baseBranch}\` → \`dev\` with full validation
+
+            ### 📋 Important Notes
+            - Full validation suite will run when this work eventually merges to dev/main
+            - Major changes should still include appropriate tests
+            - Breaking changes require documentation updates
+
+            ---
+            *This is a feature branch PR validation workflow • [View Configuration](https://github.com/${{ github.repository }}/blob/main/.github/workflows/feature-branch-pr-validation.yml)*
+            `;
+
+            // Find existing comment to update or create new
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('Branch PR Detected')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
+
+  quick-syntax-validation:
+    name: ⚡ Quick Syntax Check
+    runs-on: ubuntu-latest
+    needs: detect-target-branch
+    if: needs.detect-target-branch.outputs.validation-level == 'light'
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 🔧 Minimal Bootstrap
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Quick bootstrap for syntax validation..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 🔍 Validate Syntax
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running syntax validation..." -ForegroundColor Cyan
+
+          try {
+            $output = & "./automation-scripts/0407_Validate-Syntax.ps1" -All 2>&1
+
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "✅ Syntax validation passed" -ForegroundColor Green
+              echo "SYNTAX_STATUS=✅ PASSED" >> $env:GITHUB_ENV
+            } else {
+              Write-Host "❌ Syntax validation failed" -ForegroundColor Red
+              Write-Host "$output" -ForegroundColor Yellow
+              echo "SYNTAX_STATUS=❌ FAILED" >> $env:GITHUB_ENV
+              echo "SYNTAX_ERROR<<EOF" >> $env:GITHUB_ENV
+              echo "$output" >> $env:GITHUB_ENV
+              echo "EOF" >> $env:GITHUB_ENV
+              exit 1
+            }
+          } catch {
+            Write-Host "⚠️ Error running syntax validation: $_" -ForegroundColor Red
+            echo "SYNTAX_STATUS=❌ FAILED" >> $env:GITHUB_ENV
+            exit 1
+          }
+
+  lightweight-quality-check:
+    name: 📊 Basic Quality Analysis
+    runs-on: ubuntu-latest
+    needs: [detect-target-branch, quick-syntax-validation]
+    if: needs.detect-target-branch.outputs.validation-level == 'light'
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📦 Install PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+            Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+
+      - name: 🔍 Detect Changed Files
+        id: changes
+        shell: pwsh
+        run: |
+          $baseSha = "${{ github.event.pull_request.base.sha }}"
+          $gitDiff = git diff --name-only $baseSha..HEAD
+
+          $changedFiles = $gitDiff | Where-Object {
+            $_ -match '\.(ps1|psm1|psd1)$' -and
+            $_ -notmatch '^(tests|legacy-to-migrate|\.archive)/'
+          }
+
+          if (-not $changedFiles) {
+            Write-Host "⚠️ No PowerShell files to analyze" -ForegroundColor Yellow
+            echo "has-files=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          Write-Host "Found $($changedFiles.Count) PowerShell file(s):" -ForegroundColor Green
+          $changedFiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor White }
+
+          echo "has-files=true" >> $env:GITHUB_OUTPUT
+          $changedFiles -join ',' | Set-Content -Path changed-files.txt
+
+      - name: 🔍 Run Light PSScriptAnalyzer (Critical Issues Only)
+        if: steps.changes.outputs.has-files == 'true'
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running PSScriptAnalyzer (critical issues only)..." -ForegroundColor Cyan
+
+          $changedFiles = (Get-Content changed-files.txt) -split ','
+          $criticalIssues = @()
+
+          foreach ($file in $changedFiles) {
+            if (Test-Path $file) {
+              Write-Host "Analyzing: $file" -ForegroundColor Yellow
+
+              # Only check for critical/error level issues
+              $issues = Invoke-ScriptAnalyzer -Path $file -Severity Error,ParseError
+
+              if ($issues) {
+                $criticalIssues += [PSCustomObject]@{
+                  File = $file
+                  Issues = $issues
+                }
+              }
+            }
+          }
+
+          if ($criticalIssues.Count -gt 0) {
+            Write-Host "❌ Found $($criticalIssues.Count) file(s) with critical issues" -ForegroundColor Red
+
+            foreach ($item in $criticalIssues) {
+              Write-Host "`nFile: $($item.File)" -ForegroundColor Red
+              $item.Issues | Format-Table -AutoSize
+            }
+
+            echo "QUALITY_STATUS=⚠️ CRITICAL ISSUES FOUND" >> $env:GITHUB_ENV
+            # Don't fail the workflow, just report
+          } else {
+            Write-Host "✅ No critical issues found" -ForegroundColor Green
+            echo "QUALITY_STATUS=✅ PASSED" >> $env:GITHUB_ENV
+          }
+
+      - name: 💬 Update PR with Results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const syntaxStatus = process.env.SYNTAX_STATUS || 'Not checked';
+            const qualityStatus = process.env.QUALITY_STATUS || 'Not checked';
+            const prNumber = context.payload.pull_request.number;
+            const baseBranch = '${{ needs.detect-target-branch.outputs.base-branch }}';
+
+            const comment = `## 📊 Feature Branch Validation Results
+
+            **Target Branch:** \`${baseBranch}\`
+
+            ### Validation Status
+            - **Syntax Check:** ${syntaxStatus}
+            - **Quality (Critical Only):** ${qualityStatus}
+
+            ### ℹ️ Note
+            This is a **lightweight validation** for feature branch PRs. Full validation will run when merging to dev/main.
+
+            ---
+            *Feature Branch PR Validation • [View Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*
+            `;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('Feature Branch Validation Results')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
