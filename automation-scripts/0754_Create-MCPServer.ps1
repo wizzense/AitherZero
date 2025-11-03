@@ -1,4 +1,8 @@
 #!/usr/bin/env pwsh
+# Stage: Automation
+# Dependencies: Node.js 18+
+# Category: AI Tools & Automation
+# Description: Scaffolds a new Model Context Protocol (MCP) server using the AitherZero MCP server template
 <#
 .SYNOPSIS
     Create a new MCP server from the template
@@ -7,7 +11,7 @@
     Scaffolds a new Model Context Protocol (MCP) server using the AitherZero
     MCP server template. This automation script copies the template, customizes
     it with provided parameters, and sets up the development environment.
-    
+
     This script is part of the AitherZero numbered system (0700-0799: AI Tools).
 
 .PARAMETER ServerName
@@ -48,29 +52,65 @@
     Requires: Node.js 18+
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^[a-z0-9-]+$')]
     [string]$ServerName,
-    
+
     [Parameter(Mandatory = $true)]
     [string]$Description,
-    
+
     [Parameter()]
     [string]$Author,
-    
+
     [Parameter()]
     [string]$OutputPath = ".",
-    
+
     [Parameter()]
     [string]$Organization = "custom",
-    
+
     [switch]$SkipInstall,
     [switch]$SkipGit
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Initialize logging
+$script:LoggingAvailable = $false
+try {
+    $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
+    if (Test-Path $loggingPath) {
+        Import-Module $loggingPath -Force -Global
+        $script:LoggingAvailable = $true
+    }
+} catch {
+    # Fallback to basic output if logging module fails to load
+    Write-Warning "Could not load logging module: $($_.Exception.Message)"
+    $script:LoggingAvailable = $false
+}
+
+function Write-ScriptLog {
+    param(
+        [string]$Message,
+        [string]$Level = 'Information'
+    )
+
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog -Message $Message -Level $Level
+    } else {
+        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $prefix = switch ($Level) {
+            'Error' { 'ERROR' }
+            'Warning' { 'WARN' }
+            'Debug' { 'DEBUG' }
+            default { 'INFO' }
+        }
+        Write-Host "[$timestamp] [$prefix] $Message"
+    }
+}
+
+Write-ScriptLog "Starting MCP server creation: $ServerName"
 
 # Get script root (AitherZero root)
 # This script is in automation-scripts/, so parent is AitherZero root
@@ -99,8 +139,10 @@ if (-not $Author) {
         if (-not $Author) {
             $Author = "Unknown Author"
         }
+        Write-ScriptLog "Detected author from git config: $Author" -Level 'Debug'
     } catch {
         $Author = "Unknown Author"
+        Write-ScriptLog "Could not detect git user, using default author" -Level 'Debug'
     }
 }
 
@@ -112,29 +154,46 @@ Write-Host "   Organization: @$Organization" -ForegroundColor White
 Write-Host "   Target Path: $TargetPath" -ForegroundColor White
 Write-Host ""
 
+Write-ScriptLog "Configuration - Server: $ServerName, Output: $TargetPath, Org: @$Organization"
+
 # Validate template exists
 if (-not (Test-Path $TemplatePath)) {
+    Write-ScriptLog "Template not found at: $TemplatePath" -Level 'Error'
     Write-Host "❌ Template not found at: $TemplatePath" -ForegroundColor Red
     exit 1
 }
 
+Write-ScriptLog "Template validated at: $TemplatePath" -Level 'Debug'
+
 # Check if target exists
 if (Test-Path $TargetPath) {
+    Write-ScriptLog "Target directory already exists: $TargetPath" -Level 'Error'
     Write-Host "❌ Target directory already exists: $TargetPath" -ForegroundColor Red
     exit 1
 }
 
+Write-ScriptLog "Target path validated, proceeding with creation"
+
 # Create target directory
 Write-Host "📁 Creating directory structure..." -ForegroundColor Cyan
-try {
-    # Suppress progress bar for cleaner output
-    $ProgressPreference = 'SilentlyContinue'
-    Copy-Item -Path $TemplatePath -Destination $TargetPath -Recurse -Force
-    $ProgressPreference = 'Continue'
-    Write-Host "   ✓ Directory created" -ForegroundColor Green
-} catch {
-    Write-Host "   ❌ Failed to create directory: $_" -ForegroundColor Red
-    exit 1
+Write-ScriptLog "Copying template from $TemplatePath to $TargetPath"
+
+if ($PSCmdlet.ShouldProcess($TargetPath, "Create MCP server from template")) {
+    try {
+        # Suppress progress bar for cleaner output
+        $ProgressPreference = 'SilentlyContinue'
+        Copy-Item -Path $TemplatePath -Destination $TargetPath -Recurse -Force
+        $ProgressPreference = 'Continue'
+        Write-Host "   ✓ Directory created" -ForegroundColor Green
+        Write-ScriptLog "Directory structure created successfully"
+    } catch {
+        Write-ScriptLog "Failed to create directory: $_" -Level 'Error'
+        Write-Host "   ❌ Failed to create directory: $_" -ForegroundColor Red
+        exit 1
+    }
+} else {
+    Write-Host "   (WhatIf) Would create directory: $TargetPath" -ForegroundColor Yellow
+    exit 0
 }
 
 # Function to replace placeholders in a file
@@ -143,14 +202,14 @@ function Update-TemplateFile {
         [string]$FilePath,
         [hashtable]$Replacements
     )
-    
+
     if (Test-Path $FilePath) {
         $content = Get-Content -Path $FilePath -Raw
-        
+
         foreach ($key in $Replacements.Keys) {
             $content = $content -replace [regex]::Escape($key), $Replacements[$key]
         }
-        
+
         Set-Content -Path $FilePath -Value $content -NoNewline
         return $true
     }
@@ -167,6 +226,7 @@ $replacements = @{
 
 Write-Host ""
 Write-Host "✏️  Customizing template files..." -ForegroundColor Cyan
+Write-ScriptLog "Starting template customization with replacements"
 
 # Process package.json.template
 $packageJsonTemplate = Join-Path $TargetPath "package.json.template"
@@ -174,6 +234,7 @@ $packageJson = Join-Path $TargetPath "package.json"
 if (Update-TemplateFile -FilePath $packageJsonTemplate -Replacements $replacements) {
     Rename-Item -Path $packageJsonTemplate -NewName "package.json" -Force
     Write-Host "   ✓ package.json configured" -ForegroundColor Green
+    Write-ScriptLog "Configured package.json" -Level 'Debug'
 }
 
 # Process TypeScript files
@@ -242,10 +303,13 @@ if (Test-Path $readmePath) {
     Write-Host "   ✓ README.md configured" -ForegroundColor Green
 }
 
+Write-ScriptLog "Template customization completed successfully"
+
 # Initialize git repository
 if (-not $SkipGit) {
     Write-Host ""
     Write-Host "🔧 Initializing git repository..." -ForegroundColor Cyan
+    Write-ScriptLog "Initializing git repository in $TargetPath"
     Push-Location $TargetPath
     try {
         git init
@@ -264,7 +328,9 @@ if (-not $SkipGit) {
         }
         
         Write-Host "   ✓ Git repository initialized" -ForegroundColor Green
+        Write-ScriptLog "Git repository initialized successfully"
     } catch {
+        Write-ScriptLog "Git initialization failed: $_" -Level 'Warning'
         Write-Host "   ⚠️  Git initialization skipped: $_" -ForegroundColor Yellow
     }
     Pop-Location
@@ -274,40 +340,47 @@ if (-not $SkipGit) {
 if (-not $SkipInstall) {
     Write-Host ""
     Write-Host "📦 Installing dependencies..." -ForegroundColor Cyan
+    Write-ScriptLog "Starting npm install and build process"
     Push-Location $TargetPath
-    
+
     try {
         # Check Node.js
         $nodeVersion = node --version 2>&1
         Write-Host "   ℹ️  Using Node.js: $nodeVersion" -ForegroundColor Gray
-        
+        Write-ScriptLog "Node.js version: $nodeVersion" -Level 'Debug'
+
         # Install
         npm install 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-Host "   ✓ Dependencies installed" -ForegroundColor Green
+            Write-ScriptLog "npm install completed successfully"
         } else {
             throw "npm install failed"
         }
-        
+
         Write-Host ""
         Write-Host "🔨 Building TypeScript..." -ForegroundColor Cyan
         npm run build 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
             Write-Host "   ✓ Build successful" -ForegroundColor Green
+            Write-ScriptLog "TypeScript build completed successfully"
         } else {
             throw "npm build failed"
         }
-        
+
         Write-Host ""
         Write-Host "🧪 Testing server..." -ForegroundColor Cyan
         $testOutput = npm run test:manual 2>&1 | Out-String
         if ($LASTEXITCODE -eq 0) {
             Write-Host "   ✓ Server responds correctly" -ForegroundColor Green
+            Write-ScriptLog "Server test passed"
         } else {
             Write-Host "   ⚠️  Test warning (this is normal for new servers)" -ForegroundColor Yellow
+            Write-ScriptLog "Server test had warnings (expected for new servers)" -Level 'Warning'
         }
-        
+
     } catch {
+        Write-ScriptLog "Installation/build had issues: $_" -Level 'Warning'
         Write-Host "   ⚠️  Installation/build had issues: $_" -ForegroundColor Yellow
         Write-Host "   You can run manually: cd $TargetPath && npm install && npm run build" -ForegroundColor Gray
     } finally {
@@ -357,5 +430,7 @@ Write-Host ""
 Write-Host "💡 Tip: The template includes auto-build, so users don't need to run" -ForegroundColor Yellow
 Write-Host "   npm install or npm build - it just works!" -ForegroundColor Yellow
 Write-Host ""
+
+Write-ScriptLog "MCP server creation completed successfully: $TargetPath"
 
 exit 0
