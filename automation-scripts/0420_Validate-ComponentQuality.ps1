@@ -210,8 +210,13 @@ function New-QualityIssue {
         }
         
         # Determine priority based on score
-        $priority = if ($Report.OverallScore -lt 50) { 'P2' }
-                    elseif ($Report.OverallScore -lt 70) { 'P3' }
+        $priorityThresholds = @{
+            Critical = 50
+            High = 70
+        }
+        
+        $priority = if ($Report.OverallScore -lt $priorityThresholds.Critical) { 'P2' }
+                    elseif ($Report.OverallScore -lt $priorityThresholds.High) { 'P3' }
                     else { 'P4' }
         
         # Build issue title
@@ -296,9 +301,15 @@ This file failed quality validation checks. Review the findings below and addres
         
         # Create the issue
         $labels = @('quality-validation', 'code-quality', 'copilot-task', $priority)
-        $labelsArg = ($labels | ForEach-Object { "--label `"$_`"" }) -join ' '
         
-        $issueJson = gh issue create --title $issueTitle --body $issueBody $labelsArg --json number,url 2>&1
+        # Build gh CLI arguments safely
+        $ghArgs = @('issue', 'create', '--title', $issueTitle, '--body', $issueBody)
+        foreach ($label in $labels) {
+            $ghArgs += @('--label', $label)
+        }
+        $ghArgs += @('--json', 'number,url')
+        
+        $issueJson = gh @ghArgs 2>&1
         
         if ($LASTEXITCODE -eq 0) {
             $issueData = $issueJson | ConvertFrom-Json
@@ -641,13 +652,21 @@ try {
     $shouldCreateIssues = $false
     
     # Check configuration
-    $config = Get-Configuration -ErrorAction SilentlyContinue
-    if ($config -and $config.AutomatedIssueManagement) {
-        $autoManagement = $config.AutomatedIssueManagement
-        if ($autoManagement.AutoCreateIssues -and $autoManagement.CreateFromCodeQuality) {
-            $shouldCreateIssues = $true
-            Write-ScriptLog -Message "Automated issue creation enabled by configuration"
+    $config = $null
+    try {
+        $config = Get-Configuration -ErrorAction SilentlyContinue
+        if ($config -and $config.ContainsKey('AutomatedIssueManagement')) {
+            $autoManagement = $config.AutomatedIssueManagement
+            if ($autoManagement.ContainsKey('AutoCreateIssues') -and 
+                $autoManagement.ContainsKey('CreateFromCodeQuality') -and
+                $autoManagement.AutoCreateIssues -and 
+                $autoManagement.CreateFromCodeQuality) {
+                $shouldCreateIssues = $true
+                Write-ScriptLog -Message "Automated issue creation enabled by configuration"
+            }
         }
+    } catch {
+        Write-ScriptLog -Level Debug -Message "Could not load configuration: $_"
     }
     
     # Override with explicit parameters
@@ -661,7 +680,7 @@ try {
     }
     
     # Create issues for failed files
-    if ($shouldCreateIssues -and $overallStatus -eq 'Failed') {
+    if ($shouldCreateIssues -and ($overallStatus -eq 'Failed' -or $failedCount -gt 0)) {
         Write-Host "`n📋 Creating GitHub Issues for Quality Failures..." -ForegroundColor Cyan
         
         $failedReports = $allReports | Where-Object { $_.OverallStatus -eq 'Failed' }
