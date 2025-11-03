@@ -71,9 +71,19 @@ function Get-AIConfig {
         if (Test-Path $ConfigPath) {
             # Load based on file extension
             if ($ConfigPath -like "*.psd1") {
-                $config = Import-PowerShellDataFile $ConfigPath
+                try {
+                    $config = Import-PowerShellDataFile $ConfigPath
+                } catch {
+                    Write-Error "Failed to parse PowerShell data file: $_"
+                    return $null
+                }
             } else {
-                $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+                try {
+                    $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+                } catch {
+                    Write-Error "Failed to parse JSON file: $_"
+                    return $null
+                }
             }
             return $config.AI
         } else {
