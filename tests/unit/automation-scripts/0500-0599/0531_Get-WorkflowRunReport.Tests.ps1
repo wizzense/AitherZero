@@ -3,20 +3,20 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0530_Get-WorkflowRunReport
+    Unit tests for 0531_Get-WorkflowRunReport
 .DESCRIPTION
     Auto-generated comprehensive tests
-    Script: 0530_Get-WorkflowRunReport
+    Script: 0531_Get-WorkflowRunReport
     Stage: Reporting & Analysis
     Description: Fetches and displays detailed GitHub workflow run information including
     Generated: 2025-11-03 15:15:17
 #>
 
-Describe '0530_Get-WorkflowRunReport' -Tag 'Unit', 'AutomationScript', 'Reporting & Analysis' {
+Describe '0531_Get-WorkflowRunReport' -Tag 'Unit', 'AutomationScript', 'Reporting & Analysis' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0530_Get-WorkflowRunReport.ps1'
-        $script:ScriptName = '0530_Get-WorkflowRunReport'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0531_Get-WorkflowRunReport.ps1'
+        $script:ScriptName = '0531_Get-WorkflowRunReport'
     }
 
     Context 'Script Validation' {

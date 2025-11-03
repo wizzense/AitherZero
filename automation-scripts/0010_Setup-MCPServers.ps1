@@ -24,19 +24,19 @@
     Automatically fix known configuration issues.
 
 .EXAMPLE
-    ./0009_Setup-MCPServers.ps1
+    ./0010_Setup-MCPServers.ps1
     Standard setup with validation.
 
 .EXAMPLE
-    ./0009_Setup-MCPServers.ps1 -Force
+    ./0010_Setup-MCPServers.ps1 -Force
     Force rebuild of MCP servers.
 
 .EXAMPLE
-    ./0009_Setup-MCPServers.ps1 -FixConfig
+    ./0010_Setup-MCPServers.ps1 -FixConfig
     Fix configuration issues automatically.
 
 .NOTES
-    Script: 0009_Setup-MCPServers.ps1
+    Script: 0010_Setup-MCPServers.ps1
     Range: 0000-0099 (Environment preparation)
     Author: Aitherium Corporation
     Requires: Node.js 18+, npm

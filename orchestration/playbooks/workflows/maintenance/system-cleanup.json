@@ -67,7 +67,7 @@
       {
         "name": "Log Management",
         "description": "Archive and clean old logs",
-        "sequences": ["0530"],
+        "sequences": ["0531"],
         "condition": "$CleanLogs",
         "variables": {
           "ArchiveLogs": true,
@@ -80,7 +80,7 @@
       {
         "name": "Report Cleanup",
         "description": "Clean old reports and artifacts",
-        "sequences": ["0530"],
+        "sequences": ["0531"],
         "condition": "$CleanReports",
         "variables": {
           "Path": "./reports",

@@ -87,6 +87,7 @@
                 Git = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207') }
                 Configuration = @{ Required = $true; Internal = $true }
                 Logging = @{ Required = $true; Internal = $true }
+                MCPServers = @{ Required = $false; Scripts = @('0010'); Description = 'MCP server setup and validation' }
             }
             
             # Development environment
@@ -189,14 +190,14 @@
                     Description = 'Install Pester and PSScriptAnalyzer'
                 }
                 Pester = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0400', '0402', '0403', '0409', '0411', '0480', '0490')
+                    DependsOn = @('Testing.TestingTools')
+                    Scripts = @('0402', '0403', '0409', '0411', '0480', '0490')
                     MinVersion = '5.0.0'
                     Description = 'Unit, integration, and smart testing'
                 }
                 PSScriptAnalyzer = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0400', '0404', '0410')
+                    DependsOn = @('Testing.TestingTools')
+                    Scripts = @('0404', '0410')
                     MinVersion = '1.20.0'
                     Description = 'Static code analysis (standard and fast)'
                 }
@@ -236,8 +237,8 @@
                 }
                 Logging = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0530', '0550')
-                    Description = 'Log viewing and health dashboard'
+                    Scripts = @('0530', '0531', '0550')
+                    Description = 'Log viewing, workflow reports, and health dashboard'
                 }
                 CI = @{
                     DependsOn = @('Core.PowerShell7')
@@ -366,8 +367,8 @@
                     RequiresElevation = $true
                 }
                 QualityValidation = @{
-                    DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0420')
+                    DependsOn = @('Testing.CodeQuality')
+                    Scripts = @()  # 0420 is part of Testing.CodeQuality
                     Features = @('error-handling', 'logging', 'test-coverage', 'ui-integration', 'github-actions', 'static-analysis')
                 }
             }
@@ -424,11 +425,11 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (132 total files, 130 unique numbers)
-        # Note: Scripts 0009 and 0530 have 2 files each for related functionality
+        # Script inventory by range (134 total files, 132 unique numbers)
+        # All scripts now have unique numbers
         # Counts represent unique script NUMBERS, not total files
         ScriptInventory = @{
-            '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
+            '0000-0099' = @{ Count = 9; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
