@@ -411,7 +411,7 @@
             'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
-            'experience' = @{ Modules = 8; Description = 'UI/UX components and interactive menus' }
+            'experience' = @{ Modules = 10; Description = 'UI/UX components and interactive menus' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
@@ -419,17 +419,17 @@
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (125 total files, 125 unique numbers - all numbers now unique)
+        # Script inventory by range (131 total files, 130 unique numbers - 0215 renamed from Chocolatey to MCP, Chocolatey moved to 0219)
         ScriptInventory = @{
             '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
-            '0200-0299' = @{ Count = 16; Category = 'Development Tools' }
+            '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 25; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 16; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 30; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 18; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
+            '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
+            '0900-0999' = @{ Count = 8; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
         
