@@ -244,16 +244,18 @@ function Get-ProjectMetrics {
                 
                 $metrics.LinesOfCode += $contentArray.Count
 
-                # Count functions - improved pattern matching with array wrapping for consistent Count
+                # Count functions - use Measure-Object for StrictMode safety
                 $functionMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
-                if ($functionMatches.Count -gt 0) {
-                    $metrics.Functions += $functionMatches.Count
+                $funcCount = ($functionMatches | Measure-Object).Count
+                if ($funcCount -gt 0) {
+                    $metrics.Functions += $funcCount
                 }
                 
-                # Count classes - with array wrapping for consistent Count
+                # Count classes - use Measure-Object for StrictMode safety
                 $classMatches = @($content | Select-String -Pattern '^\s*class\s+' -ErrorAction SilentlyContinue)
-                if ($classMatches.Count -gt 0) {
-                    $metrics.Classes += $classMatches.Count
+                $classCount = ($classMatches | Measure-Object).Count
+                if ($classCount -gt 0) {
+                    $metrics.Classes += $classCount
                 }
             }
         } catch {
@@ -1144,18 +1146,20 @@ function Get-FileLevelMetrics {
                 $contentArray = @($content)
                 $fileData.Lines = $contentArray.Count
                 
-                # Wrap in array for consistent Count property access
+                # Wrap in array and use Measure-Object for StrictMode safety
                 $funcMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
-                $fileData.Functions = $funcMatches.Count
+                $fileData.Functions = ($funcMatches | Measure-Object).Count
             }
             
             # Run PSScriptAnalyzer on individual file
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
                 # Wrap immediately to handle single object results under StrictMode
+                # Use Measure-Object instead of .Count for maximum StrictMode compatibility
                 $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue)
-                $issues = if ($rawIssues.Count -gt 0) { $rawIssues } else { @() }
+                $issueCount = ($rawIssues | Measure-Object).Count
+                $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                 
-                if ($issues.Count -gt 0) {
+                if (($issues | Measure-Object).Count -gt 0) {
                     # Wrap in array to ensure consistent type even with single result
                     $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
                         @{
@@ -1348,10 +1352,11 @@ function Get-DetailedTestResults {
         try {
             $content = Get-Content $testFile.FullName -ErrorAction SilentlyContinue
             if ($content) {
-                # Ensure array for consistent Count property access
+                # Ensure array and use Measure-Object for StrictMode safety
                 $itBlocks = @($content | Select-String -Pattern '^\s*It\s+[''"]' -AllMatches)
-                if ($itBlocks.Count -gt 0) {
-                    $testResults.TestFiles.PotentialTests += $itBlocks.Count
+                $itCount = ($itBlocks | Measure-Object).Count
+                if ($itCount -gt 0) {
+                    $testResults.TestFiles.PotentialTests += $itCount
                 }
             }
         } catch {
