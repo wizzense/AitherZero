@@ -219,11 +219,12 @@ function Get-ProjectMetrics {
     $metrics.Files.Total = $metrics.Files.PowerShell + $metrics.Files.Modules + $metrics.Files.Data
 
     # Count lines of code and functions
-    $allPSFiles = @(
+    # Wrap entire pipeline with @() to ensure array type even when Where-Object filters all results
+    $allPSFiles = @(@(
         Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psd1" -Recurse
-    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy)' }
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy)' })
 
     foreach ($file in $allPSFiles) {
         try {
@@ -243,16 +244,18 @@ function Get-ProjectMetrics {
                 
                 $metrics.LinesOfCode += $contentArray.Count
 
-                # Count functions - improved pattern matching with array wrapping for consistent Count
+                # Count functions - use Measure-Object for StrictMode safety
                 $functionMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
-                if ($functionMatches.Count -gt 0) {
-                    $metrics.Functions += $functionMatches.Count
+                $funcCount = ($functionMatches | Measure-Object).Count
+                if ($funcCount -gt 0) {
+                    $metrics.Functions += $funcCount
                 }
                 
-                # Count classes - with array wrapping for consistent Count
+                # Count classes - use Measure-Object for StrictMode safety
                 $classMatches = @($content | Select-String -Pattern '^\s*class\s+' -ErrorAction SilentlyContinue)
-                if ($classMatches.Count -gt 0) {
-                    $metrics.Classes += $classMatches.Count
+                $classCount = ($classMatches | Measure-Object).Count
+                if ($classCount -gt 0) {
+                    $metrics.Classes += $classCount
                 }
             }
         } catch {
@@ -316,9 +319,10 @@ function Get-ProjectMetrics {
     }
     
     # Also count domain modules for complete coverage
-    $domainModules = @(
-        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse | Where-Object { $_.FullName -match 'domains/' }
-    )
+    # Wrap entire pipeline with @() to ensure array type even when Where-Object filters all results
+    $domainModules = @(@(
+        Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
+    ) | Where-Object { $_.FullName -match 'domains/' })
     
     $allCodeFiles = @($automationScripts) + @($domainModules)
     $metrics.TestCoverage.TotalFiles = $allCodeFiles.Count
@@ -457,8 +461,10 @@ function Get-ProjectMetrics {
                 $warnings = if ($pssaData.Summary.BySeverity.PSObject.Properties['Warning']) { $pssaData.Summary.BySeverity.Warning } else { 0 }
                 $info = if ($pssaData.Summary.BySeverity.PSObject.Properties['Information']) { $pssaData.Summary.BySeverity.Information } else { 0 }
                 
-                # Count files from ByScript hash
-                $filesWithIssues = if ($pssaData.Summary.ByScript) { $pssaData.Summary.ByScript.PSObject.Properties.Count } else { 0 }
+                # Count files from ByScript hash - wrap with @() for StrictMode compatibility
+                $filesWithIssues = if ($pssaData.Summary.ByScript) { 
+                    @($pssaData.Summary.ByScript.PSObject.Properties).Count 
+                } else { 0 }
                 
                 # Total files is all PowerShell files in project
                 $totalPSFiles = $allPSFiles.Count
@@ -1107,15 +1113,21 @@ function Get-FileLevelMetrics {
         }
     }
     
-    # Get all PowerShell files
-    $psFiles = @(
+    # Get all PowerShell files - wrap entire pipeline with @() to ensure array type
+    $psFiles = @(@(
         Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
-    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' })
     
     $fileMetrics.Summary.TotalFiles = $psFiles.Count
     
     foreach ($file in $psFiles) {
+        # Validate file object exists and has required properties
+        if (-not $file -or -not $file.FullName -or -not $file.Name) {
+            Write-ScriptLog -Level Warning -Message "Skipping invalid file object in metrics collection"
+            continue
+        }
+        
         try {
             $relativePath = $file.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
             $domain = if ($relativePath -match '^domains/([^/]+)') { $matches[1] } 
@@ -1133,24 +1145,37 @@ function Get-FileLevelMetrics {
                 HasTests = $false
             }
             
-            # Count lines and functions
-            $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
+            # Count lines and functions with error handling
+            $content = $null
+            try {
+                $content = Get-Content $file.FullName -ErrorAction Stop
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Could not read file for metrics: $($file.Name) - $_"
+                # Continue with empty metrics for this file
+                $fileMetrics.Files += $fileData
+                $fileMetrics.Summary.AnalyzedFiles++
+                continue
+            }
+            
             if ($content) {
                 # Ensure content is always an array for consistent .Count behavior
                 $contentArray = @($content)
                 $fileData.Lines = $contentArray.Count
                 
-                # Wrap in array for consistent Count property access
+                # Wrap in array and use Measure-Object for StrictMode safety
                 $funcMatches = @($content | Select-String -Pattern '^\s*function\s+' -ErrorAction SilentlyContinue)
-                $fileData.Functions = $funcMatches.Count
+                $fileData.Functions = ($funcMatches | Measure-Object).Count
             }
             
             # Run PSScriptAnalyzer on individual file
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
-                $rawIssues = Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue
-                $issues = if ($rawIssues) { @($rawIssues) } else { @() }
+                # Wrap immediately to handle single object results under StrictMode
+                # Use Measure-Object instead of .Count for maximum StrictMode compatibility
+                $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue)
+                $issueCount = ($rawIssues | Measure-Object).Count
+                $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                 
-                if ($issues.Count -gt 0) {
+                if (($issues | Measure-Object).Count -gt 0) {
                     # Wrap in array to ensure consistent type even with single result
                     $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
                         @{
@@ -1332,7 +1357,8 @@ function Get-DetailedTestResults {
     }
     
     # Count all test files
-    $allTestFiles = Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+    # Get all test files - wrap with @() to handle empty results under StrictMode
+    $allTestFiles = @(Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue)
     $testResults.TestFiles.Total = $allTestFiles.Count
     $testResults.TestFiles.Unit = @($allTestFiles | Where-Object { $_.FullName -match '/unit/' }).Count
     $testResults.TestFiles.Integration = @($allTestFiles | Where-Object { $_.FullName -match '/integration/' }).Count
@@ -1342,10 +1368,11 @@ function Get-DetailedTestResults {
         try {
             $content = Get-Content $testFile.FullName -ErrorAction SilentlyContinue
             if ($content) {
-                # Ensure array for consistent Count property access
+                # Ensure array and use Measure-Object for StrictMode safety
                 $itBlocks = @($content | Select-String -Pattern '^\s*It\s+[''"]' -AllMatches)
-                if ($itBlocks.Count -gt 0) {
-                    $testResults.TestFiles.PotentialTests += $itBlocks.Count
+                $itCount = ($itBlocks | Measure-Object).Count
+                if ($itCount -gt 0) {
+                    $testResults.TestFiles.PotentialTests += $itCount
                 }
             }
         } catch {
@@ -1708,19 +1735,35 @@ function Get-LifecycleAnalysis {
     $now = Get-Date
     
     # Analyze documentation files
-    $docFiles = Get-ChildItem -Path $ProjectPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue |
-                Where-Object { $_.FullName -notmatch '(node_modules|\.git)' }
+    # Get all documentation files - wrap entire pipeline with @() to ensure array type
+    $docFiles = @(@(Get-ChildItem -Path $ProjectPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue) |
+                 Where-Object { $_.FullName -notmatch '(node_modules|\.git)' })
     
     $lifecycle.Documentation.Summary.Total = $docFiles.Count
     
     foreach ($doc in $docFiles) {
+        # Validate file object exists and has required properties
+        if (-not $doc -or -not $doc.LastWriteTime -or -not $doc.FullName) {
+            Write-ScriptLog -Level Warning -Message "Skipping invalid doc file object in lifecycle analysis"
+            continue
+        }
+        
         try {
             $lastWrite = $doc.LastWriteTime
             $ageDays = ($now - $lastWrite).TotalDays
-            $content = Get-Content $doc.FullName -ErrorAction SilentlyContinue
-            # Ensure array for consistent Count property access
+            
+            # Read content with explicit error handling
+            $content = $null
+            try {
+                $content = Get-Content $doc.FullName -ErrorAction Stop
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Could not read doc file: $($doc.Name) - $_"
+                continue
+            }
+            
+            # Ensure array for consistent Count property access - use Measure-Object for safety
             $contentArray = if ($content) { @($content) } else { @() }
-            $lineCount = $contentArray.Count
+            $lineCount = ($contentArray | Measure-Object).Count
             
             $docData = @{
                 Path = $doc.FullName.Replace($ProjectPath, '').TrimStart('\', '/')
@@ -1742,7 +1785,7 @@ function Get-LifecycleAnalysis {
             elseif ($ageDays -gt 180) { $lifecycle.Documentation.Summary.Stale++ }
             
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name) - $_"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name) - $($_.Exception.Message)"
         }
     }
     
@@ -1753,24 +1796,38 @@ function Get-LifecycleAnalysis {
         )
     }
     
-    # Analyze PowerShell code files
-    $psFiles = @(
+    # Analyze PowerShell code files - wrap entire pipeline with @() to ensure array type
+    $psFiles = @(@(
         Get-ChildItem -Path $ProjectPath -Filter "*.ps1" -Recurse
         Get-ChildItem -Path $ProjectPath -Filter "*.psm1" -Recurse
-    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' }
+    ) | Where-Object { $_.FullName -notmatch '(tests|examples|legacy|node_modules)' })
     
     $lifecycle.Code.Summary.Total = $psFiles.Count
     
     foreach ($file in $psFiles) {
+        # Validate file object exists and has required properties
+        if (-not $file -or -not $file.LastWriteTime -or -not $file.FullName) {
+            Write-ScriptLog -Level Warning -Message "Skipping invalid PS file object in lifecycle analysis"
+            continue
+        }
+        
         try {
             $lastWrite = $file.LastWriteTime
             $ageDays = ($now - $lastWrite).TotalDays
-            $content = Get-Content $file.FullName -ErrorAction SilentlyContinue
+            
+            # Read content with explicit error handling
+            $content = $null
+            try {
+                $content = Get-Content $file.FullName -ErrorAction Stop
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Could not read PS file: $($file.Name) - $_"
+                continue
+            }
             
             if ($content) {
-                # Ensure array for consistent Count property access
+                # Ensure array for consistent Count property access - use Measure-Object for safety
                 $contentArray = @($content)
-                $totalLines = $contentArray.Count
+                $totalLines = ($contentArray | Measure-Object).Count
                 $codeLines = 0
                 $commentLines = 0
                 $blankLines = 0
@@ -1849,7 +1906,7 @@ function Get-LifecycleAnalysis {
             }
             
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to analyze code: $($file.Name)"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze code: $($file.Name) - $($_.Exception.Message)"
         }
     }
     
@@ -2191,11 +2248,11 @@ function Get-HistoricalMetrics {
             Write-ScriptLog -Message "Saved metrics snapshot: $snapshotFile"
         }
         
-        # Load historical snapshots from last 30 days
+        # Load historical snapshots from last 30 days - wrap with @() to ensure array type
         $cutoffDate = (Get-Date).AddDays(-30)
-        $snapshotFiles = Get-ChildItem -Path $historyPath -Filter "snapshot-*.json" -ErrorAction SilentlyContinue |
+        $snapshotFiles = @(@(Get-ChildItem -Path $historyPath -Filter "snapshot-*.json" -ErrorAction SilentlyContinue) |
                         Where-Object { $_.LastWriteTime -gt $cutoffDate } |
-                        Sort-Object LastWriteTime -Descending
+                        Sort-Object LastWriteTime -Descending)
         
         foreach ($file in $snapshotFiles) {
             try {
@@ -4196,16 +4253,17 @@ $(if ($Metrics.Classes -gt 0) {
 |--------|-------|---------|
 | 🧪 **Test Files** | **$($Metrics.Tests.Total)** | $($Metrics.Tests.Unit) Unit, $($Metrics.Tests.Integration) Integration |
 $(if ($Metrics.Tests.LastRun) {
-    $totalTestsRun = $Metrics.Tests.Passed + $Metrics.Tests.Failed
+    $totalTestsRun = $Metrics.Tests.Passed + $Metrics.Tests.Failed + $Metrics.Tests.Skipped
     $partialRunWarning = if ($totalTestsRun -lt 100) { " ⚠️ **Partial Run** (only $totalTestsRun tests executed)" } else { "" }
     @"
-| ✅ **Last Test Run** | **$($Metrics.Tests.Passed)/$totalTests cases** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
+| ✅ **Last Test Run** | **$($Metrics.Tests.Passed)/$totalTestsRun cases** | Success Rate: $($Metrics.Tests.SuccessRate)%; Duration: $($Metrics.Tests.Duration) |
 | 📊 **Test Details** | **$($Metrics.Tests.LastRun)** | ✅ $($Metrics.Tests.Passed) passed, ❌ $($Metrics.Tests.Failed) failed$(if($Metrics.Tests.Skipped -gt 0){", ⏭️ $($Metrics.Tests.Skipped) skipped"}) |
-| ⚠️ **Note** | **Partial Run** | Only $totalTests test cases executed from available test files. Run ``./az 0402`` for full suite. |
 
 "@
     if ($totalTestsRun -lt 100) {
         @"
+| ⚠️ **Note** | **Partial Run** | Only $totalTestsRun test cases executed from available test files. Run ``./az 0402`` for full suite. |
+
 > **⚠️ Only $totalTestsRun test cases executed.** Run ``./az 0402`` for full test suite.
 
 "@
