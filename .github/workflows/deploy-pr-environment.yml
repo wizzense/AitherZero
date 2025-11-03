@@ -464,11 +464,6 @@ jobs:
             const repository = process.env.REPOSITORY;
             const runId = process.env.RUN_ID;
             
-            // Get job results
-            const validationResult = '${{ needs.validate-docker-config.result }}';
-            const buildResult = '${{ needs.build-container.result }}';
-            const deployResult = '${{ needs.deploy-docker-compose.result }}';
-            
             // Check for actual failures (not skipped)
             const validationFailed = validationResult === 'failure' || validationResult === 'cancelled';
             const buildFailed = buildResult === 'failure' || buildResult === 'cancelled';
@@ -622,7 +617,7 @@ jobs:
             - **Build Status**: ${buildResult === 'success' ? '✅ Success' : buildResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
             - **Deploy Status**: ${deployResult === 'success' ? '✅ Success' : deployResult === 'skipped' ? '⏭️ Skipped' : '❌ Failed'}
 
-            [View Workflow Run](https://${serverUrl}/${repository}/actions/runs/${runId})
+            [View Workflow Run](${serverUrl}/${repository}/actions/runs/${runId})
             `}
 
             ---

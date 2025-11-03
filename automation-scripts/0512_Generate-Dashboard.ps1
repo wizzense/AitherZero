@@ -136,8 +136,8 @@ function Open-HTMLDashboard {
 }
 
 function Get-ProjectMetrics {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
     param()
     Write-ScriptLog -Message "Collecting project metrics"
 
@@ -363,8 +363,8 @@ function Get-ProjectMetrics {
 }
 
 function Get-QualityMetrics {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification='Function returns multiple metrics')]
     param()
     <#
     .SYNOPSIS
