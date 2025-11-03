@@ -846,14 +846,15 @@ function Get-FileLevelMetrics {
                 $issues = if ($rawIssues) { @($rawIssues) } else { @() }
                 
                 if ($issues.Count -gt 0) {
-                    $fileData.Issues = $issues | Select-Object -First 10 | ForEach-Object {
+                    # Wrap in array to ensure consistent type even with single result
+                    $fileData.Issues = @($issues | Select-Object -First 10 | ForEach-Object {
                         @{
                             Rule = $_.RuleName
                             Severity = $_.Severity
                             Line = $_.Line
                             Message = $_.Message
                         }
-                    }
+                    })
                     
                     # Calculate score (100 - issues penalty)
                     $errorCount = @($issues | Where-Object { $_.Severity -eq 'Error' }).Count
@@ -1436,7 +1437,7 @@ function Get-LifecycleAnalysis {
             elseif ($ageDays -gt 180) { $lifecycle.Documentation.Summary.Stale++ }
             
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name)"
+            Write-ScriptLog -Level Warning -Message "Failed to analyze doc: $($doc.Name) - $_"
         }
     }
     
