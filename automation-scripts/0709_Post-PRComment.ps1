@@ -5,9 +5,12 @@
     Post or update PR comment with test results
 .DESCRIPTION
     Posts test results as a comment on GitHub PR
+.NOTES
+    Stage: Automation
+    Category: GitHub
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$TestResultsPath = "./test-results/results.json",
     [string]$Repository = $env:GITHUB_REPOSITORY,

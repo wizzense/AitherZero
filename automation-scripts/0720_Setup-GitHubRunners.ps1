@@ -26,6 +26,9 @@
     Validate configuration without making changes
 .PARAMETER CI
     Run in CI mode with minimal output
+.NOTES
+    Stage: Infrastructure
+    Category: GitHub
 .EXAMPLE
     ./0720_Setup-GitHubRunners.ps1 -Organization "myorg" -RunnerCount 3
 .EXAMPLE

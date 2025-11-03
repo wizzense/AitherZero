@@ -22,6 +22,9 @@
     Validate configuration without making changes
 .PARAMETER CI
     Run in CI mode with minimal output
+.NOTES
+    Stage: Infrastructure
+    Category: GitHub
 .EXAMPLE
     ./0722_Install-RunnerServices.ps1 -RunnerName "myorg-runner-1"
 .EXAMPLE
@@ -30,8 +33,8 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)]
-    [string]$RunnerName,
+    [Parameter(Mandatory=$false)]
+    [string]$RunnerName = $null,
     [ValidateSet('SystemD', 'WindowsService', 'LaunchD', 'Auto')]
     [string]$ServiceType = 'Auto',
     [ValidateSet('Automatic', 'Manual', 'Disabled')]
@@ -63,6 +66,11 @@ function Write-ServiceLog {
     } else {
         Write-Host "[$Level] $Message"
     }
+}
+
+# Validate required parameters
+if ([string]::IsNullOrWhiteSpace($RunnerName) -and -not $WhatIfPreference) {
+    throw "RunnerName is required. Use -RunnerName parameter to specify the runner name."
 }
 
 function Get-ServiceType {
