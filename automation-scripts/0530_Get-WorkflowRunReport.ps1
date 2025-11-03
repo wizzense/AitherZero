@@ -47,7 +47,12 @@
     Get report for most recent pr-validation run on dev branch.
 
 .NOTES
-    Requires GITHUB_TOKEN environment variable for API access.
+    GitHub token sources (in order of priority):
+    1. GITHUB_TOKEN environment variable
+    2. CI environment (GitHub Actions provides token automatically)
+    3. config.psd1 file (Development.GitHub.Token)
+    4. GitHub CLI authentication (gh auth login)
+    5. Interactive prompt (non-CI mode only)
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true)]
@@ -83,11 +88,107 @@ param(
 $repoRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { $PSScriptRoot | Split-Path -Parent }
 Set-Location $repoRoot
 
-# Get GitHub token
-$githubToken = $env:GITHUB_TOKEN
-if (-not $githubToken) {
-    Write-Error "GITHUB_TOKEN environment variable is required for API access."
-    exit 1
+# Detect CI environment
+$isCI = $env:CI -eq 'true' -or 
+        $env:GITHUB_ACTIONS -eq 'true' -or 
+        $env:TF_BUILD -eq 'true' -or 
+        $env:JENKINS_URL -or
+        $env:GITLAB_CI -eq 'true'
+
+# Function to get GitHub token from various sources
+function Get-GitHubToken {
+    param(
+        [bool]$IsCI = $false
+    )
+    
+    # 1. Try environment variable (primary source)
+    if ($env:GITHUB_TOKEN) {
+        Write-Verbose "Using GITHUB_TOKEN from environment variable"
+        return $env:GITHUB_TOKEN
+    }
+    
+    # 2. In CI mode, assume token will be available via GitHub Actions
+    # Don't error - let API calls fail naturally if token is truly missing
+    if ($IsCI) {
+        Write-Verbose "CI mode: Assuming GitHub token available via Actions context"
+        return $null  # Will be handled by GitHub CLI if available
+    }
+    
+    # 3. Try to get from config file
+    $configPath = Join-Path $repoRoot "config.psd1"
+    if (Test-Path $configPath) {
+        try {
+            $config = Import-PowerShellDataFile $configPath
+            if ($config.Development -and $config.Development.GitHub -and $config.Development.GitHub.Token) {
+                Write-Verbose "Using GitHub token from config.psd1"
+                return $config.Development.GitHub.Token
+            }
+        }
+        catch {
+            Write-Verbose "Could not load token from config: $_"
+        }
+    }
+    
+    # 4. Try gh CLI authentication status
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+        try {
+            $ghStatus = gh auth status 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Verbose "Using GitHub CLI authentication"
+                # gh CLI will handle auth automatically
+                return $null
+            }
+        }
+        catch {
+            Write-Verbose "gh CLI not authenticated"
+        }
+    }
+    
+    # 5. In interactive mode, prompt for token
+    if ([Environment]::UserInteractive -and -not $IsCI) {
+        Write-Host "GitHub token not found. You can:" -ForegroundColor Yellow
+        Write-Host "  1. Set GITHUB_TOKEN environment variable" -ForegroundColor Cyan
+        Write-Host "  2. Add token to config.psd1 under Development.GitHub.Token" -ForegroundColor Cyan
+        Write-Host "  3. Authenticate with: gh auth login" -ForegroundColor Cyan
+        Write-Host "  4. Enter token now (input will be hidden)" -ForegroundColor Cyan
+        Write-Host ""
+        
+        $secureToken = Read-Host "Enter GitHub token (or press Enter to skip)" -AsSecureString
+        if ($secureToken.Length -gt 0) {
+            $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+            try {
+                $token = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+                if ($token) {
+                    Write-Verbose "Using manually entered token"
+                    return $token
+                }
+            }
+            finally {
+                [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+            }
+        }
+    }
+    
+    # 6. Return null and let the script try gh CLI or fail gracefully
+    return $null
+}
+
+# Get GitHub token using smart detection
+$githubToken = Get-GitHubToken -IsCI $isCI
+
+# In non-CI mode without a token, provide helpful guidance
+if (-not $githubToken -and -not $isCI) {
+    Write-Warning "GitHub token not configured. API rate limits will be restrictive."
+    Write-Warning "Configure token via: GITHUB_TOKEN env var, config.psd1, or 'gh auth login'"
+    
+    # Try to use gh CLI as fallback
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        Write-Error "GitHub CLI (gh) not found and no token configured. Cannot proceed."
+        Write-Host "Install gh: https://cli.github.com/" -ForegroundColor Cyan
+        exit 1
+    } else {
+        Write-Verbose "Will attempt to use GitHub CLI for authentication"
+    }
 }
 
 # Detect repository from git remote
@@ -110,10 +211,18 @@ Write-Verbose "Repository: $owner/$repo"
 
 # GitHub API base URL
 $apiBase = "https://api.github.com"
+
+# Build headers - only include Authorization if token is available
 $headers = @{
-    'Authorization' = "Bearer $githubToken"
     'Accept' = 'application/vnd.github+json'
     'X-GitHub-Api-Version' = '2022-11-28'
+}
+
+if ($githubToken) {
+    $headers['Authorization'] = "Bearer $githubToken"
+    Write-Verbose "Using token-based authentication for GitHub API"
+} else {
+    Write-Verbose "No token available - API calls may have limited rate limits"
 }
 
 function Get-WorkflowRuns {
