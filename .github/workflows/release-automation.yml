@@ -311,7 +311,7 @@ jobs:
           - Pre-configured container with AitherZero installed
           - Multi-platform support (amd64, arm64)
           - Non-root user for security
-          - Image: \`ghcr.io/${{ github.repository }}:$version\`
+          - Image: \`ghcr.io/${{ github.repository }}:$($version -replace '^v','')\`
 
           ## 🚀 Quick Installation
 
@@ -327,17 +327,17 @@ jobs:
           npm install @aitherzero/mcp-server@$($version -replace '^v','')
 
           # Or use the tarball from release assets
-          curl -L https://github.com/${{ github.repository }}/releases/download/v$version/aitherzero-mcp-server-$($version -replace '^v','').tgz -o mcp-server.tgz
+          curl -L https://github.com/${{ github.repository }}/releases/download/v$($version)/aitherzero-mcp-server-$($version -replace '^v','').tgz -o mcp-server.tgz
           npm install mcp-server.tgz
           ```
 
           ### Docker Container
           ```bash
           # Pull the image
-          docker pull ghcr.io/${{ github.repository }}:$version
+          docker pull ghcr.io/${{ github.repository }}:$($version -replace '^v','')
 
           # Run interactively
-          docker run -it --rm ghcr.io/${{ github.repository }}:$version
+          docker run -it --rm ghcr.io/${{ github.repository }}:$($version -replace '^v','')
 
           # Run with docker-compose
           docker-compose up -d
@@ -511,7 +511,7 @@ jobs:
         working-directory: mcp-server
         run: |
           echo "📦 Installing dependencies..."
-          npm ci --ignore-scripts
+          npm ci
           echo "✅ Dependencies installed"
 
       - name: 🔨 Build MCP Server
@@ -575,16 +575,17 @@ jobs:
             exit 1
           fi
           
-          # Attempt to publish
-          npm publish --access public
+          # Attempt to publish and capture output
+          PUBLISH_OUTPUT=$(npm publish --access public 2>&1)
           PUBLISH_EXIT=$?
           
           if [ $PUBLISH_EXIT -eq 0 ]; then
             echo "✅ Successfully published to GitHub Packages"
-          elif grep -q "Cannot publish over existing version" <<< "$(npm publish --access public 2>&1)"; then
+          elif grep -q "Cannot publish over existing version" <<< "$PUBLISH_OUTPUT"; then
             echo "::warning::⚠️ Version already exists in registry - this is expected for re-runs"
           else
             echo "::error::❌ Publishing failed with unexpected error (exit code: $PUBLISH_EXIT)"
+            echo "$PUBLISH_OUTPUT"
             exit 1
           fi
 
@@ -725,8 +726,10 @@ jobs:
           Write-Host "   • build-info.json (Build metadata)" -ForegroundColor White
           Write-Host ""
           Write-Host "🐳 **Docker Image:**" -ForegroundColor Cyan
-          Write-Host "   • ghcr.io/${{ github.repository }}:$version" -ForegroundColor White
-          Write-Host "   • ghcr.io/${{ github.repository }}:latest" -ForegroundColor White
+          Write-Host "   • ghcr.io/${{ github.repository }}:$($version -replace '^v','')" -ForegroundColor White
+          if ('${{ github.event.inputs.prerelease }}' -ne 'true') {
+            Write-Host "   • ghcr.io/${{ github.repository }}:latest" -ForegroundColor White
+          }
           Write-Host ""
           Write-Host "📦 **MCP Server Package:**" -ForegroundColor Cyan
           Write-Host "   • @aitherzero/mcp-server@$($version -replace '^v','')" -ForegroundColor White
@@ -737,7 +740,7 @@ jobs:
           Write-Host "   iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex" -ForegroundColor Yellow
           Write-Host ""
           Write-Host "   # Docker" -ForegroundColor Gray
-          Write-Host "   docker pull ghcr.io/${{ github.repository }}:$version" -ForegroundColor Yellow
+          Write-Host "   docker pull ghcr.io/${{ github.repository }}:$($version -replace '^v','')" -ForegroundColor Yellow
           Write-Host ""
           Write-Host "   # MCP Server" -ForegroundColor Gray
           Write-Host "   npm install @aitherzero/mcp-server@$($version -replace '^v','')" -ForegroundColor Yellow
