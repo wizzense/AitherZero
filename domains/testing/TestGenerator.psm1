@@ -381,15 +381,7 @@ function New-TestStructure {
         $null = $sb.AppendLine()
         $null = $sb.AppendLine("        It 'Should be in stage: $($Metadata.Stage)' {")
         $null = $sb.AppendLine("            `$content = Get-Content `$script:ScriptPath -First 10")
-<<<<<<< HEAD
-<<<<<<< HEAD
-        $null = $sb.AppendLine("            (`$content -join ' ') | Should -Match 'Stage:[\\s:]*$($Metadata.Stage)'")
-=======
-        $null = $sb.AppendLine("            (`$content -join \" \") | Should -Match 'Stage:[\\s:]*$($Metadata.Stage)'")
->>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
-=======
-        $null = $sb.AppendLine("            (`$content -join \" \") | Should -Match 'Stage:[\\s:]*$($Metadata.Stage)'")
->>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
+    $null = $sb.AppendLine("            (`$content -join \" \") | Should -Match 'Stage:[\\s:]*$($Metadata.Stage)'")
         $null = $sb.AppendLine("        }")
     }
 

@@ -79,20 +79,11 @@ Describe '0705_Push-Branch' -Tag 'Unit', 'AutomationScript', 'Development' {
             $cmd.Parameters.ContainsKey('DryRun') | Should -Be $true
         }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
         It 'Should have parameter: NonInteractive' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
         }
 
-<<<<<<< HEAD
->>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
-=======
->>>>>>> bf56628fa1b22284358a1f4e67344a2a4ee9919d
     }
 
     Context 'Metadata' {
