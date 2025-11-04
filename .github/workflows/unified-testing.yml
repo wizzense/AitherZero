@@ -274,22 +274,6 @@ jobs:
             
             Write-Host "⚠️ Dashboard not found - summary created with limited information" -ForegroundColor Yellow
           }
-          
-          - [Dashboard](./reports/dashboard.html)
-          - [Detailed Report](./reports/test-summary.md)
-          
-          "@
-            
-            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
-          } else {
-            Write-Host "⚠️  No dashboard found - tests may have failed early" -ForegroundColor Yellow
-            @"
-          # 🎯 Test Orchestration Results
-          
-          ⚠️ **No dashboard generated** - tests may have failed during execution.
-          Check the workflow logs for details.
-          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
-          }
       
       - name: 📤 Upload Test Results
         if: always()
