@@ -604,39 +604,37 @@ function Get-ProjectMetrics {
         try {
             [xml]$coverageXml = Get-Content $coverageFiles.FullName -ErrorAction Stop
             
-            # Check for JaCoCo format (used by Pester)
-            if ($coverageXml.report) {
-                # Parse JaCoCo format - use null-safe property access
-                # Check if counter property exists before accessing
-                $reportHasCounter = $null -ne $coverageXml.report.PSObject.Properties['counter']
+            # Check for JaCoCo format (used by Pester) - use null-safe property access
+            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+            
+            if ($reportHasCounter) {
+                # Parse JaCoCo format
+                $counters = @($coverageXml.report.counter)
+                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
                 
-                if ($reportHasCounter) {
-                    $counters = @($coverageXml.report.counter)
-                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
+                    $missedLines = [int]$lineCounter.missed
+                    $coveredLines = [int]$lineCounter.covered
+                    $totalLines = $missedLines + $coveredLines
                     
-                    if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
-                        $missedLines = [int]$lineCounter.missed
-                        $coveredLines = [int]$lineCounter.covered
-                        $totalLines = $missedLines + $coveredLines
-                        
-                        if ($totalLines -gt 0) {
-                            $metrics.Coverage.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 2)
-                            $metrics.Coverage.CoveredLines = $coveredLines
-                            $metrics.Coverage.TotalLines = $totalLines
-                        }
+                    if ($totalLines -gt 0) {
+                        $metrics.Coverage.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 2)
+                        $metrics.Coverage.CoveredLines = $coveredLines
+                        $metrics.Coverage.TotalLines = $totalLines
                     }
                 }
             }
-            # Check for Cobertura format (alternative)
-            elseif ($coverageXml.coverage) {
+            # Check for Cobertura format (alternative) - use null-safe property access
+            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
                 $coverage = $coverageXml.coverage
-                if ($coverage.'line-rate') {
+                if ($null -ne $coverage.PSObject.Properties['line-rate']) {
                     $metrics.Coverage.Percentage = [math]::Round(($coverage.'line-rate' -as [double]) * 100, 2)
                 }
-                if ($coverage.'lines-covered') {
+                if ($null -ne $coverage.PSObject.Properties['lines-covered']) {
                     $metrics.Coverage.CoveredLines = $coverage.'lines-covered' -as [int]
                 }
-                if ($coverage.'lines-valid') {
+                if ($null -ne $coverage.PSObject.Properties['lines-valid']) {
                     $metrics.Coverage.TotalLines = $coverage.'lines-valid' -as [int]
                 }
             }
@@ -686,7 +684,15 @@ function Get-QualityMetrics {
     # Find quality reports
     $qualityReportsPath = Join-Path $ProjectPath "reports/quality"
     if (-not (Test-Path $qualityReportsPath)) {
-        Write-ScriptLog -Level Warning -Message "Quality reports directory not found: $qualityReportsPath"
+        Write-ScriptLog -Message "Quality reports directory does not exist yet. Creating: $qualityReportsPath"
+        try {
+            New-Item -Path $qualityReportsPath -ItemType Directory -Force | Out-Null
+            Write-ScriptLog -Message "Created quality reports directory successfully"
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to create quality reports directory: $_"
+        }
+        # Return empty metrics since no reports exist yet
+        Write-ScriptLog -Message "No quality reports available yet. Run './az 0420' to generate quality validation reports."
         return $qualityMetrics
     }
     
@@ -977,7 +983,8 @@ function Get-BuildStatus {
             $totalLines = 0
             
             # Check for JaCoCo format (used by Pester) - use null-safe property access
-            $reportHasCounter = $coverageXml.report -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
             
             if ($reportHasCounter) {
                 $counters = @($coverageXml.report.counter)
@@ -995,9 +1002,12 @@ function Get-BuildStatus {
                 }
             }
             # Check for Cobertura format (alternative) - use null-safe property access
-            elseif ($null -ne $coverageXml.PSObject.Properties['coverage'] -and $coverageXml.coverage.'line-rate') {
-                $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
-                $hasCoverageData = $true
+            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
+                $coverage = $coverageXml.coverage
+                if ($null -ne $coverage.PSObject.Properties['line-rate']) {
+                    $coveragePercent = [math]::Round([double]$coverage.'line-rate' * 100, 1)
+                    $hasCoverageData = $true
+                }
             }
             
             # Show coverage if we have data, even if it's 0%
@@ -1171,9 +1181,19 @@ function Get-FileLevelMetrics {
             # Run PSScriptAnalyzer on individual file
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
                 try {
-                    # Skip files known to cause analysis issues
-                    # TODO: Move this to config.psd1 under Testing.PSScriptAnalyzer.SkipFiles
-                    $skipAnalysisFiles = @('Maintenance.psm1')
+                    # Load skip list from config.psd1 under Testing.PSScriptAnalyzer.SkipFiles
+                    $config = if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) { Get-Configuration } else { $null }
+                    $skipAnalysisFiles = @()
+                    if ($config -and 
+                        $null -ne $config.PSObject.Properties['Testing'] -and 
+                        $null -ne $config.Testing.PSObject.Properties['PSScriptAnalyzer'] -and 
+                        $null -ne $config.Testing.PSScriptAnalyzer.PSObject.Properties['SkipFiles']) {
+                        $skipAnalysisFiles = $config.Testing.PSScriptAnalyzer.SkipFiles
+                    } else {
+                        # Fallback to hardcoded list if config is not available
+                        $skipAnalysisFiles = @('Maintenance.psm1')
+                    }
+                    
                     if ($skipAnalysisFiles -contains $file.Name) {
                         Write-ScriptLog -Level Debug -Message "Skipping PSScriptAnalyzer for known problematic file: $($file.Name)"
                         $fileData.Score = 100  # Assume clean for skipped files
@@ -1182,9 +1202,10 @@ function Get-FileLevelMetrics {
                         # Wrap immediately to handle single object results under StrictMode
                         # Use Measure-Object instead of .Count for maximum StrictMode compatibility
                         # Use ErrorAction Continue to prevent terminating errors during analysis
-                        # Filter results by checking for RuleName property (diagnostic records have this)
-                        $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Continue 2>&1 | 
-                                      Where-Object { $null -ne $_.PSObject.Properties['RuleName'] })
+                        # Use ErrorVariable to separate errors from results
+                        $scriptAnalyzerErrors = @()
+                        $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Continue -ErrorVariable scriptAnalyzerErrors | 
+                                      Where-Object { $_ -is [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord] })
                         $issueCount = ($rawIssues | Measure-Object).Count
                         $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                         
@@ -1548,14 +1569,15 @@ function Get-CodeCoverageDetails {
         try {
             [xml]$coverageXml = Get-Content $latestCoverage.FullName
             
-            # Check for JaCoCo format (used by Pester)
-            if ($coverageXml.report) {
+            # Check for JaCoCo format (used by Pester) - use null-safe property access
+            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+            
+            if ($reportHasCounter) {
                 Write-ScriptLog -Message "Parsing JaCoCo coverage format"
                 $coverage.Format = "JaCoCo"
                 
                 # Get counters from report root - safely handle missing counter elements
-                $reportHasCounter = $null -ne $coverageXml.report.PSObject.Properties['counter']
-                
                 if ($reportHasCounter) {
                     $counters = @($coverageXml.report.counter)
                     $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
@@ -1641,19 +1663,20 @@ function Get-CodeCoverageDetails {
                     }
                 }
             }
-            # Check for Cobertura format
-            elseif ($coverageXml.coverage) {
+            # Check for Cobertura format - use null-safe property access
+            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
                 Write-ScriptLog -Message "Parsing Cobertura coverage format"
                 $coverage.Format = "Cobertura"
+                $cov = $coverageXml.coverage
                 
-                if ($coverageXml.coverage.'line-rate') {
-                    $coverage.Overall.Percentage = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                if ($null -ne $cov.PSObject.Properties['line-rate']) {
+                    $coverage.Overall.Percentage = [math]::Round([double]$cov.'line-rate' * 100, 1)
                 }
                 
                 # Calculate total and covered lines for Cobertura format
-                if ($coverageXml.coverage.'lines-covered' -and $coverageXml.coverage.'lines-valid') {
-                    $coverage.Overall.CoveredLines = [int]$coverageXml.coverage.'lines-covered'
-                    $coverage.Overall.TotalLines = [int]$coverageXml.coverage.'lines-valid'
+                if (($null -ne $cov.PSObject.Properties['lines-covered']) -and ($null -ne $cov.PSObject.Properties['lines-valid'])) {
+                    $coverage.Overall.CoveredLines = [int]$cov.'lines-covered'
+                    $coverage.Overall.TotalLines = [int]$cov.'lines-valid'
                     $coverage.Overall.MissedLines = $coverage.Overall.TotalLines - $coverage.Overall.CoveredLines
                 }
                 
