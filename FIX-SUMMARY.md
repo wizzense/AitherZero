@@ -5,15 +5,15 @@
 PR #2112 identified 2 critical errors that broke local CI/CD orchestration functionality:
 
 ### Error 1: Missing Playbook Files
-A previous commit removed all orchestration playbook JSON files from `orchestration/playbooks/core/operations/` while the wrapper script (0960_Run-Playbook.ps1), documentation, and workflows still referenced them. This made local orchestration completely non-functional.
+A previous commit removed all orchestration playbook JSON files from `orchestration/playbooks/core/operations/` while the wrapper script (0962_Run-Playbook.ps1), documentation, and workflows still referenced them. This made local orchestration completely non-functional.
 
 **Impact**: 
-- Users couldn't run `./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-pr-validation` 
+- Users couldn't run `./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-pr-validation` 
 - All references to CI playbooks would fail at runtime
 - Local CI/CD workflow testing was broken
 
 ### Error 2: Missing SupportsShouldProcess
-The script `0960_Run-Playbook.ps1` declared `[CmdletBinding()]` without `SupportsShouldProcess=$true`, making the `-WhatIf` parameter unavailable even though:
+The script `0962_Run-Playbook.ps1` declared `[CmdletBinding()]` without `SupportsShouldProcess=$true`, making the `-WhatIf` parameter unavailable even though:
 - The unit tests expected it to exist
 - The documentation showed examples using it
 - It's a PowerShell best practice for scripts that modify system state
@@ -49,7 +49,7 @@ Created 11 playbook JSON files in `orchestration/playbooks/core/operations/`:
 
 ### Fix for Error 2: Added SupportsShouldProcess
 
-Modified `automation-scripts/0960_Run-Playbook.ps1`:
+Modified `automation-scripts/0962_Run-Playbook.ps1`:
 
 **Before**:
 ```powershell
@@ -78,19 +78,19 @@ All fixes were tested and validated:
 
 ### Test 1: All Playbooks Exist
 ```powershell
-./automation-scripts/0960_Run-Playbook.ps1 -List
+./automation-scripts/0962_Run-Playbook.ps1 -List
 ```
 ✅ Result: 13 playbooks discovered (11 new + 2 existing)
 
 ### Test 2: WhatIf Parameter Works
 ```powershell
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-pr-validation -WhatIf
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-pr-validation -WhatIf
 ```
 ✅ Result: Shows "What if: Performing the operation 'Execute playbook' on target 'ci-pr-validation'" without executing
 
 ### Test 3: DryRun Mode Works
 ```powershell
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-validate-config -DryRun
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-validate-config -DryRun
 ```
 ✅ Result: Playbook loads successfully and runs in dry-run mode
 
@@ -103,7 +103,7 @@ Get-Content ./orchestration/playbooks/core/operations/ci-pr-validation.json | Co
 ## Files Changed
 
 ### Modified (2 files)
-- `automation-scripts/0960_Run-Playbook.ps1` - Added SupportsShouldProcess
+- `automation-scripts/0962_Run-Playbook.ps1` - Added SupportsShouldProcess
 - `orchestration/playbooks/README.md` - Updated documentation
 
 ### Created (11 files)
@@ -141,22 +141,22 @@ All in `orchestration/playbooks/core/operations/`:
 
 ```powershell
 # List all available playbooks
-./automation-scripts/0960_Run-Playbook.ps1 -List
+./automation-scripts/0962_Run-Playbook.ps1 -List
 
 # Quick validation before pushing (2-5 min)
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
 
 # Standard validation before PR (10-15 min)
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-all-validations
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations
 
 # Comprehensive validation before merge (15-25 min)
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-all-validations -Profile comprehensive
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile comprehensive
 
 # Preview what would run (WhatIf)
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-pr-validation -WhatIf
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-pr-validation -WhatIf
 
 # Dry run mode (loads but doesn't execute)
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun
 ```
 
 ## Status

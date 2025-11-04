@@ -407,19 +407,19 @@ This document maps GitHub Actions workflows (`.github/workflows/*.yml`) to their
 
 ## Easy Playbook Execution
 
-### New Script: 0960_Run-Playbook.ps1
+### New Script: 0962_Run-Playbook.ps1
 
 A new automation script makes it easy to run playbooks:
 
 ```powershell
 # List all available playbooks
-./automation-scripts/0960_Run-Playbook.ps1 -List
+./automation-scripts/0962_Run-Playbook.ps1 -List
 
 # Run a playbook
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
 
 # Dry run to see what would execute
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun
 ```
 
 ---

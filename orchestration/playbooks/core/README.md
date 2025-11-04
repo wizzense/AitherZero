@@ -35,16 +35,16 @@ All playbooks can be executed using the wrapper script:
 
 ```powershell
 # List all available playbooks
-./automation-scripts/0960_Run-Playbook.ps1 -List
+./automation-scripts/0962_Run-Playbook.ps1 -List
 
 # Run a playbook
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-all-validations
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations
 
 # Run with profile
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
 
 # Dry run (preview execution)
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook test-quick -DryRun
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook test-quick -DryRun
 ```
 
 ## Operations Playbooks
@@ -150,7 +150,7 @@ All playbooks are validated for:
 - [Parent README](../README.md) - Playbook system overview
 - [GITHUB-WORKFLOWS-MAPPING.md](../GITHUB-WORKFLOWS-MAPPING.md) - Workflow mappings
 - [MIGRATION-GUIDE.md](../MIGRATION-GUIDE.md) - Migration guide
-- [../../automation-scripts/0960_Run-Playbook.ps1](../../automation-scripts/0960_Run-Playbook.ps1) - Wrapper script
+- [../../automation-scripts/0962_Run-Playbook.ps1](../../automation-scripts/0962_Run-Playbook.ps1) - Wrapper script
 
 ---
 

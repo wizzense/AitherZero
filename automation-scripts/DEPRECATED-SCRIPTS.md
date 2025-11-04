@@ -6,18 +6,18 @@ The following scripts are **DEPRECATED** and should no longer be used.
 
 **ONE command for all testing:**
 ```bash
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook test-orchestrated -Profile <quick|standard|full|ci>
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook test-orchestrated -Profile <quick|standard|full|ci>
 ```
 
 ## Deprecated Scripts
 
 | Script | Status | Replacement |
 |--------|--------|-------------|
-| `0409_Run-AllTests.ps1` | ⚠️ DEPRECATED | `0960_Run-Playbook.ps1 -Playbook test-orchestrated -Profile full` |
-| `0460_Orchestrate-Tests.ps1` | ⚠️ DEPRECATED | `0960_Run-Playbook.ps1 -Playbook test-orchestrated` |
-| `0470_Orchestrate-SimpleTesting.ps1` | ⚠️ DEPRECATED | `0960_Run-Playbook.ps1 -Playbook test-orchestrated -Profile quick` |
-| `0480_Test-Simple.ps1` | ⚠️ DEPRECATED | `0960_Run-Playbook.ps1 -Playbook test-orchestrated -Profile quick` |
-| `0490_AI-TestRunner.ps1` | ⚠️ DEPRECATED | `0960_Run-Playbook.ps1 -Playbook test-orchestrated` |
+| `0409_Run-AllTests.ps1` | ⚠️ DEPRECATED | `0962_Run-Playbook.ps1 -Playbook test-orchestrated -Profile full` |
+| `0460_Orchestrate-Tests.ps1` | ⚠️ DEPRECATED | `0962_Run-Playbook.ps1 -Playbook test-orchestrated` |
+| `0470_Orchestrate-SimpleTesting.ps1` | ⚠️ DEPRECATED | `0962_Run-Playbook.ps1 -Playbook test-orchestrated -Profile quick` |
+| `0480_Test-Simple.ps1` | ⚠️ DEPRECATED | `0962_Run-Playbook.ps1 -Playbook test-orchestrated -Profile quick` |
+| `0490_AI-TestRunner.ps1` | ⚠️ DEPRECATED | `0962_Run-Playbook.ps1 -Playbook test-orchestrated` |
 
 ## Why Deprecated?
 

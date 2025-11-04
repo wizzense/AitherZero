@@ -31,23 +31,23 @@
     Additional variables to pass to the playbook as a hashtable
 
 .EXAMPLE
-    .\0960_Run-Playbook.ps1 -List
+    .\0962_Run-Playbook.ps1 -List
     List all available playbooks
 
 .EXAMPLE
-    .\0960_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
+    .\0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
     Run quick validation checks before pushing code
 
 .EXAMPLE
-    .\0960_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun
+    .\0962_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun
     Preview what PR validation would do
 
 .EXAMPLE
-    .\0960_Run-Playbook.ps1 -Playbook ci-comprehensive-test -Profile unit-only
+    .\0962_Run-Playbook.ps1 -Playbook ci-comprehensive-test -Profile unit-only
     Run only unit tests
 
 .EXAMPLE
-    .\0960_Run-Playbook.ps1 -Playbook test-quick
+    .\0962_Run-Playbook.ps1 -Playbook test-quick
     Quick development validation
 
 .NOTES
@@ -163,9 +163,9 @@ function Show-PlaybookList {
     }
     
     Write-ColorOutput "Usage Examples:" -Color Cyan
-    Write-ColorOutput "  .\0960_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick" -Color White
-    Write-ColorOutput "  .\0960_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun" -Color White
-    Write-ColorOutput "  .\0960_Run-Playbook.ps1 -Playbook test-quick" -Color White
+    Write-ColorOutput "  .\0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick" -Color White
+    Write-ColorOutput "  .\0962_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun" -Color White
+    Write-ColorOutput "  .\0962_Run-Playbook.ps1 -Playbook test-quick" -Color White
     Write-ColorOutput ""
 }
 
@@ -182,7 +182,7 @@ try {
         Write-ColorOutput "ERROR: Playbook parameter is required" -Color Red
         Write-ColorOutput ""
         Write-ColorOutput "Run with -List to see available playbooks:" -Color Yellow
-        Write-ColorOutput "  .\0960_Run-Playbook.ps1 -List" -Color White
+        Write-ColorOutput "  .\0962_Run-Playbook.ps1 -List" -Color White
         Write-ColorOutput ""
         exit 1
     }

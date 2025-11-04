@@ -262,7 +262,7 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Automatic Test Generation Orchestrator - "The 100% Solution"*
 - ⚙️ [0951_Regenerate-FunctionalTests.ps1](./0951_Regenerate-FunctionalTests.ps1)
   - *Regenerate ALL tests with enhanced functional testing*
-- ⚙️ [0960_Run-Playbook.ps1](./0960_Run-Playbook.ps1)
+- ⚙️ [0962_Run-Playbook.ps1](./0962_Run-Playbook.ps1)
   - *Run orchestration playbooks - wrapper for easy local CI/CD workflow execution*
 - ⚙️ [0960_Track-DocumentationFreshness.ps1](./0960_Track-DocumentationFreshness.ps1)
   - *Track documentation freshness relative to code changes.*
