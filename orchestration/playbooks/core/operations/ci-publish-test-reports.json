@@ -1,0 +1,60 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-publish-test-reports",
+  "version": "1.0.0",
+  "description": "Publish test reports to GitHub Pages",
+  "profiles": {
+    "quick": {
+      "description": "Quick report generation",
+      "stages": ["generate"]
+    },
+    "full": {
+      "description": "Full report generation and publishing",
+      "stages": ["generate", "publish"]
+    }
+  },
+  "stages": {
+    "generate": {
+      "name": "Generate Reports",
+      "description": "Generate test reports and dashboard",
+      "scripts": [
+        {
+          "id": "0512",
+          "path": "./automation-scripts/0512_Generate-Dashboard.ps1",
+          "params": {
+            "Format": "All"
+          },
+          "continueOnError": false
+        }
+      ]
+    },
+    "publish": {
+      "name": "Publish to GitHub Pages",
+      "description": "Deploy reports to GitHub Pages",
+      "scripts": [
+        {
+          "id": "0950",
+          "path": "./automation-scripts/0950_Publish-GitHubPages.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    }
+  },
+  "executionOrder": ["generate", "publish"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ Test reports published!"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "reporting",
+    "tags": ["reports", "testing", "github-pages"],
+    "githubWorkflow": "publish-test-reports.yml",
+    "estimatedDuration": "2-3 minutes"
+  }
+}

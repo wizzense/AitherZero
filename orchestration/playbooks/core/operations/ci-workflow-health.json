@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-workflow-health",
+  "version": "1.0.0",
+  "description": "Check GitHub Actions workflow health",
+  "profiles": {
+    "quick": {
+      "description": "Quick workflow validation",
+      "stages": ["validate"]
+    }
+  },
+  "stages": {
+    "validate": {
+      "name": "Workflow Health Check",
+      "description": "Validate GitHub Actions workflow files",
+      "scripts": [
+        {
+          "id": "0950",
+          "path": "./automation-scripts/0950_Check-WorkflowHealth.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    }
+  },
+  "executionOrder": ["validate"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ Workflow health check complete!"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "validation",
+    "tags": ["workflows", "github-actions", "health"],
+    "githubWorkflow": "workflow-health-check.yml",
+    "estimatedDuration": "30 seconds"
+  }
+}

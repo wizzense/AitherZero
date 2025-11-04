@@ -1,0 +1,60 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-pr-validation",
+  "version": "1.0.0",
+  "description": "Quick PR validation - syntax check and PSScriptAnalyzer",
+  "profiles": {
+    "quick": {
+      "description": "Quick syntax validation only",
+      "stages": ["syntax"]
+    },
+    "standard": {
+      "description": "Standard validation (syntax + PSScriptAnalyzer)",
+      "stages": ["syntax", "analyze"]
+    }
+  },
+  "stages": {
+    "syntax": {
+      "name": "Syntax Validation",
+      "description": "Validate PowerShell syntax for all scripts",
+      "scripts": [
+        {
+          "id": "0407",
+          "path": "./automation-scripts/0407_Validate-Syntax.ps1",
+          "params": {
+            "All": true
+          },
+          "continueOnError": false
+        }
+      ]
+    },
+    "analyze": {
+      "name": "PSScriptAnalyzer",
+      "description": "Run PSScriptAnalyzer linting",
+      "scripts": [
+        {
+          "id": "0404",
+          "path": "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+          "params": {},
+          "continueOnError": true
+        }
+      ]
+    }
+  },
+  "executionOrder": ["syntax", "analyze"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ PR validation complete!"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "validation",
+    "tags": ["pr", "validation", "syntax", "linting"],
+    "githubWorkflow": "pr-validation.yml",
+    "estimatedDuration": "1-2 minutes"
+  }
+}

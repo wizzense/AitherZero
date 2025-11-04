@@ -1,0 +1,147 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-all-validations",
+  "version": "1.0.0",
+  "description": "Meta-playbook combining all CI validation checks",
+  "profiles": {
+    "quick": {
+      "description": "Quick validation before pushing (2-5 min)",
+      "stages": ["syntax", "config", "test-sync"]
+    },
+    "standard": {
+      "description": "Standard validation before PR (10-15 min)",
+      "stages": ["syntax", "config", "manifests", "test-sync", "unit-tests", "analyze"]
+    },
+    "comprehensive": {
+      "description": "Comprehensive validation before merge (15-25 min)",
+      "stages": ["syntax", "config", "manifests", "test-sync", "unit-tests", "integration-tests", "analyze", "quality", "workflow-health"]
+    }
+  },
+  "stages": {
+    "syntax": {
+      "name": "Syntax Validation",
+      "description": "Validate PowerShell syntax",
+      "scripts": [
+        {
+          "id": "0407",
+          "path": "./automation-scripts/0407_Validate-Syntax.ps1",
+          "params": {
+            "All": true
+          },
+          "continueOnError": false
+        }
+      ]
+    },
+    "config": {
+      "name": "Config Validation",
+      "description": "Validate configuration manifest",
+      "scripts": [
+        {
+          "id": "0413",
+          "path": "./automation-scripts/0413_Validate-ConfigManifest.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    },
+    "manifests": {
+      "name": "Manifest Validation",
+      "description": "Validate module manifests",
+      "scripts": [
+        {
+          "id": "0414",
+          "path": "./automation-scripts/0414_Validate-Manifests.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    },
+    "test-sync": {
+      "name": "Test Sync Validation",
+      "description": "Validate test-script synchronization",
+      "scripts": [
+        {
+          "id": "0426",
+          "path": "./automation-scripts/0426_Validate-TestScriptSync.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    },
+    "unit-tests": {
+      "name": "Unit Tests",
+      "description": "Run unit tests",
+      "scripts": [
+        {
+          "id": "0402",
+          "path": "./automation-scripts/0402_Run-UnitTests.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    },
+    "integration-tests": {
+      "name": "Integration Tests",
+      "description": "Run integration tests",
+      "scripts": [
+        {
+          "id": "0403",
+          "path": "./automation-scripts/0403_Run-IntegrationTests.ps1",
+          "params": {},
+          "continueOnError": true
+        }
+      ]
+    },
+    "analyze": {
+      "name": "PSScriptAnalyzer",
+      "description": "Run code quality analysis",
+      "scripts": [
+        {
+          "id": "0404",
+          "path": "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+          "params": {},
+          "continueOnError": true
+        }
+      ]
+    },
+    "quality": {
+      "name": "Quality Validation",
+      "description": "Validate component quality",
+      "scripts": [
+        {
+          "id": "0420",
+          "path": "./automation-scripts/0420_Validate-ComponentQuality.ps1",
+          "params": {},
+          "continueOnError": true
+        }
+      ]
+    },
+    "workflow-health": {
+      "name": "Workflow Health Check",
+      "description": "Validate GitHub Actions workflows",
+      "scripts": [
+        {
+          "id": "0950",
+          "path": "./automation-scripts/0950_Check-WorkflowHealth.ps1",
+          "params": {},
+          "continueOnError": true
+        }
+      ]
+    }
+  },
+  "executionOrder": ["syntax", "config", "manifests", "test-sync", "unit-tests", "integration-tests", "analyze", "quality", "workflow-health"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ All validations complete! Ready to push/PR."
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "validation",
+    "tags": ["meta", "validation", "comprehensive", "ci", "pr"],
+    "estimatedDuration": "2-25 minutes (depends on profile)"
+  }
+}

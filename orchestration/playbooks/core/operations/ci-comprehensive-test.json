@@ -1,0 +1,101 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-comprehensive-test",
+  "version": "1.0.0",
+  "description": "Run comprehensive test suite with full coverage",
+  "profiles": {
+    "unit-only": {
+      "description": "Unit tests only",
+      "stages": ["unit"]
+    },
+    "integration-only": {
+      "description": "Integration tests only",
+      "stages": ["integration"]
+    },
+    "quick": {
+      "description": "Quick validation (unit + integration)",
+      "stages": ["unit", "integration"]
+    },
+    "standard": {
+      "description": "Standard testing (unit + integration + analysis)",
+      "stages": ["unit", "integration", "analyze"]
+    },
+    "full": {
+      "description": "Full testing with all stages",
+      "stages": ["unit", "integration", "analyze", "report"]
+    }
+  },
+  "stages": {
+    "unit": {
+      "name": "Unit Tests",
+      "description": "Run all unit tests",
+      "scripts": [
+        {
+          "id": "0402",
+          "path": "./automation-scripts/0402_Run-UnitTests.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    },
+    "integration": {
+      "name": "Integration Tests",
+      "description": "Run integration tests",
+      "scripts": [
+        {
+          "id": "0403",
+          "path": "./automation-scripts/0403_Run-IntegrationTests.ps1",
+          "params": {},
+          "continueOnError": true
+        }
+      ]
+    },
+    "analyze": {
+      "name": "Code Analysis",
+      "description": "Run PSScriptAnalyzer",
+      "scripts": [
+        {
+          "id": "0404",
+          "path": "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+          "params": {},
+          "continueOnError": true
+        }
+      ]
+    },
+    "report": {
+      "name": "Generate Reports",
+      "description": "Generate test reports and dashboard",
+      "scripts": [
+        {
+          "id": "0512",
+          "path": "./automation-scripts/0512_Generate-Dashboard.ps1",
+          "params": {
+            "Format": "All"
+          },
+          "continueOnError": true
+        }
+      ]
+    }
+  },
+  "executionOrder": ["unit", "integration", "analyze", "report"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ Comprehensive testing complete!"
+    },
+    {
+      "type": "openFile",
+      "path": "./reports/dashboard.html",
+      "condition": "fileExists"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "testing",
+    "tags": ["tests", "comprehensive", "pester", "linting"],
+    "githubWorkflow": "comprehensive-test-execution.yml",
+    "estimatedDuration": "5-10 minutes"
+  }
+}

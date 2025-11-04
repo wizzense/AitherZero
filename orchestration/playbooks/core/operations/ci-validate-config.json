@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-validate-config",
+  "version": "1.0.0",
+  "description": "Validate configuration manifest integrity",
+  "profiles": {
+    "quick": {
+      "description": "Quick config validation",
+      "stages": ["validate"]
+    }
+  },
+  "stages": {
+    "validate": {
+      "name": "Validate Config Manifest",
+      "description": "Check config.psd1 for errors and inconsistencies",
+      "scripts": [
+        {
+          "id": "0413",
+          "path": "./automation-scripts/0413_Validate-ConfigManifest.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    }
+  },
+  "executionOrder": ["validate"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ Config validation complete!"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "validation",
+    "tags": ["config", "validation", "manifest"],
+    "githubWorkflow": "validate-config.yml",
+    "estimatedDuration": "30 seconds"
+  }
+}

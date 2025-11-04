@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-validate-manifests",
+  "version": "1.0.0",
+  "description": "Validate PowerShell module manifests",
+  "profiles": {
+    "quick": {
+      "description": "Quick manifest validation",
+      "stages": ["validate"]
+    }
+  },
+  "stages": {
+    "validate": {
+      "name": "Validate Manifests",
+      "description": "Check all .psd1 module manifests",
+      "scripts": [
+        {
+          "id": "0414",
+          "path": "./automation-scripts/0414_Validate-Manifests.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    }
+  },
+  "executionOrder": ["validate"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ Manifest validation complete!"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "validation",
+    "tags": ["manifests", "validation", "psd1"],
+    "githubWorkflow": "validate-manifests.yml",
+    "estimatedDuration": "30 seconds"
+  }
+}

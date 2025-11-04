@@ -1,0 +1,48 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-auto-generate-tests",
+  "version": "1.0.0",
+  "description": "Auto-generate tests for scripts missing test coverage",
+  "profiles": {
+    "quick": {
+      "description": "Quick mode - generate missing tests only",
+      "stages": ["generate"]
+    },
+    "full": {
+      "description": "Full regeneration of all tests",
+      "stages": ["generate"]
+    }
+  },
+  "stages": {
+    "generate": {
+      "name": "Generate Tests",
+      "description": "Auto-generate tests for automation scripts",
+      "scripts": [
+        {
+          "id": "0950",
+          "path": "./automation-scripts/0950_Generate-AllTests.ps1",
+          "params": {
+            "Mode": "Quick"
+          },
+          "continueOnError": false
+        }
+      ]
+    }
+  },
+  "executionOrder": ["generate"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ Test generation complete!"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "testing",
+    "tags": ["tests", "generation", "automation"],
+    "githubWorkflow": "auto-generate-tests.yml",
+    "estimatedDuration": "1-2 minutes"
+  }
+}

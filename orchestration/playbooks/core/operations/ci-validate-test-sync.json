@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/playbook-schema-v3.json",
+  "name": "ci-validate-test-sync",
+  "version": "1.0.0",
+  "description": "Validate test-script synchronization",
+  "profiles": {
+    "quick": {
+      "description": "Quick test sync validation",
+      "stages": ["validate"]
+    }
+  },
+  "stages": {
+    "validate": {
+      "name": "Validate Test Sync",
+      "description": "Check that all scripts have corresponding tests",
+      "scripts": [
+        {
+          "id": "0426",
+          "path": "./automation-scripts/0426_Validate-TestScriptSync.ps1",
+          "params": {},
+          "continueOnError": false
+        }
+      ]
+    }
+  },
+  "executionOrder": ["validate"],
+  "parallel": false,
+  "continueOnError": false,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "✅ Test synchronization validated!"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "validation",
+    "tags": ["tests", "validation", "sync"],
+    "githubWorkflow": "validate-test-sync.yml",
+    "estimatedDuration": "1 minute"
+  }
+}
