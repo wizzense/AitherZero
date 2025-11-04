@@ -40,7 +40,7 @@ Scripts in `/automation-scripts/` follow numeric ranges:
 - **0700-0799**: Git automation & AI tools
 - **9000-9999**: Maintenance & cleanup
 
-Use the `az` wrapper for script execution: `az 0402` runs unit tests, `az 0404` runs PSScriptAnalyzer.
+Use the `aitherzero` wrapper for script execution: `aitherzero 0402` runs unit tests, `aitherzero 0404` runs PSScriptAnalyzer.
 
 ## Domain Structure (Consolidated Architecture v2.0)
 
@@ -95,15 +95,15 @@ if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
 ./Start-AitherZero.ps1
 
 # Run numbered scripts
-az 0402              # Unit tests
-az 0404              # PSScriptAnalyzer
-az 0407              # Syntax validation
-az 0510 -ShowAll     # Project report
+aitherzero 0402              # Unit tests
+aitherzero 0404              # PSScriptAnalyzer
+aitherzero 0407              # Syntax validation
+aitherzero 0510 -ShowAll     # Project report
 
 # Git workflow automation
-az 0701 -Type feature -Name "my-feature"     # Create branch
-az 0702 -Type feat -Message "add feature"    # Commit
-az 0703 -Title "Add feature"                 # PR creation
+aitherzero 0701 -Type feature -Name "my-feature"     # Create branch
+aitherzero 0702 -Type feat -Message "add feature"    # Commit
+aitherzero 0703 -Title "Add feature"                 # PR creation
 ```
 
 ### Testing Commands
@@ -252,7 +252,7 @@ if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
 ├── Start-AitherZero.ps1         # Main entry point - interactive mode
 ├── bootstrap.ps1                # Setup script (PowerShell) - ALWAYS RUN FIRST
 ├── bootstrap.sh                 # Setup script (Bash) - Linux/macOS variant
-├── az.ps1                       # Wrapper for numbered scripts (./az.ps1 0402)
+├── aitherzero                   # Global wrapper script for numbered scripts
 ├── config.psd1                  # Master configuration manifest - 1476 lines
 ├── config.example.psd1          # Template configuration  
 ├── PSScriptAnalyzerSettings.psd1 # Linter rules (27 lines)
@@ -522,17 +522,18 @@ Check exit codes: 0=success, 1=error, 3010=restart required
 ```powershell
 # 1. Syntax validation - Takes ~1-2 seconds for all 457 files
 ./automation-scripts/0407_Validate-Syntax.ps1 -All
+# Or use the global wrapper:
+aitherzero 0407 -All
 
 # 2. PSScriptAnalyzer - Takes ~75 seconds for full codebase
 ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+# Or:
+aitherzero 0404
 
 # 3. Unit tests - Takes ~54 seconds (may have 5-15 known failures)
 ./automation-scripts/0402_Run-UnitTests.ps1
-
-# Alternative: Use the 'az' wrapper (shorter syntax)
-./az.ps1 0407 -All          # Syntax validation
-./az.ps1 0404               # PSScriptAnalyzer
-./az.ps1 0402               # Unit tests
+# Or:
+aitherzero 0402
 ```
 
 **Timing Expectations**:
@@ -588,32 +589,32 @@ Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
 ./bootstrap.ps1 -Mode Update -InstallProfile Minimal
 
 # 2. Validate baseline
-./az.ps1 0407 -All && ./az.ps1 0404
+aitherzero 0407 -All && aitherzero 0404
 
 # 3. Make your changes
 # ...
 
 # 4. Test your changes
-./az.ps1 0407 -All
-./az.ps1 0404 -Path ./path/to/changed
+aitherzero 0407 -All
+aitherzero 0404 -Path ./path/to/changed
 Invoke-Pester -Path "./tests/unit/YourTest.Tests.ps1"
 
 # 5. Final validation
-./az.ps1 0420 -Path ./path/to/changed
+aitherzero 0420 -Path ./path/to/changed
 ```
 
 **For bug fixes:**
 ```powershell
 # 1. Reproduce the issue
 # 2. Run existing tests to confirm failure
-./az.ps1 0402
+aitherzero 0402
 
 # 3. Fix the issue
 # 4. Verify tests pass
-./az.ps1 0402
+aitherzero 0402
 
 # 5. Run quality validation
-./az.ps1 0420 -Path ./path/to/fixed
+aitherzero 0420 -Path ./path/to/fixed
 ```
 
 ### CI/CD Integration
@@ -623,7 +624,7 @@ The GitHub Actions workflows use these exact commands:
 ```yaml
 # PR Validation (.github/workflows/pr-validation.yml)
 - Bootstrap minimal environment
-- Run syntax validation: ./az.ps1 0407 -All
+- Run syntax validation: aitherzero 0407 -All
 - Comment results on PR
 
 # Comprehensive Tests (.github/workflows/comprehensive-test-execution.yml)  
@@ -647,7 +648,7 @@ The GitHub Actions workflows use these exact commands:
 ```powershell
 # Solution: az.ps1 must be called with ./ prefix in repository root
 cd /path/to/AitherZero
-./az.ps1 0407
+aitherzero 0407
 ```
 
 **Issue**: Pester tests fail with "Module not found"
@@ -659,13 +660,13 @@ Import-Module ./AitherZero.psd1 -Force
 **Issue**: PSScriptAnalyzer timeout
 ```powershell
 # Solution: Run on specific path instead of entire codebase
-./az.ps1 0404 -Path ./domains/utilities
+aitherzero 0404 -Path ./domains/utilities
 ```
 
 ### Before Making Changes
 
 1. **Always bootstrap first**: `./bootstrap.ps1 -Mode Update`
-2. **Validate baseline**: `./az.ps1 0407 -All && ./az.ps1 0404` 
+2. **Validate baseline**: `aitherzero 0407 -All && aitherzero 0404` 
 3. **Review known issues**: Ignore the 5 errors in Security.Tests.ps1
 4. **Check transcript logs**: `logs/transcript-*.log` for detailed errors
 5. **Understand timing**: Budget 2-3 minutes for full validation cycle
@@ -1019,14 +1020,14 @@ When using AI assistance:
 ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
 # Validate before changes (baseline check)
-./az.ps1 0407 -All && ./az.ps1 0404
+aitherzero 0407 -All && aitherzero 0404
 
 # Test after changes
-./az.ps1 0407 -All
+aitherzero 0407 -All
 Invoke-Pester -Path "./tests/unit/YourTest.Tests.ps1"
 
 # Quality check before commit
-./az.ps1 0420 -Path ./path/to/changed
+aitherzero 0420 -Path ./path/to/changed
 ```
 
 ### Critical Success Factors
@@ -1043,7 +1044,7 @@ Invoke-Pester -Path "./tests/unit/YourTest.Tests.ps1"
 ### Common Mistakes to Avoid
 
 1. ❌ Skipping bootstrap → ✅ Always run `./bootstrap.ps1 -Mode Update` first
-2. ❌ Running `az 0407` → ✅ Use `./az.ps1 0407` (needs ./ prefix)
+2. ❌ Not having `aitherzero` in PATH → ✅ Run bootstrap to install it globally
 3. ❌ Forgetting Export-ModuleMember → ✅ Add function to export list
 4. ❌ Adding function without tests → ✅ Create matching `*.Tests.ps1` file
 5. ❌ Hardcoding values → ✅ Use `config.psd1` or `Get-Configuration`
@@ -1060,10 +1061,13 @@ Invoke-Pester -Path "./tests/unit/YourTest.Tests.ps1"
 Import-Module ./AitherZero.psd1 -Force
 ```
 
-**"Command not found: az"**:
+**"Command not found: aitherzero"**:
 ```powershell
-# Must be in repository root with ./
-cd /path/to/AitherZero && ./az.ps1 0407
+# Run bootstrap to install the global command
+./bootstrap.ps1 -Mode Update
+
+# Or use direct script invocation
+./automation-scripts/0407_Validate-Syntax.ps1 -All
 ```
 
 **Tests failing unexpectedly**:
@@ -1077,7 +1081,7 @@ $env:AITHERZERO_INITIALIZED -eq 'true'
 **PSScriptAnalyzer timeout**:
 ```powershell
 # Run on specific path instead
-./az.ps1 0404 -Path ./domains/utilities
+aitherzero 0404 -Path ./domains/utilities
 ```
 
 **Issue creation failures in CI**:
@@ -1107,16 +1111,16 @@ if ($env:GITHUB_ACTIONS -eq 'true') {
 Before submitting code changes:
 
 - [ ] Bootstrap completed successfully
-- [ ] Syntax validation passes (`./az.ps1 0407 -All`)
-- [ ] PSScriptAnalyzer passes or issues documented (`./az.ps1 0404`)
-- [ ] Unit tests pass (`./az.ps1 0402`)
-- [ ] Quality validation passes (`./az.ps1 0420 -Path <changed>`)
+- [ ] Syntax validation passes (`aitherzero 0407 -All`)
+- [ ] PSScriptAnalyzer passes or issues documented (`aitherzero 0404`)
+- [ ] Unit tests pass (`aitherzero 0402`)
+- [ ] Quality validation passes (`aitherzero 0420 -Path <changed>`)
 - [ ] Functions exported in Export-ModuleMember
 - [ ] Comment-based help added (`.SYNOPSIS`, etc.)
 - [ ] Tests created for new functionality
 - [ ] Cross-platform compatibility verified
 - [ ] Transcript logs checked (`logs/transcript-*.log`)
-- [ ] Config changes validated (`./az.ps1 0413`)
+- [ ] Config changes validated (`aitherzero 0413`)
 
 ### Performance Expectations
 
@@ -1124,10 +1128,10 @@ Before submitting code changes:
 |---------|---------------|-------|
 | `bootstrap.ps1 -Mode New -InstallProfile Minimal` | 2-5 minutes | First time only |
 | `bootstrap.ps1 -Mode Update` | 30-60 seconds | Updates |
-| `./az.ps1 0407 -All` | 1-2 seconds | 457 files |
-| `./az.ps1 0404` | 60-90 seconds | 516 files |
-| `./az.ps1 0402` | 45-60 seconds | ~74 test files |
-| `./az.ps1 0420 -Path <path>` | 30-120 seconds | Per component |
+| `aitherzero 0407 -All` | 1-2 seconds | 457 files |
+| `aitherzero 0404` | 60-90 seconds | 516 files |
+| `aitherzero 0402` | 45-60 seconds | ~74 test files |
+| `aitherzero 0420 -Path <path>` | 30-120 seconds | Per component |
 | Full validation cycle | 2-3 minutes | All checks |
 
 ---
