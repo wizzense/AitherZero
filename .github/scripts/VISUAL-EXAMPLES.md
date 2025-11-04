@@ -103,7 +103,7 @@ const jobInfo = {
   ...
 };
 
-// Check step outcomes to get actual test results
+// Check step conclusions from GitHub REST API to get actual test results
 if (job.steps) {
   const runTestsStep = job.steps.find(step => 
     step.name.includes('Run Unit Tests') ||
@@ -111,8 +111,9 @@ if (job.steps) {
     step.name.includes('Run Integration Tests')
   );
   
-  if (runTestsStep && runTestsStep.outcome) {
-    jobInfo.actualOutcome = runTestsStep.outcome;  // Use step outcome!
+  // Note: GitHub REST API exposes 'conclusion' and 'status', not 'outcome'
+  if (runTestsStep && runTestsStep.conclusion) {
+    jobInfo.actualOutcome = runTestsStep.conclusion;  // Use step conclusion from API!
   }
 }
 
