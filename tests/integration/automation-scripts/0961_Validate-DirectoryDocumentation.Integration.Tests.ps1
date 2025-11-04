@@ -6,13 +6,15 @@
     Integration tests for 0961_Validate-DirectoryDocumentation
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 07:53:36
+    Generated: 2025-11-04 20:39:43
 #>
 
 Describe '0961_Validate-DirectoryDocumentation Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0961_Validate-DirectoryDocumentation.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0961_Validate-DirectoryDocumentation.ps1'
     }
 
     Context 'Integration' {

@@ -6,13 +6,15 @@
     Integration tests for 0208_Install-Docker
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-02 21:41:15
+    Generated: 2025-11-04 20:39:42
 #>
 
 Describe '0208_Install-Docker Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0208_Install-Docker.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0208_Install-Docker.ps1'
     }
 
     Context 'Integration' {

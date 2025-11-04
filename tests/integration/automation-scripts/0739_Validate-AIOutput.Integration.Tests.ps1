@@ -6,13 +6,15 @@
     Integration tests for 0739_Validate-AIOutput
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-02 21:41:15
+    Generated: 2025-11-04 20:39:43
 #>
 
 Describe '0739_Validate-AIOutput Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0739_Validate-AIOutput.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0739_Validate-AIOutput.ps1'
     }
 
     Context 'Integration' {

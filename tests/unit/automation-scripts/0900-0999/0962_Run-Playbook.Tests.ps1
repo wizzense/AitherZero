@@ -9,13 +9,15 @@
     Script: 0962_Run-Playbook
     Stage: Unknown
     Description: This script provides an easy way to run AitherZero orchestration playbooks that mirror
-    Generated: 2025-11-04 08:53:23
+    Generated: 2025-11-04 20:39:43
 #>
 
 Describe '0962_Run-Playbook' -Tag 'Unit', 'AutomationScript', 'Unknown' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0962_Run-Playbook.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0962_Run-Playbook.ps1'
         $script:ScriptName = '0962_Run-Playbook'
 
         # Import test helpers for environment detection

@@ -6,13 +6,15 @@
     Integration tests for 0211_Install-VSBuildTools
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-02 21:41:15
+    Generated: 2025-11-04 20:39:42
 #>
 
 Describe '0211_Install-VSBuildTools Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0211_Install-VSBuildTools.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0211_Install-VSBuildTools.ps1'
     }
 
     Context 'Integration' {

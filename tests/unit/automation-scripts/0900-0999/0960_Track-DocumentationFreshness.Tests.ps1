@@ -9,13 +9,15 @@
     Script: 0960_Track-DocumentationFreshness
     Stage: 0960 (Documentation Tracking)
     Description: Analyzes when documentation files were last modified compared to the code they document.
-    Generated: 2025-11-04 07:53:36
+    Generated: 2025-11-04 20:39:43
 #>
 
 Describe '0960_Track-DocumentationFreshness' -Tag 'Unit', 'AutomationScript', '0960 (Documentation Tracking)' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0960_Track-DocumentationFreshness.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0960_Track-DocumentationFreshness.ps1'
         $script:ScriptName = '0960_Track-DocumentationFreshness'
 
         # Import test helpers for environment detection

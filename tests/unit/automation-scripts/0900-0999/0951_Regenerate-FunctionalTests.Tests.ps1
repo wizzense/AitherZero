@@ -9,13 +9,15 @@
     Script: 0951_Regenerate-FunctionalTests
     Stage: Unknown
     Description: Uses the new EnhancedTestGenerator to create MEANINGFUL tests that validate
-    Generated: 2025-11-04 07:53:36
+    Generated: 2025-11-04 20:39:43
 #>
 
 Describe '0951_Regenerate-FunctionalTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0951_Regenerate-FunctionalTests.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0951_Regenerate-FunctionalTests.ps1'
         $script:ScriptName = '0951_Regenerate-FunctionalTests'
 
         # Import test helpers for environment detection

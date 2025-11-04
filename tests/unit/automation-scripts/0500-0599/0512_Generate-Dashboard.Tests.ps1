@@ -3,123 +3,127 @@
 
 <#
 .SYNOPSIS
-    Enhanced functional tests for 0512_Generate-Dashboard
+    Unit tests for 0512_Generate-Dashboard
 .DESCRIPTION
-    Auto-generated tests with REAL functionality validation:
-    - Structural validation (syntax, parameters)
-    - Functional validation (behavior, outputs)
-    - Error handling validation (edge cases)
-    - Integration validation (dependencies)
-
+    Auto-generated comprehensive tests with environment awareness
     Script: 0512_Generate-Dashboard
-    Synopsis: Generate comprehensive CI/CD dashboard with real-time status monitoring
-    Strategy: Generation scripts
-    Generated: 2025-11-04 07:20:34
+    Stage: Reporting
+    Description: Creates HTML and Markdown dashboards showing project health, test results,
+    Generated: 2025-11-04 20:39:43
 #>
 
-Describe '0512_Generate-Dashboard - Enhanced Tests' -Tag 'Unit', 'Functional', 'Enhanced' {
+Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0512_Generate-Dashboard.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0512_Generate-Dashboard.ps1'
         $script:ScriptName = '0512_Generate-Dashboard'
 
-        # Setup test environment
-        $script:TestRoot = Join-Path $TestDrive $script:ScriptName
-        New-Item -Path $script:TestRoot -ItemType Directory -Force | Out-Null
+        # Import test helpers for environment detection
+        $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
+        if (Test-Path $testHelpersPath) {
+            Import-Module $testHelpersPath -Force -ErrorAction SilentlyContinue
+        }
+
+        # Detect test environment
+        $script:TestEnv = if (Get-Command Get-TestEnvironment -ErrorAction SilentlyContinue) {
+            Get-TestEnvironment
+        } else {
+            @{ IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'); IsLocal = $true }
+        }
     }
 
-    Context '📋 Structural Validation' {
-        It 'Script file exists' {
+    Context 'Script Validation' {
+        It 'Script file should exist' {
             Test-Path $script:ScriptPath | Should -Be $true
         }
 
-        It 'Has valid PowerShell syntax' {
+        It 'Should have valid PowerShell syntax' {
             $errors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile(
+            $null = [System.Management.Automation.Language.Parser]::ParseFile(
                 $script:ScriptPath, [ref]$null, [ref]$errors
             )
             $errors.Count | Should -Be 0
         }
 
-        It 'Supports WhatIf (ShouldProcess)' {
+        It 'Should support WhatIf' {
             $content = Get-Content $script:ScriptPath -Raw
             $content | Should -Match 'SupportsShouldProcess'
         }
+    }
 
-        It 'Has expected parameters' {
+    Context 'Parameters' {
+        It 'Should have parameter: ProjectPath' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('ProjectPath') | Should -Be $true
+        }
+
+        It 'Should have parameter: OutputPath' {
+            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
+        }
+
+        It 'Should have parameter: Format' {
+            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Format') | Should -Be $true
+        }
+
+        It 'Should have parameter: Open' {
+            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Open') | Should -Be $true
         }
+
     }
 
-    Context '⚙️ Functional Validation' {
-        It 'Executes in WhatIf mode without errors' {
-            { & $script:ScriptPath -WhatIf -ErrorAction Stop } | Should -Not -Throw
+    Context 'Metadata' {
+        It 'Should be in stage: Reporting' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
-        It 'Creates expected output files' {
-            # Mock file operations to verify behavior
-            Mock Set-Content { } -Verifiable
-            
-            # Test would execute script and verify Set-Content was called
-            # Full implementation depends on specific script
-        } -Skip:($true) # Placeholder for manual implementation
-
-        It 'Returns appropriate exit codes' {
-            # Test success case (exit 0)
-            # Test failure cases (exit non-zero)
-            # Full implementation depends on specific script
-        } -Skip:($true) # Placeholder for manual implementation
-
+        It 'Should declare dependencies' {
+            $content = Get-Content $script:ScriptPath -First 50
+            ($content -join ' ') | Should -Match 'Dependencies:'
+        }
     }
 
-    Context '🚨 Error Handling' {
-        It 'Propagates errors appropriately' {
-            # Verify script handles errors and exits with non-zero code
-            # Full implementation depends on specific script
-        } -Skip:($true) # Placeholder for manual implementation
+    Context 'Execution' {
+        It 'Should execute with WhatIf' {
+            {
+                $params = @{ WhatIf = $true }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
+        }
     }
 
-    Context '🎭 Mocked Dependencies' {
-        It 'Calls Invoke-RestMethod correctly' {
-            Mock Invoke-RestMethod { } -Verifiable
-            
-            # Execute script with mocked dependencies
-            # Verify Invoke-RestMethod was called with expected parameters
-            
-            Should -InvokeVerifiable
-        } -Skip:($true) # Placeholder for manual implementation
+    Context 'Environment Awareness' {
+        It 'Test environment should be detected' {
+            $script:TestEnv | Should -Not -BeNullOrEmpty
+            $script:TestEnv.Keys | Should -Contain 'IsCI'
+        }
 
-        It 'Calls Start-Process correctly' {
-            Mock Start-Process { } -Verifiable
+        It 'Should adapt to CI environment' {
+            # Skip if not in CI
+            if (-not $script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "CI-only validation"
+                return
+            }
             
-            # Execute script with mocked dependencies
-            # Verify Start-Process was called with expected parameters
-            
-            Should -InvokeVerifiable
-        } -Skip:($true) # Placeholder for manual implementation
+            # This test only runs in CI
+            $script:TestEnv.IsCI | Should -Be $true
+            $env:CI | Should -Not -BeNullOrEmpty
+        }
 
-        It 'Calls Set-Content correctly' {
-            Mock Set-Content { } -Verifiable
+        It 'Should adapt to local environment' {
+            # Skip if in CI
+            if ($script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "Local-only validation"
+                return
+            }
             
-            # Execute script with mocked dependencies
-            # Verify Set-Content was called with expected parameters
-            
-            Should -InvokeVerifiable
-        } -Skip:($true) # Placeholder for manual implementation
-
-        It 'Calls New-Item correctly' {
-            Mock New-Item { } -Verifiable
-            
-            # Execute script with mocked dependencies
-            # Verify New-Item was called with expected parameters
-            
-            Should -InvokeVerifiable
-        } -Skip:($true) # Placeholder for manual implementation
-
+            # This test only runs locally
+            $script:TestEnv.IsCI | Should -Be $false
+        }
     }
-
 }

@@ -6,13 +6,15 @@
     Integration tests for 0001_Ensure-PowerShell7
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 02:14:26
+    Generated: 2025-11-04 20:39:42
 #>
 
 Describe '0001_Ensure-PowerShell7 Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0001_Ensure-PowerShell7.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0001_Ensure-PowerShell7.ps1'
     }
 
     Context 'Integration' {

@@ -9,13 +9,15 @@
     Script: 0514_Generate-CodeMap
     Stage: Reporting
     Description: Creates a fully-featured interactive code map showing all PowerShell modules,
-    Generated: 2025-11-04 20:18:33
+    Generated: 2025-11-04 20:39:43
 #>
 
 Describe '0514_Generate-CodeMap' -Tag 'Unit', 'AutomationScript', 'Reporting' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0514_Generate-CodeMap.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0514_Generate-CodeMap.ps1'
         $script:ScriptName = '0514_Generate-CodeMap'
 
         # Import test helpers for environment detection

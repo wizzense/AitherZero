@@ -9,13 +9,15 @@
     Script: 0961_Validate-DirectoryDocumentation
     Stage: 0961 (Documentation Validation)
     Description: Checks that important directories contain README.md files to document their purpose and contents.
-    Generated: 2025-11-04 07:53:36
+    Generated: 2025-11-04 20:39:43
 #>
 
 Describe '0961_Validate-DirectoryDocumentation' -Tag 'Unit', 'AutomationScript', '0961 (Documentation Validation)' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0961_Validate-DirectoryDocumentation.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0961_Validate-DirectoryDocumentation.ps1'
         $script:ScriptName = '0961_Validate-DirectoryDocumentation'
 
         # Import test helpers for environment detection
