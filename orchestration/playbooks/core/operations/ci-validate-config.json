@@ -1,42 +1,83 @@
 {
-  "$schema": "../../schema/playbook-schema-v3.json",
-  "name": "ci-validate-config",
-  "version": "1.0.0",
-  "description": "Validate configuration manifest integrity",
-  "profiles": {
-    "quick": {
-      "description": "Quick config validation",
-      "stages": ["validate"]
-    }
-  },
-  "stages": {
-    "validate": {
-      "name": "Validate Config Manifest",
-      "description": "Check config.psd1 for errors and inconsistencies",
-      "scripts": [
-        {
-          "id": "0413",
-          "path": "./automation-scripts/0413_Validate-ConfigManifest.ps1",
-          "params": {},
-          "continueOnError": false
-        }
-      ]
-    }
-  },
-  "executionOrder": ["validate"],
-  "parallel": false,
-  "continueOnError": false,
-  "postActions": [
-    {
-      "type": "display",
-      "message": "✅ Config validation complete!"
-    }
-  ],
   "metadata": {
-    "author": "AitherZero Team",
-    "category": "validation",
-    "tags": ["config", "validation", "manifest"],
-    "githubWorkflow": "validate-config.yml",
-    "estimatedDuration": "30 seconds"
+    "name": "ci-validate-config",
+    "description": "Validate config.psd1 manifest - mirrors GitHub Actions validate-config.yml",
+    "version": "1.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "validation", "config", "github-actions"],
+    "estimatedDuration": "2-5 minutes",
+    "lastUpdated": "2025-11-04T06:00:00Z",
+    "githubWorkflow": "validate-config.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["PSScriptAnalyzer"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "validateConfig": true,
+      "syncConfig": true,
+      "fixIssues": false
+    },
+    "profiles": {
+      "standard": {
+        "description": "Standard config validation matching GitHub Actions",
+        "variables": {
+          "validateConfig": true,
+          "syncConfig": true,
+          "fixIssues": false
+        }
+      },
+      "fix": {
+        "description": "Validate and fix config issues",
+        "variables": {
+          "validateConfig": true,
+          "syncConfig": true,
+          "fixIssues": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Validate Config Manifest",
+        "description": "Validate config.psd1 structure and content",
+        "sequences": ["0413"],
+        "condition": "{{validateConfig}}",
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "Sync Config with Scripts",
+        "description": "Check config.psd1 synchronization with automation scripts",
+        "sequences": ["0003"],
+        "condition": "{{syncConfig}}",
+        "continueOnError": false,
+        "timeout": 120
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🔍 Starting config manifest validation...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ Config manifest is valid and synchronized!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ Config manifest validation failed",
+      "level": "Error"
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "validate-config.yml"
+    }
   }
 }

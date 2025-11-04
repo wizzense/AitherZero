@@ -1,48 +1,97 @@
 {
-  "$schema": "../../schema/playbook-schema-v3.json",
-  "name": "ci-auto-generate-tests",
-  "version": "1.0.0",
-  "description": "Auto-generate tests for scripts missing test coverage",
-  "profiles": {
-    "quick": {
-      "description": "Quick mode - generate missing tests only",
-      "stages": ["generate"]
-    },
-    "full": {
-      "description": "Full regeneration of all tests",
-      "stages": ["generate"]
-    }
-  },
-  "stages": {
-    "generate": {
-      "name": "Generate Tests",
-      "description": "Auto-generate tests for automation scripts",
-      "scripts": [
-        {
-          "id": "0950",
-          "path": "./automation-scripts/0950_Generate-AllTests.ps1",
-          "params": {
-            "Mode": "Quick"
-          },
-          "continueOnError": false
-        }
-      ]
-    }
-  },
-  "executionOrder": ["generate"],
-  "parallel": false,
-  "continueOnError": false,
-  "postActions": [
-    {
-      "type": "display",
-      "message": "✅ Test generation complete!"
-    }
-  ],
   "metadata": {
-    "author": "AitherZero Team",
-    "category": "testing",
-    "tags": ["tests", "generation", "automation"],
-    "githubWorkflow": "auto-generate-tests.yml",
-    "estimatedDuration": "1-2 minutes"
+    "name": "ci-auto-generate-tests",
+    "description": "Auto-generate tests for automation scripts - mirrors GitHub Actions auto-generate-tests.yml",
+    "version": "1.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "testing", "automation", "github-actions", "generation"],
+    "estimatedDuration": "5-15 minutes",
+    "lastUpdated": "2025-11-04T06:00:00Z",
+    "githubWorkflow": "auto-generate-tests.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "mode": "Quick",
+      "force": false,
+      "detectOnly": false
+    },
+    "profiles": {
+      "quick": {
+        "description": "Quick mode - generate tests for new scripts only",
+        "variables": {
+          "mode": "Quick",
+          "force": false,
+          "detectOnly": false
+        }
+      },
+      "full": {
+        "description": "Full mode - regenerate all tests",
+        "variables": {
+          "mode": "Full",
+          "force": true,
+          "detectOnly": false
+        }
+      },
+      "detect": {
+        "description": "Detection mode - identify scripts without tests",
+        "variables": {
+          "mode": "Quick",
+          "force": false,
+          "detectOnly": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Generate Tests",
+        "description": "Auto-generate tests for automation scripts",
+        "sequences": ["0950"],
+        "variables": {
+          "Mode": "{{mode}}",
+          "Force": "{{force}}"
+        },
+        "continueOnError": false,
+        "timeout": 900
+      },
+      {
+        "name": "Validate Test Sync",
+        "description": "Validate that all scripts have tests",
+        "sequences": ["0426"],
+        "condition": "!{{detectOnly}}",
+        "variables": {
+          "CI": false
+        },
+        "continueOnError": true,
+        "timeout": 120
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🧪 Starting test generation...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ Tests generated successfully!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ Test generation failed",
+      "level": "Error"
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "auto-generate-tests.yml"
+    }
   }
 }

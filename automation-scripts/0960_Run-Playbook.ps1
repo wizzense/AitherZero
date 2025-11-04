@@ -59,7 +59,7 @@
     but locally on your machine for faster iteration and debugging.
 #>
 
-[CmdletBinding(SupportsShouldProcess=$true)]
+[CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Position = 0)]
     [string]$Playbook,
@@ -222,11 +222,33 @@ try {
     Write-ColorOutput ""
     
     # Check if we should proceed with execution
-    $shouldExecute = $true
-    if ($PSCmdlet.ShouldProcess($Playbook, "Execute playbook")) {
+    $target = "playbook '$Playbook'"
+    if ($Profile) {
+        $target += " with profile '$Profile'"
+    }
+    
+    if ($PSCmdlet.ShouldProcess($target, "Execute orchestration playbook")) {
         # Execute playbook
         & $startAitherZeroPath @params
         $exitCode = $LASTEXITCODE
+    }
+    else {
+        # WhatIf mode - just show what would be executed
+        Write-ColorOutput "What if: Would execute playbook '$Playbook'" -Color Yellow
+        if ($Profile) {
+            Write-ColorOutput "What if: Would use profile '$Profile'" -Color Yellow
+        }
+        $exitCode = 0
+    }
+    
+    # Display completion info
+    $duration = (Get-Date) - $script:StartTime
+    Write-ColorOutput ""
+    Write-ColorOutput "=== Execution Complete ===" -Color Cyan
+    Write-ColorOutput "Duration: $($duration.ToString('mm\:ss'))" -Color Gray
+    
+    if ($exitCode -eq 0) {
+        Write-ColorOutput "Status: SUCCESS" -Color Green
     }
     else {
         # WhatIf mode - just show what would be done

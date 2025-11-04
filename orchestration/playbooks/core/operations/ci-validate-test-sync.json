@@ -1,42 +1,87 @@
 {
-  "$schema": "../../schema/playbook-schema-v3.json",
-  "name": "ci-validate-test-sync",
-  "version": "1.0.0",
-  "description": "Validate test-script synchronization",
-  "profiles": {
-    "quick": {
-      "description": "Quick test sync validation",
-      "stages": ["validate"]
-    }
-  },
-  "stages": {
-    "validate": {
-      "name": "Validate Test Sync",
-      "description": "Check that all scripts have corresponding tests",
-      "scripts": [
-        {
-          "id": "0426",
-          "path": "./automation-scripts/0426_Validate-TestScriptSync.ps1",
-          "params": {},
-          "continueOnError": false
-        }
-      ]
-    }
-  },
-  "executionOrder": ["validate"],
-  "parallel": false,
-  "continueOnError": false,
-  "postActions": [
-    {
-      "type": "display",
-      "message": "✅ Test synchronization validated!"
-    }
-  ],
   "metadata": {
-    "author": "AitherZero Team",
-    "category": "validation",
-    "tags": ["tests", "validation", "sync"],
-    "githubWorkflow": "validate-test-sync.yml",
-    "estimatedDuration": "1 minute"
+    "name": "ci-validate-test-sync",
+    "description": "Validate test-script synchronization - mirrors GitHub Actions validate-test-sync.yml",
+    "version": "1.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "validation", "tests", "github-actions", "sync"],
+    "estimatedDuration": "2-5 minutes",
+    "lastUpdated": "2025-11-04T06:00:00Z",
+    "githubWorkflow": "validate-test-sync.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": [],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "validateSync": true,
+      "removeOrphaned": false,
+      "showDetails": true
+    },
+    "profiles": {
+      "standard": {
+        "description": "Standard test-script sync validation",
+        "variables": {
+          "validateSync": true,
+          "removeOrphaned": false,
+          "showDetails": true
+        }
+      },
+      "cleanup": {
+        "description": "Validate and remove orphaned test files",
+        "variables": {
+          "validateSync": true,
+          "removeOrphaned": true,
+          "showDetails": true
+        }
+      },
+      "quick": {
+        "description": "Quick validation without detailed output",
+        "variables": {
+          "validateSync": true,
+          "removeOrphaned": false,
+          "showDetails": false
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Validate Test-Script Sync",
+        "description": "Check for orphaned test files without corresponding scripts",
+        "sequences": ["0426"],
+        "condition": "{{validateSync}}",
+        "variables": {
+          "RemoveOrphaned": "{{removeOrphaned}}",
+          "CI": false
+        },
+        "continueOnError": false,
+        "timeout": 180
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🔍 Starting test-script synchronization validation...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ All test files are synchronized with automation scripts!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "⚠️ Test-script synchronization issues detected",
+      "level": "Warning"
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "validate-test-sync.yml"
+    }
   }
 }

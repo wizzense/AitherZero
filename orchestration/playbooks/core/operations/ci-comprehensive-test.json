@@ -1,101 +1,120 @@
 {
-  "$schema": "../../schema/playbook-schema-v3.json",
-  "name": "ci-comprehensive-test",
-  "version": "1.0.0",
-  "description": "Run comprehensive test suite with full coverage",
-  "profiles": {
-    "unit-only": {
-      "description": "Unit tests only",
-      "stages": ["unit"]
-    },
-    "integration-only": {
-      "description": "Integration tests only",
-      "stages": ["integration"]
-    },
-    "quick": {
-      "description": "Quick validation (unit + integration)",
-      "stages": ["unit", "integration"]
-    },
-    "standard": {
-      "description": "Standard testing (unit + integration + analysis)",
-      "stages": ["unit", "integration", "analyze"]
-    },
-    "full": {
-      "description": "Full testing with all stages",
-      "stages": ["unit", "integration", "analyze", "report"]
-    }
-  },
-  "stages": {
-    "unit": {
-      "name": "Unit Tests",
-      "description": "Run all unit tests",
-      "scripts": [
-        {
-          "id": "0402",
-          "path": "./automation-scripts/0402_Run-UnitTests.ps1",
-          "params": {},
-          "continueOnError": false
-        }
-      ]
-    },
-    "integration": {
-      "name": "Integration Tests",
-      "description": "Run integration tests",
-      "scripts": [
-        {
-          "id": "0403",
-          "path": "./automation-scripts/0403_Run-IntegrationTests.ps1",
-          "params": {},
-          "continueOnError": true
-        }
-      ]
-    },
-    "analyze": {
-      "name": "Code Analysis",
-      "description": "Run PSScriptAnalyzer",
-      "scripts": [
-        {
-          "id": "0404",
-          "path": "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
-          "params": {},
-          "continueOnError": true
-        }
-      ]
-    },
-    "report": {
-      "name": "Generate Reports",
-      "description": "Generate test reports and dashboard",
-      "scripts": [
-        {
-          "id": "0512",
-          "path": "./automation-scripts/0512_Generate-Dashboard.ps1",
-          "params": {
-            "Format": "All"
-          },
-          "continueOnError": true
-        }
-      ]
-    }
-  },
-  "executionOrder": ["unit", "integration", "analyze", "report"],
-  "parallel": false,
-  "continueOnError": false,
-  "postActions": [
-    {
-      "type": "display",
-      "message": "✅ Comprehensive testing complete!"
-    },
-    {
-      "type": "openFile",
-      "path": "./reports/dashboard.html",
-      "condition": "fileExists"
-    }
-  ],
   "metadata": {
-    "author": "AitherZero Team",
-    "category": "testing",
-    "tags": ["tests", "comprehensive", "pester", "linting"],
-    "githubWorkflow": "comprehensive-test-execution.yml",
-    "estimatedDuration": "5-10 minutes"
+    "name": "ci-comprehensive-test",
+    "description": "Comprehensive test execution - mirrors GitHub Actions comprehensive-test-execution.yml",
+    "version": "2.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "testing", "comprehensive", "github-actions", "unit", "integration"],
+    "estimatedDuration": "20-30 minutes",
+    "lastUpdated": "2025-11-02T06:30:00Z",
+    "githubWorkflow": "comprehensive-test-execution.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "testType": "all",
+      "runUnitTests": true,
+      "runIntegrationTests": true,
+      "generateReports": true,
+      "publishResults": false
+    },
+    "profiles": {
+      "unit-only": {
+        "description": "Unit tests only",
+        "variables": {
+          "testType": "unit",
+          "runIntegrationTests": false
+        }
+      },
+      "integration-only": {
+        "description": "Integration tests only",
+        "variables": {
+          "testType": "integration",
+          "runUnitTests": false
+        }
+      },
+      "ci": {
+        "description": "CI/CD mode with reporting",
+        "variables": {
+          "testType": "all",
+          "generateReports": true,
+          "publishResults": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Test Discovery",
+        "description": "Discover all test files",
+        "sequences": [],
+        "preScript": "Write-Host '📋 Discovering tests...' -ForegroundColor Cyan; $unitTests = @(Get-ChildItem -Path './tests/unit' -Filter '*.Tests.ps1' -Recurse -ErrorAction SilentlyContinue); $integrationTests = @(Get-ChildItem -Path './tests/integration' -Filter '*.Tests.ps1' -Recurse -ErrorAction SilentlyContinue); Write-Host \"  Unit: $($unitTests.Count), Integration: $($integrationTests.Count)\" -ForegroundColor Yellow",
+        "continueOnError": false,
+        "timeout": 60
+      },
+      {
+        "name": "Install Testing Tools",
+        "description": "Ensure Pester is installed",
+        "sequences": ["0400"],
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "Run Unit Tests",
+        "description": "Execute all unit tests",
+        "sequences": ["0402"],
+        "condition": "{{runUnitTests}}",
+        "variables": {
+          "NoCoverage": true,
+          "OutputFormat": "NUnitXml"
+        },
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "Run Integration Tests",
+        "description": "Execute integration tests",
+        "sequences": ["0403"],
+        "condition": "{{runIntegrationTests}}",
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "Generate Reports",
+        "description": "Generate test reports",
+        "sequences": ["0450"],
+        "condition": "{{generateReports}}",
+        "continueOnError": false,
+        "timeout": 120
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🧪 Starting comprehensive test execution...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ All tests passed!",
+      "level": "Information",
+      "includeMetrics": true
+    },
+    "onFailure": {
+      "message": "❌ Test execution completed with failures",
+      "level": "Warning",
+      "includeFailures": true
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "comprehensive-test-execution.yml"
+    }
   }
 }
