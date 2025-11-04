@@ -10,7 +10,7 @@
     Stage: Prepare
     Description: Clean up temporary files and prepare environment
     Supports WhatIf: True
-    Generated: 2025-11-04 20:50:00
+    Generated: 2025-11-04 22:34:14
 #>
 
 Describe '0000_Cleanup-Environment' -Tag 'Unit', 'AutomationScript', 'Prepare' {
@@ -33,6 +33,12 @@ Describe '0000_Cleanup-Environment' -Tag 'Unit', 'AutomationScript', 'Prepare' {
         } else {
             @{ IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'); IsLocal = $true }
         }
+
+        # Import ScriptUtilities module (script uses it)
+        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"
+        if (Test-Path $scriptUtilitiesPath) {
+            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue
+        }
     }
 
     Context 'Script Validation' {
@@ -51,6 +57,11 @@ Describe '0000_Cleanup-Environment' -Tag 'Unit', 'AutomationScript', 'Prepare' {
         It 'Should support WhatIf' {
             $content = Get-Content $script:ScriptPath -Raw
             $content | Should -Match 'SupportsShouldProcess'
+        }
+
+        It 'Should properly import ScriptUtilities module' {
+            $content = Get-Content $script:ScriptPath -Raw
+            $content | Should -Match 'Import-Module.*ScriptUtilities\.psm1'
         }
     }
 

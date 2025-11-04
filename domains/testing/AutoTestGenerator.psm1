@@ -149,6 +149,8 @@ function New-AutoTest {
     $scriptContent = Get-Content $ScriptPath -Raw
     $supportsWhatIf = $scriptContent -match '\[CmdletBinding\([^\)]*SupportsShouldProcess[^\)]*\)\]'
     $hasConfiguration = $params | Where-Object { $_.Name -eq 'Configuration' }
+    $usesScriptUtilities = $scriptContent -match 'Import-Module.*ScriptUtilities\.psm1' -or 
+                           $scriptContent -match 'Write-ScriptLog|Get-GitHubToken|Test-Prerequisites|Get-ProjectRoot'
 
     # Determine test paths
     $rangeNum = if ($scriptName -match '^(\d+)_') { [int]$Matches[1] } else { 0 }
@@ -181,12 +183,13 @@ function New-AutoTest {
     # Generate unit test
     $unitTest = Build-UnitTest -ScriptName $scriptName -ScriptPath $ScriptPath `
         -Stage $stage -Description $description -Parameters $params -Dependencies $dependencies `
-        -SupportsWhatIf $supportsWhatIf -HasConfiguration $hasConfiguration
+        -SupportsWhatIf $supportsWhatIf -HasConfiguration $hasConfiguration `
+        -UsesScriptUtilities $usesScriptUtilities
 
     # Generate integration test
     $integrationTest = Build-IntegrationTest -ScriptName $scriptName -ScriptPath $ScriptPath `
         -Stage $stage -Dependencies $dependencies -SupportsWhatIf $supportsWhatIf `
-        -HasConfiguration $hasConfiguration
+        -HasConfiguration $hasConfiguration -UsesScriptUtilities $usesScriptUtilities
 
     # Write files
     try {
@@ -216,7 +219,8 @@ function Build-UnitTest {
         $Parameters, 
         $Dependencies,
         [bool]$SupportsWhatIf,
-        $HasConfiguration
+        $HasConfiguration,
+        [bool]$UsesScriptUtilities
     )
 
     $sb = [System.Text.StringBuilder]::new()
@@ -277,6 +281,17 @@ function Build-UnitTest {
     [void]$sb.AppendLine('        } else {')
     [void]$sb.AppendLine('            @{ IsCI = ($env:CI -eq ''true'' -or $env:GITHUB_ACTIONS -eq ''true''); IsLocal = $true }')
     [void]$sb.AppendLine('        }')
+    
+    # Add ScriptUtilities module import if script uses it
+    if ($UsesScriptUtilities) {
+        [void]$sb.AppendLine('')
+        [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
+        [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
+        [void]$sb.AppendLine('        }')
+    }
+    
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     
@@ -307,6 +322,15 @@ function Build-UnitTest {
         [void]$sb.AppendLine('            # This is acceptable for read-only or simple scripts')
         [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
         [void]$sb.AppendLine('            $content -notmatch ''SupportsShouldProcess'' | Should -Be $true')
+        [void]$sb.AppendLine('        }')
+    }
+    [void]$sb.AppendLine('')
+    
+    # ScriptUtilities usage test
+    if ($UsesScriptUtilities) {
+        [void]$sb.AppendLine("        It 'Should properly import ScriptUtilities module' {")
+        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
+        [void]$sb.AppendLine('            $content | Should -Match ''Import-Module.*ScriptUtilities\.psm1''')
         [void]$sb.AppendLine('        }')
     }
     [void]$sb.AppendLine('    }')
@@ -426,7 +450,8 @@ function Build-IntegrationTest {
         $Stage, 
         $Dependencies,
         [bool]$SupportsWhatIf,
-        $HasConfiguration
+        $HasConfiguration,
+        [bool]$UsesScriptUtilities
     )
 
     $sb = [System.Text.StringBuilder]::new()
@@ -461,6 +486,17 @@ function Build-IntegrationTest {
     [void]$sb.AppendLine('        # Compute path relative to repository root using $PSScriptRoot')
     [void]$sb.AppendLine('        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent')
     [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'automation-scripts/$ScriptName.ps1'")
+    
+    # Add ScriptUtilities module import if script uses it
+    if ($UsesScriptUtilities) {
+        [void]$sb.AppendLine('')
+        [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
+        [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
+        [void]$sb.AppendLine('        }')
+    }
+    
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("    Context 'Integration' {")

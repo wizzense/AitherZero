@@ -11,39 +11,9 @@ param(
     [hashtable]$Configuration
 )
 
-# Initialize logging
-$script:LoggingAvailable = $false
-try {
-    $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
-    if (Test-Path $loggingPath) {
-        Import-Module $loggingPath -Force -Global
-        $script:LoggingAvailable = $true
-    }
-} catch {
-    # Fallback to basic output if logging module fails to load
-    Write-Warning "Could not load logging module: $($_.Exception.Message)"
-    $script:LoggingAvailable = $false
-}
-
-function Write-ScriptLog {
-    param(
-        [string]$Message,
-        [string]$Level = 'Information'
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $Level
-    } else {
-        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-        $prefix = switch ($Level) {
-            'Error' { 'ERROR' }
-            'Warning' { 'WARN' }
-            'Debug' { 'DEBUG' }
-            default { 'INFO' }
-        }
-        Write-Host "[$timestamp] [$prefix] $Message"
-    }
-}
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
 
 Write-ScriptLog "Starting WSL2 installation check"
 

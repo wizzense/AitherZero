@@ -3,23 +3,23 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0001_Ensure-PowerShell7
+    Unit tests for 0516_Schedule-ReportGeneration
 .DESCRIPTION
     Auto-generated comprehensive tests with environment awareness
-    Script: 0001_Ensure-PowerShell7
-    Stage: Prepare
-    Description: Ensure PowerShell 7 is installed and restart if needed
+    Script: 0516_Schedule-ReportGeneration
+    Stage: Reporting
+    Description: Sets up scheduled report generation using either cron (Linux/Mac) or Task Scheduler (Windows)
     Supports WhatIf: True
-    Generated: 2025-11-04 20:50:00
+    Generated: 2025-11-04 22:28:09
 #>
 
-Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
+Describe '0516_Schedule-ReportGeneration' -Tag 'Unit', 'AutomationScript', 'Reporting' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0001_Ensure-PowerShell7.ps1'
-        $script:ScriptName = '0001_Ensure-PowerShell7'
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0516_Schedule-ReportGeneration.ps1'
+        $script:ScriptName = '0516_Schedule-ReportGeneration'
 
         # Import test helpers for environment detection
         $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
@@ -55,22 +55,27 @@ Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
     }
 
     Context 'Parameters' {
-        It 'Should have parameter: Configuration' {
+        It 'Should have parameter: ProjectPath' {
             $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('Configuration') | Should -Be $true
+            $cmd.Parameters.ContainsKey('ProjectPath') | Should -Be $true
+        }
+
+        It 'Should have parameter: Schedule' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Schedule') | Should -Be $true
+        }
+
+        It 'Should have parameter: Time' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Time') | Should -Be $true
         }
 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Prepare' {
+        It 'Should be in stage: Reporting' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
-        }
-
-        It 'Should declare dependencies' {
-            $content = Get-Content $script:ScriptPath -First 50
-            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 
@@ -78,7 +83,6 @@ Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
         It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
-                $params.Configuration = @{}
                 & $script:ScriptPath @params
             } | Should -Not -Throw
         }
