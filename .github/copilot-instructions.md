@@ -54,6 +54,52 @@ Located in `/domains/` (legacy references may point to `aither-core/`):
 
 ## Critical Development Patterns
 
+### ⚠️ HARD REQUIREMENT: Single-Purpose Scripts & Orchestration
+
+**NEVER create duplicate or "alternative" versions of automation scripts!**
+
+❌ **WRONG - Creating variants:**
+```
+automation-scripts/
+├── 0404_Run-PSScriptAnalyzer.ps1
+├── 0404_Run-PSScriptAnalyzer-Parallel.ps1    ❌ NEVER DO THIS
+├── 0404_Run-PSScriptAnalyzer-Fast.ps1        ❌ NEVER DO THIS  
+└── 0404_Run-PSScriptAnalyzer-Clean.ps1       ❌ NEVER DO THIS
+```
+
+✅ **CORRECT - Single script + orchestration:**
+```
+automation-scripts/
+├── 0404_Run-PSScriptAnalyzer.ps1    ✅ One comprehensive script
+└── 0410_Run-PSScriptAnalyzer-Fast.ps1    ✅ Different purpose (fast CI checks)
+
+orchestration/playbooks/
+└── code-quality-full.psd1    ✅ Orchestrates complex workflows
+```
+
+**Core Principles:**
+1. **One Script = One Job**: Each numbered script does ONE thing well
+2. **No Duplicates**: Never create parallel/fast/clean variants with same number
+3. **Different Numbers = Different Purposes**: 0404 (comprehensive) vs 0410 (fast CI)
+4. **Orchestration for Complexity**: Use playbooks when workflow needs multiple steps
+5. **Sequential Execution Risk**: Scripts 0000-9999 can be run sequentially - duplicates cause confusion
+
+**When You Need Complex Workflows:**
+- ✅ Create a playbook in `orchestration/playbooks/`
+- ✅ Add supporting scripts with different numbers (0415, 0416, etc.)
+- ❌ Don't create script variants (0404-parallel, 0404-fast)
+
+**Example - Correct Approach:**
+```powershell
+# If 0404 is too complex for one script, break it down:
+0404_Run-PSScriptAnalyzer.ps1          # Main analysis
+0415_Manage-PSScriptAnalyzerCache.ps1  # Cache management
+0416_Generate-PSScriptAnalyzerReport.ps1  # Reporting
+
+# Then orchestrate:
+orchestration/playbooks/code-quality-full.psd1
+```
+
 ### Module Scope Issues
 Functions in scriptblocks may lose module scope. Call directly:
 ```powershell
