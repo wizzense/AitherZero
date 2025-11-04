@@ -17,6 +17,14 @@ module.exports = async ({github, context, core}) => {
     run_id: context.runId
   });
   
+  // Step name patterns for test execution steps
+  // Add new patterns here when introducing new test job types
+  const TEST_STEP_PATTERNS = [
+    'Run Unit Tests',
+    'Run Domain Tests',
+    'Run Integration Tests'
+  ];
+  
   // Organize jobs by type
   const unitTests = [];
   const domainTests = [];
@@ -31,11 +39,7 @@ module.exports = async ({github, context, core}) => {
     
     if (job.steps) {
       const runTestsStep = job.steps.find(step => 
-        step.name && (
-          step.name.includes('Run Unit Tests') || 
-          step.name.includes('Run Domain Tests') || 
-          step.name.includes('Run Integration Tests')
-        )
+        step.name && TEST_STEP_PATTERNS.some(pattern => step.name.includes(pattern))
       );
       
       if (runTestsStep && runTestsStep.outcome) {

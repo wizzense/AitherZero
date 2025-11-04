@@ -120,8 +120,13 @@ const mockGithub = {
     console.log(`${hasFailedStatus ? '✅' : '❌'} Contains FAILED status`);
     console.log(`${hasWarning ? '✅' : '❌'} Contains warning section`);
     
-    // Check that we correctly identified the failed jobs
-    const failedJobCount = (commentBody.match(/\*\*FAILED\*\*/g) || []).length;
+    // Check that we correctly identified the failed jobs by parsing comment structure
+    // More robust than regex - checks actual table rows with FAILED status
+    const failedJobLines = commentBody.split('\n').filter(line => 
+      line.includes('**FAILED**') && line.includes('|')
+    );
+    const failedJobCount = failedJobLines.length;
+    
     console.log(`\n📈 Failed job count in comment: ${failedJobCount}`);
     console.log(`   Expected: 2 (Unit Tests [0000-0099] and Domain Tests [configuration])`);
     
@@ -130,8 +135,12 @@ const mockGithub = {
       process.exit(1);
     }
     
-    // Check that successful job shows as PASSED
-    const passedJobCount = (commentBody.match(/PASSED/g) || []).length;
+    // Check that successful job shows as PASSED by parsing table rows
+    const passedJobLines = commentBody.split('\n').filter(line =>
+      line.includes('PASSED') && line.includes('|') && !line.includes('Status')
+    );
+    const passedJobCount = passedJobLines.length;
+    
     console.log(`\n✅ Passed job count in comment: ${passedJobCount}`);
     console.log(`   Expected: At least 1 (Unit Tests [0100-0199])`);
     
