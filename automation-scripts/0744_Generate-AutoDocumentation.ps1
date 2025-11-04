@@ -134,7 +134,8 @@ function Invoke-FullDocumentationGeneration {
                 $domainName = $_.Name
                 Write-DocLog "Processing domain: $domainName" -Level Debug
 
-                $domainModules = Get-ChildItem -Path $domainPath -Filter "*.psm1"
+                # Force array to ensure .Count works even with single item
+                $domainModules = @(Get-ChildItem -Path $domainPath -Filter "*.psm1")
                 Write-DocLog "Found $($domainModules.Count) modules in domain: $domainName" -Level Debug
 
                 $domainModules | ForEach-Object {
