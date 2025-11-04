@@ -529,15 +529,22 @@ try {
     }
 }
 catch {
+    # Extract error info once to avoid duplication
+    $errorMessage = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+    $errorStackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace } else { 'N/A' }
+    
     Write-ScriptLog -Level Error -Message "Integration test execution failed: $_" -Data @{
-        Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
-        ScriptStackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace } else { 'N/A' }
+        Exception = $errorMessage
+        ScriptStackTrace = $errorStackTrace
     }
     
     # CRITICAL: Always create TestReport file even on catastrophic failure
     # This ensures CI/CD aggregation can process results
+    # Use $PSScriptRoot instead of $projectRoot to ensure variable is always available
+    $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
+    
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "tests/results"
+        $OutputPath = Join-Path $scriptProjectRoot "tests/results"
     }
     
     if (-not (Test-Path $OutputPath)) {
@@ -557,8 +564,8 @@ catch {
         SkippedCount = 0
         Duration = 0
         ExecutionError = @{
-            Message = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
-            ScriptStackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace } else { 'N/A' }
+            Message = $errorMessage
+            ScriptStackTrace = $errorStackTrace
         }
         TestResults = @{
             Summary = @{
