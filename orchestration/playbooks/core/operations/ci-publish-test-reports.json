@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "name": "ci-publish-test-reports",
+    "description": "Publish test reports - mirrors GitHub Actions publish-test-reports.yml",
+    "version": "1.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "testing", "reports", "github-actions", "publishing"],
+    "estimatedDuration": "3-8 minutes",
+    "lastUpdated": "2025-11-04T06:00:00Z",
+    "githubWorkflow": "publish-test-reports.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "collectReports": true,
+      "publishResults": true,
+      "forcePublish": false
+    },
+    "profiles": {
+      "standard": {
+        "description": "Standard report publishing",
+        "variables": {
+          "collectReports": true,
+          "publishResults": true,
+          "forcePublish": false
+        }
+      },
+      "force": {
+        "description": "Force publish even if no changes detected",
+        "variables": {
+          "collectReports": true,
+          "publishResults": true,
+          "forcePublish": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Publish Test Results",
+        "description": "Collect and publish test results",
+        "sequences": ["0450"],
+        "condition": "{{publishResults}}",
+        "variables": {
+          "Force": "{{forcePublish}}"
+        },
+        "continueOnError": false,
+        "timeout": 300
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "📊 Starting test report publishing...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ Test reports published successfully!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ Test report publishing failed",
+      "level": "Error"
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "publish-test-reports.yml"
+    }
+  }
+}

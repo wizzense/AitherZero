@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "name": "ci-pr-validation",
+    "description": "PR validation workflow - mirrors GitHub Actions pr-validation.yml for local execution",
+    "version": "2.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "pr", "validation", "github-actions", "quality"],
+    "estimatedDuration": "10-15 minutes",
+    "lastUpdated": "2025-11-02T06:30:00Z",
+    "githubWorkflow": "pr-validation.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["PSScriptAnalyzer"],
+    "requiredTools": ["git"],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "prNumber": "",
+      "baseBranch": "main",
+      "analyzePowerShell": true,
+      "validateWorkflows": true,
+      "quickMode": false
+    },
+    "profiles": {
+      "quick": {
+        "description": "Fast PR validation - essential checks only",
+        "variables": {
+          "quickMode": true,
+          "validateWorkflows": false
+        }
+      },
+      "standard": {
+        "description": "Standard PR validation matching GitHub Actions",
+        "variables": {
+          "quickMode": false,
+          "validateWorkflows": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Syntax Validation",
+        "description": "Validate PowerShell syntax for changed files",
+        "sequences": ["0407"],
+        "variables": {
+          "CheckSyntax": true,
+          "ChangedFilesOnly": true
+        },
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "PSScriptAnalyzer",
+        "description": "Run PSScriptAnalyzer on changed PowerShell files",
+        "sequences": ["0410"],
+        "variables": {
+          "Fast": true,
+          "ChangedOnly": true,
+          "ExcludePaths": ["tests", "examples", "legacy-to-migrate"]
+        },
+        "continueOnError": true,
+        "timeout": 180
+      },
+      {
+        "name": "Workflow Validation",
+        "description": "Validate GitHub Actions workflows",
+        "sequences": ["0440"],
+        "condition": "{{validateWorkflows}}",
+        "continueOnError": true,
+        "timeout": 120
+      },
+      {
+        "name": "Config Validation",
+        "description": "Validate configuration manifests",
+        "sequences": ["0413"],
+        "continueOnError": true,
+        "timeout": 60
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🔍 Starting PR validation...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ PR validation passed!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ PR validation failed",
+      "level": "Error"
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "pr-validation.yml"
+    }
+  }
+}
