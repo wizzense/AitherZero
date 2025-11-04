@@ -165,7 +165,7 @@
         "description": "Run domain module tests in parallel",
         "type": "parallel-group",
         "parallel": true,
-        "maxConcurrency": 8,
+        "maxConcurrency": 6,
         "failFast": false,
         "continueOnError": true,
         "timeout": 600,
@@ -179,19 +179,19 @@
             }
           },
           {
+            "name": "Domain Tests [documentation]",
+            "sequence": ["0402"],
+            "variables": {
+              "TestPath": "./tests/domains/documentation",
+              "OutputFile": "DomainTests-documentation.xml"
+            }
+          },
+          {
             "name": "Domain Tests [infrastructure]",
             "sequence": ["0402"],
             "variables": {
               "TestPath": "./tests/domains/infrastructure",
               "OutputFile": "DomainTests-infrastructure.xml"
-            }
-          },
-          {
-            "name": "Domain Tests [utilities]",
-            "sequence": ["0402"],
-            "variables": {
-              "TestPath": "./tests/domains/utilities",
-              "OutputFile": "DomainTests-utilities.xml"
             }
           },
           {
@@ -203,22 +203,6 @@
             }
           },
           {
-            "name": "Domain Tests [experience]",
-            "sequence": ["0402"],
-            "variables": {
-              "TestPath": "./tests/domains/experience",
-              "OutputFile": "DomainTests-experience.xml"
-            }
-          },
-          {
-            "name": "Domain Tests [automation]",
-            "sequence": ["0402"],
-            "variables": {
-              "TestPath": "./tests/domains/automation",
-              "OutputFile": "DomainTests-automation.xml"
-            }
-          },
-          {
             "name": "Domain Tests [testing]",
             "sequence": ["0402"],
             "variables": {
@@ -227,11 +211,11 @@
             }
           },
           {
-            "name": "Domain Tests [reporting]",
+            "name": "Domain Tests [utilities]",
             "sequence": ["0402"],
             "variables": {
-              "TestPath": "./tests/domains/reporting",
-              "OutputFile": "DomainTests-reporting.xml"
+              "TestPath": "./tests/domains/utilities",
+              "OutputFile": "DomainTests-utilities.xml"
             }
           }
         ]
@@ -241,7 +225,7 @@
         "description": "Run integration test suites in parallel",
         "type": "parallel-group",
         "parallel": true,
-        "maxConcurrency": 3,
+        "maxConcurrency": 1,
         "failFast": false,
         "continueOnError": true,
         "timeout": 900,
@@ -252,22 +236,6 @@
             "variables": {
               "TestPath": "./tests/integration/automation-scripts",
               "OutputFile": "IntegrationTests-automation-scripts.xml"
-            }
-          },
-          {
-            "name": "Integration Tests [orchestration]",
-            "sequence": ["0403"],
-            "variables": {
-              "TestPath": "./tests/integration/orchestration",
-              "OutputFile": "IntegrationTests-orchestration.xml"
-            }
-          },
-          {
-            "name": "Integration Tests [workflows]",
-            "sequence": ["0403"],
-            "variables": {
-              "TestPath": "./tests/integration/workflows",
-              "OutputFile": "IntegrationTests-workflows.xml"
             }
           }
         ]

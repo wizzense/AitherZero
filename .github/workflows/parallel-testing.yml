@@ -77,23 +77,19 @@ jobs:
             '0900-0999'
           )
           
-          # Domain modules
+          # Domain modules - ONLY modules that have test directories
           $domainModules = @(
             'configuration',
+            'documentation',
             'infrastructure',
-            'utilities',
             'security',
-            'experience',
-            'automation',
             'testing',
-            'reporting'
+            'utilities'
           )
           
-          # Integration test suites
+          # Integration test suites - ONLY suites that exist
           $integrationSuites = @(
-            'automation-scripts',
-            'orchestration',
-            'workflows'
+            'automation-scripts'
           )
           
           # Output as JSON arrays for matrix
@@ -166,7 +162,7 @@ jobs:
           }
       
       - name: 📊 Upload Test Results
-        if: always()
+        if: always() && hashFiles('./tests/results/UnitTests-${{ matrix.range }}.xml') != ''
         uses: actions/upload-artifact@v4
         with:
           name: unit-tests-${{ matrix.range }}
@@ -229,7 +225,7 @@ jobs:
           }
       
       - name: 📊 Upload Test Results
-        if: always()
+        if: always() && hashFiles('./tests/results/DomainTests-${{ matrix.module }}.xml') != ''
         uses: actions/upload-artifact@v4
         with:
           name: domain-tests-${{ matrix.module }}
@@ -292,7 +288,7 @@ jobs:
           }
       
       - name: 📊 Upload Test Results
-        if: always()
+        if: always() && hashFiles('./tests/results/IntegrationTests-${{ matrix.suite }}.xml') != ''
         uses: actions/upload-artifact@v4
         with:
           name: integration-tests-${{ matrix.suite }}
@@ -331,7 +327,7 @@ jobs:
           ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
       
       - name: 📊 Upload Analysis Results
-        if: always()
+        if: always() && hashFiles('./tests/analysis/*') != ''
         uses: actions/upload-artifact@v4
         with:
           name: static-analysis
