@@ -1,6 +1,6 @@
 # Automation Domain
 
-The Automation domain provides comprehensive deployment automation, parallel execution, and dependency management capabilities.
+The Automation domain provides comprehensive deployment automation, parallel execution, dependency management, and reusable script utilities.
 
 ## Responsibilities
 
@@ -9,12 +9,42 @@ The Automation domain provides comprehensive deployment automation, parallel exe
 - Cross-platform installation automation
 - Infrastructure provisioning automation
 - CI/CD pipeline integration
+- **Common script utilities to eliminate code duplication**
 
 ## Status
 
 ✅ **Active** - Core functionality implemented
 
 ## Core Modules
+
+### ScriptUtilities.psm1 ⭐ NEW
+**Purpose**: Eliminate duplicate code across 125+ automation scripts
+
+Provides reusable helper functions used by automation scripts:
+- **Write-ScriptLog**: Centralized logging wrapper with fallback
+- **Get-ProjectRoot**: Determine AitherZero project root path
+- **Test-IsAdministrator**: Check for admin/root privileges
+- **Get-PlatformName**: Get platform name (Windows/Linux/macOS)
+- **Test-CommandAvailable**: Check if a command exists
+- **Get-GitHubToken**: Retrieve GitHub authentication token
+- **Invoke-WithRetry**: Execute script blocks with retry logic
+- **Test-GitRepository**: Check if in a Git repository
+- **Get-ScriptMetadata**: Extract metadata from script headers
+- **Format-Duration**: Format TimeSpan into readable string
+
+**Usage in automation scripts**:
+```powershell
+# Import at the top of your script
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+
+# Use the functions
+Write-ScriptLog -Message "Starting process" -Level Information
+$root = Get-ProjectRoot
+if (Test-IsAdministrator) {
+    Write-ScriptLog "Running with elevated privileges"
+}
+```
 
 ### DeploymentAutomation.psm1
 The primary automation engine providing:
@@ -23,6 +53,12 @@ The primary automation engine providing:
 - **Cross-Platform Support**: Works on Windows, Linux, and macOS
 - **Integrated Logging**: Uses centralized logging from utilities domain
 - **Stage-Based Execution**: Run specific deployment stages (Prepare, Core, Services, etc.)
+
+### OrchestrationEngine.psm1
+Advanced workflow orchestration with:
+- **Playbook-based execution**: Define complex workflows
+- **Sequence management**: Group scripts into logical sequences
+- **Configuration-driven**: Use config.psd1 for workflow definitions
 
 ## Key Features
 
@@ -37,6 +73,7 @@ Scripts can include metadata in comments:
 ```powershell
 # Stage: Core
 # Dependencies: Git, PowerShell7
+# Tags: development, tools
 ```
 
 ### Parallel Execution Engine
@@ -47,6 +84,40 @@ Scripts can include metadata in comments:
 
 ## Usage Examples
 
+### Using ScriptUtilities in your scripts
+```powershell
+#Requires -Version 7.0
+# Stage: Development
+# Dependencies: Git
+
+[CmdletBinding(SupportsShouldProcess)]
+param()
+
+# Import script utilities (replaces manual Write-ScriptLog definitions)
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+
+Write-ScriptLog -Message "Starting installation" -Level Information
+
+try {
+    if (-not (Test-CommandAvailable -Name 'git')) {
+        Write-ScriptLog -Message "Git is required" -Level Error
+        exit 1
+    }
+    
+    # Use Invoke-WithRetry for operations that may fail
+    Invoke-WithRetry -ScriptBlock {
+        git clone https://github.com/user/repo.git
+    } -MaxAttempts 3 -DelaySeconds 5
+    
+    Write-ScriptLog -Message "Installation completed" -Level Information
+} catch {
+    Write-ScriptLog -Message "Installation failed: $_" -Level Error
+    exit 1
+}
+```
+
+### Using DeploymentAutomation
 ```powershell
 # Import the automation domain
 Import-Module ./domains/automation/DeploymentAutomation.psm1
@@ -77,8 +148,9 @@ Scripts in `automation-scripts/` are organized by priority and function:
 - **0100-0199**: Core infrastructure components
 - **0200-0299**: Development tools and utilities
 - **0300-0399**: Services and applications
-- **0400-0499**: Configuration and customization
-- **0500-0599**: Validation and testing
+- **0400-0499**: Configuration, testing, and validation
+- **0500-0599**: Reporting and metrics
+- **0700-0799**: Git automation and AI tools
 - **9000-9999**: Cleanup and maintenance
 
 ## Integration with Bootstrap
@@ -91,11 +163,34 @@ The bootstrap script (`bootstrap.ps1`) automatically:
 
 ## Best Practices
 
-1. **Always use stages** - Group related scripts into logical stages
-2. **Define dependencies** - Explicitly declare script dependencies
-3. **Use centralized logging** - All scripts should use Write-CustomLog
-4. **Handle errors gracefully** - Scripts should be idempotent
-5. **Test in dry-run mode** - Always test with -DryRun first
+1. **Use ScriptUtilities** - Import the module instead of duplicating helper functions
+2. **Always use stages** - Group related scripts into logical stages
+3. **Define dependencies** - Explicitly declare script dependencies
+4. **Use Write-ScriptLog** - Centralized logging with automatic fallback
+5. **Handle errors gracefully** - Scripts should be idempotent
+6. **Test in dry-run mode** - Always test with -DryRun first
+7. **Check platform compatibility** - Use Get-PlatformName and Test-IsAdministrator
+
+## Code Deduplication Initiative
+
+**Status**: 22 scripts refactored (0000-0499 range completed)
+
+Previously, 55+ scripts had duplicate implementations of:
+- Write-ScriptLog function (~40 lines each)
+- Logging module initialization
+- Basic utility functions
+
+**ScriptUtilities.psm1** eliminates this duplication by providing:
+- Single source of truth for common functions
+- Automatic fallback for logging
+- Cross-platform compatibility helpers
+- Reusable patterns for all automation scripts
+
+**Refactored scripts** (22 total):
+- 0000-0099 range: 7 scripts
+- 0100-0199 range: 5 scripts  
+- 0200-0299 range: 7 scripts
+- 0400-0499 range: 3 scripts
 
 ## Migration from LabRunner
 
@@ -105,3 +200,4 @@ This module is the evolution of the original LabRunner, providing:
 - Stage-based organization
 - Integrated with domain architecture
 - Uses centralized logging throughout
+- **Reusable utilities to eliminate code duplication**

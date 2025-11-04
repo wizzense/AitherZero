@@ -73,7 +73,7 @@ Scripts in `/automation-scripts/` follow numeric ranges:
 
 ```powershell
 # Environment & Setup (0000-0099)
-az 0001  # Initialize PowerShell 7
+# Note: PowerShell 7 is installed by bootstrap.ps1
 az 0010  # Create directory structure
 
 # Infrastructure (0100-0199)

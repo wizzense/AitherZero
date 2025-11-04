@@ -61,39 +61,12 @@ if (-not $OutputPath) {
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
-$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
+Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
 
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force
-    $script:LoggingAvailable = $true
-} else {
-    $script:LoggingAvailable = $false
-}
+$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
 
 if (Test-Path $configModule) {
     Import-Module $configModule -Force -ErrorAction SilentlyContinue
-}
-
-function Write-ScriptLog {
-    param(
-        [string]$Level = 'Information',
-        [string]$Message,
-        [hashtable]$Data = @{}
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0404_Run-PSScriptAnalyzer" -Data $Data
-    } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = @{
-            'Error' = 'Red'
-            'Warning' = 'Yellow'
-            'Information' = 'White'
-            'Debug' = 'Gray'
-        }[$Level]
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
 }
 
 $settingsPath = $null  # Initialize for cleanup in finally block

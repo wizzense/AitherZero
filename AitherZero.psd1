@@ -60,6 +60,11 @@
         'Test-UIIntegration', 'Test-GitHubActionsIntegration', 'Test-PSScriptAnalyzerCompliance',
         'Invoke-QualityValidation', 'Format-QualityReport',
 
+        # From ScriptUtilities (Automation helpers)
+        'Get-ProjectRoot', 'Write-ScriptLog', 'Test-IsAdministrator', 'Get-PlatformName',
+        'Test-CommandAvailable', 'Get-GitHubToken', 'Invoke-WithRetry', 'Test-GitRepository',
+        'Get-ScriptMetadata', 'Format-Duration',
+
         # Wildcard for any additional functions
         '*'
     )
