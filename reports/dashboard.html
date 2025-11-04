@@ -764,7 +764,7 @@
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-11-04 04:34:53
+        🔄 Last updated: 2025-11-04 18:45:20
     </div>
 
     <div class="container">
@@ -776,18 +776,18 @@
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
-                <img src="https://img.shields.io/badge/tests-failing-red" alt="Tests Status">
+                <img src="https://img.shields.io/badge/tests-unknown-lightgrey" alt="Tests Status">
                 <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
                 <img src="https://img.shields.io/github/license/wizzense/AitherZero" alt="License">
                 <img src="https://img.shields.io/github/last-commit/wizzense/AitherZero" alt="Last Commit">
             </div>
 
             <div class="status-bar">
-                <div class="status-badge status-issues">
-                    🎯 Overall: Issues
+                <div class="status-badge status-warning">
+                    🎯 Overall: Warning
                 </div>
-                <div class="status-badge status-issues">
-                    🧪 Tests: Failing
+                <div class="status-badge status-unknown">
+                    🧪 Tests: Unknown
                 </div>
                 <div class="status-badge status-healthy">
                     🔒 Security: Clean
@@ -804,32 +804,32 @@
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <h3>📁 Project Files</h3>
-                        <div class="metric-value">203</div>
+                        <div class="metric-value">206</div>
                         <div class="metric-label">
-                            139 Scripts | 58 Modules | 6 Data
+                            141 Scripts | 59 Modules | 6 Data
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                        📄 407 Markdown | 🔧 3 YAML | 📋 130 JSON
+                        📄 340 Markdown | 🔧 3 YAML | 📋 93 JSON
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">94,195</div>
+                        <div class="metric-value">95,322</div>
                         <div class="metric-label">
-                            1115 Functions
+                            1125 Functions
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            💬 7,722 Comments (8.2%) | ⚪ 15,687 Blank Lines
+                            💬 7,831 Comments (8.2%) | ⚪ 15,871 Blank Lines
                         </div>
                     </div>
                     
                     <div class="metric-card">
                         <h3>🤖 Automation Scripts</h3>
-                        <div class="metric-value">134</div>
+                        <div class="metric-value">138</div>
                         <div class="metric-label">Number-based orchestration (0000-9999)</div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ⚡ 21 GitHub Workflows
+                            ⚡ 22 GitHub Workflows
                         </div>
                     </div>
                     
@@ -837,7 +837,7 @@
                         <h3>🗂️ Domain Modules</h3>
                         <div class="metric-value">11</div>
                         <div class="metric-label">
-                            37 Total Modules
+                            38 Total Modules
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
                             Consolidated architecture
@@ -846,47 +846,36 @@
 
                     <div class="metric-card">
                         <h3>🧪 Test Files</h3>
-                        <div class="metric-value">307</div>
+                        <div class="metric-value">318</div>
                         <div class="metric-label">
-                            154 Unit | 153 Integration
+                            160 Unit | 158 Integration
                         </div>
                         
                         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--card-border);">
                             <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
                                 Last Test Run Results:
                             </div>
-                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--error);">
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
-                                Last Test Run Results:
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                ✅ 5 Passed | ❌ 17 Failed
-                            </div>
-                                                        <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
-                                <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
-                                    ⚠️ Only 22 test cases executed. Run <code>./az 0402</code> for full test suite.
+                                                    <div style="padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--text-secondary);">
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                    ⚠️ No test results available. Run <code>./automation-scripts/0402_Run-UnitTests.ps1</code> to execute tests.
                                 </div>
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Last run: 2025-11-04 04:18:10
-                            </div>
-                        </div>
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🧪 Test Coverage</h3>
-                        <div class="metric-value">71.3%</div>
+                        <div class="metric-value">69.4%</div>
                         <div class="metric-label">
-                            127 / 178 Files Have Tests
+                            127 / 183 Files Have Tests
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 71.3%; background: var(--warning)">
-                                71.3%
+                            <div class="progress-fill" style="width: 69.4%; background: var(--warning)">
+                                69.4%
                             </div>
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ⚠️ 51 files without tests
+                            ⚠️ 56 files without tests
                         </div>
                     </div>
                     
@@ -894,7 +883,7 @@
                         <h3>📚 Documentation Coverage</h3>
                         <div class="metric-value">9.3%</div>
                         <div class="metric-label">
-                            104 / 1115 Functions Documented
+                            105 / 1125 Functions Documented
                         </div>
                         <div class="progress-bar">
                             <div class="progress-fill" style="width: 9.3%; background: var(--error)">
@@ -902,39 +891,39 @@
                             </div>
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ⚠️ 1006 functions without docs
+                            ⚠️ 1015 functions without docs
                         </div>
                     </div>
                     
                     <div class="metric-card">
                         <h3>✨ Code Quality</h3>
-                        <div class="metric-value">94/100</div>
+                        <div class="metric-value">90/100</div>
                         <div class="metric-label">
-                            236 issues in 10 files
+                            No issues found
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 94%; background: var(--success)">
-                                94/100
+                            <div class="progress-fill" style="width: 90%; background: var(--success)">
+                                90/100
                             </div>
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ✅ 190 clean, ⚠️ 9 warnings, ❌ 1 errors
+                            ✅ 0 clean, ⚠️ 22 warnings, ❌ 0 errors
                         </div>
                     </div>
                     
                                         <div class="metric-card">
                         <h3>🌿 Git Repository</h3>
-                        <div class="metric-value" style="font-size: 1.8rem;">3</div>
+                        <div class="metric-value" style="font-size: 1.8rem;">2</div>
                         <div class="metric-label">Total Commits</div>
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/generate-dashboard</span>
+                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/fix-code-quality-reporting</span>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                👥 1 Contributors
+                                👥 2 Contributors
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Latest: 52ea37c - Fix GitHub API data fetching with proper fallback handling (51 seconds ago)
+                                Latest: 73685a1 - Initial plan (6 minutes ago)
                             </div>
                         </div>
                     </div>
@@ -955,13 +944,13 @@
                 <div class="metrics-grid">
                     <div class="metric-card error">
                         <h3>📈 Quality Score</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">68%</div>
                         <div class="metric-label">
-                            Average across 0 validated files
+                            Average across 1 validated files
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 0%; background: var(--error)">
-                                
+                            <div class="progress-fill" style="width: 68%; background: var(--error)">
+                                68%
                             </div>
                         </div>
                     </div>
@@ -972,52 +961,52 @@
                         <div class="metric-label">
                             ✅ 0 Passed | 
                             ⚠️ 0 Warnings | 
-                            ❌ 0 Failed
+                            ❌ 1 Failed
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🔍 Error Handling</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">80%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
-                            ⚠️ 0 | 
-                            ❌ 0
+                            ✅ 2 | 
+                            ⚠️ 1 | 
+                            ❌ 1
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Logging</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">83.8%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
-                            ⚠️ 0 | 
+                            ✅ 1 | 
+                            ⚠️ 3 | 
                             ❌ 0
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🧪 Test Coverage</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">75%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
+                            ✅ 3 | 
                             ⚠️ 0 | 
-                            ❌ 0
+                            ❌ 1
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🔬 PSScriptAnalyzer</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">63.8%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
-                            ⚠️ 0 | 
-                            ❌ 0
+                            ✅ 1 | 
+                            ⚠️ 1 | 
+                            ❌ 2
                         </div>
                     </div>
                 </div>
                 
-                <p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Last validation: 11/04/2025 18:44:49</p>
             </section>
 
             <section class="section" id="pssa">
@@ -1051,7 +1040,7 @@
                     </div>
                 </div>
                 
-                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./az 0404</code> to analyze code quality</p>
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze code quality</p>
             </section>
 
             <section class="section" id="manifest">
@@ -1141,7 +1130,7 @@
                     </div>
                     <div class="domain-card">
                         <h4>testing</h4>
-                        <div class="module-count">8 modules</div>
+                        <div class="module-count">9 modules</div>
                     </div>
                     <div class="domain-card">
                         <h4>utilities</h4>
@@ -1153,17 +1142,17 @@
             <section class="section" id="health">
                 <h2>📈 Project Health</h2>
                 <div class="badge-grid">
-                    <div class="badge error">
+                    <div class="badge warning">
                         Build: Unknown
                     </div>
-                    <div class="badge error">
-                        Tests: Failing
+                    <div class="badge warning">
+                        Tests: Unknown
                     </div>
-                    <div class="badge info">Quality: 94/100</div>
+                    <div class="badge info">Quality: 90/100</div>
                     <div class="badge">Security: Scanned</div>
                     <div class="badge">Platform: Unix</div>
                     <div class="badge">PowerShell: 7.4.13</div>
-                    <div class='badge info'>Workflows: 21</div>
+                    <div class='badge info'>Workflows: 22</div>
                 </div>
             </section>
             
@@ -1173,11 +1162,11 @@
                     <div class="info-card">
                         <div class="info-card-header">📊 Repository Statistics</div>
                         <div class="info-card-body">
-                            <p><strong>Branch:</strong> <code>copilot/generate-dashboard</code></p>
-                            <p><strong>Total Commits:</strong> 3</p>
-                            <p><strong>Contributors:</strong> 1</p>
-                            <p><strong>Automation Scripts:</strong> 134</p>
-                            <p><strong>GitHub Workflows:</strong> 21</p>
+                            <p><strong>Branch:</strong> <code>copilot/fix-code-quality-reporting</code></p>
+                            <p><strong>Total Commits:</strong> 2</p>
+                            <p><strong>Contributors:</strong> 2</p>
+                            <p><strong>Automation Scripts:</strong> 138</p>
+                            <p><strong>GitHub Workflows:</strong> 22</p>
                         </div>
                     </div>
                     
@@ -1185,7 +1174,7 @@
                         <div class="info-card-header">📝 Latest Commit</div>
                         <div class="info-card-body">
                             <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
-                                52ea37c - Fix GitHub API data fetching with proper fallback handling (51 seconds ago)
+                                73685a1 - Initial plan (6 minutes ago)
                             </p>
                         </div>
                     </div>
@@ -1198,16 +1187,12 @@
                     <div class="info-card-body">
                         <ul class="commit-list">
                             <li class='commit-item'>
-                                <span class='commit-hash'>52ea37c</span>
-                                <span class='commit-message'>Fix GitHub API data fetching with proper fallback handling</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>bf6752b</span>
+                                <span class='commit-hash'>73685a1</span>
                                 <span class='commit-message'>Initial plan</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>fdfd0cd</span>
-                                <span class='commit-message'>refactor: use duck typing for PSScriptAnalyzer results filtering</span>
+                                <span class='commit-hash'>4123a89</span>
+                                <span class='commit-message'>Fix configuration warnings, test reporter format, and test comment script initialization (#2128)</span>
                             </li>
                         </ul>
                     </div>
@@ -1216,10 +1201,10 @@
                 <div class="info-card" id="actions">
                     <div class="info-card-header">🎯 Quick Actions</div>
                     <div class="info-card-body">
-                        <p><strong>Run Tests:</strong> <code>./az 0402</code></p>
-                        <p><strong>Generate Report:</strong> <code>./az 0510</code></p>
-                        <p><strong>View Dashboard:</strong> <code>./az 0511</code></p>
-                        <p><strong>Validate Code:</strong> <code>./az 0404</code></p>
+                        <p><strong>Run Tests:</strong> <code>./automation-scripts/0402_Run-UnitTests.ps1</code></p>
+                        <p><strong>Generate Report:</strong> <code>./automation-scripts/0510_Generate-ProjectReport.ps1</code></p>
+                        <p><strong>View Dashboard:</strong> <code>./automation-scripts/0511_Show-ProjectDashboard.ps1</code></p>
+                        <p><strong>Validate Code:</strong> <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code></p>
                         <p><strong>Update Project:</strong> <code>git pull && ./bootstrap.ps1</code></p>
                     </div>
                 </div>
@@ -1230,7 +1215,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.13</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-11-04 04:34:53</p>
+                        <p><strong>Last Scan:</strong> 2025-11-04 18:45:20</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -1420,17 +1405,17 @@
                     </div>
                     <div class="metric-card">
                         <h3>👥 Contributors</h3>
-                        <div class="metric-value" style="font-size: 2rem;">1</div>
+                        <div class="metric-value" style="font-size: 2rem;">2</div>
                         <div class="metric-label">Active Contributors</div>
                     </div>
                     <div class="metric-card">
                         <h3>🔀 Pull Requests</h3>
-                        <div class="metric-value" style="font-size: 2rem;">18</div>
+                        <div class="metric-value" style="font-size: 2rem;">19</div>
                         <div class="metric-label">Open PRs</div>
                     </div>
                     <div class="metric-card">
                         <h3>🐛 Issues</h3>
-                        <div class="metric-value" style="font-size: 2rem;">247</div>
+                        <div class="metric-value" style="font-size: 2rem;">249</div>
                         <div class="metric-label">Open Issues</div>
                     </div>
                     <div class="metric-card">
@@ -1460,12 +1445,12 @@
                     </div>
                     <div class="metric-card">
                         <h3>❌ Failed</h3>
-                        <div class="metric-value" style="font-size: 2rem; color: var(--danger);">2</div>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--text-secondary);">0</div>
                         <div class="metric-label">Recent Failures</div>
                     </div>
                     <div class="metric-card">
                         <h3>🕐 Last Run</h3>
-                        <div class="metric-value" style="font-size: 1.2rem;">failure</div>
+                        <div class="metric-value" style="font-size: 1.2rem;">action_required</div>
                         <div class="metric-label">Status</div>
                     </div>
                 </div>
@@ -1480,36 +1465,22 @@
                                 <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
                     <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
                         <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='https://github.com/wizzense/AitherZero/issues/2123' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #2123: 🧪 Test Failure: Should execute in test mode
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>github-actions[bot]</strong> on 2025-11-04
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>P2</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated-issue</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>tests</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>agent-jessica</span>
+                    </div>
+                </div>                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
                             <a href='https://github.com/wizzense/AitherZero/issues/2096' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
                                 #2096: 🧪 Test Failure: Should execute in test mode
-                            </a>
-                        </h3>
-                    </div>
-                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
-                        Opened by <strong>github-actions[bot]</strong> on 2025-11-03
-                    </div>
-                    <div style='margin-top: 8px;'>
-                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>P2</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated-issue</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>tests</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>agent-jessica</span>
-                    </div>
-                </div>                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
-                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
-                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
-                            <a href='https://github.com/wizzense/AitherZero/issues/2093' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
-                                #2093: 🧪 Test Failure: Should validate no hardcoded secrets in configuration files
-                            </a>
-                        </h3>
-                    </div>
-                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
-                        Opened by <strong>github-actions[bot]</strong> on 2025-11-03
-                    </div>
-                    <div style='margin-top: 8px;'>
-                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>P2</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated-issue</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>tests</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>agent-jessica</span>
-                    </div>
-                </div>                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
-                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
-                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
-                            <a href='https://github.com/wizzense/AitherZero/issues/2092' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
-                                #2092: 🧪 Test Failure: Should validate complete Claude Code integration setup
                             </a>
                         </h3>
                     </div>
@@ -1531,14 +1502,14 @@
                 <div class="info-card">
                     <div class="info-card-header">📊 Test Execution Trends</div>
                     <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-03</strong>: 12/304 passed (3.9%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-03</strong>: 12/304 passed (3.9%)</div>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/318 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div>
                     </div>
                 </div>
                 
                 <div class="info-card" style="margin-top: 20px;">
                     <div class="info-card-header">📏 Lines of Code Growth</div>
                     <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,195 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,166 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,165 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-03</strong>: 93,461 LOC, 1111 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-03</strong>: 93,466 LOC, 1111 functions</div>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 95,322 LOC, 1125 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,246 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,246 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,195 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,173 LOC, 1115 functions</div>
                     </div>
                 </div>
                 
@@ -1549,7 +1520,7 @@
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-11-04 04:34:53 |
+            Generated by AitherZero Dashboard | 2025-11-04 18:45:20 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
