@@ -53,6 +53,7 @@ if ($env:PATH -notlike "*$automationPath*") {
 $modulesToLoad = @(
     # Core utilities first
     './domains/utilities/Logging.psm1',
+    './domains/utilities/DownloadUtility.psm1',
 
     # Configuration
     './domains/configuration/Configuration.psm1',
