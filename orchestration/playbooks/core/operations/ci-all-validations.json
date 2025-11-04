@@ -1,79 +1,57 @@
 {
   "metadata": {
     "name": "ci-all-validations",
-    "description": "Run all CI validation checks - comprehensive local testing before pushing",
+    "description": "Run all CI validation checks in one playbook",
     "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "validation", "comprehensive", "github-actions", "all"],
+    "tags": ["ci", "validation", "comprehensive", "meta"],
     "estimatedDuration": "15-25 minutes",
-    "lastUpdated": "2025-11-04T06:00:00Z",
-    "githubWorkflow": "multiple"
+    "githubWorkflow": "N/A - Meta playbook combining multiple workflows"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": ["PSScriptAnalyzer", "Pester"],
     "requiredTools": [],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "runPRValidation": true,
-      "runConfigValidation": true,
-      "runManifestValidation": true,
-      "runTestSync": true,
-      "runWorkflowHealth": true,
-      "runQualityValidation": false,
-      "runTests": false
+      "verbose": false,
+      "failFast": false
     },
     "profiles": {
       "quick": {
-        "description": "Quick validation - essential checks only",
+        "description": "Essential checks only (2-5 min)",
         "variables": {
-          "runPRValidation": true,
-          "runConfigValidation": true,
-          "runManifestValidation": true,
-          "runTestSync": false,
-          "runWorkflowHealth": false,
-          "runQualityValidation": false,
-          "runTests": false
+          "skipWorkflowCheck": true,
+          "skipQuality": true,
+          "skipTests": true
         }
       },
       "standard": {
-        "description": "Standard validation - most CI checks",
+        "description": "Most CI checks (10-15 min)",
         "variables": {
-          "runPRValidation": true,
-          "runConfigValidation": true,
-          "runManifestValidation": true,
-          "runTestSync": true,
-          "runWorkflowHealth": true,
-          "runQualityValidation": false,
-          "runTests": false
+          "skipWorkflowCheck": false,
+          "skipQuality": true,
+          "skipTests": true
         }
       },
       "comprehensive": {
-        "description": "Comprehensive validation - all CI checks including tests",
+        "description": "All checks including tests (15-25 min)",
         "variables": {
-          "runPRValidation": true,
-          "runConfigValidation": true,
-          "runManifestValidation": true,
-          "runTestSync": true,
-          "runWorkflowHealth": true,
-          "runQualityValidation": true,
-          "runTests": true
+          "skipWorkflowCheck": false,
+          "skipQuality": false,
+          "skipTests": false
         }
       }
     },
     "stages": [
       {
-        "name": "PR Validation",
-        "description": "Validate PowerShell syntax and changed files",
+        "name": "Syntax Validation",
+        "description": "Validate PowerShell syntax for all files",
         "sequences": ["0407"],
-        "condition": "{{runPRValidation}}",
         "variables": {
-          "CheckSyntax": true,
-          "ChangedFilesOnly": false
+          "All": true
         },
         "continueOnError": false,
         "timeout": 180
@@ -81,80 +59,71 @@
       {
         "name": "Config Validation",
         "description": "Validate config.psd1 manifest",
-        "sequences": ["0413", "0003"],
-        "condition": "{{runConfigValidation}}",
+        "sequences": ["0413"],
+        "variables": {},
         "continueOnError": false,
-        "timeout": 180
+        "timeout": 120
+      },
+      {
+        "name": "Config Synchronization",
+        "description": "Sync config with automation scripts",
+        "sequences": ["0003"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 120
       },
       {
         "name": "Manifest Validation",
         "description": "Validate PowerShell module manifests",
         "sequences": ["0405"],
-        "condition": "{{runManifestValidation}}",
+        "variables": {},
         "continueOnError": false,
-        "timeout": 180
+        "timeout": 120
       },
       {
         "name": "Test Sync Validation",
         "description": "Validate test-script synchronization",
         "sequences": ["0426"],
-        "condition": "{{runTestSync}}",
-        "variables": {
-          "CI": false
-        },
+        "variables": {},
         "continueOnError": true,
-        "timeout": 120
+        "timeout": 180
       },
       {
         "name": "Workflow Health Check",
         "description": "Validate GitHub Actions workflows",
         "sequences": ["0440"],
-        "condition": "{{runWorkflowHealth}}",
+        "variables": {},
         "continueOnError": true,
-        "timeout": 180
+        "timeout": 120,
+        "condition": "{{skipWorkflowCheck}} == false"
       },
       {
         "name": "Quality Validation",
         "description": "Run PSScriptAnalyzer on all code",
         "sequences": ["0404"],
-        "condition": "{{runQualityValidation}}",
-        "variables": {
-          "Fast": true
-        },
+        "variables": {},
         "continueOnError": true,
-        "timeout": 300
+        "timeout": 300,
+        "condition": "{{skipQuality}} == false"
+      },
+      {
+        "name": "Install Testing Tools",
+        "description": "Ensure testing tools are installed",
+        "sequences": ["0400"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 300,
+        "condition": "{{skipTests}} == false"
       },
       {
         "name": "Unit Tests",
         "description": "Run unit tests",
-        "sequences": ["0400", "0402"],
-        "condition": "{{runTests}}",
-        "variables": {
-          "NoCoverage": true
-        },
+        "sequences": ["0402"],
+        "variables": {},
         "continueOnError": true,
-        "timeout": 600
+        "timeout": 900,
+        "condition": "{{skipTests}} == false"
       }
     ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🚀 Starting comprehensive CI validation...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ All validations passed! Ready to push.",
-      "level": "Information"
-    },
-    "onFailure": {
-      "message": "❌ Some validations failed - review output above",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "multiple"
-    }
   }
 }
