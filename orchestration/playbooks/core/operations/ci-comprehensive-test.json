@@ -102,7 +102,7 @@
     },
     "onSuccess": {
       "message": "✅ All tests passed!",
-      "level": "Success",
+      "level": "Information",
       "includeMetrics": true
     },
     "onFailure": {

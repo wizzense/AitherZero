@@ -144,7 +144,7 @@
     },
     "onSuccess": {
       "message": "✅ All validations passed! Ready to push.",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Some validations failed - review output above",

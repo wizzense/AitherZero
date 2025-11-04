@@ -62,7 +62,7 @@
     },
     "onSuccess": {
       "message": "✅ Test reports published successfully!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Test report publishing failed",

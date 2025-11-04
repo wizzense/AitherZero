@@ -81,7 +81,7 @@
     },
     "onSuccess": {
       "message": "✅ Tests generated successfully!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Test generation failed",
