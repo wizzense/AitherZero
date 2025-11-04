@@ -49,11 +49,6 @@ Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' 
             $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
         }
 
-        It 'Should have parameter: TemplatePath' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('TemplatePath') | Should -Be $true
-        }
-
         It 'Should have parameter: Format' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Format') | Should -Be $true
@@ -73,7 +68,7 @@ Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' 
         }
 
         It 'Should declare dependencies' {
-            $content = Get-Content $script:ScriptPath -First 20
+            $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }

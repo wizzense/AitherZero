@@ -191,6 +191,54 @@ function Get-QualityRecommendation {
     return $null
 }
 
+function Test-GitHubAuthentication {
+    <#
+    .SYNOPSIS
+        Check if GitHub CLI is installed and authenticated
+    .DESCRIPTION
+        Validates that gh CLI is available and the user is authenticated.
+        Returns $true if ready to create issues, $false otherwise.
+        In GitHub Actions, checks for GITHUB_TOKEN or GH_TOKEN environment variables.
+    #>
+    [CmdletBinding()]
+    param()
+    
+    try {
+        # Check if gh CLI is available
+        $ghAvailable = Get-Command gh -ErrorAction SilentlyContinue
+        if (-not $ghAvailable) {
+            Write-ScriptLog -Level Warning -Message "GitHub CLI (gh) is not installed. Install from: https://cli.github.com/"
+            return $false
+        }
+        
+        # In GitHub Actions, gh CLI can use GITHUB_TOKEN automatically
+        # Check if we're in GitHub Actions with a token
+        if ($env:GITHUB_ACTIONS -eq 'true') {
+            if ($env:GITHUB_TOKEN -or $env:GH_TOKEN) {
+                Write-ScriptLog -Level Debug -Message "GitHub Actions environment detected with token available"
+                return $true
+            } else {
+                Write-ScriptLog -Level Warning -Message "GitHub Actions environment detected but no token available (GITHUB_TOKEN not set)"
+                return $false
+            }
+        }
+        
+        # For non-GitHub Actions environments, check authentication status
+        $authCheck = gh auth status 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-ScriptLog -Level Warning -Message "GitHub CLI is not authenticated. Run: gh auth login"
+            return $false
+        }
+        
+        Write-ScriptLog -Level Debug -Message "GitHub CLI is authenticated and ready"
+        return $true
+        
+    } catch {
+        Write-ScriptLog -Level Warning -Message "Failed to check GitHub authentication: $_"
+        return $false
+    }
+}
+
 function New-QualityIssue {
     <#
     .SYNOPSIS
@@ -202,7 +250,7 @@ function New-QualityIssue {
     )
     
     try {
-        # Check if gh CLI is available
+        # Authentication should be checked by caller, but double-check here
         $ghAvailable = Get-Command gh -ErrorAction SilentlyContinue
         if (-not $ghAvailable) {
             Write-ScriptLog -Level Warning -Message "GitHub CLI (gh) not available. Cannot create issues."
@@ -307,34 +355,43 @@ This file failed quality validation checks. Review the findings below and addres
         foreach ($label in $labels) {
             $ghArgs += @('--label', $label)
         }
-        $ghArgs += @('--json', 'number,url')
         
-        $issueJson = gh @ghArgs 2>&1
+        # Execute gh command and capture output properly
+        # gh issue create outputs the URL to the created issue on success
+        # Note: Errors will go to stderr; we don't redirect to avoid log corruption
+        try {
+            $issueUrl = gh @ghArgs
+            $exitCode = $LASTEXITCODE
+        } catch {
+            $exitCode = 1
+            $issueUrl = $null
+        }
         
-        if ($LASTEXITCODE -eq 0) {
-            $issueData = $issueJson | ConvertFrom-Json
-            Write-ScriptLog -Message "Created issue #$($issueData.number) for $($Report.FileName)" -Data @{
-                IssueNumber = $issueData.number
-                IssueUrl = $issueData.url
-            }
-            return $issueData
-        } else {
-            # Parse and display user-friendly error message
-            $errorMessage = if ($issueJson -is [string]) {
-                $issueJson
-            } elseif ($issueJson -is [array]) {
-                $issueJson -join "`n"
+        if ($exitCode -eq 0 -and $issueUrl) {
+            # Extract issue number from URL (format: https://github.com/owner/repo/issues/123)
+            if ($issueUrl -match '/issues/(\d+)') {
+                $issueNumber = $Matches[1]
+                Write-ScriptLog -Message "Created issue #$issueNumber for $($Report.FileName)" -Data @{
+                    IssueNumber = $issueNumber
+                    IssueUrl = $issueUrl
+                }
+                return @{
+                    Number = $issueNumber
+                    Url = $issueUrl
+                    Success = $true
+                }
             } else {
-                "Unknown error creating issue"
+                Write-ScriptLog -Level Warning -Message "Issue created but could not parse issue number from: $issueUrl"
+                return @{
+                    Url = $issueUrl
+                    Success = $true
+                }
             }
-            
-            Write-ScriptLog -Level Error -Message "Failed to create issue for $($Report.FileName)" -Data @{
-                Error = $errorMessage
-                ExitCode = $LASTEXITCODE
+        } else {
+            # Log the failure without capturing stderr (which can corrupt logs)
+            Write-ScriptLog -Level Warning -Message "GitHub issue creation failed for $($Report.FileName)" -Data @{
+                ExitCode = $exitCode
             }
-            
-            # Show user-friendly message
-            Write-Host "  ⚠️  Issue creation failed. Check that gh CLI is authenticated and has write access." -ForegroundColor Yellow
             return $null
         }
         
@@ -697,30 +754,50 @@ try {
     
     # Create issues for failed files
     if ($shouldCreateIssues -and ($overallStatus -eq 'Failed' -or $failedCount -gt 0)) {
-        Write-Host "`n📋 Creating GitHub Issues for Quality Failures..." -ForegroundColor Cyan
-        
-        $failedReports = $allReports | Where-Object { $_.OverallStatus -eq 'Failed' }
-        $issuesCreated = 0
-        
-        foreach ($failedReport in $failedReports) {
-            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($failedReport.FilePath)
-            $reportPath = Join-Path $OutputPath "$reportName-$fileName.json"
-            
-            Write-Host "  Creating issue for: $($failedReport.FileName)..." -ForegroundColor Yellow
-            
-            $issue = New-QualityIssue -Report $failedReport -ReportPath $reportPath
-            if ($issue) {
-                Write-Host "  ✅ Created issue #$($issue.number): $($issue.url)" -ForegroundColor Green
-                $issuesCreated++
-            } else {
-                Write-Host "  ❌ Failed to create issue for $($failedReport.FileName)" -ForegroundColor Red
-            }
-        }
-        
-        if ($issuesCreated -gt 0) {
-            Write-Host "`n✨ Created $issuesCreated GitHub issue(s) for quality failures" -ForegroundColor Green
+        # In GitHub Actions/CI, skip issue creation - the workflow handles it
+        if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
+            Write-Host "`nℹ️  Issue creation skipped - running in CI environment" -ForegroundColor Cyan
+            Write-Host "   GitHub Actions workflow will create issues automatically" -ForegroundColor Gray
+            Write-ScriptLog -Message "Skipping issue creation in CI - workflow will handle it"
         } else {
-            Write-Host "`n⚠️  No issues created. Check that GitHub CLI is authenticated." -ForegroundColor Yellow
+            Write-Host "`n📋 Creating GitHub Issues for Quality Failures..." -ForegroundColor Cyan
+            
+            # Check GitHub authentication before attempting to create issues
+            if (-not (Test-GitHubAuthentication)) {
+                Write-Host "  ⚠️  Cannot create issues: GitHub CLI is not authenticated or not installed." -ForegroundColor Yellow
+                Write-Host "  💡 To enable issue creation:" -ForegroundColor Cyan
+                Write-Host "     1. Install GitHub CLI: https://cli.github.com/" -ForegroundColor Gray
+                Write-Host "     2. Authenticate: gh auth login" -ForegroundColor Gray
+                Write-ScriptLog -Level Warning -Message "Skipping issue creation - GitHub CLI not authenticated"
+            } else {
+                $failedReports = $allReports | Where-Object { $_.OverallStatus -eq 'Failed' }
+                $issuesCreated = 0
+                
+                foreach ($failedReport in $failedReports) {
+                    $fileName = [System.IO.Path]::GetFileNameWithoutExtension($failedReport.FilePath)
+                    $reportPath = Join-Path $OutputPath "$reportName-$fileName.json"
+                    
+                    Write-Host "  Creating issue for: $($failedReport.FileName)..." -ForegroundColor Yellow
+                    
+                    $issue = New-QualityIssue -Report $failedReport -ReportPath $reportPath
+                    if ($issue) {
+                        if ($issue.Number) {
+                            Write-Host "  ✅ Created issue #$($issue.Number): $($issue.Url)" -ForegroundColor Green
+                        } else {
+                            Write-Host "  ✅ Created issue: $($issue.Url)" -ForegroundColor Green
+                        }
+                        $issuesCreated++
+                    } else {
+                        Write-Host "  ❌ Failed to create issue for $($failedReport.FileName)" -ForegroundColor Red
+                    }
+                }
+                
+                if ($issuesCreated -gt 0) {
+                    Write-Host "`n✨ Created $issuesCreated GitHub issue(s) for quality failures" -ForegroundColor Green
+                } else {
+                    Write-Host "`n⚠️  No issues were created. Check GitHub CLI authentication and permissions." -ForegroundColor Yellow
+                }
+            }
         }
     }
     

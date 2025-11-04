@@ -121,6 +121,9 @@ jobs:
         if: steps.changes.outputs.has-files == 'true'
         id: validation
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Host "🔍 Running quality validation..." -ForegroundColor Cyan
           

@@ -10,37 +10,27 @@
     Creates HTML and Markdown dashboards showing project health, test results,
     security status, CI/CD metrics, and deployment information for effective
     project management and systematic improvement.
-    
-    Use the -Open parameter to automatically open the HTML dashboard in your 
-    default browser after generation.
 
-    Exit Codes:
-    0   - Dashboard generated successfully
-    1   - Generation failed
-    2   - Configuration error
-
+.PARAMETER ProjectPath
+    Path to the project root directory
+.PARAMETER OutputPath
+    Path where dashboard files will be generated
+.PARAMETER Format
+    Dashboard format to generate (HTML, Markdown, JSON, or All)
 .PARAMETER Open
     Automatically open the HTML dashboard in the default browser after generation
 
 .EXAMPLE
     ./0512_Generate-Dashboard.ps1
-    Generate all dashboard formats (HTML, Markdown, JSON)
-
 .EXAMPLE
     ./0512_Generate-Dashboard.ps1 -Format HTML -Open
-    Generate HTML dashboard and open it in the browser
 
 .NOTES
     Stage: Reporting
+    Category: Reporting
     Order: 0512
     Dependencies: 0510
     Tags: reporting, dashboard, monitoring, html, markdown
-    
-    Future Enhancements:
-    - IncludeMetrics: Enable/disable metrics collection
-    - IncludeTrends: Include historical trend analysis
-    - RefreshData: Force refresh of cached data
-    - ThemeColor: Customize dashboard color scheme
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
