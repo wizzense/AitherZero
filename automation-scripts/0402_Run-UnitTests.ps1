@@ -802,8 +802,56 @@ try {
     }
 }
 catch {
+    # Extract error info once to avoid duplication
+    $errorMessage = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+    $errorStackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace } else { 'N/A' }
+    
     Write-ScriptLog -Level Error -Message "Unit test execution failed: $_" -Data @{
-        Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+        Exception = $errorMessage
     }
+    
+    # CRITICAL: Always create TestReport file even on catastrophic failure
+    # This ensures CI/CD aggregation can process results
+    # Use $PSScriptRoot instead of $projectRoot to ensure variable is always available
+    $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
+    
+    if (-not $OutputPath) {
+        $OutputPath = Join-Path $scriptProjectRoot "tests/results"
+    }
+    
+    if (-not (Test-Path $OutputPath)) {
+        New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $testReportPath = Join-Path $OutputPath "TestReport-Unit-$timestamp.json"
+    
+    # Create minimal failure report
+    $failureReport = @{
+        TestType = 'Unit'
+        Timestamp = (Get-Date).ToString('o')
+        TotalCount = 0
+        PassedCount = 0
+        FailedCount = 0
+        SkippedCount = 0
+        Duration = 0
+        ExecutionError = @{
+            Message = $errorMessage
+            ScriptStackTrace = $errorStackTrace
+        }
+        TestResults = @{
+            Summary = @{
+                Total = 0
+                Passed = 0
+                Failed = 0
+                Skipped = 0
+            }
+            Details = @()
+        }
+    }
+    
+    $failureReport | ConvertTo-Json -Depth 10 | Set-Content -Path $testReportPath
+    Write-ScriptLog -Message "Failure report saved to: $testReportPath"
+    
     exit 2
 }
