@@ -52,7 +52,17 @@ param(
 )
 
 # Detect CI early so normalization logic has accurate context
-$script:IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+$script:IsCI = (
+    $env:CI -eq 'true' -or 
+    $env:GITHUB_ACTIONS -eq 'true' -or 
+    $env:GITLAB_CI -eq 'true' -or
+    $env:CIRCLECI -eq 'true' -or
+    $env:TF_BUILD -eq 'true' -or
+    $env:TRAVIS -eq 'true' -or
+    $env:APPVEYOR -eq 'true' -or
+    [bool]$env:JENKINS_URL -or
+    [bool]$env:TEAMCITY_VERSION
+)
 
 # Robust profile normalization & validation (must run immediately after param binding & CI detection)
 $validProfiles = @('Minimal','Standard','Developer','Full')
@@ -209,10 +219,16 @@ function Test-Dependencies {
     Write-BootstrapLog "Checking system dependencies..." -Level Info
 
     # Detect environment for context-aware dependency checking
-    $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+    # Use the same detection logic as $script:IsCI for consistency
+    $isCI = $script:IsCI
     $ciProvider = if ($env:GITHUB_ACTIONS -eq 'true') { 'GitHub Actions' } 
                   elseif ($env:TF_BUILD -eq 'true') { 'Azure Pipelines' }
                   elseif ($env:GITLAB_CI -eq 'true') { 'GitLab CI' }
+                  elseif ($env:CIRCLECI -eq 'true') { 'CircleCI' }
+                  elseif ($env:JENKINS_URL) { 'Jenkins' }
+                  elseif ($env:TRAVIS -eq 'true') { 'Travis CI' }
+                  elseif ($env:APPVEYOR -eq 'true') { 'AppVeyor' }
+                  elseif ($env:TEAMCITY_VERSION) { 'TeamCity' }
                   else { 'Unknown CI' }
 
     if ($isCI) {

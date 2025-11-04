@@ -32,18 +32,20 @@ function Test-IsCI {
     param()
 
     # Check common CI environment variables
-    $ciIndicators = @(
-        $env:CI -eq 'true',
-        $env:GITHUB_ACTIONS -eq 'true',
-        $env:GITLAB_CI -eq 'true',
-        $env:CIRCLECI -eq 'true',
-        $env:TF_BUILD -eq 'true',          # Azure Pipelines
-        $env:JENKINS_URL,                   # Jenkins
-        $env:TRAVIS -eq 'true',            # Travis CI
-        $env:APPVEYOR -eq 'true',          # AppVeyor
-        $env:TEAMCITY_VERSION,             # TeamCity
-        $env:AITHERZERO_CI -eq 'true'      # AitherZero-specific CI flag
-    )
+    # Convert non-empty string variables to boolean to ensure proper detection
+    # Note: Storing each check in a variable first ensures proper array construction
+    $check1 = $env:CI -eq 'true'
+    $check2 = $env:GITHUB_ACTIONS -eq 'true'
+    $check3 = $env:GITLAB_CI -eq 'true'
+    $check4 = $env:CIRCLECI -eq 'true'
+    $check5 = $env:TF_BUILD -eq 'true'
+    $check6 = [bool]$env:JENKINS_URL
+    $check7 = $env:TRAVIS -eq 'true'
+    $check8 = $env:APPVEYOR -eq 'true'
+    $check9 = [bool]$env:TEAMCITY_VERSION
+    $check10 = $env:AITHERZERO_CI -eq 'true'
+    
+    $ciIndicators = @($check1, $check2, $check3, $check4, $check5, $check6, $check7, $check8, $check9, $check10)
 
     return ($ciIndicators -contains $true)
 }
