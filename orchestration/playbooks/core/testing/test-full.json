@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "name": "test-full",
+    "description": "Complete test suite",
+    "version": "1.0.0",
+    "category": "testing",
+    "tags": ["testing", "full", "complete", "validation", "quality"],
+    "estimatedDuration": "30-45 minutes",
+    "githubWorkflow": "N/A"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester", "PSScriptAnalyzer"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false,
+      "generateReports": true
+    },
+    "profiles": {},
+    "stages": [
+      {
+        "name": "Syntax Validation",
+        "description": "Validate PowerShell syntax",
+        "sequences": ["0407"],
+        "variables": {
+          "All": true
+        },
+        "continueOnError": false,
+        "timeout": 180
+      },
+      {
+        "name": "Config Validation",
+        "description": "Validate config.psd1",
+        "sequences": ["0413"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "Config Synchronization",
+        "description": "Sync config with scripts",
+        "sequences": ["0003"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 120
+      },
+      {
+        "name": "Manifest Validation",
+        "description": "Validate module manifests",
+        "sequences": ["0405"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "Test Sync Check",
+        "description": "Check test synchronization",
+        "sequences": ["0426"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 180
+      },
+      {
+        "name": "Workflow Health Check",
+        "description": "Validate GitHub Actions workflows",
+        "sequences": ["0440"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 120
+      },
+      {
+        "name": "PSScriptAnalyzer",
+        "description": "Run PSScriptAnalyzer on all code",
+        "sequences": ["0404"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Install Testing Tools",
+        "description": "Ensure testing tools installed",
+        "sequences": ["0400"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Unit Tests",
+        "description": "Run unit tests",
+        "sequences": ["0402"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "Integration Tests",
+        "description": "Run integration tests",
+        "sequences": ["0403"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "Component Quality",
+        "description": "Component quality validation",
+        "sequences": ["0420"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Documentation Structure",
+        "description": "Validate documentation",
+        "sequences": ["0425"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 180
+      },
+      {
+        "name": "Generate Test Report",
+        "description": "Generate comprehensive test report",
+        "sequences": ["0450"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 480,
+        "condition": "{{generateReports}} == true"
+      }
+    ]
+  }
+}

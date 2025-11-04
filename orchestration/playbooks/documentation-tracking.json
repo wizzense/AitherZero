@@ -1,0 +1,91 @@
+{
+  "$schema": "../schema/playbook-schema-v3.json",
+  "name": "documentation-tracking",
+  "version": "1.0.0",
+  "description": "Track documentation freshness and validate directory documentation coverage",
+  "profiles": {
+    "quick": {
+      "description": "Quick documentation validation (missing docs only)",
+      "stages": ["validate"]
+    },
+    "standard": {
+      "description": "Standard documentation tracking (validation + freshness)",
+      "stages": ["validate", "track"]
+    },
+    "full": {
+      "description": "Full documentation analysis (validation + freshness + reporting)",
+      "stages": ["validate", "track", "report"]
+    }
+  },
+  "stages": {
+    "validate": {
+      "name": "Validate Directory Documentation",
+      "description": "Check for missing README.md or index.md files",
+      "scripts": [
+        {
+          "id": "0961",
+          "path": "./automation-scripts/0961_Validate-DirectoryDocumentation.ps1",
+          "params": {
+            "CheckMissing": true,
+            "MinFiles": 3
+          },
+          "continueOnError": true
+        }
+      ]
+    },
+    "track": {
+      "name": "Track Documentation Freshness",
+      "description": "Analyze when documentation was last updated",
+      "scripts": [
+        {
+          "id": "0960",
+          "path": "./automation-scripts/0960_Track-DocumentationFreshness.ps1",
+          "params": {
+            "ReportOnly": true
+          },
+          "continueOnError": true
+        }
+      ]
+    },
+    "report": {
+      "name": "Generate Reports",
+      "description": "Generate project report and dashboard with documentation metrics",
+      "scripts": [
+        {
+          "id": "0510",
+          "path": "./automation-scripts/0510_Generate-ProjectReport.ps1",
+          "params": {},
+          "continueOnError": true
+        },
+        {
+          "id": "0512",
+          "path": "./automation-scripts/0512_Generate-Dashboard.ps1",
+          "params": {
+            "Format": "All"
+          },
+          "continueOnError": true
+        }
+      ]
+    }
+  },
+  "executionOrder": ["validate", "track", "report"],
+  "parallel": false,
+  "continueOnError": true,
+  "postActions": [
+    {
+      "type": "display",
+      "message": "📚 Documentation tracking complete! Check reports/ for details."
+    },
+    {
+      "type": "openFile",
+      "path": "./reports/dashboard.html",
+      "condition": "fileExists"
+    }
+  ],
+  "metadata": {
+    "author": "AitherZero Team",
+    "category": "documentation",
+    "tags": ["documentation", "tracking", "validation", "reporting"],
+    "estimatedDuration": "2-5 minutes"
+  }
+}

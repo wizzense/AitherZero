@@ -1,0 +1,472 @@
+---
+name: 🎯 Unified Testing Orchestration
+
+# Simplified workflow using playbook orchestration
+on:
+  push:
+    branches: [main, develop, dev]
+    paths:
+      - 'domains/**'
+      - 'automation-scripts/**'
+      - 'tests/**'
+      - '**.ps1'
+      - '**.psm1'
+  pull_request:
+    branches: [main, develop, dev]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Test profile to run'
+        type: choice
+        options:
+          - quick
+          - standard
+          - full
+          - ci
+        default: 'standard'
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  pages: write
+
+concurrency:
+  group: unified-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  orchestrated-tests:
+    name: 🎯 Orchestrated Testing (${{ github.event.inputs.profile || 'standard' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "🚀 Bootstrapping AitherZero Environment" -ForegroundColor Cyan
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+          Write-Host "✅ Bootstrap complete!" -ForegroundColor Green
+      
+      - name: 🎼 Run Test Orchestration
+        id: orchestration
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          $profile = "${{ github.event.inputs.profile }}"
+          if (-not $profile) { $profile = "ci" }
+          
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "🎼 Starting Orchestrated Testing" -ForegroundColor Cyan
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "   Profile: $profile" -ForegroundColor White
+          Write-Host "   Playbook: test-orchestrated" -ForegroundColor White
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host ""
+          
+          # Run orchestration
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -PlaybookProfile $profile
+          
+          $exitCode = $LASTEXITCODE
+          
+          Write-Host ""
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          if ($exitCode -eq 0) {
+            Write-Host "✅ Orchestration COMPLETED SUCCESSFULLY" -ForegroundColor Green
+            "status=success" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "❌ Orchestration FAILED (exit code: $exitCode)" -ForegroundColor Red
+            "status=failed" >> $env:GITHUB_OUTPUT
+          }
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          
+          exit $exitCode
+      
+      - name: 📋 Validate Documentation Coverage
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "📚 Validating directory documentation..." -ForegroundColor Cyan
+          ./automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
+      
+      - name: 📅 Track Documentation Freshness
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "⏰ Tracking documentation updates..." -ForegroundColor Cyan
+          ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
+      
+      - name: 📊 Generate Dashboard
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "📊 Generating comprehensive dashboard..." -ForegroundColor Cyan
+          ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+      
+      - name: 📈 Create Modern Summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "📈 Creating GitHub Summary" -ForegroundColor Cyan
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          
+          # Find latest report
+          $reportJson = Get-ChildItem "./reports" -Filter "dashboard.json" -ErrorAction SilentlyContinue | 
+            Select-Object -First 1
+          
+          if ($reportJson) {
+            $report = Get-Content $reportJson.FullName | ConvertFrom-Json
+            
+            $totalTests = $report.Summary.TotalTests
+            $passedTests = $report.Summary.PassedTests
+            $failedTests = $report.Summary.FailedTests
+            $skippedTests = $report.Summary.SkippedTests
+            $passRate = if ($totalTests -gt 0) { [math]::Round(($passedTests / $totalTests) * 100, 1) } else { 0 }
+            
+            # Visual status indicators
+            $statusIcon = if ($failedTests -eq 0) { '✅' } else { '⚠️' }
+            $statusText = if ($failedTests -eq 0) { 'ALL TESTS PASSED' } else { 'SOME TESTS FAILED' }
+            $statusBadge = if ($failedTests -eq 0) { '🟢 SUCCESS' } elseif ($passRate -ge 70) { '🟡 WARNING' } else { '🔴 FAILURE' }
+            
+            # Progress bar visualization
+            $progressBar = ""
+            $greenBlocks = [math]::Floor($passRate / 10)
+            $redBlocks = 10 - $greenBlocks
+            $progressBar = ('🟢' * $greenBlocks) + ('⚪' * $redBlocks)
+            
+            # Build modern GitHub step summary
+            $summary = @"
+          # 🎯 Unified Test Orchestration Results
+          
+          ## $statusIcon Status: **$statusText** • $statusBadge
+          
+          ### 📊 Test Execution Summary
+          
+          | Metric | Value | Visual Progress |
+          |--------|-------|-----------------|
+          | **Total Tests** | $totalTests | ⚡ |
+          | **✅ Passed** | $passedTests | $('🟢' * [math]::Min($passedTests, 10)) |
+          | **❌ Failed** | $failedTests | $(if ($failedTests -gt 0) { '🔴' * [math]::Min($failedTests, 10) } else { '✨' }) |
+          | **⏭️ Skipped** | $skippedTests | 〰️ |
+          | **📈 Pass Rate** | $passRate% | $progressBar |
+          
+          ### 🔍 Quality & Security Overview
+          
+          | Severity | Count | Status |
+          |----------|-------|--------|
+          | 🔴 **Critical** | $($report.Summary.CriticalIssues) | $(if ($report.Summary.CriticalIssues -eq 0) { '✅ None' } else { '⚠️ Action Needed' }) |
+          | 🟠 **High** | $($report.Summary.HighIssues) | $(if ($report.Summary.HighIssues -eq 0) { '✅ None' } else { '⚠️ Review Required' }) |
+          | 🟡 **Medium** | $($report.Summary.MediumIssues) | $(if ($report.Summary.MediumIssues -lt 10) { '✅ Acceptable' } else { '⚠️ Consider Fixing' }) |
+          | 🔵 **Low** | $($report.Summary.LowIssues) | ℹ️ Informational |
+          | **Total Issues** | $($report.Summary.TotalIssues) | 📋 |
+          
+          ### 🎭 Test Profile
+          
+          **Profile Used:** ``${{ github.event.inputs.profile || 'ci' }}``  
+          **Orchestration Status:** ``${{ steps.orchestration.outputs.status || 'unknown' }}``  
+          **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          $(if ($failedTests -gt 0) {
+          @"
+          
+          ### ⚠️ Action Required
+          
+          **$failedTests test(s) failed.** Please review the failures and address them before merging.
+          
+          🔍 **Next Steps:**
+          1. Review failed tests in the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          2. Fix the failing tests locally
+          3. Run ``./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated"`` to verify fixes
+          4. Push changes to trigger re-validation
+          "@
+          } else {
+          @"
+          
+          ### 🎉 All Tests Passed!
+          
+          Excellent work! All tests are passing successfully. Your code meets the quality standards.
+          "@
+          })
+          
+          ### 📊 Resources
+          
+          - 🌐 [**Live Dashboard**](https://wizzense.github.io/AitherZero/dashboard.html)
+          - 📁 [**Download Reports**](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - 📖 [**Documentation**](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/)
+          - 🎼 [**Playbook Details**](${{ github.server_url }}/${{ github.repository }}/blob/main/orchestration/playbooks/testing/test-orchestrated.json)
+          
+          ---
+          
+          <details>
+          <summary>🔧 Local Testing Commands</summary>
+          
+          ``````bash
+          # Run same tests locally
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -PlaybookProfile ci
+          
+          # Quick validation only
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -PlaybookProfile quick
+          
+          # Full comprehensive testing
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -PlaybookProfile full
+          ``````
+          
+          </details>
+          
+          ---
+          *🤖 Generated by AitherZero Unified Testing Orchestration • Profile: ${{ github.event.inputs.profile || 'ci' }} • Run #${{ github.run_number }}*
+          "@
+            
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+            
+            Write-Host "✅ Summary created successfully!" -ForegroundColor Green
+          } else {
+            $summary = @"
+          # 🎯 Unified Test Orchestration Results
+          
+          ## ⚠️ Dashboard Generation Issue
+          
+          The comprehensive dashboard could not be generated. This may indicate:
+          - Orchestration failed early
+          - Dashboard generation script encountered an error
+          - Report files were not created
+          
+          ### 🔍 Troubleshooting Steps
+          
+          1. Check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for errors
+          2. Review the "Run Test Orchestration" step output
+          3. Look for errors in the "Generate Dashboard" step
+          
+          ### 📊 Orchestration Status
+          
+          **Status:** ``${{ steps.orchestration.outputs.status || 'unknown' }}``  
+          **Profile:** ``${{ github.event.inputs.profile || 'ci' }}``  
+          **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          ---
+          *🤖 Generated by AitherZero Unified Testing Orchestration • Run #${{ github.run_number }}*
+          "@
+            
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+            
+            Write-Host "⚠️ Dashboard not found - summary created with limited information" -ForegroundColor Yellow
+          }
+          
+          - [Dashboard](./reports/dashboard.html)
+          - [Detailed Report](./reports/test-summary.md)
+          
+          "@
+            
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+          } else {
+            Write-Host "⚠️  No dashboard found - tests may have failed early" -ForegroundColor Yellow
+            @"
+          # 🎯 Test Orchestration Results
+          
+          ⚠️ **No dashboard generated** - tests may have failed during execution.
+          Check the workflow logs for details.
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+          }
+      
+      - name: 📤 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            tests/results/**/*.xml
+            tests/results/**/*.json
+          retention-days: 30
+      
+      - name: 📤 Upload Reports & Dashboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-dashboard
+          path: |
+            reports/**/*.html
+            reports/**/*.json
+            reports/**/*.md
+          retention-days: 30
+      
+      - name: 📊 Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: 'tests/results/**/{UnitTests,IntegrationTests}-*.xml'
+          check_name: 'Test Results'
+          comment_mode: always
+        continue-on-error: true
+      
+      - name: 💬 Post Modern PR Comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🎯 Unified Test Orchestration Results\n\n';
+            comment += '> **Builds on:** [✅ PR Validation](#) provided syntax check • This is the comprehensive test suite\n\n';
+            
+            try {
+              const dashboardPath = './reports/dashboard.json';
+              if (fs.existsSync(dashboardPath)) {
+                const dashboard = JSON.parse(fs.readFileSync(dashboardPath, 'utf8'));
+                
+                const totalTests = dashboard.Summary.TotalTests;
+                const passedTests = dashboard.Summary.PassedTests;
+                const failedTests = dashboard.Summary.FailedTests;
+                const skippedTests = dashboard.Summary.SkippedTests;
+                const passRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+                
+                // Status indicators
+                const statusIcon = failedTests === 0 ? '✅' : '⚠️';
+                const statusText = failedTests === 0 ? 'PASSED' : 'FAILED';
+                const statusBadge = failedTests === 0 ? '🟢 SUCCESS' : (passRate >= 70 ? '🟡 WARNING' : '🔴 FAILURE');
+                
+                // Progress bar
+                const greenBlocks = Math.floor(passRate / 10);
+                const whiteBlocks = 10 - greenBlocks;
+                const progressBar = '🟢'.repeat(greenBlocks) + '⚪'.repeat(whiteBlocks);
+                
+                comment += `### ${statusIcon} Status: **${statusText}** • ${statusBadge}\n\n`;
+                comment += `**Test Profile:** \`${{ github.event.inputs.profile || 'ci' }}\`\n`;
+                comment += `**Pass Rate:** ${passRate}% ${progressBar}\n\n`;
+                
+                comment += `### 📊 Test Results\n\n`;
+                comment += `| Metric | Value | Visual |\n`;
+                comment += `|--------|-------|--------|\n`;
+                comment += `| Total Tests | ${totalTests} | ⚡ |\n`;
+                comment += `| ✅ Passed | ${passedTests} | ${'🟢'.repeat(Math.min(passedTests, 10))} |\n`;
+                comment += `| ❌ Failed | ${failedTests} | ${failedTests > 0 ? '🔴'.repeat(Math.min(failedTests, 10)) : '✨'} |\n`;
+                comment += `| ⏭️ Skipped | ${skippedTests} | 〰️ |\n\n`;
+                
+                comment += `### 🔍 Quality Overview\n\n`;
+                comment += `| Severity | Count | Status |\n`;
+                comment += `|----------|-------|--------|\n`;
+                comment += `| 🔴 Critical | ${dashboard.Summary.CriticalIssues} | ${dashboard.Summary.CriticalIssues === 0 ? '✅' : '⚠️'} |\n`;
+                comment += `| 🟠 High | ${dashboard.Summary.HighIssues} | ${dashboard.Summary.HighIssues === 0 ? '✅' : '⚠️'} |\n`;
+                comment += `| 🟡 Medium | ${dashboard.Summary.MediumIssues} | ${dashboard.Summary.MediumIssues < 10 ? '✅' : '⚠️'} |\n`;
+                comment += `| 🔵 Low | ${dashboard.Summary.LowIssues} | ℹ️ |\n\n`;
+                
+                if (failedTests > 0) {
+                  comment += `### ⚠️ Action Required\n\n`;
+                  comment += `**${failedTests} test(s) failed.** Please fix before merging.\n\n`;
+                  comment += `🔍 **Next Steps:**\n`;
+                  comment += `1. Review [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n`;
+                  comment += `2. Fix failing tests locally\n`;
+                  comment += `3. Run: \`./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated"\`\n`;
+                  comment += `4. Push changes to re-validate\n\n`;
+                } else {
+                  comment += `### 🎉 All Tests Passed!\n\n`;
+                  comment += `Excellent work! All tests are passing. Ready to merge! 🚀\n\n`;
+                }
+                
+                comment += `### 🔗 Resources\n\n`;
+                comment += `- 🌐 [Live Dashboard](https://wizzense.github.io/AitherZero/dashboard.html)\n`;
+                comment += `- 📁 [Download Reports](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n`;
+                comment += `- 📊 [Workflow Run #${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n`;
+                
+              } else {
+                comment += `⚠️ **Dashboard not generated** - tests may have failed during execution.\n\n`;
+                comment += `Check the [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.\n`;
+              }
+            } catch (error) {
+              comment += `⚠️ Error reading dashboard: ${error.message}\n`;
+            }
+            
+            comment += `\n---\n`;
+            comment += `*🤖 Automated by AitherZero Unified Testing • Profile: ${{ github.event.inputs.profile || 'ci' }} • Run #${context.runNumber}*`;
+            
+            // Find and update existing comment or create new
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.login === 'github-actions[bot]' && 
+              c.body.includes('🎯 Unified Test Orchestration Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+  publish-dashboard:
+    name: 📊 Publish Dashboard to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: orchestrated-tests
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 📊 Download Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports-dashboard
+          path: ./reports
+        continue-on-error: true
+      
+      - name: 🔧 Setup Pages
+        uses: actions/configure-pages@v5
+      
+      - name: 🏗️ Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./reports
+          destination: ./_site
+      
+      - name: 📤 Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+      
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      
+      - name: 📋 Report Deployment
+        if: steps.deployment.outcome == 'success'
+        run: |
+          echo "✅ Dashboard published to GitHub Pages!"
+          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"

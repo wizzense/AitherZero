@@ -1,95 +1,64 @@
 {
   "metadata": {
     "name": "ci-quality-validation",
-    "description": "Quality validation - mirrors GitHub Actions quality-validation.yml",
-    "version": "2.0.0",
+    "description": "Quality checks on code and components",
+    "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "quality", "validation", "github-actions", "psscriptanalyzer"],
+    "tags": ["ci", "quality", "validation", "code-quality"],
     "estimatedDuration": "10-15 minutes",
-    "lastUpdated": "2025-11-02T06:30:00Z",
     "githubWorkflow": "quality-validation.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": ["PSScriptAnalyzer"],
     "requiredTools": [],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "path": "./domains",
-      "recursive": true,
-      "failOnWarning": false,
-      "validateComponents": true
+      "verbose": false,
+      "failOnWarnings": false
     },
     "profiles": {
       "fast": {
-        "description": "Fast quality check",
+        "description": "Fast quality check - essential checks only",
         "variables": {
-          "recursive": false,
-          "validateComponents": false
+          "skipDocumentation": true
         }
       },
-      "comprehensive": {
-        "description": "Comprehensive quality validation",
+      "standard": {
+        "description": "Standard quality check - all checks",
         "variables": {
-          "recursive": true,
-          "validateComponents": true,
-          "failOnWarning": false
+          "skipDocumentation": false
         }
       }
     },
     "stages": [
       {
-        "name": "PSScriptAnalyzer",
-        "description": "Run PSScriptAnalyzer on all code",
+        "name": "PSScriptAnalyzer Full Scan",
+        "description": "Run PSScriptAnalyzer on entire codebase",
         "sequences": ["0404"],
-        "variables": {
-          "Path": "{{path}}",
-          "Recurse": "{{recursive}}",
-          "FailOnWarning": "{{failOnWarning}}",
-          "ExcludePaths": ["tests", "legacy-to-migrate", "examples"]
-        },
-        "continueOnError": false,
+        "variables": {},
+        "continueOnError": true,
         "timeout": 300
       },
       {
-        "name": "Component Quality",
+        "name": "Component Quality Validation",
         "description": "Validate component quality standards",
         "sequences": ["0420"],
-        "condition": "{{validateComponents}}",
+        "variables": {},
         "continueOnError": true,
-        "timeout": 180
+        "timeout": 300
       },
       {
         "name": "Documentation Structure",
-        "description": "Validate documentation completeness",
+        "description": "Validate documentation structure and completeness",
         "sequences": ["0425"],
+        "variables": {},
         "continueOnError": true,
-        "timeout": 120
+        "timeout": 180,
+        "condition": "{{skipDocumentation}} == false"
       }
     ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🔍 Starting quality validation...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ Quality validation passed!",
-      "level": "Success"
-    },
-    "onFailure": {
-      "message": "❌ Quality validation failed",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "quality-validation.yml"
-    }
   }
 }

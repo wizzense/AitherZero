@@ -7,7 +7,7 @@ name: 'Phase 2 - Intelligent Issue Creation'
 on:
   workflow_run:
     workflows:
-      - "🧪 Comprehensive Test Execution"
+      - "🎯 Unified Testing Orchestration"
       - "PR Validation"
       - "Quality Validation"
     types: [completed]
