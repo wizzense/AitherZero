@@ -14,6 +14,14 @@ Reusable one-shot prompts for common development tasks in AitherZero.
 
 ## Available Prompts
 
+### 🏗️ Architecture & Design (REQUIRED READING)
+
+| Prompt | Purpose | When to Use |
+|--------|---------|-------------|
+| **[aitherzero-script-architecture.md](./aitherzero-script-architecture.md)** | ⚠️ Single-purpose scripts rule | **ALWAYS before creating/modifying automation scripts** |
+
+**READ THIS FIRST** if working with automation-scripts (0000-9999).
+
 ### 🔧 Troubleshooting
 
 | Prompt | Purpose | When to Use |
