@@ -668,7 +668,7 @@ jobs:
         with:
           name: '⚡ Parallel Test Results'
           path: './tests/results-consolidated/**/*.xml'
-          reporter: 'dotnet-trx'
+          reporter: 'java-junit'
           fail-on-error: false
       
       - name: 💬 Comment on PR

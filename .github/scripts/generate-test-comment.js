@@ -114,7 +114,7 @@ module.exports = async ({github, context, core}) => {
   const failedPct = totalTests > 0 ? (failed/totalTests*100).toFixed(1) : '0.0';
   const skippedPct = totalTests > 0 ? (skipped/totalTests*100).toFixed(1) : '0.0';
   
-  // Calculate job statuses - MUST be before using failedJobs
+  // Calculate job statuses - MOVED BEFORE USAGE
   const allJobs = [...unitTests, ...domainTests, ...integrationTests, ...staticAnalysis];
   const failedJobs = allJobs.filter(j => j.conclusion === 'failure');
   const hasFailures = failed > 0 || failedJobs.length > 0;
