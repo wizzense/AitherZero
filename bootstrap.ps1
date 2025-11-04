@@ -208,8 +208,22 @@ function Get-DefaultInstallPath {
 function Test-Dependencies {
     Write-BootstrapLog "Checking system dependencies..." -Level Info
 
+    # Detect environment for context-aware dependency checking
+    $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+    $ciProvider = if ($env:GITHUB_ACTIONS -eq 'true') { 'GitHub Actions' } 
+                  elseif ($env:TF_BUILD -eq 'true') { 'Azure Pipelines' }
+                  elseif ($env:GITLAB_CI -eq 'true') { 'GitLab CI' }
+                  else { 'Unknown CI' }
+
+    if ($isCI) {
+        Write-BootstrapLog "CI environment detected: $ciProvider" -Level Info
+    } else {
+        Write-BootstrapLog "Local development environment detected" -Level Info
+    }
+
     $missing = @()
     $found = @()
+    $optional = @()
 
     # Check Git
     if (Get-Command git -ErrorAction SilentlyContinue) {
@@ -236,13 +250,73 @@ function Test-Dependencies {
         $found += 'PowerShell7'
     }
 
-    # Additional system checks
+    # Platform detection with enhanced info
     if (Test-IsWindows) {
         Write-BootstrapLog "Platform: Windows" -Level Info
+        
+        # Windows-specific optional dependencies
+        if (Get-Command winget -ErrorAction SilentlyContinue) {
+            Write-BootstrapLog "  Package Manager: winget available" -Level Success
+            $optional += 'winget'
+        } elseif (Get-Command choco -ErrorAction SilentlyContinue) {
+            Write-BootstrapLog "  Package Manager: Chocolatey available" -Level Success
+            $optional += 'choco'
+        } else {
+            Write-BootstrapLog "  Package Manager: None detected (winget/choco recommended)" -Level Info
+        }
     } elseif (Test-IsMacOS) {
         Write-BootstrapLog "Platform: macOS" -Level Info
+        
+        # macOS-specific optional dependencies
+        if (Get-Command brew -ErrorAction SilentlyContinue) {
+            Write-BootstrapLog "  Package Manager: Homebrew available" -Level Success
+            $optional += 'brew'
+        } else {
+            Write-BootstrapLog "  Package Manager: Homebrew not found (recommended)" -Level Info
+        }
     } else {
         Write-BootstrapLog "Platform: Linux/Unix" -Level Info
+        
+        # Linux-specific checks
+        if (Test-Path "/etc/os-release") {
+            $osRelease = Get-Content "/etc/os-release" | ConvertFrom-StringData -Delimiter "="
+            $distroId = $osRelease.ID.Trim('"')
+            Write-BootstrapLog "  Distribution: $distroId" -Level Info
+            
+            # Check for package managers
+            if (Get-Command apt -ErrorAction SilentlyContinue) {
+                $optional += 'apt'
+            } elseif (Get-Command dnf -ErrorAction SilentlyContinue) {
+                $optional += 'dnf'
+            } elseif (Get-Command yum -ErrorAction SilentlyContinue) {
+                $optional += 'yum'
+            }
+        }
+    }
+
+    # Check for Pester (optional but recommended for testing)
+    if ($isCI -or $InstallProfile -in @('Developer', 'Full')) {
+        $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge '5.0.0' }
+        if ($pesterModule) {
+            Write-BootstrapLog "Pester 5.0+ found: $($pesterModule.Version)" -Level Success
+            $found += 'Pester'
+        } else {
+            Write-BootstrapLog "Pester 5.0+ not found (will be installed if needed)" -Level Info
+            # Not critical for bootstrap, but note it
+            $optional += 'Pester'
+        }
+    }
+
+    # Check for PSScriptAnalyzer (optional but recommended for development)
+    if ($InstallProfile -in @('Developer', 'Full')) {
+        $psaModule = Get-Module -ListAvailable -Name PSScriptAnalyzer
+        if ($psaModule) {
+            Write-BootstrapLog "PSScriptAnalyzer found: $($psaModule.Version)" -Level Success
+            $found += 'PSScriptAnalyzer'
+        } else {
+            Write-BootstrapLog "PSScriptAnalyzer not found (will be installed if needed)" -Level Info
+            $optional += 'PSScriptAnalyzer'
+        }
     }
 
     # Report findings
@@ -250,10 +324,14 @@ function Test-Dependencies {
         Write-BootstrapLog "Dependencies satisfied: $($found -join ', ')" -Level Success
     }
 
+    if ($optional.Count -gt 0) {
+        Write-BootstrapLog "Optional components available: $($optional -join ', ')" -Level Info
+    }
+
     if ($missing.Count -gt 0) {
         Write-BootstrapLog "Missing dependencies: $($missing -join ', ')" -Level Warning
 
-        # Determine installation strategy
+        # Determine installation strategy with enhanced logic
         $shouldInstall = $false
         $reason = ""
 
@@ -265,7 +343,11 @@ function Test-Dependencies {
             $reason = "PowerShell 7 is required and will be auto-installed"
         } elseif ($script:IsCI) {
             $shouldInstall = $true
-            $reason = "CI environment detected"
+            $reason = "CI environment detected - auto-installing missing dependencies"
+        } elseif ($NonInteractive) {
+            # In non-interactive mode, don't install automatically unless explicitly requested
+            $shouldInstall = $false
+            $reason = "Non-interactive mode without auto-install flag"
         }
 
         if ($shouldInstall) {
@@ -291,6 +373,14 @@ function Test-Dependencies {
         }
     } else {
         Write-BootstrapLog "All required dependencies are available!" -Level Success
+        
+        # Provide summary for CI environments
+        if ($isCI) {
+            Write-BootstrapLog "CI Environment Summary:" -Level Info
+            Write-BootstrapLog "  Provider: $ciProvider" -Level Info
+            Write-BootstrapLog "  PowerShell: $($PSVersionTable.PSVersion)" -Level Info
+            Write-BootstrapLog "  Platform: $([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)" -Level Info
+        }
     }
 }
 
