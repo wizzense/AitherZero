@@ -83,7 +83,8 @@ release-notes.md
 
 # PowerShell Security Scripts (Private - Never Commit)
 powershellsec/
-tests/results/
+tests/results/*
+!tests/results/index.md
 
 # Quality reports (generated artifacts - linting results, analysis output)
 reports/quality/
