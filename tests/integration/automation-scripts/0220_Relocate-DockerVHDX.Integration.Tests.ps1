@@ -3,18 +3,18 @@
 
 <#
 .SYNOPSIS
-    Integration tests for 0220_Configure-DockerDesktopHyperV
+    Integration tests for 0220_Relocate-DockerVHDX
 .DESCRIPTION
-    Integration tests for Docker Desktop Hyper-V configuration script
+    Integration tests for Docker Desktop VHDX relocation script
     Tests Windows-specific functionality and Docker Desktop integration
-    Generated: 2025-11-04 00:20:00
+    Generated: 2025-11-04 00:26:00
 #>
 
-Describe '0220_Configure-DockerDesktopHyperV Integration Tests' -Tag 'Integration', 'AutomationScript', 'Development', 'Docker' {
+Describe '0220_Relocate-DockerVHDX Integration Tests' -Tag 'Integration', 'AutomationScript', 'Development', 'Docker' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0220_Configure-DockerDesktopHyperV.ps1'
-        $script:ScriptName = '0220_Configure-DockerDesktopHyperV'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0220_Relocate-DockerVHDX.ps1'
+        $script:ScriptName = '0220_Relocate-DockerVHDX'
     }
 
     Context 'Windows-Only Execution' {
@@ -83,7 +83,7 @@ Describe '0220_Configure-DockerDesktopHyperV Integration Tests' -Tag 'Integratio
         It 'Should support WhatIf for all operations' {
             # WhatIf should not make any actual changes
             {
-                & $script:ScriptPath -WhatIf -SkipFeatureInstall $true
+                & $script:ScriptPath -WhatIf
             } | Should -Not -Throw
         }
     }

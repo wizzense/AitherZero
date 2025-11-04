@@ -3,20 +3,20 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0220_Configure-DockerDesktopHyperV
+    Unit tests for 0220_Relocate-DockerVHDX
 .DESCRIPTION
     Auto-generated comprehensive tests
-    Script: 0220_Configure-DockerDesktopHyperV
+    Script: 0220_Relocate-DockerVHDX
     Stage: Development
-    Description: Configure Docker Desktop with Hyper-V backend and custom VHDX location on Windows
-    Generated: 2025-11-04 00:20:00
+    Description: Relocate Docker Desktop VHDX to custom disk location on Windows
+    Generated: 2025-11-04 00:26:00
 #>
 
-Describe '0220_Configure-DockerDesktopHyperV' -Tag 'Unit', 'AutomationScript', 'Development' {
+Describe '0220_Relocate-DockerVHDX' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0220_Configure-DockerDesktopHyperV.ps1'
-        $script:ScriptName = '0220_Configure-DockerDesktopHyperV'
+        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0220_Relocate-DockerVHDX.ps1'
+        $script:ScriptName = '0220_Relocate-DockerVHDX'
     }
 
     Context 'Script Validation' {
@@ -49,10 +49,7 @@ Describe '0220_Configure-DockerDesktopHyperV' -Tag 'Unit', 'AutomationScript', '
             $cmd.Parameters.ContainsKey('DiskDir') | Should -Be $true
         }
 
-        It 'Should have parameter: SkipFeatureInstall' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('SkipFeatureInstall') | Should -Be $true
-        }
+
     }
 
     Context 'Metadata' {
