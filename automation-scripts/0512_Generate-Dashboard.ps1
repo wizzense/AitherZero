@@ -509,19 +509,36 @@ function Get-ProjectMetrics {
                     $errors = $pssaData.Summary.Errors
                     $warnings = $pssaData.Summary.Warnings
                     
-                    $filesAnalyzed = if ($pssaData.FilesAnalyzed) { @($pssaData.FilesAnalyzed).Count } else { 0 }
-                    $metrics.QualityCoverage.TotalValidated = $filesAnalyzed
-                    $metrics.QualityCoverage.FailedFiles = if ($errors -gt 0) { 1 } else { 0 }
-                    $metrics.QualityCoverage.WarningFiles = if ($warnings -gt 0) { $filesAnalyzed - $metrics.QualityCoverage.FailedFiles } else { 0 }
-                    $metrics.QualityCoverage.PassedFiles = [math]::Max(0, $filesAnalyzed - $metrics.QualityCoverage.FailedFiles - $metrics.QualityCoverage.WarningFiles)
+                    # Fast results only scan changed files, but we need to represent quality against ALL files
+                    $filesScanned = if ($pssaData.FilesAnalyzed) { @($pssaData.FilesAnalyzed).Count } else { 0 }
+                    $totalPSFiles = $allPSFiles.Count
                     
-                    if ($filesAnalyzed -gt 0) {
-                        $avgIssuesPerFile = $totalIssues / $filesAnalyzed
-                        $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 10), 1))
-                        $metrics.QualityCoverage.Percentage = [math]::Round(($metrics.QualityCoverage.PassedFiles / $filesAnalyzed) * 100, 1)
+                    # Use total PowerShell files as the baseline for quality calculation
+                    $metrics.QualityCoverage.TotalValidated = $totalPSFiles
+                    
+                    # Estimate files with issues from scanned files
+                    $filesWithIssues = $filesScanned  # All scanned files have at least warnings
+                    $filesWithErrors = if ($errors -gt 0) { [math]::Min($filesScanned, [math]::Ceiling($errors / [math]::Max(1, ($totalIssues / $filesScanned)))) } else { 0 }
+                    
+                    $metrics.QualityCoverage.FailedFiles = $filesWithErrors
+                    $metrics.QualityCoverage.WarningFiles = $filesWithIssues - $filesWithErrors
+                    # Assume files not scanned are clean (optimistic but prevents false negatives)
+                    $metrics.QualityCoverage.PassedFiles = $totalPSFiles - $filesWithIssues
+                    $metrics.QualityCoverage.TotalIssues = $totalIssues
+                    
+                    # Calculate quality score: penalize based on issues found relative to all files
+                    if ($totalPSFiles -gt 0) {
+                        $issuesPerFile = $totalIssues / $totalPSFiles
+                        $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($issuesPerFile * 5), 1))
+                        
+                        # Quality percentage: weight clean files and warning files
+                        $metrics.QualityCoverage.Percentage = [math]::Round(
+                            (($metrics.QualityCoverage.PassedFiles + ($metrics.QualityCoverage.WarningFiles * 0.3)) / $totalPSFiles) * 100,
+                            1
+                        )
                     }
                     
-                    Write-ScriptLog -Level Warning -Message "Using fast results only - run './automation-scripts/0404_Run-PSScriptAnalyzer.ps1' for full baseline analysis"
+                    Write-ScriptLog -Level Warning -Message "Using fast results only ($filesScanned files scanned, $totalIssues issues) - calculated against $totalPSFiles total files. Run './automation-scripts/0404_Run-PSScriptAnalyzer.ps1' for full baseline analysis"
                 }
             } catch {
                 Write-ScriptLog -Level Warning -Message "Failed to parse fast quality results: $_"
@@ -529,28 +546,39 @@ function Get-ProjectMetrics {
         }
     }
 
-    # Get latest test results - check multiple possible locations
+    # Get latest test results - check multiple possible locations including JSON
     $testResultsPaths = @(
         (Join-Path $ProjectPath "testResults.xml"),
-        (Join-Path $ProjectPath "tests/results/*.xml")
+        (Join-Path $ProjectPath "tests/results/*.xml"),
+        (Join-Path $ProjectPath "tests/results/*Summary*.json"),
+        (Join-Path $ProjectPath "TestResults.json")
     )
     
     $latestTestResults = $null
+    $testResultFormat = $null
+    
     foreach ($testPath in $testResultsPaths) {
         if ($testPath -like "*`**") {
-            $latestTestResults = Get-ChildItem -Path (Split-Path $testPath -Parent) -Filter (Split-Path $testPath -Leaf) -ErrorAction SilentlyContinue | 
-                               Where-Object { $_.Name -notlike "Coverage*" } |
-                               Sort-Object LastWriteTime -Descending | 
-                               Select-Object -First 1
+            $files = Get-ChildItem -Path (Split-Path $testPath -Parent) -Filter (Split-Path $testPath -Leaf) -ErrorAction SilentlyContinue | 
+                    Where-Object { $_.Name -notlike "Coverage*" -and $_.Name -notlike "PSScriptAnalyzer*" } |
+                    Sort-Object LastWriteTime -Descending
+            
+            if ($files) {
+                $latestTestResults = $files[0]
+                $testResultFormat = if ($latestTestResults.Extension -eq '.json') { 'JSON' } else { 'XML' }
+                break
+            }
         } else {
             if (Test-Path $testPath) {
                 $latestTestResults = Get-Item $testPath
+                $testResultFormat = if ($latestTestResults.Extension -eq '.json') { 'JSON' } else { 'XML' }
+                break
             }
         }
-        if ($latestTestResults) { break }
     }
     
-    if ($latestTestResults) {
+    # Parse test results based on format
+    if ($latestTestResults -and $testResultFormat -eq 'XML') {
         try {
             [xml]$testXml = Get-Content $latestTestResults.FullName
             
@@ -565,6 +593,7 @@ function Get-ProjectMetrics {
                 $metrics.Tests.Passed = $totalTests - $failures - $errors - $skipped
                 $metrics.Tests.Failed = $failures + $errors
                 $metrics.Tests.Skipped = $skipped
+                $metrics.Tests.Total = $totalTests
                 
                 if ($totalTests -gt 0) {
                     $metrics.Tests.SuccessRate = [math]::Round(($metrics.Tests.Passed / $totalTests) * 100, 1)
@@ -584,14 +613,57 @@ function Get-ProjectMetrics {
                             $metrics.Tests.Duration = "${minutes}m ${seconds}s"
                         }
                     } catch {
-                        $metrics.Tests.Duration = "Unknown"
+                        $metrics.Tests.Duration = "Not recorded"
                     }
                 } else {
-                    $metrics.Tests.Duration = "Unknown"
+                    $metrics.Tests.Duration = "Not recorded"
                 }
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse test results: $_"
+            Write-ScriptLog -Level Warning -Message "Failed to parse test XML results: $_"
+        }
+    } elseif ($latestTestResults -and $testResultFormat -eq 'JSON') {
+        try {
+            $testJson = Get-Content $latestTestResults.FullName -Raw | ConvertFrom-Json
+            
+            # Parse Pester 5.x JSON format
+            if ($testJson.Passed -or $testJson.Failed -or $testJson.Total) {
+                $metrics.Tests.Passed = if ($testJson.Passed) { $testJson.Passed } else { 0 }
+                $metrics.Tests.Failed = if ($testJson.Failed) { $testJson.Failed } else { 0 }
+                $metrics.Tests.Skipped = if ($testJson.Skipped) { $testJson.Skipped } else { 0 }
+                $metrics.Tests.Total = if ($testJson.Total) { $testJson.Total } else { $metrics.Tests.Passed + $metrics.Tests.Failed + $metrics.Tests.Skipped }
+                
+                if ($metrics.Tests.Total -gt 0) {
+                    $metrics.Tests.SuccessRate = [math]::Round(($metrics.Tests.Passed / $metrics.Tests.Total) * 100, 1)
+                }
+                
+                $metrics.Tests.LastRun = $latestTestResults.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+                
+                if ($testJson.Duration) {
+                    $duration = [double]$testJson.Duration
+                    if ($duration -lt 60) {
+                        $metrics.Tests.Duration = "$([math]::Round($duration, 2))s"
+                    } else {
+                        $minutes = [math]::Floor($duration / 60)
+                        $seconds = [math]::Round($duration % 60, 0)
+                        $metrics.Tests.Duration = "${minutes}m ${seconds}s"
+                    }
+                } else {
+                    $metrics.Tests.Duration = "Not recorded"
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse test JSON results: $_"
+        }
+    }
+    
+    # If no test results found, provide informative status based on test file count
+    if (-not $latestTestResults -or ($metrics.Tests.Total -eq 0 -and $metrics.Tests.Passed -eq 0)) {
+        # We have test files but no results - tests haven't been run recently
+        if ($metrics.Tests.Unit -gt 0 -or $metrics.Tests.Integration -gt 0) {
+            $metrics.Tests.LastRun = "Not run recently"
+            $metrics.Tests.Duration = "Run tests to see duration"
+            Write-ScriptLog -Level Warning -Message "Test files exist ($($metrics.Tests.Unit) unit, $($metrics.Tests.Integration) integration) but no recent test results found. Run './automation-scripts/0402_Run-UnitTests.ps1' to generate results."
         }
     }
 
@@ -917,6 +989,10 @@ function ConvertFrom-TestResultsXml {
 }
 
 function Get-BuildStatus {
+    param(
+        [hashtable]$Metrics
+    )
+    
     Write-ScriptLog -Message "Determining build status"
 
     $status = @{
@@ -941,14 +1017,59 @@ function Get-BuildStatus {
         }
     }
 
-    # Check recent test results from testResults.xml at project root
-    $testResultsPath = Join-Path $ProjectPath "testResults.xml"
-    if (Test-Path $testResultsPath) {
-        $result = ConvertFrom-TestResultsXml -XmlPath $testResultsPath
-        if ($result) {
-            $status.Tests = $result.TestStatus
-            $status.Badges.Tests = $result.BadgeUrl
-            $status.LastBuild = $result.LastWriteTime
+    # Use metrics data if provided (preferred method)
+    if ($Metrics) {
+        Write-ScriptLog -Message "Using metrics for build status - Tests.Total: $($Metrics.Tests.Total), Tests.Passed: $($Metrics.Tests.Passed), Tests.Failed: $($Metrics.Tests.Failed), Tests.Unit: $($Metrics.Tests.Unit), Tests.Integration: $($Metrics.Tests.Integration)"
+        
+        # Determine test status from metrics
+        # Only show test status if we have actual execution results (Passed or Failed count > 0)
+        if (($Metrics.Tests.Passed -gt 0) -or ($Metrics.Tests.Failed -gt 0)) {
+            # We have actual test execution results
+            if ($Metrics.Tests.Failed -eq 0) {
+                $status.Tests = "Passing"
+                $passRate = [int]$Metrics.Tests.SuccessRate
+                $status.Badges.Tests = "https://img.shields.io/badge/tests-passing%20(${passRate}%25)-brightgreen"
+            } else {
+                $status.Tests = "Failing"
+                $failedCount = $Metrics.Tests.Failed
+                $totalTests = $Metrics.Tests.Passed + $Metrics.Tests.Failed + $Metrics.Tests.Skipped
+                $status.Badges.Tests = "https://img.shields.io/badge/tests-${failedCount}%20of%20${totalTests}%20failing-red"
+            }
+            if ($Metrics.Tests.LastRun -and $Metrics.Tests.LastRun -ne "Unknown" -and $Metrics.Tests.LastRun -ne "Not run recently") {
+                $status.LastBuild = $Metrics.Tests.LastRun
+            }
+        } elseif ($Metrics.Tests.Unit -gt 0 -or $Metrics.Tests.Integration -gt 0) {
+            # Test files exist but no execution results
+            $testCount = $Metrics.Tests.Unit + $Metrics.Tests.Integration
+            $status.Tests = "Not Run"
+            $status.Badges.Tests = "https://img.shields.io/badge/tests-not%20run%20(${testCount}%20tests)-yellow"
+        }
+        
+        # Set coverage status from metrics
+        if ($Metrics.Coverage.Percentage -gt 0) {
+            $coveragePercent = [int]$Metrics.Coverage.Percentage
+            $status.Coverage = "${coveragePercent}%"
+            
+            if ($coveragePercent -ge 80) {
+                $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
+            } elseif ($coveragePercent -ge 50) {
+                $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
+            } else {
+                $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+            }
+        }
+    }
+
+    # Fallback: Check recent test results from testResults.xml at project root (if metrics didn't provide data)
+    if ($status.Tests -eq "Unknown") {
+        $testResultsPath = Join-Path $ProjectPath "testResults.xml"
+        if (Test-Path $testResultsPath) {
+            $result = ConvertFrom-TestResultsXml -XmlPath $testResultsPath
+            if ($result) {
+                $status.Tests = $result.TestStatus
+                $status.Badges.Tests = $result.BadgeUrl
+                $status.LastBuild = $result.LastWriteTime
+            }
         }
     }
     
@@ -970,60 +1091,62 @@ function Get-BuildStatus {
         }
     }
 
-    # Check code coverage
-    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
-                    Where-Object { $_.Length -gt 100 } |  # Skip empty files
-                    Sort-Object LastWriteTime -Descending |
-                    Select-Object -First 1
-    if ($coverageFiles) {
-        try {
-            [xml]$coverageXml = Get-Content $coverageFiles.FullName -ErrorAction Stop
-            $coveragePercent = 0
-            $hasCoverageData = $false
-            $totalLines = 0
-            
-            # Check for JaCoCo format (used by Pester) - use null-safe property access
-            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
-            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
-            
-            if ($reportHasCounter) {
-                $counters = @($coverageXml.report.counter)
-                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+    # Check code coverage (only if not already set from metrics)
+    if ($status.Coverage -eq "Unknown") {
+        $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
+                        Where-Object { $_.Length -gt 100 } |  # Skip empty files
+                        Sort-Object LastWriteTime -Descending |
+                        Select-Object -First 1
+        if ($coverageFiles) {
+            try {
+                [xml]$coverageXml = Get-Content $coverageFiles.FullName -ErrorAction Stop
+                $coveragePercent = 0
+                $hasCoverageData = $false
+                $totalLines = 0
                 
-                if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
-                    $missedLines = [int]$lineCounter.missed
-                    $coveredLines = [int]$lineCounter.covered
-                    $totalLines = $missedLines + $coveredLines
+                # Check for JaCoCo format (used by Pester) - use null-safe property access
+                $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+                $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+                
+                if ($reportHasCounter) {
+                    $counters = @($coverageXml.report.counter)
+                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
                     
-                    if ($totalLines -gt 0) {
-                        $coveragePercent = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                    if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
+                        $missedLines = [int]$lineCounter.missed
+                        $coveredLines = [int]$lineCounter.covered
+                        $totalLines = $missedLines + $coveredLines
+                        
+                        if ($totalLines -gt 0) {
+                            $coveragePercent = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                        }
+                        $hasCoverageData = $true
                     }
-                    $hasCoverageData = $true
                 }
-            }
-            # Check for Cobertura format (alternative) - use null-safe property access
-            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
-                $coverage = $coverageXml.coverage
-                if ($null -ne $coverage.PSObject.Properties['line-rate']) {
-                    $coveragePercent = [math]::Round([double]$coverage.'line-rate' * 100, 1)
-                    $hasCoverageData = $true
+                # Check for Cobertura format (alternative) - use null-safe property access
+                elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
+                    $coverage = $coverageXml.coverage
+                    if ($null -ne $coverage.PSObject.Properties['line-rate']) {
+                        $coveragePercent = [math]::Round([double]$coverage.'line-rate' * 100, 1)
+                        $hasCoverageData = $true
+                    }
                 }
-            }
-            
-            # Show coverage if we have data, even if it's 0%
-            if ($hasCoverageData) {
-                $status.Coverage = "${coveragePercent}%"
                 
-                if ($coveragePercent -ge 80) {
-                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
-                } elseif ($coveragePercent -ge 50) {
-                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
-                } else {
-                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+                # Show coverage if we have data, even if it's 0%
+                if ($hasCoverageData) {
+                    $status.Coverage = "${coveragePercent}%"
+                    
+                    if ($coveragePercent -ge 80) {
+                        $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
+                    } elseif ($coveragePercent -ge 50) {
+                        $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
+                    } else {
+                        $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+                    }
                 }
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
             }
-        } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
     }
     
@@ -1056,7 +1179,7 @@ function Get-BuildStatus {
         $status.Overall = "Issues"
     } elseif (
         ($status.Tests -eq "Passing" -and $status.Security -eq "Minor Issues") -or
-        ($status.Tests -ne "Failing" -and $status.Security -eq "Clean")
+        (($status.Tests -eq "Not Run" -or $status.Tests -eq "Passing") -and $status.Security -eq "Clean")
     ) {
         $status.Overall = "Warning"
     } else {
@@ -4807,7 +4930,7 @@ try {
     # Collect data
     Write-ScriptLog -Message "Collecting project data..."
     $metrics = Get-ProjectMetrics
-    $status = Get-BuildStatus
+    $status = Get-BuildStatus -Metrics $metrics
     $activity = Get-RecentActivity
     $qualityMetrics = Get-QualityMetrics
     $pssaMetrics = Get-PSScriptAnalyzerMetrics
