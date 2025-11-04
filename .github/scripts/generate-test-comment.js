@@ -47,13 +47,27 @@ module.exports = async ({github, context, core}) => {
   
   // Helper function to format job status
   const formatJob = (job) => {
-    const icon = job.conclusion === 'success' ? '✅' : 
-                job.conclusion === 'failure' ? '❌' : 
-                job.conclusion === 'skipped' ? '⏭️' : '⏳';
-    const statusText = job.conclusion === 'success' ? 'PASSED' : 
-                      job.conclusion === 'failure' ? 'FAILED' : 
-                      job.conclusion === 'skipped' ? 'SKIPPED' : 'RUNNING';
-    return `| ${icon} [${job.name}](${job.url}) | **${statusText}** | ${job.duration}s |`;
+    // Determine icon and status based on conclusion and actual test results
+    let icon, statusText;
+    
+    if (job.conclusion === 'success') {
+      icon = '✅';
+      statusText = 'PASSED';
+    } else if (job.conclusion === 'failure') {
+      icon = '❌';
+      statusText = '**FAILED**';
+    } else if (job.conclusion === 'skipped') {
+      icon = '⏭️';
+      statusText = 'SKIPPED';
+    } else if (job.conclusion === 'cancelled') {
+      icon = '🚫';
+      statusText = 'CANCELLED';
+    } else {
+      icon = '⏳';
+      statusText = 'RUNNING';
+    }
+    
+    return `| ${icon} [${job.name}](${job.url}) | ${statusText} | ${job.duration}s |`;
   };
   
   // Build sections
@@ -91,6 +105,16 @@ module.exports = async ({github, context, core}) => {
     }
   }
   
+  // Add failed jobs summary if there are failures
+  let failedJobsSection = '';
+  if (failedJobs.length > 0) {
+    failedJobsSection = `\n---\n\n### ❌ Failed Jobs Summary\n\n**${failedJobs.length} job(s) failed** - please review and address:\n\n| Failed Job | Link to Logs |\n|------------|-------------|\n`;
+    for (const job of failedJobs) {
+      failedJobsSection += `| ${job.name} | [View Logs →](${job.url}) |\n`;
+    }
+    failedJobsSection += '\n';
+  }
+  
   const totalJobs = unitTests.length + domainTests.length + integrationTests.length + staticAnalysis.length;
   const maxDuration = Math.max(...[...unitTests, ...domainTests, ...integrationTests, ...staticAnalysis].map(j => j.duration));
   const estimatedSequential = totalJobs * 60;
@@ -100,10 +124,32 @@ module.exports = async ({github, context, core}) => {
   const failedPct = totalTests > 0 ? (failed/totalTests*100).toFixed(1) : '0.0';
   const skippedPct = totalTests > 0 ? (skipped/totalTests*100).toFixed(1) : '0.0';
   
+  // Calculate job statuses
+  const allJobs = [...unitTests, ...domainTests, ...integrationTests, ...staticAnalysis];
+  const failedJobs = allJobs.filter(j => j.conclusion === 'failure');
+  const hasFailures = failed > 0 || failedJobs.length > 0;
+  
+  // Build warning section if there are failures
+  let warningSection = '';
+  if (hasFailures) {
+    warningSection = `
+> ## ⚠️ **ATTENTION: This PR has test failures and quality issues**
+> 
+> **${failed} test(s) failed** across ${failedJobs.length} job(s). Please review and fix before merging.
+> 
+> - ❌ **Action Required**: Fix failing tests listed below
+> - 🔍 **Check Status**: Click on failed job links to see detailed logs
+> - 📋 **Not Blocking**: You can still merge, but failures should be addressed
+>
+> ---
+
+`;
+  }
+  
   const comment = `## ⚡ Parallel Test Execution Results ${color}
 
 **Overall Status**: ${statusIcon} **${status}**
-
+${warningSection}
 ### 📊 Aggregate Test Results
 
 | Metric | Count | Percentage |
@@ -114,7 +160,7 @@ module.exports = async ({github, context, core}) => {
 | **Total Tests** | **${totalTests}** | **100%** |
 
 ---
-${unitSection}${domainSection}${integrationSection}${staticSection}
+${unitSection}${domainSection}${integrationSection}${staticSection}${failedJobsSection}
 ---
 
 ### ⚡ Parallel Execution Stats

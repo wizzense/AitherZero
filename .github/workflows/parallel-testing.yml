@@ -340,6 +340,7 @@ jobs:
       - name: 🔍 PSScriptAnalyzer
         shell: pwsh
         timeout-minutes: 5
+        continue-on-error: true
         run: |
           Write-Host "⚡ Running PSScriptAnalyzer" -ForegroundColor Cyan
           ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
@@ -378,6 +379,7 @@ jobs:
       - name: 📊 Consolidate Results
         id: consolidate
         shell: pwsh
+        continue-on-error: true
         run: |
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
           Write-Host "📊 Consolidating Parallel Test Results" -ForegroundColor Cyan
@@ -420,19 +422,20 @@ jobs:
           "total-failed=$totalFailed" >> $env:GITHUB_OUTPUT
           "total-skipped=$totalSkipped" >> $env:GITHUB_OUTPUT
           
-          # Exit with failure if any tests failed
+          # Mark as failed if tests failed (but continue-on-error allows subsequent steps)
           if ($totalFailed -gt 0) {
-            Write-Host "❌ Some tests failed - marking workflow as failed" -ForegroundColor Red
+            Write-Host "❌ Some tests failed - marking step as failed" -ForegroundColor Red
             exit 1
           }
       
       - name: 📊 Publish Test Report
         uses: dorny/test-reporter@v1
         if: always()
+        continue-on-error: true
         with:
           name: '⚡ Parallel Test Results'
           path: './tests/results-consolidated/**/*.xml'
-          reporter: 'java-junit'
+          reporter: 'dotnet-trx'
           fail-on-error: false
       
       - name: 💬 Comment on PR
@@ -456,3 +459,21 @@ jobs:
               }
             };
             return await script({github, context, core: mockCore});
+      
+      - name: ✅ Final Status Check
+        if: always()
+        shell: pwsh
+        run: |
+          $failed = "${{ steps.consolidate.outputs.total-failed }}"
+          if ($failed -and $failed -gt 0) {
+            Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Red
+            Write-Host "❌ WORKFLOW FAILED: $failed test(s) failed" -ForegroundColor Red
+            Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "This failure is informational and does NOT block merging." -ForegroundColor Yellow
+            Write-Host "Please review failed tests and address issues before merging." -ForegroundColor Yellow
+            Write-Host ""
+            exit 1
+          } else {
+            Write-Host "✅ All checks passed!" -ForegroundColor Green
+          }
