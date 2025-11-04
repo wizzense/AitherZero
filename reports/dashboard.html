@@ -1932,13 +1932,13 @@ body {
                 <div class="metrics-grid">
                     <div class="metric-card error">
                         <h3>📈 Quality Score</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">68%</div>
                         <div class="metric-label">
-                            Average across 0 validated files
+                            Average across 1 validated files
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 0%; background: var(--error)">
-                                
+                            <div class="progress-fill" style="width: 68%; background: var(--error)">
+                                68%
                             </div>
                         </div>
                     </div>
@@ -1949,52 +1949,52 @@ body {
                         <div class="metric-label">
                             ✅ 0 Passed | 
                             ⚠️ 0 Warnings | 
-                            ❌ 0 Failed
+                            ❌ 1 Failed
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🔍 Error Handling</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">80%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
-                            ⚠️ 0 | 
-                            ❌ 0
+                            ✅ 2 | 
+                            ⚠️ 1 | 
+                            ❌ 1
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Logging</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">83.8%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
-                            ⚠️ 0 | 
+                            ✅ 1 | 
+                            ⚠️ 3 | 
                             ❌ 0
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🧪 Test Coverage</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">75%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
+                            ✅ 3 | 
                             ⚠️ 0 | 
-                            ❌ 0
+                            ❌ 1
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>🔬 PSScriptAnalyzer</h3>
-                        <div class="metric-value">0%</div>
+                        <div class="metric-value">63.8%</div>
                         <div class="metric-label">
-                            ✅ 0 | 
-                            ⚠️ 0 | 
-                            ❌ 0
+                            ✅ 1 | 
+                            ⚠️ 1 | 
+                            ❌ 2
                         </div>
                     </div>
                 </div>
                 
-                <p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Last validation: 11/04/2025 18:44:49</p>
             </section>
 
             <section class="section" id="pssa">
@@ -2028,7 +2028,7 @@ body {
                     </div>
                 </div>
                 
-                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./az 0404</code> to analyze code quality</p>
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze code quality</p>
             </section>
 
             <section class="section" id="manifest">
@@ -2201,10 +2201,10 @@ body {
                 <div class="info-card" id="actions">
                     <div class="info-card-header">🎯 Quick Actions</div>
                     <div class="info-card-body">
-                        <p><strong>Run Tests:</strong> <code>./az 0402</code></p>
-                        <p><strong>Generate Report:</strong> <code>./az 0510</code></p>
-                        <p><strong>View Dashboard:</strong> <code>./az 0511</code></p>
-                        <p><strong>Validate Code:</strong> <code>./az 0404</code></p>
+                        <p><strong>Run Tests:</strong> <code>./automation-scripts/0402_Run-UnitTests.ps1</code></p>
+                        <p><strong>Generate Report:</strong> <code>./automation-scripts/0510_Generate-ProjectReport.ps1</code></p>
+                        <p><strong>View Dashboard:</strong> <code>./automation-scripts/0511_Show-ProjectDashboard.ps1</code></p>
+                        <p><strong>Validate Code:</strong> <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code></p>
                         <p><strong>Update Project:</strong> <code>git pull && ./bootstrap.ps1</code></p>
                     </div>
                 </div>
@@ -2410,7 +2410,7 @@ body {
                     </div>
                     <div class="metric-card">
                         <h3>🔀 Pull Requests</h3>
-                        <div class="metric-value" style="font-size: 2rem;">18</div>
+                        <div class="metric-value" style="font-size: 2rem;">19</div>
                         <div class="metric-label">Open PRs</div>
                     </div>
                     <div class="metric-card">

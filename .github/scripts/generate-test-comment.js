@@ -17,6 +17,14 @@ module.exports = async ({github, context, core}) => {
     run_id: context.runId
   });
   
+  // Step name patterns for test execution steps
+  // Add new patterns here when introducing new test job types
+  const TEST_STEP_PATTERNS = [
+    'Run Unit Tests',
+    'Run Domain Tests',
+    'Run Integration Tests'
+  ];
+  
   // Organize jobs by type
   const unitTests = [];
   const domainTests = [];
@@ -24,9 +32,27 @@ module.exports = async ({github, context, core}) => {
   const staticAnalysis = [];
   
   for (const job of jobs.data.jobs) {
+    // Check if the job has a 'run-tests' step and get its conclusion
+    // When continue-on-error is true, job.conclusion will be 'success' even if tests fail
+    // But step.conclusion will correctly reflect 'failure'
+    // Note: GitHub REST API exposes 'conclusion' and 'status' for steps, not 'outcome'
+    let actualOutcome = job.conclusion;
+    
+    if (job.steps) {
+      const runTestsStep = job.steps.find(step => 
+        step.name && TEST_STEP_PATTERNS.some(pattern => step.name.includes(pattern))
+      );
+      
+      // Use step.conclusion (API field) instead of step.outcome (workflow context only)
+      if (runTestsStep && runTestsStep.conclusion) {
+        actualOutcome = runTestsStep.conclusion;
+      }
+    }
+    
     const jobInfo = {
       name: job.name,
       conclusion: job.conclusion,
+      actualOutcome: actualOutcome,  // Use step conclusion from API for accurate status
       status: job.status,
       url: job.html_url,
       duration: job.completed_at && job.started_at 
@@ -47,19 +73,20 @@ module.exports = async ({github, context, core}) => {
   
   // Helper function to format job status
   const formatJob = (job) => {
-    // Determine icon and status based on conclusion and actual test results
+    // Use actualOutcome (which reflects step conclusion from API) instead of job conclusion
+    // This correctly shows failures even when continue-on-error is true
     let icon, statusText;
     
-    if (job.conclusion === 'success') {
+    if (job.actualOutcome === 'success') {
       icon = '✅';
       statusText = 'PASSED';
-    } else if (job.conclusion === 'failure') {
+    } else if (job.actualOutcome === 'failure') {
       icon = '❌';
       statusText = '**FAILED**';
-    } else if (job.conclusion === 'skipped') {
+    } else if (job.actualOutcome === 'skipped') {
       icon = '⏭️';
       statusText = 'SKIPPED';
-    } else if (job.conclusion === 'cancelled') {
+    } else if (job.actualOutcome === 'cancelled') {
       icon = '🚫';
       statusText = 'CANCELLED';
     } else {
@@ -114,9 +141,9 @@ module.exports = async ({github, context, core}) => {
   const failedPct = totalTests > 0 ? (failed/totalTests*100).toFixed(1) : '0.0';
   const skippedPct = totalTests > 0 ? (skipped/totalTests*100).toFixed(1) : '0.0';
   
-  // Calculate job statuses - MOVED BEFORE USAGE
+  // Calculate job statuses - use actualOutcome for accurate status
   const allJobs = [...unitTests, ...domainTests, ...integrationTests, ...staticAnalysis];
-  const failedJobs = allJobs.filter(j => j.conclusion === 'failure');
+  const failedJobs = allJobs.filter(j => j.actualOutcome === 'failure');
   const hasFailures = failed > 0 || failedJobs.length > 0;
   
   // Add failed jobs summary if there are failures
