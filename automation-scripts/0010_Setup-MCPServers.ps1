@@ -37,13 +37,16 @@
 
 .NOTES
     Script: 0010_Setup-MCPServers.ps1
+    Stage: Environment
+    Category: Setup
     Range: 0000-0099 (Environment preparation)
+    Dependencies: Node.js 18+, npm
     Author: Aitherium Corporation
     Requires: Node.js 18+, npm
     Idempotent: Yes - safe to run multiple times
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess=$true)]
 param(
     [Parameter(Mandatory = $false)]
     [switch]$Force,
@@ -121,29 +124,37 @@ function Test-MCPServerBuilt {
 }
 
 function Build-MCPServer {
+    [CmdletBinding(SupportsShouldProcess=$true)]
     param([string]$ServerPath)
 
     try {
-        Push-Location $ServerPath
-        Write-StatusMessage "Building AitherZero MCP server..." -Level Info
+        if ($PSCmdlet.ShouldProcess("MCP Server at $ServerPath", "Build")) {
+            Push-Location $ServerPath
+            Write-StatusMessage "Building AitherZero MCP server..." -Level Info
 
-        # Install dependencies
-        Write-StatusMessage "Installing npm dependencies..." -Level Info
-        npm install --silent
+            # Install dependencies
+            Write-StatusMessage "Installing npm dependencies..." -Level Info
+            npm install --silent
 
-        # Build is automatic via postinstall, but verify
-        if (-not (Test-Path 'dist/index.js')) {
-            Write-StatusMessage "Build failed - dist/index.js not created" -Level Error
-            return $false
+            # Build is automatic via postinstall, but verify
+            if (-not (Test-Path 'dist/index.js')) {
+                Write-StatusMessage "Build failed - dist/index.js not created" -Level Error
+                return $false
+            }
+
+            Write-StatusMessage "MCP server built successfully" -Level Success
+            return $true
+        } else {
+            Write-StatusMessage "Would build MCP server at: $ServerPath" -Level Info
+            return $true
         }
-
-        Write-StatusMessage "MCP server built successfully" -Level Success
-        return $true
     } catch {
         Write-StatusMessage "Failed to build MCP server: $_" -Level Error
         return $false
     } finally {
-        Pop-Location
+        if ($PSBoundParameters.ContainsKey('WhatIf') -eq $false) {
+            Pop-Location
+        }
     }
 }
 
@@ -225,74 +236,80 @@ function Test-MCPConfiguration {
 }
 
 function Repair-MCPConfiguration {
+    [CmdletBinding(SupportsShouldProcess=$true)]
     param([string]$WorkspaceRoot)
 
-    Write-StatusMessage "Fixing MCP configuration issues..." -Level Info
+    if ($PSCmdlet.ShouldProcess("MCP Configuration at $WorkspaceRoot", "Repair")) {
+        Write-StatusMessage "Fixing MCP configuration issues..." -Level Info
 
-    $configFile = Join-Path $WorkspaceRoot '.vscode' 'mcp-servers.json'
+        $configFile = Join-Path $WorkspaceRoot '.vscode' 'mcp-servers.json'
 
-    if (-not (Test-Path $configFile)) {
-        Write-StatusMessage "Config file not found, cannot fix" -Level Error
-        return $false
-    }
+        if (-not (Test-Path $configFile)) {
+            Write-StatusMessage "Config file not found, cannot fix" -Level Error
+            return $false
+        }
 
-    try {
-        $config = Get-Content $configFile -Raw | ConvertFrom-Json
-        $modified = $false
+        try {
+            $config = Get-Content $configFile -Raw | ConvertFrom-Json
+            $modified = $false
 
-        # Remove servers using non-existent packages
-        $serversToRemove = @()
-        $badPackages = @('@modelcontextprotocol/server-git', '@modelcontextprotocol/server-fetch')
+            # Remove servers using non-existent packages
+            $serversToRemove = @()
+            $badPackages = @('@modelcontextprotocol/server-git', '@modelcontextprotocol/server-fetch')
 
-        foreach ($serverName in $config.mcpServers.PSObject.Properties.Name) {
-            $server = $config.mcpServers.$serverName
-            if ($server.args) {
-                foreach ($arg in $server.args) {
-                    if ($badPackages -contains $arg) {
-                        $serversToRemove += $serverName
-                        Write-StatusMessage "Removing server '$serverName' (uses non-existent package: $arg)" -Level Info
-                        break
+            foreach ($serverName in $config.mcpServers.PSObject.Properties.Name) {
+                $server = $config.mcpServers.$serverName
+                if ($server.args) {
+                    foreach ($arg in $server.args) {
+                        if ($badPackages -contains $arg) {
+                            $serversToRemove += $serverName
+                            Write-StatusMessage "Removing server '$serverName' (uses non-existent package: $arg)" -Level Info
+                            break
+                        }
                     }
                 }
             }
-        }
 
-        # Remove bad servers
-        foreach ($serverName in $serversToRemove) {
-            $config.mcpServers.PSObject.Properties.Remove($serverName)
-            $modified = $true
-        }
-
-        # Update defaultServers list
-        if ($config.defaultServers) {
-            $newDefaults = @()
-            foreach ($server in $config.defaultServers) {
-                if ($serversToRemove -notcontains $server) {
-                    $newDefaults += $server
-                }
+            # Remove bad servers
+            foreach ($serverName in $serversToRemove) {
+                $config.mcpServers.PSObject.Properties.Remove($serverName)
+                $modified = $true
             }
-            $config.defaultServers = $newDefaults
-            $modified = $true
-        }
 
-        if ($modified) {
-            # Backup original
-            $backupFile = $configFile + ".backup." + (Get-Date -Format "yyyyMMddHHmmss")
-            Copy-Item $configFile $backupFile
-            Write-StatusMessage "Backed up original config to: $backupFile" -Level Info
+            # Update defaultServers list
+            if ($config.defaultServers) {
+                $newDefaults = @()
+                foreach ($server in $config.defaultServers) {
+                    if ($serversToRemove -notcontains $server) {
+                        $newDefaults += $server
+                    }
+                }
+                $config.defaultServers = $newDefaults
+                $modified = $true
+            }
 
-            # Write fixed config
-            $config | ConvertTo-Json -Depth 10 | Set-Content $configFile -Encoding UTF8
-            Write-StatusMessage "MCP configuration fixed successfully" -Level Success
-            Write-StatusMessage "Removed $($serversToRemove.Count) problematic server(s)" -Level Success
-            return $true
-        } else {
-            Write-StatusMessage "No configuration issues found to fix" -Level Info
-            return $true
+            if ($modified) {
+                # Backup original
+                $backupFile = $configFile + ".backup." + (Get-Date -Format "yyyyMMddHHmmss")
+                Copy-Item $configFile $backupFile
+                Write-StatusMessage "Backed up original config to: $backupFile" -Level Info
+
+                # Write fixed config
+                $config | ConvertTo-Json -Depth 10 | Set-Content $configFile -Encoding UTF8
+                Write-StatusMessage "MCP configuration fixed successfully" -Level Success
+                Write-StatusMessage "Removed $($serversToRemove.Count) problematic server(s)" -Level Success
+                return $true
+            } else {
+                Write-StatusMessage "No configuration issues found to fix" -Level Info
+                return $true
+            }
+        } catch {
+            Write-StatusMessage "Failed to fix configuration: $_" -Level Error
+            return $false
         }
-    } catch {
-        Write-StatusMessage "Failed to fix configuration: $_" -Level Error
-        return $false
+    } else {
+        Write-StatusMessage "Would repair MCP configuration at: $WorkspaceRoot" -Level Info
+        return $true
     }
 }
 

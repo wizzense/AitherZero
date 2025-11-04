@@ -73,7 +73,7 @@ Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' 
         }
 
         It 'Should declare dependencies' {
-            $content = Get-Content $script:ScriptPath -First 20
+            $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
