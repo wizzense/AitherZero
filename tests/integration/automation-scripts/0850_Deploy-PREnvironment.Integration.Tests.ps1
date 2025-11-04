@@ -6,20 +6,29 @@
     Integration tests for 0850_Deploy-PREnvironment
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-02 21:41:16
+    Supports WhatIf: False
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0850_Deploy-PREnvironment Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0850_Deploy-PREnvironment.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0850_Deploy-PREnvironment.ps1'
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            # Script does not support -WhatIf parameter
-            # Test basic script structure instead
+        It 'Should have required structure (has mandatory parameters)' {
+            # Script has mandatory parameters - cannot execute without them
+            # Verify script structure instead
             Test-Path $script:ScriptPath | Should -Be $true
+            
+            # Verify Get-Command can read parameters
+            {
+                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop
+                $cmd.Parameters.Count | Should -BeGreaterThan 0
+            } | Should -Not -Throw
         }
     }
 }

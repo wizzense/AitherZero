@@ -3926,22 +3926,28 @@ $manifestTagsSection
                 <div id="quality-drilldown"></div>
                 <script>
                     // Initialize quality drilldown with file metrics
-                    const qualityData = $(if($FileMetrics -and $FileMetrics.Files){$FileMetrics.Files | Select-Object -First 20 | ConvertTo-Json -Depth 3 -Compress}else{'[]'});
-                    if (qualityData && qualityData.length > 0) {
-                        const fileQualityMap = {};
-                        qualityData.forEach(file => {
-                            fileQualityMap[file.Path] = {
-                                score: file.Score || 0,
-                                errorHandling: file.ErrorHandling ? '✅' : '❌',
-                                logging: file.Logging ? '✅' : '❌',
-                                testCoverage: file.HasTests ? '✅' : '❌',
-                                pssa: file.Issues && file.Issues.length === 0 ? '✅' : file.Issues ? file.Issues.length + ' issues' : 'N/A'
-                            };
-                        });
-                        initQualityDrilldown(fileQualityMap);
-                    } else {
-                        document.getElementById('quality-drilldown').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0420</code> to generate detailed quality metrics</p>';
-                    }
+                    // Wrap in DOMContentLoaded to ensure initQualityDrilldown function is defined
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const qualityData = $(if($FileMetrics -and $FileMetrics.Files){$FileMetrics.Files | Select-Object -First 20 | ConvertTo-Json -Depth 3 -Compress}else{'[]'});
+                        if (qualityData && qualityData.length > 0) {
+                            const fileQualityMap = {};
+                            qualityData.forEach(file => {
+                                fileQualityMap[file.Path] = {
+                                    score: file.Score || 0,
+                                    errorHandling: file.ErrorHandling ? '✅' : '❌',
+                                    logging: file.Logging ? '✅' : '❌',
+                                    testCoverage: file.HasTests ? '✅' : '❌',
+                                    pssa: file.Issues && file.Issues.length === 0 ? '✅' : file.Issues ? file.Issues.length + ' issues' : 'N/A'
+                                };
+                            });
+                            // Function will be available after enhanced-scripts.js loads
+                            if (typeof initQualityDrilldown === 'function') {
+                                initQualityDrilldown(fileQualityMap);
+                            }
+                        } else {
+                            document.getElementById('quality-drilldown').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0420</code> to generate detailed quality metrics</p>';
+                        }
+                    });
                 </script>
             </section>
 

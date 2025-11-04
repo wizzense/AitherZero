@@ -38,7 +38,7 @@ module.exports = async ({github, context, core}) => {
     // Note: GitHub REST API exposes 'conclusion' and 'status' for steps, not 'outcome'
     let actualOutcome = job.conclusion;
     
-    if (job.steps) {
+    if (job.steps && job.steps.length > 0) {
       const runTestsStep = job.steps.find(step => 
         step.name && TEST_STEP_PATTERNS.some(pattern => step.name.includes(pattern))
       );
@@ -46,6 +46,12 @@ module.exports = async ({github, context, core}) => {
       // Use step.conclusion (API field) instead of step.outcome (workflow context only)
       if (runTestsStep && runTestsStep.conclusion) {
         actualOutcome = runTestsStep.conclusion;
+      } else {
+        // If no matching test step found, check for any failed step
+        const failedStep = job.steps.find(step => step.conclusion === 'failure');
+        if (failedStep) {
+          actualOutcome = 'failure';
+        }
       }
     }
     

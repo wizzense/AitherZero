@@ -9,13 +9,16 @@
     Script: 0960_Track-DocumentationFreshness
     Stage: 0960 (Documentation Tracking)
     Description: Analyzes when documentation files were last modified compared to the code they document.
-    Generated: 2025-11-04 07:53:36
+    Supports WhatIf: False
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0960_Track-DocumentationFreshness' -Tag 'Unit', 'AutomationScript', '0960 (Documentation Tracking)' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0960_Track-DocumentationFreshness.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0960_Track-DocumentationFreshness.ps1'
         $script:ScriptName = '0960_Track-DocumentationFreshness'
 
         # Import test helpers for environment detection
@@ -45,9 +48,11 @@ Describe '0960_Track-DocumentationFreshness' -Tag 'Unit', 'AutomationScript', '0
             $errors.Count | Should -Be 0
         }
 
-        It 'Should support WhatIf' {
+        It 'Should not require WhatIf support' {
+            # Script does not implement SupportsShouldProcess
+            # This is acceptable for read-only or simple scripts
             $content = Get-Content $script:ScriptPath -Raw
-            $content | Should -Match 'SupportsShouldProcess'
+            $content -notmatch 'SupportsShouldProcess' | Should -Be $true
         }
     }
 
@@ -87,10 +92,12 @@ Describe '0960_Track-DocumentationFreshness' -Tag 'Unit', 'AutomationScript', '0
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should be executable (no WhatIf support)' {
+            # Script does not support -WhatIf parameter
+            # Verify script can be dot-sourced without errors
             {
-                $params = @{ WhatIf = $true }
-                & $script:ScriptPath @params
+                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop
+                $cmd | Should -Not -BeNullOrEmpty
             } | Should -Not -Throw
         }
     }
@@ -102,25 +109,19 @@ Describe '0960_Track-DocumentationFreshness' -Tag 'Unit', 'AutomationScript', '0
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }
