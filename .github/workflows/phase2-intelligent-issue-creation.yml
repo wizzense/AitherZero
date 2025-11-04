@@ -7,8 +7,8 @@ name: 'Phase 2 - Intelligent Issue Creation'
 on:
   workflow_run:
     workflows:
-      - "🎯 Unified Testing Orchestration"
-      - "PR Validation"
+      - "⚡ Parallel Testing (High Performance)"
+      - "✅ PR Validation"
       - "Quality Validation"
     types: [completed]
 

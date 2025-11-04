@@ -31,6 +31,10 @@ on:
           - stale-only
           - missing-only
 
+concurrency:
+  group: documentation-tracking-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   track-documentation:
     name: Track Documentation Changes
