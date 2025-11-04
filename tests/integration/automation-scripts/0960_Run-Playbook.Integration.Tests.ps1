@@ -6,7 +6,7 @@
     Integration tests for 0960_Run-Playbook
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 06:59:35
+    Generated: 2025-11-04 07:00:54
 #>
 
 Describe '0960_Run-Playbook Integration' -Tag 'Integration', 'AutomationScript' {
