@@ -83,7 +83,7 @@
         FeatureDependencies = @{
             # Core features that everything depends on
             Core = @{
-                PowerShell7 = @{ Required = $true; MinVersion = '7.0'; Scripts = @('0001') }
+                PowerShell7 = @{ Required = $true; MinVersion = '7.0'; Scripts = @() }
                 Git = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207') }
                 Configuration = @{ Required = $true; Internal = $true }
                 Logging = @{ Required = $true; Internal = $true }
@@ -197,9 +197,9 @@
                 }
                 PSScriptAnalyzer = @{
                     DependsOn = @('Testing.TestingTools')
-                    Scripts = @('0404', '0410')
+                    Scripts = @('0404')
                     MinVersion = '1.20.0'
-                    Description = 'Static code analysis (standard and fast)'
+                    Description = 'Static code analysis'
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
@@ -385,7 +385,7 @@
             Standard = @{
                 Description = 'Common development environment'
                 Features = @('Core', 'Development.Node', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                ScriptRanges = @('0000-0299', '0400-0410')
+                ScriptRanges = @('0000-0299', '0400-0499')
                 EstimatedTime = '5-15 minutes'
             }
             Developer = @{
@@ -413,7 +413,7 @@
         # Domain module structure (actual repository state)
         Domains = @{
             'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation' = @{ Modules = 2; Description = 'Orchestration engine and deployment automation' }
+            'automation' = @{ Modules = 3; Description = 'Orchestration engine and deployment automation' }
             'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
@@ -513,7 +513,7 @@
                 Enabled = $true
                 Required = $true
                 Version = '7.0+'
-                InstallScript = '0001'
+                InstallScript = $null  # PowerShell 7 installation handled by bootstrap
                 Platforms = @('Windows', 'Linux', 'macOS')
                 Installer = @{
                     Windows = 'https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.msi'
