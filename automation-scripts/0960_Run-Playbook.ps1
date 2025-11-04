@@ -59,7 +59,7 @@
     but locally on your machine for faster iteration and debugging.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Position = 0)]
     [string]$Playbook,
@@ -221,9 +221,25 @@ try {
     Write-ColorOutput "Started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -Color Gray
     Write-ColorOutput ""
     
-    # Execute playbook
-    & $startAitherZeroPath @params
-    $exitCode = $LASTEXITCODE
+    # Check if we should proceed with execution
+    $target = "playbook '$Playbook'"
+    if ($Profile) {
+        $target += " with profile '$Profile'"
+    }
+    
+    if ($PSCmdlet.ShouldProcess($target, "Execute orchestration playbook")) {
+        # Execute playbook
+        & $startAitherZeroPath @params
+        $exitCode = $LASTEXITCODE
+    }
+    else {
+        # WhatIf mode - just show what would be executed
+        Write-ColorOutput "What if: Would execute playbook '$Playbook'" -Color Yellow
+        if ($Profile) {
+            Write-ColorOutput "What if: Would use profile '$Profile'" -Color Yellow
+        }
+        $exitCode = 0
+    }
     
     # Display completion info
     $duration = (Get-Date) - $script:StartTime
@@ -235,10 +251,31 @@ try {
         Write-ColorOutput "Status: SUCCESS" -Color Green
     }
     else {
-        Write-ColorOutput "Status: FAILED (Exit Code: $exitCode)" -Color Red
+        # WhatIf mode - just show what would be done
+        Write-ColorOutput "WhatIf: Would execute playbook '$Playbook' with the following parameters:" -Color Yellow
+        $params.GetEnumerator() | ForEach-Object {
+            Write-ColorOutput "  $($_.Key): $($_.Value)" -Color Gray
+        }
+        $exitCode = 0
+        $shouldExecute = $false
     }
     
-    Write-ColorOutput ""
+    # Display completion info (only if actually executed)
+    if ($shouldExecute) {
+        $duration = (Get-Date) - $script:StartTime
+        Write-ColorOutput ""
+        Write-ColorOutput "=== Execution Complete ===" -Color Cyan
+        Write-ColorOutput "Duration: $($duration.ToString('mm\:ss'))" -Color Gray
+        
+        if ($exitCode -eq 0) {
+            Write-ColorOutput "Status: SUCCESS" -Color Green
+        }
+        else {
+            Write-ColorOutput "Status: FAILED (Exit Code: $exitCode)" -Color Red
+        }
+        
+        Write-ColorOutput ""
+    }
     
     exit $exitCode
 }

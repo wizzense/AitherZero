@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "name": "ci-validate-manifests",
+    "description": "Validate PowerShell module manifests - mirrors GitHub Actions validate-manifests.yml",
+    "version": "1.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "validation", "manifests", "github-actions", "modules"],
+    "estimatedDuration": "2-5 minutes",
+    "lastUpdated": "2025-11-04T06:00:00Z",
+    "githubWorkflow": "validate-manifests.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": [],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "validateManifests": true,
+      "runTests": false,
+      "fixIssues": false
+    },
+    "profiles": {
+      "standard": {
+        "description": "Standard manifest validation matching GitHub Actions",
+        "variables": {
+          "validateManifests": true,
+          "runTests": false,
+          "fixIssues": false
+        }
+      },
+      "fix": {
+        "description": "Validate and fix manifest issues",
+        "variables": {
+          "validateManifests": true,
+          "runTests": false,
+          "fixIssues": true
+        }
+      },
+      "with-tests": {
+        "description": "Validate manifests and run associated tests",
+        "variables": {
+          "validateManifests": true,
+          "runTests": true,
+          "fixIssues": false
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Validate Module Manifests",
+        "description": "Validate all PowerShell module manifests for syntax and Unicode issues",
+        "sequences": ["0405"],
+        "condition": "{{validateManifests}}",
+        "variables": {
+          "Fix": "{{fixIssues}}"
+        },
+        "continueOnError": false,
+        "timeout": 180
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🔍 Starting module manifest validation...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ All module manifests validated successfully!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ Module manifest validation failed",
+      "level": "Error"
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "validate-manifests.yml"
+    }
+  }
+}

@@ -24,31 +24,31 @@
 
 All workflows that run in GitHub Actions have corresponding playbooks for local execution:
 
-| Playbook | Purpose | Duration | Profile Options |
-|----------|---------|----------|-----------------|
-| **ci-all-validations** | Run all CI validation checks | 15-25 min | quick, standard, comprehensive |
-| **ci-pr-validation** | PR validation (syntax, PSScriptAnalyzer) | 10-15 min | quick, standard |
-| **ci-comprehensive-test** | Run full test suite | 20-30 min | unit-only, integration-only, ci |
-| **ci-quality-validation** | Quality checks on code | 10-15 min | fast, standard |
-| **ci-validate-config** | Validate config.psd1 manifest | 2-5 min | standard, fix |
-| **ci-validate-manifests** | Validate PS module manifests | 2-5 min | standard, fix, with-tests |
-| **ci-validate-test-sync** | Check test-script synchronization | 2-5 min | standard, cleanup, quick |
-| **ci-auto-generate-tests** | Auto-generate tests for scripts | 5-15 min | quick, full, detect |
-| **ci-workflow-health** | Validate workflow health | 2-5 min | standard, quick |
-| **ci-index-automation** | Generate project indexes | 5-10 min | incremental, full, verify |
-| **ci-publish-test-reports** | Publish test results | 3-8 min | standard, force |
-| **ci-documentation** | Generate documentation | 10-15 min | incremental, full |
-| **ci-release** | Automate releases | 15-30 min | production, prerelease |
-| **ci-deploy-pr** | Deploy PR environment | 10-20 min | deploy, test, cleanup |
+| Playbook | Purpose | Duration | Workflow |
+|----------|---------|----------|----------|
+| **ci-all-validations** | Meta-playbook - all validation checks | 2-25 min | Combined |
+| **ci-pr-validation** | PR validation (syntax, PSScriptAnalyzer) | 1-2 min | pr-validation.yml |
+| **ci-comprehensive-test** | Run full test suite | 5-10 min | comprehensive-test-execution.yml |
+| **ci-quality-validation** | Quality checks on code | 2-3 min | quality-validation.yml |
+| **ci-validate-config** | Validate config.psd1 manifest | 30 sec | validate-config.yml |
+| **ci-validate-manifests** | Validate PS module manifests | 30 sec | validate-manifests.yml |
+| **ci-validate-test-sync** | Check test-script synchronization | 1 min | validate-test-sync.yml |
+| **ci-auto-generate-tests** | Auto-generate tests for scripts | 1-2 min | auto-generate-tests.yml |
+| **ci-workflow-health** | Validate workflow health | 30 sec | workflow-health-check.yml |
+| **ci-index-automation** | Generate project indexes | 1 min | index-automation.yml |
+| **ci-publish-test-reports** | Publish test results | 2-3 min | publish-test-reports.yml |
+
+### Documentation & Reporting
+
+| Playbook | Purpose | Duration |
+|----------|---------|----------|
+| **documentation-tracking** | Track doc freshness & validate coverage | 2-5 min |
 
 ### Testing Playbooks
 
 | Playbook | Purpose | Duration |
 |----------|---------|----------|
-| **test-quick** | Fast validation for development | 5-10 min |
-| **test-standard** | Standard test execution | 10-15 min |
-| **test-comprehensive** | Comprehensive validation | 20-30 min |
-| **test-full** | Complete test suite | 30-45 min |
+| **test-orchestrated** | Orchestrated testing with unified reporting | 10-15 min |
 
 ## 🎯 Common Use Cases
 
@@ -60,8 +60,8 @@ All workflows that run in GitHub Actions have corresponding playbooks for local 
 
 # What it runs:
 # - PowerShell syntax validation (0407)
-# - Config manifest validation (0413, 0003)
-# - Module manifest validation (0405)
+# - Config manifest validation (0413)
+# - Test-script synchronization (0426)
 ```
 
 ### Before Creating a PR
@@ -71,9 +71,12 @@ All workflows that run in GitHub Actions have corresponding playbooks for local 
 ./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-all-validations
 
 # What it runs:
-# - All quick validations
-# - Test-script synchronization (0426)
-# - Workflow health checks (0440)
+# - Syntax validation (0407)
+# - Config validation (0413)
+# - Manifest validation (0414)
+# - Test sync validation (0426)
+# - Unit tests (0402)
+# - PSScriptAnalyzer (0404)
 ```
 
 ### Before Merging a PR
@@ -84,8 +87,9 @@ All workflows that run in GitHub Actions have corresponding playbooks for local 
 
 # What it runs:
 # - All standard validations
-# - Quality validation (0404)
-# - Unit tests (0400, 0402)
+# - Integration tests (0403)
+# - Quality validation (0420)
+# - Workflow health check (0950)
 ```
 
 ### Testing Specific Workflows
@@ -94,10 +98,11 @@ All workflows that run in GitHub Actions have corresponding playbooks for local 
 # Test PR validation workflow
 ./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-pr-validation
 
-# Test documentation generation
-./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-documentation
+# Preview what would run (WhatIf mode)
+./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-pr-validation -WhatIf
 
-# Test auto-generate tests
+# Test config validation
+./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-validate-config
 ./automation-scripts/0960_Run-Playbook.ps1 -Playbook ci-auto-generate-tests -Profile quick
 ```
 
@@ -244,13 +249,13 @@ ls automation-scripts/0XXX*.ps1
 
 ## 📊 Workflow Coverage
 
-Current coverage: **13 of 21** GitHub Actions workflows have corresponding playbooks.
+Current coverage: **13 of 23** GitHub Actions workflows have corresponding playbooks.
 
 | Status | Count | Workflows |
 |--------|-------|-----------|
 | ✅ Complete | 13 | All validation, testing, and deployment workflows |
 | 🚧 Partial | 0 | N/A |
-| ❌ No Playbook | 8 | GitHub-specific workflows (Pages, Copilot, etc.) |
+| ❌ No Playbook | 10 | GitHub-specific workflows (Pages, Copilot, etc.) |
 
 See [GITHUB-WORKFLOWS-MAPPING.md](./GITHUB-WORKFLOWS-MAPPING.md) for complete details.
 
