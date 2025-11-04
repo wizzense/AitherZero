@@ -1,9 +1,9 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Enhanced Test Generator v2.0 - Functional & Behavioral Tests
+    Functional Test Generator v2.0 - Behavioral & Integration Tests
 .DESCRIPTION
-    Generates MEANINGFUL tests that validate actual functionality, not just structure.
+    Generates comprehensive tests that validate actual functionality and behavior.
     
     What This Generates:
     - ✅ Structural tests (file exists, syntax, parameters)
@@ -12,11 +12,11 @@
     - ✅ Integration tests (dependencies, workflows)
     - ✅ Smart mocks (for external dependencies)
     
-    THIS REPLACES: Basic AutoTestGenerator structural-only tests
+    REPLACES: AutoTestGenerator (structural-only tests)
     
 .NOTES
     Copyright © 2025 Aitherium Corporation
-    Part of Testing Infrastructure Overhaul - Phase 2
+    Part of Testing Infrastructure v2.0
 #>
 
 Set-StrictMode -Version Latest
@@ -54,10 +54,10 @@ $script:TestStrategies = @{
     }
 }
 
-function New-EnhancedTest {
+function New-FunctionalTest {
     <#
     .SYNOPSIS
-        Generate enhanced functional tests for a script
+        Generate comprehensive functional tests for a script
     .PARAMETER ScriptPath
         Path to script to test
     .PARAMETER TestType
@@ -76,7 +76,7 @@ function New-EnhancedTest {
         [switch]$Force
     )
     
-    Write-Host "🔧 Generating enhanced tests for: $(Split-Path $ScriptPath -Leaf)" -ForegroundColor Cyan
+    Write-Host "🔧 Generating functional tests for: $(Split-Path $ScriptPath -Leaf)" -ForegroundColor Cyan
     
     # Analyze script
     $analysis = Get-ScriptAnalysis -ScriptPath $ScriptPath
@@ -89,7 +89,7 @@ function New-EnhancedTest {
     $strategy = Get-TestStrategy -ScriptName $analysis.Name
     
     # Generate test content
-    $testContent = Build-EnhancedTestSuite `
+    $testContent = Build-FunctionalTestSuite `
         -Analysis $analysis `
         -Strategy $strategy `
         -TestType $TestType
@@ -223,10 +223,10 @@ function Get-TestStrategy {
     }
 }
 
-function Build-EnhancedTestSuite {
+function Build-FunctionalTestSuite {
     <#
     .SYNOPSIS
-        Build complete enhanced test suite
+        Build complete functional test suite
     #>
     param($Analysis, $Strategy, $TestType)
     
@@ -238,9 +238,9 @@ function Build-EnhancedTestSuite {
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('<#')
     [void]$sb.AppendLine('.SYNOPSIS')
-    [void]$sb.AppendLine("    Enhanced functional tests for $($Analysis.Name)")
+    [void]$sb.AppendLine("    Comprehensive functional tests for $($Analysis.Name)")
     [void]$sb.AppendLine('.DESCRIPTION')
-    [void]$sb.AppendLine('    Auto-generated tests with REAL functionality validation:')
+    [void]$sb.AppendLine('    Auto-generated tests with full functionality validation:')
     [void]$sb.AppendLine('    - Structural validation (syntax, parameters)')
     [void]$sb.AppendLine('    - Functional validation (behavior, outputs)')
     [void]$sb.AppendLine('    - Error handling validation (edge cases)')
@@ -256,7 +256,7 @@ function Build-EnhancedTestSuite {
     [void]$sb.AppendLine('')
     
     # BeforeAll
-    [void]$sb.AppendLine("Describe '$($Analysis.Name) - Enhanced Tests' -Tag 'Unit', 'Functional', 'Enhanced' {")
+    [void]$sb.AppendLine("Describe '$($Analysis.Name) - Functional Tests' -Tag 'Unit', 'Functional' {")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('    BeforeAll {')
     [void]$sb.AppendLine("        " + '$script:ScriptPath = ' + "'$($Analysis.Path -replace '\\', '/')'")
@@ -455,4 +455,4 @@ function Get-TestFilePath {
 }
 
 # Export functions
-Export-ModuleMember -Function New-EnhancedTest, Get-ScriptAnalysis, Get-TestStrategy
+Export-ModuleMember -Function New-FunctionalTest, Get-ScriptAnalysis, Get-TestStrategy

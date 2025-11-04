@@ -62,25 +62,25 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$enhancedGeneratorPath = Join-Path $projectRoot "domains/testing/EnhancedTestGenerator.psm1"
+$testGeneratorPath = Join-Path $projectRoot "domains/testing/FunctionalTestGenerator.psm1"
 
 # Banner
 Write-Host "`n╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║     Enhanced Test Regeneration - Functional Tests v2.0     ║" -ForegroundColor Cyan
-Write-Host "║         No More 'File Exists' Tests - Real Testing!        ║" -ForegroundColor Cyan
+Write-Host "║     Functional Test Regeneration v2.0                      ║" -ForegroundColor Cyan
+Write-Host "║     Comprehensive Behavioral & Integration Testing         ║" -ForegroundColor Cyan
 Write-Host "╚═══════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
 
-# Load enhanced generator
-if (-not (Test-Path $enhancedGeneratorPath)) {
-    Write-Host "❌ Enhanced generator not found: $enhancedGeneratorPath" -ForegroundColor Red
+# Load generator
+if (-not (Test-Path $testGeneratorPath)) {
+    Write-Host "❌ Test generator not found: $testGeneratorPath" -ForegroundColor Red
     exit 1
 }
 
 try {
-    Import-Module $enhancedGeneratorPath -Force -ErrorAction Stop
-    Write-Host "✅ Enhanced test generator loaded" -ForegroundColor Green
+    Import-Module $testGeneratorPath -Force -ErrorAction Stop
+    Write-Host "✅ Functional test generator loaded" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Failed to load enhanced generator: $_" -ForegroundColor Red
+    Write-Host "❌ Failed to load generator: $_" -ForegroundColor Red
     exit 1
 }
 
@@ -152,7 +152,7 @@ foreach ($scriptFile in $scriptsToRegenerate) {
     $results.Total++
     
     try {
-        $result = New-EnhancedTest -ScriptPath $scriptFile.FullName -TestType $TestType -Force:$Force
+        $result = New-FunctionalTest -ScriptPath $scriptFile.FullName -TestType $TestType -Force:$Force
         
         if ($result.Generated) {
             $results.Generated++
@@ -181,7 +181,7 @@ $duration = ($endTime - $startTime).TotalSeconds
 
 # Summary
 Write-Host "`n╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║              Enhanced Test Regeneration Complete!            ║" -ForegroundColor Green
+Write-Host "║         Functional Test Regeneration Complete!             ║" -ForegroundColor Green
 Write-Host "╚═══════════════════════════════════════════════════════════════╝`n" -ForegroundColor Green
 
 Write-Host "📊 Summary:" -ForegroundColor Cyan
