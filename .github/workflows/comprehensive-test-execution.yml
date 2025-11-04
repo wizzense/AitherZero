@@ -39,6 +39,7 @@ concurrency:
 env:
   AITHERZERO_CI: true
   AITHERZERO_NONINTERACTIVE: true
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   test-discovery:
@@ -101,6 +102,11 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
       
       - name: 🔧 Bootstrap Environment
         shell: pwsh
@@ -207,6 +213,11 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
       
       - name: 🔧 Bootstrap Environment
         shell: pwsh
