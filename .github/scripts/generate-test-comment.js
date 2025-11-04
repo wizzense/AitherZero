@@ -105,16 +105,6 @@ module.exports = async ({github, context, core}) => {
     }
   }
   
-  // Add failed jobs summary if there are failures
-  let failedJobsSection = '';
-  if (failedJobs.length > 0) {
-    failedJobsSection = `\n---\n\n### ❌ Failed Jobs Summary\n\n**${failedJobs.length} job(s) failed** - please review and address:\n\n| Failed Job | Link to Logs |\n|------------|-------------|\n`;
-    for (const job of failedJobs) {
-      failedJobsSection += `| ${job.name} | [View Logs →](${job.url}) |\n`;
-    }
-    failedJobsSection += '\n';
-  }
-  
   const totalJobs = unitTests.length + domainTests.length + integrationTests.length + staticAnalysis.length;
   const maxDuration = Math.max(...[...unitTests, ...domainTests, ...integrationTests, ...staticAnalysis].map(j => j.duration));
   const estimatedSequential = totalJobs * 60;
@@ -124,10 +114,20 @@ module.exports = async ({github, context, core}) => {
   const failedPct = totalTests > 0 ? (failed/totalTests*100).toFixed(1) : '0.0';
   const skippedPct = totalTests > 0 ? (skipped/totalTests*100).toFixed(1) : '0.0';
   
-  // Calculate job statuses
+  // Calculate job statuses - MOVED BEFORE USAGE
   const allJobs = [...unitTests, ...domainTests, ...integrationTests, ...staticAnalysis];
   const failedJobs = allJobs.filter(j => j.conclusion === 'failure');
   const hasFailures = failed > 0 || failedJobs.length > 0;
+  
+  // Add failed jobs summary if there are failures
+  let failedJobsSection = '';
+  if (failedJobs.length > 0) {
+    failedJobsSection = `\n---\n\n### ❌ Failed Jobs Summary\n\n**${failedJobs.length} job(s) failed** - please review and address:\n\n| Failed Job | Link to Logs |\n|------------|-------------|\n`;
+    for (const job of failedJobs) {
+      failedJobsSection += `| ${job.name} | [View Logs →](${job.url}) |\n`;
+    }
+    failedJobsSection += '\n';
+  }
   
   // Build warning section if there are failures
   let warningSection = '';
