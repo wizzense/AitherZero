@@ -198,6 +198,35 @@ Key sections:
 
 ## Common Issues & Solutions
 
+### GitHub Issue Creation Failures
+
+**Problem**: Scripts fail to create GitHub issues with errors like:
+```
+Error: 1-04 02:45:14] [Error] Failed to create issue for file.ps1
+⚠️  Issue creation failed. Check that gh CLI is authenticated and has write access.
+```
+
+**Root Cause**: 
+- PowerShell scripts trying to use `gh` CLI in CI/CD workflows
+- `gh` CLI requires explicit authentication setup
+- Workflows already handle issue creation via `actions/github-script@v7`
+
+**Solution**:
+1. **In workflows**: Use `actions/github-script@v7` (NOT `gh` CLI)
+2. **In PowerShell scripts**: Detect CI and skip issue creation
+3. **Local use**: Ensure `gh auth login` is run before using `gh` CLI
+
+**Check**:
+```powershell
+# Scripts should detect CI and delegate to workflow
+if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
+    Write-Host "Issue creation skipped - workflow will handle it"
+    return
+}
+```
+
+**Reference**: See `.github/workflows/auto-create-issues-from-failures.yml` for correct pattern
+
 ### Module Loading Errors
 - Ensure `Logging.psm1` loads first (other modules depend on Write-CustomLog)
 - `BetterMenu.psm1` must load before `UserInterface.psm1`
@@ -358,6 +387,68 @@ Key sections:
 - Comprehensive tests: 3-5 minutes
 - Quality validation: 2-3 minutes
 - Documentation: 1-2 minutes
+
+### Critical GitHub Actions Patterns
+
+**IMPORTANT: Creating GitHub Issues in Workflows**
+
+❌ **WRONG - Do NOT use `gh` CLI in workflows for issue creation:**
+```yaml
+- name: Create Issue
+  run: |
+    gh issue create --title "..." --body "..." --label "..."
+    # This requires explicit GITHUB_TOKEN setup and gh auth
+```
+
+✅ **RIGHT - Use `actions/github-script@v7` (recommended):**
+```yaml
+- name: Create Issue
+  uses: actions/github-script@v7
+  with:
+    script: |
+      const issue = await github.rest.issues.create({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        title: 'Issue title',
+        body: 'Issue body',
+        labels: ['label1', 'label2']
+      });
+      console.log(`Created issue #${issue.data.number}`);
+```
+
+**Why `actions/github-script` is better:**
+1. **Built-in authentication** - No need to set up GITHUB_TOKEN explicitly
+2. **Uses Octokit API** - Full GitHub REST API access
+3. **Better error handling** - Structured responses, no stderr bleeding
+4. **JavaScript/TypeScript** - Easy to work with JSON data
+5. **Used by existing workflows** - See `auto-create-issues-from-failures.yml` and `quality-validation.yml`
+
+**Pattern for PowerShell scripts:**
+- PowerShell scripts (like `0420_Validate-ComponentQuality.ps1`) should **skip issue creation in CI**
+- Detect CI with: `$env:GITHUB_ACTIONS -eq 'true'` or `$env:CI -eq 'true'`
+- Let the workflow handle issue creation via `actions/github-script`
+- Only attempt local issue creation using `gh` CLI when NOT in CI
+
+**Example from working code:**
+```powershell
+if ($shouldCreateIssues -and ($overallStatus -eq 'Failed')) {
+    # In GitHub Actions/CI, skip issue creation - the workflow handles it
+    if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
+        Write-Host "Issue creation skipped - running in CI environment"
+        Write-Host "GitHub Actions workflow will create issues automatically"
+    } else {
+        # Local execution - try to use gh CLI
+        if (Test-GitHubAuthentication) {
+            # Create issues with gh CLI...
+        }
+    }
+}
+```
+
+**Authentication patterns:**
+- Workflows: `actions/github-script` uses automatic token (no setup needed)
+- Local scripts: Require `gh auth login` before using `gh` CLI
+- CI detection: Check `$env:GITHUB_ACTIONS` or `$env:CI`
 
 ### Common Patterns and Locations
 
@@ -959,6 +1050,8 @@ Invoke-Pester -Path "./tests/unit/YourTest.Tests.ps1"
 6. ❌ Using Write-Host → ✅ Use `Write-CustomLog` or `Write-UIText`
 7. ❌ Breaking cross-platform → ✅ Check `$IsWindows`, `$IsLinux`, `$IsMacOS`
 8. ❌ Stopping on known failures → ✅ Verify failures match expected list
+9. ❌ **Using `gh` CLI in workflows** → ✅ **Use `actions/github-script@v7` instead**
+10. ❌ **Creating issues from PowerShell in CI** → ✅ **Let workflow handle it via github-script**
 
 ### When Things Go Wrong
 
@@ -985,6 +1078,15 @@ $env:AITHERZERO_INITIALIZED -eq 'true'
 ```powershell
 # Run on specific path instead
 ./az.ps1 0404 -Path ./domains/utilities
+```
+
+**Issue creation failures in CI**:
+```powershell
+# Check if script is trying to create issues in CI
+# Should skip and let workflow handle it
+if ($env:GITHUB_ACTIONS -eq 'true') {
+    # Correct - workflow will create issues via actions/github-script
+}
 ```
 
 ### File Locations at a Glance
