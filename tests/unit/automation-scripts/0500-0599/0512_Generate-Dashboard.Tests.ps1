@@ -49,11 +49,6 @@ Describe '0512_Generate-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' 
             $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
         }
 
-        It 'Should have parameter: TemplatePath' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('TemplatePath') | Should -Be $true
-        }
-
         It 'Should have parameter: Format' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Format') | Should -Be $true

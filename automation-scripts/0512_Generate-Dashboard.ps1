@@ -15,8 +15,6 @@
     Path to the project root directory
 .PARAMETER OutputPath
     Path where dashboard files will be generated
-.PARAMETER TemplatePath
-    Path to custom dashboard template (optional, uses built-in template if not specified)
 .PARAMETER Format
     Dashboard format to generate (HTML, Markdown, JSON, or All)
 .PARAMETER Open
@@ -39,11 +37,9 @@
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'OutputPath', Justification='Used in main script body')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Format', Justification='Used in switch statement')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Open', Justification='Used to open HTML dashboard')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'TemplatePath', Justification='Reserved for future template customization feature')]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
     [string]$OutputPath = (Join-Path $ProjectPath "reports"),
-    [string]$TemplatePath = '',
     [ValidateSet('HTML', 'Markdown', 'JSON', 'All')]
     [string]$Format = 'All',
     [switch]$Open
