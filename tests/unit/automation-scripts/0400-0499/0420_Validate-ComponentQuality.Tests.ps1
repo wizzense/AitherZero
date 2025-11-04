@@ -9,7 +9,8 @@
     Script: 0420_Validate-ComponentQuality
     Stage: Testing
     Description: Comprehensive quality validation tool that checks:
-    Generated: 2025-11-04 20:39:42
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0420_Validate-ComponentQuality' -Tag 'Unit', 'AutomationScript', 'Testing' {
@@ -119,7 +120,7 @@ Describe '0420_Validate-ComponentQuality' -Tag 'Unit', 'AutomationScript', 'Test
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 & $script:ScriptPath @params
@@ -134,25 +135,19 @@ Describe '0420_Validate-ComponentQuality' -Tag 'Unit', 'AutomationScript', 'Test
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }

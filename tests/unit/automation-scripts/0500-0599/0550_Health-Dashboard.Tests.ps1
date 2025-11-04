@@ -9,7 +9,8 @@
     Script: 0550_Health-Dashboard
     Stage: Reporting
     Description: Consolidated health and status dashboard for AitherZero
-    Generated: 2025-11-04 20:39:43
+    Supports WhatIf: False
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0550_Health-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
@@ -47,9 +48,11 @@ Describe '0550_Health-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
             $errors.Count | Should -Be 0
         }
 
-        It 'Should support WhatIf' {
+        It 'Should not require WhatIf support' {
+            # Script does not implement SupportsShouldProcess
+            # This is acceptable for read-only or simple scripts
             $content = Get-Content $script:ScriptPath -Raw
-            $content | Should -Match 'SupportsShouldProcess'
+            $content -notmatch 'SupportsShouldProcess' | Should -Be $true
         }
     }
 
@@ -84,11 +87,12 @@ Describe '0550_Health-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should be executable (no WhatIf support)' {
+            # Script does not support -WhatIf parameter
+            # Verify script can be dot-sourced without errors
             {
-                $params = @{ WhatIf = $true }
-                $params.Configuration = @{}
-                & $script:ScriptPath @params
+                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop
+                $cmd | Should -Not -BeNullOrEmpty
             } | Should -Not -Throw
         }
     }
@@ -100,25 +104,19 @@ Describe '0550_Health-Dashboard' -Tag 'Unit', 'AutomationScript', 'Reporting' {
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }

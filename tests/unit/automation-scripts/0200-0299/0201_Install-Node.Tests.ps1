@@ -9,7 +9,8 @@
     Script: 0201_Install-Node
     Stage: Development
     Description: Install Node.js runtime using package managers (winget priority)
-    Generated: 2025-11-04 20:39:42
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0201_Install-Node' -Tag 'Unit', 'AutomationScript', 'Development' {
@@ -74,7 +75,7 @@ Describe '0201_Install-Node' -Tag 'Unit', 'AutomationScript', 'Development' {
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 $params.Configuration = @{}
@@ -90,25 +91,19 @@ Describe '0201_Install-Node' -Tag 'Unit', 'AutomationScript', 'Development' {
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }

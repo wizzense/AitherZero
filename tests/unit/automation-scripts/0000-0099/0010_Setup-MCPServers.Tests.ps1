@@ -9,7 +9,8 @@
     Script: 0010_Setup-MCPServers
     Stage: Environment
     Description: This script provides complete MCP server lifecycle management:
-    Generated: 2025-11-04 20:39:42
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0010_Setup-MCPServers' -Tag 'Unit', 'AutomationScript', 'Environment' {
@@ -79,7 +80,7 @@ Describe '0010_Setup-MCPServers' -Tag 'Unit', 'AutomationScript', 'Environment' 
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 & $script:ScriptPath @params
@@ -94,25 +95,19 @@ Describe '0010_Setup-MCPServers' -Tag 'Unit', 'AutomationScript', 'Environment' 
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }

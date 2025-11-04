@@ -6,7 +6,8 @@
     Integration tests for 0750_Build-MCPServer
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 20:39:43
+    Supports WhatIf: False
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0750_Build-MCPServer Integration' -Tag 'Integration', 'AutomationScript' {
@@ -18,10 +19,16 @@ Describe '0750_Build-MCPServer Integration' -Tag 'Integration', 'AutomationScrip
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
+        It 'Should execute without errors (no WhatIf support)' {
             # Script does not support -WhatIf parameter
-            # Test basic script structure instead
+            # Test basic script structure and loadability
             Test-Path $script:ScriptPath | Should -Be $true
+            
+            # Verify script can be dot-sourced
+            {
+                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop
+                $cmd | Should -Not -BeNullOrEmpty
+            } | Should -Not -Throw
         }
     }
 }

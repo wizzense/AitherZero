@@ -6,7 +6,8 @@
     Integration tests for 0739_Validate-AIOutput
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 20:39:43
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0739_Validate-AIOutput Integration' -Tag 'Integration', 'AutomationScript' {
@@ -18,8 +19,11 @@ Describe '0739_Validate-AIOutput Integration' -Tag 'Integration', 'AutomationScr
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
+        It 'Should execute in test mode with WhatIf' {
+            {
+                $params = @{ WhatIf = $true; ErrorAction = 'Stop' }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }

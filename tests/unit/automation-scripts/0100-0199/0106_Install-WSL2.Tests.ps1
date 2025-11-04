@@ -9,7 +9,8 @@
     Script: 0106_Install-WSL2
     Stage: Infrastructure
     Description: Install Windows Subsystem for Linux 2 with chosen distribution
-    Generated: 2025-11-04 20:39:42
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0106_Install-WSL2' -Tag 'Unit', 'AutomationScript', 'Infrastructure' {
@@ -74,7 +75,7 @@ Describe '0106_Install-WSL2' -Tag 'Unit', 'AutomationScript', 'Infrastructure' {
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 $params.Configuration = @{}
@@ -90,25 +91,19 @@ Describe '0106_Install-WSL2' -Tag 'Unit', 'AutomationScript', 'Infrastructure' {
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }

@@ -6,7 +6,8 @@
     Integration tests for 9999_Reset-Machine
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 20:39:43
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '9999_Reset-Machine Integration' -Tag 'Integration', 'AutomationScript' {
@@ -18,8 +19,12 @@ Describe '9999_Reset-Machine Integration' -Tag 'Integration', 'AutomationScript'
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
+        It 'Should execute in test mode with WhatIf' {
+            {
+                $params = @{ WhatIf = $true; ErrorAction = 'Stop' }
+                $params.Configuration = @{ Automation = @{ DryRun = $true } }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }

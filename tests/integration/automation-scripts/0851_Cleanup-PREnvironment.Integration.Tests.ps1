@@ -6,7 +6,9 @@
     Integration tests for 0851_Cleanup-PREnvironment
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 20:39:43
+    Supports WhatIf: False
+    Interactive Script: Yes
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0851_Cleanup-PREnvironment Integration' -Tag 'Integration', 'AutomationScript' {
@@ -18,10 +20,18 @@ Describe '0851_Cleanup-PREnvironment Integration' -Tag 'Integration', 'Automatio
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            # Script does not support -WhatIf parameter
-            # Test basic script structure instead
+        It 'Should be loadable (interactive script)' {
+            # Script is interactive - cannot execute in non-interactive test
+            # Verify script structure instead
             Test-Path $script:ScriptPath | Should -Be $true
+            
+            # Verify script can be parsed
+            {
+                $errors = $null
+                [System.Management.Automation.Language.Parser]::ParseFile(
+                    $script:ScriptPath, [ref]$null, [ref]$errors
+                if ($errors.Count -gt 0) { throw "Parse errors: $errors" }
+            } | Should -Not -Throw
         }
     }
 }

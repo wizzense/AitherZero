@@ -9,7 +9,8 @@
     Script: 0950_Generate-AllTests
     Stage: Unknown
     Description: This script automatically generates and maintains tests for ALL AitherZero components:
-    Generated: 2025-11-04 20:39:43
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0950_Generate-AllTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
@@ -84,7 +85,7 @@ Describe '0950_Generate-AllTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 $params.Configuration = @{}
@@ -100,25 +101,19 @@ Describe '0950_Generate-AllTests' -Tag 'Unit', 'AutomationScript', 'Unknown' {
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }

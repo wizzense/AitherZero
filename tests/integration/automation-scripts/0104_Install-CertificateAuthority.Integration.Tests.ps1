@@ -6,7 +6,8 @@
     Integration tests for 0104_Install-CertificateAuthority
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 20:39:42
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0104_Install-CertificateAuthority Integration' -Tag 'Integration', 'AutomationScript' {
@@ -18,8 +19,12 @@ Describe '0104_Install-CertificateAuthority Integration' -Tag 'Integration', 'Au
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
+        It 'Should execute in test mode with WhatIf' {
+            {
+                $params = @{ WhatIf = $true; ErrorAction = 'Stop' }
+                $params.Configuration = @{ Automation = @{ DryRun = $true } }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }

@@ -9,7 +9,8 @@
     Script: 0513_Enable-ContinuousReporting
     Stage: Reporting
     Description: Sets up file watchers, event triggers, and continuous monitoring for automatic report generation
-    Generated: 2025-11-04 20:39:43
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0513_Enable-ContinuousReporting' -Tag 'Unit', 'AutomationScript', 'Reporting' {
@@ -94,7 +95,7 @@ Describe '0513_Enable-ContinuousReporting' -Tag 'Unit', 'AutomationScript', 'Rep
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 & $script:ScriptPath @params
@@ -109,25 +110,19 @@ Describe '0513_Enable-ContinuousReporting' -Tag 'Unit', 'AutomationScript', 'Rep
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }
