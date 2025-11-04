@@ -1,86 +1,57 @@
 {
   "metadata": {
     "name": "ci-validate-manifests",
-    "description": "Validate PowerShell module manifests - mirrors GitHub Actions validate-manifests.yml",
+    "description": "Validate PowerShell module manifests for syntax and Unicode issues",
     "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "validation", "manifests", "github-actions", "modules"],
+    "tags": ["ci", "validation", "manifests", "modules"],
     "estimatedDuration": "2-5 minutes",
-    "lastUpdated": "2025-11-04T06:00:00Z",
     "githubWorkflow": "validate-manifests.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": [],
     "requiredTools": [],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "validateManifests": true,
-      "runTests": false,
-      "fixIssues": false
+      "verbose": false,
+      "autoFix": false,
+      "runTests": false
     },
     "profiles": {
       "standard": {
-        "description": "Standard manifest validation matching GitHub Actions",
+        "description": "Standard manifest validation",
         "variables": {
-          "validateManifests": true,
-          "runTests": false,
-          "fixIssues": false
+          "autoFix": false,
+          "runTests": false
         }
       },
       "fix": {
-        "description": "Validate and fix manifest issues",
+        "description": "Validate and fix Unicode issues",
         "variables": {
-          "validateManifests": true,
-          "runTests": false,
-          "fixIssues": true
+          "autoFix": true,
+          "runTests": false
         }
       },
       "with-tests": {
-        "description": "Validate manifests and run associated tests",
+        "description": "Validate and run tests",
         "variables": {
-          "validateManifests": true,
-          "runTests": true,
-          "fixIssues": false
+          "autoFix": false,
+          "runTests": true
         }
       }
     },
     "stages": [
       {
-        "name": "Validate Module Manifests",
-        "description": "Validate all PowerShell module manifests for syntax and Unicode issues",
+        "name": "Manifest Validation",
+        "description": "Validate PowerShell module manifest syntax",
         "sequences": ["0405"],
-        "condition": "{{validateManifests}}",
-        "variables": {
-          "Fix": "{{fixIssues}}"
-        },
+        "variables": {},
         "continueOnError": false,
-        "timeout": 180
+        "timeout": 120
       }
     ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🔍 Starting module manifest validation...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ All module manifests validated successfully!",
-      "level": "Information"
-    },
-    "onFailure": {
-      "message": "❌ Module manifest validation failed",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "validate-manifests.yml"
-    }
   }
 }
