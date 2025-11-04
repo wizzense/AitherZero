@@ -14,6 +14,12 @@
     - Creates private internal repository if needed
     - Mirrors all branches and tags from upstream
     - Sets up local clone with upstream remote configured
+
+.NOTES
+    Stage: Development
+    Category: Git
+    Dependencies: git, gh CLI
+    Tags: git, mirror, sync, repository
     
 .PARAMETER UpstreamUrl
     The URL of the upstream public repository to mirror
@@ -51,12 +57,6 @@
 .EXAMPLE
     ./0706_Mirror-Repository.ps1 -UpstreamUrl "https://github.com/owner/repo.git" -TargetOrg "MyOrg" -InternalRepoName "MyRepo-Internal"
     Sets up custom repository mirror
-
-.NOTES
-    Stage: Development
-    Category: Git
-    Dependencies: git, gh CLI
-    Tags: git, mirror, sync, repository
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
