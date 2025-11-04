@@ -44,9 +44,9 @@
 
     Run without user prompts (automatically detected in CI environments)
 
-.PARAMETER Profile
+.PARAMETER ProfileName
 
-    Execution profile to use
+    Execution profile to use (Minimal, Standard, Developer, Full)
 
 .PARAMETER Playbook
 
@@ -785,7 +785,7 @@ function Show-Help {
 
     Write-UIText "  -Mode Orchestrate -Playbook 'tech-debt-analysis' -PlaybookProfile 'quick'" -Color 'Info'
 
-    Write-UIText "  -NonInteractive -Profile Developer" -Color 'Info'
+    Write-UIText "  -NonInteractive -ProfileName Developer" -Color 'Info'
 
     Write-UIText "  -DryRun    # Preview without executing" -Color 'Info'
 

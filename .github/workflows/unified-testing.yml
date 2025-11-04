@@ -74,7 +74,7 @@ jobs:
           Write-Host "🎼 Starting orchestrated testing with profile: $profile" -ForegroundColor Cyan
           Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
           
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -Profile $profile
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -PlaybookProfile $profile
           
           $exitCode = $LASTEXITCODE
           Write-Host "`n═══════════════════════════════════════════════════════" -ForegroundColor Cyan
