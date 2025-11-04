@@ -126,7 +126,74 @@ orchestration/playbooks/
 # Complex workflow = playbook:
 orchestration/playbooks/code-quality-full.psd1
 ```
+
+### ⚠️ HARD REQUIREMENT: Use ScriptUtilities Module for Common Code
+
+**NEVER duplicate common helper functions in automation scripts!**
+
+All automation scripts should use the centralized `ScriptUtilities.psm1` module for common patterns.
+
+❌ **WRONG - Defining helper functions in each script:**
+```powershell
+# In 0404_Run-PSScriptAnalyzer.ps1
+function Write-ScriptLog {
+    param([string]$Message, [string]$Level = 'Information')
+    # 40 lines of duplicate logging code...
+}
+
+function Get-GitHubToken {
+    # 30 lines of duplicate auth code...
+}
+
+# Script logic starts here...
 ```
+
+✅ **CORRECT - Import ScriptUtilities module:**
+```powershell
+# In 0404_Run-PSScriptAnalyzer.ps1
+#Requires -Version 7.0
+
+param(
+    [switch]$Fast,
+    [switch]$UseCache
+)
+
+# Import ScriptUtilities for common functions
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+
+# Now use the functions directly
+Write-ScriptLog "Starting PSScriptAnalyzer..." -Level 'Information'
+$token = Get-GitHubToken -ErrorAction SilentlyContinue
+
+# Script logic...
+```
+
+**Available Functions in ScriptUtilities:**
+- `Write-ScriptLog` - Centralized logging with fallback
+- `Get-GitHubToken` - GitHub authentication helper
+- `Test-Prerequisites` - Validate dependencies
+- `Get-ProjectRoot` - Get repository root path
+- `Get-ScriptMetadata` - Parse script metadata comments
+- `Test-CommandAvailable` - Check if command exists
+- `Test-IsAdministrator` - Check admin privileges
+- `Test-GitRepository` - Validate git repository
+- `Invoke-WithRetry` - Retry failed operations
+- `Format-Duration` - Format timespan for display
+
+**When to Add Functions to ScriptUtilities:**
+- Function is used in 3+ automation scripts
+- Function provides common infrastructure (logging, auth, validation)
+- Function has no script-specific logic
+- Function follows PowerShell best practices (approved verbs, proper parameters)
+
+**When NOT to Add to ScriptUtilities:**
+- Script-specific business logic
+- Functions with heavy dependencies on specific tools
+- Experimental/unstable code
+
+**Core Principle:**
+> "DRY (Don't Repeat Yourself) - Extract reusable code to ScriptUtilities, not copy-paste to every script"
 
 ### Module Scope Issues
 Functions in scriptblocks may lose module scope. Call directly:
