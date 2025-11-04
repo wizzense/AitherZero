@@ -227,7 +227,10 @@ function Build-UnitTest {
     [void]$sb.AppendLine("Describe '$ScriptName' -Tag 'Unit', 'AutomationScript', '$Stage' {")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('    BeforeAll {')
-    [void]$sb.AppendLine("        " + '$script:ScriptPath = ' + "'$($ScriptPath -replace '\\', '/')'")
+    # Use relative path from $PSScriptRoot to make tests portable across different environments
+    [void]$sb.AppendLine('        # Compute path relative to repository root using $PSScriptRoot')
+    [void]$sb.AppendLine('        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent')
+    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'automation-scripts/$ScriptName.ps1'")
     [void]$sb.AppendLine("        " + '$script:ScriptName = ' + "'$ScriptName'")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('        # Import test helpers for environment detection')
@@ -368,7 +371,10 @@ function Build-IntegrationTest {
     [void]$sb.AppendLine("Describe '$ScriptName Integration' -Tag 'Integration', 'AutomationScript' {")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('    BeforeAll {')
-    [void]$sb.AppendLine("        " + '$script:ScriptPath = ' + "'$($ScriptPath -replace '\\', '/')'")
+    # Use relative path from $PSScriptRoot to make tests portable across different environments
+    [void]$sb.AppendLine('        # Compute path relative to repository root using $PSScriptRoot')
+    [void]$sb.AppendLine('        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent')
+    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'automation-scripts/$ScriptName.ps1'")
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("    Context 'Integration' {")
