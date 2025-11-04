@@ -357,9 +357,15 @@ This file failed quality validation checks. Review the findings below and addres
         }
         
         # Execute gh command and capture output properly
-        # gh issue create outputs the URL to the created issue
-        $issueUrl = gh @ghArgs 2>&1
-        $exitCode = $LASTEXITCODE
+        # gh issue create outputs the URL to the created issue on success
+        # Note: Errors will go to stderr; we don't redirect to avoid log corruption
+        try {
+            $issueUrl = gh @ghArgs
+            $exitCode = $LASTEXITCODE
+        } catch {
+            $exitCode = 1
+            $issueUrl = $null
+        }
         
         if ($exitCode -eq 0 -and $issueUrl) {
             # Extract issue number from URL (format: https://github.com/owner/repo/issues/123)
