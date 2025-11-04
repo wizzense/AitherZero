@@ -1420,93 +1420,118 @@ function Get-DetailedTestResults {
         }
     }
     
-    # Parse testResults.xml for actual execution results
-    $testResultsPath = Join-Path $ProjectPath "testResults.xml"
-    if (Test-Path $testResultsPath) {
-        try {
-            [xml]$testXml = Get-Content $testResultsPath
-            
-            # Get summary from root
-            $results = $testXml.'test-results'
-            $testResults.Summary.Total = [int]$results.total
-            $failures = [int]$results.failures
-            $errors = [int]$results.errors
-            $testResults.Summary.Skipped = [int]$results.skipped
-            $testResults.Summary.Passed = $testResults.Summary.Total - $failures - $errors - $testResults.Summary.Skipped
-            $testResults.Summary.Failed = $failures + $errors
-            
-            # Count how many test files have results
-            $testCases = $testXml.SelectNodes("//test-case")
-            $filesWithResults = @($testCases | ForEach-Object { 
-                if ($_.name -match '/([^/]+\.Tests\.ps1)') { $matches[1] }
-            } | Select-Object -Unique)
-            $testResults.TestFiles.WithResults = $filesWithResults.Count
-            
-            # Extract individual test cases
-            foreach ($testCase in $testCases) {
-                $testPath = $testCase.name
-                $domain = if ($testPath -match '/domains/([^/]+)/') { $matches[1] }
-                         elseif ($testPath -match '/automation-scripts/') { 'automation-scripts' }
-                         else { 'other' }
+    # Parse TestReport JSON files for actual execution results (created by 0402 and 0403)
+    # Look for latest TestReport-*.json files in tests/results
+    $testResultsDir = Join-Path $ProjectPath "tests/results"
+    $testReportFiles = @()
+    
+    if (Test-Path $testResultsDir) {
+        $testReportFiles = @(Get-ChildItem -Path $testResultsDir -Filter "TestReport-*.json" -ErrorAction SilentlyContinue |
+                            Where-Object { $_.Length -gt 50 } |  # Skip empty files
+                            Sort-Object LastWriteTime -Descending)
+    }
+    
+    if ($testReportFiles.Count -gt 0) {
+        Write-ScriptLog -Message "Found $($testReportFiles.Count) TestReport JSON files"
+        
+        # Process each test report (Unit and Integration)
+        foreach ($reportFile in $testReportFiles | Select-Object -First 10) {  # Limit to 10 most recent
+            try {
+                $reportContent = Get-Content $reportFile.FullName -Raw -ErrorAction Stop
+                $report = $reportContent | ConvertFrom-Json
                 
-                $testType = if ($testPath -match '/unit/') { 'Unit' }
-                           elseif ($testPath -match '/integration/') { 'Integration' }
-                           else { 'Other' }
-                
-                $testData = @{
-                    Name = $testCase.name
-                    Description = $testCase.description
-                    Result = $testCase.result
-                    Success = $testCase.success -eq 'True'
-                    Time = $testCase.time
-                    Domain = $domain
-                    Type = $testType
+                # Handle execution errors gracefully
+                if ($null -ne $report.PSObject.Properties['ExecutionError']) {
+                    Write-ScriptLog -Level Warning -Message "Test report contains execution error: $($reportFile.Name) - $($report.ExecutionError.Message)"
+                    # Still process what we have
                 }
                 
-                $testResults.Tests += $testData
-                
-                # Track by domain
-                if (-not $testResults.ByDomain.ContainsKey($domain)) {
-                    $testResults.ByDomain[$domain] = @{ Total = 0; Passed = 0; Failed = 0 }
+                # Aggregate summary counts
+                if ($null -ne $report.PSObject.Properties['TotalCount']) {
+                    $testResults.Summary.Total += [int]$report.TotalCount
                 }
-                $testResults.ByDomain[$domain].Total++
-                if ($testData.Success) {
-                    $testResults.ByDomain[$domain].Passed++
-                } else {
-                    $testResults.ByDomain[$domain].Failed++
+                if ($null -ne $report.PSObject.Properties['PassedCount']) {
+                    $testResults.Summary.Passed += [int]$report.PassedCount
+                }
+                if ($null -ne $report.PSObject.Properties['FailedCount']) {
+                    $testResults.Summary.Failed += [int]$report.FailedCount
+                }
+                if ($null -ne $report.PSObject.Properties['SkippedCount']) {
+                    $testResults.Summary.Skipped += [int]$report.SkippedCount
                 }
                 
                 # Track by type
+                $testType = if ($null -ne $report.PSObject.Properties['TestType']) { $report.TestType } else { 'Other' }
                 if ($testResults.ByType.ContainsKey($testType)) {
-                    $testResults.ByType[$testType].Total++
-                    if ($testData.Success) {
-                        $testResults.ByType[$testType].Passed++
-                    } else {
-                        $testResults.ByType[$testType].Failed++
+                    if ($null -ne $report.PSObject.Properties['TotalCount']) {
+                        $testResults.ByType[$testType].Total += [int]$report.TotalCount
+                    }
+                    if ($null -ne $report.PSObject.Properties['PassedCount']) {
+                        $testResults.ByType[$testType].Passed += [int]$report.PassedCount
+                    }
+                    if ($null -ne $report.PSObject.Properties['FailedCount']) {
+                        $testResults.ByType[$testType].Failed += [int]$report.FailedCount
                     }
                 }
-            }
-            
-            # Get duration from test suite
-            if ($testXml.'test-results'.'test-suite' -and $testXml.'test-results'.'test-suite'.time) {
-                $duration = [double]$testXml.'test-results'.'test-suite'.time
-                if ($duration -lt 60) {
-                    $testResults.Summary.Duration = "$([math]::Round($duration, 2))s"
-                } else {
-                    $minutes = [math]::Floor($duration / 60)
-                    $seconds = [math]::Round($duration % 60, 0)
-                    $testResults.Summary.Duration = "${minutes}m ${seconds}s"
+                
+                # Extract failed test details if available
+                if ($null -ne $report.PSObject.Properties['TestResults'] -and 
+                    $null -ne $report.TestResults.PSObject.Properties['Details'] -and 
+                    $report.TestResults.Details.Count -gt 0) {
+                    
+                    foreach ($testDetail in $report.TestResults.Details) {
+                        $testName = if ($null -ne $testDetail.PSObject.Properties['Name']) { $testDetail.Name } else { 'Unknown' }
+                        $testPath = if ($null -ne $testDetail.PSObject.Properties['ExpandedPath']) { $testDetail.ExpandedPath } else { $testName }
+                        
+                        $domain = if ($testPath -match '/domains/([^/]+)/') { $matches[1] }
+                                 elseif ($testPath -match '/automation-scripts/') { 'automation-scripts' }
+                                 else { 'other' }
+                        
+                        $testData = @{
+                            Name = $testName
+                            Result = if ($null -ne $testDetail.PSObject.Properties['Result']) { $testDetail.Result } else { 'Failed' }
+                            Success = $false  # Details only include failed tests
+                            Time = if ($null -ne $testDetail.PSObject.Properties['Duration']) { $testDetail.Duration } else { 0 }
+                            Domain = $domain
+                            Type = $testType
+                        }
+                        
+                        $testResults.Tests += $testData
+                        
+                        # Track by domain
+                        if (-not $testResults.ByDomain.ContainsKey($domain)) {
+                            $testResults.ByDomain[$domain] = @{ Total = 0; Passed = 0; Failed = 0 }
+                        }
+                        $testResults.ByDomain[$domain].Total++
+                        $testResults.ByDomain[$domain].Failed++
+                    }
                 }
+                
+                # Aggregate duration
+                if ($null -ne $report.PSObject.Properties['Duration']) {
+                    $duration = [double]$report.Duration
+                    if ($duration -lt 60) {
+                        $testResults.Summary.Duration = "$([math]::Round($duration, 2))s"
+                    } else {
+                        $minutes = [math]::Floor($duration / 60)
+                        $seconds = [math]::Round($duration % 60, 0)
+                        $testResults.Summary.Duration = "${minutes}m ${seconds}s"
+                    }
+                }
+                
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to parse test report: $($reportFile.Name) - $_"
             }
-            
-        } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse detailed test results: $_"
         }
+        
+        Write-ScriptLog -Message "Aggregated test results: Total=$($testResults.Summary.Total), Passed=$($testResults.Summary.Passed), Failed=$($testResults.Summary.Failed), Skipped=$($testResults.Summary.Skipped)"
+    } else {
+        Write-ScriptLog -Level Warning -Message "No TestReport JSON files found in $testResultsDir"
     }
     
     # Create audit message
     if ($testResults.TestFiles.Total -gt 0) {
-        $coveragePercent = if ($testResults.TestFiles.PotentialTests -gt 0) {
+        $coveragePercent = if ($testResults.TestFiles.PotentialTests -gt 0 -and $testResults.Summary.Total -gt 0) {
             [math]::Round(($testResults.Summary.Total / $testResults.TestFiles.PotentialTests) * 100, 1)
         } else { 0 }
         
@@ -1515,11 +1540,11 @@ function Get-DetailedTestResults {
 - Total Test Files: $($testResults.TestFiles.Total) ($($testResults.TestFiles.Unit) unit, $($testResults.TestFiles.Integration) integration)
 - Potential Test Cases: $($testResults.TestFiles.PotentialTests) (by counting It blocks)
 - Actually Run: $($testResults.Summary.Total) ($coveragePercent% of potential)
-- Files with Results: $($testResults.TestFiles.WithResults) / $($testResults.TestFiles.Total)
+- Test Results: Passed=$($testResults.Summary.Passed), Failed=$($testResults.Summary.Failed), Skipped=$($testResults.Summary.Skipped)
 
 The autogenerated test system has created $($testResults.TestFiles.Total) test files with approximately $($testResults.TestFiles.PotentialTests) test cases.
-Only $($testResults.Summary.Total) tests were run in the last execution (from testResults.xml).
-Run './az 0402' to execute the full test suite.
+Test results are aggregated from TestReport-*.json files in tests/results.
+Run './az 0402' (unit) or './az 0403' (integration) to execute tests.
 "@
     }
     
