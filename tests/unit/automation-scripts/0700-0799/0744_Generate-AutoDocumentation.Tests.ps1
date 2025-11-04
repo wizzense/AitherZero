@@ -8,8 +8,8 @@
     Auto-generated comprehensive tests
     Script: 0744_Generate-AutoDocumentation
     Stage: AI & Documentation
-    Description: Automated reactive documentation generation with quality validation
-    Generated: 2025-10-30 02:11:49
+    Description: Generates comprehensive, up-to-date documentation automatically based on code changes.
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0744_Generate-AutoDocumentation' -Tag 'Unit', 'AutomationScript', 'AI & Documentation' {
@@ -73,8 +73,8 @@ Describe '0744_Generate-AutoDocumentation' -Tag 'Unit', 'AutomationScript', 'AI 
 
     Context 'Metadata' {
         It 'Should be in stage: AI & Documentation' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {

@@ -1,0 +1,98 @@
+{
+  "mcpServers": {
+    "aitherzero": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "mcp-server/scripts/start-with-build.mjs"
+      ],
+      "env": {
+        "AITHERZERO_ROOT": ".",
+        "AITHERZERO_NONINTERACTIVE": "1"
+      },
+      "tools": [
+        "run_script",
+        "list_scripts",
+        "search_scripts",
+        "execute_playbook",
+        "get_configuration",
+        "run_tests",
+        "run_quality_check",
+        "get_project_report"
+      ]
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
+      "tools": [
+        "read_file",
+        "read_multiple_files",
+        "write_file",
+        "create_directory",
+        "list_directory",
+        "move_file",
+        "search_files",
+        "get_file_info"
+      ]
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "tools": [
+        "create_or_update_file",
+        "search_repositories",
+        "create_repository",
+        "get_file_contents",
+        "push_files",
+        "create_issue",
+        "create_pull_request",
+        "fork_repository",
+        "create_branch"
+      ]
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "."
+      ],
+      "tools": [
+        "git_status",
+        "git_diff",
+        "git_commit",
+        "git_add",
+        "git_reset",
+        "git_log",
+        "git_show"
+      ]
+    },
+    "powershell-docs": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-powershell-docs"
+      ],
+      "tools": [
+        "search_powershell_docs",
+        "get_command_help",
+        "get_about_topic"
+      ]
+    }
+  }
+}

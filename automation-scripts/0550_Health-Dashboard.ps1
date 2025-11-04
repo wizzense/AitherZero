@@ -9,14 +9,14 @@ param(
     [hashtable]$Configuration,
 
     [Parameter()]
+    [switch]$NonInteractive,
+
+    [Parameter()]
     [switch]$ShowAll
 )
 
 # Initialize environment
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-
-# Detect CI environment
-$isCI = $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true'
 
 # Configuration constants
 $script:CoreModules = @('Logging', 'LogViewer', 'Configuration')

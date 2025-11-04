@@ -1,0 +1,42 @@
+{
+  "Timestamp": "2025-11-03T17:48:41.5030547+00:00",
+  "Tests": {
+    "Unit": 152,
+    "Integration": 152,
+    "LastRun": "2025-11-03 17:38:31",
+    "Passed": 12,
+    "Failed": 0,
+    "SuccessRate": 100.0,
+    "Duration": "0.98s",
+    "Total": 304,
+    "Skipped": 0
+  },
+  "DocumentationCoverage": {
+    "FunctionsWithoutDocs": 1002,
+    "TotalFunctions": 1111,
+    "Percentage": 9.4,
+    "FunctionsWithDocs": 104
+  },
+  "LinesOfCode": 93466,
+  "TestCoverage": {
+    "FilesWithTests": 18,
+    "FilesWithoutTests": 178,
+    "Percentage": 9.2,
+    "TotalFiles": 196
+  },
+  "QualityCoverage": {
+    "WarningFiles": 22,
+    "TotalValidated": 22,
+    "PassedFiles": 0,
+    "FailedFiles": 0,
+    "Percentage": 0.0,
+    "AverageScore": 90
+  },
+  "LineCoverage": {
+    "CoveredLines": 0,
+    "Percentage": 0,
+    "TotalLines": 0
+  },
+  "Functions": 1111,
+  "Date": "2025-11-03"
+}

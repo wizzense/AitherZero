@@ -9,7 +9,7 @@
     Script: 0425_Validate-DocumentationStructure
     Stage: Testing
     Description: This script validates that documentation follows the AitherZero documentation standards:
-    Generated: 2025-10-30 17:55:53
+    Generated: 2025-11-02 21:41:15
 #>
 
 Describe '0425_Validate-DocumentationStructure' -Tag 'Unit', 'AutomationScript', 'Testing' {

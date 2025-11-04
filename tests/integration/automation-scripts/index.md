@@ -11,8 +11,8 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 127
-- **PowerShell Scripts**: 126
+- **Files**: 136
+- **PowerShell Scripts**: 135
 
 ## 📄 Files
 
@@ -38,6 +38,8 @@
   - *Integration tests for 0008_Install-OpenTofu*
 - ⚙️ [0009_Initialize-OpenTofu.Integration.Tests.ps1](./0009_Initialize-OpenTofu.Integration.Tests.ps1)
   - *Integration tests for 0009_Initialize-OpenTofu*
+- ⚙️ [0009_Setup-MCPServers.Integration.Tests.ps1](./0009_Setup-MCPServers.Integration.Tests.ps1)
+  - *Integration tests for 0009_Setup-MCPServers*
 - ⚙️ [0100_Configure-System.Integration.Tests.ps1](./0100_Configure-System.Integration.Tests.ps1)
   - *Integration tests for 0100_Configure-System*
 - ⚙️ [0104_Install-CertificateAuthority.Integration.Tests.ps1](./0104_Install-CertificateAuthority.Integration.Tests.ps1)
@@ -74,14 +76,16 @@
   - *Integration tests for 0213_Install-AWSCLI*
 - ⚙️ [0214_Install-Packer.Integration.Tests.ps1](./0214_Install-Packer.Integration.Tests.ps1)
   - *Integration tests for 0214_Install-Packer*
-- ⚙️ [0215_Install-Chocolatey.Integration.Tests.ps1](./0215_Install-Chocolatey.Integration.Tests.ps1)
-  - *Integration tests for 0215_Install-Chocolatey*
+- ⚙️ [0215_Configure-MCPServers.Integration.Tests.ps1](./0215_Configure-MCPServers.Integration.Tests.ps1)
+  - *Integration tests for 0215_Configure-MCPServers*
 - ⚙️ [0216_Set-PowerShellProfile.Integration.Tests.ps1](./0216_Set-PowerShellProfile.Integration.Tests.ps1)
   - *Integration tests for 0216_Set-PowerShellProfile*
 - ⚙️ [0217_Install-ClaudeCode.Integration.Tests.ps1](./0217_Install-ClaudeCode.Integration.Tests.ps1)
   - *Integration tests for 0217_Install-ClaudeCode*
 - ⚙️ [0218_Install-GeminiCLI.Integration.Tests.ps1](./0218_Install-GeminiCLI.Integration.Tests.ps1)
   - *Integration tests for 0218_Install-GeminiCLI*
+- ⚙️ [0219_Install-Chocolatey.Integration.Tests.ps1](./0219_Install-Chocolatey.Integration.Tests.ps1)
+  - *Integration tests for 0215_Install-Chocolatey*
 - ⚙️ [0300_Deploy-Infrastructure.Integration.Tests.ps1](./0300_Deploy-Infrastructure.Integration.Tests.ps1)
   - *Integration tests for 0300_Deploy-Infrastructure*
 - ⚙️ [0400_Install-TestingTools.Integration.Tests.ps1](./0400_Install-TestingTools.Integration.Tests.ps1)
@@ -116,6 +120,8 @@
   - *Integration tests for 0420_Validate-ComponentQuality*
 - ⚙️ [0425_Validate-DocumentationStructure.Integration.Tests.ps1](./0425_Validate-DocumentationStructure.Integration.Tests.ps1)
   - *Integration tests for 0425_Validate-DocumentationStructure*
+- ⚙️ [0426_Validate-TestScriptSync.Integration.Tests.ps1](./0426_Validate-TestScriptSync.Integration.Tests.ps1)
+  - *Integration tests for 0426_Validate-TestScriptSync*
 - ⚙️ [0440_Validate-Workflows.Integration.Tests.ps1](./0440_Validate-Workflows.Integration.Tests.ps1)
   - *Integration tests for 0440_Validate-Workflows*
 - ⚙️ [0441_Test-WorkflowsLocally.Integration.Tests.ps1](./0441_Test-WorkflowsLocally.Integration.Tests.ps1)
@@ -160,6 +166,8 @@
   - *Integration tests for 0523_Analyze-SecurityIssues*
 - ⚙️ [0524_Generate-TechDebtReport.Integration.Tests.ps1](./0524_Generate-TechDebtReport.Integration.Tests.ps1)
   - *Integration tests for 0524_Generate-TechDebtReport*
+- ⚙️ [0530_Get-WorkflowRunReport.Integration.Tests.ps1](./0530_Get-WorkflowRunReport.Integration.Tests.ps1)
+  - *Integration tests for 0530_Get-WorkflowRunReport*
 - ⚙️ [0530_View-Logs.Integration.Tests.ps1](./0530_View-Logs.Integration.Tests.ps1)
   - *Integration tests for 0530_View-Logs*
 - ⚙️ [0550_Health-Dashboard.Integration.Tests.ps1](./0550_Health-Dashboard.Integration.Tests.ps1)
@@ -222,6 +230,14 @@
   - *Integration tests for 0745_Generate-ProjectIndexes*
 - ⚙️ [0746_Generate-AllDocumentation.Integration.Tests.ps1](./0746_Generate-AllDocumentation.Integration.Tests.ps1)
   - *Integration tests for 0746_Generate-AllDocumentation*
+- ⚙️ [0750_Build-MCPServer.Integration.Tests.ps1](./0750_Build-MCPServer.Integration.Tests.ps1)
+  - *Integration tests for 0750_Build-MCPServer*
+- ⚙️ [0751_Start-MCPServer.Integration.Tests.ps1](./0751_Start-MCPServer.Integration.Tests.ps1)
+  - *Integration tests for 0751_Start-MCPServer*
+- ⚙️ [0752_Demo-MCPServer.Integration.Tests.ps1](./0752_Demo-MCPServer.Integration.Tests.ps1)
+  - *Integration tests for 0752_Demo-MCPServer*
+- ⚙️ [0753_Use-MCPServer.Integration.Tests.ps1](./0753_Use-MCPServer.Integration.Tests.ps1)
+  - *Integration tests for 0753_Use-MCPServer*
 - ⚙️ [0798_generate-changelog.Integration.Tests.ps1](./0798_generate-changelog.Integration.Tests.ps1)
   - *Integration tests for 0798_generate-changelog*
 - ⚙️ [0799_cleanup-old-tags.Integration.Tests.ps1](./0799_cleanup-old-tags.Integration.Tests.ps1)
@@ -266,6 +282,8 @@
   - *Integration tests for 0853_Quick-Docker-Validation*
 - ⚙️ [0854_Manage-PRContainer.Integration.Tests.ps1](./0854_Manage-PRContainer.Integration.Tests.ps1)
   - *Integration tests for 0854_Manage-PRContainer*
+- ⚙️ [0860_Validate-Deployments.Integration.Tests.ps1](./0860_Validate-Deployments.Integration.Tests.ps1)
+  - *Integration tests for 0860_Validate-Deployments*
 - ⚙️ [0900_Test-SelfDeployment.Integration.Tests.ps1](./0900_Test-SelfDeployment.Integration.Tests.ps1)
   - *Integration tests for 0900_Test-SelfDeployment*
 - ⚙️ [0901_Test-LocalDeployment.Integration.Tests.ps1](./0901_Test-LocalDeployment.Integration.Tests.ps1)
@@ -277,5 +295,5 @@
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-01 08:56:08 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-03 17:00:02 UTC
 

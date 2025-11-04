@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0703_Create-PullRequest
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Development
+    Description: Creates a GitHub pull request with automatic template selection,
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0703_Create-PullRequest' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0703_Create-PullRequest' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0703_Create-PullRequest.ps1'
@@ -108,8 +109,10 @@ Describe '0703_Create-PullRequest' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $cmd.Parameters.ContainsKey('OpenInBrowser') | Should -Be $true
         }
 
+        It 'Should have parameter: NonInteractive' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('NonInteractive') | Should -Be $true
         }
-
         It 'Should have parameter: Force' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Force') | Should -Be $true
@@ -118,9 +121,9 @@ Describe '0703_Create-PullRequest' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Development' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 

@@ -30,6 +30,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Ensure TERM is set for terminal operations (required in CI environments)
+if (-not $env:TERM) {
+    $env:TERM = 'xterm-256color'
+}
+
 # Script metadata
 $scriptMetadata = @{
     Stage = 'Testing'
@@ -155,17 +160,51 @@ try {
     Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
     Import-Module Pester -MinimumVersion $pesterMinVersion -Force
 
-    # Import all domain modules for integration testing
-    Write-ScriptLog -Message "Loading domain modules for integration testing"
-    $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "domains") -Filter "*.psm1" -Recurse
-    foreach ($module in $domainModules) {
+    # Set test mode BEFORE loading modules to prevent transcript I/O overhead
+    # This ensures the AitherZero module skips transcript initialization
+    $env:AITHERZERO_TEST_MODE = "Integration"
+
+    # Import AitherZero main module which loads all domains efficiently
+    # This is much faster than loading individual modules
+    Write-ScriptLog -Message "Loading AitherZero module for integration testing"
+    $mainModule = Join-Path $projectRoot "AitherZero.psd1"
+    
+    if (Test-Path $mainModule) {
         try {
-            Write-ScriptLog -Level Debug -Message "Loading module: $($module.Name)"
-            Import-Module $module.FullName -Force -ErrorAction Stop
+            Write-ScriptLog -Level Debug -Message "Loading main module: AitherZero"
+            Import-Module $mainModule -Force -ErrorAction Stop -DisableNameChecking
+            Write-ScriptLog -Message "AitherZero module loaded successfully"
         }
         catch {
-            Write-ScriptLog -Level Warning -Message "Failed to load module $($module.Name): $_"
-            # Continue with other modules - some may have parse errors
+            Write-ScriptLog -Level Warning -Message "Failed to load main module, falling back to individual modules: $_"
+            
+            # Fallback: Load domain modules individually
+            $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "domains") -Filter "*.psm1" -Recurse
+            foreach ($module in $domainModules) {
+                try {
+                    Write-ScriptLog -Level Debug -Message "Loading module: $($module.Name)"
+                    Import-Module $module.FullName -Force -ErrorAction Stop
+                }
+                catch {
+                    Write-ScriptLog -Level Warning -Message "Failed to load module $($module.Name): $_"
+                    # Continue with other modules - some may have parse errors
+                }
+            }
+        }
+    } else {
+        Write-ScriptLog -Level Warning -Message "Main module not found, loading individual domain modules"
+        
+        # Load domain modules individually
+        $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "domains") -Filter "*.psm1" -Recurse
+        foreach ($module in $domainModules) {
+            try {
+                Write-ScriptLog -Level Debug -Message "Loading module: $($module.Name)"
+                Import-Module $module.FullName -Force -ErrorAction Stop
+            }
+            catch {
+                Write-ScriptLog -Level Warning -Message "Failed to load module $($module.Name): $_"
+                # Continue with other modules - some may have parse errors
+            }
         }
     }
 
@@ -184,24 +223,17 @@ try {
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
-    $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
-
-    # Apply parallel execution settings from config (if supported)
-    if ($pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
-        try {
-            $pesterConfig.Run.Parallel = $true
-            if ($pesterSettings.Parallel.BlockSize) {
-                $pesterConfig.Run.ParallelBlockSize = $pesterSettings.Parallel.BlockSize
-            }
-            Write-ScriptLog -Message "Parallel execution enabled with block size: $($pesterSettings.Parallel.BlockSize ?? 4)"
-        }
-        catch {
-            Write-ScriptLog -Level Warning -Message "Parallel execution not supported in this Pester version"
-        }
+    
+    # Check for Run settings with StrictMode-safe access
+    if ($pesterSettings.ContainsKey('Run') -and $pesterSettings.Run) {
+        $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
+        $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
+    } else {
+        $pesterConfig.Run.PassThru = $true
+        $pesterConfig.Run.Exit = $false
     }
 
-    # Filter for integration tests
+    # Filter for integration tests first
     $tags = @('Integration')
     if ($IncludeE2E) {
         $tags += 'E2E'
@@ -211,12 +243,68 @@ try {
     $pesterConfig.Filter.Tag = $tags
     $pesterConfig.Filter.ExcludeTag = @('Unit', 'Performance')
 
-    # Disable parallel execution for integration tests (if supported)
-    try {
-        $pesterConfig.Run.Parallel = $false
+    # Apply parallel execution settings from config (if supported)
+    # Enable parallel for integration tests to improve performance
+    $parallelEnabled = $false
+    if ($pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
+        try {
+            # Check if Pester supports parallel execution
+            if ((Get-Command Invoke-Pester).Parameters.ContainsKey('Configuration')) {
+                $pesterConfig.Run.Parallel = $true
+                
+                # Use configured block size directly (config already optimized for integration tests)
+                # Integration tests load modules and execute scripts, so they need
+                # smaller batches to avoid overwhelming workers and maintain responsiveness
+                $blockSize = if ($pesterSettings.Parallel.BlockSize) { 
+                    [Math]::Max(2, [Math]::Floor($pesterSettings.Parallel.BlockSize))
+                } else { 
+                    2 
+                }
+                $pesterConfig.Run.ParallelBlockSize = $blockSize
+                
+                # Configure worker count
+                # Use config value or optimize for CI performance
+                if ($env:CI -or $env:AITHERZERO_CI) {
+                    # Use available CPU cores in CI
+                    $workers = [Math]::Min([Environment]::ProcessorCount, 4)
+                    Write-ScriptLog -Message "CI detected: Using $workers parallel workers"
+                } elseif ($pesterSettings.Parallel.Workers) {
+                    $workers = $pesterSettings.Parallel.Workers
+                } else {
+                    $workers = 4  # Default
+                }
+                $pesterConfig.Run.ParallelWorkers = $workers
+                
+                $parallelEnabled = $true
+                Write-ScriptLog -Message "Parallel execution enabled for integration tests (workers: $workers, block size: $blockSize)" -Level Information
+            } else {
+                Write-ScriptLog -Level Warning -Message "Parallel execution not supported in this Pester version"
+            }
+        }
+        catch {
+            Write-ScriptLog -Level Warning -Message "Failed to enable parallel execution: $_"
+        }
     }
-    catch {
-        Write-ScriptLog -Level Debug -Message "Parallel execution setting not available in this Pester version"
+    
+    if (-not $parallelEnabled) {
+        Write-ScriptLog -Level Information -Message "Running integration tests sequentially"
+    }
+
+    # Optimize output verbosity for performance (especially in CI)
+    if ($pesterSettings.ContainsKey('Output') -and $pesterSettings.Output) {
+        if ($pesterSettings.Output.Verbosity) {
+            $pesterConfig.Output.Verbosity = $pesterSettings.Output.Verbosity
+        }
+        if ($pesterSettings.Output.StackTraceVerbosity) {
+            $pesterConfig.Output.StackTraceVerbosity = $pesterSettings.Output.StackTraceVerbosity
+        }
+    } else {
+        # Default to minimal output for speed in CI
+        if ($env:CI -or $env:AITHERZERO_CI) {
+            $pesterConfig.Output.Verbosity = 'Minimal'
+            $pesterConfig.Output.StackTraceVerbosity = 'FirstLine'
+            Write-ScriptLog -Message "CI environment: Using minimal output verbosity for performance"
+        }
     }
 
     # Output configuration
@@ -249,9 +337,9 @@ try {
         New-Item -Path $testDrive -ItemType Directory -Force | Out-Null
     }
 
-    # Set environment variables for tests
-    if ($PSCmdlet.ShouldProcess("Environment variables", "Set test mode variables")) {
-        $env:AITHERZERO_TEST_MODE = "Integration"
+    # Set test drive environment variable
+    # Note: AITHERZERO_TEST_MODE is already set earlier before module loading
+    if ($PSCmdlet.ShouldProcess("Environment variables", "Set test drive variable")) {
         $env:AITHERZERO_TEST_DRIVE = $testDrive
     }
 
@@ -441,9 +529,57 @@ try {
     }
 }
 catch {
+    # Extract error info once to avoid duplication
+    $errorMessage = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+    $errorStackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace } else { 'N/A' }
+    
     Write-ScriptLog -Level Error -Message "Integration test execution failed: $_" -Data @{
-        Exception = $_.Exception.Message
-        ScriptStackTrace = $_.ScriptStackTrace
+        Exception = $errorMessage
+        ScriptStackTrace = $errorStackTrace
     }
+    
+    # CRITICAL: Always create TestReport file even on catastrophic failure
+    # This ensures CI/CD aggregation can process results
+    # Use $PSScriptRoot instead of $projectRoot to ensure variable is always available
+    $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
+    
+    if (-not $OutputPath) {
+        $OutputPath = Join-Path $scriptProjectRoot "tests/results"
+    }
+    
+    if (-not (Test-Path $OutputPath)) {
+        New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $testReportPath = Join-Path $OutputPath "TestReport-Integration-$timestamp.json"
+    
+    # Create minimal failure report
+    $failureReport = @{
+        TestType = 'Integration'
+        Timestamp = (Get-Date).ToString('o')
+        TotalCount = 0
+        PassedCount = 0
+        FailedCount = 0
+        SkippedCount = 0
+        Duration = 0
+        ExecutionError = @{
+            Message = $errorMessage
+            ScriptStackTrace = $errorStackTrace
+        }
+        TestResults = @{
+            Summary = @{
+                Total = 0
+                Passed = 0
+                Failed = 0
+                Skipped = 0
+            }
+            Details = @()
+        }
+    }
+    
+    $failureReport | ConvertTo-Json -Depth 10 | Set-Content -Path $testReportPath
+    Write-ScriptLog -Message "Failure report saved to: $testReportPath"
+    
     exit 2
 }

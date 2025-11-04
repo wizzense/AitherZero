@@ -92,6 +92,7 @@ jobs:
   run-unit-tests:
     name: 🧪 Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Timeout for entire job
     needs: test-discovery
     if: |
       (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'unit' || github.event.inputs.test_type == '') &&
@@ -103,34 +104,49 @@ jobs:
       
       - name: 🔧 Bootstrap Environment
         shell: pwsh
+        timeout-minutes: 3
         run: |
           Write-Host "🚀 Bootstrapping environment..." -ForegroundColor Cyan
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
       
       - name: 📦 Install Testing Tools
         shell: pwsh
+        timeout-minutes: 2
         run: |
           Write-Host "📦 Installing testing tools..." -ForegroundColor Cyan
           ./automation-scripts/0400_Install-TestingTools.ps1
-      
+
+      - name: 🔍 Validate Test-Script Synchronization
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "🔍 Validating test-script synchronization..." -ForegroundColor Cyan
+          ./automation-scripts/0426_Validate-TestScriptSync.ps1 -CI
+          if ($LASTEXITCODE -eq 1) {
+            Write-Host "⚠️  Orphaned tests detected but tests will continue" -ForegroundColor Yellow
+          }
+
       - name: 🧪 Run Unit Tests
         shell: pwsh
+        timeout-minutes: 5
         run: |
           Write-Host "🧪 Running ALL unit tests..." -ForegroundColor Cyan
-          $result = ./automation-scripts/0402_Run-UnitTests.ps1 `
-            -OutputPath "./tests/results" `
-            -PassThru `
-            -ErrorAction Continue
           
-          # Display results
-          Write-Host "`n📊 Unit Test Results:" -ForegroundColor Green
-          Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
-          Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
-          Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-          Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-          
-          # Set job summary
-          @"
+          try {
+            $result = ./automation-scripts/0402_Run-UnitTests.ps1 `
+              -OutputPath "./tests/results" `
+              -PassThru `
+              -ErrorAction Stop
+            
+            # Display results
+            Write-Host "`n📊 Unit Test Results:" -ForegroundColor Green
+            Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
+            Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+            
+            # Set job summary
+            @"
           ## 🧪 Unit Test Results
           
           | Metric | Count |
@@ -141,10 +157,31 @@ jobs:
           | ⏭️ Skipped | $($result.SkippedCount) |
           | ⏱️ Duration | $($result.Duration.TotalSeconds)s |
           "@ >> $env:GITHUB_STEP_SUMMARY
+            
+            # Exit with failure if tests failed
+            if ($result.FailedCount -gt 0) {
+              Write-Host "::error::$($result.FailedCount) unit tests failed"
+              exit 1
+            }
+          }
+          catch {
+            Write-Host "::error::Unit test execution failed: $_" -ForegroundColor Red
+            Write-Host "`n📊 Unit Test Results:" -ForegroundColor Red
+            Write-Host "  Total: N/A (execution failed)" -ForegroundColor Red
+            Write-Host "  Passed: N/A" -ForegroundColor Red
+            Write-Host "  Failed: N/A" -ForegroundColor Red
+            Write-Host "  Skipped: N/A" -ForegroundColor Red
+            
+            @"
+          ## 🧪 Unit Test Results
           
-          # Exit with failure if tests failed
-          if ($result.FailedCount -gt 0) {
-            Write-Host "::error::$($result.FailedCount) unit tests failed"
+          ❌ **Test execution failed**
+          
+          Error: $_
+          
+          Please check the logs for details.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+            
             exit 1
           }
       
@@ -161,6 +198,7 @@ jobs:
   run-integration-tests:
     name: 🔗 Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Increased from default 120s to accommodate parallel test execution
     needs: test-discovery
     if: |
       (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'integration' || github.event.inputs.test_type == '') &&
@@ -172,34 +210,49 @@ jobs:
       
       - name: 🔧 Bootstrap Environment
         shell: pwsh
+        timeout-minutes: 3
         run: |
           Write-Host "🚀 Bootstrapping environment..." -ForegroundColor Cyan
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
       
       - name: 📦 Install Testing Tools
         shell: pwsh
+        timeout-minutes: 2
         run: |
           Write-Host "📦 Installing testing tools..." -ForegroundColor Cyan
           ./automation-scripts/0400_Install-TestingTools.ps1
-      
+
+      - name: 🔍 Validate Test-Script Synchronization
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "🔍 Validating test-script synchronization..." -ForegroundColor Cyan
+          ./automation-scripts/0426_Validate-TestScriptSync.ps1 -CI
+          if ($LASTEXITCODE -eq 1) {
+            Write-Host "⚠️  Orphaned tests detected but tests will continue" -ForegroundColor Yellow
+          }
+
       - name: 🔗 Run Integration Tests
         shell: pwsh
+        timeout-minutes: 10
         run: |
           Write-Host "🔗 Running ALL integration tests..." -ForegroundColor Cyan
-          $result = ./automation-scripts/0403_Run-IntegrationTests.ps1 `
-            -OutputPath "./tests/results" `
-            -PassThru `
-            -ErrorAction Continue
           
-          # Display results
-          Write-Host "`n📊 Integration Test Results:" -ForegroundColor Green
-          Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
-          Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
-          Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-          Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-          
-          # Set job summary
-          @"
+          try {
+            $result = ./automation-scripts/0403_Run-IntegrationTests.ps1 `
+              -OutputPath "./tests/results" `
+              -PassThru `
+              -ErrorAction Stop
+            
+            # Display results
+            Write-Host "`n📊 Integration Test Results:" -ForegroundColor Green
+            Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
+            Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+            
+            # Set job summary
+            @"
           ## 🔗 Integration Test Results
           
           | Metric | Count |
@@ -210,10 +263,31 @@ jobs:
           | ⏭️ Skipped | $($result.SkippedCount) |
           | ⏱️ Duration | $($result.Duration.TotalSeconds)s |
           "@ >> $env:GITHUB_STEP_SUMMARY
+            
+            # Exit with failure if tests failed
+            if ($result.FailedCount -gt 0) {
+              Write-Host "::error::$($result.FailedCount) integration tests failed"
+              exit 1
+            }
+          }
+          catch {
+            Write-Host "::error::Integration test execution failed: $_" -ForegroundColor Red
+            Write-Host "`n📊 Integration Test Results:" -ForegroundColor Red
+            Write-Host "  Total: N/A (execution failed)" -ForegroundColor Red
+            Write-Host "  Passed: N/A" -ForegroundColor Red
+            Write-Host "  Failed: N/A" -ForegroundColor Red
+            Write-Host "  Skipped: N/A" -ForegroundColor Red
+            
+            @"
+          ## 🔗 Integration Test Results
           
-          # Exit with failure if tests failed
-          if ($result.FailedCount -gt 0) {
-            Write-Host "::error::$($result.FailedCount) integration tests failed"
+          ❌ **Test execution failed**
+          
+          Error: $_
+          
+          Please check the logs for details.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+            
             exit 1
           }
       
@@ -247,32 +321,12 @@ jobs:
         run: |
           Write-Host "📊 Aggregating all test results..." -ForegroundColor Cyan
           
-          # Parse test discovery outputs with proper error handling
-          $discoveryTotal = '${{ needs.test-discovery.outputs.total-test-count }}'
-          $discoveryUnit = '${{ needs.test-discovery.outputs.unit-test-count }}'
-          $discoveryIntegration = '${{ needs.test-discovery.outputs.integration-test-count }}'
-          
-          # Helper function to convert string to int or zero
-          function ConvertToIntOrZero($value) {
-            if ($value -match '^\d+$') { return [int]$value } else { return 0 }
-          }
-          
-          # Convert to integers with fallback to 0
-          $totalTestFiles = ConvertToIntOrZero $discoveryTotal
-          $unitTestFiles = ConvertToIntOrZero $discoveryUnit
-          $integrationTestFiles = ConvertToIntOrZero $discoveryIntegration
-          
-          Write-Host "Test discovery outputs:" -ForegroundColor Yellow
-          Write-Host "  Total: $totalTestFiles" -ForegroundColor White
-          Write-Host "  Unit: $unitTestFiles" -ForegroundColor White
-          Write-Host "  Integration: $integrationTestFiles" -ForegroundColor White
-          
           # Create aggregated report structure
           $aggregatedReport = @{
             Timestamp = (Get-Date).ToString('o')
-            TotalTestFiles = $totalTestFiles
-            UnitTestFiles = $unitTestFiles
-            IntegrationTestFiles = $integrationTestFiles
+            TotalTestFiles = [int]'${{ needs.test-discovery.outputs.total-count }}'
+            UnitTestFiles = [int]'${{ needs.test-discovery.outputs.unit-test-count }}'
+            IntegrationTestFiles = [int]'${{ needs.test-discovery.outputs.integration-count }}'
             TestResults = @{
               Summary = @{
                 Total = 0
@@ -297,10 +351,6 @@ jobs:
             }
           }
           
-          # Track unique test files processed
-          $processedUnitFiles = @{}
-          $processedIntegrationFiles = @{}
-          
           # Parse all test result files
           $resultFiles = Get-ChildItem -Path "./test-artifacts" -Filter "*.json" -Recurse -ErrorAction SilentlyContinue
           
@@ -311,25 +361,13 @@ jobs:
               $result = Get-Content $file.FullName -Raw | ConvertFrom-Json
               
               if ($null -ne $result.TotalCount) {
-                # Determine test type by checking parent directory name or file name
-                if ($file.FullName -match 'unit-test-results|TestReport-Unit') {
+                if ($file.Name -match 'TestReport-Unit|unit-test-results') {
                   $testType = 'Unit'
-                } elseif ($file.FullName -match 'integration-test-results|TestReport-Integration') {
+                } elseif ($file.Name -match 'TestReport-Integration|integration-test-results') {
                   $testType = 'Integration'
                 } else {
                   $testType = 'Unknown'
-                  Write-Warning "Could not determine test type for: $($file.FullName). Defaulting to 'Unknown'."
-                }
-                
-                # Track unique test files if available
-                if ($result.TestFiles) {
-                  foreach ($testFile in $result.TestFiles) {
-                    if ($testType -eq 'Unit') {
-                      $processedUnitFiles[$testFile] = $true
-                    } elseif ($testType -eq 'Integration') {
-                      $processedIntegrationFiles[$testFile] = $true
-                    }
-                  }
+                  Write-Warning "Could not determine test type for: $($file.Name). Defaulting to 'Unknown'."
                 }
                 
                 # Add to summary
@@ -350,25 +388,6 @@ jobs:
             catch {
               Write-Warning "Failed to parse: $($file.Name)"
             }
-          }
-          
-          # Fallback: If discovery didn't capture test files, count from processed results
-          if ($aggregatedReport.TotalTestFiles -eq 0 -and ($processedUnitFiles.Count -gt 0 -or $processedIntegrationFiles.Count -gt 0)) {
-            $aggregatedReport.UnitTestFiles = $processedUnitFiles.Count
-            $aggregatedReport.IntegrationTestFiles = $processedIntegrationFiles.Count
-            $aggregatedReport.TotalTestFiles = $processedUnitFiles.Count + $processedIntegrationFiles.Count
-            Write-Host "Using fallback test file counts from processed results" -ForegroundColor Yellow
-          }
-          
-          # Additional fallback: Count test files directly if still 0
-          if ($aggregatedReport.TotalTestFiles -eq 0) {
-            Write-Host "Discovery and result parsing failed to find test files, counting directly..." -ForegroundColor Yellow
-            $unitTests = @(Get-ChildItem -Path "./tests/unit" -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue)
-            $integrationTests = @(Get-ChildItem -Path "./tests/integration" -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue)
-            $aggregatedReport.UnitTestFiles = $unitTests.Count
-            $aggregatedReport.IntegrationTestFiles = $integrationTests.Count
-            $aggregatedReport.TotalTestFiles = $unitTests.Count + $integrationTests.Count
-            Write-Host "Direct count: Unit=$($unitTests.Count), Integration=$($integrationTests.Count)" -ForegroundColor Cyan
           }
           
           # Save aggregated report
@@ -428,89 +447,31 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const reportFile = fs.readdirSync('./reports').find(f => f.startsWith('TestReport-Aggregated'));
+            const report = JSON.parse(fs.readFileSync(`./reports/${reportFile}`, 'utf8'));
             
-            try {
-              const reportFile = fs.readdirSync('./reports').find(f => f.startsWith('TestReport-Aggregated'));
-              
-              if (!reportFile) {
-                throw new Error('No aggregated test report found');
-              }
-              
-              const report = JSON.parse(fs.readFileSync(`./reports/${reportFile}`, 'utf8'));
-              
-              // Safely calculate pass rate with proper null/zero checks
-              const totalTests = report.TestResults?.Summary?.Total || 0;
-              const passedTests = report.TestResults?.Summary?.Passed || 0;
-              const failedTests = report.TestResults?.Summary?.Failed || 0;
-              const skippedTests = report.TestResults?.Summary?.Skipped || 0;
-              
-              const passRate = totalTests > 0 
-                ? ((passedTests / totalTests) * 100).toFixed(1) 
-                : '0.0';
-              
-              const statusIcon = totalTests === 0 ? '⚠️' : (failedTests === 0 ? '✅' : '❌');
-              
-              // Get test file counts with fallback values
-              const totalTestFiles = report.TotalTestFiles || 0;
-              const unitTestFiles = report.UnitTestFiles || 0;
-              const integrationTestFiles = report.IntegrationTestFiles || 0;
-              
-              // Get by-type results with safe fallbacks
-              const unitTotal = report.TestResults?.ByType?.Unit?.Total || 0;
-              const unitPassed = report.TestResults?.ByType?.Unit?.Passed || 0;
-              const unitFailed = report.TestResults?.ByType?.Unit?.Failed || 0;
-              const unitSkipped = report.TestResults?.ByType?.Unit?.Skipped || 0;
-              
-              const integrationTotal = report.TestResults?.ByType?.Integration?.Total || 0;
-              const integrationPassed = report.TestResults?.ByType?.Integration?.Passed || 0;
-              const integrationFailed = report.TestResults?.ByType?.Integration?.Failed || 0;
-              const integrationSkipped = report.TestResults?.ByType?.Integration?.Skipped || 0;
-              
-              // Build test file discovery message
-              const discoveryMessage = totalTestFiles > 0
-                ? `${totalTestFiles} test files found (${unitTestFiles} unit, ${integrationTestFiles} integration)`
-                : `Test files: ${unitTestFiles} unit, ${integrationTestFiles} integration`;
-              
-              const comment = `## ${statusIcon} Comprehensive Test Results
-              
-              **Test Discovery:** ${discoveryMessage}
-              **Tests Executed:** ${totalTests}
-              **Pass Rate:** ${passRate}%
-              
-              | Type | Total | ✅ Passed | ❌ Failed | ⏭️ Skipped |
-              |------|-------|----------|----------|-----------|
-              | **Unit** | ${unitTotal} | ${unitPassed} | ${unitFailed} | ${unitSkipped} |
-              | **Integration** | ${integrationTotal} | ${integrationPassed} | ${integrationFailed} | ${integrationSkipped} |
-              | **Total** | ${totalTests} | ${passedTests} | ${failedTests} | ${skippedTests} |
-              
-              ---
-              📊 [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-              `;
-              
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: comment
-              });
-              
-            } catch (error) {
-              console.error('Failed to create PR comment:', error);
-              
-              // Create a fallback comment with basic info
-              const fallbackComment = `## ⚠️ Test Results
-              
-              Test execution completed, but the aggregated report could not be loaded.
-              
-              Please check the [workflow run logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.
-              
-              Error: ${error.message}
-              `;
-              
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: fallbackComment
-              });
-            }
+            const passRate = ((report.TestResults.Summary.Passed / report.TestResults.Summary.Total) * 100).toFixed(1);
+            const statusIcon = report.TestResults.Summary.Failed === 0 ? '✅' : '❌';
+            
+            const comment = `## ${statusIcon} Comprehensive Test Results
+            
+            **Test Discovery:** ${report.TotalTestFiles} test files found
+            **Tests Executed:** ${report.TestResults.Summary.Total}
+            **Pass Rate:** ${passRate}%
+            
+            | Type | Total | ✅ Passed | ❌ Failed | ⏭️ Skipped |
+            |------|-------|----------|----------|-----------|
+            | **Unit** | ${report.TestResults.ByType.Unit.Total} | ${report.TestResults.ByType.Unit.Passed} | ${report.TestResults.ByType.Unit.Failed} | ${report.TestResults.ByType.Unit.Skipped} |
+            | **Integration** | ${report.TestResults.ByType.Integration.Total} | ${report.TestResults.ByType.Integration.Passed} | ${report.TestResults.ByType.Integration.Failed} | ${report.TestResults.ByType.Integration.Skipped} |
+            | **Total** | ${report.TestResults.Summary.Total} | ${report.TestResults.Summary.Passed} | ${report.TestResults.Summary.Failed} | ${report.TestResults.Summary.Skipped} |
+            
+            ---
+            📊 [View Full Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            `;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });

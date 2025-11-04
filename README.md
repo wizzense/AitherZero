@@ -41,7 +41,7 @@ $latest = (Invoke-RestMethod "https://api.github.com/repos/wizzense/AitherZero/r
 Invoke-WebRequest -Uri $latest.browser_download_url -OutFile "AitherZero-latest.zip"
 Expand-Archive -Path "AitherZero-latest.zip" -DestinationPath ./
 cd AitherZero-*
-./bootstrap.ps1 -Mode New -NonInteractive
+./bootstrap.ps1 -Mode New
 ```
 
 **Option 2: GitHub CLI**
@@ -53,7 +53,16 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ./bootstrap.sh
 ```
 
-**Note**: After cloning, run `bash tools/setup-git-merge.sh` to configure Git to handle auto-generated `index.md` files correctly. This prevents merge conflicts. See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) for details.
+**Note**: After cloning, run these setup commands:
+```bash
+# Configure Git merge strategy for auto-generated files
+bash tools/setup-git-merge.sh
+
+# Enable pre-commit hooks for validation (recommended for contributors)
+pwsh -File tools/Setup-GitHooks.ps1
+```
+
+See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
 
 **Option 3: Git Clone**
 ```bash
@@ -78,6 +87,63 @@ cd AitherZero
 ### 🐳 Docker Quick Start
 
 Run AitherZero in an isolated container:
+
+```bash
+# Pull the latest image from GitHub Container Registry
+docker pull ghcr.io/wizzense/aitherzero:latest
+
+# Run interactively
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+
+# Or use docker-compose for persistent storage
+docker-compose up -d
+```
+
+**Available Docker images:**
+- `ghcr.io/wizzense/aitherzero:latest` - Latest stable release
+- `ghcr.io/wizzense/aitherzero:1.0.0` - Specific version
+- Multi-platform support: `linux/amd64`, `linux/arm64`
+
+See [Docker Documentation](DOCKER.md) for complete container usage guide.
+
+### 🤖 MCP Server Quick Start
+
+Use AitherZero with AI assistants (Claude, GitHub Copilot, etc.):
+
+```bash
+# Install from GitHub Packages
+npm install @aitherzero/mcp-server
+
+# Or install globally
+npm install -g @aitherzero/mcp-server
+```
+
+**Configure with Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "aitherzero": {
+      "command": "npx",
+      "args": ["@aitherzero/mcp-server"]
+    }
+  }
+}
+```
+
+**Configure with VS Code / GitHub Copilot** (`.github/mcp-servers.json`):
+```json
+{
+  "mcpServers": {
+    "aitherzero": {
+      "command": "npx",
+      "args": ["@aitherzero/mcp-server"],
+      "description": "AitherZero infrastructure automation"
+    }
+  }
+}
+```
+
+See [MCP Server Documentation](mcp-server/README.md) for complete setup and usage guide.
 
 ```bash
 # Quick start with Docker Compose
@@ -241,9 +307,33 @@ AitherZero includes comprehensive GitHub Copilot integration to enhance develope
 ### Features
 - **Custom Instructions**: Project-specific guidance for AI coding assistants
 - **Agent Routing**: 8 specialized expert agents for different domains
-- **MCP Servers**: Model Context Protocol integration for enhanced context
+- **MCP Client**: Model Context Protocol integration for enhanced context (uses external MCP servers)
+- **MCP Server**: AitherZero can BE an MCP server - expose automation capabilities to AI assistants! 🆕
+  - **Published to GitHub Packages**: `npm install @aitherzero/mcp-server`
+  - **Available as Release Asset**: Download tarball from releases
+  - **Multi-platform Support**: Works with Claude, GitHub Copilot, and other MCP clients
 - **Dev Containers**: Pre-configured development environment
 - **VS Code Integration**: Optimized settings, tasks, and debugging
+
+### Distribution Formats
+
+AitherZero is available in multiple formats for different use cases:
+
+1. **Platform Package** (`.zip`, `.tar.gz`):
+   - Complete PowerShell module with all domains
+   - 100+ automation scripts
+   - Released via GitHub Releases
+
+2. **Docker Image** (`ghcr.io/wizzense/aitherzero`):
+   - Pre-configured container environment
+   - Multi-platform: `linux/amd64`, `linux/arm64`
+   - Published to GitHub Container Registry
+   - Perfect for CI/CD and isolated environments
+
+3. **MCP Server** (`@aitherzero/mcp-server`):
+   - npm package for AI assistant integration
+   - Published to GitHub Packages
+   - Enables natural language infrastructure management
 
 ### Quick Setup
 1. **Install GitHub Copilot** extensions in VS Code

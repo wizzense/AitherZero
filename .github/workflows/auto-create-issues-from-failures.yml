@@ -1,27 +1,13 @@
 ---
 name: 🚨 Auto-Create Issues from Test Failures
 
-# ⚠️ THIS WORKFLOW IS DEPRECATED ⚠️
-# This workflow has been superseded by 'Phase 2 - Intelligent Issue Creation'
-# (phase2-intelligent-issue-creation.yml) which provides:
-# - Better deduplication using stable fingerprints
-# - Comprehensive failure analysis (tests, syntax, quality, security)
-# - Intelligent agent routing based on file and error patterns
-# - PR context filtering (only dev→main PRs)
-# - Enhanced error normalization
-#
-# This workflow remains available for manual triggering only as a backup.
-# All automatic triggers have been disabled to prevent duplicate issue creation.
-
 # Automatically analyze test results and create targeted GitHub issues
 on:
   # DISABLED: workflow_run trigger was creating duplicate issues
-  # Use phase2-intelligent-issue-creation.yml instead
   # workflow_run:
   #   workflows: ["Quality Validation"]
   #   types: [completed]
   # DISABLED: Daily cron was creating duplicate issues
-  # Use phase2-intelligent-issue-creation.yml instead
   # schedule:
   #   # Run daily to catch any missed failures
   #   - cron: '0 7 * * *'  # 7 AM UTC daily
@@ -57,7 +43,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: 📊 Download Test Artifacts
-        if: github.event_name == 'workflow_run'
+        if: github.event.workflow_run
         uses: dawidd6/action-download-artifact@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -97,8 +83,8 @@ jobs:
                   foreach ($result in $report.TestResults.Details) {
                     if ($result.Result -eq 'Failed') {
                       $testFailures += @{
-                        TestName = $result.ExpandedName ?? $result.Name ?? 'Unknown Test'
-                        ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } elseif ($result.Error) { $result.Error } else { "Test failed" }
+                        TestName = $result.ExpandedName
+                        ErrorMessage = if ($result.ErrorRecord) { $result.ErrorRecord.Exception.Message } else { "Test failed" }
                         File = if ($result.ScriptBlock) { $result.ScriptBlock.File } else { "Unknown" }
                         Line = if ($result.ScriptBlock) { $result.ScriptBlock.StartPosition.Line } else { 0 }
                       }
@@ -233,7 +219,7 @@ jobs:
                 return '- **Triggered by:** Scheduled analysis';
               }
               
-              const workflowRunUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${workflowRun.Id}`;
+              const workflowRunUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${workflowRun.Id}`;
               return `
             - **Workflow:** ${workflowRun.Workflow}
             - **Run ID:** [${workflowRun.Id}](${workflowRunUrl})

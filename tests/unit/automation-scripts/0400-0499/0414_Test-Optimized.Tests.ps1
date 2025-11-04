@@ -7,11 +7,12 @@
 .DESCRIPTION
     Auto-generated comprehensive tests
     Script: 0414_Test-Optimized
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Testing
+    Description: Optimized test runner that:
+    Generated: 2025-11-02 21:41:15
 #>
 
-Describe '0414_Test-Optimized' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0414_Test-Optimized' -Tag 'Unit', 'AutomationScript', 'Testing' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0414_Test-Optimized.ps1'
@@ -101,9 +102,14 @@ Describe '0414_Test-Optimized' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
+        It 'Should be in stage: Testing' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
+        }
+
+        It 'Should declare dependencies' {
             $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 

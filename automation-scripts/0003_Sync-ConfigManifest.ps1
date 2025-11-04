@@ -100,6 +100,39 @@ $discoveredScripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" -ErrorActi
 
 Write-SyncLog "Found $($discoveredScripts.Count) automation scripts" -Level Success
 
+# Check for duplicate script numbers (CRITICAL)
+Write-SyncLog "Checking for duplicate script numbers..." -Level Info
+$duplicateNumbers = $discoveredScripts | 
+    Group-Object Number | 
+    Where-Object { $_.Count -gt 1 }
+
+if ($duplicateNumbers) {
+    Write-Host ""
+    Write-SyncLog "CRITICAL: Duplicate script numbers detected!" -Level Error
+    Write-Host ""
+    Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║            DUPLICATE SCRIPT NUMBERS FOUND                    ║" -ForegroundColor Red
+    Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Red
+    Write-Host ""
+    
+    foreach ($dup in $duplicateNumbers) {
+        Write-Host "Script Number: $($dup.Name) (found $($dup.Count) times)" -ForegroundColor Red
+        foreach ($script in $dup.Group) {
+            Write-Host "  • $($script.Name)" -ForegroundColor Yellow
+        }
+        Write-Host ""
+    }
+    
+    Write-Host "💥 FAILURE: Duplicate script numbers are not allowed!" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Each automation script must have a unique number." -ForegroundColor White
+    Write-Host "Please rename one of the duplicate scripts to use an available number." -ForegroundColor White
+    Write-Host ""
+    exit 2
+}
+
+Write-SyncLog "No duplicate script numbers found" -Level Success
+
 # Load config.psd1
 Write-SyncLog "Loading config.psd1..." -Level Info
 
@@ -212,7 +245,44 @@ if ($missingScripts.Count -gt 0) {
     exit 1
 } else {
     Write-SyncLog "All automation scripts are registered in config.psd1!" -Level Success
-    Write-Host ""
-    Write-Host "✅ Configuration is in sync" -ForegroundColor Green
-    exit 0
 }
+
+# Check for duplicate script number references in config.psd1
+Write-Host ""
+Write-SyncLog "Checking config.psd1 for duplicate references..." -Level Info
+
+$configDuplicates = $registeredScripts.GetEnumerator() | Where-Object { $_.Value.Count -gt 1 }
+if ($configDuplicates) {
+    Write-Host ""
+    Write-SyncLog "CRITICAL: Duplicate script number references in config.psd1!" -Level Error
+    Write-Host ""
+    Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║        DUPLICATE REFERENCES IN CONFIG.PSD1 FOUND            ║" -ForegroundColor Red
+    Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Red
+    Write-Host ""
+    
+    foreach ($dup in $configDuplicates) {
+        Write-Host "Script Number: $($dup.Key)" -ForegroundColor Red
+        foreach ($location in $dup.Value) {
+            Write-Host "  • Referenced in: $location" -ForegroundColor Yellow
+        }
+        Write-Host ""
+    }
+    
+    Write-Host "💥 FAILURE: Duplicate references will break script execution!" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Each script number can only be referenced ONCE in config.psd1." -ForegroundColor White
+    Write-Host "Multiple references cause ambiguity and execution failures." -ForegroundColor White
+    Write-Host ""
+    Write-Host "🔧 Action Required:" -ForegroundColor Red
+    Write-Host "  1. Review the duplicate references listed above" -ForegroundColor White
+    Write-Host "  2. Determine which feature should own each script" -ForegroundColor White
+    Write-Host "  3. Remove duplicate entries from config.psd1" -ForegroundColor White
+    Write-Host "  4. Re-run this validation script" -ForegroundColor White
+    Write-Host ""
+    exit 2
+}
+
+Write-Host ""
+Write-Host "✅ Configuration is in sync" -ForegroundColor Green
+exit 0
