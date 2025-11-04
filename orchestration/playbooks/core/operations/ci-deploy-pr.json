@@ -1,138 +1,79 @@
 {
   "metadata": {
     "name": "ci-deploy-pr",
-    "description": "PR environment deployment - mirrors GitHub Actions deploy-pr-environment.yml",
-    "version": "2.0.0",
+    "description": "Deploy Docker container for PR testing",
+    "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "deployment", "pr", "docker", "github-actions"],
+    "tags": ["ci", "deployment", "docker", "pr"],
     "estimatedDuration": "10-20 minutes",
-    "lastUpdated": "2025-11-02T06:30:00Z",
     "githubWorkflow": "deploy-pr-environment.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": [],
     "requiredTools": ["docker"],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "prNumber": "",
-      "action": "deploy",
-      "containerName": "aitherzero-pr-{{prNumber}}",
-      "runTests": true,
-      "cleanup": false
+      "verbose": false,
+      "prNumber": ""
     },
     "profiles": {
       "deploy": {
         "description": "Deploy PR environment",
-        "variables": {
-          "action": "deploy",
-          "runTests": true,
-          "cleanup": false
-        }
+        "variables": {}
       },
       "test": {
         "description": "Test existing PR environment",
-        "variables": {
-          "action": "test",
-          "runTests": true,
-          "cleanup": false
-        }
+        "variables": {}
       },
       "cleanup": {
         "description": "Cleanup PR environment",
-        "variables": {
-          "action": "cleanup",
-          "runTests": false,
-          "cleanup": true
-        }
+        "variables": {}
       }
     },
     "stages": [
       {
-        "name": "Deploy PR Environment",
-        "description": "Deploy Docker container for PR testing",
+        "name": "Deploy Container",
+        "description": "Deploy Docker container for PR",
         "sequences": ["0850"],
-        "condition": "'{{action}}' -eq 'deploy'",
         "variables": {
-          "PRNumber": "{{prNumber}}",
-          "ContainerName": "{{containerName}}"
+          "PRNumber": "{{prNumber}}"
         },
         "continueOnError": false,
         "timeout": 600
       },
       {
         "name": "Validate Deployment",
-        "description": "Validate Docker container is running",
+        "description": "Validate container deployment",
         "sequences": ["0853"],
-        "condition": "'{{action}}' -eq 'deploy' -or '{{action}}' -eq 'test'",
         "variables": {
-          "ContainerName": "{{containerName}}"
+          "PRNumber": "{{prNumber}}"
         },
         "continueOnError": false,
-        "timeout": 180
-      },
-      {
-        "name": "Run Container Tests",
-        "description": "Execute tests in container",
-        "sequences": ["0854"],
-        "condition": "{{runTests}}",
-        "variables": {
-          "ContainerName": "{{containerName}}",
-          "TestType": "quick"
-        },
-        "continueOnError": true,
         "timeout": 300
       },
       {
-        "name": "Cleanup PR Environment",
-        "description": "Remove PR Docker container",
-        "sequences": ["0851"],
-        "condition": "{{cleanup}}",
+        "name": "Run Container Tests",
+        "description": "Run tests in container",
+        "sequences": ["0854"],
         "variables": {
-          "ContainerName": "{{containerName}}"
+          "PRNumber": "{{prNumber}}"
         },
         "continueOnError": true,
-        "timeout": 120
-      }
-    ]
-  },
-  "validation": {
-    "preConditions": [
-      {
-        "name": "Docker Available",
-        "condition": "Get-Command docker -ErrorAction SilentlyContinue",
-        "message": "Docker must be installed"
+        "timeout": 600
       },
       {
-        "name": "PR Number Provided",
-        "condition": "'{{prNumber}}' -ne '' -or '{{action}}' -eq 'cleanup'",
-        "message": "PR number is required for deployment"
+        "name": "Cleanup Environment",
+        "description": "Cleanup container resources",
+        "sequences": ["0851"],
+        "variables": {
+          "PRNumber": "{{prNumber}}"
+        },
+        "continueOnError": true,
+        "timeout": 180
       }
-    ],
-    "postConditions": []
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🐳 Starting PR environment {{action}}...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ PR environment {{action}} completed!",
-      "level": "Information"
-    },
-    "onFailure": {
-      "message": "❌ PR environment {{action}} failed",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "deploy-pr-environment.yml"
-    }
+    ]
   }
 }

@@ -1,58 +1,52 @@
 {
   "metadata": {
     "name": "ci-auto-generate-tests",
-    "description": "Auto-generate tests for automation scripts - mirrors GitHub Actions auto-generate-tests.yml",
+    "description": "Automatically generate tests for automation scripts",
     "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "testing", "automation", "github-actions", "generation"],
+    "tags": ["ci", "testing", "automation", "generation"],
     "estimatedDuration": "5-15 minutes",
-    "lastUpdated": "2025-11-04T06:00:00Z",
     "githubWorkflow": "auto-generate-tests.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": ["Pester"],
     "requiredTools": [],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "mode": "Quick",
+      "verbose": false,
       "force": false,
-      "detectOnly": false
+      "mode": "Quick"
     },
     "profiles": {
       "quick": {
         "description": "Quick mode - generate tests for new scripts only",
         "variables": {
           "mode": "Quick",
-          "force": false,
-          "detectOnly": false
+          "force": false
         }
       },
       "full": {
         "description": "Full mode - regenerate all tests",
         "variables": {
           "mode": "Full",
-          "force": true,
-          "detectOnly": false
+          "force": true
         }
       },
       "detect": {
-        "description": "Detection mode - identify scripts without tests",
+        "description": "Detect mode - show what would be generated",
         "variables": {
           "mode": "Quick",
-          "force": false,
-          "detectOnly": true
+          "force": false
         }
       }
     },
     "stages": [
       {
         "name": "Generate Tests",
-        "description": "Auto-generate tests for automation scripts",
+        "description": "Auto-generate tests for scripts",
         "sequences": ["0950"],
         "variables": {
           "Mode": "{{mode}}",
@@ -63,35 +57,12 @@
       },
       {
         "name": "Validate Test Sync",
-        "description": "Validate that all scripts have tests",
+        "description": "Validate test synchronization after generation",
         "sequences": ["0426"],
-        "condition": "!{{detectOnly}}",
-        "variables": {
-          "CI": false
-        },
+        "variables": {},
         "continueOnError": true,
-        "timeout": 120
+        "timeout": 180
       }
     ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🧪 Starting test generation...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ Tests generated successfully!",
-      "level": "Information"
-    },
-    "onFailure": {
-      "message": "❌ Test generation failed",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "auto-generate-tests.yml"
-    }
   }
 }

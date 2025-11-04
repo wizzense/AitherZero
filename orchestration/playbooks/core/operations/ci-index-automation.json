@@ -1,60 +1,49 @@
 {
   "metadata": {
     "name": "ci-index-automation",
-    "description": "Generate project indexes - mirrors GitHub Actions index-automation.yml",
+    "description": "Generate project index.md files for all directories",
     "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "documentation", "indexes", "github-actions", "automation"],
+    "tags": ["ci", "documentation", "indexes", "automation"],
     "estimatedDuration": "5-10 minutes",
-    "lastUpdated": "2025-11-04T06:00:00Z",
     "githubWorkflow": "index-automation.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": [],
     "requiredTools": [],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "mode": "Incremental",
-      "generateIndexes": true,
-      "verifyOnly": false
+      "verbose": false,
+      "mode": "Incremental"
     },
     "profiles": {
       "incremental": {
-        "description": "Incremental index generation - only update changed files",
+        "description": "Incremental index generation - only changed files",
         "variables": {
-          "mode": "Incremental",
-          "generateIndexes": true,
-          "verifyOnly": false
+          "mode": "Incremental"
         }
       },
       "full": {
-        "description": "Full index regeneration - rebuild all indexes",
+        "description": "Full regeneration - all indexes",
         "variables": {
-          "mode": "Full",
-          "generateIndexes": true,
-          "verifyOnly": false
+          "mode": "Full"
         }
       },
       "verify": {
-        "description": "Verify indexes without regenerating",
+        "description": "Verify indexes are up-to-date",
         "variables": {
-          "mode": "Verify",
-          "generateIndexes": false,
-          "verifyOnly": true
+          "mode": "Verify"
         }
       }
     },
     "stages": [
       {
-        "name": "Generate Project Indexes",
-        "description": "Generate index.md files for all directories",
+        "name": "Generate Indexes",
+        "description": "Generate project indexes",
         "sequences": ["0745"],
-        "condition": "{{generateIndexes}}",
         "variables": {
           "Mode": "{{mode}}"
         },
@@ -62,25 +51,5 @@
         "timeout": 600
       }
     ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🗂️ Starting project index generation...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ Project indexes generated successfully!",
-      "level": "Information"
-    },
-    "onFailure": {
-      "message": "❌ Index generation failed",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "index-automation.yml"
-    }
   }
 }
