@@ -244,13 +244,13 @@ ls automation-scripts/0XXX*.ps1
 
 ## 📊 Workflow Coverage
 
-Current coverage: **13 of 21** GitHub Actions workflows have corresponding playbooks.
+Current coverage: **13 of 23** GitHub Actions workflows have corresponding playbooks.
 
 | Status | Count | Workflows |
 |--------|-------|-----------|
 | ✅ Complete | 13 | All validation, testing, and deployment workflows |
 | 🚧 Partial | 0 | N/A |
-| ❌ No Playbook | 8 | GitHub-specific workflows (Pages, Copilot, etc.) |
+| ❌ No Playbook | 10 | GitHub-specific workflows (Pages, Copilot, etc.) |
 
 See [GITHUB-WORKFLOWS-MAPPING.md](./GITHUB-WORKFLOWS-MAPPING.md) for complete details.
 
