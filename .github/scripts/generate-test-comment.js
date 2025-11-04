@@ -15,10 +15,12 @@ module.exports = async ({github, context, core}) => {
   const color = failed > 0 ? '🔴' : '🟢';
   
   // Get all workflow jobs to show detailed status
+  // IMPORTANT: We need step-level details to detect test failures with continue-on-error
   const jobs = await github.rest.actions.listJobsForWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    run_id: context.runId
+    run_id: context.runId,
+    // No filter parameter - get all jobs with their steps
   });
   
   // Step name patterns for test execution steps
@@ -39,6 +41,16 @@ module.exports = async ({github, context, core}) => {
   console.log(`📊 Processing ${jobs.data.jobs.length} jobs from workflow run`);
   console.log(`📊 Test totals - Passed: ${passed}, Failed: ${failed}, Skipped: ${skipped}`);
   
+  // Debug: Check if we're getting step data
+  const jobsWithSteps = jobs.data.jobs.filter(j => j.steps && j.steps.length > 0);
+  const jobsWithoutSteps = jobs.data.jobs.filter(j => !j.steps || j.steps.length === 0);
+  console.log(`📊 Jobs with step data: ${jobsWithSteps.length}, Jobs without step data: ${jobsWithoutSteps.length}`);
+  
+  if (jobsWithoutSteps.length > 0) {
+    console.log(`⚠️  WARNING: ${jobsWithoutSteps.length} jobs have no step data. These jobs may show incorrect status:`);
+    jobsWithoutSteps.forEach(j => console.log(`     - ${j.name} (conclusion: ${j.conclusion})`));
+  }
+  
   for (const job of jobs.data.jobs) {
     // Check if the job has a 'run-tests' step and get its conclusion
     // When continue-on-error is true, job.conclusion will be 'success' even if tests fail
@@ -48,41 +60,41 @@ module.exports = async ({github, context, core}) => {
     let detectionMethod = 'job-conclusion';  // Track how we determined the status
     
     if (job.steps && job.steps.length > 0) {
-      // Method 1: Look for step with id 'run-tests' (most reliable)
-      const runTestsStepById = job.steps.find(step => 
-        step.name && (step.name.includes('[id:run-tests]') || step.number === 3 || step.number === 4)
-      );
+      // Debug: Log all step names for this job if it's a test job
+      if (job.name.includes('Unit Tests') || job.name.includes('Domain Tests') || job.name.includes('Integration Tests')) {
+        console.log(`\n🔍 Analyzing job: "${job.name}" (conclusion=${job.conclusion})`);
+        console.log(`   Steps (${job.steps.length} total):`);
+        job.steps.forEach((step, idx) => {
+          console.log(`     [${idx}] ${step.name} - conclusion=${step.conclusion || 'N/A'}, status=${step.status || 'N/A'}`);
+        });
+      }
       
-      // Method 2: Look for steps matching test patterns
+      // Method 1: Look for step with id 'run-tests' by matching the step name pattern
+      // The step id doesn't appear in the API response, but the name does
       const runTestsStepByName = job.steps.find(step => 
         step.name && TEST_STEP_PATTERNS.some(pattern => step.name.includes(pattern))
       );
       
-      const runTestsStep = runTestsStepById || runTestsStepByName;
-      
       // Use step.conclusion (API field) instead of step.outcome (workflow context only)
-      if (runTestsStep && runTestsStep.conclusion) {
-        actualOutcome = runTestsStep.conclusion;
+      if (runTestsStepByName && runTestsStepByName.conclusion) {
+        actualOutcome = runTestsStepByName.conclusion;
         detectionMethod = 'step-conclusion';
+        console.log(`   ✅ Found test step: "${runTestsStepByName.name}" with conclusion=${actualOutcome}`);
       } else {
         // If no matching test step found, check for any failed step
         const failedStep = job.steps.find(step => step.conclusion === 'failure');
         if (failedStep) {
           actualOutcome = 'failure';
           detectionMethod = 'any-failed-step';
+          console.log(`   ⚠️  Found failed step: "${failedStep.name}" - marking job as failed`);
+        } else {
+          console.log(`   ⚠️  No test step or failed step found, using job conclusion: ${actualOutcome}`);
         }
       }
-    }
-    
-    // Fallback: For test jobs, if we have overall test failures but couldn't detect step status,
-    // and the job completed successfully (which happens with continue-on-error), 
-    // we need to check if this specific job's artifact contains failures
-    if (actualOutcome === 'success' && failed > 0 && detectionMethod === 'job-conclusion') {
-      // If this is a test job and we have overall failures, we'll mark it as "needs-review"
-      // The consolidation step will show the actual failures
+    } else {
+      // No steps available - this might be because the job hasn't completed yet
       if (job.name.includes('Unit Tests') || job.name.includes('Domain Tests') || job.name.includes('Integration Tests')) {
-        // Don't override - we'll show accurate status in aggregate
-        console.log(`⚠️  Job "${job.name}" - cannot determine step status, showing job conclusion (${actualOutcome})`);
+        console.log(`\n⚠️  WARNING: Job "${job.name}" has NO STEPS DATA! (status=${job.status}, conclusion=${job.conclusion})`);
       }
     }
     
@@ -97,6 +109,20 @@ module.exports = async ({github, context, core}) => {
         ? Math.round((new Date(job.completed_at) - new Date(job.started_at)) / 1000) 
         : 0
     };
+    
+    // CRITICAL FIX: If this is a test job and we couldn't detect step status (defaulted to job conclusion),
+    // and we have overall test failures from consolidation, we CANNOT trust the job conclusion.
+    // The job shows 'success' due to continue-on-error, but tests may have failed.
+    // In this case, mark the status as "unknown" or use a different indicator.
+    if (detectionMethod === 'job-conclusion' && failed > 0) {
+      if (job.name.includes('Unit Tests') || job.name.includes('Domain Tests') || job.name.includes('Integration Tests')) {
+        // We have test failures but couldn't detect which job failed - mark as unknown
+        console.log(`   ⚠️  CANNOT DETERMINE TRUE STATUS - overall failures exist but step data unavailable`);
+        console.log(`   ⚠️  Marking as "unknown" - user should check detailed logs`);
+        jobInfo.actualOutcome = 'unknown';  // Special status for ambiguous cases
+        jobInfo.detectionMethod = 'unknown-with-overall-failures';
+      }
+    }
     
     // Debug logging
     if (job.name.includes('Unit Tests') || job.name.includes('Domain Tests') || job.name.includes('Integration Tests')) {
@@ -132,6 +158,10 @@ module.exports = async ({github, context, core}) => {
     } else if (job.actualOutcome === 'cancelled') {
       icon = '🚫';
       statusText = 'CANCELLED';
+    } else if (job.actualOutcome === 'unknown') {
+      // Special case: We couldn't determine status reliably
+      icon = '⚠️';
+      statusText = '**NEEDS REVIEW**';
     } else {
       icon = '⏳';
       statusText = 'RUNNING';
