@@ -604,39 +604,37 @@ function Get-ProjectMetrics {
         try {
             [xml]$coverageXml = Get-Content $coverageFiles.FullName -ErrorAction Stop
             
-            # Check for JaCoCo format (used by Pester)
-            if ($coverageXml.report) {
-                # Parse JaCoCo format - use null-safe property access
-                # Check if counter property exists before accessing
-                $reportHasCounter = $null -ne $coverageXml.report.PSObject.Properties['counter']
+            # Check for JaCoCo format (used by Pester) - use null-safe property access
+            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+            
+            if ($reportHasCounter) {
+                # Parse JaCoCo format
+                $counters = @($coverageXml.report.counter)
+                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
                 
-                if ($reportHasCounter) {
-                    $counters = @($coverageXml.report.counter)
-                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+                if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
+                    $missedLines = [int]$lineCounter.missed
+                    $coveredLines = [int]$lineCounter.covered
+                    $totalLines = $missedLines + $coveredLines
                     
-                    if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
-                        $missedLines = [int]$lineCounter.missed
-                        $coveredLines = [int]$lineCounter.covered
-                        $totalLines = $missedLines + $coveredLines
-                        
-                        if ($totalLines -gt 0) {
-                            $metrics.Coverage.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 2)
-                            $metrics.Coverage.CoveredLines = $coveredLines
-                            $metrics.Coverage.TotalLines = $totalLines
-                        }
+                    if ($totalLines -gt 0) {
+                        $metrics.Coverage.Percentage = [math]::Round(($coveredLines / $totalLines) * 100, 2)
+                        $metrics.Coverage.CoveredLines = $coveredLines
+                        $metrics.Coverage.TotalLines = $totalLines
                     }
                 }
             }
-            # Check for Cobertura format (alternative)
-            elseif ($coverageXml.coverage) {
+            # Check for Cobertura format (alternative) - use null-safe property access
+            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
                 $coverage = $coverageXml.coverage
-                if ($coverage.'line-rate') {
+                if ($null -ne $coverage.PSObject.Properties['line-rate']) {
                     $metrics.Coverage.Percentage = [math]::Round(($coverage.'line-rate' -as [double]) * 100, 2)
                 }
-                if ($coverage.'lines-covered') {
+                if ($null -ne $coverage.PSObject.Properties['lines-covered']) {
                     $metrics.Coverage.CoveredLines = $coverage.'lines-covered' -as [int]
                 }
-                if ($coverage.'lines-valid') {
+                if ($null -ne $coverage.PSObject.Properties['lines-valid']) {
                     $metrics.Coverage.TotalLines = $coverage.'lines-valid' -as [int]
                 }
             }
@@ -686,7 +684,15 @@ function Get-QualityMetrics {
     # Find quality reports
     $qualityReportsPath = Join-Path $ProjectPath "reports/quality"
     if (-not (Test-Path $qualityReportsPath)) {
-        Write-ScriptLog -Level Warning -Message "Quality reports directory not found: $qualityReportsPath"
+        Write-ScriptLog -Message "Quality reports directory does not exist yet. Creating: $qualityReportsPath"
+        try {
+            New-Item -Path $qualityReportsPath -ItemType Directory -Force | Out-Null
+            Write-ScriptLog -Message "Created quality reports directory successfully"
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to create quality reports directory: $_"
+        }
+        # Return empty metrics since no reports exist yet
+        Write-ScriptLog -Message "No quality reports available yet. Run './az 0420' to generate quality validation reports."
         return $qualityMetrics
     }
     
@@ -977,7 +983,8 @@ function Get-BuildStatus {
             $totalLines = 0
             
             # Check for JaCoCo format (used by Pester) - use null-safe property access
-            $reportHasCounter = $coverageXml.report -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
             
             if ($reportHasCounter) {
                 $counters = @($coverageXml.report.counter)
@@ -995,9 +1002,12 @@ function Get-BuildStatus {
                 }
             }
             # Check for Cobertura format (alternative) - use null-safe property access
-            elseif ($null -ne $coverageXml.PSObject.Properties['coverage'] -and $coverageXml.coverage.'line-rate') {
-                $coveragePercent = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
-                $hasCoverageData = $true
+            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
+                $coverage = $coverageXml.coverage
+                if ($null -ne $coverage.PSObject.Properties['line-rate']) {
+                    $coveragePercent = [math]::Round([double]$coverage.'line-rate' * 100, 1)
+                    $hasCoverageData = $true
+                }
             }
             
             # Show coverage if we have data, even if it's 0%
@@ -1171,10 +1181,19 @@ function Get-FileLevelMetrics {
             # Run PSScriptAnalyzer on individual file
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
                 try {
-                    # Skip files known to cause analysis issues
-                    # TODO: Move this to config.psd1 under Testing.PSScriptAnalyzer.SkipFiles
-                    # bootstrap.ps1 and Maintenance.psm1 cause threading/pipeline issues with error stream redirection
-                    $skipAnalysisFiles = @('Maintenance.psm1', 'bootstrap.ps1', 'bootstrap.sh')
+                    # Load skip list from config.psd1 under Testing.PSScriptAnalyzer.SkipFiles
+                    $config = if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) { Get-Configuration } else { $null }
+                    $skipAnalysisFiles = @()
+                    if ($config -and 
+                        $null -ne $config.PSObject.Properties['Testing'] -and 
+                        $null -ne $config.Testing.PSObject.Properties['PSScriptAnalyzer'] -and 
+                        $null -ne $config.Testing.PSScriptAnalyzer.PSObject.Properties['SkipFiles']) {
+                        $skipAnalysisFiles = $config.Testing.PSScriptAnalyzer.SkipFiles
+                    } else {
+                        # Fallback to hardcoded list if config is not available
+                        $skipAnalysisFiles = @('Maintenance.psm1')
+                    }
+                    
                     if ($skipAnalysisFiles -contains $file.Name) {
                         Write-ScriptLog -Level Debug -Message "Skipping PSScriptAnalyzer for known problematic file: $($file.Name)"
                         $fileData.Score = 100  # Assume clean for skipped files
@@ -1182,10 +1201,11 @@ function Get-FileLevelMetrics {
                     else {
                         # Wrap immediately to handle single object results under StrictMode
                         # Use Measure-Object instead of .Count for maximum StrictMode compatibility
-                        # CRITICAL: Do NOT use error stream redirection (2>&1) - causes threading issues
-                        # Use SilentlyContinue to suppress errors gracefully without pipeline interruption
-                        $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue | 
-                                      Where-Object { $null -ne $_.PSObject.Properties['RuleName'] })
+                        # Use ErrorAction Continue to prevent terminating errors during analysis
+                        # Use ErrorVariable to separate errors from results
+                        $scriptAnalyzerErrors = @()
+                        $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Continue -ErrorVariable scriptAnalyzerErrors | 
+                                      Where-Object { $_ -is [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord] })
                         $issueCount = ($rawIssues | Measure-Object).Count
                         $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                         
@@ -1549,14 +1569,15 @@ function Get-CodeCoverageDetails {
         try {
             [xml]$coverageXml = Get-Content $latestCoverage.FullName
             
-            # Check for JaCoCo format (used by Pester)
-            if ($coverageXml.report) {
+            # Check for JaCoCo format (used by Pester) - use null-safe property access
+            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+            
+            if ($reportHasCounter) {
                 Write-ScriptLog -Message "Parsing JaCoCo coverage format"
                 $coverage.Format = "JaCoCo"
                 
                 # Get counters from report root - safely handle missing counter elements
-                $reportHasCounter = $null -ne $coverageXml.report.PSObject.Properties['counter']
-                
                 if ($reportHasCounter) {
                     $counters = @($coverageXml.report.counter)
                     $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
@@ -1642,19 +1663,20 @@ function Get-CodeCoverageDetails {
                     }
                 }
             }
-            # Check for Cobertura format
-            elseif ($coverageXml.coverage) {
+            # Check for Cobertura format - use null-safe property access
+            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
                 Write-ScriptLog -Message "Parsing Cobertura coverage format"
                 $coverage.Format = "Cobertura"
+                $cov = $coverageXml.coverage
                 
-                if ($coverageXml.coverage.'line-rate') {
-                    $coverage.Overall.Percentage = [math]::Round([double]$coverageXml.coverage.'line-rate' * 100, 1)
+                if ($null -ne $cov.PSObject.Properties['line-rate']) {
+                    $coverage.Overall.Percentage = [math]::Round([double]$cov.'line-rate' * 100, 1)
                 }
                 
                 # Calculate total and covered lines for Cobertura format
-                if ($coverageXml.coverage.'lines-covered' -and $coverageXml.coverage.'lines-valid') {
-                    $coverage.Overall.CoveredLines = [int]$coverageXml.coverage.'lines-covered'
-                    $coverage.Overall.TotalLines = [int]$coverageXml.coverage.'lines-valid'
+                if (($null -ne $cov.PSObject.Properties['lines-covered']) -and ($null -ne $cov.PSObject.Properties['lines-valid'])) {
+                    $coverage.Overall.CoveredLines = [int]$cov.'lines-covered'
+                    $coverage.Overall.TotalLines = [int]$cov.'lines-valid'
                     $coverage.Overall.MissedLines = $coverage.Overall.TotalLines - $coverage.Overall.CoveredLines
                 }
                 
@@ -1988,28 +2010,34 @@ function Get-GitHubRepositoryData {
     try {
         # Check if we're in GitHub Actions with access to API
         $apiUrl = "https://api.github.com/repos/$Owner/$Repo"
+        $repoInfo = $null
         
-        # Use gh CLI if available for authenticated requests
+        # Try gh CLI if available and properly authenticated
         if (Get-Command gh -ErrorAction SilentlyContinue) {
-            Write-ScriptLog -Message "Using GitHub CLI for authenticated request"
-            
             # Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions compatibility
-            # gh CLI expects GH_TOKEN, but GitHub Actions provides GITHUB_TOKEN
             if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
                 $env:GH_TOKEN = $env:GITHUB_TOKEN
                 Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
             }
             
-            $response = gh api $apiUrl 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $repoInfo = $response | ConvertFrom-Json
+            # Only use gh CLI if we have authentication
+            if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                Write-ScriptLog -Message "Attempting to use GitHub CLI for authenticated request"
+                $response = gh api $apiUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $repoInfo = $response | ConvertFrom-Json
+                    Write-ScriptLog -Message "Successfully fetched repository data using GitHub CLI"
+                } else {
+                    Write-ScriptLog -Level Warning -Message "GitHub CLI request failed (exit code $LASTEXITCODE), falling back to direct API call"
+                }
             } else {
-                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
-                $repoInfo = $null
+                Write-ScriptLog -Message "GitHub CLI available but not authenticated, using direct API call"
             }
-        } else {
-            # Fallback to direct API call (rate limited)
-            Write-ScriptLog -Message "Using direct API request (rate limited)"
+        }
+        
+        # Fallback to direct API call if gh CLI didn't work
+        if (-not $repoInfo) {
+            Write-ScriptLog -Message "Using direct API request for repository data"
             $headers = @{
                 'User-Agent' = 'AitherZero-Dashboard'
                 'Accept' = 'application/vnd.github.v3+json'
@@ -2050,21 +2078,31 @@ function Get-GitHubRepositoryData {
             # Fetch pull requests separately
             try {
                 $prUrl = "https://api.github.com/repos/$Owner/$Repo/pulls?state=open"
+                $prs = $null
+                
+                # Try gh CLI if available and authenticated
                 if (Get-Command gh -ErrorAction SilentlyContinue) {
                     # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
                     if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
                         $env:GH_TOKEN = $env:GITHUB_TOKEN
                     }
                     
-                    $prResponse = gh api $prUrl 2>&1
-                    if ($LASTEXITCODE -eq 0) {
-                        $prs = $prResponse | ConvertFrom-Json
-                        $repoData.OpenPRs = @($prs).Count
+                    if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                        $prResponse = gh api $prUrl 2>&1
+                        if ($LASTEXITCODE -eq 0) {
+                            $prs = $prResponse | ConvertFrom-Json
+                        } else {
+                            Write-ScriptLog -Level Warning -Message "GitHub CLI PR request failed (exit code $LASTEXITCODE), falling back to direct API call"
+                        }
                     }
-                } else {
-                    $prs = Invoke-RestMethod -Uri $prUrl -Headers $headers -ErrorAction Stop
-                    $repoData.OpenPRs = @($prs).Count
                 }
+                
+                # Fallback to direct API call if gh CLI didn't work
+                if (-not $prs) {
+                    $prs = Invoke-RestMethod -Uri $prUrl -Headers $headers -ErrorAction Stop
+                }
+                
+                $repoData.OpenPRs = @($prs).Count
                 Write-ScriptLog -Message "Fetched PR data: $($repoData.OpenPRs) open PRs"
             } catch {
                 Write-ScriptLog -Level Warning -Message "Failed to fetch PR data: $($_.Exception.Message)"
@@ -2098,8 +2136,9 @@ function Get-GitHubWorkflowStatus {
     
     try {
         $workflowsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/workflows"
+        $workflowsList = $null
         
-        # Use gh CLI if available
+        # Try gh CLI if available and authenticated
         if (Get-Command gh -ErrorAction SilentlyContinue) {
             # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
             if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
@@ -2107,14 +2146,18 @@ function Get-GitHubWorkflowStatus {
                 Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
             }
             
-            $response = gh api $workflowsUrl 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $workflowsList = $response | ConvertFrom-Json
-            } else {
-                Write-ScriptLog -Level Warning -Message "Failed to fetch workflows via gh CLI"
-                $workflowsList = $null
+            if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                $response = gh api $workflowsUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $workflowsList = $response | ConvertFrom-Json
+                } else {
+                    Write-ScriptLog -Level Warning -Message "Failed to fetch workflows via gh CLI (exit code $LASTEXITCODE), falling back to direct API call"
+                }
             }
-        } else {
+        }
+        
+        # Fallback to direct API call if gh CLI didn't work
+        if (-not $workflowsList) {
             $headers = @{
                 'User-Agent' = 'AitherZero-Dashboard'
                 'Accept' = 'application/vnd.github.v3+json'
@@ -2135,6 +2178,7 @@ function Get-GitHubWorkflowStatus {
             
             # Get status of recent workflow runs
             $runsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/runs?per_page=10"
+            $runsData = $null
             
             if (Get-Command gh -ErrorAction SilentlyContinue) {
                 # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
@@ -2142,11 +2186,18 @@ function Get-GitHubWorkflowStatus {
                     $env:GH_TOKEN = $env:GITHUB_TOKEN
                 }
                 
-                $runsResponse = gh api $runsUrl 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    $runsData = $runsResponse | ConvertFrom-Json
+                if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                    $runsResponse = gh api $runsUrl 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        $runsData = $runsResponse | ConvertFrom-Json
+                    } else {
+                        Write-ScriptLog -Level Warning -Message "Failed to fetch workflow runs via gh CLI (exit code $LASTEXITCODE), falling back to direct API call"
+                    }
                 }
-            } else {
+            }
+            
+            # Fallback to direct API call if gh CLI didn't work
+            if (-not $runsData) {
                 $runsData = Invoke-RestMethod -Uri $runsUrl -Headers $headers -ErrorAction Stop
             }
             
@@ -2193,26 +2244,33 @@ function Get-GitHubIssues {
     
     try {
         $issuesUrl = "https://api.github.com/repos/$Owner/$Repo/issues?state=open&per_page=$MaxIssues"
+        $issuesList = $null
         
-        # Use gh CLI if available for authenticated requests
+        # Try gh CLI if available and properly authenticated
         if (Get-Command gh -ErrorAction SilentlyContinue) {
-            Write-ScriptLog -Message "Using GitHub CLI to fetch issues"
-            
             # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
             if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
                 $env:GH_TOKEN = $env:GITHUB_TOKEN
                 Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
             }
             
-            $response = gh api $issuesUrl 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $issuesList = $response | ConvertFrom-Json
+            # Only use gh CLI if we have authentication
+            if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                Write-ScriptLog -Message "Attempting to use GitHub CLI to fetch issues"
+                $response = gh api $issuesUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $issuesList = $response | ConvertFrom-Json
+                    Write-ScriptLog -Message "Successfully fetched issues using GitHub CLI"
+                } else {
+                    Write-ScriptLog -Level Warning -Message "GitHub CLI request failed (exit code $LASTEXITCODE), falling back to direct API call"
+                }
             } else {
-                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
-                $issuesList = $null
+                Write-ScriptLog -Message "GitHub CLI available but not authenticated, using direct API call"
             }
-        } else {
-            # Fallback to direct API call
+        }
+        
+        # Fallback to direct API call if gh CLI didn't work
+        if (-not $issuesList) {
             Write-ScriptLog -Message "Using direct API request for issues"
             $headers = @{
                 'User-Agent' = 'AitherZero-Dashboard'
@@ -2236,7 +2294,8 @@ function Get-GitHubIssues {
             
             foreach ($issue in $issuesArray) {
                 # Skip pull requests (GitHub API returns them as issues)
-                if ($issue.pull_request) {
+                # Use null-safe property access
+                if ($null -ne $issue.PSObject.Properties['pull_request'] -and $issue.pull_request) {
                     continue
                 }
                 
