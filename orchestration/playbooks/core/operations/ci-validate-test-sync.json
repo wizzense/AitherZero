@@ -71,7 +71,7 @@
     },
     "onSuccess": {
       "message": "✅ All test files are synchronized with automation scripts!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "⚠️ Test-script synchronization issues detected",

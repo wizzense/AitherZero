@@ -89,7 +89,7 @@
     },
     "onSuccess": {
       "message": "✅ Documentation generated successfully!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Documentation generation failed",

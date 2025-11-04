@@ -89,7 +89,7 @@
     },
     "onSuccess": {
       "message": "✅ PR validation passed!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ PR validation failed",

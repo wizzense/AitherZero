@@ -124,7 +124,7 @@
     },
     "onSuccess": {
       "message": "✅ Release v{{version}} created successfully!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Release automation failed",

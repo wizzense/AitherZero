@@ -65,7 +65,7 @@
     },
     "onSuccess": {
       "message": "✅ All workflow health checks passed!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Workflow health issues detected!",

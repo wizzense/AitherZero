@@ -67,7 +67,7 @@
     },
     "onSuccess": {
       "message": "✅ Config manifest is valid and synchronized!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Config manifest validation failed",

@@ -79,7 +79,7 @@
     },
     "onSuccess": {
       "message": "✅ Quality validation passed!",
-      "level": "Success"
+      "level": "Information"
     },
     "onFailure": {
       "message": "❌ Quality validation failed",
