@@ -2,9 +2,13 @@
 // This script is called from parallel-testing.yml workflow
 
 module.exports = async ({github, context, core}) => {
-  const passed = core.getInput('passed');
-  const failed = core.getInput('failed');
-  const skipped = core.getInput('skipped');
+  // Parse as integers - core.getInput returns strings
+  const passed = parseInt(core.getInput('passed') || '0', 10);
+  const failed = parseInt(core.getInput('failed') || '0', 10);
+  const skipped = parseInt(core.getInput('skipped') || '0', 10);
+  
+  // Debug logging
+  console.log(`📊 Test Results: Passed=${passed}, Failed=${failed}, Skipped=${skipped}`);
   
   const status = failed > 0 ? 'TESTS FAILED' : 'ALL TESTS PASSED';
   const statusIcon = failed > 0 ? '❌' : '✅';
@@ -31,27 +35,54 @@ module.exports = async ({github, context, core}) => {
   const integrationTests = [];
   const staticAnalysis = [];
   
+  // Debug: Log what we received from API
+  console.log(`📊 Processing ${jobs.data.jobs.length} jobs from workflow run`);
+  console.log(`📊 Test totals - Passed: ${passed}, Failed: ${failed}, Skipped: ${skipped}`);
+  
   for (const job of jobs.data.jobs) {
     // Check if the job has a 'run-tests' step and get its conclusion
     // When continue-on-error is true, job.conclusion will be 'success' even if tests fail
     // But step.conclusion will correctly reflect 'failure'
     // Note: GitHub REST API exposes 'conclusion' and 'status' for steps, not 'outcome'
     let actualOutcome = job.conclusion;
+    let detectionMethod = 'job-conclusion';  // Track how we determined the status
     
     if (job.steps && job.steps.length > 0) {
-      const runTestsStep = job.steps.find(step => 
+      // Method 1: Look for step with id 'run-tests' (most reliable)
+      const runTestsStepById = job.steps.find(step => 
+        step.name && (step.name.includes('[id:run-tests]') || step.number === 3 || step.number === 4)
+      );
+      
+      // Method 2: Look for steps matching test patterns
+      const runTestsStepByName = job.steps.find(step => 
         step.name && TEST_STEP_PATTERNS.some(pattern => step.name.includes(pattern))
       );
+      
+      const runTestsStep = runTestsStepById || runTestsStepByName;
       
       // Use step.conclusion (API field) instead of step.outcome (workflow context only)
       if (runTestsStep && runTestsStep.conclusion) {
         actualOutcome = runTestsStep.conclusion;
+        detectionMethod = 'step-conclusion';
       } else {
         // If no matching test step found, check for any failed step
         const failedStep = job.steps.find(step => step.conclusion === 'failure');
         if (failedStep) {
           actualOutcome = 'failure';
+          detectionMethod = 'any-failed-step';
         }
+      }
+    }
+    
+    // Fallback: For test jobs, if we have overall test failures but couldn't detect step status,
+    // and the job completed successfully (which happens with continue-on-error), 
+    // we need to check if this specific job's artifact contains failures
+    if (actualOutcome === 'success' && failed > 0 && detectionMethod === 'job-conclusion') {
+      // If this is a test job and we have overall failures, we'll mark it as "needs-review"
+      // The consolidation step will show the actual failures
+      if (job.name.includes('Unit Tests') || job.name.includes('Domain Tests') || job.name.includes('Integration Tests')) {
+        // Don't override - we'll show accurate status in aggregate
+        console.log(`⚠️  Job "${job.name}" - cannot determine step status, showing job conclusion (${actualOutcome})`);
       }
     }
     
@@ -59,12 +90,18 @@ module.exports = async ({github, context, core}) => {
       name: job.name,
       conclusion: job.conclusion,
       actualOutcome: actualOutcome,  // Use step conclusion from API for accurate status
+      detectionMethod: detectionMethod,  // For debugging
       status: job.status,
       url: job.html_url,
       duration: job.completed_at && job.started_at 
         ? Math.round((new Date(job.completed_at) - new Date(job.started_at)) / 1000) 
         : 0
     };
+    
+    // Debug logging
+    if (job.name.includes('Unit Tests') || job.name.includes('Domain Tests') || job.name.includes('Integration Tests')) {
+      console.log(`  - ${job.name}: conclusion=${job.conclusion}, actualOutcome=${actualOutcome}, method=${detectionMethod}, steps=${job.steps ? job.steps.length : 0}`);
+    }
     
     if (job.name.includes('Unit Tests')) {
       unitTests.push(jobInfo);
@@ -142,7 +179,7 @@ module.exports = async ({github, context, core}) => {
   const maxDuration = Math.max(...[...unitTests, ...domainTests, ...integrationTests, ...staticAnalysis].map(j => j.duration));
   const estimatedSequential = totalJobs * 60;
   
-  const totalTests = parseInt(passed) + parseInt(failed) + parseInt(skipped);
+  const totalTests = passed + failed + skipped;
   const passedPct = totalTests > 0 ? (passed/totalTests*100).toFixed(1) : '0.0';
   const failedPct = totalTests > 0 ? (failed/totalTests*100).toFixed(1) : '0.0';
   const skippedPct = totalTests > 0 ? (skipped/totalTests*100).toFixed(1) : '0.0';
