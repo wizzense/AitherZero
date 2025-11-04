@@ -1,18 +1,20 @@
 @{
-    Name = "code-quality-full"
-    Description = "Comprehensive code quality analysis with full PSScriptAnalyzer scan"
+    Name = "code-quality-fast"
+    Description = "Fast code quality validation for CI/CD pipelines"
     Version = "1.0.0"
     
     # Execute these scripts in sequence
     Sequence = @(
         @{
             Script = "0404_Run-PSScriptAnalyzer.ps1"
-            Description = "Run comprehensive PSScriptAnalyzer with caching"
+            Description = "Fast PSScriptAnalyzer scan (core files only)"
             Parameters = @{
+                Fast = $true
+                MaxFiles = 25
                 UseCache = $true
             }
             ContinueOnError = $false
-            Timeout = 300
+            Timeout = 60
         },
         @{
             Script = "0407_Validate-Syntax.ps1"
@@ -21,28 +23,19 @@
                 All = $true
             }
             ContinueOnError = $false
-            Timeout = 60
-        },
-        @{
-            Script = "0512_Generate-Dashboard.ps1"
-            Description = "Generate updated dashboard with new quality metrics"
-            Parameters = @{
-                Format = "HTML"
-            }
-            ContinueOnError = $true
-            Timeout = 120
+            Timeout = 30
         }
     )
     
     # Variables available to all scripts
     Variables = @{
         ReportsPath = "./reports"
-        EnableCache = $true
+        FastMode = $true
     }
     
     # Success criteria
     SuccessCriteria = @{
-        RequireAllSuccess = $false
+        RequireAllSuccess = $true
         MinimumSuccessCount = 2
     }
 }
