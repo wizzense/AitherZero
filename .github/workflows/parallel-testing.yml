@@ -157,6 +157,11 @@ jobs:
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
             Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
             
+            # Set outputs for status check
+            "passed=$($result.PassedCount)" >> $env:GITHUB_OUTPUT
+            "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
+            "skipped=$($result.SkippedCount)" >> $env:GITHUB_OUTPUT
+            
             # Mark step as failed but don't exit (continue-on-error allows continuation)
             if ($result.FailedCount -gt 0) {
               Write-Host "##vso[task.complete result=Failed;]Tests failed"
@@ -164,7 +169,53 @@ jobs:
             }
           } else {
             Write-Host "⏭️  No tests found for range ${{ matrix.range }}" -ForegroundColor Yellow
+            "passed=0" >> $env:GITHUB_OUTPUT
+            "failed=0" >> $env:GITHUB_OUTPUT
+            "skipped=0" >> $env:GITHUB_OUTPUT
           }
+      
+      - name: 📋 Create Status Check
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        env:
+          PASSED: ${{ steps.run-tests.outputs.passed }}
+          FAILED: ${{ steps.run-tests.outputs.failed }}
+          SKIPPED: ${{ steps.run-tests.outputs.skipped }}
+          RANGE: ${{ matrix.range }}
+        with:
+          script: |
+            const passed = parseInt(process.env.PASSED || '0', 10);
+            const failed = parseInt(process.env.FAILED || '0', 10);
+            const skipped = parseInt(process.env.SKIPPED || '0', 10);
+            const range = process.env.RANGE;
+            const total = passed + failed + skipped;
+            
+            let conclusion, summary;
+            
+            if (total === 0) {
+              conclusion = 'success';
+              summary = `⏭️ No tests in range ${range}`;
+            } else if (failed === 0) {
+              conclusion = 'success';
+              summary = `✅ ${passed} test(s) passed in range ${range}`;
+            } else {
+              conclusion = 'failure';
+              summary = `❌ ${failed} test(s) failed in range ${range}`;
+            }
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: `🧪 Unit Tests [${range}]`,
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: summary,
+                summary: summary,
+                text: `**Range:** ${range}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
+              }
+            });
       
       - name: 📊 Upload Test Results
         if: always()
@@ -226,6 +277,11 @@ jobs:
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
             Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
             
+            # Set outputs for status check
+            "passed=$($result.PassedCount)" >> $env:GITHUB_OUTPUT
+            "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
+            "skipped=$($result.SkippedCount)" >> $env:GITHUB_OUTPUT
+            
             # Mark step as failed but don't exit (continue-on-error allows continuation)
             if ($result.FailedCount -gt 0) {
               Write-Host "##vso[task.complete result=Failed;]Tests failed"
@@ -233,7 +289,53 @@ jobs:
             }
           } else {
             Write-Host "⏭️  No tests found for module ${{ matrix.module }}" -ForegroundColor Yellow
+            "passed=0" >> $env:GITHUB_OUTPUT
+            "failed=0" >> $env:GITHUB_OUTPUT
+            "skipped=0" >> $env:GITHUB_OUTPUT
           }
+      
+      - name: 📋 Create Status Check
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        env:
+          PASSED: ${{ steps.run-tests.outputs.passed }}
+          FAILED: ${{ steps.run-tests.outputs.failed }}
+          SKIPPED: ${{ steps.run-tests.outputs.skipped }}
+          MODULE: ${{ matrix.module }}
+        with:
+          script: |
+            const passed = parseInt(process.env.PASSED || '0', 10);
+            const failed = parseInt(process.env.FAILED || '0', 10);
+            const skipped = parseInt(process.env.SKIPPED || '0', 10);
+            const module = process.env.MODULE;
+            const total = passed + failed + skipped;
+            
+            let conclusion, summary;
+            
+            if (total === 0) {
+              conclusion = 'success';
+              summary = `⏭️ No tests for ${module} domain`;
+            } else if (failed === 0) {
+              conclusion = 'success';
+              summary = `✅ ${passed} test(s) passed for ${module} domain`;
+            } else {
+              conclusion = 'failure';
+              summary = `❌ ${failed} test(s) failed for ${module} domain`;
+            }
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: `🏗️ Domain Tests [${module}]`,
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: summary,
+                summary: summary,
+                text: `**Domain:** ${module}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
+              }
+            });
       
       - name: 📊 Upload Test Results
         if: always()
@@ -295,6 +397,11 @@ jobs:
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
             Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
             
+            # Set outputs for status check
+            "passed=$($result.PassedCount)" >> $env:GITHUB_OUTPUT
+            "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
+            "skipped=$($result.SkippedCount)" >> $env:GITHUB_OUTPUT
+            
             # Mark step as failed but don't exit (continue-on-error allows continuation)
             if ($result.FailedCount -gt 0) {
               Write-Host "##vso[task.complete result=Failed;]Tests failed"
@@ -302,7 +409,53 @@ jobs:
             }
           } else {
             Write-Host "⏭️  No tests found for suite ${{ matrix.suite }}" -ForegroundColor Yellow
+            "passed=0" >> $env:GITHUB_OUTPUT
+            "failed=0" >> $env:GITHUB_OUTPUT
+            "skipped=0" >> $env:GITHUB_OUTPUT
           }
+      
+      - name: 📋 Create Status Check
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        env:
+          PASSED: ${{ steps.run-tests.outputs.passed }}
+          FAILED: ${{ steps.run-tests.outputs.failed }}
+          SKIPPED: ${{ steps.run-tests.outputs.skipped }}
+          SUITE: ${{ matrix.suite }}
+        with:
+          script: |
+            const passed = parseInt(process.env.PASSED || '0', 10);
+            const failed = parseInt(process.env.FAILED || '0', 10);
+            const skipped = parseInt(process.env.SKIPPED || '0', 10);
+            const suite = process.env.SUITE;
+            const total = passed + failed + skipped;
+            
+            let conclusion, summary;
+            
+            if (total === 0) {
+              conclusion = 'success';
+              summary = `⏭️ No tests for ${suite} suite`;
+            } else if (failed === 0) {
+              conclusion = 'success';
+              summary = `✅ ${passed} test(s) passed for ${suite} suite`;
+            } else {
+              conclusion = 'failure';
+              summary = `❌ ${failed} test(s) failed for ${suite} suite`;
+            }
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: `🔗 Integration Tests [${suite}]`,
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: summary,
+                summary: summary,
+                text: `**Suite:** ${suite}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
+              }
+            });
       
       - name: 📊 Upload Test Results
         if: always()
@@ -479,6 +632,64 @@ jobs:
           
           $perfData | ConvertTo-Json -Depth 10 | Out-File -FilePath "./reports/performance-metrics.json" -Encoding UTF8
           Write-Host "✅ Performance metrics collected" -ForegroundColor Green
+      
+      - name: 📋 Create Status Check
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        env:
+          ERRORS: ${{ steps.pssa.outputs.error-count }}
+          WARNINGS: ${{ steps.pssa.outputs.warning-count }}
+          INFO: ${{ steps.pssa.outputs.info-count }}
+          TOTAL: ${{ steps.pssa.outputs.total-issues }}
+          LINE_COV: ${{ steps.coverage.outputs.line-coverage }}
+          BRANCH_COV: ${{ steps.coverage.outputs.branch-coverage }}
+        with:
+          script: |
+            const errors = parseInt(process.env.ERRORS || '0', 10);
+            const warnings = parseInt(process.env.WARNINGS || '0', 10);
+            const info = parseInt(process.env.INFO || '0', 10);
+            const total = parseInt(process.env.TOTAL || '0', 10);
+            const lineCov = parseFloat(process.env.LINE_COV || '0');
+            const branchCov = parseFloat(process.env.BRANCH_COV || '0');
+            
+            let conclusion, summary;
+            
+            if (errors > 0) {
+              conclusion = 'failure';
+              summary = `❌ ${errors} error(s), ${warnings} warning(s) found`;
+            } else if (warnings > 10) {
+              conclusion = 'neutral';
+              summary = `⚠️ ${warnings} warning(s) found (no errors)`;
+            } else {
+              conclusion = 'success';
+              summary = `✅ Code quality passed (${total} total issues)`;
+            }
+            
+            const text = `**PSScriptAnalyzer:**
+            
+            • Errors: ${errors}
+            • Warnings: ${warnings}
+            • Information: ${info}
+            • Total Issues: ${total}
+            
+            **Code Coverage:**
+            
+            • Line Coverage: ${lineCov}%
+            • Branch Coverage: ${branchCov}%`;
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: '🔍 Static Analysis',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: summary,
+                summary: summary,
+                text: text
+              }
+            });
 
   # Consolidation job - runs after all parallel jobs complete
   consolidate-results:
@@ -670,6 +881,143 @@ jobs:
           path: './tests/results-consolidated/**/*.xml'
           reporter: 'java-junit'
           fail-on-error: false
+      
+      - name: 📋 Create Status Check
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        env:
+          PASSED: ${{ steps.consolidate.outputs.total-passed }}
+          FAILED: ${{ steps.consolidate.outputs.total-failed }}
+          SKIPPED: ${{ steps.consolidate.outputs.total-skipped }}
+        with:
+          script: |
+            const passed = parseInt(process.env.PASSED || '0', 10);
+            const failed = parseInt(process.env.FAILED || '0', 10);
+            const skipped = parseInt(process.env.SKIPPED || '0', 10);
+            const total = passed + failed + skipped;
+            
+            let conclusion, summary, text;
+            
+            if (failed === 0) {
+              conclusion = 'success';
+              summary = `✅ All tests passed (${passed} passed, ${skipped} skipped)`;
+              text = `Parallel test execution completed successfully.\n\n**Results:**\n- ✅ Passed: ${passed}\n- ⏭️ Skipped: ${skipped}\n- Total: ${total}`;
+            } else {
+              conclusion = 'failure';
+              summary = `❌ ${failed} test(s) failed (${passed} passed, ${skipped} skipped)`;
+              text = `Parallel test execution found failures.\n\n**Results:**\n- ✅ Passed: ${passed}\n- ❌ Failed: ${failed}\n- ⏭️ Skipped: ${skipped}\n- Total: ${total}\n\n**Action Required:** Review failed tests and address issues.`;
+            }
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: '⚡ Parallel Testing Results',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: summary,
+                summary: summary,
+                text: text
+              }
+            });
+      
+      - name: 📋 Collect Check Statuses for Dashboard
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Get all checks for this PR
+            const { data: checkRuns } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.payload.pull_request.head.sha,
+              per_page: 100
+            });
+            
+            // Filter for parallel testing checks only
+            const parallelTestChecks = checkRuns.check_runs.filter(check => 
+              check.name.includes('Unit Tests') ||
+              check.name.includes('Domain Tests') ||
+              check.name.includes('Integration Tests') ||
+              check.name.includes('Static Analysis') ||
+              check.name.includes('Parallel Testing Results')
+            );
+            
+            // Organize checks by type
+            const checkSummary = {
+              timestamp: new Date().toISOString(),
+              workflow_run: '${{ github.run_id }}',
+              pr_number: context.payload.pull_request.number,
+              commit_sha: context.payload.pull_request.head.sha,
+              total_checks: parallelTestChecks.length,
+              checks: {
+                unit_tests: [],
+                domain_tests: [],
+                integration_tests: [],
+                static_analysis: [],
+                overall: []
+              },
+              summary: {
+                total: parallelTestChecks.length,
+                success: 0,
+                failure: 0,
+                neutral: 0,
+                skipped: 0
+              }
+            };
+            
+            // Process each check
+            for (const check of parallelTestChecks) {
+              const checkData = {
+                name: check.name,
+                conclusion: check.conclusion,
+                status: check.status,
+                started_at: check.started_at,
+                completed_at: check.completed_at,
+                html_url: check.html_url,
+                output_title: check.output?.title || '',
+                output_summary: check.output?.summary || ''
+              };
+              
+              // Count by conclusion
+              if (check.conclusion === 'success') checkSummary.summary.success++;
+              else if (check.conclusion === 'failure') checkSummary.summary.failure++;
+              else if (check.conclusion === 'neutral') checkSummary.summary.neutral++;
+              else if (check.conclusion === 'skipped') checkSummary.summary.skipped++;
+              
+              // Categorize by type
+              if (check.name.includes('Unit Tests')) {
+                checkSummary.checks.unit_tests.push(checkData);
+              } else if (check.name.includes('Domain Tests')) {
+                checkSummary.checks.domain_tests.push(checkData);
+              } else if (check.name.includes('Integration Tests')) {
+                checkSummary.checks.integration_tests.push(checkData);
+              } else if (check.name.includes('Static Analysis')) {
+                checkSummary.checks.static_analysis.push(checkData);
+              } else if (check.name.includes('Parallel Testing Results')) {
+                checkSummary.checks.overall.push(checkData);
+              }
+            }
+            
+            // Save to reports directory for dashboard
+            const reportsDir = './reports';
+            if (!fs.existsSync(reportsDir)) {
+              fs.mkdirSync(reportsDir, { recursive: true });
+            }
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const checkStatusPath = path.join(reportsDir, `ParallelTestChecks-${timestamp}.json`);
+            fs.writeFileSync(checkStatusPath, JSON.stringify(checkSummary, null, 2));
+            
+            core.info(`✅ Saved check statuses to ${checkStatusPath}`);
+            core.info(`   Total checks: ${checkSummary.total_checks}`);
+            core.info(`   Success: ${checkSummary.summary.success}`);
+            core.info(`   Failure: ${checkSummary.summary.failure}`);
+            core.info(`   Neutral: ${checkSummary.summary.neutral}`);
       
       - name: 💬 Comment on PR
         if: github.event_name == 'pull_request' && always()
