@@ -1,0 +1,264 @@
+---
+name: 🎯 Unified Testing Orchestration
+
+# Simplified workflow using playbook orchestration
+on:
+  push:
+    branches: [main, develop, dev]
+    paths:
+      - 'domains/**'
+      - 'automation-scripts/**'
+      - 'tests/**'
+      - '**.ps1'
+      - '**.psm1'
+  pull_request:
+    branches: [main, develop, dev]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Test profile to run'
+        type: choice
+        options:
+          - quick
+          - standard
+          - full
+          - ci
+        default: 'standard'
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  pages: write
+
+concurrency:
+  group: unified-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  orchestrated-tests:
+    name: 🎯 Orchestrated Testing (${{ github.event.inputs.profile || 'standard' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          Write-Host "🚀 Bootstrapping AitherZero..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 🎼 Run Test Orchestration
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          $profile = "${{ github.event.inputs.profile }}"
+          if (-not $profile) { $profile = "ci" }
+          
+          Write-Host "🎼 Starting orchestrated testing with profile: $profile" -ForegroundColor Cyan
+          Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -Profile $profile
+          
+          $exitCode = $LASTEXITCODE
+          Write-Host "`n═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host "🎯 Orchestration completed with exit code: $exitCode" -ForegroundColor $(if ($exitCode -eq 0) { 'Green' } else { 'Red' })
+          
+          exit $exitCode
+      
+      - name: 📊 Generate Dashboard
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "📊 Generating comprehensive dashboard..." -ForegroundColor Cyan
+          ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+      
+      - name: 📈 Create Summary
+        if: always()
+        shell: pwsh
+        run: |
+          # Find latest report
+          $reportJson = Get-ChildItem "./reports" -Filter "dashboard.json" -ErrorAction SilentlyContinue | 
+            Select-Object -First 1
+          
+          if ($reportJson) {
+            $report = Get-Content $reportJson.FullName | ConvertFrom-Json
+            
+            # Build GitHub step summary
+            $summary = @"
+          # 🎯 Test Orchestration Results
+          
+          **Profile:** ${{ github.event.inputs.profile || 'ci' }}  
+          **Status:** $(if ($report.Summary.FailedTests -eq 0) { '✅ PASSED' } else { '❌ FAILED' })  
+          **Generated:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+          
+          ## 📊 Test Summary
+          
+          | Metric | Value |
+          |--------|-------|
+          | Total Tests | $($report.Summary.TotalTests) |
+          | ✅ Passed | $($report.Summary.PassedTests) |
+          | ❌ Failed | $($report.Summary.FailedTests) |
+          | ⏭️ Skipped | $($report.Summary.SkippedTests) |
+          
+          ## 🐛 Quality Issues
+          
+          | Severity | Count |
+          |----------|-------|
+          | 🔴 Critical | $($report.Summary.CriticalIssues) |
+          | 🟠 High | $($report.Summary.HighIssues) |
+          | 🟡 Medium | $($report.Summary.MediumIssues) |
+          | 🔵 Low | $($report.Summary.LowIssues) |
+          
+          ## 📄 Reports
+          
+          - [Dashboard](./reports/dashboard.html)
+          - [Detailed Report](./reports/test-summary.md)
+          
+          "@
+            
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+          } else {
+            Write-Host "⚠️  No dashboard found - tests may have failed early" -ForegroundColor Yellow
+            @"
+          # 🎯 Test Orchestration Results
+          
+          ⚠️ **No dashboard generated** - tests may have failed during execution.
+          Check the workflow logs for details.
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+          }
+      
+      - name: 📤 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            tests/results/**/*.xml
+            tests/results/**/*.json
+          retention-days: 30
+      
+      - name: 📤 Upload Reports & Dashboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-dashboard
+          path: |
+            reports/**/*.html
+            reports/**/*.json
+            reports/**/*.md
+          retention-days: 30
+      
+      - name: 📊 Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: 'tests/results/**/*.xml'
+          check_name: 'Test Results'
+          comment_mode: always
+        continue-on-error: true
+      
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Try to read dashboard summary
+            let summary = '## 🎯 Test Orchestration Results\n\n';
+            
+            try {
+              const dashboardPath = './reports/dashboard.json';
+              if (fs.existsSync(dashboardPath)) {
+                const dashboard = JSON.parse(fs.readFileSync(dashboardPath, 'utf8'));
+                const passRate = dashboard.Summary.TotalTests > 0 
+                  ? Math.round((dashboard.Summary.PassedTests / dashboard.Summary.TotalTests) * 100)
+                  : 0;
+                
+                const status = dashboard.Summary.FailedTests === 0 ? '✅ PASSED' : '❌ FAILED';
+                
+                summary += `**Profile:** ${{ github.event.inputs.profile || 'ci' }}\n`;
+                summary += `**Status:** ${status}\n`;
+                summary += `**Pass Rate:** ${passRate}%\n\n`;
+                summary += `| Tests | Issues |\n`;
+                summary += `|-------|--------|\n`;
+                summary += `| Total: ${dashboard.Summary.TotalTests} | Total: ${dashboard.Summary.TotalIssues} |\n`;
+                summary += `| ✅ ${dashboard.Summary.PassedTests} | 🔴 ${dashboard.Summary.CriticalIssues} critical |\n`;
+                summary += `| ❌ ${dashboard.Summary.FailedTests} | 🟠 ${dashboard.Summary.HighIssues} high |\n`;
+                summary += `| ⏭️ ${dashboard.Summary.SkippedTests} | 🟡 ${dashboard.Summary.MediumIssues} medium |\n\n`;
+                summary += `📊 [View Full Dashboard](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+              } else {
+                summary += '⚠️ Dashboard not generated - check workflow logs for details.\n';
+              }
+            } catch (error) {
+              summary += `⚠️ Error reading dashboard: ${error.message}\n`;
+            }
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });
+
+  publish-dashboard:
+    name: 📊 Publish Dashboard to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: orchestrated-tests
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 📊 Download Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports-dashboard
+          path: ./reports
+        continue-on-error: true
+      
+      - name: 🔧 Setup Pages
+        uses: actions/configure-pages@v5
+      
+      - name: 🏗️ Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./reports
+          destination: ./_site
+      
+      - name: 📤 Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+      
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      
+      - name: 📋 Report Deployment
+        if: steps.deployment.outcome == 'success'
+        run: |
+          echo "✅ Dashboard published to GitHub Pages!"
+          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"
