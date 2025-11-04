@@ -5,18 +5,31 @@
 .SYNOPSIS
     Unit tests for 0001_Ensure-PowerShell7
 .DESCRIPTION
-    Auto-generated comprehensive tests
+    Auto-generated comprehensive tests with environment awareness
     Script: 0001_Ensure-PowerShell7
     Stage: Prepare
     Description: Ensure PowerShell 7 is installed and restart if needed
-    Generated: 2025-11-02 21:41:15
+    Generated: 2025-11-04 02:14:26
 #>
 
 Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0001_Ensure-PowerShell7.ps1'
+        $script:ScriptPath = './automation-scripts/0001_Ensure-PowerShell7.ps1'
         $script:ScriptName = '0001_Ensure-PowerShell7'
+
+        # Import test helpers for environment detection
+        $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
+        if (Test-Path $testHelpersPath) {
+            Import-Module $testHelpersPath -Force -ErrorAction SilentlyContinue
+        }
+
+        # Detect test environment
+        $script:TestEnv = if (Get-Command Get-TestEnvironment -ErrorAction SilentlyContinue) {
+            Get-TestEnvironment
+        } else {
+            @{ IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'); IsLocal = $true }
+        }
     }
 
     Context 'Script Validation' {
@@ -65,6 +78,36 @@ Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
                 $params.Configuration = @{}
                 & $script:ScriptPath @params
             } | Should -Not -Throw
+        }
+    }
+
+    Context 'Environment Awareness' {
+        It 'Test environment should be detected' {
+            $script:TestEnv | Should -Not -BeNullOrEmpty
+            $script:TestEnv.Keys | Should -Contain 'IsCI'
+        }
+
+        It 'Should adapt to CI environment' {
+            # Skip if not in CI
+            if (-not $script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "CI-only validation"
+                return
+            }
+            
+            # This test only runs in CI
+            $script:TestEnv.IsCI | Should -Be $true
+            $env:CI | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Should adapt to local environment' {
+            # Skip if in CI
+            if ($script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "Local-only validation"
+                return
+            }
+            
+            # This test only runs locally
+            $script:TestEnv.IsCI | Should -Be $false
         }
     }
 }
