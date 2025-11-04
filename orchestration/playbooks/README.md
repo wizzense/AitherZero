@@ -264,7 +264,7 @@ See [GITHUB-WORKFLOWS-MAPPING.md](./GITHUB-WORKFLOWS-MAPPING.md) for complete de
 1. **Run validations**: `./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick`
 2. **Explore playbooks**: `./automation-scripts/0962_Run-Playbook.ps1 -List`
 3. **Read mapping**: See [GITHUB-WORKFLOWS-MAPPING.md](./GITHUB-WORKFLOWS-MAPPING.md)
-4. **Create custom**: Copy from `templates/` and customize
+4. **Create custom**: Copy an existing playbook from `core/operations/` or `core/testing/` and customize it
 
 ---
 
