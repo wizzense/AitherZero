@@ -180,247 +180,246 @@ function Invoke-FileDownload {
         [string]$Method = 'Auto'
     )
     
-    begin {
-        Write-DownloadLog "Starting file download from: $Uri" -Level 'Information'
-        Write-DownloadLog "Destination: $OutFile" -Level 'Debug'
-        
-        # Validate destination directory exists
-        $destinationDir = Split-Path $OutFile -Parent
-        if (-not (Test-Path $destinationDir)) {
-            try {
-                New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
-                Write-DownloadLog "Created destination directory: $destinationDir" -Level 'Debug'
-            } catch {
-                Write-DownloadLog "Failed to create destination directory: $_" -Level 'Error'
-                throw
-            }
-        }
-        
-        # Get expected file size from remote server
-        $expectedSize = $null
-        if (-not $SkipValidation) {
-            try {
-                Write-DownloadLog "Checking remote file size..." -Level 'Debug'
-                $headRequest = Invoke-WebRequest -Uri $Uri -Method Head -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
-                if ($headRequest.Headers.'Content-Length') {
-                    $expectedSize = [long]$headRequest.Headers.'Content-Length'[0]
-                    Write-DownloadLog "Expected file size: $expectedSize bytes" -Level 'Debug'
-                }
-            } catch {
-                Write-DownloadLog "Could not determine remote file size: $_" -Level 'Debug'
-            }
-        }
-        
-        # Check if file exists and validate it
-        $existingFileValid = $false
-        $resumeDownload = $false
-        
-        if (Test-Path $OutFile) {
-            $existingFile = Get-Item $OutFile
-            $existingSize = $existingFile.Length
-            
-            Write-DownloadLog "Existing file found: $existingSize bytes" -Level 'Debug'
-            
-            if ($Force) {
-                Write-DownloadLog "Force flag specified, will overwrite existing file" -Level 'Debug'
-            } elseif ($expectedSize -and $existingSize -eq $expectedSize) {
-                # File exists and size matches - assume complete download
-                Write-DownloadLog "File exists with correct size, using cached version" -Level 'Information'
-                $existingFileValid = $true
-            } elseif ($expectedSize -and $existingSize -lt $expectedSize) {
-                # Partial download detected - can resume
-                Write-DownloadLog "Partial download detected ($existingSize of $expectedSize bytes)" -Level 'Information'
-                $resumeDownload = $true
-            } elseif ($expectedSize -and $existingSize -gt $expectedSize) {
-                # File is larger than expected - corrupt or wrong file
-                Write-DownloadLog "Existing file is larger than expected, will re-download" -Level 'Warning'
-                Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
-            } elseif (-not $expectedSize) {
-                # Cannot validate size, use existing file unless Force is specified
-                Write-DownloadLog "Cannot validate file size (no Content-Length header), using existing file" -Level 'Warning'
-                $existingFileValid = $true
-            }
-        }
-        
-        # Return cached file if valid
-        if ($existingFileValid) {
-            $fileInfo = Get-Item $OutFile
-            return [PSCustomObject]@{
-                Success = $true
-                Method = 'Cached'
-                FilePath = $OutFile
-                FileSize = $fileInfo.Length
-                ExpectedSize = $expectedSize
-                Duration = [TimeSpan]::Zero
-                Attempts = 0
-                Resumed = $false
-                Message = 'Using cached file (already downloaded)'
-            }
-        }
-        
-        # Determine download method
-        $useMethod = $Method
-        if ($Method -eq 'Auto') {
-            if ($script:BitsAvailable -and $IsWindows) {
-                $useMethod = 'BITS'
-                Write-DownloadLog "Auto-selected BITS for download (Windows platform)" -Level 'Debug'
-            } else {
-                $useMethod = 'WebRequest'
-                Write-DownloadLog "Auto-selected WebRequest for download (non-Windows or BITS unavailable)" -Level 'Debug'
-            }
-        }
-        
-        # Note: Resume functionality for BITS is handled automatically by the service
-        # For WebRequest, we need to delete partial files as Invoke-WebRequest doesn't support resume
-        if ($resumeDownload -and $useMethod -eq 'WebRequest') {
-            Write-DownloadLog "WebRequest doesn't support resume, removing partial file" -Level 'Debug'
-            Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
-            $resumeDownload = $false
+    # Single block function for proper early return behavior
+    $startTime = Get-Date
+    
+    Write-DownloadLog "Starting file download from: $Uri" -Level 'Information'
+    Write-DownloadLog "Destination: $OutFile" -Level 'Debug'
+    
+    # Validate destination directory exists
+    $destinationDir = Split-Path $OutFile -Parent
+    if (-not (Test-Path $destinationDir)) {
+        try {
+            New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
+            Write-DownloadLog "Created destination directory: $destinationDir" -Level 'Debug'
+        } catch {
+            Write-DownloadLog "Failed to create destination directory: $_" -Level 'Error'
+            throw
         }
     }
     
-    process {
-        $startTime = Get-Date
-        $attempt = 0
-        $lastError = $null
-        $wasResumed = $resumeDownload
+    # Get expected file size from remote server
+    $expectedSize = $null
+    if (-not $SkipValidation) {
+        try {
+            Write-DownloadLog "Checking remote file size..." -Level 'Debug'
+            $headRequest = Invoke-WebRequest -Uri $Uri -Method Head -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+            if ($headRequest.Headers.'Content-Length') {
+                $expectedSize = [long]$headRequest.Headers.'Content-Length'[0]
+                Write-DownloadLog "Expected file size: $expectedSize bytes" -Level 'Debug'
+            }
+        } catch {
+            Write-DownloadLog "Could not determine remote file size: $_" -Level 'Debug'
+        }
+    }
+    
+    # Check if file exists and validate it
+    $existingFileValid = $false
+    $resumeDownload = $false
+    
+    if (Test-Path $OutFile) {
+        $existingFile = Get-Item $OutFile
+        $existingSize = $existingFile.Length
         
-        while ($attempt -lt $RetryCount) {
-            $attempt++
-            
-            try {
-                if ($useMethod -eq 'BITS' -and $script:BitsAvailable) {
-                    # Use BITS for optimized download with automatic resume
-                    Write-DownloadLog "Downloading via BITS (attempt $attempt of $RetryCount)..." -Level 'Information'
+        Write-DownloadLog "Existing file found: $existingSize bytes" -Level 'Debug'
+        
+        if ($Force) {
+            Write-DownloadLog "Force flag specified, will overwrite existing file" -Level 'Debug'
+        } elseif ($expectedSize -and $existingSize -eq $expectedSize) {
+            # File exists and size matches - assume complete download
+            Write-DownloadLog "File exists with correct size, using cached version" -Level 'Information'
+            $existingFileValid = $true
+        } elseif ($expectedSize -and $existingSize -lt $expectedSize) {
+            # Partial download detected - can resume
+            Write-DownloadLog "Partial download detected ($existingSize of $expectedSize bytes)" -Level 'Information'
+            $resumeDownload = $true
+        } elseif ($expectedSize -and $existingSize -gt $expectedSize) {
+            # File is larger than expected - corrupt or wrong file
+            Write-DownloadLog "Existing file is larger than expected, will re-download" -Level 'Warning'
+            Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
+        } elseif (-not $expectedSize) {
+            # Cannot validate size, use existing file unless Force is specified
+            Write-DownloadLog "Cannot validate file size (no Content-Length header), using existing file" -Level 'Warning'
+            $existingFileValid = $true
+        }
+    }
+    
+    # Return cached file if valid
+    if ($existingFileValid) {
+        $fileInfo = Get-Item $OutFile
+        return [PSCustomObject]@{
+            Success = $true
+            Method = 'Cached'
+            FilePath = $OutFile
+            FileSize = $fileInfo.Length
+            ExpectedSize = $expectedSize
+            Duration = [TimeSpan]::Zero
+            Attempts = 0
+            Resumed = $false
+            Message = 'Using cached file (already downloaded)'
+        }
+    }
+    
+    # Determine download method
+    $useMethod = $Method
+    if ($Method -eq 'Auto') {
+        if ($script:BitsAvailable -and $IsWindows) {
+            $useMethod = 'BITS'
+            Write-DownloadLog "Auto-selected BITS for download (Windows platform)" -Level 'Debug'
+        } else {
+            $useMethod = 'WebRequest'
+            Write-DownloadLog "Auto-selected WebRequest for download (non-Windows or BITS unavailable)" -Level 'Debug'
+        }
+    }
+    
+    # Note: Resume functionality for BITS is handled automatically by the service
+    # For WebRequest, we need to delete partial files as Invoke-WebRequest doesn't support resume
+    if ($resumeDownload -and $useMethod -eq 'WebRequest') {
+        Write-DownloadLog "WebRequest doesn't support resume, removing partial file" -Level 'Debug'
+        Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
+        $resumeDownload = $false
+    }
+    
+    # Retry loop
+    $attempt = 0
+    $lastError = $null
+    $wasResumed = $resumeDownload
+    
+    while ($attempt -lt $RetryCount) {
+        $attempt++
+        
+        try {
+            if ($useMethod -eq 'BITS' -and $script:BitsAvailable) {
+                # Use BITS for optimized download with automatic resume
+                Write-DownloadLog "Downloading via BITS (attempt $attempt of $RetryCount)..." -Level 'Information'
+                
+                if ($PSCmdlet.ShouldProcess($OutFile, "Download file from $Uri using BITS")) {
+                    # Start-BitsTransfer parameters
+                    $bitsParams = @{
+                        Source = $Uri
+                        Destination = $OutFile
+                        ErrorAction = 'Stop'
+                    }
                     
-                    if ($PSCmdlet.ShouldProcess($OutFile, "Download file from $Uri using BITS")) {
-                        # Start-BitsTransfer parameters
-                        $bitsParams = @{
-                            Source = $Uri
-                            Destination = $OutFile
+                    # Add description for better tracking
+                    $bitsParams.Description = "Download: $(Split-Path $OutFile -Leaf)"
+                    
+                    # BITS automatically handles resume if transfer was interrupted
+                    # The -Asynchronous switch would allow us to monitor, but synchronous is simpler
+                    
+                    # Execute BITS transfer
+                    Start-BitsTransfer @bitsParams
+                    
+                    Write-DownloadLog "Download completed successfully via BITS" -Level 'Information'
+                }
+                
+            } else {
+                # Fallback to Invoke-WebRequest
+                Write-DownloadLog "Downloading via WebRequest (attempt $attempt of $RetryCount)..." -Level 'Information'
+                
+                if ($PSCmdlet.ShouldProcess($OutFile, "Download file from $Uri using WebRequest")) {
+                    # Suppress progress bar to avoid console flooding
+                    $originalProgressPreference = $ProgressPreference
+                    $ProgressPreference = 'SilentlyContinue'
+                    
+                    try {
+                        $webRequestParams = @{
+                            Uri = $Uri
+                            OutFile = $OutFile
+                            TimeoutSec = $TimeoutSec
                             ErrorAction = 'Stop'
                         }
                         
-                        # Add description for better tracking
-                        $bitsParams.Description = "Download: $(Split-Path $OutFile -Leaf)"
-                        
-                        # BITS automatically handles resume if transfer was interrupted
-                        # The -Asynchronous switch would allow us to monitor, but synchronous is simpler
-                        
-                        # Execute BITS transfer
-                        Start-BitsTransfer @bitsParams
-                        
-                        Write-DownloadLog "Download completed successfully via BITS" -Level 'Information'
-                    }
-                    
-                } else {
-                    # Fallback to Invoke-WebRequest
-                    Write-DownloadLog "Downloading via WebRequest (attempt $attempt of $RetryCount)..." -Level 'Information'
-                    
-                    if ($PSCmdlet.ShouldProcess($OutFile, "Download file from $Uri using WebRequest")) {
-                        # Suppress progress bar to avoid console flooding
-                        $originalProgressPreference = $ProgressPreference
-                        $ProgressPreference = 'SilentlyContinue'
-                        
-                        try {
-                            $webRequestParams = @{
-                                Uri = $Uri
-                                OutFile = $OutFile
-                                TimeoutSec = $TimeoutSec
-                                ErrorAction = 'Stop'
-                            }
-                            
-                            if ($UseBasicParsing) {
-                                $webRequestParams.UseBasicParsing = $true
-                            }
-                            
-                            Invoke-WebRequest @webRequestParams
-                            
-                            Write-DownloadLog "Download completed successfully via WebRequest" -Level 'Information'
-                        } finally {
-                            $ProgressPreference = $originalProgressPreference
+                        if ($UseBasicParsing) {
+                            $webRequestParams.UseBasicParsing = $true
                         }
+                        
+                        Invoke-WebRequest @webRequestParams
+                        
+                        Write-DownloadLog "Download completed successfully via WebRequest" -Level 'Information'
+                    } finally {
+                        $ProgressPreference = $originalProgressPreference
                     }
-                }
-                
-                # Verify download
-                if (Test-Path $OutFile) {
-                    $fileInfo = Get-Item $OutFile
-                    $actualSize = $fileInfo.Length
-                    $duration = (Get-Date) - $startTime
-                    
-                    # Validate file size if expected size is known
-                    if ($expectedSize -and -not $SkipValidation) {
-                        if ($actualSize -eq $expectedSize) {
-                            Write-DownloadLog "File downloaded successfully: $actualSize bytes in $($duration.TotalSeconds.ToString('F2')) seconds" -Level 'Information'
-                        } elseif ($actualSize -lt $expectedSize) {
-                            # Incomplete download
-                            $percentComplete = [math]::Round(($actualSize / $expectedSize) * 100, 2)
-                            throw "Incomplete download: Got $actualSize of $expectedSize bytes ($percentComplete% complete)"
-                        } else {
-                            # File larger than expected - possible corruption
-                            throw "Downloaded file is larger than expected: $actualSize bytes (expected $expectedSize bytes)"
-                        }
-                    } else {
-                        Write-DownloadLog "File downloaded successfully: $actualSize bytes in $($duration.TotalSeconds.ToString('F2')) seconds" -Level 'Information'
-                    }
-                    
-                    # Success - return result
-                    return [PSCustomObject]@{
-                        Success = $true
-                        Method = $useMethod
-                        FilePath = $OutFile
-                        FileSize = $actualSize
-                        ExpectedSize = $expectedSize
-                        Duration = $duration
-                        Attempts = $attempt
-                        Resumed = $wasResumed
-                        Message = 'Download completed successfully'
-                    }
-                } else {
-                    throw "Downloaded file not found at: $OutFile"
-                }
-                
-            } catch {
-                $lastError = $_
-                Write-DownloadLog "Download attempt $attempt failed: $_" -Level 'Warning'
-                
-                # Clean up partial/corrupt download
-                if (Test-Path $OutFile) {
-                    try {
-                        $partialSize = (Get-Item $OutFile).Length
-                        Write-DownloadLog "Cleaning up partial/corrupt download ($partialSize bytes)" -Level 'Debug'
-                        Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
-                    } catch {
-                        Write-DownloadLog "Could not clean up partial file: $_" -Level 'Debug'
-                    }
-                }
-                
-                if ($attempt -lt $RetryCount) {
-                    # Calculate retry delay with exponential backoff
-                    $waitSeconds = $RetryDelaySeconds * [math]::Pow(2, $attempt - 1)
-                    Write-DownloadLog "Retrying in $waitSeconds seconds... (attempt $($attempt + 1) of $RetryCount)" -Level 'Information'
-                    Start-Sleep -Seconds $waitSeconds
-                } else {
-                    Write-DownloadLog "Retry exhausted after $attempt attempts" -Level 'Error'
                 }
             }
+            
+            # Verify download
+            if (Test-Path $OutFile) {
+                $fileInfo = Get-Item $OutFile
+                $actualSize = $fileInfo.Length
+                $duration = (Get-Date) - $startTime
+                
+                # Validate file size if expected size is known
+                if ($expectedSize -and -not $SkipValidation) {
+                    if ($actualSize -eq $expectedSize) {
+                        Write-DownloadLog "File downloaded successfully: $actualSize bytes in $($duration.TotalSeconds.ToString('F2')) seconds" -Level 'Information'
+                    } elseif ($actualSize -lt $expectedSize) {
+                        # Incomplete download
+                        $percentComplete = [math]::Round(($actualSize / $expectedSize) * 100, 2)
+                        throw "Incomplete download: Got $actualSize of $expectedSize bytes ($percentComplete% complete)"
+                    } else {
+                        # File larger than expected - possible corruption
+                        throw "Downloaded file is larger than expected: $actualSize bytes (expected $expectedSize bytes)"
+                    }
+                } else {
+                    Write-DownloadLog "File downloaded successfully: $actualSize bytes in $($duration.TotalSeconds.ToString('F2')) seconds" -Level 'Information'
+                }
+                
+                # Success - return result
+                return [PSCustomObject]@{
+                    Success = $true
+                    Method = $useMethod
+                    FilePath = $OutFile
+                    FileSize = $actualSize
+                    ExpectedSize = $expectedSize
+                    Duration = $duration
+                    Attempts = $attempt
+                    Resumed = $wasResumed
+                    Message = 'Download completed successfully'
+                }
+            } else {
+                throw "Downloaded file not found at: $OutFile"
+            }
+            
+        } catch {
+            $lastError = $_
+            Write-DownloadLog "Download attempt $attempt failed: $_" -Level 'Warning'
+            
+            # Clean up partial/corrupt download
+            if (Test-Path $OutFile) {
+                try {
+                    $partialSize = (Get-Item $OutFile).Length
+                    Write-DownloadLog "Cleaning up partial/corrupt download ($partialSize bytes)" -Level 'Debug'
+                    Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
+                } catch {
+                    Write-DownloadLog "Could not clean up partial file: $_" -Level 'Debug'
+                }
+            }
+            
+            if ($attempt -lt $RetryCount) {
+                # Calculate retry delay with exponential backoff
+                $waitSeconds = $RetryDelaySeconds * [math]::Pow(2, $attempt - 1)
+                Write-DownloadLog "Retrying in $waitSeconds seconds... (attempt $($attempt + 1) of $RetryCount)" -Level 'Information'
+                Start-Sleep -Seconds $waitSeconds
+            } else {
+                Write-DownloadLog "Retry exhausted after $attempt attempts" -Level 'Error'
+            }
         }
-        
-        # All attempts failed - return failure result
-        Write-DownloadLog "Download failed after $RetryCount attempts: $lastError" -Level 'Error'
-        
-        return [PSCustomObject]@{
-            Success = $false
-            Method = $useMethod
-            FilePath = $OutFile
-            FileSize = 0
-            ExpectedSize = $expectedSize
-            Duration = (Get-Date) - $startTime
-            Attempts = $attempt
-            Resumed = $false
-            Message = "Download failed after $RetryCount attempts: $lastError"
-        }
+    }
+    
+    # All attempts failed - return failure result
+    Write-DownloadLog "Download failed after $RetryCount attempts: $lastError" -Level 'Error'
+    
+    return [PSCustomObject]@{
+        Success = $false
+        Method = $useMethod
+        FilePath = $OutFile
+        FileSize = 0
+        ExpectedSize = $expectedSize
+        Duration = (Get-Date) - $startTime
+        Attempts = $attempt
+        Resumed = $false
+        Message = "Download failed after $RetryCount attempts: $lastError"
     }
 }
 
