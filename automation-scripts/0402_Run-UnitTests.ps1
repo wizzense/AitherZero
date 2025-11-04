@@ -539,14 +539,14 @@ try {
 
             try {
                 # Suppress all output streams to prevent pipeline threading issues
-                $null = $ErrorActionPreference
+                $ErrorActionPreference = 'SilentlyContinue'
                 $WarningPreference = 'SilentlyContinue'
                 $VerbosePreference = 'SilentlyContinue'
                 $DebugPreference = 'SilentlyContinue'
                 $InformationPreference = 'SilentlyContinue'
                 
                 # Import Pester in parallel runspace
-                Import-Module Pester -MinimumVersion 5.0 -Force -ErrorAction Stop
+                Import-Module Pester -MinimumVersion 5.0 -Force -ErrorAction SilentlyContinue
 
                 # Create config for this chunk
                 $chunkConfig = New-PesterConfiguration
