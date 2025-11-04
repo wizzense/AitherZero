@@ -2,7 +2,7 @@
 
 **Infrastructure Automation Platform**
 
-*Last updated: 2025-10-30 08:18:58*
+*Last updated: 2025-11-04 04:34:53*
 
 ---
 
@@ -11,40 +11,45 @@
 ### File Statistics
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📁 **Total Files** | **204** | 132 Scripts, 62 Modules, 10 Data |
-| 📄 **Documentation** | **295** | Markdown files |
-| 🔧 **Configuration** | **96** | 3 YAML, 93 JSON |
+| 📁 **Total Files** | **203** | 139 Scripts, 58 Modules, 6 Data |
+| 📄 **Documentation** | **407** | Markdown files |
+| 🔧 **Configuration** | **133** | 3 YAML, 130 JSON |
 
 ### Code Statistics
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📝 **Lines of Code** | **85,461** | Total lines across all PowerShell files |
-| 🔨 **Functions** | **966** | Public and private functions |
-| 💬 **Comments** | **7,130** | 8.3% of total code |
-| ⚪ **Blank Lines** | **14,469** | Whitespace and formatting |
+| 📝 **Lines of Code** | **94,195** | Total lines across all PowerShell files |
+| 🔨 **Functions** | **1115** | Public and private functions |
+| 💬 **Comments** | **7,722** | 8.2% of total code |
+| ⚪ **Blank Lines** | **15,687** | Whitespace and formatting |
 
 ### Automation & Infrastructure  
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🤖 **Automation Scripts** | **125** | Number-based orchestration (0000-9999) |
-| ⚡ **GitHub Workflows** | **14** | CI/CD automation |
-| 🗂️ **Domain Modules** | **11** | 35 total modules |
+| 🤖 **Automation Scripts** | **134** | Number-based orchestration (0000-9999) |
+| ⚡ **GitHub Workflows** | **21** | CI/CD automation |
+| 🗂️ **Domain Modules** | **11** | 37 total modules |
 
 ### Testing & Quality
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🧪 **Test Suite** | **281** | 142 Unit, 139 Integration |
-| ✅ **Test Results** | **12/12** | Success Rate: 100% | Duration: 0.98s |
-| 📊 **Last Test Run** | **2025-10-30 08:03:38** | ✅ 12 passed, ❌ 0 failed |
-| 📈 **Code Coverage** | **0%** | No coverage data available |
+| 🧪 **Test Files** | **307** | 154 Unit, 153 Integration |
+| ✅ **Last Test Run** | **5/22 cases** | Success Rate: 22.7%; Duration: 1.26s |
+| 📊 **Test Details** | **2025-11-04 04:18:10** | ✅ 5 passed, ❌ 17 failed |
+ | ⚠️ **Note** | **Partial Run** | Only 22 test cases executed from available test files. Run `./az 0402` for full suite. |
+
+> **⚠️ Only 22 test cases executed.** Run `./az 0402` for full test suite.
+| 🧪 **Test Coverage** | **71.3%** | 127 / 178 files have tests |
+| 📚 **Documentation Coverage** | **9.3%** | 104 / 1115 functions documented |
+| ✨ **Code Quality** | **94/100** | 236 issues in 10 files (✅ 190 clean / ⚠️ 9 warnings / ❌ 1 errors) |
 
 ### Git Repository
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🌿 **Branch** | **`copilot/fix-aitherzero-dashboard-issues`** | Current working branch |
-| 📝 **Total Commits** | **6** | Repository history |
-| 👥 **Contributors** | **2** | Unique contributors |
-| 🔄 **Latest Commit** | **befe167 - Enhance Markdown dashboard with comprehensive metrics (2 minutes ago)** | Most recent change |
+| 🌿 **Branch** | **`copilot/generate-dashboard`** | Current working branch |
+| 📝 **Total Commits** | **3** | Repository history |
+| 👥 **Contributors** | **1** | Unique contributors |
+| 🔄 **Latest Commit** | **52ea37c - Fix GitHub API data fetching with proper fallback handling (51 seconds ago)** | Most recent change |
 
 
 ## ✨ Code Quality Validation
@@ -62,22 +67,20 @@
 
 ## 🎯 Project Health
 
-❓ **Status: Unknown** - Monitoring in progress
+⚠️ **Status: Issues Detected** - Attention required
 
 ### Build Status
-- **Tests:** ❓ Unknown
+- **Tests:** ❌ Failing
 - **Security:** 🛡️ Scanned
-- **Coverage:** 📊 0%
+- **Code Quality:** 📊 94/100
 - **Platform:** 💻 Unix
-- **PowerShell:** ⚡ 7.4.12
+- **PowerShell:** ⚡ 7.4.13
 
 ## 🔄 Recent Activity
 
-- `befe167` Enhance Markdown dashboard with comprehensive metrics
-- `d9863c9` Improve dashboard layout and spacing
-- `7bda24c` Improve dashboard metrics collection and display
-- `fae33be` Initial plan for dashboard improvements
-- `d65ed5d` Initial plan
+- `52ea37c` Fix GitHub API data fetching with proper fallback handling
+- `bf6752b` Initial plan
+- `fdfd0cd` refactor: use duck typing for PSScriptAnalyzer results filtering
 
 ## 🎯 Quick Commands
 
@@ -92,7 +95,7 @@
 ## 📋 System Information
 
 - **Platform:** Unix
-- **PowerShell:** 7.4.12
+- **PowerShell:** 7.4.13
 - **Environment:** Development
 - **Project Root:** `/home/runner/work/AitherZero/AitherZero`
 

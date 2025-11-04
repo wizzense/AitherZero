@@ -2010,28 +2010,34 @@ function Get-GitHubRepositoryData {
     try {
         # Check if we're in GitHub Actions with access to API
         $apiUrl = "https://api.github.com/repos/$Owner/$Repo"
+        $repoInfo = $null
         
-        # Use gh CLI if available for authenticated requests
+        # Try gh CLI if available and properly authenticated
         if (Get-Command gh -ErrorAction SilentlyContinue) {
-            Write-ScriptLog -Message "Using GitHub CLI for authenticated request"
-            
             # Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions compatibility
-            # gh CLI expects GH_TOKEN, but GitHub Actions provides GITHUB_TOKEN
             if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
                 $env:GH_TOKEN = $env:GITHUB_TOKEN
                 Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
             }
             
-            $response = gh api $apiUrl 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $repoInfo = $response | ConvertFrom-Json
+            # Only use gh CLI if we have authentication
+            if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                Write-ScriptLog -Message "Attempting to use GitHub CLI for authenticated request"
+                $response = gh api $apiUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $repoInfo = $response | ConvertFrom-Json
+                    Write-ScriptLog -Message "Successfully fetched repository data using GitHub CLI"
+                } else {
+                    Write-ScriptLog -Level Warning -Message "GitHub CLI request failed (exit code $LASTEXITCODE), falling back to direct API call"
+                }
             } else {
-                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
-                $repoInfo = $null
+                Write-ScriptLog -Message "GitHub CLI available but not authenticated, using direct API call"
             }
-        } else {
-            # Fallback to direct API call (rate limited)
-            Write-ScriptLog -Message "Using direct API request (rate limited)"
+        }
+        
+        # Fallback to direct API call if gh CLI didn't work
+        if (-not $repoInfo) {
+            Write-ScriptLog -Message "Using direct API request for repository data"
             $headers = @{
                 'User-Agent' = 'AitherZero-Dashboard'
                 'Accept' = 'application/vnd.github.v3+json'
@@ -2072,21 +2078,31 @@ function Get-GitHubRepositoryData {
             # Fetch pull requests separately
             try {
                 $prUrl = "https://api.github.com/repos/$Owner/$Repo/pulls?state=open"
+                $prs = $null
+                
+                # Try gh CLI if available and authenticated
                 if (Get-Command gh -ErrorAction SilentlyContinue) {
                     # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
                     if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
                         $env:GH_TOKEN = $env:GITHUB_TOKEN
                     }
                     
-                    $prResponse = gh api $prUrl 2>&1
-                    if ($LASTEXITCODE -eq 0) {
-                        $prs = $prResponse | ConvertFrom-Json
-                        $repoData.OpenPRs = @($prs).Count
+                    if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                        $prResponse = gh api $prUrl 2>&1
+                        if ($LASTEXITCODE -eq 0) {
+                            $prs = $prResponse | ConvertFrom-Json
+                        } else {
+                            Write-ScriptLog -Level Warning -Message "GitHub CLI PR request failed (exit code $LASTEXITCODE), falling back to direct API call"
+                        }
                     }
-                } else {
-                    $prs = Invoke-RestMethod -Uri $prUrl -Headers $headers -ErrorAction Stop
-                    $repoData.OpenPRs = @($prs).Count
                 }
+                
+                # Fallback to direct API call if gh CLI didn't work
+                if (-not $prs) {
+                    $prs = Invoke-RestMethod -Uri $prUrl -Headers $headers -ErrorAction Stop
+                }
+                
+                $repoData.OpenPRs = @($prs).Count
                 Write-ScriptLog -Message "Fetched PR data: $($repoData.OpenPRs) open PRs"
             } catch {
                 Write-ScriptLog -Level Warning -Message "Failed to fetch PR data: $($_.Exception.Message)"
@@ -2120,8 +2136,9 @@ function Get-GitHubWorkflowStatus {
     
     try {
         $workflowsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/workflows"
+        $workflowsList = $null
         
-        # Use gh CLI if available
+        # Try gh CLI if available and authenticated
         if (Get-Command gh -ErrorAction SilentlyContinue) {
             # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
             if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
@@ -2129,14 +2146,18 @@ function Get-GitHubWorkflowStatus {
                 Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
             }
             
-            $response = gh api $workflowsUrl 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $workflowsList = $response | ConvertFrom-Json
-            } else {
-                Write-ScriptLog -Level Warning -Message "Failed to fetch workflows via gh CLI"
-                $workflowsList = $null
+            if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                $response = gh api $workflowsUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $workflowsList = $response | ConvertFrom-Json
+                } else {
+                    Write-ScriptLog -Level Warning -Message "Failed to fetch workflows via gh CLI (exit code $LASTEXITCODE), falling back to direct API call"
+                }
             }
-        } else {
+        }
+        
+        # Fallback to direct API call if gh CLI didn't work
+        if (-not $workflowsList) {
             $headers = @{
                 'User-Agent' = 'AitherZero-Dashboard'
                 'Accept' = 'application/vnd.github.v3+json'
@@ -2157,6 +2178,7 @@ function Get-GitHubWorkflowStatus {
             
             # Get status of recent workflow runs
             $runsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/runs?per_page=10"
+            $runsData = $null
             
             if (Get-Command gh -ErrorAction SilentlyContinue) {
                 # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
@@ -2164,11 +2186,18 @@ function Get-GitHubWorkflowStatus {
                     $env:GH_TOKEN = $env:GITHUB_TOKEN
                 }
                 
-                $runsResponse = gh api $runsUrl 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    $runsData = $runsResponse | ConvertFrom-Json
+                if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                    $runsResponse = gh api $runsUrl 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        $runsData = $runsResponse | ConvertFrom-Json
+                    } else {
+                        Write-ScriptLog -Level Warning -Message "Failed to fetch workflow runs via gh CLI (exit code $LASTEXITCODE), falling back to direct API call"
+                    }
                 }
-            } else {
+            }
+            
+            # Fallback to direct API call if gh CLI didn't work
+            if (-not $runsData) {
                 $runsData = Invoke-RestMethod -Uri $runsUrl -Headers $headers -ErrorAction Stop
             }
             
@@ -2215,26 +2244,33 @@ function Get-GitHubIssues {
     
     try {
         $issuesUrl = "https://api.github.com/repos/$Owner/$Repo/issues?state=open&per_page=$MaxIssues"
+        $issuesList = $null
         
-        # Use gh CLI if available for authenticated requests
+        # Try gh CLI if available and properly authenticated
         if (Get-Command gh -ErrorAction SilentlyContinue) {
-            Write-ScriptLog -Message "Using GitHub CLI to fetch issues"
-            
             # Ensure GH_TOKEN is set for gh CLI in GitHub Actions
             if ($env:GITHUB_TOKEN -and -not $env:GH_TOKEN) {
                 $env:GH_TOKEN = $env:GITHUB_TOKEN
                 Write-ScriptLog -Message "Set GH_TOKEN from GITHUB_TOKEN for GitHub Actions"
             }
             
-            $response = gh api $issuesUrl 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $issuesList = $response | ConvertFrom-Json
+            # Only use gh CLI if we have authentication
+            if ($env:GH_TOKEN -or $env:GITHUB_TOKEN) {
+                Write-ScriptLog -Message "Attempting to use GitHub CLI to fetch issues"
+                $response = gh api $issuesUrl 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $issuesList = $response | ConvertFrom-Json
+                    Write-ScriptLog -Message "Successfully fetched issues using GitHub CLI"
+                } else {
+                    Write-ScriptLog -Level Warning -Message "GitHub CLI request failed (exit code $LASTEXITCODE), falling back to direct API call"
+                }
             } else {
-                Write-ScriptLog -Level Warning -Message "GitHub CLI request failed: $response"
-                $issuesList = $null
+                Write-ScriptLog -Message "GitHub CLI available but not authenticated, using direct API call"
             }
-        } else {
-            # Fallback to direct API call
+        }
+        
+        # Fallback to direct API call if gh CLI didn't work
+        if (-not $issuesList) {
             Write-ScriptLog -Message "Using direct API request for issues"
             $headers = @{
                 'User-Agent' = 'AitherZero-Dashboard'
@@ -2258,7 +2294,8 @@ function Get-GitHubIssues {
             
             foreach ($issue in $issuesArray) {
                 # Skip pull requests (GitHub API returns them as issues)
-                if ($issue.pull_request) {
+                # Use null-safe property access
+                if ($null -ne $issue.PSObject.Properties['pull_request'] -and $issue.pull_request) {
                     continue
                 }
                 
