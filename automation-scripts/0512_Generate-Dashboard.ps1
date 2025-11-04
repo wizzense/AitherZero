@@ -1172,6 +1172,7 @@ function Get-FileLevelMetrics {
             if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) {
                 try {
                     # Skip files known to cause analysis issues
+                    # TODO: Move this to config.psd1 under Testing.PSScriptAnalyzer.SkipFiles
                     $skipAnalysisFiles = @('Maintenance.psm1')
                     if ($skipAnalysisFiles -contains $file.Name) {
                         Write-ScriptLog -Level Debug -Message "Skipping PSScriptAnalyzer for known problematic file: $($file.Name)"
@@ -1181,8 +1182,9 @@ function Get-FileLevelMetrics {
                         # Wrap immediately to handle single object results under StrictMode
                         # Use Measure-Object instead of .Count for maximum StrictMode compatibility
                         # Use ErrorAction Continue to prevent terminating errors during analysis
+                        # Filter results by checking for RuleName property (diagnostic records have this)
                         $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Continue 2>&1 | 
-                                      Where-Object { $_ -is [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord] })
+                                      Where-Object { $null -ne $_.PSObject.Properties['RuleName'] })
                         $issueCount = ($rawIssues | Measure-Object).Count
                         $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                         
