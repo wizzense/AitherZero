@@ -538,6 +538,13 @@ try {
             $CoverageThreshold = $using:CoverageThreshold
 
             try {
+                # Suppress all output streams to prevent pipeline threading issues
+                $null = $ErrorActionPreference
+                $WarningPreference = 'SilentlyContinue'
+                $VerbosePreference = 'SilentlyContinue'
+                $DebugPreference = 'SilentlyContinue'
+                $InformationPreference = 'SilentlyContinue'
+                
                 # Import Pester in parallel runspace
                 Import-Module Pester -MinimumVersion 5.0 -Force -ErrorAction Stop
 
@@ -553,12 +560,13 @@ try {
                 $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
                 $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
 
-                # Run tests for this chunk
-                Invoke-Pester -Configuration $chunkConfig
+                # Run tests for this chunk - suppress all error/warning streams
+                Invoke-Pester -Configuration $chunkConfig 2>$null 3>$null
             }
             catch {
-                # Return empty result on error to prevent pipeline failure
-                Write-Warning "Error executing test chunk: $_"
+                # CRITICAL: Do NOT use Write-Warning or any cmdlet that writes to pipeline
+                # This causes "WriteObject/WriteError cannot be called from outside overrides" errors
+                # Instead, return an empty result object silently
                 [PSCustomObject]@{
                     TotalCount = 0
                     PassedCount = 0

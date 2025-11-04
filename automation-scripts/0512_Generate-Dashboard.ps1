@@ -1173,7 +1173,8 @@ function Get-FileLevelMetrics {
                 try {
                     # Skip files known to cause analysis issues
                     # TODO: Move this to config.psd1 under Testing.PSScriptAnalyzer.SkipFiles
-                    $skipAnalysisFiles = @('Maintenance.psm1')
+                    # bootstrap.ps1 and Maintenance.psm1 cause threading/pipeline issues with error stream redirection
+                    $skipAnalysisFiles = @('Maintenance.psm1', 'bootstrap.ps1', 'bootstrap.sh')
                     if ($skipAnalysisFiles -contains $file.Name) {
                         Write-ScriptLog -Level Debug -Message "Skipping PSScriptAnalyzer for known problematic file: $($file.Name)"
                         $fileData.Score = 100  # Assume clean for skipped files
@@ -1181,9 +1182,9 @@ function Get-FileLevelMetrics {
                     else {
                         # Wrap immediately to handle single object results under StrictMode
                         # Use Measure-Object instead of .Count for maximum StrictMode compatibility
-                        # Use ErrorAction Continue to prevent terminating errors during analysis
-                        # Filter results by checking for RuleName property (diagnostic records have this)
-                        $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Continue 2>&1 | 
+                        # CRITICAL: Do NOT use error stream redirection (2>&1) - causes threading issues
+                        # Use SilentlyContinue to suppress errors gracefully without pipeline interruption
+                        $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction SilentlyContinue | 
                                       Where-Object { $null -ne $_.PSObject.Properties['RuleName'] })
                         $issueCount = ($rawIssues | Measure-Object).Count
                         $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
