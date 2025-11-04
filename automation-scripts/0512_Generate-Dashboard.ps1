@@ -3498,6 +3498,9 @@ $manifestTagsSection
             <section class="section" id="actions">
                 <h2>⚡ Quick Actions & GitHub Integration</h2>
                 <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="window.location.href='code-map.html'" style="font-size: 1.1rem; padding: 12px 24px;">
+                        🗺️ Explore Interactive Code Map
+                    </button>
                     <button class="btn btn-primary" onclick="window.open('https://github.com/wizzense/AitherZero', '_blank')">
                         🏠 View Repository
                     </button>
@@ -3524,7 +3527,7 @@ $manifestTagsSection
                     </button>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
-                    💡 Click any button to open GitHub in a new tab with pre-filled templates
+                    💡 Click any button to open GitHub in a new tab with pre-filled templates | 🗺️ Click Code Map for full codebase visualization
                 </p>
             </section>
             

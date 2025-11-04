@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AitherZero - Interactive Code Map</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    {{CSS}}
+</head>
+<body>
+    <div id="app">
+        <div id="sidebar">
+            <div id="sidebar-header">
+                <h1>🗺️ Code Map</h1>
+                <div class="subtitle">Interactive Codebase Explorer</div>
+            </div>
+            
+            <div id="search-box">
+                <input type="text" id="search-input" placeholder="🔍 Search files, functions..." />
+            </div>
+            
+            <div id="tabs">
+                <div class="tab active" data-tab="domains">Domains</div>
+                <div class="tab" data-tab="functions">Functions</div>
+                <div class="tab" data-tab="files">Files</div>
+                <div class="tab" data-tab="stats">Stats</div>
+            </div>
+            
+            <div id="content-area"></div>
+        </div>
+        
+        <div id="main">
+            <div id="toolbar">
+                <button class="btn active" id="btn-tree">🌳 Tree View</button>
+                <button class="btn" id="btn-graph">🕸️ Graph View</button>
+                <button class="btn" id="btn-matrix">📊 Matrix View</button>
+                <button class="btn" id="btn-sunburst">☀️ Sunburst</button>
+                <div style="flex: 1"></div>
+                <button class="btn" id="btn-export">💾 Export</button>
+                <button class="btn" id="btn-back">🏠 Back to Dashboard</button>
+            </div>
+            
+            <div id="visualization">
+                <div id="graph-container"></div>
+                <div id="info-panel">
+                    <span class="close-btn" onclick="closeInfoPanel()">×</span>
+                    <div id="info-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Data from PowerShell will be injected here
+        {{DATA}}
+    </script>
+    {{JAVASCRIPT}}
+</body>
+</html>
