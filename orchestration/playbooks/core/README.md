@@ -150,7 +150,7 @@ All playbooks are validated for:
 - [Parent README](../README.md) - Playbook system overview
 - [GITHUB-WORKFLOWS-MAPPING.md](../GITHUB-WORKFLOWS-MAPPING.md) - Workflow mappings
 - [MIGRATION-GUIDE.md](../MIGRATION-GUIDE.md) - Migration guide
-- [../../automation-scripts/0962_Run-Playbook.ps1](../../automation-scripts/0962_Run-Playbook.ps1) - Wrapper script
+- [../../../automation-scripts/0962_Run-Playbook.ps1](../../../automation-scripts/0962_Run-Playbook.ps1) - Wrapper script
 
 ---
 
