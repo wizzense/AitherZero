@@ -1,0 +1,464 @@
+---
+name: ⚡ Parallel Testing (High Performance)
+
+# High-performance parallel test execution across multiple runners
+# Tests are split by range and executed concurrently, then consolidated
+
+on:
+  push:
+    branches: [main, develop, dev, dev-staging]
+    paths:
+      - 'domains/**'
+      - 'automation-scripts/**'
+      - 'tests/**'
+      - '**.ps1'
+      - '**.psm1'
+  pull_request:
+    branches: [main, develop, dev, dev-staging]
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter (all, unit, integration, domains)'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - domains
+        default: 'all'
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+# Allow parallel execution across different test suites
+concurrency:
+  group: parallel-tests-${{ github.ref }}-${{ github.run_number }}
+  cancel-in-progress: false  # Keep running - we want parallel jobs
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  # Fast preparation job - sets up for parallel execution
+  prepare:
+    name: 🎯 Prepare Test Matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      unit-ranges: ${{ steps.matrix.outputs.unit-ranges }}
+      domain-modules: ${{ steps.matrix.outputs.domain-modules }}
+      integration-suites: ${{ steps.matrix.outputs.integration-suites }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Quick Bootstrap
+        shell: pwsh
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 🎯 Generate Test Matrix
+        id: matrix
+        shell: pwsh
+        run: |
+          # Unit test ranges (by script number ranges)
+          $unitRanges = @(
+            '0000-0099',
+            '0100-0199',
+            '0200-0299',
+            '0400-0499',
+            '0500-0599',
+            '0700-0799',
+            '0800-0899',
+            '0900-0999'
+          )
+          
+          # Domain modules
+          $domainModules = @(
+            'configuration',
+            'infrastructure',
+            'utilities',
+            'security',
+            'experience',
+            'automation',
+            'testing',
+            'reporting'
+          )
+          
+          # Integration test suites
+          $integrationSuites = @(
+            'automation-scripts',
+            'orchestration',
+            'workflows'
+          )
+          
+          # Output as JSON arrays for matrix
+          $unitRangesJson = $unitRanges | ConvertTo-Json -Compress
+          $domainModulesJson = $domainModules | ConvertTo-Json -Compress
+          $integrationSuitesJson = $integrationSuites | ConvertTo-Json -Compress
+          
+          "unit-ranges=$unitRangesJson" >> $env:GITHUB_OUTPUT
+          "domain-modules=$domainModulesJson" >> $env:GITHUB_OUTPUT
+          "integration-suites=$integrationSuitesJson" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "✅ Test matrix generated" -ForegroundColor Green
+          Write-Host "   Unit ranges: $($unitRanges.Count)" -ForegroundColor Cyan
+          Write-Host "   Domain modules: $($domainModules.Count)" -ForegroundColor Cyan
+          Write-Host "   Integration suites: $($integrationSuites.Count)" -ForegroundColor Cyan
+
+  # Parallel unit tests by script number range
+  unit-tests-parallel:
+    name: 🧪 Unit Tests [${{ matrix.range }}]
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'unit' || github.event.inputs.test_filter == ''
+    
+    strategy:
+      fail-fast: false  # Continue all jobs even if one fails
+      max-parallel: 8   # Run up to 8 jobs simultaneously
+      matrix:
+        range: ${{ fromJson(needs.prepare.outputs.unit-ranges) }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        timeout-minutes: 3
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 🧪 Run Unit Tests [${{ matrix.range }}]
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          Write-Host "⚡ Running unit tests for range: ${{ matrix.range }}" -ForegroundColor Cyan
+          
+          $testPath = "./tests/unit/automation-scripts/${{ matrix.range }}"
+          
+          if (Test-Path $testPath) {
+            $config = New-PesterConfiguration
+            $config.Run.Path = $testPath
+            $config.Run.Exit = $true
+            $config.Run.PassThru = $true
+            $config.Output.Verbosity = 'Normal'
+            $config.TestResult.Enabled = $true
+            $config.TestResult.OutputPath = "./tests/results/UnitTests-${{ matrix.range }}.xml"
+            $config.TestResult.OutputFormat = 'NUnitXml'
+            
+            $result = Invoke-Pester -Configuration $config
+            
+            Write-Host "✅ Tests completed for ${{ matrix.range }}" -ForegroundColor Green
+            Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            
+            if ($result.FailedCount -gt 0) {
+              exit 1
+            }
+          } else {
+            Write-Host "⏭️  No tests found for range ${{ matrix.range }}" -ForegroundColor Yellow
+          }
+      
+      - name: 📊 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-tests-${{ matrix.range }}
+          path: ./tests/results/UnitTests-${{ matrix.range }}.xml
+          retention-days: 7
+
+  # Parallel domain module tests
+  domain-tests-parallel:
+    name: 🏗️ Domain Tests [${{ matrix.module }}]
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'domains' || github.event.inputs.test_filter == ''
+    
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        module: ${{ fromJson(needs.prepare.outputs.domain-modules) }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        timeout-minutes: 3
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 🏗️ Run Domain Tests [${{ matrix.module }}]
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          Write-Host "⚡ Running domain tests for: ${{ matrix.module }}" -ForegroundColor Cyan
+          
+          $testPath = "./tests/domains/${{ matrix.module }}"
+          
+          if (Test-Path $testPath) {
+            $config = New-PesterConfiguration
+            $config.Run.Path = $testPath
+            $config.Run.Exit = $true
+            $config.Run.PassThru = $true
+            $config.Output.Verbosity = 'Normal'
+            $config.TestResult.Enabled = $true
+            $config.TestResult.OutputPath = "./tests/results/DomainTests-${{ matrix.module }}.xml"
+            $config.TestResult.OutputFormat = 'NUnitXml'
+            
+            $result = Invoke-Pester -Configuration $config
+            
+            Write-Host "✅ Tests completed for ${{ matrix.module }}" -ForegroundColor Green
+            Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            
+            if ($result.FailedCount -gt 0) {
+              exit 1
+            }
+          } else {
+            Write-Host "⏭️  No tests found for module ${{ matrix.module }}" -ForegroundColor Yellow
+          }
+      
+      - name: 📊 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domain-tests-${{ matrix.module }}
+          path: ./tests/results/DomainTests-${{ matrix.module }}.xml
+          retention-days: 7
+
+  # Parallel integration tests
+  integration-tests-parallel:
+    name: 🔗 Integration Tests [${{ matrix.suite }}]
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'integration' || github.event.inputs.test_filter == ''
+    
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        suite: ${{ fromJson(needs.prepare.outputs.integration-suites) }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        timeout-minutes: 3
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 🔗 Run Integration Tests [${{ matrix.suite }}]
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          Write-Host "⚡ Running integration tests for: ${{ matrix.suite }}" -ForegroundColor Cyan
+          
+          $testPath = "./tests/integration/${{ matrix.suite }}"
+          
+          if (Test-Path $testPath) {
+            $config = New-PesterConfiguration
+            $config.Run.Path = $testPath
+            $config.Run.Exit = $true
+            $config.Run.PassThru = $true
+            $config.Output.Verbosity = 'Normal'
+            $config.TestResult.Enabled = $true
+            $config.TestResult.OutputPath = "./tests/results/IntegrationTests-${{ matrix.suite }}.xml"
+            $config.TestResult.OutputFormat = 'NUnitXml'
+            
+            $result = Invoke-Pester -Configuration $config
+            
+            Write-Host "✅ Tests completed for ${{ matrix.suite }}" -ForegroundColor Green
+            Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            
+            if ($result.FailedCount -gt 0) {
+              exit 1
+            }
+          } else {
+            Write-Host "⏭️  No tests found for suite ${{ matrix.suite }}" -ForegroundColor Yellow
+          }
+      
+      - name: 📊 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-tests-${{ matrix.suite }}
+          path: ./tests/results/IntegrationTests-${{ matrix.suite }}.xml
+          retention-days: 7
+
+  # Static analysis (runs in parallel with tests)
+  static-analysis:
+    name: 🔍 Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == ''
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        timeout-minutes: 3
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 🔍 Syntax Validation
+        shell: pwsh
+        timeout-minutes: 2
+        run: |
+          Write-Host "⚡ Running syntax validation" -ForegroundColor Cyan
+          ./automation-scripts/0407_Validate-Syntax.ps1 -All
+      
+      - name: 🔍 PSScriptAnalyzer
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          Write-Host "⚡ Running PSScriptAnalyzer" -ForegroundColor Cyan
+          ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+      
+      - name: 📊 Upload Analysis Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-analysis
+          path: ./tests/analysis/*
+          retention-days: 7
+
+  # Consolidation job - runs after all parallel jobs complete
+  consolidate-results:
+    name: 📊 Consolidate & Report
+    needs: [unit-tests-parallel, domain-tests-parallel, integration-tests-parallel, static-analysis]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()  # Run even if some tests failed
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        timeout-minutes: 3
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 📥 Download All Test Results
+        uses: actions/download-artifact@v4
+        with:
+          path: ./tests/results-consolidated
+      
+      - name: 📊 Consolidate Results
+        id: consolidate
+        shell: pwsh
+        run: |
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "📊 Consolidating Parallel Test Results" -ForegroundColor Cyan
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          
+          $allResults = Get-ChildItem -Path "./tests/results-consolidated" -Recurse -Filter "*.xml"
+          
+          Write-Host "Found $($allResults.Count) test result files" -ForegroundColor Cyan
+          
+          $totalPassed = 0
+          $totalFailed = 0
+          $totalSkipped = 0
+          
+          foreach ($file in $allResults) {
+            try {
+              [xml]$xml = Get-Content $file.FullName
+              $testRun = $xml.'test-results'
+              if ($testRun) {
+                $totalPassed += [int]$testRun.total - [int]$testRun.failures - [int]$testRun.ignored
+                $totalFailed += [int]$testRun.failures
+                $totalSkipped += [int]$testRun.ignored
+              }
+            } catch {
+              Write-Host "⚠️  Could not parse $($file.Name): $_" -ForegroundColor Yellow
+            }
+          }
+          
+          Write-Host ""
+          Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host "   PARALLEL TEST EXECUTION COMPLETE" -ForegroundColor Green
+          Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host "   ✅ Passed:  $totalPassed" -ForegroundColor Green
+          Write-Host "   ❌ Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { 'Red' } else { 'Green' })
+          Write-Host "   ⏭️  Skipped: $totalSkipped" -ForegroundColor Yellow
+          Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host ""
+          
+          # Set outputs
+          "total-passed=$totalPassed" >> $env:GITHUB_OUTPUT
+          "total-failed=$totalFailed" >> $env:GITHUB_OUTPUT
+          "total-skipped=$totalSkipped" >> $env:GITHUB_OUTPUT
+          
+          # Exit with failure if any tests failed
+          if ($totalFailed -gt 0) {
+            Write-Host "❌ Some tests failed - marking workflow as failed" -ForegroundColor Red
+            exit 1
+          }
+      
+      - name: 📊 Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: '⚡ Parallel Test Results'
+          path: './tests/results-consolidated/**/*.xml'
+          reporter: 'java-junit'
+          fail-on-error: false
+      
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const passed = '${{ steps.consolidate.outputs.total-passed }}';
+            const failed = '${{ steps.consolidate.outputs.total-failed }}';
+            const skipped = '${{ steps.consolidate.outputs.total-skipped }}';
+            
+            const status = failed > 0 ? '❌ FAILED' : '✅ PASSED';
+            const color = failed > 0 ? '🔴' : '🟢';
+            
+            const comment = `## ⚡ Parallel Test Execution Results ${color}
+            
+            **Status**: ${status}
+            
+            ### 📊 Test Summary
+            
+            | Metric | Count | Percentage |
+            |--------|-------|------------|
+            | ✅ Passed | ${passed} | ${(passed/(parseInt(passed)+parseInt(failed)+parseInt(skipped))*100).toFixed(1)}% |
+            | ❌ Failed | ${failed} | ${(failed/(parseInt(passed)+parseInt(failed)+parseInt(skipped))*100).toFixed(1)}% |
+            | ⏭️ Skipped | ${skipped} | ${(skipped/(parseInt(passed)+parseInt(failed)+parseInt(skipped))*100).toFixed(1)}% |
+            | **Total** | **${parseInt(passed)+parseInt(failed)+parseInt(skipped)}** | **100%** |
+            
+            ### ⚡ Performance Benefits
+            
+            - Tests executed in **parallel across multiple runners**
+            - **Up to 8 concurrent jobs** for maximum speed
+            - Results consolidated automatically
+            
+            ---
+            *🤖 Parallel Testing System • View detailed results in [workflow artifacts](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*
+            `;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
