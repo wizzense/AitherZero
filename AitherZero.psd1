@@ -18,6 +18,9 @@
         # From Logging modules
         'Write-CustomLog', 'Write-ConfigLog', 'Write-UILog', 'Write-TestingLog',
         'Write-InfraLog', 'Write-AuditLog', 'Enable-AuditLogging',
+        
+        # From DownloadUtility
+        'Invoke-FileDownload', 'Test-BitsAvailability', 'Get-DownloadMethod',
 
         # From Configuration
         'Get-Configuration', 'Set-Configuration', 'Get-ModuleConfiguration',
