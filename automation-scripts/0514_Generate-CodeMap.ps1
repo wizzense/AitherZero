@@ -357,6 +357,7 @@ const codeMapData = {
     
     $codeMapPath = Join-Path $OutputPath "code-map.html"
     if ($PSCmdlet.ShouldProcess($codeMapPath, "Create code map HTML")) {
+        $html | Set-Content -Path $codeMapPath -Encoding UTF8
         Write-ScriptLog -Message "Code map created: $codeMapPath"
     }
     
