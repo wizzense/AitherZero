@@ -32,9 +32,10 @@ module.exports = async ({github, context, core}) => {
   const staticAnalysis = [];
   
   for (const job of jobs.data.jobs) {
-    // Check if the job has a 'run-tests' step and get its outcome
+    // Check if the job has a 'run-tests' step and get its conclusion
     // When continue-on-error is true, job.conclusion will be 'success' even if tests fail
-    // But step.outcome will correctly reflect 'failure'
+    // But step.conclusion will correctly reflect 'failure'
+    // Note: GitHub REST API exposes 'conclusion' and 'status' for steps, not 'outcome'
     let actualOutcome = job.conclusion;
     
     if (job.steps) {
@@ -42,15 +43,16 @@ module.exports = async ({github, context, core}) => {
         step.name && TEST_STEP_PATTERNS.some(pattern => step.name.includes(pattern))
       );
       
-      if (runTestsStep && runTestsStep.outcome) {
-        actualOutcome = runTestsStep.outcome;
+      // Use step.conclusion (API field) instead of step.outcome (workflow context only)
+      if (runTestsStep && runTestsStep.conclusion) {
+        actualOutcome = runTestsStep.conclusion;
       }
     }
     
     const jobInfo = {
       name: job.name,
       conclusion: job.conclusion,
-      actualOutcome: actualOutcome,  // Use step outcome for accurate status
+      actualOutcome: actualOutcome,  // Use step conclusion from API for accurate status
       status: job.status,
       url: job.html_url,
       duration: job.completed_at && job.started_at 
@@ -71,7 +73,7 @@ module.exports = async ({github, context, core}) => {
   
   // Helper function to format job status
   const formatJob = (job) => {
-    // Use actualOutcome (which reflects step outcome) instead of conclusion
+    // Use actualOutcome (which reflects step conclusion from API) instead of job conclusion
     // This correctly shows failures even when continue-on-error is true
     let icon, statusText;
     

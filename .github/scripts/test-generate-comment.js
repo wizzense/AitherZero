@@ -1,9 +1,10 @@
 // Simple test for generate-test-comment.js logic
-// This tests that we correctly detect test failures from step outcomes
+// This tests that we correctly detect test failures from step conclusions
+// Note: GitHub REST API exposes 'conclusion' and 'status' for steps, not 'outcome'
 
 const testModule = require('./generate-test-comment.js');
 
-// Mock GitHub API response with steps data
+// Mock GitHub API response with steps data (using actual API schema)
 const mockJobs = {
   data: {
     jobs: [
@@ -17,8 +18,8 @@ const mockJobs = {
         steps: [
           {
             name: 'Run Unit Tests [0000-0099]',
-            outcome: 'failure', // But the test step actually failed
-            conclusion: 'failure'
+            status: 'completed',
+            conclusion: 'failure' // But the test step actually failed
           }
         ]
       },
@@ -32,8 +33,8 @@ const mockJobs = {
         steps: [
           {
             name: 'Run Unit Tests [0100-0199]',
-            outcome: 'success', // This one actually passed
-            conclusion: 'success'
+            status: 'completed',
+            conclusion: 'success' // This one actually passed
           }
         ]
       },
@@ -47,8 +48,8 @@ const mockJobs = {
         steps: [
           {
             name: 'Run Domain Tests [configuration]',
-            outcome: 'failure', // Failed test
-            conclusion: 'failure'
+            status: 'completed',
+            conclusion: 'failure' // Failed test
           }
         ]
       }

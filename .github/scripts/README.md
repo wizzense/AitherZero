@@ -16,13 +16,14 @@ Generates detailed PR comments for parallel test execution results.
 
 **Important Implementation Details:**
 
-The script correctly handles jobs with `continue-on-error: true` by checking step outcomes instead of job conclusions:
+The script correctly handles jobs with `continue-on-error: true` by checking step conclusions from the GitHub REST API instead of job conclusions:
 
 ```javascript
 // When continue-on-error is true:
 // - job.conclusion will be 'success' even if tests fail
-// - step.outcome will correctly reflect 'failure'
-// We use step.outcome for accurate status reporting
+// - step.conclusion will correctly reflect 'failure'
+// We use step.conclusion for accurate status reporting
+// Note: GitHub REST API exposes 'conclusion' and 'status' for steps, not 'outcome'
 ```
 
 This ensures that failed tests are properly marked as "❌ FAILED" in PR comments even when the workflow continues execution.
@@ -62,13 +63,13 @@ The parallel testing workflow uses `generate-test-comment.js` to create PR comme
 
 **Cause:** Jobs use `continue-on-error: true`, causing `job.conclusion` to be 'success' even when tests fail.
 
-**Solution:** The script now checks `step.outcome` from job steps to get the actual test result. This was fixed in commit `b46cd43`.
+**Solution:** The script now checks `step.conclusion` from job steps (via GitHub REST API) to get the actual test result. Note that the API exposes `step.conclusion` and `step.status`, not `step.outcome` (which only exists in workflow context).
 
 ### Issue: Failed jobs not appearing in summary
 
 **Cause:** The `failedJobs` filter was using `job.conclusion` instead of `job.actualOutcome`.
 
-**Solution:** Updated to use `job.actualOutcome` which correctly reflects step failures.
+**Solution:** Updated to use `job.actualOutcome` which correctly reflects step failures from the REST API.
 
 ## Development
 

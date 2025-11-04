@@ -16,10 +16,11 @@ Root cause: Jobs with `continue-on-error: true` have `conclusion: 'success'` eve
 ### Files Changed (4 files, +517 lines)
 
 1. **`.github/scripts/generate-test-comment.js`** (+28 lines, -7 lines)
-   - Extract step outcomes from job.steps array
-   - Use `step.outcome` instead of `job.conclusion` for accurate status
+   - Extract step conclusions from job.steps array (GitHub REST API)
+   - Use `step.conclusion` instead of `job.conclusion` for accurate status
    - Track `actualOutcome` property on each job info object
    - Update all status checks to use `actualOutcome`
+   - Note: API exposes `conclusion` and `status` for steps, not `outcome`
 
 2. **`.github/scripts/test-generate-comment.js`** (+152 lines, new file)
    - Comprehensive test suite for comment generation
@@ -55,7 +56,7 @@ if (job.conclusion === 'success') {
 
 #### After
 ```javascript
-// Check step outcomes for actual results
+// Check step conclusions from GitHub REST API for actual results
 let actualOutcome = job.conclusion;
 
 if (job.steps) {
@@ -65,14 +66,15 @@ if (job.steps) {
     step.name.includes('Run Integration Tests')
   );
   
-  if (runTestsStep && runTestsStep.outcome) {
-    actualOutcome = runTestsStep.outcome;  // Use actual test result
+  // Note: GitHub REST API exposes 'conclusion' and 'status' for steps, not 'outcome'
+  if (runTestsStep && runTestsStep.conclusion) {
+    actualOutcome = runTestsStep.conclusion;  // Use actual test result from API
   }
 }
 
 const jobInfo = {
   conclusion: job.conclusion,
-  actualOutcome: actualOutcome,  // New: actual test result
+  actualOutcome: actualOutcome,  // New: actual test result from step
 };
 
 if (job.actualOutcome === 'failure') {  // Now correctly detects failures
@@ -161,16 +163,17 @@ Overall Status: ❌ TESTS FAILED
 ### GitHub Actions Behavior
 When a job step has `continue-on-error: true`:
 - Step fails with exit code 1
-- `step.conclusion` = 'failure'
-- `step.outcome` = 'failure'
+- `step.conclusion` = 'failure' (exposed by REST API)
+- `step.status` = 'completed' (exposed by REST API)
 - But `job.conclusion` = 'success' (to continue workflow)
 - Workflow doesn't fail, subsequent jobs run
+- Note: `step.outcome` only exists in workflow context, NOT in REST API responses
 
 ### The Bug
-The script only checked `job.conclusion` which was always 'success', so it couldn't detect the actual test failures.
+The script only checked `job.conclusion` which was always 'success', so it couldn't detect the actual test failures. Additionally, it was checking for `step.outcome` which doesn't exist in the GitHub REST API response.
 
 ### The Fix
-The script now checks `step.outcome` from the specific test execution step, which correctly reflects whether tests passed or failed.
+The script now checks `step.conclusion` from the GitHub REST API (not `step.outcome` which doesn't exist in API responses) from the specific test execution step, which correctly reflects whether tests passed or failed.
 
 ## Deployment
 
