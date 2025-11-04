@@ -10,32 +10,6 @@ param(
     [hashtable]$Configuration
 )
 
-# Import script utilities
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
-
-# Import PackageManager module
-try {
-    $packageManagerPath = Join-Path $ProjectRoot "domains/utilities/PackageManager.psm1"
-    if (Test-Path $packageManagerPath) {
-        Import-Module $packageManagerPath -Force -Global
-        $script:PackageManagerAvailable = $true
-    } else {
-        throw "PackageManager module not found at: $packageManagerPath"
-    }
-} catch {
-    Write-Warning "Could not load PackageManager module: #Requires -Version 7.0
-# Stage: Development
-# Dependencies: PackageManager
-# Description: Install Docker Desktop or Docker Engine using package managers (winget priority)
-# Tags: development, docker, containers, virtualization
-
-[CmdletBinding(SupportsShouldProcess)]
-param(
-    [Parameter()]
-    [hashtable]$Configuration
-)
-
 # Initialize logging
 $script:LoggingAvailable = $false
 try {
@@ -366,4 +340,4 @@ try {
 } catch {
     Write-ScriptLog "Docker installation failed: $_" -Level 'Error'
     exit 1
-}"
+}
