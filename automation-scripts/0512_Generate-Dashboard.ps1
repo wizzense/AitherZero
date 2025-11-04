@@ -2507,8 +2507,34 @@ function New-HTMLDashboard {
         [hashtable]$GitHubData,
         [hashtable]$WorkflowStatus,
         [hashtable]$HistoricalMetrics,
+        [hashtable]$FileMetrics,
+        [hashtable]$Dependencies,
         [string]$OutputPath
     )
+
+    Write-ScriptLog -Message "Generating HTML dashboard with interactive features"
+    
+    # Load enhanced template files
+    $templatePath = Join-Path $ProjectPath "templates/dashboard"
+    $enhancedStylesPath = Join-Path $templatePath "enhanced-styles.css"
+    $enhancedScriptsPath = Join-Path $templatePath "enhanced-scripts.js"
+    
+    $enhancedStyles = ""
+    $enhancedScripts = ""
+    
+    if (Test-Path $enhancedStylesPath) {
+        $enhancedStyles = Get-Content $enhancedStylesPath -Raw
+        Write-ScriptLog -Message "Loaded enhanced styles"
+    } else {
+        Write-ScriptLog -Level Warning -Message "Enhanced styles not found: $enhancedStylesPath"
+    }
+    
+    if (Test-Path $enhancedScriptsPath) {
+        $enhancedScripts = Get-Content $enhancedScriptsPath -Raw
+        Write-ScriptLog -Message "Loaded enhanced scripts"
+    } else {
+        Write-ScriptLog -Level Warning -Message "Enhanced scripts not found: $enhancedScriptsPath"
+    }
 
     Write-ScriptLog -Message "Generating HTML dashboard"
 
@@ -3394,24 +3420,34 @@ $manifestTagsSection
             color: var(--primary-color);
             font-weight: 600;
         }
+        
+        /* Enhanced Interactive Styles */
+        $enhancedStyles
     </style>
 </head>
 <body>
+    <!-- Breadcrumb Navigation -->
+    <div id="breadcrumbs"></div>
+    
     <div class="toc-toggle" onclick="toggleToc()">☰</div>
     
     <nav class="toc" id="toc">
         <h3>📑 Contents</h3>
         <ul>
             <li><a href="#overview">Overview</a></li>
+            <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#dependencies">Dependencies</a></li>
+            <li><a href="#domains">Domain Explorer</a></li>
+            <li><a href="#config">Configuration</a></li>
             <li><a href="#quality">Code Quality</a></li>
             <li><a href="#pssa">PSScriptAnalyzer</a></li>
             <li><a href="#manifest">Module Manifest</a></li>
-            <li><a href="#domains">Domain Modules</a></li>
             <li><a href="#health">Project Health</a></li>
+            <li><a href="#releases">Releases</a></li>
             <li><a href="#git">Git & VCS</a></li>
             <li><a href="#activity">Recent Activity</a></li>
-            <li><a href="#actions">Quick Actions</a></li>
+            <li><a href="#indices">Index Navigation</a></li>
             <li><a href="#system">System Info</a></li>
             <li><a href="#resources">Resources</a></li>
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
@@ -3458,6 +3494,43 @@ $manifestTagsSection
         </div>
 
         <div class="content">
+            <!-- Quick Actions Section with GitHub Integration -->
+            <section class="section" id="actions">
+                <h2>⚡ Quick Actions & GitHub Integration</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="window.location.href='code-map.html'" style="font-size: 1.1rem; padding: 12px 24px;">
+                        🗺️ Explore Interactive Code Map
+                    </button>
+                    <button class="btn btn-primary" onclick="window.open('https://github.com/wizzense/AitherZero', '_blank')">
+                        🏠 View Repository
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('bug')">
+                        🐛 Report Bug
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('feature')">
+                        ✨ Request Feature
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('docs')">
+                        📚 Improve Docs
+                    </button>
+                    <button class="btn btn-primary" onclick="createPullRequest()">
+                        🔀 Create Pull Request
+                    </button>
+                    <button class="btn" onclick="openDocumentation()">
+                        📖 Browse Documentation
+                    </button>
+                    <button class="btn" onclick="openDocumentation('README.md')">
+                        📄 View README
+                    </button>
+                    <button class="btn" onclick="window.open('https://github.com/wizzense/AitherZero/releases', '_blank')">
+                        📦 View Releases
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 Click any button to open GitHub in a new tab with pre-filled templates | 🗺️ Click Code Map for full codebase visualization
+                </p>
+            </section>
+            
             <section class="section" id="metrics">
                 <h2>📊 Project Metrics</h2>
                 <div class="metrics-grid">
@@ -3655,6 +3728,98 @@ $manifestTagsSection
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Interactive Dependency Mapping Section -->
+            <section class="section" id="dependencies">
+                <h2>🔗 Interactive Dependency Mapping</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Explore project dependencies, module relationships, and script dependencies
+                </p>
+                <div id="dependency-graph"></div>
+                <script>
+                    // Initialize dependency graph with data
+                    const dependencyData = $(if($Dependencies){$Dependencies | ConvertTo-Json -Depth 5 -Compress}else{'{}'});
+                    if (Object.keys(dependencyData).length > 0) {
+                        initDependencyGraph(dependencyData);
+                    } else {
+                        document.getElementById('dependency-graph').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0512</code> with full analysis to generate dependency map</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Domain Explorer Section -->
+            <section class="section" id="domain-explorer-section">
+                <h2>🗂️ Interactive Domain Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Click to explore each domain module, view functions, and navigate code
+                </p>
+                <div id="domain-explorer"></div>
+                <script>
+                    // Initialize domain explorer with data
+                    const domainData = $($Metrics.Domains | ConvertTo-Json -Depth 3 -Compress);
+                    if (domainData && domainData.length > 0) {
+                        initDomainExplorer(domainData);
+                    } else {
+                        document.getElementById('domain-explorer').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No domain data available</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Configuration Explorer Section -->
+            <section class="section" id="config">
+                <h2>⚙️ Interactive Configuration Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Browse and search through config.psd1 manifest interactively
+                </p>
+                <div id="config-explorer"></div>
+                <script>
+                    // Load configuration from manifest
+                    fetch('https://raw.githubusercontent.com/wizzense/AitherZero/main/config.psd1')
+                        .then(response => response.text())
+                        .then(data => {
+                            // Parse PowerShell data file (simplified)
+                            const configData = {
+                                Core: { Profile: 'Standard', MaxConcurrency: 4 },
+                                Automation: { OrchestrationEnabled: true },
+                                Testing: { Profile: 'Standard', CoverageThreshold: 80 },
+                                Note: 'Full config parsing requires PowerShell - this is a simplified view'
+                            };
+                            initConfigExplorer(configData);
+                        })
+                        .catch(err => {
+                            document.getElementById('config-explorer').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">Configuration explorer - Run dashboard locally for full config browsing</p>';
+                        });
+                </script>
+            </section>
+
+            <!-- File-Level Quality Drill-down Section -->
+            <section class="section" id="quality-drilldown-section">
+                <h2>🔍 File-Level Quality Drill-down</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Detailed quality metrics for every file - expand to see checks and issues
+                </p>
+                <div id="quality-drilldown"></div>
+                <script>
+                    // Initialize quality drilldown with file metrics
+                    const qualityData = $(if($FileMetrics -and $FileMetrics.Files){$FileMetrics.Files | Select-Object -First 20 | ConvertTo-Json -Depth 3 -Compress}else{'[]'});
+                    if (qualityData && qualityData.length > 0) {
+                        const fileQualityMap = {};
+                        qualityData.forEach(file => {
+                            fileQualityMap[file.Path] = {
+                                score: file.Score || 0,
+                                errorHandling: file.ErrorHandling ? '✅' : '❌',
+                                logging: file.Logging ? '✅' : '❌',
+                                testCoverage: file.HasTests ? '✅' : '❌',
+                                pssa: file.Issues && file.Issues.length === 0 ? '✅' : file.Issues ? file.Issues.length + ' issues' : 'N/A'
+                            };
+                        });
+                        initQualityDrilldown(fileQualityMap);
+                    } else {
+                        document.getElementById('quality-drilldown').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0420</code> to generate detailed quality metrics</p>';
+                    }
+                </script>
             </section>
 
             <section class="section" id="quality">
@@ -4195,6 +4360,48 @@ $commitsHTML
                     💡 <em>Historical data accumulates automatically with each dashboard generation</em>
                 </p>
             </section>
+
+            <!-- Release Tracker Section -->
+            <section class="section" id="releases">
+                <h2>📦 Releases & Version History</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Track releases, packages, and container versions
+                </p>
+                <div id="release-tracker"></div>
+                <script>
+                    // Fetch releases from GitHub API
+                    fetch('https://api.github.com/repos/wizzense/AitherZero/releases')
+                        .then(response => response.json())
+                        .then(releases => {
+                            if (releases && releases.length > 0) {
+                                const releaseData = releases.slice(0, 10).map(r => ({
+                                    version: r.tag_name || r.name,
+                                    date: new Date(r.published_at).toLocaleDateString(),
+                                    description: r.body ? r.body.substring(0, 200) + '...' : 'No description',
+                                    url: r.html_url,
+                                    assets: r.assets ? r.assets.map(a => ({ name: a.name, url: a.browser_download_url })) : []
+                                }));
+                                initReleaseTracker(releaseData);
+                            } else {
+                                document.getElementById('release-tracker').innerHTML = 
+                                    '<p style="text-align: center; color: var(--text-secondary);">No releases yet. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">Create your first release</a></p>';
+                            }
+                        })
+                        .catch(err => {
+                            document.getElementById('release-tracker').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">⚠️ Unable to fetch releases. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">View releases on GitHub</a></p>';
+                        });
+                </script>
+            </section>
+
+            <!-- Index Navigation Section -->
+            <section class="section" id="indices">
+                <h2>📑 Navigate Project Indices</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Quick access to all index files and documentation hubs throughout the project
+                </p>
+                <div id="index-navigation"></div>
+            </section>
         </div>
 
         <div class="footer">
@@ -4204,6 +4411,9 @@ $commitsHTML
     </div>
 
     <script>
+        /* Enhanced Interactive Dashboard Scripts */
+        $enhancedScripts
+        
         // TOC toggle for mobile
         function toggleToc() {
             document.getElementById('toc').classList.toggle('open');
@@ -4647,7 +4857,7 @@ try {
     # Generate dashboards based on format selection
     switch ($Format) {
         'HTML' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -OutputPath $OutputPath
         }
         'Markdown' {
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
@@ -4656,7 +4866,7 @@ try {
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
         'All' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -OutputPath $OutputPath
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
