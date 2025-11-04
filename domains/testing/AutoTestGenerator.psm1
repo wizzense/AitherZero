@@ -289,7 +289,7 @@ function Build-UnitTest {
     if ($Dependencies -and @($Dependencies).Count -gt 0) {
         [void]$sb.AppendLine('')
         [void]$sb.AppendLine("        It 'Should declare dependencies' {")
-        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -First 20')
+        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -First 50')
         [void]$sb.AppendLine("            (" + '$content -join '' '') | Should -Match ''Dependencies:''')
         [void]$sb.AppendLine('        }')
     }
