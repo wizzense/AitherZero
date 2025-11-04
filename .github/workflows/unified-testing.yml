@@ -329,6 +329,7 @@ jobs:
             const fs = require('fs');
             
             let comment = '## 🎯 Unified Test Orchestration Results\n\n';
+            comment += '> **Builds on:** [✅ PR Validation](#) provided syntax check • This is the comprehensive test suite\n\n';
             
             try {
               const dashboardPath = './reports/dashboard.json';
