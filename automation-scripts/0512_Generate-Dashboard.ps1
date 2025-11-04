@@ -436,11 +436,25 @@ function Get-ProjectMetrics {
     }
     
     # Calculate quality coverage from PSScriptAnalyzer baseline results
-    # Priority: Use full baseline results from tests/results, fallback to fast results
+    # Priority: 1) Parallel results (comprehensive), 2) Baseline results, 3) Fast results
+    
+    # Check for parallel analysis results first (most comprehensive)
+    $parallelResultsPath = Join-Path $ProjectPath "reports/psscriptanalyzer-results.json"
     $pssaSummaryPath = Join-Path $ProjectPath "tests/results"
-    $latestPssaSummary = Get-ChildItem -Path $pssaSummaryPath -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
-                         Sort-Object LastWriteTime -Descending | 
-                         Select-Object -First 1
+    $latestPssaSummary = $null
+    
+    if (Test-Path $parallelResultsPath) {
+        $latestPssaSummary = Get-Item $parallelResultsPath
+        Write-ScriptLog -Message "Using comprehensive parallel PSScriptAnalyzer results"
+    } else {
+        # Fallback to baseline results
+        $latestPssaSummary = Get-ChildItem -Path $pssaSummaryPath -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
+                             Sort-Object LastWriteTime -Descending | 
+                             Select-Object -First 1
+        if ($latestPssaSummary) {
+            Write-ScriptLog -Message "Using baseline PSScriptAnalyzer results"
+        }
+    }
     
     if ($latestPssaSummary) {
         try {
@@ -456,9 +470,19 @@ function Get-ProjectMetrics {
                     @($pssaData.Summary.ByScript.PSObject.Properties).Count 
                 } else { 0 }
                 
-                # Total files is all PowerShell files in project
-                $totalPSFiles = $allPSFiles.Count
+                # Total files analyzed or all PowerShell files in project
+                $filesAnalyzed = if ($pssaData.Summary.FilesAnalyzed) { $pssaData.Summary.FilesAnalyzed } else { $pssaData.FilesAnalyzed.Count }
+                $totalPSFiles = [math]::Max($filesAnalyzed, $allPSFiles.Count)
                 $metrics.QualityCoverage.TotalValidated = $totalPSFiles
+                
+                # Store raw data for comprehensive quality calculation
+                $metrics.QualityCoverage.RawData = @{
+                    Errors = $errors
+                    Warnings = $warnings
+                    Information = $info
+                    FilesScanned = $filesAnalyzed
+                    TotalFiles = $totalPSFiles
+                }
                 
                 # Files without issues are clean
                 $cleanFiles = $totalPSFiles - $filesWithIssues
@@ -479,10 +503,6 @@ function Get-ProjectMetrics {
                 $metrics.QualityCoverage.PassedFiles = $cleanFiles
                 $metrics.QualityCoverage.TotalIssues = $totalIssues
                 
-                # Calculate quality score: penalize based on issues per file
-                $avgIssuesPerFile = if ($totalPSFiles -gt 0) { $totalIssues / $totalPSFiles } else { 0 }
-                $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 5), 1))
-                
                 # Quality percentage: files without major issues
                 if ($totalPSFiles -gt 0) {
                     $metrics.QualityCoverage.Percentage = [math]::Round(
@@ -491,7 +511,7 @@ function Get-ProjectMetrics {
                     )
                 }
                 
-                Write-ScriptLog -Message "Quality coverage calculated from baseline: $totalIssues total issues across $filesWithIssues files (of $totalPSFiles total)"
+                Write-ScriptLog -Message "Quality coverage: $totalIssues total issues ($errors errors, $warnings warnings, $info info) across $filesWithIssues files (of $totalPSFiles total, $filesAnalyzed analyzed)"
             }
         } catch {
             Write-ScriptLog -Level Warning -Message "Failed to parse baseline quality results: $_"
