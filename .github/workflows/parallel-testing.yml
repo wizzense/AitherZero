@@ -338,12 +338,57 @@ jobs:
           ./automation-scripts/0407_Validate-Syntax.ps1 -All
       
       - name: 🔍 PSScriptAnalyzer
+        id: pssa
         shell: pwsh
         timeout-minutes: 5
         continue-on-error: true
         run: |
           Write-Host "⚡ Running PSScriptAnalyzer" -ForegroundColor Cyan
           ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+          
+          # Capture summary for later use
+          $summaryPath = Get-ChildItem "./tests/analysis" -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          
+          if ($summaryPath) {
+            $summary = Get-Content $summaryPath.FullName | ConvertFrom-Json
+            "error-count=$($summary.BySeverity.Error)" >> $env:GITHUB_OUTPUT
+            "warning-count=$($summary.BySeverity.Warning)" >> $env:GITHUB_OUTPUT
+            "info-count=$($summary.BySeverity.Information)" >> $env:GITHUB_OUTPUT
+            "total-issues=$($summary.TotalIssues)" >> $env:GITHUB_OUTPUT
+          }
+      
+      - name: 📊 Code Coverage Analysis
+        id: coverage
+        shell: pwsh
+        timeout-minutes: 3
+        continue-on-error: true
+        run: |
+          Write-Host "⚡ Analyzing code coverage from test runs..." -ForegroundColor Cyan
+          
+          # Check for coverage files from test runs
+          $coverageFiles = Get-ChildItem "./tests/coverage" -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue
+          
+          if ($coverageFiles) {
+            Write-Host "Found $($coverageFiles.Count) coverage file(s)" -ForegroundColor Cyan
+            
+            # Parse latest coverage file
+            $latestCoverage = $coverageFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            [xml]$covXml = Get-Content $latestCoverage.FullName
+            
+            $lineRate = [math]::Round([double]$covXml.coverage.'line-rate' * 100, 2)
+            $branchRate = [math]::Round([double]$covXml.coverage.'branch-rate' * 100, 2)
+            
+            "line-coverage=$lineRate" >> $env:GITHUB_OUTPUT
+            "branch-coverage=$branchRate" >> $env:GITHUB_OUTPUT
+            
+            Write-Host "✅ Line Coverage: $lineRate%" -ForegroundColor Green
+            Write-Host "✅ Branch Coverage: $branchRate%" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️  No coverage files found" -ForegroundColor Yellow
+            "line-coverage=0" >> $env:GITHUB_OUTPUT
+            "branch-coverage=0" >> $env:GITHUB_OUTPUT
+          }
       
       - name: 📊 Upload Analysis Results
         if: always() && hashFiles('./tests/analysis/*') != ''
@@ -352,6 +397,88 @@ jobs:
           name: static-analysis
           path: ./tests/analysis/*
           retention-days: 7
+      
+      - name: 🐛 Collect Open Issues
+        id: issues
+        if: always()
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            
+            const bugs = issues.filter(i => i.labels.some(l => l.name === 'bug'));
+            const features = issues.filter(i => i.labels.some(l => l.name === 'enhancement' || l.name === 'feature'));
+            const critical = issues.filter(i => i.labels.some(l => l.name === 'critical' || l.name === 'priority: high'));
+            
+            core.setOutput('total-issues', issues.length);
+            core.setOutput('bugs', bugs.length);
+            core.setOutput('features', features.length);
+            core.setOutput('critical', critical.length);
+            
+            // Save detailed issue data
+            const fs = require('fs');
+            const issuesDir = './reports';
+            if (!fs.existsSync(issuesDir)) {
+              fs.mkdirSync(issuesDir, { recursive: true });
+            }
+            
+            const issueData = {
+              timestamp: new Date().toISOString(),
+              total: issues.length,
+              bugs: bugs.length,
+              features: features.length,
+              critical: critical.length,
+              issues: issues.map(i => ({
+                number: i.number,
+                title: i.title,
+                state: i.state,
+                labels: i.labels.map(l => l.name),
+                created_at: i.created_at,
+                updated_at: i.updated_at,
+                url: i.html_url
+              }))
+            };
+            
+            fs.writeFileSync('./reports/open-issues.json', JSON.stringify(issueData, null, 2));
+            console.log(`✅ Collected ${issues.length} open issues`);
+      
+      - name: ⏱️ Performance Metrics
+        id: performance
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "⚡ Collecting performance metrics..." -ForegroundColor Cyan
+          
+          # Calculate workflow execution time
+          $startTime = "${{ github.event.workflow_run.created_at || github.event.head_commit.timestamp }}"
+          if ($startTime) {
+            $start = [DateTime]::Parse($startTime)
+            $duration = (Get-Date) - $start
+            $durationMinutes = [math]::Round($duration.TotalMinutes, 2)
+            "workflow-duration=$durationMinutes" >> $env:GITHUB_OUTPUT
+            Write-Host "Workflow duration: $durationMinutes minutes" -ForegroundColor Cyan
+          }
+          
+          # Collect performance data from logs if available
+          $perfData = @{
+            Timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
+            WorkflowRun = "${{ github.run_id }}"
+            Metrics = @{
+              TestExecutionTime = $durationMinutes
+              ParallelJobs = 17  # Total jobs in parallel execution
+              AverageJobDuration = 0
+            }
+          }
+          
+          $perfData | ConvertTo-Json -Depth 10 | Out-File -FilePath "./reports/performance-metrics.json" -Encoding UTF8
+          Write-Host "✅ Performance metrics collected" -ForegroundColor Green
 
   # Consolidation job - runs after all parallel jobs complete
   consolidate-results:
@@ -422,6 +549,112 @@ jobs:
           "total-failed=$totalFailed" >> $env:GITHUB_OUTPUT
           "total-skipped=$totalSkipped" >> $env:GITHUB_OUTPUT
           
+          # Generate TestReport JSON for dashboard integration
+          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+          $testReport = @{
+            TestType = "Parallel"
+            GeneratedAt = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
+            WorkflowRun = "${{ github.run_id }}"
+            WorkflowURL = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            WorkflowName = "Parallel Testing"
+            Branch = "${{ github.ref_name }}"
+            Commit = "${{ github.sha }}"
+            CommitMessage = "${{ github.event.head_commit.message }}"
+            Author = "${{ github.actor }}"
+            
+            # Test Results
+            TotalCount = $totalPassed + $totalFailed + $totalSkipped
+            PassedCount = $totalPassed
+            FailedCount = $totalFailed
+            SkippedCount = $totalSkipped
+            FailureRate = if (($totalPassed + $totalFailed) -gt 0) { [math]::Round(($totalFailed / ($totalPassed + $totalFailed)) * 100, 2) } else { 0 }
+            PassRate = if (($totalPassed + $totalFailed) -gt 0) { [math]::Round(($totalPassed / ($totalPassed + $totalFailed)) * 100, 2) } else { 0 }
+            
+            # Code Quality Metrics
+            CodeQuality = @{
+              PSScriptAnalyzer = @{
+                TotalIssues = "${{ steps.pssa.outputs.total-issues || 0 }}"
+                Errors = "${{ steps.pssa.outputs.error-count || 0 }}"
+                Warnings = "${{ steps.pssa.outputs.warning-count || 0 }}"
+                Information = "${{ steps.pssa.outputs.info-count || 0 }}"
+              }
+              Coverage = @{
+                LineCoverage = "${{ steps.coverage.outputs.line-coverage || 0 }}"
+                BranchCoverage = "${{ steps.coverage.outputs.branch-coverage || 0 }}"
+              }
+            }
+            
+            # Issue Tracking
+            Issues = @{
+              Total = "${{ steps.issues.outputs.total-issues || 0 }}"
+              Bugs = "${{ steps.issues.outputs.bugs || 0 }}"
+              Features = "${{ steps.issues.outputs.features || 0 }}"
+              Critical = "${{ steps.issues.outputs.critical || 0 }}"
+            }
+            
+            # Performance Metrics
+            Performance = @{
+              WorkflowDuration = "${{ steps.performance.outputs.workflow-duration || 0 }}"
+              ParallelJobs = 17
+              ResultFiles = $allResults.Count
+            }
+            
+            # Health Assessment
+            HealthScore = @{
+              Overall = 0
+              TestHealth = 0
+              CodeQuality = 0
+              IssueHealth = 0
+            }
+            
+            TestResults = @{
+              Summary = "Parallel execution across $($allResults.Count) test suites"
+              ResultFiles = $allResults.Count
+            }
+          }
+          
+          # Calculate health scores (0-100)
+          $testHealth = if ($testReport.TotalCount -gt 0) { 
+            [math]::Round($testReport.PassRate, 0) 
+          } else { 0 }
+          
+          $qualityHealth = 100
+          $errors = [int]$testReport.CodeQuality.PSScriptAnalyzer.Errors
+          $warnings = [int]$testReport.CodeQuality.PSScriptAnalyzer.Warnings
+          if ($errors -gt 0) { $qualityHealth -= [math]::Min($errors * 5, 50) }
+          if ($warnings -gt 0) { $qualityHealth -= [math]::Min($warnings, 30) }
+          $qualityHealth = [math]::Max($qualityHealth, 0)
+          
+          $issueHealth = 100
+          $bugs = [int]$testReport.Issues.Bugs
+          $critical = [int]$testReport.Issues.Critical
+          if ($bugs -gt 0) { $issueHealth -= [math]::Min($bugs * 2, 40) }
+          if ($critical -gt 0) { $issueHealth -= [math]::Min($critical * 10, 50) }
+          $issueHealth = [math]::Max($issueHealth, 0)
+          
+          $overallHealth = [math]::Round(($testHealth * 0.4 + $qualityHealth * 0.3 + $issueHealth * 0.3), 0)
+          
+          $testReport.HealthScore.Overall = $overallHealth
+          $testReport.HealthScore.TestHealth = $testHealth
+          $testReport.HealthScore.CodeQuality = $qualityHealth
+          $testReport.HealthScore.IssueHealth = $issueHealth
+          
+          $testReportJson = $testReport | ConvertTo-Json -Depth 10
+          
+          # Save to tests/results for dashboard
+          $resultsDir = "./tests/results"
+          if (-not (Test-Path $resultsDir)) {
+            New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
+          }
+          
+          $reportPath = Join-Path $resultsDir "TestReport-Parallel-$timestamp.json"
+          $testReportJson | Out-File -FilePath $reportPath -Encoding UTF8
+          Write-Host "✅ Generated comprehensive TestReport JSON: $reportPath" -ForegroundColor Green
+          Write-Host "   Overall Health Score: $overallHealth/100" -ForegroundColor $(if ($overallHealth -ge 80) { 'Green' } elseif ($overallHealth -ge 60) { 'Yellow' } else { 'Red' })
+          Write-Host "   Test Health: $testHealth/100" -ForegroundColor Cyan
+          Write-Host "   Code Quality: $qualityHealth/100" -ForegroundColor Cyan
+          Write-Host "   Issue Health: $issueHealth/100" -ForegroundColor Cyan
+          
           # Mark as failed if tests failed (but continue-on-error allows subsequent steps)
           if ($totalFailed -gt 0) {
             Write-Host "❌ Some tests failed - marking step as failed" -ForegroundColor Red
@@ -459,6 +692,27 @@ jobs:
               }
             };
             return await script({github, context, core: mockCore});
+      
+      - name: 📊 Generate Dashboard
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "📊 Generating comprehensive dashboard..." -ForegroundColor Cyan
+          ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+      
+      - name: 📤 Upload Dashboard & Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parallel-test-dashboard
+          path: |
+            reports/**/*.html
+            reports/**/*.json
+            reports/**/*.md
+            tests/results/TestReport-Parallel-*.json
+          retention-days: 30
+          if-no-files-found: warn
       
       - name: ✅ Final Status Check
         if: always()
