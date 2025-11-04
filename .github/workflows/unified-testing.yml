@@ -186,7 +186,7 @@ jobs:
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: 'tests/results/**/*.xml'
+          files: 'tests/results/**/{UnitTests,IntegrationTests}-*.xml'
           check_name: 'Test Results'
           comment_mode: always
         continue-on-error: true
