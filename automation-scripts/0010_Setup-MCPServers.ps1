@@ -127,9 +127,11 @@ function Build-MCPServer {
     [CmdletBinding(SupportsShouldProcess=$true)]
     param([string]$ServerPath)
 
+    $locationPushed = $false
     try {
         if ($PSCmdlet.ShouldProcess("MCP Server at $ServerPath", "Build")) {
             Push-Location $ServerPath
+            $locationPushed = $true
             Write-StatusMessage "Building AitherZero MCP server..." -Level Info
 
             # Install dependencies
@@ -152,7 +154,7 @@ function Build-MCPServer {
         Write-StatusMessage "Failed to build MCP server: $_" -Level Error
         return $false
     } finally {
-        if ($PSBoundParameters.ContainsKey('WhatIf') -eq $false) {
+        if ($locationPushed) {
             Pop-Location
         }
     }
