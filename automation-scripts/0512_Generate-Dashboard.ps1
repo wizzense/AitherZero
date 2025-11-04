@@ -526,19 +526,22 @@ function Get-ProjectMetrics {
                     $metrics.QualityCoverage.PassedFiles = $totalPSFiles - $filesWithIssues
                     $metrics.QualityCoverage.TotalIssues = $totalIssues
                     
-                    # Calculate quality score: penalize based on issues found relative to all files
-                    if ($totalPSFiles -gt 0) {
-                        $issuesPerFile = $totalIssues / $totalPSFiles
-                        $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($issuesPerFile * 5), 1))
-                        
-                        # Quality percentage: weight clean files and warning files
-                        $metrics.QualityCoverage.Percentage = [math]::Round(
-                            (($metrics.QualityCoverage.PassedFiles + ($metrics.QualityCoverage.WarningFiles * 0.3)) / $totalPSFiles) * 100,
-                            1
-                        )
+                    # Store raw data for comprehensive quality calculation later
+                    $metrics.QualityCoverage.RawData = @{
+                        Errors = $errors
+                        Warnings = $warnings
+                        Information = $info
+                        FilesScanned = $filesScanned
+                        TotalFiles = $totalPSFiles
                     }
                     
-                    Write-ScriptLog -Level Warning -Message "Using fast results only ($filesScanned files scanned, $totalIssues issues) - calculated against $totalPSFiles total files. Run './automation-scripts/0404_Run-PSScriptAnalyzer.ps1' for full baseline analysis"
+                    # Quality percentage: weight clean files and warning files
+                    $metrics.QualityCoverage.Percentage = [math]::Round(
+                        (($metrics.QualityCoverage.PassedFiles + ($metrics.QualityCoverage.WarningFiles * 0.3)) / $totalPSFiles) * 100,
+                        1
+                    )
+                    
+                    Write-ScriptLog -Level Warning -Message "Using fast results only ($filesScanned files scanned, $totalIssues issues: $errors errors, $warnings warnings) - calculated against $totalPSFiles total files. Run './automation-scripts/0404_Run-PSScriptAnalyzer.ps1' for full baseline analysis"
                 }
             } catch {
                 Write-ScriptLog -Level Warning -Message "Failed to parse fast quality results: $_"
@@ -714,6 +717,81 @@ function Get-ProjectMetrics {
             Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
     }
+
+    # Calculate comprehensive quality score based on multiple factors
+    Write-ScriptLog -Message "Calculating comprehensive quality score from all metrics"
+    
+    $qualityScore = 100.0  # Start at perfect score
+    $scoreBreakdown = @{
+        PSScriptAnalyzer = 100
+        TestCoverage = 100
+        DocumentationCoverage = 100
+        CodeCoverage = 100
+    }
+    
+    # Factor 1: PSScriptAnalyzer Issues (40% weight) - Most important
+    # Errors are critical, warnings are serious, info is minor
+    if ($metrics.QualityCoverage.PSObject.Properties['RawData'] -and $metrics.QualityCoverage.RawData) {
+        $pssaErrors = $metrics.QualityCoverage.RawData.Errors
+        $pssaWarnings = $metrics.QualityCoverage.RawData.Warnings
+        $pssaInfo = $metrics.QualityCoverage.RawData.Information
+        
+        # Each error costs 5 points, each warning 1 point, each info 0.1 points
+        # Normalize to 100-point scale
+        $pssaPenalty = ($pssaErrors * 5) + ($pssaWarnings * 1) + ($pssaInfo * 0.1)
+        $scoreBreakdown.PSScriptAnalyzer = [math]::Max(0, [math]::Round(100 - $pssaPenalty, 1))
+        
+        Write-ScriptLog -Message "PSScriptAnalyzer score: $($scoreBreakdown.PSScriptAnalyzer)/100 ($pssaErrors errors, $pssaWarnings warnings, $pssaInfo info)"
+    } elseif ($metrics.QualityCoverage.TotalIssues -eq 0) {
+        # No issues found
+        $scoreBreakdown.PSScriptAnalyzer = 100
+        Write-ScriptLog -Message "PSScriptAnalyzer score: 100/100 (no issues found)"
+    } else {
+        # If no detailed PSSA data but we have issue count, estimate
+        $totalIssues = $metrics.QualityCoverage.TotalIssues
+        # Assume most are warnings (1 point each)
+        $pssaPenalty = $totalIssues * 1.5  # Average penalty
+        $scoreBreakdown.PSScriptAnalyzer = [math]::Max(0, [math]::Round(100 - $pssaPenalty, 1))
+        Write-ScriptLog -Message "PSScriptAnalyzer score: $($scoreBreakdown.PSScriptAnalyzer)/100 (estimated from $totalIssues total issues)"
+    }
+    
+    # Factor 2: Test Coverage (30% weight)
+    if ($metrics.TestCoverage.TotalFiles -gt 0) {
+        $scoreBreakdown.TestCoverage = [math]::Round($metrics.TestCoverage.Percentage, 1)
+        Write-ScriptLog -Message "Test coverage score: $($scoreBreakdown.TestCoverage)/100 ($($metrics.TestCoverage.FilesWithTests)/$($metrics.TestCoverage.TotalFiles) files have tests)"
+    } else {
+        $scoreBreakdown.TestCoverage = 0
+    }
+    
+    # Factor 3: Documentation Coverage (20% weight)
+    if ($metrics.DocumentationCoverage.TotalFunctions -gt 0) {
+        $scoreBreakdown.DocumentationCoverage = [math]::Round($metrics.DocumentationCoverage.Percentage, 1)
+        Write-ScriptLog -Message "Documentation score: $($scoreBreakdown.DocumentationCoverage)/100 ($($metrics.DocumentationCoverage.FunctionsWithDocs)/$($metrics.DocumentationCoverage.TotalFunctions) functions documented)"
+    } else {
+        $scoreBreakdown.DocumentationCoverage = 0
+    }
+    
+    # Factor 4: Code Coverage from tests (10% weight)
+    if ($metrics.Coverage.Percentage -gt 0) {
+        $scoreBreakdown.CodeCoverage = [math]::Round($metrics.Coverage.Percentage, 1)
+        Write-ScriptLog -Message "Code coverage score: $($scoreBreakdown.CodeCoverage)/100 ($($metrics.Coverage.CoveredLines)/$($metrics.Coverage.TotalLines) lines covered)"
+    } else {
+        # No code coverage data - assume low score
+        $scoreBreakdown.CodeCoverage = 20
+    }
+    
+    # Calculate weighted average
+    $qualityScore = (
+        ($scoreBreakdown.PSScriptAnalyzer * 0.40) +
+        ($scoreBreakdown.TestCoverage * 0.30) +
+        ($scoreBreakdown.DocumentationCoverage * 0.20) +
+        ($scoreBreakdown.CodeCoverage * 0.10)
+    )
+    
+    $metrics.QualityCoverage.AverageScore = [math]::Round($qualityScore, 1)
+    $metrics.QualityCoverage.ScoreBreakdown = $scoreBreakdown
+    
+    Write-ScriptLog -Message "Overall quality score: $($metrics.QualityCoverage.AverageScore)/100 (PSSA: $($scoreBreakdown.PSScriptAnalyzer) × 40%, Tests: $($scoreBreakdown.TestCoverage) × 30%, Docs: $($scoreBreakdown.DocumentationCoverage) × 20%, Coverage: $($scoreBreakdown.CodeCoverage) × 10%)"
 
     return $metrics
 }
