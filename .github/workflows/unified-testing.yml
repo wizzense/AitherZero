@@ -82,6 +82,22 @@ jobs:
           
           exit $exitCode
       
+      - name: 📋 Validate Documentation Coverage
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "📚 Validating directory documentation..." -ForegroundColor Cyan
+          ./automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
+      
+      - name: 📅 Track Documentation Freshness
+        if: always()
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "⏰ Tracking documentation updates..." -ForegroundColor Cyan
+          ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
+      
       - name: 📊 Generate Dashboard
         if: always()
         shell: pwsh
