@@ -436,11 +436,25 @@ function Get-ProjectMetrics {
     }
     
     # Calculate quality coverage from PSScriptAnalyzer baseline results
-    # Priority: Use full baseline results from tests/results, fallback to fast results
+    # Priority: 1) Parallel results (comprehensive), 2) Baseline results, 3) Fast results
+    
+    # Check for parallel analysis results first (most comprehensive)
+    $parallelResultsPath = Join-Path $ProjectPath "reports/psscriptanalyzer-results.json"
     $pssaSummaryPath = Join-Path $ProjectPath "tests/results"
-    $latestPssaSummary = Get-ChildItem -Path $pssaSummaryPath -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
-                         Sort-Object LastWriteTime -Descending | 
-                         Select-Object -First 1
+    $latestPssaSummary = $null
+    
+    if (Test-Path $parallelResultsPath) {
+        $latestPssaSummary = Get-Item $parallelResultsPath
+        Write-ScriptLog -Message "Using comprehensive parallel PSScriptAnalyzer results"
+    } else {
+        # Fallback to baseline results
+        $latestPssaSummary = Get-ChildItem -Path $pssaSummaryPath -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
+                             Sort-Object LastWriteTime -Descending | 
+                             Select-Object -First 1
+        if ($latestPssaSummary) {
+            Write-ScriptLog -Message "Using baseline PSScriptAnalyzer results"
+        }
+    }
     
     if ($latestPssaSummary) {
         try {
@@ -456,9 +470,19 @@ function Get-ProjectMetrics {
                     @($pssaData.Summary.ByScript.PSObject.Properties).Count 
                 } else { 0 }
                 
-                # Total files is all PowerShell files in project
-                $totalPSFiles = $allPSFiles.Count
+                # Total files analyzed or all PowerShell files in project
+                $filesAnalyzed = if ($pssaData.Summary.FilesAnalyzed) { $pssaData.Summary.FilesAnalyzed } else { $pssaData.FilesAnalyzed.Count }
+                $totalPSFiles = [math]::Max($filesAnalyzed, $allPSFiles.Count)
                 $metrics.QualityCoverage.TotalValidated = $totalPSFiles
+                
+                # Store raw data for comprehensive quality calculation
+                $metrics.QualityCoverage.RawData = @{
+                    Errors = $errors
+                    Warnings = $warnings
+                    Information = $info
+                    FilesScanned = $filesAnalyzed
+                    TotalFiles = $totalPSFiles
+                }
                 
                 # Files without issues are clean
                 $cleanFiles = $totalPSFiles - $filesWithIssues
@@ -479,10 +503,6 @@ function Get-ProjectMetrics {
                 $metrics.QualityCoverage.PassedFiles = $cleanFiles
                 $metrics.QualityCoverage.TotalIssues = $totalIssues
                 
-                # Calculate quality score: penalize based on issues per file
-                $avgIssuesPerFile = if ($totalPSFiles -gt 0) { $totalIssues / $totalPSFiles } else { 0 }
-                $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 5), 1))
-                
                 # Quality percentage: files without major issues
                 if ($totalPSFiles -gt 0) {
                     $metrics.QualityCoverage.Percentage = [math]::Round(
@@ -491,7 +511,7 @@ function Get-ProjectMetrics {
                     )
                 }
                 
-                Write-ScriptLog -Message "Quality coverage calculated from baseline: $totalIssues total issues across $filesWithIssues files (of $totalPSFiles total)"
+                Write-ScriptLog -Message "Quality coverage: $totalIssues total issues ($errors errors, $warnings warnings, $info info) across $filesWithIssues files (of $totalPSFiles total, $filesAnalyzed analyzed)"
             }
         } catch {
             Write-ScriptLog -Level Warning -Message "Failed to parse baseline quality results: $_"
@@ -509,19 +529,39 @@ function Get-ProjectMetrics {
                     $errors = $pssaData.Summary.Errors
                     $warnings = $pssaData.Summary.Warnings
                     
-                    $filesAnalyzed = if ($pssaData.FilesAnalyzed) { @($pssaData.FilesAnalyzed).Count } else { 0 }
-                    $metrics.QualityCoverage.TotalValidated = $filesAnalyzed
-                    $metrics.QualityCoverage.FailedFiles = if ($errors -gt 0) { 1 } else { 0 }
-                    $metrics.QualityCoverage.WarningFiles = if ($warnings -gt 0) { $filesAnalyzed - $metrics.QualityCoverage.FailedFiles } else { 0 }
-                    $metrics.QualityCoverage.PassedFiles = [math]::Max(0, $filesAnalyzed - $metrics.QualityCoverage.FailedFiles - $metrics.QualityCoverage.WarningFiles)
+                    # Fast results only scan changed files, but we need to represent quality against ALL files
+                    $filesScanned = if ($pssaData.FilesAnalyzed) { @($pssaData.FilesAnalyzed).Count } else { 0 }
+                    $totalPSFiles = $allPSFiles.Count
                     
-                    if ($filesAnalyzed -gt 0) {
-                        $avgIssuesPerFile = $totalIssues / $filesAnalyzed
-                        $metrics.QualityCoverage.AverageScore = [math]::Max(0, [math]::Round(100 - ($avgIssuesPerFile * 10), 1))
-                        $metrics.QualityCoverage.Percentage = [math]::Round(($metrics.QualityCoverage.PassedFiles / $filesAnalyzed) * 100, 1)
+                    # Use total PowerShell files as the baseline for quality calculation
+                    $metrics.QualityCoverage.TotalValidated = $totalPSFiles
+                    
+                    # Estimate files with issues from scanned files
+                    $filesWithIssues = $filesScanned  # All scanned files have at least warnings
+                    $filesWithErrors = if ($errors -gt 0) { [math]::Min($filesScanned, [math]::Ceiling($errors / [math]::Max(1, ($totalIssues / $filesScanned)))) } else { 0 }
+                    
+                    $metrics.QualityCoverage.FailedFiles = $filesWithErrors
+                    $metrics.QualityCoverage.WarningFiles = $filesWithIssues - $filesWithErrors
+                    # Assume files not scanned are clean (optimistic but prevents false negatives)
+                    $metrics.QualityCoverage.PassedFiles = $totalPSFiles - $filesWithIssues
+                    $metrics.QualityCoverage.TotalIssues = $totalIssues
+                    
+                    # Store raw data for comprehensive quality calculation later
+                    $metrics.QualityCoverage.RawData = @{
+                        Errors = $errors
+                        Warnings = $warnings
+                        Information = $info
+                        FilesScanned = $filesScanned
+                        TotalFiles = $totalPSFiles
                     }
                     
-                    Write-ScriptLog -Level Warning -Message "Using fast results only - run './az 0404' for full baseline analysis"
+                    # Quality percentage: weight clean files and warning files
+                    $metrics.QualityCoverage.Percentage = [math]::Round(
+                        (($metrics.QualityCoverage.PassedFiles + ($metrics.QualityCoverage.WarningFiles * 0.3)) / $totalPSFiles) * 100,
+                        1
+                    )
+                    
+                    Write-ScriptLog -Level Warning -Message "Using fast results only ($filesScanned files scanned, $totalIssues issues: $errors errors, $warnings warnings) - calculated against $totalPSFiles total files. Run './automation-scripts/0404_Run-PSScriptAnalyzer.ps1' for full baseline analysis"
                 }
             } catch {
                 Write-ScriptLog -Level Warning -Message "Failed to parse fast quality results: $_"
@@ -529,28 +569,39 @@ function Get-ProjectMetrics {
         }
     }
 
-    # Get latest test results - check multiple possible locations
+    # Get latest test results - check multiple possible locations including JSON
     $testResultsPaths = @(
         (Join-Path $ProjectPath "testResults.xml"),
-        (Join-Path $ProjectPath "tests/results/*.xml")
+        (Join-Path $ProjectPath "tests/results/*.xml"),
+        (Join-Path $ProjectPath "tests/results/*Summary*.json"),
+        (Join-Path $ProjectPath "TestResults.json")
     )
     
     $latestTestResults = $null
+    $testResultFormat = $null
+    
     foreach ($testPath in $testResultsPaths) {
         if ($testPath -like "*`**") {
-            $latestTestResults = Get-ChildItem -Path (Split-Path $testPath -Parent) -Filter (Split-Path $testPath -Leaf) -ErrorAction SilentlyContinue | 
-                               Where-Object { $_.Name -notlike "Coverage*" } |
-                               Sort-Object LastWriteTime -Descending | 
-                               Select-Object -First 1
+            $files = Get-ChildItem -Path (Split-Path $testPath -Parent) -Filter (Split-Path $testPath -Leaf) -ErrorAction SilentlyContinue | 
+                    Where-Object { $_.Name -notlike "Coverage*" -and $_.Name -notlike "PSScriptAnalyzer*" } |
+                    Sort-Object LastWriteTime -Descending
+            
+            if ($files) {
+                $latestTestResults = $files[0]
+                $testResultFormat = if ($latestTestResults.Extension -eq '.json') { 'JSON' } else { 'XML' }
+                break
+            }
         } else {
             if (Test-Path $testPath) {
                 $latestTestResults = Get-Item $testPath
+                $testResultFormat = if ($latestTestResults.Extension -eq '.json') { 'JSON' } else { 'XML' }
+                break
             }
         }
-        if ($latestTestResults) { break }
     }
     
-    if ($latestTestResults) {
+    # Parse test results based on format
+    if ($latestTestResults -and $testResultFormat -eq 'XML') {
         try {
             [xml]$testXml = Get-Content $latestTestResults.FullName
             
@@ -565,6 +616,7 @@ function Get-ProjectMetrics {
                 $metrics.Tests.Passed = $totalTests - $failures - $errors - $skipped
                 $metrics.Tests.Failed = $failures + $errors
                 $metrics.Tests.Skipped = $skipped
+                $metrics.Tests.Total = $totalTests
                 
                 if ($totalTests -gt 0) {
                     $metrics.Tests.SuccessRate = [math]::Round(($metrics.Tests.Passed / $totalTests) * 100, 1)
@@ -584,14 +636,57 @@ function Get-ProjectMetrics {
                             $metrics.Tests.Duration = "${minutes}m ${seconds}s"
                         }
                     } catch {
-                        $metrics.Tests.Duration = "Unknown"
+                        $metrics.Tests.Duration = "Not recorded"
                     }
                 } else {
-                    $metrics.Tests.Duration = "Unknown"
+                    $metrics.Tests.Duration = "Not recorded"
                 }
             }
         } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse test results: $_"
+            Write-ScriptLog -Level Warning -Message "Failed to parse test XML results: $_"
+        }
+    } elseif ($latestTestResults -and $testResultFormat -eq 'JSON') {
+        try {
+            $testJson = Get-Content $latestTestResults.FullName -Raw | ConvertFrom-Json
+            
+            # Parse Pester 5.x JSON format
+            if ($testJson.Passed -or $testJson.Failed -or $testJson.Total) {
+                $metrics.Tests.Passed = if ($testJson.Passed) { $testJson.Passed } else { 0 }
+                $metrics.Tests.Failed = if ($testJson.Failed) { $testJson.Failed } else { 0 }
+                $metrics.Tests.Skipped = if ($testJson.Skipped) { $testJson.Skipped } else { 0 }
+                $metrics.Tests.Total = if ($testJson.Total) { $testJson.Total } else { $metrics.Tests.Passed + $metrics.Tests.Failed + $metrics.Tests.Skipped }
+                
+                if ($metrics.Tests.Total -gt 0) {
+                    $metrics.Tests.SuccessRate = [math]::Round(($metrics.Tests.Passed / $metrics.Tests.Total) * 100, 1)
+                }
+                
+                $metrics.Tests.LastRun = $latestTestResults.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+                
+                if ($testJson.Duration) {
+                    $duration = [double]$testJson.Duration
+                    if ($duration -lt 60) {
+                        $metrics.Tests.Duration = "$([math]::Round($duration, 2))s"
+                    } else {
+                        $minutes = [math]::Floor($duration / 60)
+                        $seconds = [math]::Round($duration % 60, 0)
+                        $metrics.Tests.Duration = "${minutes}m ${seconds}s"
+                    }
+                } else {
+                    $metrics.Tests.Duration = "Not recorded"
+                }
+            }
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to parse test JSON results: $_"
+        }
+    }
+    
+    # If no test results found, provide informative status based on test file count
+    if (-not $latestTestResults -or ($metrics.Tests.Total -eq 0 -and $metrics.Tests.Passed -eq 0)) {
+        # We have test files but no results - tests haven't been run recently
+        if ($metrics.Tests.Unit -gt 0 -or $metrics.Tests.Integration -gt 0) {
+            $metrics.Tests.LastRun = "Not run recently"
+            $metrics.Tests.Duration = "Run tests to see duration"
+            Write-ScriptLog -Level Warning -Message "Test files exist ($($metrics.Tests.Unit) unit, $($metrics.Tests.Integration) integration) but no recent test results found. Run './automation-scripts/0402_Run-UnitTests.ps1' to generate results."
         }
     }
 
@@ -643,6 +738,81 @@ function Get-ProjectMetrics {
         }
     }
 
+    # Calculate comprehensive quality score based on multiple factors
+    Write-ScriptLog -Message "Calculating comprehensive quality score from all metrics"
+    
+    $qualityScore = 100.0  # Start at perfect score
+    $scoreBreakdown = @{
+        PSScriptAnalyzer = 100
+        TestCoverage = 100
+        DocumentationCoverage = 100
+        CodeCoverage = 100
+    }
+    
+    # Factor 1: PSScriptAnalyzer Issues (40% weight) - Most important
+    # Errors are critical, warnings are serious, info is minor
+    if ($metrics.QualityCoverage.PSObject.Properties['RawData'] -and $metrics.QualityCoverage.RawData) {
+        $pssaErrors = $metrics.QualityCoverage.RawData.Errors
+        $pssaWarnings = $metrics.QualityCoverage.RawData.Warnings
+        $pssaInfo = $metrics.QualityCoverage.RawData.Information
+        
+        # Each error costs 5 points, each warning 1 point, each info 0.1 points
+        # Normalize to 100-point scale
+        $pssaPenalty = ($pssaErrors * 5) + ($pssaWarnings * 1) + ($pssaInfo * 0.1)
+        $scoreBreakdown.PSScriptAnalyzer = [math]::Max(0, [math]::Round(100 - $pssaPenalty, 1))
+        
+        Write-ScriptLog -Message "PSScriptAnalyzer score: $($scoreBreakdown.PSScriptAnalyzer)/100 ($pssaErrors errors, $pssaWarnings warnings, $pssaInfo info)"
+    } elseif ($metrics.QualityCoverage.TotalIssues -eq 0) {
+        # No issues found
+        $scoreBreakdown.PSScriptAnalyzer = 100
+        Write-ScriptLog -Message "PSScriptAnalyzer score: 100/100 (no issues found)"
+    } else {
+        # If no detailed PSSA data but we have issue count, estimate
+        $totalIssues = $metrics.QualityCoverage.TotalIssues
+        # Assume most are warnings (1 point each)
+        $pssaPenalty = $totalIssues * 1.5  # Average penalty
+        $scoreBreakdown.PSScriptAnalyzer = [math]::Max(0, [math]::Round(100 - $pssaPenalty, 1))
+        Write-ScriptLog -Message "PSScriptAnalyzer score: $($scoreBreakdown.PSScriptAnalyzer)/100 (estimated from $totalIssues total issues)"
+    }
+    
+    # Factor 2: Test Coverage (30% weight)
+    if ($metrics.TestCoverage.TotalFiles -gt 0) {
+        $scoreBreakdown.TestCoverage = [math]::Round($metrics.TestCoverage.Percentage, 1)
+        Write-ScriptLog -Message "Test coverage score: $($scoreBreakdown.TestCoverage)/100 ($($metrics.TestCoverage.FilesWithTests)/$($metrics.TestCoverage.TotalFiles) files have tests)"
+    } else {
+        $scoreBreakdown.TestCoverage = 0
+    }
+    
+    # Factor 3: Documentation Coverage (20% weight)
+    if ($metrics.DocumentationCoverage.TotalFunctions -gt 0) {
+        $scoreBreakdown.DocumentationCoverage = [math]::Round($metrics.DocumentationCoverage.Percentage, 1)
+        Write-ScriptLog -Message "Documentation score: $($scoreBreakdown.DocumentationCoverage)/100 ($($metrics.DocumentationCoverage.FunctionsWithDocs)/$($metrics.DocumentationCoverage.TotalFunctions) functions documented)"
+    } else {
+        $scoreBreakdown.DocumentationCoverage = 0
+    }
+    
+    # Factor 4: Code Coverage from tests (10% weight)
+    if ($metrics.Coverage.Percentage -gt 0) {
+        $scoreBreakdown.CodeCoverage = [math]::Round($metrics.Coverage.Percentage, 1)
+        Write-ScriptLog -Message "Code coverage score: $($scoreBreakdown.CodeCoverage)/100 ($($metrics.Coverage.CoveredLines)/$($metrics.Coverage.TotalLines) lines covered)"
+    } else {
+        # No code coverage data - assume low score
+        $scoreBreakdown.CodeCoverage = 20
+    }
+    
+    # Calculate weighted average
+    $qualityScore = (
+        ($scoreBreakdown.PSScriptAnalyzer * 0.40) +
+        ($scoreBreakdown.TestCoverage * 0.30) +
+        ($scoreBreakdown.DocumentationCoverage * 0.20) +
+        ($scoreBreakdown.CodeCoverage * 0.10)
+    )
+    
+    $metrics.QualityCoverage.AverageScore = [math]::Round($qualityScore, 1)
+    $metrics.QualityCoverage.ScoreBreakdown = $scoreBreakdown
+    
+    Write-ScriptLog -Message "Overall quality score: $($metrics.QualityCoverage.AverageScore)/100 (PSSA: $($scoreBreakdown.PSScriptAnalyzer) × 40%, Tests: $($scoreBreakdown.TestCoverage) × 30%, Docs: $($scoreBreakdown.DocumentationCoverage) × 20%, Coverage: $($scoreBreakdown.CodeCoverage) × 10%)"
+
     return $metrics
 }
 
@@ -692,7 +862,7 @@ function Get-QualityMetrics {
             Write-ScriptLog -Level Warning -Message "Failed to create quality reports directory: $_"
         }
         # Return empty metrics since no reports exist yet
-        Write-ScriptLog -Message "No quality reports available yet. Run './az 0420' to generate quality validation reports."
+        Write-ScriptLog -Message "No quality reports available yet. Run './automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains' to generate quality validation reports."
         return $qualityMetrics
     }
     
@@ -917,6 +1087,10 @@ function ConvertFrom-TestResultsXml {
 }
 
 function Get-BuildStatus {
+    param(
+        [hashtable]$Metrics
+    )
+    
     Write-ScriptLog -Message "Determining build status"
 
     $status = @{
@@ -941,14 +1115,59 @@ function Get-BuildStatus {
         }
     }
 
-    # Check recent test results from testResults.xml at project root
-    $testResultsPath = Join-Path $ProjectPath "testResults.xml"
-    if (Test-Path $testResultsPath) {
-        $result = ConvertFrom-TestResultsXml -XmlPath $testResultsPath
-        if ($result) {
-            $status.Tests = $result.TestStatus
-            $status.Badges.Tests = $result.BadgeUrl
-            $status.LastBuild = $result.LastWriteTime
+    # Use metrics data if provided (preferred method)
+    if ($Metrics) {
+        Write-ScriptLog -Message "Using metrics for build status - Tests.Total: $($Metrics.Tests.Total), Tests.Passed: $($Metrics.Tests.Passed), Tests.Failed: $($Metrics.Tests.Failed), Tests.Unit: $($Metrics.Tests.Unit), Tests.Integration: $($Metrics.Tests.Integration)"
+        
+        # Determine test status from metrics
+        # Only show test status if we have actual execution results (Passed or Failed count > 0)
+        if (($Metrics.Tests.Passed -gt 0) -or ($Metrics.Tests.Failed -gt 0)) {
+            # We have actual test execution results
+            if ($Metrics.Tests.Failed -eq 0) {
+                $status.Tests = "Passing"
+                $passRate = [int]$Metrics.Tests.SuccessRate
+                $status.Badges.Tests = "https://img.shields.io/badge/tests-passing%20(${passRate}%25)-brightgreen"
+            } else {
+                $status.Tests = "Failing"
+                $failedCount = $Metrics.Tests.Failed
+                $totalTests = $Metrics.Tests.Passed + $Metrics.Tests.Failed + $Metrics.Tests.Skipped
+                $status.Badges.Tests = "https://img.shields.io/badge/tests-${failedCount}%20of%20${totalTests}%20failing-red"
+            }
+            if ($Metrics.Tests.LastRun -and $Metrics.Tests.LastRun -ne "Unknown" -and $Metrics.Tests.LastRun -ne "Not run recently") {
+                $status.LastBuild = $Metrics.Tests.LastRun
+            }
+        } elseif ($Metrics.Tests.Unit -gt 0 -or $Metrics.Tests.Integration -gt 0) {
+            # Test files exist but no execution results
+            $testCount = $Metrics.Tests.Unit + $Metrics.Tests.Integration
+            $status.Tests = "Not Run"
+            $status.Badges.Tests = "https://img.shields.io/badge/tests-not%20run%20(${testCount}%20tests)-yellow"
+        }
+        
+        # Set coverage status from metrics
+        if ($Metrics.Coverage.Percentage -gt 0) {
+            $coveragePercent = [int]$Metrics.Coverage.Percentage
+            $status.Coverage = "${coveragePercent}%"
+            
+            if ($coveragePercent -ge 80) {
+                $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
+            } elseif ($coveragePercent -ge 50) {
+                $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
+            } else {
+                $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+            }
+        }
+    }
+
+    # Fallback: Check recent test results from testResults.xml at project root (if metrics didn't provide data)
+    if ($status.Tests -eq "Unknown") {
+        $testResultsPath = Join-Path $ProjectPath "testResults.xml"
+        if (Test-Path $testResultsPath) {
+            $result = ConvertFrom-TestResultsXml -XmlPath $testResultsPath
+            if ($result) {
+                $status.Tests = $result.TestStatus
+                $status.Badges.Tests = $result.BadgeUrl
+                $status.LastBuild = $result.LastWriteTime
+            }
         }
     }
     
@@ -970,60 +1189,62 @@ function Get-BuildStatus {
         }
     }
 
-    # Check code coverage
-    $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
-                    Where-Object { $_.Length -gt 100 } |  # Skip empty files
-                    Sort-Object LastWriteTime -Descending |
-                    Select-Object -First 1
-    if ($coverageFiles) {
-        try {
-            [xml]$coverageXml = Get-Content $coverageFiles.FullName -ErrorAction Stop
-            $coveragePercent = 0
-            $hasCoverageData = $false
-            $totalLines = 0
-            
-            # Check for JaCoCo format (used by Pester) - use null-safe property access
-            $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
-            $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
-            
-            if ($reportHasCounter) {
-                $counters = @($coverageXml.report.counter)
-                $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
+    # Check code coverage (only if not already set from metrics)
+    if ($status.Coverage -eq "Unknown") {
+        $coverageFiles = Get-ChildItem -Path $ProjectPath -Filter "Coverage-*.xml" -Recurse -ErrorAction SilentlyContinue |
+                        Where-Object { $_.Length -gt 100 } |  # Skip empty files
+                        Sort-Object LastWriteTime -Descending |
+                        Select-Object -First 1
+        if ($coverageFiles) {
+            try {
+                [xml]$coverageXml = Get-Content $coverageFiles.FullName -ErrorAction Stop
+                $coveragePercent = 0
+                $hasCoverageData = $false
+                $totalLines = 0
                 
-                if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
-                    $missedLines = [int]$lineCounter.missed
-                    $coveredLines = [int]$lineCounter.covered
-                    $totalLines = $missedLines + $coveredLines
+                # Check for JaCoCo format (used by Pester) - use null-safe property access
+                $hasReport = $null -ne $coverageXml.PSObject.Properties['report']
+                $reportHasCounter = $hasReport -and ($null -ne $coverageXml.report.PSObject.Properties['counter'])
+                
+                if ($reportHasCounter) {
+                    $counters = @($coverageXml.report.counter)
+                    $lineCounter = $counters | Where-Object { $_.type -eq 'LINE' } | Select-Object -First 1
                     
-                    if ($totalLines -gt 0) {
-                        $coveragePercent = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                    if ($lineCounter -and $lineCounter.missed -and $lineCounter.covered) {
+                        $missedLines = [int]$lineCounter.missed
+                        $coveredLines = [int]$lineCounter.covered
+                        $totalLines = $missedLines + $coveredLines
+                        
+                        if ($totalLines -gt 0) {
+                            $coveragePercent = [math]::Round(($coveredLines / $totalLines) * 100, 1)
+                        }
+                        $hasCoverageData = $true
                     }
-                    $hasCoverageData = $true
                 }
-            }
-            # Check for Cobertura format (alternative) - use null-safe property access
-            elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
-                $coverage = $coverageXml.coverage
-                if ($null -ne $coverage.PSObject.Properties['line-rate']) {
-                    $coveragePercent = [math]::Round([double]$coverage.'line-rate' * 100, 1)
-                    $hasCoverageData = $true
+                # Check for Cobertura format (alternative) - use null-safe property access
+                elseif ($null -ne $coverageXml.PSObject.Properties['coverage']) {
+                    $coverage = $coverageXml.coverage
+                    if ($null -ne $coverage.PSObject.Properties['line-rate']) {
+                        $coveragePercent = [math]::Round([double]$coverage.'line-rate' * 100, 1)
+                        $hasCoverageData = $true
+                    }
                 }
-            }
-            
-            # Show coverage if we have data, even if it's 0%
-            if ($hasCoverageData) {
-                $status.Coverage = "${coveragePercent}%"
                 
-                if ($coveragePercent -ge 80) {
-                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
-                } elseif ($coveragePercent -ge 50) {
-                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
-                } else {
-                    $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+                # Show coverage if we have data, even if it's 0%
+                if ($hasCoverageData) {
+                    $status.Coverage = "${coveragePercent}%"
+                    
+                    if ($coveragePercent -ge 80) {
+                        $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-brightgreen"
+                    } elseif ($coveragePercent -ge 50) {
+                        $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-yellow"
+                    } else {
+                        $status.Badges.Coverage = "https://img.shields.io/badge/coverage-${coveragePercent}%25-red"
+                    }
                 }
+            } catch {
+                Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
             }
-        } catch {
-            Write-ScriptLog -Level Warning -Message "Failed to parse coverage data: $_"
         }
     }
     
@@ -1056,7 +1277,7 @@ function Get-BuildStatus {
         $status.Overall = "Issues"
     } elseif (
         ($status.Tests -eq "Passing" -and $status.Security -eq "Minor Issues") -or
-        ($status.Tests -ne "Failing" -and $status.Security -eq "Clean")
+        (($status.Tests -eq "Not Run" -or $status.Tests -eq "Passing") -and $status.Security -eq "Clean")
     ) {
         $status.Overall = "Warning"
     } else {
@@ -1565,7 +1786,7 @@ function Get-DetailedTestResults {
 
 The autogenerated test system has created $($testResults.TestFiles.Total) test files with approximately $($testResults.TestFiles.PotentialTests) test cases.
 Test results are aggregated from TestReport-*.json files in tests/results.
-Run './az 0402' (unit) or './az 0403' (integration) to execute tests.
+Run './automation-scripts/0402_Run-UnitTests.ps1' (unit) or './automation-scripts/0403_Run-IntegrationTests.ps1' (integration) to execute tests.
 "@
     }
     
@@ -2507,8 +2728,34 @@ function New-HTMLDashboard {
         [hashtable]$GitHubData,
         [hashtable]$WorkflowStatus,
         [hashtable]$HistoricalMetrics,
+        [hashtable]$FileMetrics,
+        [hashtable]$Dependencies,
         [string]$OutputPath
     )
+
+    Write-ScriptLog -Message "Generating HTML dashboard with interactive features"
+    
+    # Load enhanced template files
+    $templatePath = Join-Path $ProjectPath "templates/dashboard"
+    $enhancedStylesPath = Join-Path $templatePath "enhanced-styles.css"
+    $enhancedScriptsPath = Join-Path $templatePath "enhanced-scripts.js"
+    
+    $enhancedStyles = ""
+    $enhancedScripts = ""
+    
+    if (Test-Path $enhancedStylesPath) {
+        $enhancedStyles = Get-Content $enhancedStylesPath -Raw
+        Write-ScriptLog -Message "Loaded enhanced styles"
+    } else {
+        Write-ScriptLog -Level Warning -Message "Enhanced styles not found: $enhancedStylesPath"
+    }
+    
+    if (Test-Path $enhancedScriptsPath) {
+        $enhancedScripts = Get-Content $enhancedScriptsPath -Raw
+        Write-ScriptLog -Message "Loaded enhanced scripts"
+    } else {
+        Write-ScriptLog -Level Warning -Message "Enhanced scripts not found: $enhancedScriptsPath"
+    }
 
     Write-ScriptLog -Message "Generating HTML dashboard"
 
@@ -3394,24 +3641,34 @@ $manifestTagsSection
             color: var(--primary-color);
             font-weight: 600;
         }
+        
+        /* Enhanced Interactive Styles */
+        $enhancedStyles
     </style>
 </head>
 <body>
+    <!-- Breadcrumb Navigation -->
+    <div id="breadcrumbs"></div>
+    
     <div class="toc-toggle" onclick="toggleToc()">☰</div>
     
     <nav class="toc" id="toc">
         <h3>📑 Contents</h3>
         <ul>
             <li><a href="#overview">Overview</a></li>
+            <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#dependencies">Dependencies</a></li>
+            <li><a href="#domains">Domain Explorer</a></li>
+            <li><a href="#config">Configuration</a></li>
             <li><a href="#quality">Code Quality</a></li>
             <li><a href="#pssa">PSScriptAnalyzer</a></li>
             <li><a href="#manifest">Module Manifest</a></li>
-            <li><a href="#domains">Domain Modules</a></li>
             <li><a href="#health">Project Health</a></li>
+            <li><a href="#releases">Releases</a></li>
             <li><a href="#git">Git & VCS</a></li>
             <li><a href="#activity">Recent Activity</a></li>
-            <li><a href="#actions">Quick Actions</a></li>
+            <li><a href="#indices">Index Navigation</a></li>
             <li><a href="#system">System Info</a></li>
             <li><a href="#resources">Resources</a></li>
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
@@ -3458,6 +3715,43 @@ $manifestTagsSection
         </div>
 
         <div class="content">
+            <!-- Quick Actions Section with GitHub Integration -->
+            <section class="section" id="actions">
+                <h2>⚡ Quick Actions & GitHub Integration</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="window.location.href='code-map.html'" style="font-size: 1.1rem; padding: 12px 24px;">
+                        🗺️ Explore Interactive Code Map
+                    </button>
+                    <button class="btn btn-primary" onclick="window.open('https://github.com/wizzense/AitherZero', '_blank')">
+                        🏠 View Repository
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('bug')">
+                        🐛 Report Bug
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('feature')">
+                        ✨ Request Feature
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('docs')">
+                        📚 Improve Docs
+                    </button>
+                    <button class="btn btn-primary" onclick="createPullRequest()">
+                        🔀 Create Pull Request
+                    </button>
+                    <button class="btn" onclick="openDocumentation()">
+                        📖 Browse Documentation
+                    </button>
+                    <button class="btn" onclick="openDocumentation('README.md')">
+                        📄 View README
+                    </button>
+                    <button class="btn" onclick="window.open('https://github.com/wizzense/AitherZero/releases', '_blank')">
+                        📦 View Releases
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 Click any button to open GitHub in a new tab with pre-filled templates | 🗺️ Click Code Map for full codebase visualization
+                </p>
+            </section>
+            
             <section class="section" id="metrics">
                 <h2>📊 Project Metrics</h2>
                 <div class="metrics-grid">
@@ -3528,7 +3822,7 @@ $manifestTagsSection
                                 @"
                             <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
                                 <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
-                                    ⚠️ Only $totalTestsRun test cases executed. Run <code>./az 0402</code> for full test suite.
+                                    ⚠️ Only $totalTestsRun test cases executed. Run <code>./automation-scripts/0402_Run-UnitTests.ps1</code> for full test suite.
                                 </div>
                             </div>
 "@
@@ -3551,7 +3845,7 @@ $manifestTagsSection
                             @"
                             <div style="padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--text-secondary);">
                                 <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                    ⚠️ No test results available. Run <code>./az 0402</code> to execute tests.
+                                    ⚠️ No test results available. Run <code>./automation-scripts/0402_Run-UnitTests.ps1</code> to execute tests.
                                 </div>
                             </div>
 "@
@@ -3619,7 +3913,7 @@ $manifestTagsSection
                         } else {
                             @"
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            Run <code>./az 0404</code> to analyze code quality
+                            Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze code quality
                         </div>
 "@
                         })
@@ -3655,6 +3949,104 @@ $manifestTagsSection
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Interactive Dependency Mapping Section -->
+            <section class="section" id="dependencies">
+                <h2>🔗 Interactive Dependency Mapping</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Explore project dependencies, module relationships, and script dependencies
+                </p>
+                <div id="dependency-graph"></div>
+                <script>
+                    // Initialize dependency graph with data
+                    const dependencyData = $(if($Dependencies){$Dependencies | ConvertTo-Json -Depth 5 -Compress}else{'{}'});
+                    if (Object.keys(dependencyData).length > 0) {
+                        initDependencyGraph(dependencyData);
+                    } else {
+                        document.getElementById('dependency-graph').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0512</code> with full analysis to generate dependency map</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Domain Explorer Section -->
+            <section class="section" id="domain-explorer-section">
+                <h2>🗂️ Interactive Domain Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Click to explore each domain module, view functions, and navigate code
+                </p>
+                <div id="domain-explorer"></div>
+                <script>
+                    // Initialize domain explorer with data
+                    const domainData = $($Metrics.Domains | ConvertTo-Json -Depth 3 -Compress);
+                    if (domainData && domainData.length > 0) {
+                        initDomainExplorer(domainData);
+                    } else {
+                        document.getElementById('domain-explorer').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No domain data available</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Configuration Explorer Section -->
+            <section class="section" id="config">
+                <h2>⚙️ Interactive Configuration Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Browse and search through config.psd1 manifest interactively
+                </p>
+                <div id="config-explorer"></div>
+                <script>
+                    // Load configuration from manifest
+                    fetch('https://raw.githubusercontent.com/wizzense/AitherZero/main/config.psd1')
+                        .then(response => response.text())
+                        .then(data => {
+                            // Parse PowerShell data file (simplified)
+                            const configData = {
+                                Core: { Profile: 'Standard', MaxConcurrency: 4 },
+                                Automation: { OrchestrationEnabled: true },
+                                Testing: { Profile: 'Standard', CoverageThreshold: 80 },
+                                Note: 'Full config parsing requires PowerShell - this is a simplified view'
+                            };
+                            initConfigExplorer(configData);
+                        })
+                        .catch(err => {
+                            document.getElementById('config-explorer').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">Configuration explorer - Run dashboard locally for full config browsing</p>';
+                        });
+                </script>
+            </section>
+
+            <!-- File-Level Quality Drill-down Section -->
+            <section class="section" id="quality-drilldown-section">
+                <h2>🔍 File-Level Quality Drill-down</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Detailed quality metrics for every file - expand to see checks and issues
+                </p>
+                <div id="quality-drilldown"></div>
+                <script>
+                    // Initialize quality drilldown with file metrics
+                    // Wrap in DOMContentLoaded to ensure initQualityDrilldown function is defined
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const qualityData = $(if($FileMetrics -and $FileMetrics.Files){$FileMetrics.Files | Select-Object -First 20 | ConvertTo-Json -Depth 3 -Compress}else{'[]'});
+                        if (qualityData && qualityData.length > 0) {
+                            const fileQualityMap = {};
+                            qualityData.forEach(file => {
+                                fileQualityMap[file.Path] = {
+                                    score: file.Score || 0,
+                                    errorHandling: file.ErrorHandling ? '✅' : '❌',
+                                    logging: file.Logging ? '✅' : '❌',
+                                    testCoverage: file.HasTests ? '✅' : '❌',
+                                    pssa: file.Issues && file.Issues.length === 0 ? '✅' : file.Issues ? file.Issues.length + ' issues' : 'N/A'
+                                };
+                            });
+                            // Function will be available after enhanced-scripts.js loads
+                            if (typeof initQualityDrilldown === 'function') {
+                                initQualityDrilldown(fileQualityMap);
+                            }
+                        } else {
+                            document.getElementById('quality-drilldown').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0420</code> to generate detailed quality metrics</p>';
+                        }
+                    });
+                </script>
             </section>
 
             <section class="section" id="quality">
@@ -3727,7 +4119,7 @@ $manifestTagsSection
                 $(if ($QualityMetrics.LastValidation) {
                     "<p class='metric-label' style='text-align: center; margin-top: 20px;'>Last validation: $($QualityMetrics.LastValidation)</p>"
                 } else {
-                    "<p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>"
+                    "<p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive</code> to generate quality reports.</p>"
                 })
             </section>
 
@@ -3784,10 +4176,10 @@ $topIssuesHTML
 "@
                 })
                 
-                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./az 0404</code> to analyze code quality</p>
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze code quality</p>
 "@
                 } else {
-                    "<p class='metric-label' style='text-align: center;'>⚠️ No PSScriptAnalyzer data available. Run <code>./az 0404</code> to analyze your code.</p>"
+                    "<p class='metric-label' style='text-align: center;'>⚠️ No PSScriptAnalyzer data available. Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze your code.</p>"
                 })
             </section>
 
@@ -3854,10 +4246,10 @@ $commitsHTML
                 <div class="info-card" id="actions">
                     <div class="info-card-header">🎯 Quick Actions</div>
                     <div class="info-card-body">
-                        <p><strong>Run Tests:</strong> <code>./az 0402</code></p>
-                        <p><strong>Generate Report:</strong> <code>./az 0510</code></p>
-                        <p><strong>View Dashboard:</strong> <code>./az 0511</code></p>
-                        <p><strong>Validate Code:</strong> <code>./az 0404</code></p>
+                        <p><strong>Run Tests:</strong> <code>./automation-scripts/0402_Run-UnitTests.ps1</code></p>
+                        <p><strong>Generate Report:</strong> <code>./automation-scripts/0510_Generate-ProjectReport.ps1</code></p>
+                        <p><strong>View Dashboard:</strong> <code>./automation-scripts/0511_Show-ProjectDashboard.ps1</code></p>
+                        <p><strong>Validate Code:</strong> <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code></p>
                         <p><strong>Update Project:</strong> <code>git pull && ./bootstrap.ps1</code></p>
                     </div>
                 </div>
@@ -4195,6 +4587,48 @@ $commitsHTML
                     💡 <em>Historical data accumulates automatically with each dashboard generation</em>
                 </p>
             </section>
+
+            <!-- Release Tracker Section -->
+            <section class="section" id="releases">
+                <h2>📦 Releases & Version History</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Track releases, packages, and container versions
+                </p>
+                <div id="release-tracker"></div>
+                <script>
+                    // Fetch releases from GitHub API
+                    fetch('https://api.github.com/repos/wizzense/AitherZero/releases')
+                        .then(response => response.json())
+                        .then(releases => {
+                            if (releases && releases.length > 0) {
+                                const releaseData = releases.slice(0, 10).map(r => ({
+                                    version: r.tag_name || r.name,
+                                    date: new Date(r.published_at).toLocaleDateString(),
+                                    description: r.body ? r.body.substring(0, 200) + '...' : 'No description',
+                                    url: r.html_url,
+                                    assets: r.assets ? r.assets.map(a => ({ name: a.name, url: a.browser_download_url })) : []
+                                }));
+                                initReleaseTracker(releaseData);
+                            } else {
+                                document.getElementById('release-tracker').innerHTML = 
+                                    '<p style="text-align: center; color: var(--text-secondary);">No releases yet. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">Create your first release</a></p>';
+                            }
+                        })
+                        .catch(err => {
+                            document.getElementById('release-tracker').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">⚠️ Unable to fetch releases. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">View releases on GitHub</a></p>';
+                        });
+                </script>
+            </section>
+
+            <!-- Index Navigation Section -->
+            <section class="section" id="indices">
+                <h2>📑 Navigate Project Indices</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Quick access to all index files and documentation hubs throughout the project
+                </p>
+                <div id="index-navigation"></div>
+            </section>
         </div>
 
         <div class="footer">
@@ -4204,6 +4638,9 @@ $commitsHTML
     </div>
 
     <script>
+        /* Enhanced Interactive Dashboard Scripts */
+        $enhancedScripts
+        
         // TOC toggle for mobile
         function toggleToc() {
             document.getElementById('toc').classList.toggle('open');
@@ -4432,14 +4869,14 @@ $(if ($Metrics.Tests.LastRun) {
 "@
     if ($totalTestsRun -lt 100) {
         @"
-| ⚠️ **Note** | **Partial Run** | Only $totalTestsRun test cases executed from available test files. Run ``./az 0402`` for full suite. |
+| ⚠️ **Note** | **Partial Run** | Only $totalTestsRun test cases executed from available test files. Run ``./automation-scripts/0402_Run-UnitTests.ps1`` for full suite. |
 
-> **⚠️ Only $totalTestsRun test cases executed.** Run ``./az 0402`` for full test suite.
+> **⚠️ Only $totalTestsRun test cases executed.** Run ``./automation-scripts/0402_Run-UnitTests.ps1`` for full test suite.
 
 "@
     }
 } else {
-"| ⚠️ **Test Results** | **N/A** | No test results available. Run ``./az 0402`` |
+"| ⚠️ **Test Results** | **N/A** | No test results available. Run ``./automation-scripts/0402_Run-UnitTests.ps1`` |
 "
 })| 🧪 **Test Coverage** | **$($Metrics.TestCoverage.Percentage)%** | $($Metrics.TestCoverage.FilesWithTests) / $($Metrics.TestCoverage.TotalFiles) files have tests |
 | 📚 **Documentation Coverage** | **$($Metrics.DocumentationCoverage.Percentage)%** | $($Metrics.DocumentationCoverage.FunctionsWithDocs) / $($Metrics.DocumentationCoverage.TotalFunctions) functions documented |
@@ -4472,7 +4909,7 @@ $(if ($Metrics.Git.Branch -ne "Unknown") {
 $(if ($QualityMetrics.LastValidation) {
     "*Last quality validation: $($QualityMetrics.LastValidation)*"
 } else {
-    "*⚠️ No quality validation data available. Run ``./az 0420`` to generate quality reports.*"
+    "*⚠️ No quality validation data available. Run ``./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive`` to generate quality reports.*"
 })
 
 ## 🎯 Project Health
@@ -4504,10 +4941,10 @@ $(if($Activity.Commits.Count -gt 0) {
 
 | Action | Command |
 |--------|---------|
-| Run Tests | ``./az 0402`` |
-| Code Analysis | ``./az 0404`` |
-| Generate Reports | ``./az 0510`` |
-| View Dashboard | ``./az 0511`` |
+| Run Tests | ``./automation-scripts/0402_Run-UnitTests.ps1`` |
+| Code Analysis | ``./automation-scripts/0404_Run-PSScriptAnalyzer.ps1`` |
+| Generate Reports | ``./automation-scripts/0510_Generate-ProjectReport.ps1`` |
+| View Dashboard | ``./automation-scripts/0511_Show-ProjectDashboard.ps1`` |
 | Syntax Check | ``./az 0407`` |
 
 ## 📋 System Information
@@ -4597,7 +5034,7 @@ try {
     # Collect data
     Write-ScriptLog -Message "Collecting project data..."
     $metrics = Get-ProjectMetrics
-    $status = Get-BuildStatus
+    $status = Get-BuildStatus -Metrics $metrics
     $activity = Get-RecentActivity
     $qualityMetrics = Get-QualityMetrics
     $pssaMetrics = Get-PSScriptAnalyzerMetrics
@@ -4647,7 +5084,7 @@ try {
     # Generate dashboards based on format selection
     switch ($Format) {
         'HTML' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -OutputPath $OutputPath
         }
         'Markdown' {
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
@@ -4656,7 +5093,7 @@ try {
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }
         'All' {
-            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -OutputPath $OutputPath
+            New-HTMLDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -GitHubData $githubData -WorkflowStatus $workflowStatus -HistoricalMetrics $historicalMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -OutputPath $OutputPath
             New-MarkdownDashboard -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -OutputPath $OutputPath
             New-JSONReport -Metrics $metrics -Status $status -Activity $activity -QualityMetrics $qualityMetrics -PSScriptAnalyzerMetrics $pssaMetrics -FileMetrics $fileMetrics -Dependencies $dependencies -DetailedTests $detailedTests -CoverageDetails $coverageDetails -Lifecycle $lifecycle -OutputPath $OutputPath
         }

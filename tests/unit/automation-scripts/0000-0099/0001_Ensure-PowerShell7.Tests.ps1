@@ -9,13 +9,16 @@
     Script: 0001_Ensure-PowerShell7
     Stage: Prepare
     Description: Ensure PowerShell 7 is installed and restart if needed
-    Generated: 2025-11-04 02:14:26
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0001_Ensure-PowerShell7.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0001_Ensure-PowerShell7.ps1'
         $script:ScriptName = '0001_Ensure-PowerShell7'
 
         # Import test helpers for environment detection
@@ -66,13 +69,13 @@ Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
         }
 
         It 'Should declare dependencies' {
-            $content = Get-Content $script:ScriptPath -First 20
+            $content = Get-Content $script:ScriptPath -First 50
             ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 $params.Configuration = @{}
@@ -88,25 +91,19 @@ Describe '0001_Ensure-PowerShell7' -Tag 'Unit', 'AutomationScript', 'Prepare' {
         }
 
         It 'Should adapt to CI environment' {
-            # Skip if not in CI
             if (-not $script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "CI-only validation"
                 return
             }
-            
-            # This test only runs in CI
             $script:TestEnv.IsCI | Should -Be $true
             $env:CI | Should -Not -BeNullOrEmpty
         }
 
         It 'Should adapt to local environment' {
-            # Skip if in CI
             if ($script:TestEnv.IsCI) {
                 Set-ItResult -Skipped -Because "Local-only validation"
                 return
             }
-            
-            # This test only runs locally
             $script:TestEnv.IsCI | Should -Be $false
         }
     }

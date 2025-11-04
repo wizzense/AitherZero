@@ -1,120 +1,82 @@
 {
   "metadata": {
     "name": "ci-comprehensive-test",
-    "description": "Comprehensive test execution - mirrors GitHub Actions comprehensive-test-execution.yml",
-    "version": "2.0.0",
+    "description": "Run full test suite (unit + integration)",
+    "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "testing", "comprehensive", "github-actions", "unit", "integration"],
+    "tags": ["ci", "testing", "unit", "integration"],
     "estimatedDuration": "20-30 minutes",
-    "lastUpdated": "2025-11-02T06:30:00Z",
     "githubWorkflow": "comprehensive-test-execution.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": ["Pester"],
     "requiredTools": [],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "testType": "all",
-      "runUnitTests": true,
-      "runIntegrationTests": true,
-      "generateReports": true,
-      "publishResults": false
+      "verbose": false,
+      "generateReport": true
     },
     "profiles": {
       "unit-only": {
-        "description": "Unit tests only",
+        "description": "Run unit tests only",
         "variables": {
-          "testType": "unit",
-          "runIntegrationTests": false
+          "skipIntegration": true
         }
       },
       "integration-only": {
-        "description": "Integration tests only",
+        "description": "Run integration tests only",
         "variables": {
-          "testType": "integration",
-          "runUnitTests": false
+          "skipUnit": true
         }
       },
       "ci": {
-        "description": "CI/CD mode with reporting",
+        "description": "CI optimized - full test suite with reporting",
         "variables": {
-          "testType": "all",
-          "generateReports": true,
-          "publishResults": true
+          "skipUnit": false,
+          "skipIntegration": false,
+          "generateReport": true
         }
       }
     },
     "stages": [
       {
-        "name": "Test Discovery",
-        "description": "Discover all test files",
-        "sequences": [],
-        "preScript": "Write-Host '📋 Discovering tests...' -ForegroundColor Cyan; $unitTests = @(Get-ChildItem -Path './tests/unit' -Filter '*.Tests.ps1' -Recurse -ErrorAction SilentlyContinue); $integrationTests = @(Get-ChildItem -Path './tests/integration' -Filter '*.Tests.ps1' -Recurse -ErrorAction SilentlyContinue); Write-Host \"  Unit: $($unitTests.Count), Integration: $($integrationTests.Count)\" -ForegroundColor Yellow",
-        "continueOnError": false,
-        "timeout": 60
-      },
-      {
         "name": "Install Testing Tools",
         "description": "Ensure Pester is installed",
         "sequences": ["0400"],
+        "variables": {},
         "continueOnError": false,
-        "timeout": 120
+        "timeout": 300
       },
       {
-        "name": "Run Unit Tests",
-        "description": "Execute all unit tests",
+        "name": "Unit Tests",
+        "description": "Run unit tests",
         "sequences": ["0402"],
-        "condition": "{{runUnitTests}}",
-        "variables": {
-          "NoCoverage": true,
-          "OutputFormat": "NUnitXml"
-        },
+        "variables": {},
         "continueOnError": true,
-        "timeout": 600
+        "timeout": 900,
+        "condition": "{{skipUnit}} == false"
       },
       {
-        "name": "Run Integration Tests",
-        "description": "Execute integration tests",
+        "name": "Integration Tests",
+        "description": "Run integration tests",
         "sequences": ["0403"],
-        "condition": "{{runIntegrationTests}}",
+        "variables": {},
         "continueOnError": true,
-        "timeout": 900
+        "timeout": 900,
+        "condition": "{{skipIntegration}} == false"
       },
       {
-        "name": "Generate Reports",
-        "description": "Generate test reports",
+        "name": "Generate Test Report",
+        "description": "Generate comprehensive test report",
         "sequences": ["0450"],
-        "condition": "{{generateReports}}",
-        "continueOnError": false,
-        "timeout": 120
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 300,
+        "condition": "{{generateReport}} == true"
       }
     ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🧪 Starting comprehensive test execution...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ All tests passed!",
-      "level": "Success",
-      "includeMetrics": true
-    },
-    "onFailure": {
-      "message": "❌ Test execution completed with failures",
-      "level": "Warning",
-      "includeFailures": true
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "comprehensive-test-execution.yml"
-    }
   }
 }

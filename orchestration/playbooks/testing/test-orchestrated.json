@@ -1,0 +1,144 @@
+{
+  "name": "test-orchestrated",
+  "description": "Orchestrated testing using existing automation scripts with unified reporting",
+  "version": "2.0.0",
+  "author": "AitherZero - Complete Testing Overhaul",
+  "tags": ["testing", "orchestration", "unified", "reporting"],
+  
+  "requirements": {
+    "modules": ["Pester", "PSScriptAnalyzer"],
+    "minimumVersion": "7.0",
+    "estimatedDuration": "10-15 minutes"
+  },
+  
+  "variables": {
+    "resultsPath": "./tests/results",
+    "reportsPath": "./reports",
+    "openDashboard": true
+  },
+  
+  "profiles": {
+    "quick": {
+      "description": "Quick validation - unit tests + syntax only (5min)",
+      "excludeStages": ["Integration Tests", "Quality Analysis", "Security Scan"]
+    },
+    "standard": {
+      "description": "Standard testing - most common checks (10min)",
+      "excludeStages": ["Security Scan"]
+    },
+    "full": {
+      "description": "Full testing - everything including security (20min)",
+      "excludeStages": []
+    },
+    "ci": {
+      "description": "CI optimized - parallel where possible (10min)",
+      "variables": {
+        "openDashboard": false
+      },
+      "excludeStages": ["Security Scan"]
+    }
+  },
+  
+  "stages": [
+    {
+      "name": "Install Testing Tools",
+      "description": "Ensure Pester and PSScriptAnalyzer are installed",
+      "sequence": ["0400"],
+      "continueOnError": false,
+      "timeout": 300
+    },
+    {
+      "name": "Unit Tests",
+      "description": "Run unit tests",
+      "sequence": ["0402"],
+      "continueOnError": true,
+      "timeout": 600
+    },
+    {
+      "name": "Integration Tests",
+      "description": "Run integration tests",
+      "sequence": ["0403"],
+      "continueOnError": true,
+      "timeout": 600
+    },
+    {
+      "name": "Syntax Validation",
+      "description": "Validate PowerShell syntax",
+      "sequence": ["0407"],
+      "continueOnError": true,
+      "timeout": 180
+    },
+    {
+      "name": "Static Analysis",
+      "description": "Run PSScriptAnalyzer",
+      "sequence": ["0404"],
+      "continueOnError": true,
+      "timeout": 300
+    },
+    {
+      "name": "Quality Analysis",
+      "description": "Component quality validation",
+      "sequence": ["0420"],
+      "continueOnError": true,
+      "timeout": 300
+    },
+    {
+      "name": "Security Scan",
+      "description": "Security issues analysis",
+      "sequence": ["0523"],
+      "continueOnError": true,
+      "timeout": 300
+    }
+  ],
+  
+  "postActions": [
+    {
+      "description": "Generate project report with all metrics",
+      "type": "script",
+      "command": "0510",
+      "parameters": {
+        "Format": "All",
+        "ShowAll": true
+      },
+      "continueOnError": true
+    },
+    {
+      "description": "Generate comprehensive dashboard",
+      "type": "script",
+      "command": "0512",
+      "parameters": {
+        "Format": "All",
+        "Open": "{{openDashboard:=true}}"
+      },
+      "continueOnError": true
+    },
+    {
+      "description": "Display summary",
+      "type": "script",
+      "inline": "Write-Host \"`n═══════════════════════════════════════\" -ForegroundColor Cyan; Write-Host \"✅ Testing orchestration complete!\" -ForegroundColor Green; Write-Host \"📊 Check reports/ for detailed dashboards\" -ForegroundColor Cyan; Write-Host \"═══════════════════════════════════════`n\" -ForegroundColor Cyan"
+    }
+  ],
+  
+  "notifications": {
+    "onSuccess": {
+      "message": "✅ All tests completed - check dashboard for details",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ Some tests failed - review dashboard for prioritized issues",
+      "level": "Warning"
+    }
+  },
+  
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "uploadArtifacts": true,
+      "artifacts": [
+        "{{reportsPath}}/**/*.html",
+        "{{reportsPath}}/**/*.json",
+        "{{resultsPath}}/**/*.xml"
+      ]
+    }
+  }
+}

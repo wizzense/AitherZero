@@ -1,7 +1,7 @@
 # GitHub Actions Workflow to Playbook Mapping
 
-**Version**: 2.0  
-**Last Updated**: 2025-11-02  
+**Version**: 2.1  
+**Last Updated**: 2025-11-04  
 **Purpose**: Map GitHub Actions workflows to local playbook equivalents for testing and development
 
 ## Overview
@@ -18,6 +18,14 @@ This document maps GitHub Actions workflows (`.github/workflows/*.yml`) to their
 | **release-automation.yml** | ci-release | Operations | 0407, 0404, 0402, 0798, 0744, 0745 |
 | **documentation-automation.yml** | ci-documentation | Operations | 0733, 0745, 0746, 0515 |
 | **deploy-pr-environment.yml** | ci-deploy-pr | Operations | 0850, 0853, 0854, 0851 |
+| **validate-config.yml** | ci-validate-config | Operations | 0413, 0003 |
+| **validate-manifests.yml** | ci-validate-manifests | Operations | 0405 |
+| **validate-test-sync.yml** | ci-validate-test-sync | Operations | 0426 |
+| **auto-generate-tests.yml** | ci-auto-generate-tests | Operations | 0950, 0426 |
+| **workflow-health-check.yml** | ci-workflow-health | Operations | 0440, monitor script |
+| **index-automation.yml** | ci-index-automation | Operations | 0745 |
+| **publish-test-reports.yml** | ci-publish-test-reports | Operations | 0450 |
+| **ALL VALIDATIONS** | ci-all-validations | Operations | Multiple (see below) |
 
 ## Detailed Mappings
 
@@ -191,6 +199,231 @@ This document maps GitHub Actions workflows (`.github/workflows/*.yml`) to their
 
 ---
 
+### 7. Config Validation (`validate-config.yml` → `ci-validate-config`)
+
+**Workflow Purpose**: Validate config.psd1 manifest structure and synchronization
+
+**Playbook**: `core/operations/ci-validate-config.json`
+
+**Local Usage**:
+```powershell
+# Standard config validation
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-validate-config
+
+# Validate and fix issues
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-validate-config -PlaybookProfile fix
+```
+
+**What it validates**:
+- Config manifest structure (0413)
+- Config synchronization with automation scripts (0003)
+- PSScriptAnalyzer compliance
+
+**GitHub Actions Triggers**: `push`, `pull_request`, `workflow_dispatch`
+
+---
+
+### 8. Manifest Validation (`validate-manifests.yml` → `ci-validate-manifests`)
+
+**Workflow Purpose**: Validate PowerShell module manifests for syntax and Unicode issues
+
+**Playbook**: `core/operations/ci-validate-manifests.json`
+
+**Local Usage**:
+```powershell
+# Standard manifest validation
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-validate-manifests
+
+# Validate and fix Unicode issues
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-validate-manifests -PlaybookProfile fix
+```
+
+**What it validates**:
+- PowerShell module manifest syntax (0405)
+- Unicode character issues
+- Restricted language compliance
+
+**GitHub Actions Triggers**: `push`, `pull_request`, `workflow_dispatch`
+
+---
+
+### 9. Test Sync Validation (`validate-test-sync.yml` → `ci-validate-test-sync`)
+
+**Workflow Purpose**: Validate test files are synchronized with automation scripts
+
+**Playbook**: `core/operations/ci-validate-test-sync.json`
+
+**Local Usage**:
+```powershell
+# Check for orphaned test files
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-validate-test-sync
+
+# Remove orphaned test files
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-validate-test-sync -PlaybookProfile cleanup
+```
+
+**What it validates**:
+- Test files have corresponding scripts (0426)
+- No orphaned test files exist
+- Test directory structure matches scripts
+
+**GitHub Actions Triggers**: `push`, `pull_request`, `workflow_dispatch`
+
+---
+
+### 10. Auto-Generate Tests (`auto-generate-tests.yml` → `ci-auto-generate-tests`)
+
+**Workflow Purpose**: Automatically generate tests for automation scripts
+
+**Playbook**: `core/operations/ci-auto-generate-tests.json`
+
+**Local Usage**:
+```powershell
+# Quick mode - generate tests for new scripts only
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-auto-generate-tests -PlaybookProfile quick
+
+# Full mode - regenerate all tests
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-auto-generate-tests -PlaybookProfile full
+```
+
+**What it does**:
+- Auto-generate tests for scripts (0950)
+- Validate test synchronization (0426)
+- Create missing test files
+
+**GitHub Actions Triggers**: `push`, `pull_request`, `workflow_dispatch`
+
+---
+
+### 11. Workflow Health Check (`workflow-health-check.yml` → `ci-workflow-health`)
+
+**Workflow Purpose**: Validate GitHub Actions workflow health and configuration
+
+**Playbook**: `core/operations/ci-workflow-health.json`
+
+**Local Usage**:
+```powershell
+# Full workflow health check
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-workflow-health
+
+# Quick health check
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-workflow-health -PlaybookProfile quick
+```
+
+**What it validates**:
+- Workflow health monitor script
+- YAML syntax validation (0440)
+- Concurrency groups
+- workflow_run trigger names
+- Circular dependencies
+
+**GitHub Actions Triggers**: `push`, `pull_request`, `workflow_dispatch`
+
+---
+
+### 12. Index Automation (`index-automation.yml` → `ci-index-automation`)
+
+**Workflow Purpose**: Generate project index.md files for all directories
+
+**Playbook**: `core/operations/ci-index-automation.json`
+
+**Local Usage**:
+```powershell
+# Incremental index generation
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-index-automation
+
+# Full regeneration
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-index-automation -PlaybookProfile full
+```
+
+**What it generates**:
+- Project indexes (0745)
+- Directory structure documentation
+- Navigation indexes
+
+**GitHub Actions Triggers**: `push`, `pull_request`, `workflow_dispatch`
+
+---
+
+### 13. Publish Test Reports (`publish-test-reports.yml` → `ci-publish-test-reports`)
+
+**Workflow Purpose**: Collect and publish test results
+
+**Playbook**: `core/operations/ci-publish-test-reports.json`
+
+**Local Usage**:
+```powershell
+# Publish test reports
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-publish-test-reports
+
+# Force publish
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-publish-test-reports -PlaybookProfile force
+```
+
+**What it does**:
+- Collect test results (0450)
+- Generate test dashboards
+- Publish results to reports directory
+
+**GitHub Actions Triggers**: `workflow_run`, `push`, `workflow_dispatch`
+
+---
+
+### 14. All Validations (`ci-all-validations`)
+
+**Workflow Purpose**: Run all CI validation checks in one playbook
+
+**Playbook**: `core/operations/ci-all-validations.json`
+
+**Local Usage**:
+```powershell
+# Quick validation (essential checks only)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-all-validations -PlaybookProfile quick
+
+# Standard validation (most CI checks)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-all-validations
+
+# Comprehensive validation (all checks including tests)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-all-validations -PlaybookProfile comprehensive
+```
+
+**What it runs**:
+- PR validation (0407)
+- Config validation (0413, 0003)
+- Manifest validation (0405)
+- Test sync validation (0426)
+- Workflow health check (0440)
+- Quality validation (0404) [optional]
+- Unit tests (0400, 0402) [optional]
+
+**Profiles**:
+- `quick`: Essential checks (2-5 min)
+- `standard`: Most CI checks (10-15 min)
+- `comprehensive`: All checks including tests (15-25 min)
+
+**No GitHub Workflow**: This is a meta-playbook combining multiple workflows
+
+---
+
+## Easy Playbook Execution
+
+### New Script: 0962_Run-Playbook.ps1
+
+A new automation script makes it easy to run playbooks:
+
+```powershell
+# List all available playbooks
+./automation-scripts/0962_Run-Playbook.ps1 -List
+
+# Run a playbook
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
+
+# Dry run to see what would execute
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-pr-validation -DryRun
+```
+
+---
+
 ## Workflows Without Direct Playbook Equivalents
 
 Some workflows don't have direct playbook equivalents because they're GitHub-specific:
@@ -201,9 +434,8 @@ Some workflows don't have direct playbook equivalents because they're GitHub-spe
 |----------|---------|-----------------|
 | **jekyll-gh-pages.yml** | Deploy Jekyll to Pages | GitHub Pages deployment only |
 | **copilot-agent-router.yml** | Route to Copilot agents | GitHub Copilot integration |
-| **workflow-health-check.yml** | Monitor workflow health | GitHub Actions metadata |
-| **validate-config.yml** | Validate config manifest | Simple validation (0413) |
-| **validate-manifests.yml** | Validate PS manifests | Simple validation (0405) |
+| **archive-documentation.yml** | Archive old docs | GitHub Pages deployment |
+| **build-aithercore-packages.yml** | Build packages | Package registry integration |
 
 ### Specialized Workflows
 
@@ -212,7 +444,7 @@ Some workflows don't have direct playbook equivalents because they're GitHub-spe
 | **auto-create-issues-from-failures.yml** | Create issues from test failures | Manual: 0800, 0810 |
 | **phase2-intelligent-issue-creation.yml** | AI-powered issue creation | AI-assisted workflow |
 | **comment-release.yml** | Release on comment | GitHub comment trigger |
-| **publish-test-reports.yml** | Publish test reports | Use ci-comprehensive-test |
+| **diagnose-ci-failures.yml** | Diagnose CI failures | Manual debugging |
 
 ## Testing Workflow Changes Locally
 

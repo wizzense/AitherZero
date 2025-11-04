@@ -120,6 +120,34 @@ jobs:
           exit 1
         }
         
+    - name: 📋 Validate Directory Documentation
+      shell: pwsh
+      run: |
+        Write-Host "Validating directory documentation..." -ForegroundColor Cyan
+        
+        # Check for missing README.md or index.md files
+        try {
+          ./automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
+          Write-Host "Documentation validation completed" -ForegroundColor Green
+        } catch {
+          Write-Warning "Some directories are missing documentation"
+          # Don't fail the workflow, just warn
+        }
+        
+    - name: 📅 Track Documentation Freshness
+      shell: pwsh
+      run: |
+        Write-Host "Tracking documentation freshness..." -ForegroundColor Cyan
+        
+        # Track when docs were last updated
+        try {
+          ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
+          Write-Host "Documentation tracking completed" -ForegroundColor Green
+        } catch {
+          Write-Warning "Documentation tracking encountered issues"
+          # Don't fail the workflow
+        }
+        
     - name: 📊 Generate Index Report
       shell: pwsh
       run: |
