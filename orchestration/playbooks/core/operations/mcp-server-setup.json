@@ -70,7 +70,7 @@
     },
     "onSuccess": {
       "message": "✅ MCP Server ready! AI assistants can now control AitherZero.",
-      "level": "Success",
+      "level": "Information",
       "channels": ["console"]
     },
     "onFailure": {

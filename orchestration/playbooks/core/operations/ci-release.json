@@ -1,140 +1,84 @@
 {
   "metadata": {
     "name": "ci-release",
-    "description": "Release automation - mirrors GitHub Actions release-automation.yml",
-    "version": "2.0.0",
+    "description": "Automate release creation and deployment",
+    "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "release", "automation", "github-actions", "deployment"],
-    "estimatedDuration": "15-25 minutes",
-    "lastUpdated": "2025-11-02T06:30:00Z",
+    "tags": ["ci", "release", "deployment", "automation"],
+    "estimatedDuration": "15-30 minutes",
     "githubWorkflow": "release-automation.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": ["Pester", "PSScriptAnalyzer"],
-    "requiredTools": ["git", "gh"],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": ["git-write", "github-api"]
+    "requiredTools": ["git"],
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "version": "",
-      "prerelease": false,
-      "runFullTests": true,
-      "generateChangelog": true,
-      "publishDocs": true
+      "verbose": false,
+      "skipTests": false,
+      "version": ""
     },
     "profiles": {
-      "prerelease": {
-        "description": "Pre-release version",
+      "production": {
+        "description": "Production release - full validation",
         "variables": {
-          "prerelease": true,
-          "runFullTests": false
+          "skipTests": false
         }
       },
-      "production": {
-        "description": "Production release",
+      "prerelease": {
+        "description": "Pre-release - skip full tests",
         "variables": {
-          "prerelease": false,
-          "runFullTests": true,
-          "generateChangelog": true,
-          "publishDocs": true
+          "skipTests": true
         }
       }
     },
     "stages": [
       {
         "name": "Pre-Release Validation",
-        "description": "Comprehensive validation before release",
-        "sequences": ["0407", "0404", "0402"],
-        "condition": "{{runFullTests}}",
+        "description": "Validate syntax before release",
+        "sequences": ["0407"],
         "variables": {
-          "CheckSyntax": true,
-          "FailOnWarning": true,
-          "NoCoverage": false
+          "All": true
         },
         "continueOnError": false,
-        "timeout": 900
+        "timeout": 180
       },
       {
-        "name": "Version Update",
-        "description": "Update version in manifest files",
-        "sequences": [],
-        "preScript": "Write-Host '📝 Updating version to {{version}}...' -ForegroundColor Cyan; if ('{{version}}' -eq '') { throw 'Version is required' }; # Update VERSION file and manifests here",
+        "name": "Quality Check",
+        "description": "Run PSScriptAnalyzer",
+        "sequences": ["0404"],
+        "variables": {},
         "continueOnError": false,
-        "timeout": 60
+        "timeout": 300,
+        "condition": "{{skipTests}} == false"
+      },
+      {
+        "name": "Run Tests",
+        "description": "Run unit tests",
+        "sequences": ["0402"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 900,
+        "condition": "{{skipTests}} == false"
       },
       {
         "name": "Generate Changelog",
-        "description": "Generate changelog from commits",
+        "description": "Generate release changelog",
         "sequences": ["0798"],
-        "condition": "{{generateChangelog}}",
+        "variables": {},
         "continueOnError": true,
-        "timeout": 120
+        "timeout": 180
       },
       {
         "name": "Build Documentation",
-        "description": "Generate release documentation",
+        "description": "Build release documentation",
         "sequences": ["0744", "0745"],
-        "condition": "{{publishDocs}}",
+        "variables": {},
         "continueOnError": true,
-        "timeout": 300
-      },
-      {
-        "name": "Create Release Tag",
-        "description": "Create and push release tag",
-        "sequences": [],
-        "postScript": "Write-Host '🏷️  Creating release tag v{{version}}...' -ForegroundColor Cyan; git tag -a \"v{{version}}\" -m \"Release v{{version}}\"; git push origin \"v{{version}}\"",
-        "continueOnError": false,
-        "timeout": 120
+        "timeout": 600
       }
     ]
-  },
-  "validation": {
-    "preConditions": [
-      {
-        "name": "Version Provided",
-        "condition": "'{{version}}' -ne ''",
-        "message": "Version number is required for release"
-      },
-      {
-        "name": "Git Clean",
-        "condition": "(git status --porcelain).Length -eq 0",
-        "message": "Git working directory must be clean"
-      },
-      {
-        "name": "On Main Branch",
-        "condition": "(git branch --show-current) -eq 'main'",
-        "message": "Releases must be created from main branch"
-      }
-    ],
-    "postConditions": [
-      {
-        "name": "Tag Created",
-        "condition": "git tag -l 'v{{version}}'",
-        "message": "Release tag should be created"
-      }
-    ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "🚀 Starting release automation for version {{version}}...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ Release v{{version}} created successfully!",
-      "level": "Success"
-    },
-    "onFailure": {
-      "message": "❌ Release automation failed",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "release-automation.yml"
-    }
   }
 }

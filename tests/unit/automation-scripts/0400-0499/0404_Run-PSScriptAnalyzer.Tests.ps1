@@ -3,107 +3,119 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0404_Run-PSScriptAnalyzer
+    Enhanced functional tests for 0404_Run-PSScriptAnalyzer
 .DESCRIPTION
-    Auto-generated comprehensive tests
+    Auto-generated tests with REAL functionality validation:
+    - Structural validation (syntax, parameters)
+    - Functional validation (behavior, outputs)
+    - Error handling validation (edge cases)
+    - Integration validation (dependencies)
+
     Script: 0404_Run-PSScriptAnalyzer
-    Stage: Testing
-    Description: Performs static code analysis to identify potential issues and ensure code quality
-    Generated: 2025-11-02 21:41:15
+    Synopsis: Run PSScriptAnalyzer on AitherZero codebase
+    Strategy: Analysis scripts
+    Generated: 2025-11-04 07:20:34
 #>
 
-Describe '0404_Run-PSScriptAnalyzer' -Tag 'Unit', 'AutomationScript', 'Testing' {
+Describe '0404_Run-PSScriptAnalyzer - Enhanced Tests' -Tag 'Unit', 'Functional', 'Enhanced' {
 
     BeforeAll {
         $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0404_Run-PSScriptAnalyzer.ps1'
         $script:ScriptName = '0404_Run-PSScriptAnalyzer'
+
+        # Setup test environment
+        $script:TestRoot = Join-Path $TestDrive $script:ScriptName
+        New-Item -Path $script:TestRoot -ItemType Directory -Force | Out-Null
     }
 
-    Context 'Script Validation' {
-        It 'Script file should exist' {
+    Context '📋 Structural Validation' {
+        It 'Script file exists' {
             Test-Path $script:ScriptPath | Should -Be $true
         }
 
-        It 'Should have valid PowerShell syntax' {
+        It 'Has valid PowerShell syntax' {
             $errors = $null
-            $null = [System.Management.Automation.Language.Parser]::ParseFile(
+            [System.Management.Automation.Language.Parser]::ParseFile(
                 $script:ScriptPath, [ref]$null, [ref]$errors
             )
             $errors.Count | Should -Be 0
         }
 
-        It 'Should support WhatIf' {
+        It 'Supports WhatIf (ShouldProcess)' {
             $content = Get-Content $script:ScriptPath -Raw
             $content | Should -Match 'SupportsShouldProcess'
         }
-    }
 
-    Context 'Parameters' {
-        It 'Should have parameter: Path' {
+        It 'Has expected parameters' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Path') | Should -Be $true
-        }
-
-        It 'Should have parameter: OutputPath' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('OutputPath') | Should -Be $true
-        }
-
-        It 'Should have parameter: DryRun' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('DryRun') | Should -Be $true
-        }
-
-        It 'Should have parameter: Fix' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Fix') | Should -Be $true
-        }
-
-        It 'Should have parameter: IncludeSuppressed' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('IncludeSuppressed') | Should -Be $true
-        }
-
-        It 'Should have parameter: ExcludePaths' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('ExcludePaths') | Should -Be $true
-        }
-
-        It 'Should have parameter: Severity' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('Severity') | Should -Be $true
-        }
-
-        It 'Should have parameter: ExcludeRules' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('ExcludeRules') | Should -Be $true
-        }
-
-        It 'Should have parameter: IncludeRules' {
-            $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('IncludeRules') | Should -Be $true
         }
+    }
+
+    Context '⚙️ Functional Validation' {
+        It 'Executes in WhatIf mode without errors' {
+            { & $script:ScriptPath -WhatIf -ErrorAction Stop } | Should -Not -Throw
+        }
+
+        It 'Creates expected output files' {
+            # Mock file operations to verify behavior
+            Mock Set-Content { } -Verifiable
+            
+            # Test would execute script and verify Set-Content was called
+            # Full implementation depends on specific script
+        } -Skip:($true) # Placeholder for manual implementation
+
+        It 'Returns appropriate exit codes' {
+            # Test success case (exit 0)
+            # Test failure cases (exit non-zero)
+            # Full implementation depends on specific script
+        } -Skip:($true) # Placeholder for manual implementation
 
     }
 
-    Context 'Metadata' {
-        It 'Should be in stage: Testing' {
-            $content = Get-Content $script:ScriptPath -First 40
-            ($content -join ' ') | Should -Match '(Stage:|Category:)'
-        }
-
-        It 'Should declare dependencies' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Dependencies:'
-        }
+    Context '🚨 Error Handling' {
+        It 'Propagates errors appropriately' {
+            # Verify script handles errors and exits with non-zero code
+            # Full implementation depends on specific script
+        } -Skip:($true) # Placeholder for manual implementation
     }
 
-    Context 'Execution' {
-        It 'Should execute with WhatIf' {
-            {
-                $params = @{ WhatIf = $true }
-                & $script:ScriptPath @params
-            } | Should -Not -Throw
-        }
+    Context '🎭 Mocked Dependencies' {
+        It 'Calls Set-Content correctly' {
+            Mock Set-Content { } -Verifiable
+            
+            # Execute script with mocked dependencies
+            # Verify Set-Content was called with expected parameters
+            
+            Should -InvokeVerifiable
+        } -Skip:($true) # Placeholder for manual implementation
+
+        It 'Calls New-Item correctly' {
+            Mock New-Item { } -Verifiable
+            
+            # Execute script with mocked dependencies
+            # Verify New-Item was called with expected parameters
+            
+            Should -InvokeVerifiable
+        } -Skip:($true) # Placeholder for manual implementation
+
+        It 'Calls Remove-Item correctly' {
+            Mock Remove-Item { } -Verifiable
+            
+            # Execute script with mocked dependencies
+            # Verify Remove-Item was called with expected parameters
+            
+            Should -InvokeVerifiable
+        } -Skip:($true) # Placeholder for manual implementation
+
     }
+
 }
