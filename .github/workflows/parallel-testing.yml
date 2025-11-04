@@ -243,11 +243,6 @@ jobs:
           path: ./tests/results/DomainTests-${{ matrix.module }}.xml
           retention-days: 7
           if-no-files-found: warn
-        uses: actions/upload-artifact@v4
-        with:
-          name: domain-tests-${{ matrix.module }}
-          path: ./tests/results/DomainTests-${{ matrix.module }}.xml
-          retention-days: 7
 
   # Parallel integration tests
   integration-tests-parallel:
