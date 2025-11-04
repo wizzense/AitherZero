@@ -141,7 +141,7 @@ jobs:
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
             $config.Run.Path = $testPath
-            $config.Run.Exit = $true
+            $config.Run.Exit = $false
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Normal'
             $config.TestResult.Enabled = $true
@@ -153,6 +153,7 @@ jobs:
             Write-Host "✅ Tests completed for ${{ matrix.range }}" -ForegroundColor Green
             Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
             
             if ($result.FailedCount -gt 0) {
               exit 1
@@ -204,7 +205,7 @@ jobs:
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
             $config.Run.Path = $testPath
-            $config.Run.Exit = $true
+            $config.Run.Exit = $false
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Normal'
             $config.TestResult.Enabled = $true
@@ -216,6 +217,7 @@ jobs:
             Write-Host "✅ Tests completed for ${{ matrix.module }}" -ForegroundColor Green
             Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
             
             if ($result.FailedCount -gt 0) {
               exit 1
@@ -267,7 +269,7 @@ jobs:
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
             $config.Run.Path = $testPath
-            $config.Run.Exit = $true
+            $config.Run.Exit = $false
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Normal'
             $config.TestResult.Enabled = $true
@@ -279,6 +281,7 @@ jobs:
             Write-Host "✅ Tests completed for ${{ matrix.suite }}" -ForegroundColor Green
             Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
             
             if ($result.FailedCount -gt 0) {
               exit 1
@@ -420,41 +423,21 @@ jobs:
       - name: 💬 Comment on PR
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
+        env:
+          PASSED: ${{ steps.consolidate.outputs.total-passed }}
+          FAILED: ${{ steps.consolidate.outputs.total-failed }}
+          SKIPPED: ${{ steps.consolidate.outputs.total-skipped }}
         with:
           script: |
-            const passed = '${{ steps.consolidate.outputs.total-passed }}';
-            const failed = '${{ steps.consolidate.outputs.total-failed }}';
-            const skipped = '${{ steps.consolidate.outputs.total-skipped }}';
-            
-            const status = failed > 0 ? '❌ FAILED' : '✅ PASSED';
-            const color = failed > 0 ? '🔴' : '🟢';
-            
-            const comment = `## ⚡ Parallel Test Execution Results ${color}
-            
-            **Status**: ${status}
-            
-            ### 📊 Test Summary
-            
-            | Metric | Count | Percentage |
-            |--------|-------|------------|
-            | ✅ Passed | ${passed} | ${(passed/(parseInt(passed)+parseInt(failed)+parseInt(skipped))*100).toFixed(1)}% |
-            | ❌ Failed | ${failed} | ${(failed/(parseInt(passed)+parseInt(failed)+parseInt(skipped))*100).toFixed(1)}% |
-            | ⏭️ Skipped | ${skipped} | ${(skipped/(parseInt(passed)+parseInt(failed)+parseInt(skipped))*100).toFixed(1)}% |
-            | **Total** | **${parseInt(passed)+parseInt(failed)+parseInt(skipped)}** | **100%** |
-            
-            ### ⚡ Performance Benefits
-            
-            - Tests executed in **parallel across multiple runners**
-            - **Up to 8 concurrent jobs** for maximum speed
-            - Results consolidated automatically
-            
-            ---
-            *🤖 Parallel Testing System • View detailed results in [workflow artifacts](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*
-            `;
-            
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: comment
-            });
+            const script = require('./.github/scripts/generate-test-comment.js');
+            const mockCore = {
+              getInput: (name) => {
+                const inputs = {
+                  'passed': process.env.PASSED,
+                  'failed': process.env.FAILED,
+                  'skipped': process.env.SKIPPED
+                };
+                return inputs[name] || '';
+              }
+            };
+            return await script({github, context, core: mockCore});
