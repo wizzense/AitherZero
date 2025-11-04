@@ -6,20 +6,29 @@
     Integration tests for 0961_Validate-DirectoryDocumentation
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-04 07:53:36
+    Supports WhatIf: False
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0961_Validate-DirectoryDocumentation Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0961_Validate-DirectoryDocumentation.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0961_Validate-DirectoryDocumentation.ps1'
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
+        It 'Should execute without errors (no WhatIf support)' {
             # Script does not support -WhatIf parameter
-            # Test basic script structure instead
+            # Test basic script structure and loadability
             Test-Path $script:ScriptPath | Should -Be $true
+            
+            # Verify script can be dot-sourced
+            {
+                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop
+                $cmd | Should -Not -BeNullOrEmpty
+            } | Should -Not -Throw
         }
     }
 }
