@@ -236,12 +236,21 @@ function Get-TestResourcePath {
 
     switch ($ResourceType) {
         'TempDir' {
-            if ($isCI) {
-                # CI environments often have specific temp directories
-                return if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { $env:TEMP }
+            # Cross-platform temp directory detection
+            $temp = if ($isCI -and $env:RUNNER_TEMP) {
+                $env:RUNNER_TEMP
+            } elseif ($env:TEMP) {
+                $env:TEMP
+            } elseif ($env:TMP) {
+                $env:TMP
+            } elseif ($env:TMPDIR) {
+                $env:TMPDIR
+            } elseif ($IsWindows) {
+                'C:\Windows\Temp'
             } else {
-                return $env:TEMP
+                '/tmp'
             }
+            return $temp
         }
         'TestData' {
             return Join-Path $projectRoot 'tests/data'
@@ -255,8 +264,23 @@ function Get-TestResourcePath {
             }
         }
         'Cache' {
+            # Cross-platform cache directory
+            $temp = if ($isCI -and $env:RUNNER_TEMP) {
+                $env:RUNNER_TEMP
+            } elseif ($env:TEMP) {
+                $env:TEMP
+            } elseif ($env:TMP) {
+                $env:TMP
+            } elseif ($env:TMPDIR) {
+                $env:TMPDIR
+            } elseif ($IsWindows) {
+                'C:\Windows\Temp'
+            } else {
+                '/tmp'
+            }
+            
             if ($isCI) {
-                return if ($env:RUNNER_TEMP) { Join-Path $env:RUNNER_TEMP 'test-cache' } else { Join-Path $env:TEMP 'test-cache' }
+                return Join-Path $temp 'test-cache'
             } else {
                 return Join-Path $projectRoot '.cache/tests'
             }
