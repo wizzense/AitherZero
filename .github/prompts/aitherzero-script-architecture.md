@@ -1,17 +1,18 @@
-# AitherZero Architecture: Single-Purpose Scripts & Orchestration
+# AitherZero Architecture: Single-Purpose Scripts with Parameters
 
 **Context:** You're working with AitherZero's number-based automation system (0000-9999).
 
-## ⚠️ CRITICAL RULE: No Duplicate Scripts
+## ⚠️ CRITICAL RULE: Use Parameters, Not Duplicate Scripts
 
 ### The Problem
 Scripts 0000-9999 are designed for sequential execution. Creating variants breaks this model:
 
 ```
-❌ BAD:
+❌ BAD - Multiple scripts for behavior variations:
 0404_Run-PSScriptAnalyzer.ps1
 0404_Run-PSScriptAnalyzer-Parallel.ps1     # Causes confusion
 0404_Run-PSScriptAnalyzer-Fast.ps1         # Which one runs?
+0410_Run-PSScriptAnalyzer-Fast.ps1         # Just another version of same thing!
 0404_Run-PSScriptAnalyzer-Clean.ps1        # Violates numbering system
 ```
 
@@ -19,23 +20,45 @@ When someone runs `aitherzero 0404`, which script executes? The system breaks.
 
 ### The Solution
 
-**Option 1: Use Different Numbers for Different Purposes**
-```
-✅ GOOD:
-0404_Run-PSScriptAnalyzer.ps1       # Comprehensive analysis
-0410_Run-PSScriptAnalyzer-Fast.ps1  # Quick CI checks (different number!)
-0415_Manage-PSScriptAnalyzerCache.ps1  # Cache management
+**PRIMARY APPROACH: Use Parameters to Modify Behavior**
+```powershell
+✅ CORRECT - ONE script with parameters:
+0404_Run-PSScriptAnalyzer.ps1
+
+# Script accepts parameters:
+param(
+    [switch]$Fast,              # Fast mode for CI
+    [switch]$Comprehensive,     # Full scan
+    [switch]$UseCache,          # Use cached results
+    [switch]$Parallel,          # Use parallel processing
+    [string[]]$Severity         # Control severity levels
+)
+
+# Usage examples:
+./0404_Run-PSScriptAnalyzer.ps1                    # Default behavior
+./0404_Run-PSScriptAnalyzer.ps1 -Fast              # Fast mode
+./0404_Run-PSScriptAnalyzer.ps1 -Fast -UseCache    # Fast with cache
+./0404_Run-PSScriptAnalyzer.ps1 -Severity Error    # Errors only
+./0404_Run-PSScriptAnalyzer.ps1 -Parallel          # Use parallelization
 ```
 
-Each script has ONE clear purpose. No confusion.
-
-**Option 2: Use Orchestration for Complex Workflows**
+**ONLY use different numbers for TRULY DIFFERENT FUNCTIONALITY:**
 ```
-✅ GOOD:
+✅ CORRECT - Different purposes = different numbers:
+0404_Run-PSScriptAnalyzer.ps1          # Analysis (all modes via parameters)
+0415_Manage-PSScriptAnalyzerCache.ps1  # Cache management (different function)
+0416_Generate-AnalysisReport.ps1       # Report generation (different function)
+```
+
+Each script has ONE clear purpose. No confusion about what each does.
+
+**For Complex Workflows - Use Orchestration:**
+```
+✅ CORRECT - Playbook for workflows:
 orchestration/playbooks/code-quality-full.psd1
 
 Sequence:
-  1. Run 0404 (PSScriptAnalyzer)
+  1. Run 0404 with parameters
   2. Run 0407 (Syntax validation)
   3. Run 0512 (Generate dashboard)
 ```
@@ -44,25 +67,24 @@ Complex workflows belong in playbooks, not duplicate scripts.
 
 ## Design Principles
 
-### 1. Single Responsibility
-Each numbered script does ONE thing:
-- 0404: Run PSScriptAnalyzer with caching
-- 0410: Quick PSScriptAnalyzer for CI
-- 0415: Manage cache
+### 1. Parameters Over Duplicates
+Modify behavior with parameters, NOT separate scripts:
+- ✅ `0404_Run-PSScriptAnalyzer.ps1 -Fast`
+- ❌ `0410_Run-PSScriptAnalyzer-Fast.ps1`
 
-### 2. No Variants
+### 2. One Script Per Function
+Each numbered script does ONE function (with parameter variations):
+- 0404: Analysis (comprehensive, fast, cached - all via parameters)
+- 0415: Cache management (info, clear, prune - via -Action parameter)
+
+### 3. Never Create Behavior Variants
 Never create:
-- Script-Parallel
-- Script-Fast
-- Script-Clean
-- Script-Alternative
+- Script-Parallel (use `-Parallel` parameter)
+- Script-Fast (use `-Fast` parameter)
+- Script-Clean (use `-Clean` parameter)
+- Script-Alternative (use parameters)
 
-Instead:
-- Add caching/performance to the original script
-- Create new numbered scripts for truly different functions
-- Use playbooks for orchestration
-
-### 3. Orchestration Over Duplication
+### 4. Orchestration For Workflows
 If you need to:
 - Run multiple scripts in sequence
 - Coordinate complex workflows
@@ -74,8 +96,37 @@ Create a playbook, don't duplicate scripts.
 
 ### ❌ Wrong Approach
 ```powershell
-# User asks: "Make PSScriptAnalyzer faster with parallelization"
+# User asks: "Make PSScriptAnalyzer faster"
+# Bad response: Create 0410_Run-PSScriptAnalyzer-Fast.ps1
+
+# User asks: "Add parallel processing"
 # Bad response: Create 0404_Run-PSScriptAnalyzer-Parallel.ps1
+```
+
+### ✅ Correct Approach
+```powershell
+# User asks: "Make PSScriptAnalyzer faster"
+# Correct response: Add -Fast parameter to 0404_Run-PSScriptAnalyzer.ps1
+
+param(
+    [switch]$Fast,
+    [switch]$UseCache
+)
+
+if ($Fast) {
+    # Fast mode logic
+} else {
+    # Comprehensive mode logic
+}
+
+# User asks: "Add parallel processing"
+# Correct response: Add -Parallel parameter to 0404_Run-PSScriptAnalyzer.ps1
+
+param([switch]$Parallel)
+
+if ($Parallel) {
+    # Use parallel processing
+}
 ```
 
 ### ✅ Correct Approach

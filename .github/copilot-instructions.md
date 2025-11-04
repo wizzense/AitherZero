@@ -54,24 +54,39 @@ Located in `/domains/` (legacy references may point to `aither-core/`):
 
 ## Critical Development Patterns
 
-### ⚠️ HARD REQUIREMENT: Single-Purpose Scripts & Orchestration
+### ⚠️ HARD REQUIREMENT: Single-Purpose Scripts with Parameters
 
 **NEVER create duplicate or "alternative" versions of automation scripts!**
 
-❌ **WRONG - Creating variants:**
+❌ **WRONG - Creating separate scripts for behavior variations:**
 ```
 automation-scripts/
 ├── 0404_Run-PSScriptAnalyzer.ps1
 ├── 0404_Run-PSScriptAnalyzer-Parallel.ps1    ❌ NEVER DO THIS
 ├── 0404_Run-PSScriptAnalyzer-Fast.ps1        ❌ NEVER DO THIS  
+├── 0410_Run-PSScriptAnalyzer-Fast.ps1        ❌ WRONG - Just another version
 └── 0404_Run-PSScriptAnalyzer-Clean.ps1       ❌ NEVER DO THIS
 ```
 
-✅ **CORRECT - Single script + orchestration:**
+✅ **CORRECT - Single script with parameters for behavior modification:**
+```powershell
+automation-scripts/
+└── 0404_Run-PSScriptAnalyzer.ps1    ✅ One script with parameters
+
+# Usage examples:
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1                    # Full comprehensive scan
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Fast              # Fast mode for CI
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Severity Error   # Errors only
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -UseCache         # Use cached results
+
+# Parameters control behavior, NOT separate scripts!
+```
+
+✅ **For truly different functionality - use different numbers:**
 ```
 automation-scripts/
-├── 0404_Run-PSScriptAnalyzer.ps1    ✅ One comprehensive script
-└── 0410_Run-PSScriptAnalyzer-Fast.ps1    ✅ Different purpose (fast CI checks)
+├── 0404_Run-PSScriptAnalyzer.ps1          # Analysis (with -Fast parameter)
+└── 0415_Manage-PSScriptAnalyzerCache.ps1  # Cache management (different purpose)
 
 orchestration/playbooks/
 └── code-quality-full.psd1    ✅ Orchestrates complex workflows
@@ -79,25 +94,38 @@ orchestration/playbooks/
 
 **Core Principles:**
 1. **One Script = One Job**: Each numbered script does ONE thing well
-2. **No Duplicates**: Never create parallel/fast/clean variants with same number
-3. **Different Numbers = Different Purposes**: 0404 (comprehensive) vs 0410 (fast CI)
-4. **Orchestration for Complexity**: Use playbooks when workflow needs multiple steps
+2. **Parameters NOT Duplicates**: Modify behavior with parameters, NOT separate scripts
+3. **Different Numbers = Different Functions**: 0404 (analysis) vs 0415 (cache mgmt) - truly different purposes
+4. **Orchestration for Workflows**: Use playbooks when workflow needs multiple steps
 5. **Sequential Execution Risk**: Scripts 0000-9999 can be run sequentially - duplicates cause confusion
 
-**When You Need Complex Workflows:**
-- ✅ Create a playbook in `orchestration/playbooks/`
-- ✅ Add supporting scripts with different numbers (0415, 0416, etc.)
-- ❌ Don't create script variants (0404-parallel, 0404-fast)
+**When You Need Behavior Variations:**
+- ✅ Add parameters to existing script: `-Fast`, `-Comprehensive`, `-Severity`, `-UseCache`
+- ❌ Don't create: 0404-Fast.ps1, 0404-Parallel.ps1, 0404-Clean.ps1
+
+**When You Need Different Functionality:**
+- ✅ Create new numbered script: 0415 for cache management
+- ✅ Create playbook for complex workflows
+- ❌ Don't create variants of the same script
 
 **Example - Correct Approach:**
 ```powershell
-# If 0404 is too complex for one script, break it down:
-0404_Run-PSScriptAnalyzer.ps1          # Main analysis
-0415_Manage-PSScriptAnalyzerCache.ps1  # Cache management
-0416_Generate-PSScriptAnalyzerReport.ps1  # Reporting
+# ONE script handles all analysis modes via parameters:
+0404_Run-PSScriptAnalyzer.ps1
+    Parameters:
+        -Fast           # Quick scan for CI
+        -Comprehensive  # Full scan
+        -UseCache       # Use cache
+        -Severity       # Control severity levels
+        -Parallel       # Use parallel processing
 
-# Then orchestrate:
+# Different functionality = different script:
+0415_Manage-PSScriptAnalyzerCache.ps1  # Cache operations
+0416_Generate-AnalysisReport.ps1       # Report generation
+
+# Complex workflow = playbook:
 orchestration/playbooks/code-quality-full.psd1
+```
 ```
 
 ### Module Scope Issues
