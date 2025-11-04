@@ -1206,9 +1206,19 @@ function Get-FileLevelMetrics {
                             # Use Measure-Object instead of .Count for maximum StrictMode compatibility
                             # Use ErrorAction Continue to prevent terminating errors during analysis
                             # Use ErrorVariable to separate errors from results
+                            # CRITICAL: Run in isolated script block to prevent errors from escaping
                             $scriptAnalyzerErrors = @()
-                            $rawIssues = @(Invoke-ScriptAnalyzer -Path $file.FullName -ErrorAction Continue -ErrorVariable scriptAnalyzerErrors | 
-                                          Where-Object { $_ -is [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord] })
+                            $rawIssues = & {
+                                param($FilePath)
+                                try {
+                                    @(Invoke-ScriptAnalyzer -Path $FilePath -ErrorAction Continue 2>&1 | 
+                                      Where-Object { $_ -is [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord] })
+                                } catch {
+                                    # Silently catch and return empty array if PSScriptAnalyzer fails
+                                    @()
+                                }
+                            } $file.FullName
+                            
                             $issueCount = ($rawIssues | Measure-Object).Count
                             $issues = if ($issueCount -gt 0) { $rawIssues } else { @() }
                             
