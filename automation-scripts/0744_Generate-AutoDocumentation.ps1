@@ -134,7 +134,8 @@ function Invoke-FullDocumentationGeneration {
                 $domainName = $_.Name
                 Write-DocLog "Processing domain: $domainName" -Level Debug
 
-                $domainModules = Get-ChildItem -Path $domainPath -Filter "*.psm1"
+                # Force array to ensure .Count works even with single item
+                $domainModules = @(Get-ChildItem -Path $domainPath -Filter "*.psm1")
                 Write-DocLog "Found $($domainModules.Count) modules in domain: $domainName" -Level Debug
 
                 $domainModules | ForEach-Object {
@@ -191,10 +192,12 @@ function Invoke-IncrementalDocumentationGeneration {
                     Write-DocLog "Updated documentation for module: $($file.BaseName)" -Level Information
                     $processedCount++
                 } elseif ($file.FullName -like "*.ps1" -and $file.FullName -like "*automation-scripts*") {
-                    Write-DocLog "Processing script: $($file.BaseName)" -Level Information
-                    Update-ScriptDocumentation -ScriptPath $file.FullName
-                    Write-DocLog "Updated documentation for script: $($file.BaseName)" -Level Information
-                    $processedCount++
+                    Write-DocLog "Detected change to script: $($file.BaseName)" -Level Information
+                    # Note: Individual script documentation is handled by Invoke-ScriptDocumentationGeneration
+                    # which generates a comprehensive index. Incremental updates for individual scripts
+                    # are not currently implemented. Run with -Mode Full to regenerate script index.
+                    Write-DocLog "Script documentation handled by full generation mode" -Level Debug
+                    # Don't increment processedCount since no action was taken
                 } elseif ($file.Name -eq "README.md") {
                     Write-DocLog "Processing main README file" -Level Information
                     Update-MainDocumentation

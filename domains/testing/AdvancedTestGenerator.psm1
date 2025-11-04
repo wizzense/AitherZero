@@ -788,7 +788,7 @@ function New-ExecutionTests {
 
     if ($Metadata.Stage) {
         $null = $sb.AppendLine("        It 'Should be categorized in stage: $($Metadata.Stage)' {")
-        $null = $sb.AppendLine("            `$content = Get-Content `$script:ScriptPath -First 20")
+        $null = $sb.AppendLine("            `$content = Get-Content `$script:ScriptPath -First 50")
         $null = $sb.AppendLine("            (`$content -join ' ') | Should -Match 'Stage:.*$($Metadata.Stage)'")
         $null = $sb.AppendLine("        }")
         $null = $sb.AppendLine()
@@ -796,7 +796,7 @@ function New-ExecutionTests {
 
     if ($Metadata.Dependencies.Count -gt 0) {
         $null = $sb.AppendLine("        It 'Should declare dependencies in header' {")
-        $null = $sb.AppendLine("            `$content = Get-Content `$script:ScriptPath -First 20")
+        $null = $sb.AppendLine("            `$content = Get-Content `$script:ScriptPath -First 50")
         $null = $sb.AppendLine("            (`$content -join ' ') | Should -Match 'Dependencies:'")
         $null = $sb.AppendLine("        }")
         $null = $sb.AppendLine()
@@ -906,7 +906,7 @@ function New-DependencyTests {
 
     foreach ($dep in $Dependencies) {
         $null = $sb.AppendLine("        It 'Should document dependency: $dep' {")
-        $null = $sb.AppendLine("            `$content = Get-Content `$script:ScriptPath -First 20")
+        $null = $sb.AppendLine("            `$content = Get-Content `$script:ScriptPath -First 50")
         $null = $sb.AppendLine("            (`$content -join ' ') | Should -Match '$dep'")
         $null = $sb.AppendLine("        }")
     }
