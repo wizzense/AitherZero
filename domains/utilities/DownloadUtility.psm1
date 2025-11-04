@@ -203,7 +203,7 @@ function Invoke-FileDownload {
     if (-not $SkipValidation) {
         try {
             Write-DownloadLog "Checking remote file size..." -Level 'Debug'
-            $headRequest = Invoke-WebRequest -Uri $Uri -Method Head -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+            $headRequest = Invoke-WebRequest -Uri $Uri -Method Head -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop
             if ($headRequest.Headers.'Content-Length') {
                 $expectedSize = [long]$headRequest.Headers.'Content-Length'[0]
                 Write-DownloadLog "Expected file size: $expectedSize bytes" -Level 'Debug'
@@ -350,7 +350,7 @@ function Invoke-FileDownload {
                 $duration = (Get-Date) - $startTime
                 
                 # Validate file size if expected size is known
-                if ($expectedSize -and -not $SkipValidation) {
+                if ($expectedSize -and $expectedSize -gt 0 -and -not $SkipValidation) {
                     if ($actualSize -eq $expectedSize) {
                         Write-DownloadLog "File downloaded successfully: $actualSize bytes in $($duration.TotalSeconds.ToString('F2')) seconds" -Level 'Information'
                     } elseif ($actualSize -lt $expectedSize) {
@@ -398,6 +398,10 @@ function Invoke-FileDownload {
             
             if ($attempt -lt $RetryCount) {
                 # Calculate retry delay with exponential backoff
+                # Example progression (assuming $RetryDelaySeconds = 2):
+                # attempt 1: 2 * 2^0 = 2s
+                # attempt 2: 2 * 2^1 = 4s
+                # attempt 3: 2 * 2^2 = 8s
                 $waitSeconds = $RetryDelaySeconds * [math]::Pow(2, $attempt - 1)
                 Write-DownloadLog "Retrying in $waitSeconds seconds... (attempt $($attempt + 1) of $RetryCount)" -Level 'Information'
                 Start-Sleep -Seconds $waitSeconds

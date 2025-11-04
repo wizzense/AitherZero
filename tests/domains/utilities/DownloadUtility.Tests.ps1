@@ -202,6 +202,7 @@ Describe 'DownloadUtility Module' {
             $startTime = Get-Date
             
             # Use an invalid URL that will fail quickly
+            # 192.0.2.1 is a documentation/test IP address from TEST-NET-1 (RFC 5737), intentionally unreachable
             $result = Invoke-FileDownload -Uri 'https://192.0.2.1/file.txt' `
                 -OutFile $script:TestFile -RetryCount 3 -RetryDelaySeconds 1 -TimeoutSec 2
             
@@ -209,8 +210,8 @@ Describe 'DownloadUtility Module' {
             
             $result.Success | Should -Be $false
             # With exponential backoff: 1s + 2s + 4s = 7s + download attempts
-            # Should take at least a few seconds
-            $duration | Should -BeGreaterThan 2
+            # Should take at least 3 seconds (1s + 2s minimum from first two retries)
+            $duration | Should -BeGreaterThan 3
         }
     }
     
