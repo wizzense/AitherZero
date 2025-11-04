@@ -1,54 +1,29 @@
 {
   "metadata": {
-    "name": "ci-all-validations",
-    "description": "Run all CI validation checks in one playbook",
+    "name": "test-full",
+    "description": "Complete test suite",
     "version": "1.0.0",
-    "category": "operations",
-    "tags": ["ci", "validation", "comprehensive", "meta"],
-    "estimatedDuration": "15-25 minutes",
-    "githubWorkflow": "N/A - Meta playbook combining multiple workflows"
+    "category": "testing",
+    "tags": ["testing", "full", "complete", "validation", "quality"],
+    "estimatedDuration": "30-45 minutes",
+    "githubWorkflow": "N/A"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
-    "requiredModules": ["PSScriptAnalyzer", "Pester"],
+    "requiredModules": ["Pester", "PSScriptAnalyzer"],
     "requiredTools": [],
     "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
       "verbose": false,
-      "failFast": false
+      "generateReports": true
     },
-    "profiles": {
-      "quick": {
-        "description": "Essential checks only (2-5 min)",
-        "variables": {
-          "skipWorkflowCheck": true,
-          "skipQuality": true,
-          "skipTests": true
-        }
-      },
-      "standard": {
-        "description": "Most CI checks (10-15 min)",
-        "variables": {
-          "skipWorkflowCheck": false,
-          "skipQuality": true,
-          "skipTests": true
-        }
-      },
-      "comprehensive": {
-        "description": "All checks including tests (15-25 min)",
-        "variables": {
-          "skipWorkflowCheck": false,
-          "skipQuality": false,
-          "skipTests": false
-        }
-      }
-    },
+    "profiles": {},
     "stages": [
       {
         "name": "Syntax Validation",
-        "description": "Validate PowerShell syntax for all files",
+        "description": "Validate PowerShell syntax",
         "sequences": ["0407"],
         "variables": {
           "All": true
@@ -58,7 +33,7 @@
       },
       {
         "name": "Config Validation",
-        "description": "Validate config.psd1 manifest",
+        "description": "Validate config.psd1",
         "sequences": ["0413"],
         "variables": {},
         "continueOnError": false,
@@ -66,7 +41,7 @@
       },
       {
         "name": "Config Synchronization",
-        "description": "Sync config with automation scripts",
+        "description": "Sync config with scripts",
         "sequences": ["0003"],
         "variables": {},
         "continueOnError": true,
@@ -74,15 +49,15 @@
       },
       {
         "name": "Manifest Validation",
-        "description": "Validate PowerShell module manifests",
+        "description": "Validate module manifests",
         "sequences": ["0405"],
         "variables": {},
         "continueOnError": false,
         "timeout": 120
       },
       {
-        "name": "Test Sync Validation",
-        "description": "Validate test-script synchronization",
+        "name": "Test Sync Check",
+        "description": "Check test synchronization",
         "sequences": ["0426"],
         "variables": {},
         "continueOnError": true,
@@ -94,26 +69,23 @@
         "sequences": ["0440"],
         "variables": {},
         "continueOnError": true,
-        "timeout": 120,
-        "condition": "{{skipWorkflowCheck}} == false"
+        "timeout": 120
       },
       {
-        "name": "Quality Validation",
+        "name": "PSScriptAnalyzer",
         "description": "Run PSScriptAnalyzer on all code",
         "sequences": ["0404"],
         "variables": {},
         "continueOnError": true,
-        "timeout": 300,
-        "condition": "{{skipQuality}} == false"
+        "timeout": 300
       },
       {
         "name": "Install Testing Tools",
-        "description": "Ensure testing tools are installed",
+        "description": "Ensure testing tools installed",
         "sequences": ["0400"],
         "variables": {},
         "continueOnError": false,
-        "timeout": 300,
-        "condition": "{{skipTests}} == false"
+        "timeout": 300
       },
       {
         "name": "Unit Tests",
@@ -121,8 +93,40 @@
         "sequences": ["0402"],
         "variables": {},
         "continueOnError": true,
-        "timeout": 900,
-        "condition": "{{skipTests}} == false"
+        "timeout": 900
+      },
+      {
+        "name": "Integration Tests",
+        "description": "Run integration tests",
+        "sequences": ["0403"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 900
+      },
+      {
+        "name": "Component Quality",
+        "description": "Component quality validation",
+        "sequences": ["0420"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 300
+      },
+      {
+        "name": "Documentation Structure",
+        "description": "Validate documentation",
+        "sequences": ["0425"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 180
+      },
+      {
+        "name": "Generate Test Report",
+        "description": "Generate comprehensive test report",
+        "sequences": ["0450"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 480,
+        "condition": "{{generateReports}} == true"
       }
     ]
   }

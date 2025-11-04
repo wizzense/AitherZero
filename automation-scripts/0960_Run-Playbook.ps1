@@ -251,10 +251,31 @@ try {
         Write-ColorOutput "Status: SUCCESS" -Color Green
     }
     else {
-        Write-ColorOutput "Status: FAILED (Exit Code: $exitCode)" -Color Red
+        # WhatIf mode - just show what would be done
+        Write-ColorOutput "WhatIf: Would execute playbook '$Playbook' with the following parameters:" -Color Yellow
+        $params.GetEnumerator() | ForEach-Object {
+            Write-ColorOutput "  $($_.Key): $($_.Value)" -Color Gray
+        }
+        $exitCode = 0
+        $shouldExecute = $false
     }
     
-    Write-ColorOutput ""
+    # Display completion info (only if actually executed)
+    if ($shouldExecute) {
+        $duration = (Get-Date) - $script:StartTime
+        Write-ColorOutput ""
+        Write-ColorOutput "=== Execution Complete ===" -Color Cyan
+        Write-ColorOutput "Duration: $($duration.ToString('mm\:ss'))" -Color Gray
+        
+        if ($exitCode -eq 0) {
+            Write-ColorOutput "Status: SUCCESS" -Color Green
+        }
+        else {
+            Write-ColorOutput "Status: FAILED (Exit Code: $exitCode)" -Color Red
+        }
+        
+        Write-ColorOutput ""
+    }
     
     exit $exitCode
 }

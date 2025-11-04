@@ -1,78 +1,49 @@
 {
   "metadata": {
     "name": "ci-publish-test-reports",
-    "description": "Publish test reports - mirrors GitHub Actions publish-test-reports.yml",
+    "description": "Collect and publish test results",
     "version": "1.0.0",
     "category": "operations",
-    "author": "AitherZero CI/CD Team",
-    "tags": ["ci", "testing", "reports", "github-actions", "publishing"],
+    "tags": ["ci", "testing", "reporting", "artifacts"],
     "estimatedDuration": "3-8 minutes",
-    "lastUpdated": "2025-11-04T06:00:00Z",
     "githubWorkflow": "publish-test-reports.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": ["Pester"],
     "requiredTools": [],
-    "platforms": ["Windows", "Linux", "macOS"],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {
-      "collectReports": true,
-      "publishResults": true,
-      "forcePublish": false
+      "verbose": false,
+      "force": false
     },
     "profiles": {
       "standard": {
-        "description": "Standard report publishing",
+        "description": "Standard test report publishing",
         "variables": {
-          "collectReports": true,
-          "publishResults": true,
-          "forcePublish": false
+          "force": false
         }
       },
       "force": {
-        "description": "Force publish even if no changes detected",
+        "description": "Force publish even if no changes",
         "variables": {
-          "collectReports": true,
-          "publishResults": true,
-          "forcePublish": true
+          "force": true
         }
       }
     },
     "stages": [
       {
-        "name": "Publish Test Results",
-        "description": "Collect and publish test results",
+        "name": "Collect Test Results",
+        "description": "Collect and aggregate test results",
         "sequences": ["0450"],
-        "condition": "{{publishResults}}",
         "variables": {
-          "Force": "{{forcePublish}}"
+          "Force": "{{force}}"
         },
         "continueOnError": false,
-        "timeout": 300
+        "timeout": 480
       }
     ]
-  },
-  "notifications": {
-    "onStart": {
-      "message": "📊 Starting test report publishing...",
-      "level": "Information"
-    },
-    "onSuccess": {
-      "message": "✅ Test reports published successfully!",
-      "level": "Information"
-    },
-    "onFailure": {
-      "message": "❌ Test report publishing failed",
-      "level": "Error"
-    }
-  },
-  "integrations": {
-    "github": {
-      "enabled": true,
-      "workflow": "publish-test-reports.yml"
-    }
   }
 }
