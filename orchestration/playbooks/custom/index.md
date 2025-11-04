@@ -1,6 +1,6 @@
-# examples
+# custom
 
-**Navigation**: [🏠 Root](../../../index.md) → [orchestration](../../index.md) → [playbooks](../index.md) → **examples**
+**Navigation**: [🏠 Root](../../../index.md) → [orchestration](../../index.md) → [playbooks](../index.md) → **custom**
 
 ⬆️ **Parent**: [playbooks](../index.md)
 
@@ -11,17 +11,16 @@ See [README.md](./README.md) for detailed information about this directory.
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 3
+- **Files**: 2
 
 ## 📄 Files
 
 ### .json Files
 
-- ⚙️ [test-quick-v3.json](./test-quick-v3.json)
+- ⚙️ [endpoint-configuration-example.json](./endpoint-configuration-example.json)
 
 ### .md Files
 
-- 📝 [index.md](./index.md)
 - 📝 [README.md](./README.md)
 
 ---

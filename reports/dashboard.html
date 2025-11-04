@@ -758,12 +758,13 @@
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
             <li><a href="#github-activity">🌟 GitHub</a></li>
             <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#github-issues">🐛 Issues</a></li>
             <li><a href="#trends">📈 Trends</a></li>
         </ul>
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-31 19:37:08
+        🔄 Last updated: 2025-11-04 03:32:46
     </div>
 
     <div class="container">
@@ -775,18 +776,18 @@
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
-                <img src="https://img.shields.io/badge/tests-passing-brightgreen" alt="Tests Status">
+                <img src="https://img.shields.io/badge/tests-failing-red" alt="Tests Status">
                 <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
                 <img src="https://img.shields.io/github/license/wizzense/AitherZero" alt="License">
                 <img src="https://img.shields.io/github/last-commit/wizzense/AitherZero" alt="Last Commit">
             </div>
 
             <div class="status-bar">
-                <div class="status-badge status-healthy">
-                    🎯 Overall: Healthy
+                <div class="status-badge status-issues">
+                    🎯 Overall: Issues
                 </div>
-                <div class="status-badge status-healthy">
-                    🧪 Tests: Passing
+                <div class="status-badge status-issues">
+                    🧪 Tests: Failing
                 </div>
                 <div class="status-badge status-healthy">
                     🔒 Security: Clean
@@ -803,32 +804,32 @@
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <h3>📁 Project Files</h3>
-                        <div class="metric-value">192</div>
+                        <div class="metric-value">203</div>
                         <div class="metric-label">
-                            131 Scripts | 56 Modules | 5 Data
+                            139 Scripts | 58 Modules | 6 Data
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                        📄 320 Markdown | 🔧 3 YAML | 📋 92 JSON
+                        📄 408 Markdown | 🔧 3 YAML | 📋 126 JSON
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">86,757</div>
+                        <div class="metric-value">94,156</div>
                         <div class="metric-label">
-                            973 Functions
+                            1115 Functions
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            💬 7,134 Comments (8.2%) | ⚪ 14,629 Blank Lines
+                            💬 7,714 Comments (8.2%) | ⚪ 15,682 Blank Lines
                         </div>
                     </div>
                     
                     <div class="metric-card">
                         <h3>🤖 Automation Scripts</h3>
-                        <div class="metric-value">124</div>
+                        <div class="metric-value">134</div>
                         <div class="metric-label">Number-based orchestration (0000-9999)</div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ⚡ 15 GitHub Workflows
+                            ⚡ 21 GitHub Workflows
                         </div>
                     </div>
                     
@@ -836,7 +837,7 @@
                         <h3>🗂️ Domain Modules</h3>
                         <div class="metric-value">11</div>
                         <div class="metric-label">
-                            35 Total Modules
+                            37 Total Modules
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
                             Consolidated architecture
@@ -845,51 +846,95 @@
 
                     <div class="metric-card">
                         <h3>🧪 Test Files</h3>
-                        <div class="metric-value">281</div>
+                        <div class="metric-value">307</div>
                         <div class="metric-label">
-                            142 Unit | 139 Integration
+                            154 Unit | 153 Integration
                         </div>
-                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--success);">
+                        
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--card-border);">
+                            <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
+                                Last Test Run Results:
+                            </div>
+                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--error);">
                             <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
                                 Last Test Run Results:
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                ✅ 12 Passed | ❌ 0 Failed
+                                ✅ 5 Passed | ❌ 17 Failed
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                Success Rate: <span style="color: var(--success); font-weight: 600;">100%</span> | Duration: 0.98s
+                                                        <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
+                                <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
+                                    ⚠️ Only 22 test cases executed. Run <code>./az 0402</code> for full test suite.
+                                </div>
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Last run: 2025-10-31 19:33:04
+                                Last run: 2025-11-04 03:15:38
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--warning); margin-top: 8px; font-style: italic;">
-                                ⚠️ Only 12 test cases executed. Run <code>./az 0402</code> for full test suite.
-                            </div>
+                        </div>
                         </div>
                     </div>
 
                     <div class="metric-card">
-                        <h3>📊 Code Coverage</h3>
-                        <div class="metric-value">0%</div>
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">71.3%</div>
                         <div class="metric-label">
-                            No coverage data available
+                            127 / 178 Files Have Tests
                         </div>
-                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 71.3%; background: var(--warning)">
+                                71.3%
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ 51 files without tests
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>📚 Documentation Coverage</h3>
+                        <div class="metric-value">9.3%</div>
+                        <div class="metric-label">
+                            104 / 1115 Functions Documented
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 9.3%; background: var(--error)">
+                                9.3%
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ 1006 functions without docs
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>✨ Code Quality</h3>
+                        <div class="metric-value">94/100</div>
+                        <div class="metric-label">
+                            236 issues in 10 files
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 94%; background: var(--success)">
+                                94/100
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ✅ 190 clean, ⚠️ 9 warnings, ❌ 1 errors
+                        </div>
                     </div>
                     
                                         <div class="metric-card">
                         <h3>🌿 Git Repository</h3>
-                        <div class="metric-value" style="font-size: 1.8rem;">45</div>
+                        <div class="metric-value" style="font-size: 1.8rem;">3</div>
                         <div class="metric-label">Total Commits</div>
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/update-dashboard-data-fidelity</span>
+                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/fix-reporting-engine-issues</span>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                👥 4 Contributors
+                                👥 2 Contributors
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Latest: b930021 - Phase 2: Add GitHub API integration for live repository metrics (11 minutes ago)
+                                Latest: ed0a632 - fix: improve coverage XML parsing with null-safe property access (5 minutes ago)
                             </div>
                         </div>
                     </div>
@@ -1080,7 +1125,7 @@
                     </div>
                     <div class="domain-card">
                         <h4>experience</h4>
-                        <div class="module-count">2 modules</div>
+                        <div class="module-count">4 modules</div>
                     </div>
                     <div class="domain-card">
                         <h4>infrastructure</h4>
@@ -1108,17 +1153,17 @@
             <section class="section" id="health">
                 <h2>📈 Project Health</h2>
                 <div class="badge-grid">
-                    <div class="badge ">
-                        Build: Passing
+                    <div class="badge error">
+                        Build: Unknown
                     </div>
-                    <div class="badge ">
-                        Tests: Passing
+                    <div class="badge error">
+                        Tests: Failing
                     </div>
-                    <div class="badge info">Coverage: 0%</div>
+                    <div class="badge info">Quality: 94/100</div>
                     <div class="badge">Security: Scanned</div>
                     <div class="badge">Platform: Unix</div>
                     <div class="badge">PowerShell: 7.4.13</div>
-                    <div class='badge info'>Workflows: 15</div>
+                    <div class='badge info'>Workflows: 21</div>
                 </div>
             </section>
             
@@ -1128,11 +1173,11 @@
                     <div class="info-card">
                         <div class="info-card-header">📊 Repository Statistics</div>
                         <div class="info-card-body">
-                            <p><strong>Branch:</strong> <code>copilot/update-dashboard-data-fidelity</code></p>
-                            <p><strong>Total Commits:</strong> 45</p>
-                            <p><strong>Contributors:</strong> 4</p>
-                            <p><strong>Automation Scripts:</strong> 124</p>
-                            <p><strong>GitHub Workflows:</strong> 15</p>
+                            <p><strong>Branch:</strong> <code>copilot/fix-reporting-engine-issues</code></p>
+                            <p><strong>Total Commits:</strong> 3</p>
+                            <p><strong>Contributors:</strong> 2</p>
+                            <p><strong>Automation Scripts:</strong> 134</p>
+                            <p><strong>GitHub Workflows:</strong> 21</p>
                         </div>
                     </div>
                     
@@ -1140,7 +1185,7 @@
                         <div class="info-card-header">📝 Latest Commit</div>
                         <div class="info-card-body">
                             <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
-                                b930021 - Phase 2: Add GitHub API integration for live repository metrics (11 minutes ago)
+                                ed0a632 - fix: improve coverage XML parsing with null-safe property access (5 minutes ago)
                             </p>
                         </div>
                     </div>
@@ -1153,24 +1198,16 @@
                     <div class="info-card-body">
                         <ul class="commit-list">
                             <li class='commit-item'>
-                                <span class='commit-hash'>b930021</span>
-                                <span class='commit-message'>Phase 2: Add GitHub API integration for live repository metrics</span>
+                                <span class='commit-hash'>ed0a632</span>
+                                <span class='commit-message'>fix: improve coverage XML parsing with null-safe property access</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>8048168</span>
-                                <span class='commit-message'>Restore interactive roadmap and GitHub activity sections with all code review fixes</span>
+                                <span class='commit-hash'>a1e9b8b</span>
+                                <span class='commit-message'>Initial plan</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>5b43503</span>
-                                <span class='commit-message'>Addressing PR comments</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>c5a11b2</span>
-                                <span class='commit-message'>docs: update project indexes [auto-generated]</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>6a8cc82</span>
-                                <span class='commit-message'>Merge 9b0700b7ae2f2bc42cac3710280cd53704588dbe into d33d0ccce7fe34af8066fdd1b25340343f0bd153</span>
+                                <span class='commit-hash'>d454e2f</span>
+                                <span class='commit-message'>Fix test failures: add metadata, WhatIf support, and Node.js setup to workflows (#2100)</span>
                             </li>
                         </ul>
                     </div>
@@ -1193,7 +1230,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.13</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-31 19:37:08</p>
+                        <p><strong>Last Scan:</strong> 2025-11-04 03:32:46</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -1383,7 +1420,7 @@
                     </div>
                     <div class="metric-card">
                         <h3>👥 Contributors</h3>
-                        <div class="metric-value" style="font-size: 2rem;">4</div>
+                        <div class="metric-value" style="font-size: 2rem;">2</div>
                         <div class="metric-label">Active Contributors</div>
                     </div>
                     <div class="metric-card">
@@ -1437,27 +1474,29 @@
                 </p>
             </section>
 
+            <!-- GitHub Issues Section -->
+            <section class="section" id="github-issues" style="margin-top: 30px;">
+                <h2>🐛 Open GitHub Issues</h2>
+                <p style='color: var(--text-secondary); text-align: center;'>✅ <em>No open issues! Great job!</em></p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    Showing up to 10 open issues | <a href="https://github.com/wizzense/AitherZero/issues" target="_blank" style="color: var(--info);">View all issues</a>
+                </p>
+            </section>
+
             <!-- Historical Trends Section -->
             <section class="section" id="trends" style="margin-top: 30px;">
                 <h2>📈 Historical Trends</h2>
                 <div class="info-card">
                     <div class="info-card-header">📊 Test Execution Trends</div>
                     <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-10-31</strong>: 12/281 passed (4.3%)</div>
-                    </div>
-                </div>
-                
-                <div class="info-card" style="margin-top: 20px;">
-                    <div class="info-card-header">📈 Code Coverage Trends</div>
-                    <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-10-31</strong>: 0% coverage</div>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 5/307 passed (1.6%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-03</strong>: 12/304 passed (3.9%)</div>
                     </div>
                 </div>
                 
                 <div class="info-card" style="margin-top: 20px;">
                     <div class="info-card-header">📏 Lines of Code Growth</div>
                     <div class="info-card-content">
-                        <p style='color: var(--text-secondary);'>No historical LOC data available yet. Data will be tracked going forward.</p>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,156 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,156 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,156 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 94,152 LOC, 1115 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-03</strong>: 93,461 LOC, 1111 functions</div>
                     </div>
                 </div>
                 
@@ -1468,7 +1507,7 @@
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-31 19:37:08 |
+            Generated by AitherZero Dashboard | 2025-11-04 03:32:46 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
