@@ -686,7 +686,15 @@ function Get-QualityMetrics {
     # Find quality reports
     $qualityReportsPath = Join-Path $ProjectPath "reports/quality"
     if (-not (Test-Path $qualityReportsPath)) {
-        Write-ScriptLog -Level Warning -Message "Quality reports directory not found: $qualityReportsPath"
+        Write-ScriptLog -Message "Quality reports directory does not exist yet. Creating: $qualityReportsPath"
+        try {
+            New-Item -Path $qualityReportsPath -ItemType Directory -Force | Out-Null
+            Write-ScriptLog -Message "Created quality reports directory successfully"
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to create quality reports directory: $_"
+        }
+        # Return empty metrics since no reports exist yet
+        Write-ScriptLog -Message "No quality reports available yet. Run './az 0420' to generate quality validation reports."
         return $qualityMetrics
     }
     
