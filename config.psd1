@@ -1268,6 +1268,173 @@
             RepoUrl = 'https://github.com/Aitherium/AitherLabs.git'
             InfraRepoUrl = 'https://github.com/Aitherium/aitherium-infrastructure.git'
         }
+        
+        # OS ISO Download Configuration
+        # Automated download of operating system ISOs for lab environments
+        # Uses Invoke-FileDownload with BITS support when user is logged in interactively
+        ISODownloads = @{
+            Enabled = $true
+            DownloadPath = 'C:/iso_share'  # Uses IsoSharePath by default
+            UseBITS = $true  # Use BITS when available (interactive sessions), auto-fallback to WebRequest
+            RetryCount = 5  # Large files need more retries
+            RetryDelaySeconds = 5  # Longer delay for large downloads
+            TimeoutSec = 3600  # 1 hour timeout for large ISOs
+            
+            # Windows ISOs
+            Windows = @{
+                Enabled = $true
+                # Note: Microsoft requires authentication for official ISOs
+                # These are evaluation/trial versions or require MSDN/VLSC access
+                Server2022 = @{
+                    Enabled = $true
+                    Url = 'https://software-static.download.prss.microsoft.com/dbazure/988969d5-f34g-4e03-ac9d-1f9786c66751/SERVER_EVAL_x64FRE_en-us.iso'
+                    FileName = 'WindowsServer2022-Eval.iso'
+                    Size = '5.3GB'
+                    SHA256 = ''  # Add checksum for validation if available
+                    Description = 'Windows Server 2022 Evaluation'
+                }
+                Server2019 = @{
+                    Enabled = $true
+                    Url = 'https://software-download.microsoft.com/download/pr/17763.737.190906-2324.rs5_release_svc_refresh_SERVER_EVAL_x64FRE_en-us_1.iso'
+                    FileName = 'WindowsServer2019-Eval.iso'
+                    Size = '5.1GB'
+                    SHA256 = ''
+                    Description = 'Windows Server 2019 Evaluation'
+                }
+                Windows11 = @{
+                    Enabled = $false  # Requires media creation tool or manual download
+                    Url = ''  # User must provide URL
+                    FileName = 'Windows11.iso'
+                    Size = '5.5GB'
+                    SHA256 = ''
+                    Description = 'Windows 11 (requires manual URL configuration)'
+                }
+                Windows10 = @{
+                    Enabled = $false
+                    Url = ''  # User must provide URL
+                    FileName = 'Windows10.iso'
+                    Size = '5.2GB'
+                    SHA256 = ''
+                    Description = 'Windows 10 (requires manual URL configuration)'
+                }
+            }
+            
+            # Linux ISOs
+            Linux = @{
+                Enabled = $true
+                Ubuntu = @{
+                    '22.04' = @{
+                        Enabled = $true
+                        Url = 'https://releases.ubuntu.com/22.04/ubuntu-22.04.3-live-server-amd64.iso'
+                        FileName = 'ubuntu-22.04.3-server-amd64.iso'
+                        Size = '2.5GB'
+                        SHA256 = ''
+                        Description = 'Ubuntu 22.04.3 LTS Server'
+                    }
+                    '20.04' = @{
+                        Enabled = $false
+                        Url = 'https://releases.ubuntu.com/20.04/ubuntu-20.04.6-live-server-amd64.iso'
+                        FileName = 'ubuntu-20.04.6-server-amd64.iso'
+                        Size = '1.4GB'
+                        SHA256 = ''
+                        Description = 'Ubuntu 20.04.6 LTS Server'
+                    }
+                }
+                Debian = @{
+                    '12' = @{
+                        Enabled = $true
+                        Url = 'https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.2.0-amd64-netinst.iso'
+                        FileName = 'debian-12.2.0-amd64-netinst.iso'
+                        Size = '650MB'
+                        SHA256 = ''
+                        Description = 'Debian 12 (Bookworm) Network Installer'
+                    }
+                    '11' = @{
+                        Enabled = $false
+                        Url = 'https://cdimage.debian.org/cdimage/archive/11.8.0/amd64/iso-cd/debian-11.8.0-amd64-netinst.iso'
+                        FileName = 'debian-11.8.0-amd64-netinst.iso'
+                        Size = '400MB'
+                        SHA256 = ''
+                        Description = 'Debian 11 (Bullseye) Network Installer'
+                    }
+                }
+                CentOS = @{
+                    'Stream9' = @{
+                        Enabled = $true
+                        Url = 'https://mirrors.centos.org/mirrorlist?path=/9-stream/BaseOS/x86_64/iso/CentOS-Stream-9-latest-x86_64-dvd1.iso&redirect=1&protocol=https'
+                        FileName = 'CentOS-Stream-9-latest-x86_64-dvd1.iso'
+                        Size = '10GB'
+                        SHA256 = ''
+                        Description = 'CentOS Stream 9'
+                    }
+                }
+                RHEL = @{
+                    '9' = @{
+                        Enabled = $false  # Requires Red Hat account
+                        Url = ''  # User must provide URL from Red Hat Customer Portal
+                        FileName = 'rhel-9-x86_64-dvd.iso'
+                        Size = '10GB'
+                        SHA256 = ''
+                        Description = 'Red Hat Enterprise Linux 9 (requires Red Hat account)'
+                    }
+                }
+                AlmaLinux = @{
+                    '9' = @{
+                        Enabled = $true
+                        Url = 'https://repo.almalinux.org/almalinux/9/isos/x86_64/AlmaLinux-9-latest-x86_64-dvd.iso'
+                        FileName = 'AlmaLinux-9-latest-x86_64-dvd.iso'
+                        Size = '10GB'
+                        SHA256 = ''
+                        Description = 'AlmaLinux 9 (RHEL clone)'
+                    }
+                }
+                RockyLinux = @{
+                    '9' = @{
+                        Enabled = $true
+                        Url = 'https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9-latest-x86_64-dvd.iso'
+                        FileName = 'Rocky-9-latest-x86_64-dvd.iso'
+                        Size = '10GB'
+                        SHA256 = ''
+                        Description = 'Rocky Linux 9 (RHEL clone)'
+                    }
+                }
+                Fedora = @{
+                    '39' = @{
+                        Enabled = $false
+                        Url = 'https://download.fedoraproject.org/pub/fedora/linux/releases/39/Server/x86_64/iso/Fedora-Server-dvd-x86_64-39-1.5.iso'
+                        FileName = 'Fedora-Server-39-x86_64.iso'
+                        Size = '2.1GB'
+                        SHA256 = ''
+                        Description = 'Fedora 39 Server'
+                    }
+                }
+            }
+            
+            # Other Operating Systems
+            Other = @{
+                Enabled = $true
+                FreeBSD = @{
+                    '14.0' = @{
+                        Enabled = $false
+                        Url = 'https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/14.0/FreeBSD-14.0-RELEASE-amd64-dvd1.iso'
+                        FileName = 'FreeBSD-14.0-RELEASE-amd64-dvd1.iso'
+                        Size = '3.7GB'
+                        SHA256 = ''
+                        Description = 'FreeBSD 14.0 Release'
+                    }
+                }
+                OpenBSD = @{
+                    '7.4' = @{
+                        Enabled = $false
+                        Url = 'https://cdn.openbsd.org/pub/OpenBSD/7.4/amd64/install74.iso'
+                        FileName = 'openbsd-7.4-amd64-install.iso'
+                        Size = '550MB'
+                        SHA256 = ''
+                        Description = 'OpenBSD 7.4'
+                    }
+                }
+            }
+        }
     }
     
     # ===================================================================
