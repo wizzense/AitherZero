@@ -157,8 +157,8 @@ function Get-ScriptTestMetadata {
         Description = ''
     }
 
-    # Extract script header comments for metadata
-    $content = Get-Content $ScriptPath -First 20
+    # Extract script header comments for metadata (read more lines to accommodate longer headers)
+    $content = Get-Content $ScriptPath -First 50
     foreach ($line in $content) {
         if ($line -match '^#\s*Stage:\s*(.+)') {
             $metadata.Stage = $Matches[1].Trim()

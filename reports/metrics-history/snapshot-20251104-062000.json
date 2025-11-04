@@ -1,0 +1,43 @@
+{
+  "LineCoverage": {
+    "Percentage": 0,
+    "CoveredLines": 0,
+    "TotalLines": 0
+  },
+  "Timestamp": "2025-11-04T06:20:00.3519038+00:00",
+  "QualityCoverage": {
+    "TotalValidated": 200,
+    "TotalIssues": 236,
+    "AverageScore": 94,
+    "WarningFiles": 9,
+    "Percentage": 96.4,
+    "FailedFiles": 1.0,
+    "PassedFiles": 190
+  },
+  "Tests": {
+    "Total": 307,
+    "Skipped": 0,
+    "Failed": 17,
+    "Passed": 5,
+    "LastRun": "2025-11-04 06:14:56",
+    "Duration": "1.26s",
+    "Integration": 153,
+    "Unit": 154,
+    "SuccessRate": 22.7
+  },
+  "Date": "2025-11-04",
+  "LinesOfCode": 94246,
+  "TestCoverage": {
+    "TotalFiles": 178,
+    "Percentage": 71.3,
+    "FilesWithoutTests": 51,
+    "FilesWithTests": 127
+  },
+  "Functions": 1115,
+  "DocumentationCoverage": {
+    "FunctionsWithoutDocs": 1006,
+    "Percentage": 9.3,
+    "TotalFunctions": 1115,
+    "FunctionsWithDocs": 104
+  }
+}
