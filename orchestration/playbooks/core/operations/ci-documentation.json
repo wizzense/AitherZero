@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "name": "ci-documentation",
+    "description": "Documentation automation - mirrors GitHub Actions documentation-automation.yml",
+    "version": "2.0.0",
+    "category": "operations",
+    "author": "AitherZero CI/CD Team",
+    "tags": ["ci", "documentation", "automation", "github-actions"],
+    "estimatedDuration": "10-15 minutes",
+    "lastUpdated": "2025-11-02T06:30:00Z",
+    "githubWorkflow": "documentation-automation.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": [],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"],
+    "permissions": []
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "mode": "Full",
+      "format": "Both",
+      "generateIndexes": true,
+      "publishPages": false
+    },
+    "profiles": {
+      "incremental": {
+        "description": "Incremental documentation update",
+        "variables": {
+          "mode": "Incremental",
+          "generateIndexes": false
+        }
+      },
+      "full": {
+        "description": "Full documentation regeneration",
+        "variables": {
+          "mode": "Full",
+          "format": "Both",
+          "generateIndexes": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Generate Function Documentation",
+        "description": "Generate documentation from function comments",
+        "sequences": ["0733"],
+        "variables": {
+          "Mode": "{{mode}}",
+          "Format": "{{format}}"
+        },
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Generate Project Indexes",
+        "description": "Create project navigation indexes",
+        "sequences": ["0745"],
+        "condition": "{{generateIndexes}}",
+        "continueOnError": false,
+        "timeout": 180
+      },
+      {
+        "name": "Generate All Documentation",
+        "description": "Complete documentation generation",
+        "sequences": ["0746"],
+        "variables": {
+          "IncludeAPI": true,
+          "IncludeGuides": true
+        },
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Deploy to GitHub Pages",
+        "description": "Deploy documentation to GitHub Pages",
+        "sequences": ["0515"],
+        "condition": "{{publishPages}}",
+        "continueOnError": true,
+        "timeout": 180
+      }
+    ]
+  },
+  "notifications": {
+    "onStart": {
+      "message": "📚 Starting documentation generation...",
+      "level": "Information"
+    },
+    "onSuccess": {
+      "message": "✅ Documentation generated successfully!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ Documentation generation failed",
+      "level": "Error"
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "workflow": "documentation-automation.yml"
+    }
+  }
+}
