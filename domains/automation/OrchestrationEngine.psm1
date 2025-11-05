@@ -1117,6 +1117,10 @@ function Invoke-SequentialOrchestration {
                 }
 
             } catch {
+                # With pre-increment, $retryCount represents attempts made so far
+                # maxRetries = 0 means 1 attempt total (no retries)
+                # maxRetries = 1 means 2 attempts total (1 original + 1 retry)
+                # So: $retryCount > $maxRetries means we've exhausted all allowed attempts
                 if ($retryCount -gt $maxRetries) {
                     Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $($maxRetries) retries)" -Level 'Error'
 
