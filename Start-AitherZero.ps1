@@ -2888,16 +2888,45 @@ function Show-AdvancedMenu {
 
                 $configPath = Join-Path $script:ProjectRoot 'config.psd1'
 
-                if ($IsWindows) {
+                try {
+                    if ($IsWindows) {
 
-                    Start-Process notepad.exe -ArgumentList $configPath -Wait
+                        Start-Process notepad.exe -ArgumentList $configPath -Wait
 
-                } else {
+                    } else {
 
-                    $editor = $env:EDITOR ?? 'nano'
+                        # Use direct invocation for interactive console editors in Linux/macOS
+                        # Start-Process doesn't work well with interactive TTY applications
+                        $editor = $env:EDITOR ?? 'nano'
+                        
+                        # Check if editor exists
+                        $editorPath = (Get-Command $editor -ErrorAction SilentlyContinue)?.Source
+                        if (-not $editorPath) {
+                            # Try common editors as fallbacks (prioritize nano since it's available in container)
+                            # Note: nano is guaranteed in containerized environments (see Dockerfile line 9),
+                            # but this fallback logic handles non-containerized environments
+                            $fallbackEditors = @('nano', 'vi', 'vim')
+                            foreach ($fallback in $fallbackEditors) {
+                                $editorPath = (Get-Command $fallback -ErrorAction SilentlyContinue)?.Source
+                                if ($editorPath) {
+                                    $editor = $fallback
+                                    break
+                                }
+                            }
+                        }
 
-                    Start-Process -FilePath $editor -ArgumentList $configPath -Wait
+                        if ($editorPath) {
+                            # Use call operator for direct invocation with TTY support
+                            & $editor $configPath
+                        } else {
+                            Show-UINotification -Message "No text editor found. Please install nano, vi, or vim, or set the EDITOR environment variable." -Type 'Error'
+                            continue
+                        }
 
+                    }
+                } catch {
+                    Show-UINotification -Message "Failed to open editor: $_" -Type 'Error'
+                    continue
                 }
 
 
@@ -3569,6 +3598,55 @@ try {
 
 
         'Orchestrate' {
+
+            # Helper function to normalize sequence numbers (pad to 4 digits if needed)
+            function Normalize-SequenceNumber {
+                param([string]$Value)
+                $trimmed = $Value.Trim()
+                # If it's a pure number (lost leading zeros), pad it back to 4 digits
+                if ($trimmed -match '^\d+$' -and $trimmed.Length -lt 4) {
+                    return $trimmed.PadLeft(4, '0')
+                }
+                return $trimmed
+            }
+
+            # Normalize and split sequence numbers
+            # Handle cases like "0500,0501" being passed as a single string
+            # Also pad numbers to 4 digits if they lost leading zeros during parameter binding
+            if ($Sequence) {
+                $normalizedSequence = @()
+                foreach ($item in $Sequence) {
+                    # Split comma-separated values within each array element
+                    $parts = $item -split ',' | Where-Object { $_ }
+                    foreach ($part in $parts) {
+                        $normalizedSequence += Normalize-SequenceNumber -Value $part
+                    }
+                }
+                $Sequence = $normalizedSequence
+            }
+
+            # Handle positional arguments - if Sequence is not set but RemainingArguments exist,
+            # treat RemainingArguments as the sequence
+            if (-not $Sequence -and $RemainingArguments) {
+                # Parse RemainingArguments into Sequence
+                # Handle cases like: "0500,0501" or "0500" "0501"
+                $Sequence = @()
+                foreach ($arg in $RemainingArguments) {
+                    if ($arg -is [string]) {
+                        # Split comma-separated values
+                        $parts = $arg -split ',' | Where-Object { $_ }
+                        foreach ($part in $parts) {
+                            $Sequence += Normalize-SequenceNumber -Value $part
+                        }
+                    } else {
+                        $Sequence += [string]$arg
+                    }
+                }
+                
+                if ($Sequence.Count -gt 0 -and (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+                    Write-CustomLog -Message "Using positional arguments as sequence: $($Sequence -join ', ')" -Level 'Information'
+                }
+            }
 
             if (-not $Sequence -and -not $Playbook) {
 

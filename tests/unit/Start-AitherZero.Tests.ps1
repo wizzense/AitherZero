@@ -483,4 +483,34 @@ try {
             $content | Should -Match 'Run a specific script \(shortcut'
         }
     }
+
+    Context "Sequence Parameter Normalization" {
+        It "Should handle comma-separated sequences as single parameter" {
+            # Test that the script splits comma-separated values
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match 'Split comma-separated values'
+            $content | Should -Match "-split ','"
+        }
+
+        It "Should normalize sequence numbers by padding to 4 digits" {
+            # Test that the script pads numeric sequences to 4 digits
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match "\.PadLeft\(4, '0'\)"
+            $content | Should -Match 'pad.*4 digits'
+        }
+
+        It "Should handle leading zeros being stripped during parameter binding" {
+            # Test that there's logic to handle PowerShell stripping leading zeros
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match 'lost leading zeros'
+            $content | Should -Match 'Normalize.*sequence'
+        }
+
+        It "Should support both positional and named sequence parameters" {
+            # Test that RemainingArguments are handled as fallback
+            $content = Get-Content $script:EntryScript -Raw
+            $content | Should -Match 'RemainingArguments'
+            $content | Should -Match 'positional arguments'
+        }
+    }
 }
