@@ -173,7 +173,7 @@ function Build-CapabilitiesFromManifest {
     }
     
     # Extract available modes from manifest or config
-    if ($Config.Manifest -and $Config.Manifest.SupportedModes) {
+    if ($Config.ContainsKey('Manifest') -and $Config.Manifest -and $Config.Manifest.ContainsKey('SupportedModes')) {
         $script:ConfigManager.ManifestCapabilities.Modes = $Config.Manifest.SupportedModes
     } else {
         # Default modes
@@ -183,22 +183,22 @@ function Build-CapabilitiesFromManifest {
     }
     
     # Extract script inventory
-    if ($Config.ScriptInventory) {
+    if ($Config.ContainsKey('ScriptInventory') -and $Config.ScriptInventory) {
         $script:ConfigManager.ManifestCapabilities.Scripts = $Config.ScriptInventory
     }
     
     # Extract features
-    if ($Config.Features) {
+    if ($Config.ContainsKey('Features') -and $Config.Features) {
         foreach ($key in $Config.Features.Keys) {
             $feature = $Config.Features[$key]
-            if ($feature.Enabled) {
+            if ($feature -is [hashtable] -and $feature.ContainsKey('Enabled') -and $feature.Enabled) {
                 $script:ConfigManager.ManifestCapabilities.Features[$key] = $feature
             }
         }
     }
     
     # Extract enabled extensions
-    if ($Config.Extensions -and $Config.Extensions.EnabledExtensions) {
+    if ($Config.ContainsKey('Extensions') -and $Config.Extensions -and $Config.Extensions.ContainsKey('EnabledExtensions')) {
         $script:ConfigManager.ManifestCapabilities.Extensions = $Config.Extensions.EnabledExtensions
     }
     
@@ -259,18 +259,22 @@ function Get-AvailableConfigurations {
         Initialize-ConfigManager
     }
     
-    $configs = $script:ConfigManager.AvailableConfigs.Values | ForEach-Object {
+    $configs = $script:ConfigManager.AvailableConfigs.GetEnumerator() | ForEach-Object {
+        $key = $_.Key
+        $value = $_.Value
+        
         $isCurrent = $script:ConfigManager.ActiveConfig -and 
-                     $script:ConfigManager.ActiveConfig._Metadata.LoadedFrom -eq $_.Path
+                     $script:ConfigManager.ActiveConfig._Metadata.LoadedFrom -eq $value.Path
         
         [PSCustomObject]@{
-            Name = $_.Name
-            Profile = $_.Profile
-            Environment = $_.Environment
-            Description = $_.Description
-            LastModified = $_.LastModified
+            Key = $key  # Add the actual dictionary key
+            Name = $value.Name
+            Profile = $value.Profile
+            Environment = $value.Environment
+            Description = $value.Description
+            LastModified = $value.LastModified
             Current = $isCurrent
-            Path = if ($Detailed) { $_.Path } else { $null }
+            Path = if ($Detailed) { $value.Path } else { $null }
         }
     }
     
@@ -395,7 +399,8 @@ function Show-ConfigurationSelector {
         $selectedIndex = [int]$selection - 1
         if ($selectedIndex -ge 0 -and $selectedIndex -lt $configList.Count) {
             $selectedConfig = $configList[$selectedIndex]
-            Switch-Configuration -ConfigName $selectedConfig.Name
+            # Use the Key property which contains the actual dictionary key (e.g., "configs/dev")
+            Switch-Configuration -ConfigName $selectedConfig.Key
         } else {
             Write-Host "Invalid selection" -ForegroundColor Red
         }
