@@ -46,8 +46,9 @@ if (-not $env:TERM) {
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+
 $testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
 $testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
 $configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
 
@@ -85,13 +86,6 @@ if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
 }
 
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force
-    $script:LoggingAvailable = $true
-} else {
-    $script:LoggingAvailable = $false
-}
-
 if (Test-Path $testCacheModule) {
     Import-Module $testCacheModule -Force
     $script:CacheAvailable = $true
@@ -99,29 +93,8 @@ if (Test-Path $testCacheModule) {
     $script:CacheAvailable = $false
 }
 
-function Write-ScriptLog {
-    param(
-        [string]$Level = 'Information',
-        [string]$Message,
-        [hashtable]$Data = @{}
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0402_Run-UnitTests" -Data $Data
-    } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = @{
-            'Error' = 'Red'
-            'Warning' = 'Yellow'
-            'Information' = 'White'
-            'Debug' = 'Gray'
-        }[$Level]
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
-}
-
 try {
-    Write-ScriptLog -Message "Starting unit test execution"
+    Write-ScriptLog -Message "Starting unit test execution" -Source "0402_Run-UnitTests"
     
     # Log CI mode coverage message now that Write-ScriptLog is available
     if ($CI -and -not $PSBoundParameters.ContainsKey('NoCoverage')) {
@@ -514,6 +487,7 @@ try {
 
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
     $useParallel = $pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
+    $parallelExecutionFailed = $false
 
     if ($useParallel) {
         $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 6 }
@@ -528,7 +502,8 @@ try {
         }
 
         # Run test chunks in parallel with error handling
-        $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
+        try {
+            $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
             $chunk = $_
             $projectRoot = $using:projectRoot
             $OutputPath = $using:OutputPath
@@ -579,20 +554,56 @@ try {
                 }
             }
         }
-
-        # Aggregate results from all parallel runs
-        $result = [PSCustomObject]@{
-            TotalCount = ($parallelResults | Measure-Object -Property TotalCount -Sum).Sum
-            PassedCount = ($parallelResults | Measure-Object -Property PassedCount -Sum).Sum
-            FailedCount = ($parallelResults | Measure-Object -Property FailedCount -Sum).Sum
-            SkippedCount = ($parallelResults | Measure-Object -Property SkippedCount -Sum).Sum
-            NotRunCount = ($parallelResults | Measure-Object -Property NotRunCount -Sum).Sum
-            Duration = ($parallelResults | Measure-Object -Property Duration -Maximum).Maximum
-            Failed = @($parallelResults | ForEach-Object { $_.Failed } | Where-Object { $_ })
-            Tests = @($parallelResults | ForEach-Object { $_.Tests } | Where-Object { $_ })
-            CodeCoverage = $null  # Code coverage not supported in parallel mode
         }
-    } else {
+        
+        catch {
+            # Parallel execution failed - log and fall back to sequential
+            $parallelError = $_
+            Write-ScriptLog -Level Warning -Message "Parallel test execution failed: $($parallelError.Exception.Message)" -Data @{
+                ErrorType = $parallelError.Exception.GetType().Name
+                ErrorMessage = $parallelError.Exception.Message
+            }
+            
+            # Check if this is the "pipeline has been stopped" error
+            if ($parallelError.Exception.Message -like "*pipeline*stopped*") {
+                Write-ScriptLog -Level Warning -Message "Pipeline stopping error detected - falling back to sequential execution"
+            } else {
+                Write-ScriptLog -Level Warning -Message "Unexpected error in parallel execution - falling back to sequential execution"
+            }
+            
+            $parallelExecutionFailed = $true
+            $useParallel = $false  # Trigger sequential execution fallback
+            $parallelResults = @()  # Clear any partial results
+        }
+
+        # Aggregate results from all parallel runs (only if parallel succeeded)
+        if (-not $parallelExecutionFailed -and $parallelResults) {
+            Write-ScriptLog -Message "Aggregating results from parallel execution"
+            $result = [PSCustomObject]@{
+                TotalCount = ($parallelResults | Measure-Object -Property TotalCount -Sum).Sum
+                PassedCount = ($parallelResults | Measure-Object -Property PassedCount -Sum).Sum
+                FailedCount = ($parallelResults | Measure-Object -Property FailedCount -Sum).Sum
+                SkippedCount = ($parallelResults | Measure-Object -Property SkippedCount -Sum).Sum
+                NotRunCount = ($parallelResults | Measure-Object -Property NotRunCount -Sum).Sum
+                Duration = ($parallelResults | Measure-Object -Property Duration -Maximum).Maximum
+                Failed = @($parallelResults | ForEach-Object { $_.Failed } | Where-Object { $_ })
+                Tests = @($parallelResults | ForEach-Object { $_.Tests } | Where-Object { $_ })
+                CodeCoverage = $null  # Code coverage not supported in parallel mode
+            }
+        } else {
+            # Parallel execution failed, result will be set by sequential fallback
+            $result = $null
+        }
+    }
+    
+    # Sequential execution (either by choice or as fallback from failed parallel)
+    if (-not $useParallel -or $parallelExecutionFailed) {
+        if ($parallelExecutionFailed) {
+            Write-ScriptLog -Message "Falling back to sequential test execution"
+        } else {
+            Write-ScriptLog -Message "Running tests sequentially"
+        }
+        
         # Standard sequential execution with error handling
         try {
             $result = Invoke-Pester -Configuration $pesterConfig

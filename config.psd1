@@ -83,7 +83,7 @@
         FeatureDependencies = @{
             # Core features that everything depends on
             Core = @{
-                PowerShell7 = @{ Required = $true; MinVersion = '7.0'; Scripts = @('0001') }
+                PowerShell7 = @{ Required = $true; MinVersion = '7.0'; Scripts = @() }
                 Git = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207') }
                 Configuration = @{ Required = $true; Internal = $true }
                 Logging = @{ Required = $true; Internal = $true }
@@ -197,9 +197,9 @@
                 }
                 PSScriptAnalyzer = @{
                     DependsOn = @('Testing.TestingTools')
-                    Scripts = @('0404', '0410')
+                    Scripts = @('0404', '0415')
                     MinVersion = '1.20.0'
-                    Description = 'Static code analysis (standard and fast)'
+                    Description = 'Static code analysis and cache management'
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
@@ -227,8 +227,8 @@
                 }
                 ProjectReports = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0510', '0511', '0512', '0513', '0514')
-                    Description = 'Project reports, dashboards, scheduling, and report generation'
+                    Scripts = @('0510', '0511', '0512', '0513', '0514', '0516')
+                    Description = 'Project reports, dashboards, scheduling, and automated report generation'
                 }
                 Analysis = @{
                     DependsOn = @('Core.PowerShell7')
@@ -348,8 +348,18 @@
                 }
                 TestGeneration = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester')
-                    Scripts = @('0950')
-                    Description = 'Automatic test generation system - generates unit and integration tests for all automation scripts'
+                    Scripts = @('0950', '0951')
+                    Description = 'Automatic test generation system - generates unit, integration, and functional tests for all automation scripts'
+                }
+                DocumentationTracking = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0960', '0961')
+                    Description = 'Documentation freshness tracking and directory documentation validation'
+                }
+                Orchestration = @{
+                    DependsOn = @('Core.PowerShell7')
+                    Scripts = @('0962')
+                    Description = 'Playbook execution wrapper for local CI/CD workflow testing'
                 }
             }
             
@@ -385,7 +395,7 @@
             Standard = @{
                 Description = 'Common development environment'
                 Features = @('Core', 'Development.Node', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                ScriptRanges = @('0000-0299', '0400-0410')
+                ScriptRanges = @('0000-0299', '0400-0499')
                 EstimatedTime = '5-15 minutes'
             }
             Developer = @{
@@ -413,7 +423,7 @@
         # Domain module structure (actual repository state)
         Domains = @{
             'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation' = @{ Modules = 2; Description = 'Orchestration engine and deployment automation' }
+            'automation' = @{ Modules = 3; Description = 'Orchestration engine and deployment automation' }
             'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
@@ -421,23 +431,23 @@
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
-            'testing' = @{ Modules = 8; Description = 'Testing framework, quality validation, and test generation' }
+            'testing' = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
             'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
         }
         
-        # Script inventory by range (134 total files, 132 unique numbers)
+        # Script inventory by range (138 total files, 137 unique numbers)
         # All scripts now have unique numbers
         # Counts represent unique script NUMBERS, not total files
         ScriptInventory = @{
-            '0000-0099' = @{ Count = 9; Category = 'Environment Setup' }
+            '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 26; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 17; Category = 'Reporting & Analytics' }
+            '0500-0599' = @{ Count = 18; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 3; Category = 'Validation & Test Generation' }
+            '0900-0999' = @{ Count = 7; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
         
@@ -513,7 +523,7 @@
                 Enabled = $true
                 Required = $true
                 Version = '7.0+'
-                InstallScript = '0001'
+                InstallScript = $null  # PowerShell 7 installation handled by bootstrap
                 Platforms = @('Windows', 'Linux', 'macOS')
                 Installer = @{
                     Windows = 'https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.msi'

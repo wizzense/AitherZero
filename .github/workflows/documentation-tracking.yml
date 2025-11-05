@@ -1,0 +1,192 @@
+---
+name: 📚 Documentation Tracking & Validation
+
+# Track when documentation was last updated relative to code changes
+# Ensure docs live with the code they document
+
+on:
+  push:
+    branches: [main, develop, dev]
+    paths:
+      - 'domains/**'
+      - 'automation-scripts/**'
+      - 'tests/**'
+      - '**.ps1'
+      - '**.psm1'
+      - '**.md'
+  pull_request:
+    branches: [main, develop, dev]
+  schedule:
+    # Run weekly to check for stale docs
+    - cron: '0 8 * * 1'  # 8 AM UTC every Monday
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of check to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - stale-only
+          - missing-only
+
+concurrency:
+  group: documentation-tracking-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  track-documentation:
+    name: Track Documentation Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for last-modified tracking
+      
+      - name: 🔧 Setup PowerShell
+        shell: pwsh
+        run: |
+          $PSVersionTable
+          Write-Host "PowerShell is ready"
+      
+      - name: 📊 Generate documentation tracking report
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Analyzing documentation freshness..."
+          ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
+      
+      - name: 🔍 Check for stale documentation
+        shell: pwsh
+        run: |
+          Write-Host "📅 Checking for stale documentation (>90 days)..."
+          ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -CheckStale -StaleDays 90
+      
+      - name: 📝 Check for missing README files
+        shell: pwsh
+        run: |
+          Write-Host "📋 Checking for directories without README.md..."
+          ./automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
+      
+      - name: 📤 Upload documentation tracking report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documentation-tracking-report
+          path: |
+            reports/documentation-tracking.json
+            reports/documentation-tracking.md
+            reports/stale-documentation.json
+            reports/missing-documentation.json
+          retention-days: 30
+      
+      - name: 💬 Comment on PR with documentation status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read the documentation tracking report
+            let comment = '## 📚 Documentation Status\n\n';
+            
+            try {
+              if (fs.existsSync('reports/documentation-tracking.md')) {
+                const report = fs.readFileSync('reports/documentation-tracking.md', 'utf8');
+                comment += report;
+              } else {
+                comment += '✅ Documentation tracking report not generated (no issues found).\n';
+              }
+            } catch (error) {
+              comment += '⚠️ Could not read documentation tracking report.\n';
+            }
+            
+            // Check for stale docs
+            try {
+              if (fs.existsSync('reports/stale-documentation.json')) {
+                const stale = JSON.parse(fs.readFileSync('reports/stale-documentation.json', 'utf8'));
+                if (stale.staleDocs && stale.staleDocs.length > 0) {
+                  comment += '\n### ⚠️ Stale Documentation\n\n';
+                  comment += `Found ${stale.staleDocs.length} documentation file(s) not updated in >90 days:\n\n`;
+                  stale.staleDocs.slice(0, 10).forEach(doc => {
+                    comment += `- \`${doc.path}\` (${doc.daysOld} days old)\n`;
+                  });
+                  if (stale.staleDocs.length > 10) {
+                    comment += `\n_...and ${stale.staleDocs.length - 10} more_\n`;
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('No stale documentation report found');
+            }
+            
+            // Check for missing docs
+            try {
+              if (fs.existsSync('reports/missing-documentation.json')) {
+                const missing = JSON.parse(fs.readFileSync('reports/missing-documentation.json', 'utf8'));
+                if (missing.missingDocs && missing.missingDocs.length > 0) {
+                  comment += '\n### 📝 Missing Documentation\n\n';
+                  comment += `Found ${missing.missingDocs.length} director(ies) without README.md:\n\n`;
+                  missing.missingDocs.slice(0, 10).forEach(dir => {
+                    comment += `- \`${dir}\`\n`;
+                  });
+                  if (missing.missingDocs.length > 10) {
+                    comment += `\n_...and ${missing.missingDocs.length - 10} more_\n`;
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('No missing documentation report found');
+            }
+            
+            comment += '\n---\n_Documentation tracking powered by AitherZero_';
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+      
+      - name: 🚨 Create issues for stale documentation
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              if (fs.existsSync('reports/stale-documentation.json')) {
+                const stale = JSON.parse(fs.readFileSync('reports/stale-documentation.json', 'utf8'));
+                
+                if (stale.staleDocs && stale.staleDocs.length > 0) {
+                  // Create one issue summarizing all stale docs
+                  const body = `## Stale Documentation Detected\n\n` +
+                    `Found ${stale.staleDocs.length} documentation file(s) not updated in >90 days.\n\n` +
+                    `### Files\n\n` +
+                    stale.staleDocs.map(doc => 
+                      `- \`${doc.path}\` - Last updated ${doc.daysOld} days ago (${doc.lastModified})`
+                    ).join('\n') +
+                    `\n\n### Action Required\n\n` +
+                    `Please review these documentation files and update them if the documented code has changed.\n\n` +
+                    `---\n_Auto-generated by documentation-tracking workflow_`;
+                  
+                  await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title: `📚 Stale Documentation: ${stale.staleDocs.length} file(s) need updating`,
+                    body: body,
+                    labels: ['documentation', 'maintenance', 'stale']
+                  });
+                }
+              }
+            } catch (error) {
+              console.log('No stale documentation to report');
+            }

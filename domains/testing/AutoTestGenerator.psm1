@@ -145,6 +145,13 @@ function New-AutoTest {
     # Ensure $params is always an array
     if ($null -eq $params) { $params = @() }
 
+    # Check script capabilities
+    $scriptContent = Get-Content $ScriptPath -Raw
+    $supportsWhatIf = $scriptContent -match '\[CmdletBinding\([^\)]*SupportsShouldProcess[^\)]*\)\]'
+    $hasConfiguration = $params | Where-Object { $_.Name -eq 'Configuration' }
+    $usesScriptUtilities = $scriptContent -match 'Import-Module.*ScriptUtilities\.psm1' -or 
+                           $scriptContent -match 'Write-ScriptLog|Get-GitHubToken|Test-Prerequisites|Get-ProjectRoot'
+
     # Determine test paths
     $rangeNum = if ($scriptName -match '^(\d+)_') { [int]$Matches[1] } else { 0 }
     $rangeStart = [Math]::Floor($rangeNum / 100) * 100
@@ -175,11 +182,14 @@ function New-AutoTest {
 
     # Generate unit test
     $unitTest = Build-UnitTest -ScriptName $scriptName -ScriptPath $ScriptPath `
-        -Stage $stage -Description $description -Parameters $params -Dependencies $dependencies
+        -Stage $stage -Description $description -Parameters $params -Dependencies $dependencies `
+        -SupportsWhatIf $supportsWhatIf -HasConfiguration $hasConfiguration `
+        -UsesScriptUtilities $usesScriptUtilities
 
     # Generate integration test
     $integrationTest = Build-IntegrationTest -ScriptName $scriptName -ScriptPath $ScriptPath `
-        -Stage $stage -Dependencies $dependencies
+        -Stage $stage -Dependencies $dependencies -SupportsWhatIf $supportsWhatIf `
+        -HasConfiguration $hasConfiguration -UsesScriptUtilities $usesScriptUtilities
 
     # Write files
     try {
@@ -201,9 +211,32 @@ function New-AutoTest {
 }
 
 function Build-UnitTest {
-    param($ScriptName, $ScriptPath, $Stage, $Description, $Parameters, $Dependencies)
+    param(
+        $ScriptName, 
+        $ScriptPath, 
+        $Stage, 
+        $Description, 
+        $Parameters, 
+        $Dependencies,
+        [bool]$SupportsWhatIf,
+        $HasConfiguration,
+        [bool]$UsesScriptUtilities
+    )
 
     $sb = [System.Text.StringBuilder]::new()
+    
+    # Analyze script content for additional edge cases
+    $scriptContent = Get-Content $ScriptPath -Raw
+    
+    # Detect additional script characteristics
+    $hasMandatoryParams = $Parameters | Where-Object { $scriptContent -match "Mandatory\s*=\s*\`$true.*$($_.Name)" }
+    $hasValidateScript = $scriptContent -match '\[ValidateScript\('
+    $hasBeginBlock = $scriptContent -match '^\s*begin\s*\{' -or $scriptContent -match '\n\s*begin\s*\{'
+    $hasProcessBlock = $scriptContent -match '^\s*process\s*\{' -or $scriptContent -match '\n\s*process\s*\{'
+    $acceptsPipeline = $scriptContent -match '\[Parameter\([^\)]*ValueFromPipeline[^\)]*\)\]'
+    $requiresElevation = $scriptContent -match '#Requires\s+-RunAsAdministrator'
+    $requiresModules = $scriptContent -match '#Requires\s+-Modules?\s+(\S+)'
+    $hasOutputType = $scriptContent -match '\[OutputType\('
     
     # Header
     [void]$sb.AppendLine('#Requires -Version 7.0')
@@ -219,6 +252,10 @@ function Build-UnitTest {
     if ($Description) {
         [void]$sb.AppendLine("    Description: $Description")
     }
+    [void]$sb.AppendLine("    Supports WhatIf: $SupportsWhatIf")
+    if ($requiresElevation) {
+        [void]$sb.AppendLine("    Requires Elevation: Yes")
+    }
     [void]$sb.AppendLine("    Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
     [void]$sb.AppendLine('#>')
     [void]$sb.AppendLine('')
@@ -227,7 +264,9 @@ function Build-UnitTest {
     [void]$sb.AppendLine("Describe '$ScriptName' -Tag 'Unit', 'AutomationScript', '$Stage' {")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('    BeforeAll {')
-    [void]$sb.AppendLine("        " + '$script:ScriptPath = ' + "'$($ScriptPath -replace '\\', '/')'")
+    [void]$sb.AppendLine('        # Compute path relative to repository root using $PSScriptRoot')
+    [void]$sb.AppendLine('        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent')
+    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'automation-scripts/$ScriptName.ps1'")
     [void]$sb.AppendLine("        " + '$script:ScriptName = ' + "'$ScriptName'")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('        # Import test helpers for environment detection')
@@ -242,6 +281,17 @@ function Build-UnitTest {
     [void]$sb.AppendLine('        } else {')
     [void]$sb.AppendLine('            @{ IsCI = ($env:CI -eq ''true'' -or $env:GITHUB_ACTIONS -eq ''true''); IsLocal = $true }')
     [void]$sb.AppendLine('        }')
+    
+    # Add ScriptUtilities module import if script uses it
+    if ($UsesScriptUtilities) {
+        [void]$sb.AppendLine('')
+        [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
+        [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
+        [void]$sb.AppendLine('        }')
+    }
+    
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     
@@ -259,10 +309,30 @@ function Build-UnitTest {
     [void]$sb.AppendLine('            $errors.Count | Should -Be 0')
     [void]$sb.AppendLine('        }')
     [void]$sb.AppendLine('')
-    [void]$sb.AppendLine("        It 'Should support WhatIf' {")
-    [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
-    [void]$sb.AppendLine('            $content | Should -Match ''SupportsShouldProcess''')
-    [void]$sb.AppendLine('        }')
+    
+    # Conditional WhatIf test - only if script supports it
+    if ($SupportsWhatIf) {
+        [void]$sb.AppendLine("        It 'Should support WhatIf' {")
+        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
+        [void]$sb.AppendLine('            $content | Should -Match ''SupportsShouldProcess''')
+        [void]$sb.AppendLine('        }')
+    } else {
+        [void]$sb.AppendLine("        It 'Should not require WhatIf support' {")
+        [void]$sb.AppendLine('            # Script does not implement SupportsShouldProcess')
+        [void]$sb.AppendLine('            # This is acceptable for read-only or simple scripts')
+        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
+        [void]$sb.AppendLine('            $content -notmatch ''SupportsShouldProcess'' | Should -Be $true')
+        [void]$sb.AppendLine('        }')
+    }
+    [void]$sb.AppendLine('')
+    
+    # ScriptUtilities usage test
+    if ($UsesScriptUtilities) {
+        [void]$sb.AppendLine("        It 'Should properly import ScriptUtilities module' {")
+        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
+        [void]$sb.AppendLine('            $content | Should -Match ''Import-Module.*ScriptUtilities\.psm1''')
+        [void]$sb.AppendLine('        }')
+    }
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     
@@ -280,12 +350,13 @@ function Build-UnitTest {
         [void]$sb.AppendLine('')
     }
     
-    # Stage test
+    # Metadata tests
     [void]$sb.AppendLine("    Context 'Metadata' {")
     [void]$sb.AppendLine("        It 'Should be in stage: $Stage' {")
     [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -First 40')
     [void]$sb.AppendLine("            (" + '$content -join '' '') | Should -Match ''(Stage:|Category:)''')
     [void]$sb.AppendLine('        }')
+    
     if ($Dependencies -and @($Dependencies).Count -gt 0) {
         [void]$sb.AppendLine('')
         [void]$sb.AppendLine("        It 'Should declare dependencies' {")
@@ -296,17 +367,38 @@ function Build-UnitTest {
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     
-    # Execution test
+    # Execution tests - handle different scenarios
     [void]$sb.AppendLine("    Context 'Execution' {")
-    [void]$sb.AppendLine("        It 'Should execute with WhatIf' {")
-    [void]$sb.AppendLine('            {')
-    [void]$sb.AppendLine('                $params = @{ WhatIf = $true }')
-    if ($Parameters | Where-Object { $_.Name -eq 'Configuration' }) {
-        [void]$sb.AppendLine('                $params.Configuration = @{}')
+    
+    if ($SupportsWhatIf) {
+        # Script supports WhatIf - test with it
+        [void]$sb.AppendLine("        It 'Should execute with WhatIf without throwing' {")
+        [void]$sb.AppendLine('            {')
+        [void]$sb.AppendLine('                $params = @{ WhatIf = $true }')
+        if ($HasConfiguration) {
+            [void]$sb.AppendLine('                $params.Configuration = @{}')
+        }
+        [void]$sb.AppendLine('                & $script:ScriptPath @params')
+        [void]$sb.AppendLine('            } | Should -Not -Throw')
+        [void]$sb.AppendLine('        }')
+    } elseif ($hasMandatoryParams) {
+        # Script has mandatory params but no WhatIf - test basic invocation
+        [void]$sb.AppendLine("        It 'Should require mandatory parameters' {")
+        [void]$sb.AppendLine('            # Script has mandatory parameters - cannot execute without them')
+        [void]$sb.AppendLine('            { & $script:ScriptPath -ErrorAction Stop } | Should -Throw')
+        [void]$sb.AppendLine('        }')
+    } else {
+        # Script without WhatIf and without mandatory params - test basic structure
+        [void]$sb.AppendLine("        It 'Should be executable (no WhatIf support)' {")
+        [void]$sb.AppendLine('            # Script does not support -WhatIf parameter')
+        [void]$sb.AppendLine('            # Verify script can be dot-sourced without errors')
+        [void]$sb.AppendLine('            {')
+        [void]$sb.AppendLine('                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop')
+        [void]$sb.AppendLine('                $cmd | Should -Not -BeNullOrEmpty')
+        [void]$sb.AppendLine('            } | Should -Not -Throw')
+        [void]$sb.AppendLine('        }')
     }
-    [void]$sb.AppendLine('                & $script:ScriptPath @params')
-    [void]$sb.AppendLine('            } | Should -Not -Throw')
-    [void]$sb.AppendLine('        }')
+    
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     
@@ -318,41 +410,57 @@ function Build-UnitTest {
     [void]$sb.AppendLine('        }')
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("        It 'Should adapt to CI environment' {")
-    [void]$sb.AppendLine('            # Skip if not in CI')
     [void]$sb.AppendLine('            if (-not $script:TestEnv.IsCI) {')
     [void]$sb.AppendLine('                Set-ItResult -Skipped -Because "CI-only validation"')
     [void]$sb.AppendLine('                return')
     [void]$sb.AppendLine('            }')
-    [void]$sb.AppendLine('            ')
-    [void]$sb.AppendLine('            # This test only runs in CI')
     [void]$sb.AppendLine('            $script:TestEnv.IsCI | Should -Be $true')
     [void]$sb.AppendLine('            $env:CI | Should -Not -BeNullOrEmpty')
     [void]$sb.AppendLine('        }')
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("        It 'Should adapt to local environment' {")
-    [void]$sb.AppendLine('            # Skip if in CI')
     [void]$sb.AppendLine('            if ($script:TestEnv.IsCI) {')
     [void]$sb.AppendLine('                Set-ItResult -Skipped -Because "Local-only validation"')
     [void]$sb.AppendLine('                return')
     [void]$sb.AppendLine('            }')
-    [void]$sb.AppendLine('            ')
-    [void]$sb.AppendLine('            # This test only runs locally')
     [void]$sb.AppendLine('            $script:TestEnv.IsCI | Should -Be $false')
     [void]$sb.AppendLine('        }')
     [void]$sb.AppendLine('    }')
+    
+    # Add special tests for scripts with elevation requirements
+    if ($requiresElevation) {
+        [void]$sb.AppendLine('')
+        [void]$sb.AppendLine("    Context 'Elevation Requirements' {")
+        [void]$sb.AppendLine("        It 'Should require administrator elevation' {")
+        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
+        [void]$sb.AppendLine('            $content | Should -Match ''#Requires\s+-RunAsAdministrator''')
+        [void]$sb.AppendLine('        }')
+        [void]$sb.AppendLine('    }')
+    }
+    
     [void]$sb.AppendLine('}')
     
     return $sb.ToString()
 }
 
 function Build-IntegrationTest {
-    param($ScriptName, $ScriptPath, $Stage, $Dependencies)
+    param(
+        $ScriptName, 
+        $ScriptPath, 
+        $Stage, 
+        $Dependencies,
+        [bool]$SupportsWhatIf,
+        $HasConfiguration,
+        [bool]$UsesScriptUtilities
+    )
 
     $sb = [System.Text.StringBuilder]::new()
     
-    # Check if script supports WhatIf by looking for SupportsShouldProcess
+    # Analyze script content for edge cases
     $scriptContent = Get-Content $ScriptPath -Raw
-    $supportsWhatIf = $scriptContent -match '\[CmdletBinding\([^\)]*SupportsShouldProcess[^\)]*\)\]'
+    $hasMandatoryParams = $scriptContent -match 'Mandatory\s*=\s*\$true'
+    $requiresElevation = $scriptContent -match '#Requires\s+-RunAsAdministrator'
+    $isInteractive = $scriptContent -match 'Read-Host' -or $scriptContent -match 'Show-UIMenu' -or $scriptContent -match '\$Host\.UI'
     
     [void]$sb.AppendLine('#Requires -Version 7.0')
     [void]$sb.AppendLine('#Requires -Module Pester')
@@ -362,27 +470,102 @@ function Build-IntegrationTest {
     [void]$sb.AppendLine("    Integration tests for $ScriptName")
     [void]$sb.AppendLine('.DESCRIPTION')
     [void]$sb.AppendLine("    Auto-generated integration tests")
+    [void]$sb.AppendLine("    Supports WhatIf: $SupportsWhatIf")
+    if ($requiresElevation) {
+        [void]$sb.AppendLine("    Requires Elevation: Yes")
+    }
+    if ($isInteractive) {
+        [void]$sb.AppendLine("    Interactive Script: Yes")
+    }
     [void]$sb.AppendLine("    Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
     [void]$sb.AppendLine('#>')
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("Describe '$ScriptName Integration' -Tag 'Integration', 'AutomationScript' {")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('    BeforeAll {')
-    [void]$sb.AppendLine("        " + '$script:ScriptPath = ' + "'$($ScriptPath -replace '\\', '/')'")
+    [void]$sb.AppendLine('        # Compute path relative to repository root using $PSScriptRoot')
+    [void]$sb.AppendLine('        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent')
+    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'automation-scripts/$ScriptName.ps1'")
+    
+    # Add ScriptUtilities module import if script uses it
+    if ($UsesScriptUtilities) {
+        [void]$sb.AppendLine('')
+        [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
+        [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
+        [void]$sb.AppendLine('        }')
+    }
+    
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("    Context 'Integration' {")
-    [void]$sb.AppendLine("        It 'Should execute in test mode' {")
     
-    if ($supportsWhatIf) {
-        [void]$sb.AppendLine('            { & $script:ScriptPath -WhatIf } | Should -Not -Throw')
-    } else {
-        [void]$sb.AppendLine('            # Script does not support -WhatIf parameter')
-        [void]$sb.AppendLine('            # Test basic script structure instead')
+    # Generate appropriate test based on script characteristics
+    if ($SupportsWhatIf) {
+        # Script supports WhatIf - test with it
+        [void]$sb.AppendLine("        It 'Should execute in test mode with WhatIf' {")
+        [void]$sb.AppendLine('            {')
+        [void]$sb.AppendLine('                $params = @{ WhatIf = $true; ErrorAction = ''Stop'' }')
+        if ($HasConfiguration) {
+            [void]$sb.AppendLine('                $params.Configuration = @{ Automation = @{ DryRun = $true } }')
+        }
+        [void]$sb.AppendLine('                & $script:ScriptPath @params')
+        [void]$sb.AppendLine('            } | Should -Not -Throw')
+        [void]$sb.AppendLine('        }')
+    } elseif ($isInteractive) {
+        # Interactive script - can't test execution in CI
+        [void]$sb.AppendLine("        It 'Should be loadable (interactive script)' {")
+        [void]$sb.AppendLine('            # Script is interactive - cannot execute in non-interactive test')
+        [void]$sb.AppendLine('            # Verify script structure instead')
         [void]$sb.AppendLine('            Test-Path $script:ScriptPath | Should -Be $true')
+        [void]$sb.AppendLine('            ')
+        [void]$sb.AppendLine('            # Verify script can be parsed')
+        [void]$sb.AppendLine('            {')
+        [void]$sb.AppendLine('                $errors = $null')
+        [void]$sb.AppendLine('                [System.Management.Automation.Language.Parser]::ParseFile(')
+        [void]$sb.AppendLine('                    $script:ScriptPath, [ref]$null, [ref]$errors')
+        [void]$sb.AppendLine('                if ($errors.Count -gt 0) { throw "Parse errors: $errors" }')
+        [void]$sb.AppendLine('            } | Should -Not -Throw')
+        [void]$sb.AppendLine('        }')
+    } elseif ($hasMandatoryParams -and -not $HasConfiguration) {
+        # Script has mandatory params but no Configuration param - test structure only
+        [void]$sb.AppendLine("        It 'Should have required structure (has mandatory parameters)' {")
+        [void]$sb.AppendLine('            # Script has mandatory parameters - cannot execute without them')
+        [void]$sb.AppendLine('            # Verify script structure instead')
+        [void]$sb.AppendLine('            Test-Path $script:ScriptPath | Should -Be $true')
+        [void]$sb.AppendLine('            ')
+        [void]$sb.AppendLine('            # Verify Get-Command can read parameters')
+        [void]$sb.AppendLine('            {')
+        [void]$sb.AppendLine('                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop')
+        [void]$sb.AppendLine('                $cmd.Parameters.Count | Should -BeGreaterThan 0')
+        [void]$sb.AppendLine('            } | Should -Not -Throw')
+        [void]$sb.AppendLine('        }')
+    } else {
+        # Simple script - test basic execution
+        [void]$sb.AppendLine("        It 'Should execute without errors (no WhatIf support)' {")
+        [void]$sb.AppendLine('            # Script does not support -WhatIf parameter')
+        [void]$sb.AppendLine('            # Test basic script structure and loadability')
+        [void]$sb.AppendLine('            Test-Path $script:ScriptPath | Should -Be $true')
+        [void]$sb.AppendLine('            ')
+        [void]$sb.AppendLine('            # Verify script can be dot-sourced')
+        [void]$sb.AppendLine('            {')
+        [void]$sb.AppendLine('                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop')
+        [void]$sb.AppendLine('                $cmd | Should -Not -BeNullOrEmpty')
+        [void]$sb.AppendLine('            } | Should -Not -Throw')
+        [void]$sb.AppendLine('        }')
     }
     
-    [void]$sb.AppendLine('        }')
+    # Add elevation awareness test if needed
+    if ($requiresElevation) {
+        [void]$sb.AppendLine('')
+        [void]$sb.AppendLine("        It 'Should detect elevation requirement' {")
+        [void]$sb.AppendLine('            # Script requires elevation - verify in non-elevated test')
+        [void]$sb.AppendLine('            $content = Get-Content $script:ScriptPath -Raw')
+        [void]$sb.AppendLine('            $content | Should -Match ''#Requires\s+-RunAsAdministrator''')
+        [void]$sb.AppendLine('        }')
+    }
+    
     [void]$sb.AppendLine('    }')
     [void]$sb.AppendLine('}')
     

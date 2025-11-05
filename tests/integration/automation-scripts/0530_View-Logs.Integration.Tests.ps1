@@ -6,18 +6,26 @@
     Integration tests for 0530_View-Logs
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-11-02 21:41:15
+    Supports WhatIf: True
+    Interactive Script: Yes
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0530_View-Logs Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0530_View-Logs.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0530_View-Logs.ps1'
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            { & $script:ScriptPath -WhatIf } | Should -Not -Throw
+        It 'Should execute in test mode with WhatIf' {
+            {
+                $params = @{ WhatIf = $true; ErrorAction = 'Stop' }
+                $params.Configuration = @{ Automation = @{ DryRun = $true } }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }

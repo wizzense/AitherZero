@@ -1,366 +1,159 @@
-# Core Playbooks
+# AitherZero Playbook Core Files
 
-**Version**: 2.0  
-**Last Updated**: 2025-11-02  
-**Status**: Active Development
-
-## Overview
-
-This directory contains the consolidated core playbooks for AitherZero's orchestration system. These playbooks represent a streamlined, well-organized collection that replaces the previous 42 playbooks with ~23 focused, purpose-driven orchestrations.
+This directory contains the core playbook JSON files for local CI/CD workflow execution.
 
 ## Directory Structure
 
 ```
 core/
-├── testing/          # Test and validation playbooks
-├── git/              # Git workflow automation
-├── devtools/         # Development tool installation
-├── setup/            # Environment setup
-├── infrastructure/   # Infrastructure automation
-├── operations/       # CI/CD and deployment
-├── analysis/         # Code analysis and reporting
-└── ai/               # AI-powered workflows
+├── operations/     # CI/CD operations playbooks (15 files)
+│   ├── ci-all-validations.json
+│   ├── ci-pr-validation.json
+│   ├── ci-comprehensive-test.json
+│   ├── ci-quality-validation.json
+│   ├── ci-validate-config.json
+│   ├── ci-validate-manifests.json
+│   ├── ci-validate-test-sync.json
+│   ├── ci-auto-generate-tests.json
+│   ├── ci-workflow-health.json
+│   ├── ci-index-automation.json
+│   ├── ci-publish-test-reports.json
+│   ├── ci-documentation.json
+│   ├── ci-release.json
+│   ├── ci-deploy-pr.json
+│   └── ci-unified-testing.json
+└── testing/        # Testing playbooks (4 files)
+    ├── test-quick.json
+    ├── test-standard.json
+    ├── test-comprehensive.json
+    └── test-full.json
 ```
 
-## Core Playbooks by Category
+## Usage
 
-### 🧪 Testing (`testing/`)
+All playbooks can be executed using the wrapper script:
 
-Fast, focused testing playbooks for different scenarios:
-
-| Playbook | Duration | Purpose | When to Use |
-|----------|----------|---------|-------------|
-| **test-quick** | 2-5 min | Fast iteration validation | During active development |
-| **test-standard** | 15-20 min | Pre-commit validation | Before creating PRs |
-| **test-full** | 30-45 min | Complete validation + coverage | Before major releases |
-| **test-ci** | 15-20 min | CI/CD optimized | Automated pipelines |
-| **workflow-validation** | 10-15 min | GitHub Actions testing | Workflow development |
-
-**Example Usage:**
 ```powershell
-# Quick validation during development
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick
+# List all available playbooks
+./automation-scripts/0962_Run-Playbook.ps1 -List
 
-# Pre-commit validation  
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-standard
+# Run a playbook
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations
 
-# Complete validation
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full
+# Run with profile
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-all-validations -Profile quick
+
+# Dry run (preview execution)
+./automation-scripts/0962_Run-Playbook.ps1 -Playbook test-quick -DryRun
 ```
 
-### 🔀 Git Workflows (`git/`)
+## Operations Playbooks
 
-Automated Git workflows with AI assistance:
+Operations playbooks mirror GitHub Actions workflows for local execution:
 
-| Playbook | Purpose | Stages |
-|----------|---------|--------|
-| **git-feature** | Complete feature workflow | Branch → Validate → Commit → Push → PR |
-| **git-commit** | Simple commit workflow | Stage → Validate → Commit |
-| **git-standard** | Flexible Git operations | Configurable workflow |
+| Playbook | GitHub Workflow | Purpose | Duration |
+|----------|----------------|---------|----------|
+| ci-all-validations | Multiple | All CI validation checks | 15-25 min |
+| ci-pr-validation | pr-validation.yml | PR validation | 10-15 min |
+| ci-comprehensive-test | comprehensive-test-execution.yml | Full test suite | 20-30 min |
+| ci-quality-validation | quality-validation.yml | Quality checks | 10-15 min |
+| ci-validate-config | validate-config.yml | Config validation | 2-5 min |
+| ci-validate-manifests | validate-manifests.yml | Manifest validation | 2-5 min |
+| ci-validate-test-sync | validate-test-sync.yml | Test synchronization | 2-5 min |
+| ci-auto-generate-tests | auto-generate-tests.yml | Auto-generate tests | 5-15 min |
+| ci-workflow-health | workflow-health-check.yml | Workflow health | 2-5 min |
+| ci-index-automation | index-automation.yml | Generate indexes | 5-10 min |
+| ci-publish-test-reports | publish-test-reports.yml | Publish reports | 3-8 min |
+| ci-documentation | documentation-automation.yml | Generate docs | 10-15 min |
+| ci-release | release-automation.yml | Release automation | 15-30 min |
+| ci-deploy-pr | deploy-pr-environment.yml | PR deployment | 10-20 min |
 
-**Example Usage:**
-```powershell
-# Complete feature workflow with AI
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook git-feature `
-    -Variables @{branchName="add-logging"; commitType="feat"}
+## Testing Playbooks
 
-# Quick commit
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook git-commit
-```
+Testing playbooks provide different levels of validation:
 
-### 🛠️ Development Tools (`devtools/`)
+| Playbook | Purpose | Duration | Use When |
+|----------|---------|----------|----------|
+| test-quick | Fast validation | 5-10 min | During active development |
+| test-standard | Standard testing | 10-15 min | Before creating PR |
+| test-comprehensive | Comprehensive validation | 20-30 min | Before merging PR |
+| test-full | Complete test suite | 30-45 min | Final validation |
 
-Install development tools quickly:
+## Profile System
 
-| Playbook | Tools Included | Duration |
-|----------|----------------|----------|
-| **devtools-minimal** | Git, Node, Docker, Python | 10-15 min |
-| **devtools-full** | All dev tools + VS Code, CLIs | 30-45 min |
+Most playbooks support profiles to customize execution:
 
-**Example Usage:**
-```powershell
-# Essential tools only
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook devtools-minimal
+| Profile | Description | Use Case |
+|---------|-------------|----------|
+| quick | Essential checks only | Active development |
+| standard | Most checks | Before PR creation |
+| comprehensive | All checks including tests | Before PR merge |
+| ci | CI/CD optimized | Automated pipelines |
 
-# Complete toolchain
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook devtools-full
-```
+## JSON Structure
 
-### 🏗️ Infrastructure (`infrastructure/`)
-
-System and infrastructure setup:
-
-| Playbook | Purpose | Platform |
-|----------|---------|----------|
-| **infrastructure-minimal** | Basic system configuration | Cross-platform |
-| **infrastructure-wsl** | WSL2 + Docker development | Windows only |
-| **hyperv-lab-setup** | Complete Hyper-V lab | Windows only |
-
-**Example Usage:**
-```powershell
-# Minimal cross-platform setup
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook infrastructure-minimal
-
-# WSL2 development environment
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook infrastructure-wsl
-
-# Full Hyper-V lab
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook hyperv-lab-setup
-```
-
-### ⚙️ Setup (`setup/`)
-
-Environment setup for different scenarios:
-
-| Playbook | Purpose | Tools |
-|----------|---------|-------|
-| **minimal-setup** | Quick start / CI | Core dependencies |
-| **dev-environment** | Standard developer workstation | Standard dev stack |
-| **full-development** | Power user setup | All tools |
-| **ai-development** | AI-enhanced development | + AI assistants |
-
-### 🚀 Operations (`operations/`)
-
-CI/CD and deployment automation (mirrors GitHub Actions workflows):
-
-| Playbook | Purpose | GitHub Workflow |
-|----------|---------|-----------------|
-| **ci-pr-validation** | PR validation checks | pr-validation.yml |
-| **ci-comprehensive-test** | Full test suite execution | comprehensive-test-execution.yml |
-| **ci-quality-validation** | Quality and linting checks | quality-validation.yml |
-| **ci-release** | Release automation | release-automation.yml |
-| **ci-documentation** | Documentation generation | documentation-automation.yml |
-| **ci-deploy-pr** | PR environment deployment | deploy-pr-environment.yml |
-| **session-management** | Work session management | - |
-
-**Example Usage:**
-```powershell
-# Run PR validation locally before pushing
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-pr-validation
-
-# Run comprehensive tests (matches CI)
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-comprehensive-test
-
-# Generate documentation
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-documentation
-```
-
-### 📊 Analysis (`analysis/`)
-
-Code analysis and reporting:
-
-| Playbook | Purpose |
-|----------|---------|
-| **automated-security-review** | Security scanning |
-| **claude-code-review** | AI code review |
-| **tech-debt-analysis** | Technical debt analysis |
-| **reporting-automation** | Comprehensive reporting |
-
-### 🤖 AI Workflows (`ai/`)
-
-AI-powered automation:
-
-| Playbook | Purpose |
-|----------|---------|
-| **ai-agent-personas** | Custom agent personas |
-| **ai-orchestration** | Multi-agent orchestration |
-| **ai-commands** | Custom CLI commands |
-
-## Playbook Schema v2.0
-
-All core playbooks use the standardized v2.0 schema:
+All playbooks follow this structure:
 
 ```json
 {
   "metadata": {
     "name": "playbook-name",
-    "description": "Clear description",
-    "version": "2.0.0",
-    "category": "testing|git|devtools|infrastructure|...",
-    "author": "AitherZero Team",
+    "description": "Purpose",
+    "version": "1.0.0",
+    "category": "operations|testing",
     "tags": ["tag1", "tag2"],
     "estimatedDuration": "X-Y minutes",
-    "lastUpdated": "2025-11-02T00:00:00Z"
+    "githubWorkflow": "workflow-name.yml"
   },
   "requirements": {
     "minimumPowerShellVersion": "7.0",
     "requiredModules": [],
     "requiredTools": [],
-    "platforms": [],
-    "permissions": []
+    "platforms": ["Windows", "Linux", "macOS"]
   },
   "orchestration": {
     "defaultVariables": {},
     "profiles": {},
-    "stages": []
-  },
-  "validation": {
-    "preConditions": [],
-    "postConditions": []
-  },
-  "notifications": {},
-  "reporting": {},
-  "postActions": []
+    "stages": [
+      {
+        "name": "Stage Name",
+        "description": "Description",
+        "sequences": ["0XXX"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 120,
+        "condition": "{{variable}} == value"
+      }
+    ]
+  }
 }
 ```
-
-## Profiles
-
-Many playbooks support multiple profiles for different use cases:
-
-```powershell
-# Use specific profile
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -PlaybookProfile lightning
-
-# Available profiles vary by playbook:
-# test-quick: lightning, standard, thorough
-# test-standard: quick, strict, standard
-# git-feature: standard, quick, interactive
-# infrastructure-wsl: minimal, development, docker-focused
-```
-
-## Variables
-
-Pass custom variables to playbooks:
-
-```powershell
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook git-feature `
-    -Variables @{
-        branchName = "my-feature"
-        branchType = "feature"
-        commitType = "feat"
-        autoValidate = $true
-    }
-```
-
-## Migration from Legacy Playbooks
-
-See [CONSOLIDATION-PLAN.md](../CONSOLIDATION-PLAN.md) for complete migration details.
-
-### Quick Migration Guide
-
-| Old Playbook | New Equivalent |
-|--------------|----------------|
-| test-lightning | test-quick -Profile lightning |
-| test-simple | test-quick -Profile lightning |
-| test-comprehensive | test-standard |
-| comprehensive-validation | test-full |
-| claude-feature-workflow | git-feature |
-| ai-complete-workflow | git-feature |
-| claude-commit-workflow | git-commit |
 
 ## Best Practices
 
-### 1. Choose the Right Playbook
+1. **Test locally first**: Run playbooks before pushing to CI/CD
+2. **Use profiles**: Customize execution for different scenarios
+3. **Dry run first**: Preview execution with `-DryRun`
+4. **Match workflows**: Keep in sync with GitHub Actions
+5. **Document changes**: Update metadata when modifying
 
-- **Development**: test-quick for fast feedback
-- **Pre-commit**: test-standard for thorough validation
-- **Pre-release**: test-full with coverage
-- **CI/CD**: test-ci optimized for automation
+## Validation
 
-### 2. Use Profiles
+All playbooks are validated for:
+- Valid JSON structure
+- Required fields present
+- Proper stage configuration
+- Executable script references
 
-Profiles customize playbook behavior without modifying the playbook:
+## See Also
 
-```powershell
-# Fast iteration
--PlaybookProfile lightning
+- [Parent README](../README.md) - Playbook system overview
+- [GITHUB-WORKFLOWS-MAPPING.md](../GITHUB-WORKFLOWS-MAPPING.md) - Workflow mappings
+- [MIGRATION-GUIDE.md](../MIGRATION-GUIDE.md) - Migration guide
+- [../../../automation-scripts/0962_Run-Playbook.ps1](../../../automation-scripts/0962_Run-Playbook.ps1) - Wrapper script
 
-# Strict validation
--PlaybookProfile strict
+---
 
-# Interactive mode
--PlaybookProfile interactive
-```
-
-### 3. Leverage Variables
-
-Override defaults for specific needs:
-
-```powershell
--Variables @{
-    continueOnError = $false  # Fail fast
-    skipCoverage = $true      # Speed up tests
-    nonInteractive = $true    # Automation mode
-}
-```
-
-### 4. Chain Playbooks
-
-Run multiple playbooks in sequence:
-
-```powershell
-# Setup then test
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook devtools-minimal
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick
-
-# Development workflow
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-standard
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook git-feature
-```
-
-## Troubleshooting
-
-### Playbook Not Found
-
-Ensure you're using the playbook name (not filename):
-
-```powershell
-# Correct
--Playbook test-quick
-
-# Incorrect
--Playbook test-quick.json
-```
-
-### Missing Requirements
-
-Check playbook requirements in metadata:
-
-```powershell
-# View playbook details
-Get-Content ./orchestration/playbooks/core/testing/test-quick.json | ConvertFrom-Json | Select-Object -ExpandProperty metadata
-```
-
-### Stage Failures
-
-Enable detailed logging:
-
-```powershell
-$env:AITHERZERO_MINIMAL_LOGGING = "false"
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -Verbose
-```
-
-### Profile Issues
-
-List available profiles:
-
-```powershell
-$playbook = Get-Content ./orchestration/playbooks/core/testing/test-quick.json | ConvertFrom-Json
-$playbook.orchestration.profiles | Get-Member -MemberType NoteProperty
-```
-
-## Contributing
-
-When creating new playbooks:
-
-1. Use v2.0 schema (see template above)
-2. Add to appropriate category directory
-3. Include comprehensive metadata
-4. Define clear profiles for different use cases
-5. Add validation conditions
-6. Document in this README
-
-## Support
-
-- 📖 **Documentation**: [AitherZero Docs](../../../docs/)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/wizzense/AitherZero/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/wizzense/AitherZero/discussions)
-
-## Version History
-
-- **2.0.0** (2025-11-02): Initial core playbooks release
-  - Consolidated 42 playbooks → 23 core playbooks
-  - Standardized on v2.0 schema
-  - Added profile support
-  - Improved documentation
+**Version**: 1.0.0  
+**Last Updated**: 2025-11-04  
+**Maintainer**: AitherZero CI/CD Team

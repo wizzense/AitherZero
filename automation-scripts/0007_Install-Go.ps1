@@ -10,23 +10,13 @@ param(
     [hashtable]$Configuration
 )
 
-# Initialize logging
-$script:LoggingAvailable = $false
-try {
-    $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
-    if (Test-Path $loggingPath) {
-        Import-Module $loggingPath -Force -Global
-        $script:LoggingAvailable = $true
-    }
-} catch {
-    # Fallback to basic output if logging module fails to load
-    Write-Warning "Could not load logging module: $($_.Exception.Message)"
-    $script:LoggingAvailable = $false
-}
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
 
 # Import PackageManager module
 try {
-    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    $packageManagerPath = Join-Path $ProjectRoot "domains/utilities/PackageManager.psm1"
     if (Test-Path $packageManagerPath) {
         Import-Module $packageManagerPath -Force -Global
         $script:PackageManagerAvailable = $true
@@ -36,26 +26,6 @@ try {
 } catch {
     Write-Warning "Could not load PackageManager module: $_"
     $script:PackageManagerAvailable = $false
-}
-
-function Write-ScriptLog {
-    param(
-        [string]$Message,
-        [string]$Level = 'Information'
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $Level
-    } else {
-        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-        $prefix = switch ($Level) {
-            'Error' { 'ERROR' }
-            'Warning' { 'WARN' }
-            'Debug' { 'DEBUG' }
-            default { 'INFO' }
-        }
-        Write-Host "[$timestamp] [$prefix] $Message"
-    }
 }
 
 Write-ScriptLog "Starting Go installation using package managers"
