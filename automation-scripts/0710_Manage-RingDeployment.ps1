@@ -69,7 +69,12 @@ param(
 )
 
 # Import common functions if available
-$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$ProjectRoot = if ($PSScriptRoot) {
+    Split-Path $PSScriptRoot -Parent
+} else {
+    Get-Location | Select-Object -ExpandProperty Path
+}
+
 if (Test-Path (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1")) {
     Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
 }
