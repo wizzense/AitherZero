@@ -3570,6 +3570,57 @@ try {
 
         'Orchestrate' {
 
+            # Normalize and split sequence numbers
+            # Handle cases like "0500,0501" being passed as a single string
+            # Also pad numbers to 4 digits if they lost leading zeros during parameter binding
+            if ($Sequence) {
+                $normalizedSequence = @()
+                foreach ($item in $Sequence) {
+                    # Split comma-separated values within each array element
+                    $parts = $item -split ',' | Where-Object { $_ }
+                    foreach ($part in $parts) {
+                        # Trim whitespace
+                        $part = $part.Trim()
+                        # If it's a pure number (lost leading zeros), pad it back to 4 digits
+                        if ($part -match '^\d+$' -and $part.Length -lt 4) {
+                            $normalizedSequence += $part.PadLeft(4, '0')
+                        } else {
+                            $normalizedSequence += $part
+                        }
+                    }
+                }
+                $Sequence = $normalizedSequence
+            }
+
+            # Handle positional arguments - if Sequence is not set but RemainingArguments exist,
+            # treat RemainingArguments as the sequence
+            if (-not $Sequence -and $RemainingArguments) {
+                # Parse RemainingArguments into Sequence
+                # Handle cases like: "0500,0501" or "0500" "0501"
+                $Sequence = @()
+                foreach ($arg in $RemainingArguments) {
+                    if ($arg -is [string]) {
+                        # Split comma-separated values
+                        $parts = $arg -split ',' | Where-Object { $_ }
+                        foreach ($part in $parts) {
+                            $part = $part.Trim()
+                            # Normalize sequence numbers
+                            if ($part -match '^\d+$' -and $part.Length -lt 4) {
+                                $Sequence += $part.PadLeft(4, '0')
+                            } else {
+                                $Sequence += $part
+                            }
+                        }
+                    } else {
+                        $Sequence += [string]$arg
+                    }
+                }
+                
+                if ($Sequence.Count -gt 0 -and (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+                    Write-CustomLog -Message "Using positional arguments as sequence: $($Sequence -join ', ')" -Level 'Information'
+                }
+            }
+
             if (-not $Sequence -and -not $Playbook) {
 
                 Write-Error "Orchestrate mode requires -Sequence or -Playbook parameter"
