@@ -33,7 +33,7 @@ This directory contains utility scripts for repository management and maintenanc
 - Detailed logging of all operations
 - Error handling and reporting
 
-**Alternative**: Use the GitHub Actions workflow `.github/workflows/cleanup-old-releases.yml` for a safer, automated approach.
+**Alternative**: Use the GitHub Actions workflow `.github/workflows/release-cleanup-v1.yml` for a safer, automated approach.
 
 ## Related Documentation
 

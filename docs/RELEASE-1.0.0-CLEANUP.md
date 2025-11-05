@@ -132,7 +132,7 @@ The cleanup script includes:
 
 - `/VERSION` - Contains the official version number (1.0.0.0)
 - `/tools/Invoke-ReleaseCleanup.ps1` - Automated cleanup script (manual execution)
-- `/.github/workflows/cleanup-old-releases.yml` - GitHub Actions workflow (recommended)
+- `/.github/workflows/release-cleanup-v1.yml` - GitHub Actions workflow (recommended)
 - `/.github/workflows/release.yml` - Release automation workflow
 
 ## References
