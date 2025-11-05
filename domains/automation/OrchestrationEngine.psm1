@@ -75,6 +75,7 @@ function Invoke-OrchestrationSequence {
     .DESCRIPTION
     A high-level orchestration language using numbers to execute complex workflows.
     Supports ranges, wildcards, exclusions, and conditional execution.
+    Enhanced with GitHub Actions-like features: matrix builds, caching, and job outputs.
 
     .PARAMETER Sequence
     Number sequence(s) to execute. Supports multiple formats:
@@ -113,6 +114,15 @@ function Invoke-OrchestrationSequence {
     .PARAMETER LoadPlaybook
     Load and execute a saved playbook
 
+    .PARAMETER Matrix
+    Matrix build parameters for parallel execution with different configurations
+    
+    .PARAMETER UseCache
+    Enable caching of execution results and artifacts
+
+    .PARAMETER GenerateSummary
+    Generate markdown execution summary report
+
     .EXAMPLE
     # Run environment setup
     Invoke-OrchestrationSequence -Sequence "0000-0099"
@@ -144,6 +154,17 @@ function Invoke-OrchestrationSequence {
     .EXAMPLE
     # Execute saved playbook
     Invoke-OrchestrationSequence -LoadPlaybook "dev-setup"
+    
+    .EXAMPLE
+    # Matrix build - run tests with different configurations
+    Invoke-OrchestrationSequence -Sequence "0402" -Matrix @{
+        profile = @('quick', 'comprehensive')
+        platform = @('Windows', 'Linux')
+    }
+    
+    .EXAMPLE
+    # With caching enabled
+    Invoke-OrchestrationSequence -LoadPlaybook "test-full" -UseCache -GenerateSummary
     #>
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Sequence')]
     param(
@@ -185,7 +206,16 @@ function Invoke-OrchestrationSequence {
         [switch]$Interactive,
 
         [Parameter()]
-        [hashtable]$Conditions = @{}
+        [hashtable]$Conditions = @{},
+
+        [Parameter()]
+        [hashtable]$Matrix,
+
+        [Parameter()]
+        [switch]$UseCache,
+
+        [Parameter()]
+        [switch]$GenerateSummary
     )
 
     begin {
@@ -325,6 +355,24 @@ function Invoke-OrchestrationSequence {
                 $Parallel = $false
             }
         }
+
+        # Initialize caching system if enabled
+        if ($UseCache) {
+            $script:CacheManager = Initialize-OrchestrationCache -Configuration $config
+            Write-OrchestrationLog "Caching enabled - cache directory: $($script:CacheManager.CacheDir)" -Level 'Information'
+        }
+
+        # Initialize execution summary tracking if requested
+        if ($GenerateSummary) {
+            $script:ExecutionSummary = @{
+                StartTime = Get-Date
+                Playbook = $LoadPlaybook
+                Variables = $Variables
+                Stages = @()
+                Outputs = @{}
+            }
+            Write-OrchestrationLog "Execution summary generation enabled" -Level 'Information'
+        }
     }
 
     process {
@@ -341,6 +389,13 @@ function Invoke-OrchestrationSequence {
         # Get script metadata
         $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions
 
+        # Matrix build handling - expand scripts for each matrix combination
+        if ($Matrix) {
+            Write-OrchestrationLog "Matrix build enabled with $($Matrix.Keys.Count) dimensions" -Level 'Information'
+            $scripts = Expand-MatrixBuilds -Scripts $scripts -Matrix $Matrix -Variables $Variables
+            Write-OrchestrationLog "Expanded to $($scripts.Count) matrix job(s)" -Level 'Information'
+        }
+
         # Save playbook if requested
         if ($SavePlaybook) {
             Save-OrchestrationPlaybook -Name $SavePlaybook -Sequence $Sequence -Variables $Variables -Profile $ExecutionProfile
@@ -350,7 +405,11 @@ function Invoke-OrchestrationSequence {
         # Dry run mode
         if ($DryRun) {
             Write-OrchestrationLog "DRY RUN MODE - No scripts will be executed"
-            Show-OrchestrationPlan -Scripts $scripts
+            if ($Matrix) {
+                Show-MatrixOrchestrationPlan -Scripts $scripts -Matrix $Matrix
+            } else {
+                Show-OrchestrationPlan -Scripts $scripts
+            }
             return
         }
 
@@ -420,6 +479,24 @@ function Invoke-OrchestrationSequence {
                     duration = if ($result.Duration) { $result.Duration.ToString() } else { 'Unknown' }
                     completed = if ($result.Completed) { $result.Completed } else { $scripts.Count }
                 }
+            }
+
+            # Generate execution summary if requested
+            if ($GenerateSummary) {
+                $script:ExecutionSummary.EndTime = Get-Date
+                $script:ExecutionSummary.Duration = $result.Duration
+                $script:ExecutionSummary.Result = $result
+                $summaryPath = Export-OrchestrationSummary -Summary $script:ExecutionSummary -Configuration $config
+                Write-OrchestrationLog "Execution summary saved to: $summaryPath" -Level 'Information'
+                
+                # Add summary path to result
+                $result | Add-Member -NotePropertyName 'SummaryPath' -NotePropertyValue $summaryPath -Force
+            }
+
+            # Save to cache if enabled
+            if ($UseCache) {
+                Save-OrchestrationCache -CacheManager $script:CacheManager -Result $result -Scripts $scripts -Variables $Variables
+                Write-OrchestrationLog "Execution result cached" -Level 'Information'
             }
 
             # Return execution result
@@ -1457,6 +1534,283 @@ function Get-OrchestrationPlaybook {
     return $null
 }
 
+#
+# GitHub Actions-like Features: Matrix Builds, Caching, Job Outputs
+#
+
+function Expand-MatrixBuilds {
+    <#
+    .SYNOPSIS
+    Expand scripts into matrix builds with different parameter combinations
+    
+    .DESCRIPTION
+    Takes a set of scripts and matrix parameters, generating all combinations
+    for parallel execution. Similar to GitHub Actions matrix strategy.
+    
+    .EXAMPLE
+    $matrix = @{
+        profile = @('quick', 'comprehensive')
+        platform = @('Windows', 'Linux')
+    }
+    Expand-MatrixBuilds -Scripts $scripts -Matrix $matrix
+    #>
+    param(
+        [array]$Scripts,
+        [hashtable]$Matrix,
+        [hashtable]$Variables
+    )
+
+    $expandedScripts = @()
+    
+    # Generate all matrix combinations
+    $combinations = Get-MatrixCombinations -Matrix $Matrix
+    
+    Write-OrchestrationLog "Generated $($combinations.Count) matrix combinations" -Level 'Information'
+    
+    foreach ($combination in $combinations) {
+        foreach ($script in $Scripts) {
+            # Clone the script object
+            $matrixScript = $script.PSObject.Copy()
+            
+            # Create matrix-specific variables
+            $matrixVars = $Variables.Clone()
+            foreach ($key in $combination.Keys) {
+                $matrixVars[$key] = $combination[$key]
+            }
+            
+            # Update script with matrix variables
+            $matrixScript.Variables = $matrixVars
+            $matrixScript.MatrixConfig = $combination
+            
+            # Generate unique identifier for this matrix job
+            $matrixId = ($combination.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ','
+            $matrixScript.MatrixId = $matrixId
+            $matrixScript.Number = "$($script.Number)-matrix-$($expandedScripts.Count)"
+            
+            $expandedScripts += $matrixScript
+        }
+    }
+    
+    return $expandedScripts
+}
+
+function Get-MatrixCombinations {
+    <#
+    .SYNOPSIS
+    Generate all combinations from matrix dimensions
+    
+    .DESCRIPTION
+    Recursively generates all possible combinations of matrix parameters
+    #>
+    param([hashtable]$Matrix)
+    
+    $dimensions = @($Matrix.Keys)
+    if ($dimensions.Count -eq 0) {
+        return @(@{})
+    }
+    
+    $combinations = @(@{})
+    
+    foreach ($dimension in $dimensions) {
+        $newCombinations = @()
+        $values = $Matrix[$dimension]
+        
+        foreach ($combination in $combinations) {
+            foreach ($value in $values) {
+                $newCombination = $combination.Clone()
+                $newCombination[$dimension] = $value
+                $newCombinations += $newCombination
+            }
+        }
+        
+        $combinations = $newCombinations
+    }
+    
+    return $combinations
+}
+
+function Show-MatrixOrchestrationPlan {
+    <#
+    .SYNOPSIS
+    Display orchestration plan for matrix builds
+    #>
+    param(
+        [array]$Scripts,
+        [hashtable]$Matrix
+    )
+    
+    Write-Host "`nMatrix Orchestration Plan:" -ForegroundColor Cyan
+    Write-Host "==========================" -ForegroundColor Cyan
+    Write-Host "`nMatrix Dimensions:" -ForegroundColor Yellow
+    foreach ($dimension in $Matrix.Keys) {
+        Write-Host "  $dimension : $($Matrix[$dimension] -join ', ')" -ForegroundColor White
+    }
+    
+    $combinations = ($Scripts | Select-Object -First 1 -ExpandProperty MatrixConfig -ErrorAction SilentlyContinue).Count
+    if (-not $combinations) {
+        $combinations = (Get-MatrixCombinations -Matrix $Matrix).Count
+    }
+    
+    Write-Host "`nTotal Combinations: $combinations" -ForegroundColor Green
+    Write-Host "Total Jobs: $($Scripts.Count)" -ForegroundColor Green
+    
+    Write-Host "`nJobs:" -ForegroundColor Yellow
+    foreach ($script in $Scripts) {
+        $matrixInfo = if ($script.MatrixId) { " [$($script.MatrixId)]" } else { "" }
+        Write-Host "  [$($script.Number)]$matrixInfo $($script.Name)" -ForegroundColor White
+    }
+}
+
+function Initialize-OrchestrationCache {
+    <#
+    .SYNOPSIS
+    Initialize the orchestration caching system
+    
+    .DESCRIPTION
+    Sets up the cache directory structure and returns a cache manager object
+    #>
+    param([hashtable]$Configuration)
+    
+    $cacheDir = Join-Path $script:ProjectRoot '.orchestration-cache'
+    
+    # Create cache directories
+    @('results', 'artifacts', 'metadata') | ForEach-Object {
+        $dir = Join-Path $cacheDir $_
+        if (-not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        }
+    }
+    
+    return @{
+        CacheDir = $cacheDir
+        ResultsDir = Join-Path $cacheDir 'results'
+        ArtifactsDir = Join-Path $cacheDir 'artifacts'
+        MetadataDir = Join-Path $cacheDir 'metadata'
+        Enabled = $true
+    }
+}
+
+function Save-OrchestrationCache {
+    <#
+    .SYNOPSIS
+    Save orchestration execution results to cache
+    #>
+    param(
+        [hashtable]$CacheManager,
+        [object]$Result,
+        [array]$Scripts,
+        [hashtable]$Variables
+    )
+    
+    try {
+        # Generate cache key from scripts and variables
+        $cacheKey = Get-OrchestrationCacheKey -Scripts $Scripts -Variables $Variables
+        
+        # Save result
+        $resultPath = Join-Path $CacheManager.ResultsDir "$cacheKey.json"
+        $Result | ConvertTo-Json -Depth 10 | Set-Content -Path $resultPath
+        
+        # Save metadata
+        $metadata = @{
+            CacheKey = $cacheKey
+            Timestamp = Get-Date -Format 'o'
+            Scripts = ($Scripts | Select-Object Number, Name, Path)
+            Variables = $Variables
+            Success = ($Result.Failed -eq 0)
+        }
+        $metadataPath = Join-Path $CacheManager.MetadataDir "$cacheKey.meta.json"
+        $metadata | ConvertTo-Json -Depth 10 | Set-Content -Path $metadataPath
+        
+        Write-OrchestrationLog "Cached execution result: $cacheKey" -Level 'Debug'
+    } catch {
+        Write-OrchestrationLog "Failed to save cache: $_" -Level 'Warning'
+    }
+}
+
+function Get-OrchestrationCacheKey {
+    <#
+    .SYNOPSIS
+    Generate a unique cache key from scripts and variables
+    #>
+    param(
+        [array]$Scripts,
+        [hashtable]$Variables
+    )
+    
+    $scriptIds = ($Scripts | ForEach-Object { $_.Number }) -join ','
+    $varJson = $Variables | ConvertTo-Json -Compress
+    $combined = "$scriptIds|$varJson"
+    
+    # Generate SHA256 hash
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $hash = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($combined))
+    $hashString = [BitConverter]::ToString($hash) -replace '-', ''
+    
+    return $hashString.Substring(0, 16)  # Use first 16 chars
+}
+
+function Export-OrchestrationSummary {
+    <#
+    .SYNOPSIS
+    Export execution summary as markdown report
+    
+    .DESCRIPTION
+    Generates a GitHub Actions-style job summary in markdown format
+    #>
+    param(
+        [hashtable]$Summary,
+        [hashtable]$Configuration
+    )
+    
+    $reportsDir = Join-Path $script:ProjectRoot 'reports/orchestration'
+    if (-not (Test-Path $reportsDir)) {
+        New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyy-MM-dd-HHmmss'
+    $summaryPath = Join-Path $reportsDir "summary-$timestamp.md"
+    
+    $markdown = @"
+# Orchestration Execution Summary
+
+**Playbook**: $($Summary.Playbook)  
+**Started**: $($Summary.StartTime.ToString('yyyy-MM-dd HH:mm:ss'))  
+**Completed**: $($Summary.EndTime.ToString('yyyy-MM-dd HH:mm:ss'))  
+**Duration**: $($Summary.Duration.ToString())  
+**Status**: $(if ($Summary.Result.Failed -eq 0) { '✅ Success' } else { '❌ Failed' })
+
+## Results
+
+| Metric | Count |
+|--------|-------|
+| Total Scripts | $($Summary.Result.Total) |
+| Completed | $($Summary.Result.Completed) ✅ |
+| Failed | $($Summary.Result.Failed) ❌ |
+| Success Rate | $([math]::Round(($Summary.Result.Completed / $Summary.Result.Total) * 100, 2))% |
+
+## Variables
+
+``````json
+$($Summary.Variables | ConvertTo-Json)
+``````
+
+## Execution Details
+
+"@
+    
+    # Add failed scripts if any
+    if ($Summary.Result.Results.Failed.Count -gt 0) {
+        $markdown += "`n### ❌ Failed Scripts`n`n"
+        foreach ($failedScript in $Summary.Result.Results.Failed.GetEnumerator()) {
+            $markdown += "- **$($failedScript.Key)**: $($failedScript.Value.Error)`n"
+        }
+    }
+    
+    $markdown | Set-Content -Path $summaryPath
+    
+    return $summaryPath
+}
+
 # Simplified number sequence functions for direct use
 function Invoke-Sequence {
     <#
@@ -1493,4 +1847,11 @@ Export-ModuleMember -Function @(
     'ConvertTo-StandardPlaybookFormat'
     'Test-PlaybookConditions'
     'Send-PlaybookNotification'
+    'Expand-MatrixBuilds'
+    'Get-MatrixCombinations'
+    'Show-MatrixOrchestrationPlan'
+    'Initialize-OrchestrationCache'
+    'Save-OrchestrationCache'
+    'Get-OrchestrationCacheKey'
+    'Export-OrchestrationSummary'
 ) -Alias @('seq')
