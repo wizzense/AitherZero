@@ -2888,16 +2888,43 @@ function Show-AdvancedMenu {
 
                 $configPath = Join-Path $script:ProjectRoot 'config.psd1'
 
-                if ($IsWindows) {
+                try {
+                    if ($IsWindows) {
 
-                    Start-Process notepad.exe -ArgumentList $configPath -Wait
+                        Start-Process notepad.exe -ArgumentList $configPath -Wait
 
-                } else {
+                    } else {
 
-                    $editor = $env:EDITOR ?? 'nano'
+                        # Use direct invocation for interactive console editors in Linux/macOS
+                        # Start-Process doesn't work well with interactive TTY applications
+                        $editor = $env:EDITOR ?? 'nano'
+                        
+                        # Check if editor exists
+                        $editorPath = (Get-Command $editor -ErrorAction SilentlyContinue)?.Source
+                        if (-not $editorPath) {
+                            # Try common editors as fallbacks
+                            $fallbackEditors = @('nano', 'vi', 'vim')
+                            foreach ($fallback in $fallbackEditors) {
+                                $editorPath = (Get-Command $fallback -ErrorAction SilentlyContinue)?.Source
+                                if ($editorPath) {
+                                    $editor = $fallback
+                                    break
+                                }
+                            }
+                        }
 
-                    Start-Process -FilePath $editor -ArgumentList $configPath -Wait
+                        if ($editorPath) {
+                            # Use call operator for direct invocation with TTY support
+                            & $editor $configPath
+                        } else {
+                            Show-UINotification -Message "No text editor found. Please install nano, vi, or vim, or set the EDITOR environment variable." -Type 'Error'
+                            continue
+                        }
 
+                    }
+                } catch {
+                    Show-UINotification -Message "Failed to open editor: $_" -Type 'Error'
+                    continue
                 }
 
 
