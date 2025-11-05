@@ -3485,6 +3485,35 @@ try {
 
     $config = Get-AitherConfiguration -Path $ConfigPath
 
+    # Integrate CommandParser for enhanced parameter validation and shortcut resolution
+    if (Get-Command Parse-AitherCommand -ErrorAction SilentlyContinue) {
+        # Build command string from parameters
+        $cmdText = "-Mode $Mode"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -notin @('Mode', 'ConfigPath', 'NonInteractive', 'ProfileName', 'IsRelaunch', 'RemainingArguments')) {
+                $value = $param.Value
+                if ($value -is [array]) {
+                    $value = $value -join ','
+                }
+                if ($value -match '\s') {
+                    $cmdText += " -$($param.Key) `"$value`""
+                } else {
+                    $cmdText += " -$($param.Key) $value"
+                }
+            }
+        }
+        
+        # Parse and validate command
+        $parsed = Parse-AitherCommand -CommandText $cmdText
+        if ($parsed.IsValid) {
+            Write-Verbose "CommandParser validated command: $cmdText"
+            # Command is valid, parameters already set, continue
+        } else {
+            Write-Verbose "CommandParser validation: $($parsed.Error) - continuing anyway for backward compatibility"
+            # Continue anyway for backward compatibility
+        }
+    }
+
 
 
     # Smart execution mode detection based on environment context
