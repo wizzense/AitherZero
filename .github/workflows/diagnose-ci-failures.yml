@@ -70,7 +70,7 @@ jobs:
           # Run diagnostic based on input
           if ($runId) {
             Write-Host "📊 Analyzing run ID: $runId" -ForegroundColor Yellow
-            & $script -RunId $runId -Detailed -OutputFormat Both
+            & $script -RunId $runId -Detailed -OutputFormat both
           } elseif ($workflowName) {
             Write-Host "📊 Analyzing workflow: $workflowName" -ForegroundColor Yellow
             & $script -WorkflowName $workflowName -Status failure -Limit 5
