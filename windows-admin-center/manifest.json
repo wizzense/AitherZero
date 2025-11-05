@@ -1,0 +1,113 @@
+{
+  "$schema": "../node_modules/@microsoft/windows-admin-center-sdk/dist/manifest/manifest-schema.json",
+  "name": "aitherzero",
+  "displayName": "AitherZero",
+  "description": "Infrastructure automation platform for Windows Admin Center",
+  "version": "0.1.0",
+  "publisher": "Aitherium Corporation",
+  "company": "Aitherium Corporation",
+  "companyUrl": "https://github.com/wizzense",
+  "productUrl": "https://github.com/wizzense/AitherZero",
+  "buildVersion": "0.1.0",
+  "buildDate": "2025-11-05",
+  "shellVersion": "2103",
+  "icon": "assets/icon.png",
+  "tags": [
+    "automation",
+    "infrastructure",
+    "powershell",
+    "devops",
+    "orchestration"
+  ],
+  "categories": [
+    "infrastructure",
+    "automation"
+  ],
+  "modules": [
+    "AitherZero"
+  ],
+  "entryPoints": [
+    {
+      "name": "dashboard",
+      "displayName": "Dashboard",
+      "description": "Infrastructure automation dashboard",
+      "icon": "assets/dashboard-icon.png",
+      "path": "#/dashboard",
+      "parentModule": {
+        "name": "msft.sme.server-manager",
+        "entryPointType": "tool"
+      },
+      "requirements": [
+        {
+          "condition": "powershell",
+          "arguments": {
+            "version": "7.0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "scripts",
+      "displayName": "Automation Scripts",
+      "description": "Browse and execute automation scripts",
+      "icon": "assets/scripts-icon.png",
+      "path": "#/scripts",
+      "parentModule": {
+        "name": "msft.sme.server-manager",
+        "entryPointType": "tool"
+      },
+      "requirements": [
+        {
+          "condition": "powershell",
+          "arguments": {
+            "version": "7.0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "playbooks",
+      "displayName": "Playbooks",
+      "description": "Orchestration playbook management",
+      "icon": "assets/playbooks-icon.png",
+      "path": "#/playbooks",
+      "parentModule": {
+        "name": "msft.sme.server-manager",
+        "entryPointType": "tool"
+      },
+      "requirements": [
+        {
+          "condition": "powershell",
+          "arguments": {
+            "version": "7.0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "infrastructure",
+      "displayName": "Infrastructure",
+      "description": "VM and infrastructure management",
+      "icon": "assets/infrastructure-icon.png",
+      "path": "#/infrastructure",
+      "parentModule": {
+        "name": "msft.sme.server-manager",
+        "entryPointType": "tool"
+      },
+      "requirements": [
+        {
+          "condition": "powershell",
+          "arguments": {
+            "version": "7.0"
+          }
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "locale": "en-US",
+      "path": "assets/strings/strings.resjson"
+    }
+  ]
+}
