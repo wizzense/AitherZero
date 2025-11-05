@@ -50,7 +50,35 @@ The script:
 
 ## Execution Instructions
 
-To complete the cleanup, a repository administrator with appropriate permissions must:
+There are two ways to complete the cleanup:
+
+### Option 1: GitHub Actions Workflow (Recommended)
+
+The safest and easiest method is to use the GitHub Actions workflow:
+
+1. **Navigate to Actions tab**:
+   - Go to https://github.com/wizzense/AitherZero/actions
+   - Select "Cleanup Old Releases and Tags" workflow
+
+2. **Run in dry-run mode first** (to preview changes):
+   - Click "Run workflow"
+   - Leave "Dry run mode" checked
+   - Click "Run workflow" button
+   - Review the output to see what would be deleted
+
+3. **Execute the cleanup**:
+   - Click "Run workflow" again
+   - **Uncheck** "Dry run mode"
+   - Type `CONFIRM` in the confirmation field
+   - Click "Run workflow" button
+
+4. **Verify the cleanup**:
+   - Check the workflow output for success messages
+   - Verify only v1.0.0.0 remains in releases and tags
+
+### Option 2: PowerShell Script (Manual)
+
+For local execution, a repository administrator with appropriate permissions can run:
 
 1. **Authenticate with GitHub CLI**:
    ```bash
@@ -60,6 +88,11 @@ To complete the cleanup, a repository administrator with appropriate permissions
 2. **Run the cleanup script**:
    ```bash
    cd /path/to/AitherZero
+   
+   # Dry run first
+   pwsh ./tools/Invoke-ReleaseCleanup.ps1 -DryRun
+   
+   # Execute cleanup
    pwsh ./tools/Invoke-ReleaseCleanup.ps1
    ```
 
@@ -98,7 +131,8 @@ The cleanup script includes:
 ## Related Files
 
 - `/VERSION` - Contains the official version number (1.0.0.0)
-- `/tools/Invoke-ReleaseCleanup.ps1` - Automated cleanup script
+- `/tools/Invoke-ReleaseCleanup.ps1` - Automated cleanup script (manual execution)
+- `/.github/workflows/cleanup-old-releases.yml` - GitHub Actions workflow (recommended)
 - `/.github/workflows/release.yml` - Release automation workflow
 
 ## References
