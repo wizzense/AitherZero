@@ -1425,16 +1425,94 @@ function ConvertTo-StandardPlaybookFormat {
     .SYNOPSIS
     Converts playbooks from different versions to a standardized format
     .DESCRIPTION
-    Handles both legacy v1 playbooks and new v2.0 schema playbooks,
+    Handles v1 (legacy), v2.0 (stages-based), and v3.0 (jobs-based) playbooks,
     converting them to a consistent internal format for execution.
+    
+    Ensures full backward compatibility with existing JSON playbooks.
     #>
     param(
         [hashtable]$Playbook
     )
 
-    # Check if this is a v2.0 playbook (has metadata and orchestration sections)
-    if ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
-        Write-OrchestrationLog "Loading v2.0 playbook: $($Playbook.metadata.name)" -Level 'Information'
+    # Check if this is a v3.0 playbook (has jobs instead of stages)
+    if ($Playbook.ContainsKey('metadata') -and 
+        $Playbook.ContainsKey('orchestration') -and 
+        $Playbook.orchestration.ContainsKey('jobs')) {
+        
+        Write-OrchestrationLog "Loading v3.0 jobs-based playbook: $($Playbook.metadata.name)" -Level 'Information'
+        
+        # Convert v3.0 jobs to v2.0 stages format for backward compatibility
+        $standardPlaybook = @{
+            # Metadata
+            Name = $Playbook.metadata.name
+            Description = $Playbook.metadata.description
+            Version = $Playbook.metadata.version
+            Category = $Playbook.metadata.category
+            Author = $Playbook.metadata.author
+            Tags = $Playbook.metadata.tags
+            EstimatedDuration = $Playbook.metadata.estimatedDuration
+            
+            # Requirements
+            Requirements = $Playbook.requirements
+            
+            # Variables and profiles
+            Variables = if ($Playbook.orchestration.defaultVariables) { 
+                $Playbook.orchestration.defaultVariables 
+            } else { @{} }
+            Profiles = if ($Playbook.orchestration.profiles) { 
+                $Playbook.orchestration.profiles 
+            } else { @{} }
+            
+            # Convert jobs to stages
+            Stages = @()
+            
+            # Store original jobs for advanced execution
+            Jobs = $Playbook.orchestration.jobs
+            
+            # Validation and notifications
+            Validation = $Playbook.validation
+            Notifications = $Playbook.notifications
+            Reporting = $Playbook.reporting
+        }
+        
+        # Convert jobs to stages format for compatibility
+        foreach ($jobKey in $Playbook.orchestration.jobs.Keys) {
+            $job = $Playbook.orchestration.jobs[$jobKey]
+            
+            # Extract script numbers from steps
+            $sequences = @()
+            foreach ($step in $job.steps) {
+                if ($step.run) {
+                    $sequences += $step.run
+                }
+            }
+            
+            $convertedStage = @{
+                Name = $job.name
+                Description = if ($job.description) { $job.description } else { "" }
+                Sequence = $sequences
+                Variables = if ($job.env) { $job.env } else { @{} }
+                Condition = if ($job.if) { $job.if } else { $null }
+                ContinueOnError = if ($job.continueOnError) { $job.continueOnError } else { $false }
+                Parallel = $false  # Jobs run sequentially by default
+                Timeout = if ($job.timeout) { $job.timeout } else { 3600 }
+                Retries = 0
+            }
+            
+            # Handle matrix strategy
+            if ($job.strategy -and $job.strategy.matrix) {
+                $convertedStage.Matrix = $job.strategy.matrix
+            }
+            
+            $standardPlaybook.Stages += $convertedStage
+        }
+        
+        return $standardPlaybook
+    }
+    
+    # Check if this is a v2.0 playbook (has metadata and orchestration with stages)
+    elseif ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
+        Write-OrchestrationLog "Loading v2.0 stages-based playbook: $($Playbook.metadata.name)" -Level 'Information'
         
         # Convert v2.0 format to internal format
         $standardPlaybook = @{
