@@ -267,8 +267,17 @@ function Remove-Extension {
 function Get-AvailableExtensions {
     [CmdletBinding()]
     param(
-        [switch]$LoadedOnly
+        [switch]$LoadedOnly,
+        [switch]$AsHashtable
     )
+    
+    if ($AsHashtable) {
+        # Return the raw hashtable for programmatic access
+        if ($LoadedOnly) {
+            return $script:ExtensionRegistry.Loaded
+        }
+        return $script:ExtensionRegistry.Available
+    }
     
     if ($LoadedOnly) {
         return $script:ExtensionRegistry.Loaded.Values | ForEach-Object {

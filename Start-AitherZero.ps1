@@ -3591,10 +3591,33 @@ try {
 
             }
 
-            # Initialize extension system if not already done
-            if (Get-Command Initialize-ExtensionManager -ErrorAction SilentlyContinue) {
+            # Initialize extension system with auto-discovery
+            if (Get-Command Initialize-ExtensionSystem -ErrorAction SilentlyContinue) {
                 try {
-                    Initialize-ExtensionManager -Config $config
+                    Write-Verbose "Initializing extension system..."
+                    
+                    # Get additional search paths from config if present
+                    $additionalPaths = @()
+                    if ($config.Extensions -and $config.Extensions.SearchPaths) {
+                        $additionalPaths = $config.Extensions.SearchPaths
+                    }
+                    
+                    # Initialize with auto-discovery
+                    Initialize-ExtensionSystem -AdditionalPaths $additionalPaths
+                    
+                    # Auto-load extensions if configured
+                    if ($config.Extensions -and $config.Extensions.AutoLoad -eq $true) {
+                        Write-Verbose "Auto-loading extensions..."
+                        $availableExtensions = Get-AvailableExtensions
+                        foreach ($extName in $availableExtensions.Keys) {
+                            try {
+                                Import-Extension -Name $extName -ErrorAction Continue
+                            } catch {
+                                Write-Warning "Failed to auto-load extension '$extName': $_"
+                            }
+                        }
+                    }
+                    
                 } catch {
                     Write-Warning "Extension system initialization skipped: $_"
                 }
@@ -3604,7 +3627,7 @@ try {
             if (Get-Command Show-UnifiedMenu -ErrorAction SilentlyContinue) {
                 Write-Verbose "Using new unified CLI/menu interface"
                 try {
-                    Show-UnifiedMenu -Config $config
+                    Show-UnifiedMenu -Config $config -ProjectRoot $PSScriptRoot
                 } catch {
                     Write-Warning "Unified menu failed, falling back to legacy menu: $_"
                     Show-InteractiveMenu -Config $config
