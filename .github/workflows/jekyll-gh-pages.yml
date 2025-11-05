@@ -1,5 +1,5 @@
 # Jekyll site to GitHub Pages - Enhanced with Reports
-name: Deploy Jekyll to GitHub Pages
+name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
   # Runs on pushes targeting the default branch
@@ -10,7 +10,6 @@ on:
       - 'docs/**'
       - 'index.md'
       - '_config.yml'
-      - 'Gemfile'
       - 'mcp-server/README.md'
       - 'mcp-server/QUICKSTART.md'
 
@@ -40,12 +39,6 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.1'
-          bundler-cache: true
-
       - name: Copy MCP Server Documentation
         run: |
           echo "📄 Copying MCP server documentation to docs..."
@@ -64,9 +57,10 @@ jobs:
           fi
         
       - name: Build with Jekyll
-        run: bundle exec jekyll build
-        env:
-          JEKYLL_ENV: production
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
