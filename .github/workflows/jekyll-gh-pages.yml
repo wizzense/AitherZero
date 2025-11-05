@@ -1,5 +1,5 @@
 # Jekyll site to GitHub Pages - Enhanced with Reports
-name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+name: Deploy Jekyll to GitHub Pages
 
 on:
   # Runs on pushes targeting the default branch
