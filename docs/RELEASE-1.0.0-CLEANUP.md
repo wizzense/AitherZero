@@ -1,5 +1,7 @@
 # Making v1.0.0.0 the Official Release
 
+> **Quick Start**: See [`QUICKSTART-RELEASE-CLEANUP.md`](./QUICKSTART-RELEASE-CLEANUP.md) for a 2-minute guide.
+
 This document describes the process of making v1.0.0.0 the official first release of AitherZero by removing all other tags and releases.
 
 ## Background
