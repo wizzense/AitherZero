@@ -11,11 +11,11 @@
     If specified, only shows what would be deleted without making changes.
 
 .EXAMPLE
-    ./cleanup-releases-and-tags.ps1 -DryRun
+    ./Invoke-ReleaseCleanup.ps1 -DryRun
     Shows what would be deleted without making changes.
 
 .EXAMPLE
-    ./cleanup-releases-and-tags.ps1
+    ./Invoke-ReleaseCleanup.ps1
     Deletes all releases and tags except v1.0.0.0
 #>
 

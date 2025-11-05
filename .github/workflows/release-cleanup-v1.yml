@@ -53,8 +53,13 @@ jobs:
           echo "Fetched all tags"
           
           # Get all tags except v1.0.0.0
-          TAGS_TO_DELETE=$(git tag -l | grep -v "^v1.0.0.0$" || echo "")
-          TAG_COUNT=$(echo "$TAGS_TO_DELETE" | wc -l)
+          TAGS_TO_DELETE=$(git tag -l | grep -v "^v1.0.0.0$" || true)
+          
+          if [ -z "$TAGS_TO_DELETE" ]; then
+            TAG_COUNT=0
+          else
+            TAG_COUNT=$(echo "$TAGS_TO_DELETE" | wc -l)
+          fi
           
           echo "tags_to_delete<<EOF" >> $GITHUB_OUTPUT
           echo "$TAGS_TO_DELETE" >> $GITHUB_OUTPUT
@@ -156,23 +161,32 @@ jobs:
         run: |
           echo "🗑️  Deleting remote tags..."
           
-          DELETED=0
-          FAILED=0
+          # Use temporary files to track counts across loop
+          TEMP_DIR=$(mktemp -d)
+          echo "0" > "$TEMP_DIR/deleted"
+          echo "0" > "$TEMP_DIR/failed"
           
           echo "${{ steps.fetch-tags.outputs.tags_to_delete }}" | while read tag; do
             if [ -n "$tag" ]; then
               echo "  Deleting remote tag: $tag"
               if git push origin --delete "$tag" 2>/dev/null; then
-                DELETED=$((DELETED + 1))
+                echo $(($(cat "$TEMP_DIR/deleted") + 1)) > "$TEMP_DIR/deleted"
               else
                 echo "  ❌ Failed to delete remote tag: $tag"
-                FAILED=$((FAILED + 1))
+                echo $(($(cat "$TEMP_DIR/failed") + 1)) > "$TEMP_DIR/failed"
               fi
             fi
           done
           
+          DELETED=$(cat "$TEMP_DIR/deleted")
+          FAILED=$(cat "$TEMP_DIR/failed")
+          rm -rf "$TEMP_DIR"
+          
           echo ""
-          echo "✅ Deleted remote tags"
+          echo "✅ Deleted $DELETED remote tags"
+          if [ "$FAILED" -gt 0 ]; then
+            echo "❌ Failed to delete $FAILED remote tags"
+          fi
       
       - name: Create cleanup summary
         if: ${{ !inputs.dry_run }}
