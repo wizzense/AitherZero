@@ -1,0 +1,180 @@
+{
+  "name": "aitherzero-vscode",
+  "displayName": "AitherZero",
+  "description": "Infrastructure automation platform integration for VS Code",
+  "version": "0.1.0",
+  "publisher": "aitherium",
+  "icon": "resources/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Debuggers",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "aitherzero",
+    "infrastructure",
+    "automation",
+    "powershell",
+    "devops",
+    "orchestration"
+  ],
+  "activationEvents": [
+    "onCommand:aitherzero.runScript",
+    "onCommand:aitherzero.openDashboard",
+    "onCommand:aitherzero.refreshScripts",
+    "onView:aitherZeroScripts",
+    "workspaceContains:**/AitherZero.psd1"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aitherzero.runScript",
+        "title": "Run Script",
+        "category": "AitherZero",
+        "icon": "$(play)"
+      },
+      {
+        "command": "aitherzero.openDashboard",
+        "title": "Open Dashboard",
+        "category": "AitherZero",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "aitherzero.refreshScripts",
+        "title": "Refresh Scripts",
+        "category": "AitherZero",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aitherzero.bootstrap",
+        "title": "Run Bootstrap",
+        "category": "AitherZero"
+      },
+      {
+        "command": "aitherzero.validateSyntax",
+        "title": "Validate Syntax",
+        "category": "AitherZero"
+      },
+      {
+        "command": "aitherzero.runTests",
+        "title": "Run Tests",
+        "category": "AitherZero"
+      },
+      {
+        "command": "aitherzero.openPlaybook",
+        "title": "Open Playbook",
+        "category": "AitherZero"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aitherzero-explorer",
+          "title": "AitherZero",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "aitherzero-explorer": [
+        {
+          "id": "aitherZeroScripts",
+          "name": "Automation Scripts",
+          "icon": "resources/icon.svg",
+          "contextualTitle": "AitherZero Scripts"
+        },
+        {
+          "id": "aitherZeroPlaybooks",
+          "name": "Playbooks",
+          "icon": "resources/icon.svg",
+          "contextualTitle": "AitherZero Playbooks"
+        },
+        {
+          "id": "aitherZeroDomains",
+          "name": "Domains",
+          "icon": "resources/icon.svg",
+          "contextualTitle": "AitherZero Domains"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "aitherzero.runScript",
+          "when": "view == aitherZeroScripts && viewItem == script",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "aitherzero.runScript",
+          "when": "aitherzero:enabled"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AitherZero",
+      "properties": {
+        "aitherzero.installationPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to AitherZero installation. If empty, will auto-detect."
+        },
+        "aitherzero.powerShellPath": {
+          "type": "string",
+          "default": "pwsh",
+          "description": "Path to PowerShell executable"
+        },
+        "aitherzero.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh script list when files change"
+        },
+        "aitherzero.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications for script execution results"
+        },
+        "aitherzero.terminal.clearBeforeRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Clear terminal before running scripts"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "typescript": "^5.0.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^2.19.0"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wizzense/AitherZero.git",
+    "directory": "vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/wizzense/AitherZero/issues"
+  },
+  "homepage": "https://github.com/wizzense/AitherZero/tree/main/vscode-extension#readme",
+  "license": "MIT"
+}

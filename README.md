@@ -400,6 +400,18 @@ AitherZero is available in multiple formats for different use cases:
    - Published to GitHub Packages
    - Enables natural language infrastructure management
 
+4. **VS Code Extension** 🆕:
+   - Browse and execute automation scripts from VS Code
+   - Interactive dashboard and playbook management
+   - Integrated terminal support
+   - See [VS Code Extension Guide](vscode-extension/README.md)
+
+5. **Windows Admin Center Extension** 🆕:
+   - Web-based infrastructure management
+   - Remote script execution on multiple servers
+   - Real-time monitoring and dashboards
+   - See [WAC Extension Guide](windows-admin-center/README.md)
+
 ### Quick Setup
 1. **Install GitHub Copilot** extensions in VS Code
 2. **Open in Dev Container** (recommended) or install recommended extensions
@@ -426,6 +438,8 @@ AitherZero is available in multiple formats for different use cases:
 - [MCP Server Configuration](docs/COPILOT-MCP-SETUP.md) - Enhanced context setup
 - [Custom Instructions](.github/copilot-instructions.md) - AI coding guidance
 - [Agent Routing](.github/copilot.yaml) - Specialized experts
+- [Extensions Integration Guide](docs/EXTENSIONS-INTEGRATION-GUIDE.md) - VS Code & WAC extensions 🆕
+- [Extensions Quick Start](docs/EXTENSIONS-QUICKSTART.md) - Get started in minutes 🆕
 
 **Learn more**: See [docs/COPILOT-DEV-ENVIRONMENT.md](docs/COPILOT-DEV-ENVIRONMENT.md) for the complete setup guide.
 
