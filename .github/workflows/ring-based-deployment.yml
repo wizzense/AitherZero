@@ -1,0 +1,606 @@
+---
+name: 🎯 Ring-Based Deployment
+
+# Comprehensive ring-based deployment workflow
+# Handles PR labeling, testing, and promotion across ring levels
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+  push:
+    branches:
+      - ring-0
+      - ring-0-integrations
+      - ring-1
+      - ring-1-integrations
+      - ring-2
+      - dev
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Ring action to perform'
+        required: true
+        type: choice
+        options:
+          - promote
+          - demote
+          - status
+          - test
+      from_ring:
+        description: 'Source ring (for promote/demote)'
+        required: false
+        type: choice
+        options:
+          - ring-0
+          - ring-0-integrations
+          - ring-1
+          - ring-1-integrations
+          - ring-2
+          - dev
+          - main
+      to_ring:
+        description: 'Target ring (for promote/demote)'
+        required: false
+        type: choice
+        options:
+          - ring-0
+          - ring-0-integrations
+          - ring-1
+          - ring-1-integrations
+          - ring-2
+          - dev
+          - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: write
+
+concurrency:
+  group: ring-deployment-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  # Detect ring information from PR or push
+  detect-ring:
+    name: 🔍 Detect Ring Context
+    runs-on: ubuntu-latest
+    outputs:
+      source-ring: ${{ steps.detect.outputs.source-ring }}
+      target-ring: ${{ steps.detect.outputs.target-ring }}
+      source-ring-level: ${{ steps.detect.outputs.source-ring-level }}
+      target-ring-level: ${{ steps.detect.outputs.target-ring-level }}
+      ring-labels: ${{ steps.detect.outputs.ring-labels }}
+      is-promotion: ${{ steps.detect.outputs.is-promotion }}
+      is-demotion: ${{ steps.detect.outputs.is-demotion }}
+      test-profile: ${{ steps.detect.outputs.test-profile }}
+    
+    steps:
+      - name: 🔍 Detect Ring Context
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ringMapping = {
+              'ring-0': 0,
+              'ring-0-integrations': 0.5,
+              'ring-1': 1,
+              'ring-1-integrations': 1.5,
+              'ring-2': 2,
+              'dev': 4,
+              'main': 5
+            };
+            
+            const testProfiles = {
+              'ring-0': 'quick',
+              'ring-0-integrations': 'integration',
+              'ring-1': 'standard',
+              'ring-1-integrations': 'integration',
+              'ring-2': 'comprehensive',
+              'dev': 'full',
+              'main': 'production'
+            };
+            
+            let sourceRing, targetRing, sourceBranch, targetBranch;
+            
+            // Determine source and target based on event type
+            if (context.eventName === 'pull_request') {
+              sourceBranch = context.payload.pull_request.head.ref;
+              targetBranch = context.payload.pull_request.base.ref;
+              sourceRing = sourceBranch;
+              targetRing = targetBranch;
+            } else if (context.eventName === 'push') {
+              targetBranch = context.ref.replace('refs/heads/', '');
+              targetRing = targetBranch;
+              sourceRing = 'unknown';
+            } else if (context.eventName === 'workflow_dispatch') {
+              sourceRing = '${{ github.event.inputs.from_ring }}' || 'unknown';
+              targetRing = '${{ github.event.inputs.to_ring }}' || 'unknown';
+            }
+            
+            // Normalize ring names (handle feature branches)
+            const normalizeRing = (branch) => {
+              if (!branch) return 'unknown';
+              // Check if branch matches a ring pattern
+              for (const ring of Object.keys(ringMapping)) {
+                if (branch === ring || branch.startsWith(ring + '/')) {
+                  return ring;
+                }
+              }
+              // Default to lowest ring for unknown branches
+              return 'ring-0';
+            };
+            
+            sourceRing = normalizeRing(sourceRing);
+            targetRing = normalizeRing(targetRing);
+            
+            const sourceLevel = ringMapping[sourceRing] || 0;
+            const targetLevel = ringMapping[targetRing] || 0;
+            
+            const isPromotion = targetLevel > sourceLevel;
+            const isDemotion = targetLevel < sourceLevel;
+            
+            const testProfile = testProfiles[targetRing] || 'standard';
+            
+            // Generate ring labels for PR
+            const ringLabels = [];
+            if (context.eventName === 'pull_request') {
+              ringLabels.push(`ring:source:${sourceRing}`);
+              ringLabels.push(`ring:target:${targetRing}`);
+              if (isPromotion) {
+                ringLabels.push('ring:promotion');
+              } else if (isDemotion) {
+                ringLabels.push('ring:demotion');
+              }
+            }
+            
+            core.setOutput('source-ring', sourceRing);
+            core.setOutput('target-ring', targetRing);
+            core.setOutput('source-ring-level', sourceLevel.toString());
+            core.setOutput('target-ring-level', targetLevel.toString());
+            core.setOutput('ring-labels', JSON.stringify(ringLabels));
+            core.setOutput('is-promotion', isPromotion.toString());
+            core.setOutput('is-demotion', isDemotion.toString());
+            core.setOutput('test-profile', testProfile);
+            
+            core.info(`🎯 Ring Detection Results:`);
+            core.info(`   Source Ring: ${sourceRing} (level ${sourceLevel})`);
+            core.info(`   Target Ring: ${targetRing} (level ${targetLevel})`);
+            core.info(`   Direction: ${isPromotion ? '⬆️ Promotion' : isDemotion ? '⬇️ Demotion' : '➡️ Same Level'}`);
+            core.info(`   Test Profile: ${testProfile}`);
+
+  # Apply ring labels to PR
+  label-pr:
+    name: 🏷️ Label PR with Ring Information
+    needs: detect-ring
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 🏷️ Apply Ring Labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = JSON.parse('${{ needs.detect-ring.outputs.ring-labels }}');
+            const prNumber = context.payload.pull_request.number;
+            
+            if (labels.length === 0) {
+              core.info('No ring labels to apply');
+              return;
+            }
+            
+            // Remove old ring labels first
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const oldRingLabels = currentLabels
+              .filter(l => l.name.startsWith('ring:'))
+              .map(l => l.name);
+            
+            for (const label of oldRingLabels) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  name: label
+                });
+              } catch (error) {
+                core.warning(`Could not remove label ${label}: ${error.message}`);
+              }
+            }
+            
+            // Ensure labels exist (create if needed)
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label
+                });
+              } catch (error) {
+                if (error.status === 404) {
+                  // Label doesn't exist, create it
+                  let color = '0E8A16'; // Default green
+                  let description = 'Ring deployment label';
+                  
+                  if (label.includes('source')) {
+                    color = '1D76DB'; // Blue for source
+                    description = 'Source ring for this PR';
+                  } else if (label.includes('target')) {
+                    color = 'D93F0B'; // Orange for target
+                    description = 'Target ring for this PR';
+                  } else if (label.includes('promotion')) {
+                    color = '0E8A16'; // Green for promotion
+                    description = 'Promoting to higher ring';
+                  } else if (label.includes('demotion')) {
+                    color = 'FBCA04'; // Yellow for demotion
+                    description = 'Demoting to lower ring';
+                  }
+                  
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label,
+                    color: color,
+                    description: description
+                  });
+                  core.info(`✅ Created label: ${label}`);
+                }
+              }
+            }
+            
+            // Add new ring labels
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              labels: labels
+            });
+            
+            core.info(`✅ Applied ${labels.length} ring label(s) to PR #${prNumber}`);
+            labels.forEach(l => core.info(`   🏷️ ${l}`));
+
+  # Post ring information comment on PR
+  comment-ring-info:
+    name: 💬 Post Ring Information
+    needs: [detect-ring, label-pr]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 💬 Post Ring Information Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sourceRing = '${{ needs.detect-ring.outputs.source-ring }}';
+            const targetRing = '${{ needs.detect-ring.outputs.target-ring }}';
+            const sourceLevel = '${{ needs.detect-ring.outputs.source-ring-level }}';
+            const targetLevel = '${{ needs.detect-ring.outputs.target-ring-level }}';
+            const isPromotion = '${{ needs.detect-ring.outputs.is-promotion }}' === 'true';
+            const isDemotion = '${{ needs.detect-ring.outputs.is-demotion }}' === 'true';
+            const testProfile = '${{ needs.detect-ring.outputs.test-profile }}';
+            
+            const prNumber = context.payload.pull_request.number;
+            
+            // Determine direction emoji and message
+            let directionEmoji = '➡️';
+            let directionText = 'Same Level';
+            let directionClass = 'neutral';
+            
+            if (isPromotion) {
+              directionEmoji = '⬆️';
+              directionText = 'Promotion';
+              directionClass = 'promotion';
+            } else if (isDemotion) {
+              directionEmoji = '⬇️';
+              directionText = 'Demotion';
+              directionClass = 'demotion';
+            }
+            
+            // Build ring progression visual
+            const rings = [
+              { name: 'ring-0', level: 0, label: 'Ring 0' },
+              { name: 'ring-0-integrations', level: 0.5, label: 'Ring 0 Int' },
+              { name: 'ring-1', level: 1, label: 'Ring 1' },
+              { name: 'ring-1-integrations', level: 1.5, label: 'Ring 1 Int' },
+              { name: 'ring-2', level: 2, label: 'Ring 2' },
+              { name: 'dev', level: 4, label: 'Dev (R4)' },
+              { name: 'main', level: 5, label: 'Main (R5)' }
+            ];
+            
+            let progressionVisual = '```\n';
+            for (const ring of rings) {
+              const isSource = ring.name === sourceRing;
+              const isTarget = ring.name === targetRing;
+              
+              let marker = '   ';
+              if (isSource && isTarget) {
+                marker = ' ↔️ ';
+              } else if (isSource) {
+                marker = ' 📍 ';
+              } else if (isTarget) {
+                marker = ' 🎯 ';
+              }
+              
+              const levelBar = '█'.repeat(Math.max(1, ring.level * 2));
+              progressionVisual += `${marker} ${ring.label.padEnd(12)} ${levelBar}\n`;
+            }
+            progressionVisual += '```\n';
+            progressionVisual += '\n📍 = Source Ring | 🎯 = Target Ring\n';
+            
+            const comment = `## ${directionEmoji} Ring Deployment Information
+            
+**PR Direction:** ${directionText}
+**Source Ring:** \`${sourceRing}\` (Level ${sourceLevel})
+**Target Ring:** \`${targetRing}\` (Level ${targetLevel})
+**Test Profile:** \`${testProfile}\`
+
+### Ring Progression
+
+${progressionVisual}
+
+### ${directionClass === 'promotion' ? '✅' : directionClass === 'demotion' ? '⚠️' : 'ℹ️'} What This Means
+
+${isPromotion ? `
+This PR is **promoting** changes from **${sourceRing}** to **${targetRing}**.
+
+**Requirements:**
+- ✅ All tests in \`${testProfile}\` profile must pass
+- ✅ Code review approval required
+- ✅ Quality gates must be met
+- ✅ Integration tests must pass
+
+**Promotion Flow:**
+1. Tests run automatically based on target ring
+2. Manual approval may be required for higher rings
+3. Changes will be validated before merge
+4. Post-merge, changes propagate to target ring
+` : isDemotion ? `
+This PR is **demoting** changes from **${sourceRing}** to **${targetRing}**.
+
+**Note:** Demotions are less common and typically used for:
+- Emergency rollbacks
+- Cherry-picking specific fixes
+- Testing lower ring compatibility
+
+**Validation:**
+- Tests will run for target ring profile: \`${testProfile}\`
+- Review required to ensure demotion is intentional
+` : `
+This PR is targeting the **same ring level** or a lateral move.
+
+**Validation:**
+- Standard tests for \`${testProfile}\` profile will run
+- Normal review process applies
+`}
+
+### 🚀 Next Steps
+
+1. ✅ **Automated Tests** - Will run based on \`${testProfile}\` profile
+2. 👥 **Code Review** - Request reviews from team members
+3. ✅ **Quality Checks** - PSScriptAnalyzer, syntax validation
+4. 🔄 **Integration Tests** - ${targetRing.includes('integration') ? 'Enhanced integration suite' : 'Standard integration tests'}
+5. ✅ **Merge** - Once all checks pass and reviews approved
+
+### 📊 Ring Testing Profiles
+
+| Ring | Test Profile | Duration | Coverage |
+|------|-------------|----------|----------|
+| ring-0 | quick | ~2-3 min | Basic validation |
+| ring-0-integrations | integration | ~5-7 min | Integration focused |
+| ring-1 | standard | ~5-10 min | Standard test suite |
+| ring-1-integrations | integration | ~10-15 min | Full integration |
+| ring-2 | comprehensive | ~15-20 min | Comprehensive tests |
+| dev | full | ~20-30 min | Complete test suite |
+| main | production | ~30-45 min | Production validation |
+
+### 🔧 Manual Ring Management
+
+To change the target ring, you can:
+- **Update PR base branch** - Close and reopen PR with different target
+- **Use labels** - Modify \`ring:target:*\` label (triggers re-evaluation)
+- **Workflow dispatch** - Use "Ring-Based Deployment" workflow
+
+---
+*🤖 Automated Ring Detection • [View Workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`;
+            
+            // Find and update existing comment or create new
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('Ring Deployment Information')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+              core.info(`✅ Updated existing ring information comment`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+              core.info(`✅ Posted new ring information comment`);
+            }
+
+  # Run ring-appropriate tests
+  ring-tests:
+    name: 🧪 Ring Tests (${{ needs.detect-ring.outputs.test-profile }})
+    needs: detect-ring
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]'))
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          Write-Host "🚀 Bootstrapping for ring: ${{ needs.detect-ring.outputs.target-ring }}" -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 🧪 Run Ring-Appropriate Tests
+        shell: pwsh
+        timeout-minutes: 35
+        env:
+          RING_PROFILE: ${{ needs.detect-ring.outputs.test-profile }}
+          TARGET_RING: ${{ needs.detect-ring.outputs.target-ring }}
+        run: |
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "🧪 Running Tests for Ring: $env:TARGET_RING" -ForegroundColor Cyan
+          Write-Host "   Test Profile: $env:RING_PROFILE" -ForegroundColor Yellow
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          
+          # Map test profiles to playbooks
+          $playbook = switch ($env:RING_PROFILE) {
+            'quick' { 'test-quick' }
+            'integration' { 'test-integration' }
+            'standard' { 'test-standard' }
+            'comprehensive' { 'test-full' }
+            'full' { 'test-orchestrated' }
+            'production' { 'test-orchestrated' }
+            default { 'test-quick' }
+          }
+          
+          Write-Host "📋 Using playbook: $playbook" -ForegroundColor Cyan
+          
+          # Run tests via orchestration
+          try {
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -NonInteractive
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "❌ Tests failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+              exit $LASTEXITCODE
+            }
+            
+            Write-Host "✅ All ring tests passed!" -ForegroundColor Green
+          } catch {
+            Write-Host "❌ Test execution failed: $_" -ForegroundColor Red
+            throw
+          }
+      
+      - name: 📊 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ring-test-results-${{ needs.detect-ring.outputs.target-ring }}
+          path: |
+            tests/results/**/*.xml
+            tests/results/**/*.json
+            reports/**/*
+          retention-days: 30
+          if-no-files-found: warn
+
+  # Ring promotion workflow
+  promote-ring:
+    name: 🎯 Promote to Next Ring
+    needs: [detect-ring, ring-tests]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.action == 'promote' &&
+      needs.ring-tests.result == 'success'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🎯 Create Promotion PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fromRing = '${{ github.event.inputs.from_ring }}';
+            const toRing = '${{ github.event.inputs.to_ring }}';
+            
+            // Create PR from source to target ring
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🎯 Promote: ${fromRing} → ${toRing}`,
+              head: fromRing,
+              base: toRing,
+              body: `## 🎯 Ring Promotion
+              
+This PR promotes changes from **${fromRing}** to **${toRing}**.
+
+**Promotion Type:** Automated
+**Triggered By:** @${context.actor}
+**Workflow Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+
+### ✅ Pre-Promotion Validation
+
+- ✅ All tests passed in source ring
+- ✅ Quality gates met
+- ✅ Security checks passed
+
+### 🚀 Next Steps
+
+1. Review changes in this PR
+2. Ensure all ring-appropriate tests pass
+3. Approve and merge to complete promotion
+
+---
+*🤖 Automated Ring Promotion*`
+            });
+            
+            core.info(`✅ Created promotion PR #${pr.number}`);
+            core.setOutput('pr-number', pr.number);
+
+  # Summary job
+  ring-deployment-summary:
+    name: 📊 Ring Deployment Summary
+    needs: [detect-ring, label-pr, comment-ring-info, ring-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 📊 Generate Summary
+        shell: pwsh
+        run: |
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "📊 RING DEPLOYMENT SUMMARY" -ForegroundColor Cyan
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Source Ring:  ${{ needs.detect-ring.outputs.source-ring }} (Level ${{ needs.detect-ring.outputs.source-ring-level }})" -ForegroundColor Yellow
+          Write-Host "Target Ring:  ${{ needs.detect-ring.outputs.target-ring }} (Level ${{ needs.detect-ring.outputs.target-ring-level }})" -ForegroundColor Yellow
+          Write-Host "Direction:    $(if ('${{ needs.detect-ring.outputs.is-promotion }}' -eq 'true') { '⬆️ Promotion' } elseif ('${{ needs.detect-ring.outputs.is-demotion }}' -eq 'true') { '⬇️ Demotion' } else { '➡️ Same Level' })" -ForegroundColor Yellow
+          Write-Host "Test Profile: ${{ needs.detect-ring.outputs.test-profile }}" -ForegroundColor Yellow
+          Write-Host ""
+          Write-Host "Job Status:" -ForegroundColor Cyan
+          Write-Host "  🔍 Detection:      ${{ needs.detect-ring.result }}" -ForegroundColor $(if ('${{ needs.detect-ring.result }}' -eq 'success') { 'Green' } else { 'Red' })
+          Write-Host "  🏷️ Labeling:       ${{ needs.label-pr.result || 'skipped' }}" -ForegroundColor $(if ('${{ needs.label-pr.result }}' -eq 'success') { 'Green' } else { 'Yellow' })
+          Write-Host "  💬 Comment:        ${{ needs.comment-ring-info.result || 'skipped' }}" -ForegroundColor $(if ('${{ needs.comment-ring-info.result }}' -eq 'success') { 'Green' } else { 'Yellow' })
+          Write-Host "  🧪 Tests:          ${{ needs.ring-tests.result || 'skipped' }}" -ForegroundColor $(if ('${{ needs.ring-tests.result }}' -eq 'success') { 'Green' } else { 'Red' })
+          Write-Host ""
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
