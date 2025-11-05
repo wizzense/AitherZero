@@ -1,8 +1,8 @@
-# resources
+# code-map
 
-**Navigation**: [🏠 Root](../../../../index.md) → [templates](../../../index.md) → [mcp-server-template](../../index.md) → [src](../index.md) → **resources**
+**Navigation**: [🏠 Root](../../index.md) → [templates](../index.md) → **code-map**
 
-⬆️ **Parent**: [src](../index.md)
+⬆️ **Parent**: [templates](../index.md)
 
 ## 📖 Overview
 
@@ -11,9 +11,21 @@ See [README.md](./README.md) for detailed information about this directory.
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 2
+- **Files**: 5
 
 ## 📄 Files
+
+### .css Files
+
+- 📄 [code-map.css](./code-map.css)
+
+### .html Files
+
+- 📄 [code-map.html](./code-map.html)
+
+### .js Files
+
+- 📄 [code-map.js](./code-map.js)
 
 ### .md Files
 
