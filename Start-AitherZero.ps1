@@ -3591,7 +3591,28 @@ try {
 
             }
 
-        Show-InteractiveMenu -Config $config
+            # Initialize extension system if not already done
+            if (Get-Command Initialize-ExtensionManager -ErrorAction SilentlyContinue) {
+                try {
+                    Initialize-ExtensionManager -Config $config
+                } catch {
+                    Write-Warning "Extension system initialization skipped: $_"
+                }
+            }
+            
+            # Use new unified menu system if available, fallback to old menu
+            if (Get-Command Show-UnifiedMenu -ErrorAction SilentlyContinue) {
+                Write-Verbose "Using new unified CLI/menu interface"
+                try {
+                    Show-UnifiedMenu -Config $config
+                } catch {
+                    Write-Warning "Unified menu failed, falling back to legacy menu: $_"
+                    Show-InteractiveMenu -Config $config
+                }
+            } else {
+                Write-Verbose "Unified menu not available, using legacy interface"
+                Show-InteractiveMenu -Config $config
+            }
 
         }
 

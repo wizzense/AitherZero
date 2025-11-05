@@ -1423,6 +1423,47 @@
     }
     
     # ===================================================================
+    # EXTENSION SYSTEM - Plugin Architecture
+    # ===================================================================
+    Extensions = @{
+        # Enable extension system
+        Enabled = $true
+        
+        # Extension search paths (ordered by priority)
+        SearchPaths = @(
+            './extensions'                           # Local extensions
+            "$HOME/.aitherzero/extensions"          # User extensions
+            "$env:AITHERZERO_EXTENSIONS_PATH"       # Custom path via environment variable
+        )
+        
+        # Auto-load extensions at startup
+        AutoLoad = $true
+        
+        # Extension validation
+        RequireManifest = $true
+        RequireSignature = $false  # Set to true for production environments
+        
+        # Reserved script number ranges
+        ScriptNumberRanges = @{
+            Core = @{ Start = 0; End = 7999; Description = 'AitherZero Core Scripts' }
+            Extensions = @{ Start = 8000; End = 8999; Description = 'Extension Scripts' }
+            Maintenance = @{ Start = 9000; End = 9999; Description = 'Maintenance Scripts' }
+        }
+        
+        # Extension feature flags
+        Features = @{
+            CustomModes = $true           # Allow extensions to add CLI modes
+            CustomCommands = $true        # Allow extensions to add PowerShell commands
+            CustomScripts = $true         # Allow extensions to add automation scripts
+            CustomDomains = $true         # Allow extensions to add domain modules
+            HotReload = $false           # Hot-reload extensions without restart (experimental)
+        }
+        
+        # Registered extensions (populated at runtime by ExtensionManager)
+        Loaded = @()
+    }
+    
+    # ===================================================================
     # AUTOMATED ISSUE MANAGEMENT - GitHub Issue Automation
     # ===================================================================
     AutomatedIssueManagement = @{
