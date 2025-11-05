@@ -1,0 +1,220 @@
+name: Cleanup Old Releases and Tags
+
+# This workflow removes all GitHub releases and tags except v1.0.0.0
+# Making v1.0.0.0 the official first release of AitherZero
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "CONFIRM" to proceed with deletion'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run mode (show what would be deleted without making changes)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  
+jobs:
+  cleanup-releases-and-tags:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history and tags
+      
+      - name: Validate confirmation
+        if: ${{ !inputs.dry_run }}
+        run: |
+          if [ "${{ inputs.confirm }}" != "CONFIRM" ]; then
+            echo "❌ Confirmation failed. You must type 'CONFIRM' to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation received"
+      
+      - name: Display mode
+        run: |
+          if [ "${{ inputs.dry_run }}" == "true" ]; then
+            echo "🔍 Running in DRY RUN mode - no changes will be made"
+          else
+            echo "⚠️  Running in DELETION mode - changes will be permanent"
+          fi
+      
+      - name: Fetch all tags
+        id: fetch-tags
+        run: |
+          git fetch --tags
+          echo "Fetched all tags"
+          
+          # Get all tags except v1.0.0.0
+          TAGS_TO_DELETE=$(git tag -l | grep -v "^v1.0.0.0$" || true)
+          
+          if [ -z "$TAGS_TO_DELETE" ]; then
+            TAG_COUNT=0
+          else
+            TAG_COUNT=$(echo "$TAGS_TO_DELETE" | wc -l)
+          fi
+          
+          echo "tags_to_delete<<EOF" >> $GITHUB_OUTPUT
+          echo "$TAGS_TO_DELETE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "tag_count=$TAG_COUNT" >> $GITHUB_OUTPUT
+      
+      - name: List releases to delete
+        id: list-releases
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const releasesToDelete = releases.data.filter(r => r.tag_name !== 'v1.0.0.0');
+            
+            core.setOutput('release_count', releasesToDelete.length);
+            core.setOutput('releases', JSON.stringify(releasesToDelete.map(r => ({
+              id: r.id,
+              tag_name: r.tag_name,
+              name: r.name
+            }))));
+            
+            return releasesToDelete.length;
+      
+      - name: Display summary
+        run: |
+          echo "=========================================="
+          echo "  CLEANUP SUMMARY"
+          echo "=========================================="
+          echo "Tags to keep:    1 (v1.0.0.0)"
+          echo "Tags to delete:  ${{ steps.fetch-tags.outputs.tag_count }}"
+          echo "Releases to delete: ${{ steps.list-releases.outputs.release_count }}"
+          echo ""
+          echo "Mode: ${{ inputs.dry_run && 'DRY RUN' || 'DELETION' }}"
+          echo "=========================================="
+      
+      - name: Show tags to be deleted
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "📋 Tags that would be deleted:"
+          echo "${{ steps.fetch-tags.outputs.tags_to_delete }}" | while read tag; do
+            if [ -n "$tag" ]; then
+              echo "  - $tag"
+            fi
+          done
+      
+      - name: Show releases to be deleted
+        if: ${{ inputs.dry_run }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = JSON.parse('${{ steps.list-releases.outputs.releases }}');
+            console.log('📋 Releases that would be deleted:');
+            releases.forEach(r => {
+              console.log(`  - ${r.tag_name} (${r.name})`);
+            });
+      
+      - name: Delete GitHub releases
+        if: ${{ !inputs.dry_run }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = JSON.parse('${{ steps.list-releases.outputs.releases }}');
+            
+            let deleted = 0;
+            let failed = 0;
+            
+            console.log('🗑️  Deleting GitHub releases...');
+            
+            for (const release of releases) {
+              try {
+                console.log(`  Deleting release: ${release.tag_name}`);
+                await github.rest.repos.deleteRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.id
+                });
+                deleted++;
+              } catch (error) {
+                console.error(`  ❌ Failed to delete release: ${release.tag_name}`);
+                console.error(`     Error: ${error.message}`);
+                failed++;
+              }
+            }
+            
+            console.log('');
+            console.log(`✅ Deleted ${deleted} releases`);
+            if (failed > 0) {
+              console.log(`❌ Failed to delete ${failed} releases`);
+            }
+      
+      - name: Delete remote tags
+        if: ${{ !inputs.dry_run }}
+        run: |
+          echo "🗑️  Deleting remote tags..."
+          
+          # Use temporary files to track counts across loop
+          TEMP_DIR=$(mktemp -d)
+          echo "0" > "$TEMP_DIR/deleted"
+          echo "0" > "$TEMP_DIR/failed"
+          
+          echo "${{ steps.fetch-tags.outputs.tags_to_delete }}" | while read tag; do
+            if [ -n "$tag" ]; then
+              echo "  Deleting remote tag: $tag"
+              if git push origin --delete "$tag" 2>/dev/null; then
+                echo $(($(cat "$TEMP_DIR/deleted") + 1)) > "$TEMP_DIR/deleted"
+              else
+                echo "  ❌ Failed to delete remote tag: $tag"
+                echo $(($(cat "$TEMP_DIR/failed") + 1)) > "$TEMP_DIR/failed"
+              fi
+            fi
+          done
+          
+          DELETED=$(cat "$TEMP_DIR/deleted")
+          FAILED=$(cat "$TEMP_DIR/failed")
+          rm -rf "$TEMP_DIR"
+          
+          echo ""
+          echo "✅ Deleted $DELETED remote tags"
+          if [ "$FAILED" -gt 0 ]; then
+            echo "❌ Failed to delete $FAILED remote tags"
+          fi
+      
+      - name: Create cleanup summary
+        if: ${{ !inputs.dry_run }}
+        run: |
+          echo "=========================================="
+          echo "  CLEANUP COMPLETE"
+          echo "=========================================="
+          echo ""
+          echo "✅ Results:"
+          echo "  - Releases deleted: ${{ steps.list-releases.outputs.release_count }}"
+          echo "  - Tags deleted: ${{ steps.fetch-tags.outputs.tag_count }}"
+          echo ""
+          echo "The repository now has only v1.0.0.0 as the official release!"
+          echo "=========================================="
+      
+      - name: Dry run complete
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "=========================================="
+          echo "  DRY RUN COMPLETE"
+          echo "=========================================="
+          echo ""
+          echo "No changes were made."
+          echo ""
+          echo "To perform the actual cleanup:"
+          echo "1. Go to Actions → Cleanup Old Releases and Tags"
+          echo "2. Click 'Run workflow'"
+          echo "3. Uncheck 'Dry run mode'"
+          echo "4. Type 'CONFIRM' in the confirmation field"
+          echo "5. Click 'Run workflow'"
+          echo "=========================================="
