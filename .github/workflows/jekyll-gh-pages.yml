@@ -10,6 +10,7 @@ on:
       - 'docs/**'
       - 'index.md'
       - '_config.yml'
+      - 'Gemfile'
       - 'mcp-server/README.md'
       - 'mcp-server/QUICKSTART.md'
 
