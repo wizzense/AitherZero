@@ -1,0 +1,313 @@
+---
+name: 🔒 Configure Ring Branch Protection
+
+# Workflow to configure branch protection rules for ring branches
+# Requires admin permissions to execute
+
+on:
+  workflow_dispatch:
+    inputs:
+      ring:
+        description: 'Ring to configure (or "all" for all rings)'
+        required: true
+        type: choice
+        options:
+          - all
+          - ring-0
+          - ring-0-integrations
+          - ring-1
+          - ring-1-integrations
+          - ring-2
+          - dev
+          - main
+      dry_run:
+        description: 'Dry run (show what would be configured without applying)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  administration: write
+
+jobs:
+  configure-protection:
+    name: 🔒 Configure Branch Protection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Load Ring Configuration
+        id: load-config
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Load ring configuration
+            const configPath = '.github/ring-config.json';
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            
+            core.info('✅ Ring configuration loaded');
+            core.setOutput('config', JSON.stringify(config));
+            
+            return config;
+      
+      - name: 🔒 Configure Branch Protection Rules
+        uses: actions/github-script@v7
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          TARGET_RING: ${{ github.event.inputs.ring }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const config = JSON.parse('${{ steps.load-config.outputs.config }}');
+            const dryRun = process.env.DRY_RUN === 'true';
+            const targetRing = process.env.TARGET_RING;
+            
+            const rings = targetRing === 'all' 
+              ? Object.keys(config.rings) 
+              : [targetRing];
+            
+            core.info(`🔒 Configuring branch protection for: ${rings.join(', ')}`);
+            core.info(`   Dry Run: ${dryRun ? 'YES (no changes will be made)' : 'NO (will apply changes)'}`);
+            core.info('');
+            
+            for (const ringName of rings) {
+              const ring = config.rings[ringName];
+              const protection = config.branchProtection[ringName];
+              
+              if (!protection) {
+                core.warning(`⚠️ No branch protection config found for ${ringName}`);
+                continue;
+              }
+              
+              core.info(`\n📋 Configuration for ${ringName}:`);
+              core.info(`   Required Status Checks: ${protection.requiredStatusChecks.join(', ')}`);
+              core.info(`   Required Approvals: ${protection.requireApprovals}`);
+              core.info(`   Dismiss Stale Reviews: ${protection.dismissStaleReviews}`);
+              core.info(`   Require Code Owner Reviews: ${protection.requireCodeOwnerReviews}`);
+              core.info(`   Restrict Pushes: ${protection.restrictPushes}`);
+              
+              if (dryRun) {
+                core.info(`   🔍 DRY RUN - Would configure branch protection`);
+                continue;
+              }
+              
+              try {
+                // Build protection configuration
+                const protectionConfig = {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: ringName,
+                  required_status_checks: {
+                    strict: true,
+                    contexts: protection.requiredStatusChecks
+                  },
+                  enforce_admins: ring.protected || false,
+                  required_pull_request_reviews: {
+                    dismissal_restrictions: {},
+                    dismiss_stale_reviews: protection.dismissStaleReviews,
+                    require_code_owner_reviews: protection.requireCodeOwnerReviews,
+                    required_approving_review_count: protection.requireApprovals
+                  },
+                  restrictions: null
+                };
+                
+                // Add push restrictions if needed
+                if (protection.restrictPushes && protection.allowedPushers) {
+                  // Note: This requires team/user slugs which need to be configured
+                  core.info(`   ⚠️ Push restrictions configured but users/teams need to be specified`);
+                }
+                
+                // Apply branch protection
+                await github.rest.repos.updateBranchProtection(protectionConfig);
+                
+                core.info(`   ✅ Branch protection applied to ${ringName}`);
+                
+              } catch (error) {
+                if (error.status === 404) {
+                  core.warning(`   ⚠️ Branch ${ringName} does not exist yet - skipping`);
+                } else if (error.status === 403) {
+                  core.error(`   ❌ Insufficient permissions to configure ${ringName}`);
+                  core.error(`      This workflow requires admin permissions on the repository`);
+                } else {
+                  core.error(`   ❌ Failed to configure ${ringName}: ${error.message}`);
+                }
+              }
+            }
+            
+            core.info('');
+            core.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            core.info('🔒 Branch Protection Configuration Complete');
+            core.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      - name: 📊 Generate Configuration Report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const config = JSON.parse('${{ steps.load-config.outputs.config }}');
+            const targetRing = '${{ github.event.inputs.ring }}';
+            const dryRun = '${{ github.event.inputs.dry_run }}' === 'true';
+            
+            const rings = targetRing === 'all' 
+              ? Object.keys(config.rings) 
+              : [targetRing];
+            
+            let report = `# 🔒 Branch Protection Configuration Report\n\n`;
+            report += `**Generated**: ${new Date().toISOString()}\n`;
+            report += `**Target**: ${targetRing}\n`;
+            report += `**Dry Run**: ${dryRun ? 'Yes' : 'No'}\n`;
+            report += `**Actor**: @${context.actor}\n\n`;
+            
+            report += `## Configuration Summary\n\n`;
+            report += `| Ring | Status Checks | Approvals | Code Owners | Stale Reviews | Push Restrict |\n`;
+            report += `|------|---------------|-----------|-------------|---------------|---------------|\n`;
+            
+            for (const ringName of rings) {
+              const protection = config.branchProtection[ringName];
+              if (!protection) continue;
+              
+              report += `| ${ringName} | ${protection.requiredStatusChecks.length} | `;
+              report += `${protection.requireApprovals} | `;
+              report += `${protection.requireCodeOwnerReviews ? '✅' : '❌'} | `;
+              report += `${protection.dismissStaleReviews ? '✅' : '❌'} | `;
+              report += `${protection.restrictPushes ? '✅' : '❌'} |\n`;
+            }
+            
+            report += `\n## Detailed Configuration\n\n`;
+            
+            for (const ringName of rings) {
+              const ring = config.rings[ringName];
+              const protection = config.branchProtection[ringName];
+              if (!protection) continue;
+              
+              report += `### ${ringName}\n\n`;
+              report += `**Ring Level**: ${ring.level}\n`;
+              report += `**Type**: ${ring.type}\n`;
+              report += `**Protected**: ${ring.protected ? 'Yes' : 'No'}\n\n`;
+              
+              report += `**Status Checks**:\n`;
+              for (const check of protection.requiredStatusChecks) {
+                report += `- ${check}\n`;
+              }
+              
+              report += `\n**Review Requirements**:\n`;
+              report += `- Required Approvals: ${protection.requireApprovals}\n`;
+              report += `- Code Owner Review: ${protection.requireCodeOwnerReviews ? 'Required' : 'Not Required'}\n`;
+              report += `- Dismiss Stale Reviews: ${protection.dismissStaleReviews ? 'Yes' : 'No'}\n`;
+              
+              if (protection.restrictPushes) {
+                report += `\n**Push Restrictions**: Enabled\n`;
+                if (protection.allowedPushers) {
+                  report += `- Allowed: ${protection.allowedPushers.join(', ')}\n`;
+                }
+              }
+              
+              report += `\n`;
+            }
+            
+            report += `## Next Steps\n\n`;
+            
+            if (dryRun) {
+              report += `1. Review the configuration above\n`;
+              report += `2. Re-run this workflow with "Dry run" unchecked to apply\n`;
+              report += `3. Verify branch protection rules in repository settings\n`;
+            } else {
+              report += `1. ✅ Branch protection rules have been applied\n`;
+              report += `2. Verify settings in: Settings → Branches\n`;
+              report += `3. Test by creating a PR to protected branches\n`;
+            }
+            
+            report += `\n---\n`;
+            report += `*🤖 Generated by Ring Branch Protection Configuration Workflow*\n`;
+            
+            // Save report
+            const reportsDir = './reports';
+            if (!fs.existsSync(reportsDir)) {
+              fs.mkdirSync(reportsDir, { recursive: true });
+            }
+            
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const reportPath = `${reportsDir}/branch-protection-${timestamp}.md`;
+            fs.writeFileSync(reportPath, report);
+            
+            core.info(`📄 Report saved to: ${reportPath}`);
+            
+            // Also output to summary
+            core.summary.addRaw(report);
+            await core.summary.write();
+      
+      - name: 📤 Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-protection-report
+          path: reports/branch-protection-*.md
+          retention-days: 90
+      
+      - name: 📋 Comment on Trigger Issue
+        if: github.event.issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const dryRun = '${{ github.event.inputs.dry_run }}' === 'true';
+            const targetRing = '${{ github.event.inputs.ring }}';
+            
+            const comment = `## 🔒 Branch Protection Configuration ${dryRun ? '(Dry Run)' : 'Applied'}
+            
+**Target**: \`${targetRing}\`
+**Status**: ${dryRun ? '🔍 Simulated' : '✅ Applied'}
+**Run**: [View Details](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+
+${dryRun ? `
+This was a **dry run** - no changes were made.
+
+To apply the configuration:
+1. Go to Actions → Configure Ring Branch Protection
+2. Run workflow with "Dry run" unchecked
+` : `
+✅ Branch protection rules have been configured.
+
+**Next Steps**:
+1. Verify in Settings → Branches
+2. Test by creating a PR to protected branch
+3. Adjust configuration if needed
+`}
+
+---
+*🤖 Automated by Ring Branch Protection Workflow*`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  summary:
+    name: 📊 Configuration Summary
+    needs: configure-protection
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 📊 Display Summary
+        shell: pwsh
+        run: |
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host "🔒 BRANCH PROTECTION CONFIGURATION SUMMARY" -ForegroundColor Cyan
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Target:  ${{ github.event.inputs.ring }}" -ForegroundColor Yellow
+          Write-Host "Mode:    $(if ('${{ github.event.inputs.dry_run }}' -eq 'true') { 'DRY RUN' } else { 'APPLY' })" -ForegroundColor Yellow
+          Write-Host "Status:  ${{ needs.configure-protection.result }}" -ForegroundColor $(if ('${{ needs.configure-protection.result }}' -eq 'success') { 'Green' } else { 'Red' })
+          Write-Host ""
+          Write-Host "📄 Review the workflow output for detailed information" -ForegroundColor Cyan
+          Write-Host "📋 Download the branch protection report artifact" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
