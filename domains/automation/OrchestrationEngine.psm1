@@ -1019,12 +1019,14 @@ function Invoke-SequentialOrchestration {
         $scriptStart = Get-Date  # Initialize before the try block to avoid null reference
 
         # Execute at least once, then retry up to maxRetries times
-        while ($retryCount -eq 0 -or ($retryCount -le $maxRetries -and -not $succeeded)) {
+        while ($retryCount -le $maxRetries -and -not $succeeded) {
             try {
                 if ($retryCount -gt 0) {
                     Write-OrchestrationLog "Retry attempt $retryCount/$maxRetries for [$($script.Number)] $($script.Name)"
                     Start-Sleep -Seconds $retryDelay
                 }
+                
+                $retryCount++  # Increment attempt counter before execution
 
                 $scriptStart = Get-Date  # Update for each retry
 
@@ -1035,7 +1037,7 @@ function Invoke-SequentialOrchestration {
                         ScriptNumber = $script.Number
                         Configuration = $Configuration
                         DryRun = $DryRun
-                        RetryAttempt = $retryCount
+                        RetryAttempt = $retryCount - 1  # Adjust for pre-increment
                     }
                 }
 
@@ -1103,7 +1105,7 @@ function Invoke-SequentialOrchestration {
                         ScriptNumber = $script.Number
                         Duration = $duration.TotalSeconds
                         ExitCode = $LASTEXITCODE
-                        RetryAttempt = $retryCount
+                        RetryAttempt = $retryCount - 1  # Adjust for pre-increment
                     }
                 }
 
@@ -1111,13 +1113,16 @@ function Invoke-SequentialOrchestration {
                     Success = $true
                     ExitCode = 0
                     Duration = $duration
-                    RetryCount = $retryCount
+                    RetryCount = $retryCount - 1  # Adjust for pre-increment
                 }
 
             } catch {
-                $retryCount++
+                # With pre-increment, $retryCount represents attempts made so far
+                # maxRetries = 0 means 1 attempt total (no retries)
+                # maxRetries = 1 means 2 attempts total (1 original + 1 retry)
+                # So: $retryCount > $maxRetries means we've exhausted all allowed attempts
                 if ($retryCount -gt $maxRetries) {
-                    Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $maxRetries retries)" -Level 'Error'
+                    Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $($maxRetries) retries)" -Level 'Error'
 
                     # Write audit log for failure
                     if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
