@@ -696,19 +696,49 @@ function Test-PSScriptAnalyzerCompliance {
     try {
         Import-Module PSScriptAnalyzer -ErrorAction Stop
 
-        # Check for project PSScriptAnalyzer settings file
-        $settingsFile = Join-Path $script:ProjectRoot "PSScriptAnalyzerSettings.psd1"
+        # Load PSScriptAnalyzer settings from config.psd1
         $analyzerParams = @{
             Path = $Path
-            Severity = 'Error', 'Warning'
             ErrorAction = 'SilentlyContinue'
         }
-
-        if (Test-Path $settingsFile) {
-            Write-QualityLog -Message "Using PSScriptAnalyzer settings from: $settingsFile" -Level Debug
-            $analyzerParams.Settings = $settingsFile
+        
+        # Try to load configuration from config.psd1
+        $configPath = Join-Path $script:ProjectRoot "config.psd1"
+        if (Test-Path $configPath) {
+            try {
+                $config = Import-PowerShellDataFile -Path $configPath -ErrorAction SilentlyContinue
+                if ($config.Testing.PSScriptAnalyzer) {
+                    $psaConfig = $config.Testing.PSScriptAnalyzer
+                    
+                    # Apply severity filter
+                    if ($psaConfig.Severity) {
+                        $analyzerParams.Severity = $psaConfig.Severity
+                    } else {
+                        $analyzerParams.Severity = @('Error', 'Warning')
+                    }
+                    
+                    # Apply exclude rules
+                    if ($psaConfig.ExcludeRules) {
+                        $analyzerParams.ExcludeRule = $psaConfig.ExcludeRules
+                    }
+                    
+                    # Apply include rules
+                    if ($psaConfig.IncludeRules -and $psaConfig.IncludeRules -ne @('*')) {
+                        $analyzerParams.IncludeRule = $psaConfig.IncludeRules
+                    }
+                    
+                    Write-QualityLog -Message "Using PSScriptAnalyzer settings from config.psd1" -Level Debug
+                } else {
+                    $analyzerParams.Severity = @('Error', 'Warning')
+                    Write-QualityLog -Message "No PSScriptAnalyzer settings in config.psd1, using defaults" -Level Debug
+                }
+            } catch {
+                $analyzerParams.Severity = @('Error', 'Warning')
+                Write-QualityLog -Message "Failed to load config.psd1, using defaults: $_" -Level Warning
+            }
         } else {
-            Write-QualityLog -Message "No PSScriptAnalyzer settings file found, using defaults" -Level Debug
+            $analyzerParams.Severity = @('Error', 'Warning')
+            Write-QualityLog -Message "config.psd1 not found, using defaults" -Level Debug
         }
 
         # Run analysis - wrap in array for consistent handling

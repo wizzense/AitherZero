@@ -51,7 +51,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Invoke-ScriptAnalyzer -Path '${file}' -Settings 'pwsh/PSScriptAnalyzerSettings.psd1' -Recurse"
+                "Invoke-ScriptAnalyzer -Path '${file}' -Recurse"
             ],
             "group": "build",
             "presentation": {

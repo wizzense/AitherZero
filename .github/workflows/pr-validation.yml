@@ -1,10 +1,9 @@
 ---
-name: PR Validation
+name: ✅ PR Validation
 
-# Optimized for cost efficiency - only essential PR validations
+# Fast, essential PR validation - runs before main CI
 on:
   pull_request:
-    # Run on all PRs - removed overly restrictive conditions
     types: [opened, synchronize, reopened, ready_for_review]
   issue_comment:
     types: [created]
@@ -18,20 +17,24 @@ permissions:
   actions: none
   security-events: none
 
-# Cost-optimized concurrency to prevent conflicts with main CI
+# Cost-optimized concurrency
 concurrency:
-  group: pr-validation-${{ github.event.pull_request.number }}
+  group: pr-validation-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
 
 jobs:
   # Safe analysis for fork PRs - no code execution
   fork-pr-analysis:
-    name: Fork PR Analysis (Safe)
+    name: 🔒 Fork PR Analysis
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name != github.repository
 
     steps:
-      - name: 📋 Fork PR Notice
+      - name: 🔒 Post Fork PR Security Notice
         uses: actions/github-script@v7
         with:
           script: |
@@ -40,29 +43,36 @@ jobs:
             const forkRepo = context.payload.pull_request.head.repo.full_name;
 
             const comment = `## 🔒 Fork PR Security Notice
-
-            **PR #${prNumber} from Fork Repository**
-            - **Author:** @${prAuthor}
-            - **Fork:** ${forkRepo}
+            
+            **PR #${prNumber} from Fork Repository** • **Author:** @${prAuthor} • **Fork:** \`${forkRepo}\`
 
             ### 🛡️ Security Policy
+            
             For security reasons, automated validation is **limited** for fork PRs:
-            - ✅ **Static analysis** and change review available
-            - ❌ **Code execution** disabled to prevent security risks
-            - 🔍 **Full CI pipeline** will run after maintainer review
+            
+            | Check | Status | Reason |
+            |-------|--------|--------|
+            | 📝 Static Analysis | ✅ Enabled | Safe to run without code execution |
+            | 🔍 Change Review | ✅ Enabled | Analyzes diff without running code |
+            | 🧪 Test Execution | ❌ Disabled | Requires maintainer approval |
+            | 🚀 Full CI Pipeline | ⏸️ Waiting | Runs after maintainer review |
 
             ### 🚀 Next Steps
-            1. **Maintainer review** required before full validation
-            2. **Manual approval** needed to run comprehensive tests
-            3. **Security review** for any sensitive changes
+            
+            1. 👀 **Maintainer Review** - A maintainer will review your changes
+            2. ✅ **Approval** - If approved, full CI will run automatically
+            3. 🔒 **Security Check** - All changes reviewed for security concerns
+            4. 🎉 **Merge** - Once all checks pass, your PR can be merged!
 
-            ### 📋 Contribution Guidelines
-            - Review [Contributing Guidelines](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
-            - Ensure all changes follow project standards
-            - Add tests for new functionality when possible
+            ### 📋 While You Wait
+            
+            - 📖 Review [Contributing Guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md)
+            - ✅ Ensure your changes follow project standards
+            - 🧪 Add tests for new functionality
+            - 📝 Update documentation if needed
 
             ---
-            *This is an automated security notice for fork contributions.*
+            *🤖 Automated security notice for fork contributions • This helps keep the project secure!*
             `;
 
             await github.rest.issues.createComment({
@@ -73,7 +83,7 @@ jobs:
             });
 
   pr-analysis:
-    name: Analyze PR Changes
+    name: 🔍 Analyze PR Changes
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository
     outputs:
@@ -168,7 +178,7 @@ jobs:
           }
 
           # Minimal bootstrap for validation
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
           # Test syntax with -All switch to validate all PowerShell files
           try {
@@ -197,14 +207,14 @@ jobs:
             echo "EOF" >> $env:GITHUB_ENV
           }
 
-      - name: 💬 Update PR with Analysis
+      - name: 💬 Post Modern PR Validation Comment
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
 
             // Read analysis
-            let analysis = { Recommendations: [], TotalFiles: 0 };
+            let analysis = { Recommendations: [], TotalFiles: 0, PowerShellFiles: 0, WorkflowFiles: 0, TestFiles: 0 };
             try {
               analysis = JSON.parse(fs.readFileSync('./pr-analysis.json', 'utf8'));
             } catch (e) {
@@ -219,90 +229,89 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const prTitle = context.payload.pull_request.title;
             const prAuthor = context.payload.pull_request.user.login;
+            
+            // Status indicators
+            const statusIcon = syntaxStatus.includes('PASSED') ? '✅' : syntaxStatus.includes('FAILED') ? '❌' : '⏭️';
+            const statusBadge = syntaxStatus.includes('PASSED') ? '🟢 READY' : syntaxStatus.includes('FAILED') ? '🔴 NEEDS FIX' : '🟡 PENDING';
 
-            let comment = `## 🔍 PR Validation Results
+            let comment = `## ✅ PR Validation Results\n\n`;
+            comment += `### ${statusIcon} Quick Validation: ${statusBadge}\n\n`;
+            comment += `**PR #${prNumber}:** ${prTitle}\n`;
+            comment += `**Author:** @${prAuthor}\n`;
+            comment += `**Changes:** ${changeSummary}\n\n`;
 
-            **#${prNumber}: ${prTitle}** by @${prAuthor}
+            comment += `### 📊 File Analysis\n\n`;
+            comment += `| Type | Count | Visual |\n`;
+            comment += `|------|-------|--------|\n`;
+            comment += `| Total Files | ${analysis.TotalFiles} | ${'📄'.repeat(Math.min(analysis.TotalFiles, 10))} |\n`;
+            comment += `| PowerShell | ${analysis.PowerShellFiles} | ${'⚡'.repeat(Math.min(analysis.PowerShellFiles, 10))} |\n`;
+            comment += `| Workflows | ${analysis.WorkflowFiles} | ${'🔄'.repeat(Math.min(analysis.WorkflowFiles, 5))} |\n`;
+            comment += `| Tests | ${analysis.TestFiles} | ${'🧪'.repeat(Math.min(analysis.TestFiles, 10))} |\n\n`;
 
-            ### 📊 Change Summary
-            ${changeSummary}
-
-            ### ✅ Validation Status
-            - **Syntax Check:** ${syntaxStatus}
-            - **Main CI:** Will run automatically after this validation
-            `;
+            comment += `### 🔍 Validation Checks\n\n`;
+            comment += `| Check | Status | Next Step |\n`;
+            comment += `|-------|--------|------------|\n`;
+            comment += `| ✅ Syntax Check | ${syntaxStatus} | ${syntaxStatus.includes('PASSED') ? 'Complete' : 'Review errors below'} |\n`;
+            comment += `| 🧪 Main CI Tests | ⏳ Queued | Will run automatically |\n`;
+            comment += `| 📊 Quality Check | ⏳ Queued | Runs with main CI |\n\n`;
 
             if (syntaxError) {
-              comment += `
-            ### ❌ Syntax Validation Failed
-
-            The syntax validation detected errors in your PowerShell code. Please review and fix the issues below:
-
-            <details>
-            <summary>📋 View Syntax Errors</summary>
-
-            \`\`\`
-            ${syntaxError}
-            \`\`\`
-
-            </details>
-
-            **How to fix:**
-            1. Review the error messages above to identify problematic files
-            2. Fix syntax errors in the identified files
-            3. Run local validation: \`./automation-scripts/0407_Validate-Syntax.ps1 -FilePath <file>\`
-            4. Push your changes to trigger re-validation
-            `;
+              comment += `### ❌ Action Required: Fix Syntax Errors\n\n`;
+              comment += `PowerShell syntax errors were detected. Please fix them before merging.\n\n`;
+              comment += `<details>\n`;
+              comment += `<summary>📋 View Error Details</summary>\n\n`;
+              comment += `\`\`\`\n${syntaxError}\n\`\`\`\n\n`;
+              comment += `</details>\n\n`;
+              comment += `#### 🔧 How to Fix\n\n`;
+              comment += `1. 📝 Review the error messages above\n`;
+              comment += `2. 🔍 Identify and fix syntax errors in the affected files\n`;
+              comment += `3. 🧪 Test locally: \`./automation-scripts/0407_Validate-Syntax.ps1 -All\`\n`;
+              comment += `4. 🚀 Push changes to trigger re-validation\n\n`;
             } else if (syntaxDetails && syntaxStatus.includes('PASSED')) {
-              comment += `
-            ### ✅ Syntax Validation Passed
-
-            All PowerShell files have valid syntax. Great job! 🎉
-
-            <details>
-            <summary>📋 View Validation Details</summary>
-
-            \`\`\`
-            ${syntaxDetails}
-            \`\`\`
-
-            </details>
-            `;
+              comment += `### ✅ All Syntax Checks Passed!\n\n`;
+              comment += `Great work! All PowerShell files have valid syntax. 🎉\n\n`;
+              if (syntaxDetails.length > 0 && syntaxDetails.length < 500) {
+                comment += `<details>\n`;
+                comment += `<summary>📋 View Validation Details</summary>\n\n`;
+                comment += `\`\`\`\n${syntaxDetails}\n\`\`\`\n\n`;
+                comment += `</details>\n\n`;
+              }
             }
 
-            if (analysis.Recommendations.length > 0) {
-              comment += `
-            ### 💡 Recommendations
-            ${analysis.Recommendations.map(rec => `- ${rec}`).join('\n')}
-            `;
+            if (analysis.Recommendations && analysis.Recommendations.length > 0) {
+              comment += `### 💡 Recommendations\n\n`;
+              for (const rec of analysis.Recommendations) {
+                comment += `- ${rec}\n`;
+              }
+              comment += `\n`;
             }
 
-            comment += `
-            ### 🚀 Next Steps
-            `;
-
+            comment += `### 🚀 What Happens Next?\n\n`;
             if (syntaxStatus.includes('FAILED')) {
-              comment += `
-            1. ❗ **Fix syntax errors** listed above
-            2. **Test locally** using: \`./automation-scripts/0407_Validate-Syntax.ps1 -All\`
-            3. **Push changes** to trigger automatic re-validation
-            4. Once validation passes, **comprehensive CI** will run automatically
-            `;
+              comment += `1. ❗ **Fix the syntax errors** listed above\n`;
+              comment += `2. 🧪 **Test locally** using: \`./automation-scripts/0407_Validate-Syntax.ps1 -All\`\n`;
+              comment += `3. 🚀 **Push your changes** - validation will re-run automatically\n`;
+              comment += `4. ✅ Once validation passes, **comprehensive CI tests** will run\n`;
             } else {
-              comment += `
-            1. ✅ Quick validation passed successfully
-            2. 🔄 Comprehensive CI will run automatically
-            3. 📊 Monitor the [CI pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for full results
-            4. 🧪 Consider running additional local tests: \`./az.ps1 0402\`
-            `;
+              comment += `1. ✅ **Quick validation passed** - syntax is good!\n`;
+              comment += `2. 🔄 **Comprehensive CI is running** - check the [workflows](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions)\n`;
+              comment += `3. 📊 **Quality checks** will provide detailed feedback\n`;
+              comment += `4. 🎉 Once all checks pass, you're **ready to merge**!\n\n`;
+              comment += `#### 🧪 Optional: Test Locally\n\n`;
+              comment += `\`\`\`bash\n`;
+              comment += `# Run syntax validation\n`;
+              comment += `./automation-scripts/0407_Validate-Syntax.ps1 -All\n\n`;
+              comment += `# Run unit tests\n`;
+              comment += `./automation-scripts/0402_Run-UnitTests.ps1\n\n`;
+              comment += `# Full test suite\n`;
+              comment += `./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -PlaybookProfile quick\n`;
+              comment += `\`\`\`\n`;
             }
 
-            comment += `
-            ---
-            *Automated PR validation • [View full CI pipeline](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*
-            `;
+            comment += `\n---\n`;
+            comment += `*🤖 Automated PR Validation • Fast syntax check before main CI • [View Workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`;
 
-            // Find existing comment to update or create new
+            // Find and update existing comment or create new
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -311,7 +320,7 @@ jobs:
 
             const existingComment = comments.find(c =>
               c.user.login === 'github-actions[bot]' &&
-              c.body.includes('🔍 PR Validation Results')
+              c.body.includes('✅ PR Validation Results')
             );
 
             if (existingComment) {
@@ -329,5 +338,4 @@ jobs:
                 body: comment
               });
             }
-
 

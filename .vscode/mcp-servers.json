@@ -1,0 +1,115 @@
+{
+  "mcpServers": {
+    "aitherzero": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+      ],
+      "env": {
+        "AITHERZERO_ROOT": "${workspaceFolder}",
+        "AITHERZERO_NONINTERACTIVE": "1"
+      },
+      "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
+      "tools": [
+        "run_script",
+        "list_scripts",
+        "search_scripts",
+        "execute_playbook",
+        "get_configuration",
+        "run_tests",
+        "run_quality_check",
+        "get_project_report"
+      ]
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ],
+      "description": "Filesystem access to AitherZero repository",
+      "tools": [
+        "read_file",
+        "write_file",
+        "create_directory",
+        "list_directory",
+        "move_file",
+        "search_files",
+        "get_file_info",
+        "read_multiple_files"
+      ]
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      },
+      "description": "GitHub API access",
+      "tools": [
+        "create_or_update_file",
+        "search_repositories",
+        "create_repository",
+        "get_file_contents",
+        "push_files",
+        "create_issue",
+        "create_pull_request",
+        "fork_repository",
+        "create_branch"
+      ]
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "${workspaceFolder}"
+      ],
+      "description": "Git version control operations",
+      "tools": [
+        "git_status",
+        "git_diff",
+        "git_commit",
+        "git_add",
+        "git_reset",
+        "git_log",
+        "git_show"
+      ]
+    },
+    "powershell-docs": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ],
+      "env": {
+        "ALLOWED_DOMAINS": "docs.microsoft.com,learn.microsoft.com,github.com"
+      },
+      "description": "PowerShell documentation",
+      "tools": [
+        "search_powershell_docs",
+        "get_command_help",
+        "get_about_topic"
+      ]
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Detailed reasoning for complex tasks"
+    }
+  }
+}

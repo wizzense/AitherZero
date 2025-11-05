@@ -7,8 +7,8 @@ name: 'Phase 2 - Intelligent Issue Creation'
 on:
   workflow_run:
     workflows:
-      - "🧪 Comprehensive Test Execution"
-      - "PR Validation"
+      - "⚡ Parallel Testing (High Performance)"
+      - "✅ PR Validation"
       - "Quality Validation"
     types: [completed]
 
@@ -403,6 +403,16 @@ jobs:
 
                 if (existingIssue) {
                   console.log(`  Issue already exists for fingerprint: ${fingerprint} (#${existingIssue.number})`);
+                  // Mark for update instead of skipping
+                  issueGroups.push({
+                    fingerprint,
+                    category,
+                    failure,
+                    agent: determineAgent(failure),
+                    priority: category === 'Security' ? 'p0' : category === 'Syntax' ? 'p1' : 'p2',
+                    existingIssueNumber: existingIssue.number,
+                    shouldUpdate: true
+                  });
                   continue;
                 }
 
@@ -439,7 +449,7 @@ jobs:
           retention-days: 30
 
   create-intelligent-issues:
-    name: 📝 Create Intelligent Issues
+    name: 📝 Create or Update Intelligent Issues
     runs-on: ubuntu-latest
     needs: [comprehensive-failure-analysis, intelligent-issue-grouping]
     if: |
@@ -456,7 +466,7 @@ jobs:
           name: issue-groups
           path: ./
 
-      - name: 📝 Create Issues with Agent Assignment
+      - name: 📝 Create or Update Issues with Agent Assignment
         uses: actions/github-script@v7
         with:
           script: |
@@ -466,12 +476,13 @@ jobs:
             const data = JSON.parse(fs.readFileSync('./issue-groups.json', 'utf8'));
             const { issueGroups, analysis } = data;
 
-            console.log(`📝 Creating ${issueGroups.length} intelligent issues...`);
+            console.log(`📝 Processing ${issueGroups.length} intelligent issues...`);
 
             let createdCount = 0;
+            let updatedCount = 0;
 
             for (const group of issueGroups) {
-              const { fingerprint, category, failure, agent, priority } = group;
+              const { fingerprint, category, failure, agent, priority, existingIssueNumber, shouldUpdate } = group;
 
               // Build issue title
               const title = category === 'Tests'
@@ -484,13 +495,55 @@ jobs:
                 ? `🔒 Security Issue: ${failure.Type}`
                 : `🔄 Workflow Failure: ${failure.WorkflowName}`;
 
-              // Build issue body with rich context
+              // Build workflow context
               const workflowContext = analysis.WorkflowContext.TriggeredBy
                 ? `- **Workflow:** [${analysis.WorkflowContext.TriggeredBy.WorkflowName}](${analysis.WorkflowContext.TriggeredBy.HtmlUrl})
             - **Run ID:** ${analysis.WorkflowContext.TriggeredBy.WorkflowId}
             - **Status:** ${analysis.WorkflowContext.TriggeredBy.Conclusion}`
                 : `- **Manual Analysis:** Scheduled analysis`;
+              
+              // If this is an update to existing issue, add a comment
+              if (shouldUpdate && existingIssueNumber) {
+                try {
+                  const updateComment = [
+                    '## 🔄 Issue Update - New Detection',
+                    '',
+                    `**Timestamp:** ${analysis.Timestamp}`,
+                    `**Category:** ${category}`,
+                    `**Priority:** ${priority}`,
+                    `**File:** \`${failure.File || 'N/A'}\``,
+                    failure.Line ? `**Line:** ${failure.Line}` : '',
+                    '',
+                    '### Error Details',
+                    '',
+                    failure.ErrorMessage || failure.Message || failure.Description || 'See details below',
+                    '',
+                    failure.StackTrace ? '```\n' + failure.StackTrace + '\n```' : '',
+                    '',
+                    '### Workflow Context',
+                    '',
+                    workflowContext,
+                    '',
+                    '---',
+                    '*This issue was re-detected. Please review and address if not already fixed.*'
+                  ].filter(Boolean).join('\n');
+                  
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: existingIssueNumber,
+                    body: updateComment
+                  });
+                  
+                  console.log(`✅ Updated existing issue #${existingIssueNumber}: ${title}`);
+                  updatedCount++;
+                } catch (error) {
+                  console.error(`❌ Failed to update issue #${existingIssueNumber}: ${error.message}`);
+                }
+                continue;
+              }
 
+              // Create new issue
               const body = `## ${category} Failure Detected
 
             **Category:** ${category}
@@ -554,7 +607,7 @@ jobs:
               }
             }
 
-            console.log(`\n✅ Created ${createdCount} intelligent issues!`);
+            console.log(`\n✅ Created ${createdCount} new issues, updated ${updatedCount} existing issues!`);
 
       - name: 📊 Update Issue State Database
         shell: pwsh

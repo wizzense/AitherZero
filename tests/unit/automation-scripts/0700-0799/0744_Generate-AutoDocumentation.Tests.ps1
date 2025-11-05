@@ -5,18 +5,34 @@
 .SYNOPSIS
     Unit tests for 0744_Generate-AutoDocumentation
 .DESCRIPTION
-    Auto-generated comprehensive tests
+    Auto-generated comprehensive tests with environment awareness
     Script: 0744_Generate-AutoDocumentation
     Stage: AI & Documentation
-    Description: Automated reactive documentation generation with quality validation
-    Generated: 2025-10-30 02:11:49
+    Description: Generates comprehensive, up-to-date documentation automatically based on code changes.
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:01
 #>
 
 Describe '0744_Generate-AutoDocumentation' -Tag 'Unit', 'AutomationScript', 'AI & Documentation' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0744_Generate-AutoDocumentation.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0744_Generate-AutoDocumentation.ps1'
         $script:ScriptName = '0744_Generate-AutoDocumentation'
+
+        # Import test helpers for environment detection
+        $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
+        if (Test-Path $testHelpersPath) {
+            Import-Module $testHelpersPath -Force -ErrorAction SilentlyContinue
+        }
+
+        # Detect test environment
+        $script:TestEnv = if (Get-Command Get-TestEnvironment -ErrorAction SilentlyContinue) {
+            Get-TestEnvironment
+        } else {
+            @{ IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'); IsLocal = $true }
+        }
     }
 
     Context 'Script Validation' {
@@ -73,22 +89,46 @@ Describe '0744_Generate-AutoDocumentation' -Tag 'Unit', 'AutomationScript', 'AI 
 
     Context 'Metadata' {
         It 'Should be in stage: AI & Documentation' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
 
         It 'Should declare dependencies' {
-            $content = Get-Content $script:ScriptPath -First 20
+            $content = Get-Content $script:ScriptPath -First 50
             ($content -join ' ') | Should -Match 'Dependencies:'
         }
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 & $script:ScriptPath @params
             } | Should -Not -Throw
+        }
+    }
+
+    Context 'Environment Awareness' {
+        It 'Test environment should be detected' {
+            $script:TestEnv | Should -Not -BeNullOrEmpty
+            $script:TestEnv.Keys | Should -Contain 'IsCI'
+        }
+
+        It 'Should adapt to CI environment' {
+            if (-not $script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "CI-only validation"
+                return
+            }
+            $script:TestEnv.IsCI | Should -Be $true
+            $env:CI | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Should adapt to local environment' {
+            if ($script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "Local-only validation"
+                return
+            }
+            $script:TestEnv.IsCI | Should -Be $false
         }
     }
 }

@@ -11,8 +11,8 @@ See [README.md](./README.md) for detailed information about this directory.
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 129
-- **PowerShell Scripts**: 124
+- **Files**: 144
+- **PowerShell Scripts**: 138
 
 ## 📄 Files
 
@@ -22,6 +22,7 @@ See [README.md](./README.md) for detailed information about this directory.
 
 ### .md Files
 
+- 📝 [DEPRECATED-SCRIPTS.md](./DEPRECATED-SCRIPTS.md)
 - 📝 [EXECUTION-ORDER.md](./EXECUTION-ORDER.md)
 - 📝 [index.md](./index.md)
 - 📝 [migration-status.md](./migration-status.md)
@@ -30,7 +31,6 @@ See [README.md](./README.md) for detailed information about this directory.
 ### .ps1 Files
 
 - ⚙️ [0000_Cleanup-Environment.ps1](./0000_Cleanup-Environment.ps1)
-- ⚙️ [0001_Ensure-PowerShell7.ps1](./0001_Ensure-PowerShell7.ps1)
 - ⚙️ [0002_Setup-Directories.ps1](./0002_Setup-Directories.ps1)
 - ⚙️ [0003_Sync-ConfigManifest.ps1](./0003_Sync-ConfigManifest.ps1)
   - *Synchronize config.psd1 with actual automation scripts*
@@ -38,6 +38,8 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0007_Install-Go.ps1](./0007_Install-Go.ps1)
 - ⚙️ [0008_Install-OpenTofu.ps1](./0008_Install-OpenTofu.ps1)
 - ⚙️ [0009_Initialize-OpenTofu.ps1](./0009_Initialize-OpenTofu.ps1)
+- ⚙️ [0010_Setup-MCPServers.ps1](./0010_Setup-MCPServers.ps1)
+  - *Idempotent setup and validation of MCP servers for GitHub Copilot.*
 - ⚙️ [0100_Configure-System.ps1](./0100_Configure-System.ps1)
 - ⚙️ [0104_Install-CertificateAuthority.ps1](./0104_Install-CertificateAuthority.ps1)
 - ⚙️ [0105_Install-HyperV.ps1](./0105_Install-HyperV.ps1)
@@ -56,10 +58,12 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0212_Install-AzureCLI.ps1](./0212_Install-AzureCLI.ps1)
 - ⚙️ [0213_Install-AWSCLI.ps1](./0213_Install-AWSCLI.ps1)
 - ⚙️ [0214_Install-Packer.ps1](./0214_Install-Packer.ps1)
-- ⚙️ [0215_Install-Chocolatey.ps1](./0215_Install-Chocolatey.ps1)
+- ⚙️ [0215_Configure-MCPServers.ps1](./0215_Configure-MCPServers.ps1)
+  - *Configure Model Context Protocol (MCP) servers for GitHub Copilot*
 - ⚙️ [0216_Set-PowerShellProfile.ps1](./0216_Set-PowerShellProfile.ps1)
 - ⚙️ [0217_Install-ClaudeCode.ps1](./0217_Install-ClaudeCode.ps1)
 - ⚙️ [0218_Install-GeminiCLI.ps1](./0218_Install-GeminiCLI.ps1)
+- ⚙️ [0219_Install-Chocolatey.ps1](./0219_Install-Chocolatey.ps1)
 - ⚙️ [0300_Deploy-Infrastructure.ps1](./0300_Deploy-Infrastructure.ps1)
 - ⚙️ [0400_Install-TestingTools.ps1](./0400_Install-TestingTools.ps1)
   - *Install testing and validation tools for AitherZero*
@@ -78,8 +82,6 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0408_Generate-TestCoverage.ps1](./0408_Generate-TestCoverage.ps1)
 - ⚙️ [0409_Run-AllTests.ps1](./0409_Run-AllTests.ps1)
   - *Execute all tests for AitherZero (unit, integration, E2E)*
-- ⚙️ [0410_Run-PSScriptAnalyzer-Fast.ps1](./0410_Run-PSScriptAnalyzer-Fast.ps1)
-  - *FAST PSScriptAnalyzer for CI environments - 10x faster than regular analysis*
 - ⚙️ [0411_Test-Smart.ps1](./0411_Test-Smart.ps1)
   - *Intelligent test runner with caching and incremental testing*
 - ⚙️ [0412_Validate-AST.ps1](./0412_Validate-AST.ps1)
@@ -88,10 +90,14 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Validates the config.psd1 manifest for accuracy and completeness*
 - ⚙️ [0414_Test-Optimized.ps1](./0414_Test-Optimized.ps1)
   - *High-performance parallel test execution optimized for AitherZero*
+- ⚙️ [0415_Manage-PSScriptAnalyzerCache.ps1](./0415_Manage-PSScriptAnalyzerCache.ps1)
+  - *Manage PSScriptAnalyzer cache for performance optimization*
 - ⚙️ [0420_Validate-ComponentQuality.ps1](./0420_Validate-ComponentQuality.ps1)
   - *Validate component quality for new features and components*
 - ⚙️ [0425_Validate-DocumentationStructure.ps1](./0425_Validate-DocumentationStructure.ps1)
   - *Validates and maintains documentation structure and organization*
+- ⚙️ [0426_Validate-TestScriptSync.ps1](./0426_Validate-TestScriptSync.ps1)
+  - *Validate synchronization between test files and automation scripts*
 - ⚙️ [0440_Validate-Workflows.ps1](./0440_Validate-Workflows.ps1)
   - *Validates GitHub Actions workflow files for syntax, schema compliance, and best practices*
 - ⚙️ [0441_Test-WorkflowsLocally.ps1](./0441_Test-WorkflowsLocally.ps1)
@@ -120,10 +126,12 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Generate comprehensive CI/CD dashboard with real-time status monitoring*
 - ⚙️ [0513_Enable-ContinuousReporting.ps1](./0513_Enable-ContinuousReporting.ps1)
   - *Enable continuous reporting and monitoring for development workflow*
-- ⚙️ [0514_Schedule-ReportGeneration.ps1](./0514_Schedule-ReportGeneration.ps1)
-  - *Schedule automatic report generation for AitherZero project*
+- ⚙️ [0514_Generate-CodeMap.ps1](./0514_Generate-CodeMap.ps1)
+  - *Generate comprehensive interactive code map visualizer*
 - ⚙️ [0515_Deploy-Documentation.ps1](./0515_Deploy-Documentation.ps1)
   - *Deploy documentation and reports to GitHub Pages*
+- ⚙️ [0516_Schedule-ReportGeneration.ps1](./0516_Schedule-ReportGeneration.ps1)
+  - *Schedule automatic report generation for AitherZero project*
 - ⚙️ [0520_Analyze-ConfigurationUsage.ps1](./0520_Analyze-ConfigurationUsage.ps1)
   - *Analyzes configuration usage across the codebase*
 - ⚙️ [0521_Analyze-DocumentationCoverage.ps1](./0521_Analyze-DocumentationCoverage.ps1)
@@ -135,6 +143,8 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0524_Generate-TechDebtReport.ps1](./0524_Generate-TechDebtReport.ps1)
   - *Generates comprehensive tech debt report from analysis results*
 - ⚙️ [0530_View-Logs.ps1](./0530_View-Logs.ps1)
+- ⚙️ [0531_Get-WorkflowRunReport.ps1](./0531_Get-WorkflowRunReport.ps1)
+  - *Get detailed workflow run reports for CI debugging.*
 - ⚙️ [0550_Health-Dashboard.ps1](./0550_Health-Dashboard.ps1)
   - *Gets overall system health status*
 - ⚙️ [0599_CI-ProgressReporter.ps1](./0599_CI-ProgressReporter.ps1)
@@ -193,6 +203,16 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Generate navigable index.md files for entire project structure*
 - ⚙️ [0746_Generate-AllDocumentation.ps1](./0746_Generate-AllDocumentation.ps1)
   - *Automated documentation generation orchestrator - runs all documentation generators*
+- ⚙️ [0750_Build-MCPServer.ps1](./0750_Build-MCPServer.ps1)
+  - *Build the AitherZero MCP Server*
+- ⚙️ [0751_Start-MCPServer.ps1](./0751_Start-MCPServer.ps1)
+  - *Start the AitherZero MCP Server*
+- ⚙️ [0752_Demo-MCPServer.ps1](./0752_Demo-MCPServer.ps1)
+  - *Demonstrate AitherZero MCP Server functionality*
+- ⚙️ [0753_Use-MCPServer.ps1](./0753_Use-MCPServer.ps1)
+  - *Actually USE the MCP Server to execute AitherZero commands*
+- ⚙️ [0754_Create-MCPServer.ps1](./0754_Create-MCPServer.ps1)
+  - *Create a new MCP server from the template*
 - ⚙️ [0798_generate-changelog.ps1](./0798_generate-changelog.ps1)
   - *Generate changelog from git history.*
 - ⚙️ [0799_cleanup-old-tags.ps1](./0799_cleanup-old-tags.ps1)
@@ -233,14 +253,25 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Quick validation of PR Docker deployment configuration*
 - ⚙️ [0854_Manage-PRContainer.ps1](./0854_Manage-PRContainer.ps1)
   - *Manage PR container environments with automated operations*
+- ⚙️ [0860_Validate-Deployments.ps1](./0860_Validate-Deployments.ps1)
+  - *Validates deployment configuration and status for GitHub Pages and containers.*
 - ⚙️ [0900_Test-SelfDeployment.ps1](./0900_Test-SelfDeployment.ps1)
   - *Test AitherZero self-deployment capabilities*
 - ⚙️ [0901_Test-LocalDeployment.ps1](./0901_Test-LocalDeployment.ps1)
   - *Test AitherZero local deployment capabilities (offline mode)*
 - ⚙️ [0950_Generate-AllTests.ps1](./0950_Generate-AllTests.ps1)
   - *Automatic Test Generation Orchestrator - "The 100% Solution"*
+- ⚙️ [0951_Regenerate-FunctionalTests.ps1](./0951_Regenerate-FunctionalTests.ps1)
+  - *Regenerate ALL tests with enhanced functional testing*
+- ⚙️ [0960_Track-DocumentationFreshness.ps1](./0960_Track-DocumentationFreshness.ps1)
+  - *Track documentation freshness relative to code changes.*
+- ⚙️ [0961_Validate-DirectoryDocumentation.ps1](./0961_Validate-DirectoryDocumentation.ps1)
+  - *Validate that directories have proper documentation (README.md).*
+- ⚙️ [0962_Run-Playbook.ps1](./0962_Run-Playbook.ps1)
+  - *Run orchestration playbooks - wrapper for easy local CI/CD workflow execution*
 - ⚙️ [9999_Reset-Machine.ps1](./9999_Reset-Machine.ps1)
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-10-31 08:27:45 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-05 01:07:41 UTC
+

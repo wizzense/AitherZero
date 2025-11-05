@@ -41,7 +41,7 @@ $latest = (Invoke-RestMethod "https://api.github.com/repos/wizzense/AitherZero/r
 Invoke-WebRequest -Uri $latest.browser_download_url -OutFile "AitherZero-latest.zip"
 Expand-Archive -Path "AitherZero-latest.zip" -DestinationPath ./
 cd AitherZero-*
-./bootstrap.ps1 -Mode New -NonInteractive
+./bootstrap.ps1 -Mode New
 ```
 
 **Option 2: GitHub CLI**
@@ -53,7 +53,16 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ./bootstrap.sh
 ```
 
-**Note**: After cloning, run `bash tools/setup-git-merge.sh` to configure Git to handle auto-generated `index.md` files correctly. This prevents merge conflicts. See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) for details.
+**Note**: After cloning, run these setup commands:
+```bash
+# Configure Git merge strategy for auto-generated files
+bash tools/setup-git-merge.sh
+
+# Enable pre-commit hooks for validation (recommended for contributors)
+pwsh -File tools/Setup-GitHooks.ps1
+```
+
+See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
 
 **Option 3: Git Clone**
 ```bash
@@ -78,6 +87,63 @@ cd AitherZero
 ### 🐳 Docker Quick Start
 
 Run AitherZero in an isolated container:
+
+```bash
+# Pull the latest image from GitHub Container Registry
+docker pull ghcr.io/wizzense/aitherzero:latest
+
+# Run interactively
+docker run -it --rm ghcr.io/wizzense/aitherzero:latest
+
+# Or use docker-compose for persistent storage
+docker-compose up -d
+```
+
+**Available Docker images:**
+- `ghcr.io/wizzense/aitherzero:latest` - Latest stable release
+- `ghcr.io/wizzense/aitherzero:1.0.0` - Specific version
+- Multi-platform support: `linux/amd64`, `linux/arm64`
+
+See [Docker Documentation](DOCKER.md) for complete container usage guide.
+
+### 🤖 MCP Server Quick Start
+
+Use AitherZero with AI assistants (Claude, GitHub Copilot, etc.):
+
+```bash
+# Install from GitHub Packages
+npm install @aitherzero/mcp-server
+
+# Or install globally
+npm install -g @aitherzero/mcp-server
+```
+
+**Configure with Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "aitherzero": {
+      "command": "npx",
+      "args": ["@aitherzero/mcp-server"]
+    }
+  }
+}
+```
+
+**Configure with VS Code / GitHub Copilot** (`.github/mcp-servers.json`):
+```json
+{
+  "mcpServers": {
+    "aitherzero": {
+      "command": "npx",
+      "args": ["@aitherzero/mcp-server"],
+      "description": "AitherZero infrastructure automation"
+    }
+  }
+}
+```
+
+See [MCP Server Documentation](mcp-server/README.md) for complete setup and usage guide.
 
 ```bash
 # Quick start with Docker Compose
@@ -207,6 +273,71 @@ AitherZero maintains high code quality standards through automated validation:
 - **Infrastructure Deployment**: Plan, apply, and destroy infrastructure using OpenTofu/Terraform
 - **Lab VM Management**: Create and manage virtual machines
 - **Configuration**: Simple configuration management
+- **Building-Block Automation**: 134 composable scripts for custom automation workflows
+
+## 🧩 Building-Block Automation System
+
+AitherZero provides **134 automation scripts** organized as building blocks that can be combined to create custom workflows for any endpoint configuration or deployment task.
+
+### Quick Start with Building Blocks
+
+```powershell
+# Use pre-built recipes
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile web-development
+
+# Create custom playbook from template
+cp orchestration/playbooks/templates/custom-playbook-template.json orchestration/playbooks/custom/my-playbook.json
+
+# Execute custom playbook
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook my-playbook
+```
+
+### Script Categories
+
+| Range | Category | Scripts | Purpose |
+|-------|----------|---------|---------|
+| 0000-0099 | Environment Prep | 11 | PowerShell 7, directories, validation tools |
+| 0100-0199 | Infrastructure | 6 | Hyper-V, WSL2, certificates, system config |
+| 0200-0299 | Dev Tools | 19 | Git, Node, Python, Docker, VS Code, CLIs |
+| 0400-0499 | Testing | 26 | Unit tests, integration tests, quality checks |
+| 0500-0599 | Reporting | 25 | Reports, metrics, analytics, tech debt |
+| 0700-0799 | Dev Workflows | 35 | Git workflows, CI/CD, AI tools, MCP servers |
+| 0800-0899 | Issue & Deploy | 19 | Issue management, PR environments |
+| 0900-0999 | Test Generation | 3 | Automated test generation |
+
+### Pre-Built Recipes
+
+**Web Development** (30-45 min):
+```powershell
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile web-development
+# Installs: Git, Node.js, Docker, VS Code, testing tools
+```
+
+**Python Data Science** (25-35 min):
+```powershell
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile python-datascience
+# Installs: Git, Python, Poetry, VS Code, testing tools
+```
+
+**AI-Powered Development** (30-40 min):
+```powershell
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile ai-powered-development
+# Installs: Complete dev stack + AI agents, MCP servers, Copilot integration
+```
+
+**Cloud DevOps** (25-35 min):
+```powershell
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile cloud-devops
+# Installs: Git, Docker, Azure CLI, AWS CLI, OpenTofu, Packer
+```
+
+### Documentation
+
+- **[Building-Block Index](docs/BUILDING-BLOCKS-INDEX.md)** - Start here for overview and quick access
+- **[Quick Reference](docs/BUILDING-BLOCKS-QUICK-REFERENCE.md)** - Script lookup and common patterns (5 min read)
+- **[Complete Guide](docs/BUILDING-BLOCKS.md)** - Full documentation with all blocks (15 min read)
+- **[Reorganization Plan](docs/BUILDING-BLOCKS-REORGANIZATION.md)** - Architecture decisions (10 min read)
+- **[Custom Playbook Guide](orchestration/playbooks/custom/README.md)** - Create your own playbooks (10 min read)
 
 ## Core Modules
 
@@ -241,9 +372,33 @@ AitherZero includes comprehensive GitHub Copilot integration to enhance develope
 ### Features
 - **Custom Instructions**: Project-specific guidance for AI coding assistants
 - **Agent Routing**: 8 specialized expert agents for different domains
-- **MCP Servers**: Model Context Protocol integration for enhanced context
+- **MCP Client**: Model Context Protocol integration for enhanced context (uses external MCP servers)
+- **MCP Server**: AitherZero can BE an MCP server - expose automation capabilities to AI assistants! 🆕
+  - **Published to GitHub Packages**: `npm install @aitherzero/mcp-server`
+  - **Available as Release Asset**: Download tarball from releases
+  - **Multi-platform Support**: Works with Claude, GitHub Copilot, and other MCP clients
 - **Dev Containers**: Pre-configured development environment
 - **VS Code Integration**: Optimized settings, tasks, and debugging
+
+### Distribution Formats
+
+AitherZero is available in multiple formats for different use cases:
+
+1. **Platform Package** (`.zip`, `.tar.gz`):
+   - Complete PowerShell module with all domains
+   - 100+ automation scripts
+   - Released via GitHub Releases
+
+2. **Docker Image** (`ghcr.io/wizzense/aitherzero`):
+   - Pre-configured container environment
+   - Multi-platform: `linux/amd64`, `linux/arm64`
+   - Published to GitHub Container Registry
+   - Perfect for CI/CD and isolated environments
+
+3. **MCP Server** (`@aitherzero/mcp-server`):
+   - npm package for AI assistant integration
+   - Published to GitHub Packages
+   - Enables natural language infrastructure management
 
 ### Quick Setup
 1. **Install GitHub Copilot** extensions in VS Code

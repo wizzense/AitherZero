@@ -43,43 +43,16 @@ $scriptMetadata = @{
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+
 $testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
 
 if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
 }
 
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force
-    $script:LoggingAvailable = $true
-} else {
-    $script:LoggingAvailable = $false
-}
-
-function Write-ScriptLog {
-    param(
-        [string]$Level = 'Information',
-        [string]$Message,
-        [hashtable]$Data = @{}
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0409_Run-AllTests" -Data $Data
-    } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = @{
-            'Error' = 'Red'
-            'Warning' = 'Yellow'
-            'Information' = 'White'
-            'Debug' = 'Gray'
-        }[$Level]
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
-}
-
 try {
-    Write-ScriptLog -Message "Starting all tests execution"
+    Write-ScriptLog -Message "Starting all tests execution" -Source "0409_Run-AllTests"
 
     # Check if running in DryRun mode
     if ($DryRun) {

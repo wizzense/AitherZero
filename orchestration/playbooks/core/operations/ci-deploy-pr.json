@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "name": "ci-deploy-pr",
+    "description": "Deploy Docker container for PR testing",
+    "version": "1.0.0",
+    "category": "operations",
+    "tags": ["ci", "deployment", "docker", "pr"],
+    "estimatedDuration": "10-20 minutes",
+    "githubWorkflow": "deploy-pr-environment.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": [],
+    "requiredTools": ["docker"],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false,
+      "prNumber": ""
+    },
+    "profiles": {
+      "deploy": {
+        "description": "Deploy PR environment",
+        "variables": {}
+      },
+      "test": {
+        "description": "Test existing PR environment",
+        "variables": {}
+      },
+      "cleanup": {
+        "description": "Cleanup PR environment",
+        "variables": {}
+      }
+    },
+    "stages": [
+      {
+        "name": "Deploy Container",
+        "description": "Deploy Docker container for PR",
+        "sequences": ["0850"],
+        "variables": {
+          "PRNumber": "{{prNumber}}"
+        },
+        "continueOnError": false,
+        "timeout": 600
+      },
+      {
+        "name": "Validate Deployment",
+        "description": "Validate container deployment",
+        "sequences": ["0853"],
+        "variables": {
+          "PRNumber": "{{prNumber}}"
+        },
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Run Container Tests",
+        "description": "Run tests in container",
+        "sequences": ["0854"],
+        "variables": {
+          "PRNumber": "{{prNumber}}"
+        },
+        "continueOnError": true,
+        "timeout": 600
+      },
+      {
+        "name": "Cleanup Environment",
+        "description": "Cleanup container resources",
+        "sequences": ["0851"],
+        "variables": {
+          "PRNumber": "{{prNumber}}"
+        },
+        "continueOnError": true,
+        "timeout": 180
+      }
+    ]
+  }
+}

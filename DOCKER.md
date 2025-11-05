@@ -4,17 +4,21 @@ This guide explains how to use AitherZero with Docker for easy deployment and te
 
 ## What Does This Do?
 
-The AitherZero PR container system provides:
+The AitherZero container system provides:
+- **Ready-to-Use Environment**: Container comes pre-bootstrapped with global `aitherzero` command
 - **Automated PR Testing**: Every PR automatically builds a Docker image published to GitHub Container Registry
 - **Isolated Environments**: Each PR gets its own container for safe testing without affecting your system
-- **Quick Access**: Pull and run PR containers in seconds to test changes before merging
+- **Quick Access**: Pull and run containers in seconds - no manual setup required
 - **Container Management**: The `0854_Manage-PRContainer.ps1` script provides automated container lifecycle management
 
 ### How It Works
 
-1. **Automatic Build**: When you open a PR, GitHub Actions automatically builds a container image
+1. **Automatic Build**: When you open a PR, GitHub Actions automatically:
+   - Builds a container image
+   - Runs `bootstrap.ps1` to initialize the environment
+   - Installs the global `aitherzero` command in `/home/aitherzero/.local/bin`
 2. **Published to Registry**: The image is pushed to `ghcr.io/wizzense/aitherzero:pr-{number}`
-3. **Easy Testing**: Pull the image and run it locally to test the PR changes
+3. **Easy Testing**: Pull the image and run `aitherzero` immediately - it just works
 4. **Managed Lifecycle**: Use the container manager script for automated setup, testing, and cleanup
 
 ## Quick Start
@@ -33,11 +37,14 @@ docker run -d --name aitherzero-pr-1677 -p 8087:8080 ghcr.io/wizzense/aitherzero
 # Wait a few seconds for startup
 sleep 5
 
-# Run tests in the container (when module is loaded, 'az' alias is available)
-docker exec aitherzero-pr-1677 pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
+# Run the aitherzero command - it's already installed and ready!
+docker exec aitherzero-pr-1677 aitherzero
 
-# Open interactive shell to explore
+# Open interactive shell (aitherzero command is in PATH)
 docker exec -it aitherzero-pr-1677 pwsh
+
+# Inside the container, just run:
+aitherzero
 
 # Cleanup when done
 docker stop aitherzero-pr-1677 && docker rm aitherzero-pr-1677
@@ -56,7 +63,7 @@ cd AitherZero
 # QuickStart: Pull + Run + Verify in one command
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1677
 
-# Open interactive shell
+# Open interactive shell (aitherzero command available immediately)
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
 
 # Check status
@@ -65,8 +72,8 @@ pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber 167
 # View logs
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
 
-# Execute commands in container
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "az 0402"
+# Execute the aitherzero command in container
+pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "aitherzero"
 
 # Cleanup when done
 pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1677

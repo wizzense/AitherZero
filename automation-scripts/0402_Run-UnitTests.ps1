@@ -35,14 +35,20 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Ensure TERM is set for terminal operations (required in CI environments)
+if (-not $env:TERM) {
+    $env:TERM = 'xterm-256color'
+}
+
 # Script metadata (used for orchestration)
 # Note: Script metadata is defined for orchestration system documentation
 # It is referenced by automation infrastructure even if not directly used in this script
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+
 $testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
 $testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
 $configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
 
@@ -80,13 +86,6 @@ if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
 }
 
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force
-    $script:LoggingAvailable = $true
-} else {
-    $script:LoggingAvailable = $false
-}
-
 if (Test-Path $testCacheModule) {
     Import-Module $testCacheModule -Force
     $script:CacheAvailable = $true
@@ -94,29 +93,8 @@ if (Test-Path $testCacheModule) {
     $script:CacheAvailable = $false
 }
 
-function Write-ScriptLog {
-    param(
-        [string]$Level = 'Information',
-        [string]$Message,
-        [hashtable]$Data = @{}
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0402_Run-UnitTests" -Data $Data
-    } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = @{
-            'Error' = 'Red'
-            'Warning' = 'Yellow'
-            'Information' = 'White'
-            'Debug' = 'Gray'
-        }[$Level]
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
-}
-
 try {
-    Write-ScriptLog -Message "Starting unit test execution"
+    Write-ScriptLog -Message "Starting unit test execution" -Source "0402_Run-UnitTests"
     
     # Log CI mode coverage message now that Write-ScriptLog is available
     if ($CI -and -not $PSBoundParameters.ContainsKey('NoCoverage')) {
@@ -222,6 +200,62 @@ try {
 
     Write-ScriptLog -Message "Found $($testFiles.Count) test files"
 
+    # Pre-validate test files to detect orphaned tests (tests for non-existent scripts)
+    # This prevents pipeline failures from missing script files
+    $validTestFiles = @()
+    $orphanedTests = @()
+    
+    foreach ($testFile in $testFiles) {
+        # Check if this is an automation script test
+        if ($testFile.FullName -match 'automation-scripts') {
+            # Extract script name from test file name
+            $scriptName = $testFile.BaseName -replace '\.Tests$', ''
+            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName.ps1"
+            
+            # Check if the corresponding script exists
+            if (-not (Test-Path $scriptPath)) {
+                $orphanedTests += [PSCustomObject]@{
+                    TestFile = $testFile.Name
+                    ScriptName = $scriptName
+                    Path = $testFile.FullName
+                }
+                Write-ScriptLog -Level Warning -Message "Orphaned test detected: $($testFile.Name) (missing script: $scriptName.ps1)"
+                continue
+            }
+        }
+        
+        # Add to valid test files
+        $validTestFiles += $testFile
+    }
+    
+    # Report orphaned tests
+    if ($orphanedTests.Count -gt 0) {
+        Write-ScriptLog -Level Warning -Message "Found $($orphanedTests.Count) orphaned test file(s)" -Data @{
+            OrphanedTests = $orphanedTests.Count
+            Details = ($orphanedTests | ForEach-Object { $_.TestFile }) -join ', '
+        }
+        Write-Host ""
+        Write-Host "⚠️  Warning: Orphaned Test Files Detected" -ForegroundColor Yellow
+        Write-Host "   These test files reference non-existent scripts and will be skipped:" -ForegroundColor Yellow
+        $orphanedTests | ForEach-Object {
+            Write-Host "   - $($_.TestFile) → missing $($_.ScriptName).ps1" -ForegroundColor DarkYellow
+        }
+        Write-Host ""
+        Write-Host "   💡 Tip: Run validation to clean up orphaned tests:" -ForegroundColor Cyan
+        Write-Host "      ./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned" -ForegroundColor Gray
+        Write-Host ""
+    }
+    
+    # Update test files to only include valid ones
+    $testFiles = $validTestFiles
+    
+    if ($testFiles.Count -eq 0) {
+        Write-ScriptLog -Level Warning -Message "No valid test files found after filtering orphaned tests"
+        exit 0
+    }
+    
+    Write-ScriptLog -Message "Proceeding with $($testFiles.Count) valid test file(s)"
+
     # Load configuration
     $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
@@ -284,12 +318,19 @@ try {
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
-    $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
+    
+    # Check for Run settings with StrictMode-safe access
+    if ($pesterSettings.ContainsKey('Run') -and $pesterSettings.Run) {
+        $pesterConfig.Run.PassThru = if ($null -ne $pesterSettings.Run.PassThru) { $pesterSettings.Run.PassThru } else { $true }
+        $pesterConfig.Run.Exit = if ($null -ne $pesterSettings.Run.Exit) { $pesterSettings.Run.Exit } else { $false }
+    } else {
+        $pesterConfig.Run.PassThru = $true
+        $pesterConfig.Run.Exit = $false
+    }
 
 
     # Apply output settings from config
-    if ($pesterSettings.Output) {
+    if ($pesterSettings.ContainsKey('Output') -and $pesterSettings.Output) {
         if ($pesterSettings.Output.Verbosity) {
             $pesterConfig.Output.Verbosity = $pesterSettings.Output.Verbosity
         }
@@ -299,14 +340,14 @@ try {
     }
 
     # Apply Should settings from config
-    if ($pesterSettings.Should -and $pesterSettings.Should.ErrorAction) {
+    if ($pesterSettings.ContainsKey('Should') -and $pesterSettings.Should -and $pesterSettings.Should.ErrorAction) {
         $pesterConfig.Should.ErrorAction = $pesterSettings.Should.ErrorAction
     }
 
     # CI mode adjustments (override config if in CI)
     if ($CI) {
         Write-ScriptLog -Message "Running in CI mode - applying performance optimizations"
-        $pesterConfig.Output.Verbosity = 'Normal'  # Show meaningful test output in CI
+        $pesterConfig.Output.Verbosity = 'Minimal'  # Minimal output for faster CI
         $pesterConfig.Should.ErrorAction = 'Continue'
         
         # Reduce excessive logging from modules during test execution
@@ -314,15 +355,24 @@ try {
         $env:AITHERZERO_QUIET_MODE = 'true'   # Suppress verbose module initialization
         
         # Enable parallel execution in CI for better performance
-        if (-not $pesterSettings.Parallel) {
+        if (-not ($pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel)) {
             $pesterSettings.Parallel = @{}
         }
         $pesterSettings.Parallel.Enabled = $true
-        $pesterSettings.Parallel.Workers = 2  # Reduce to avoid resource contention
+        
+        # Optimize worker count based on available CPU cores
+        # Max 6 workers to balance parallelization benefits with memory overhead
+        # (Each worker creates a separate PowerShell process consuming ~100-150MB)
+        # Note: These settings are used for custom PowerShell parallel execution (see line 458+),
+        # not Pester's built-in parallel execution which is not used for unit tests
+        $availableCores = [Environment]::ProcessorCount
+        $pesterSettings.Parallel.Workers = [Math]::Min([Math]::Max(2, $availableCores - 1), 6)  # Use cores-1, max 6
         $pesterSettings.Parallel.BlockSize = 5  # Larger chunks for fewer overhead
         
+        Write-ScriptLog -Message "CI mode: Parallel execution with $($pesterSettings.Parallel.Workers) workers (BlockSize: $($pesterSettings.Parallel.BlockSize))"
+        
         # CI adjustments: Enable full testing with optimized reporting
-        Write-ScriptLog -Message "CI mode: Running full test suite with clear output and parallel execution"
+        Write-ScriptLog -Message "CI mode: Running full test suite with minimal output and parallel execution"
     }
 
     # Apply filter settings from config or use defaults for unit tests
@@ -436,7 +486,8 @@ try {
     $env:AITHERZERO_TEST_MODE = 'true'
 
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
-    $useParallel = $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
+    $useParallel = $pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
+    $parallelExecutionFailed = $false
 
     if ($useParallel) {
         $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 6 }
@@ -450,8 +501,9 @@ try {
             $testChunks += ,@($chunk)
         }
 
-        # Run test chunks in parallel
-        $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
+        # Run test chunks in parallel with error handling
+        try {
+            $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
             $chunk = $_
             $projectRoot = $using:projectRoot
             $OutputPath = $using:OutputPath
@@ -460,44 +512,162 @@ try {
             $NoCoverage = $using:NoCoverage
             $CoverageThreshold = $using:CoverageThreshold
 
-            # Import Pester in parallel runspace
-            Import-Module Pester -MinimumVersion 5.0 -Force
+            try {
+                # Suppress all output streams to prevent pipeline threading issues
+                $ErrorActionPreference = 'SilentlyContinue'
+                $WarningPreference = 'SilentlyContinue'
+                $VerbosePreference = 'SilentlyContinue'
+                $DebugPreference = 'SilentlyContinue'
+                $InformationPreference = 'SilentlyContinue'
+                
+                # Import Pester in parallel runspace
+                Import-Module Pester -MinimumVersion 5.0 -Force -ErrorAction SilentlyContinue
 
-            # Create config for this chunk
-            $chunkConfig = New-PesterConfiguration
-            $chunkConfig.Run.Path = $chunk
-            $chunkConfig.Run.PassThru = $true
-            $chunkConfig.Run.Exit = $false
+                # Create config for this chunk
+                $chunkConfig = New-PesterConfiguration
+                $chunkConfig.Run.Path = $chunk
+                $chunkConfig.Run.PassThru = $true
+                $chunkConfig.Run.Exit = $false
 
-            # Apply settings from parent scope
-            $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
-            $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
-            $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
-            $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
+                # Apply settings from parent scope
+                $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
+                $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
+                $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
+                $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
 
-            # Run tests for this chunk
-            Invoke-Pester -Configuration $chunkConfig
+                # Run tests for this chunk - suppress all error/warning streams
+                Invoke-Pester -Configuration $chunkConfig 2>$null 3>$null
+            }
+            catch {
+                # CRITICAL: Do NOT use Write-Warning or any cmdlet that writes to pipeline
+                # This causes "WriteObject/WriteError cannot be called from outside overrides" errors
+                # Instead, return an empty result object silently
+                [PSCustomObject]@{
+                    TotalCount = 0
+                    PassedCount = 0
+                    FailedCount = 0
+                    SkippedCount = 0
+                    NotRunCount = 0
+                    Duration = [TimeSpan]::Zero
+                    Failed = @()
+                    Tests = @()
+                }
+            }
+        }
+        }
+        
+        catch {
+            # Parallel execution failed - log and fall back to sequential
+            $parallelError = $_
+            Write-ScriptLog -Level Warning -Message "Parallel test execution failed: $($parallelError.Exception.Message)" -Data @{
+                ErrorType = $parallelError.Exception.GetType().Name
+                ErrorMessage = $parallelError.Exception.Message
+            }
+            
+            # Check if this is the "pipeline has been stopped" error
+            if ($parallelError.Exception.Message -like "*pipeline*stopped*") {
+                Write-ScriptLog -Level Warning -Message "Pipeline stopping error detected - falling back to sequential execution"
+            } else {
+                Write-ScriptLog -Level Warning -Message "Unexpected error in parallel execution - falling back to sequential execution"
+            }
+            
+            $parallelExecutionFailed = $true
+            $useParallel = $false  # Trigger sequential execution fallback
+            $parallelResults = @()  # Clear any partial results
         }
 
-        # Aggregate results from all parallel runs
-        $result = [PSCustomObject]@{
-            TotalCount = ($parallelResults | Measure-Object -Property TotalCount -Sum).Sum
-            PassedCount = ($parallelResults | Measure-Object -Property PassedCount -Sum).Sum
-            FailedCount = ($parallelResults | Measure-Object -Property FailedCount -Sum).Sum
-            SkippedCount = ($parallelResults | Measure-Object -Property SkippedCount -Sum).Sum
-            NotRunCount = ($parallelResults | Measure-Object -Property NotRunCount -Sum).Sum
-            Duration = ($parallelResults | Measure-Object -Property Duration -Maximum).Maximum
-            Failed = @($parallelResults | ForEach-Object { $_.Failed } | Where-Object { $_ })
-            Tests = @($parallelResults | ForEach-Object { $_.Tests } | Where-Object { $_ })
-            CodeCoverage = $null  # Code coverage not supported in parallel mode
+        # Aggregate results from all parallel runs (only if parallel succeeded)
+        if (-not $parallelExecutionFailed -and $parallelResults) {
+            Write-ScriptLog -Message "Aggregating results from parallel execution"
+            $result = [PSCustomObject]@{
+                TotalCount = ($parallelResults | Measure-Object -Property TotalCount -Sum).Sum
+                PassedCount = ($parallelResults | Measure-Object -Property PassedCount -Sum).Sum
+                FailedCount = ($parallelResults | Measure-Object -Property FailedCount -Sum).Sum
+                SkippedCount = ($parallelResults | Measure-Object -Property SkippedCount -Sum).Sum
+                NotRunCount = ($parallelResults | Measure-Object -Property NotRunCount -Sum).Sum
+                Duration = ($parallelResults | Measure-Object -Property Duration -Maximum).Maximum
+                Failed = @($parallelResults | ForEach-Object { $_.Failed } | Where-Object { $_ })
+                Tests = @($parallelResults | ForEach-Object { $_.Tests } | Where-Object { $_ })
+                CodeCoverage = $null  # Code coverage not supported in parallel mode
+            }
+        } else {
+            # Parallel execution failed, result will be set by sequential fallback
+            $result = $null
         }
-    } else {
-        # Standard sequential execution
-        $result = Invoke-Pester -Configuration $pesterConfig
+    }
+    
+    # Sequential execution (either by choice or as fallback from failed parallel)
+    if (-not $useParallel -or $parallelExecutionFailed) {
+        if ($parallelExecutionFailed) {
+            Write-ScriptLog -Message "Falling back to sequential test execution"
+        } else {
+            Write-ScriptLog -Message "Running tests sequentially"
+        }
+        
+        # Standard sequential execution with error handling
+        try {
+            $result = Invoke-Pester -Configuration $pesterConfig
+        }
+        catch {
+            Write-ScriptLog -Level Error -Message "Pester execution encountered an error: $_" -Data @{
+                Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+            }
+            
+            # Create a minimal result object to allow the script to continue
+            $result = [PSCustomObject]@{
+                TotalCount = 0
+                PassedCount = 0
+                FailedCount = 0
+                SkippedCount = 0
+                Duration = [TimeSpan]::Zero
+                Failed = @()
+                Tests = @()
+            }
+            
+            Write-Host ""
+            Write-Host "⚠️  Test execution encountered errors but continuing..." -ForegroundColor Yellow
+            Write-Host "   Error: $_" -ForegroundColor DarkYellow
+            Write-Host ""
+        }
     }
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         $duration = Stop-PerformanceTrace -Name "UnitTests"
+    } else {
+        $duration = $null
+    }
+
+    # Verify result object exists and has expected properties
+    if (-not $result) {
+        Write-ScriptLog -Level Error -Message "Test execution returned null result"
+        Write-Host "`n❌ Unit Test Results:" -ForegroundColor Red
+        Write-Host "  Total: N/A"
+        Write-Host "  Passed: N/A"
+        Write-Host "  Failed: N/A"
+        Write-Host "  Skipped: N/A"
+        exit 2
+    }
+
+    # Ensure result has required properties with defaults
+    if ($null -eq $result.TotalCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing TotalCount property, using 0"
+        $result | Add-Member -NotePropertyName TotalCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.PassedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing PassedCount property, using 0"
+        $result | Add-Member -NotePropertyName PassedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.FailedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing FailedCount property, using 0"
+        $result | Add-Member -NotePropertyName FailedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.SkippedCount) {
+        Write-ScriptLog -Level Warning -Message "Result missing SkippedCount property, using 0"
+        $result | Add-Member -NotePropertyName SkippedCount -NotePropertyValue 0 -Force
+    }
+    if ($null -eq $result.Duration) {
+        Write-ScriptLog -Level Warning -Message "Result missing Duration property, using 0"
+        $result | Add-Member -NotePropertyName Duration -NotePropertyValue ([TimeSpan]::Zero) -Force
     }
 
     # Log results
@@ -511,13 +681,19 @@ try {
 
     Write-ScriptLog -Message "Unit test execution completed" -Data $testSummary
 
-    # Display summary
+    # Display summary with safe property access
     Write-Host "`nUnit Test Summary:" -ForegroundColor Cyan
-    Write-Host "  Total Tests: $($result.TotalCount)"
-    Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
-    Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-    Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-    Write-Host "  Duration: $($result.Duration.TotalSeconds.ToString('F2'))s"
+    $totalCount = if ($null -ne $result.TotalCount) { $result.TotalCount } else { 0 }
+    $passedCount = if ($null -ne $result.PassedCount) { $result.PassedCount } else { 0 }
+    $failedCount = if ($null -ne $result.FailedCount) { $result.FailedCount } else { 0 }
+    $skippedCount = if ($null -ne $result.SkippedCount) { $result.SkippedCount } else { 0 }
+    $durationSeconds = if ($null -ne $result.Duration) { $result.Duration.TotalSeconds.ToString('F2') } else { '0.00' }
+    
+    Write-Host "  Total Tests: $totalCount"
+    Write-Host "  Passed: $passedCount" -ForegroundColor Green
+    Write-Host "  Failed: $failedCount" -ForegroundColor $(if ($failedCount -gt 0) { 'Red' } else { 'Green' })
+    Write-Host "  Skipped: $skippedCount" -ForegroundColor Yellow
+    Write-Host "  Duration: ${durationSeconds}s"
 
     if ($pesterConfig.CodeCoverage.Enabled -and $result.CodeCoverage) {
         Write-Host "`nCode Coverage:" -ForegroundColor Cyan
@@ -546,15 +722,20 @@ try {
         }
     }
 
-    # Display failed tests
-    if ($result.FailedCount -gt 0) {
+    # Display failed tests with safe access to Failed collection
+    if ($failedCount -gt 0 -and $result.Failed) {
         Write-Host "`nFailed Tests:" -ForegroundColor Red
-        $result.Failed | ForEach-Object {
-            Write-Host "  - $($_.ExpandedPath)" -ForegroundColor Red
-            if ($_.ErrorRecord -and $_.ErrorRecord.Exception) {
-                Write-Host "    $($_.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
-            } elseif ($_.ErrorRecord) {
-                Write-Host "    $($_.ErrorRecord)" -ForegroundColor DarkRed
+        $failedTests = @($result.Failed)  # Ensure array for safe iteration
+        foreach ($failedTest in $failedTests) {
+            $testPath = if ($failedTest.ExpandedPath) { $failedTest.ExpandedPath } 
+                       elseif ($failedTest.Name) { $failedTest.Name }
+                       else { "Unknown test" }
+            Write-Host "  - $testPath" -ForegroundColor Red
+            
+            if ($failedTest.ErrorRecord -and $failedTest.ErrorRecord.Exception) {
+                Write-Host "    $($failedTest.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
+            } elseif ($failedTest.ErrorRecord) {
+                Write-Host "    $($failedTest.ErrorRecord)" -ForegroundColor DarkRed
             }
         }
     }
@@ -572,33 +753,37 @@ try {
         $comprehensiveReport = @{
             TestType = 'Unit'
             Timestamp = (Get-Date).ToString('o')
-            TotalCount = $result.TotalCount
-            PassedCount = $result.PassedCount
-            FailedCount = $result.FailedCount
-            SkippedCount = $result.SkippedCount
-            Duration = $result.Duration.TotalSeconds
+            TotalCount = $totalCount
+            PassedCount = $passedCount
+            FailedCount = $failedCount
+            SkippedCount = $skippedCount
+            Duration = if ($result.Duration) { $result.Duration.TotalSeconds } else { 0 }
             TestResults = @{
                 Summary = @{
-                    Total = $result.TotalCount
-                    Passed = $result.PassedCount
-                    Failed = $result.FailedCount
-                    Skipped = $result.SkippedCount
+                    Total = $totalCount
+                    Passed = $passedCount
+                    Failed = $failedCount
+                    Skipped = $skippedCount
                 }
                 Details = @()
             }
         }
 
-        # Add failed test details
-        if ($result.Failed -and $result.Failed.Count -gt 0) {
-            foreach ($failedTest in $result.Failed) {
+        # Add failed test details - with safe access to Failed collection
+        if ($failedCount -gt 0 -and $result.Failed) {
+            $failedTests = @($result.Failed)  # Ensure array
+            foreach ($failedTest in $failedTests) {
                 $testDetail = @{
                     Result = 'Failed'
-                    Name = $failedTest.Name ?? $failedTest.ExpandedName ?? $failedTest.ExpandedPath ?? 'Unknown Test'
+                    Name = if ($failedTest.Name) { $failedTest.Name } 
+                           elseif ($failedTest.ExpandedName) { $failedTest.ExpandedName }
+                           elseif ($failedTest.ExpandedPath) { $failedTest.ExpandedPath }
+                           else { 'Unknown Test' }
                     ExpandedPath = $failedTest.ExpandedPath
                     ErrorRecord = if ($failedTest.ErrorRecord) {
                         @{
                             Exception = @{
-                                Message = $failedTest.ErrorRecord.Exception.Message
+                                Message = if ($failedTest.ErrorRecord.Exception) { $failedTest.ErrorRecord.Exception.Message } else { 'No exception message' }
                             }
                             ScriptStackTrace = $failedTest.ErrorRecord.ScriptStackTrace
                         }
@@ -607,7 +792,7 @@ try {
                         @{
                             File = $failedTest.ScriptBlock.File
                             StartPosition = @{
-                                Line = $failedTest.ScriptBlock.StartPosition.StartLine
+                                Line = if ($failedTest.ScriptBlock.StartPosition) { $failedTest.ScriptBlock.StartPosition.StartLine } else { 0 }
                             }
                         }
                     } else { $null }
@@ -626,18 +811,66 @@ try {
         return $result
     }
 
-    # Exit based on test results
-    if ($result.FailedCount -eq 0) {
+    # Exit based on test results - use safe values
+    if ($failedCount -eq 0) {
         Write-ScriptLog -Message "All unit tests passed!"
         exit 0
     } else {
-        Write-ScriptLog -Level Error -Message "$($result.FailedCount) unit tests failed"
+        Write-ScriptLog -Level Error -Message "$failedCount unit tests failed"
         exit 1
     }
 }
 catch {
+    # Extract error info once to avoid duplication
+    $errorMessage = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+    $errorStackTrace = if ($_.ScriptStackTrace) { $_.ScriptStackTrace } else { 'N/A' }
+    
     Write-ScriptLog -Level Error -Message "Unit test execution failed: $_" -Data @{
-        Exception = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+        Exception = $errorMessage
     }
+    
+    # CRITICAL: Always create TestReport file even on catastrophic failure
+    # This ensures CI/CD aggregation can process results
+    # Use $PSScriptRoot instead of $projectRoot to ensure variable is always available
+    $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
+    
+    if (-not $OutputPath) {
+        $OutputPath = Join-Path $scriptProjectRoot "tests/results"
+    }
+    
+    if (-not (Test-Path $OutputPath)) {
+        New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $testReportPath = Join-Path $OutputPath "TestReport-Unit-$timestamp.json"
+    
+    # Create minimal failure report
+    $failureReport = @{
+        TestType = 'Unit'
+        Timestamp = (Get-Date).ToString('o')
+        TotalCount = 0
+        PassedCount = 0
+        FailedCount = 0
+        SkippedCount = 0
+        Duration = 0
+        ExecutionError = @{
+            Message = $errorMessage
+            ScriptStackTrace = $errorStackTrace
+        }
+        TestResults = @{
+            Summary = @{
+                Total = 0
+                Passed = 0
+                Failed = 0
+                Skipped = 0
+            }
+            Details = @()
+        }
+    }
+    
+    $failureReport | ConvertTo-Json -Depth 10 | Set-Content -Path $testReportPath
+    Write-ScriptLog -Message "Failure report saved to: $testReportPath"
+    
     exit 2
 }

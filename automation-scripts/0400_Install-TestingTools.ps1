@@ -200,55 +200,8 @@ try {
         exit 1
     }
 
-    # Create PSScriptAnalyzer settings file if it doesn't exist
-    $psaSettingsPath = Join-Path (Split-Path $PSScriptRoot -Parent) "PSScriptAnalyzerSettings.psd1"
-    if (-not (Test-Path $psaSettingsPath)) {
-        Write-ScriptLog -Message "Creating PSScriptAnalyzer settings file"
-
-        $psaSettings = @'
-@{
-    # Select which rules to run
-    IncludeRules = @('*')
-
-    # Exclude specific rules
-    ExcludeRules = @(
-        'PSAvoidUsingWriteHost',  # We use Write-Host for UI output
-        'PSUseShouldProcessForStateChangingFunctions'  # Not all functions need ShouldProcess
-    )
-
-    # Rule-specific settings
-    Rules = @{
-        PSProvideCommentHelp = @{
-            Enable = $true
-            ExportedOnly = $false
-            BlockComment = $true
-            Placement = "begin"
-        }
-
-        PSUseCompatibleSyntax = @{
-            Enable = $true
-            TargetVersions = @('7.0')
-        }
-    }
-
-    # Code formatting settings
-    CodeFormatting = @{
-        UseCorrectCasing = $true
-        WhitespaceInsideBrace = $true
-        WhitespaceAroundOperator = $true
-        WhitespaceAfterSeparator = $true
-        IgnoreOneLineBlock = $true
-        NewLineAfterOpenBrace = $true
-        NewLineAfterCloseBrace = $true
-    }
-}
-'@
-
-        if ($PSCmdlet.ShouldProcess($psaSettingsPath, "Create PSScriptAnalyzer settings file")) {
-            $psaSettings | Set-Content -Path $psaSettingsPath -Force
-        }
-        Write-ScriptLog -Message "PSScriptAnalyzer settings created at: $psaSettingsPath"
-    }
+    # Note: PSScriptAnalyzer settings are now in config.psd1 under Testing.PSScriptAnalyzer
+    # No need to create a separate PSScriptAnalyzerSettings.psd1 file
 
     Write-ScriptLog -Message "Testing tools installation completed successfully"
     exit 0

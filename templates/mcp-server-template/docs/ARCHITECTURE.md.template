@@ -1,0 +1,442 @@
+# SERVERNAME MCP Server - Architecture
+
+This document explains the technical architecture of the SERVERNAME MCP server.
+
+## Overview
+
+The SERVERNAME MCP server is a TypeScript application that implements the Model Context Protocol (MCP) to expose [describe functionality] to AI assistants.
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     AI Assistant                            │
+│              (Claude, GitHub Copilot, etc)                  │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       │ MCP Protocol (JSON-RPC over stdio)
+                       │
+┌──────────────────────▼──────────────────────────────────────┐
+│                SERVERNAME MCP Server                         │
+│                   (TypeScript/Node.js)                       │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              src/index.ts (Main Server)             │   │
+│  │  • Server initialization                            │   │
+│  │  • Tool registration                                │   │
+│  │  • Resource registration                            │   │
+│  │  • Request routing                                  │   │
+│  └────────────┬───────────────────┬─────────────────────┘   │
+│               │                   │                         │
+│               ▼                   ▼                         │
+│  ┌────────────────────┐  ┌───────────────────┐            │
+│  │  Tool Handlers     │  │ Resource Handlers  │            │
+│  │  • Execute actions │  │ • Return data      │            │
+│  │  • Validate input  │  │ • Format output    │            │
+│  │  • Return results  │  │ • Handle errors    │            │
+│  └────────┬───────────┘  └─────────┬──────────┘            │
+│           │                        │                        │
+│           └────────────┬───────────┘                        │
+│                        │                                    │
+│           ┌────────────▼───────────┐                        │
+│           │    Utilities           │                        │
+│           │  • Logger              │                        │
+│           │  • Command Executor    │                        │
+│           │  • Helpers             │                        │
+│           └────────────┬───────────┘                        │
+└────────────────────────┼────────────────────────────────────┘
+                         │
+                         ▼
+           ┌─────────────────────────────┐
+           │     External Systems        │
+           │  • CLI tools                │
+           │  • APIs                     │
+           │  • Databases                │
+           │  • File system              │
+           └─────────────────────────────┘
+```
+
+## Core Components
+
+### 1. Server Initialization (src/index.ts)
+
+**Purpose**: Set up the MCP server and define capabilities
+
+**Key Responsibilities**:
+- Create MCP Server instance
+- Register tool and resource handlers
+- Set up stdio transport
+- Handle process signals
+
+**Code Structure**:
+```typescript
+const server = new Server({
+  name: 'SERVERNAME-server',
+  version: '0.1.0'
+}, {
+  capabilities: {
+    tools: {},
+    resources: {}
+  }
+});
+```
+
+### 2. Tool System
+
+**Purpose**: Execute actions requested by AI assistants
+
+**Flow**:
+1. AI sends tool call request via JSON-RPC
+2. Server routes to appropriate handler
+3. Handler validates input
+4. Handler executes logic
+5. Handler returns formatted result
+6. Server sends response to AI
+
+**Implementation Pattern**:
+```typescript
+// Tool definition
+{
+  name: 'tool_name',
+  description: 'Clear description',
+  inputSchema: { /* JSON Schema */ }
+}
+
+// Tool handler
+async function toolName(param: string): Promise<string> {
+  // Validate
+  // Execute
+  // Return
+}
+```
+
+### 3. Resource System
+
+**Purpose**: Provide read-only data to AI assistants
+
+**Flow**:
+1. AI sends resource read request
+2. Server routes to appropriate reader
+3. Reader fetches/computes data
+4. Reader formats as string
+5. Server sends response to AI
+
+**Implementation Pattern**:
+```typescript
+// Resource definition
+{
+  uri: 'servername://resource-name',
+  name: 'Display Name',
+  mimeType: 'application/json'
+}
+
+// Resource reader
+async function getResource(): Promise<string> {
+  // Fetch data
+  // Format as string
+  // Return
+}
+```
+
+### 4. Utilities
+
+**Purpose**: Provide reusable functionality
+
+**Components**:
+
+**logger.ts**: Logging to stderr
+```typescript
+log('Info message');
+logError('Error message', error);
+logDebug('Debug message');
+```
+
+**executor.ts**: Safe command execution
+```typescript
+const result = await executeCommand('ls -la', '/path');
+```
+
+## Communication Protocol
+
+### JSON-RPC 2.0
+
+The server communicates using JSON-RPC 2.0 over stdio:
+
+**Request Format**:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "tool_name",
+    "arguments": { "param": "value" }
+  }
+}
+```
+
+**Response Format**:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      { "type": "text", "text": "Result data" }
+    ]
+  }
+}
+```
+
+**Error Format**:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32603,
+    "message": "Error description"
+  }
+}
+```
+
+## Data Flow
+
+### Tool Execution Flow
+
+```
+1. AI sends tool call request
+   ↓
+2. StdioServerTransport receives on stdin
+   ↓
+3. MCP Server parses JSON-RPC
+   ↓
+4. CallToolRequestSchema handler routes request
+   ↓
+5. Tool function executes
+   ↓
+6. Result formatted as MCP response
+   ↓
+7. Response sent to stdout
+   ↓
+8. AI receives and processes result
+```
+
+### Resource Read Flow
+
+```
+1. AI sends resource read request
+   ↓
+2. Server receives via stdio
+   ↓
+3. ReadResourceRequestSchema handler routes
+   ↓
+4. Resource function fetches data
+   ↓
+5. Data formatted as string
+   ↓
+6. Response with MIME type sent
+   ↓
+7. AI receives and parses data
+```
+
+## Error Handling
+
+### Layers of Error Handling
+
+1. **Input Validation**: Verify parameters before execution
+2. **Try-Catch Blocks**: Catch exceptions in tool/resource functions
+3. **Error Formatting**: Convert exceptions to readable messages
+4. **MCP Error Response**: Return proper JSON-RPC error format
+5. **Logging**: Log all errors for debugging
+
+### Error Flow
+
+```typescript
+try {
+  validateInput(params);
+  const result = await executeOperation(params);
+  return { content: [{ type: 'text', text: result }] };
+} catch (error) {
+  logError('Operation failed:', error);
+  return {
+    content: [{ 
+      type: 'text', 
+      text: `Error: ${error.message}` 
+    }],
+    isError: true
+  };
+}
+```
+
+## Configuration
+
+### Environment Variables
+
+- `SERVERNAME_ROOT`: Server root directory
+- `DEBUG`: Enable debug logging
+- Other custom variables as needed
+
+### Configuration Loading
+
+```typescript
+const SERVER_ROOT = process.env.SERVERNAME_ROOT || process.cwd();
+const DEBUG = process.env.DEBUG === '1';
+```
+
+## Build System
+
+### TypeScript Compilation
+
+**Input**: `src/**/*.ts`
+**Output**: `dist/**/*.js`
+**Config**: `tsconfig.json`
+
+**Build Process**:
+1. TypeScript compiler (`tsc`) reads source
+2. Type checking performed
+3. ES2022 code generated
+4. Output written to `dist/`
+
+### Auto-Build System
+
+**File**: `scripts/start-with-build.mjs`
+
+**Logic**:
+```
+IF dist/index.js does not exist THEN
+  IF node_modules does not exist THEN
+    Run npm install
+  END IF
+  Run npm build
+END IF
+Start server
+```
+
+## Performance Considerations
+
+### Async Operations
+
+All I/O operations are async:
+```typescript
+async function operation(): Promise<Result> {
+  const data = await fetchData();
+  const processed = await processData(data);
+  return processed;
+}
+```
+
+### Command Execution
+
+Uses child_process with proper timeout and buffer limits:
+```typescript
+const { stdout, stderr } = await exec(command, {
+  timeout: 30000,
+  maxBuffer: 10 * 1024 * 1024
+});
+```
+
+### Resource Usage
+
+- **Memory**: Node.js process memory
+- **CPU**: Command execution, JSON parsing
+- **I/O**: stdio communication, file operations
+
+## Security
+
+### Input Validation
+
+All inputs validated before use:
+```typescript
+if (!param || typeof param !== 'string') {
+  throw new Error('Invalid parameter');
+}
+```
+
+### Command Injection Prevention
+
+Commands sanitized and parameterized:
+```typescript
+const safeCommand = buildCommand(executable, [arg1, arg2]);
+```
+
+### Principle of Least Privilege
+
+Server runs with minimal permissions needed.
+
+## Extensibility
+
+### Adding New Tools
+
+1. Define tool schema
+2. Implement tool function
+3. Add to tool list
+4. Add handler case
+5. Test and document
+
+### Adding New Resources
+
+1. Define resource URI and metadata
+2. Implement reader function
+3. Add to resource list
+4. Add handler case
+5. Test and document
+
+### Custom Utilities
+
+Add new utilities in `src/utils/`:
+- Follow existing patterns
+- Export functions
+- Document usage
+- Add tests
+
+## Testing Architecture
+
+### Test Levels
+
+1. **Unit Tests**: Test individual functions
+2. **Integration Tests**: Test JSON-RPC communication
+3. **End-to-End Tests**: Test with real MCP clients
+
+### Test Structure
+
+```
+test/
+├── basic-test.mjs      # Integration test
+├── unit/               # Unit tests (optional)
+└── e2e/                # E2E tests (optional)
+```
+
+## Deployment
+
+### Packaging
+
+Server can be:
+- Used directly from source
+- Installed via npm
+- Packaged as standalone binary (with pkg)
+
+### Configuration Deployment
+
+Users configure in:
+- Claude Desktop config
+- VS Code settings
+- Generic MCP client config
+
+## Future Enhancements
+
+Potential improvements:
+- [ ] Streaming support for long operations
+- [ ] Caching layer for resources
+- [ ] Rate limiting
+- [ ] Authentication/authorization
+- [ ] Prometheus metrics
+- [ ] REST API alongside MCP
+- [ ] WebSocket transport
+
+## References
+
+- **MCP Specification**: https://modelcontextprotocol.io/
+- **MCP SDK**: https://github.com/modelcontextprotocol/sdk
+- **TypeScript**: https://www.typescriptlang.org/
+- **Node.js**: https://nodejs.org/

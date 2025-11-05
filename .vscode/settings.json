@@ -54,7 +54,64 @@
     "powershell": true
   },
   "github.copilot.editor.enableAutoCompletions": true,
-
+  "github.copilot.chat.mcp.enabled": true,
+  "github.copilot.chat.mcp.servers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "/workspaces/AitherZero/mcp-server/scripts/start-with-build.mjs"
+      ],
+      "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "AITHERZERO_ROOT": "/workspaces/AitherZero",
+        "AITHERZERO_NONINTERACTIVE": "1"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/workspaces/AitherZero"
+      ],
+      "description": "Filesystem access to AitherZero repository",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "description": "GitHub API access",
+      "capabilities": {
+        "resources": true,
+        "tools": true
+      },
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Detailed reasoning for complex tasks",
+      "capabilities": {
+        "prompts": true,
+        "tools": true
+      }
+    }
+  },
   // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.defaultProfile.linux": "pwsh",

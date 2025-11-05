@@ -45,6 +45,10 @@
     Minimum overall score required to pass (0-100, default: 70)
 .PARAMETER DryRun
     Show what would be validated without running checks
+.PARAMETER CreateIssues
+    Force creation of GitHub issues for failed validations (requires gh CLI)
+.PARAMETER NoIssueCreation
+    Disable automatic issue creation even if configured in config.psd1
 .EXAMPLE
     ./0420_Validate-ComponentQuality.ps1 -Path ./domains/testing/NewModule.psm1
     Validate a single module file
@@ -57,11 +61,14 @@
 .EXAMPLE
     ./0420_Validate-ComponentQuality.ps1 -Path ./config -Recursive -ExcludeDataFiles
     Validate all scripts in config directory, but skip .psd1 data files
+.EXAMPLE
+    ./0420_Validate-ComponentQuality.ps1 -Path ./domains/testing -Recursive -CreateIssues
+    Validate all files in testing domain and create GitHub issues for failures
 .NOTES
     Stage: Testing
     Order: 0420
-    Dependencies: 0400 (Testing tools installation)
-    Tags: testing, quality, validation, standards
+    Dependencies: 0400 (Testing tools installation), gh CLI (optional, for issue creation)
+    Tags: testing, quality, validation, standards, automation
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -84,7 +91,11 @@ param(
     
     [int]$MinimumScore = 70,
     
-    [switch]$DryRun
+    [switch]$DryRun,
+    
+    [switch]$CreateIssues,
+    
+    [switch]$NoIssueCreation
 )
 
 $ErrorActionPreference = 'Stop'
@@ -134,6 +145,262 @@ function Write-ScriptLog {
     }
 }
 
+function Get-QualityRecommendation {
+    <#
+    .SYNOPSIS
+        Get actionable recommendations for quality issues
+    #>
+    param(
+        [string]$CheckName,
+        [hashtable]$Details
+    )
+    
+    try {
+        switch ($CheckName) {
+            'ErrorHandling' {
+                if ($Details.ContainsKey('HasErrorActionPreference') -and $Details.HasErrorActionPreference -eq $false) {
+                    return "Add at top of file: `$ErrorActionPreference = 'Stop'"
+                } elseif ($Details.ContainsKey('TryCatchBlocks') -and $Details.TryCatchBlocks -eq 0) {
+                    return "Wrap risky operations in try/catch blocks"
+                }
+            }
+            'Logging' {
+                if ($Details.ContainsKey('HasInfoLevel') -and $Details.HasInfoLevel -eq $false) {
+                    return "Add Write-CustomLog calls for key operations and milestones"
+                }
+            }
+            'TestCoverage' {
+                if ($Details.ContainsKey('TestFileExists') -and $Details.TestFileExists -eq $false) {
+                    # Get expected path from finding if available
+                    return "Create unit test file for this component"
+                }
+            }
+            'PSScriptAnalyzer' {
+                if ($Details.ContainsKey('Errors') -and $Details.Errors -gt 0) {
+                    return "Run: ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path <file>"
+                } elseif ($Details.ContainsKey('Warnings') -and $Details.Warnings -gt 0) {
+                    return "Review warnings with: Invoke-ScriptAnalyzer -Path <file>"
+                }
+            }
+        }
+    } catch {
+        # Silently ignore errors in recommendation generation
+        Write-Verbose "Error getting recommendation for $CheckName : $_"
+    }
+    
+    return $null
+}
+
+function Test-GitHubAuthentication {
+    <#
+    .SYNOPSIS
+        Check if GitHub CLI is installed and authenticated
+    .DESCRIPTION
+        Validates that gh CLI is available and the user is authenticated.
+        Returns $true if ready to create issues, $false otherwise.
+        In GitHub Actions, checks for GITHUB_TOKEN or GH_TOKEN environment variables.
+    #>
+    [CmdletBinding()]
+    param()
+    
+    try {
+        # Check if gh CLI is available
+        $ghAvailable = Get-Command gh -ErrorAction SilentlyContinue
+        if (-not $ghAvailable) {
+            Write-ScriptLog -Level Warning -Message "GitHub CLI (gh) is not installed. Install from: https://cli.github.com/"
+            return $false
+        }
+        
+        # In GitHub Actions, gh CLI can use GITHUB_TOKEN automatically
+        # Check if we're in GitHub Actions with a token
+        if ($env:GITHUB_ACTIONS -eq 'true') {
+            if ($env:GITHUB_TOKEN -or $env:GH_TOKEN) {
+                Write-ScriptLog -Level Debug -Message "GitHub Actions environment detected with token available"
+                return $true
+            } else {
+                Write-ScriptLog -Level Warning -Message "GitHub Actions environment detected but no token available (GITHUB_TOKEN not set)"
+                return $false
+            }
+        }
+        
+        # For non-GitHub Actions environments, check authentication status
+        $authCheck = gh auth status 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-ScriptLog -Level Warning -Message "GitHub CLI is not authenticated. Run: gh auth login"
+            return $false
+        }
+        
+        Write-ScriptLog -Level Debug -Message "GitHub CLI is authenticated and ready"
+        return $true
+        
+    } catch {
+        Write-ScriptLog -Level Warning -Message "Failed to check GitHub authentication: $_"
+        return $false
+    }
+}
+
+function New-QualityIssue {
+    <#
+    .SYNOPSIS
+        Create a GitHub issue for quality validation failure
+    #>
+    param(
+        [PSCustomObject]$Report,
+        [string]$ReportPath
+    )
+    
+    try {
+        # Authentication should be checked by caller, but double-check here
+        $ghAvailable = Get-Command gh -ErrorAction SilentlyContinue
+        if (-not $ghAvailable) {
+            Write-ScriptLog -Level Warning -Message "GitHub CLI (gh) not available. Cannot create issues."
+            return $null
+        }
+        
+        # Determine priority based on score
+        $priorityThresholds = @{
+            Critical = 50
+            High = 70
+        }
+        
+        $priority = if ($Report.OverallScore -lt $priorityThresholds.Critical) { 'P2' }
+                    elseif ($Report.OverallScore -lt $priorityThresholds.High) { 'P3' }
+                    else { 'P4' }
+        
+        # Build issue title
+        $issueTitle = "🔍 [Quality] $($Report.FileName) - Score: $($Report.OverallScore)%"
+        
+        # Build issue body
+        $issueBody = @"
+## Quality Validation Failure Report
+
+**File**: ``$($Report.FilePath)``
+**Overall Score**: $($Report.OverallScore)%
+**Status**: $($Report.OverallStatus)
+**Validation Date**: $($Report.Timestamp)
+
+### Summary
+
+This file failed quality validation checks. Review the findings below and address the issues.
+
+"@
+        
+        # Add critical issues
+        $criticalIssues = @($Report.Checks | Where-Object { $_.Status -eq 'Failed' })
+        if ($criticalIssues.Count -gt 0) {
+            $issueBody += "`n### 🔴 Critical Issues`n`n"
+            foreach ($issue in $criticalIssues) {
+                $issueBody += "#### $($issue.CheckName) (Score: $($issue.Score)%)`n`n"
+                if ($issue.Findings) {
+                    foreach ($finding in $issue.Findings) {
+                        $issueBody += "- $finding`n"
+                    }
+                }
+                
+                # Add recommendation
+                $recommendation = Get-QualityRecommendation -CheckName $issue.CheckName -Details $issue.Details
+                if ($recommendation) {
+                    $issueBody += "`n**💡 Recommendation:** $recommendation`n"
+                }
+                $issueBody += "`n"
+            }
+        }
+        
+        # Add warnings
+        $warningIssues = @($Report.Checks | Where-Object { $_.Status -eq 'Warning' })
+        if ($warningIssues.Count -gt 0) {
+            $issueBody += "`n### 🟡 Warnings`n`n"
+            foreach ($issue in $warningIssues) {
+                $issueBody += "#### $($issue.CheckName) (Score: $($issue.Score)%)`n`n"
+                if ($issue.Findings) {
+                    foreach ($finding in $issue.Findings) {
+                        $issueBody += "- $finding`n"
+                    }
+                }
+                
+                # Add recommendation
+                $recommendation = Get-QualityRecommendation -CheckName $issue.CheckName -Details $issue.Details
+                if ($recommendation) {
+                    $issueBody += "`n**💡 Recommendation:** $recommendation`n"
+                }
+                $issueBody += "`n"
+            }
+        }
+        
+        # Add next steps
+        $issueBody += @"
+
+### 📋 Next Steps
+
+1. Review the detailed quality report (attached as artifact)
+2. Address the issues identified above
+3. Run local validation: ``./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $($Report.FilePath)``
+4. Re-run validation after fixes
+
+### 🤖 Automated Processing
+
+@copilot please review this file and address the quality issues identified above following AitherZero quality standards.
+
+---
+
+*This issue was automatically created by the Quality Validation System*
+*Report: $ReportPath*
+"@
+        
+        # Create the issue
+        $labels = @('quality-validation', 'code-quality', 'copilot-task', $priority)
+        
+        # Build gh CLI arguments safely
+        $ghArgs = @('issue', 'create', '--title', $issueTitle, '--body', $issueBody)
+        foreach ($label in $labels) {
+            $ghArgs += @('--label', $label)
+        }
+        
+        # Execute gh command and capture output properly
+        # gh issue create outputs the URL to the created issue on success
+        # Note: Errors will go to stderr; we don't redirect to avoid log corruption
+        try {
+            $issueUrl = gh @ghArgs
+            $exitCode = $LASTEXITCODE
+        } catch {
+            $exitCode = 1
+            $issueUrl = $null
+        }
+        
+        if ($exitCode -eq 0 -and $issueUrl) {
+            # Extract issue number from URL (format: https://github.com/owner/repo/issues/123)
+            if ($issueUrl -match '/issues/(\d+)') {
+                $issueNumber = $Matches[1]
+                Write-ScriptLog -Message "Created issue #$issueNumber for $($Report.FileName)" -Data @{
+                    IssueNumber = $issueNumber
+                    IssueUrl = $issueUrl
+                }
+                return @{
+                    Number = $issueNumber
+                    Url = $issueUrl
+                    Success = $true
+                }
+            } else {
+                Write-ScriptLog -Level Warning -Message "Issue created but could not parse issue number from: $issueUrl"
+                return @{
+                    Url = $issueUrl
+                    Success = $true
+                }
+            }
+        } else {
+            # Log the failure without capturing stderr (which can corrupt logs)
+            Write-ScriptLog -Level Warning -Message "GitHub issue creation failed for $($Report.FileName)" -Data @{
+                ExitCode = $exitCode
+            }
+            return $null
+        }
+        
+    } catch {
+        Write-ScriptLog -Level Error -Message "Error creating quality issue: $_"
+        return $null
+    }
+}
+
 try {
     Write-ScriptLog -Message "Starting component quality validation"
     Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -154,7 +421,7 @@ try {
         
         $scanParams = @{
             Path = $Path
-            Include = '*.ps1', '*.psm1', '*.psd1'
+            Filter = '*.ps*'
             File = $true
         }
         
@@ -162,10 +429,12 @@ try {
             $scanParams.Recurse = $true
         }
         
-        $filesToValidate = Get-ChildItem @scanParams | Select-Object -ExpandProperty FullName
+        $allFiles = Get-ChildItem @scanParams
         
-        # Ensure it's an array
-        $filesToValidate = @($filesToValidate)
+        # Filter to only .ps1, .psm1, .psd1 files (case-insensitive)
+        $filesToValidate = @($allFiles | Where-Object { 
+            $_.Extension -imatch '\.(ps1|psm1|psd1)$' 
+        } | Select-Object -ExpandProperty FullName)
         
         # Filter out .psd1 files if requested
         if ($ExcludeDataFiles) {
@@ -279,7 +548,7 @@ try {
     Write-Host "⚠️  Warnings: $warningCount" -ForegroundColor Yellow
     Write-Host "❌ Failed: $failedCount" -ForegroundColor Red
     
-    # Display file-by-file breakdown
+    # Display file-by-file breakdown with detailed findings
     if ($fileCount -gt 0) {
         Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
         Write-Host "║                   FILE BREAKDOWN                             ║" -ForegroundColor Cyan
@@ -302,29 +571,78 @@ try {
                 'Failed' = 'Red'
             }[$status]
             
-            Write-Host "$statusIcon $fileName" -ForegroundColor $statusColor -NoNewline
-            Write-Host " - Score: $score%" -ForegroundColor White
+            $statusBadge = if ($score -ge 90) { "[EXCELLENT]" } 
+                          elseif ($score -ge 70) { "[GOOD]" } 
+                          elseif ($score -ge 50) { "[NEEDS IMPROVEMENT]" }
+                          else { "[NEEDS ATTENTION]" }
             
-            # Show top issues for failed/warning files
+            Write-Host "$statusIcon $fileName" -ForegroundColor $statusColor -NoNewline
+            Write-Host " - Score: $score% $statusBadge" -ForegroundColor White
+            Write-Host "   Path: $($report.FilePath)" -ForegroundColor DarkGray
+            
+            # Show detailed issues for failed/warning files
             if ($status -in @('Failed', 'Warning')) {
-                $issues = $report.Checks | Where-Object { $_.Status -in @('Failed', 'Warning') } | Select-Object -First 2
-                foreach ($issue in $issues) {
-                    $issueIcon = if ($issue.Status -eq 'Failed') { '  ❌' } else { '  ⚠️ ' }
-                    if ($issue.Findings) {
-                        $findingsArray = @($issue.Findings)
-                        if ($findingsArray.Count -gt 0) {
-                            $finding = $findingsArray[0]
-                            # Truncate long findings
-                            if ($finding.Length -gt 70) {
-                                $finding = $finding.Substring(0, 67) + "..."
+                # Group issues by severity
+                $criticalIssues = @($report.Checks | Where-Object { $_.Status -eq 'Failed' })
+                $warningIssues = @($report.Checks | Where-Object { $_.Status -eq 'Warning' })
+                
+                if ($criticalIssues.Count -gt 0) {
+                    Write-Host "`n   🔴 CRITICAL ISSUES:" -ForegroundColor Red
+                    foreach ($issue in $criticalIssues) {
+                        Write-Host "   • [$($issue.CheckName)]" -ForegroundColor Red -NoNewline
+                        if ($issue.Findings -and $issue.Findings.Count -gt 0) {
+                            $findingsArray = @($issue.Findings)
+                            foreach ($finding in $findingsArray | Select-Object -First 3) {
+                                Write-Host " $finding" -ForegroundColor Gray
                             }
-                            Write-Host "$issueIcon $($issue.CheckName): $finding" -ForegroundColor Gray
+                            
+                            # Show recommendations based on check type
+                            $recommendation = Get-QualityRecommendation -CheckName $issue.CheckName -Details $issue.Details
+                            if ($recommendation) {
+                                Write-Host "     → $recommendation" -ForegroundColor Cyan
+                            }
+                        } else {
+                            Write-Host "" -ForegroundColor Gray
                         }
                     }
                 }
+                
+                if ($warningIssues.Count -gt 0) {
+                    Write-Host "`n   🟡 WARNINGS:" -ForegroundColor Yellow
+                    foreach ($issue in $warningIssues) {
+                        Write-Host "   • [$($issue.CheckName)]" -ForegroundColor Yellow -NoNewline
+                        if ($issue.Findings -and $issue.Findings.Count -gt 0) {
+                            $findingsArray = @($issue.Findings)
+                            foreach ($finding in $findingsArray | Select-Object -First 3) {
+                                Write-Host " $finding" -ForegroundColor Gray
+                            }
+                            
+                            # Show recommendations
+                            $recommendation = Get-QualityRecommendation -CheckName $issue.CheckName -Details $issue.Details
+                            if ($recommendation) {
+                                Write-Host "     → $recommendation" -ForegroundColor Cyan
+                            }
+                        } else {
+                            Write-Host "" -ForegroundColor Gray
+                        }
+                    }
+                }
+                
+                # Show PSScriptAnalyzer details if available
+                $psaCheck = $report.Checks | Where-Object { $_.CheckName -eq 'PSScriptAnalyzer' -and $_.Status -in @('Failed', 'Warning') }
+                if ($psaCheck -and $psaCheck.Details.TopIssues) {
+                    Write-Host "`n   🟠 CODE QUALITY (PSScriptAnalyzer):" -ForegroundColor DarkYellow
+                    foreach ($topIssue in $psaCheck.Details.TopIssues | Select-Object -First 5) {
+                        Write-Host "     → $topIssue" -ForegroundColor Gray
+                    }
+                    if ($psaCheck.Details.TotalIssues -gt 5) {
+                        Write-Host "     ... and $($psaCheck.Details.TotalIssues - 5) more issues" -ForegroundColor DarkGray
+                    }
+                }
             }
+            
+            Write-Host ""
         }
-        Write-Host ""
     }
     
     # Save reports
@@ -401,6 +719,87 @@ try {
     }
     
     Write-Host "`n📊 Reports saved to: $OutputPath" -ForegroundColor Cyan
+    
+    # Create GitHub issues if requested or configured
+    $shouldCreateIssues = $false
+    
+    # Check configuration
+    $config = $null
+    try {
+        $config = Get-Configuration -ErrorAction SilentlyContinue
+        if ($config -and $config.ContainsKey('AutomatedIssueManagement')) {
+            $autoManagement = $config.AutomatedIssueManagement
+            if ($autoManagement -and
+                $autoManagement.ContainsKey('AutoCreateIssues') -and 
+                $autoManagement.ContainsKey('CreateFromCodeQuality') -and
+                $autoManagement.AutoCreateIssues -and 
+                $autoManagement.CreateFromCodeQuality) {
+                $shouldCreateIssues = $true
+                Write-ScriptLog -Message "Automated issue creation enabled by configuration"
+            }
+        }
+    } catch {
+        Write-ScriptLog -Level Debug -Message "Could not load configuration: $_"
+    }
+    
+    # Override with explicit parameters
+    if ($CreateIssues) {
+        $shouldCreateIssues = $true
+        Write-ScriptLog -Message "Automated issue creation enabled by parameter"
+    }
+    if ($NoIssueCreation) {
+        $shouldCreateIssues = $false
+        Write-ScriptLog -Message "Automated issue creation disabled by parameter"
+    }
+    
+    # Create issues for failed files
+    if ($shouldCreateIssues -and ($overallStatus -eq 'Failed' -or $failedCount -gt 0)) {
+        # In GitHub Actions/CI, skip issue creation - the workflow handles it
+        if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
+            Write-Host "`nℹ️  Issue creation skipped - running in CI environment" -ForegroundColor Cyan
+            Write-Host "   GitHub Actions workflow will create issues automatically" -ForegroundColor Gray
+            Write-ScriptLog -Message "Skipping issue creation in CI - workflow will handle it"
+        } else {
+            Write-Host "`n📋 Creating GitHub Issues for Quality Failures..." -ForegroundColor Cyan
+            
+            # Check GitHub authentication before attempting to create issues
+            if (-not (Test-GitHubAuthentication)) {
+                Write-Host "  ⚠️  Cannot create issues: GitHub CLI is not authenticated or not installed." -ForegroundColor Yellow
+                Write-Host "  💡 To enable issue creation:" -ForegroundColor Cyan
+                Write-Host "     1. Install GitHub CLI: https://cli.github.com/" -ForegroundColor Gray
+                Write-Host "     2. Authenticate: gh auth login" -ForegroundColor Gray
+                Write-ScriptLog -Level Warning -Message "Skipping issue creation - GitHub CLI not authenticated"
+            } else {
+                $failedReports = $allReports | Where-Object { $_.OverallStatus -eq 'Failed' }
+                $issuesCreated = 0
+                
+                foreach ($failedReport in $failedReports) {
+                    $fileName = [System.IO.Path]::GetFileNameWithoutExtension($failedReport.FilePath)
+                    $reportPath = Join-Path $OutputPath "$reportName-$fileName.json"
+                    
+                    Write-Host "  Creating issue for: $($failedReport.FileName)..." -ForegroundColor Yellow
+                    
+                    $issue = New-QualityIssue -Report $failedReport -ReportPath $reportPath
+                    if ($issue) {
+                        if ($issue.Number) {
+                            Write-Host "  ✅ Created issue #$($issue.Number): $($issue.Url)" -ForegroundColor Green
+                        } else {
+                            Write-Host "  ✅ Created issue: $($issue.Url)" -ForegroundColor Green
+                        }
+                        $issuesCreated++
+                    } else {
+                        Write-Host "  ❌ Failed to create issue for $($failedReport.FileName)" -ForegroundColor Red
+                    }
+                }
+                
+                if ($issuesCreated -gt 0) {
+                    Write-Host "`n✨ Created $issuesCreated GitHub issue(s) for quality failures" -ForegroundColor Green
+                } else {
+                    Write-Host "`n⚠️  No issues were created. Check GitHub CLI authentication and permissions." -ForegroundColor Yellow
+                }
+            }
+        }
+    }
     
     # Determine exit code
     $duration = (Get-Date) - $script:StartTime

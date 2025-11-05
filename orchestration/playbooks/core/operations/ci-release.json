@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "name": "ci-release",
+    "description": "Automate release creation and deployment",
+    "version": "1.0.0",
+    "category": "operations",
+    "tags": ["ci", "release", "deployment", "automation"],
+    "estimatedDuration": "15-30 minutes",
+    "githubWorkflow": "release-automation.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester", "PSScriptAnalyzer"],
+    "requiredTools": ["git"],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false,
+      "skipTests": false,
+      "version": ""
+    },
+    "profiles": {
+      "production": {
+        "description": "Production release - full validation",
+        "variables": {
+          "skipTests": false
+        }
+      },
+      "prerelease": {
+        "description": "Pre-release - skip full tests",
+        "variables": {
+          "skipTests": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Pre-Release Validation",
+        "description": "Validate syntax before release",
+        "sequences": ["0407"],
+        "variables": {
+          "All": true
+        },
+        "continueOnError": false,
+        "timeout": 180
+      },
+      {
+        "name": "Quality Check",
+        "description": "Run PSScriptAnalyzer",
+        "sequences": ["0404"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 300,
+        "condition": "{{skipTests}} == false"
+      },
+      {
+        "name": "Run Tests",
+        "description": "Run unit tests",
+        "sequences": ["0402"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 900,
+        "condition": "{{skipTests}} == false"
+      },
+      {
+        "name": "Generate Changelog",
+        "description": "Generate release changelog",
+        "sequences": ["0798"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 180
+      },
+      {
+        "name": "Build Documentation",
+        "description": "Build release documentation",
+        "sequences": ["0744", "0745"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 600
+      }
+    ]
+  }
+}

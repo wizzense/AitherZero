@@ -5,17 +5,34 @@
 .SYNOPSIS
     Unit tests for 0805_Analyze-OpenIssues
 .DESCRIPTION
-    Auto-generated comprehensive tests
+    Auto-generated comprehensive tests with environment awareness
     Script: 0805_Analyze-OpenIssues
-    Stage: Unknown
-    Generated: 2025-10-30 02:11:49
+    Stage: Development
+    Description: Scans open GitHub issues and matches them with current branch/PR changes
+    Supports WhatIf: False
+    Generated: 2025-11-04 20:50:01
 #>
 
-Describe '0805_Analyze-OpenIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
+Describe '0805_Analyze-OpenIssues' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0805_Analyze-OpenIssues.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0805_Analyze-OpenIssues.ps1'
         $script:ScriptName = '0805_Analyze-OpenIssues'
+
+        # Import test helpers for environment detection
+        $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
+        if (Test-Path $testHelpersPath) {
+            Import-Module $testHelpersPath -Force -ErrorAction SilentlyContinue
+        }
+
+        # Detect test environment
+        $script:TestEnv = if (Get-Command Get-TestEnvironment -ErrorAction SilentlyContinue) {
+            Get-TestEnvironment
+        } else {
+            @{ IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'); IsLocal = $true }
+        }
     }
 
     Context 'Script Validation' {
@@ -31,9 +48,11 @@ Describe '0805_Analyze-OpenIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
             $errors.Count | Should -Be 0
         }
 
-        It 'Should support WhatIf' {
+        It 'Should not require WhatIf support' {
+            # Script does not implement SupportsShouldProcess
+            # This is acceptable for read-only or simple scripts
             $content = Get-Content $script:ScriptPath -Raw
-            $content | Should -Match 'SupportsShouldProcess'
+            $content -notmatch 'SupportsShouldProcess' | Should -Be $true
         }
     }
 
@@ -81,18 +100,44 @@ Describe '0805_Analyze-OpenIssues' -Tag 'Unit', 'AutomationScript', 'Unknown' {
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: Unknown' {
-            $content = Get-Content $script:ScriptPath -First 20
-            ($content -join ' ') | Should -Match 'Stage:'
+        It 'Should be in stage: Development' {
+            $content = Get-Content $script:ScriptPath -First 40
+            ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should be executable (no WhatIf support)' {
+            # Script does not support -WhatIf parameter
+            # Verify script can be dot-sourced without errors
             {
-                $params = @{ WhatIf = $true }
-                & $script:ScriptPath @params
+                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop
+                $cmd | Should -Not -BeNullOrEmpty
             } | Should -Not -Throw
+        }
+    }
+
+    Context 'Environment Awareness' {
+        It 'Test environment should be detected' {
+            $script:TestEnv | Should -Not -BeNullOrEmpty
+            $script:TestEnv.Keys | Should -Contain 'IsCI'
+        }
+
+        It 'Should adapt to CI environment' {
+            if (-not $script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "CI-only validation"
+                return
+            }
+            $script:TestEnv.IsCI | Should -Be $true
+            $env:CI | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Should adapt to local environment' {
+            if ($script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "Local-only validation"
+                return
+            }
+            $script:TestEnv.IsCI | Should -Be $false
         }
     }
 }

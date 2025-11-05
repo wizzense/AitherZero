@@ -70,7 +70,7 @@ Quick Start Commands:
 az> list scripts
 ➤ Available Scripts (104):
   ➤ 0000 - Cleanup Environment
-  ➤ 0001 - Ensure PowerShell7
+  ➤ 0002 - Setup Directories
   ➤ 0402 - Run UnitTests
   ...
 
@@ -116,7 +116,7 @@ Perfect for automated workflows:
 ➤ Available Scripts (104):
 
 ➤ 0000 - Cleanup Environment
-➤ 0001 - Ensure PowerShell7  
+# Note: PowerShell 7 ensured by bootstrap.ps1  
 ➤ 0002 - Setup Directories
 ➤ 0402 - Run UnitTests
 ➤ 0404 - Run PSScriptAnalyzer
@@ -188,7 +188,7 @@ The modern CLI works alongside the existing interface:
 ### Development Workflow
 ```bash
 # Start development session
-az run script 0001              # Ensure PowerShell 7
+# PowerShell 7 is ensured by bootstrap.ps1 - not needed as a separate script
 az run playbook dev-environment # Setup development tools
 
 # During development
@@ -225,7 +225,7 @@ az run script 0510              # Generate system report
 
 # Troubleshooting  
 az search log                   # Find logging tools
-az run script 0530              # View logs
+az run script 0530 or 0531              # View logs
 
 # Maintenance
 az search clean                 # Find cleanup scripts

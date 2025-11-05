@@ -2,6 +2,9 @@
 
 This directory contains all tests for the AitherZero project, organized by domain and test type.
 
+
+=======
+
 ## Test Structure
 
 ```
@@ -102,6 +105,9 @@ Tests are automatically run on:
 - Test with real dependencies
 - Medium execution time
 - End-to-end scenarios
+
+
+=======
 
 ### Performance Tests
 - Measure execution time

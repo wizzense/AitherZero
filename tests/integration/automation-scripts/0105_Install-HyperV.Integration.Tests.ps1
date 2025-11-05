@@ -6,19 +6,25 @@
     Integration tests for 0105_Install-HyperV
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-10-30 02:11:49
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0105_Install-HyperV Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0105_Install-HyperV.ps1'
-        $script:TestConfig = @{ Automation = @{ DryRun = $true } }
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0105_Install-HyperV.ps1'
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            { & $script:ScriptPath -Configuration $script:TestConfig -WhatIf } | Should -Not -Throw
+        It 'Should execute in test mode with WhatIf' {
+            {
+                $params = @{ WhatIf = $true; ErrorAction = 'Stop' }
+                $params.Configuration = @{ Automation = @{ DryRun = $true } }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }

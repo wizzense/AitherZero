@@ -387,9 +387,10 @@ Force CI mode manually:
 ```powershell
 # Option 1: Set CI environment variable
 $env:CI = "true"
+./bootstrap.ps1
 
-# Option 2: Use NonInteractive parameter
-./bootstrap.ps1 -NonInteractive
+# Option 2: Bootstrap auto-detects CI via environment
+# GitHub Actions, Azure DevOps, and other CI systems set env vars automatically
 
 # Option 3: Set in config
 @{

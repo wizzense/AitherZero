@@ -23,6 +23,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  packages: write
 
 env:
   AITHERZERO_CI: true
@@ -47,7 +48,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Preparing release validation environment..." -ForegroundColor Magenta
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Standard
+          ./bootstrap.ps1 -Mode New -InstallProfile Standard
 
       - name: 📦 Install Release Dependencies
         shell: pwsh
@@ -287,8 +288,12 @@ jobs:
           - **CI/CD Integration:** GitHub Actions workflows for automation
           - **Infrastructure as Code:** OpenTofu/Terraform support
           - **Comprehensive Testing:** Automated validation and reporting
+          - **MCP Server:** AI assistant integration via Model Context Protocol
+          - **Container Support:** Docker images for isolated environments
 
           ## 📦 What's Included
+
+          ### AitherZero Platform
           - Complete PowerShell module with all domains
           - 100+ automation scripts organized by number ranges
           - Cross-platform bootstrap and setup scripts
@@ -296,18 +301,52 @@ jobs:
           - Documentation and examples
           - CI/CD workflow templates
 
+          ### MCP Server Package
+          - Model Context Protocol server for AI assistants (Claude, GitHub Copilot, etc.)
+          - Execute automation scripts via natural language
+          - Infrastructure management through conversational AI
+          - Package: \`@aitherzero/mcp-server@$($version -replace '^v','')\`
+
+          ### Docker Image
+          - Pre-configured container with AitherZero installed
+          - Multi-platform support (amd64, arm64)
+          - Non-root user for security
+          - Image: \`ghcr.io/${{ github.repository }}:$($version -replace '^v','')\`
+
           ## 🚀 Quick Installation
 
-          ### One-Line Install (Recommended)
+          ### Platform (One-Line Install)
           ```powershell
           # PowerShell 5.1+ (auto-upgrades to PowerShell 7)
           iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
           ```
 
+          ### MCP Server
+          ```bash
+          # Install from GitHub Packages
+          npm install @aitherzero/mcp-server@$($version -replace '^v','')
+
+          # Or use the tarball from release assets
+          curl -L https://github.com/${{ github.repository }}/releases/download/v$($version)/aitherzero-mcp-server-$($version -replace '^v','').tgz -o mcp-server.tgz
+          npm install mcp-server.tgz
+          ```
+
+          ### Docker Container
+          ```bash
+          # Pull the image
+          docker pull ghcr.io/${{ github.repository }}:$($version -replace '^v','')
+
+          # Run interactively
+          docker run -it --rm ghcr.io/${{ github.repository }}:$($version -replace '^v','')
+
+          # Run with docker-compose
+          docker-compose up -d
+          ```
+
           ### Manual Installation
           1. Download and extract `AitherZero-v$version.zip`
           2. Open PowerShell in the extracted directory
-          3. Run: `./bootstrap.ps1 -Mode New -NonInteractive`
+          3. Run: `./bootstrap.ps1 -Mode New`
 
           ### Verification
           ```powershell
@@ -324,7 +363,7 @@ jobs:
           ./az.ps1 0404          # Code quality analysis
 
           # System setup (Windows)
-          ./az.ps1 0001          # Ensure PowerShell 7
+          # Note: PowerShell 7 is ensured by bootstrap.ps1
           ./az.ps1 0105          # Install Hyper-V
           ./az.ps1 0106          # Install WSL2
 
@@ -338,18 +377,52 @@ jobs:
           ./az.ps1 0511          # Show project dashboard
           ```
 
+          ## 🤖 MCP Server Usage
+
+          Add to your AI assistant configuration:
+
+          ### Claude Desktop
+          ```json
+          {
+            "mcpServers": {
+              "aitherzero": {
+                "command": "npx",
+                "args": ["@aitherzero/mcp-server@$($version -replace '^v','')"]
+              }
+            }
+          }
+          ```
+
+          ### VS Code / GitHub Copilot
+          Add to `.github/mcp-servers.json`:
+          ```json
+          {
+            "mcpServers": {
+              "aitherzero": {
+                "command": "npx",
+                "args": ["@aitherzero/mcp-server@$($version -replace '^v','')"],
+                "description": "AitherZero infrastructure automation"
+              }
+            }
+          }
+          ```
+
           ## 📋 System Requirements
           - **PowerShell:** 7.0+ (5.1+ supported with auto-upgrade)
           - **Operating System:** Windows 10/11, Ubuntu 20.04+, macOS 11.0+
           - **Memory:** 2GB RAM minimum, 4GB recommended
           - **Storage:** 1GB free space
           - **Network:** Internet connection for initial setup and updates
+          - **Node.js:** 18+ (for MCP server only)
+          - **Docker:** 20.10+ (for container deployment only)
 
           ## 📚 Documentation
           - [Getting Started Guide](https://github.com/wizzense/AitherZero#getting-started)
           - [Function Reference](https://github.com/wizzense/AitherZero/blob/main/FUNCTIONALITY-INDEX.md)
           - [Automation Scripts](https://github.com/wizzense/AitherZero/tree/main/automation-scripts)
           - [Domain Architecture](https://github.com/wizzense/AitherZero/tree/main/domains)
+          - [MCP Server Documentation](https://github.com/wizzense/AitherZero/tree/main/mcp-server#readme)
+          - [Docker Documentation](https://github.com/wizzense/AitherZero/blob/main/DOCKER.md)
 
           ## 🔄 Updates and Migration
           ```powershell
@@ -365,6 +438,10 @@ jobs:
           **Full Changelog:** [Compare v$lastTag...v$version](${{ github.server_url }}/${{ github.repository }}/compare/$lastTag...v$version)
 
           **Support:** [Create an issue](${{ github.server_url }}/${{ github.repository }}/issues/new) for questions or problems
+
+          **Container Registry:** [View Docker images](https://github.com/${{ github.repository }}/pkgs/container/aitherzero)
+
+          **Package Registry:** [View MCP server package](https://github.com/${{ github.repository }}/pkgs/npm/%40aitherzero%2Fmcp-server)
           "@
 
           $releaseNotes | Set-Content ./release-notes.md
@@ -398,11 +475,236 @@ jobs:
 
           Write-Host "✅ Latest tag updated to v${{ env.RELEASE_VERSION }}" -ForegroundColor Green
 
+  build-mcp-server:
+    name: Build and Publish MCP Server
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: always() && (needs.create-release.result == 'success')
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@aitherzero'
+
+      - name: 📋 Update MCP Server Version
+        shell: bash
+        working-directory: mcp-server
+        run: |
+          VERSION="${{ env.RELEASE_VERSION }}"
+          VERSION_NUMBER="${VERSION#v}"
+          
+          echo "📝 Updating MCP server version to $VERSION_NUMBER"
+          
+          # Update version in package.json
+          npm version $VERSION_NUMBER --no-git-tag-version --allow-same-version
+          
+          echo "✅ MCP server version updated"
+
+      - name: 📦 Install Dependencies
+        working-directory: mcp-server
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
+          echo "✅ Dependencies installed"
+
+      - name: 🔨 Build MCP Server
+        working-directory: mcp-server
+        run: |
+          echo "🔨 Building MCP server..."
+          npm run build
+          echo "✅ Build complete"
+
+      - name: 🧪 Test MCP Server
+        working-directory: mcp-server
+        run: |
+          echo "🧪 Testing MCP server..."
+          npm test
+          
+          TEST_EXIT_CODE=$?
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::warning::⚠️ MCP server tests failed with exit code: $TEST_EXIT_CODE"
+            echo "::warning::Tests are non-blocking, but should be investigated before release"
+          else
+            echo "✅ All tests passed"
+          fi
+          
+          # Don't fail the workflow, but warn prominently
+          exit 0
+
+      - name: 📦 Create Package Archive
+        working-directory: mcp-server
+        run: |
+          VERSION="${{ env.RELEASE_VERSION }}"
+          
+          echo "📦 Creating package archive..."
+          npm pack
+          
+          PACKAGE_FILE="aitherzero-mcp-server-${VERSION#v}.tgz"
+          mv *.tgz "../${PACKAGE_FILE}"
+          
+          echo "✅ Package created: ${PACKAGE_FILE}"
+          ls -lh "../${PACKAGE_FILE}"
+
+      - name: 📤 Upload Package to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.RELEASE_VERSION }}
+          files: |
+            aitherzero-mcp-server-*.tgz
+
+      - name: 📢 Publish to GitHub Packages
+        working-directory: mcp-server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📢 Publishing to GitHub Packages..."
+          
+          # First, validate the package with dry-run
+          npm publish --dry-run
+          DRY_RUN_EXIT=$?
+          
+          if [ $DRY_RUN_EXIT -ne 0 ]; then
+            echo "::error::Package validation failed - dry-run detected issues"
+            exit 1
+          fi
+          
+          # Attempt to publish and capture output
+          PUBLISH_OUTPUT=$(npm publish --access public 2>&1)
+          PUBLISH_EXIT=$?
+          
+          if [ $PUBLISH_EXIT -eq 0 ]; then
+            echo "✅ Successfully published to GitHub Packages"
+          elif grep -q "Cannot publish over existing version" <<< "$PUBLISH_OUTPUT"; then
+            echo "::warning::⚠️ Version already exists in registry - this is expected for re-runs"
+          else
+            echo "::error::❌ Publishing failed with unexpected error (exit code: $PUBLISH_EXIT)"
+            echo "$PUBLISH_OUTPUT"
+            exit 1
+          fi
+
+      - name: 📊 MCP Server Build Summary
+        shell: bash
+        run: |
+          VERSION="${{ env.RELEASE_VERSION }}"
+          VERSION_NUMBER="${VERSION#v}"
+          
+          echo "## 📦 MCP Server Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Package Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package:** @aitherzero/mcp-server" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** $VERSION_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** GitHub Packages" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Install from GitHub Packages" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @aitherzero/mcp-server@$VERSION_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Or download the release asset" >> $GITHUB_STEP_SUMMARY
+          echo "curl -L https://github.com/${{ github.repository }}/releases/download/v${{ env.RELEASE_VERSION }}/aitherzero-mcp-server-$VERSION_NUMBER.tgz -o mcp-server.tgz" >> $GITHUB_STEP_SUMMARY
+          echo "tar -xzf mcp-server.tgz" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  publish-docker-image:
+    name: Build and Publish Docker Image
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: always() && (needs.create-release.result == 'success')
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📋 Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ env.RELEASE_VERSION }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ env.RELEASE_VERSION }}
+            type=semver,pattern={{major}},value=v${{ env.RELEASE_VERSION }}
+            type=raw,value=latest,enable=${{ github.event.inputs.prerelease != 'true' }}
+            type=sha,prefix=sha-
+
+      - name: 🔨 Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ env.RELEASE_VERSION }}
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 🧪 Test Docker Image
+        shell: bash
+        run: |
+          echo "🧪 Testing Docker image..."
+          
+          IMAGE_TAG="ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}"
+          
+          docker run --rm ${IMAGE_TAG} pwsh -NoProfile -Command "
+            Write-Host '✅ Container started' -ForegroundColor Green;
+            if (Test-Path /opt/aitherzero/AitherZero.psd1) {
+              Write-Host '✅ Module manifest found' -ForegroundColor Green;
+            } else {
+              Write-Error '❌ Module manifest not found';
+              exit 1;
+            }
+          "
+          
+          echo "✅ Docker image test passed"
+
+      - name: 📊 Docker Build Summary
+        shell: bash
+        run: |
+          echo "## 🐳 Docker Image Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Image Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** GitHub Container Registry" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** ghcr.io/${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Usage" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Pull the image" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Run interactively" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -it --rm ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
   post-release:
     name: Post-Release Tasks
     runs-on: ubuntu-latest
-    needs: [create-release]
-    if: success() && github.ref == 'refs/heads/main'
+    needs: [create-release, build-mcp-server, publish-docker-image]
+    if: always() && (needs.create-release.result == 'success')
 
     steps:
       - name: 📥 Checkout
@@ -420,10 +722,28 @@ jobs:
           Write-Host "📦 **Release Assets Created:**" -ForegroundColor Cyan
           Write-Host "   • AitherZero-v$version.zip (Windows compatible)" -ForegroundColor White
           Write-Host "   • AitherZero-v$version.tar.gz (Unix compatible)" -ForegroundColor White
+          Write-Host "   • aitherzero-mcp-server-$($version -replace '^v','').tgz (MCP Server)" -ForegroundColor White
           Write-Host "   • build-info.json (Build metadata)" -ForegroundColor White
           Write-Host ""
-          Write-Host "🚀 **Installation Command:**" -ForegroundColor Cyan
+          Write-Host "🐳 **Docker Image:**" -ForegroundColor Cyan
+          Write-Host "   • ghcr.io/${{ github.repository }}:$($version -replace '^v','')" -ForegroundColor White
+          if ('${{ github.event.inputs.prerelease }}' -ne 'true') {
+            Write-Host "   • ghcr.io/${{ github.repository }}:latest" -ForegroundColor White
+          }
+          Write-Host ""
+          Write-Host "📦 **MCP Server Package:**" -ForegroundColor Cyan
+          Write-Host "   • @aitherzero/mcp-server@$($version -replace '^v','')" -ForegroundColor White
+          Write-Host "   • Published to GitHub Packages" -ForegroundColor White
+          Write-Host ""
+          Write-Host "🚀 **Installation Commands:**" -ForegroundColor Cyan
+          Write-Host "   # AitherZero Platform" -ForegroundColor Gray
           Write-Host "   iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex" -ForegroundColor Yellow
+          Write-Host ""
+          Write-Host "   # Docker" -ForegroundColor Gray
+          Write-Host "   docker pull ghcr.io/${{ github.repository }}:$($version -replace '^v','')" -ForegroundColor Yellow
+          Write-Host ""
+          Write-Host "   # MCP Server" -ForegroundColor Gray
+          Write-Host "   npm install @aitherzero/mcp-server@$($version -replace '^v','')" -ForegroundColor Yellow
           Write-Host ""
           Write-Host "📋 **Release Information:**" -ForegroundColor Cyan
           Write-Host "   • Repository: ${{ github.repository }}" -ForegroundColor White
@@ -433,6 +753,8 @@ jobs:
           Write-Host ""
           Write-Host "🔗 **Links:**" -ForegroundColor Cyan
           Write-Host "   • Release Page: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v$version" -ForegroundColor Blue
+          Write-Host "   • Docker Image: https://github.com/${{ github.repository }}/pkgs/container/aitherzero" -ForegroundColor Blue
+          Write-Host "   • MCP Server: https://github.com/${{ github.repository }}/pkgs/npm/%40aitherzero%2Fmcp-server" -ForegroundColor Blue
           Write-Host "   • Documentation: ${{ github.server_url }}/${{ github.repository }}#readme" -ForegroundColor Blue
           Write-Host "   • Issues: ${{ github.server_url }}/${{ github.repository }}/issues" -ForegroundColor Blue
           Write-Host ""

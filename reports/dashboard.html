@@ -735,35 +735,895 @@
             color: var(--primary-color);
             font-weight: 600;
         }
+        
+        /* Enhanced Interactive Styles */
+        /* ============================================================================
+   AitherZero Interactive Dashboard - Enhanced Styles
+   ============================================================================ */
+
+/* Base styles from original (preserved for compatibility) */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --bg-dark: #0d1117;
+    --bg-darker: #010409;
+    --card-bg: #161b22;
+    --card-border: #30363d;
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+    --success: #238636;
+    --warning: #d29922;
+    --error: #da3633;
+    --danger: #da3633;
+    --info: #1f6feb;
+    --hover-bg: #21262d;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--bg-darker);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 20px;
+    margin-left: 290px;
+}
+
+@media (max-width: 1024px) {
+    body {
+        margin-left: 0;
+        padding: 10px;
+    }
+}
+
+/* ============================================================================
+   Breadcrumb Navigation
+   ============================================================================ */
+
+#breadcrumbs {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    background: var(--bg-darker);
+    border-bottom: 1px solid var(--card-border);
+    padding: 12px 20px;
+    margin: -20px -20px 20px -20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+    background: rgba(1, 4, 9, 0.95);
+}
+
+.breadcrumb-item {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-item:hover {
+    color: var(--primary-color);
+}
+
+.breadcrumb-item.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.breadcrumb-separator {
+    color: var(--card-border);
+    user-select: none;
+}
+
+/* ============================================================================
+   Action Buttons & Controls
+   ============================================================================ */
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-color: transparent;
+    color: white;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: rgba(35, 134, 54, 0.15);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.btn-warning {
+    background: rgba(210, 153, 34, 0.15);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.btn-danger {
+    background: rgba(218, 54, 51, 0.15);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.btn-explore,
+.btn-view-file,
+.btn-release {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
+/* ============================================================================
+   Dependency Graph Visualization
+   ============================================================================ */
+
+.dependency-network {
+    background: var(--bg-dark);
+    border-radius: 12px;
+    padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.dependency-domain {
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+}
+
+.domain-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.domain-header:hover {
+    background: var(--hover-bg);
+}
+
+.domain-header h4 {
+    flex: 1;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.toggle-icon {
+    color: var(--text-secondary);
+    user-select: none;
+    font-family: monospace;
+    font-size: 0.9rem;
+    transition: transform 0.2s;
+}
+
+.domain-content {
+    padding: 0 15px 15px;
+}
+
+.dependency-item {
+    margin: 10px 0;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    border-left: 3px solid var(--info);
+}
+
+.script-name {
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: color 0.2s;
+}
+
+.script-name:hover {
+    color: var(--primary-color);
+}
+
+.deps-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-left: 8px;
+    background: var(--info);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.dependency-list {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.dep-link {
+    padding: 5px 10px;
+    margin: 3px 0;
+    background: var(--hover-bg);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.dep-link:hover {
+    background: var(--card-border);
+    color: var(--primary-color);
+    padding-left: 15px;
+}
+
+.highlight-flash {
+    animation: flashHighlight 2s ease-in-out;
+}
+
+@keyframes flashHighlight {
+    0%, 100% { background: var(--bg-dark); }
+    50% { background: var(--primary-color); box-shadow: 0 0 20px var(--primary-color); }
+}
+
+/* ============================================================================
+   Domain Explorer
+   ============================================================================ */
+
+.domain-explorer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.domain-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.domain-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+.domain-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    cursor: pointer;
+    background: var(--bg-dark);
+}
+
+.domain-card-header h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.domain-card-content {
+    padding: 20px;
+}
+
+.domain-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.stat-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Configuration Explorer
+   ============================================================================ */
+
+.config-explorer {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.config-search {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+#config-search-input {
+    flex: 1;
+    padding: 10px 15px;
+    background: var(--bg-dark);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+#config-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.config-tree {
+    max-height: 600px;
+    overflow-y: auto;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.config-node {
+    margin: 5px 0;
+}
+
+.config-item {
+    margin: 5px 0;
+}
+
+.config-key {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.config-key:hover {
+    background: var(--hover-bg);
+}
+
+.key-name {
+    font-weight: 500;
+    color: var(--info);
+}
+
+.config-value {
+    color: var(--success);
+    font-family: 'Courier New', monospace;
+    margin-left: 24px;
+}
+
+.config-array {
+    margin-left: 24px;
+}
+
+.array-item {
+    padding: 5px 10px;
+    margin: 3px 0;
+    background: var(--hover-bg);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.search-highlight {
+    background: rgba(255, 255, 0, 0.1);
+    border-left: 3px solid var(--warning);
+}
+
+/* ============================================================================
+   Quality Drill-down
+   ============================================================================ */
+
+.quality-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.quality-item {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.quality-item.success {
+    border-left: 4px solid var(--success);
+}
+
+.quality-item.warning {
+    border-left: 4px solid var(--warning);
+}
+
+.quality-item.error {
+    border-left: 4px solid var(--error);
+}
+
+.quality-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.quality-header:hover {
+    background: var(--hover-bg);
+}
+
+.file-name {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.quality-score {
+    padding: 4px 12px;
+    background: var(--bg-dark);
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.quality-details {
+    padding: 15px;
+    border-top: 1px solid var(--card-border);
+}
+
+.quality-checks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.check-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+}
+
+.check-name {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.check-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Release Tracker
+   ============================================================================ */
+
+.release-timeline {
+    position: relative;
+    padding-left: 40px;
+}
+
+.release-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--card-border);
+}
+
+.release-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.release-marker {
+    position: absolute;
+    left: -32px;
+    width: 30px;
+    height: 30px;
+    background: var(--card-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.release-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.release-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.release-header h4 {
+    flex: 1;
+    margin: 0;
+}
+
+.badge-latest {
+    padding: 2px 8px;
+    background: var(--success);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.release-date {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.release-details {
+    padding-top: 15px;
+}
+
+.release-assets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.asset-link {
+    padding: 6px 12px;
+    background: var(--bg-dark);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.asset-link:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+.release-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ============================================================================
+   Index Navigation
+   ============================================================================ */
+
+.index-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.index-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.index-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+.index-icon {
+    font-size: 2.5rem;
+}
+
+.index-label {
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ============================================================================
+   Modal System
+   ============================================================================ */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    max-width: 800px;
+    max-height: 80vh;
+    width: 90%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid var(--card-border);
+    background: var(--bg-dark);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .domain-explorer-grid,
+    .quality-checks,
+    .domain-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-container {
+        max-width: 95%;
+        max-height: 90vh;
+    }
+    
+    .release-timeline {
+        padding-left: 30px;
+    }
+    
+    .release-marker {
+        left: -27px;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+    }
+}
+
+/* ============================================================================
+   Badge Variants
+   ============================================================================ */
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge.success {
+    background: rgba(35, 134, 54, 0.15);
+    color: var(--success);
+}
+
+.badge.warning {
+    background: rgba(210, 153, 34, 0.15);
+    color: var(--warning);
+}
+
+.badge.error {
+    background: rgba(218, 54, 51, 0.15);
+    color: var(--error);
+}
+
+.badge.info {
+    background: rgba(31, 111, 235, 0.15);
+    color: var(--info);
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+.text-center {
+    text-align: center;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* ============================================================================
+   Scrollbar Styling
+   ============================================================================ */
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
     </style>
 </head>
 <body>
+    <!-- Breadcrumb Navigation -->
+    <div id="breadcrumbs"></div>
+    
     <div class="toc-toggle" onclick="toggleToc()">☰</div>
     
     <nav class="toc" id="toc">
         <h3>📑 Contents</h3>
         <ul>
             <li><a href="#overview">Overview</a></li>
+            <li><a href="#actions">Quick Actions</a></li>
             <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#dependencies">Dependencies</a></li>
+            <li><a href="#domains">Domain Explorer</a></li>
+            <li><a href="#config">Configuration</a></li>
             <li><a href="#quality">Code Quality</a></li>
             <li><a href="#pssa">PSScriptAnalyzer</a></li>
             <li><a href="#manifest">Module Manifest</a></li>
-            <li><a href="#domains">Domain Modules</a></li>
             <li><a href="#health">Project Health</a></li>
+            <li><a href="#releases">Releases</a></li>
             <li><a href="#git">Git & VCS</a></li>
             <li><a href="#activity">Recent Activity</a></li>
-            <li><a href="#actions">Quick Actions</a></li>
+            <li><a href="#indices">Index Navigation</a></li>
             <li><a href="#system">System Info</a></li>
             <li><a href="#resources">Resources</a></li>
             <li><a href="#roadmap">🗺️ Roadmap</a></li>
             <li><a href="#github-activity">🌟 GitHub</a></li>
             <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#github-issues">🐛 Issues</a></li>
             <li><a href="#trends">📈 Trends</a></li>
         </ul>
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-10-31 19:37:08
+        🔄 Last updated: 2025-11-04 20:54:58
     </div>
 
     <div class="container">
@@ -775,18 +1635,18 @@
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
                 <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
-                <img src="https://img.shields.io/badge/tests-passing-brightgreen" alt="Tests Status">
+                <img src="https://img.shields.io/badge/tests-not%20run%20(320%20tests)-yellow" alt="Tests Status">
                 <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
                 <img src="https://img.shields.io/github/license/wizzense/AitherZero" alt="License">
                 <img src="https://img.shields.io/github/last-commit/wizzense/AitherZero" alt="Last Commit">
             </div>
 
             <div class="status-bar">
-                <div class="status-badge status-healthy">
-                    🎯 Overall: Healthy
+                <div class="status-badge status-warning">
+                    🎯 Overall: Warning
                 </div>
-                <div class="status-badge status-healthy">
-                    🧪 Tests: Passing
+                <div class="status-badge status-unknown">
+                    🧪 Tests: Not Run
                 </div>
                 <div class="status-badge status-healthy">
                     🔒 Security: Clean
@@ -798,37 +1658,74 @@
         </div>
 
         <div class="content">
+            <!-- Quick Actions Section with GitHub Integration -->
+            <section class="section" id="actions">
+                <h2>⚡ Quick Actions & GitHub Integration</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="window.location.href='code-map.html'" style="font-size: 1.1rem; padding: 12px 24px;">
+                        🗺️ Explore Interactive Code Map
+                    </button>
+                    <button class="btn btn-primary" onclick="window.open('https://github.com/wizzense/AitherZero', '_blank')">
+                        🏠 View Repository
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('bug')">
+                        🐛 Report Bug
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('feature')">
+                        ✨ Request Feature
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('docs')">
+                        📚 Improve Docs
+                    </button>
+                    <button class="btn btn-primary" onclick="createPullRequest()">
+                        🔀 Create Pull Request
+                    </button>
+                    <button class="btn" onclick="openDocumentation()">
+                        📖 Browse Documentation
+                    </button>
+                    <button class="btn" onclick="openDocumentation('README.md')">
+                        📄 View README
+                    </button>
+                    <button class="btn" onclick="window.open('https://github.com/wizzense/AitherZero/releases', '_blank')">
+                        📦 View Releases
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 Click any button to open GitHub in a new tab with pre-filled templates | 🗺️ Click Code Map for full codebase visualization
+                </p>
+            </section>
+            
             <section class="section" id="metrics">
                 <h2>📊 Project Metrics</h2>
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <h3>📁 Project Files</h3>
-                        <div class="metric-value">192</div>
+                        <div class="metric-value">207</div>
                         <div class="metric-label">
-                            131 Scripts | 56 Modules | 5 Data
+                            142 Scripts | 59 Modules | 6 Data
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                        📄 320 Markdown | 🔧 3 YAML | 📋 92 JSON
+                        📄 340 Markdown | 🔧 3 YAML | 📋 95 JSON
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">86,757</div>
+                        <div class="metric-value">96,145</div>
                         <div class="metric-label">
-                            973 Functions
+                            1131 Functions
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            💬 7,134 Comments (8.2%) | ⚪ 14,629 Blank Lines
+                            💬 7,898 Comments (8.2%) | ⚪ 15,980 Blank Lines
                         </div>
                     </div>
                     
                     <div class="metric-card">
                         <h3>🤖 Automation Scripts</h3>
-                        <div class="metric-value">124</div>
+                        <div class="metric-value">139</div>
                         <div class="metric-label">Number-based orchestration (0000-9999)</div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ⚡ 15 GitHub Workflows
+                            ⚡ 22 GitHub Workflows
                         </div>
                     </div>
                     
@@ -836,7 +1733,7 @@
                         <h3>🗂️ Domain Modules</h3>
                         <div class="metric-value">11</div>
                         <div class="metric-label">
-                            35 Total Modules
+                            38 Total Modules
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
                             Consolidated architecture
@@ -845,51 +1742,95 @@
 
                     <div class="metric-card">
                         <h3>🧪 Test Files</h3>
-                        <div class="metric-value">281</div>
+                        <div class="metric-value">320</div>
                         <div class="metric-label">
-                            142 Unit | 139 Integration
+                            161 Unit | 159 Integration
                         </div>
-                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--success);">
+                        
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--card-border);">
+                            <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
+                                Last Test Run Results:
+                            </div>
+                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--error);">
                             <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
                                 Last Test Run Results:
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                ✅ 12 Passed | ❌ 0 Failed
+                                ✅ 0 Passed | ❌ 0 Failed
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                Success Rate: <span style="color: var(--success); font-weight: 600;">100%</span> | Duration: 0.98s
+                                                        <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
+                                <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
+                                    ⚠️ Only 0 test cases executed. Run <code>./automation-scripts/0402_Run-UnitTests.ps1</code> for full test suite.
+                                </div>
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Last run: 2025-10-31 19:33:04
+                                Last run: Not run recently
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--warning); margin-top: 8px; font-style: italic;">
-                                ⚠️ Only 12 test cases executed. Run <code>./az 0402</code> for full test suite.
-                            </div>
+                        </div>
                         </div>
                     </div>
 
                     <div class="metric-card">
-                        <h3>📊 Code Coverage</h3>
-                        <div class="metric-value">0%</div>
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">69.6%</div>
                         <div class="metric-label">
-                            No coverage data available
+                            128 / 184 Files Have Tests
                         </div>
-                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 69.6%; background: var(--warning)">
+                                69.6%
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ 56 files without tests
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>📚 Documentation Coverage</h3>
+                        <div class="metric-value">9.3%</div>
+                        <div class="metric-label">
+                            105 / 1131 Functions Documented
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 9.3%; background: var(--error)">
+                                9.3%
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ 1021 functions without docs
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>✨ Code Quality</h3>
+                        <div class="metric-value">51.5/100</div>
+                        <div class="metric-label">
+                            22 issues in 22 files
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 51.5%; background: var(--error)">
+                                51.5/100
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ✅ 182 clean, ⚠️ 22 warnings, ❌ 0 errors
+                        </div>
                     </div>
                     
                                         <div class="metric-card">
                         <h3>🌿 Git Repository</h3>
-                        <div class="metric-value" style="font-size: 1.8rem;">45</div>
+                        <div class="metric-value" style="font-size: 1.8rem;">4</div>
                         <div class="metric-label">Total Commits</div>
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/update-dashboard-data-fidelity</span>
+                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/fix-code-quality-reporting</span>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
-                                👥 4 Contributors
+                                👥 2 Contributors
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Latest: b930021 - Phase 2: Add GitHub API integration for live repository metrics (11 minutes ago)
+                                Latest: 7d58eac - Fix code quality underreporting and test status issues (5 minutes ago)
                             </div>
                         </div>
                     </div>
@@ -903,6 +1844,98 @@
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Interactive Dependency Mapping Section -->
+            <section class="section" id="dependencies">
+                <h2>🔗 Interactive Dependency Mapping</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Explore project dependencies, module relationships, and script dependencies
+                </p>
+                <div id="dependency-graph"></div>
+                <script>
+                    // Initialize dependency graph with data
+                    const dependencyData = {"Total":53,"Features":[{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"ValidationTools"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"HyperV"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"CertificateAuthority"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"OpenTofu"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"WindowsAdminCenter"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Go"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"WSL2"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"PXE"},{"Description":"","Required":false,"Category":"Infrastructure","Platform":[],"Scripts":[],"DependsOn":[],"Name":"System"},{"Description":"","Required":false,"Category":"Maintenance","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Environment"},{"Description":"","Required":false,"Category":"Maintenance","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Reset"},{"Description":"","Required":false,"Category":"Maintenance","Platform":[],"Scripts":[],"DependsOn":[],"Name":"QualityValidation"},{"Description":"","Required":false,"Category":"AIAgents","Platform":[],"Scripts":[],"DependsOn":[],"Name":"CodeReview"},{"Description":"","Required":false,"Category":"AIAgents","Platform":[],"Scripts":[],"DependsOn":[],"Name":"TestGeneration"},{"Description":"","Required":false,"Category":"AIAgents","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Workflows"},{"Description":"","Required":false,"Category":"AIAgents","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Documentation"},{"Description":"","Required":false,"Category":"AIAgents","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Setup"},{"Description":"","Required":false,"Category":"AIAgents","Platform":[],"Scripts":[],"DependsOn":[],"Name":"MCPServer"},{"Description":"","Required":false,"Category":"AIAgents","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Optimization"},{"Description":"","Required":false,"Category":"Git","Platform":[],"Scripts":[],"DependsOn":[],"Name":"GitWorkflow"},{"Description":"","Required":false,"Category":"Git","Platform":[],"Scripts":[],"DependsOn":[],"Name":"GitHubRunners"},{"Description":"","Required":false,"Category":"Git","Platform":[],"Scripts":[],"DependsOn":[],"Name":"GitSetup"},{"Description":"","Required":false,"Category":"Core","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Logging"},{"Description":"","Required":false,"Category":"Core","Platform":[],"Scripts":[],"DependsOn":[],"Name":"MCPServers"},{"Description":"","Required":false,"Category":"Core","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Configuration"},{"Description":"","Required":false,"Category":"Core","Platform":[],"Scripts":[],"DependsOn":[],"Name":"PowerShell7"},{"Description":"","Required":false,"Category":"Core","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Git"},{"Description":"","Required":false,"Category":"IssueManagement","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Analysis"},{"Description":"","Required":false,"Category":"IssueManagement","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Creation"},{"Description":"","Required":false,"Category":"IssueManagement","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Automation"},{"Description":"","Required":false,"Category":"IssueManagement","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Workflow"},{"Description":"","Required":false,"Category":"IssueManagement","Platform":[],"Scripts":[],"DependsOn":[],"Name":"PRDeployment"},{"Description":"","Required":false,"Category":"Deployment","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Infrastructure"},{"Description":"","Required":false,"Category":"Deployment","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Validation"},{"Description":"","Required":false,"Category":"Deployment","Platform":[],"Scripts":[],"DependsOn":[],"Name":"TestGeneration"},{"Description":"","Required":false,"Category":"Testing","Platform":[],"Scripts":[],"DependsOn":[],"Name":"PSScriptAnalyzer"},{"Description":"","Required":false,"Category":"Testing","Platform":[],"Scripts":[],"DependsOn":[],"Name":"CodeQuality"},{"Description":"","Required":false,"Category":"Testing","Platform":[],"Scripts":[],"DependsOn":[],"Name":"TestOrchestration"},{"Description":"","Required":false,"Category":"Testing","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Pester"},{"Description":"","Required":false,"Category":"Testing","Platform":[],"Scripts":[],"DependsOn":[],"Name":"WorkflowTesting"},{"Description":"","Required":false,"Category":"Testing","Platform":[],"Scripts":[],"DependsOn":[],"Name":"TestingTools"},{"Description":"","Required":false,"Category":"Development","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Python"},{"Description":"","Required":false,"Category":"Development","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Node"},{"Description":"","Required":false,"Category":"Development","Platform":[],"Scripts":[],"DependsOn":[],"Name":"VSCode"},{"Description":"","Required":false,"Category":"Development","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Docker"},{"Description":"","Required":false,"Category":"Development","Platform":[],"Scripts":[],"DependsOn":[],"Name":"AITools"},{"Description":"","Required":false,"Category":"Development","Platform":[],"Scripts":[],"DependsOn":[],"Name":"CloudCLI"},{"Description":"","Required":false,"Category":"Development","Platform":[],"Scripts":[],"DependsOn":[],"Name":"DevTools"},{"Description":"","Required":false,"Category":"Reporting","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Analysis"},{"Description":"","Required":false,"Category":"Reporting","Platform":[],"Scripts":[],"DependsOn":[],"Name":"SystemInfo"},{"Description":"","Required":false,"Category":"Reporting","Platform":[],"Scripts":[],"DependsOn":[],"Name":"Logging"},{"Description":"","Required":false,"Category":"Reporting","Platform":[],"Scripts":[],"DependsOn":[],"Name":"ProjectReports"},{"Description":"","Required":false,"Category":"Reporting","Platform":[],"Scripts":[],"DependsOn":[],"Name":"CI"}],"Scripts":{"0800-0899":{"Category":"Issue Management & PR Deployment","Count":19},"0200-0299":{"Category":"Development Tools","Count":17},"0400-0499":{"Category":"Testing & Quality","Count":26},"0500-0599":{"Category":"Reporting & Analytics","Count":17},"9000-9999":{"Category":"Maintenance","Count":1},"0000-0099":{"Category":"Environment Setup","Count":9},"0300-0399":{"Category":"Deployment","Count":1},"0100-0199":{"Category":"Infrastructure","Count":6},"0900-0999":{"Category":"Validation & Test Generation","Count":7},"0700-0799":{"Category":"Git & AI Automation","Count":35}},"Modules":{"experience":{"Description":"UI/UX components and interactive menus","Modules":10},"configuration":{"Description":"Unified configuration management","Modules":1},"automation":{"Description":"Orchestration engine and deployment automation","Modules":2},"documentation":{"Description":"Documentation generation engine and project indexing","Modules":2},"utilities":{"Description":"Core utilities, logging, and maintenance","Modules":9},"infrastructure":{"Description":"Infrastructure automation and management","Modules":1},"ai-agents":{"Description":"AI integration and workflow orchestration","Modules":3},"testing":{"Description":"Testing framework, quality validation, and test generation","Modules":9},"development":{"Description":"Developer tools and Git automation","Modules":4},"reporting":{"Description":"Analytics, reporting, and tech debt analysis","Modules":2},"security":{"Description":"Security and credential management","Modules":1}}};
+                    if (Object.keys(dependencyData).length > 0) {
+                        initDependencyGraph(dependencyData);
+                    } else {
+                        document.getElementById('dependency-graph').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0512</code> with full analysis to generate dependency map</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Domain Explorer Section -->
+            <section class="section" id="domain-explorer-section">
+                <h2>🗂️ Interactive Domain Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Click to explore each domain module, view functions, and navigate code
+                </p>
+                <div id="domain-explorer"></div>
+                <script>
+                    // Initialize domain explorer with data
+                    const domainData = [{"Name":"ai-agents","Modules":3,"Path":"/home/runner/work/AitherZero/AitherZero/domains/ai-agents"},{"Name":"automation","Modules":2,"Path":"/home/runner/work/AitherZero/AitherZero/domains/automation"},{"Name":"configuration","Modules":1,"Path":"/home/runner/work/AitherZero/AitherZero/domains/configuration"},{"Name":"development","Modules":4,"Path":"/home/runner/work/AitherZero/AitherZero/domains/development"},{"Name":"documentation","Modules":2,"Path":"/home/runner/work/AitherZero/AitherZero/domains/documentation"},{"Name":"experience","Modules":4,"Path":"/home/runner/work/AitherZero/AitherZero/domains/experience"},{"Name":"infrastructure","Modules":1,"Path":"/home/runner/work/AitherZero/AitherZero/domains/infrastructure"},{"Name":"reporting","Modules":2,"Path":"/home/runner/work/AitherZero/AitherZero/domains/reporting"},{"Name":"security","Modules":1,"Path":"/home/runner/work/AitherZero/AitherZero/domains/security"},{"Name":"testing","Modules":9,"Path":"/home/runner/work/AitherZero/AitherZero/domains/testing"},{"Name":"utilities","Modules":9,"Path":"/home/runner/work/AitherZero/AitherZero/domains/utilities"}];
+                    if (domainData && domainData.length > 0) {
+                        initDomainExplorer(domainData);
+                    } else {
+                        document.getElementById('domain-explorer').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No domain data available</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Configuration Explorer Section -->
+            <section class="section" id="config">
+                <h2>⚙️ Interactive Configuration Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Browse and search through config.psd1 manifest interactively
+                </p>
+                <div id="config-explorer"></div>
+                <script>
+                    // Load configuration from manifest
+                    fetch('https://raw.githubusercontent.com/wizzense/AitherZero/main/config.psd1')
+                        .then(response => response.text())
+                        .then(data => {
+                            // Parse PowerShell data file (simplified)
+                            const configData = {
+                                Core: { Profile: 'Standard', MaxConcurrency: 4 },
+                                Automation: { OrchestrationEnabled: true },
+                                Testing: { Profile: 'Standard', CoverageThreshold: 80 },
+                                Note: 'Full config parsing requires PowerShell - this is a simplified view'
+                            };
+                            initConfigExplorer(configData);
+                        })
+                        .catch(err => {
+                            document.getElementById('config-explorer').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">Configuration explorer - Run dashboard locally for full config browsing</p>';
+                        });
+                </script>
+            </section>
+
+            <!-- File-Level Quality Drill-down Section -->
+            <section class="section" id="quality-drilldown-section">
+                <h2>🔍 File-Level Quality Drill-down</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Detailed quality metrics for every file - expand to see checks and issues
+                </p>
+                <div id="quality-drilldown"></div>
+                <script>
+                    // Initialize quality drilldown with file metrics
+                    const qualityData = [{"Issues":[{"Rule":"PSAvoidUsingEmptyCatchBlock","Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Severity":1,"Line":1246},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":56},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":57},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":224},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":272},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":285},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":295},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":301},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":392},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":1215}],"Lines":1378,"Functions":16,"Path":"bootstrap.ps1","Domain":"other","HasTests":false,"Name":"bootstrap.ps1","Score":0},{"Issues":[{"Rule":"PSAvoidUsingEmptyCatchBlock","Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Severity":1,"Line":252},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":18},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":20},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":22},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":24},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":220},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":222},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":233},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":242},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":262}],"Lines":3875,"Functions":21,"Path":"Start-AitherZero.ps1","Domain":"other","HasTests":false,"Name":"Start-AitherZero.ps1","Score":0},{"Issues":[{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":32},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":40},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":44},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":48},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":49},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":50},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":55},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":56},{"Rule":"PSAvoidUsingWriteHost","Message":"File 'Validate-TestDiscoveryFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":61}],"Lines":178,"Functions":1,"Path":"Validate-TestDiscoveryFix.ps1","Domain":"other","HasTests":false,"Name":"Validate-TestDiscoveryFix.ps1","Score":13},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0000_Cleanup-Environment.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42}],"Lines":129,"Functions":1,"Path":"automation-scripts/0000_Cleanup-Environment.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0000_Cleanup-Environment.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0001_Ensure-PowerShell7.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":26},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0001_Ensure-PowerShell7.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":88},{"Rule":"PSReviewUnusedParameter","Message":"The parameter 'Configuration' has been declared but not used.","Severity":1,"Line":9}],"Lines":97,"Functions":1,"Path":"automation-scripts/0001_Ensure-PowerShell7.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0001_Ensure-PowerShell7.ps1","Score":91},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0002_Setup-Directories.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42}],"Lines":148,"Functions":1,"Path":"automation-scripts/0002_Setup-Directories.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0002_Setup-Directories.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":8},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":11},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":68},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":75},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":82},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":105},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":106},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":117},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":125},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":195}],"Lines":288,"Functions":1,"Path":"automation-scripts/0003_Sync-ConfigManifest.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0003_Sync-ConfigManifest.ps1","Score":0},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0006_Install-ValidationTools.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42}],"Lines":146,"Functions":1,"Path":"automation-scripts/0006_Install-ValidationTools.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0006_Install-ValidationTools.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0007_Install-Go.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":57}],"Lines":391,"Functions":1,"Path":"automation-scripts/0007_Install-Go.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0007_Install-Go.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0008_Install-OpenTofu.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42}],"Lines":242,"Functions":1,"Path":"automation-scripts/0008_Install-OpenTofu.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0008_Install-OpenTofu.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0009_Initialize-OpenTofu.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":43}],"Lines":214,"Functions":1,"Path":"automation-scripts/0009_Initialize-OpenTofu.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0009_Initialize-OpenTofu.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":90},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":395},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":396},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":397},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":398},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":399},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":412},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":413},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":425},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":436}],"Lines":471,"Functions":8,"Path":"automation-scripts/0010_Setup-MCPServers.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0010_Setup-MCPServers.ps1","Score":45},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0100_Configure-System.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42}],"Lines":214,"Functions":1,"Path":"automation-scripts/0100_Configure-System.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0100_Configure-System.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0104_Install-CertificateAuthority.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":44}],"Lines":262,"Functions":1,"Path":"automation-scripts/0104_Install-CertificateAuthority.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0104_Install-CertificateAuthority.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0105_Install-HyperV.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42}],"Lines":212,"Functions":1,"Path":"automation-scripts/0105_Install-HyperV.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0105_Install-HyperV.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0106_Install-WSL2.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":44},{"Rule":"PSPossibleIncorrectComparisonWithNull","Message":"$null should be on the left side of equality comparisons.","Severity":1,"Line":290}],"Lines":363,"Functions":1,"Path":"automation-scripts/0106_Install-WSL2.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0106_Install-WSL2.ps1","Score":94},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0107_Install-WindowsAdminCenter.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":44},{"Rule":"PSUseDeclaredVarsMoreThanAssignments","Message":"The variable 'wacInstalled' is assigned but never used.","Severity":1,"Line":96}],"Lines":290,"Functions":1,"Path":"automation-scripts/0107_Install-WindowsAdminCenter.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0107_Install-WindowsAdminCenter.ps1","Score":94},{"Issues":[{"Rule":"PSAvoidUsingWriteHost","Message":"File '0112_Enable-PXE.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":42}],"Lines":194,"Functions":1,"Path":"automation-scripts/0112_Enable-PXE.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0112_Enable-PXE.ps1","Score":97},{"Issues":[{"Rule":"PSAvoidUsingEmptyCatchBlock","Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Severity":1,"Line":20},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":84},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":177},{"Rule":"PSAvoidTrailingWhitespace","Message":"Line has trailing whitespace","Severity":0,"Line":184},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0201_Install-Node.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":54}],"Lines":306,"Functions":1,"Path":"automation-scripts/0201_Install-Node.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0201_Install-Node.ps1","Score":91},{"Issues":[{"Rule":"PSAvoidUsingEmptyCatchBlock","Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Severity":1,"Line":20},{"Rule":"PSAvoidUsingWriteHost","Message":"File '0204_Install-Poetry.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":40}],"Lines":211,"Functions":1,"Path":"automation-scripts/0204_Install-Poetry.ps1","Domain":"automation-scripts","HasTests":false,"Name":"0204_Install-Poetry.ps1","Score":94}];
+                    if (qualityData && qualityData.length > 0) {
+                        const fileQualityMap = {};
+                        qualityData.forEach(file => {
+                            fileQualityMap[file.Path] = {
+                                score: file.Score || 0,
+                                errorHandling: file.ErrorHandling ? '✅' : '❌',
+                                logging: file.Logging ? '✅' : '❌',
+                                testCoverage: file.HasTests ? '✅' : '❌',
+                                pssa: file.Issues && file.Issues.length === 0 ? '✅' : file.Issues ? file.Issues.length + ' issues' : 'N/A'
+                            };
+                        });
+                        initQualityDrilldown(fileQualityMap);
+                    } else {
+                        document.getElementById('quality-drilldown').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0420</code> to generate detailed quality metrics</p>';
+                    }
+                </script>
             </section>
 
             <section class="section" id="quality">
@@ -972,7 +2005,7 @@
                     </div>
                 </div>
                 
-                <p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./az 0420</code> to generate quality reports.</p>
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive</code> to generate quality reports.</p>
             </section>
 
             <section class="section" id="pssa">
@@ -1006,7 +2039,7 @@
                     </div>
                 </div>
                 
-                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./az 0404</code> to analyze code quality</p>
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze code quality</p>
             </section>
 
             <section class="section" id="manifest">
@@ -1080,7 +2113,7 @@
                     </div>
                     <div class="domain-card">
                         <h4>experience</h4>
-                        <div class="module-count">2 modules</div>
+                        <div class="module-count">4 modules</div>
                     </div>
                     <div class="domain-card">
                         <h4>infrastructure</h4>
@@ -1096,7 +2129,7 @@
                     </div>
                     <div class="domain-card">
                         <h4>testing</h4>
-                        <div class="module-count">8 modules</div>
+                        <div class="module-count">9 modules</div>
                     </div>
                     <div class="domain-card">
                         <h4>utilities</h4>
@@ -1108,17 +2141,17 @@
             <section class="section" id="health">
                 <h2>📈 Project Health</h2>
                 <div class="badge-grid">
-                    <div class="badge ">
-                        Build: Passing
+                    <div class="badge warning">
+                        Build: Unknown
                     </div>
-                    <div class="badge ">
-                        Tests: Passing
+                    <div class="badge warning">
+                        Tests: Not Run
                     </div>
-                    <div class="badge info">Coverage: 0%</div>
+                    <div class="badge info">Quality: 51.5/100</div>
                     <div class="badge">Security: Scanned</div>
                     <div class="badge">Platform: Unix</div>
                     <div class="badge">PowerShell: 7.4.13</div>
-                    <div class='badge info'>Workflows: 15</div>
+                    <div class='badge info'>Workflows: 22</div>
                 </div>
             </section>
             
@@ -1128,11 +2161,11 @@
                     <div class="info-card">
                         <div class="info-card-header">📊 Repository Statistics</div>
                         <div class="info-card-body">
-                            <p><strong>Branch:</strong> <code>copilot/update-dashboard-data-fidelity</code></p>
-                            <p><strong>Total Commits:</strong> 45</p>
-                            <p><strong>Contributors:</strong> 4</p>
-                            <p><strong>Automation Scripts:</strong> 124</p>
-                            <p><strong>GitHub Workflows:</strong> 15</p>
+                            <p><strong>Branch:</strong> <code>copilot/fix-code-quality-reporting</code></p>
+                            <p><strong>Total Commits:</strong> 4</p>
+                            <p><strong>Contributors:</strong> 2</p>
+                            <p><strong>Automation Scripts:</strong> 139</p>
+                            <p><strong>GitHub Workflows:</strong> 22</p>
                         </div>
                     </div>
                     
@@ -1140,7 +2173,7 @@
                         <div class="info-card-header">📝 Latest Commit</div>
                         <div class="info-card-body">
                             <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
-                                b930021 - Phase 2: Add GitHub API integration for live repository metrics (11 minutes ago)
+                                7d58eac - Fix code quality underreporting and test status issues (5 minutes ago)
                             </p>
                         </div>
                     </div>
@@ -1153,24 +2186,20 @@
                     <div class="info-card-body">
                         <ul class="commit-list">
                             <li class='commit-item'>
-                                <span class='commit-hash'>b930021</span>
-                                <span class='commit-message'>Phase 2: Add GitHub API integration for live repository metrics</span>
+                                <span class='commit-hash'>7d58eac</span>
+                                <span class='commit-message'>Fix code quality underreporting and test status issues</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>8048168</span>
-                                <span class='commit-message'>Restore interactive roadmap and GitHub activity sections with all code review fixes</span>
+                                <span class='commit-hash'>19e0452</span>
+                                <span class='commit-message'>Initial exploration of dashboard issues - no changes yet</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>5b43503</span>
-                                <span class='commit-message'>Addressing PR comments</span>
+                                <span class='commit-hash'>1bc4c43</span>
+                                <span class='commit-message'>Initial plan</span>
                             </li>
                             <li class='commit-item'>
-                                <span class='commit-hash'>c5a11b2</span>
-                                <span class='commit-message'>docs: update project indexes [auto-generated]</span>
-                            </li>
-                            <li class='commit-item'>
-                                <span class='commit-hash'>6a8cc82</span>
-                                <span class='commit-message'>Merge 9b0700b7ae2f2bc42cac3710280cd53704588dbe into d33d0ccce7fe34af8066fdd1b25340343f0bd153</span>
+                                <span class='commit-hash'>b614b5b</span>
+                                <span class='commit-message'>Add fully interactive dashboard with comprehensive code map visualizer (#2132)</span>
                             </li>
                         </ul>
                     </div>
@@ -1179,10 +2208,10 @@
                 <div class="info-card" id="actions">
                     <div class="info-card-header">🎯 Quick Actions</div>
                     <div class="info-card-body">
-                        <p><strong>Run Tests:</strong> <code>./az 0402</code></p>
-                        <p><strong>Generate Report:</strong> <code>./az 0510</code></p>
-                        <p><strong>View Dashboard:</strong> <code>./az 0511</code></p>
-                        <p><strong>Validate Code:</strong> <code>./az 0404</code></p>
+                        <p><strong>Run Tests:</strong> <code>./automation-scripts/0402_Run-UnitTests.ps1</code></p>
+                        <p><strong>Generate Report:</strong> <code>./automation-scripts/0510_Generate-ProjectReport.ps1</code></p>
+                        <p><strong>View Dashboard:</strong> <code>./automation-scripts/0511_Show-ProjectDashboard.ps1</code></p>
+                        <p><strong>Validate Code:</strong> <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code></p>
                         <p><strong>Update Project:</strong> <code>git pull && ./bootstrap.ps1</code></p>
                     </div>
                 </div>
@@ -1193,7 +2222,7 @@
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.13</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-10-31 19:37:08</p>
+                        <p><strong>Last Scan:</strong> 2025-11-04 20:54:58</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -1373,7 +2402,7 @@
                 <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                     <div class="metric-card">
                         <h3>⭐ Stars</h3>
-                        <div class="metric-value" style="font-size: 2rem;">0</div>
+                        <div class="metric-value" style="font-size: 2rem;">1</div>
                         <div class="metric-label">GitHub Stars</div>
                     </div>
                     <div class="metric-card">
@@ -1383,22 +2412,22 @@
                     </div>
                     <div class="metric-card">
                         <h3>👥 Contributors</h3>
-                        <div class="metric-value" style="font-size: 2rem;">4</div>
+                        <div class="metric-value" style="font-size: 2rem;">2</div>
                         <div class="metric-label">Active Contributors</div>
                     </div>
                     <div class="metric-card">
                         <h3>🔀 Pull Requests</h3>
-                        <div class="metric-value" style="font-size: 2rem;">0</div>
+                        <div class="metric-value" style="font-size: 2rem;">17</div>
                         <div class="metric-label">Open PRs</div>
                     </div>
                     <div class="metric-card">
                         <h3>🐛 Issues</h3>
-                        <div class="metric-value" style="font-size: 2rem;">0</div>
+                        <div class="metric-value" style="font-size: 2rem;">247</div>
                         <div class="metric-label">Open Issues</div>
                     </div>
                     <div class="metric-card">
                         <h3>👀 Watchers</h3>
-                        <div class="metric-value" style="font-size: 2rem;">0</div>
+                        <div class="metric-value" style="font-size: 2rem;">1</div>
                         <div class="metric-label">Repository Watchers</div>
                     </div>
                 </div>
@@ -1413,27 +2442,92 @@
                 <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                     <div class="metric-card">
                         <h3>📋 Total Workflows</h3>
-                        <div class="metric-value" style="font-size: 2rem;">0</div>
+                        <div class="metric-value" style="font-size: 2rem;">30</div>
                         <div class="metric-label">Active Workflows</div>
                     </div>
                     <div class="metric-card">
                         <h3>✅ Successful</h3>
-                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">0</div>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">5</div>
                         <div class="metric-label">Recent Successes</div>
                     </div>
                     <div class="metric-card">
                         <h3>❌ Failed</h3>
-                        <div class="metric-value" style="font-size: 2rem; color: var(--text-secondary);">0</div>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--danger);">1</div>
                         <div class="metric-label">Recent Failures</div>
                     </div>
                     <div class="metric-card">
                         <h3>🕐 Last Run</h3>
-                        <div class="metric-value" style="font-size: 1.2rem;">Unknown</div>
+                        <div class="metric-value" style="font-size: 1.2rem;">skipped</div>
                         <div class="metric-label">Status</div>
                     </div>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
                     ✅ <em>Live workflow data from GitHub Actions API</em>
+                </p>
+            </section>
+
+            <!-- GitHub Issues Section -->
+            <section class="section" id="github-issues" style="margin-top: 30px;">
+                <h2>🐛 Open GitHub Issues</h2>
+                                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='https://github.com/wizzense/AitherZero/issues/2123' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #2123: 🧪 Test Failure: Should execute in test mode
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>github-actions[bot]</strong> on 2025-11-04
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>P2</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated-issue</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>tests</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>agent-jessica</span>
+                    </div>
+                </div>                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='https://github.com/wizzense/AitherZero/issues/2096' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #2096: 🧪 Test Failure: Should execute in test mode
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>github-actions[bot]</strong> on 2025-11-03
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>P2</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated-issue</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>tests</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>agent-jessica</span>
+                    </div>
+                </div>                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='https://github.com/wizzense/AitherZero/issues/2093' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #2093: 🧪 Test Failure: Should validate no hardcoded secrets in configuration files
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>github-actions[bot]</strong> on 2025-11-03
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>P2</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated-issue</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>tests</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>agent-jessica</span>
+                    </div>
+                </div>                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='https://github.com/wizzense/AitherZero/issues/2092' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #2092: 🧪 Test Failure: Should validate complete Claude Code integration setup
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>github-actions[bot]</strong> on 2025-11-03
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>P2</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated-issue</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>tests</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>agent-jessica</span>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    Showing up to 10 open issues | <a href="https://github.com/wizzense/AitherZero/issues" target="_blank" style="color: var(--info);">View all issues</a>
                 </p>
             </section>
 
@@ -1443,21 +2537,14 @@
                 <div class="info-card">
                     <div class="info-card-header">📊 Test Execution Trends</div>
                     <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-10-31</strong>: 12/281 passed (4.3%)</div>
-                    </div>
-                </div>
-                
-                <div class="info-card" style="margin-top: 20px;">
-                    <div class="info-card-header">📈 Code Coverage Trends</div>
-                    <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-10-31</strong>: 0% coverage</div>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/320 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/320 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/320 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/320 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/320 passed (0%)</div>
                     </div>
                 </div>
                 
                 <div class="info-card" style="margin-top: 20px;">
                     <div class="info-card-header">📏 Lines of Code Growth</div>
                     <div class="info-card-content">
-                        <p style='color: var(--text-secondary);'>No historical LOC data available yet. Data will be tracked going forward.</p>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 96,145 LOC, 1131 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 96,145 LOC, 1131 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 96,075 LOC, 1131 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 96,067 LOC, 1131 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 96,065 LOC, 1131 functions</div>
                     </div>
                 </div>
                 
@@ -1465,15 +2552,831 @@
                     💡 <em>Historical data accumulates automatically with each dashboard generation</em>
                 </p>
             </section>
+
+            <!-- Release Tracker Section -->
+            <section class="section" id="releases">
+                <h2>📦 Releases & Version History</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Track releases, packages, and container versions
+                </p>
+                <div id="release-tracker"></div>
+                <script>
+                    // Fetch releases from GitHub API
+                    fetch('https://api.github.com/repos/wizzense/AitherZero/releases')
+                        .then(response => response.json())
+                        .then(releases => {
+                            if (releases && releases.length > 0) {
+                                const releaseData = releases.slice(0, 10).map(r => ({
+                                    version: r.tag_name || r.name,
+                                    date: new Date(r.published_at).toLocaleDateString(),
+                                    description: r.body ? r.body.substring(0, 200) + '...' : 'No description',
+                                    url: r.html_url,
+                                    assets: r.assets ? r.assets.map(a => ({ name: a.name, url: a.browser_download_url })) : []
+                                }));
+                                initReleaseTracker(releaseData);
+                            } else {
+                                document.getElementById('release-tracker').innerHTML = 
+                                    '<p style="text-align: center; color: var(--text-secondary);">No releases yet. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">Create your first release</a></p>';
+                            }
+                        })
+                        .catch(err => {
+                            document.getElementById('release-tracker').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">⚠️ Unable to fetch releases. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">View releases on GitHub</a></p>';
+                        });
+                </script>
+            </section>
+
+            <!-- Index Navigation Section -->
+            <section class="section" id="indices">
+                <h2>📑 Navigate Project Indices</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Quick access to all index files and documentation hubs throughout the project
+                </p>
+                <div id="index-navigation"></div>
+            </section>
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-10-31 19:37:08 |
+            Generated by AitherZero Dashboard | 2025-11-04 20:54:58 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
 
     <script>
+        /* Enhanced Interactive Dashboard Scripts */
+        // ============================================================================
+// AitherZero Interactive Dashboard - Enhanced Scripts
+// ============================================================================
+
+// Global state management
+const DashboardState = {
+    currentView: 'overview',
+    filters: {},
+    expandedSections: new Set(),
+    searchResults: [],
+    dependencyGraph: null,
+    configExplorer: null
+};
+
+// ============================================================================
+// Core Navigation & TOC
+// ============================================================================
+
+function toggleToc() {
+    const toc = document.getElementById('toc');
+    if (toc) {
+        toc.classList.toggle('open');
+    }
+}
+
+function highlightToc() {
+    const sections = document.querySelectorAll('.section, .header');
+    const tocLinks = document.querySelectorAll('.toc a');
+    
+    let current = '';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (window.pageYOffset >= sectionTop - 100) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    tocLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+// ============================================================================
+// Breadcrumb Navigation
+// ============================================================================
+
+function initBreadcrumbs() {
+    const breadcrumbContainer = document.getElementById('breadcrumbs');
+    if (!breadcrumbContainer) return;
+    
+    // Build breadcrumb trail based on current section
+    window.addEventListener('scroll', updateBreadcrumbs);
+    updateBreadcrumbs();
+}
+
+function updateBreadcrumbs() {
+    const breadcrumbContainer = document.getElementById('breadcrumbs');
+    if (!breadcrumbContainer) return;
+    
+    const sections = document.querySelectorAll('.section, .header');
+    let currentSection = null;
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (window.pageYOffset >= sectionTop - 150) {
+            currentSection = section;
+        }
+    });
+    
+    if (currentSection) {
+        const sectionId = currentSection.getAttribute('id');
+        const sectionTitle = currentSection.querySelector('h2, h1')?.textContent || sectionId;
+        
+        breadcrumbContainer.innerHTML = `
+            <a href="#top" class="breadcrumb-item">🏠 Dashboard</a>
+            <span class="breadcrumb-separator">›</span>
+            <a href="#${sectionId}" class="breadcrumb-item active">${sectionTitle}</a>
+        `;
+    }
+}
+
+// ============================================================================
+// Interactive Dependency Visualization
+// ============================================================================
+
+function initDependencyGraph(dependencyData) {
+    const container = document.getElementById('dependency-graph');
+    if (!container || !dependencyData) return;
+    
+    DashboardState.dependencyGraph = dependencyData;
+    renderDependencyGraph(dependencyData);
+}
+
+function renderDependencyGraph(data) {
+    const container = document.getElementById('dependency-graph');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="graph-loading">Rendering dependency graph...</div>';
+    
+    // Create interactive network visualization
+    setTimeout(() => {
+        const graphHTML = createDependencyGraphHTML(data);
+        container.innerHTML = graphHTML;
+        attachDependencyHandlers();
+    }, 100);
+}
+
+function createDependencyGraphHTML(data) {
+    let html = '<div class="dependency-network">';
+    
+    // Group by domain
+    const domains = {};
+    Object.keys(data).forEach(script => {
+        const deps = data[script];
+        const domain = script.split('/')[0] || 'core';
+        if (!domains[domain]) domains[domain] = [];
+        domains[domain].push({ script, deps });
+    });
+    
+    // Render domains
+    Object.keys(domains).sort().forEach(domain => {
+        html += `
+            <div class="dependency-domain" data-domain="${domain}">
+                <div class="domain-header" onclick="toggleDependencyDomain('${domain}')">
+                    <span class="toggle-icon">▼</span>
+                    <h4>📦 ${domain}</h4>
+                    <span class="badge">${domains[domain].length} scripts</span>
+                </div>
+                <div class="domain-content" id="deps-${domain}">
+        `;
+        
+        domains[domain].forEach(({ script, deps }) => {
+            const depsCount = Array.isArray(deps) ? deps.length : 0;
+            html += `
+                <div class="dependency-item" data-script="${script}">
+                    <div class="script-name" onclick="showDependencyDetails('${script}')">
+                        📄 ${script}
+                        ${depsCount > 0 ? `<span class="deps-badge">${depsCount} deps</span>` : ''}
+                    </div>
+                    ${depsCount > 0 ? `
+                        <div class="dependency-list" id="deps-list-${script.replace(/[^a-zA-Z0-9]/g, '_')}">
+                            ${deps.map(dep => `<div class="dep-link" onclick="navigateToDependency('${dep}')">→ ${dep}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function toggleDependencyDomain(domain) {
+    const content = document.getElementById(`deps-${domain}`);
+    const header = content?.previousElementSibling;
+    
+    if (content && header) {
+        const isOpen = content.style.display !== 'none';
+        content.style.display = isOpen ? 'none' : 'block';
+        header.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function showDependencyDetails(script) {
+    const modal = createModal(`Dependency Details: ${script}`, `
+        <div class="dependency-details">
+            <h4>Direct Dependencies</h4>
+            <div id="direct-deps"></div>
+            <h4>Reverse Dependencies (Used By)</h4>
+            <div id="reverse-deps"></div>
+            <h4>Dependency Chain</h4>
+            <div id="dep-chain"></div>
+        </div>
+    `);
+    
+    // Calculate and show dependencies
+    const deps = DashboardState.dependencyGraph[script] || [];
+    document.getElementById('direct-deps').innerHTML = deps.length > 0 
+        ? deps.map(d => `<div class="dep-item">→ ${d}</div>`).join('') 
+        : '<em>No direct dependencies</em>';
+    
+    // Find reverse dependencies
+    const reverseDeps = Object.keys(DashboardState.dependencyGraph).filter(s => 
+        (DashboardState.dependencyGraph[s] || []).includes(script)
+    );
+    document.getElementById('reverse-deps').innerHTML = reverseDeps.length > 0
+        ? reverseDeps.map(d => `<div class="dep-item">← ${d}</div>`).join('')
+        : '<em>Not used by any scripts</em>';
+}
+
+function navigateToDependency(dep) {
+    const element = document.querySelector(`[data-script="${dep}"]`);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('highlight-flash');
+        setTimeout(() => element.classList.remove('highlight-flash'), 2000);
+    }
+}
+
+function attachDependencyHandlers() {
+    // Handlers are attached via onclick in HTML for better compatibility
+}
+
+// ============================================================================
+// Domain Module Explorer
+// ============================================================================
+
+function initDomainExplorer(domainData) {
+    const container = document.getElementById('domain-explorer');
+    if (!container || !domainData) return;
+    
+    renderDomainExplorer(domainData);
+}
+
+function renderDomainExplorer(data) {
+    const container = document.getElementById('domain-explorer');
+    if (!container) return;
+    
+    let html = '<div class="domain-explorer-grid">';
+    
+    data.forEach(domain => {
+        html += `
+            <div class="domain-card" data-domain="${domain.Name}">
+                <div class="domain-card-header" onclick="toggleDomainCard('${domain.Name}')">
+                    <h3>🗂️ ${domain.Name}</h3>
+                    <span class="badge">${domain.Modules} modules</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="domain-card-content" id="domain-${domain.Name}">
+                    <div class="domain-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Modules:</span>
+                            <span class="stat-value">${domain.Modules}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Functions:</span>
+                            <span class="stat-value">${domain.Functions || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <button class="btn-explore" onclick="exploreDomain('${domain.Name}')">
+                        🔍 Explore Domain
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function toggleDomainCard(domainName) {
+    const content = document.getElementById(`domain-${domainName}`);
+    const card = content?.closest('.domain-card');
+    
+    if (content && card) {
+        const isOpen = content.style.display !== 'none';
+        content.style.display = isOpen ? 'none' : 'block';
+        card.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function exploreDomain(domainName) {
+    createModal(`Domain: ${domainName}`, `
+        <div class="domain-details">
+            <h4>📂 Module Files</h4>
+            <div id="domain-files"></div>
+            <h4>🔧 Exported Functions</h4>
+            <div id="domain-functions"></div>
+            <h4>📊 Domain Metrics</h4>
+            <div id="domain-metrics"></div>
+        </div>
+    `);
+    
+    // This would be populated with actual data from the dashboard
+    document.getElementById('domain-files').innerHTML = '<em>Loading module information...</em>';
+}
+
+// ============================================================================
+// Configuration Explorer
+// ============================================================================
+
+function initConfigExplorer(configData) {
+    const container = document.getElementById('config-explorer');
+    if (!container) return;
+    
+    DashboardState.configExplorer = configData;
+    renderConfigExplorer(configData);
+}
+
+function renderConfigExplorer(config) {
+    const container = document.getElementById('config-explorer');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="config-explorer">
+            <div class="config-search">
+                <input type="text" id="config-search-input" placeholder="🔍 Search configuration..." 
+                       onkeyup="searchConfig(this.value)">
+                <button onclick="expandAllConfig()">Expand All</button>
+                <button onclick="collapseAllConfig()">Collapse All</button>
+            </div>
+            <div class="config-tree" id="config-tree">
+                ${renderConfigTree(config)}
+            </div>
+        </div>
+    `;
+}
+
+function renderConfigTree(obj, path = '', level = 0) {
+    if (!obj || typeof obj !== 'object') {
+        return `<span class="config-value">${JSON.stringify(obj)}</span>`;
+    }
+    
+    let html = '<div class="config-node" style="margin-left: ' + (level * 20) + 'px;">';
+    
+    Object.keys(obj).forEach(key => {
+        const value = obj[key];
+        const fullPath = path ? `${path}.${key}` : key;
+        const isObject = value && typeof value === 'object' && !Array.isArray(value);
+        const isArray = Array.isArray(value);
+        
+        html += `
+            <div class="config-item" data-path="${fullPath}">
+                <div class="config-key" onclick="toggleConfigNode('${fullPath}')">
+                    ${isObject || isArray ? '<span class="toggle-icon">▼</span>' : ''}
+                    <span class="key-name">${key}</span>
+                    ${isArray ? `<span class="badge">${value.length} items</span>` : ''}
+                </div>
+                <div class="config-value-container" id="config-${fullPath.replace(/[^a-zA-Z0-9]/g, '_')}">
+        `;
+        
+        if (isObject) {
+            html += renderConfigTree(value, fullPath, level + 1);
+        } else if (isArray) {
+            html += '<div class="config-array">';
+            value.forEach((item, idx) => {
+                html += `<div class="array-item">[${idx}]: ${JSON.stringify(item)}</div>`;
+            });
+            html += '</div>';
+        } else {
+            html += `<span class="config-value">${JSON.stringify(value)}</span>`;
+        }
+        
+        html += '</div></div>';
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function toggleConfigNode(path) {
+    const node = document.getElementById(`config-${path.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    const item = node?.closest('.config-item');
+    
+    if (node && item) {
+        const isOpen = node.style.display !== 'none';
+        node.style.display = isOpen ? 'none' : 'block';
+        const icon = item.querySelector('.toggle-icon');
+        if (icon) icon.textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function searchConfig(query) {
+    const items = document.querySelectorAll('.config-item');
+    const lowerQuery = query.toLowerCase();
+    
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        const matches = text.includes(lowerQuery);
+        item.style.display = matches || query === '' ? 'block' : 'none';
+        
+        if (matches && query !== '') {
+            item.classList.add('search-highlight');
+        } else {
+            item.classList.remove('search-highlight');
+        }
+    });
+}
+
+function expandAllConfig() {
+    document.querySelectorAll('.config-value-container').forEach(node => {
+        node.style.display = 'block';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▼';
+    });
+}
+
+function collapseAllConfig() {
+    document.querySelectorAll('.config-value-container').forEach(node => {
+        node.style.display = 'none';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▶';
+    });
+}
+
+// ============================================================================
+// Test & Quality Drill-downs
+// ============================================================================
+
+function initQualityDrilldown(qualityData) {
+    const container = document.getElementById('quality-drilldown');
+    if (!container || !qualityData) return;
+    
+    renderQualityDrilldown(qualityData);
+}
+
+function renderQualityDrilldown(data) {
+    const container = document.getElementById('quality-drilldown');
+    if (!container) return;
+    
+    let html = '<div class="quality-grid">';
+    
+    Object.keys(data).forEach(file => {
+        const metrics = data[file];
+        const score = metrics.score || 0;
+        const statusClass = score >= 80 ? 'success' : score >= 60 ? 'warning' : 'error';
+        
+        html += `
+            <div class="quality-item ${statusClass}" data-file="${file}">
+                <div class="quality-header" onclick="toggleQualityDetails('${file}')">
+                    <span class="file-name">${file}</span>
+                    <span class="quality-score">${score}/100</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="quality-details" id="quality-${file.replace(/[^a-zA-Z0-9]/g, '_')}">
+                    <div class="quality-checks">
+                        ${renderQualityChecks(metrics)}
+                    </div>
+                    <button class="btn-view-file" onclick="viewFileDetails('${file}')">View File</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderQualityChecks(metrics) {
+    const checks = [
+        { name: 'Error Handling', value: metrics.errorHandling },
+        { name: 'Logging', value: metrics.logging },
+        { name: 'Test Coverage', value: metrics.testCoverage },
+        { name: 'PSScriptAnalyzer', value: metrics.pssa }
+    ];
+    
+    return checks.map(check => `
+        <div class="check-item">
+            <span class="check-name">${check.name}:</span>
+            <span class="check-value">${check.value || 'N/A'}</span>
+        </div>
+    `).join('');
+}
+
+function toggleQualityDetails(file) {
+    const details = document.getElementById(`quality-${file.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    const item = details?.closest('.quality-item');
+    
+    if (details && item) {
+        const isOpen = details.style.display !== 'none';
+        details.style.display = isOpen ? 'none' : 'block';
+        item.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function viewFileDetails(file) {
+    createModal(`File Details: ${file}`, `
+        <div class="file-details">
+            <h4>📊 Metrics</h4>
+            <div id="file-metrics"></div>
+            <h4>🔍 Issues</h4>
+            <div id="file-issues"></div>
+            <h4>🧪 Tests</h4>
+            <div id="file-tests"></div>
+        </div>
+    `);
+}
+
+// ============================================================================
+// GitHub Actions: Issue & PR Creation
+// ============================================================================
+
+function createGitHubIssue(template = 'bug') {
+    const templates = {
+        bug: {
+            title: 'Bug Report',
+            labels: 'bug',
+            body: `**Describe the bug**\nA clear and concise description of what the bug is.\n\n**To Reproduce**\nSteps to reproduce the behavior\n\n**Expected behavior**\nWhat you expected to happen\n\n**Screenshots**\nIf applicable, add screenshots`
+        },
+        feature: {
+            title: 'Feature Request',
+            labels: 'enhancement',
+            body: `**Is your feature request related to a problem?**\nA clear description of the problem\n\n**Describe the solution**\nWhat you want to happen\n\n**Additional context**\nAny other context`
+        },
+        docs: {
+            title: 'Documentation',
+            labels: 'documentation',
+            body: `**Documentation issue**\nDescribe what needs to be documented or improved`
+        }
+    };
+    
+    const templateData = templates[template] || templates.bug;
+    const url = `https://github.com/wizzense/AitherZero/issues/new?` +
+                `title=${encodeURIComponent(templateData.title)}&` +
+                `labels=${encodeURIComponent(templateData.labels)}&` +
+                `body=${encodeURIComponent(templateData.body)}`;
+    
+    window.open(url, '_blank');
+}
+
+function createPullRequest() {
+    const url = 'https://github.com/wizzense/AitherZero/compare';
+    window.open(url, '_blank');
+}
+
+function openDocumentation(section = '') {
+    const url = section 
+        ? `https://github.com/wizzense/AitherZero/tree/main/docs/${section}`
+        : 'https://github.com/wizzense/AitherZero/tree/main/docs';
+    window.open(url, '_blank');
+}
+
+// ============================================================================
+// Release & Build Information
+// ============================================================================
+
+function initReleaseTracker(releases) {
+    const container = document.getElementById('release-tracker');
+    if (!container || !releases) return;
+    
+    renderReleaseTracker(releases);
+}
+
+function renderReleaseTracker(releases) {
+    const container = document.getElementById('release-tracker');
+    if (!container) return;
+    
+    let html = '<div class="release-timeline">';
+    
+    releases.forEach((release, idx) => {
+        html += `
+            <div class="release-item" data-version="${release.version}">
+                <div class="release-marker">${idx === 0 ? '🎯' : '📦'}</div>
+                <div class="release-content">
+                    <div class="release-header" onclick="toggleRelease('${release.version}')">
+                        <h4>${release.version}${idx === 0 ? ' <span class="badge-latest">Latest</span>' : ''}</h4>
+                        <span class="release-date">${release.date}</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="release-details" id="release-${release.version.replace(/[^a-zA-Z0-9]/g, '_')}">
+                        <p>${release.description || 'No description'}</p>
+                        <div class="release-assets">
+                            ${release.assets ? release.assets.map(asset => 
+                                `<a href="${asset.url}" class="asset-link">📥 ${asset.name}</a>`
+                            ).join('') : ''}
+                        </div>
+                        <div class="release-actions">
+                            <button onclick="window.open('${release.url}', '_blank')" class="btn-release">View on GitHub</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function toggleRelease(version) {
+    const details = document.getElementById(`release-${version.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    const item = details?.closest('.release-item');
+    
+    if (details && item) {
+        const isOpen = details.style.display !== 'none';
+        details.style.display = isOpen ? 'none' : 'block';
+        item.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+// ============================================================================
+// Index File Navigation
+// ============================================================================
+
+function initIndexNavigation() {
+    const indexContainer = document.getElementById('index-navigation');
+    if (!indexContainer) return;
+    
+    // Discover all index files in the project
+    const indices = [
+        { path: 'docs/index.md', label: 'Documentation Index' },
+        { path: 'automation-scripts/index.md', label: 'Automation Scripts Index' },
+        { path: 'domains/index.md', label: 'Domains Index' },
+        { path: 'tests/index.md', label: 'Tests Index' },
+        { path: 'templates/index.md', label: 'Templates Index' }
+    ];
+    
+    let html = '<div class="index-grid">';
+    indices.forEach(index => {
+        html += `
+            <div class="index-card" onclick="navigateToIndex('${index.path}')">
+                <div class="index-icon">📑</div>
+                <div class="index-label">${index.label}</div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    indexContainer.innerHTML = html;
+}
+
+function navigateToIndex(path) {
+    const url = `https://github.com/wizzense/AitherZero/blob/main/${path}`;
+    window.open(url, '_blank');
+}
+
+// ============================================================================
+// Modal System
+// ============================================================================
+
+function createModal(title, content) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('dashboard-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'dashboard-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>${title}</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                ${content}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    return modal;
+}
+
+function closeModal() {
+    const modal = document.getElementById('dashboard-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all interactive components
+    initBreadcrumbs();
+    initIndexNavigation();
+    
+    // Smooth scroll for all anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K: Toggle TOC
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            toggleToc();
+        }
+        // Escape: Close modals and menus
+        if (e.key === 'Escape') {
+            closeModal();
+            document.getElementById('toc')?.classList.remove('open');
+        }
+        // Ctrl/Cmd + /: Focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+            e.preventDefault();
+            document.getElementById('config-search-input')?.focus();
+        }
+    });
+    
+    // Scroll event handlers
+    window.addEventListener('scroll', highlightToc);
+    highlightToc();
+    
+    // Copy to clipboard for code blocks
+    document.querySelectorAll('code').forEach(code => {
+        code.style.cursor = 'pointer';
+        code.title = 'Click to copy';
+        code.addEventListener('click', function() {
+            navigator.clipboard.writeText(this.textContent).then(() => {
+                const originalText = this.textContent;
+                this.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    this.textContent = originalText;
+                }, 1500);
+            });
+        });
+    });
+    
+    // Animate progress bars on scroll
+    const progressBars = document.querySelectorAll('.progress-fill');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.transition = 'width 1.5s ease-out';
+                const width = entry.target.style.width;
+                entry.target.style.width = '0%';
+                setTimeout(() => {
+                    entry.target.style.width = width;
+                }, 100);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    progressBars.forEach(bar => observer.observe(bar));
+    
+    // Interactive card effects
+    document.querySelectorAll('.metric-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' || e.target.closest('a') || e.target.tagName === 'BUTTON') {
+                return;
+            }
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+    
+    console.log('🚀 AitherZero Interactive Dashboard Initialized');
+    console.log('📋 Keyboard Shortcuts:');
+    console.log('  • Ctrl/Cmd + K: Toggle navigation');
+    console.log('  • Ctrl/Cmd + /: Focus search');
+    console.log('  • Escape: Close modals/menus');
+    console.log('  • Click code blocks to copy');
+});
+
+// Update timestamp
+function updateTimestamp() {
+    const now = new Date();
+    const timeString = now.toLocaleString();
+    document.title = 'AitherZero Dashboard - Updated ' + timeString;
+}
+setInterval(updateTimestamp, 60000);
+
+        
         // TOC toggle for mobile
         function toggleToc() {
             document.getElementById('toc').classList.toggle('open');

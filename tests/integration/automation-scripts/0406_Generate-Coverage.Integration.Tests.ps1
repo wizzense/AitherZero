@@ -6,19 +6,24 @@
     Integration tests for 0406_Generate-Coverage
 .DESCRIPTION
     Auto-generated integration tests
-    Generated: 2025-10-30 02:34:25
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0406_Generate-Coverage Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
-        $script:ScriptPath = './automation-scripts/0406_Generate-Coverage.ps1'
-        $script:TestConfig = @{ Automation = @{ DryRun = $true } }
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0406_Generate-Coverage.ps1'
     }
 
     Context 'Integration' {
-        It 'Should execute in test mode' {
-            { & $script:ScriptPath -Configuration $script:TestConfig -WhatIf } | Should -Not -Throw
+        It 'Should execute in test mode with WhatIf' {
+            {
+                $params = @{ WhatIf = $true; ErrorAction = 'Stop' }
+                & $script:ScriptPath @params
+            } | Should -Not -Throw
         }
     }
 }

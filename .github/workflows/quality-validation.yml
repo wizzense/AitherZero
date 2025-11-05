@@ -47,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
-          ./bootstrap.ps1 -Mode New -NonInteractive -InstallProfile Minimal
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
       - name: 💾 Cache PowerShell Modules
         uses: actions/cache@v4
@@ -121,6 +121,9 @@ jobs:
         if: steps.changes.outputs.has-files == 'true'
         id: validation
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Host "🔍 Running quality validation..." -ForegroundColor Cyan
           
@@ -360,6 +363,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
+            const crypto = require('crypto');
             
             // Read quality reports
             const reportsDir = './reports/quality';
@@ -397,9 +401,26 @@ jobs:
                 return;
               }
               
-              // Create issue for each failed file or one consolidated issue
+              // Get existing automated issues to avoid duplicates
+              const { data: existingIssues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: 'quality-validation,automated',
+                state: 'open',
+                per_page: 100
+              });
+              
+              console.log(`Found ${existingIssues.length} existing quality validation issues`);
+              
+              // Create issue for each failed file or update existing
               for (const file of failedFiles) {
                 const fileName = path.basename(file.FilePath);
+                
+                // Create fingerprint for deduplication based on file path
+                const fingerprint = crypto.createHash('sha256')
+                  .update(file.FilePath.toLowerCase().replace(/\\/g, '/'))
+                  .digest('hex')
+                  .substring(0, 16);
                 
                 // Find the detailed report
                 const detailedReportFiles = fs.readdirSync(reportsDir)
@@ -420,6 +441,56 @@ jobs:
                 const issueTitle = 'Quality Validation Failed: ' + fileName + ' (Score: ' + file.Score + '%)';
                 const prNumber = context.payload.pull_request?.number || 'N/A';
                 const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+                
+                // Check if issue already exists for this file
+                const existingIssue = existingIssues.find(i => 
+                  i.body && i.body.includes(`<!-- fingerprint:${fingerprint} -->`)
+                );
+                
+                if (existingIssue) {
+                  // Update existing issue with latest info
+                  const updateComment = [
+                    '## 🔄 Updated Quality Validation Report',
+                    '',
+                    `**Timestamp:** ${new Date().toISOString()}`,
+                    `**Overall Score:** ${file.Score}%`,
+                    `**Status:** ${file.Status}`,
+                    `**PR:** #${prNumber}`,
+                    '',
+                    '### Detailed Findings',
+                    '```',
+                    detailedFindings || 'See workflow artifacts for full details',
+                    '```',
+                    '',
+                    '### Workflow Context',
+                    `- **Run ID:** [${context.runId}](${runUrl})`,
+                    `- **Latest PR:** #${context.payload.pull_request.number}`,
+                    '',
+                    '---',
+                    '*This is an automated update. Issue remains open until quality standards are met.*'
+                  ].join('\n');
+                  
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: existingIssue.number,
+                    body: updateComment
+                  });
+                  
+                  console.log(`✅ Updated existing issue #${existingIssue.number} for ${fileName}`);
+                  
+                  // Link to PR
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.payload.pull_request.number,
+                    body: `📋 Updated existing issue #${existingIssue.number} with latest quality validation results for \`${fileName}\``
+                  });
+                  
+                  continue;
+                }
+                
+                // Create new issue if none exists
                 const issueBody = '## Quality Validation Failure Report\n\n' +
                   '**File**: `' + file.FilePath + '`\n' +
                   '**Overall Score**: ' + file.Score + '%\n' +
@@ -439,21 +510,22 @@ jobs:
                   '@copilot please review this file and address the quality issues identified above.\n\n' +
                   '---\n' +
                   '*This issue was automatically created by the Quality Validation System*\n' +
-                  '*Related PR: #${{ github.event.pull_request.number }}*\n' +
-                  '*Workflow Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*';
+                  '*Related PR: #' + context.payload.pull_request.number + '*\n' +
+                  '*Workflow Run: [' + context.runId + '](' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')*\n' +
+                  '<!-- fingerprint:' + fingerprint + ' -->';
                 
                 // Create the issue
+                // Note: Cannot assign to @copilot as it's not a regular user
+                // Instead, we mention @copilot in the issue body
                 const issue = await github.rest.issues.create({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   title: issueTitle,
                   body: issueBody,
                   labels: ['quality-validation', 'automated', 'needs-fix']
-                  # Note: Cannot assign to @copilot as it's not a regular user
-                  # Instead, we mention @copilot in the issue body (line 439)
                 });
                 
-                console.log(`Created issue #${issue.data.number} for ${fileName}`);
+                console.log(`✅ Created new issue #${issue.data.number} for ${fileName}`);
                 
                 // Link issue to PR by adding a comment
                 await github.rest.issues.createComment({

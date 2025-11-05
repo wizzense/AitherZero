@@ -1,0 +1,75 @@
+{
+  "metadata": {
+    "name": "test-standard",
+    "description": "Standard test execution",
+    "version": "1.0.0",
+    "category": "testing",
+    "tags": ["testing", "standard", "validation"],
+    "estimatedDuration": "10-15 minutes",
+    "githubWorkflow": "N/A"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester", "PSScriptAnalyzer"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false
+    },
+    "profiles": {},
+    "stages": [
+      {
+        "name": "Syntax Validation",
+        "description": "Validate PowerShell syntax",
+        "sequences": ["0407"],
+        "variables": {
+          "All": true
+        },
+        "continueOnError": false,
+        "timeout": 180
+      },
+      {
+        "name": "Config Validation",
+        "description": "Validate config.psd1",
+        "sequences": ["0413"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "Manifest Validation",
+        "description": "Validate module manifests",
+        "sequences": ["0405"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "Test Sync Check",
+        "description": "Check test synchronization",
+        "sequences": ["0426"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 180
+      },
+      {
+        "name": "Install Testing Tools",
+        "description": "Ensure testing tools installed",
+        "sequences": ["0400"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Unit Tests",
+        "description": "Run unit tests",
+        "sequences": ["0402"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 900
+      }
+    ]
+  }
+}
