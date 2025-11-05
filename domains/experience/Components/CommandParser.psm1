@@ -95,11 +95,23 @@ function Parse-AitherCommand {
         return $result
     }
     
-    # Validate mode value
+    # Validate mode value (including extension modes)
     $validModes = @('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')
+    
+    # Add extension modes if available
+    if ($global:AitherZeroExtensionModes) {
+        $validModes += $global:AitherZeroExtensionModes.Keys
+    }
+    
     if ($result.Mode -notin $validModes) {
         $result.Error = "Invalid mode '$($result.Mode)'. Valid modes: $($validModes -join ', ')"
         return $result
+    }
+    
+    # Check if this is an extension mode
+    if ($global:AitherZeroExtensionModes -and $global:AitherZeroExtensionModes.ContainsKey($result.Mode)) {
+        $result.IsExtensionMode = $true
+        $result.ExtensionInfo = $global:AitherZeroExtensionModes[$result.Mode]
     }
     
     # Validate mode-specific parameters
