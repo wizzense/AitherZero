@@ -84,7 +84,7 @@ Describe '0854_Manage-PRContainer Integration' -Tag 'Integration', 'AutomationSc
     }
     
     Context 'Status Action' {
-        It 'Should execute Status action with PR number' -Skip:(-not $script:DockerAvailable) {
+        It 'Should execute Status action with PR number' -Skip:(-not ($script:DockerAvailable -and $script:DockerRunning)) {
             # Status checks should work even if container doesn't exist
             $result = & pwsh -Command "& '$script:ScriptPath' -Action Status -PRNumber $script:TestPRNumber 2>&1"
             $LASTEXITCODE | Should -BeIn @(0, 1)
@@ -101,7 +101,7 @@ Describe '0854_Manage-PRContainer Integration' -Tag 'Integration', 'AutomationSc
     }
     
     Context 'Cleanup Action' {
-        It 'Should execute Cleanup action gracefully when container does not exist' -Skip:(-not $script:DockerAvailable) {
+        It 'Should execute Cleanup action gracefully when container does not exist' -Skip:(-not ($script:DockerAvailable -and $script:DockerRunning)) {
             # Cleanup should succeed or warn when container doesn't exist
             $result = & pwsh -Command "& '$script:ScriptPath' -Action Cleanup -PRNumber $script:TestPRNumber 2>&1"
             $LASTEXITCODE | Should -BeIn @(0, 1)
@@ -112,7 +112,7 @@ Describe '0854_Manage-PRContainer Integration' -Tag 'Integration', 'AutomationSc
     }
     
     Context 'Exec Action Parameter Validation' {
-        It 'Should require Command parameter for Exec action' -Skip:(-not $script:DockerAvailable) {
+        It 'Should require Command parameter for Exec action' -Skip:(-not ($script:DockerAvailable -and $script:DockerRunning)) {
             # Exec without a command should fail gracefully
             $result = & pwsh -Command "& '$script:ScriptPath' -Action Exec -PRNumber $script:TestPRNumber 2>&1"
             $LASTEXITCODE | Should -Be 1
