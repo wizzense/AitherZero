@@ -1098,13 +1098,14 @@ function Invoke-SequentialOrchestration {
         # Execute at least once, then retry up to maxRetries times
         while ($retryCount -le $maxRetries -and -not $succeeded) {
             try {
-                # Log retry attempts (retryCount represents attempts already made at this point)
-                if ($retryCount -gt 0) {
-                    Write-OrchestrationLog "Retry attempt $retryCount/$maxRetries for [$($script.Number)] $($script.Name) (Attempt $($retryCount + 1) of $($maxRetries + 1))"
+                # Increment attempt counter at the start of each iteration
+                $retryCount++
+                
+                # Log retry attempts (after incrementing, so retryCount now represents current attempt number)
+                if ($retryCount -gt 1) {
+                    Write-OrchestrationLog "Retry attempt $($retryCount - 1)/$maxRetries for [$($script.Number)] $($script.Name) (Attempt $retryCount of $($maxRetries + 1))"
                     Start-Sleep -Seconds $retryDelay
                 }
-                
-                $retryCount++  # Increment attempt counter before execution
 
                 $scriptStart = Get-Date  # Update for each retry
 
