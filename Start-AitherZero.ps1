@@ -2902,7 +2902,9 @@ function Show-AdvancedMenu {
                         # Check if editor exists
                         $editorPath = (Get-Command $editor -ErrorAction SilentlyContinue)?.Source
                         if (-not $editorPath) {
-                            # Try common editors as fallbacks
+                            # Try common editors as fallbacks (prioritize nano since it's available in container)
+                            # Note: nano is guaranteed in containerized environments (see Dockerfile line 9),
+                            # but this fallback logic handles non-containerized environments
                             $fallbackEditors = @('nano', 'vi', 'vim')
                             foreach ($fallback in $fallbackEditors) {
                                 $editorPath = (Get-Command $fallback -ErrorAction SilentlyContinue)?.Source
@@ -3597,6 +3599,17 @@ try {
 
         'Orchestrate' {
 
+            # Helper function to normalize sequence numbers (pad to 4 digits if needed)
+            function Normalize-SequenceNumber {
+                param([string]$Value)
+                $trimmed = $Value.Trim()
+                # If it's a pure number (lost leading zeros), pad it back to 4 digits
+                if ($trimmed -match '^\d+$' -and $trimmed.Length -lt 4) {
+                    return $trimmed.PadLeft(4, '0')
+                }
+                return $trimmed
+            }
+
             # Normalize and split sequence numbers
             # Handle cases like "0500,0501" being passed as a single string
             # Also pad numbers to 4 digits if they lost leading zeros during parameter binding
@@ -3606,14 +3619,7 @@ try {
                     # Split comma-separated values within each array element
                     $parts = $item -split ',' | Where-Object { $_ }
                     foreach ($part in $parts) {
-                        # Trim whitespace
-                        $part = $part.Trim()
-                        # If it's a pure number (lost leading zeros), pad it back to 4 digits
-                        if ($part -match '^\d+$' -and $part.Length -lt 4) {
-                            $normalizedSequence += $part.PadLeft(4, '0')
-                        } else {
-                            $normalizedSequence += $part
-                        }
+                        $normalizedSequence += Normalize-SequenceNumber -Value $part
                     }
                 }
                 $Sequence = $normalizedSequence
@@ -3630,13 +3636,7 @@ try {
                         # Split comma-separated values
                         $parts = $arg -split ',' | Where-Object { $_ }
                         foreach ($part in $parts) {
-                            $part = $part.Trim()
-                            # Normalize sequence numbers
-                            if ($part -match '^\d+$' -and $part.Length -lt 4) {
-                                $Sequence += $part.PadLeft(4, '0')
-                            } else {
-                                $Sequence += $part
-                            }
+                            $Sequence += Normalize-SequenceNumber -Value $part
                         }
                     } else {
                         $Sequence += [string]$arg
