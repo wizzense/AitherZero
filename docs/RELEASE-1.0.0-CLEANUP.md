@@ -31,14 +31,14 @@ The following tags and releases were identified for removal:
 - v1.0.0.0 (Official 1.0.0 Release)
 
 ### 3. Cleanup Script
-Created `/tools/cleanup-releases-and-tags.ps1` to automate the cleanup process:
+Created `/tools/Invoke-ReleaseCleanup.ps1` to automate the cleanup process:
 
 ```powershell
 # Dry run to see what would be deleted
-./tools/cleanup-releases-and-tags.ps1 -DryRun
+./tools/Invoke-ReleaseCleanup.ps1 -DryRun
 
 # Execute the cleanup
-./tools/cleanup-releases-and-tags.ps1
+./tools/Invoke-ReleaseCleanup.ps1
 ```
 
 The script:
@@ -60,7 +60,7 @@ To complete the cleanup, a repository administrator with appropriate permissions
 2. **Run the cleanup script**:
    ```bash
    cd /path/to/AitherZero
-   pwsh ./tools/cleanup-releases-and-tags.ps1
+   pwsh ./tools/Invoke-ReleaseCleanup.ps1
    ```
 
 3. **Verify the cleanup**:
@@ -98,7 +98,7 @@ The cleanup script includes:
 ## Related Files
 
 - `/VERSION` - Contains the official version number (1.0.0.0)
-- `/tools/cleanup-releases-and-tags.ps1` - Automated cleanup script
+- `/tools/Invoke-ReleaseCleanup.ps1` - Automated cleanup script
 - `/.github/workflows/release.yml` - Release automation workflow
 
 ## References
