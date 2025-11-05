@@ -60,7 +60,7 @@ jobs:
           Write-Host "🔍 Diagnosing CI Failures..." -ForegroundColor Cyan
           
           # Get the script
-          $script = "./automation-scripts/0530_Get-WorkflowRunReport.ps1"
+          $script = "./automation-scripts/0531_Get-WorkflowRunReport.ps1"
           
           if (-not (Test-Path $script)) {
             Write-Host "❌ Diagnostic script not found: $script" -ForegroundColor Red
@@ -70,7 +70,7 @@ jobs:
           # Run diagnostic based on input
           if ($runId) {
             Write-Host "📊 Analyzing run ID: $runId" -ForegroundColor Yellow
-            & $script -RunId $runId -Detailed -OutputFormat Both
+            & $script -RunId $runId -Detailed -OutputFormat both
           } elseif ($workflowName) {
             Write-Host "📊 Analyzing workflow: $workflowName" -ForegroundColor Yellow
             & $script -WorkflowName $workflowName -Status failure -Limit 5
