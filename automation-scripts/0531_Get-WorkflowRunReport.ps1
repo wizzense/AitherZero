@@ -471,8 +471,12 @@ try {
         if ($OutputFormat -eq 'both') {
             # Determine base path - use ExportPath directory if specified, otherwise current directory
             $basePath = if ($ExportPath) {
-                $directory = Split-Path $ExportPath -Parent -ErrorAction SilentlyContinue
-                if ($directory -and $directory -ne '') { $directory } else { Get-Location }
+                $directory = Split-Path $ExportPath -Parent
+                if ([string]::IsNullOrEmpty($directory)) { 
+                    Get-Location 
+                } else { 
+                    $directory 
+                }
             } else {
                 Get-Location
             }
