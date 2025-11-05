@@ -598,3 +598,8 @@ function Show-CommandHelp {
 Export-ModuleMember -Function @(
     'Start-UnifiedMenu'
 )
+
+# Create alias for compatibility
+New-Alias -Name 'Show-UnifiedMenu' -Value 'Start-UnifiedMenu' -Force
+Export-ModuleMember -Alias 'Show-UnifiedMenu'
+
