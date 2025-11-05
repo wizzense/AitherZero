@@ -39,6 +39,12 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+
       - name: Copy MCP Server Documentation
         run: |
           echo "📄 Copying MCP server documentation to docs..."
@@ -57,10 +63,9 @@ jobs:
           fi
         
       - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./
-          destination: ./_site
+        run: bundle exec jekyll build --source ./ --destination ./_site
+        env:
+          JEKYLL_ENV: production
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
