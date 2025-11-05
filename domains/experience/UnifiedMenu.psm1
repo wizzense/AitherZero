@@ -105,15 +105,55 @@ function Show-ModeSelectionMenu {
         Show-CurrentCommand
         Write-Host ""
         
-        # Build mode menu items
-        $items = @(
-            [PSCustomObject]@{ Name = "🎯 Run - Execute scripts or sequences"; Mode = 'Run' }
-            [PSCustomObject]@{ Name = "📚 Orchestrate - Run playbooks"; Mode = 'Orchestrate' }
-            [PSCustomObject]@{ Name = "🔍 Search - Find scripts and resources"; Mode = 'Search' }
-            [PSCustomObject]@{ Name = "📋 List - Show available resources"; Mode = 'List' }
-            [PSCustomObject]@{ Name = "✅ Test - Run test suites"; Mode = 'Test' }
-            [PSCustomObject]@{ Name = "🔧 Validate - Validation checks"; Mode = 'Validate' }
-        )
+        # Build mode menu items from config manifest capabilities
+        $items = @()
+        
+        # Get capabilities from manifest if available
+        if (Get-Command Get-ManifestCapabilities -ErrorAction SilentlyContinue) {
+            $capabilities = Get-ManifestCapabilities
+            if ($capabilities -and $capabilities.Modes) {
+                # Generate menu from manifest modes
+                $modeIcons = @{
+                    'Run' = '🎯'
+                    'Orchestrate' = '📚'
+                    'Search' = '🔍'
+                    'List' = '📋'
+                    'Test' = '✅'
+                    'Validate' = '🔧'
+                    'Deploy' = '🚀'
+                    'Interactive' = '💻'
+                }
+                
+                $modeDescriptions = @{
+                    'Run' = 'Execute scripts or sequences'
+                    'Orchestrate' = 'Run playbooks'
+                    'Search' = 'Find scripts and resources'
+                    'List' = 'Show available resources'
+                    'Test' = 'Run test suites'
+                    'Validate' = 'Validation checks'
+                    'Deploy' = 'Deploy infrastructure'
+                    'Interactive' = 'Interactive menu'
+                }
+                
+                foreach ($mode in $capabilities.Modes) {
+                    if ($mode -ne 'Interactive') {  # Skip Interactive in the menu
+                        $icon = if ($modeIcons.ContainsKey($mode)) { $modeIcons[$mode] } else { '▶️' }
+                        $desc = if ($modeDescriptions.ContainsKey($mode)) { $modeDescriptions[$mode] } else { $mode }
+                        
+                        $items += [PSCustomObject]@{
+                            Name = "$icon $mode - $desc"
+                            Mode = $mode
+                        }
+                    }
+                }
+            } else {
+                # Fallback to default modes
+                $items = Get-DefaultModeMenuItems
+            }
+        } else {
+            # Fallback to default modes
+            $items = Get-DefaultModeMenuItems
+        }
         
         Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
         Write-Host "║                    Select Mode (-Mode)                     ║" -ForegroundColor Cyan
@@ -176,6 +216,12 @@ function Show-ModeSelectionMenu {
             'List' { Show-ListMenu }
             'Test' { Show-TestMenu }
             'Validate' { Show-ValidateMenu }
+            'Deploy' { Show-DeployMenu }
+            default {
+                Write-Host "`n⚠️  Mode '$selectedMode' not yet implemented" -ForegroundColor Yellow
+                Write-Host "Press any key to continue..." -ForegroundColor DarkGray
+                $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+            }
         }
         
         # Pop breadcrumb when returning
@@ -185,6 +231,21 @@ function Show-ModeSelectionMenu {
     }
     
     Write-Host "`n✨ Goodbye!" -ForegroundColor Cyan
+}
+
+<#
+.SYNOPSIS
+    Gets default mode menu items (fallback)
+#>
+function Get-DefaultModeMenuItems {
+    return @(
+        [PSCustomObject]@{ Name = "🎯 Run - Execute scripts or sequences"; Mode = 'Run' }
+        [PSCustomObject]@{ Name = "📚 Orchestrate - Run playbooks"; Mode = 'Orchestrate' }
+        [PSCustomObject]@{ Name = "🔍 Search - Find scripts and resources"; Mode = 'Search' }
+        [PSCustomObject]@{ Name = "📋 List - Show available resources"; Mode = 'List' }
+        [PSCustomObject]@{ Name = "✅ Test - Run test suites"; Mode = 'Test' }
+        [PSCustomObject]@{ Name = "🔧 Validate - Validation checks"; Mode = 'Validate' }
+    )
 }
 
 <#

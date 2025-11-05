@@ -587,6 +587,29 @@ function Export-ConfigurationTemplate {
     Write-Host "✅ Configuration template created: $OutputPath" -ForegroundColor Green
 }
 
+<#
+.SYNOPSIS
+    Gets manifest capabilities for menu generation
+#>
+function Get-ManifestCapabilities {
+    [CmdletBinding()]
+    param()
+    
+    if (-not $script:ConfigManager.Initialized) {
+        Initialize-ConfigManager
+    }
+    
+    return $script:ConfigManager.ManifestCapabilities
+}
+
+<#
+.SYNOPSIS
+    Gets current configuration (alias for compatibility)
+#>
+function Get-CurrentConfiguration {
+    return Get-ActiveConfiguration
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Initialize-ConfigManager'
