@@ -29,10 +29,14 @@
     Maximum number of runs to list (default: 10).
 
 .PARAMETER OutputFormat
-    Output format: console, json, markdown (default: console).
+    Output format: console, json, markdown, both (default: console).
+    When 'both' is specified, generates both JSON and text files with names
+    workflow-report-{RunId}.json and workflow-report-{RunId}.txt.
 
 .PARAMETER ExportPath
     Path to export report to (optional).
+    For OutputFormat='both', this specifies the directory where files are created.
+    For other formats, this is the full file path including name.
 
 .EXAMPLE
     ./automation-scripts/0531_Get-WorkflowRunReport.ps1 -RunId 12345678
@@ -465,15 +469,23 @@ try {
 
         # Handle "both" output format - generate both JSON and text files
         if ($OutputFormat -eq 'both') {
+            # Determine base path - use ExportPath directory if specified, otherwise current directory
+            $basePath = if ($ExportPath) {
+                $directory = Split-Path $ExportPath -Parent
+                if ($directory) { $directory } else { Get-Location }
+            } else {
+                Get-Location
+            }
+            
             # Generate JSON report
             $jsonReport = Format-JsonReport -Details $details
-            $jsonFileName = "workflow-report-$RunId.json"
+            $jsonFileName = Join-Path $basePath "workflow-report-$RunId.json"
             $jsonReport | Out-File -FilePath $jsonFileName -Encoding UTF8
             Write-Host "✓ JSON report exported to: $jsonFileName" -ForegroundColor Green
             
             # Generate markdown/text report
             $mdReport = Format-MarkdownReport -Details $details
-            $txtFileName = "workflow-report-$RunId.txt"
+            $txtFileName = Join-Path $basePath "workflow-report-$RunId.txt"
             $mdReport | Out-File -FilePath $txtFileName -Encoding UTF8
             Write-Host "✓ Text report exported to: $txtFileName" -ForegroundColor Green
             
