@@ -80,14 +80,30 @@ Describe '0531_Get-WorkflowRunReport' -Tag 'Unit', 'AutomationScript', 'Reportin
             $cmd.Parameters.ContainsKey('List') | Should -Be $true
         }
 
+        It 'Should have parameter: Detailed' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Detailed') | Should -Be $true
+        }
+
         It 'Should have parameter: MaxRuns' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('MaxRuns') | Should -Be $true
         }
 
+        It 'Should have Limit alias for MaxRuns parameter' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters['MaxRuns'].Aliases | Should -Contain 'Limit'
+        }
+
         It 'Should have parameter: OutputFormat' {
             $cmd = Get-Command $script:ScriptPath
             $cmd.Parameters.ContainsKey('OutputFormat') | Should -Be $true
+        }
+
+        It 'Should accept both as OutputFormat value' {
+            $cmd = Get-Command $script:ScriptPath
+            $validateSet = $cmd.Parameters['OutputFormat'].Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
+            $validateSet.ValidValues | Should -Contain 'both'
         }
 
         It 'Should have parameter: ExportPath' {
