@@ -70,15 +70,24 @@ jobs:
         with:
           script: |
             try {
+              // Note: listArtifactsForRepo does not support name filtering
+              // We must fetch artifacts and filter by name in the response
               const artifacts = await github.rest.actions.listArtifactsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                name: 'issue-state-db',
-                per_page: 1
+                per_page: 100
               });
               
-              const exists = artifacts.data.artifacts.length > 0;
+              // Filter for the specific artifact by name and check if not expired
+              const targetArtifact = artifacts.data.artifacts.find(
+                artifact => artifact.name === 'issue-state-db' && !artifact.expired
+              );
+              
+              const exists = !!targetArtifact;
               console.log(`Issue state artifact ${exists ? 'exists' : 'does not exist'}`);
+              if (targetArtifact) {
+                console.log(`  Found artifact ID: ${targetArtifact.id}, created: ${targetArtifact.created_at}`);
+              }
               core.setOutput('exists', exists);
               return exists;
             } catch (error) {
@@ -343,15 +352,24 @@ jobs:
         with:
           script: |
             try {
+              // Note: listArtifactsForRepo does not support name filtering
+              // We must fetch artifacts and filter by name in the response
               const artifacts = await github.rest.actions.listArtifactsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                name: 'issue-state-db',
-                per_page: 1
+                per_page: 100
               });
               
-              const exists = artifacts.data.artifacts.length > 0;
+              // Filter for the specific artifact by name and check if not expired
+              const targetArtifact = artifacts.data.artifacts.find(
+                artifact => artifact.name === 'issue-state-db' && !artifact.expired
+              );
+              
+              const exists = !!targetArtifact;
               console.log(`Issue state artifact ${exists ? 'exists' : 'does not exist'}`);
+              if (targetArtifact) {
+                console.log(`  Found artifact ID: ${targetArtifact.id}, created: ${targetArtifact.created_at}`);
+              }
               core.setOutput('exists', exists);
               return exists;
             } catch (error) {
@@ -702,7 +720,7 @@ jobs:
           $issueState = if (Test-Path $issueStateFile) {
             Get-Content $issueStateFile -Raw | ConvertFrom-Json
           } else {
-            @{ fingerprints = @(); lastUpdated = $null }
+            @{ fingerprints = @(); lastUpdated = $null; totalTracked = 0 }
           }
 
           # Load created issues
