@@ -74,10 +74,14 @@ param(
     [switch]$List,
 
     [Parameter(Mandatory = $false)]
+    [switch]$Detailed,
+
+    [Parameter(Mandatory = $false)]
+    [Alias('Limit')]
     [int]$MaxRuns = 10,
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet('console', 'json', 'markdown')]
+    [ValidateSet('console', 'json', 'markdown', 'both')]
     [string]$OutputFormat = 'console',
 
     [Parameter(Mandatory = $false)]
@@ -459,19 +463,38 @@ try {
         Write-Host "🔍 Fetching detailed report for run $RunId..." -ForegroundColor Cyan
         $details = Get-WorkflowRunDetails -RunId $RunId
 
-        # Format and output report
-        $report = switch ($OutputFormat) {
-            'json' { Format-JsonReport -Details $details }
-            'markdown' { Format-MarkdownReport -Details $details }
-            default { Format-ConsoleReport -Details $details; $null }
+        # Handle "both" output format - generate both JSON and text files
+        if ($OutputFormat -eq 'both') {
+            # Generate JSON report
+            $jsonReport = Format-JsonReport -Details $details
+            $jsonFileName = "workflow-report-$RunId.json"
+            $jsonReport | Out-File -FilePath $jsonFileName -Encoding UTF8
+            Write-Host "✓ JSON report exported to: $jsonFileName" -ForegroundColor Green
+            
+            # Generate markdown/text report
+            $mdReport = Format-MarkdownReport -Details $details
+            $txtFileName = "workflow-report-$RunId.txt"
+            $mdReport | Out-File -FilePath $txtFileName -Encoding UTF8
+            Write-Host "✓ Text report exported to: $txtFileName" -ForegroundColor Green
+            
+            # Also display console output for immediate feedback
+            Format-ConsoleReport -Details $details
         }
+        else {
+            # Format and output report
+            $report = switch ($OutputFormat) {
+                'json' { Format-JsonReport -Details $details }
+                'markdown' { Format-MarkdownReport -Details $details }
+                default { Format-ConsoleReport -Details $details; $null }
+            }
 
-        # Export if path specified
-        if ($ExportPath -and $report) {
-            $report | Out-File -FilePath $ExportPath -Encoding UTF8
-            Write-Host "✓ Report exported to: $ExportPath" -ForegroundColor Green
-        } elseif ($report) {
-            Write-Output $report
+            # Export if path specified
+            if ($ExportPath -and $report) {
+                $report | Out-File -FilePath $ExportPath -Encoding UTF8
+                Write-Host "✓ Report exported to: $ExportPath" -ForegroundColor Green
+            } elseif ($report) {
+                Write-Output $report
+            }
         }
     }
 

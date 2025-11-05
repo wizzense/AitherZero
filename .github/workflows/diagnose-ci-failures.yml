@@ -60,7 +60,7 @@ jobs:
           Write-Host "🔍 Diagnosing CI Failures..." -ForegroundColor Cyan
           
           # Get the script
-          $script = "./automation-scripts/0530_Get-WorkflowRunReport.ps1"
+          $script = "./automation-scripts/0531_Get-WorkflowRunReport.ps1"
           
           if (-not (Test-Path $script)) {
             Write-Host "❌ Diagnostic script not found: $script" -ForegroundColor Red
