@@ -73,7 +73,9 @@ export class AitherZeroTerminal {
         }
 
         // Try to use the global aitherzero command first, fall back to direct execution
-        return `aitherzero ${scriptNumber} ${args.join(' ')} || pwsh -File "${path.join(aitherZeroPath, 'Start-AitherZero.ps1')}" -Mode Run -Target ${scriptNumber}`;
+        // Ensure args are passed to both the CLI and the fallback command
+        const argsStr = args.length > 0 ? ` ${args.join(' ')}` : '';
+        return `aitherzero ${scriptNumber}${argsStr} || pwsh -File "${path.join(aitherZeroPath, 'Start-AitherZero.ps1')}" -Mode Run -Target ${scriptNumber}${argsStr}`;
     }
 
     private getAitherZeroPath(): string | undefined {
