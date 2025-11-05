@@ -22,6 +22,14 @@
 param(
     [string]$Path = (Split-Path $PSScriptRoot -Parent),
     [string]$OutputPath,
+    
+    # Performance & Mode Options
+    [switch]$Fast,              # Fast mode: analyze only core/critical files
+    [switch]$UseCache,          # Use cached results for unchanged files  
+    [int]$MaxFiles = 0,         # Max files to analyze (0 = all, used with -Fast)
+    [switch]$CoreOnly,          # Analyze only core files (most restrictive)
+    
+    # Standard Options
     [switch]$DryRun,
     [switch]$Fix,
     [switch]$IncludeSuppressed,
@@ -34,6 +42,15 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Determine output path based on mode
+if (-not $OutputPath) {
+    if ($Fast) {
+        $OutputPath = "./reports/psscriptanalyzer-fast-results.json"
+    } else {
+        $OutputPath = "./reports/psscriptanalyzer-results.json"
+    }
+}
+
 # Script metadata (kept as comment for documentation)
 # Stage: Testing
 # Order: 0404
@@ -44,39 +61,12 @@ Set-StrictMode -Version Latest
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
-$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
+Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
 
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force
-    $script:LoggingAvailable = $true
-} else {
-    $script:LoggingAvailable = $false
-}
+$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
 
 if (Test-Path $configModule) {
     Import-Module $configModule -Force -ErrorAction SilentlyContinue
-}
-
-function Write-ScriptLog {
-    param(
-        [string]$Level = 'Information',
-        [string]$Message,
-        [hashtable]$Data = @{}
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0404_Run-PSScriptAnalyzer" -Data $Data
-    } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = @{
-            'Error' = 'Red'
-            'Warning' = 'Yellow'
-            'Information' = 'White'
-            'Debug' = 'Gray'
-        }[$Level]
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
 }
 
 $settingsPath = $null  # Initialize for cleanup in finally block
@@ -213,6 +203,55 @@ try {
             Path = $Path
             Recurse = $true
             Settings = $settingsPath
+        }
+    }
+
+    # FAST MODE: Limit files to core/critical files only
+    if ($Fast -or $CoreOnly) {
+        Write-ScriptLog -Message "Fast mode enabled - analyzing only core/critical files"
+        
+        # Core application files
+        $coreFiles = @(
+            './Start-AitherZero.ps1',
+            './Initialize-AitherEnvironment.ps1',
+            './bootstrap.ps1'
+        ) | Where-Object { Test-Path (Join-Path $Path $_) } | ForEach-Object { Join-Path $Path $_ }
+        
+        # Key automation scripts (most important)
+        $keyPattern = '^(0[0-4]\d{2}_|0815_|0820_|0830_|0835_|0400_|0402_|0404_)'
+        $keyAutomationScripts = @()
+        $automationPath = Join-Path $Path 'automation-scripts'
+        if (Test-Path $automationPath) {
+            $keyAutomationScripts = Get-ChildItem $automationPath -Filter '*.ps1' | 
+                                   Where-Object { $_.Name -match $keyPattern } |
+                                   Select-Object -First 15 -ExpandProperty FullName
+        }
+        
+        # Essential domain modules
+        $domainFiles = @()
+        $domainsPath = Join-Path $Path 'domains'
+        if (Test-Path $domainsPath) {
+            $domainFiles = Get-ChildItem $domainsPath -Filter '*.psm1' -Recurse | 
+                          Select-Object -First 5 -ExpandProperty FullName
+        }
+        
+        # Combine and limit
+        $allFastFiles = @($coreFiles + $keyAutomationScripts + $domainFiles) | Where-Object { $_ -and (Test-Path $_) }
+        
+        if ($MaxFiles -gt 0 -and $allFastFiles.Count -gt $MaxFiles) {
+            $allFastFiles = $allFastFiles | Select-Object -First $MaxFiles
+        }
+        
+        Write-ScriptLog -Message "Fast mode: Selected $($allFastFiles.Count) critical files for analysis"
+        
+        # Override file discovery
+        $filesToAnalyze = $allFastFiles
+        $analyzerParams = @{
+            Path = $filesToAnalyze
+            Recurse = $false
+        }
+        if ($settingsPath -and (Test-Path $settingsPath)) {
+            $analyzerParams['Settings'] = $settingsPath
         }
     }
 

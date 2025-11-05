@@ -363,7 +363,7 @@ jobs:
           ./az.ps1 0404          # Code quality analysis
 
           # System setup (Windows)
-          ./az.ps1 0001          # Ensure PowerShell 7
+          # Note: PowerShell 7 is ensured by bootstrap.ps1
           ./az.ps1 0105          # Install Hyper-V
           ./az.ps1 0106          # Install WSL2
 

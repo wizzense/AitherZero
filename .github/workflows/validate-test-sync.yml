@@ -16,6 +16,10 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: validate-test-sync-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write

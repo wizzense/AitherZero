@@ -11,8 +11,8 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 137
-- **PowerShell Scripts**: 136
+- **Files**: 141
+- **PowerShell Scripts**: 140
 
 ## 📄 Files
 
@@ -24,8 +24,6 @@
 
 - ⚙️ [0000_Cleanup-Environment.Integration.Tests.ps1](./0000_Cleanup-Environment.Integration.Tests.ps1)
   - *Integration tests for 0000_Cleanup-Environment*
-- ⚙️ [0001_Ensure-PowerShell7.Integration.Tests.ps1](./0001_Ensure-PowerShell7.Integration.Tests.ps1)
-  - *Integration tests for 0001_Ensure-PowerShell7*
 - ⚙️ [0002_Setup-Directories.Integration.Tests.ps1](./0002_Setup-Directories.Integration.Tests.ps1)
   - *Integration tests for 0002_Setup-Directories*
 - ⚙️ [0003_Sync-ConfigManifest.Integration.Tests.ps1](./0003_Sync-ConfigManifest.Integration.Tests.ps1)
@@ -85,7 +83,7 @@
 - ⚙️ [0218_Install-GeminiCLI.Integration.Tests.ps1](./0218_Install-GeminiCLI.Integration.Tests.ps1)
   - *Integration tests for 0218_Install-GeminiCLI*
 - ⚙️ [0219_Install-Chocolatey.Integration.Tests.ps1](./0219_Install-Chocolatey.Integration.Tests.ps1)
-  - *Integration tests for 0215_Install-Chocolatey*
+  - *Integration tests for 0219_Install-Chocolatey*
 - ⚙️ [0300_Deploy-Infrastructure.Integration.Tests.ps1](./0300_Deploy-Infrastructure.Integration.Tests.ps1)
   - *Integration tests for 0300_Deploy-Infrastructure*
 - ⚙️ [0400_Install-TestingTools.Integration.Tests.ps1](./0400_Install-TestingTools.Integration.Tests.ps1)
@@ -116,6 +114,8 @@
   - *Integration tests for 0413_Validate-ConfigManifest*
 - ⚙️ [0414_Test-Optimized.Integration.Tests.ps1](./0414_Test-Optimized.Integration.Tests.ps1)
   - *Integration tests for 0414_Test-Optimized*
+- ⚙️ [0415_Manage-PSScriptAnalyzerCache.Integration.Tests.ps1](./0415_Manage-PSScriptAnalyzerCache.Integration.Tests.ps1)
+  - *Integration tests for 0415_Manage-PSScriptAnalyzerCache*
 - ⚙️ [0420_Validate-ComponentQuality.Integration.Tests.ps1](./0420_Validate-ComponentQuality.Integration.Tests.ps1)
   - *Integration tests for 0420_Validate-ComponentQuality*
 - ⚙️ [0425_Validate-DocumentationStructure.Integration.Tests.ps1](./0425_Validate-DocumentationStructure.Integration.Tests.ps1)
@@ -152,10 +152,14 @@
   - *Integration tests for 0512_Generate-Dashboard*
 - ⚙️ [0513_Enable-ContinuousReporting.Integration.Tests.ps1](./0513_Enable-ContinuousReporting.Integration.Tests.ps1)
   - *Integration tests for 0513_Enable-ContinuousReporting*
+- ⚙️ [0514_Generate-CodeMap.Integration.Tests.ps1](./0514_Generate-CodeMap.Integration.Tests.ps1)
+  - *Integration tests for 0514_Generate-CodeMap*
 - ⚙️ [0514_Schedule-ReportGeneration.Integration.Tests.ps1](./0514_Schedule-ReportGeneration.Integration.Tests.ps1)
   - *Integration tests for 0514_Schedule-ReportGeneration*
 - ⚙️ [0515_Deploy-Documentation.Integration.Tests.ps1](./0515_Deploy-Documentation.Integration.Tests.ps1)
   - *Integration tests for 0515_Deploy-Documentation*
+- ⚙️ [0516_Schedule-ReportGeneration.Integration.Tests.ps1](./0516_Schedule-ReportGeneration.Integration.Tests.ps1)
+  - *Integration tests for 0516_Schedule-ReportGeneration*
 - ⚙️ [0520_Analyze-ConfigurationUsage.Integration.Tests.ps1](./0520_Analyze-ConfigurationUsage.Integration.Tests.ps1)
   - *Integration tests for 0520_Analyze-ConfigurationUsage*
 - ⚙️ [0521_Analyze-DocumentationCoverage.Integration.Tests.ps1](./0521_Analyze-DocumentationCoverage.Integration.Tests.ps1)
@@ -264,14 +268,10 @@
   - *Integration tests for 0822_Test-IssueCreation*
 - ⚙️ [0825_Create-Issues-Manual.Integration.Tests.ps1](./0825_Create-Issues-Manual.Integration.Tests.ps1)
   - *Integration tests for 0825_Create-Issues-Manual*
-- ⚙️ [0830_Generate-IssueFiles.Integration.Tests.ps1](./0830_Generate-IssueFiles.Integration.Tests.ps1)
-  - *Integration tests for 0830_Generate-IssueFiles*
 - ⚙️ [0831_Prompt-Templates.Integration.Tests.ps1](./0831_Prompt-Templates.Integration.Tests.ps1)
   - *Integration tests for 0831_Prompt-Templates*
 - ⚙️ [0832_Generate-PromptFromData.Integration.Tests.ps1](./0832_Generate-PromptFromData.Integration.Tests.ps1)
   - *Integration tests for 0832_Generate-PromptFromData*
-- ⚙️ [0835_Create-Issues-Now.Integration.Tests.ps1](./0835_Create-Issues-Now.Integration.Tests.ps1)
-  - *Integration tests for 0835_Create-Issues-Now*
 - ⚙️ [0840_Validate-WorkflowAutomation.Integration.Tests.ps1](./0840_Validate-WorkflowAutomation.Integration.Tests.ps1)
   - *Integration tests for 0840_Validate-WorkflowAutomation*
 - ⚙️ [0850_Deploy-PREnvironment.Integration.Tests.ps1](./0850_Deploy-PREnvironment.Integration.Tests.ps1)
@@ -292,10 +292,18 @@
   - *Integration tests for 0901_Test-LocalDeployment*
 - ⚙️ [0950_Generate-AllTests.Integration.Tests.ps1](./0950_Generate-AllTests.Integration.Tests.ps1)
   - *Integration tests for 0950_Generate-AllTests*
+- ⚙️ [0951_Regenerate-FunctionalTests.Integration.Tests.ps1](./0951_Regenerate-FunctionalTests.Integration.Tests.ps1)
+  - *Integration tests for 0951_Regenerate-FunctionalTests*
+- ⚙️ [0960_Track-DocumentationFreshness.Integration.Tests.ps1](./0960_Track-DocumentationFreshness.Integration.Tests.ps1)
+  - *Integration tests for 0960_Track-DocumentationFreshness*
+- ⚙️ [0961_Validate-DirectoryDocumentation.Integration.Tests.ps1](./0961_Validate-DirectoryDocumentation.Integration.Tests.ps1)
+  - *Integration tests for 0961_Validate-DirectoryDocumentation*
+- ⚙️ [0962_Run-Playbook.Integration.Tests.ps1](./0962_Run-Playbook.Integration.Tests.ps1)
+  - *Integration tests for 0962_Run-Playbook*
 - ⚙️ [9999_Reset-Machine.Integration.Tests.ps1](./9999_Reset-Machine.Integration.Tests.ps1)
   - *Integration tests for 9999_Reset-Machine*
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-04 06:45:24 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-05 01:07:43 UTC
 

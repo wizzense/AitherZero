@@ -19,10 +19,6 @@ on:
       - 'README.md'
       - 'docs/**'
   workflow_dispatch:
-
-concurrency:
-  group: documentation-automation-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: true
     inputs:
       mode:
         description: 'Documentation generation mode'
@@ -42,15 +38,19 @@ concurrency:
         - HTML
         - Both
 
+concurrency:
+  group: documentation-automation-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   cleanup-auto-prs:
     name: 🧹 Cleanup Auto PRs
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    
+
     permissions:
       pull-requests: write
-      
+
     steps:
     - name: 🔍 Find and Close Auto PRs
       uses: actions/github-script@v7
@@ -59,26 +59,26 @@ jobs:
           const prNumber = context.payload.pull_request.number;
           const autoBranchName = `auto-docs/${prNumber}`;
           const repo = context.repo;
-          
+
           core.info(`Parent PR #${prNumber} was closed, searching for auto-docs PRs...`);
-          
+
           // Find all open PRs from the auto-docs branch
           const { data: allPRs } = await github.rest.pulls.list({
             owner: repo.owner,
             repo: repo.repo,
             state: 'open'
           });
-          
+
           const autoPRs = allPRs.filter(pr => pr.head.ref === autoBranchName);
-          
+
           if (autoPRs.length === 0) {
             core.info(`No open auto-docs PRs found for branch ${autoBranchName}`);
             return;
           }
-          
+
           for (const autoPR of autoPRs) {
             core.info(`Closing auto-docs PR #${autoPR.number}`);
-            
+
             // Add a comment explaining why it's being closed
             await github.rest.issues.createComment({
               owner: repo.owner,
@@ -86,7 +86,7 @@ jobs:
               issue_number: autoPR.number,
               body: `🔒 Automatically closing this PR because the parent PR #${prNumber} was closed.`
             });
-            
+
             // Close the PR
             await github.rest.pulls.update({
               owner: repo.owner,
@@ -94,10 +94,10 @@ jobs:
               pull_number: autoPR.number,
               state: 'closed'
             });
-            
+
             core.info(`✅ Closed auto-docs PR #${autoPR.number}`);
           }
-          
+
           // Delete the auto branch
           try {
             await github.rest.git.deleteRef({
@@ -118,53 +118,53 @@ jobs:
     name: 🔄 Generate Documentation
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: write
       pull-requests: write
-      
+
     steps:
     - name: 📥 Checkout Repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - name: ⚡ Verify PowerShell
       shell: pwsh
       run: |
         # Verify PowerShell version
         Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
         Write-Host "OS: $($PSVersionTable.OS)" -ForegroundColor Green
-          
+
     - name: 📦 Install Dependencies
       shell: pwsh
       run: |
         Write-Host "Installing required PowerShell modules..." -ForegroundColor Cyan
-        
+
         # Install any required modules for documentation generation
         if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
           Install-Module -Name PowerShellGet -Force -Scope CurrentUser
         }
-        
+
         Write-Host "Dependencies installed successfully" -ForegroundColor Green
-        
+
     - name: 🏗️ Initialize AitherZero
       shell: pwsh
       run: |
         Write-Host "Initializing AitherZero environment..." -ForegroundColor Cyan
-        
+
         # Import the main module
         Import-Module ./AitherZero.psd1 -Force
         Get-Module AitherZero
-        
+
         Write-Host "AitherZero initialized successfully" -ForegroundColor Green
-        
+
     - name: 📚 Generate Documentation
       shell: pwsh
       run: |
         Write-Host "Starting automated documentation generation..." -ForegroundColor Cyan
-        
+
         # Set parameters based on trigger
         $mode = if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
           '${{ github.event.inputs.mode }}'
@@ -173,15 +173,15 @@ jobs:
         } else {
           'Full'
         }
-        
+
         $format = if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
           '${{ github.event.inputs.format }}'
         } else {
           'Both'
         }
-        
+
         Write-Host "Mode: $mode, Format: $format" -ForegroundColor White
-        
+
         # Run documentation generation
         try {
           ./automation-scripts/0744_Generate-AutoDocumentation.ps1 -Mode $mode -Format $format -Quality
@@ -190,63 +190,63 @@ jobs:
           Write-Error "Documentation generation failed: $_"
           exit 1
         }
-        
+
     - name: 🔍 Validate Documentation Quality
       shell: pwsh
       run: |
         Write-Host "Validating documentation quality..." -ForegroundColor Cyan
-        
+
         # Import documentation engine
         Import-Module ./domains/documentation/DocumentationEngine.psm1 -Force
         Initialize-DocumentationEngine
-        
+
         # Run quality validation
         $results = Test-DocumentationQuality -Path "./docs/generated"
-        
+
         Write-Host "Quality Score: $($results.Score)%" -ForegroundColor White
         Write-Host "Quality Gate: $(if ($results.Passed) { 'PASSED' } else { 'FAILED' })" -ForegroundColor $(if ($results.Passed) { 'Green' } else { 'Red' })
-        
+
         if (-not $results.Passed) {
           Write-Warning "Documentation quality gate failed"
           # Don't fail the build for quality issues, just warn
         }
-        
+
     - name: 📊 Generate Documentation Report
       shell: pwsh
       run: |
         Write-Host "Generating documentation report..." -ForegroundColor Cyan
-        
+
         # Count generated files
         $generatedPath = "./docs/generated"
         if (Test-Path $generatedPath) {
           $markdownFiles = @(Get-ChildItem -Path $generatedPath -Filter "*.md" -Recurse).Count
           $htmlFiles = @(Get-ChildItem -Path $generatedPath -Filter "*.html" -Recurse).Count
-          
+
           Write-Host "Generated Files:" -ForegroundColor White
           Write-Host "  - Markdown: $markdownFiles files" -ForegroundColor White
           Write-Host "  - HTML: $htmlFiles files" -ForegroundColor White
-          
+
           # Set output for later steps
           echo "MARKDOWN_FILES=$markdownFiles" >> $env:GITHUB_ENV
           echo "HTML_FILES=$htmlFiles" >> $env:GITHUB_ENV
         }
-        
+
     - name: 🔍 Check for Uncommitted Documentation Changes (PR)
       if: github.event_name == 'pull_request'
       id: check-doc-changes
       shell: pwsh
       run: |
         Write-Host "Checking for uncommitted documentation changes..." -ForegroundColor Cyan
-        
+
         # Check if there are uncommitted changes after generation
         $changes = git status --porcelain | Where-Object { $_ -match 'docs/generated/' }
         $hasUncommittedChanges = @($changes).Count -gt 0
-        
+
         if ($hasUncommittedChanges) {
           Write-Host "✅ Documentation was regenerated and needs to be committed" -ForegroundColor Green
           Write-Host "Updated documentation files:" -ForegroundColor Cyan
           $changes | ForEach-Object { Write-Host "  $_" -ForegroundColor Cyan }
-          
+
           echo "HAS_UNCOMMITTED_DOCS=true" >> $env:GITHUB_ENV
           echo "UNCOMMITTED_DOC_COUNT=$($changes.Count)" >> $env:GITHUB_ENV
           echo "has_changes=true" >> $env:GITHUB_OUTPUT
@@ -256,7 +256,7 @@ jobs:
           echo "UNCOMMITTED_DOC_COUNT=0" >> $env:GITHUB_ENV
           echo "has_changes=false" >> $env:GITHUB_OUTPUT
         }
-        
+
     - name: 🌿 Create Auto-Docs Branch and PR (PR Only)
       if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
       uses: actions/github-script@v7
@@ -266,21 +266,21 @@ jobs:
           const autoBranchName = `auto-docs/${prNumber}`;
           const baseBranchName = context.payload.pull_request.head.ref;
           const repo = context.repo;
-          
+
           core.info(`Creating auto-docs branch: ${autoBranchName}`);
           core.info(`Base PR branch: ${baseBranchName}`);
           core.info(`PR number: ${prNumber}`);
-          
+
           // Get the current commit SHA
           const { data: prData } = await github.rest.pulls.get({
             owner: repo.owner,
             repo: repo.repo,
             pull_number: prNumber
           });
-          
+
           const headSha = prData.head.sha;
           core.info(`Head SHA: ${headSha}`);
-          
+
           // Check if auto-docs branch already exists and delete it
           try {
             await github.rest.git.getRef({
@@ -288,7 +288,7 @@ jobs:
               repo: repo.repo,
               ref: `heads/${autoBranchName}`
             });
-            
+
             core.info(`Branch ${autoBranchName} exists, deleting it`);
             await github.rest.git.deleteRef({
               owner: repo.owner,
@@ -302,7 +302,7 @@ jobs:
               throw error;
             }
           }
-          
+
           // Create new branch from current PR head
           await github.rest.git.createRef({
             owner: repo.owner,
@@ -310,11 +310,11 @@ jobs:
             ref: `refs/heads/${autoBranchName}`,
             sha: headSha
           });
-          
+
           core.info(`✅ Created branch ${autoBranchName}`);
           core.setOutput('auto_branch', autoBranchName);
           core.setOutput('base_branch', baseBranchName);
-          
+
     - name: 💾 Commit and Push Documentation Updates
       if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
       shell: bash
@@ -322,17 +322,17 @@ jobs:
         # Configure git
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        
+
         # Get the auto-docs branch name
         AUTO_BRANCH="auto-docs/${{ github.event.pull_request.number }}"
-        
+
         # Checkout the auto-docs branch
         git fetch origin
         git checkout "$AUTO_BRANCH"
-        
+
         # Add and commit documentation changes
         git add docs/generated/
-        
+
         # Create commit message with details
         MARKDOWN_COUNT="${{ env.MARKDOWN_FILES }}"
         HTML_COUNT="${{ env.HTML_FILES }}"
@@ -343,12 +343,12 @@ jobs:
           -m "" \
           -m "This commit was automatically generated by the documentation automation workflow." \
           -m "It updates documentation to reflect changes in the codebase."
-        
+
         # Push to the auto-docs branch
         git push origin "$AUTO_BRANCH"
-        
+
         echo "✅ Committed and pushed documentation updates to $AUTO_BRANCH"
-        
+
     - name: 📝 Create PR for Documentation Updates
       if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'true'
       uses: actions/github-script@v7
@@ -358,10 +358,10 @@ jobs:
           const autoBranchName = `auto-docs/${prNumber}`;
           const baseBranchName = context.payload.pull_request.head.ref;
           const repo = context.repo;
-          
+
           const markdownCount = process.env.MARKDOWN_FILES || '0';
           const htmlCount = process.env.HTML_FILES || '0';
-          
+
           // Check if a PR already exists from auto-docs branch to base branch
           const { data: existingPRs } = await github.rest.pulls.list({
             owner: repo.owner,
@@ -370,9 +370,9 @@ jobs:
             base: baseBranchName,
             state: 'open'
           });
-          
+
           let autoDocsPR;
-          
+
           if (existingPRs.length > 0) {
             autoDocsPR = existingPRs[0];
             core.info(`Found existing auto-docs PR #${autoDocsPR.number}`);
@@ -380,21 +380,21 @@ jobs:
             // Create PR from auto-docs branch to base PR branch
             const prTitle = `Auto-update documentation for PR #${prNumber}`;
             const prBody = `## Automated Documentation Updates
-            
+
             This PR contains automatically generated documentation updates for [PR #${prNumber}](https://github.com/${repo.owner}/${repo.repo}/pull/${prNumber}).
-            
+
             ### Summary
             - **Markdown files**: ${markdownCount}
             - **HTML files**: ${htmlCount}
-            
+
             ### Automation Details
             This PR was automatically created by the documentation automation workflow. Please review and merge this PR into the parent branch to apply the documentation updates.
-            
+
             ### Important
             - Do not modify this PR manually
             - This PR will be closed automatically when the parent PR is merged or closed
             - Documentation updates are isolated to keep the parent PR commits clean
-            
+
             ---
             *Related to: #${prNumber}*
             *Generated by: Documentation Automation Workflow*`;
@@ -407,10 +407,10 @@ jobs:
               base: baseBranchName,
               body: prBody
             });
-            
+
             autoDocsPR = newPR;
             core.info(`✅ Created auto-docs PR #${newPR.number}`);
-            
+
             // Add labels
             await github.rest.issues.addLabels({
               owner: repo.owner,
@@ -419,17 +419,17 @@ jobs:
               labels: ['documentation', 'automated', 'auto-docs']
             });
           }
-          
+
           // Set output for potential auto-merge step
           core.setOutput('auto_pr_number', autoDocsPR.number);
-          
+
           // Add comment to original PR
           const comment = `Documentation Updates Available
-          
+
           Automated documentation updates have been generated and are available in PR #${autoDocsPR.number}.
-          
+
           Once that PR is reviewed and merged into this branch, the documentation will be up to date.
-          
+
           [View Auto-Docs PR](https://github.com/${repo.owner}/${repo.repo}/pull/${autoDocsPR.number})`;
 
           await github.rest.issues.createComment({
@@ -438,7 +438,7 @@ jobs:
             repo: repo.repo,
             body: comment
           });
-        
+
     - name: 💬 Comment on PR (No Changes)
       if: github.event_name == 'pull_request' && steps.check-doc-changes.outputs.has_changes == 'false'
       uses: actions/github-script@v7
@@ -446,20 +446,20 @@ jobs:
         script: |
           const markdownFiles = process.env.MARKDOWN_FILES || '0';
           const htmlFiles = process.env.HTML_FILES || '0';
-          
+
           const comment = `## 📚 Documentation Update Report
-          
+
           **Documentation generation completed - no changes needed!**
-          
+
           ### Generated Files
           - 📄 Markdown files: ${markdownFiles}
           - 🌐 HTML files: ${htmlFiles}
-          
+
           ### Summary
           - ✅ Documentation engine initialized
           - ✅ Quality validation passed
           - ℹ️ No changes detected - documentation is up to date
-          
+
           ---
           *Generated by AitherZero Documentation Automation*`;
           // Post the comment to the PR
@@ -474,18 +474,18 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "Deploying documentation to GitHub Pages..." -ForegroundColor Cyan
-        
+
         # Copy generated documentation to a deployment directory
         $deployPath = "./docs-deploy"
         if (Test-Path $deployPath) {
           Remove-Item -Path $deployPath -Recurse -Force
         }
-        
+
         New-Item -Path $deployPath -ItemType Directory -Force
-        
+
         if (Test-Path "./docs/generated") {
           Copy-Item -Path "./docs/generated/*" -Destination $deployPath -Recurse -Force
-          
+
           # Create index.html if it doesn't exist
           $indexPath = Join-Path $deployPath "index.html"
           if (-not (Test-Path $indexPath) -and (Test-Path (Join-Path $deployPath "INDEX.md"))) {
@@ -497,10 +497,10 @@ jobs:
             $indexHtml = $htmlHeader + $htmlBody + $htmlFooter
             $indexHtml | Set-Content $indexPath
           }
-          
+
           Write-Host "Documentation prepared for deployment" -ForegroundColor Green
         }
-        
+
     - name: 🌐 Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
       uses: peaceiris/actions-gh-pages@v4
@@ -508,19 +508,19 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs-deploy
         publish_branch: gh-pages
-        
+
     - name: 📤 Upload Documentation Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: generated-documentation
         path: docs/generated/
         retention-days: 30
-        
+
     - name: 📈 Update Documentation Badge
       if: github.ref == 'refs/heads/main'
       shell: pwsh
       run: |
         Write-Host "Documentation generation workflow completed successfully" -ForegroundColor Green
-        
+
         # Could add badge update logic here if using shields.io or similar
         Write-Host "Documentation available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" -ForegroundColor Cyan

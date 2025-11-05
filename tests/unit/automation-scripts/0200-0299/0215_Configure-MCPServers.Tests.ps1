@@ -5,18 +5,34 @@
 .SYNOPSIS
     Unit tests for 0215_Configure-MCPServers
 .DESCRIPTION
-    Auto-generated comprehensive tests
+    Auto-generated comprehensive tests with environment awareness
     Script: 0215_Configure-MCPServers
     Stage: Development
-    Description: Sets up MCP servers in VS Code settings to enhance GitHub Copilot with:
-    Generated: 2025-11-02 21:41:15
+    Description: Sets up MCP servers in VS Code using the .vscode/mcp.json format.
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
 Describe '0215_Configure-MCPServers' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
-        $script:ScriptPath = '/home/runner/work/AitherZero/AitherZero/automation-scripts/0215_Configure-MCPServers.ps1'
+        # Compute path relative to repository root using $PSScriptRoot
+        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0215_Configure-MCPServers.ps1'
         $script:ScriptName = '0215_Configure-MCPServers'
+
+        # Import test helpers for environment detection
+        $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
+        if (Test-Path $testHelpersPath) {
+            Import-Module $testHelpersPath -Force -ErrorAction SilentlyContinue
+        }
+
+        # Detect test environment
+        $script:TestEnv = if (Get-Command Get-TestEnvironment -ErrorAction SilentlyContinue) {
+            Get-TestEnvironment
+        } else {
+            @{ IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'); IsLocal = $true }
+        }
     }
 
     Context 'Script Validation' {
@@ -59,11 +75,35 @@ Describe '0215_Configure-MCPServers' -Tag 'Unit', 'AutomationScript', 'Developme
     }
 
     Context 'Execution' {
-        It 'Should execute with WhatIf' {
+        It 'Should execute with WhatIf without throwing' {
             {
                 $params = @{ WhatIf = $true }
                 & $script:ScriptPath @params
             } | Should -Not -Throw
+        }
+    }
+
+    Context 'Environment Awareness' {
+        It 'Test environment should be detected' {
+            $script:TestEnv | Should -Not -BeNullOrEmpty
+            $script:TestEnv.Keys | Should -Contain 'IsCI'
+        }
+
+        It 'Should adapt to CI environment' {
+            if (-not $script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "CI-only validation"
+                return
+            }
+            $script:TestEnv.IsCI | Should -Be $true
+            $env:CI | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Should adapt to local environment' {
+            if ($script:TestEnv.IsCI) {
+                Set-ItResult -Skipped -Because "Local-only validation"
+                return
+            }
+            $script:TestEnv.IsCI | Should -Be $false
         }
     }
 }
