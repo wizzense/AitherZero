@@ -1277,8 +1277,39 @@ Before submitting code changes:
 
 ---
 
+## Additional Documentation
+
+For specialized development tasks, refer to these comprehensive guides:
+
+### Style and Standards
+- **`docs/STYLE-GUIDE.md`** - Code style, naming conventions, PowerShell standards, extension templates
+- **`docs/INTEGRATION-TESTING-GUIDE.md`** - Integration testing requirements, CLI/UI integration tests, config-driven test patterns
+- **`docs/AI-AGENT-GUIDE.md`** - AI agent-specific guidelines for code generation, extension creation, config updates
+
+### Architecture and Design
+- **`docs/CONFIG-DRIVEN-ARCHITECTURE.md`** - Config-driven system design, manifest structure, capability extraction
+- **`docs/EXTENSIONS.md`** - Extension system, plugin architecture, manifest format
+- **`docs/UNIFIED-MENU-DESIGN.md`** - CLI/menu unification, command building, navigation design
+
+### Quick Reference
+When generating code or extensions:
+1. Follow `STYLE-GUIDE.md` for naming and structure
+2. Use `AI-AGENT-GUIDE.md` templates for consistent generation
+3. Write integration tests per `INTEGRATION-TESTING-GUIDE.md`
+4. Validate config changes with `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+5. Ensure UI/CLI integration per architecture guides
+
+**Key Principles:**
+- Config.psd1 drives all capabilities (modes, features, scripts)
+- Extensions use 8000-8999 script range
+- Menu IS the CLI (same commands, same structure)
+- All code must have tests (unit + integration)
+- Always validate config after manifest changes
+
+---
+
 **Remember**: These instructions are the result of comprehensive testing and exploration. Trust the commands, timing, and sequences documented here. Only search for additional information if something fails unexpectedly or if requirements have changed.
 
-**Version**: 2.0 - Comprehensive validated instructions for AitherZero
-**Last Updated**: 2025-11-02
-**Validated Against**: AitherZero 2.0.0 (525 PowerShell files, 125 scripts, 11 domains, 192 functions)
+**Version**: 2.1 - Extended with unified CLI/menu system and extension architecture
+**Last Updated**: 2025-11-05
+**Validated Against**: AitherZero 2.0.0+ (525+ PowerShell files, 130 scripts, 11 domains, 192+ functions, extensible via plugins)
