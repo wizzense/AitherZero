@@ -53,13 +53,18 @@ if ($env:PATH -notlike "*$automationPath*") {
 $modulesToLoad = @(
     # Core utilities first
     './domains/utilities/Logging.psm1',
+    './domains/utilities/ExtensionManager.psm1',
 
-    # Configuration
+    # Configuration (both old and new for backward compatibility)
     './domains/configuration/Configuration.psm1',
+    './domains/configuration/ConfigManager.psm1',
 
-    # User interface (BetterMenu first, then UserInterface)
+    # User interface (BetterMenu first, then components, then UserInterface)
     './domains/experience/BetterMenu.psm1',
+    './domains/experience/Components/CommandParser.psm1',
+    './domains/experience/Components/BreadcrumbNavigation.psm1',
     './domains/experience/UserInterface.psm1',
+    './domains/experience/UnifiedMenu.psm1',
 
     # Development tools
     './domains/development/GitAutomation.psm1',
@@ -77,6 +82,8 @@ $modulesToLoad = @(
 
     # Automation (exports Invoke-OrchestrationSequence)
     './domains/automation/OrchestrationEngine.psm1',
+    './domains/automation/AsyncOrchestration.psm1',
+    './domains/automation/GitHubWorkflowParser.psm1',
     './domains/automation/DeploymentAutomation.psm1',
 
     # Infrastructure
@@ -101,7 +108,9 @@ $script:LoadStartTime = Get-Date
 # Load critical modules first (synchronously)
 $criticalModules = @(
     './domains/utilities/Logging.psm1',
-    './domains/configuration/Configuration.psm1'
+    './domains/configuration/Configuration.psm1',
+    './domains/configuration/ConfigManager.psm1',
+    './domains/utilities/ExtensionManager.psm1'
 )
 
 foreach ($modulePath in $criticalModules) {
@@ -262,6 +271,33 @@ function Invoke-AitherScript {
 
 # Set up aliases
 Set-Alias -Name 'az' -Value 'Invoke-AitherScript' -Force
+
+# Initialize extension and config systems if available
+if (Get-Command Initialize-ExtensionSystem -ErrorAction SilentlyContinue) {
+    try {
+        Initialize-ExtensionSystem
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog -Message "Extension system initialized" -Level 'Information' -Source "AitherZero"
+        }
+    } catch {
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog -Message "Failed to initialize extension system: $_" -Level 'Warning' -Source "AitherZero"
+        }
+    }
+}
+
+if (Get-Command Initialize-ConfigManager -ErrorAction SilentlyContinue) {
+    try {
+        Initialize-ConfigManager
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog -Message "Config manager initialized" -Level 'Information' -Source "AitherZero"
+        }
+    } catch {
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog -Message "Failed to initialize config manager: $_" -Level 'Warning' -Source "AitherZero"
+        }
+    }
+}
 
 # Note: We do NOT use Export-ModuleMember here. When omitted, PowerShell automatically
 # exports all functions and aliases defined in the module. The nested modules are imported
