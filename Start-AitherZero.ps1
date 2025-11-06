@@ -977,7 +977,16 @@ function Get-AitherConfiguration {
 
         try {
 
-            $configData = Import-PowerShellDataFile $psd1Path
+            # Use scriptblock evaluation instead of Import-PowerShellDataFile
+            # because config.psd1 contains PowerShell expressions ($true/$false) that
+            # Import-PowerShellDataFile treats as "dynamic expressions"
+            $configContent = Get-Content -Path $psd1Path -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $configData = & $scriptBlock
+
+            if (-not $configData -or $configData -isnot [hashtable]) {
+                throw "Config file did not return a valid hashtable"
+            }
 
             # Convert to hashtable for compatibility
 
