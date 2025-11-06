@@ -1044,7 +1044,21 @@ function Request-FeatureEnable {
         # Load existing local config or create new
         $localConfig = @{}
         if (Test-Path $localConfigPath) {
-            $localConfig = Import-PowerShellDataFile $localConfigPath
+            # Use scriptblock evaluation instead of Import-PowerShellDataFile
+            # because config files may contain PowerShell expressions ($true/$false)
+            try {
+                $content = Get-Content -Path $localConfigPath -Raw
+                $scriptBlock = [scriptblock]::Create($content)
+                $localConfig = & $scriptBlock
+                
+                if (-not $localConfig -or $localConfig -isnot [hashtable]) {
+                    Write-ConfigLog -Level Warning -Message "Local config did not return valid hashtable, using empty config"
+                    $localConfig = @{}
+                }
+            } catch {
+                Write-ConfigLog -Level Warning -Message "Failed to load local config: $_"
+                $localConfig = @{}
+            }
         }
         
         # Ensure Features section exists
