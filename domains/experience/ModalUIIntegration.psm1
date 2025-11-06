@@ -492,8 +492,8 @@ NORMAL MODE (Default)
   Navigation:
     ↑/k       Move up
     ↓/j       Move down
-    g         Go to top
-    G         Go to bottom
+    Home      Go to top
+    End       Go to bottom
     1-9, 0    Quick select items
     Enter     Select item
     
@@ -502,6 +502,10 @@ NORMAL MODE (Default)
     /         Enter Search mode
     ?         Show this help
     q, ESC    Quit/back
+    
+  Search Navigation:
+    n         Next search result
+    p         Previous search result
 
 COMMAND MODE (: prefix)
   Commands:
@@ -524,6 +528,8 @@ COMMAND MODE (: prefix)
 SEARCH MODE (/ prefix)
   Type to filter items in real-time
   ↑/↓        Navigate results
+  n          Next match
+  p          Previous match
   Enter      Select result
   ESC        Clear search
 

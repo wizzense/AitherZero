@@ -36,8 +36,8 @@ $script:DefaultKeyBindings = @{
         'l' = @{ Action = 'Navigate-Forward'; Description = 'Go forward (VIM)' }
         
         # Quick navigation
-        'g' = @{ Action = 'Go-ToTop'; Description = 'Go to first item' }
-        'G' = @{ Action = 'Go-ToBottom'; Description = 'Go to last item' }
+        'Home' = @{ Action = 'Go-ToTop'; Description = 'Go to first item' }
+        'End' = @{ Action = 'Go-ToBottom'; Description = 'Go to last item' }
         'PageUp' = @{ Action = 'Page-Up'; Description = 'Page up' }
         'PageDown' = @{ Action = 'Page-Down'; Description = 'Page down' }
         
@@ -54,7 +54,7 @@ $script:DefaultKeyBindings = @{
         
         # Search navigation
         'n' = @{ Action = 'Next-SearchResult'; Description = 'Next search result' }
-        'N' = @{ Action = 'Previous-SearchResult'; Description = 'Previous search result' }
+        'p' = @{ Action = 'Previous-SearchResult'; Description = 'Previous search result' }
         
         # Other
         '?' = @{ Action = 'Show-Help'; Description = 'Show help' }
@@ -90,7 +90,7 @@ $script:DefaultKeyBindings = @{
         'UpArrow' = @{ Action = 'Navigate-Up'; Description = 'Previous result' }
         'DownArrow' = @{ Action = 'Navigate-Down'; Description = 'Next result' }
         'n' = @{ Action = 'Next-SearchResult'; Description = 'Next match' }
-        'N' = @{ Action = 'Previous-SearchResult'; Description = 'Previous match' }
+        'p' = @{ Action = 'Previous-SearchResult'; Description = 'Previous match' }
     }
 }
 
