@@ -31,7 +31,7 @@ jobs:
   collect-reports:
     name: 📥 Collect Test Reports and Artifacts
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
           # Always checkout from the base repository, not from PR/fork
           # This is safe because we only publish reports from trusted CI runs
           ref: ${{ github.event.repository.default_branch }}
-          
+
       - name: 📊 Download Workflow Artifacts
         if: github.event.workflow_run
         uses: dawidd6/action-download-artifact@v6
@@ -49,18 +49,18 @@ jobs:
           path: ./downloaded-artifacts
           workflow: ${{ github.event.workflow_run.workflow_id }}
         continue-on-error: true
-        
+
       - name: 📦 Organize Reports
         shell: pwsh
         run: |
           Write-Host "📦 Organizing test reports..." -ForegroundColor Cyan
-          
+
           # Create reports directory if it doesn't exist
           $reportsDir = "./reports"
           if (-not (Test-Path $reportsDir)) {
             New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
           }
-          
+
           # Copy downloaded artifacts to reports directory
           if (Test-Path "./downloaded-artifacts") {
             Write-Host "Copying downloaded artifacts..." -ForegroundColor Yellow
@@ -70,7 +70,7 @@ jobs:
               Write-Host "  Copied: $($_.Name)" -ForegroundColor Green
             }
           }
-          
+
           # Run quality validation to generate quality metrics for dashboard
           Write-Host "Running quality validation for key domains..." -ForegroundColor Cyan
           $domainPaths = @(
@@ -79,7 +79,7 @@ jobs:
             "./domains/security",
             "./domains/experience"
           )
-          
+
           foreach ($domainPath in $domainPaths) {
             if (Test-Path $domainPath) {
               Write-Host "  Validating: $domainPath" -ForegroundColor Yellow
@@ -90,7 +90,7 @@ jobs:
               }
             }
           }
-          
+
           # Also validate key automation scripts
           Write-Host "Validating automation scripts..." -ForegroundColor Cyan
           $criticalScripts = @(
@@ -98,7 +98,7 @@ jobs:
             "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
             "./automation-scripts/0512_Generate-Dashboard.ps1"
           )
-          
+
           foreach ($scriptPath in $criticalScripts) {
             if (Test-Path $scriptPath) {
               Write-Host "  Validating: $(Split-Path $scriptPath -Leaf)" -ForegroundColor Yellow
@@ -109,29 +109,29 @@ jobs:
               }
             }
           }
-          
+
           Write-Host "✅ Quality validation completed" -ForegroundColor Green
-          
+
           # Generate FULL COMPREHENSIVE dashboard (0512 does all the heavy lifting)
           Write-Host "Generating comprehensive dashboard with all metrics..." -ForegroundColor Cyan
           ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
-          
+
           # Create beginner-friendly LANDING PAGE that guides to the detailed dashboard
           $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending
           $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
-          
+
           # Check if comprehensive dashboard exists
           $dashboardHTML = Join-Path $reportsDir "dashboard.html"
           $hasDashboard = Test-Path $dashboardHTML
-          
+
           $indexContent = "# 🎯 AitherZero Project Dashboard - Landing Page`n`n"
-          
+
           if ($hasDashboard) {
             $indexContent += "## 🚀 [VIEW COMPREHENSIVE DASHBOARD →](reports/dashboard.html)`n`n"
             $indexContent += "> Click above for the full interactive dashboard with all metrics, charts, and detailed analysis`n`n"
             $indexContent += "---`n`n"
           }
-          
+
           $indexContent += "## 📊 Quick Navigation`n`n"
           $indexContent += "### For Non-Technical Users`n"
           $indexContent += "Start here if you're new to coding projects or need a high-level overview:`n`n"
@@ -140,13 +140,13 @@ jobs:
           $indexContent += "3. **What should I do?** - Look for red items in the dashboard - those need attention first`n`n"
           $indexContent += "### For Technical Users`n"
           $indexContent += "Direct access to detailed reports and raw data:`n`n"
-          
+
           foreach ($file in $reportFiles) {
             $relativePath = "reports/$($file.Name)"
             $fileTime = Get-Date $file.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss'
             $indexContent += "- [$($file.Name)]($relativePath) - $fileTime`n"
           }
-          
+
           $indexContent += "`n---`n`n"
           $indexContent += "## 🎓 Quick Reference Guide`n`n"
           $indexContent += "### Health Scores Explained`n"
@@ -161,15 +161,15 @@ jobs:
           $indexContent += "4. Plan for features`n`n"
           $indexContent += "---`n`n"
           $indexContent += "Generated: $timestamp`n"
-          
+
           $indexContent | Out-File -FilePath "./reports-index.md" -Encoding UTF8
-          
+
           Write-Host "✅ Reports organized successfully" -ForegroundColor Green
           Write-Host "Total reports: $($reportFiles.Count)" -ForegroundColor Cyan
           if ($hasDashboard) {
             Write-Host "✅ Comprehensive dashboard available at reports/dashboard.html" -ForegroundColor Green
           }
-          
+
       - name: 📤 Upload Combined Reports
         uses: actions/upload-artifact@v4
         with:
@@ -185,41 +185,41 @@ jobs:
     name: 🚀 Publish to GitHub Pages
     runs-on: ubuntu-latest
     needs: collect-reports
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 📊 Download Combined Reports
         uses: actions/download-artifact@v4
         with:
           name: combined-reports
           path: ./
-          
+
       - name: 🔧 Setup Pages
         uses: actions/configure-pages@v5
-        
+
       - name: 🏗️ Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./_site
-          
+
       - name: 📤 Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
-          
+
       - name: 🚀 Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        
+
       - name: 📋 Report Deployment
         shell: pwsh
         run: |
           Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
           Write-Host "🔗 URL: ${{ steps.deployment.outputs.page_url }}" -ForegroundColor Cyan
-          Write-Host "" 
+          Write-Host ""
           Write-Host "📊 Available Reports:" -ForegroundColor Yellow
           Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}reports/dashboard.html"
           Write-Host "  - Reports Index: ${{ steps.deployment.outputs.page_url }}reports-index.html"
