@@ -106,7 +106,15 @@ function Discover-Extensions {
         
         foreach ($manifestFile in $manifestFiles) {
             try {
-                $manifest = Import-PowerShellDataFile -Path $manifestFile.FullName
+                # Use scriptblock evaluation for .psd1 files
+                $content = Get-Content -Path $manifestFile.FullName -Raw
+                $scriptBlock = [scriptblock]::Create($content)
+                $manifest = & $scriptBlock
+                
+                if (-not $manifest -or $manifest -isnot [hashtable]) {
+                    Write-Warning "Extension manifest did not return a valid hashtable: $($manifestFile.FullName)"
+                    continue
+                }
                 
                 # Validate manifest
                 if (-not $manifest.Name) {
