@@ -249,12 +249,12 @@ jobs:
             PRIMARY_TAG="pr-${PR_NUMBER}-${BRANCH_SLUG}-v${BUILD_ITERATION}"
             echo "primary-tag=${PRIMARY_TAG}" >> $GITHUB_OUTPUT
 
-            # Additional tags for easy reference
+            # Additional tags for easy reference (just tag names, not full image refs)
             echo "tags<<EOF" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:${PRIMARY_TAG}" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:pr-${PR_NUMBER}-${BRANCH_SLUG}-latest" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:pr-${PR_NUMBER}-latest" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:pr-${PR_NUMBER}-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+            echo "type=raw,value=${PRIMARY_TAG}" >> $GITHUB_OUTPUT
+            echo "type=raw,value=pr-${PR_NUMBER}-${BRANCH_SLUG}-latest" >> $GITHUB_OUTPUT
+            echo "type=raw,value=pr-${PR_NUMBER}-latest" >> $GITHUB_OUTPUT
+            echo "type=raw,value=pr-${PR_NUMBER}-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
             echo "✅ Generated PR tags with branch name '${BRANCH_SLUG}' and iteration v${BUILD_ITERATION}"
@@ -264,9 +264,9 @@ jobs:
             echo "primary-tag=${VERSION}" >> $GITHUB_OUTPUT
 
             echo "tags<<EOF" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:${VERSION}" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:latest" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+            echo "type=raw,value=${VERSION}" >> $GITHUB_OUTPUT
+            echo "type=raw,value=latest" >> $GITHUB_OUTPUT
+            echo "type=raw,value=sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
             echo "✅ Generated release tags for version ${VERSION}"

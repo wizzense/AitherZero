@@ -650,33 +650,33 @@ jobs:
           
           # Generate comprehensive release tags
           # Format: Semantic versioning + descriptive metadata
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          # Use type=raw,value= format for docker/metadata-action
           
           echo "tags<<EOF" >> $GITHUB_OUTPUT
-          echo "ghcr.io/${REPO_LOWER}:${VERSION_NUMBER}" >> $GITHUB_OUTPUT
-          echo "ghcr.io/${REPO_LOWER}:v${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          echo "type=raw,value=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          echo "type=raw,value=v${VERSION_NUMBER}" >> $GITHUB_OUTPUT
           
           # Add major.minor tag (e.g., 2.0)
           MAJOR_MINOR=$(echo ${VERSION_NUMBER} | cut -d. -f1,2)
-          echo "ghcr.io/${REPO_LOWER}:${MAJOR_MINOR}" >> $GITHUB_OUTPUT
+          echo "type=raw,value=${MAJOR_MINOR}" >> $GITHUB_OUTPUT
           
           # Add major tag (e.g., 2)
           MAJOR=$(echo ${VERSION_NUMBER} | cut -d. -f1)
-          echo "ghcr.io/${REPO_LOWER}:${MAJOR}" >> $GITHUB_OUTPUT
+          echo "type=raw,value=${MAJOR}" >> $GITHUB_OUTPUT
           
           # Add 'latest' tag only for non-prerelease versions
           if [ "$IS_PRERELEASE" != "true" ]; then
-            echo "ghcr.io/${REPO_LOWER}:latest" >> $GITHUB_OUTPUT
-            echo "ghcr.io/${REPO_LOWER}:stable" >> $GITHUB_OUTPUT
+            echo "type=raw,value=latest" >> $GITHUB_OUTPUT
+            echo "type=raw,value=stable" >> $GITHUB_OUTPUT
           else
-            echo "ghcr.io/${REPO_LOWER}:prerelease" >> $GITHUB_OUTPUT
+            echo "type=raw,value=prerelease" >> $GITHUB_OUTPUT
           fi
           
           # Add commit SHA tag for traceability
-          echo "ghcr.io/${REPO_LOWER}:sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          echo "type=raw,value=sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
           
           # Add timestamp tag for temporal organization
-          echo "ghcr.io/${REPO_LOWER}:release-${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "type=raw,value=release-${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
           echo "✅ Generated release tags for version ${VERSION_NUMBER}"
