@@ -4,6 +4,23 @@
 
 The **Automated Agent Review System** provides proactive, intelligent code review feedback immediately after commits are pushed to pull requests. Custom agents automatically analyze changes based on their expertise areas and post actionable feedback directly in PR comments.
 
+> **🎯 Key Benefit:** Get instant, expert feedback on every commit without manual review requests - your code is continuously reviewed by specialized agents as you work.
+
+## ⚡ Quick Start
+
+**For Developers:**
+1. Create a PR with your changes
+2. Commit and push your code
+3. Agents automatically review within 2-3 minutes
+4. Check PR comments for feedback
+5. Address issues and commit again - agents re-review automatically!
+
+**For First-Time Users:**
+- No setup required - works automatically on all PRs
+- Agents select themselves based on what you changed
+- Read agent comments for actionable improvement suggestions
+- Tag agents with `@agent-name` if you have questions
+
 ## 🎯 Goals
 
 1. **Proactive Feedback**: Get immediate review comments after each commit
