@@ -3,11 +3,8 @@ name: 🤖 Automated Agent Review
 
 # Automatically review commits with custom agents and provide proactive feedback
 on:
-  push:
-    branches:
-      - '**'  # All branches
   pull_request:
-    types: [synchronize]  # When new commits are pushed to a PR
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -97,8 +94,27 @@ jobs:
         run: |
           Write-Host "📊 Analyzing changed files in commit..." -ForegroundColor Cyan
           
-          # Get changed files in this commit
-          $changedFiles = @(git diff --name-only HEAD~1 HEAD 2>/dev/null)
+          # Get changed files in this commit - robust to first commit and shallow clone
+          $changedFiles = @()
+          try {
+            # Try diff against parent commit
+            $changedFiles = @(git diff --name-only HEAD~1 HEAD 2>$null)
+
+            # If empty, might be first commit or shallow - check against remote base branch
+            if ($changedFiles.Count -eq 0) {
+              $baseRef = "${{ github.base_ref }}"
+              if ($baseRef) {
+                $changedFiles = @(git diff --name-only origin/$baseRef HEAD 2>$null)
+              }
+            }
+
+            # If still empty, list all files in commit
+            if ($changedFiles.Count -eq 0) {
+              $changedFiles = @(git show --name-only --format="" HEAD)
+            }
+          } catch {
+            Write-Host "Error getting changed files: $_" -ForegroundColor Yellow
+          }
           
           if ($changedFiles.Count -eq 0) {
             Write-Host "No files changed in this commit" -ForegroundColor Yellow
@@ -190,8 +206,9 @@ jobs:
             Select-Object -First 3 |
             Select-Object -ExpandProperty Key
           
-          $agentsJson = $selectedAgents | ConvertTo-Json -Compress
-          if ($null -eq $agentsJson) { $agentsJson = '[]' }
+          $agentsArray = @($selectedAgents)
+          $agentsJson = ConvertTo-Json -InputObject $agentsArray -Compress
+          if ($null -eq $agentsJson -or $agentsJson -eq 'null') { $agentsJson = '[]' }
           
           Write-Host "Selected agents for review: $agentsJson" -ForegroundColor Green
           
@@ -205,8 +222,11 @@ jobs:
           }
           $summaryText = $summary -join ', '
           
+          # Properly escape for GitHub Actions output
+          $summaryTextEscaped = $summaryText -replace '%', '%25' -replace "`r", '%0D' -replace "`n", '%0A'
+          
           echo "agents-to-review=$agentsJson" >> $env:GITHUB_OUTPUT
-          echo "change-summary=$summaryText" >> $env:GITHUB_OUTPUT
+          echo "change-summary=$summaryTextEscaped" >> $env:GITHUB_OUTPUT
           
           Write-Host "Change summary: $summaryText" -ForegroundColor Cyan
 
@@ -368,12 +388,16 @@ jobs:
               if ($content) {
                 # Rachel - PowerShell best practices
                 if ($agentId -eq 'rachel') {
-                  if ($content -match 'Write-Host' -and $content -notmatch 'Write-CustomLog|Write-UIText') {
+                  # More precise pattern to avoid false positives in comments/strings
+                  if (
+                    ($content -match '^\s*Write-Host\s' -or $content -match '\n\s*Write-Host\s') `
+                      -and $content -notmatch 'Write-CustomLog|Write-UIText'
+                  ) {
                     $issues += @{
                       File = $file
                       Line = 0
                       Severity = 'Information'
-                      Message = 'Consider using Write-CustomLog or Write-UIText instead of Write-Host for better logging'
+                      Message = 'Consider using Write-CustomLog or Write-UIText instead of Write-Host in automation scripts and modules (Write-Host is acceptable in CI/CD workflows)'
                       RuleName = 'CustomRule-PreferCustomLogging'
                     }
                   }
@@ -401,12 +425,12 @@ jobs:
                     }
                   }
                   
-                  if ($content -match '\$env:.*password|\$env:.*secret|\$env:.*token' -and $content -notmatch 'GITHUB_TOKEN') {
+                  if ($content -match '\$env:[A-Z_]*(?:PASSWORD|SECRET|TOKEN)[A-Z_]*\s*=' -and $content -notmatch 'GITHUB_TOKEN') {
                     $issues += @{
                       File = $file
                       Line = 0
                       Severity = 'Warning'
-                      Message = 'Potential sensitive data in environment variables. Ensure proper secret management.'
+                      Message = 'Potential sensitive data in environment variable assignment. Ensure proper secret management.'
                       RuleName = 'CustomRule-SensitiveEnvVars'
                     }
                   }
@@ -416,7 +440,9 @@ jobs:
                 if ($agentId -eq 'jessica') {
                   if ($file -match '\.ps1$' -and $file -notmatch '\.Tests\.ps1$' -and $file -match 'automation-scripts/') {
                     $testFile = $file -replace '\.ps1$', '.Tests.ps1'
-                    if (-not (Test-Path "tests/**/$([System.IO.Path]::GetFileName($testFile))" -PathType Leaf)) {
+                    $testFileName = [System.IO.Path]::GetFileName($testFile)
+                    $testExists = Get-ChildItem -Path "tests" -Filter $testFileName -Recurse -File -ErrorAction SilentlyContinue
+                    if (-not $testExists) {
                       $issues += @{
                         File = $file
                         Line = 0
@@ -453,7 +479,11 @@ jobs:
                   $linkPath = $link.Groups[2].Value
                   if ($linkPath -notmatch '^https?://' -and $linkPath -notmatch '^#') {
                     # Relative link - check if file exists
-                    $fullPath = Join-Path (Split-Path $file -Parent) $linkPath
+                    # Remove fragment and query string
+                    $cleanPath = $linkPath -replace '[#?].*', ''
+                    # URL decode (handle spaces and special chars)
+                    $cleanPath = [System.Uri]::UnescapeDataString($cleanPath)
+                    $fullPath = Join-Path (Split-Path $file -Parent) $cleanPath
                     if (-not (Test-Path $fullPath)) {
                       $issues += @{
                         File = $file
