@@ -40,31 +40,27 @@ try {
     $shouldInstall = $false
     $nodeConfig = $null
 
-    if (Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue) {
-        # Use new configuration system
+    # Use the convenient helper that checks and prompts in one call
+    if (Get-Command Test-FeatureOrPrompt -ErrorAction SilentlyContinue) {
+        # Use the simple helper function
+        $shouldInstall = Test-FeatureOrPrompt -FeatureName 'Node' -Category 'Development' -Reason "Script 0201 requires Node.js to install the Node runtime and npm packages"
+        
+        if ($shouldInstall) {
+            $nodeConfig = Get-FeatureConfiguration -FeatureName 'Node' -Category 'Development'
+            Write-ScriptLog "Node.js installation enabled via Features.Development.Node configuration"
+        } else {
+            Write-ScriptLog "Node.js installation is not enabled"
+            exit 0
+        }
+    } elseif (Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue) {
+        # Fallback to manual checking for older versions
         $shouldInstall = Test-FeatureEnabled -FeatureName 'Node' -Category 'Development'
         if ($shouldInstall) {
             $nodeConfig = Get-FeatureConfiguration -FeatureName 'Node' -Category 'Development'
             Write-ScriptLog "Node.js installation enabled via Features.Development.Node configuration"
         } else {
-            # Feature is disabled - prompt user to enable it
             Write-ScriptLog "Node.js installation is not enabled for current profile/platform"
-            
-            if (Get-Command Request-FeatureEnable -ErrorAction SilentlyContinue) {
-                $enabled = Request-FeatureEnable -FeatureName 'Node' -Category 'Development' -Reason "Script 0201 requires Node.js to install the Node runtime and npm packages"
-                if ($enabled) {
-                    # Feature was enabled, get config and proceed
-                    $nodeConfig = Get-FeatureConfiguration -FeatureName 'Node' -Category 'Development'
-                    $shouldInstall = $true
-                    Write-ScriptLog "Node.js installation enabled by user request"
-                } else {
-                    Write-ScriptLog "User declined to enable Node.js feature"
-                    exit 0
-                }
-            } else {
-                Write-ScriptLog "Node.js feature is disabled and cannot prompt in this context"
-                exit 0
-            }
+            exit 0
         }
     } else {
         # Fallback to legacy configuration for backwards compatibility

@@ -490,6 +490,74 @@ function Format-Duration {
     }
 }
 
+function Test-FeatureOrPrompt {
+    <#
+    .SYNOPSIS
+        Tests if a feature is enabled and prompts to enable if needed
+    .DESCRIPTION
+        Convenience function for automation scripts that combines feature testing
+        and prompting. Returns true if the feature is enabled or was successfully
+        enabled by the user.
+    .PARAMETER FeatureName
+        Name of the feature to check
+    .PARAMETER Category
+        Feature category (e.g., 'Development', 'Infrastructure')
+    .PARAMETER Reason
+        Description of why the feature is needed
+    .PARAMETER ExitOnDisabled
+        If true and feature is disabled, exit script with code 0. Default: false
+    .EXAMPLE
+        if (-not (Test-FeatureOrPrompt -FeatureName 'Node' -Category 'Development' -Reason 'Required for npm packages')) {
+            Write-Warning "Node.js feature is not enabled"
+            exit 0
+        }
+    .OUTPUTS
+        [bool] True if feature is enabled, false otherwise
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$FeatureName,
+        
+        [Parameter(Mandatory)]
+        [string]$Category,
+        
+        [string]$Reason = "This script requires the $FeatureName feature",
+        
+        [switch]$ExitOnDisabled
+    )
+    
+    # Check if Configuration module functions are available
+    $testAvailable = Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue
+    $requestAvailable = Get-Command Request-FeatureEnable -ErrorAction SilentlyContinue
+    
+    if (-not $testAvailable) {
+        Write-ScriptLog "Configuration module not available, cannot check feature status" -Level 'Warning'
+        return $false
+    }
+    
+    # Check if feature is enabled
+    if (Test-FeatureEnabled -FeatureName $FeatureName -Category $Category) {
+        return $true
+    }
+    
+    # Feature is disabled - try to prompt if possible
+    if ($requestAvailable) {
+        $enabled = Request-FeatureEnable -FeatureName $FeatureName -Category $Category -Reason $Reason
+        if ($enabled) {
+            return $true
+        }
+    }
+    
+    # Feature is disabled and user declined or prompting not available
+    if ($ExitOnDisabled) {
+        Write-ScriptLog "Feature $Category.$FeatureName is required but not enabled, exiting" -Level 'Warning'
+        exit 0
+    }
+    
+    return $false
+}
+
 # Initialize on module import
 Initialize-ScriptUtilities
 
@@ -504,5 +572,6 @@ Export-ModuleMember -Function @(
     'Invoke-WithRetry',
     'Test-GitRepository',
     'Get-ScriptMetadata',
-    'Format-Duration'
+    'Format-Duration',
+    'Test-FeatureOrPrompt'
 )

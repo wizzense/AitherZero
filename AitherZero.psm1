@@ -78,6 +78,7 @@ $modulesToLoad = @(
     # Automation (exports Invoke-OrchestrationSequence)
     './domains/automation/OrchestrationEngine.psm1',
     './domains/automation/DeploymentAutomation.psm1',
+    './domains/automation/ScriptUtilities.psm1',
 
     # Infrastructure
     './domains/infrastructure/Infrastructure.psm1',

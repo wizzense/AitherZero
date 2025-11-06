@@ -2800,7 +2800,7 @@ function Show-AdvancedMenu {
 
                 Name = "Edit Configuration"
 
-                Description = "Open config.json in editor"
+                Description = "Open config.psd1 in editor"
 
             },
 
