@@ -84,7 +84,15 @@ Write-Host ""
 # 1. Syntax Validation
 Write-Host "1. SYNTAX VALIDATION" -ForegroundColor Yellow
 try {
-    $config = Import-PowerShellDataFile -Path $ConfigPath -ErrorAction Stop
+    # Use scriptblock evaluation to handle PowerShell expressions in config
+    $configContent = Get-Content -Path $ConfigPath -Raw -ErrorAction Stop
+    $scriptBlock = [Scriptblock]::Create($configContent)
+    $config = & $scriptBlock
+    
+    if (-not $config -or $config -isnot [hashtable]) {
+        throw "Config file did not return a valid hashtable"
+    }
+    
     Write-ValidationResult "Config file loads successfully" -Level Success
 } catch {
     Write-ValidationResult "Failed to load config file: $($_.Exception.Message)" -Level Error
