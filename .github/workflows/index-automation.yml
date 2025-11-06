@@ -46,7 +46,12 @@ jobs:
   generate-indexes:
     name: 🔄 Generate Project Indexes
     # Skip if triggered by bot commit to prevent infinite loops, and skip if PR is being closed
-    if: github.event.action != 'closed' && github.actor != 'github-actions[bot]' && github.event.pusher.name != 'github-actions[bot]'
+    if: |
+      github.event.action != 'closed' && 
+      github.actor != 'github-actions[bot]' && 
+      github.actor != 'copilot-swe-agent[bot]' &&
+      !startsWith(github.event.head_commit.author.name, 'copilot-swe-agent') &&
+      !startsWith(github.event.head_commit.author.name, 'github-actions')
     runs-on: ubuntu-latest
 
     permissions:
