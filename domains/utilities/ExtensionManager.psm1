@@ -91,6 +91,16 @@ function Initialize-ExtensionSystem {
 <#
 .SYNOPSIS
     Discovers available extensions
+.DESCRIPTION
+    Scans search paths for extension manifests. 
+    
+    SECURITY: Extension manifests are loaded using Import-PowerShellDataFile which
+    does NOT execute arbitrary code. This prevents RCE from malicious manifests in
+    untrusted locations (e.g., ~/.aitherzero/extensions).
+    
+    Extension authors must use literal values (strings, numbers, arrays, hashtables)
+    and CANNOT use PowerShell expressions like $true/$false or command invocations.
+    Use string literals 'true'/'false' instead and parse them in your code.
 #>
 function Discover-Extensions {
     [CmdletBinding()]
@@ -106,15 +116,10 @@ function Discover-Extensions {
         
         foreach ($manifestFile in $manifestFiles) {
             try {
-                # Use scriptblock evaluation for .psd1 files
-                $content = Get-Content -Path $manifestFile.FullName -Raw
-                $scriptBlock = [scriptblock]::Create($content)
-                $manifest = & $scriptBlock
-                
-                if (-not $manifest -or $manifest -isnot [hashtable]) {
-                    Write-Warning "Extension manifest did not return a valid hashtable: $($manifestFile.FullName)"
-                    continue
-                }
+                # Use Import-PowerShellDataFile for security - does NOT execute arbitrary code
+                # Extension manifests MUST be pure data files without PowerShell expressions
+                # If a manifest uses $true/$false, it will fail here (by design for security)
+                $manifest = Import-PowerShellDataFile -Path $manifestFile.FullName -ErrorAction Stop
                 
                 # Validate manifest
                 if (-not $manifest.Name) {

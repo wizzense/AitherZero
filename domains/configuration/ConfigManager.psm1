@@ -508,7 +508,12 @@ function Test-ConfigurationValidity {
         
         if (-not $config -or $config -isnot [hashtable]) {
             $errors += "Config file did not return a valid hashtable"
-            return @{ Valid = $false; Errors = $errors; Warnings = $warnings }
+            return [PSCustomObject]@{
+                IsValid = $false
+                Errors = $errors
+                Warnings = $warnings
+                Path = $Path
+            }
         }
         
         # Check required sections
