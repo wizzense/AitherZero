@@ -2,14 +2,34 @@
 
 Welcome to the AitherZero AI workforce! This directory contains custom GitHub Copilot agents with diverse personas designed to support various aspects of the AitherZero infrastructure automation platform.
 
-## 🚀 Quick Start: Using Agent Routing
+## 🚀 Quick Start: Using Agents
 
-The repository includes an **automatic agent routing system** that suggests the best agents for your PR based on the files you change and keywords in your description. 
+AitherZero provides **two automated agent systems** to help you:
 
-**To use it:**
-1. Open a PR - agents are automatically suggested in a comment
-2. Request specific agents: `@maya, please review` or `/infrastructure`
-3. See [Agent Routing Guide](../AGENT-ROUTING-GUIDE.md) for detailed instructions
+### 1. 🤖 Automated Agent Review (NEW!)
+**Proactive feedback after every commit**
+
+- ✅ **Automatic**: Triggers on every commit to a PR
+- ✅ **Intelligent**: Routes to agents based on what you changed
+- ✅ **Actionable**: Posts specific issues and suggestions
+- ✅ **Continuous**: Reviews run automatically on each push
+
+**How it works:**
+1. Commit changes to your PR branch
+2. Agents automatically analyze your changes
+3. Receive detailed feedback in PR comments
+4. Address issues and commit again - agents re-review!
+
+See: [Automated Agent Review Guide](../AUTOMATED-AGENT-REVIEW-GUIDE.md)
+
+### 2. 📋 Agent Routing & Suggestions
+**Smart agent suggestions when you open a PR**
+
+- Suggests best agents based on files changed
+- Request specific agents: `@maya, please review` or `/infrastructure`
+- Manual invocation for targeted help
+
+See: [Agent Routing Guide](../AGENT-ROUTING-GUIDE.md)
 
 ## Team Overview
 
@@ -282,20 +302,40 @@ These agents are designed to support the AitherZero number-based orchestration s
 - **0700-0799** (Git & AI): Rachel, David
 - **9000-9999** (Maintenance): Maya, Rachel
 
-## Automatic Agent Routing
+## Automatic Agent Systems
 
-The [`.github/copilot.yaml`](../copilot.yaml) configuration file enables automatic routing:
+AitherZero includes two integrated agent automation systems:
 
-- **File Pattern Matching**: Agents are suggested based on which files you modify
-- **Keyword Detection**: PR titles/descriptions trigger relevant agent suggestions
-- **Label-Based Routing**: GitHub labels map to agent expertise areas
-- **Manual Invocation**: Use `@agent-name` or `/command` in comments
-- **Collaboration Patterns**: Pre-configured multi-agent workflows
+### 🤖 Automated Agent Review
+[`.github/workflows/automated-agent-review.yml`](../workflows/automated-agent-review.yml)
 
-**Workflow Integration:**
-- [`.github/workflows/copilot-agent-router.yml`](../workflows/copilot-agent-router.yml) - Automation workflow
-- Automatically posts agent suggestions on PR open/update
-- Handles agent command parsing and acknowledgment
+- **Triggers**: Automatically on every commit to PR branches
+- **Function**: Performs intelligent code review based on agent expertise
+- **Output**: Posts detailed feedback with issues, warnings, and suggestions
+- **Continuous**: Re-reviews automatically on each new commit
+
+**Key Features:**
+- 🔍 **Smart Agent Selection**: Routes to 1-3 most relevant agents per commit
+- 🎯 **Focused Reviews**: Agents only review files in their expertise area
+- 📊 **Issue Classification**: Critical, warnings, and suggestions by severity
+- ♻️ **Continuous Feedback**: Automatic re-review on subsequent commits
+
+For complete details, see the [Automated Agent Review Guide](../AUTOMATED-AGENT-REVIEW-GUIDE.md).
+
+### 📋 Agent Routing & Suggestions
+[`.github/workflows/copilot-agent-router.yml`](../workflows/copilot-agent-router.yml)
+
+- **Triggers**: When PR is opened or updated
+- **Function**: Suggests relevant agents based on changes
+- **Output**: Comment with agent recommendations
+- **Manual**: Supports `@agent-name` or `/command` invocations
+
+**Configuration:**
+The [`.github/copilot.yaml`](../copilot.yaml) configuration file defines:
+- **File Pattern Matching**: Agents based on modified files
+- **Keyword Detection**: PR titles/descriptions trigger suggestions
+- **Label-Based Routing**: GitHub labels map to agent expertise
+- **Collaboration Patterns**: Multi-agent workflow recommendations
 
 For complete details, see the [Agent Routing Guide](../AGENT-ROUTING-GUIDE.md).
 
