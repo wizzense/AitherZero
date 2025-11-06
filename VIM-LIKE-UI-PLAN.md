@@ -56,10 +56,9 @@ Press:
   :   Enter command mode (type commands)
   /   Enter search mode (filter items)
   h,j,k,l  VIM navigation (optional)
-  Home  Go to top
-  End   Go to bottom
+  g   Go to top
+  G   Go to bottom
   n   Next search result
-  p   Previous search result
   q   Quit/back
   ?   Show help
 ```

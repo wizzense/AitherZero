@@ -932,25 +932,6 @@
         EnableEmoji = $true
         ShowExecutionTime = $true
         
-        # Modal UI Settings (VIM-like interface)
-        ModalUI = @{
-            Enabled = $true  # Enable VIM-like modal UI enhancements
-            DefaultMode = 'Normal'  # Starting mode (Normal, Command, Search)
-            VimBindings = $true  # Use VIM-style keys (h,j,k,l)
-            ShowModeIndicator = $true  # Show current mode in UI
-            CommandHistory = $true  # Enable command history
-            MaxHistoryItems = 50  # Maximum history entries
-            SearchAsYouType = $true  # Real-time search filtering
-            QuickSelection = $true  # Enable number selection (1-9, 0)
-            
-            # Key binding customization (advanced users)
-            KeyBindings = @{
-                # Can override default bindings here
-                # Format: @{ Mode = @{ 'Key' = @{ Action = 'ActionName'; Description = 'Description' } } }
-                # Example: Normal = @{ 'x' = @{ Action = 'Delete-Item'; Description = 'Delete item' } }
-            }
-        }
-        
         # Themes
         Theme = 'Default'
         Themes = @{
