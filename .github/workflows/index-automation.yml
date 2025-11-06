@@ -45,6 +45,7 @@ concurrency:
 jobs:
   generate-indexes:
     name: 🔄 Generate Project Indexes
+    # Skip if PR is being closed
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
 

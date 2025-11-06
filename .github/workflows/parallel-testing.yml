@@ -33,9 +33,10 @@ permissions:
   pull-requests: write
 
 # Allow parallel execution across different test suites
+# Cancel old runs for the same branch when new commits arrive
 concurrency:
-  group: parallel-tests-${{ github.ref }}-${{ github.run_number }}
-  cancel-in-progress: false  # Keep running - we want parallel jobs
+  group: parallel-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   AITHERZERO_CI: true
