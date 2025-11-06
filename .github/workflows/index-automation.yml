@@ -45,7 +45,8 @@ concurrency:
 jobs:
   generate-indexes:
     name: 🔄 Generate Project Indexes
-    if: github.event.action != 'closed'
+    # Skip if triggered by bot commit to prevent infinite loops, and skip if PR is being closed
+    if: github.event.action != 'closed' && github.actor != 'github-actions[bot]' && github.event.pusher.name != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     permissions:
