@@ -2956,10 +2956,10 @@ function Show-AdvancedMenu {
 
                     Show-UINotification -Message "Failed to reload configuration: $($_.Exception.Message)" -Type 'Error'
 
-                    Write-ConfigLog -Level Warning -Message "Configuration reload failed, changes will apply on restart" -Data @{
-
-                        Error = $_.Exception.Message
-
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog -Level 'Warning' -Message "Configuration reload failed, changes will apply on restart" -Source "Start-AitherZero" -Data @{
+                            Error = $_.Exception.Message
+                        }
                     }
 
                 }
