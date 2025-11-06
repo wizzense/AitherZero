@@ -929,7 +929,10 @@ if (-not $script:IsInitialized) {
         # Try to load configuration if available
         $configPath = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "config.psd1"
         if (Test-Path $configPath) {
-            $config = Import-PowerShellDataFile $configPath
+            # Use scriptblock evaluation to handle PowerShell expressions in config
+            $configContent = Get-Content -Path $configPath -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $config = & $scriptBlock
             if ($config.Logging) {
                 Initialize-Logging -Configuration $config
             }

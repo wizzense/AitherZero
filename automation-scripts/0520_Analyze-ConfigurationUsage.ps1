@@ -57,7 +57,20 @@ function Analyze-ConfigurationUsage {
         return @{ Error = "config.psd1 not found"; Path = $configFullPath }
     }
 
-    $config = Import-PowerShellDataFile $configFullPath
+    # Use scriptblock evaluation instead of Import-PowerShellDataFile
+    # because config.psd1 contains PowerShell expressions ($true/$false) that
+    # Import-PowerShellDataFile treats as "dynamic expressions"
+    try {
+        $configContent = Get-Content -Path $configFullPath -Raw
+        $scriptBlock = [scriptblock]::Create($configContent)
+        $config = & $scriptBlock
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        }
+    } catch {
+        Write-AnalysisLog "Failed to load config: $($_.Exception.Message)" -Component "ConfigUsage" -Level Error
+        return @{ Error = "Failed to load config.psd1"; Details = $_.Exception.Message }
+    }
 
     # Initialize results
     $usage = @{
