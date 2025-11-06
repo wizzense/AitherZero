@@ -922,6 +922,143 @@ function Test-FeatureEnabled {
     return $true
 }
 
+function Request-FeatureEnable {
+    <#
+    .SYNOPSIS
+        Prompts user to enable a feature at runtime and saves the setting
+    .DESCRIPTION
+        When a feature is disabled but required for an operation, this function
+        prompts the user to enable it. If approved, the setting is saved to
+        config.local.psd1 for persistence.
+    .PARAMETER FeatureName
+        Name of the feature to enable
+    .PARAMETER Category
+        Feature category (e.g., 'Development', 'Infrastructure')
+    .PARAMETER Reason
+        Description of why the feature is needed
+    .PARAMETER NonInteractive
+        Skip prompting and return false (for CI/batch scenarios)
+    .EXAMPLE
+        $enabled = Request-FeatureEnable -FeatureName 'Node' -Category 'Development' -Reason 'Required to run script 0201'
+    .OUTPUTS
+        [bool] True if feature was enabled, false otherwise
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$FeatureName,
+        
+        [Parameter(Mandatory)]
+        [string]$Category,
+        
+        [string]$Reason = "This operation requires the $FeatureName feature",
+        
+        [switch]$NonInteractive
+    )
+    
+    # Check if already enabled
+    if (Test-FeatureEnabled -FeatureName $FeatureName -Category $Category) {
+        Write-ConfigLog -Level Debug -Message "Feature $Category.$FeatureName is already enabled"
+        return $true
+    }
+    
+    # In non-interactive mode, just return false
+    if ($NonInteractive -or $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true') {
+        Write-ConfigLog -Level Warning -Message "Feature $Category.$FeatureName is disabled and cannot be enabled in non-interactive mode"
+        return $false
+    }
+    
+    # Show prompt to user
+    Write-Host ""
+    Write-Host "Feature Required: $Category.$FeatureName" -ForegroundColor Yellow
+    Write-Host "Reason: $Reason" -ForegroundColor Gray
+    Write-Host ""
+    
+    $featureConfig = Get-FeatureConfiguration -FeatureName $FeatureName -Category $Category
+    if ($featureConfig -and $featureConfig.Description) {
+        Write-Host "Description: $($featureConfig.Description)" -ForegroundColor Gray
+    }
+    
+    if ($featureConfig -and $featureConfig.InstallScript) {
+        Write-Host "Install Script: $($featureConfig.InstallScript)" -ForegroundColor Gray
+    }
+    
+    Write-Host ""
+    $response = Read-Host "Enable this feature now? (y/n)"
+    
+    if ($response -notmatch '^[yY]') {
+        Write-ConfigLog -Level Information -Message "User declined to enable feature $Category.$FeatureName"
+        return $false
+    }
+    
+    # Enable the feature by updating config.local.psd1
+    try {
+        # Determine paths
+        $configPath = $script:ConfigPath
+        if (-not $configPath) {
+            $configPath = Join-Path $script:ProjectRoot "config.psd1"
+        }
+        
+        # Build local config path - handle both .psd1 and .json extensions
+        if ($configPath -like '*.psd1') {
+            $localConfigPath = $configPath -replace '\.psd1$', '.local.psd1'
+        } elseif ($configPath -like '*.json') {
+            $localConfigPath = $configPath -replace '\.json$', '.local.psd1'
+        } else {
+            # Fallback: add .local.psd1 to the path
+            $localConfigPath = "$configPath.local.psd1"
+        }
+        
+        # Load existing local config or create new
+        $localConfig = @{}
+        if (Test-Path $localConfigPath) {
+            $localConfig = Import-PowerShellDataFile $localConfigPath
+        }
+        
+        # Ensure Features section exists
+        if (-not $localConfig.Features) {
+            $localConfig.Features = @{}
+        }
+        
+        # Ensure category exists
+        if (-not $localConfig.Features.$Category) {
+            $localConfig.Features.$Category = @{}
+        }
+        
+        # Ensure feature exists
+        if (-not $localConfig.Features.$Category.$FeatureName) {
+            $localConfig.Features.$Category.$FeatureName = @{}
+        }
+        
+        # Enable the feature
+        $localConfig.Features.$Category.$FeatureName.Enabled = $true
+        
+        # Save to config.local.psd1
+        $psd1Content = ConvertTo-Psd1String -InputObject $localConfig
+        Set-Content -Path $localConfigPath -Value $psd1Content -Force
+        
+        Write-Host "✓ Feature $Category.$FeatureName enabled and saved to config.local.psd1" -ForegroundColor Green
+        Write-ConfigLog -Level Information -Message "Feature $Category.$FeatureName enabled via user request" -Data @{
+            ConfigPath = $localConfigPath
+            Reason = $Reason
+        }
+        
+        # Reload configuration to pick up the change
+        $script:Config = $null
+        $null = Get-Configuration
+        
+        return $true
+        
+    } catch {
+        Write-ConfigLog -Level Error -Message "Failed to enable feature $Category.$FeatureName" -Data @{
+            Error = $_.Exception.Message
+            StackTrace = $_.ScriptStackTrace
+        }
+        Write-Host "✗ Failed to enable feature: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
 function Get-ExecutionProfile {
     <#
     .SYNOPSIS
@@ -1085,6 +1222,7 @@ Export-ModuleMember -Function @(
     'Get-PlatformManifest',
     'Get-FeatureConfiguration',
     'Test-FeatureEnabled',
+    'Request-FeatureEnable',
     'Get-ExecutionProfile',
     'Get-FeatureDependencies',
     'Resolve-FeatureDependencies'
