@@ -36,6 +36,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          # Use PAT with workflow scope to trigger workflows on bot commits
+          # Falls back to GITHUB_TOKEN if PAT not available (won't trigger workflows)
+          token: ${{ secrets.PAT_WITH_WORKFLOW_SCOPE || secrets.GITHUB_TOKEN }}
 
       - name: 🔧 Setup PowerShell
         shell: bash
