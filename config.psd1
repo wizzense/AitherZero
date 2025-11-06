@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -358,8 +358,8 @@
                 }
                 Orchestration = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0962')
-                    Description = 'Playbook execution wrapper for local CI/CD workflow testing'
+                    Scripts = @('0962', '0963', '0964', '0965', '0966')
+                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, and local validation'
                 }
             }
             

@@ -130,7 +130,16 @@ function Import-ConfigManifest {
     Write-Verbose "Loading configuration from: $Path"
     
     try {
-        $config = Import-PowerShellDataFile -Path $Path
+        # Use scriptblock evaluation instead of Import-PowerShellDataFile
+        # because config.psd1 contains PowerShell expressions ($true/$false) that
+        # Import-PowerShellDataFile treats as "dynamic expressions"
+        $content = Get-Content -Path $Path -Raw
+        $scriptBlock = [scriptblock]::Create($content)
+        $config = & $scriptBlock
+        
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        }
         
         # Add metadata
         $config._Metadata = @{
