@@ -142,7 +142,16 @@ if (-not (Test-Path $configPath)) {
 }
 
 try {
-    $config = Import-PowerShellDataFile -Path $configPath
+    # Use scriptblock evaluation instead of Import-PowerShellDataFile
+    # because config.psd1 contains PowerShell expressions ($true/$false) that
+    # Import-PowerShellDataFile treats as "dynamic expressions"
+    $content = Get-Content -Path $configPath -Raw
+    $scriptBlock = [scriptblock]::Create($content)
+    $config = & $scriptBlock
+    
+    if (-not $config -or $config -isnot [hashtable]) {
+        throw "Config file did not return a valid hashtable"
+    }
 } catch {
     Write-SyncLog "Failed to load config.psd1: $($_.Exception.Message)" -Level Error
     exit 2
