@@ -1600,18 +1600,44 @@ function ConvertTo-StandardPlaybookFormat {
 function Get-OrchestrationPlaybook {
     param([string]$Name)
 
-    # First try direct path in playbooks root
-    $playbookPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
-
-    if (Test-Path $playbookPath) {
-        $playbook = Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
+    # Try both .psd1 and .json formats
+    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    
+    # First try .psd1 format (PowerShell Data File)
+    $psd1Path = Join-Path $playbooksDir "$Name.psd1"
+    if (Test-Path $psd1Path) {
+        # Use Import-ConfigDataFile if available, otherwise scriptblock evaluation
+        if (Get-Command Import-ConfigDataFile -ErrorAction SilentlyContinue) {
+            $playbook = Import-ConfigDataFile -Path $psd1Path
+        } else {
+            $content = Get-Content -Path $psd1Path -Raw
+            $scriptBlock = [scriptblock]::Create($content)
+            $playbook = & $scriptBlock
+        }
+        return ConvertTo-StandardPlaybookFormat $playbook
+    }
+    
+    # Then try .json format (legacy)
+    $jsonPath = Join-Path $playbooksDir "$Name.json"
+    if (Test-Path $jsonPath) {
+        $playbook = Get-Content $jsonPath -Raw | ConvertFrom-Json -AsHashtable
         return ConvertTo-StandardPlaybookFormat $playbook
     }
 
-    # Then search in subdirectories
-    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    # Finally search in subdirectories for both formats
+    $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.psd1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($foundPlaybook) {
+        if (Get-Command Import-ConfigDataFile -ErrorAction SilentlyContinue) {
+            $playbook = Import-ConfigDataFile -Path $foundPlaybook.FullName
+        } else {
+            $content = Get-Content -Path $foundPlaybook.FullName -Raw
+            $scriptBlock = [scriptblock]::Create($content)
+            $playbook = & $scriptBlock
+        }
+        return ConvertTo-StandardPlaybookFormat $playbook
+    }
+    
     $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-
     if ($foundPlaybook) {
         $playbook = Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
         return ConvertTo-StandardPlaybookFormat $playbook
