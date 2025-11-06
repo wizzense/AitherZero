@@ -423,16 +423,16 @@
         # Domain module structure (actual repository state)
         Domains = @{
             'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation' = @{ Modules = 3; Description = 'Orchestration engine and deployment automation' }
-            'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
+            'automation' = @{ Modules = 5; Description = 'Orchestration engine and deployment automation' }
+            'configuration' = @{ Modules = 2; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
-            'experience' = @{ Modules = 10; Description = 'UI/UX components and interactive menus' }
+            'experience' = @{ Modules = 18; Description = 'UI/UX components and interactive menus' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
             'testing' = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
-            'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
+            'utilities' = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
         
         # Script inventory by range (138 total files, 137 unique numbers)
@@ -447,7 +447,7 @@
             '0500-0599' = @{ Count = 18; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 10; Category = 'Validation & Test Generation' }
+            '0900-0999' = @{ Count = 11; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
         
