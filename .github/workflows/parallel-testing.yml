@@ -174,48 +174,9 @@ jobs:
             "skipped=0" >> $env:GITHUB_OUTPUT
           }
 
-      - name: 📋 Create Status Check
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        env:
-          PASSED: ${{ steps.run-tests.outputs.passed }}
-          FAILED: ${{ steps.run-tests.outputs.failed }}
-          SKIPPED: ${{ steps.run-tests.outputs.skipped }}
-          RANGE: ${{ matrix.range }}
-        with:
-          script: |
-            const passed = parseInt(process.env.PASSED || '0', 10);
-            const failed = parseInt(process.env.FAILED || '0', 10);
-            const skipped = parseInt(process.env.SKIPPED || '0', 10);
-            const range = process.env.RANGE;
-            const total = passed + failed + skipped;
-
-            let conclusion, summary;
-
-            if (total === 0) {
-              conclusion = 'success';
-              summary = `⏭️ No tests in range ${range}`;
-            } else if (failed === 0) {
-              conclusion = 'success';
-              summary = `✅ ${passed} test(s) passed in range ${range}`;
-            } else {
-              conclusion = 'failure';
-              summary = `❌ ${failed} test(s) failed in range ${range}`;
-            }
-
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: `🧪 Unit Tests [${range}]`,
-              head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
-              conclusion: conclusion,
-              output: {
-                title: summary,
-                summary: summary,
-                text: `**Range:** ${range}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
-              }
-            });
+      # Note: Individual status checks removed - GitHub job status is sufficient
+      # Creating too many checks concurrently causes GitHub UI issues
+      # The consolidate-results job creates a summary check
 
       - name: 📊 Upload Test Results
         if: always()
@@ -302,48 +263,9 @@ jobs:
             "skipped=0" >> $env:GITHUB_OUTPUT
           }
 
-      - name: 📋 Create Status Check
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        env:
-          PASSED: ${{ steps.run-tests.outputs.passed }}
-          FAILED: ${{ steps.run-tests.outputs.failed }}
-          SKIPPED: ${{ steps.run-tests.outputs.skipped }}
-          MODULE: ${{ matrix.module }}
-        with:
-          script: |
-            const passed = parseInt(process.env.PASSED || '0', 10);
-            const failed = parseInt(process.env.FAILED || '0', 10);
-            const skipped = parseInt(process.env.SKIPPED || '0', 10);
-            const module = process.env.MODULE;
-            const total = passed + failed + skipped;
-
-            let conclusion, summary;
-
-            if (total === 0) {
-              conclusion = 'success';
-              summary = `⏭️ No tests for ${module} domain`;
-            } else if (failed === 0) {
-              conclusion = 'success';
-              summary = `✅ ${passed} test(s) passed for ${module} domain`;
-            } else {
-              conclusion = 'failure';
-              summary = `❌ ${failed} test(s) failed for ${module} domain`;
-            }
-
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: `🏗️ Domain Tests [${module}]`,
-              head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
-              conclusion: conclusion,
-              output: {
-                title: summary,
-                summary: summary,
-                text: `**Domain:** ${module}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
-              }
-            });
+      # Note: Individual status checks removed - GitHub job status is sufficient
+      # Creating too many checks concurrently causes GitHub UI issues
+      # The consolidate-results job creates a summary check
 
       - name: 📊 Upload Test Results
         if: always()
@@ -430,48 +352,9 @@ jobs:
             "skipped=0" >> $env:GITHUB_OUTPUT
           }
 
-      - name: 📋 Create Status Check
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        env:
-          PASSED: ${{ steps.run-tests.outputs.passed }}
-          FAILED: ${{ steps.run-tests.outputs.failed }}
-          SKIPPED: ${{ steps.run-tests.outputs.skipped }}
-          SUITE: ${{ matrix.suite }}
-        with:
-          script: |
-            const passed = parseInt(process.env.PASSED || '0', 10);
-            const failed = parseInt(process.env.FAILED || '0', 10);
-            const skipped = parseInt(process.env.SKIPPED || '0', 10);
-            const suite = process.env.SUITE;
-            const total = passed + failed + skipped;
-
-            let conclusion, summary;
-
-            if (total === 0) {
-              conclusion = 'success';
-              summary = `⏭️ No tests for ${suite} suite`;
-            } else if (failed === 0) {
-              conclusion = 'success';
-              summary = `✅ ${passed} test(s) passed for ${suite} suite`;
-            } else {
-              conclusion = 'failure';
-              summary = `❌ ${failed} test(s) failed for ${suite} suite`;
-            }
-
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: `🔗 Integration Tests [${suite}]`,
-              head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
-              conclusion: conclusion,
-              output: {
-                title: summary,
-                summary: summary,
-                text: `**Suite:** ${suite}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
-              }
-            });
+      # Note: Individual status checks removed - GitHub job status is sufficient
+      # Creating too many checks concurrently causes GitHub UI issues
+      # The consolidate-results job creates a summary check
 
       - name: 📊 Upload Test Results
         if: always()
@@ -657,63 +540,9 @@ jobs:
           $perfData | ConvertTo-Json -Depth 10 | Out-File -FilePath "./reports/performance-metrics.json" -Encoding UTF8
           Write-Host "✅ Performance metrics collected" -ForegroundColor Green
 
-      - name: 📋 Create Status Check
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        env:
-          ERRORS: ${{ steps.pssa.outputs.error-count }}
-          WARNINGS: ${{ steps.pssa.outputs.warning-count }}
-          INFO: ${{ steps.pssa.outputs.info-count }}
-          TOTAL: ${{ steps.pssa.outputs.total-issues }}
-          LINE_COV: ${{ steps.coverage.outputs.line-coverage }}
-          BRANCH_COV: ${{ steps.coverage.outputs.branch-coverage }}
-        with:
-          script: |
-            const errors = parseInt(process.env.ERRORS || '0', 10);
-            const warnings = parseInt(process.env.WARNINGS || '0', 10);
-            const info = parseInt(process.env.INFO || '0', 10);
-            const total = parseInt(process.env.TOTAL || '0', 10);
-            const lineCov = parseFloat(process.env.LINE_COV || '0');
-            const branchCov = parseFloat(process.env.BRANCH_COV || '0');
-
-            let conclusion, summary;
-
-            if (errors > 0) {
-              conclusion = 'failure';
-              summary = `❌ ${errors} error(s), ${warnings} warning(s) found`;
-            } else if (warnings > 10) {
-              conclusion = 'neutral';
-              summary = `⚠️ ${warnings} warning(s) found (no errors)`;
-            } else {
-              conclusion = 'success';
-              summary = `✅ Code quality passed (${total} total issues)`;
-            }
-
-            const text = `**PSScriptAnalyzer:**
-
-            • Errors: ${errors}
-            • Warnings: ${warnings}
-            • Information: ${info}
-            • Total Issues: ${total}
-
-            **Code Coverage:**
-
-            • Line Coverage: ${lineCov}%
-            • Branch Coverage: ${branchCov}%`;
-
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: '🔍 Static Analysis',
-              head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
-              conclusion: conclusion,
-              output: {
-                title: summary,
-                summary: summary,
-                text: text
-              }
-            });
+      # Note: Individual status checks removed - GitHub job status is sufficient
+      # Creating too many checks concurrently causes GitHub UI issues
+      # The consolidate-results job creates a summary check
 
   # Consolidation job - runs after all parallel jobs complete
   consolidate-results:
