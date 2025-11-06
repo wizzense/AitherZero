@@ -67,7 +67,14 @@ function Discover-Configurations {
     
     foreach ($file in $configFiles) {
         try {
-            $config = Import-PowerShellDataFile -Path $file.FullName
+            # Use scriptblock evaluation for config files
+            $content = Get-Content -Path $file.FullName -Raw
+            $scriptBlock = [scriptblock]::Create($content)
+            $config = & $scriptBlock
+            
+            if (-not $config -or $config -isnot [hashtable]) {
+                throw "Config file did not return a valid hashtable"
+            }
             
             $configInfo = @{
                 Name = $file.BaseName
@@ -92,7 +99,14 @@ function Discover-Configurations {
         
         foreach ($file in $envConfigs) {
             try {
-                $config = Import-PowerShellDataFile -Path $file.FullName
+                # Use scriptblock evaluation for config files
+                $content = Get-Content -Path $file.FullName -Raw
+                $scriptBlock = [scriptblock]::Create($content)
+                $config = & $scriptBlock
+                
+                if (-not $config -or $config -isnot [hashtable]) {
+                    throw "Config file did not return a valid hashtable"
+                }
                 
                 $configInfo = @{
                     Name = $file.BaseName
@@ -130,7 +144,16 @@ function Import-ConfigManifest {
     Write-Verbose "Loading configuration from: $Path"
     
     try {
-        $config = Import-PowerShellDataFile -Path $Path
+        # Use scriptblock evaluation instead of Import-PowerShellDataFile
+        # because config.psd1 contains PowerShell expressions ($true/$false) that
+        # Import-PowerShellDataFile treats as "dynamic expressions"
+        $content = Get-Content -Path $Path -Raw
+        $scriptBlock = [scriptblock]::Create($content)
+        $config = & $scriptBlock
+        
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        }
         
         # Add metadata
         $config._Metadata = @{
@@ -478,7 +501,20 @@ function Test-ConfigurationValidity {
     $warnings = @()
     
     try {
-        $config = Import-PowerShellDataFile -Path $Path
+        # Use scriptblock evaluation for config files
+        $content = Get-Content -Path $Path -Raw
+        $scriptBlock = [scriptblock]::Create($content)
+        $config = & $scriptBlock
+        
+        if (-not $config -or $config -isnot [hashtable]) {
+            $errors += "Config file did not return a valid hashtable"
+            return [PSCustomObject]@{
+                IsValid = $false
+                Errors = $errors
+                Warnings = $warnings
+                Path = $Path
+            }
+        }
         
         # Check required sections
         $requiredSections = @('Manifest', 'Core')

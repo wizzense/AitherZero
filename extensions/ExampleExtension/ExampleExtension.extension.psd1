@@ -66,7 +66,7 @@
     
     # Extension configuration defaults
     Configuration = @{
-        EnableVerboseLogging = $false
+        EnableVerboseLogging = 'false'  # Use string 'false' instead of $false for data-file compatibility
         DataPath = 'data/'
     }
 }
