@@ -1,6 +1,6 @@
-# demos
+# .orchestration-jobs
 
-**Navigation**: [🏠 Root](../index.md) → **demos**
+**Navigation**: [🏠 Root](../index.md) → **.orchestration-jobs**
 
 ⬆️ **Parent**: [Root](../index.md)
 
@@ -11,13 +11,7 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 1
-
-## 📄 Files
-
-### .md Files
-
-- 📝 [index.md](./index.md)
+- **Files**: 0
 
 ---
 

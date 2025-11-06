@@ -1,6 +1,6 @@
-# legacy-to-migrate
+# extensions
 
-**Navigation**: [🏠 Root](../index.md) → **legacy-to-migrate**
+**Navigation**: [🏠 Root](../index.md) → **extensions**
 
 ⬆️ **Parent**: [Root](../index.md)
 
@@ -11,17 +11,12 @@
 ### 📊 Contents
 
 - **Subdirectories**: 1
-- **Files**: 1
+- **Files**: 0
 
 ## 📁 Subdirectories
 
-- [📂 **ISOCustomizer**](./ISOCustomizer/index.md)
-
-## 📄 Files
-
-### .md Files
-
-- 📝 [index.md](./index.md)
+- 📂 **ExampleExtension**
+  - *Demonstrates how to create an extension for AitherZero Core.*
 
 ---
 
