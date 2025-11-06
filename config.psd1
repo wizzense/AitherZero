@@ -237,8 +237,8 @@
                 }
                 Logging = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0530', '0531', '0550')
-                    Description = 'Log viewing, workflow reports, and health dashboard'
+                    Scripts = @('0530', '0531', '0550', '0830')
+                    Description = 'Log viewing, workflow reports, health dashboard, and comprehensive log search'
                 }
                 CI = @{
                     DependsOn = @('Core.PowerShell7')
@@ -446,8 +446,8 @@
             '0400-0499' = @{ Count = 26; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 18; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 7; Category = 'Validation & Test Generation' }
+            '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
+            '0900-0999' = @{ Count = 10; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
         
@@ -931,6 +931,25 @@
         ProgressBarStyle = 'Classic'
         EnableEmoji = $true
         ShowExecutionTime = $true
+        
+        # Modal UI Settings (VIM-like interface)
+        ModalUI = @{
+            Enabled = $true  # Enable VIM-like modal UI enhancements
+            DefaultMode = 'Normal'  # Starting mode (Normal, Command, Search)
+            VimBindings = $true  # Use VIM-style keys (h,j,k,l)
+            ShowModeIndicator = $true  # Show current mode in UI
+            CommandHistory = $true  # Enable command history
+            MaxHistoryItems = 50  # Maximum history entries
+            SearchAsYouType = $true  # Real-time search filtering
+            QuickSelection = $true  # Enable number selection (1-9, 0)
+            
+            # Key binding customization (advanced users)
+            KeyBindings = @{
+                # Can override default bindings here
+                # Format: @{ Mode = @{ 'Key' = @{ Action = 'ActionName'; Description = 'Description' } } }
+                # Example: Normal = @{ 'x' = @{ Action = 'Delete-Item'; Description = 'Delete item' } }
+            }
+        }
         
         # Themes
         Theme = 'Default'

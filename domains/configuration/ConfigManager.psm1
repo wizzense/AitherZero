@@ -602,14 +602,6 @@ function Get-ManifestCapabilities {
     return $script:ConfigManager.ManifestCapabilities
 }
 
-<#
-.SYNOPSIS
-    Gets current configuration (alias for compatibility)
-#>
-function Get-CurrentConfiguration {
-    return Get-ActiveConfiguration
-}
-
 # Export functions
 Export-ModuleMember -Function @(
     'Initialize-ConfigManager'
