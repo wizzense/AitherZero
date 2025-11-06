@@ -23,6 +23,31 @@ $script:IsCI = $false
 $script:CIDefaults = @{}
 $script:CIDefaultsUI = @{}
 
+# Helper function to load .psd1 files that may contain PowerShell expressions
+function Import-ConfigDataFile {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+    
+    if (-not (Test-Path $Path)) {
+        throw "Config file not found: $Path"
+    }
+    
+    # Read and evaluate as scriptblock (supports $true/$false and other expressions)
+    # This is needed because config.psd1 contains PowerShell expressions that
+    # Import-PowerShellDataFile cannot handle
+    $content = Get-Content -Path $Path -Raw
+    $scriptBlock = [scriptblock]::Create($content)
+    $data = & $scriptBlock
+    
+    if (-not $data -or $data -isnot [hashtable]) {
+        throw "Config file did not return a valid hashtable: $Path"
+    }
+    
+    return $data
+}
+
 # Logging helper for Configuration module
 function Write-ConfigLog {
     param(
@@ -173,13 +198,13 @@ function Get-Configuration {
             try {
                 # Load based on file extension
                 if ($script:ConfigPath -like "*.psd1") {
-                    $script:Config = Import-PowerShellDataFile $script:ConfigPath
+                    $script:Config = Import-ConfigDataFile -Path $script:ConfigPath
 
                     # Check for local overrides
                     $localPath = $script:ConfigPath -replace '\.psd1$', '.local.psd1'
                     if (Test-Path $localPath) {
                         Write-ConfigLog -Message "Loading local overrides from $localPath" -Level Information
-                        $localConfig = Import-PowerShellDataFile $localPath
+                        $localConfig = Import-ConfigDataFile -Path $localPath
                         $script:Config = Merge-Configuration -Current $script:Config -New $localConfig
                     }
                 } else {
