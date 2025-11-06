@@ -527,26 +527,24 @@ function Test-FeatureOrPrompt {
         [switch]$ExitOnDisabled
     )
     
-    # Check if Configuration module functions are available
-    $testAvailable = Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue
-    $requestAvailable = Get-Command Request-FeatureEnable -ErrorAction SilentlyContinue
-    
-    if (-not $testAvailable) {
-        Write-ScriptLog "Configuration module not available, cannot check feature status" -Level 'Warning'
+    # Check if feature is enabled - function should be available from AitherZero module
+    try {
+        if (Test-FeatureEnabled -FeatureName $FeatureName -Category $Category) {
+            return $true
+        }
+    } catch {
+        Write-ScriptLog "Configuration functions not available or error checking feature: $($_.Exception.Message)" -Level 'Warning'
         return $false
     }
     
-    # Check if feature is enabled
-    if (Test-FeatureEnabled -FeatureName $FeatureName -Category $Category) {
-        return $true
-    }
-    
     # Feature is disabled - try to prompt if possible
-    if ($requestAvailable) {
+    try {
         $enabled = Request-FeatureEnable -FeatureName $FeatureName -Category $Category -Reason $Reason
         if ($enabled) {
             return $true
         }
+    } catch {
+        Write-ScriptLog "Error prompting for feature (may not be available in this context): $($_.Exception.Message)" -Level 'Debug'
     }
     
     # Feature is disabled and user declined or prompting not available

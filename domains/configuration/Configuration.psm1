@@ -998,7 +998,16 @@ function Request-FeatureEnable {
         if (-not $configPath) {
             $configPath = Join-Path $script:ProjectRoot "config.psd1"
         }
-        $localConfigPath = $configPath -replace '\.psd1$', '.local.psd1'
+        
+        # Build local config path - handle both .psd1 and .json extensions
+        if ($configPath -like '*.psd1') {
+            $localConfigPath = $configPath -replace '\.psd1$', '.local.psd1'
+        } elseif ($configPath -like '*.json') {
+            $localConfigPath = $configPath -replace '\.json$', '.local.psd1'
+        } else {
+            # Fallback: add .local.psd1 to the path
+            $localConfigPath = "$configPath.local.psd1"
+        }
         
         # Load existing local config or create new
         $localConfig = @{}
