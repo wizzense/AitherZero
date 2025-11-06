@@ -289,7 +289,7 @@ function Search-LogFile {
         
         return $matches
     } catch {
-        Write-ScriptLog "Error searching file $Path: $_" -Level 'Warning'
+        Write-ScriptLog "Error searching file ${Path}: $_" -Level 'Warning'
         return @()
     }
 }
@@ -441,7 +441,13 @@ try {
     Write-ScriptLog "Starting comprehensive log search for pattern: $Pattern"
     
     # Get all relevant log files
-    $logFiles = Get-AllLogFiles -Type $LogType -After $After -Before $Before
+    $getLogParams = @{
+        Type = $LogType
+    }
+    if ($After) { $getLogParams['After'] = $After }
+    if ($Before) { $getLogParams['Before'] = $Before }
+    
+    $logFiles = Get-AllLogFiles @getLogParams
     
     if ($logFiles.Count -eq 0) {
         Write-Host "`n⚠️  No log files found matching criteria" -ForegroundColor Yellow
