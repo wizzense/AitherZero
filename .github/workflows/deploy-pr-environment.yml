@@ -258,13 +258,13 @@ jobs:
           IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
           echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           echo "Using image tag for deployment: ${IMAGE_TAG}"
-          
+
           # Generate package URL for GitHub Container Registry
           # Note: Package name matches the hardcoded image name 'aitherzero' (line 175)
           # This ensures consistency between the image push and package URL
           PACKAGE_URL="https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
           echo "package-url=${PACKAGE_URL}" >> $GITHUB_OUTPUT
-          
+
           # Full image URL with registry
           IMAGE_URL="${IMAGE_TAG}"
           echo "image-url=${IMAGE_URL}" >> $GITHUB_OUTPUT
@@ -325,18 +325,18 @@ jobs:
 
           # Wait for container to be healthy
           echo "⏳ Waiting for environment to be ready..."
-          
+
           # Give container time to start (Docker healthcheck has 5s start-period + 30s intervals)
           echo "⏳ Waiting for initial startup (40 seconds)..."
           sleep 40
-          
+
           # Check health status
           HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "no-health")
           CONTAINER_RUNNING=$(docker inspect --format='{{.State.Running}}' aitherzero-pr-${PR_NUMBER} 2>/dev/null || echo "false")
-          
+
           echo "Container running: ${CONTAINER_RUNNING}"
           echo "Health status: ${HEALTH_STATUS}"
-          
+
           if [ "$CONTAINER_RUNNING" = "true" ]; then
             if [ "$HEALTH_STATUS" = "healthy" ] || [ "$HEALTH_STATUS" = "starting" ] || [ "$HEALTH_STATUS" = "no-health" ]; then
               echo "✅ Container is running and responsive"
@@ -352,7 +352,7 @@ jobs:
             docker logs aitherzero-pr-${PR_NUMBER}
             exit 1
           fi
-          
+
           echo "✅ Environment deployed successfully"
 
           # Set deployment outputs with package information
@@ -443,17 +443,17 @@ jobs:
         with:
           script: |
             const prNumber = ${{ needs.check-deployment-trigger.outputs.pr-number }};
-            
+
             // Calculate unique port for each PR with automatic rollover
             // Port range: 8080-8179 (100 ports available)
             // Formula: 8080 + (prNumber % 100) ensures ports roll over after 100 PRs
             const dynamicPort = 8080 + (prNumber % 100);
-            
+
             // Get job results
             const validationResult = '${{ needs.validate-docker-config.result }}';
             const buildResult = '${{ needs.build-container.result }}';
             const deployResult = '${{ needs.deploy-docker-compose.result }}';
-            
+
             // Get values from environment
             const branchName = process.env.BRANCH_NAME;
             const commitSha = process.env.COMMIT_SHA;
@@ -463,20 +463,20 @@ jobs:
             const serverUrl = process.env.SERVER_URL;
             const repository = process.env.REPOSITORY;
             const runId = process.env.RUN_ID;
-            
+
             // Check for actual failures (not skipped)
             const validationFailed = validationResult === 'failure' || validationResult === 'cancelled';
             const buildFailed = buildResult === 'failure' || buildResult === 'cancelled';
             const deployFailed = deployResult === 'failure' || deployResult === 'cancelled';
-            
+
             // Check for successful deployment (all completed successfully)
-            const deploymentSuccessful = validationResult === 'success' && 
-                buildResult === 'success' && 
+            const deploymentSuccessful = validationResult === 'success' &&
+                buildResult === 'success' &&
                 deployResult === 'success';
-            
+
             // Check if deployment was skipped (jobs didn't run but no failures)
             const deploymentSkipped = !validationFailed && !buildFailed && !deployFailed && !deploymentSuccessful;
-            
+
             let status = '🚀';
             let title = 'Deployment Successful';
             let message = 'Your PR environment has been deployed and is ready for testing!';
@@ -508,7 +508,7 @@ jobs:
             - **Image Digest**: \`${imageDigest}\`
             - **Package URL**: [${packageUrl}](${packageUrl})
             - **Registry**: GitHub Container Registry (\`ghcr.io\`)
-            
+
             #### 📥 Pull Command
             \`\`\`bash
             docker pull ${imageTag}
@@ -525,64 +525,64 @@ jobs:
             Choose the method that works best for you:
 
             #### ⚡ Method 1: Quick Docker Commands (No Clone Required)
-            
+
             Fastest way to test - just use Docker directly:
-            
+
             \`\`\`bash
             # Pull and run the container
             docker pull ${imageTag}
             docker run -d --name aitherzero-pr-${prNumber} -p ${dynamicPort}:8080 ${imageTag}
-            
+
             # Wait for startup
             sleep 5
-            
+
             # Run tests (import module first to get az alias)
             docker exec aitherzero-pr-${prNumber} pwsh -Command "Import-Module /opt/aitherzero/AitherZero.psd1; az 0402"
-            
+
             # Open interactive shell to explore (module auto-loads)
             docker exec -it aitherzero-pr-${prNumber} pwsh
-            
+
             # Cleanup when done
             docker stop aitherzero-pr-${prNumber} && docker rm aitherzero-pr-${prNumber}
             \`\`\`
-            
+
             #### 🎯 Method 2: Container Manager (After Cloning Repo)
-            
+
             For automated workflows with the container manager:
-            
+
             \`\`\`bash
             # Clone the repo
             git clone https://github.com/wizzense/AitherZero.git
             cd AitherZero
-            
+
             # QuickStart: Pull + Run + Verify automatically
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber ${prNumber}
-            
+
             # Open interactive shell
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber ${prNumber}
-            
+
             # Execute commands
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber ${prNumber} -Command "az 0402"
-            
+
             # Check status
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber ${prNumber}
-            
+
             # View logs
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber ${prNumber}
-            
+
             # Cleanup when done
             pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber ${prNumber}
             \`\`\`
 
             #### 🖥️ Method 3: Interactive Testing (Recommended)
-            
+
             Best for exploring and development:
-            
+
             \`\`\`bash
             # Pull and start interactively
             docker pull ${imageTag}
             docker run -it --name aitherzero-pr-${prNumber} ${imageTag}
-            
+
             # You'll see the welcome screen. Module is already loaded, so use:
             # az 0402                    # Run unit tests
             # az 0510 -ShowAll           # Generate reports
@@ -590,9 +590,9 @@ jobs:
             \`\`\`
 
             ### 📚 Available Test Commands
-            
+
             Inside the container or via \`docker exec\`, you can run:
-            
+
             - \`az 0402\` - Run unit tests
             - \`az 0404\` - Run PSScriptAnalyzer linting
             - \`az 0407\` - Validate PowerShell syntax

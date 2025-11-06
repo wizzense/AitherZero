@@ -98,7 +98,7 @@ jobs:
         run: |
           if ($env:GITHUB_STEP_SUMMARY) {
             $status = "${{ job.status }}"
-            
+
             # Build summary using array to avoid here-string issues
             $summaryLines = @(
               "## Config Manifest Validation Results"
@@ -124,7 +124,7 @@ jobs:
               "    ./automation-scripts/0003_Sync-ConfigManifest.ps1"
               ""
             )
-            
+
             $summary = $summaryLines -join "`n"
             $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
           }
