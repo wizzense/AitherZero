@@ -43,13 +43,13 @@ jobs:
             const forkRepo = context.payload.pull_request.head.repo.full_name;
 
             const comment = `## 🔒 Fork PR Security Notice
-            
+
             **PR #${prNumber} from Fork Repository** • **Author:** @${prAuthor} • **Fork:** \`${forkRepo}\`
 
             ### 🛡️ Security Policy
-            
+
             For security reasons, automated validation is **limited** for fork PRs:
-            
+
             | Check | Status | Reason |
             |-------|--------|--------|
             | 📝 Static Analysis | ✅ Enabled | Safe to run without code execution |
@@ -58,14 +58,14 @@ jobs:
             | 🚀 Full CI Pipeline | ⏸️ Waiting | Runs after maintainer review |
 
             ### 🚀 Next Steps
-            
+
             1. 👀 **Maintainer Review** - A maintainer will review your changes
             2. ✅ **Approval** - If approved, full CI will run automatically
             3. 🔒 **Security Check** - All changes reviewed for security concerns
             4. 🎉 **Merge** - Once all checks pass, your PR can be merged!
 
             ### 📋 While You Wait
-            
+
             - 📖 Review [Contributing Guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md)
             - ✅ Ensure your changes follow project standards
             - 🧪 Add tests for new functionality
@@ -229,7 +229,7 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const prTitle = context.payload.pull_request.title;
             const prAuthor = context.payload.pull_request.user.login;
-            
+
             // Status indicators
             const statusIcon = syntaxStatus.includes('PASSED') ? '✅' : syntaxStatus.includes('FAILED') ? '❌' : '⏭️';
             const statusBadge = syntaxStatus.includes('PASSED') ? '🟢 READY' : syntaxStatus.includes('FAILED') ? '🔴 NEEDS FIX' : '🟡 PENDING';
