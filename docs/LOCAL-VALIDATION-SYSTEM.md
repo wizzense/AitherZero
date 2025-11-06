@@ -28,21 +28,21 @@ Three validation playbooks mirror GitHub Actions workflows:
 
 ### 2. **Convenience Wrapper Script**
 
-**Script**: `automation-scripts/0960_Run-LocalValidation.ps1`
+**Script**: `automation-scripts/0966_Run-LocalValidation.ps1`
 
 **Usage**:
 ```powershell
 # Fast validation (syntax + config)
-./automation-scripts/0960_Run-LocalValidation.ps1 -ValidationLevel Fast
+./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Fast
 
 # Standard validation (syntax + linting + unit tests)
-./automation-scripts/0960_Run-LocalValidation.ps1 -ValidationLevel Standard
+./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Standard
 
 # Full validation (all checks including integration tests)
-./automation-scripts/0960_Run-LocalValidation.ps1 -ValidationLevel Full -GenerateReport
+./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Full -GenerateReport
 
 # Or use the global wrapper:
-aitherzero 0960 -ValidationLevel Fast
+aitherzero 0966 -ValidationLevel Fast
 ```
 
 ### 3. **Markdown Reports**
@@ -205,7 +205,7 @@ The orchestration engine now provides feature parity with GitHub Actions:
 code domains/utilities/Logging.psm1
 
 # Quick validation (30 seconds)
-aitherzero 0960 -ValidationLevel Fast
+aitherzero 0966 -ValidationLevel Fast
 
 # If passed, commit
 git add .
@@ -215,7 +215,7 @@ git commit -m "feat: improve logging"
 ### Pre-Commit Validation
 ```powershell
 # Complete validation before commit
-aitherzero 0960 -ValidationLevel Standard -GenerateReport
+aitherzero 0966 -ValidationLevel Standard -GenerateReport
 
 # Review report
 cat reports/local-validation-*.md
@@ -227,7 +227,7 @@ git push
 ### PR Preparation
 ```powershell
 # Full validation before creating PR
-aitherzero 0960 -ValidationLevel Full -GenerateReport
+aitherzero 0966 -ValidationLevel Full -GenerateReport
 
 # Review comprehensive report
 open reports/local-validation-*.md
@@ -239,7 +239,7 @@ gh pr create --title "feat: new feature" --body "$(cat reports/local-validation-
 ### Direct Playbook Execution
 ```powershell
 # Run specific playbook
-aitherzero 0960 -Playbook pr-validation-full
+aitherzero 0966 -Playbook pr-validation-full
 
 # Or use orchestration directly
 Start-AitherZero -Mode Orchestrate -Playbook pr-validation-full
@@ -255,7 +255,7 @@ Error: Playbook not found: ./orchestration/playbooks/pr-validation-full.psd1
 **Solution**: Ensure you're in the project root directory:
 ```powershell
 cd /path/to/AitherZero
-./automation-scripts/0960_Run-LocalValidation.ps1 -ValidationLevel Standard
+./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Standard
 ```
 
 ### Issue: Module not loaded
@@ -287,7 +287,7 @@ cat ./tests/results/*.xml
 ### Component Diagram
 ```
 ┌─────────────────────────────────────┐
-│  0960_Run-LocalValidation.ps1       │
+│  0966_Run-LocalValidation.ps1       │
 │  (Convenience Wrapper)               │
 └────────────┬────────────────────────┘
              │
@@ -319,7 +319,7 @@ cat ./tests/results/*.xml
 
 ### Execution Flow
 ```
-1. User runs: aitherzero 0960 -ValidationLevel Standard
+1. User runs: aitherzero 0966 -ValidationLevel Standard
 2. Wrapper determines playbook: pr-validation-full
 3. Wrapper loads configuration: Get-Configuration
 4. Wrapper invokes orchestration: Invoke-OrchestrationSequence

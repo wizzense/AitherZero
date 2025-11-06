@@ -125,8 +125,24 @@ try {
         throw "Playbook not found: $playbookPath"
     }
     
-    # Execute the playbook
-    $result = Invoke-OrchestrationSequence -PlaybookPath $playbookPath -Configuration $config
+    # Load the playbook data from the .psd1 file
+    $playbookData = Import-PowerShellDataFile $playbookPath
+    
+    if (-not $playbookData.Sequence) {
+        throw "Playbook file does not contain a 'Sequence' property: $playbookPath"
+    }
+    
+    # Build sequence from playbook steps - extract script numbers (0407, 0404, etc.)
+    $sequenceScripts = @()
+    foreach ($step in $playbookData.Sequence) {
+        # Extract the script number from filenames like "0407_Validate-Syntax.ps1"
+        if ($step.Script -match '^(\d{4})') {
+            $sequenceScripts += $matches[1]
+        }
+    }
+    
+    # Execute the playbook sequence
+    $result = Invoke-OrchestrationSequence -Sequence $sequenceScripts -Configuration $config
     
     $endTime = Get-Date
     $duration = $endTime - $startTime

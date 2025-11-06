@@ -84,10 +84,11 @@
         SummaryFormat = "Markdown"
     }
     
-    # Success criteria - all critical checks must pass
+    # Success criteria - all critical scripts listed below must pass for overall success
     SuccessCriteria = @{
         RequireAllSuccess = $false
-        MinimumSuccessCount = 4  # At least 4 of 6 must pass
+        MinimumSuccessCount = 4  # At least 4 of 6 total scripts must pass
+        # All scripts in CriticalScripts must pass; other scripts are optional
         CriticalScripts = @(
             "0407_Validate-Syntax.ps1"
             "0404_Run-PSScriptAnalyzer.ps1"
