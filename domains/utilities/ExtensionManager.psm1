@@ -410,7 +410,10 @@ function Get-ExtensionConfiguration {
     
     if (Test-Path $configPath) {
         try {
-            $mainConfig = Import-PowerShellDataFile -Path $configPath
+            # Use scriptblock evaluation to handle PowerShell expressions in config
+            $configContent = Get-Content -Path $configPath -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $mainConfig = & $scriptBlock
             if ($mainConfig.Extensions) {
                 $config = $mainConfig.Extensions
             }
