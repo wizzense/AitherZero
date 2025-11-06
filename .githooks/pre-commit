@@ -11,6 +11,8 @@
 
 set -e
 
+EXIT_CODE=0
+
 # Check if config.psd1 is being committed
 if git diff --cached --name-only | grep -q "^config.psd1$"; then
     echo "🔍 Detected changes to config.psd1 - running validation..."
@@ -19,7 +21,7 @@ if git diff --cached --name-only | grep -q "^config.psd1$"; then
     # Run the validation script
     if pwsh -File ./automation-scripts/0413_Validate-ConfigManifest.ps1; then
         echo ""
-        echo "✅ Config validation passed - proceeding with commit"
+        echo "✅ Config validation passed"
         echo ""
     else
         echo ""
@@ -31,11 +33,28 @@ if git diff --cached --name-only | grep -q "^config.psd1$"; then
         echo "  3. Run: pwsh -File ./automation-scripts/0413_Validate-ConfigManifest.ps1"
         echo "  4. Try committing again"
         echo ""
-        echo "To bypass this check (NOT RECOMMENDED):"
-        echo "  git commit --no-verify"
-        echo ""
-        exit 1
+        EXIT_CODE=1
     fi
+fi
+
+# Check if workflow files are being committed
+if git diff --cached --name-only | grep -q "^.github/workflows/.*\.yml$"; then
+    # Run the workflow validation hook
+    if [ -x ".githooks/pre-commit-workflows" ]; then
+        if ! ./.githooks/pre-commit-workflows; then
+            EXIT_CODE=1
+        fi
+    else
+        echo "⚠️  Workflow validation hook not found or not executable"
+    fi
+fi
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "To bypass these checks (NOT RECOMMENDED):"
+    echo "  git commit --no-verify"
+    echo ""
+    exit 1
 fi
 
 exit 0

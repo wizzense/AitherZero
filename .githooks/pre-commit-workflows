@@ -1,0 +1,52 @@
+#!/bin/bash
+# Pre-commit hook to validate GitHub Actions workflows
+# This prevents common YAML errors that cause workflows to disappear
+
+echo "🔍 Validating GitHub Actions workflows..."
+
+# Check if any workflow files are being committed
+WORKFLOW_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep "^.github/workflows/.*\.yml$")
+
+if [ -z "$WORKFLOW_FILES" ]; then
+  echo "✓ No workflow files changed"
+  exit 0
+fi
+
+echo "Checking $(echo "$WORKFLOW_FILES" | wc -l) workflow file(s)..."
+
+# Validate each workflow file
+ERRORS=0
+for file in $WORKFLOW_FILES; do
+  echo -n "  Checking $file... "
+  
+  # Check for trailing spaces
+  if grep -q "[[:space:]]$" "$file"; then
+    echo "❌ TRAILING SPACES FOUND"
+    echo "    Run: sed -i 's/[[:space:]]*$//' $file"
+    ERRORS=$((ERRORS + 1))
+    continue
+  fi
+  
+  # Check YAML syntax
+  if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+    echo "❌ YAML SYNTAX ERROR"
+    python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>&1 | head -3
+    ERRORS=$((ERRORS + 1))
+    continue
+  fi
+  
+  echo "✅ Valid"
+done
+
+if [ $ERRORS -gt 0 ]; then
+  echo ""
+  echo "❌ Found $ERRORS error(s) in workflow files"
+  echo "Please fix the errors and try again"
+  echo ""
+  echo "Quick fix for trailing spaces:"
+  echo "  find .github/workflows -name '*.yml' -exec sed -i 's/[[:space:]]*$//' {} \;"
+  exit 1
+fi
+
+echo "✅ All workflow files are valid"
+exit 0
