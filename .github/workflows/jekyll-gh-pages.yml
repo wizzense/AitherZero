@@ -35,7 +35,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -55,13 +55,13 @@ jobs:
             cp ./mcp-server/IMPLEMENTATION-SUMMARY.md ./docs/mcp-server/implementation.md
             echo "✅ Copied MCP server implementation summary"
           fi
-        
+
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./_site
-          
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
@@ -76,7 +76,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        
+
       - name: Report Deployment
         shell: pwsh
         run: |
@@ -90,7 +90,7 @@ jobs:
           Write-Host "  - MCP Server: ${{ steps.deployment.outputs.page_url }}docs/mcp-server/"
           Write-Host ""
           Write-Host "⏱️ Deployment Duration: <5 minutes is normal" -ForegroundColor Cyan
-          
+
       - name: Diagnose Deployment Failure
         if: failure()
         run: |

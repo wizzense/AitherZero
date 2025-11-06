@@ -25,7 +25,7 @@ jobs:
   diagnose-failures:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch'
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -56,17 +56,17 @@ jobs:
         run: |
           $runId = "${{ github.event.workflow_run.id || inputs.run_id }}"
           $workflowName = "${{ inputs.workflow_name }}"
-          
+
           Write-Host "🔍 Diagnosing CI Failures..." -ForegroundColor Cyan
-          
+
           # Get the script
           $script = "./automation-scripts/0531_Get-WorkflowRunReport.ps1"
-          
+
           if (-not (Test-Path $script)) {
             Write-Host "❌ Diagnostic script not found: $script" -ForegroundColor Red
             exit 1
           }
-          
+
           # Run diagnostic based on input
           if ($runId) {
             Write-Host "📊 Analyzing run ID: $runId" -ForegroundColor Yellow
@@ -99,19 +99,19 @@ jobs:
               'workflow-report.txt',
               'workflow-report-summary.txt'
             ];
-            
+
             let reportContent = '## 🔍 CI Failure Diagnostic Report\n\n';
             reportContent += `**Workflow**: ${context.payload.workflow_run.name}\n`;
             reportContent += `**Run ID**: ${context.payload.workflow_run.id}\n`;
             reportContent += `**Status**: ${context.payload.workflow_run.conclusion}\n\n`;
-            
+
             for (const file of reportFiles) {
               if (fs.existsSync(file)) {
                 reportContent += fs.readFileSync(file, 'utf8');
                 break;
               }
             }
-            
+
             if (context.payload.workflow_run.pull_requests.length > 0) {
               const pr = context.payload.workflow_run.pull_requests[0];
               await github.rest.issues.createComment({

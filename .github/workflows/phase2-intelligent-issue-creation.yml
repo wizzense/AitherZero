@@ -77,12 +77,12 @@ jobs:
                 repo: context.repo.repo,
                 per_page: 100
               });
-              
+
               // Filter for the specific artifact by name and check if not expired
               const targetArtifact = artifacts.data.artifacts.find(
                 artifact => artifact.name === 'issue-state-db' && !artifact.expired
               );
-              
+
               const exists = !!targetArtifact;
               console.log(`Issue state artifact ${exists ? 'exists' : 'does not exist'}`);
               if (targetArtifact) {
@@ -110,14 +110,14 @@ jobs:
         run: |
           Write-Host "📝 Initializing issue state database (first run or expired artifact)..." -ForegroundColor Yellow
           New-Item -ItemType Directory -Force -Path "$env:ISSUE_STATE_DIR" | Out-Null
-          
+
           $initialState = @{
             fingerprints = @()
             lastUpdated = $null
             totalTracked = 0
             initialized = Get-Date -Format 'o'
           }
-          
+
           $initialState | ConvertTo-Json -Depth 10 | Out-File -FilePath "$env:ISSUE_STATE_DIR/issue-fingerprints.json"
           Write-Host "✅ Created initial issue state database" -ForegroundColor Green
 
@@ -359,12 +359,12 @@ jobs:
                 repo: context.repo.repo,
                 per_page: 100
               });
-              
+
               // Filter for the specific artifact by name and check if not expired
               const targetArtifact = artifacts.data.artifacts.find(
                 artifact => artifact.name === 'issue-state-db' && !artifact.expired
               );
-              
+
               const exists = !!targetArtifact;
               console.log(`Issue state artifact ${exists ? 'exists' : 'does not exist'}`);
               if (targetArtifact) {
@@ -392,14 +392,14 @@ jobs:
         run: |
           Write-Host "📝 Initializing issue state database (first run or expired artifact)..." -ForegroundColor Yellow
           New-Item -ItemType Directory -Force -Path "$env:ISSUE_STATE_DIR" | Out-Null
-          
+
           $initialState = @{
             fingerprints = @()
             lastUpdated = $null
             totalTracked = 0
             initialized = Get-Date -Format 'o'
           }
-          
+
           $initialState | ConvertTo-Json -Depth 10 | Out-File -FilePath "$env:ISSUE_STATE_DIR/issue-fingerprints.json"
           Write-Host "✅ Created initial issue state database" -ForegroundColor Green
 
@@ -601,7 +601,7 @@ jobs:
             - **Run ID:** ${analysis.WorkflowContext.TriggeredBy.WorkflowId}
             - **Status:** ${analysis.WorkflowContext.TriggeredBy.Conclusion}`
                 : `- **Manual Analysis:** Scheduled analysis`;
-              
+
               // If this is an update to existing issue, add a comment
               if (shouldUpdate && existingIssueNumber) {
                 try {
@@ -627,14 +627,14 @@ jobs:
                     '---',
                     '*This issue was re-detected. Please review and address if not already fixed.*'
                   ].filter(Boolean).join('\n');
-                  
+
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: existingIssueNumber,
                     body: updateComment
                   });
-                  
+
                   console.log(`✅ Updated existing issue #${existingIssueNumber}: ${title}`);
                   updatedCount++;
                 } catch (error) {
