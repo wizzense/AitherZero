@@ -3,7 +3,7 @@ name: 'Validate PowerShell Module Manifests'
 on:
   push:
     # Only run on base branches to avoid duplicate runs with pull_request events
-    branches: [main, dev]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - '**/*.psd1'
       - 'tools/Validate-ModuleManifest.ps1'
@@ -15,6 +15,10 @@ on:
 concurrency:
   group: validate-manifests-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   validate-manifests:

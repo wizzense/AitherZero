@@ -107,7 +107,15 @@ function Get-TestingConfiguration {
     if (Test-Path $ConfigPath) {
         try {
             Write-TestingLog -Level Debug -Message "Loading configuration directly from file"
-            $config = Import-PowerShellDataFile $ConfigPath
+            # Use scriptblock evaluation instead of Import-PowerShellDataFile
+            # because config.psd1 contains PowerShell expressions ($true/$false) that
+            # Import-PowerShellDataFile treats as "dynamic expressions"
+            $configContent = Get-Content -Path $ConfigPath -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $config = & $scriptBlock
+            if (-not $config -or $config -isnot [hashtable]) {
+                throw "Config file did not return a valid hashtable"
+            }
 
             # Check for local overrides
             $localConfigPath = $ConfigPath -replace '\.psd1$', '.local.psd1'
@@ -115,8 +123,11 @@ function Get-TestingConfiguration {
                 Write-TestingLog -Level Debug -Message "Loading local configuration overrides" -Data @{
                     LocalConfigPath = $localConfigPath
                 }
-                $localConfig = Import-PowerShellDataFile $localConfigPath
-                if ($localConfig.Testing) {
+                # Local config also needs scriptblock evaluation
+                $localContent = Get-Content -Path $localConfigPath -Raw
+                $localBlock = [scriptblock]::Create($localContent)
+                $localConfig = & $localBlock
+                if ($localConfig -and $localConfig.Testing) {
                     # Merge local Testing configuration
                     foreach ($key in $localConfig.Testing.Keys) {
                         $config.Testing.$key = $localConfig.Testing.$key

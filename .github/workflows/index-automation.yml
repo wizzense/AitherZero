@@ -2,7 +2,7 @@ name: 🗂️ Project Index Automation
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'
@@ -15,7 +15,7 @@ on:
       - '**/*.psm1'
   pull_request:
     types: [opened, synchronize, reopened, closed]
-    branches: [ main, dev ]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'

@@ -64,12 +64,62 @@ jobs:
           path: ./artifacts
         continue-on-error: true
 
+      - name: 🔍 Check if Issue State Artifact Exists
+        id: check-artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              // Note: listArtifactsForRepo does not support name filtering
+              // We must fetch artifacts and filter by name in the response
+              const artifacts = await github.rest.actions.listArtifactsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+
+              // Filter for the specific artifact by name and check if not expired
+              const targetArtifact = artifacts.data.artifacts.find(
+                artifact => artifact.name === 'issue-state-db' && !artifact.expired
+              );
+
+              const exists = !!targetArtifact;
+              console.log(`Issue state artifact ${exists ? 'exists' : 'does not exist'}`);
+              if (targetArtifact) {
+                console.log(`  Found artifact ID: ${targetArtifact.id}, created: ${targetArtifact.created_at}`);
+              }
+              core.setOutput('exists', exists);
+              return exists;
+            } catch (error) {
+              console.log(`Could not check artifact: ${error.message}`);
+              core.setOutput('exists', false);
+              return false;
+            }
+
       - name: 📥 Download Existing Issue State
+        if: steps.check-artifact.outputs.exists == 'true'
         uses: actions/download-artifact@v4
         with:
           name: issue-state-db
           path: ${{ env.ISSUE_STATE_DIR }}
         continue-on-error: true
+
+      - name: 📝 Initialize Issue State (First Run)
+        if: steps.check-artifact.outputs.exists == 'false'
+        shell: pwsh
+        run: |
+          Write-Host "📝 Initializing issue state database (first run or expired artifact)..." -ForegroundColor Yellow
+          New-Item -ItemType Directory -Force -Path "$env:ISSUE_STATE_DIR" | Out-Null
+
+          $initialState = @{
+            fingerprints = @()
+            lastUpdated = $null
+            totalTracked = 0
+            initialized = Get-Date -Format 'o'
+          }
+
+          $initialState | ConvertTo-Json -Depth 10 | Out-File -FilePath "$env:ISSUE_STATE_DIR/issue-fingerprints.json"
+          Write-Host "✅ Created initial issue state database" -ForegroundColor Green
 
       - name: 🔍 Comprehensive Analysis
         id: analysis
@@ -296,12 +346,62 @@ jobs:
           name: comprehensive-failure-analysis
           path: ./
 
+      - name: 🔍 Check if Issue State Artifact Exists
+        id: check-artifact-grouping
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              // Note: listArtifactsForRepo does not support name filtering
+              // We must fetch artifacts and filter by name in the response
+              const artifacts = await github.rest.actions.listArtifactsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+
+              // Filter for the specific artifact by name and check if not expired
+              const targetArtifact = artifacts.data.artifacts.find(
+                artifact => artifact.name === 'issue-state-db' && !artifact.expired
+              );
+
+              const exists = !!targetArtifact;
+              console.log(`Issue state artifact ${exists ? 'exists' : 'does not exist'}`);
+              if (targetArtifact) {
+                console.log(`  Found artifact ID: ${targetArtifact.id}, created: ${targetArtifact.created_at}`);
+              }
+              core.setOutput('exists', exists);
+              return exists;
+            } catch (error) {
+              console.log(`Could not check artifact: ${error.message}`);
+              core.setOutput('exists', false);
+              return false;
+            }
+
       - name: 📥 Download Issue State
+        if: steps.check-artifact-grouping.outputs.exists == 'true'
         uses: actions/download-artifact@v4
         with:
           name: issue-state-db
           path: ${{ env.ISSUE_STATE_DIR }}
         continue-on-error: true
+
+      - name: 📝 Initialize Issue State (First Run)
+        if: steps.check-artifact-grouping.outputs.exists == 'false'
+        shell: pwsh
+        run: |
+          Write-Host "📝 Initializing issue state database (first run or expired artifact)..." -ForegroundColor Yellow
+          New-Item -ItemType Directory -Force -Path "$env:ISSUE_STATE_DIR" | Out-Null
+
+          $initialState = @{
+            fingerprints = @()
+            lastUpdated = $null
+            totalTracked = 0
+            initialized = Get-Date -Format 'o'
+          }
+
+          $initialState | ConvertTo-Json -Depth 10 | Out-File -FilePath "$env:ISSUE_STATE_DIR/issue-fingerprints.json"
+          Write-Host "✅ Created initial issue state database" -ForegroundColor Green
 
       - name: 🧠 Intelligent Grouping
         id: grouping
@@ -501,7 +601,7 @@ jobs:
             - **Run ID:** ${analysis.WorkflowContext.TriggeredBy.WorkflowId}
             - **Status:** ${analysis.WorkflowContext.TriggeredBy.Conclusion}`
                 : `- **Manual Analysis:** Scheduled analysis`;
-              
+
               // If this is an update to existing issue, add a comment
               if (shouldUpdate && existingIssueNumber) {
                 try {
@@ -527,14 +627,14 @@ jobs:
                     '---',
                     '*This issue was re-detected. Please review and address if not already fixed.*'
                   ].filter(Boolean).join('\n');
-                  
+
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: existingIssueNumber,
                     body: updateComment
                   });
-                  
+
                   console.log(`✅ Updated existing issue #${existingIssueNumber}: ${title}`);
                   updatedCount++;
                 } catch (error) {
@@ -620,7 +720,7 @@ jobs:
           $issueState = if (Test-Path $issueStateFile) {
             Get-Content $issueStateFile -Raw | ConvertFrom-Json
           } else {
-            @{ fingerprints = @(); lastUpdated = $null }
+            @{ fingerprints = @(); lastUpdated = $null; totalTracked = 0 }
           }
 
           # Load created issues
