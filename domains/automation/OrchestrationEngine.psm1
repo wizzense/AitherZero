@@ -1298,14 +1298,20 @@ function Get-OrchestrationConfiguration {
         # Load default configuration
         $configPath = Join-Path $script:ProjectRoot 'config.psd1'
         if (Test-Path $configPath) {
-            $Configuration = Import-PowerShellDataFile $configPath
+            # Use scriptblock evaluation to handle PowerShell expressions in config
+            $configContent = Get-Content -Path $configPath -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $Configuration = & $scriptBlock
         } else {
             $Configuration = @{}
         }
     } elseif ($Configuration -is [string]) {
         # Load from file path
         if (Test-Path $Configuration) {
-            $Configuration = Import-PowerShellDataFile $Configuration
+            # Use scriptblock evaluation to handle PowerShell expressions in config
+            $configContent = Get-Content -Path $Configuration -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $Configuration = & $scriptBlock
         } else {
             throw "Configuration file not found: $Configuration"
         }

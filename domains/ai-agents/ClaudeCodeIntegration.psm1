@@ -72,7 +72,10 @@ function Initialize-ClaudeCodeIntegration {
         # Load configuration
         $configPathExpanded = [Environment]::ExpandEnvironmentVariables($ConfigPath)
         if (Test-Path $configPathExpanded) {
-            $script:ClaudeCodeConfig = Import-PowerShellDataFile $configPathExpanded
+            # Use scriptblock evaluation to handle PowerShell expressions in config
+            $configContent = Get-Content -Path $configPathExpanded -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $script:ClaudeCodeConfig = & $scriptBlock
             Write-ClaudeLog "Configuration loaded from: $configPathExpanded" -Level Success
         } else {
             Write-ClaudeLog "Configuration not found: $configPathExpanded" -Level Warning
