@@ -6,7 +6,7 @@ name: ⚡ Parallel Testing (High Performance)
 
 on:
   push:
-    branches: [main, develop, dev, dev-staging]
+    branches: [main, develop, dev, dev-staging, ring-0-integrations]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'
@@ -14,7 +14,7 @@ on:
       - '**.ps1'
       - '**.psm1'
   pull_request:
-    branches: [main, develop, dev, dev-staging]
+    branches: [main, develop, dev, dev-staging, ring-0-integrations]
   workflow_dispatch:
     inputs:
       test_filter:

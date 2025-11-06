@@ -6,7 +6,7 @@ name: 📚 Documentation Tracking & Validation
 
 on:
   push:
-    branches: [main, develop, dev]
+    branches: [main, develop, dev, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'
@@ -15,7 +15,7 @@ on:
       - '**.psm1'
       - '**.md'
   pull_request:
-    branches: [main, develop, dev]
+    branches: [main, develop, dev, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
   schedule:
     # Run weekly to check for stale docs
     - cron: '0 8 * * 1'  # 8 AM UTC every Monday

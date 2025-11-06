@@ -7,7 +7,7 @@ on:
     workflows: ["Intelligent CI Orchestrator", "Quality Validation", "🎯 Unified Testing Orchestration", "⚡ Parallel Testing (High Performance)"]
     types: [completed]
   push:
-    branches: [main, dev]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'reports/**'
   workflow_dispatch:
