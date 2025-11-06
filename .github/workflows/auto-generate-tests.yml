@@ -42,6 +42,8 @@ jobs:
   generate-tests:
     name: Auto-Generate Tests
     runs-on: ubuntu-latest
+    # Skip if triggered by bot commit to prevent infinite loops
+    if: github.actor != 'github-actions[bot]' && github.event.pusher.name != 'github-actions[bot]'
 
     steps:
       - name: 📥 Checkout repository
