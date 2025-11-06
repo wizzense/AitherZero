@@ -633,17 +633,72 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 📋 Extract Docker Metadata
+      - name: 📋 Generate Enhanced Release Tags
+        id: generate-tags
+        shell: bash
+        run: |
+          VERSION="${{ env.RELEASE_VERSION }}"
+          VERSION_NUMBER="${VERSION#v}"
+          IS_PRERELEASE="${{ github.event.inputs.prerelease }}"
+          COMMIT_SHORT="${{ github.sha }}"
+          COMMIT_SHORT="${COMMIT_SHORT:0:8}"
+          BUILD_TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          
+          echo "version-number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          echo "commit-short=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          echo "build-timestamp=${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
+          
+          # Generate comprehensive release tags
+          # Format: Semantic versioning + descriptive metadata
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo "ghcr.io/${REPO_LOWER}:${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          echo "ghcr.io/${REPO_LOWER}:v${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          
+          # Add major.minor tag (e.g., 2.0)
+          MAJOR_MINOR=$(echo ${VERSION_NUMBER} | cut -d. -f1,2)
+          echo "ghcr.io/${REPO_LOWER}:${MAJOR_MINOR}" >> $GITHUB_OUTPUT
+          
+          # Add major tag (e.g., 2)
+          MAJOR=$(echo ${VERSION_NUMBER} | cut -d. -f1)
+          echo "ghcr.io/${REPO_LOWER}:${MAJOR}" >> $GITHUB_OUTPUT
+          
+          # Add 'latest' tag only for non-prerelease versions
+          if [ "$IS_PRERELEASE" != "true" ]; then
+            echo "ghcr.io/${REPO_LOWER}:latest" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${REPO_LOWER}:stable" >> $GITHUB_OUTPUT
+          else
+            echo "ghcr.io/${REPO_LOWER}:prerelease" >> $GITHUB_OUTPUT
+          fi
+          
+          # Add commit SHA tag for traceability
+          echo "ghcr.io/${REPO_LOWER}:sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          
+          # Add timestamp tag for temporal organization
+          echo "ghcr.io/${REPO_LOWER}:release-${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Generated release tags for version ${VERSION_NUMBER}"
+
+      - name: 📋 Extract Docker Metadata with Enhanced Labels
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}},value=v${{ env.RELEASE_VERSION }}
-            type=semver,pattern={{major}}.{{minor}},value=v${{ env.RELEASE_VERSION }}
-            type=semver,pattern={{major}},value=v${{ env.RELEASE_VERSION }}
-            type=raw,value=latest,enable=${{ github.event.inputs.prerelease != 'true' }}
-            type=sha,prefix=sha-
+          tags: ${{ steps.generate-tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=AitherZero
+            org.opencontainers.image.description=Infrastructure automation platform
+            org.opencontainers.image.vendor=wizzense
+            org.opencontainers.image.version=${{ steps.generate-tags.outputs.version-number }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ steps.generate-tags.outputs.build-timestamp }}
+            com.aitherzero.release.version=${{ env.RELEASE_VERSION }}
+            com.aitherzero.release.prerelease=${{ github.event.inputs.prerelease }}
+            com.aitherzero.build.timestamp=${{ steps.generate-tags.outputs.build-timestamp }}
+            com.aitherzero.commit.short=${{ steps.generate-tags.outputs.commit-short }}
 
       - name: 🔨 Build and Push Docker Image
         uses: docker/build-push-action@v5

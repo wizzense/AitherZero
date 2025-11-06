@@ -7,19 +7,67 @@ This guide explains how to use AitherZero with Docker for easy deployment and te
 The AitherZero container system provides:
 - **Ready-to-Use Environment**: Container comes pre-bootstrapped with global `aitherzero` command
 - **Automated PR Testing**: Every PR automatically builds a Docker image published to GitHub Container Registry
+- **Enhanced Image Naming**: Descriptive tags with branch names and version iterations
 - **Isolated Environments**: Each PR gets its own container for safe testing without affecting your system
 - **Quick Access**: Pull and run containers in seconds - no manual setup required
 - **Container Management**: The `0854_Manage-PRContainer.ps1` script provides automated container lifecycle management
+- **Automated Cleanup**: Old PR images and artifacts are automatically cleaned up to save storage
+
+### Enhanced Image Naming System
+
+**NEW**: Images now use descriptive names with branch information and version tracking:
+
+**PR Images Format:**
+```
+ghcr.io/wizzense/aitherzero:pr-{number}-{branch-name}-v{iteration}
+ghcr.io/wizzense/aitherzero:pr-{number}-{branch-name}-latest
+ghcr.io/wizzense/aitherzero:pr-{number}-latest
+ghcr.io/wizzense/aitherzero:pr-{number}-{commit-sha}
+```
+
+**Examples:**
+```bash
+# PR #1677 on branch "feature/docker-improvements", build iteration 5
+ghcr.io/wizzense/aitherzero:pr-1677-feature-docker-improvements-v5
+
+# Latest build for PR #1677 on that branch
+ghcr.io/wizzense/aitherzero:pr-1677-feature-docker-improvements-latest
+
+# Latest build for PR #1677 (any branch)
+ghcr.io/wizzense/aitherzero:pr-1677-latest
+```
+
+**Release Images Format:**
+```
+ghcr.io/wizzense/aitherzero:2.0.0
+ghcr.io/wizzense/aitherzero:2.0
+ghcr.io/wizzense/aitherzero:2
+ghcr.io/wizzense/aitherzero:latest
+ghcr.io/wizzense/aitherzero:stable
+ghcr.io/wizzense/aitherzero:sha-abc12345
+ghcr.io/wizzense/aitherzero:release-20231106-143022
+```
+
+### Automated Cleanup Policies
+
+To keep the container registry organized and save storage:
+
+- **PR Images**: Automatically deleted 7 days after PR is closed
+- **Release Images**: Old versions deleted after 90 days (latest/stable protected)
+- **Workflow Artifacts**: Deleted after 30 days
+- **Schedule**: Daily cleanup runs at 2 AM UTC
+- **Protected Tags**: `latest`, `stable`, `prerelease` are never deleted
 
 ### How It Works
 
 1. **Automatic Build**: When you open a PR, GitHub Actions automatically:
-   - Builds a container image
+   - Builds a container image with enhanced naming
+   - Tags it with PR number, branch name, and version iteration
    - Runs `bootstrap.ps1` to initialize the environment
    - Installs the global `aitherzero` command in `/home/aitherzero/.local/bin`
-2. **Published to Registry**: The image is pushed to `ghcr.io/wizzense/aitherzero:pr-{number}`
-3. **Easy Testing**: Pull the image and run `aitherzero` immediately - it just works
-4. **Managed Lifecycle**: Use the container manager script for automated setup, testing, and cleanup
+2. **Published to Registry**: The image is pushed with multiple descriptive tags
+3. **Easy Testing**: Pull any version by PR number, branch, or iteration
+4. **Managed Lifecycle**: Automated cleanup removes old images to save storage
 
 ## Quick Start
 
@@ -28,11 +76,18 @@ The AitherZero container system provides:
 The fastest way to test a PR - just use Docker directly:
 
 ```bash
-# Pull the PR container image (replace 1677 with your PR number)
-docker pull ghcr.io/wizzense/aitherzero:pr-1677
+# Pull the PR container image using the new naming format
+# Option 1: Pull latest version of specific branch
+docker pull ghcr.io/wizzense/aitherzero:pr-1677-feature-docker-v5
+
+# Option 2: Pull latest build for the PR (any branch)
+docker pull ghcr.io/wizzense/aitherzero:pr-1677-latest
+
+# Option 3: Pull specific commit
+docker pull ghcr.io/wizzense/aitherzero:pr-1677-abc12345
 
 # Run the container
-docker run -d --name aitherzero-pr-1677 -p 8087:8080 ghcr.io/wizzense/aitherzero:pr-1677
+docker run -d --name aitherzero-pr-1677 -p 8087:8080 ghcr.io/wizzense/aitherzero:pr-1677-latest
 
 # Wait a few seconds for startup
 sleep 5
@@ -48,6 +103,20 @@ aitherzero
 
 # Cleanup when done
 docker stop aitherzero-pr-1677 && docker rm aitherzero-pr-1677
+```
+
+### Finding the Right Image Tag
+
+To find all available tags for a PR:
+
+```bash
+# List all tags for PR #1677 in GitHub Container Registry
+# Visit: https://github.com/wizzense/AitherZero/pkgs/container/aitherzero
+
+# Or use GitHub API
+curl -H "Authorization: token YOUR_TOKEN" \
+  "https://api.github.com/orgs/wizzense/packages/container/aitherzero/versions" \
+  | jq '.[] | select(.metadata.container.tags[] | contains("pr-1677"))'
 ```
 
 ### Method 2: Using the Container Manager (After Cloning)
@@ -470,12 +539,83 @@ docker-compose down
 # Remove volumes as well
 docker-compose down -v
 
-# Remove the image
-docker rmi ghcr.io/wizzense/aitherzero:pr-1634
+# Remove a specific image tag
+docker rmi ghcr.io/wizzense/aitherzero:pr-1634-feature-name-v1
 
-# Complete cleanup
+# Complete cleanup of all PR images
+docker images | grep "aitherzero:pr-1634" | awk '{print $3}' | xargs docker rmi
+
+# Complete cleanup with Docker Compose
 docker-compose down -v --rmi all
 ```
+
+## Automated Image Cleanup
+
+AitherZero automatically cleans up old container images to save registry storage:
+
+### Cleanup Policies
+
+| Resource Type | Retention Period | Cleanup Schedule | Protected Tags |
+|---------------|------------------|------------------|----------------|
+| PR Images | 7 days after PR closes | Daily at 2 AM UTC | None (all PR images cleaned) |
+| Release Images | 90 days for old versions | Daily at 2 AM UTC | `latest`, `stable`, `prerelease` |
+| Workflow Artifacts | 30 days | Daily at 2 AM UTC | Active workflow artifacts |
+
+### How Cleanup Works
+
+1. **Daily Scheduled Run**: The cleanup workflow runs automatically every day at 2 AM UTC
+2. **PR Status Check**: Checks if PRs are closed using GitHub API
+3. **Age Calculation**: Determines how long images/artifacts have existed
+4. **Smart Deletion**: 
+   - Removes PR images only after PR is closed for 7+ days
+   - Keeps the 3 most recent versions of each major release
+   - Never deletes protected tags (`latest`, `stable`, `prerelease`)
+5. **Reporting**: Creates GitHub issues if any deletions fail
+
+### Manual Cleanup Trigger
+
+You can manually trigger cleanup with custom settings:
+
+```bash
+# Trigger via GitHub Actions UI:
+# 1. Go to Actions tab
+# 2. Select "Cleanup Old PR Container Images"
+# 3. Click "Run workflow"
+# 4. Configure options:
+#    - dry_run: true (test without deleting)
+#    - retention_days: 7 (days for PR images)
+#    - release_retention_days: 90 (days for release images)
+#    - artifact_retention_days: 30 (days for artifacts)
+#    - cleanup_old_releases: true
+#    - cleanup_old_artifacts: true
+```
+
+### Viewing Cleanup Reports
+
+Cleanup reports are available in:
+- **GitHub Actions**: Check workflow run summaries
+- **GitHub Issues**: Failed cleanups create issues with `automated-cleanup` label
+- **Step Summary**: Each run provides detailed summary of what was deleted
+
+### Opting Out of Cleanup
+
+To prevent specific images from being cleaned up:
+
+1. **For PR Images**: Keep the PR open or merge it within 7 days
+2. **For Releases**: Images with `latest`, `stable`, or `prerelease` tags are protected
+3. **For Artifacts**: No opt-out, but retention period can be adjusted
+
+### Storage Impact
+
+Typical storage savings:
+- **Per PR Image**: ~500 MB per image × multiple versions = 2-5 GB per PR
+- **Old Release Images**: ~500 MB × old versions = varies
+- **Workflow Artifacts**: Average 100 MB per artifact × thousands = significant
+
+**Example**: If you have 50 closed PRs, each with 3 build iterations:
+- Without cleanup: 50 × 3 × 500 MB = **75 GB**
+- With cleanup (7 days): ~5-10 closed PRs retained = **7.5-15 GB**
+- **Savings**: ~60-67.5 GB
 
 ## Best Practices
 
