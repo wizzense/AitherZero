@@ -706,7 +706,10 @@ function Test-PSScriptAnalyzerCompliance {
         $configPath = Join-Path $script:ProjectRoot "config.psd1"
         if (Test-Path $configPath) {
             try {
-                $config = Import-PowerShellDataFile -Path $configPath -ErrorAction SilentlyContinue
+                # Use scriptblock evaluation to handle PowerShell expressions in config
+                $configContent = Get-Content -Path $configPath -Raw
+                $scriptBlock = [scriptblock]::Create($configContent)
+                $config = & $scriptBlock
                 if ($config.Testing.PSScriptAnalyzer) {
                     $psaConfig = $config.Testing.PSScriptAnalyzer
                     

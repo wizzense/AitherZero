@@ -225,6 +225,14 @@ jobs:
           path: ./tests/results/UnitTests-${{ matrix.range }}.xml
           retention-days: 7
           if-no-files-found: warn
+      
+      - name: ❌ Fail Job if Tests Failed
+        if: steps.run-tests.outputs.failed != '0' && steps.run-tests.outputs.failed != ''
+        shell: pwsh
+        run: |
+          $failed = "${{ steps.run-tests.outputs.failed }}"
+          Write-Host "❌ Job must fail: $failed test(s) failed in range ${{ matrix.range }}" -ForegroundColor Red
+          exit 1
 
   # Parallel domain module tests
   domain-tests-parallel:
@@ -345,6 +353,14 @@ jobs:
           path: ./tests/results/DomainTests-${{ matrix.module }}.xml
           retention-days: 7
           if-no-files-found: warn
+      
+      - name: ❌ Fail Job if Tests Failed
+        if: steps.run-tests.outputs.failed != '0' && steps.run-tests.outputs.failed != ''
+        shell: pwsh
+        run: |
+          $failed = "${{ steps.run-tests.outputs.failed }}"
+          Write-Host "❌ Job must fail: $failed test(s) failed in ${{ matrix.module }} domain" -ForegroundColor Red
+          exit 1
 
   # Parallel integration tests
   integration-tests-parallel:
@@ -465,6 +481,14 @@ jobs:
           path: ./tests/results/IntegrationTests-${{ matrix.suite }}.xml
           retention-days: 7
           if-no-files-found: warn
+      
+      - name: ❌ Fail Job if Tests Failed
+        if: steps.run-tests.outputs.failed != '0' && steps.run-tests.outputs.failed != ''
+        shell: pwsh
+        run: |
+          $failed = "${{ steps.run-tests.outputs.failed }}"
+          Write-Host "❌ Job must fail: $failed test(s) failed in ${{ matrix.suite }} suite" -ForegroundColor Red
+          exit 1
 
   # Static analysis (runs in parallel with tests)
   static-analysis:
