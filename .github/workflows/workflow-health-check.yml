@@ -2,12 +2,12 @@ name: 'Workflow Health Check'
 
 on:
   pull_request:
-    branches: [main, develop, dev]
+    branches: [main, develop, dev, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - '.github/workflows/**'
       - '.github/scripts/monitor-workflow-health.ps1'
   push:
-    branches: [main, develop, dev]
+    branches: [main, develop, dev, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - '.github/workflows/**'
       - '.github/scripts/monitor-workflow-health.ps1'

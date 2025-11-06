@@ -2,9 +2,9 @@
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs on pushes targeting the default branch and ring branches
   push:
-    branches: ["main", "dev"]
+    branches: ["main", "dev", "develop", "dev-staging", "ring-0", "ring-0-integrations", "ring-1", "ring-1-integrations", "ring-2"]
     paths:
       - 'reports/**'
       - 'docs/**'
