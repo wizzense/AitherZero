@@ -63,7 +63,7 @@
         # From ScriptUtilities (Automation helpers)
         'Get-ProjectRoot', 'Write-ScriptLog', 'Test-IsAdministrator', 'Get-PlatformName',
         'Test-CommandAvailable', 'Get-GitHubToken', 'Invoke-WithRetry', 'Test-GitRepository',
-        'Get-ScriptMetadata', 'Format-Duration',
+        'Get-ScriptMetadata', 'Format-Duration', 'Test-FeatureOrPrompt',
 
         # Wildcard for any additional functions
         '*'
