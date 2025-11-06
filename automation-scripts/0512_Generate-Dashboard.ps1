@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 # PSScriptAnalyzer suppressions for dashboard generation script
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Scope='Function', Target='*', Justification='Dashboard functions intentionally use plural names for collections of metrics')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Scope='Function', Target='*', Justification='ShouldProcess handled at script level, not individual helper functions')]
@@ -1548,7 +1548,15 @@ function Get-DependencyMapping {
     $configPath = Join-Path $ProjectPath "config.psd1"
     if (Test-Path $configPath) {
         try {
-            $config = Import-PowerShellDataFile $configPath -ErrorAction Stop
+            # Use scriptblock evaluation instead of Import-PowerShellDataFile
+        # because config.psd1 contains PowerShell expressions ($true/$false) that
+        # Import-PowerShellDataFile treats as "dynamic expressions"
+        $configContent = Get-Content -Path $configPath -Raw
+        $scriptBlock = [scriptblock]::Create($configContent)
+        $config = & $scriptBlock
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        } -ErrorAction Stop
             
             # Extract feature dependencies
             if ($config.Manifest.FeatureDependencies) {
