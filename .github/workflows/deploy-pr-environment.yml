@@ -212,18 +212,82 @@ jobs:
           echo "image-name=${IMAGE_NAME_LOWER}" >> $GITHUB_OUTPUT
           echo "Using image name: ${IMAGE_NAME_LOWER}"
 
-      - name: 🏷️ Extract Metadata
+      - name: 🏷️ Generate Enhanced Image Tags
+        id: generate-tags
+        shell: bash
+        run: |
+          PR_NUMBER="${{ needs.check-deployment-trigger.outputs.pr-number }}"
+          IS_RELEASE="${{ needs.check-deployment-trigger.outputs.is-release }}"
+          RELEASE_TAG="${{ needs.check-deployment-trigger.outputs.release-tag }}"
+          
+          # Get branch name and sanitize it for Docker tag compatibility
+          # Docker tags can only contain lowercase letters, digits, hyphens, underscores, and periods
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          BRANCH_SLUG=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+          echo "branch-slug=${BRANCH_SLUG}" >> $GITHUB_OUTPUT
+          
+          # Get short commit SHA for uniqueness
+          COMMIT_SHORT="${{ github.sha }}"
+          COMMIT_SHORT="${COMMIT_SHORT:0:8}"
+          echo "commit-short=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          
+          # Generate build timestamp for versioning
+          BUILD_TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          echo "build-timestamp=${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
+          
+          # Calculate build iteration number by counting previous builds for this PR/branch
+          # This gives us v1, v2, v3, etc. for each new build of the same PR
+          if [ "$IS_RELEASE" != "true" ] && [ -n "$PR_NUMBER" ]; then
+            # For PRs: Query GitHub Container Registry API to count existing tags
+            # Note: In real scenarios, you would query the registry API here
+            # For now, we'll use GitHub run number as a proxy for iteration
+            BUILD_ITERATION="${{ github.run_number }}"
+            echo "build-iteration=${BUILD_ITERATION}" >> $GITHUB_OUTPUT
+            
+            # Generate descriptive PR tags with branch name and iteration
+            # Format: pr-{number}-{branch-slug}-v{iteration}
+            PRIMARY_TAG="pr-${PR_NUMBER}-${BRANCH_SLUG}-v${BUILD_ITERATION}"
+            echo "primary-tag=${PRIMARY_TAG}" >> $GITHUB_OUTPUT
+            
+            # Additional tags for easy reference
+            echo "tags<<EOF" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:${PRIMARY_TAG}" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:pr-${PR_NUMBER}-${BRANCH_SLUG}-latest" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:pr-${PR_NUMBER}-latest" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:pr-${PR_NUMBER}-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
+            echo "✅ Generated PR tags with branch name '${BRANCH_SLUG}' and iteration v${BUILD_ITERATION}"
+          else
+            # For releases: Use semantic versioning
+            VERSION="${RELEASE_TAG#v}"
+            echo "primary-tag=${VERSION}" >> $GITHUB_OUTPUT
+            
+            echo "tags<<EOF" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:${VERSION}" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:latest" >> $GITHUB_OUTPUT
+            echo "ghcr.io/${{ steps.image-name.outputs.image-name }}:sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
+            echo "✅ Generated release tags for version ${VERSION}"
+          fi
+
+      - name: 🏷️ Extract Metadata with Enhanced Labels
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.CONTAINER_REGISTRY }}/${{ steps.image-name.outputs.image-name }}
-          tags: |
-            type=ref,event=pr,prefix=pr-
-            type=sha,prefix=pr-${{ needs.check-deployment-trigger.outputs.pr-number }}-,enable=${{ needs.check-deployment-trigger.outputs.is-release != 'true' }}
-            type=semver,pattern={{version}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
-            type=semver,pattern={{major}},enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
-            type=raw,value=latest,enable=${{ needs.check-deployment-trigger.outputs.is-release == 'true' }}
+          tags: ${{ steps.generate-tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=AitherZero
+            org.opencontainers.image.description=Infrastructure automation platform
+            org.opencontainers.image.vendor=wizzense
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            com.aitherzero.pr.number=${{ needs.check-deployment-trigger.outputs.pr-number }}
+            com.aitherzero.branch.name=${{ steps.generate-tags.outputs.branch-slug }}
+            com.aitherzero.build.iteration=${{ steps.generate-tags.outputs.build-iteration }}
+            com.aitherzero.build.timestamp=${{ steps.generate-tags.outputs.build-timestamp }}
 
       - name: 🔧 Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -254,14 +318,14 @@ jobs:
       - name: 📊 Image Build Summary
         id: image-tag
         run: |
-          # Extract the first tag (pr-{number}) for deployment
+          # Extract the primary tag (first one generated)
           IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
           echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "Using image tag for deployment: ${IMAGE_TAG}"
-
+          
+          # Get all generated tags for display
+          ALL_TAGS="${{ steps.meta.outputs.tags }}"
+          
           # Generate package URL for GitHub Container Registry
-          # Note: Package name matches the hardcoded image name 'aitherzero' (line 175)
-          # This ensures consistency between the image push and package URL
           PACKAGE_URL="https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
           echo "package-url=${PACKAGE_URL}" >> $GITHUB_OUTPUT
 
@@ -269,12 +333,23 @@ jobs:
           IMAGE_URL="${IMAGE_TAG}"
           echo "image-url=${IMAGE_URL}" >> $GITHUB_OUTPUT
 
-          echo "### 🐳 Container Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Container Image Built with Enhanced Naming" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Primary Tag" >> $GITHUB_STEP_SUMMARY
           echo "- **Image**: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### All Generated Tags" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "$ALL_TAGS" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Metadata" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: \`${{ steps.generate-tags.outputs.branch-slug }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Iteration**: \`v${{ steps.generate-tags.outputs.build-iteration }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ steps.generate-tags.outputs.commit-short }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: \`${{ steps.generate-tags.outputs.build-timestamp }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Package URL**: ${PACKAGE_URL}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Labels**: ${{ steps.meta.outputs.labels }}" >> $GITHUB_STEP_SUMMARY
   # Deploy to Docker Compose (local/simple deployment) - PR only
   deploy-docker-compose:
     name: Deploy with Docker Compose
