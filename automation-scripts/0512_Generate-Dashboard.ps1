@@ -1549,14 +1549,14 @@ function Get-DependencyMapping {
     if (Test-Path $configPath) {
         try {
             # Use scriptblock evaluation instead of Import-PowerShellDataFile
-        # because config.psd1 contains PowerShell expressions ($true/$false) that
-        # Import-PowerShellDataFile treats as "dynamic expressions"
-        $configContent = Get-Content -Path $configPath -Raw
-        $scriptBlock = [scriptblock]::Create($configContent)
-        $config = & $scriptBlock
-        if (-not $config -or $config -isnot [hashtable]) {
-            throw "Config file did not return a valid hashtable"
-        } -ErrorAction Stop
+            # because config.psd1 contains PowerShell expressions ($true/$false) that
+            # Import-PowerShellDataFile treats as "dynamic expressions"
+            $configContent = Get-Content -Path $configPath -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $config = & $scriptBlock
+            if (-not $config -or $config -isnot [hashtable]) {
+                throw "Config file did not return a valid hashtable"
+            }
             
             # Extract feature dependencies
             if ($config.Manifest.FeatureDependencies) {
