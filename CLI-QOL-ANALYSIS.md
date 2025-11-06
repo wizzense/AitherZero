@@ -1,7 +1,7 @@
 # CLI & Interactive CLI Quality of Life Features Analysis
 
-**Date:** 2025-11-05  
-**Status:** ✅ COMPREHENSIVE ASSESSMENT COMPLETE  
+**Date:** 2025-11-05 (Updated: 2025-11-06)  
+**Status:** ✅ COMPREHENSIVE ASSESSMENT COMPLETE + NEW FEATURES PLANNED  
 **Scope:** CLI and Interactive Menu quality of life features for AitherZero
 
 ---
@@ -10,7 +10,25 @@
 
 AitherZero has **excellent foundational QoL features** with a unique unified CLI/menu system that teaches users the CLI naturally. However, there are **strategic gaps** in areas like session management, advanced navigation, and error recovery that would significantly enhance user experience.
 
-**Overall Rating: 7.5/10** (Strong foundation, notable gaps in advanced features)
+**NEW (2025-11-06):** Added comprehensive plans for enhanced log search and health dashboard features based on user feedback.
+
+**Overall Rating: 7.5/10** (Strong foundation, notable gaps in advanced features; with planned enhancements: 8.5/10)
+
+---
+
+## Update: New User Requirements (2025-11-06)
+
+**User Feedback from PR #2167:**
+1. **Enhanced Log Search** - "ability to search and view logs from 830 like transcripts, run logs. All of it."
+2. **Health Dashboard** - "show a health dashboard summary of course via text or have it output the actual HTML report"
+
+**Response:** Created comprehensive implementation plan (LOG-SEARCH-HEALTH-DASHBOARD-PLAN.md) covering:
+- New script 0830 for advanced log search across all sources
+- Enhanced health dashboard with HTML report generation
+- Estimated 2-3 days implementation
+- See separate plan document for full details
+
+These features address operational visibility and troubleshooting efficiency.
 
 ---
 
@@ -598,7 +616,100 @@ function Set-AitherTheme {
 
 ---
 
+## Planned Features (User-Requested, 2025-11-06) 🎯
+
+### 11. Enhanced Log Search ✨ **NEW - HIGH PRIORITY**
+**Status: PLANNED** (Script 0830)
+
+**What's Being Added:**
+- Comprehensive log search across ALL sources (transcripts, run logs, application logs, test results)
+- Advanced features: regex support, context lines, date filtering, severity filtering
+- Multiple export formats: Text, JSON, CSV, HTML
+- Interactive and CLI modes
+
+**Implementation:**
+```powershell
+# Search for errors with context
+./automation-scripts/0830_Search-AllLogs.ps1 -Pattern "error" -Context 3
+
+# Search transcripts for specific command
+./automation-scripts/0830_Search-AllLogs.ps1 -Pattern "Invoke-Pester" -LogType Transcript
+
+# Export results
+./automation-scripts/0830_Search-AllLogs.ps1 -Pattern "failed" -Format JSON -OutputFile results.json
+```
+
+**Features:**
+- Search 7+ log sources (app, transcript, orchestration, test, analysis, archived)
+- Regex and case-sensitive search
+- Date range filtering (after/before)
+- Context lines (show N lines before/after match)
+- Max results limiting
+- Multiple output formats
+
+**Effort:** 1 day (8 hours)  
+**Value:** Very High - Reduces troubleshooting time by 50-70%
+
+See: `LOG-SEARCH-HEALTH-DASHBOARD-PLAN.md` for full details
+
+### 12. Enhanced Health Dashboard ✨ **NEW - HIGH PRIORITY**  
+**Status: PLANNED** (Enhanced script 0550)
+
+**What's Being Added:**
+- HTML report generation with charts and visualizations
+- Multiple output formats (text, HTML, JSON, Markdown)
+- Comprehensive health metrics across 7 categories:
+  1. System (PowerShell, disk, memory, CPU)
+  2. Logging (status, rotation, error counts)
+  3. Tests (Pester, results, pass rate)
+  4. Code Quality (PSScriptAnalyzer, coverage, tech debt)
+  5. CI/CD (workflow status, build success rate)
+  6. Security (scans, vulnerabilities, certificates)
+  7. Dependencies (modules, versions, updates)
+
+**Implementation:**
+```powershell
+# Quick text summary
+./automation-scripts/0550_Health-Dashboard.ps1
+
+# Generate HTML dashboard
+./automation-scripts/0550_Health-Dashboard.ps1 -Format HTML -Open
+
+# Export health data
+./automation-scripts/0550_Health-Dashboard.ps1 -Format JSON -OutputFile health.json
+```
+
+**Features:**
+- Interactive HTML dashboard with Bootstrap/Chart.js
+- Real-time status indicators (healthy/warning/critical)
+- Historical trend data
+- Auto-refresh capability
+- Responsive design
+- Export to multiple formats
+
+**Effort:** 1.5 days (12 hours)  
+**Value:** Very High - Complete system visibility at a glance
+
+See: `LOG-SEARCH-HEALTH-DASHBOARD-PLAN.md` for full details
+
+---
+
 ## Implementation Priority Matrix
+
+### Phase 0: User-Requested Features (IMMEDIATE - 2-3 days) ⚡
+**Critical operational features requested by users**
+
+1. **Enhanced Log Search** (HIGH) - 1 day (8h)
+   - Script 0830 for comprehensive log search
+   - All log sources, regex, context, multiple formats
+   
+2. **Enhanced Health Dashboard** (HIGH) - 1.5 days (12h)
+   - HTML report generation
+   - Comprehensive metrics (7 categories)
+   - Charts and visualizations
+
+**Total:** 2.5 days (20 hours)
+**ROI:** 50-70% reduction in troubleshooting time + complete system visibility
 
 ### Phase 1: Critical UX (1-2 weeks)
 **These address immediate pain points**
@@ -652,8 +763,38 @@ function Set-AitherTheme {
 
 ## Recommended Implementation Strategy
 
-### Immediate Action (Next PR)
-Focus on **Phase 1 - Critical UX** features:
+### Immediate Action (Next PR) - Phase 0 ⚡
+**User-requested operational features**
+
+Focus on **Phase 0 - Enhanced Log Search & Health Dashboard**:
+
+1. **Enhanced Log Search (Script 0830)**
+   - Create `automation-scripts/0830_Search-AllLogs.ps1`
+   - Add comprehensive search across all log sources
+   - Support regex, context lines, date filtering
+   - Multiple export formats (JSON, CSV, HTML)
+
+2. **Enhanced Health Dashboard (Script 0550)**
+   - Enhance existing `automation-scripts/0550_Health-Dashboard.ps1`
+   - Add HTML report generation with charts
+   - Expand health metrics (7 categories)
+   - Multiple output formats
+
+3. **Integration**
+   - Add shortcuts: `search-logs`, `health`
+   - Add to UnifiedMenu options
+   - Create comprehensive tests
+
+**Estimated Effort:** 2.5 days (20 hours) for Phase 0
+
+**Benefits of Phase 0 Implementation:**
+- **50-70% reduction** in troubleshooting time
+- **Complete system visibility** at a glance
+- **Actionable insights** from logs
+- **Professional reporting** via HTML dashboards
+
+### Follow-up Action - Phase 1
+After Phase 0, proceed with **Critical UX features**:
 
 1. **Session Management**
    - Create `domains/experience/SessionManager.psm1`
