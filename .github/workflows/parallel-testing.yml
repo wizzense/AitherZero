@@ -6,7 +6,7 @@ name: ⚡ Parallel Testing (High Performance)
 
 on:
   push:
-    branches: [main, develop, dev, dev-staging]
+    branches: [main, develop, dev, dev-staging, ring-0-integrations]
     paths:
       - 'domains/**'
       - 'automation-scripts/**'
@@ -14,7 +14,7 @@ on:
       - '**.ps1'
       - '**.psm1'
   pull_request:
-    branches: [main, develop, dev, dev-staging]
+    branches: [main, develop, dev, dev-staging, ring-0-integrations]
   workflow_dispatch:
     inputs:
       test_filter:
@@ -33,9 +33,10 @@ permissions:
   pull-requests: write
 
 # Allow parallel execution across different test suites
+# Cancel old runs for the same branch when new commits arrive
 concurrency:
-  group: parallel-tests-${{ github.ref }}-${{ github.run_number }}
-  cancel-in-progress: false  # Keep running - we want parallel jobs
+  group: parallel-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   AITHERZERO_CI: true
@@ -51,16 +52,16 @@ jobs:
       unit-ranges: ${{ steps.matrix.outputs.unit-ranges }}
       domain-modules: ${{ steps.matrix.outputs.domain-modules }}
       integration-suites: ${{ steps.matrix.outputs.integration-suites }}
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-      
+
       - name: 🔧 Quick Bootstrap
         shell: pwsh
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-      
+
       - name: 🎯 Generate Test Matrix
         id: matrix
         shell: pwsh
@@ -76,7 +77,7 @@ jobs:
             '0800-0899',
             '0900-0999'
           )
-          
+
           # Domain modules - ONLY modules that have test directories
           $domainModules = @(
             'configuration',
@@ -86,21 +87,21 @@ jobs:
             'testing',
             'utilities'
           )
-          
+
           # Integration test suites - ONLY suites that exist
           $integrationSuites = @(
             'automation-scripts'
           )
-          
+
           # Output as JSON arrays for matrix
           $unitRangesJson = $unitRanges | ConvertTo-Json -Compress
           $domainModulesJson = $domainModules | ConvertTo-Json -Compress
           $integrationSuitesJson = $integrationSuites | ConvertTo-Json -Compress
-          
+
           "unit-ranges=$unitRangesJson" >> $env:GITHUB_OUTPUT
           "domain-modules=$domainModulesJson" >> $env:GITHUB_OUTPUT
           "integration-suites=$integrationSuitesJson" >> $env:GITHUB_OUTPUT
-          
+
           Write-Host "✅ Test matrix generated" -ForegroundColor Green
           Write-Host "   Unit ranges: $($unitRanges.Count)" -ForegroundColor Cyan
           Write-Host "   Domain modules: $($domainModules.Count)" -ForegroundColor Cyan
@@ -113,23 +114,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'unit' || github.event.inputs.test_filter == ''
-    
+
     strategy:
       fail-fast: false  # Continue all jobs even if one fails
       max-parallel: 8   # Run up to 8 jobs simultaneously
       matrix:
         range: ${{ fromJson(needs.prepare.outputs.unit-ranges) }}
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-      
+
       - name: 🔧 Bootstrap
         shell: pwsh
         timeout-minutes: 3
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-      
+
       - name: 🧪 Run Unit Tests [${{ matrix.range }}]
         id: run-tests
         shell: pwsh
@@ -137,9 +138,9 @@ jobs:
         timeout-minutes: 5
         run: |
           Write-Host "⚡ Running unit tests for range: ${{ matrix.range }}" -ForegroundColor Cyan
-          
+
           $testPath = "./tests/unit/automation-scripts/${{ matrix.range }}"
-          
+
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
             $config.Run.Path = $testPath
@@ -149,19 +150,19 @@ jobs:
             $config.TestResult.Enabled = $true
             $config.TestResult.OutputPath = "./tests/results/UnitTests-${{ matrix.range }}.xml"
             $config.TestResult.OutputFormat = 'NUnitXml'
-            
+
             $result = Invoke-Pester -Configuration $config
-            
+
             Write-Host "✅ Tests completed for ${{ matrix.range }}" -ForegroundColor Green
             Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
             Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-            
+
             # Set outputs for status check
             "passed=$($result.PassedCount)" >> $env:GITHUB_OUTPUT
             "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
             "skipped=$($result.SkippedCount)" >> $env:GITHUB_OUTPUT
-            
+
             # Mark step as failed but don't exit (continue-on-error allows continuation)
             if ($result.FailedCount -gt 0) {
               Write-Host "##vso[task.complete result=Failed;]Tests failed"
@@ -173,7 +174,7 @@ jobs:
             "failed=0" >> $env:GITHUB_OUTPUT
             "skipped=0" >> $env:GITHUB_OUTPUT
           }
-      
+
       - name: 📋 Create Status Check
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -189,9 +190,9 @@ jobs:
             const skipped = parseInt(process.env.SKIPPED || '0', 10);
             const range = process.env.RANGE;
             const total = passed + failed + skipped;
-            
+
             let conclusion, summary;
-            
+
             if (total === 0) {
               conclusion = 'success';
               summary = `⏭️ No tests in range ${range}`;
@@ -202,7 +203,7 @@ jobs:
               conclusion = 'failure';
               summary = `❌ ${failed} test(s) failed in range ${range}`;
             }
-            
+
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -216,7 +217,7 @@ jobs:
                 text: `**Range:** ${range}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
               }
             });
-      
+
       - name: 📊 Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -226,6 +227,14 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
+      - name: ❌ Fail Job if Tests Failed
+        if: steps.run-tests.outputs.failed != '0' && steps.run-tests.outputs.failed != ''
+        shell: pwsh
+        run: |
+          $failed = "${{ steps.run-tests.outputs.failed }}"
+          Write-Host "❌ Job must fail: $failed test(s) failed in range ${{ matrix.range }}" -ForegroundColor Red
+          exit 1
+
   # Parallel domain module tests
   domain-tests-parallel:
     name: 🏗️ Domain Tests [${{ matrix.module }}]
@@ -233,23 +242,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'domains' || github.event.inputs.test_filter == ''
-    
+
     strategy:
       fail-fast: false
       max-parallel: 8
       matrix:
         module: ${{ fromJson(needs.prepare.outputs.domain-modules) }}
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-      
+
       - name: 🔧 Bootstrap
         shell: pwsh
         timeout-minutes: 3
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-      
+
       - name: 🏗️ Run Domain Tests [${{ matrix.module }}]
         id: run-tests
         shell: pwsh
@@ -257,9 +266,9 @@ jobs:
         timeout-minutes: 5
         run: |
           Write-Host "⚡ Running domain tests for: ${{ matrix.module }}" -ForegroundColor Cyan
-          
+
           $testPath = "./tests/domains/${{ matrix.module }}"
-          
+
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
             $config.Run.Path = $testPath
@@ -269,19 +278,19 @@ jobs:
             $config.TestResult.Enabled = $true
             $config.TestResult.OutputPath = "./tests/results/DomainTests-${{ matrix.module }}.xml"
             $config.TestResult.OutputFormat = 'NUnitXml'
-            
+
             $result = Invoke-Pester -Configuration $config
-            
+
             Write-Host "✅ Tests completed for ${{ matrix.module }}" -ForegroundColor Green
             Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
             Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-            
+
             # Set outputs for status check
             "passed=$($result.PassedCount)" >> $env:GITHUB_OUTPUT
             "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
             "skipped=$($result.SkippedCount)" >> $env:GITHUB_OUTPUT
-            
+
             # Mark step as failed but don't exit (continue-on-error allows continuation)
             if ($result.FailedCount -gt 0) {
               Write-Host "##vso[task.complete result=Failed;]Tests failed"
@@ -293,7 +302,7 @@ jobs:
             "failed=0" >> $env:GITHUB_OUTPUT
             "skipped=0" >> $env:GITHUB_OUTPUT
           }
-      
+
       - name: 📋 Create Status Check
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -309,9 +318,9 @@ jobs:
             const skipped = parseInt(process.env.SKIPPED || '0', 10);
             const module = process.env.MODULE;
             const total = passed + failed + skipped;
-            
+
             let conclusion, summary;
-            
+
             if (total === 0) {
               conclusion = 'success';
               summary = `⏭️ No tests for ${module} domain`;
@@ -322,7 +331,7 @@ jobs:
               conclusion = 'failure';
               summary = `❌ ${failed} test(s) failed for ${module} domain`;
             }
-            
+
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -336,7 +345,7 @@ jobs:
                 text: `**Domain:** ${module}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
               }
             });
-      
+
       - name: 📊 Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -346,6 +355,14 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
+      - name: ❌ Fail Job if Tests Failed
+        if: steps.run-tests.outputs.failed != '0' && steps.run-tests.outputs.failed != ''
+        shell: pwsh
+        run: |
+          $failed = "${{ steps.run-tests.outputs.failed }}"
+          Write-Host "❌ Job must fail: $failed test(s) failed in ${{ matrix.module }} domain" -ForegroundColor Red
+          exit 1
+
   # Parallel integration tests
   integration-tests-parallel:
     name: 🔗 Integration Tests [${{ matrix.suite }}]
@@ -353,23 +370,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'integration' || github.event.inputs.test_filter == ''
-    
+
     strategy:
       fail-fast: false
       max-parallel: 3
       matrix:
         suite: ${{ fromJson(needs.prepare.outputs.integration-suites) }}
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-      
+
       - name: 🔧 Bootstrap
         shell: pwsh
         timeout-minutes: 3
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-      
+
       - name: 🔗 Run Integration Tests [${{ matrix.suite }}]
         id: run-tests
         shell: pwsh
@@ -377,9 +394,9 @@ jobs:
         timeout-minutes: 10
         run: |
           Write-Host "⚡ Running integration tests for: ${{ matrix.suite }}" -ForegroundColor Cyan
-          
+
           $testPath = "./tests/integration/${{ matrix.suite }}"
-          
+
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
             $config.Run.Path = $testPath
@@ -389,19 +406,19 @@ jobs:
             $config.TestResult.Enabled = $true
             $config.TestResult.OutputPath = "./tests/results/IntegrationTests-${{ matrix.suite }}.xml"
             $config.TestResult.OutputFormat = 'NUnitXml'
-            
+
             $result = Invoke-Pester -Configuration $config
-            
+
             Write-Host "✅ Tests completed for ${{ matrix.suite }}" -ForegroundColor Green
             Write-Host "   Passed: $($result.PassedCount)" -ForegroundColor Green
             Write-Host "   Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
             Write-Host "   Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-            
+
             # Set outputs for status check
             "passed=$($result.PassedCount)" >> $env:GITHUB_OUTPUT
             "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
             "skipped=$($result.SkippedCount)" >> $env:GITHUB_OUTPUT
-            
+
             # Mark step as failed but don't exit (continue-on-error allows continuation)
             if ($result.FailedCount -gt 0) {
               Write-Host "##vso[task.complete result=Failed;]Tests failed"
@@ -413,7 +430,7 @@ jobs:
             "failed=0" >> $env:GITHUB_OUTPUT
             "skipped=0" >> $env:GITHUB_OUTPUT
           }
-      
+
       - name: 📋 Create Status Check
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -429,9 +446,9 @@ jobs:
             const skipped = parseInt(process.env.SKIPPED || '0', 10);
             const suite = process.env.SUITE;
             const total = passed + failed + skipped;
-            
+
             let conclusion, summary;
-            
+
             if (total === 0) {
               conclusion = 'success';
               summary = `⏭️ No tests for ${suite} suite`;
@@ -442,7 +459,7 @@ jobs:
               conclusion = 'failure';
               summary = `❌ ${failed} test(s) failed for ${suite} suite`;
             }
-            
+
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -456,7 +473,7 @@ jobs:
                 text: `**Suite:** ${suite}\n**Passed:** ${passed}\n**Failed:** ${failed}\n**Skipped:** ${skipped}\n**Total:** ${total}`
               }
             });
-      
+
       - name: 📊 Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -466,30 +483,38 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
+      - name: ❌ Fail Job if Tests Failed
+        if: steps.run-tests.outputs.failed != '0' && steps.run-tests.outputs.failed != ''
+        shell: pwsh
+        run: |
+          $failed = "${{ steps.run-tests.outputs.failed }}"
+          Write-Host "❌ Job must fail: $failed test(s) failed in ${{ matrix.suite }} suite" -ForegroundColor Red
+          exit 1
+
   # Static analysis (runs in parallel with tests)
   static-analysis:
     name: 🔍 Static Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == ''
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-      
+
       - name: 🔧 Bootstrap
         shell: pwsh
         timeout-minutes: 3
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-      
+
       - name: 🔍 Syntax Validation
         shell: pwsh
         timeout-minutes: 2
         run: |
           Write-Host "⚡ Running syntax validation" -ForegroundColor Cyan
           ./automation-scripts/0407_Validate-Syntax.ps1 -All
-      
+
       - name: 🔍 PSScriptAnalyzer
         id: pssa
         shell: pwsh
@@ -498,11 +523,11 @@ jobs:
         run: |
           Write-Host "⚡ Running PSScriptAnalyzer" -ForegroundColor Cyan
           ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
-          
+
           # Capture summary for later use
-          $summaryPath = Get-ChildItem "./tests/analysis" -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue | 
+          $summaryPath = Get-ChildItem "./tests/analysis" -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          
+
           if ($summaryPath) {
             $summary = Get-Content $summaryPath.FullName | ConvertFrom-Json
             "error-count=$($summary.BySeverity.Error)" >> $env:GITHUB_OUTPUT
@@ -510,7 +535,7 @@ jobs:
             "info-count=$($summary.BySeverity.Information)" >> $env:GITHUB_OUTPUT
             "total-issues=$($summary.TotalIssues)" >> $env:GITHUB_OUTPUT
           }
-      
+
       - name: 📊 Code Coverage Analysis
         id: coverage
         shell: pwsh
@@ -518,23 +543,23 @@ jobs:
         continue-on-error: true
         run: |
           Write-Host "⚡ Analyzing code coverage from test runs..." -ForegroundColor Cyan
-          
+
           # Check for coverage files from test runs
           $coverageFiles = Get-ChildItem "./tests/coverage" -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue
-          
+
           if ($coverageFiles) {
             Write-Host "Found $($coverageFiles.Count) coverage file(s)" -ForegroundColor Cyan
-            
+
             # Parse latest coverage file
             $latestCoverage = $coverageFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 1
             [xml]$covXml = Get-Content $latestCoverage.FullName
-            
+
             $lineRate = [math]::Round([double]$covXml.coverage.'line-rate' * 100, 2)
             $branchRate = [math]::Round([double]$covXml.coverage.'branch-rate' * 100, 2)
-            
+
             "line-coverage=$lineRate" >> $env:GITHUB_OUTPUT
             "branch-coverage=$branchRate" >> $env:GITHUB_OUTPUT
-            
+
             Write-Host "✅ Line Coverage: $lineRate%" -ForegroundColor Green
             Write-Host "✅ Branch Coverage: $branchRate%" -ForegroundColor Green
           } else {
@@ -542,7 +567,7 @@ jobs:
             "line-coverage=0" >> $env:GITHUB_OUTPUT
             "branch-coverage=0" >> $env:GITHUB_OUTPUT
           }
-      
+
       - name: 📊 Upload Analysis Results
         if: always() && hashFiles('./tests/analysis/*') != ''
         uses: actions/upload-artifact@v4
@@ -550,7 +575,7 @@ jobs:
           name: static-analysis
           path: ./tests/analysis/*
           retention-days: 7
-      
+
       - name: 🐛 Collect Open Issues
         id: issues
         if: always()
@@ -564,23 +589,23 @@ jobs:
               state: 'open',
               per_page: 100
             });
-            
+
             const bugs = issues.filter(i => i.labels.some(l => l.name === 'bug'));
             const features = issues.filter(i => i.labels.some(l => l.name === 'enhancement' || l.name === 'feature'));
             const critical = issues.filter(i => i.labels.some(l => l.name === 'critical' || l.name === 'priority: high'));
-            
+
             core.setOutput('total-issues', issues.length);
             core.setOutput('bugs', bugs.length);
             core.setOutput('features', features.length);
             core.setOutput('critical', critical.length);
-            
+
             // Save detailed issue data
             const fs = require('fs');
             const issuesDir = './reports';
             if (!fs.existsSync(issuesDir)) {
               fs.mkdirSync(issuesDir, { recursive: true });
             }
-            
+
             const issueData = {
               timestamp: new Date().toISOString(),
               total: issues.length,
@@ -597,10 +622,10 @@ jobs:
                 url: i.html_url
               }))
             };
-            
+
             fs.writeFileSync('./reports/open-issues.json', JSON.stringify(issueData, null, 2));
             console.log(`✅ Collected ${issues.length} open issues`);
-      
+
       - name: ⏱️ Performance Metrics
         id: performance
         if: always()
@@ -608,7 +633,7 @@ jobs:
         continue-on-error: true
         run: |
           Write-Host "⚡ Collecting performance metrics..." -ForegroundColor Cyan
-          
+
           # Calculate workflow execution time
           $startTime = "${{ github.event.workflow_run.created_at || github.event.head_commit.timestamp }}"
           if ($startTime) {
@@ -618,7 +643,7 @@ jobs:
             "workflow-duration=$durationMinutes" >> $env:GITHUB_OUTPUT
             Write-Host "Workflow duration: $durationMinutes minutes" -ForegroundColor Cyan
           }
-          
+
           # Collect performance data from logs if available
           $perfData = @{
             Timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ")
@@ -629,10 +654,10 @@ jobs:
               AverageJobDuration = 0
             }
           }
-          
+
           $perfData | ConvertTo-Json -Depth 10 | Out-File -FilePath "./reports/performance-metrics.json" -Encoding UTF8
           Write-Host "✅ Performance metrics collected" -ForegroundColor Green
-      
+
       - name: 📋 Create Status Check
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -651,9 +676,9 @@ jobs:
             const total = parseInt(process.env.TOTAL || '0', 10);
             const lineCov = parseFloat(process.env.LINE_COV || '0');
             const branchCov = parseFloat(process.env.BRANCH_COV || '0');
-            
+
             let conclusion, summary;
-            
+
             if (errors > 0) {
               conclusion = 'failure';
               summary = `❌ ${errors} error(s), ${warnings} warning(s) found`;
@@ -664,19 +689,19 @@ jobs:
               conclusion = 'success';
               summary = `✅ Code quality passed (${total} total issues)`;
             }
-            
+
             const text = `**PSScriptAnalyzer:**
-            
+
             • Errors: ${errors}
             • Warnings: ${warnings}
             • Information: ${info}
             • Total Issues: ${total}
-            
+
             **Code Coverage:**
-            
+
             • Line Coverage: ${lineCov}%
             • Branch Coverage: ${branchCov}%`;
-            
+
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -698,22 +723,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: always()  # Run even if some tests failed
-    
+
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-      
+
       - name: 🔧 Bootstrap
         shell: pwsh
         timeout-minutes: 3
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-      
+
       - name: 📥 Download All Test Results
         uses: actions/download-artifact@v4
         with:
           path: ./tests/results-consolidated
-      
+
       - name: 📊 Consolidate Results
         id: consolidate
         shell: pwsh
@@ -722,15 +747,15 @@ jobs:
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
           Write-Host "📊 Consolidating Parallel Test Results" -ForegroundColor Cyan
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
-          
+
           $allResults = Get-ChildItem -Path "./tests/results-consolidated" -Recurse -Filter "*.xml"
-          
+
           Write-Host "Found $($allResults.Count) test result files" -ForegroundColor Cyan
-          
+
           $totalPassed = 0
           $totalFailed = 0
           $totalSkipped = 0
-          
+
           foreach ($file in $allResults) {
             try {
               [xml]$xml = Get-Content $file.FullName
@@ -744,7 +769,7 @@ jobs:
               Write-Host "⚠️  Could not parse $($file.Name): $_" -ForegroundColor Yellow
             }
           }
-          
+
           Write-Host ""
           Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
           Write-Host "   PARALLEL TEST EXECUTION COMPLETE" -ForegroundColor Green
@@ -754,12 +779,12 @@ jobs:
           Write-Host "   ⏭️  Skipped: $totalSkipped" -ForegroundColor Yellow
           Write-Host "═══════════════════════════════════════" -ForegroundColor Cyan
           Write-Host ""
-          
+
           # Set outputs
           "total-passed=$totalPassed" >> $env:GITHUB_OUTPUT
           "total-failed=$totalFailed" >> $env:GITHUB_OUTPUT
           "total-skipped=$totalSkipped" >> $env:GITHUB_OUTPUT
-          
+
           # Generate TestReport JSON for dashboard integration
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
           $testReport = @{
@@ -772,7 +797,7 @@ jobs:
             Commit = "${{ github.sha }}"
             CommitMessage = "${{ github.event.head_commit.message }}"
             Author = "${{ github.actor }}"
-            
+
             # Test Results
             TotalCount = $totalPassed + $totalFailed + $totalSkipped
             PassedCount = $totalPassed
@@ -780,7 +805,7 @@ jobs:
             SkippedCount = $totalSkipped
             FailureRate = if (($totalPassed + $totalFailed) -gt 0) { [math]::Round(($totalFailed / ($totalPassed + $totalFailed)) * 100, 2) } else { 0 }
             PassRate = if (($totalPassed + $totalFailed) -gt 0) { [math]::Round(($totalPassed / ($totalPassed + $totalFailed)) * 100, 2) } else { 0 }
-            
+
             # Code Quality Metrics
             CodeQuality = @{
               PSScriptAnalyzer = @{
@@ -794,7 +819,7 @@ jobs:
                 BranchCoverage = "${{ steps.coverage.outputs.branch-coverage || 0 }}"
               }
             }
-            
+
             # Issue Tracking
             Issues = @{
               Total = "${{ steps.issues.outputs.total-issues || 0 }}"
@@ -802,14 +827,14 @@ jobs:
               Features = "${{ steps.issues.outputs.features || 0 }}"
               Critical = "${{ steps.issues.outputs.critical || 0 }}"
             }
-            
+
             # Performance Metrics
             Performance = @{
               WorkflowDuration = "${{ steps.performance.outputs.workflow-duration || 0 }}"
               ParallelJobs = 17
               ResultFiles = $allResults.Count
             }
-            
+
             # Health Assessment
             HealthScore = @{
               Overall = 0
@@ -817,47 +842,47 @@ jobs:
               CodeQuality = 0
               IssueHealth = 0
             }
-            
+
             TestResults = @{
               Summary = "Parallel execution across $($allResults.Count) test suites"
               ResultFiles = $allResults.Count
             }
           }
-          
+
           # Calculate health scores (0-100)
-          $testHealth = if ($testReport.TotalCount -gt 0) { 
-            [math]::Round($testReport.PassRate, 0) 
+          $testHealth = if ($testReport.TotalCount -gt 0) {
+            [math]::Round($testReport.PassRate, 0)
           } else { 0 }
-          
+
           $qualityHealth = 100
           $errors = [int]$testReport.CodeQuality.PSScriptAnalyzer.Errors
           $warnings = [int]$testReport.CodeQuality.PSScriptAnalyzer.Warnings
           if ($errors -gt 0) { $qualityHealth -= [math]::Min($errors * 5, 50) }
           if ($warnings -gt 0) { $qualityHealth -= [math]::Min($warnings, 30) }
           $qualityHealth = [math]::Max($qualityHealth, 0)
-          
+
           $issueHealth = 100
           $bugs = [int]$testReport.Issues.Bugs
           $critical = [int]$testReport.Issues.Critical
           if ($bugs -gt 0) { $issueHealth -= [math]::Min($bugs * 2, 40) }
           if ($critical -gt 0) { $issueHealth -= [math]::Min($critical * 10, 50) }
           $issueHealth = [math]::Max($issueHealth, 0)
-          
+
           $overallHealth = [math]::Round(($testHealth * 0.4 + $qualityHealth * 0.3 + $issueHealth * 0.3), 0)
-          
+
           $testReport.HealthScore.Overall = $overallHealth
           $testReport.HealthScore.TestHealth = $testHealth
           $testReport.HealthScore.CodeQuality = $qualityHealth
           $testReport.HealthScore.IssueHealth = $issueHealth
-          
+
           $testReportJson = $testReport | ConvertTo-Json -Depth 10
-          
+
           # Save to tests/results for dashboard
           $resultsDir = "./tests/results"
           if (-not (Test-Path $resultsDir)) {
             New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
           }
-          
+
           $reportPath = Join-Path $resultsDir "TestReport-Parallel-$timestamp.json"
           $testReportJson | Out-File -FilePath $reportPath -Encoding UTF8
           Write-Host "✅ Generated comprehensive TestReport JSON: $reportPath" -ForegroundColor Green
@@ -865,13 +890,13 @@ jobs:
           Write-Host "   Test Health: $testHealth/100" -ForegroundColor Cyan
           Write-Host "   Code Quality: $qualityHealth/100" -ForegroundColor Cyan
           Write-Host "   Issue Health: $issueHealth/100" -ForegroundColor Cyan
-          
+
           # Mark as failed if tests failed (but continue-on-error allows subsequent steps)
           if ($totalFailed -gt 0) {
             Write-Host "❌ Some tests failed - marking step as failed" -ForegroundColor Red
             exit 1
           }
-      
+
       - name: 📊 Publish Test Report
         uses: dorny/test-reporter@v1
         if: always()
@@ -881,7 +906,7 @@ jobs:
           path: './tests/results-consolidated/**/*.xml'
           reporter: 'java-junit'
           fail-on-error: false
-      
+
       - name: 📋 Create Status Check
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -895,9 +920,9 @@ jobs:
             const failed = parseInt(process.env.FAILED || '0', 10);
             const skipped = parseInt(process.env.SKIPPED || '0', 10);
             const total = passed + failed + skipped;
-            
+
             let conclusion, summary, text;
-            
+
             if (failed === 0) {
               conclusion = 'success';
               summary = `✅ All tests passed (${passed} passed, ${skipped} skipped)`;
@@ -907,7 +932,7 @@ jobs:
               summary = `❌ ${failed} test(s) failed (${passed} passed, ${skipped} skipped)`;
               text = `Parallel test execution found failures.\n\n**Results:**\n- ✅ Passed: ${passed}\n- ❌ Failed: ${failed}\n- ⏭️ Skipped: ${skipped}\n- Total: ${total}\n\n**Action Required:** Review failed tests and address issues.`;
             }
-            
+
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -921,7 +946,7 @@ jobs:
                 text: text
               }
             });
-      
+
       - name: 📋 Collect Check Statuses for Dashboard
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -929,7 +954,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
+
             // Get all checks for this PR
             const { data: checkRuns } = await github.rest.checks.listForRef({
               owner: context.repo.owner,
@@ -937,16 +962,16 @@ jobs:
               ref: context.payload.pull_request.head.sha,
               per_page: 100
             });
-            
+
             // Filter for parallel testing checks only
-            const parallelTestChecks = checkRuns.check_runs.filter(check => 
+            const parallelTestChecks = checkRuns.check_runs.filter(check =>
               check.name.includes('Unit Tests') ||
               check.name.includes('Domain Tests') ||
               check.name.includes('Integration Tests') ||
               check.name.includes('Static Analysis') ||
               check.name.includes('Parallel Testing Results')
             );
-            
+
             // Organize checks by type
             const checkSummary = {
               timestamp: new Date().toISOString(),
@@ -969,7 +994,7 @@ jobs:
                 skipped: 0
               }
             };
-            
+
             // Process each check
             for (const check of parallelTestChecks) {
               const checkData = {
@@ -982,13 +1007,13 @@ jobs:
                 output_title: check.output?.title || '',
                 output_summary: check.output?.summary || ''
               };
-              
+
               // Count by conclusion
               if (check.conclusion === 'success') checkSummary.summary.success++;
               else if (check.conclusion === 'failure') checkSummary.summary.failure++;
               else if (check.conclusion === 'neutral') checkSummary.summary.neutral++;
               else if (check.conclusion === 'skipped') checkSummary.summary.skipped++;
-              
+
               // Categorize by type
               if (check.name.includes('Unit Tests')) {
                 checkSummary.checks.unit_tests.push(checkData);
@@ -1002,23 +1027,23 @@ jobs:
                 checkSummary.checks.overall.push(checkData);
               }
             }
-            
+
             // Save to reports directory for dashboard
             const reportsDir = './reports';
             if (!fs.existsSync(reportsDir)) {
               fs.mkdirSync(reportsDir, { recursive: true });
             }
-            
+
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
             const checkStatusPath = path.join(reportsDir, `ParallelTestChecks-${timestamp}.json`);
             fs.writeFileSync(checkStatusPath, JSON.stringify(checkSummary, null, 2));
-            
+
             core.info(`✅ Saved check statuses to ${checkStatusPath}`);
             core.info(`   Total checks: ${checkSummary.total_checks}`);
             core.info(`   Success: ${checkSummary.summary.success}`);
             core.info(`   Failure: ${checkSummary.summary.failure}`);
             core.info(`   Neutral: ${checkSummary.summary.neutral}`);
-      
+
       - name: 💬 Comment on PR
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -1040,7 +1065,7 @@ jobs:
               }
             };
             return await script({github, context, core: mockCore});
-      
+
       - name: 📊 Generate Dashboard
         if: always()
         shell: pwsh
@@ -1048,7 +1073,7 @@ jobs:
         run: |
           Write-Host "📊 Generating comprehensive dashboard..." -ForegroundColor Cyan
           ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
-      
+
       - name: 📤 Upload Dashboard & Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -1061,7 +1086,7 @@ jobs:
             tests/results/TestReport-Parallel-*.json
           retention-days: 30
           if-no-files-found: warn
-      
+
       - name: ✅ Final Status Check
         if: always()
         shell: pwsh

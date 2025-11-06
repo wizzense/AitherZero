@@ -72,7 +72,15 @@ function Get-AIConfig {
             # Load based on file extension
             if ($ConfigPath -like "*.psd1") {
                 try {
-                    $config = Import-PowerShellDataFile $ConfigPath
+                    # Use scriptblock evaluation instead of Import-PowerShellDataFile
+                    # because config.psd1 contains PowerShell expressions ($true/$false) that
+                    # Import-PowerShellDataFile treats as "dynamic expressions"
+                    $configContent = Get-Content -Path $configPath -Raw
+                    $scriptBlock = [scriptblock]::Create($configContent)
+                    $config = & $scriptBlock
+                    if (-not $config -or $config -isnot [hashtable]) {
+                        throw "Config file did not return a valid hashtable"
+                    }
                 } catch {
                     Write-Error "Failed to parse PowerShell data file: $_"
                     return $null
@@ -241,7 +249,13 @@ function Initialize-RateLimiting {
 
     if (Test-Path $configPath) {
         if ($PSCmdlet.ShouldProcess($configPath, "Update rate limits configuration")) {
-            $existingConfig = Import-PowerShellDataFile $configPath -AsHashtable
+            # Use scriptblock evaluation instead of Import-PowerShellDataFile
+            $configContent = Get-Content -Path $configPath -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $existingConfig = & $scriptBlock
+            if (-not $existingConfig -or $existingConfig -isnot [hashtable]) {
+                throw "Config file did not return a valid hashtable"
+            }
             $existingConfig[$Provider] = $rateLimits
             $existingConfig | ConvertTo-Json -Depth 10 | Set-Content $configPath
         }
