@@ -42,7 +42,15 @@ $script:Condition = '$env:ANTHROPIC_API_KEY -or $env:OPENAI_API_KEY -or $env:GOO
 
 #region Configuration Loading
 $configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
-$config = Import-PowerShellDataFile $configPath
+# Use scriptblock evaluation instead of Import-PowerShellDataFile
+# because config.psd1 contains PowerShell expressions ($true/$false) that
+# Import-PowerShellDataFile treats as "dynamic expressions"
+$configContent = Get-Content -Path $configPath -Raw
+$scriptBlock = [scriptblock]::Create($configContent)
+$config = & $scriptBlock
+if (-not $config -or $config -isnot [hashtable]) {
+    throw "Config file did not return a valid hashtable"
+}
 
 if (-not $config.AI.TestGeneration.Enabled) {
     Write-Warning "AI Test Generation is disabled in configuration"

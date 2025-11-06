@@ -126,7 +126,15 @@ function Get-GitHubToken {
     $configPath = Join-Path $repoRoot "config.psd1"
     if (Test-Path $configPath) {
         try {
-            $config = Import-PowerShellDataFile $configPath
+            # Use scriptblock evaluation instead of Import-PowerShellDataFile
+        # because config.psd1 contains PowerShell expressions ($true/$false) that
+        # Import-PowerShellDataFile treats as "dynamic expressions"
+        $configContent = Get-Content -Path $configPath -Raw
+        $scriptBlock = [scriptblock]::Create($configContent)
+        $config = & $scriptBlock
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        }
             if ($config.Development -and $config.Development.GitHub -and $config.Development.GitHub.Token) {
                 Write-Verbose "Using GitHub token from config.psd1"
                 return $config.Development.GitHub.Token

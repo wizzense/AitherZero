@@ -196,6 +196,51 @@ $configDir = "C:\Users\$env:USERNAME\.aitherzero"
 $scriptPath = "$PSScriptRoot\scripts\example.ps1"
 ```
 
+### Configuration File Loading
+
+**CRITICAL:** The `config.psd1` file contains PowerShell expressions (`$true`, `$false`) that `Import-PowerShellDataFile` treats as "dynamic expressions" and cannot load.
+
+```powershell
+# ✅ CORRECT - Use scriptblock evaluation for config.psd1
+$configPath = "./config.psd1"
+if (Test-Path $configPath) {
+    try {
+        # Use scriptblock evaluation instead of Import-PowerShellDataFile
+        # because config.psd1 contains PowerShell expressions ($true/$false) that
+        # Import-PowerShellDataFile treats as "dynamic expressions"
+        $configContent = Get-Content -Path $configPath -Raw
+        $scriptBlock = [scriptblock]::Create($configContent)
+        $config = & $scriptBlock
+        
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        }
+        
+        # Now use $config safely
+        $version = $config.Manifest.Version
+    }
+    catch {
+        Write-Error "Failed to load config: $($_.Exception.Message)"
+        throw
+    }
+}
+
+# ❌ WRONG - Import-PowerShellDataFile fails with config.psd1
+$config = Import-PowerShellDataFile "./config.psd1"
+# Error: "Cannot generate a PowerShell object for a ScriptBlock evaluating dynamic expressions"
+```
+
+**Why This Matters:**
+- `Import-PowerShellDataFile` is designed for **pure data files** (like module manifests)
+- It does NOT evaluate PowerShell expressions for security reasons
+- `config.psd1` uses `$true`/`$false` boolean values, which are expressions
+- Using scriptblock evaluation is the correct approach for configuration files with expressions
+
+**When to Use Each:**
+- **Import-PowerShellDataFile**: Module manifests (`.psd1`), pure data files
+- **Scriptblock Evaluation**: `config.psd1`, configuration files with expressions
+- **ConvertFrom-Json**: JSON configuration files (`.json`)
+
 ---
 
 ## Extension Development

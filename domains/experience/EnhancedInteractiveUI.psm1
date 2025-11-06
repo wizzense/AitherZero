@@ -71,8 +71,13 @@ function Start-EnhancedInteractiveUI {
         $modalUIEnabled = $false
         if (Test-Path $ConfigPath) {
             try {
-                $configData = Import-PowerShellDataFile -Path $ConfigPath -ErrorAction SilentlyContinue
-                if ($configData.UI.ModalUI.Enabled -ne $null) {
+                # Use scriptblock evaluation instead of Import-PowerShellDataFile
+                # because config.psd1 contains PowerShell expressions ($true/$false) that
+                # Import-PowerShellDataFile treats as "dynamic expressions"
+                $configContent = Get-Content -Path $ConfigPath -Raw -ErrorAction SilentlyContinue
+                $scriptBlock = [scriptblock]::Create($configContent)
+                $configData = & $scriptBlock
+                if ($configData -and $configData.UI.ModalUI.Enabled -ne $null) {
                     $modalUIEnabled = $configData.UI.ModalUI.Enabled
                 }
             } catch {

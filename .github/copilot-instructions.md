@@ -337,6 +337,53 @@ Key sections:
 - `Automation.MaxConcurrency`: Parallel execution limit
 - `Testing.Profile`: Quick, Standard, Full, CI
 
+### ⚠️ CRITICAL: Loading config.psd1 Files
+
+**NEVER use `Import-PowerShellDataFile` for `config.psd1`!**
+
+The `config.psd1` file contains PowerShell expressions (`$true`, `$false`) that `Import-PowerShellDataFile` treats as "dynamic expressions" and **cannot load**.
+
+```powershell
+# ✅ CORRECT - Use scriptblock evaluation for config.psd1
+$configPath = "./config.psd1"
+if (Test-Path $configPath) {
+    try {
+        # Use scriptblock evaluation instead of Import-PowerShellDataFile
+        # because config.psd1 contains PowerShell expressions ($true/$false) that
+        # Import-PowerShellDataFile treats as "dynamic expressions"
+        $configContent = Get-Content -Path $configPath -Raw
+        $scriptBlock = [scriptblock]::Create($configContent)
+        $config = & $scriptBlock
+        
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        }
+        
+        # Now use $config safely
+        $version = $config.Manifest.Version
+    }
+    catch {
+        Write-Error "Failed to load config: $($_.Exception.Message)"
+        throw
+    }
+}
+
+# ❌ WRONG - Import-PowerShellDataFile fails with config.psd1
+$config = Import-PowerShellDataFile "./config.psd1"
+# Error: "Cannot generate a PowerShell object for a ScriptBlock evaluating dynamic expressions"
+```
+
+**Why This Pattern:**
+- `Import-PowerShellDataFile` is for **pure data** (module manifests)
+- It does NOT evaluate expressions for security
+- `config.psd1` uses boolean values (`$true`/`$false`) which are expressions
+- Scriptblock evaluation is the correct and safe approach
+
+**Quick Reference:**
+- **config.psd1**: Use scriptblock evaluation (see above)
+- **Module manifests (.psd1)**: Use `Import-PowerShellDataFile`
+- **JSON files (.json)**: Use `ConvertFrom-Json`
+
 ## Common Issues & Solutions
 
 ### GitHub Issue Creation Failures

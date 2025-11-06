@@ -80,7 +80,15 @@ try {
     # Load configuration
     $configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
     if (Test-Path $configPath) {
-        $config = Import-PowerShellDataFile $configPath
+        # Use scriptblock evaluation instead of Import-PowerShellDataFile
+        # because config.psd1 contains PowerShell expressions ($true/$false) that
+        # Import-PowerShellDataFile treats as "dynamic expressions"
+        $configContent = Get-Content -Path $configPath -Raw
+        $scriptBlock = [scriptblock]::Create($configContent)
+        $config = & $scriptBlock
+        if (-not $config -or $config -isnot [hashtable]) {
+            throw "Config file did not return a valid hashtable"
+        }
         # Get Pester version from the correct location in the configuration
         $pesterMinVersion = $config.Manifest?.FeatureDependencies?.Testing?.Pester?.MinVersion
         if (-not $pesterMinVersion) {
