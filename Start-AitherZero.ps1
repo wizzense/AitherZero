@@ -1590,6 +1590,17 @@ function Invoke-ModernRunAction {
         $ScriptNum = $RunTarget
         $RunTarget = 'script'
     }
+    
+    # Detect if user tried to pass comma-separated script numbers
+    if ($RunTarget -and $RunTarget -match '^\d{3,4}[,\s]+\d{3,4}') {
+        Write-ModernCLI "Cannot run multiple scripts with -Target parameter" -Type 'Error'
+        Write-ModernCLI "" -Type 'Muted'
+        Write-ModernCLI "To run multiple scripts, use:" -Type 'Info'
+        Write-ModernCLI "  -Mode Orchestrate -Sequence $RunTarget" -Type 'Accent'
+        Write-ModernCLI "" -Type 'Muted'
+        Write-ModernCLI "Example: .\Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0500,0501" -Type 'Muted'
+        return
+    }
 
     switch ($RunTarget) {
 

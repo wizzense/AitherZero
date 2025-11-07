@@ -1594,6 +1594,9 @@
         # Enable extension system
         Enabled = $true
         
+        # Enabled extensions list (empty = all discovered extensions can be loaded)
+        EnabledExtensions = @()  # e.g., @('terraform-helper', 'custom-reports')
+        
         # Extension search paths (ordered by priority)
         SearchPaths = @(
             './extensions'                           # Local extensions
