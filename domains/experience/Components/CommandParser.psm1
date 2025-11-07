@@ -98,8 +98,13 @@ function Parse-AitherCommand {
     # Validate mode value (including extension modes)
     $validModes = @('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')
     
+    # Initialize extension modes registry if not already set
+    if (-not (Test-Path variable:global:AitherZeroExtensionModes)) {
+        $global:AitherZeroExtensionModes = @{}
+    }
+    
     # Add extension modes if available
-    if ($global:AitherZeroExtensionModes) {
+    if ($global:AitherZeroExtensionModes -and $global:AitherZeroExtensionModes.Count -gt 0) {
         $validModes += $global:AitherZeroExtensionModes.Keys
     }
     

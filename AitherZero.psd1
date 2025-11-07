@@ -20,7 +20,7 @@
         'Write-InfraLog', 'Write-AuditLog', 'Enable-AuditLogging',
 
         # From Configuration
-        'Get-Configuration', 'Set-Configuration', 'Get-ModuleConfiguration',
+        'Import-ConfigDataFile', 'Get-Configuration', 'Set-Configuration', 'Get-ModuleConfiguration',
 
         # From BetterMenu
         'Show-BetterMenu',

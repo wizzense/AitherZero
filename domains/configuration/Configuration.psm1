@@ -23,8 +23,33 @@ $script:IsCI = $false
 $script:CIDefaults = @{}
 $script:CIDefaultsUI = @{}
 
-# Helper function to load .psd1 files that may contain PowerShell expressions
+<#
+.SYNOPSIS
+    Loads .psd1 configuration files that contain PowerShell expressions
+.DESCRIPTION
+    This function loads .psd1 files using scriptblock evaluation instead of Import-PowerShellDataFile.
+    
+    Use this function when loading config files (config.psd1, config.local.psd1, etc.) because they contain:
+    * #Requires statements (makes them scripts, not pure data)
+    * Multi-line block comments (not supported by Import-PowerShellDataFile)
+    * Boolean literals and other PowerShell expressions
+    
+    DO NOT use Import-PowerShellDataFile for config files. It will fail with:
+    "Cannot generate a PowerShell object for a ScriptBlock evaluating dynamic expressions"
+    
+    Import-PowerShellDataFile is ONLY for module manifests that are pure data.
+.PARAMETER Path
+    Path to the .psd1 file to load
+.EXAMPLE
+    $config = Import-ConfigDataFile -Path './config.psd1'
+.EXAMPLE
+    $localConfig = Import-ConfigDataFile -Path './config.local.psd1'
+.NOTES
+    This is the centralized function for loading all config files in AitherZero.
+    All scripts should use this instead of Import-PowerShellDataFile or manual scriptblock evaluation.
+#>
 function Import-ConfigDataFile {
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string]$Path
@@ -34,9 +59,7 @@ function Import-ConfigDataFile {
         throw "Config file not found: $Path"
     }
     
-    # Read and evaluate as scriptblock (supports $true/$false and other expressions)
-    # This is needed because config.psd1 contains PowerShell expressions that
-    # Import-PowerShellDataFile cannot handle
+    # Read and evaluate as scriptblock (supports #Requires, block comments, boolean literals, etc.)
     $content = Get-Content -Path $Path -Raw
     $scriptBlock = [scriptblock]::Create($content)
     $data = & $scriptBlock
@@ -1044,7 +1067,13 @@ function Request-FeatureEnable {
         # Load existing local config or create new
         $localConfig = @{}
         if (Test-Path $localConfigPath) {
-            $localConfig = Import-PowerShellDataFile $localConfigPath
+            # Use Import-ConfigDataFile helper function
+            try {
+                $localConfig = Import-ConfigDataFile -Path $localConfigPath
+            } catch {
+                Write-ConfigLog -Level Warning -Message "Failed to load local config: $_"
+                $localConfig = @{}
+            }
         }
         
         # Ensure Features section exists
@@ -1239,6 +1268,7 @@ function Resolve-FeatureDependencies {
 }
 
 Export-ModuleMember -Function @(
+    'Import-ConfigDataFile',
     'Get-Configuration',
     'Set-Configuration',
     'Get-ConfigValue',
