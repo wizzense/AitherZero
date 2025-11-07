@@ -115,7 +115,9 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'unit' || github.event.inputs.test_filter == ''
+    if: |
+      github.actor != 'github-actions[bot]' && 
+      (github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'unit' || github.event.inputs.test_filter == '')
 
     strategy:
       fail-fast: false  # Continue all jobs even if one fails
