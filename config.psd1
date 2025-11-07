@@ -423,7 +423,7 @@
         # Domain module structure (actual repository state)
         Domains = @{
             'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation' = @{ Modules = 2; Description = 'Orchestration engine and script utilities' }
+            'automation' = @{ Modules = 5; Description = 'Orchestration engine and script utilities' }
             'cli' = @{ Modules = 1; Description = 'CLI cmdlets and interactive interface' }
             'configuration' = @{ Modules = 2; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
@@ -431,8 +431,8 @@
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
-            'testing' = @{ Modules = 8; Description = 'Testing framework, quality validation, and test generation' }
-            'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
+            'testing' = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
+            'utilities' = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
         
         # Script inventory by range (138 total files, 137 unique numbers)
