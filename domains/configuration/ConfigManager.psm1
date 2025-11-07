@@ -35,7 +35,7 @@ function Initialize-ConfigManager {
     $projectRoot = if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { $PWD }
     
     # Discover available configs
-    Discover-Configurations -ProjectRoot $projectRoot
+    Find-Configurations -ProjectRoot $projectRoot
     
     # Load active config
     if (-not $ConfigPath) {
@@ -56,7 +56,7 @@ function Initialize-ConfigManager {
 .SYNOPSIS
     Discovers all available configuration files
 #>
-function Discover-Configurations {
+function Find-Configurations {
     [CmdletBinding()]
     param([string]$ProjectRoot)
     
@@ -413,7 +413,7 @@ function Show-ConfigurationSelector {
     }
     
     if ($selection -eq 'R' -or $selection -eq 'r') {
-        Discover-Configurations -ProjectRoot $(if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { $PWD })
+        Find-Configurations -ProjectRoot $(if ($env:AITHERZERO_ROOT) { $env:AITHERZERO_ROOT } else { $PWD })
         Write-Host "✅ Configuration list reloaded" -ForegroundColor Green
         return Show-ConfigurationSelector
     }
@@ -641,7 +641,7 @@ function Get-ManifestCapabilities {
 # Export functions
 Export-ModuleMember -Function @(
     'Initialize-ConfigManager'
-    'Discover-Configurations'
+    'Find-Configurations'
     'Import-ConfigManifest'
     'Build-CapabilitiesFromManifest'
     'Switch-Configuration'
