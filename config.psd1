@@ -991,6 +991,75 @@
                 Features = @('*')
             }
         }
+        
+        # Playbook registry - centralized playbook management
+        Playbooks = @{
+            'test-orchestration' = @{
+                Enabled = $true
+                Description = 'Simple test playbook for validation'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'project-health-check' = @{
+                Enabled = $true
+                Description = 'Complete project health validation (matches GitHub Actions)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    DefaultTimeout = 300  # Override range defaults for this playbook
+                }
+            }
+            'pr-validation-fast' = @{
+                Enabled = $true
+                Description = 'Fast PR validation (syntax + config)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    '0407' = @{ Timeout = 60 }   # Faster syntax check
+                    '0413' = @{ Timeout = 30 }   # Faster config validation
+                }
+            }
+            'pr-validation-full' = @{
+                Enabled = $true
+                Description = 'Full PR validation (syntax, quality, tests)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'code-quality-fast' = @{
+                Enabled = $true
+                Description = 'Quick code quality checks'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'code-quality-full' = @{
+                Enabled = $true
+                Description = 'Comprehensive code quality analysis'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'integration-tests-full' = @{
+                Enabled = $true
+                Description = 'Full integration test suite'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    DefaultTimeout = 600
+                    ContinueOnError = $true
+                }
+            }
+            'diagnose-ci' = @{
+                Enabled = $true
+                Description = 'Diagnose CI/CD failures'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'fix-ci-validation' = @{
+                Enabled = $false  # Disabled by default - maintenance only
+                Description = 'Fix CI validation issues'
+                RequiresApproval = $true
+                AllowedEnvironments = @('Dev')
+            }
+        }
     }
     
     # ===================================================================

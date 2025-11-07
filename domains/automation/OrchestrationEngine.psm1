@@ -252,6 +252,46 @@ function Invoke-OrchestrationSequence {
 
         # Load playbook if specified
         if ($LoadPlaybook) {
+            # Validate playbook is enabled in configuration
+            if ($config.Automation.Playbooks -and $config.Automation.Playbooks.ContainsKey($LoadPlaybook)) {
+                $playbookConfig = $config.Automation.Playbooks[$LoadPlaybook]
+                
+                # Check if playbook is enabled
+                if ($playbookConfig.Enabled -eq $false) {
+                    throw "Playbook '$LoadPlaybook' is disabled in configuration. Enable it in config.psd1 Automation.Playbooks section."
+                }
+                
+                # Check environment restrictions
+                $currentEnv = if ($env:AITHERZERO_ENVIRONMENT) { 
+                    $env:AITHERZERO_ENVIRONMENT 
+                } elseif ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true') {
+                    'CI'
+                } else {
+                    'Dev'
+                }
+                
+                if ($playbookConfig.AllowedEnvironments -and $playbookConfig.AllowedEnvironments.Count -gt 0) {
+                    if ($currentEnv -notin $playbookConfig.AllowedEnvironments) {
+                        throw "Playbook '$LoadPlaybook' is not allowed in '$currentEnv' environment. Allowed: $($playbookConfig.AllowedEnvironments -join ', ')"
+                    }
+                }
+                
+                # Check if approval required
+                if ($playbookConfig.RequiresApproval -and -not $Interactive) {
+                    Write-OrchestrationLog "Playbook '$LoadPlaybook' requires approval" -Level 'Warning'
+                    if (-not $config.Automation.SkipConfirmation) {
+                        $response = Read-Host "Execute playbook '$LoadPlaybook'? (yes/no)"
+                        if ($response -ne 'yes') {
+                            throw "Playbook execution cancelled by user"
+                        }
+                    }
+                }
+                
+                Write-OrchestrationLog "Playbook '$LoadPlaybook' validated: $($playbookConfig.Description)" -Level 'Information'
+            } else {
+                Write-OrchestrationLog "Playbook '$LoadPlaybook' not found in configuration registry - proceeding without validation" -Level 'Warning'
+            }
+            
             $playbook = Get-OrchestrationPlaybook -Name $LoadPlaybook
             if (-not $playbook) {
                 throw "Playbook not found: $LoadPlaybook"
@@ -459,7 +499,7 @@ function Invoke-OrchestrationSequence {
         Write-OrchestrationLog "Resolved to $($scriptNumbers.Count) scripts: $($scriptNumbers -join ', ')"
 
         # Get script metadata
-        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions -Configuration $Configuration
+        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions -Configuration $Configuration -PlaybookName $LoadPlaybook
 
         # Matrix build handling - expand scripts for each matrix combination
         if ($Matrix) {
@@ -927,10 +967,17 @@ function Get-OrchestrationScripts {
         [string[]]$Numbers,
         [hashtable]$Variables,
         [hashtable]$Conditions,
-        [hashtable]$Configuration
+        [hashtable]$Configuration,
+        [string]$PlaybookName  # Add playbook name for config lookup
     )
 
     $scripts = @()
+    
+    # Get playbook-specific defaults from config if available
+    $playbookDefaults = $null
+    if ($PlaybookName -and $Configuration.Automation.Playbooks -and $Configuration.Automation.Playbooks.ContainsKey($PlaybookName)) {
+        $playbookDefaults = $Configuration.Automation.Playbooks[$PlaybookName].ScriptDefaults
+    }
 
     foreach ($number in $Numbers) {
         $scriptFile = Get-ChildItem -Path $script:ScriptsPath -Filter "${number}_*.ps1" -File | Select-Object -First 1
@@ -942,6 +989,27 @@ function Get-OrchestrationScripts {
 
         # Get configuration defaults for this script range
         $configDefaults = Get-ScriptRangeDefaults -ScriptNumber $number -Configuration $Configuration
+        
+        # Apply playbook-specific defaults if available (overrides range defaults)
+        if ($playbookDefaults) {
+            # Check for script-specific override
+            if ($playbookDefaults.ContainsKey($number)) {
+                $scriptOverride = $playbookDefaults[$number]
+                if ($scriptOverride.Timeout) {
+                    $configDefaults.Timeout = $scriptOverride.Timeout
+                }
+                if ($null -ne $scriptOverride.ContinueOnError) {
+                    $configDefaults.ContinueOnError = $scriptOverride.ContinueOnError
+                }
+            }
+            # Check for playbook-wide defaults
+            if ($playbookDefaults.DefaultTimeout) {
+                $configDefaults.Timeout = $playbookDefaults.DefaultTimeout
+            }
+            if ($null -ne $playbookDefaults.ContinueOnError) {
+                $configDefaults.ContinueOnError = $playbookDefaults.ContinueOnError
+            }
+        }
 
         # Parse script metadata
         $metadata = Get-ScriptMetadata -Path $scriptFile.FullName
