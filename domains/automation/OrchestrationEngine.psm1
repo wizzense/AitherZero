@@ -72,6 +72,245 @@ function Get-NormalizedExitCode {
     }
 }
 
+function Test-CIEnvironment {
+    <#
+    .SYNOPSIS
+        Detect if running in a CI/CD environment
+    .DESCRIPTION
+        Detects various CI/CD platforms and returns environment information
+    .OUTPUTS
+        [hashtable] CI environment information
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param()
+    
+    $ciDetection = @{
+        IsCI = $false
+        Platform = 'Unknown'
+        RunId = $null
+        BuildNumber = $null
+        Branch = $null
+        Commit = $null
+    }
+    
+    # GitHub Actions
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'GitHub Actions'
+        $ciDetection.RunId = $env:GITHUB_RUN_ID
+        $ciDetection.BuildNumber = $env:GITHUB_RUN_NUMBER
+        $ciDetection.Branch = $env:GITHUB_REF_NAME
+        $ciDetection.Commit = $env:GITHUB_SHA
+    }
+    # Azure Pipelines
+    elseif ($env:TF_BUILD -eq 'True') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'Azure Pipelines'
+        $ciDetection.RunId = $env:BUILD_BUILDID
+        $ciDetection.BuildNumber = $env:BUILD_BUILDNUMBER
+        $ciDetection.Branch = $env:BUILD_SOURCEBRANCHNAME
+        $ciDetection.Commit = $env:BUILD_SOURCEVERSION
+    }
+    # GitLab CI
+    elseif ($env:GITLAB_CI -eq 'true') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'GitLab CI'
+        $ciDetection.RunId = $env:CI_PIPELINE_ID
+        $ciDetection.BuildNumber = $env:CI_PIPELINE_IID
+        $ciDetection.Branch = $env:CI_COMMIT_REF_NAME
+        $ciDetection.Commit = $env:CI_COMMIT_SHA
+    }
+    # Jenkins
+    elseif ($env:JENKINS_URL) {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'Jenkins'
+        $ciDetection.RunId = $env:BUILD_ID
+        $ciDetection.BuildNumber = $env:BUILD_NUMBER
+        $ciDetection.Branch = $env:BRANCH_NAME ?? $env:GIT_BRANCH
+        $ciDetection.Commit = $env:GIT_COMMIT
+    }
+    # Generic CI
+    elseif ($env:CI -eq 'true') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'Generic CI'
+    }
+    
+    return $ciDetection
+}
+
+function Export-OrchestrationResult {
+    <#
+    .SYNOPSIS
+        Export orchestration results in multiple formats for CI/CD integration
+    .DESCRIPTION
+        Exports execution results in various formats suitable for CI/CD pipelines
+    .PARAMETER Result
+        Orchestration result object to export
+    .PARAMETER Format
+        Output format (JSON, XML, JUnit, GitHubActions)
+    .PARAMETER Path
+        Output file path
+    .EXAMPLE
+        Export-OrchestrationResult -Result $result -Format JUnit -Path "./test-results.xml"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [PSCustomObject]$Result,
+        
+        [Parameter(Mandatory)]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions')]
+        [string]$Format,
+        
+        [Parameter()]
+        [string]$Path
+    )
+    
+    $output = switch ($Format) {
+        'JSON' {
+            $Result | ConvertTo-Json -Depth 10
+        }
+        
+        'XML' {
+            # Create XML document
+            $xml = New-Object System.Xml.XmlDocument
+            $root = $xml.CreateElement('OrchestrationResult')
+            $xml.AppendChild($root) | Out-Null
+            
+            # Add properties
+            $props = @('Success', 'Completed', 'Failed', 'Skipped', 'Duration')
+            foreach ($prop in $props) {
+                if ($Result.PSObject.Properties[$prop]) {
+                    $elem = $xml.CreateElement($prop)
+                    $elem.InnerText = $Result.$prop
+                    $root.AppendChild($elem) | Out-Null
+                }
+            }
+            
+            # Add script results
+            if ($Result.Results) {
+                $resultsElem = $xml.CreateElement('Scripts')
+                foreach ($scriptResult in $Result.Results) {
+                    $scriptElem = $xml.CreateElement('Script')
+                    $scriptElem.SetAttribute('Number', $scriptResult.Number)
+                    $scriptElem.SetAttribute('Success', $scriptResult.Success)
+                    $scriptElem.SetAttribute('Duration', $scriptResult.Duration)
+                    if ($scriptResult.Error) {
+                        $scriptElem.SetAttribute('Error', $scriptResult.Error)
+                    }
+                    $resultsElem.AppendChild($scriptElem) | Out-Null
+                }
+                $root.AppendChild($resultsElem) | Out-Null
+            }
+            
+            $xml.OuterXml
+        }
+        
+        'JUnit' {
+            # Create JUnit XML format
+            $xml = New-Object System.Xml.XmlDocument
+            $testsuites = $xml.CreateElement('testsuites')
+            $xml.AppendChild($testsuites) | Out-Null
+            
+            $testsuite = $xml.CreateElement('testsuite')
+            $testsuite.SetAttribute('name', 'AitherZero Orchestration')
+            $testsuite.SetAttribute('tests', $Result.Completed + $Result.Failed)
+            $testsuite.SetAttribute('failures', $Result.Failed)
+            $testsuite.SetAttribute('skipped', $Result.Skipped ?? 0)
+            $testsuite.SetAttribute('time', $Result.Duration.TotalSeconds)
+            $testsuite.SetAttribute('timestamp', (Get-Date).ToString('o'))
+            $testsuites.AppendChild($testsuite) | Out-Null
+            
+            if ($Result.Results) {
+                foreach ($scriptResult in $Result.Results) {
+                    $testcase = $xml.CreateElement('testcase')
+                    $testcase.SetAttribute('name', "Script-$($scriptResult.Number)")
+                    $testcase.SetAttribute('classname', 'AitherZero.Orchestration')
+                    $testcase.SetAttribute('time', $scriptResult.Duration.TotalSeconds)
+                    
+                    if (-not $scriptResult.Success) {
+                        $failure = $xml.CreateElement('failure')
+                        $failure.SetAttribute('message', $scriptResult.Error ?? 'Script execution failed')
+                        $failure.SetAttribute('type', 'ScriptFailure')
+                        $testcase.AppendChild($failure) | Out-Null
+                    }
+                    
+                    $testsuite.AppendChild($testcase) | Out-Null
+                }
+            }
+            
+            $xml.OuterXml
+        }
+        
+        'GitHubActions' {
+            # GitHub Actions output format with annotations
+            $output = @()
+            
+            # Set outputs
+            $output += "::set-output name=success::$($Result.Success ?? $true)"
+            $output += "::set-output name=completed::$($Result.Completed ?? 0)"
+            $output += "::set-output name=failed::$($Result.Failed ?? 0)"
+            $output += "::set-output name=skipped::$($Result.Skipped ?? 0)"
+            $output += "::set-output name=duration::$($Result.Duration.TotalSeconds)"
+            
+            # Add annotations for failures
+            if ($Result.Results) {
+                foreach ($scriptResult in $Result.Results | Where-Object { -not $_.Success }) {
+                    $message = "Script $($scriptResult.Number) failed"
+                    if ($scriptResult.Error) {
+                        $message += ": $($scriptResult.Error)"
+                    }
+                    $output += "::error::$message"
+                }
+            }
+            
+            # Summary
+            $totalScripts = $Result.Completed + $Result.Failed
+            if ($Result.Failed -eq 0) {
+                $output += "::notice::Orchestration succeeded: $($Result.Completed)/$totalScripts scripts completed"
+            }
+            else {
+                $output += "::error::Orchestration failed: $($Result.Failed)/$totalScripts scripts failed"
+            }
+            
+            $output -join "`n"
+        }
+    }
+    
+    if ($Path) {
+        $output | Out-File -FilePath $Path -Encoding utf8 -NoNewline
+        Write-OrchestrationLog "Report exported to: $Path" -Level 'Information'
+    }
+    else {
+        Write-Output $output
+    }
+}
+
+function Get-NormalizedExitCode {
+    <#
+    .SYNOPSIS
+        Normalize exit code, treating null as success (0)
+    .DESCRIPTION
+        Helper function to handle null $LASTEXITCODE or exit codes from job results.
+        Treats null values as success (exit code 0) to ensure consistent exit code handling.
+    .PARAMETER ExitCode
+        The exit code to normalize (can be null)
+    .EXAMPLE
+        $exitCode = Get-NormalizedExitCode -ExitCode $LASTEXITCODE
+    #>
+    param(
+        [Parameter(Mandatory = $false)]
+        [object]$ExitCode
+    )
+    
+    if ($null -eq $ExitCode) { 
+        return 0 
+    } else { 
+        return $ExitCode 
+    }
+}
+
 function Invoke-OrchestrationSequence {
     <#
     .SYNOPSIS
@@ -94,6 +333,11 @@ function Invoke-OrchestrationSequence {
 
     .PARAMETER Configuration
     Configuration hashtable or path to configuration file
+    
+    .PARAMETER ConfigFile
+    Path to a custom configuration file that will be merged with config.psd1 and config.local.psd1.
+    Config precedence (highest to lowest): ConfigFile > config.local.psd1 > config.psd1
+    This enables environment-specific configurations (e.g., config.ci.psd1, config.production.psd1)
 
     .PARAMETER Variables
     Variables to pass to scripts for conditional execution
@@ -127,6 +371,29 @@ function Invoke-OrchestrationSequence {
 
     .PARAMETER GenerateSummary
     Generate markdown execution summary report
+    
+    .PARAMETER OutputFormat
+    Export results in specified format for CI/CD integration:
+    - JSON: Structured JSON output for parsing and processing
+    - XML: Standard XML format for data exchange
+    - JUnit: JUnit XML format for test result integration (compatible with Jenkins, GitLab CI, Azure Pipelines)
+    - GitHubActions: GitHub Actions-specific output with annotations and workflow commands
+    - None: No output file (default)
+    
+    .PARAMETER OutputPath
+    Path where the output report file will be saved. Required when OutputFormat is not 'None'
+    
+    .PARAMETER ThrowOnError
+    Throw a terminating exception if any script fails. Essential for CI/CD pipelines to detect failures.
+    When enabled, sets exit code to 1 and throws an exception that will halt the pipeline.
+    
+    .PARAMETER Quiet
+    Suppress non-essential console output. Useful for CI/CD environments where you only want errors and warnings.
+    Sets the AITHERZERO_QUIET environment variable during execution.
+    
+    .PARAMETER PassThru
+    Return the detailed execution result object even when not using OutputFormat.
+    The result includes: Success, Completed, Failed, Skipped counts, Duration, and individual script results.
 
     .EXAMPLE
     # Run environment setup
@@ -143,6 +410,32 @@ function Invoke-OrchestrationSequence {
     .EXAMPLE
     # Run by stage
     Invoke-OrchestrationSequence -Sequence "stage:Infrastructure,stage:Development"
+
+    .EXAMPLE
+    # CI/CD: Run tests with custom config and JUnit output
+    Invoke-OrchestrationSequence -Sequence "0402,0404,0407" -ConfigFile "./config.ci.psd1" -OutputFormat JUnit -OutputPath "./test-results.xml" -ThrowOnError
+    
+    # This is ideal for CI/CD pipelines:
+    # - Custom config file for CI environment settings
+    # - JUnit output for test result integration
+    # - ThrowOnError ensures pipeline fails on errors
+    
+    .EXAMPLE
+    # GitHub Actions integration
+    Invoke-OrchestrationSequence -Sequence "stage:testing" -ConfigFile "./config.ci.psd1" -OutputFormat GitHubActions -Quiet
+    
+    # Outputs GitHub Actions workflow commands:
+    # - ::set-output commands for workflow variables
+    # - ::error annotations for failed scripts
+    # - ::notice annotations for success summaries
+    
+    .EXAMPLE
+    # Production deployment with custom config
+    Invoke-OrchestrationSequence -LoadPlaybook "deploy-prod" -ConfigFile "./config.production.psd1" -ThrowOnError -PassThru
+    
+    # Uses production-specific configuration
+    # Returns result object for programmatic access
+    # Throws on error to halt deployment on failures
 
     .EXAMPLE
     # Complex orchestration with variables
@@ -170,6 +463,35 @@ function Invoke-OrchestrationSequence {
     .EXAMPLE
     # With caching enabled
     Invoke-OrchestrationSequence -LoadPlaybook "test-full" -UseCache -GenerateSummary
+    
+    .OUTPUTS
+    [PSCustomObject] Execution result object when PassThru or OutputFormat is specified.
+    Contains: Success, Completed, Failed, Skipped, Duration, Results, ExitCode
+    
+    .NOTES
+    Exit Codes:
+    - 0: All scripts succeeded
+    - 1: One or more scripts failed (only when not using -ContinueOnError)
+    - 10: Partial success (some scripts failed but ContinueOnError was enabled)
+    
+    Configuration Hierarchy (when using -ConfigFile):
+    1. Custom config file specified in -ConfigFile (highest priority)
+    2. config.local.psd1 (local developer overrides, gitignored)
+    3. config.psd1 (base configuration)
+    
+    CI/CD Integration:
+    - Automatically detects CI environments (GitHub Actions, Azure Pipelines, GitLab CI, Jenkins)
+    - Sets appropriate exit codes for pipeline failure detection
+    - Supports standard output formats (JUnit, JSON) for result integration
+    
+    .LINK
+    Get-MergedConfiguration
+    
+    .LINK
+    Invoke-AitherWorkflow
+    
+    .LINK
+    Test-CIEnvironment
     #>
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Sequence')]
     param(
@@ -184,6 +506,9 @@ function Invoke-OrchestrationSequence {
 
         [Parameter()]
         [object]$Configuration,
+        
+        [Parameter()]
+        [string]$ConfigFile,
 
         [Parameter()]
         [hashtable]$Variables = @{},
@@ -220,14 +545,59 @@ function Invoke-OrchestrationSequence {
         [switch]$UseCache,
 
         [Parameter()]
-        [switch]$GenerateSummary
+        [switch]$GenerateSummary,
+        
+        [Parameter()]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions', 'None')]
+        [string]$OutputFormat = 'None',
+        
+        [Parameter()]
+        [string]$OutputPath,
+        
+        [Parameter()]
+        [switch]$ThrowOnError,
+        
+        [Parameter()]
+        [switch]$Quiet,
+        
+        [Parameter()]
+        [switch]$PassThru
     )
 
     begin {
+        # Set quiet mode for CI/CD
+        if ($Quiet) {
+            $env:AITHERZERO_QUIET = '1'
+        }
+        
+        # Detect CI environment
+        $ciInfo = Test-CIEnvironment
+        if ($ciInfo.IsCI -and -not $Quiet) {
+            Write-OrchestrationLog "CI environment detected: $($ciInfo.Platform)" -Level 'Information'
+        }
+        
         Write-OrchestrationLog "Starting orchestration engine"
 
-        # Load configuration
-        $config = Get-OrchestrationConfiguration -Configuration $Configuration
+        # Load configuration with custom config file support
+        if ($ConfigFile) {
+            Write-OrchestrationLog "Loading configuration from custom file: $ConfigFile" -Level 'Information'
+            # Get merged configuration (config.psd1 < config.local.psd1 < custom file)
+            if (Get-Command Get-MergedConfiguration -ErrorAction SilentlyContinue) {
+                $customConfig = Get-MergedConfiguration -ConfigFile $ConfigFile
+                # If Configuration is also provided as hashtable, merge it on top
+                if ($Configuration -is [hashtable]) {
+                    $customConfig = Merge-Configuration -Current $customConfig -New $Configuration
+                }
+                $config = Get-OrchestrationConfiguration -Configuration $customConfig
+            }
+            else {
+                # Fallback to standard loading
+                $config = Get-OrchestrationConfiguration -Configuration $Configuration
+            }
+        }
+        else {
+            $config = Get-OrchestrationConfiguration -Configuration $Configuration
+        }
 
         # Apply default from config if not specified
         if (-not $PSBoundParameters.ContainsKey('Parallel')) {
@@ -610,9 +980,40 @@ function Invoke-OrchestrationSequence {
                 Save-OrchestrationCache -CacheManager $script:CacheManager -Result $result -Scripts $scripts -Variables $Variables
                 Write-OrchestrationLog "Execution result cached" -Level 'Information'
             }
+            
+            # Export in specified format if requested
+            if ($OutputFormat -ne 'None') {
+                if ($OutputPath) {
+                    Export-OrchestrationResult -Result $result -Format $OutputFormat -Path $OutputPath
+                } else {
+                    Export-OrchestrationResult -Result $result -Format $OutputFormat
+                }
+            }
+            
+            # Set exit code based on results
+            # Exit code 10 for partial success when ContinueOnError is used
+            # Exit code 1 for failures when ContinueOnError is not used
+            # Exit code 0 for complete success
+            if ($result.Failed -eq 0) {
+                $exitCode = 0
+            }
+            elseif ($ContinueOnError) {
+                $exitCode = 10  # Partial success
+            }
+            else {
+                $exitCode = 1  # Failure
+            }
+            $global:LASTEXITCODE = $exitCode
+            
+            # Throw on error if requested (for CI/CD)
+            if ($ThrowOnError -and $result.Failed -gt 0) {
+                throw "Orchestration failed: $($result.Failed) script(s) failed"
+            }
 
-            # Return execution result
-            $result
+            # Return execution result if PassThru or for CI/CD tracking
+            if ($PassThru -or $OutputFormat -ne 'None') {
+                return $result
+            }
         }
         catch {
             # Send failure notification
@@ -623,8 +1024,21 @@ function Invoke-OrchestrationSequence {
                 }
             }
             
-            # Re-throw the error
-            throw
+            # Set error exit code
+            $global:LASTEXITCODE = 1
+            
+            # Re-throw if requested
+            if ($ThrowOnError) {
+                throw
+            }
+            
+            Write-OrchestrationLog "Orchestration failed: $($_.Exception.Message)" -Level 'Error'
+        }
+        finally {
+            # Clean up environment
+            if ($Quiet) {
+                Remove-Item Env:\AITHERZERO_QUIET -ErrorAction SilentlyContinue
+            }
         }
     }
 }
@@ -2427,6 +2841,366 @@ function Invoke-Sequence {
     Invoke-OrchestrationSequence -Sequence $Numbers
 }
 
+#region Powerful One-Liner Helpers
+
+function Invoke-AitherWorkflow {
+    <#
+    .SYNOPSIS
+        Execute a complete workflow in a single command
+    
+    .DESCRIPTION
+        Powerful one-liner function for CI/CD and automation scenarios.
+        Combines script execution, playbook orchestration, and config management.
+        
+        Supports:
+        - Custom config files (config.production.psd1, config.ci.psd1, etc.)
+        - Config hierarchy: custom > config.local.psd1 > config.psd1
+        - Variable injection
+        - Multiple output formats
+        - CI/CD-friendly error handling
+    
+    .PARAMETER Script
+        Single script number to execute (e.g., "0402")
+    
+    .PARAMETER Sequence
+        Script sequence (e.g., "0402,0404,0407" or "stage:testing")
+    
+    .PARAMETER Playbook
+        Playbook name to execute
+    
+    .PARAMETER ConfigFile
+        Custom configuration file (e.g., "config.production.psd1")
+    
+    .PARAMETER Variables
+        Variables to inject into the workflow
+    
+    .PARAMETER OutputFormat
+        Output format (JSON, XML, JUnit, GitHubActions)
+    
+    .PARAMETER OutputPath
+        Path to save output report
+    
+    .PARAMETER Quiet
+        Suppress non-essential output
+    
+    .PARAMETER ThrowOnError
+        Throw exception on error (for CI/CD)
+    
+    .EXAMPLE
+        Invoke-AitherWorkflow -Script 0402
+        # Run tests
+    
+    .EXAMPLE
+        Invoke-AitherWorkflow -Sequence "0402,0404" -ConfigFile "./config.ci.psd1" -OutputFormat JUnit -OutputPath "./results.xml"
+        # CI/CD: Run tests with custom config, output JUnit
+    
+    .EXAMPLE
+        Invoke-AitherWorkflow -Playbook "test-full" -Variables @{MaxConcurrency=8} -Quiet -ThrowOnError
+        # Non-interactive test execution with custom concurrency
+    
+    .EXAMPLE
+        azw -Playbook "deploy-prod" -ConfigFile "./config.production.psd1" -ThrowOnError
+        # Production deployment with prod config (using alias)
+    
+    .OUTPUTS
+        [PSCustomObject] Execution result if PassThru or OutputFormat is specified
+    
+    .NOTES
+        Alias: azw (AitherZero Workflow)
+        
+        Config precedence: ConfigFile > config.local.psd1 > config.psd1
+    #>
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Script')]
+    [Alias('azw')]
+    param(
+        [Parameter(Mandatory, ParameterSetName = 'Script', Position = 0)]
+        [ValidatePattern('^\d{4}$')]
+        [string]$Script,
+        
+        [Parameter(Mandatory, ParameterSetName = 'Sequence', Position = 0)]
+        [string[]]$Sequence,
+        
+        [Parameter(Mandatory, ParameterSetName = 'Playbook', Position = 0)]
+        [string]$Playbook,
+        
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [hashtable]$Variables,
+        
+        [Parameter()]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions', 'None')]
+        [string]$OutputFormat = 'None',
+        
+        [Parameter()]
+        [string]$OutputPath,
+        
+        [Parameter()]
+        [switch]$Quiet,
+        
+        [Parameter()]
+        [switch]$ThrowOnError,
+        
+        [Parameter()]
+        [switch]$PassThru
+    )
+    
+    $params = @{
+        PassThru = $PassThru
+        Quiet = $Quiet
+        ThrowOnError = $ThrowOnError
+    }
+    
+    if ($ConfigFile) {
+        $params.ConfigFile = $ConfigFile
+    }
+    
+    if ($Variables) {
+        $params.Variables = $Variables
+    }
+    
+    if ($OutputFormat -ne 'None') {
+        $params.OutputFormat = $OutputFormat
+        if ($OutputPath) {
+            $params.OutputPath = $OutputPath
+        }
+    }
+    
+    switch ($PSCmdlet.ParameterSetName) {
+        'Script' {
+            if (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue) {
+                # Invoke-AitherScript doesn't support Quiet/ThrowOnError
+                # Only pass supported parameters, but include common parameters (WhatIf, Confirm, Verbose, etc.)
+                $scriptParams = @{
+                    Number = $Script
+                    PassThru = $PassThru
+                }
+                if ($Variables) {
+                    $scriptParams.Variables = $Variables
+                }
+                
+                # Pass common parameters automatically
+                if ($PSBoundParameters.ContainsKey('WhatIf')) {
+                    $scriptParams.WhatIf = $PSBoundParameters['WhatIf']
+                }
+                if ($PSBoundParameters.ContainsKey('Confirm')) {
+                    $scriptParams.Confirm = $PSBoundParameters['Confirm']
+                }
+                if ($PSBoundParameters.ContainsKey('Verbose')) {
+                    $scriptParams.Verbose = $PSBoundParameters['Verbose']
+                }
+                
+                Invoke-AitherScript @scriptParams
+            }
+            else {
+                throw "Invoke-AitherScript not available. Ensure AitherZero module is loaded."
+            }
+        }
+        'Sequence' {
+            $params.Sequence = $Sequence
+            Invoke-OrchestrationSequence @params
+        }
+        'Playbook' {
+            $params.LoadPlaybook = $Playbook
+            Invoke-OrchestrationSequence @params
+        }
+    }
+}
+
+function Test-AitherAll {
+    <#
+    .SYNOPSIS
+        Run all tests in one command
+    
+    .DESCRIPTION
+        One-liner to execute complete test suite:
+        - Unit tests (0402)
+        - PSScriptAnalyzer (0404)
+        - Syntax validation (0407)
+    
+    .PARAMETER ConfigFile
+        Custom configuration file
+    
+    .PARAMETER OutputFormat
+        Output format (JUnit for CI/CD)
+    
+    .PARAMETER OutputPath
+        Path to save test results
+    
+    .EXAMPLE
+        Test-AitherAll
+        # Run all tests
+    
+    .EXAMPLE
+        Test-AitherAll -OutputFormat JUnit -OutputPath "./test-results.xml"
+        # CI/CD: Run all tests, output JUnit XML
+    
+    .EXAMPLE
+        aztest -ConfigFile "./config.ci.psd1" -ThrowOnError
+        # CI/CD with custom config (using alias)
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    [Alias('aztest')]
+    param(
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions', 'None')]
+        [string]$OutputFormat = 'None',
+        
+        [Parameter()]
+        [string]$OutputPath,
+        
+        [Parameter()]
+        [switch]$ThrowOnError
+    )
+    
+    $params = @{
+        Sequence = "0402,0404,0407"
+        ThrowOnError = $ThrowOnError
+        PassThru = $true
+    }
+    
+    if ($ConfigFile) {
+        $params.ConfigFile = $ConfigFile
+    }
+    
+    if ($OutputFormat -ne 'None') {
+        $params.OutputFormat = $OutputFormat
+        if ($OutputPath) {
+            $params.OutputPath = $OutputPath
+        }
+    }
+    
+    Invoke-OrchestrationSequence @params
+}
+
+function Invoke-AitherDeploy {
+    <#
+    .SYNOPSIS
+        Execute deployment workflow in one command
+    
+    .DESCRIPTION
+        One-liner for deployment automation with config file support
+    
+    .PARAMETER Environment
+        Environment to deploy to (Development, Staging, Production)
+    
+    .PARAMETER ConfigFile
+        Configuration file for the target environment
+    
+    .PARAMETER Variables
+        Additional variables to pass
+    
+    .EXAMPLE
+        Invoke-AitherDeploy -Environment Production -ConfigFile "./config.production.psd1"
+        # Deploy to production
+    
+    .EXAMPLE
+        azdeploy -Environment Staging -Variables @{SkipTests=$false}
+        # Deploy to staging with testing enabled (using alias)
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    [Alias('azdeploy')]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateSet('Development', 'Staging', 'Production')]
+        [string]$Environment,
+        
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [hashtable]$Variables = @{},
+        
+        [Parameter()]
+        [switch]$ThrowOnError
+    )
+    
+    # Add environment to variables
+    $Variables.Environment = $Environment
+    
+    $params = @{
+        LoadPlaybook = "deploy-$($Environment.ToLower())"
+        Variables = $Variables
+        ThrowOnError = $ThrowOnError
+        PassThru = $true
+    }
+    
+    if ($ConfigFile) {
+        $params.ConfigFile = $ConfigFile
+    }
+    
+    Invoke-OrchestrationSequence @params
+}
+
+function Get-AitherConfig {
+    <#
+    .SYNOPSIS
+        Get configuration with hierarchy support in one line
+    
+    .DESCRIPTION
+        Quick config access with automatic merging:
+        - config.psd1 (base)
+        - config.local.psd1 (local overrides)
+        - Custom file (if specified)
+    
+    .PARAMETER ConfigFile
+        Custom configuration file
+    
+    .PARAMETER Section
+        Configuration section to return
+    
+    .PARAMETER Key
+        Specific key to return
+    
+    .EXAMPLE
+        $config = Get-AitherConfig
+        # Get full merged configuration
+    
+    .EXAMPLE
+        $maxConcurrency = Get-AitherConfig -Section "Automation" -Key "MaxConcurrency"
+        # Get specific value
+    
+    .EXAMPLE
+        $prodConfig = Get-AitherConfig -ConfigFile "./config.production.psd1"
+        # Get production configuration
+    
+    .EXAMPLE
+        azconfig -Section Testing
+        # Get testing configuration (using alias)
+    #>
+    [CmdletBinding()]
+    [Alias('azconfig')]
+    param(
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [string]$Section,
+        
+        [Parameter()]
+        [string]$Key
+    )
+    
+    if (Get-Command Get-MergedConfiguration -ErrorAction SilentlyContinue) {
+        $params = @{}
+        if ($ConfigFile) { $params.ConfigFile = $ConfigFile }
+        if ($Section) { $params.Section = $Section }
+        if ($Key) { $params.Key = $Key }
+        
+        Get-MergedConfiguration @params
+    }
+    else {
+        Write-Warning "Get-MergedConfiguration not available. Using Get-Configuration."
+        Get-Configuration
+    }
+}
+
+#endregion
+
 # Create alias for seq
 Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
 
@@ -2448,4 +3222,10 @@ Export-ModuleMember -Function @(
     'Save-OrchestrationCache'
     'Get-OrchestrationCacheKey'
     'Export-OrchestrationSummary'
-) -Alias @('seq')
+    'Test-CIEnvironment'
+    'Export-OrchestrationResult'
+    'Invoke-AitherWorkflow'
+    'Test-AitherAll'
+    'Invoke-AitherDeploy'
+    'Get-AitherConfig'
+) -Alias @('seq', 'azw', 'aztest', 'azdeploy', 'azconfig')
