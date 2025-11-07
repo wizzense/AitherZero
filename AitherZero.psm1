@@ -59,6 +59,9 @@ $modulesToLoad = @(
     './domains/configuration/Configuration.psm1',
     './domains/configuration/ConfigManager.psm1',
 
+    # CLI Module (NEW - loads after configuration)
+    './domains/cli/CLI.psm1',
+
     # Development tools
     './domains/development/GitAutomation.psm1',
     './domains/development/IssueTracker.psm1',
