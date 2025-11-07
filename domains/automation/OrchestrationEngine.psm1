@@ -15,6 +15,11 @@ $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:ScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
 $script:OrchestrationPath = Join-Path $script:ProjectRoot 'orchestration'
 
+# Exit code constants
+$script:EXIT_SUCCESS = 0
+$script:EXIT_FAILURE = 1
+$script:EXIT_TIMEOUT = 124  # Standard timeout exit code (used by GNU timeout command)
+
 # Import logging
 $script:LoggingAvailable = $false
 try {
@@ -286,7 +291,35 @@ function Invoke-OrchestrationSequence {
 
             # Handle both direct sequences and staged playbooks
             if ($playbook.Sequence) {
-                $Sequence = $playbook.Sequence
+                # Check if Sequence contains hashtable objects (v1 playbook with script definitions)
+                # or simple strings/numbers (traditional format)
+                if ($playbook.Sequence[0] -is [hashtable]) {
+                    Write-OrchestrationLog "Playbook contains script definitions, extracting script numbers/paths"
+                    $extractedSequence = @()
+                    foreach ($scriptDef in $playbook.Sequence) {
+                        if ($scriptDef.Script) {
+                            # Extract just the script name/number
+                            $scriptName = $scriptDef.Script
+                            # If it's a full filename like "0407_Validate-Syntax.ps1", extract the number
+                            if ($scriptName -match '^(\d{4})_.*\.ps1$') {
+                                $extractedSequence += $Matches[1]
+                            } 
+                            # If it's already just a number
+                            elseif ($scriptName -match '^\d{4}$') {
+                                $extractedSequence += $scriptName
+                            }
+                            # Otherwise use as-is (might be a path or name)
+                            else {
+                                $extractedSequence += $scriptName
+                            }
+                        }
+                    }
+                    $Sequence = $extractedSequence
+                    Write-OrchestrationLog "Extracted sequence: $($Sequence -join ', ')"
+                } else {
+                    # Traditional format - already strings/numbers
+                    $Sequence = $playbook.Sequence
+                }
             }
 
             # Also check for stages (playbook can have both Sequence and Stages)
@@ -956,15 +989,15 @@ function Invoke-ParallelOrchestration {
                 break
             }
 
+            # Use script-specific variables if available, otherwise use global variables
+            $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
+
             Write-OrchestrationLog "Starting: [$($script.Number)] $($script.Name)" -Level 'Information' -Data @{
                 ScriptPath = $script.Path
                 Stage = $script.Stage
                 Dependencies = ($script.Dependencies -join ', ')
                 HasVariables = ($scriptVars.Count -gt 0)
             }
-
-            # Use script-specific variables if available, otherwise use global variables
-            $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
 
             $job = Start-ThreadJob -ScriptBlock {
                 param($ScriptPath, $Config, $Vars)
@@ -1021,6 +1054,42 @@ function Invoke-ParallelOrchestration {
 
         # Check for completed jobs
         $completedJobs = $jobs.GetEnumerator() | Where-Object { $_.Value.Job.State -eq 'Completed' }
+        
+        # Check for timed-out jobs
+        $currentTime = Get-Date
+        $timedOutJobs = $jobs.GetEnumerator() | Where-Object { 
+            $_.Value.Job.State -eq 'Running' -and 
+            $_.Value.Script.Timeout -and
+            ((New-TimeSpan -Start $_.Value.StartTime -End $currentTime).TotalSeconds -gt $_.Value.Script.Timeout)
+        }
+        
+        # Handle timed-out jobs
+        foreach ($entry in $timedOutJobs) {
+            $number = $entry.Key
+            $jobInfo = $entry.Value
+            $duration = New-TimeSpan -Start $jobInfo.StartTime -End $currentTime
+            
+            Write-OrchestrationLog "Timeout: [$number] $($jobInfo.Script.Name) exceeded timeout of $($jobInfo.Script.Timeout)s (Duration: $($duration.TotalSeconds)s)" -Level 'Error'
+            
+            # Stop the job
+            Stop-Job -Job $jobInfo.Job -PassThru | Remove-Job -Force
+            
+            $failed[$number] = @{
+                Success = $false
+                Error = "Script exceeded timeout of $($jobInfo.Script.Timeout) seconds"
+                ExitCode = $script:EXIT_TIMEOUT
+            }
+            
+            $jobs.Remove($number)
+            
+            if (-not $ContinueOnError) {
+                # Cancel remaining jobs
+                foreach ($activeJob in $jobs.Values) {
+                    Stop-Job -Job $activeJob.Job -PassThru | Remove-Job -Force
+                }
+                break
+            }
+        }
 
         foreach ($entry in $completedJobs) {
             $number = $entry.Key
@@ -1600,18 +1669,44 @@ function ConvertTo-StandardPlaybookFormat {
 function Get-OrchestrationPlaybook {
     param([string]$Name)
 
-    # First try direct path in playbooks root
-    $playbookPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
-
-    if (Test-Path $playbookPath) {
-        $playbook = Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
+    # Try both .psd1 and .json formats
+    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    
+    # First try .psd1 format (PowerShell Data File)
+    $psd1Path = Join-Path $playbooksDir "$Name.psd1"
+    if (Test-Path $psd1Path) {
+        # Use Import-ConfigDataFile if available, otherwise scriptblock evaluation
+        if (Get-Command Import-ConfigDataFile -ErrorAction SilentlyContinue) {
+            $playbook = Import-ConfigDataFile -Path $psd1Path
+        } else {
+            $content = Get-Content -Path $psd1Path -Raw
+            $scriptBlock = [scriptblock]::Create($content)
+            $playbook = & $scriptBlock
+        }
+        return ConvertTo-StandardPlaybookFormat $playbook
+    }
+    
+    # Then try .json format (legacy)
+    $jsonPath = Join-Path $playbooksDir "$Name.json"
+    if (Test-Path $jsonPath) {
+        $playbook = Get-Content $jsonPath -Raw | ConvertFrom-Json -AsHashtable
         return ConvertTo-StandardPlaybookFormat $playbook
     }
 
-    # Then search in subdirectories
-    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    # Finally search in subdirectories for both formats
+    $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.psd1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($foundPlaybook) {
+        if (Get-Command Import-ConfigDataFile -ErrorAction SilentlyContinue) {
+            $playbook = Import-ConfigDataFile -Path $foundPlaybook.FullName
+        } else {
+            $content = Get-Content -Path $foundPlaybook.FullName -Raw
+            $scriptBlock = [scriptblock]::Create($content)
+            $playbook = & $scriptBlock
+        }
+        return ConvertTo-StandardPlaybookFormat $playbook
+    }
+    
     $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-
     if ($foundPlaybook) {
         $playbook = Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
         return ConvertTo-StandardPlaybookFormat $playbook
@@ -1928,6 +2023,8 @@ Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
 Export-ModuleMember -Function @(
     'Invoke-OrchestrationSequence'
     'Invoke-Sequence'
+    'Invoke-ParallelOrchestration'
+    'Invoke-SequentialOrchestration'
     'Get-OrchestrationPlaybook'
     'Save-OrchestrationPlaybook'
     'ConvertTo-StandardPlaybookFormat'
