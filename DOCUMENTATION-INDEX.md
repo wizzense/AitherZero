@@ -1,0 +1,307 @@
+# Complete Documentation Index
+
+## Overview
+
+This index provides a comprehensive map of all AitherZero documentation, organized by audience and purpose.
+
+## For New Users
+
+**Start Here:**
+1. `README.md` - Project overview and quick start
+2. `docs/DEVELOPMENT-SETUP.md` - Environment setup
+3. `docs/UNIFIED-MENU-DESIGN.md` - Understanding the CLI/menu system
+
+## For Developers
+
+### Architecture Documentation
+- **`docs/CONFIG-DRIVEN-ARCHITECTURE.md`** - How config.psd1 drives the entire system
+- **`docs/UNIFIED-MENU-DESIGN.md`** - CLI/menu unification design philosophy
+- **`docs/EXTENSIONS.md`** - Extension system and plugin architecture
+- **`docs/ARCHITECTURE-AUTOMATED-REPORTS.md`** - Reporting system architecture
+- **`docs/COPILOT-ARCHITECTURE.md`** - Copilot integration architecture
+
+### Development Guides
+- **`docs/STYLE-GUIDE.md`** ⭐ - **Code style, naming conventions, templates**
+- **`docs/INTEGRATION-TESTING-GUIDE.md`** ⭐ - **Integration test patterns and requirements**
+- **`docs/AI-AGENT-GUIDE.md`** ⭐ - **AI agent code generation guidelines**
+- **`docs/DEVELOPMENT-SETUP.md`** - Local development environment
+- **`docs/CI-CD-GUIDE.md`** - CI/CD pipeline guide
+- **`docs/TESTING-GUIDE.md`** - Testing framework (to be created)
+
+### Configuration & Setup
+- **`docs/CONFIGURATION.md`** - Configuration system details
+- **`docs/Bootstrap-To-Infrastructure-Flow.md`** - Bootstrap process
+- **`docs/COPILOT-DEV-ENVIRONMENT.md`** - VS Code + Copilot setup
+- **`docs/COPILOT-MCP-SETUP.md`** - Model Context Protocol setup
+
+### Infrastructure & Operations
+- **`docs/DOCKER-CONTAINER-GUIDE.md`** - Container usage
+- **`docs/DOCKER-USAGE.md`** - Docker integration
+- **`.github/workflows/README.md`** - Workflow documentation
+
+## For AI Agents & Copilot
+
+### Essential Reading (in order)
+1. **`.github/copilot-instructions.md`** - Main instructions for AI agents
+2. **`docs/AI-AGENT-GUIDE.md`** ⭐ - Templates and generation patterns
+3. **`docs/STYLE-GUIDE.md`** ⭐ - Code standards and conventions
+4. **`docs/INTEGRATION-TESTING-GUIDE.md`** ⭐ - Testing requirements
+
+### Quick Reference
+- **`docs/COPILOT-QUICK-REFERENCE.md`** - Quick commands and patterns
+- **`.github/prompts/`** - Reusable one-shot prompts
+- **`.github/copilot.yaml`** - Custom agent routing config
+
+## For Maintainers
+
+### Style & Standards
+- **`docs/STYLE-GUIDE.md`** - PowerShell standards, extension templates, UI guidelines
+- **`docs/INTEGRATION-TESTING-GUIDE.md`** - Integration test requirements
+- **`CONTRIBUTING.md`** - Contribution guidelines (if exists)
+
+### Architecture & Design
+- **`docs/CONFIG-DRIVEN-ARCHITECTURE.md`** - System design principles
+- **`docs/EXTENSIONS.md`** - Extension system internals
+- **`docs/UNIFIED-MENU-DESIGN.md`** - CLI/UI design rationale
+
+### Operations
+- **`docs/CI-CD-GUIDE.md`** - CI/CD management
+- **`docs/ARCHIVE-SYSTEM.md`** - Archive management
+- **`docs/AUTOMATED-ISSUE-TRACKING.md`** - Issue automation
+
+## By Topic
+
+### Configuration System
+- `docs/CONFIG-DRIVEN-ARCHITECTURE.md` - Architecture
+- `docs/CONFIGURATION.md` - Details
+- `docs/STYLE-GUIDE.md` (Config section) - Standards
+- Script: `0413_Validate-ConfigManifest.ps1` - Validation
+
+### Extension System
+- `docs/EXTENSIONS.md` - User guide
+- `docs/STYLE-GUIDE.md` (Extension section) - Templates
+- `docs/AI-AGENT-GUIDE.md` (Extension section) - Generation
+- `domains/utilities/ExtensionManager.psm1` - Implementation
+
+### CLI/Menu System
+- `docs/UNIFIED-MENU-DESIGN.md` - Design philosophy
+- `docs/STYLE-GUIDE.md` (CLI section) - Command patterns
+- `docs/INTEGRATION-TESTING-GUIDE.md` (CLI section) - Testing
+- `domains/experience/Components/CommandParser.psm1` - Implementation
+- `domains/experience/Components/BreadcrumbNavigation.psm1` - Navigation
+
+### Testing
+- `docs/INTEGRATION-TESTING-GUIDE.md` - Integration tests
+- `docs/STYLE-GUIDE.md` (Testing section) - Test standards
+- `docs/AI-AGENT-GUIDE.md` (Testing section) - Test generation
+- Scripts: `0402` (unit), `0403` (integration), `0409` (all)
+
+### UI/UX
+- `docs/UNIFIED-MENU-DESIGN.md` - Menu design
+- `docs/STYLE-GUIDE.md` (UI section) - Rendering guidelines
+- `docs/INTEGRATION-TESTING-GUIDE.md` (UI section) - UI tests
+- `domains/experience/InteractiveUI.psm1` - Implementation
+
+## By File Type
+
+### Markdown Documentation (docs/)
+```
+docs/
+├── AI-AGENT-GUIDE.md ⭐           # AI agent code generation
+├── STYLE-GUIDE.md ⭐              # Code style standards
+├── INTEGRATION-TESTING-GUIDE.md ⭐ # Integration tests
+├── CONFIG-DRIVEN-ARCHITECTURE.md  # Config system design
+├── EXTENSIONS.md                  # Extension guide
+├── UNIFIED-MENU-DESIGN.md         # CLI/menu design
+├── CONFIGURATION.md               # Config details
+├── DEVELOPMENT-SETUP.md           # Dev environment
+├── CI-CD-GUIDE.md                 # CI/CD guide
+├── COPILOT-*.md                   # Copilot guides
+├── DOCKER-*.md                    # Docker guides
+└── archive/                       # Historical docs
+```
+
+### GitHub Configuration (.github/)
+```
+.github/
+├── copilot-instructions.md ⭐     # Main AI instructions
+├── copilot.yaml                   # Agent routing
+├── mcp-servers.json               # MCP config
+├── prompts/                       # Reusable prompts
+│   ├── github-actions-troubleshoot.md
+│   ├── use-aitherzero-workflows.md
+│   └── ...
+└── workflows/                     # CI/CD workflows
+```
+
+### Code Documentation
+```
+domains/
+├── experience/
+│   ├── README.md                  # Experience domain
+│   └── Components/
+│       ├── CommandParser.psm1     # CLI parsing
+│       └── BreadcrumbNavigation.psm1 # Navigation
+├── utilities/
+│   └── ExtensionManager.psm1      # Extension system
+└── configuration/
+    └── ConfigManager.psm1         # Config management
+
+extensions/
+└── ExampleExtension/
+    └── README.md                  # Extension example
+```
+
+## Common Workflows
+
+### Adding New Feature
+1. Read: `STYLE-GUIDE.md`
+2. Follow templates from: `AI-AGENT-GUIDE.md`
+3. Write tests per: `INTEGRATION-TESTING-GUIDE.md`
+4. Update: `config.psd1` if needed
+5. Validate: `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+6. Test: `Invoke-Pester -Path "./tests"`
+
+### Creating Extension
+1. Read: `docs/EXTENSIONS.md`
+2. Use templates from: `docs/STYLE-GUIDE.md` (Extension section)
+3. Generate with: `New-ExtensionTemplate`
+4. Test per: `docs/INTEGRATION-TESTING-GUIDE.md`
+5. Update: `config.psd1` EnabledExtensions
+6. Validate and test
+
+### Modifying Config
+1. Read: `docs/CONFIG-DRIVEN-ARCHITECTURE.md`
+2. Follow rules from: `docs/STYLE-GUIDE.md` (Config section)
+3. Make changes to: `config.psd1`
+4. Validate: `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+5. Test rendering per: `docs/INTEGRATION-TESTING-GUIDE.md`
+
+### Writing Tests
+1. Read: `docs/INTEGRATION-TESTING-GUIDE.md`
+2. Follow standards from: `docs/STYLE-GUIDE.md` (Testing section)
+3. Use templates from: `docs/AI-AGENT-GUIDE.md` (Testing section)
+4. Run: `Invoke-Pester`
+5. Verify coverage: 80%+ required
+
+## Key Principles (Quick Reference)
+
+### Architecture
+- **Config.psd1 is the single source of truth**
+- Everything is driven by manifest (modes, features, scripts)
+- Extensions use 8000-8999 script range
+- Menu IS the CLI (same commands, unified interface)
+
+### Code Style
+- Use approved PowerShell verbs (`Get-Verb`)
+- PascalCase for functions and parameters
+- Comment-based help for all public functions
+- Error handling with try/catch
+- Cross-platform compatible code
+
+### Testing
+- Minimum 80% code coverage
+- Unit tests for all functions
+- Integration tests for component interaction
+- End-to-end tests for workflows
+- Run `Invoke-Pester` before committing
+
+### Configuration
+- Validate with `0413` after all changes
+- ScriptInventory must match actual scripts
+- SupportedModes must be consistent
+- Extensions must exist if enabled
+
+### UI/CLI
+- Breadcrumbs show navigation path
+- Commands build from navigation
+- Menu and CLI use identical structure
+- UI renders from config capabilities
+
+## Quick Links
+
+**Most Important Documents:**
+1. `.github/copilot-instructions.md` - Start here (AI agents)
+2. `docs/STYLE-GUIDE.md` - Code standards
+3. `docs/AI-AGENT-GUIDE.md` - Generation templates
+4. `docs/INTEGRATION-TESTING-GUIDE.md` - Testing requirements
+5. `docs/CONFIG-DRIVEN-ARCHITECTURE.md` - System design
+
+**Quick Commands:**
+```powershell
+# Validate everything
+./automation-scripts/0413_Validate-ConfigManifest.ps1
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+./automation-scripts/0407_Validate-Syntax.ps1 -All
+Invoke-Pester -Path "./tests"
+
+# Create extension
+New-ExtensionTemplate -Name "MyExt" -Path "./extensions"
+
+# Switch config
+Show-ConfigurationSelector
+```
+
+## Documentation Status
+
+### Complete ✅
+- [x] Style Guide
+- [x] Integration Testing Guide
+- [x] AI Agent Guide
+- [x] Config-Driven Architecture
+- [x] Extensions Guide
+- [x] Unified Menu Design
+- [x] Copilot Instructions
+
+### In Progress 🚧
+- [ ] Testing Guide (general)
+- [ ] Contribution Guide
+- [ ] Troubleshooting Guide
+
+### Planned 📋
+- [ ] API Reference (generated)
+- [ ] Video Tutorials
+- [ ] Extension Marketplace Guide
+
+## Getting Help
+
+**Questions about:**
+- **Code style?** → `docs/STYLE-GUIDE.md`
+- **Integration tests?** → `docs/INTEGRATION-TESTING-GUIDE.md`
+- **AI generation?** → `docs/AI-AGENT-GUIDE.md`
+- **Config system?** → `docs/CONFIG-DRIVEN-ARCHITECTURE.md`
+- **Extensions?** → `docs/EXTENSIONS.md`
+- **CLI/Menu?** → `docs/UNIFIED-MENU-DESIGN.md`
+
+**Still stuck?**
+- Check `.github/prompts/` for troubleshooting prompts
+- Review `docs/COPILOT-QUICK-REFERENCE.md`
+- Run demo scripts: `demos/Demo-*.ps1`
+
+---
+
+## Summary
+
+AitherZero has comprehensive documentation covering:
+- ✅ **Architecture** - Config-driven design, extensions, CLI/menu unification
+- ✅ **Standards** - Code style, naming, structure, templates
+- ✅ **Testing** - Unit, integration, end-to-end test patterns
+- ✅ **AI Agents** - Code generation, templates, validation procedures
+- ✅ **Operations** - CI/CD, Docker, infrastructure
+- ✅ **Development** - Setup, workflows, troubleshooting
+
+**Version:** 1.0.0  
+**Last Updated:** 2025-11-05  
+**Total Documentation:** 20+ guides, ~200KB  
+**Maintainer:** AitherZero Team
+
+---
+
+## Document Change Log
+
+**2025-11-05:**
+- Added `STYLE-GUIDE.md` (21KB)
+- Added `INTEGRATION-TESTING-GUIDE.md` (26KB)
+- Added `AI-AGENT-GUIDE.md` (19KB)
+- Updated `copilot-instructions.md` with references
+- Created `DOCUMENTATION-INDEX.md` (this file)

@@ -15,6 +15,11 @@ $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:ScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
 $script:OrchestrationPath = Join-Path $script:ProjectRoot 'orchestration'
 
+# Exit code constants
+$script:EXIT_SUCCESS = 0
+$script:EXIT_FAILURE = 1
+$script:EXIT_TIMEOUT = 124  # Standard timeout exit code (used by GNU timeout command)
+
 # Import logging
 $script:LoggingAvailable = $false
 try {
@@ -75,6 +80,7 @@ function Invoke-OrchestrationSequence {
     .DESCRIPTION
     A high-level orchestration language using numbers to execute complex workflows.
     Supports ranges, wildcards, exclusions, and conditional execution.
+    Enhanced with GitHub Actions-like features: matrix builds, caching, and job outputs.
 
     .PARAMETER Sequence
     Number sequence(s) to execute. Supports multiple formats:
@@ -113,6 +119,15 @@ function Invoke-OrchestrationSequence {
     .PARAMETER LoadPlaybook
     Load and execute a saved playbook
 
+    .PARAMETER Matrix
+    Matrix build parameters for parallel execution with different configurations
+    
+    .PARAMETER UseCache
+    Enable caching of execution results and artifacts
+
+    .PARAMETER GenerateSummary
+    Generate markdown execution summary report
+
     .EXAMPLE
     # Run environment setup
     Invoke-OrchestrationSequence -Sequence "0000-0099"
@@ -144,6 +159,17 @@ function Invoke-OrchestrationSequence {
     .EXAMPLE
     # Execute saved playbook
     Invoke-OrchestrationSequence -LoadPlaybook "dev-setup"
+    
+    .EXAMPLE
+    # Matrix build - run tests with different configurations
+    Invoke-OrchestrationSequence -Sequence "0402" -Matrix @{
+        profile = @('quick', 'comprehensive')
+        platform = @('Windows', 'Linux')
+    }
+    
+    .EXAMPLE
+    # With caching enabled
+    Invoke-OrchestrationSequence -LoadPlaybook "test-full" -UseCache -GenerateSummary
     #>
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Sequence')]
     param(
@@ -185,7 +211,16 @@ function Invoke-OrchestrationSequence {
         [switch]$Interactive,
 
         [Parameter()]
-        [hashtable]$Conditions = @{}
+        [hashtable]$Conditions = @{},
+
+        [Parameter()]
+        [hashtable]$Matrix,
+
+        [Parameter()]
+        [switch]$UseCache,
+
+        [Parameter()]
+        [switch]$GenerateSummary
     )
 
     begin {
@@ -217,6 +252,46 @@ function Invoke-OrchestrationSequence {
 
         # Load playbook if specified
         if ($LoadPlaybook) {
+            # Validate playbook is enabled in configuration
+            if ($config.Automation.Playbooks -and $config.Automation.Playbooks.ContainsKey($LoadPlaybook)) {
+                $playbookConfig = $config.Automation.Playbooks[$LoadPlaybook]
+                
+                # Check if playbook is enabled
+                if ($playbookConfig.Enabled -eq $false) {
+                    throw "Playbook '$LoadPlaybook' is disabled in configuration. Enable it in config.psd1 Automation.Playbooks section."
+                }
+                
+                # Check environment restrictions
+                $currentEnv = if ($env:AITHERZERO_ENVIRONMENT) { 
+                    $env:AITHERZERO_ENVIRONMENT 
+                } elseif ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true') {
+                    'CI'
+                } else {
+                    'Dev'
+                }
+                
+                if ($playbookConfig.AllowedEnvironments -and $playbookConfig.AllowedEnvironments.Count -gt 0) {
+                    if ($currentEnv -notin $playbookConfig.AllowedEnvironments) {
+                        throw "Playbook '$LoadPlaybook' is not allowed in '$currentEnv' environment. Allowed: $($playbookConfig.AllowedEnvironments -join ', ')"
+                    }
+                }
+                
+                # Check if approval required
+                if ($playbookConfig.RequiresApproval -and -not $Interactive) {
+                    Write-OrchestrationLog "Playbook '$LoadPlaybook' requires approval" -Level 'Warning'
+                    if (-not $config.Automation.SkipConfirmation) {
+                        $response = Read-Host "Execute playbook '$LoadPlaybook'? (yes/no)"
+                        if ($response -ne 'yes') {
+                            throw "Playbook execution cancelled by user"
+                        }
+                    }
+                }
+                
+                Write-OrchestrationLog "Playbook '$LoadPlaybook' validated: $($playbookConfig.Description)" -Level 'Information'
+            } else {
+                Write-OrchestrationLog "Playbook '$LoadPlaybook' not found in configuration registry - proceeding without validation" -Level 'Warning'
+            }
+            
             $playbook = Get-OrchestrationPlaybook -Name $LoadPlaybook
             if (-not $playbook) {
                 throw "Playbook not found: $LoadPlaybook"
@@ -256,7 +331,74 @@ function Invoke-OrchestrationSequence {
 
             # Handle both direct sequences and staged playbooks
             if ($playbook.Sequence) {
-                $Sequence = $playbook.Sequence
+                # Check if Sequence contains hashtable objects (v1 playbook with script definitions)
+                # or simple strings/numbers (traditional format)
+                if ($playbook.Sequence[0] -is [hashtable]) {
+                    Write-OrchestrationLog "Playbook contains script definitions, normalizing and extracting script numbers/paths"
+                    $extractedSequence = @()
+                    
+                    # Store normalized script definitions for later use
+                    $script:PlaybookScriptDefinitions = @{}
+                    $validationIssues = @()
+                    
+                    foreach ($scriptDef in $playbook.Sequence) {
+                        # Normalize the script definition (pass Configuration for defaults)
+                        $normalized = ConvertTo-NormalizedScriptDefinition -Definition $scriptDef -ScriptNumber 'Unknown' -Configuration $Configuration
+                        
+                        if (-not $normalized.Valid) {
+                            $validationIssues += "Skipping invalid script definition: $($normalized.ValidationIssues -join '; ')"
+                            Write-OrchestrationLog "Skipping invalid script definition: $($normalized.ValidationIssues -join '; ')" -Level 'Warning'
+                            continue
+                        }
+                        
+                        if ($normalized.ValidationIssues.Count -gt 0) {
+                            Write-OrchestrationLog "Script definition issues: $($normalized.ValidationIssues -join '; ')" -Level 'Warning'
+                        }
+                        
+                        if ($normalized.Script) {
+                            # Extract just the script name/number
+                            $scriptName = $normalized.Script
+                            $scriptNumber = $null
+                            
+                            # If it's a full filename like "0407_Validate-Syntax.ps1", extract the number
+                            if ($scriptName -match '^(\d{4})_.*\.ps1$') {
+                                $scriptNumber = $Matches[1]
+                            } 
+                            # If it's already just a number
+                            elseif ($scriptName -match '^\d{4}$') {
+                                $scriptNumber = $scriptName
+                            }
+                            # Otherwise use as-is (might be a path or name)
+                            else {
+                                $scriptNumber = $scriptName
+                            }
+                            
+                            if ($scriptNumber) {
+                                $extractedSequence += $scriptNumber
+                                
+                                # Store the normalized script definition keyed by script number
+                                $script:PlaybookScriptDefinitions[$scriptNumber] = @{
+                                    Script = $normalized.Script
+                                    Parameters = $normalized.Parameters
+                                    Timeout = $normalized.Timeout
+                                    ContinueOnError = $normalized.ContinueOnError
+                                    Description = $normalized.Description
+                                }
+                            }
+                        }
+                    }
+                    
+                    if ($validationIssues.Count -gt 0) {
+                        Write-OrchestrationLog "Playbook validation found $($validationIssues.Count) issue(s)" -Level 'Warning'
+                    }
+                    
+                    $Sequence = $extractedSequence
+                    Write-OrchestrationLog "Extracted sequence: $($Sequence -join ', ')"
+                } else {
+                    # Traditional format - already strings/numbers
+                    $Sequence = $playbook.Sequence
+                    $script:PlaybookScriptDefinitions = $null
+                }
             }
 
             # Also check for stages (playbook can have both Sequence and Stages)
@@ -325,6 +467,24 @@ function Invoke-OrchestrationSequence {
                 $Parallel = $false
             }
         }
+
+        # Initialize caching system if enabled
+        if ($UseCache) {
+            $script:CacheManager = Initialize-OrchestrationCache -Configuration $config
+            Write-OrchestrationLog "Caching enabled - cache directory: $($script:CacheManager.CacheDir)" -Level 'Information'
+        }
+
+        # Initialize execution summary tracking if requested
+        if ($GenerateSummary) {
+            $script:ExecutionSummary = @{
+                StartTime = Get-Date
+                Playbook = $LoadPlaybook
+                Variables = $Variables
+                Stages = @()
+                Outputs = @{}
+            }
+            Write-OrchestrationLog "Execution summary generation enabled" -Level 'Information'
+        }
     }
 
     process {
@@ -339,7 +499,14 @@ function Invoke-OrchestrationSequence {
         Write-OrchestrationLog "Resolved to $($scriptNumbers.Count) scripts: $($scriptNumbers -join ', ')"
 
         # Get script metadata
-        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions
+        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions -Configuration $Configuration -PlaybookName $LoadPlaybook
+
+        # Matrix build handling - expand scripts for each matrix combination
+        if ($Matrix) {
+            Write-OrchestrationLog "Matrix build enabled with $($Matrix.Keys.Count) dimensions" -Level 'Information'
+            $scripts = Expand-MatrixBuilds -Scripts $scripts -Matrix $Matrix -Variables $Variables
+            Write-OrchestrationLog "Expanded to $($scripts.Count) matrix job(s)" -Level 'Information'
+        }
 
         # Save playbook if requested
         if ($SavePlaybook) {
@@ -350,7 +517,11 @@ function Invoke-OrchestrationSequence {
         # Dry run mode
         if ($DryRun) {
             Write-OrchestrationLog "DRY RUN MODE - No scripts will be executed"
-            Show-OrchestrationPlan -Scripts $scripts
+            if ($Matrix) {
+                Show-MatrixOrchestrationPlan -Scripts $scripts -Matrix $Matrix
+            } else {
+                Show-OrchestrationPlan -Scripts $scripts
+            }
             return
         }
 
@@ -420,6 +591,24 @@ function Invoke-OrchestrationSequence {
                     duration = if ($result.Duration) { $result.Duration.ToString() } else { 'Unknown' }
                     completed = if ($result.Completed) { $result.Completed } else { $scripts.Count }
                 }
+            }
+
+            # Generate execution summary if requested
+            if ($GenerateSummary) {
+                $script:ExecutionSummary.EndTime = Get-Date
+                $script:ExecutionSummary.Duration = $result.Duration
+                $script:ExecutionSummary.Result = $result
+                $summaryPath = Export-OrchestrationSummary -Summary $script:ExecutionSummary -Configuration $config
+                Write-OrchestrationLog "Execution summary saved to: $summaryPath" -Level 'Information'
+                
+                # Add summary path to result
+                $result | Add-Member -NotePropertyName 'SummaryPath' -NotePropertyValue $summaryPath -Force
+            }
+
+            # Save to cache if enabled
+            if ($UseCache) {
+                Save-OrchestrationCache -CacheManager $script:CacheManager -Result $result -Scripts $scripts -Variables $Variables
+                Write-OrchestrationLog "Execution result cached" -Level 'Information'
             }
 
             # Return execution result
@@ -527,6 +716,225 @@ function ConvertTo-ScriptNumbers {
     return $numbers
 }
 
+function ConvertTo-NormalizedScriptDefinition {
+    <#
+    .SYNOPSIS
+    Normalizes a script definition to a standard format with validation
+    
+    .DESCRIPTION
+    Handles different playbook formats and property name variations.
+    Validates types and provides safe defaults for missing properties.
+    Uses configuration file for fallback defaults.
+    
+    .PARAMETER Definition
+    The script definition (can be string, number, or hashtable)
+    
+    .PARAMETER ScriptNumber
+    The extracted script number (for context in error messages)
+    
+    .PARAMETER Configuration
+    Configuration hashtable with system defaults
+    #>
+    param(
+        [Parameter(Mandatory)]
+        $Definition,
+        
+        [string]$ScriptNumber,
+        
+        [hashtable]$Configuration
+    )
+    
+    # Get system defaults from configuration
+    $defaultTimeout = if ($Configuration -and $Configuration.Automation.DefaultTimeout) {
+        $Configuration.Automation.DefaultTimeout
+    } else {
+        3600  # 1 hour fallback
+    }
+    
+    $defaultContinueOnError = if ($Configuration -and $null -ne $Configuration.Automation.ContinueOnError) {
+        $Configuration.Automation.ContinueOnError
+    } else {
+        $false
+    }
+    
+    # Maximum allowed timeout (from config or hardcoded)
+    $maxTimeout = if ($Configuration -and $Configuration.Automation.MaxTimeout) {
+        $Configuration.Automation.MaxTimeout
+    } else {
+        7200  # 2 hours
+    }
+    
+    $normalized = @{
+        Script = $null
+        ScriptNumber = $ScriptNumber
+        Parameters = @{}
+        Timeout = $null  # null means use default or no timeout
+        ContinueOnError = $defaultContinueOnError
+        Description = ''
+        Valid = $true
+        ValidationIssues = @()
+    }
+    
+    # Handle different definition formats
+    if ($Definition -is [hashtable]) {
+        # Extract Script property (case-insensitive)
+        $scriptProp = $Definition['Script'] ?? $Definition['script'] ?? $Definition['ScriptPath'] ?? $Definition['scriptPath']
+        if (-not $scriptProp) {
+            $normalized.Valid = $false
+            $normalized.ValidationIssues += "Script definition missing 'Script' property"
+            return $normalized
+        }
+        $normalized.Script = $scriptProp
+        
+        # Extract Parameters (case-insensitive, type-safe)
+        $paramsProp = $Definition['Parameters'] ?? $Definition['parameters'] ?? $Definition['Params'] ?? $Definition['params']
+        if ($paramsProp) {
+            if ($paramsProp -is [hashtable]) {
+                $normalized.Parameters = $paramsProp
+            } elseif ($paramsProp -is [System.Collections.IDictionary]) {
+                # Convert IDictionary to hashtable
+                $normalized.Parameters = @{}
+                foreach ($key in $paramsProp.Keys) {
+                    $normalized.Parameters[$key] = $paramsProp[$key]
+                }
+            } else {
+                $normalized.ValidationIssues += "Parameters must be a hashtable, got $($paramsProp.GetType().Name)"
+                $normalized.Parameters = @{}
+            }
+        }
+        
+        # Extract Timeout (case-insensitive, type-safe)
+        $timeoutProp = $Definition['Timeout'] ?? $Definition['timeout'] ?? $Definition['TimeoutSeconds'] ?? $Definition['timeoutSeconds']
+        if ($null -ne $timeoutProp) {
+            try {
+                $timeoutValue = [int]$timeoutProp
+                if ($timeoutValue -le 0) {
+                    $normalized.ValidationIssues += "Timeout must be positive, got $timeoutValue (using default: ${defaultTimeout}s)"
+                    $normalized.Timeout = $defaultTimeout
+                } elseif ($timeoutValue -gt $maxTimeout) {
+                    $normalized.ValidationIssues += "Timeout exceeds maximum (${maxTimeout}s), got $timeoutValue (capping at ${maxTimeout}s)"
+                    $normalized.Timeout = $maxTimeout
+                } else {
+                    $normalized.Timeout = $timeoutValue
+                }
+            } catch {
+                $normalized.ValidationIssues += "Timeout must be an integer, got '$timeoutProp' (using default: ${defaultTimeout}s)"
+                $normalized.Timeout = $defaultTimeout
+            }
+        }
+        
+        # Extract ContinueOnError (case-insensitive, type-safe)
+        $continueProp = $Definition['ContinueOnError'] ?? $Definition['continueOnError'] ?? $Definition['continue_on_error']
+        if ($null -ne $continueProp) {
+            if ($continueProp -is [bool]) {
+                $normalized.ContinueOnError = $continueProp
+            } elseif ($continueProp -is [string]) {
+                $normalized.ContinueOnError = $continueProp -in @('true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES')
+            } elseif ($continueProp -is [int]) {
+                $normalized.ContinueOnError = $continueProp -ne 0
+            } else {
+                $normalized.ValidationIssues += "ContinueOnError must be boolean, got $($continueProp.GetType().Name) (using default: $defaultContinueOnError)"
+                $normalized.ContinueOnError = $defaultContinueOnError
+            }
+        }
+        
+        # Extract Description (case-insensitive)
+        $descProp = $Definition['Description'] ?? $Definition['description']
+        if ($descProp) {
+            $normalized.Description = $descProp.ToString()
+        }
+        
+    } elseif ($Definition -is [string] -or $Definition -is [int]) {
+        # Simple format - just script number/name
+        $normalized.Script = $Definition.ToString()
+    } else {
+        $normalized.Valid = $false
+        $normalized.ValidationIssues += "Invalid definition type: $($Definition.GetType().Name)"
+    }
+    
+    return $normalized
+}
+
+function Get-ScriptRangeDefaults {
+    <#
+    .SYNOPSIS
+    Gets default settings for a script based on its number range
+    
+    .DESCRIPTION
+    Looks up defaults from configuration based on script number.
+    Falls back to global defaults if range not found.
+    
+    .PARAMETER ScriptNumber
+    The script number (e.g., '0407')
+    
+    .PARAMETER Configuration
+    Configuration hashtable with script range defaults
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$ScriptNumber,
+        
+        [hashtable]$Configuration
+    )
+    
+    $defaults = @{
+        Timeout = $null
+        ContinueOnError = $false
+        RequiresElevation = $false
+        Stage = 'Default'
+        AllowParallel = $true
+    }
+    
+    if (-not $Configuration -or -not $Configuration.Automation) {
+        return $defaults
+    }
+    
+    # Get global automation defaults
+    if ($Configuration.Automation.DefaultTimeout) {
+        $defaults.Timeout = $Configuration.Automation.DefaultTimeout
+    }
+    if ($null -ne $Configuration.Automation.ContinueOnError) {
+        $defaults.ContinueOnError = $Configuration.Automation.ContinueOnError
+    }
+    
+    # Find matching range
+    if ($Configuration.Automation.ScriptRangeDefaults) {
+        $number = [int]$ScriptNumber
+        
+        foreach ($range in $Configuration.Automation.ScriptRangeDefaults.Keys) {
+            if ($range -match '^(\d{4})-(\d{4})$') {
+                $start = [int]$Matches[1]
+                $end = [int]$Matches[2]
+                
+                if ($number -ge $start -and $number -le $end) {
+                    $rangeDefaults = $Configuration.Automation.ScriptRangeDefaults[$range]
+                    
+                    # Override with range-specific defaults
+                    if ($rangeDefaults.DefaultTimeout) {
+                        $defaults.Timeout = $rangeDefaults.DefaultTimeout
+                    }
+                    if ($null -ne $rangeDefaults.ContinueOnError) {
+                        $defaults.ContinueOnError = $rangeDefaults.ContinueOnError
+                    }
+                    if ($null -ne $rangeDefaults.RequiresElevation) {
+                        $defaults.RequiresElevation = $rangeDefaults.RequiresElevation
+                    }
+                    if ($rangeDefaults.Stage) {
+                        $defaults.Stage = $rangeDefaults.Stage
+                    }
+                    if ($null -ne $rangeDefaults.AllowParallel) {
+                        $defaults.AllowParallel = $rangeDefaults.AllowParallel
+                    }
+                    
+                    break
+                }
+            }
+        }
+    }
+    
+    return $defaults
+}
+
 function Expand-PlaybookVariables {
     param(
         [string]$Value,
@@ -558,10 +966,18 @@ function Get-OrchestrationScripts {
     param(
         [string[]]$Numbers,
         [hashtable]$Variables,
-        [hashtable]$Conditions
+        [hashtable]$Conditions,
+        [hashtable]$Configuration,
+        [string]$PlaybookName  # Add playbook name for config lookup
     )
 
     $scripts = @()
+    
+    # Get playbook-specific defaults from config if available
+    $playbookDefaults = $null
+    if ($PlaybookName -and $Configuration.Automation.Playbooks -and $Configuration.Automation.Playbooks.ContainsKey($PlaybookName)) {
+        $playbookDefaults = $Configuration.Automation.Playbooks[$PlaybookName].ScriptDefaults
+    }
 
     foreach ($number in $Numbers) {
         $scriptFile = Get-ChildItem -Path $script:ScriptsPath -Filter "${number}_*.ps1" -File | Select-Object -First 1
@@ -571,8 +987,37 @@ function Get-OrchestrationScripts {
             continue
         }
 
+        # Get configuration defaults for this script range
+        $configDefaults = Get-ScriptRangeDefaults -ScriptNumber $number -Configuration $Configuration
+        
+        # Apply playbook-specific defaults if available (overrides range defaults)
+        if ($playbookDefaults) {
+            # Check for script-specific override
+            if ($playbookDefaults.ContainsKey($number)) {
+                $scriptOverride = $playbookDefaults[$number]
+                if ($scriptOverride.Timeout) {
+                    $configDefaults.Timeout = $scriptOverride.Timeout
+                }
+                if ($null -ne $scriptOverride.ContinueOnError) {
+                    $configDefaults.ContinueOnError = $scriptOverride.ContinueOnError
+                }
+            }
+            # Check for playbook-wide defaults
+            if ($playbookDefaults.DefaultTimeout) {
+                $configDefaults.Timeout = $playbookDefaults.DefaultTimeout
+            }
+            if ($null -ne $playbookDefaults.ContinueOnError) {
+                $configDefaults.ContinueOnError = $playbookDefaults.ContinueOnError
+            }
+        }
+
         # Parse script metadata
         $metadata = Get-ScriptMetadata -Path $scriptFile.FullName
+        
+        # Merge metadata with config defaults (metadata takes precedence)
+        if (-not $metadata.Stage -or $metadata.Stage -eq 'Default') {
+            $metadata.Stage = $configDefaults.Stage
+        }
 
         # Check if this script has stage-specific variables
         # Use stage-specific variables if defined, otherwise use global variables
@@ -615,18 +1060,77 @@ function Get-OrchestrationScripts {
             }
         }
 
-        $scripts += [PSCustomObject]@{
+        # Check if this script has playbook-defined properties (Parameters, Timeout, ContinueOnError)
+        # Priority: Playbook > Script metadata > Config defaults > Hardcoded defaults
+        $playbookDefinition = $null
+        if ($script:PlaybookScriptDefinitions -and $script:PlaybookScriptDefinitions.ContainsKey($number)) {
+            $playbookDefinition = $script:PlaybookScriptDefinitions[$number]
+            Write-OrchestrationLog "Applying playbook definition for script $number" -Level 'Debug'
+            
+            # Validate parameters against script signature
+            if ($playbookDefinition.Parameters -and $playbookDefinition.Parameters.Count -gt 0) {
+                $scriptInfo = Get-Command $scriptFile.FullName -ErrorAction SilentlyContinue
+                if ($scriptInfo) {
+                    $invalidParams = @()
+                    foreach ($paramName in $playbookDefinition.Parameters.Keys) {
+                        if (-not $scriptInfo.Parameters.ContainsKey($paramName)) {
+                            $invalidParams += $paramName
+                        }
+                    }
+                    
+                    if ($invalidParams.Count -gt 0) {
+                        Write-OrchestrationLog "Warning: Script $number has invalid playbook parameters: $($invalidParams -join ', ')" -Level 'Warning'
+                        # Remove invalid parameters
+                        foreach ($invalidParam in $invalidParams) {
+                            $playbookDefinition.Parameters.Remove($invalidParam)
+                        }
+                    }
+                }
+            }
+        }
+
+        # Build script object with metadata and playbook-defined properties
+        # Priority order: Playbook > Config Defaults > Hardcoded Defaults
+        $scriptObj = [PSCustomObject]@{
             Number = $number
             Name = $scriptFile.Name
             Path = $scriptFile.FullName
             Stage = $metadata.Stage
             Dependencies = $metadata.Dependencies
-            Description = $metadata.Description
+            Description = if ($playbookDefinition -and $playbookDefinition.Description) { 
+                $playbookDefinition.Description 
+            } else { 
+                $metadata.Description 
+            }
             Condition = $metadata.Condition
             Tags = $metadata.Tags
             Priority = [int]$number
             Variables = $stageVariables  # Include stage-specific variables
+            
+            # Playbook-defined properties (validated and normalized)
+            # Priority: Playbook > Config Range Defaults > Hardcoded
+            Parameters = if ($playbookDefinition -and $playbookDefinition.Parameters) { 
+                $playbookDefinition.Parameters 
+            } else { 
+                @{} 
+            }
+            Timeout = if ($playbookDefinition -and $playbookDefinition.Timeout) { 
+                $playbookDefinition.Timeout  # Playbook wins
+            } elseif ($configDefaults.Timeout) {
+                $configDefaults.Timeout  # Config default second
+            } else { 
+                $null  # No timeout
+            }
+            ContinueOnError = if ($playbookDefinition -and $null -ne $playbookDefinition.ContinueOnError) { 
+                [bool]$playbookDefinition.ContinueOnError  # Playbook wins
+            } else { 
+                [bool]$configDefaults.ContinueOnError  # Config default second
+            }
+            RequiresElevation = $configDefaults.RequiresElevation
+            AllowParallel = $configDefaults.AllowParallel
         }
+        
+        $scripts += $scriptObj
     }
 
     return $scripts
@@ -879,15 +1383,24 @@ function Invoke-ParallelOrchestration {
                 break
             }
 
+            # Use script-specific variables if available, otherwise use global variables
+            $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
+            
+            # Merge playbook-defined parameters (takes precedence over variables)
+            $mergedParams = $scriptVars.Clone()
+            if ($script.Parameters -and $script.Parameters.Count -gt 0) {
+                foreach ($key in $script.Parameters.Keys) {
+                    $mergedParams[$key] = $script.Parameters[$key]
+                }
+            }
+
             Write-OrchestrationLog "Starting: [$($script.Number)] $($script.Name)" -Level 'Information' -Data @{
                 ScriptPath = $script.Path
                 Stage = $script.Stage
                 Dependencies = ($script.Dependencies -join ', ')
-                HasVariables = ($scriptVars.Count -gt 0)
+                HasVariables = ($mergedParams.Count -gt 0)
+                HasPlaybookParams = ($script.Parameters -and $script.Parameters.Count -gt 0)
             }
-
-            # Use script-specific variables if available, otherwise use global variables
-            $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
 
             $job = Start-ThreadJob -ScriptBlock {
                 param($ScriptPath, $Config, $Vars)
@@ -933,7 +1446,7 @@ function Invoke-ParallelOrchestration {
                 } catch {
                     return @{ Success = $false; Error = $_.ToString(); ExitCode = 1 }
                 }
-            } -ArgumentList $script.Path, $Configuration, $scriptVars
+            } -ArgumentList $script.Path, $Configuration, $mergedParams
 
             $jobs[$script.Number] = @{
                 Job = $job
@@ -944,6 +1457,42 @@ function Invoke-ParallelOrchestration {
 
         # Check for completed jobs
         $completedJobs = $jobs.GetEnumerator() | Where-Object { $_.Value.Job.State -eq 'Completed' }
+        
+        # Check for timed-out jobs
+        $currentTime = Get-Date
+        $timedOutJobs = $jobs.GetEnumerator() | Where-Object { 
+            $_.Value.Job.State -eq 'Running' -and 
+            $_.Value.Script.Timeout -and
+            ((New-TimeSpan -Start $_.Value.StartTime -End $currentTime).TotalSeconds -gt $_.Value.Script.Timeout)
+        }
+        
+        # Handle timed-out jobs
+        foreach ($entry in $timedOutJobs) {
+            $number = $entry.Key
+            $jobInfo = $entry.Value
+            $duration = New-TimeSpan -Start $jobInfo.StartTime -End $currentTime
+            
+            Write-OrchestrationLog "Timeout: [$number] $($jobInfo.Script.Name) exceeded timeout of $($jobInfo.Script.Timeout)s (Duration: $($duration.TotalSeconds)s)" -Level 'Error'
+            
+            # Stop the job
+            Stop-Job -Job $jobInfo.Job -PassThru | Remove-Job -Force
+            
+            $failed[$number] = @{
+                Success = $false
+                Error = "Script exceeded timeout of $($jobInfo.Script.Timeout) seconds"
+                ExitCode = $script:EXIT_TIMEOUT
+            }
+            
+            $jobs.Remove($number)
+            
+            if (-not $ContinueOnError) {
+                # Cancel remaining jobs
+                foreach ($activeJob in $jobs.Values) {
+                    Stop-Job -Job $activeJob.Job -PassThru | Remove-Job -Force
+                }
+                break
+            }
+        }
 
         foreach ($entry in $completedJobs) {
             $number = $entry.Key
@@ -1019,10 +1568,14 @@ function Invoke-SequentialOrchestration {
         $scriptStart = Get-Date  # Initialize before the try block to avoid null reference
 
         # Execute at least once, then retry up to maxRetries times
-        while ($retryCount -eq 0 -or ($retryCount -le $maxRetries -and -not $succeeded)) {
+        while ($retryCount -le $maxRetries -and -not $succeeded) {
             try {
-                if ($retryCount -gt 0) {
-                    Write-OrchestrationLog "Retry attempt $retryCount/$maxRetries for [$($script.Number)] $($script.Name)"
+                # Increment attempt counter at the start of each iteration
+                $retryCount++
+                
+                # Log retry attempts (after incrementing, so retryCount now represents current attempt number)
+                if ($retryCount -gt 1) {
+                    Write-OrchestrationLog "Retry attempt $($retryCount - 1)/$maxRetries for [$($script.Number)] $($script.Name) (Attempt $retryCount of $($maxRetries + 1))"
                     Start-Sleep -Seconds $retryDelay
                 }
 
@@ -1035,7 +1588,7 @@ function Invoke-SequentialOrchestration {
                         ScriptNumber = $script.Number
                         Configuration = $Configuration
                         DryRun = $DryRun
-                        RetryAttempt = $retryCount
+                        RetryAttempt = $retryCount - 1  # Adjust for pre-increment
                     }
                 }
 
@@ -1053,6 +1606,14 @@ function Invoke-SequentialOrchestration {
 
                 # Debug logging
                 Write-OrchestrationLog "Script: $($script.Number) - Variables available: $($scriptVars.Keys -join ', ')" -Level 'Debug'
+                
+                # Add playbook-defined parameters first (if available)
+                if ($script.Parameters -and $script.Parameters.Count -gt 0) {
+                    Write-OrchestrationLog "Script: $($script.Number) - Applying playbook parameters: $($script.Parameters.Keys -join ', ')" -Level 'Debug'
+                    foreach ($key in $script.Parameters.Keys) {
+                        $params[$key] = $script.Parameters[$key]
+                    }
+                }
 
                 if ($scriptInfo) {
                     # Only add Configuration if the script accepts it
@@ -1060,9 +1621,9 @@ function Invoke-SequentialOrchestration {
                         if ($Configuration) { $params['Configuration'] = $Configuration }
                     }
 
-                    # Only add variables that match script parameters
+                    # Only add variables that match script parameters (don't override playbook parameters)
                     foreach ($key in $scriptVars.Keys) {
-                        if ($scriptInfo.Parameters.ContainsKey($key)) {
+                        if ($scriptInfo.Parameters.ContainsKey($key) -and -not $params.ContainsKey($key)) {
                             # Skip null or empty values
                             if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
                                 $params[$key] = $scriptVars[$key]
@@ -1103,7 +1664,7 @@ function Invoke-SequentialOrchestration {
                         ScriptNumber = $script.Number
                         Duration = $duration.TotalSeconds
                         ExitCode = $LASTEXITCODE
-                        RetryAttempt = $retryCount
+                        RetryAttempt = $retryCount - 1  # Adjust for pre-increment
                     }
                 }
 
@@ -1111,13 +1672,16 @@ function Invoke-SequentialOrchestration {
                     Success = $true
                     ExitCode = 0
                     Duration = $duration
-                    RetryCount = $retryCount
+                    RetryCount = $retryCount - 1  # Adjust for pre-increment
                 }
 
             } catch {
-                $retryCount++
+                # With pre-increment, $retryCount represents attempts made so far
+                # maxRetries = 0 means 1 attempt total (no retries)
+                # maxRetries = 1 means 2 attempts total (1 original + 1 retry)
+                # So: $retryCount > $maxRetries means we've exhausted all allowed attempts
                 if ($retryCount -gt $maxRetries) {
-                    Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $maxRetries retries)" -Level 'Error'
+                    Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $($maxRetries) retries)" -Level 'Error'
 
                     # Write audit log for failure
                     if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
@@ -1214,14 +1778,20 @@ function Get-OrchestrationConfiguration {
         # Load default configuration
         $configPath = Join-Path $script:ProjectRoot 'config.psd1'
         if (Test-Path $configPath) {
-            $Configuration = Import-PowerShellDataFile $configPath
+            # Use scriptblock evaluation to handle PowerShell expressions in config
+            $configContent = Get-Content -Path $configPath -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $Configuration = & $scriptBlock
         } else {
             $Configuration = @{}
         }
     } elseif ($Configuration -is [string]) {
         # Load from file path
         if (Test-Path $Configuration) {
-            $Configuration = Import-PowerShellDataFile $Configuration
+            # Use scriptblock evaluation to handle PowerShell expressions in config
+            $configContent = Get-Content -Path $Configuration -Raw
+            $scriptBlock = [scriptblock]::Create($configContent)
+            $Configuration = & $scriptBlock
         } else {
             throw "Configuration file not found: $Configuration"
         }
@@ -1343,16 +1913,94 @@ function ConvertTo-StandardPlaybookFormat {
     .SYNOPSIS
     Converts playbooks from different versions to a standardized format
     .DESCRIPTION
-    Handles both legacy v1 playbooks and new v2.0 schema playbooks,
+    Handles v1 (legacy), v2.0 (stages-based), and v3.0 (jobs-based) playbooks,
     converting them to a consistent internal format for execution.
+    
+    Ensures full backward compatibility with existing JSON playbooks.
     #>
     param(
         [hashtable]$Playbook
     )
 
-    # Check if this is a v2.0 playbook (has metadata and orchestration sections)
-    if ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
-        Write-OrchestrationLog "Loading v2.0 playbook: $($Playbook.metadata.name)" -Level 'Information'
+    # Check if this is a v3.0 playbook (has jobs instead of stages)
+    if ($Playbook.ContainsKey('metadata') -and 
+        $Playbook.ContainsKey('orchestration') -and 
+        $Playbook.orchestration.ContainsKey('jobs')) {
+        
+        Write-OrchestrationLog "Loading v3.0 jobs-based playbook: $($Playbook.metadata.name)" -Level 'Information'
+        
+        # Convert v3.0 jobs to v2.0 stages format for backward compatibility
+        $standardPlaybook = @{
+            # Metadata
+            Name = $Playbook.metadata.name
+            Description = $Playbook.metadata.description
+            Version = $Playbook.metadata.version
+            Category = $Playbook.metadata.category
+            Author = $Playbook.metadata.author
+            Tags = $Playbook.metadata.tags
+            EstimatedDuration = $Playbook.metadata.estimatedDuration
+            
+            # Requirements
+            Requirements = $Playbook.requirements
+            
+            # Variables and profiles
+            Variables = if ($Playbook.orchestration.defaultVariables) { 
+                $Playbook.orchestration.defaultVariables 
+            } else { @{} }
+            Profiles = if ($Playbook.orchestration.profiles) { 
+                $Playbook.orchestration.profiles 
+            } else { @{} }
+            
+            # Convert jobs to stages
+            Stages = @()
+            
+            # Store original jobs for advanced execution
+            Jobs = $Playbook.orchestration.jobs
+            
+            # Validation and notifications
+            Validation = $Playbook.validation
+            Notifications = $Playbook.notifications
+            Reporting = $Playbook.reporting
+        }
+        
+        # Convert jobs to stages format for compatibility
+        foreach ($jobKey in $Playbook.orchestration.jobs.Keys) {
+            $job = $Playbook.orchestration.jobs[$jobKey]
+            
+            # Extract script numbers from steps
+            $sequences = @()
+            foreach ($step in $job.steps) {
+                if ($step.run) {
+                    $sequences += $step.run
+                }
+            }
+            
+            $convertedStage = @{
+                Name = $job.name
+                Description = if ($job.description) { $job.description } else { "" }
+                Sequence = $sequences
+                Variables = if ($job.env) { $job.env } else { @{} }
+                Condition = if ($job.if) { $job.if } else { $null }
+                ContinueOnError = if ($job.continueOnError) { $job.continueOnError } else { $false }
+                Parallel = $false  # Jobs run sequentially by default
+                Timeout = if ($job.timeout) { $job.timeout } else { 3600 }
+                Retries = 0
+            }
+            
+            # Handle matrix strategy
+            if ($job.strategy -and $job.strategy.matrix) {
+                $convertedStage.Matrix = $job.strategy.matrix
+            }
+            
+            $standardPlaybook.Stages += $convertedStage
+        }
+        
+        return $standardPlaybook
+    }
+    
+    # Check if this is a v2.0 playbook (has metadata and orchestration with stages)
+    elseif ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
+        Write-OrchestrationLog "Loading v2.0 stages-based playbook: $($Playbook.metadata.name)" -Level 'Information'
         
         # Convert v2.0 format to internal format
         $standardPlaybook = @{
@@ -1432,24 +2080,327 @@ function ConvertTo-StandardPlaybookFormat {
 function Get-OrchestrationPlaybook {
     param([string]$Name)
 
-    # First try direct path in playbooks root
-    $playbookPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
-
-    if (Test-Path $playbookPath) {
-        $playbook = Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
+    # Try both .psd1 and .json formats
+    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    
+    # First try .psd1 format (PowerShell Data File)
+    $psd1Path = Join-Path $playbooksDir "$Name.psd1"
+    if (Test-Path $psd1Path) {
+        # Use Import-ConfigDataFile if available, otherwise scriptblock evaluation
+        if (Get-Command Import-ConfigDataFile -ErrorAction SilentlyContinue) {
+            $playbook = Import-ConfigDataFile -Path $psd1Path
+        } else {
+            $content = Get-Content -Path $psd1Path -Raw
+            $scriptBlock = [scriptblock]::Create($content)
+            $playbook = & $scriptBlock
+        }
+        return ConvertTo-StandardPlaybookFormat $playbook
+    }
+    
+    # Then try .json format (legacy)
+    $jsonPath = Join-Path $playbooksDir "$Name.json"
+    if (Test-Path $jsonPath) {
+        $playbook = Get-Content $jsonPath -Raw | ConvertFrom-Json -AsHashtable
         return ConvertTo-StandardPlaybookFormat $playbook
     }
 
-    # Then search in subdirectories
-    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    # Finally search in subdirectories for both formats
+    $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.psd1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($foundPlaybook) {
+        if (Get-Command Import-ConfigDataFile -ErrorAction SilentlyContinue) {
+            $playbook = Import-ConfigDataFile -Path $foundPlaybook.FullName
+        } else {
+            $content = Get-Content -Path $foundPlaybook.FullName -Raw
+            $scriptBlock = [scriptblock]::Create($content)
+            $playbook = & $scriptBlock
+        }
+        return ConvertTo-StandardPlaybookFormat $playbook
+    }
+    
     $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-
     if ($foundPlaybook) {
         $playbook = Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
         return ConvertTo-StandardPlaybookFormat $playbook
     }
 
     return $null
+}
+
+#
+# GitHub Actions-like Features: Matrix Builds, Caching, Job Outputs
+#
+
+function Expand-MatrixBuilds {
+    <#
+    .SYNOPSIS
+    Expand scripts into matrix builds with different parameter combinations
+    
+    .DESCRIPTION
+    Takes a set of scripts and matrix parameters, generating all combinations
+    for parallel execution. Similar to GitHub Actions matrix strategy.
+    
+    .EXAMPLE
+    $matrix = @{
+        profile = @('quick', 'comprehensive')
+        platform = @('Windows', 'Linux')
+    }
+    Expand-MatrixBuilds -Scripts $scripts -Matrix $matrix
+    #>
+    param(
+        [array]$Scripts,
+        [hashtable]$Matrix,
+        [hashtable]$Variables
+    )
+
+    $expandedScripts = @()
+    
+    # Generate all matrix combinations
+    $combinations = Get-MatrixCombinations -Matrix $Matrix
+    
+    Write-OrchestrationLog "Generated $($combinations.Count) matrix combinations" -Level 'Information'
+    
+    foreach ($combination in $combinations) {
+        foreach ($script in $Scripts) {
+            # Clone the script object
+            $matrixScript = $script.PSObject.Copy()
+            
+            # Create matrix-specific variables
+            $matrixVars = $Variables.Clone()
+            foreach ($key in $combination.Keys) {
+                $matrixVars[$key] = $combination[$key]
+            }
+            
+            # Update script with matrix variables
+            $matrixScript.Variables = $matrixVars
+            $matrixScript.MatrixConfig = $combination
+            
+            # Generate unique identifier for this matrix job
+            $matrixId = ($combination.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ','
+            $matrixScript.MatrixId = $matrixId
+            $matrixScript.Number = "$($script.Number)-matrix-$($expandedScripts.Count)"
+            
+            $expandedScripts += $matrixScript
+        }
+    }
+    
+    return $expandedScripts
+}
+
+function Get-MatrixCombinations {
+    <#
+    .SYNOPSIS
+    Generate all combinations from matrix dimensions
+    
+    .DESCRIPTION
+    Recursively generates all possible combinations of matrix parameters
+    #>
+    param([hashtable]$Matrix)
+    
+    $dimensions = @($Matrix.Keys)
+    if ($dimensions.Count -eq 0) {
+        return @(@{})
+    }
+    
+    $combinations = @(@{})
+    
+    foreach ($dimension in $dimensions) {
+        $newCombinations = @()
+        $values = $Matrix[$dimension]
+        
+        foreach ($combination in $combinations) {
+            foreach ($value in $values) {
+                $newCombination = $combination.Clone()
+                $newCombination[$dimension] = $value
+                $newCombinations += $newCombination
+            }
+        }
+        
+        $combinations = $newCombinations
+    }
+    
+    return $combinations
+}
+
+function Show-MatrixOrchestrationPlan {
+    <#
+    .SYNOPSIS
+    Display orchestration plan for matrix builds
+    #>
+    param(
+        [array]$Scripts,
+        [hashtable]$Matrix
+    )
+    
+    Write-Host "`nMatrix Orchestration Plan:" -ForegroundColor Cyan
+    Write-Host "==========================" -ForegroundColor Cyan
+    Write-Host "`nMatrix Dimensions:" -ForegroundColor Yellow
+    foreach ($dimension in $Matrix.Keys) {
+        Write-Host "  $dimension : $($Matrix[$dimension] -join ', ')" -ForegroundColor White
+    }
+    
+    $combinations = ($Scripts | Select-Object -First 1 -ExpandProperty MatrixConfig -ErrorAction SilentlyContinue).Count
+    if (-not $combinations) {
+        $combinations = (Get-MatrixCombinations -Matrix $Matrix).Count
+    }
+    
+    Write-Host "`nTotal Combinations: $combinations" -ForegroundColor Green
+    Write-Host "Total Jobs: $($Scripts.Count)" -ForegroundColor Green
+    
+    Write-Host "`nJobs:" -ForegroundColor Yellow
+    foreach ($script in $Scripts) {
+        $matrixInfo = if ($script.MatrixId) { " [$($script.MatrixId)]" } else { "" }
+        Write-Host "  [$($script.Number)]$matrixInfo $($script.Name)" -ForegroundColor White
+    }
+}
+
+function Initialize-OrchestrationCache {
+    <#
+    .SYNOPSIS
+    Initialize the orchestration caching system
+    
+    .DESCRIPTION
+    Sets up the cache directory structure and returns a cache manager object
+    #>
+    param([hashtable]$Configuration)
+    
+    $cacheDir = Join-Path $script:ProjectRoot '.orchestration-cache'
+    
+    # Create cache directories
+    @('results', 'artifacts', 'metadata') | ForEach-Object {
+        $dir = Join-Path $cacheDir $_
+        if (-not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        }
+    }
+    
+    return @{
+        CacheDir = $cacheDir
+        ResultsDir = Join-Path $cacheDir 'results'
+        ArtifactsDir = Join-Path $cacheDir 'artifacts'
+        MetadataDir = Join-Path $cacheDir 'metadata'
+        Enabled = $true
+    }
+}
+
+function Save-OrchestrationCache {
+    <#
+    .SYNOPSIS
+    Save orchestration execution results to cache
+    #>
+    param(
+        [hashtable]$CacheManager,
+        [object]$Result,
+        [array]$Scripts,
+        [hashtable]$Variables
+    )
+    
+    try {
+        # Generate cache key from scripts and variables
+        $cacheKey = Get-OrchestrationCacheKey -Scripts $Scripts -Variables $Variables
+        
+        # Save result
+        $resultPath = Join-Path $CacheManager.ResultsDir "$cacheKey.json"
+        $Result | ConvertTo-Json -Depth 10 | Set-Content -Path $resultPath
+        
+        # Save metadata
+        $metadata = @{
+            CacheKey = $cacheKey
+            Timestamp = Get-Date -Format 'o'
+            Scripts = ($Scripts | Select-Object Number, Name, Path)
+            Variables = $Variables
+            Success = ($Result.Failed -eq 0)
+        }
+        $metadataPath = Join-Path $CacheManager.MetadataDir "$cacheKey.meta.json"
+        $metadata | ConvertTo-Json -Depth 10 | Set-Content -Path $metadataPath
+        
+        Write-OrchestrationLog "Cached execution result: $cacheKey" -Level 'Debug'
+    } catch {
+        Write-OrchestrationLog "Failed to save cache: $_" -Level 'Warning'
+    }
+}
+
+function Get-OrchestrationCacheKey {
+    <#
+    .SYNOPSIS
+    Generate a unique cache key from scripts and variables
+    #>
+    param(
+        [array]$Scripts,
+        [hashtable]$Variables
+    )
+    
+    $scriptIds = ($Scripts | ForEach-Object { $_.Number }) -join ','
+    $varJson = $Variables | ConvertTo-Json -Compress
+    $combined = "$scriptIds|$varJson"
+    
+    # Generate SHA256 hash
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $hash = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($combined))
+    $hashString = [BitConverter]::ToString($hash) -replace '-', ''
+    
+    return $hashString.Substring(0, 16)  # Use first 16 chars
+}
+
+function Export-OrchestrationSummary {
+    <#
+    .SYNOPSIS
+    Export execution summary as markdown report
+    
+    .DESCRIPTION
+    Generates a GitHub Actions-style job summary in markdown format
+    #>
+    param(
+        [hashtable]$Summary,
+        [hashtable]$Configuration
+    )
+    
+    $reportsDir = Join-Path $script:ProjectRoot 'reports/orchestration'
+    if (-not (Test-Path $reportsDir)) {
+        New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyy-MM-dd-HHmmss'
+    $summaryPath = Join-Path $reportsDir "summary-$timestamp.md"
+    
+    $markdown = @"
+# Orchestration Execution Summary
+
+**Playbook**: $($Summary.Playbook)  
+**Started**: $($Summary.StartTime.ToString('yyyy-MM-dd HH:mm:ss'))  
+**Completed**: $($Summary.EndTime.ToString('yyyy-MM-dd HH:mm:ss'))  
+**Duration**: $($Summary.Duration.ToString())  
+**Status**: $(if ($Summary.Result.Failed -eq 0) { '✅ Success' } else { '❌ Failed' })
+
+## Results
+
+| Metric | Count |
+|--------|-------|
+| Total Scripts | $($Summary.Result.Total) |
+| Completed | $($Summary.Result.Completed) ✅ |
+| Failed | $($Summary.Result.Failed) ❌ |
+| Success Rate | $([math]::Round(($Summary.Result.Completed / $Summary.Result.Total) * 100, 2))% |
+
+## Variables
+
+``````json
+$($Summary.Variables | ConvertTo-Json)
+``````
+
+## Execution Details
+
+"@
+    
+    # Add failed scripts if any
+    if ($Summary.Result.Results.Failed.Count -gt 0) {
+        $markdown += "`n### ❌ Failed Scripts`n`n"
+        foreach ($failedScript in $Summary.Result.Results.Failed.GetEnumerator()) {
+            $markdown += "- **$($failedScript.Key)**: $($failedScript.Value.Error)`n"
+        }
+    }
+    
+    $markdown | Set-Content -Path $summaryPath
+    
+    return $summaryPath
 }
 
 # Simplified number sequence functions for direct use
@@ -1483,9 +2434,18 @@ Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
 Export-ModuleMember -Function @(
     'Invoke-OrchestrationSequence'
     'Invoke-Sequence'
+    'Invoke-ParallelOrchestration'
+    'Invoke-SequentialOrchestration'
     'Get-OrchestrationPlaybook'
     'Save-OrchestrationPlaybook'
     'ConvertTo-StandardPlaybookFormat'
     'Test-PlaybookConditions'
     'Send-PlaybookNotification'
+    'Expand-MatrixBuilds'
+    'Get-MatrixCombinations'
+    'Show-MatrixOrchestrationPlan'
+    'Initialize-OrchestrationCache'
+    'Save-OrchestrationCache'
+    'Get-OrchestrationCacheKey'
+    'Export-OrchestrationSummary'
 ) -Alias @('seq')

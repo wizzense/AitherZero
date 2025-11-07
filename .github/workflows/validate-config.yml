@@ -4,7 +4,7 @@ name: 'Validate Config Manifest'
 on:
   push:
     # Only run on base branches to avoid duplicate runs with pull_request events
-    branches: [main, dev]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'config.psd1'
       - 'automation-scripts/0003_Sync-ConfigManifest.ps1'
@@ -19,9 +19,15 @@ concurrency:
   group: validate-config-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   validate-config:
     name: 'Validate Config.psd1'
+    # Skip if triggered by bot
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
@@ -98,7 +104,7 @@ jobs:
         run: |
           if ($env:GITHUB_STEP_SUMMARY) {
             $status = "${{ job.status }}"
-            
+
             # Build summary using array to avoid here-string issues
             $summaryLines = @(
               "## Config Manifest Validation Results"
@@ -124,7 +130,7 @@ jobs:
               "    ./automation-scripts/0003_Sync-ConfigManifest.ps1"
               ""
             )
-            
+
             $summary = $summaryLines -join "`n"
             $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
           }

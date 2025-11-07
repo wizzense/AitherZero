@@ -35,6 +35,34 @@ This configures Git to use hooks from this directory instead of `.git/hooks/`.
 git commit --no-verify
 ```
 
+### pre-commit-workflows
+
+**Purpose:** Validates GitHub Actions workflow files before allowing commits that modify them.
+
+**What it checks:**
+- Trailing spaces (can cause workflows to disappear from PRs)
+- YAML syntax errors
+- Valid YAML structure
+
+**When it runs:**
+- Only when `.github/workflows/*.yml` files are being committed
+- Automatically as part of `git commit`
+
+**Why this is critical:**
+- Trailing spaces in YAML can cause GitHub Actions parser to fail silently
+- This results in workflow checks disappearing from PRs
+- Early detection prevents CI/CD system-wide failures
+
+**Quick fix for trailing spaces:**
+```bash
+find .github/workflows -name '*.yml' -exec sed -i 's/[[:space:]]*$//' {} \;
+```
+
+**To bypass (not recommended):**
+```bash
+git commit --no-verify
+```
+
 ## Why Use Hooks?
 
 Git hooks help prevent issues from being committed to the repository:

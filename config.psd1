@@ -237,8 +237,8 @@
                 }
                 Logging = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0530', '0531', '0550')
-                    Description = 'Log viewing, workflow reports, and health dashboard'
+                    Scripts = @('0530', '0531', '0550', '0830')
+                    Description = 'Log viewing, workflow reports, health dashboard, and comprehensive log search'
                 }
                 CI = @{
                     DependsOn = @('Core.PowerShell7')
@@ -358,8 +358,8 @@
                 }
                 Orchestration = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0962')
-                    Description = 'Playbook execution wrapper for local CI/CD workflow testing'
+                    Scripts = @('0962', '0963', '0964', '0965', '0966')
+                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, and local validation'
                 }
             }
             
@@ -423,16 +423,16 @@
         # Domain module structure (actual repository state)
         Domains = @{
             'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation' = @{ Modules = 3; Description = 'Orchestration engine and deployment automation' }
-            'configuration' = @{ Modules = 1; Description = 'Unified configuration management' }
+            'automation' = @{ Modules = 5; Description = 'Orchestration engine and script utilities' }
+            'cli' = @{ Modules = 1; Description = 'CLI cmdlets and interactive interface' }
+            'configuration' = @{ Modules = 2; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
-            'experience' = @{ Modules = 10; Description = 'UI/UX components and interactive menus' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }
             'testing' = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
-            'utilities' = @{ Modules = 9; Description = 'Core utilities, logging, and maintenance' }
+            'utilities' = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
         
         # Script inventory by range (138 total files, 137 unique numbers)
@@ -446,8 +446,8 @@
             '0400-0499' = @{ Count = 26; Category = 'Testing & Quality' }
             '0500-0599' = @{ Count = 18; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 19; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 7; Category = 'Validation & Test Generation' }
+            '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
+            '0900-0999' = @{ Count = 11; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
         
@@ -863,6 +863,7 @@
         # Script execution settings
         ScriptsPath = './automation-scripts'
         DefaultTimeout = 3600
+        MaxTimeout = 7200  # Maximum allowed timeout (2 hours)
         MaxConcurrency = 4
         ParallelExecution = $true
         DefaultMode = 'Parallel'  # Parallel, Sequential, Staged, Conditional
@@ -886,6 +887,82 @@
         HistoryRetentionDays = 30
         CacheExecutionPlans = $true
         NotificationEnabled = $true
+        
+        # Script range defaults - defines behavior per script number range
+        ScriptRangeDefaults = @{
+            '0000-0099' = @{
+                Name = 'Environment Setup'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $false
+                RequiresElevation = $true
+                Stage = 'Setup'
+                AllowParallel = $false  # Sequential for setup scripts
+            }
+            '0100-0199' = @{
+                Name = 'Infrastructure'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $false
+                RequiresElevation = $true
+                Stage = 'Infrastructure'
+                AllowParallel = $true
+            }
+            '0200-0299' = @{
+                Name = 'Development Tools'
+                DefaultTimeout = 900  # 15 minutes
+                ContinueOnError = $true  # Can continue if optional tools fail
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $true
+            }
+            '0400-0499' = @{
+                Name = 'Testing & Validation'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $true  # Show all test results
+                RequiresElevation = $false
+                Stage = 'Testing'
+                AllowParallel = $true
+            }
+            '0500-0599' = @{
+                Name = 'Reporting & Metrics'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Reporting'
+                AllowParallel = $true
+            }
+            '0700-0799' = @{
+                Name = 'Git Automation'
+                DefaultTimeout = 180  # 3 minutes
+                ContinueOnError = $false
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $false
+            }
+            '0800-0899' = @{
+                Name = 'Issue Management'
+                DefaultTimeout = 120  # 2 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $true
+            }
+            '0900-0999' = @{
+                Name = 'Validation & Diagnostics'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Testing'
+                AllowParallel = $true
+            }
+            '9000-9999' = @{
+                Name = 'Maintenance & Cleanup'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $true
+                RequiresElevation = $true
+                Stage = 'Maintenance'
+                AllowParallel = $false
+            }
+        }
         
         # Execution profiles mapping
         Profiles = @{
@@ -914,6 +991,75 @@
                 Features = @('*')
             }
         }
+        
+        # Playbook registry - centralized playbook management
+        Playbooks = @{
+            'test-orchestration' = @{
+                Enabled = $true
+                Description = 'Simple test playbook for validation'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'project-health-check' = @{
+                Enabled = $true
+                Description = 'Complete project health validation (matches GitHub Actions)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    DefaultTimeout = 300  # Override range defaults for this playbook
+                }
+            }
+            'pr-validation-fast' = @{
+                Enabled = $true
+                Description = 'Fast PR validation (syntax + config)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    '0407' = @{ Timeout = 60 }   # Faster syntax check
+                    '0413' = @{ Timeout = 30 }   # Faster config validation
+                }
+            }
+            'pr-validation-full' = @{
+                Enabled = $true
+                Description = 'Full PR validation (syntax, quality, tests)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'code-quality-fast' = @{
+                Enabled = $true
+                Description = 'Quick code quality checks'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'code-quality-full' = @{
+                Enabled = $true
+                Description = 'Comprehensive code quality analysis'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'integration-tests-full' = @{
+                Enabled = $true
+                Description = 'Full integration test suite'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    DefaultTimeout = 600
+                    ContinueOnError = $true
+                }
+            }
+            'diagnose-ci' = @{
+                Enabled = $true
+                Description = 'Diagnose CI/CD failures'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'fix-ci-validation' = @{
+                Enabled = $false  # Disabled by default - maintenance only
+                Description = 'Fix CI validation issues'
+                RequiresApproval = $true
+                AllowedEnvironments = @('Dev')
+            }
+        }
     }
     
     # ===================================================================
@@ -931,6 +1077,25 @@
         ProgressBarStyle = 'Classic'
         EnableEmoji = $true
         ShowExecutionTime = $true
+        
+        # Modal UI Settings (VIM-like interface)
+        ModalUI = @{
+            Enabled = $true  # Enable VIM-like modal UI enhancements
+            DefaultMode = 'Normal'  # Starting mode (Normal, Command, Search)
+            VimBindings = $true  # Use VIM-style keys (h,j,k,l)
+            ShowModeIndicator = $true  # Show current mode in UI
+            CommandHistory = $true  # Enable command history
+            MaxHistoryItems = 50  # Maximum history entries
+            SearchAsYouType = $true  # Real-time search filtering
+            QuickSelection = $true  # Enable number selection (1-9, 0)
+            
+            # Key binding customization (advanced users)
+            KeyBindings = @{
+                # Can override default bindings here
+                # Format: @{ Mode = @{ 'Key' = @{ Action = 'ActionName'; Description = 'Description' } } }
+                # Example: Normal = @{ 'x' = @{ Action = 'Delete-Item'; Description = 'Delete item' } }
+            }
+        }
         
         # Themes
         Theme = 'Default'
@@ -1420,6 +1585,47 @@
         # Internal modules and scripts (placeholder for future expansion)
         Modules = @{}
         Scripts = @{}
+    }
+    
+    # ===================================================================
+    # EXTENSION SYSTEM - Plugin Architecture
+    # ===================================================================
+    Extensions = @{
+        # Enable extension system
+        Enabled = $true
+        
+        # Extension search paths (ordered by priority)
+        SearchPaths = @(
+            './extensions'                           # Local extensions
+            "$HOME/.aitherzero/extensions"          # User extensions
+            "$env:AITHERZERO_EXTENSIONS_PATH"       # Custom path via environment variable
+        )
+        
+        # Auto-load extensions at startup
+        AutoLoad = $true
+        
+        # Extension validation
+        RequireManifest = $true
+        RequireSignature = $false  # Set to true for production environments
+        
+        # Reserved script number ranges
+        ScriptNumberRanges = @{
+            Core = @{ Start = 0; End = 7999; Description = 'AitherZero Core Scripts' }
+            Extensions = @{ Start = 8000; End = 8999; Description = 'Extension Scripts' }
+            Maintenance = @{ Start = 9000; End = 9999; Description = 'Maintenance Scripts' }
+        }
+        
+        # Extension feature flags
+        Features = @{
+            CustomModes = $true           # Allow extensions to add CLI modes
+            CustomCommands = $true        # Allow extensions to add PowerShell commands
+            CustomScripts = $true         # Allow extensions to add automation scripts
+            CustomDomains = $true         # Allow extensions to add domain modules
+            HotReload = $false           # Hot-reload extensions without restart (experimental)
+        }
+        
+        # Registered extensions (populated at runtime by ExtensionManager)
+        Loaded = @()
     }
     
     # ===================================================================

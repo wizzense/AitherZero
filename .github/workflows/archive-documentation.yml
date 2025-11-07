@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          
+
       - name: Check for archive changes
         id: check
         run: |
@@ -35,7 +35,7 @@ jobs:
           if [ -d "docs/archive" ] && [ "$(ls -A docs/archive 2>/dev/null)" ]; then
             ARCHIVE_COUNT=$(find docs/archive -type f -name "*.md" | wc -l)
             echo "archive_count=$ARCHIVE_COUNT" >> $GITHUB_OUTPUT
-            
+
             # Check if there are changes in the archive directory
             if git diff --name-only HEAD~1 HEAD | grep -q "^docs/archive/"; then
               echo "has_changes=true" >> $GITHUB_OUTPUT
@@ -57,28 +57,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Create archive metadata
         run: |
           mkdir -p _archive_staging
-          
+
           # Generate archive index with metadata
           cat > _archive_staging/ARCHIVE-INDEX.md << 'EOF'
           # AitherZero Documentation Archive
-          
+
           **Generated**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           **Total Files**: ${{ needs.check-archive.outputs.archive_count }}
           **Branch**: ${{ github.ref_name }}
           **Commit**: ${{ github.sha }}
-          
+
           ## About This Archive
-          
+
           This archive contains historical documentation from the AitherZero project that has been superseded by newer content or is no longer actively maintained. The files are preserved for reference and historical context.
-          
+
           ## Archived Files
-          
+
           EOF
-          
+
           # List all archived files with details
           cd docs/archive
           for file in *.md; do
@@ -89,7 +89,7 @@ jobs:
             fi
           done
           cd ../..
-          
+
           echo "" >> _archive_staging/ARCHIVE-INDEX.md
           echo "## Retrieval Instructions" >> _archive_staging/ARCHIVE-INDEX.md
           echo "" >> _archive_staging/ARCHIVE-INDEX.md
@@ -103,22 +103,22 @@ jobs:
           echo "" >> _archive_staging/ARCHIVE-INDEX.md
           echo "Individual files can also be viewed directly from the GitHub repository:" >> _archive_staging/ARCHIVE-INDEX.md
           echo "\`https://github.com/${{ github.repository }}/tree/${{ github.sha }}/docs/archive\`" >> _archive_staging/ARCHIVE-INDEX.md
-      
+
       - name: Create documentation archive
         run: |
           ARCHIVE_DATE=$(date +%Y%m%d)
           ARCHIVE_NAME="documentation-archive-${ARCHIVE_DATE}.zip"
-          
+
           echo "📦 Creating archive: ${ARCHIVE_NAME}"
           cd docs/archive
-          
+
           # Create zip file with all markdown files except README and index
           zip -r "../../_archive_staging/${ARCHIVE_NAME}" *.md \
             -x "README.md" "index.md" \
             || echo "⚠️  Some files may have been skipped"
-          
+
           cd ../..
-          
+
           # Verify archive was created
           if [ -f "_archive_staging/${ARCHIVE_NAME}" ]; then
             SIZE=$(stat -f%z "_archive_staging/${ARCHIVE_NAME}" 2>/dev/null || stat -c%s "_archive_staging/${ARCHIVE_NAME}")
@@ -128,13 +128,13 @@ jobs:
             echo "❌ Failed to create archive"
             exit 1
           fi
-      
+
       - name: Create archive directory structure
         run: |
           mkdir -p _site/archives
           cp _archive_staging/*.zip _site/archives/ 2>/dev/null || echo "No zip files to copy"
           cp _archive_staging/ARCHIVE-INDEX.md _site/archives/
-          
+
           # Create a simple HTML index
           cat > _site/archives/index.html << 'EOF'
           <!DOCTYPE html>
@@ -202,18 +202,18 @@ jobs:
           <body>
             <div class="container">
               <h1>📦 AitherZero Documentation Archives</h1>
-              
+
               <div class="archive-info">
                 <strong>Latest Archive:</strong> documentation-archive-$(date +%Y%m%d).zip<br>
                 <strong>Generated:</strong> $(date -u +"%Y-%m-%d %H:%M:%S UTC")<br>
                 <strong>Files:</strong> ${{ needs.check-archive.outputs.archive_count }} documents
               </div>
-              
+
               <h2>Download Archive</h2>
               <p>Click below to download the complete documentation archive:</p>
               <a href="./documentation-archive-$(date +%Y%m%d).zip" class="download-btn">📥 Download Archive</a>
               <a href="./ARCHIVE-INDEX.md" class="download-btn">📄 View Index</a>
-              
+
               <h2>What's Archived?</h2>
               <p>This archive contains historical documentation including:</p>
               <ul>
@@ -222,12 +222,12 @@ jobs:
                 <li>Workflow fixes and one-time improvements</li>
                 <li>Release notes from previous versions</li>
               </ul>
-              
+
               <h2>Quick Access</h2>
               <p>Download and extract using command line:</p>
               <pre><code>wget https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/archives/documentation-archive-$(date +%Y%m%d).zip
           unzip documentation-archive-$(date +%Y%m%d).zip</code></pre>
-              
+
               <h2>Browse on GitHub</h2>
               <p>You can also view the archived files directly in the repository:</p>
               <p><a href="https://github.com/${{ github.repository }}/tree/${{ github.sha }}/docs/archive">View on GitHub</a></p>
@@ -235,7 +235,7 @@ jobs:
           </body>
           </html>
           EOF
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -252,7 +252,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        
+
       - name: Report Deployment
         run: |
           echo "✅ Archive deployed to GitHub Pages!"

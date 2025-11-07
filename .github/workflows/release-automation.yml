@@ -191,7 +191,7 @@ jobs:
             # Bootstrap for installation
             "bootstrap.ps1", "bootstrap.sh",
             # Container support
-            "Dockerfile", "docker-compose.yml", "docker-entrypoint.ps1", 
+            "Dockerfile", "docker-compose.yml", "docker-entrypoint.ps1",
             "docker-start.ps1", "container-welcome.ps1",
             # Documentation (user-facing only)
             "README.md", "LICENSE", "VERSION",
@@ -207,7 +207,7 @@ jobs:
           )
 
           Write-Host "📦 Creating clean runtime package (no dev/test files)..." -ForegroundColor Cyan
-          
+
           foreach ($pattern in $releaseFiles) {
             if (Test-Path $pattern) {
               Copy-Item -Path $pattern -Destination "./$packageName" -Recurse -Force
@@ -219,13 +219,13 @@ jobs:
 
           # Exclude development/internal files from domains and scripts
           Write-Host "🧹 Cleaning development files from package..." -ForegroundColor Cyan
-          
+
           # Remove test files if they exist
           if (Test-Path "./$packageName/domains/*/tests") {
             Remove-Item "./$packageName/domains/*/tests" -Recurse -Force -ErrorAction SilentlyContinue
             Write-Host "  ✅ Removed domain test files" -ForegroundColor Green
           }
-          
+
           # Remove any .git directories
           if (Test-Path "./$packageName/.git*") {
             Remove-Item "./$packageName/.git*" -Recurse -Force -ErrorAction SilentlyContinue
@@ -499,12 +499,12 @@ jobs:
         run: |
           VERSION="${{ env.RELEASE_VERSION }}"
           VERSION_NUMBER="${VERSION#v}"
-          
+
           echo "📝 Updating MCP server version to $VERSION_NUMBER"
-          
+
           # Update version in package.json
           npm version $VERSION_NUMBER --no-git-tag-version --allow-same-version
-          
+
           echo "✅ MCP server version updated"
 
       - name: 📦 Install Dependencies
@@ -526,7 +526,7 @@ jobs:
         run: |
           echo "🧪 Testing MCP server..."
           npm test
-          
+
           TEST_EXIT_CODE=$?
           if [ $TEST_EXIT_CODE -ne 0 ]; then
             echo "::warning::⚠️ MCP server tests failed with exit code: $TEST_EXIT_CODE"
@@ -534,7 +534,7 @@ jobs:
           else
             echo "✅ All tests passed"
           fi
-          
+
           # Don't fail the workflow, but warn prominently
           exit 0
 
@@ -542,13 +542,13 @@ jobs:
         working-directory: mcp-server
         run: |
           VERSION="${{ env.RELEASE_VERSION }}"
-          
+
           echo "📦 Creating package archive..."
           npm pack
-          
+
           PACKAGE_FILE="aitherzero-mcp-server-${VERSION#v}.tgz"
           mv *.tgz "../${PACKAGE_FILE}"
-          
+
           echo "✅ Package created: ${PACKAGE_FILE}"
           ls -lh "../${PACKAGE_FILE}"
 
@@ -565,20 +565,20 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "📢 Publishing to GitHub Packages..."
-          
+
           # First, validate the package with dry-run
           npm publish --dry-run
           DRY_RUN_EXIT=$?
-          
+
           if [ $DRY_RUN_EXIT -ne 0 ]; then
             echo "::error::Package validation failed - dry-run detected issues"
             exit 1
           fi
-          
+
           # Attempt to publish and capture output
           PUBLISH_OUTPUT=$(npm publish --access public 2>&1)
           PUBLISH_EXIT=$?
-          
+
           if [ $PUBLISH_EXIT -eq 0 ]; then
             echo "✅ Successfully published to GitHub Packages"
           elif grep -q "Cannot publish over existing version" <<< "$PUBLISH_OUTPUT"; then
@@ -594,7 +594,7 @@ jobs:
         run: |
           VERSION="${{ env.RELEASE_VERSION }}"
           VERSION_NUMBER="${VERSION#v}"
-          
+
           echo "## 📦 MCP Server Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Package Information" >> $GITHUB_STEP_SUMMARY
@@ -633,17 +633,72 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 📋 Extract Docker Metadata
+      - name: 📋 Generate Enhanced Release Tags
+        id: generate-tags
+        shell: bash
+        run: |
+          VERSION="${{ env.RELEASE_VERSION }}"
+          VERSION_NUMBER="${VERSION#v}"
+          IS_PRERELEASE="${{ github.event.inputs.prerelease }}"
+          COMMIT_SHORT="${{ github.sha }}"
+          COMMIT_SHORT="${COMMIT_SHORT:0:8}"
+          BUILD_TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          
+          echo "version-number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          echo "commit-short=${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          echo "build-timestamp=${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
+          
+          # Generate comprehensive release tags
+          # Format: Semantic versioning + descriptive metadata
+          # Use type=raw,value= format for docker/metadata-action
+          
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo "type=raw,value=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          echo "type=raw,value=v${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          
+          # Add major.minor tag (e.g., 2.0)
+          MAJOR_MINOR=$(echo ${VERSION_NUMBER} | cut -d. -f1,2)
+          echo "type=raw,value=${MAJOR_MINOR}" >> $GITHUB_OUTPUT
+          
+          # Add major tag (e.g., 2)
+          MAJOR=$(echo ${VERSION_NUMBER} | cut -d. -f1)
+          echo "type=raw,value=${MAJOR}" >> $GITHUB_OUTPUT
+          
+          # Add 'latest' tag only for non-prerelease versions
+          if [ "$IS_PRERELEASE" != "true" ]; then
+            echo "type=raw,value=latest" >> $GITHUB_OUTPUT
+            echo "type=raw,value=stable" >> $GITHUB_OUTPUT
+          else
+            echo "type=raw,value=prerelease" >> $GITHUB_OUTPUT
+          fi
+          
+          # Add commit SHA tag for traceability
+          echo "type=raw,value=sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+          
+          # Add timestamp tag for temporal organization
+          echo "type=raw,value=release-${BUILD_TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Generated release tags for version ${VERSION_NUMBER}"
+
+      - name: 📋 Extract Docker Metadata with Enhanced Labels
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}},value=v${{ env.RELEASE_VERSION }}
-            type=semver,pattern={{major}}.{{minor}},value=v${{ env.RELEASE_VERSION }}
-            type=semver,pattern={{major}},value=v${{ env.RELEASE_VERSION }}
-            type=raw,value=latest,enable=${{ github.event.inputs.prerelease != 'true' }}
-            type=sha,prefix=sha-
+          tags: ${{ steps.generate-tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=AitherZero
+            org.opencontainers.image.description=Infrastructure automation platform
+            org.opencontainers.image.vendor=wizzense
+            org.opencontainers.image.version=${{ steps.generate-tags.outputs.version-number }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ steps.generate-tags.outputs.build-timestamp }}
+            com.aitherzero.release.version=${{ env.RELEASE_VERSION }}
+            com.aitherzero.release.prerelease=${{ github.event.inputs.prerelease }}
+            com.aitherzero.build.timestamp=${{ steps.generate-tags.outputs.build-timestamp }}
+            com.aitherzero.commit.short=${{ steps.generate-tags.outputs.commit-short }}
 
       - name: 🔨 Build and Push Docker Image
         uses: docker/build-push-action@v5
@@ -665,9 +720,9 @@ jobs:
         shell: bash
         run: |
           echo "🧪 Testing Docker image..."
-          
+
           IMAGE_TAG="ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}"
-          
+
           docker run --rm ${IMAGE_TAG} pwsh -NoProfile -Command "
             Write-Host '✅ Container started' -ForegroundColor Green;
             if (Test-Path /opt/aitherzero/AitherZero.psd1) {
@@ -677,7 +732,7 @@ jobs:
               exit 1;
             }
           "
-          
+
           echo "✅ Docker image test passed"
 
       - name: 📊 Docker Build Summary

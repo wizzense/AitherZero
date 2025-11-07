@@ -41,6 +41,8 @@ permissions:
 jobs:
   generate-tests:
     name: Auto-Generate Tests
+    # Skip if triggered by bot to prevent loops
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
@@ -48,6 +50,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          # Use GITHUB_TOKEN to prevent triggering workflows on bot commits
+          # This prevents cascade of workflow runs when tests are auto-generated
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 Setup PowerShell
@@ -55,7 +59,23 @@ jobs:
         run: |
           pwsh -Version
 
+      - name: 🔍 Check if triggered by bot commit
+        id: check-bot
+        shell: bash
+        run: |
+          LAST_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          echo "Last commit author: $LAST_COMMIT_AUTHOR"
+          
+          if [[ "$LAST_COMMIT_AUTHOR" == *"github-actions"* ]] || [[ "$LAST_COMMIT_AUTHOR" == *"[bot]"* ]]; then
+            echo "⚠️  Last commit was from a bot, skipping to prevent workflow cascade"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "✓ Last commit was from a human, proceeding with test generation"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: 🔍 Detect new scripts without tests
+        if: steps.check-bot.outputs.skip != 'true'
         id: detect
         shell: pwsh
         run: |
@@ -115,14 +135,14 @@ jobs:
           }
 
       - name: 📦 Bootstrap environment
-        if: steps.detect.outputs.missing_tests == 'true'
+        if: steps.detect.outputs.missing_tests == 'true' && steps.check-bot.outputs.skip != 'true'
         shell: pwsh
         run: |
           Write-Host "📦 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
           ./bootstrap.ps1 -Mode Update -InstallProfile Minimal
 
       - name: 🧪 Generate missing tests
-        if: steps.detect.outputs.missing_tests == 'true'
+        if: steps.detect.outputs.missing_tests == 'true' && steps.check-bot.outputs.skip != 'true'
         id: generate
         shell: pwsh
         run: |
@@ -160,7 +180,7 @@ jobs:
           }
 
       - name: 📝 Commit generated tests
-        if: github.event_name == 'pull_request' && steps.detect.outputs.missing_tests == 'true' && steps.generate.outputs.success == 'true'
+        if: github.event_name == 'pull_request' && steps.detect.outputs.missing_tests == 'true' && steps.generate.outputs.success == 'true' && steps.check-bot.outputs.skip != 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -169,9 +189,9 @@ jobs:
           if [[ -n $(git status --porcelain tests/unit/ tests/integration/) ]]; then
             git add tests/unit/ tests/integration/
 
-            # Create commit message
+            # Create commit message with [skip ci] to prevent workflow cascade
             cat > /tmp/commit-msg.txt << 'EOF'
-          test: Auto-generate tests for new scripts
+          test: Auto-generate tests for new scripts [skip ci]
 
           Automatically generated tests for ${{ steps.detect.outputs.missing_count }} script(s).
 
@@ -180,6 +200,8 @@ jobs:
           - Trigger: ${{ github.event_name }}
 
           This ensures 100% test coverage for all automation scripts.
+
+          [skip ci] prevents triggering other PR workflows in a cascade.
           EOF
 
             git commit -F /tmp/commit-msg.txt
@@ -187,7 +209,7 @@ jobs:
             # Push to the PR branch (works even in detached HEAD state)
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
-            echo "✅ Generated tests committed and pushed"
+            echo "✅ Generated tests committed and pushed with [skip ci]"
           else
             echo "ℹ️  No new test files to commit"
           fi

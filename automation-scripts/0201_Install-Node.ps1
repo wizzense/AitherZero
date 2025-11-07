@@ -40,8 +40,20 @@ try {
     $shouldInstall = $false
     $nodeConfig = $null
 
-    if (Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue) {
-        # Use new configuration system
+    # Use the convenient helper that checks and prompts in one call
+    if (Get-Command Test-FeatureOrPrompt -ErrorAction SilentlyContinue) {
+        # Use the simple helper function
+        $shouldInstall = Test-FeatureOrPrompt -FeatureName 'Node' -Category 'Development' -Reason "Script 0201 requires Node.js to install the Node runtime and npm packages"
+        
+        if ($shouldInstall) {
+            $nodeConfig = Get-FeatureConfiguration -FeatureName 'Node' -Category 'Development'
+            Write-ScriptLog "Node.js installation enabled via Features.Development.Node configuration"
+        } else {
+            Write-ScriptLog "Node.js installation is not enabled"
+            exit 0
+        }
+    } elseif (Get-Command Test-FeatureEnabled -ErrorAction SilentlyContinue) {
+        # Fallback to manual checking for older versions
         $shouldInstall = Test-FeatureEnabled -FeatureName 'Node' -Category 'Development'
         if ($shouldInstall) {
             $nodeConfig = Get-FeatureConfiguration -FeatureName 'Node' -Category 'Development'
