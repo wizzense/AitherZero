@@ -423,11 +423,11 @@
         # Domain module structure (actual repository state)
         Domains = @{
             'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation' = @{ Modules = 5; Description = 'Orchestration engine and deployment automation' }
+            'automation' = @{ Modules = 5; Description = 'Orchestration engine and script utilities' }
+            'cli' = @{ Modules = 1; Description = 'CLI cmdlets and interactive interface' }
             'configuration' = @{ Modules = 2; Description = 'Unified configuration management' }
             'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
-            'experience' = @{ Modules = 18; Description = 'UI/UX components and interactive menus' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security' = @{ Modules = 1; Description = 'Security and credential management' }

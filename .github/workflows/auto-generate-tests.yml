@@ -189,9 +189,9 @@ jobs:
           if [[ -n $(git status --porcelain tests/unit/ tests/integration/) ]]; then
             git add tests/unit/ tests/integration/
 
-            # Create commit message
+            # Create commit message with [skip ci] to prevent workflow cascade
             cat > /tmp/commit-msg.txt << 'EOF'
-          test: Auto-generate tests for new scripts
+          test: Auto-generate tests for new scripts [skip ci]
 
           Automatically generated tests for ${{ steps.detect.outputs.missing_count }} script(s).
 
@@ -200,6 +200,8 @@ jobs:
           - Trigger: ${{ github.event_name }}
 
           This ensures 100% test coverage for all automation scripts.
+
+          [skip ci] prevents triggering other PR workflows in a cascade.
           EOF
 
             git commit -F /tmp/commit-msg.txt
@@ -207,7 +209,7 @@ jobs:
             # Push to the PR branch (works even in detached HEAD state)
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
-            echo "✅ Generated tests committed and pushed"
+            echo "✅ Generated tests committed and pushed with [skip ci]"
           else
             echo "ℹ️  No new test files to commit"
           fi
