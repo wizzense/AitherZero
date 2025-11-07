@@ -991,7 +991,18 @@ function Invoke-OrchestrationSequence {
             }
             
             # Set exit code based on results
-            $exitCode = if ($result.Failed -eq 0) { 0 } else { 1 }
+            # Exit code 10 for partial success when ContinueOnError is used
+            # Exit code 1 for failures when ContinueOnError is not used
+            # Exit code 0 for complete success
+            if ($result.Failed -eq 0) {
+                $exitCode = 0
+            }
+            elseif ($ContinueOnError) {
+                $exitCode = 10  # Partial success
+            }
+            else {
+                $exitCode = 1  # Failure
+            }
             $global:LASTEXITCODE = $exitCode
             
             # Throw on error if requested (for CI/CD)
@@ -2959,7 +2970,16 @@ function Invoke-AitherWorkflow {
     switch ($PSCmdlet.ParameterSetName) {
         'Script' {
             if (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue) {
-                Invoke-AitherScript -Number $Script @params
+                # Invoke-AitherScript doesn't support Quiet/ThrowOnError
+                # Only pass supported parameters
+                $scriptParams = @{
+                    Number = $Script
+                    PassThru = $PassThru
+                }
+                if ($Variables) {
+                    $scriptParams.Variables = $Variables
+                }
+                Invoke-AitherScript @scriptParams
             }
             else {
                 throw "Invoke-AitherScript not available. Ensure AitherZero module is loaded."
