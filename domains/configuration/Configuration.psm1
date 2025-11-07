@@ -71,6 +71,127 @@ function Import-ConfigDataFile {
     return $data
 }
 
+function Get-MergedConfiguration {
+    <#
+    .SYNOPSIS
+        Get configuration with hierarchical merging support
+    
+    .DESCRIPTION
+        Loads and merges configuration files in the following precedence order:
+        1. Custom config file (if specified via -ConfigFile)
+        2. config.local.psd1 (local overrides, gitignored)
+        3. config.psd1 (base configuration)
+        
+        This allows for:
+        - Local development overrides (config.local.psd1)
+        - CI/CD-specific configs (passed via -ConfigFile)
+        - Scenario-specific configs (e.g., config.production.psd1)
+    
+    .PARAMETER ConfigFile
+        Path to a custom configuration file to use as the highest priority
+    
+    .PARAMETER IncludeLocal
+        Whether to include config.local.psd1 if it exists (default: true)
+    
+    .PARAMETER Section
+        Optional section to return instead of entire config
+    
+    .PARAMETER Key
+        Optional key within section to return
+    
+    .EXAMPLE
+        $config = Get-MergedConfiguration
+        # Returns: config.psd1 merged with config.local.psd1 (if exists)
+    
+    .EXAMPLE
+        $config = Get-MergedConfiguration -ConfigFile "./config.production.psd1"
+        # Returns: config.psd1 < config.local.psd1 < config.production.psd1
+    
+    .EXAMPLE
+        $value = Get-MergedConfiguration -ConfigFile "./ci-config.psd1" -Section "Testing" -Key "MaxConcurrency"
+        # Returns specific value from merged configuration
+    
+    .OUTPUTS
+        [hashtable] or [object] Merged configuration
+    
+    .NOTES
+        This function does not cache - use Get-Configuration for cached access
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [bool]$IncludeLocal = $true,
+        
+        [Parameter()]
+        [string]$Section,
+        
+        [Parameter()]
+        [string]$Key
+    )
+    
+    $baseConfigPath = Join-Path $script:ProjectRoot "config.psd1"
+    $localConfigPath = Join-Path $script:ProjectRoot "config.local.psd1"
+    
+    # Start with base configuration
+    $mergedConfig = $null
+    if (Test-Path $baseConfigPath) {
+        Write-ConfigLog -Message "Loading base configuration" -Level Debug -Data @{ Path = $baseConfigPath }
+        $mergedConfig = Import-ConfigDataFile -Path $baseConfigPath
+    }
+    else {
+        Write-ConfigLog -Message "Base config.psd1 not found" -Level Warning
+        return $null
+    }
+    
+    # Merge local overrides (config.local.psd1)
+    if ($IncludeLocal -and (Test-Path $localConfigPath)) {
+        Write-ConfigLog -Message "Merging local configuration overrides" -Level Debug -Data @{ Path = $localConfigPath }
+        $localConfig = Import-ConfigDataFile -Path $localConfigPath
+        $mergedConfig = Merge-Configuration -Current $mergedConfig -New $localConfig
+    }
+    
+    # Merge custom config file (highest priority)
+    if ($ConfigFile) {
+        if (Test-Path $ConfigFile) {
+            Write-ConfigLog -Message "Merging custom configuration file" -Level Information -Data @{ Path = $ConfigFile }
+            $customConfig = Import-ConfigDataFile -Path $ConfigFile
+            $mergedConfig = Merge-Configuration -Current $mergedConfig -New $customConfig
+        }
+        else {
+            Write-ConfigLog -Message "Custom config file not found: $ConfigFile" -Level Warning
+        }
+    }
+    
+    # Return section or key if requested
+    if ($Section) {
+        if ($mergedConfig.ContainsKey($Section)) {
+            $sectionData = $mergedConfig[$Section]
+            if ($Key) {
+                if ($sectionData -is [hashtable] -and $sectionData.ContainsKey($Key)) {
+                    return $sectionData[$Key]
+                }
+                elseif ($sectionData.PSObject.Properties.Name -contains $Key) {
+                    return $sectionData.$Key
+                }
+                else {
+                    Write-ConfigLog -Message "Key not found in section" -Level Warning -Data @{ Section = $Section; Key = $Key }
+                    return $null
+                }
+            }
+            return $sectionData
+        }
+        else {
+            Write-ConfigLog -Message "Section not found in configuration" -Level Warning -Data @{ Section = $Section }
+            return $null
+        }
+    }
+    
+    return $mergedConfig
+}
+
 # Logging helper for Configuration module
 function Write-ConfigLog {
     param(
@@ -1269,6 +1390,7 @@ function Resolve-FeatureDependencies {
 
 Export-ModuleMember -Function @(
     'Import-ConfigDataFile',
+    'Get-MergedConfiguration',
     'Get-Configuration',
     'Set-Configuration',
     'Get-ConfigValue',

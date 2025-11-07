@@ -438,6 +438,9 @@ function Invoke-OrchestrationSequence {
 
         [Parameter()]
         [object]$Configuration,
+        
+        [Parameter()]
+        [string]$ConfigFile,
 
         [Parameter()]
         [hashtable]$Variables = @{},
@@ -507,8 +510,26 @@ function Invoke-OrchestrationSequence {
         
         Write-OrchestrationLog "Starting orchestration engine"
 
-        # Load configuration
-        $config = Get-OrchestrationConfiguration -Configuration $Configuration
+        # Load configuration with custom config file support
+        if ($ConfigFile) {
+            Write-OrchestrationLog "Loading configuration from custom file: $ConfigFile" -Level 'Information'
+            # Get merged configuration (config.psd1 < config.local.psd1 < custom file)
+            if (Get-Command Get-MergedConfiguration -ErrorAction SilentlyContinue) {
+                $customConfig = Get-MergedConfiguration -ConfigFile $ConfigFile
+                # If Configuration is also provided as hashtable, merge it on top
+                if ($Configuration -is [hashtable]) {
+                    $customConfig = Merge-Configuration -Current $customConfig -New $Configuration
+                }
+                $config = Get-OrchestrationConfiguration -Configuration $customConfig
+            }
+            else {
+                # Fallback to standard loading
+                $config = Get-OrchestrationConfiguration -Configuration $Configuration
+            }
+        }
+        else {
+            $config = Get-OrchestrationConfiguration -Configuration $Configuration
+        }
 
         # Apply default from config if not specified
         if (-not $PSBoundParameters.ContainsKey('Parallel')) {
@@ -2741,6 +2762,345 @@ function Invoke-Sequence {
     Invoke-OrchestrationSequence -Sequence $Numbers
 }
 
+#region Powerful One-Liner Helpers
+
+function Invoke-AitherWorkflow {
+    <#
+    .SYNOPSIS
+        Execute a complete workflow in a single command
+    
+    .DESCRIPTION
+        Powerful one-liner function for CI/CD and automation scenarios.
+        Combines script execution, playbook orchestration, and config management.
+        
+        Supports:
+        - Custom config files (config.production.psd1, config.ci.psd1, etc.)
+        - Config hierarchy: custom > config.local.psd1 > config.psd1
+        - Variable injection
+        - Multiple output formats
+        - CI/CD-friendly error handling
+    
+    .PARAMETER Script
+        Single script number to execute (e.g., "0402")
+    
+    .PARAMETER Sequence
+        Script sequence (e.g., "0402,0404,0407" or "stage:testing")
+    
+    .PARAMETER Playbook
+        Playbook name to execute
+    
+    .PARAMETER ConfigFile
+        Custom configuration file (e.g., "config.production.psd1")
+    
+    .PARAMETER Variables
+        Variables to inject into the workflow
+    
+    .PARAMETER OutputFormat
+        Output format (JSON, XML, JUnit, GitHubActions)
+    
+    .PARAMETER OutputPath
+        Path to save output report
+    
+    .PARAMETER Quiet
+        Suppress non-essential output
+    
+    .PARAMETER ThrowOnError
+        Throw exception on error (for CI/CD)
+    
+    .EXAMPLE
+        Invoke-AitherWorkflow -Script 0402
+        # Run tests
+    
+    .EXAMPLE
+        Invoke-AitherWorkflow -Sequence "0402,0404" -ConfigFile "./config.ci.psd1" -OutputFormat JUnit -OutputPath "./results.xml"
+        # CI/CD: Run tests with custom config, output JUnit
+    
+    .EXAMPLE
+        Invoke-AitherWorkflow -Playbook "test-full" -Variables @{MaxConcurrency=8} -Quiet -ThrowOnError
+        # Non-interactive test execution with custom concurrency
+    
+    .EXAMPLE
+        azw -Playbook "deploy-prod" -ConfigFile "./config.production.psd1" -ThrowOnError
+        # Production deployment with prod config (using alias)
+    
+    .OUTPUTS
+        [PSCustomObject] Execution result if PassThru or OutputFormat is specified
+    
+    .NOTES
+        Alias: azw (AitherZero Workflow)
+        
+        Config precedence: ConfigFile > config.local.psd1 > config.psd1
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'Script')]
+    [Alias('azw')]
+    param(
+        [Parameter(Mandatory, ParameterSetName = 'Script', Position = 0)]
+        [ValidatePattern('^\d{4}$')]
+        [string]$Script,
+        
+        [Parameter(Mandatory, ParameterSetName = 'Sequence', Position = 0)]
+        [string[]]$Sequence,
+        
+        [Parameter(Mandatory, ParameterSetName = 'Playbook', Position = 0)]
+        [string]$Playbook,
+        
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [hashtable]$Variables,
+        
+        [Parameter()]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions', 'None')]
+        [string]$OutputFormat = 'None',
+        
+        [Parameter()]
+        [string]$OutputPath,
+        
+        [Parameter()]
+        [switch]$Quiet,
+        
+        [Parameter()]
+        [switch]$ThrowOnError,
+        
+        [Parameter()]
+        [switch]$PassThru
+    )
+    
+    $params = @{
+        PassThru = $PassThru
+        Quiet = $Quiet
+        ThrowOnError = $ThrowOnError
+    }
+    
+    if ($ConfigFile) {
+        $params.ConfigFile = $ConfigFile
+    }
+    
+    if ($Variables) {
+        $params.Variables = $Variables
+    }
+    
+    if ($OutputFormat -ne 'None') {
+        $params.OutputFormat = $OutputFormat
+        if ($OutputPath) {
+            $params.OutputPath = $OutputPath
+        }
+    }
+    
+    switch ($PSCmdlet.ParameterSetName) {
+        'Script' {
+            if (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue) {
+                Invoke-AitherScript -Number $Script @params
+            }
+            else {
+                throw "Invoke-AitherScript not available. Ensure AitherZero module is loaded."
+            }
+        }
+        'Sequence' {
+            $params.Sequence = $Sequence
+            Invoke-OrchestrationSequence @params
+        }
+        'Playbook' {
+            $params.LoadPlaybook = $Playbook
+            Invoke-OrchestrationSequence @params
+        }
+    }
+}
+
+function Test-AitherAll {
+    <#
+    .SYNOPSIS
+        Run all tests in one command
+    
+    .DESCRIPTION
+        One-liner to execute complete test suite:
+        - Unit tests (0402)
+        - PSScriptAnalyzer (0404)
+        - Syntax validation (0407)
+    
+    .PARAMETER ConfigFile
+        Custom configuration file
+    
+    .PARAMETER OutputFormat
+        Output format (JUnit for CI/CD)
+    
+    .PARAMETER OutputPath
+        Path to save test results
+    
+    .EXAMPLE
+        Test-AitherAll
+        # Run all tests
+    
+    .EXAMPLE
+        Test-AitherAll -OutputFormat JUnit -OutputPath "./test-results.xml"
+        # CI/CD: Run all tests, output JUnit XML
+    
+    .EXAMPLE
+        aztest -ConfigFile "./config.ci.psd1" -ThrowOnError
+        # CI/CD with custom config (using alias)
+    #>
+    [CmdletBinding()]
+    [Alias('aztest')]
+    param(
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions', 'None')]
+        [string]$OutputFormat = 'None',
+        
+        [Parameter()]
+        [string]$OutputPath,
+        
+        [Parameter()]
+        [switch]$ThrowOnError
+    )
+    
+    $params = @{
+        Sequence = "0402,0404,0407"
+        ThrowOnError = $ThrowOnError
+        PassThru = $true
+    }
+    
+    if ($ConfigFile) {
+        $params.ConfigFile = $ConfigFile
+    }
+    
+    if ($OutputFormat -ne 'None') {
+        $params.OutputFormat = $OutputFormat
+        if ($OutputPath) {
+            $params.OutputPath = $OutputPath
+        }
+    }
+    
+    Invoke-OrchestrationSequence @params
+}
+
+function Invoke-AitherDeploy {
+    <#
+    .SYNOPSIS
+        Execute deployment workflow in one command
+    
+    .DESCRIPTION
+        One-liner for deployment automation with config file support
+    
+    .PARAMETER Environment
+        Environment to deploy to (Development, Staging, Production)
+    
+    .PARAMETER ConfigFile
+        Configuration file for the target environment
+    
+    .PARAMETER Variables
+        Additional variables to pass
+    
+    .EXAMPLE
+        Invoke-AitherDeploy -Environment Production -ConfigFile "./config.production.psd1"
+        # Deploy to production
+    
+    .EXAMPLE
+        azdeploy -Environment Staging -Variables @{SkipTests=$false}
+        # Deploy to staging with testing enabled (using alias)
+    #>
+    [CmdletBinding()]
+    [Alias('azdeploy')]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateSet('Development', 'Staging', 'Production')]
+        [string]$Environment,
+        
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [hashtable]$Variables = @{},
+        
+        [Parameter()]
+        [switch]$ThrowOnError
+    )
+    
+    # Add environment to variables
+    $Variables.Environment = $Environment
+    
+    $params = @{
+        LoadPlaybook = "deploy-$($Environment.ToLower())"
+        Variables = $Variables
+        ThrowOnError = $ThrowOnError
+        PassThru = $true
+    }
+    
+    if ($ConfigFile) {
+        $params.ConfigFile = $ConfigFile
+    }
+    
+    Invoke-OrchestrationSequence @params
+}
+
+function Get-AitherConfig {
+    <#
+    .SYNOPSIS
+        Get configuration with hierarchy support in one line
+    
+    .DESCRIPTION
+        Quick config access with automatic merging:
+        - config.psd1 (base)
+        - config.local.psd1 (local overrides)
+        - Custom file (if specified)
+    
+    .PARAMETER ConfigFile
+        Custom configuration file
+    
+    .PARAMETER Section
+        Configuration section to return
+    
+    .PARAMETER Key
+        Specific key to return
+    
+    .EXAMPLE
+        $config = Get-AitherConfig
+        # Get full merged configuration
+    
+    .EXAMPLE
+        $maxConcurrency = Get-AitherConfig -Section "Automation" -Key "MaxConcurrency"
+        # Get specific value
+    
+    .EXAMPLE
+        $prodConfig = Get-AitherConfig -ConfigFile "./config.production.psd1"
+        # Get production configuration
+    
+    .EXAMPLE
+        azconfig -Section Testing
+        # Get testing configuration (using alias)
+    #>
+    [CmdletBinding()]
+    [Alias('azconfig')]
+    param(
+        [Parameter()]
+        [string]$ConfigFile,
+        
+        [Parameter()]
+        [string]$Section,
+        
+        [Parameter()]
+        [string]$Key
+    )
+    
+    if (Get-Command Get-MergedConfiguration -ErrorAction SilentlyContinue) {
+        $params = @{}
+        if ($ConfigFile) { $params.ConfigFile = $ConfigFile }
+        if ($Section) { $params.Section = $Section }
+        if ($Key) { $params.Key = $Key }
+        
+        Get-MergedConfiguration @params
+    }
+    else {
+        Write-Warning "Get-MergedConfiguration not available. Using Get-Configuration."
+        Get-Configuration
+    }
+}
+
+#endregion
+
 # Create alias for seq
 Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
 
@@ -2764,4 +3124,8 @@ Export-ModuleMember -Function @(
     'Export-OrchestrationSummary'
     'Test-CIEnvironment'
     'Export-OrchestrationResult'
-) -Alias @('seq')
+    'Invoke-AitherWorkflow'
+    'Test-AitherAll'
+    'Invoke-AitherDeploy'
+    'Get-AitherConfig'
+) -Alias @('seq', 'azw', 'aztest', 'azdeploy', 'azconfig')
