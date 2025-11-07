@@ -333,6 +333,11 @@ function Invoke-OrchestrationSequence {
 
     .PARAMETER Configuration
     Configuration hashtable or path to configuration file
+    
+    .PARAMETER ConfigFile
+    Path to a custom configuration file that will be merged with config.psd1 and config.local.psd1.
+    Config precedence (highest to lowest): ConfigFile > config.local.psd1 > config.psd1
+    This enables environment-specific configurations (e.g., config.ci.psd1, config.production.psd1)
 
     .PARAMETER Variables
     Variables to pass to scripts for conditional execution
@@ -368,19 +373,27 @@ function Invoke-OrchestrationSequence {
     Generate markdown execution summary report
     
     .PARAMETER OutputFormat
-    Export results in specified format (JSON, XML, JUnit, GitHubActions) for CI/CD integration
+    Export results in specified format for CI/CD integration:
+    - JSON: Structured JSON output for parsing and processing
+    - XML: Standard XML format for data exchange
+    - JUnit: JUnit XML format for test result integration (compatible with Jenkins, GitLab CI, Azure Pipelines)
+    - GitHubActions: GitHub Actions-specific output with annotations and workflow commands
+    - None: No output file (default)
     
     .PARAMETER OutputPath
-    Path to save the output report file
+    Path where the output report file will be saved. Required when OutputFormat is not 'None'
     
     .PARAMETER ThrowOnError
-    Throw exception on any error (useful for CI/CD failure detection)
+    Throw a terminating exception if any script fails. Essential for CI/CD pipelines to detect failures.
+    When enabled, sets exit code to 1 and throws an exception that will halt the pipeline.
     
     .PARAMETER Quiet
-    Suppress non-essential output for CI/CD environments
+    Suppress non-essential console output. Useful for CI/CD environments where you only want errors and warnings.
+    Sets the AITHERZERO_QUIET environment variable during execution.
     
     .PARAMETER PassThru
-    Return detailed execution result object with all metrics
+    Return the detailed execution result object even when not using OutputFormat.
+    The result includes: Success, Completed, Failed, Skipped counts, Duration, and individual script results.
 
     .EXAMPLE
     # Run environment setup
@@ -397,6 +410,32 @@ function Invoke-OrchestrationSequence {
     .EXAMPLE
     # Run by stage
     Invoke-OrchestrationSequence -Sequence "stage:Infrastructure,stage:Development"
+
+    .EXAMPLE
+    # CI/CD: Run tests with custom config and JUnit output
+    Invoke-OrchestrationSequence -Sequence "0402,0404,0407" -ConfigFile "./config.ci.psd1" -OutputFormat JUnit -OutputPath "./test-results.xml" -ThrowOnError
+    
+    # This is ideal for CI/CD pipelines:
+    # - Custom config file for CI environment settings
+    # - JUnit output for test result integration
+    # - ThrowOnError ensures pipeline fails on errors
+    
+    .EXAMPLE
+    # GitHub Actions integration
+    Invoke-OrchestrationSequence -Sequence "stage:testing" -ConfigFile "./config.ci.psd1" -OutputFormat GitHubActions -Quiet
+    
+    # Outputs GitHub Actions workflow commands:
+    # - ::set-output commands for workflow variables
+    # - ::error annotations for failed scripts
+    # - ::notice annotations for success summaries
+    
+    .EXAMPLE
+    # Production deployment with custom config
+    Invoke-OrchestrationSequence -LoadPlaybook "deploy-prod" -ConfigFile "./config.production.psd1" -ThrowOnError -PassThru
+    
+    # Uses production-specific configuration
+    # Returns result object for programmatic access
+    # Throws on error to halt deployment on failures
 
     .EXAMPLE
     # Complex orchestration with variables
@@ -424,6 +463,35 @@ function Invoke-OrchestrationSequence {
     .EXAMPLE
     # With caching enabled
     Invoke-OrchestrationSequence -LoadPlaybook "test-full" -UseCache -GenerateSummary
+    
+    .OUTPUTS
+    [PSCustomObject] Execution result object when PassThru or OutputFormat is specified.
+    Contains: Success, Completed, Failed, Skipped, Duration, Results, ExitCode
+    
+    .NOTES
+    Exit Codes:
+    - 0: All scripts succeeded
+    - 1: One or more scripts failed (only when not using -ContinueOnError)
+    - 10: Partial success (some scripts failed but ContinueOnError was enabled)
+    
+    Configuration Hierarchy (when using -ConfigFile):
+    1. Custom config file specified in -ConfigFile (highest priority)
+    2. config.local.psd1 (local developer overrides, gitignored)
+    3. config.psd1 (base configuration)
+    
+    CI/CD Integration:
+    - Automatically detects CI environments (GitHub Actions, Azure Pipelines, GitLab CI, Jenkins)
+    - Sets appropriate exit codes for pipeline failure detection
+    - Supports standard output formats (JUnit, JSON) for result integration
+    
+    .LINK
+    Get-MergedConfiguration
+    
+    .LINK
+    Invoke-AitherWorkflow
+    
+    .LINK
+    Test-CIEnvironment
     #>
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Sequence')]
     param(

@@ -77,45 +77,155 @@ function Get-MergedConfiguration {
         Get configuration with hierarchical merging support
     
     .DESCRIPTION
-        Loads and merges configuration files in the following precedence order:
-        1. Custom config file (if specified via -ConfigFile)
-        2. config.local.psd1 (local overrides, gitignored)
-        3. config.psd1 (base configuration)
+        Loads and merges configuration files in the following precedence order (highest to lowest):
+        1. Custom config file (if specified via -ConfigFile parameter)
+        2. config.local.psd1 (local developer overrides, gitignored by default)
+        3. config.psd1 (base configuration, version controlled)
         
-        This allows for:
-        - Local development overrides (config.local.psd1)
-        - CI/CD-specific configs (passed via -ConfigFile)
-        - Scenario-specific configs (e.g., config.production.psd1)
+        This hierarchical system allows for:
+        - Local development customization without modifying version-controlled files
+        - Environment-specific configurations (CI/CD, staging, production)
+        - Scenario-specific settings (testing, deployment, debugging)
+        - Secure handling of sensitive local settings (via config.local.psd1)
+        
+        The function performs deep merging, so you only need to specify the settings
+        you want to override in higher-priority files. All other settings will be
+        inherited from lower-priority configuration files.
     
     .PARAMETER ConfigFile
-        Path to a custom configuration file to use as the highest priority
+        Path to a custom configuration file to use as the highest priority override.
+        This is ideal for:
+        - CI/CD pipelines: config.ci.psd1, config.github-actions.psd1
+        - Environments: config.staging.psd1, config.production.psd1
+        - Scenarios: config.testing.psd1, config.deployment.psd1
+        
+        Example: "./config.production.psd1", "./ci/config.ci.psd1"
     
     .PARAMETER IncludeLocal
-        Whether to include config.local.psd1 if it exists (default: true)
+        Whether to include config.local.psd1 in the merge hierarchy (default: true).
+        Set to $false to skip local overrides, useful when you want only base + custom config.
     
     .PARAMETER Section
-        Optional section to return instead of entire config
+        Optional: Return only a specific section of the configuration instead of the entire config.
+        Sections correspond to top-level keys in config.psd1 (e.g., "Testing", "Automation", "Infrastructure")
     
     .PARAMETER Key
-        Optional key within section to return
+        Optional: Return a specific key within a section instead of the entire section.
+        Requires -Section to be specified. Returns the value of that specific setting.
     
     .EXAMPLE
         $config = Get-MergedConfiguration
-        # Returns: config.psd1 merged with config.local.psd1 (if exists)
+        
+        Loads and merges:
+        - config.psd1 (base)
+        - config.local.psd1 (if exists)
+        
+        Returns the complete merged configuration hashtable.
     
     .EXAMPLE
-        $config = Get-MergedConfiguration -ConfigFile "./config.production.psd1"
-        # Returns: config.psd1 < config.local.psd1 < config.production.psd1
+        $prodConfig = Get-MergedConfiguration -ConfigFile "./config.production.psd1"
+        
+        Loads and merges (in order):
+        - config.psd1
+        - config.local.psd1 (if exists)
+        - config.production.psd1 (highest priority)
+        
+        Perfect for production deployments with environment-specific settings.
     
     .EXAMPLE
-        $value = Get-MergedConfiguration -ConfigFile "./ci-config.psd1" -Section "Testing" -Key "MaxConcurrency"
-        # Returns specific value from merged configuration
+        $ciConfig = Get-MergedConfiguration -ConfigFile "./config.ci.psd1" -IncludeLocal $false
+        
+        Loads and merges (in order):
+        - config.psd1
+        - config.ci.psd1 (skips config.local.psd1)
+        
+        Useful in CI/CD where you don't want local developer settings.
+    
+    .EXAMPLE
+        $maxConcurrency = Get-MergedConfiguration -ConfigFile "./config.ci.psd1" -Section "Testing" -Key "MaxConcurrency"
+        
+        Returns: 4 (or whatever value is configured)
+        
+        Gets a specific configuration value from the merged configuration.
+        Useful for retrieving single values programmatically.
+    
+    .EXAMPLE
+        # Local development workflow
+        # 1. Create config.local.psd1 from template:
+        Copy-Item config.local.template.psd1 config.local.psd1
+        
+        # 2. Customize your local settings in config.local.psd1:
+        @{
+            Testing = @{
+                MaxConcurrency = 2  # Reduce for slower machine
+            }
+        }
+        
+        # 3. Get merged config (automatically includes config.local.psd1):
+        $config = Get-MergedConfiguration
+        # Your local settings override the defaults!
+    
+    .EXAMPLE
+        # CI/CD pipeline usage
+        # In your pipeline script:
+        $ciConfig = Get-MergedConfiguration -ConfigFile "./config.ci.psd1"
+        
+        # Then pass to orchestration:
+        Invoke-OrchestrationSequence -Sequence "0402,0404" -Configuration $ciConfig
+        
+        # Or use the shorthand:
+        Invoke-OrchestrationSequence -Sequence "0402,0404" -ConfigFile "./config.ci.psd1"
+    
+    .EXAMPLE
+        # Environment-specific deployment
+        $environment = "Production"  # or "Staging", "Development"
+        $config = Get-MergedConfiguration -ConfigFile "./config.$($environment.ToLower()).psd1"
+        
+        # Use the merged config:
+        Invoke-OrchestrationSequence -LoadPlaybook "deploy" -Configuration $config
     
     .OUTPUTS
-        [hashtable] or [object] Merged configuration
+        [hashtable] or [object] - Complete merged configuration, specific section, or specific value
+        
+        When no Section/Key specified: Returns complete merged configuration hashtable
+        When Section specified: Returns that section of the configuration
+        When Section and Key specified: Returns the specific value
     
     .NOTES
-        This function does not cache - use Get-Configuration for cached access
+        Configuration File Format:
+        All configuration files must be valid PowerShell data files (.psd1) that return a hashtable.
+        
+        Example config.local.psd1:
+        @{
+            Testing = @{
+                MaxConcurrency = 2
+                Profile = "Quick"
+            }
+            Logging = @{
+                Level = "Debug"
+            }
+        }
+        
+        Best Practices:
+        - Keep config.psd1 in version control with sensible defaults
+        - Add config.local.psd1 to .gitignore for local customization
+        - Use config.<environment>.psd1 for environment-specific settings
+        - Only override what you need to change (deep merge handles the rest)
+        - Use -ConfigFile in CI/CD scripts for reproducible builds
+        
+        Security:
+        - Never commit sensitive data (passwords, tokens) to config.psd1
+        - Use config.local.psd1 for sensitive local settings (gitignored)
+        - Consider using Azure Key Vault or similar for production secrets
+    
+    .LINK
+        Get-Configuration
+        
+    .LINK
+        Invoke-OrchestrationSequence
+        
+    .LINK
+        Import-ConfigDataFile
     #>
     [CmdletBinding()]
     param(
