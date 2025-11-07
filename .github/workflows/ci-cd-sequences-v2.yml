@@ -93,7 +93,7 @@ jobs:
             
             Invoke-AitherSequence @params
             
-            $exitCode = $LASTEXITCODE
+            $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
             $success = $exitCode -eq 0
             
             Write-Host "`nSequence completed with exit code: $exitCode" -ForegroundColor $(if ($success) { 'Green' } else { 'Yellow' })

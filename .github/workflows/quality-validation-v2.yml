@@ -83,7 +83,7 @@ jobs:
               -GenerateSummary `
               -ContinueOnError
             
-            $exitCode = $LASTEXITCODE
+            $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
             $success = $exitCode -eq 0
             
             echo "success=$success" >> $env:GITHUB_OUTPUT

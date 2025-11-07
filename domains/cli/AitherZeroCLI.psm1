@@ -617,10 +617,32 @@ function Invoke-AitherSequence {
     
     # Call orchestration engine
     if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
-        Invoke-OrchestrationSequence @params
+        $result = Invoke-OrchestrationSequence @params
+        
+        # Set exit code based on result
+        if ($result) {
+            $failedCount = 0
+            if ($result.PSObject.Properties.Name -contains 'Failed') {
+                $failedCount = $result.Failed
+            } elseif ($result -is [array]) {
+                $failedCount = ($result | Where-Object { -not $_.Success }).Count
+            }
+            
+            if ($failedCount -gt 0) {
+                $global:LASTEXITCODE = 1
+                if (-not $ContinueOnError) {
+                    Write-Error "Sequence execution failed: $failedCount script(s) failed"
+                }
+            } else {
+                $global:LASTEXITCODE = 0
+            }
+        }
+        
+        return $result
     }
     else {
         Write-AitherStatus "OrchestrationEngine not loaded" -Type Error
+        $global:LASTEXITCODE = 1
         throw "OrchestrationEngine module not available. Ensure AitherZero module is loaded."
     }
 }
@@ -759,10 +781,34 @@ function Invoke-AitherPlaybook {
     
     # Call orchestration engine
     if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
-        Invoke-OrchestrationSequence @params
+        $result = Invoke-OrchestrationSequence @params
+        
+        # Set exit code based on result
+        if ($result) {
+            $failedCount = 0
+            if ($result.PSObject.Properties.Name -contains 'Failed') {
+                $failedCount = $result.Failed
+            } elseif ($result -is [array]) {
+                $failedCount = ($result | Where-Object { -not $_.Success }).Count
+            }
+            
+            if ($failedCount -gt 0) {
+                $global:LASTEXITCODE = 1
+                if (-not $ContinueOnError) {
+                    Write-Error "Playbook execution failed: $failedCount script(s) failed"
+                }
+            } else {
+                $global:LASTEXITCODE = 0
+            }
+        }
+        
+        if ($PassThru) {
+            return $result
+        }
     }
     else {
         Write-AitherStatus "OrchestrationEngine not loaded" -Type Error
+        $global:LASTEXITCODE = 1
         throw "OrchestrationEngine module not available. Ensure AitherZero module is loaded."
     }
 }

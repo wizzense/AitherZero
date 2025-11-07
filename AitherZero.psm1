@@ -168,105 +168,11 @@ if ($env:AITHERZERO_DEBUG) {
     }
 }
 
-# Create the az/Invoke-AitherScript function with dynamic parameters
-function Invoke-AitherScript {
-    [CmdletBinding(SupportsShouldProcess)]
-    param(
-        [Parameter(Position = 0, Mandatory = $true)]
-        [string]$ScriptNumber
-    )
+# Note: Invoke-AitherScript is now provided by AitherZeroCLI module
+# The CLI module provides a comprehensive implementation with proper help,
+# pipeline support, and all QOL features. No duplicate definition needed here.
 
-    DynamicParam {
-        $paramDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-
-        # Common parameters that many scripts accept
-        $commonParams = @{
-            'Path' = [string]
-            'OutputPath' = [string]
-            'DryRun' = [switch]
-            'PassThru' = [switch]
-            'NoCoverage' = [switch]
-            'CI' = [switch]
-            'UseCache' = [switch]
-            'ForceRun' = [switch]
-            'CacheMinutes' = [int]
-            'CoverageThreshold' = [int]
-            'ShowAll' = [switch]
-            'NonInteractive' = [switch]
-            'Force' = [switch]
-            'Type' = [string]
-            'Name' = [string]
-            'Message' = [string]
-            'Title' = [string]
-            'All' = [switch]
-            'Strict' = [switch]
-            'AutoFix' = [switch]
-            'CheckDependencies' = [switch]
-            'CheckSecrets' = [switch]
-            'CheckDeprecated' = [switch]
-            'CheckBestPractices' = [switch]
-            'OutputFormat' = [string]
-            'InstallDependencies' = [switch]
-            'WorkflowFile' = [string]
-            'Event' = [string]
-            'Job' = [string]
-            'VerboseOutput' = [switch]
-            'NoCache' = [switch]
-        }
-
-        foreach ($paramName in $commonParams.Keys) {
-            $paramType = $commonParams[$paramName]
-            $paramAttribute = New-Object System.Management.Automation.ParameterAttribute
-            $paramAttribute.Mandatory = $false
-
-            $attributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-            $attributeCollection.Add($paramAttribute)
-
-            $param = New-Object System.Management.Automation.RuntimeDefinedParameter($paramName, $paramType, $attributeCollection)
-            $paramDictionary.Add($paramName, $param)
-        }
-
-        return $paramDictionary
-    }
-
-    Process {
-        # Capture all parameters including dynamic ones
-        $allParams = @{}
-        foreach ($key in $PSBoundParameters.Keys) {
-            if ($key -ne 'ScriptNumber') {
-                $allParams[$key] = $PSBoundParameters[$key]
-            }
-        }
-
-        # Pass global Config as Configuration if it exists and not already specified
-        if ($global:Config -and -not $allParams.ContainsKey('Configuration')) {
-            $allParams['Configuration'] = $global:Config
-        }
-
-        $scriptPath = Join-Path $env:AITHERZERO_ROOT "automation-scripts"
-        $scripts = Get-ChildItem -Path $scriptPath -Filter "${ScriptNumber}*.ps1" -ErrorAction SilentlyContinue
-
-        if ($scripts.Count -eq 0) {
-            Write-Error "No script found matching pattern: ${ScriptNumber}*.ps1"
-            return
-        } elseif ($scripts.Count -gt 1) {
-            Write-Host "Multiple scripts found:" -ForegroundColor Yellow
-            $scripts | ForEach-Object { Write-Host "  $_" }
-            return
-        }
-
-        # Execute the script with all parameters
-        $scriptFile = $scripts[0].FullName
-
-        if ($allParams.Count -gt 0) {
-            & $scriptFile @allParams
-        } else {
-            & $scriptFile
-        }
-    }
-}
-
-# Set up aliases
+# Set up aliases (CLI module exports the function)
 Set-Alias -Name 'az' -Value 'Invoke-AitherScript' -Force
 
 # Initialize extension and config systems if available

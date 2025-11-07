@@ -95,7 +95,7 @@ jobs:
               -GenerateSummary `
               -ContinueOnError
             
-            $exitCode = $LASTEXITCODE
+            $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
             $success = $exitCode -eq 0
             
             Write-Host "Playbook execution completed with exit code: $exitCode" -ForegroundColor $(if ($success) { 'Green' } else { 'Yellow' })

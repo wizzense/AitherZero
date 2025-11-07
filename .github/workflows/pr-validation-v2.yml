@@ -66,18 +66,21 @@ jobs:
           
           try {
             # Execute pr-validation-fast playbook using new CLI
+            # The cmdlet sets $LASTEXITCODE based on failures
             Invoke-AitherPlaybook -Name pr-validation-fast -Parallel -GenerateSummary
             
-            $exitCode = $LASTEXITCODE
+            $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
             Write-Host "Exit code: $exitCode" -ForegroundColor $(if ($exitCode -eq 0) { 'Green' } else { 'Red' })
             
             echo "success=$($exitCode -eq 0)" >> $env:GITHUB_OUTPUT
             echo "exit-code=$exitCode" >> $env:GITHUB_OUTPUT
             
+            # Exit with the appropriate code
             exit $exitCode
           }
           catch {
             Write-Host "❌ Playbook execution failed: $_" -ForegroundColor Red
+            Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor Red
             echo "success=false" >> $env:GITHUB_OUTPUT
             echo "exit-code=1" >> $env:GITHUB_OUTPUT
             exit 1

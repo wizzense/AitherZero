@@ -81,7 +81,8 @@ jobs:
           # Use Invoke-AitherScript cmdlet
           Invoke-AitherScript -Number 0407 -Variables @{ All = $true }
           
-          if ($LASTEXITCODE -ne 0) {
+          $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+          if ($exitCode -ne 0) {
             Write-Host "❌ Syntax validation failed" -ForegroundColor Red
             exit 1
           }
