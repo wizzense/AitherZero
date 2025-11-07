@@ -12,22 +12,20 @@
 
     # Functions to export from all nested modules
     FunctionsToExport = @(
-        # From RootModule (AitherZero.psm1)
-        'Invoke-AitherScript',
+        # From CLI Module (NEW - Primary Interface)
+        'Invoke-AitherScript', 'Get-AitherScript', 'Invoke-AitherSequence',
+        'Invoke-AitherPlaybook', 'Get-AitherPlaybook',
+        'Get-AitherConfig', 'Set-AitherConfig', 'Switch-AitherEnvironment',
+        'Show-AitherDashboard', 'Get-AitherMetrics', 'Export-AitherMetrics',
+        'Get-AitherPlatform', 'Test-AitherAdmin', 'Get-AitherVersion', 'Test-AitherCommand',
+        'Write-AitherLog',
 
         # From Logging modules
-        'Write-CustomLog', 'Write-ConfigLog', 'Write-UILog', 'Write-TestingLog',
+        'Write-CustomLog', 'Write-ConfigLog', 'Write-TestingLog',
         'Write-InfraLog', 'Write-AuditLog', 'Enable-AuditLogging',
 
         # From Configuration
         'Import-ConfigDataFile', 'Get-Configuration', 'Set-Configuration', 'Get-ModuleConfiguration',
-
-        # From BetterMenu
-        'Show-BetterMenu',
-
-        # From UserInterface
-        'Show-UIMenu', 'Show-UIProgress', 'Show-UINotification', 'Show-UIWizard',
-        'Initialize-AitherUI', 'Show-UIBorder', 'Write-UIText',
 
         # From GitAutomation
         'New-FeatureBranch', 'New-ConventionalCommit', 'Sync-GitRepository',
@@ -71,7 +69,7 @@
 
     CmdletsToExport = @()
     VariablesToExport = @()
-    AliasesToExport = @('az', 'seq')
+    AliasesToExport = @('az', 'seq', 'az-script', 'az-playbook', 'az-config', 'az-dashboard', 'az-metrics')
 
     # Private data
     PrivateData = @{

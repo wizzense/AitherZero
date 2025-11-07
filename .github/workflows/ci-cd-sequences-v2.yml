@@ -1,0 +1,226 @@
+---
+name: 🎯 CI/CD Sequences (v2 - CLI)
+
+# Demonstrates sequence execution with new CLI cmdlets
+# Run specific script sequences on-demand
+on:
+  workflow_dispatch:
+    inputs:
+      sequence:
+        description: 'Script sequence to execute'
+        required: true
+        default: '0402,0404,0407'
+        type: string
+      parallel:
+        description: 'Enable parallel execution'
+        required: false
+        default: true
+        type: boolean
+      max-concurrency:
+        description: 'Max parallel scripts'
+        required: false
+        default: '8'
+        type: string
+      continue-on-error:
+        description: 'Continue if a script fails'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+
+jobs:
+  execute-sequence:
+    name: 🎯 Execute Script Sequence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Bootstrapping AitherZero..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📦 Load Module
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Write-Host "✅ AitherZero CLI loaded" -ForegroundColor Green
+          
+          Write-Host "`nAvailable sequence cmdlets:" -ForegroundColor Cyan
+          Get-Command Invoke-AitherSequence, Invoke-AitherScript | Format-Table Name, Source
+
+      - name: 🎯 Execute Sequence
+        id: sequence
+        shell: pwsh
+        run: |
+          Write-Host "🎯 Executing script sequence..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          $sequence = "${{ github.event.inputs.sequence }}"
+          $parallel = "${{ github.event.inputs.parallel }}" -eq "true"
+          $maxConcurrency = [int]"${{ github.event.inputs.max-concurrency }}"
+          $continueOnError = "${{ github.event.inputs.continue-on-error }}" -eq "true"
+          
+          Write-Host "Sequence: $sequence" -ForegroundColor Yellow
+          Write-Host "Parallel: $parallel" -ForegroundColor Yellow
+          Write-Host "Max Concurrency: $maxConcurrency" -ForegroundColor Yellow
+          Write-Host "Continue on Error: $continueOnError" -ForegroundColor Yellow
+          Write-Host ""
+          
+          try {
+            # Execute sequence using new CLI cmdlet
+            $params = @{
+              Sequence = $sequence
+              Parallel = $parallel
+              MaxConcurrency = $maxConcurrency
+              ContinueOnError = $continueOnError
+              GenerateSummary = $true
+              UseCache = $true
+            }
+            
+            Invoke-AitherSequence @params
+            
+            $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+            $success = $exitCode -eq 0
+            
+            Write-Host "`nSequence completed with exit code: $exitCode" -ForegroundColor $(if ($success) { 'Green' } else { 'Yellow' })
+            
+            echo "success=$success" >> $env:GITHUB_OUTPUT
+            echo "exit-code=$exitCode" >> $env:GITHUB_OUTPUT
+            
+            exit 0  # Don't fail workflow
+          }
+          catch {
+            Write-Host "❌ Sequence execution failed: $_" -ForegroundColor Red
+            echo "success=false" >> $env:GITHUB_OUTPUT
+            echo "exit-code=1" >> $env:GITHUB_OUTPUT
+            exit 0  # Don't fail workflow
+          }
+
+      - name: 📊 Upload Execution Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sequence-results-${{ github.run_number }}
+          path: |
+            reports/**/*
+            logs/**/*.log
+            tests/results/**/*
+          retention-days: 14
+
+      - name: ✅ Sequence Execution Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $success = "${{ steps.sequence.outputs.success }}" -eq "true"
+          $sequence = "${{ github.event.inputs.sequence }}"
+          
+          Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║          SEQUENCE EXECUTION COMPLETE (v2)                    ║" -ForegroundColor Cyan
+          Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Sequence: $sequence" -ForegroundColor White
+          Write-Host "Parallel: ${{ github.event.inputs.parallel }}" -ForegroundColor White
+          Write-Host "Max Concurrency: ${{ github.event.inputs.max-concurrency }}" -ForegroundColor White
+          Write-Host ""
+          
+          if ($success) {
+            Write-Host "Status: ✅ ALL SCRIPTS SUCCEEDED" -ForegroundColor Green
+          } else {
+            Write-Host "Status: ⚠️  SOME SCRIPTS FAILED" -ForegroundColor Yellow
+          }
+          
+          Write-Host ""
+          Write-Host "Examples of sequence formats:" -ForegroundColor Cyan
+          Write-Host "  • Individual: 0402,0404,0407" -ForegroundColor Gray
+          Write-Host "  • Ranges: 0400-0410,0500-0520" -ForegroundColor Gray
+          Write-Host "  • Mixed: 0402,0500-0510,0700" -ForegroundColor Gray
+          Write-Host "  • Wildcards: 04*,!0450 (via OrchestrationEngine)" -ForegroundColor Gray
+          Write-Host ""
+          Write-Host "Powered by AitherZeroCLI and OrchestrationEngine" -ForegroundColor DarkCyan
+
+  # Example predefined sequences
+  validation-sequence:
+    name: 🔍 Validation Sequence
+    runs-on: ubuntu-latest
+    if: github.event.inputs.sequence == ''  # Only if no custom sequence
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 🔍 Run Validation Sequence
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "Running predefined validation sequence..." -ForegroundColor Cyan
+          
+          # Syntax + Config + PSScriptAnalyzer
+          Invoke-AitherSequence "0407,0413,0404" -Parallel -GenerateSummary
+
+  testing-sequence:
+    name: 🧪 Testing Sequence
+    runs-on: ubuntu-latest
+    if: github.event.inputs.sequence == ''  # Only if no custom sequence
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 🧪 Run Testing Sequence
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "Running predefined testing sequence..." -ForegroundColor Cyan
+          
+          # Install testing tools + Run unit tests + Run integration tests
+          Invoke-AitherSequence "0400,0402,0403" -Parallel -MaxConcurrency 4 -GenerateSummary
+
+  reporting-sequence:
+    name: 📊 Reporting Sequence
+    runs-on: ubuntu-latest
+    if: github.event.inputs.sequence == ''  # Only if no custom sequence
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📊 Run Reporting Sequence
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "Running predefined reporting sequence..." -ForegroundColor Cyan
+          
+          # Generate various reports
+          Invoke-AitherSequence "0510,0511,0512" -Parallel -GenerateSummary

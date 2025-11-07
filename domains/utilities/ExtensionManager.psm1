@@ -71,7 +71,7 @@ function Initialize-ExtensionSystem {
     }
     
     # Discover available extensions
-    Discover-Extensions
+    Find-Extensions
     
     # Load enabled extensions
     $config = Get-ExtensionConfiguration
@@ -102,7 +102,7 @@ function Initialize-ExtensionSystem {
     and CANNOT use PowerShell expressions like $true/$false or command invocations.
     Use string literals 'true'/'false' instead and parse them in your code.
 #>
-function Discover-Extensions {
+function Find-Extensions {
     [CmdletBinding()]
     param()
     
@@ -167,7 +167,7 @@ function Import-Extension {
     
     # Check if available
     if (-not $script:ExtensionRegistry.Available.ContainsKey($Name)) {
-        throw "Extension '$Name' not found. Run Discover-Extensions first."
+        throw "Extension '$Name' not found. Run Find-Extensions first."
     }
     
     $extInfo = $script:ExtensionRegistry.Available[$Name]
@@ -645,7 +645,7 @@ $Author
 # Export functions
 Export-ModuleMember -Function @(
     'Initialize-ExtensionSystem'
-    'Discover-Extensions'
+    'Find-Extensions'
     'Import-Extension'
     'Remove-Extension'
     'Get-AvailableExtensions'
