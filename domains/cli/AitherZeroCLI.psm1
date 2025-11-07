@@ -1132,6 +1132,12 @@ function Show-AitherDashboard {
                         'PowerShell' = "$($PSVersionTable.PSVersion)"
                     }
                 }
+                Progress = @{
+                    Data = @{
+                        Completed = 0
+                        Total = 0
+                    }
+                }
             }
         }
         
