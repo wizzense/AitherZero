@@ -60,7 +60,7 @@ $modulesToLoad = @(
     './domains/configuration/ConfigManager.psm1',
 
     # CLI Module (NEW - loads after configuration)
-    './domains/cli/CLI.psm1',
+    './domains/cli/AitherZeroCLI.psm1',
 
     # Development tools
     './domains/development/GitAutomation.psm1',
