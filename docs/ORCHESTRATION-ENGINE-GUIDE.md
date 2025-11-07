@@ -11,9 +11,9 @@ The OrchestrationEngine is AitherZero's powerful workflow automation system that
 - **Playbook system**: Reusable workflows with .psd1 or .json formats
 - **Parallel execution**: Run scripts concurrently with dependency resolution
 - **Timeout handling**: Automatic cleanup of hung operations
-- **Matrix builds**: Execute scripts with multiple configurations
-- **Caching system**: Speed up repeated executions
-- **Notifications**: Integration with external systems (Slack, Teams, etc.)
+- **Matrix builds**: Execute scripts with multiple configurations (experimental)
+- **Caching system**: Speed up repeated executions (experimental)
+- **Notifications**: Integration with external systems (planned for v2.1)
 
 ### Async Operation Support
 - Thread-based parallelism with `Start-ThreadJob`
@@ -373,3 +373,39 @@ aitherzero orchestrate test-orchestration
 - [Script Metadata](./SCRIPT-METADATA.md)
 - [Testing Guide](./TESTING-README.md)
 - [Project Health Validation](./PROJECT-HEALTH-VALIDATION.md)
+
+## Experimental Features
+
+The following features are available but considered experimental. Use with caution in production environments.
+
+### Matrix Builds
+Execute scripts with multiple parameter combinations:
+```powershell
+Invoke-OrchestrationSequence -Sequence "0402" -Matrix @{
+    profile = @('quick', 'comprehensive')
+    platform = @('Windows', 'Linux')
+}
+```
+
+**Status**: Functional but limited testing. May have edge cases.
+
+### Caching
+Cache execution results for faster repeated runs:
+```powershell
+Invoke-OrchestrationSequence -LoadPlaybook 'test-full' -UseCache
+```
+
+**Status**: Basic caching implemented. Advanced cache invalidation pending.
+
+### Notifications
+Send notifications to external systems:
+```powershell
+# Planned for v2.1
+```
+
+**Status**: Planned. Not yet implemented. Framework in place for future development.
+
+---
+
+**Last Updated**: 2025-11-07
+**Version**: 2.0.0

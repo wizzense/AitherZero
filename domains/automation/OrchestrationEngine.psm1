@@ -15,6 +15,11 @@ $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:ScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
 $script:OrchestrationPath = Join-Path $script:ProjectRoot 'orchestration'
 
+# Exit code constants
+$script:EXIT_SUCCESS = 0
+$script:EXIT_FAILURE = 1
+$script:EXIT_TIMEOUT = 124  # Standard timeout exit code (used by GNU timeout command)
+
 # Import logging
 $script:LoggingAvailable = $false
 try {
@@ -1072,7 +1077,7 @@ function Invoke-ParallelOrchestration {
             $failed[$number] = @{
                 Success = $false
                 Error = "Script exceeded timeout of $($jobInfo.Script.Timeout) seconds"
-                ExitCode = 124  # Standard timeout exit code
+                ExitCode = $script:EXIT_TIMEOUT
             }
             
             $jobs.Remove($number)
