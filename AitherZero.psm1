@@ -88,6 +88,8 @@ $modulesToLoad = @(
     
     # Security
     './domains/security/Security.psm1',
+    './domains/security/Encryption.psm1',
+    './domains/security/LicenseManager.psm1',
     
     # Documentation
     './domains/documentation/DocumentationEngine.psm1',
