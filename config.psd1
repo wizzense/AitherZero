@@ -863,6 +863,7 @@
         # Script execution settings
         ScriptsPath = './automation-scripts'
         DefaultTimeout = 3600
+        MaxTimeout = 7200  # Maximum allowed timeout (2 hours)
         MaxConcurrency = 4
         ParallelExecution = $true
         DefaultMode = 'Parallel'  # Parallel, Sequential, Staged, Conditional
@@ -886,6 +887,82 @@
         HistoryRetentionDays = 30
         CacheExecutionPlans = $true
         NotificationEnabled = $true
+        
+        # Script range defaults - defines behavior per script number range
+        ScriptRangeDefaults = @{
+            '0000-0099' = @{
+                Name = 'Environment Setup'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $false
+                RequiresElevation = $true
+                Stage = 'Setup'
+                AllowParallel = $false  # Sequential for setup scripts
+            }
+            '0100-0199' = @{
+                Name = 'Infrastructure'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $false
+                RequiresElevation = $true
+                Stage = 'Infrastructure'
+                AllowParallel = $true
+            }
+            '0200-0299' = @{
+                Name = 'Development Tools'
+                DefaultTimeout = 900  # 15 minutes
+                ContinueOnError = $true  # Can continue if optional tools fail
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $true
+            }
+            '0400-0499' = @{
+                Name = 'Testing & Validation'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $true  # Show all test results
+                RequiresElevation = $false
+                Stage = 'Testing'
+                AllowParallel = $true
+            }
+            '0500-0599' = @{
+                Name = 'Reporting & Metrics'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Reporting'
+                AllowParallel = $true
+            }
+            '0700-0799' = @{
+                Name = 'Git Automation'
+                DefaultTimeout = 180  # 3 minutes
+                ContinueOnError = $false
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $false
+            }
+            '0800-0899' = @{
+                Name = 'Issue Management'
+                DefaultTimeout = 120  # 2 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $true
+            }
+            '0900-0999' = @{
+                Name = 'Validation & Diagnostics'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Testing'
+                AllowParallel = $true
+            }
+            '9000-9999' = @{
+                Name = 'Maintenance & Cleanup'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $true
+                RequiresElevation = $true
+                Stage = 'Maintenance'
+                AllowParallel = $false
+            }
+        }
         
         # Execution profiles mapping
         Profiles = @{

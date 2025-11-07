@@ -294,31 +294,70 @@ function Invoke-OrchestrationSequence {
                 # Check if Sequence contains hashtable objects (v1 playbook with script definitions)
                 # or simple strings/numbers (traditional format)
                 if ($playbook.Sequence[0] -is [hashtable]) {
-                    Write-OrchestrationLog "Playbook contains script definitions, extracting script numbers/paths"
+                    Write-OrchestrationLog "Playbook contains script definitions, normalizing and extracting script numbers/paths"
                     $extractedSequence = @()
+                    
+                    # Store normalized script definitions for later use
+                    $script:PlaybookScriptDefinitions = @{}
+                    $validationIssues = @()
+                    
                     foreach ($scriptDef in $playbook.Sequence) {
-                        if ($scriptDef.Script) {
+                        # Normalize the script definition (pass Configuration for defaults)
+                        $normalized = ConvertTo-NormalizedScriptDefinition -Definition $scriptDef -ScriptNumber 'Unknown' -Configuration $Configuration
+                        
+                        if (-not $normalized.Valid) {
+                            $validationIssues += "Skipping invalid script definition: $($normalized.ValidationIssues -join '; ')"
+                            Write-OrchestrationLog "Skipping invalid script definition: $($normalized.ValidationIssues -join '; ')" -Level 'Warning'
+                            continue
+                        }
+                        
+                        if ($normalized.ValidationIssues.Count -gt 0) {
+                            Write-OrchestrationLog "Script definition issues: $($normalized.ValidationIssues -join '; ')" -Level 'Warning'
+                        }
+                        
+                        if ($normalized.Script) {
                             # Extract just the script name/number
-                            $scriptName = $scriptDef.Script
+                            $scriptName = $normalized.Script
+                            $scriptNumber = $null
+                            
                             # If it's a full filename like "0407_Validate-Syntax.ps1", extract the number
                             if ($scriptName -match '^(\d{4})_.*\.ps1$') {
-                                $extractedSequence += $Matches[1]
+                                $scriptNumber = $Matches[1]
                             } 
                             # If it's already just a number
                             elseif ($scriptName -match '^\d{4}$') {
-                                $extractedSequence += $scriptName
+                                $scriptNumber = $scriptName
                             }
                             # Otherwise use as-is (might be a path or name)
                             else {
-                                $extractedSequence += $scriptName
+                                $scriptNumber = $scriptName
+                            }
+                            
+                            if ($scriptNumber) {
+                                $extractedSequence += $scriptNumber
+                                
+                                # Store the normalized script definition keyed by script number
+                                $script:PlaybookScriptDefinitions[$scriptNumber] = @{
+                                    Script = $normalized.Script
+                                    Parameters = $normalized.Parameters
+                                    Timeout = $normalized.Timeout
+                                    ContinueOnError = $normalized.ContinueOnError
+                                    Description = $normalized.Description
+                                }
                             }
                         }
                     }
+                    
+                    if ($validationIssues.Count -gt 0) {
+                        Write-OrchestrationLog "Playbook validation found $($validationIssues.Count) issue(s)" -Level 'Warning'
+                    }
+                    
                     $Sequence = $extractedSequence
                     Write-OrchestrationLog "Extracted sequence: $($Sequence -join ', ')"
                 } else {
                     # Traditional format - already strings/numbers
                     $Sequence = $playbook.Sequence
+                    $script:PlaybookScriptDefinitions = $null
                 }
             }
 
@@ -420,7 +459,7 @@ function Invoke-OrchestrationSequence {
         Write-OrchestrationLog "Resolved to $($scriptNumbers.Count) scripts: $($scriptNumbers -join ', ')"
 
         # Get script metadata
-        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions
+        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions -Configuration $Configuration
 
         # Matrix build handling - expand scripts for each matrix combination
         if ($Matrix) {
@@ -637,6 +676,225 @@ function ConvertTo-ScriptNumbers {
     return $numbers
 }
 
+function ConvertTo-NormalizedScriptDefinition {
+    <#
+    .SYNOPSIS
+    Normalizes a script definition to a standard format with validation
+    
+    .DESCRIPTION
+    Handles different playbook formats and property name variations.
+    Validates types and provides safe defaults for missing properties.
+    Uses configuration file for fallback defaults.
+    
+    .PARAMETER Definition
+    The script definition (can be string, number, or hashtable)
+    
+    .PARAMETER ScriptNumber
+    The extracted script number (for context in error messages)
+    
+    .PARAMETER Configuration
+    Configuration hashtable with system defaults
+    #>
+    param(
+        [Parameter(Mandatory)]
+        $Definition,
+        
+        [string]$ScriptNumber,
+        
+        [hashtable]$Configuration
+    )
+    
+    # Get system defaults from configuration
+    $defaultTimeout = if ($Configuration -and $Configuration.Automation.DefaultTimeout) {
+        $Configuration.Automation.DefaultTimeout
+    } else {
+        3600  # 1 hour fallback
+    }
+    
+    $defaultContinueOnError = if ($Configuration -and $null -ne $Configuration.Automation.ContinueOnError) {
+        $Configuration.Automation.ContinueOnError
+    } else {
+        $false
+    }
+    
+    # Maximum allowed timeout (from config or hardcoded)
+    $maxTimeout = if ($Configuration -and $Configuration.Automation.MaxTimeout) {
+        $Configuration.Automation.MaxTimeout
+    } else {
+        7200  # 2 hours
+    }
+    
+    $normalized = @{
+        Script = $null
+        ScriptNumber = $ScriptNumber
+        Parameters = @{}
+        Timeout = $null  # null means use default or no timeout
+        ContinueOnError = $defaultContinueOnError
+        Description = ''
+        Valid = $true
+        ValidationIssues = @()
+    }
+    
+    # Handle different definition formats
+    if ($Definition -is [hashtable]) {
+        # Extract Script property (case-insensitive)
+        $scriptProp = $Definition['Script'] ?? $Definition['script'] ?? $Definition['ScriptPath'] ?? $Definition['scriptPath']
+        if (-not $scriptProp) {
+            $normalized.Valid = $false
+            $normalized.ValidationIssues += "Script definition missing 'Script' property"
+            return $normalized
+        }
+        $normalized.Script = $scriptProp
+        
+        # Extract Parameters (case-insensitive, type-safe)
+        $paramsProp = $Definition['Parameters'] ?? $Definition['parameters'] ?? $Definition['Params'] ?? $Definition['params']
+        if ($paramsProp) {
+            if ($paramsProp -is [hashtable]) {
+                $normalized.Parameters = $paramsProp
+            } elseif ($paramsProp -is [System.Collections.IDictionary]) {
+                # Convert IDictionary to hashtable
+                $normalized.Parameters = @{}
+                foreach ($key in $paramsProp.Keys) {
+                    $normalized.Parameters[$key] = $paramsProp[$key]
+                }
+            } else {
+                $normalized.ValidationIssues += "Parameters must be a hashtable, got $($paramsProp.GetType().Name)"
+                $normalized.Parameters = @{}
+            }
+        }
+        
+        # Extract Timeout (case-insensitive, type-safe)
+        $timeoutProp = $Definition['Timeout'] ?? $Definition['timeout'] ?? $Definition['TimeoutSeconds'] ?? $Definition['timeoutSeconds']
+        if ($null -ne $timeoutProp) {
+            try {
+                $timeoutValue = [int]$timeoutProp
+                if ($timeoutValue -le 0) {
+                    $normalized.ValidationIssues += "Timeout must be positive, got $timeoutValue (using default: ${defaultTimeout}s)"
+                    $normalized.Timeout = $defaultTimeout
+                } elseif ($timeoutValue -gt $maxTimeout) {
+                    $normalized.ValidationIssues += "Timeout exceeds maximum (${maxTimeout}s), got $timeoutValue (capping at ${maxTimeout}s)"
+                    $normalized.Timeout = $maxTimeout
+                } else {
+                    $normalized.Timeout = $timeoutValue
+                }
+            } catch {
+                $normalized.ValidationIssues += "Timeout must be an integer, got '$timeoutProp' (using default: ${defaultTimeout}s)"
+                $normalized.Timeout = $defaultTimeout
+            }
+        }
+        
+        # Extract ContinueOnError (case-insensitive, type-safe)
+        $continueProp = $Definition['ContinueOnError'] ?? $Definition['continueOnError'] ?? $Definition['continue_on_error']
+        if ($null -ne $continueProp) {
+            if ($continueProp -is [bool]) {
+                $normalized.ContinueOnError = $continueProp
+            } elseif ($continueProp -is [string]) {
+                $normalized.ContinueOnError = $continueProp -in @('true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES')
+            } elseif ($continueProp -is [int]) {
+                $normalized.ContinueOnError = $continueProp -ne 0
+            } else {
+                $normalized.ValidationIssues += "ContinueOnError must be boolean, got $($continueProp.GetType().Name) (using default: $defaultContinueOnError)"
+                $normalized.ContinueOnError = $defaultContinueOnError
+            }
+        }
+        
+        # Extract Description (case-insensitive)
+        $descProp = $Definition['Description'] ?? $Definition['description']
+        if ($descProp) {
+            $normalized.Description = $descProp.ToString()
+        }
+        
+    } elseif ($Definition -is [string] -or $Definition -is [int]) {
+        # Simple format - just script number/name
+        $normalized.Script = $Definition.ToString()
+    } else {
+        $normalized.Valid = $false
+        $normalized.ValidationIssues += "Invalid definition type: $($Definition.GetType().Name)"
+    }
+    
+    return $normalized
+}
+
+function Get-ScriptRangeDefaults {
+    <#
+    .SYNOPSIS
+    Gets default settings for a script based on its number range
+    
+    .DESCRIPTION
+    Looks up defaults from configuration based on script number.
+    Falls back to global defaults if range not found.
+    
+    .PARAMETER ScriptNumber
+    The script number (e.g., '0407')
+    
+    .PARAMETER Configuration
+    Configuration hashtable with script range defaults
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$ScriptNumber,
+        
+        [hashtable]$Configuration
+    )
+    
+    $defaults = @{
+        Timeout = $null
+        ContinueOnError = $false
+        RequiresElevation = $false
+        Stage = 'Default'
+        AllowParallel = $true
+    }
+    
+    if (-not $Configuration -or -not $Configuration.Automation) {
+        return $defaults
+    }
+    
+    # Get global automation defaults
+    if ($Configuration.Automation.DefaultTimeout) {
+        $defaults.Timeout = $Configuration.Automation.DefaultTimeout
+    }
+    if ($null -ne $Configuration.Automation.ContinueOnError) {
+        $defaults.ContinueOnError = $Configuration.Automation.ContinueOnError
+    }
+    
+    # Find matching range
+    if ($Configuration.Automation.ScriptRangeDefaults) {
+        $number = [int]$ScriptNumber
+        
+        foreach ($range in $Configuration.Automation.ScriptRangeDefaults.Keys) {
+            if ($range -match '^(\d{4})-(\d{4})$') {
+                $start = [int]$Matches[1]
+                $end = [int]$Matches[2]
+                
+                if ($number -ge $start -and $number -le $end) {
+                    $rangeDefaults = $Configuration.Automation.ScriptRangeDefaults[$range]
+                    
+                    # Override with range-specific defaults
+                    if ($rangeDefaults.DefaultTimeout) {
+                        $defaults.Timeout = $rangeDefaults.DefaultTimeout
+                    }
+                    if ($null -ne $rangeDefaults.ContinueOnError) {
+                        $defaults.ContinueOnError = $rangeDefaults.ContinueOnError
+                    }
+                    if ($null -ne $rangeDefaults.RequiresElevation) {
+                        $defaults.RequiresElevation = $rangeDefaults.RequiresElevation
+                    }
+                    if ($rangeDefaults.Stage) {
+                        $defaults.Stage = $rangeDefaults.Stage
+                    }
+                    if ($null -ne $rangeDefaults.AllowParallel) {
+                        $defaults.AllowParallel = $rangeDefaults.AllowParallel
+                    }
+                    
+                    break
+                }
+            }
+        }
+    }
+    
+    return $defaults
+}
+
 function Expand-PlaybookVariables {
     param(
         [string]$Value,
@@ -668,7 +926,8 @@ function Get-OrchestrationScripts {
     param(
         [string[]]$Numbers,
         [hashtable]$Variables,
-        [hashtable]$Conditions
+        [hashtable]$Conditions,
+        [hashtable]$Configuration
     )
 
     $scripts = @()
@@ -681,8 +940,16 @@ function Get-OrchestrationScripts {
             continue
         }
 
+        # Get configuration defaults for this script range
+        $configDefaults = Get-ScriptRangeDefaults -ScriptNumber $number -Configuration $Configuration
+
         # Parse script metadata
         $metadata = Get-ScriptMetadata -Path $scriptFile.FullName
+        
+        # Merge metadata with config defaults (metadata takes precedence)
+        if (-not $metadata.Stage -or $metadata.Stage -eq 'Default') {
+            $metadata.Stage = $configDefaults.Stage
+        }
 
         # Check if this script has stage-specific variables
         # Use stage-specific variables if defined, otherwise use global variables
@@ -725,18 +992,77 @@ function Get-OrchestrationScripts {
             }
         }
 
-        $scripts += [PSCustomObject]@{
+        # Check if this script has playbook-defined properties (Parameters, Timeout, ContinueOnError)
+        # Priority: Playbook > Script metadata > Config defaults > Hardcoded defaults
+        $playbookDefinition = $null
+        if ($script:PlaybookScriptDefinitions -and $script:PlaybookScriptDefinitions.ContainsKey($number)) {
+            $playbookDefinition = $script:PlaybookScriptDefinitions[$number]
+            Write-OrchestrationLog "Applying playbook definition for script $number" -Level 'Debug'
+            
+            # Validate parameters against script signature
+            if ($playbookDefinition.Parameters -and $playbookDefinition.Parameters.Count -gt 0) {
+                $scriptInfo = Get-Command $scriptFile.FullName -ErrorAction SilentlyContinue
+                if ($scriptInfo) {
+                    $invalidParams = @()
+                    foreach ($paramName in $playbookDefinition.Parameters.Keys) {
+                        if (-not $scriptInfo.Parameters.ContainsKey($paramName)) {
+                            $invalidParams += $paramName
+                        }
+                    }
+                    
+                    if ($invalidParams.Count -gt 0) {
+                        Write-OrchestrationLog "Warning: Script $number has invalid playbook parameters: $($invalidParams -join ', ')" -Level 'Warning'
+                        # Remove invalid parameters
+                        foreach ($invalidParam in $invalidParams) {
+                            $playbookDefinition.Parameters.Remove($invalidParam)
+                        }
+                    }
+                }
+            }
+        }
+
+        # Build script object with metadata and playbook-defined properties
+        # Priority order: Playbook > Config Defaults > Hardcoded Defaults
+        $scriptObj = [PSCustomObject]@{
             Number = $number
             Name = $scriptFile.Name
             Path = $scriptFile.FullName
             Stage = $metadata.Stage
             Dependencies = $metadata.Dependencies
-            Description = $metadata.Description
+            Description = if ($playbookDefinition -and $playbookDefinition.Description) { 
+                $playbookDefinition.Description 
+            } else { 
+                $metadata.Description 
+            }
             Condition = $metadata.Condition
             Tags = $metadata.Tags
             Priority = [int]$number
             Variables = $stageVariables  # Include stage-specific variables
+            
+            # Playbook-defined properties (validated and normalized)
+            # Priority: Playbook > Config Range Defaults > Hardcoded
+            Parameters = if ($playbookDefinition -and $playbookDefinition.Parameters) { 
+                $playbookDefinition.Parameters 
+            } else { 
+                @{} 
+            }
+            Timeout = if ($playbookDefinition -and $playbookDefinition.Timeout) { 
+                $playbookDefinition.Timeout  # Playbook wins
+            } elseif ($configDefaults.Timeout) {
+                $configDefaults.Timeout  # Config default second
+            } else { 
+                $null  # No timeout
+            }
+            ContinueOnError = if ($playbookDefinition -and $null -ne $playbookDefinition.ContinueOnError) { 
+                [bool]$playbookDefinition.ContinueOnError  # Playbook wins
+            } else { 
+                [bool]$configDefaults.ContinueOnError  # Config default second
+            }
+            RequiresElevation = $configDefaults.RequiresElevation
+            AllowParallel = $configDefaults.AllowParallel
         }
+        
+        $scripts += $scriptObj
     }
 
     return $scripts
@@ -991,12 +1317,21 @@ function Invoke-ParallelOrchestration {
 
             # Use script-specific variables if available, otherwise use global variables
             $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
+            
+            # Merge playbook-defined parameters (takes precedence over variables)
+            $mergedParams = $scriptVars.Clone()
+            if ($script.Parameters -and $script.Parameters.Count -gt 0) {
+                foreach ($key in $script.Parameters.Keys) {
+                    $mergedParams[$key] = $script.Parameters[$key]
+                }
+            }
 
             Write-OrchestrationLog "Starting: [$($script.Number)] $($script.Name)" -Level 'Information' -Data @{
                 ScriptPath = $script.Path
                 Stage = $script.Stage
                 Dependencies = ($script.Dependencies -join ', ')
-                HasVariables = ($scriptVars.Count -gt 0)
+                HasVariables = ($mergedParams.Count -gt 0)
+                HasPlaybookParams = ($script.Parameters -and $script.Parameters.Count -gt 0)
             }
 
             $job = Start-ThreadJob -ScriptBlock {
@@ -1043,7 +1378,7 @@ function Invoke-ParallelOrchestration {
                 } catch {
                     return @{ Success = $false; Error = $_.ToString(); ExitCode = 1 }
                 }
-            } -ArgumentList $script.Path, $Configuration, $scriptVars
+            } -ArgumentList $script.Path, $Configuration, $mergedParams
 
             $jobs[$script.Number] = @{
                 Job = $job
@@ -1203,6 +1538,14 @@ function Invoke-SequentialOrchestration {
 
                 # Debug logging
                 Write-OrchestrationLog "Script: $($script.Number) - Variables available: $($scriptVars.Keys -join ', ')" -Level 'Debug'
+                
+                # Add playbook-defined parameters first (if available)
+                if ($script.Parameters -and $script.Parameters.Count -gt 0) {
+                    Write-OrchestrationLog "Script: $($script.Number) - Applying playbook parameters: $($script.Parameters.Keys -join ', ')" -Level 'Debug'
+                    foreach ($key in $script.Parameters.Keys) {
+                        $params[$key] = $script.Parameters[$key]
+                    }
+                }
 
                 if ($scriptInfo) {
                     # Only add Configuration if the script accepts it
@@ -1210,9 +1553,9 @@ function Invoke-SequentialOrchestration {
                         if ($Configuration) { $params['Configuration'] = $Configuration }
                     }
 
-                    # Only add variables that match script parameters
+                    # Only add variables that match script parameters (don't override playbook parameters)
                     foreach ($key in $scriptVars.Keys) {
-                        if ($scriptInfo.Parameters.ContainsKey($key)) {
+                        if ($scriptInfo.Parameters.ContainsKey($key) -and -not $params.ContainsKey($key)) {
                             # Skip null or empty values
                             if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
                                 $params[$key] = $scriptVars[$key]
