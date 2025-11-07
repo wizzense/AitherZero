@@ -118,6 +118,5 @@ PSScriptAnalyzerSettings.psd1
 license.json
 licenses/
 
-# Encrypted source files
-*.encrypted
+# Encrypted source file metadata (encrypted files themselves ARE committed)
 *.encrypted.meta

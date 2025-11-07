@@ -52,7 +52,7 @@ if (-not (Get-Variable -Name "AitherZeroLicenseManagerInitialized" -Scope Global
     
 .DESCRIPTION
     Generates a license file with specified parameters including expiration date,
-    licensed user, and encryption key.
+    licensed user, and encryption key. Uses a separate signing key for tamper protection.
     
 .PARAMETER LicenseId
     Unique identifier for the license
@@ -72,8 +72,16 @@ if (-not (Get-Variable -Name "AitherZeroLicenseManagerInitialized" -Scope Global
 .PARAMETER Features
     Array of licensed features
     
+.PARAMETER SigningKey
+    Separate key used for HMAC signature (if not provided, uses a derived key)
+    WARNING: Without a separate signing key, licenses can be tampered with
+    
 .EXAMPLE
-    New-License -LicenseId "ABC123" -LicensedTo "Acme Corp" -ExpirationDate (Get-Date).AddYears(1) -EncryptionKey $key -OutputPath "./license.json"
+    New-License -LicenseId "ABC123" -LicensedTo "Acme Corp" -ExpirationDate (Get-Date).AddYears(1) -EncryptionKey $key -OutputPath "./license.json" -SigningKey $signingKey
+    
+.NOTES
+    For production use, always provide a SigningKey that is NOT stored in the license file.
+    Store the signing key securely (e.g., server-side, HSM, or separate key vault).
 #>
 function New-License {
     [CmdletBinding()]
@@ -96,7 +104,9 @@ function New-License {
         [Parameter(Mandatory)]
         [string]$OutputPath,
         
-        [string[]]$Features = @("SourceCodeObfuscation")
+        [string[]]$Features = @("SourceCodeObfuscation"),
+        
+        [string]$SigningKey
     )
     
     try {
@@ -115,6 +125,18 @@ function New-License {
         # Add signature (HMAC of license data)
         $licenseJson = $license | ConvertTo-Json -Depth 10
         
+        # Determine signing key
+        # WARNING: If no separate signing key is provided, we derive one from the encryption key
+        # This provides minimal tamper resistance but is NOT cryptographically secure against
+        # an attacker who has access to the license file
+        if (-not $SigningKey) {
+            Write-LicenseLog -Level Warning -Message "No separate signing key provided - using derived key (reduced security)"
+            # Derive a signing key from the encryption key using a different context
+            $SigningKey = -join (1..32 | ForEach-Object { 
+                [char]((([byte][char]$EncryptionKey[$_ % $EncryptionKey.Length]) + $_ + 42) % 256)
+            })
+        }
+        
         # Import Encryption module for hash function
         $encryptionModule = Join-Path $PSScriptRoot "Encryption.psm1"
         if (Test-Path $encryptionModule) {
@@ -122,7 +144,7 @@ function New-License {
         }
         
         if (Get-Command Get-DataHash -ErrorAction SilentlyContinue) {
-            $signature = Get-DataHash -Data $licenseJson -Key $EncryptionKey
+            $signature = Get-DataHash -Data $licenseJson -Key $SigningKey
             $license.Signature = $signature
         }
         
@@ -159,11 +181,15 @@ function New-License {
 .PARAMETER VerifySignature
     Whether to verify the license signature (default: $true)
     
-.EXAMPLE
-    $isValid = Test-License -LicensePath "./license.json"
+.PARAMETER SigningKey
+    Separate signing key for verification (must match key used during creation)
+    If not provided and VerifySignature is true, derives key from EncryptionKey (reduced security)
     
 .EXAMPLE
-    Test-License -LicensePath $licensePath -VerifySignature $true
+    $isValid = Test-License -LicensePath "./license.json" -SigningKey $signingKey
+    
+.EXAMPLE
+    Test-License -LicensePath $licensePath -VerifySignature $true -SigningKey $serverKey
     
 .OUTPUTS
     Hashtable with validation results
@@ -175,7 +201,9 @@ function Test-License {
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$LicensePath,
         
-        [bool]$VerifySignature = $true
+        [bool]$VerifySignature = $true,
+        
+        [string]$SigningKey
     )
     
     try {
@@ -239,6 +267,15 @@ function Test-License {
             }
             
             if (Get-Command Get-DataHash -ErrorAction SilentlyContinue) {
+                # Determine signing key for verification
+                if (-not $SigningKey) {
+                    Write-LicenseLog -Level Warning -Message "No signing key provided - deriving from encryption key (reduced security)"
+                    # Derive the same way as during creation
+                    $SigningKey = -join (1..32 | ForEach-Object { 
+                        [char]((([byte][char]$license.EncryptionKey[$_ % $license.EncryptionKey.Length]) + $_ + 42) % 256)
+                    })
+                }
+                
                 # Recreate license object without signature
                 $licenseForVerification = @{
                     LicenseId = $license.LicenseId
@@ -252,7 +289,7 @@ function Test-License {
                 }
                 $licenseJson = $licenseForVerification | ConvertTo-Json -Depth 10
                 
-                $expectedSignature = Get-DataHash -Data $licenseJson -Key $license.EncryptionKey
+                $expectedSignature = Get-DataHash -Data $licenseJson -Key $SigningKey
                 
                 if ($expectedSignature -ne $license.Signature) {
                     $validationResults.IsValid = $false
@@ -394,6 +431,12 @@ function Get-LicenseFromGitHub {
 .PARAMETER LicensePath
     Path to the license file
     
+.PARAMETER VerifySignature
+    Whether to verify signature before extracting key
+    
+.PARAMETER SigningKey
+    Signing key for signature verification
+    
 .EXAMPLE
     $key = Get-LicenseKey -LicensePath "./license.json"
     
@@ -407,12 +450,14 @@ function Get-LicenseKey {
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$LicensePath,
         
-        [bool]$VerifySignature = $false
+        [bool]$VerifySignature = $false,
+        
+        [string]$SigningKey
     )
     
     try {
         # Validate license first
-        $validation = Test-License -LicensePath $LicensePath -VerifySignature $VerifySignature
+        $validation = Test-License -LicensePath $LicensePath -VerifySignature $VerifySignature -SigningKey $SigningKey
         
         if (-not $validation.IsValid) {
             throw "License is invalid: $($validation.Reason)"

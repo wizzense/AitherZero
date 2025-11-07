@@ -174,11 +174,15 @@ try {
                 $result = Protect-File -Path $fullPath -Key $key
                 
                 # Stage encrypted files
-                git add $result.EncryptedFile 2>&1 | Out-Null
-                git add $result.MetadataFile 2>&1 | Out-Null
+                git add -f $result.EncryptedFile 2>&1 | Out-Null
+                git add -f $result.MetadataFile 2>&1 | Out-Null
                 
-                # Unstage original if desired (commented out by default)
-                # git reset HEAD $fullPath 2>&1 | Out-Null
+                # Unstage and remove original plaintext from the commit
+                git reset HEAD $file 2>&1 | Out-Null
+                
+                # Remove original from working directory (after backup warning)
+                # Uncomment to auto-remove plaintext after encryption:
+                # Remove-Item -Path $fullPath -Force
                 
                 $encryptedCount++
                 Write-ObfuscateLog "Encrypted: $file → $($result.EncryptedFile)" -Level 'Success'

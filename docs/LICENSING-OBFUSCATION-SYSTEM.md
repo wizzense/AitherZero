@@ -1,5 +1,24 @@
 # Source Code Obfuscation and Licensing System
 
+## ⚠️ CRITICAL SECURITY CONSIDERATIONS
+
+**License Signature Security:**
+The license signature system provides tamper detection but has important limitations:
+- By default, if no separate signing key is provided, the system derives a signing key from the encryption key
+- This provides basic tamper detection but **does NOT** prevent sophisticated attacks
+- An attacker with access to the license file can potentially re-sign modified licenses
+
+**For Production Use:**
+1. **ALWAYS** use a separate signing key that is stored server-side or in a secure key vault
+2. **NEVER** include the signing key in the repository or license file
+3. Consider using a public/private key pair for stronger tamper resistance
+4. Store signing keys in a Hardware Security Module (HSM) for maximum security
+
+**Pre-Commit Hook Behavior:**
+- The pre-commit hook encrypts matched files and **unstages the original plaintext**
+- Encrypted files (`.encrypted`) are committed; plaintext originals are not
+- Ensure you have backups before enabling automatic encryption
+
 ## Overview
 
 The AitherZero source code obfuscation and licensing system provides enterprise-grade encryption and license management for protecting proprietary code. It integrates seamlessly with Git workflows and supports both local and remote license management.

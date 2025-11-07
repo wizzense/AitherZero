@@ -9,6 +9,10 @@
     obfuscation and licensing system. Supports local license generation and
     remote license retrieval from private GitHub repositories.
     
+    SECURITY WARNING: For production use, always provide a separate SigningKey
+    that is stored securely (server-side, HSM, or key vault). Without a separate
+    signing key, licenses provide only basic tamper detection.
+    
     Stage: License Management
     Dependencies: Security.psm1, Encryption.psm1, LicenseManager.psm1
     Tags: Security, Licensing, Obfuscation
@@ -40,11 +44,17 @@
 .PARAMETER GenerateKey
     Generate a new encryption key instead of using an existing one
     
-.EXAMPLE
-    ./0800_Manage-License.ps1 -Action Create -LicenseId "DEMO-001" -LicensedTo "Acme Corp"
+.PARAMETER SigningKey
+    Separate key for HMAC signature (recommended for production)
+    
+.PARAMETER GenerateSigningKey
+    Generate a new signing key separate from encryption key
     
 .EXAMPLE
-    ./0800_Manage-License.ps1 -Action Validate -LicensePath "./license.json"
+    ./0800_Manage-License.ps1 -Action Create -LicenseId "DEMO-001" -LicensedTo "Acme Corp" -GenerateSigningKey
+    
+.EXAMPLE
+    ./0800_Manage-License.ps1 -Action Validate -LicensePath "./license.json" -SigningKey $serverKey
     
 .EXAMPLE
     ./0800_Manage-License.ps1 -Action Retrieve -LicenseId "PROD-123" -GitHubOwner "aitherium" -GitHubRepo "licenses"
@@ -54,7 +64,7 @@
     
 .NOTES
     Author: AitherZero Team
-    Version: 1.0.0
+    Version: 1.0.1 - Added signing key support
 #>
 
 [CmdletBinding()]
@@ -77,12 +87,16 @@ param(
     
     [string]$GitHubRepo,
     
-    [switch]$GenerateKey
+    [switch]$GenerateKey,
+    
+    [string]$SigningKey,
+    
+    [switch]$GenerateSigningKey
 )
 
 # Script metadata
 $script:ScriptName = "Manage-License"
-$script:ScriptVersion = "1.0.0"
+$script:ScriptVersion = "1.0.1"
 
 # Import required modules
 $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -153,6 +167,21 @@ try {
                 }
             }
             
+            # Generate or get signing key
+            $signingKeyToUse = $null
+            if ($GenerateSigningKey) {
+                Write-ScriptOutput "Generating separate signing key..." -Level 'Info'
+                $signingKeyToUse = New-EncryptionKey
+                Write-ScriptOutput "Signing key: $signingKeyToUse" -Level 'Warning'
+                Write-ScriptOutput "SAVE THIS SIGNING KEY SECURELY - Required for license validation!" -Level 'Warning'
+            } elseif ($SigningKey) {
+                $signingKeyToUse = $SigningKey
+                Write-ScriptOutput "Using provided signing key" -Level 'Info'
+            } else {
+                Write-ScriptOutput "No signing key provided - will derive from encryption key (reduced security)" -Level 'Warning'
+                Write-ScriptOutput "For production, use -GenerateSigningKey and store signing key securely" -Level 'Warning'
+            }
+            
             # Determine output path
             if (-not $OutputPath) {
                 $OutputPath = Join-Path (Get-Location) "$LicenseId.json"
@@ -162,12 +191,18 @@ try {
             $expirationDate = (Get-Date).AddDays($ExpirationDays)
             
             # Create license
-            $license = New-License `
-                -LicenseId $LicenseId `
-                -LicensedTo $LicensedTo `
-                -ExpirationDate $expirationDate `
-                -EncryptionKey $key `
-                -OutputPath $OutputPath
+            $licenseParams = @{
+                LicenseId = $LicenseId
+                LicensedTo = $LicensedTo
+                ExpirationDate = $expirationDate
+                EncryptionKey = $key
+                OutputPath = $OutputPath
+            }
+            if ($signingKeyToUse) {
+                $licenseParams.SigningKey = $signingKeyToUse
+            }
+            
+            $license = New-License @licenseParams
             
             Write-ScriptOutput "License created successfully!" -Level 'Success'
             Write-ScriptOutput "License ID: $LicenseId" -Level 'Info'
