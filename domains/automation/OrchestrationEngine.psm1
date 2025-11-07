@@ -72,6 +72,245 @@ function Get-NormalizedExitCode {
     }
 }
 
+function Test-CIEnvironment {
+    <#
+    .SYNOPSIS
+        Detect if running in a CI/CD environment
+    .DESCRIPTION
+        Detects various CI/CD platforms and returns environment information
+    .OUTPUTS
+        [hashtable] CI environment information
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param()
+    
+    $ciDetection = @{
+        IsCI = $false
+        Platform = 'Unknown'
+        RunId = $null
+        BuildNumber = $null
+        Branch = $null
+        Commit = $null
+    }
+    
+    # GitHub Actions
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'GitHub Actions'
+        $ciDetection.RunId = $env:GITHUB_RUN_ID
+        $ciDetection.BuildNumber = $env:GITHUB_RUN_NUMBER
+        $ciDetection.Branch = $env:GITHUB_REF_NAME
+        $ciDetection.Commit = $env:GITHUB_SHA
+    }
+    # Azure Pipelines
+    elseif ($env:TF_BUILD -eq 'True') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'Azure Pipelines'
+        $ciDetection.RunId = $env:BUILD_BUILDID
+        $ciDetection.BuildNumber = $env:BUILD_BUILDNUMBER
+        $ciDetection.Branch = $env:BUILD_SOURCEBRANCHNAME
+        $ciDetection.Commit = $env:BUILD_SOURCEVERSION
+    }
+    # GitLab CI
+    elseif ($env:GITLAB_CI -eq 'true') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'GitLab CI'
+        $ciDetection.RunId = $env:CI_PIPELINE_ID
+        $ciDetection.BuildNumber = $env:CI_PIPELINE_IID
+        $ciDetection.Branch = $env:CI_COMMIT_REF_NAME
+        $ciDetection.Commit = $env:CI_COMMIT_SHA
+    }
+    # Jenkins
+    elseif ($env:JENKINS_URL) {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'Jenkins'
+        $ciDetection.RunId = $env:BUILD_ID
+        $ciDetection.BuildNumber = $env:BUILD_NUMBER
+        $ciDetection.Branch = $env:BRANCH_NAME ?? $env:GIT_BRANCH
+        $ciDetection.Commit = $env:GIT_COMMIT
+    }
+    # Generic CI
+    elseif ($env:CI -eq 'true') {
+        $ciDetection.IsCI = $true
+        $ciDetection.Platform = 'Generic CI'
+    }
+    
+    return $ciDetection
+}
+
+function Export-OrchestrationResult {
+    <#
+    .SYNOPSIS
+        Export orchestration results in multiple formats for CI/CD integration
+    .DESCRIPTION
+        Exports execution results in various formats suitable for CI/CD pipelines
+    .PARAMETER Result
+        Orchestration result object to export
+    .PARAMETER Format
+        Output format (JSON, XML, JUnit, GitHubActions)
+    .PARAMETER Path
+        Output file path
+    .EXAMPLE
+        Export-OrchestrationResult -Result $result -Format JUnit -Path "./test-results.xml"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [PSCustomObject]$Result,
+        
+        [Parameter(Mandatory)]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions')]
+        [string]$Format,
+        
+        [Parameter()]
+        [string]$Path
+    )
+    
+    $output = switch ($Format) {
+        'JSON' {
+            $Result | ConvertTo-Json -Depth 10
+        }
+        
+        'XML' {
+            # Create XML document
+            $xml = New-Object System.Xml.XmlDocument
+            $root = $xml.CreateElement('OrchestrationResult')
+            $xml.AppendChild($root) | Out-Null
+            
+            # Add properties
+            $props = @('Success', 'Completed', 'Failed', 'Skipped', 'Duration')
+            foreach ($prop in $props) {
+                if ($Result.PSObject.Properties[$prop]) {
+                    $elem = $xml.CreateElement($prop)
+                    $elem.InnerText = $Result.$prop
+                    $root.AppendChild($elem) | Out-Null
+                }
+            }
+            
+            # Add script results
+            if ($Result.Results) {
+                $resultsElem = $xml.CreateElement('Scripts')
+                foreach ($scriptResult in $Result.Results) {
+                    $scriptElem = $xml.CreateElement('Script')
+                    $scriptElem.SetAttribute('Number', $scriptResult.Number)
+                    $scriptElem.SetAttribute('Success', $scriptResult.Success)
+                    $scriptElem.SetAttribute('Duration', $scriptResult.Duration)
+                    if ($scriptResult.Error) {
+                        $scriptElem.SetAttribute('Error', $scriptResult.Error)
+                    }
+                    $resultsElem.AppendChild($scriptElem) | Out-Null
+                }
+                $root.AppendChild($resultsElem) | Out-Null
+            }
+            
+            $xml.OuterXml
+        }
+        
+        'JUnit' {
+            # Create JUnit XML format
+            $xml = New-Object System.Xml.XmlDocument
+            $testsuites = $xml.CreateElement('testsuites')
+            $xml.AppendChild($testsuites) | Out-Null
+            
+            $testsuite = $xml.CreateElement('testsuite')
+            $testsuite.SetAttribute('name', 'AitherZero Orchestration')
+            $testsuite.SetAttribute('tests', $Result.Completed + $Result.Failed)
+            $testsuite.SetAttribute('failures', $Result.Failed)
+            $testsuite.SetAttribute('skipped', $Result.Skipped ?? 0)
+            $testsuite.SetAttribute('time', $Result.Duration.TotalSeconds)
+            $testsuite.SetAttribute('timestamp', (Get-Date).ToString('o'))
+            $testsuites.AppendChild($testsuite) | Out-Null
+            
+            if ($Result.Results) {
+                foreach ($scriptResult in $Result.Results) {
+                    $testcase = $xml.CreateElement('testcase')
+                    $testcase.SetAttribute('name', "Script-$($scriptResult.Number)")
+                    $testcase.SetAttribute('classname', 'AitherZero.Orchestration')
+                    $testcase.SetAttribute('time', $scriptResult.Duration.TotalSeconds)
+                    
+                    if (-not $scriptResult.Success) {
+                        $failure = $xml.CreateElement('failure')
+                        $failure.SetAttribute('message', $scriptResult.Error ?? 'Script execution failed')
+                        $failure.SetAttribute('type', 'ScriptFailure')
+                        $testcase.AppendChild($failure) | Out-Null
+                    }
+                    
+                    $testsuite.AppendChild($testcase) | Out-Null
+                }
+            }
+            
+            $xml.OuterXml
+        }
+        
+        'GitHubActions' {
+            # GitHub Actions output format with annotations
+            $output = @()
+            
+            # Set outputs
+            $output += "::set-output name=success::$($Result.Success ?? $true)"
+            $output += "::set-output name=completed::$($Result.Completed ?? 0)"
+            $output += "::set-output name=failed::$($Result.Failed ?? 0)"
+            $output += "::set-output name=skipped::$($Result.Skipped ?? 0)"
+            $output += "::set-output name=duration::$($Result.Duration.TotalSeconds)"
+            
+            # Add annotations for failures
+            if ($Result.Results) {
+                foreach ($scriptResult in $Result.Results | Where-Object { -not $_.Success }) {
+                    $message = "Script $($scriptResult.Number) failed"
+                    if ($scriptResult.Error) {
+                        $message += ": $($scriptResult.Error)"
+                    }
+                    $output += "::error::$message"
+                }
+            }
+            
+            # Summary
+            $totalScripts = $Result.Completed + $Result.Failed
+            if ($Result.Failed -eq 0) {
+                $output += "::notice::Orchestration succeeded: $($Result.Completed)/$totalScripts scripts completed"
+            }
+            else {
+                $output += "::error::Orchestration failed: $($Result.Failed)/$totalScripts scripts failed"
+            }
+            
+            $output -join "`n"
+        }
+    }
+    
+    if ($Path) {
+        $output | Out-File -FilePath $Path -Encoding utf8 -NoNewline
+        Write-OrchestrationLog "Report exported to: $Path" -Level 'Information'
+    }
+    else {
+        Write-Output $output
+    }
+}
+
+function Get-NormalizedExitCode {
+    <#
+    .SYNOPSIS
+        Normalize exit code, treating null as success (0)
+    .DESCRIPTION
+        Helper function to handle null $LASTEXITCODE or exit codes from job results.
+        Treats null values as success (exit code 0) to ensure consistent exit code handling.
+    .PARAMETER ExitCode
+        The exit code to normalize (can be null)
+    .EXAMPLE
+        $exitCode = Get-NormalizedExitCode -ExitCode $LASTEXITCODE
+    #>
+    param(
+        [Parameter(Mandatory = $false)]
+        [object]$ExitCode
+    )
+    
+    if ($null -eq $ExitCode) { 
+        return 0 
+    } else { 
+        return $ExitCode 
+    }
+}
+
 function Invoke-OrchestrationSequence {
     <#
     .SYNOPSIS
@@ -127,6 +366,21 @@ function Invoke-OrchestrationSequence {
 
     .PARAMETER GenerateSummary
     Generate markdown execution summary report
+    
+    .PARAMETER OutputFormat
+    Export results in specified format (JSON, XML, JUnit, GitHubActions) for CI/CD integration
+    
+    .PARAMETER OutputPath
+    Path to save the output report file
+    
+    .PARAMETER ThrowOnError
+    Throw exception on any error (useful for CI/CD failure detection)
+    
+    .PARAMETER Quiet
+    Suppress non-essential output for CI/CD environments
+    
+    .PARAMETER PassThru
+    Return detailed execution result object with all metrics
 
     .EXAMPLE
     # Run environment setup
@@ -220,10 +474,37 @@ function Invoke-OrchestrationSequence {
         [switch]$UseCache,
 
         [Parameter()]
-        [switch]$GenerateSummary
+        [switch]$GenerateSummary,
+        
+        [Parameter()]
+        [ValidateSet('JSON', 'XML', 'JUnit', 'GitHubActions', 'None')]
+        [string]$OutputFormat = 'None',
+        
+        [Parameter()]
+        [string]$OutputPath,
+        
+        [Parameter()]
+        [switch]$ThrowOnError,
+        
+        [Parameter()]
+        [switch]$Quiet,
+        
+        [Parameter()]
+        [switch]$PassThru
     )
 
     begin {
+        # Set quiet mode for CI/CD
+        if ($Quiet) {
+            $env:AITHERZERO_QUIET = '1'
+        }
+        
+        # Detect CI environment
+        $ciInfo = Test-CIEnvironment
+        if ($ciInfo.IsCI -and -not $Quiet) {
+            Write-OrchestrationLog "CI environment detected: $($ciInfo.Platform)" -Level 'Information'
+        }
+        
         Write-OrchestrationLog "Starting orchestration engine"
 
         # Load configuration
@@ -610,9 +891,29 @@ function Invoke-OrchestrationSequence {
                 Save-OrchestrationCache -CacheManager $script:CacheManager -Result $result -Scripts $scripts -Variables $Variables
                 Write-OrchestrationLog "Execution result cached" -Level 'Information'
             }
+            
+            # Export in specified format if requested
+            if ($OutputFormat -ne 'None') {
+                if ($OutputPath) {
+                    Export-OrchestrationResult -Result $result -Format $OutputFormat -Path $OutputPath
+                } else {
+                    Export-OrchestrationResult -Result $result -Format $OutputFormat
+                }
+            }
+            
+            # Set exit code based on results
+            $exitCode = if ($result.Failed -eq 0) { 0 } else { 1 }
+            $global:LASTEXITCODE = $exitCode
+            
+            # Throw on error if requested (for CI/CD)
+            if ($ThrowOnError -and $result.Failed -gt 0) {
+                throw "Orchestration failed: $($result.Failed) script(s) failed"
+            }
 
-            # Return execution result
-            $result
+            # Return execution result if PassThru or for CI/CD tracking
+            if ($PassThru -or $OutputFormat -ne 'None') {
+                return $result
+            }
         }
         catch {
             # Send failure notification
@@ -623,8 +924,21 @@ function Invoke-OrchestrationSequence {
                 }
             }
             
-            # Re-throw the error
-            throw
+            # Set error exit code
+            $global:LASTEXITCODE = 1
+            
+            # Re-throw if requested
+            if ($ThrowOnError) {
+                throw
+            }
+            
+            Write-OrchestrationLog "Orchestration failed: $($_.Exception.Message)" -Level 'Error'
+        }
+        finally {
+            # Clean up environment
+            if ($Quiet) {
+                Remove-Item Env:\AITHERZERO_QUIET -ErrorAction SilentlyContinue
+            }
         }
     }
 }
@@ -2448,4 +2762,6 @@ Export-ModuleMember -Function @(
     'Save-OrchestrationCache'
     'Get-OrchestrationCacheKey'
     'Export-OrchestrationSummary'
+    'Test-CIEnvironment'
+    'Export-OrchestrationResult'
 ) -Alias @('seq')

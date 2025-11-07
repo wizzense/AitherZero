@@ -41,6 +41,7 @@
 
         # From OrchestrationEngine
         'Invoke-OrchestrationSequence', 'Invoke-Sequence', 'Get-OrchestrationPlaybook',
+        'Test-CIEnvironment', 'Export-OrchestrationResult',
 
         # From Infrastructure
         'Initialize-Infrastructure', 'Get-InfrastructureProvider',
