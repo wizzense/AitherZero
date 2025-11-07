@@ -41,6 +41,11 @@ permissions:
 jobs:
   generate-tests:
     name: Auto-Generate Tests
+    # Skip if the last commit was from a bot to prevent loops
+    if: |
+      !contains(github.event.head_commit.message, '[auto-generated]') &&
+      github.actor != 'github-actions[bot]' &&
+      github.event.head_commit.author.name != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
