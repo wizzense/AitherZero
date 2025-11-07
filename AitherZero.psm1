@@ -54,6 +54,7 @@ $modulesToLoad = @(
     # Core utilities first
     './domains/utilities/Logging.psm1',
     './domains/utilities/ExtensionManager.psm1',
+    './domains/utilities/EnvironmentConfig.psm1',
 
     # Configuration (both old and new for backward compatibility)
     './domains/configuration/Configuration.psm1',
@@ -85,6 +86,7 @@ $modulesToLoad = @(
 
     # Infrastructure
     './domains/infrastructure/Infrastructure.psm1',
+    './domains/infrastructure/DeploymentArtifacts.psm1',
     
     # Security
     './domains/security/Security.psm1',

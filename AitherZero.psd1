@@ -16,9 +16,22 @@
         'Invoke-AitherScript', 'Get-AitherScript', 'Invoke-AitherSequence',
         'Invoke-AitherPlaybook', 'Get-AitherPlaybook',
         'Get-AitherConfig', 'Set-AitherConfig', 'Switch-AitherEnvironment',
+        'Get-AitherEnvironment', 'Set-AitherEnvironment', 'Set-AitherEnvVariable',
+        'New-AitherDeploymentArtifact', 'New-AitherUnattendXml', 'New-AitherBrewfile',
         'Show-AitherDashboard', 'Get-AitherMetrics', 'Export-AitherMetrics',
         'Get-AitherPlatform', 'Test-AitherAdmin', 'Get-AitherVersion', 'Test-AitherCommand',
         'Write-AitherLog',
+
+        # From EnvironmentConfig Module (NEW)
+        'Get-EnvironmentConfiguration', 'Set-EnvironmentConfiguration',
+        'Get-WindowsLongPathStatus', 'Enable-WindowsLongPathSupport',
+        'Get-WindowsDeveloperModeStatus', 'Enable-WindowsDeveloperMode',
+        'Update-EnvironmentVariable', 'Add-PathEntries', 'Add-ShellIntegration',
+
+        # From DeploymentArtifacts Module (NEW)
+        'New-WindowsUnattendXml', 'New-WindowsRegistryFile',
+        'New-LinuxCloudInitConfig', 'New-LinuxShellScript',
+        'New-MacOSBrewfile', 'New-Dockerfile', 'New-DeploymentArtifacts',
 
         # From Logging modules
         'Write-CustomLog', 'Write-ConfigLog', 'Write-TestingLog',

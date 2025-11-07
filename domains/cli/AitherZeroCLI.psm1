@@ -1448,6 +1448,338 @@ function Write-AitherLog {
 
 #endregion
 
+#region Environment Configuration Cmdlets
+
+function Get-AitherEnvironment {
+    <#
+    .SYNOPSIS
+        Get current environment configuration status
+    
+    .DESCRIPTION
+        Retrieves the current state of environment configuration including:
+        - Windows features (long path support, developer mode)
+        - Environment variables
+        - PATH configuration
+        - Shell integration (Unix)
+    
+    .PARAMETER Category
+        Specific category to retrieve (Windows, Unix, EnvironmentVariables, Path, All)
+    
+    .EXAMPLE
+        Get-AitherEnvironment
+        
+        Get all environment configuration status
+    
+    .EXAMPLE
+        Get-AitherEnvironment -Category Windows
+        
+        Get Windows-specific configuration status
+    
+    .OUTPUTS
+        [hashtable] Environment configuration status
+    #>
+    [CmdletBinding()]
+    param(
+        [ValidateSet('All', 'Windows', 'Unix', 'EnvironmentVariables', 'Path')]
+        [string]$Category = 'All'
+    )
+    
+    if (Get-Command Get-EnvironmentConfiguration -ErrorAction SilentlyContinue) {
+        return Get-EnvironmentConfiguration -Category $Category
+    }
+    else {
+        Write-Warning "EnvironmentConfig module not loaded"
+        return $null
+    }
+}
+
+function Set-AitherEnvironment {
+    <#
+    .SYNOPSIS
+        Apply environment configuration from config files
+    
+    .DESCRIPTION
+        Applies environment configuration settings including:
+        - Windows long path support
+        - Developer mode
+        - Environment variables
+        - PATH modifications
+        - Shell integration (Unix)
+    
+    .PARAMETER Category
+        Specific category to apply (Windows, Unix, EnvironmentVariables, Path, All)
+    
+    .PARAMETER DryRun
+        Preview changes without applying them
+    
+    .PARAMETER Force
+        Skip confirmation prompts
+    
+    .EXAMPLE
+        Set-AitherEnvironment
+        
+        Apply all environment configuration
+    
+    .EXAMPLE
+        Set-AitherEnvironment -Category Windows -DryRun
+        
+        Preview Windows configuration changes
+    
+    .EXAMPLE
+        Set-AitherEnvironment -Force
+        
+        Apply configuration without prompts
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [ValidateSet('All', 'Windows', 'Unix', 'EnvironmentVariables', 'Path')]
+        [string]$Category = 'All',
+        
+        [switch]$DryRun,
+        
+        [switch]$Force
+    )
+    
+    if (Get-Command Set-EnvironmentConfiguration -ErrorAction SilentlyContinue) {
+        $params = @{
+            Category = $Category
+            DryRun = $DryRun
+            Force = $Force
+        }
+        
+        return Set-EnvironmentConfiguration @params
+    }
+    else {
+        Write-Warning "EnvironmentConfig module not loaded"
+        return $null
+    }
+}
+
+function Set-AitherEnvVariable {
+    <#
+    .SYNOPSIS
+        Set an environment variable
+    
+    .DESCRIPTION
+        Sets or updates an environment variable at specified scope.
+        Provides a simple CLI interface for on-the-fly variable management.
+    
+    .PARAMETER Name
+        Variable name
+    
+    .PARAMETER Value
+        Variable value
+    
+    .PARAMETER Scope
+        Variable scope: Process, User, or Machine (System)
+    
+    .PARAMETER Force
+        Overwrite existing value without confirmation
+    
+    .EXAMPLE
+        Set-AitherEnvVariable -Name 'AITHERZERO_PROFILE' -Value 'Developer' -Scope User
+        
+        Set user-level environment variable
+    
+    .EXAMPLE
+        Set-AitherEnvVariable -Name 'TEMP_VAR' -Value 'test' -Scope Process -Force
+        
+        Set process variable for current session
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter(Mandatory, Position=0)]
+        [string]$Name,
+        
+        [Parameter(Mandatory, Position=1)]
+        [AllowEmptyString()]
+        [string]$Value,
+        
+        [ValidateSet('Process', 'User', 'Machine')]
+        [string]$Scope = 'Process',
+        
+        [switch]$Force
+    )
+    
+    if (Get-Command Update-EnvironmentVariable -ErrorAction SilentlyContinue) {
+        $params = @{
+            Name = $Name
+            Value = $Value
+            Scope = $Scope
+            Force = $Force
+        }
+        
+        return Update-EnvironmentVariable @params
+    }
+    else {
+        # Fallback to basic .NET method
+        try {
+            [Environment]::SetEnvironmentVariable($Name, $Value, $Scope)
+            Write-AitherStatus "Set $Scope environment variable: $Name" -Type Success
+            return $true
+        }
+        catch {
+            Write-AitherStatus "Error setting environment variable: $($_.Exception.Message)" -Type Error
+            return $false
+        }
+    }
+}
+
+#endregion
+
+#region Deployment Artifact Cmdlets
+
+function New-AitherDeploymentArtifact {
+    <#
+    .SYNOPSIS
+        Generate deployment artifacts from configuration
+    
+    .DESCRIPTION
+        Generates deployment artifacts including:
+        - Windows: Unattend.xml, registry files
+        - Linux: Cloud-init, Kickstart, shell scripts
+        - macOS: Brewfiles, shell scripts
+        - Docker: Dockerfiles
+    
+    .PARAMETER Platform
+        Target platform(s): Windows, Linux, macOS, Docker, All
+    
+    .PARAMETER OutputPath
+        Base output directory for artifacts (default: ./artifacts)
+    
+    .PARAMETER ConfigPath
+        Base path to configuration files (default: current directory)
+    
+    .EXAMPLE
+        New-AitherDeploymentArtifact -Platform Windows
+        
+        Generate Windows deployment artifacts
+    
+    .EXAMPLE
+        New-AitherDeploymentArtifact -Platform All -OutputPath ./build
+        
+        Generate all artifacts in custom location
+    
+    .OUTPUTS
+        [hashtable] Generated artifact paths by platform
+    #>
+    [CmdletBinding()]
+    param(
+        [ValidateSet('Windows', 'Linux', 'macOS', 'Docker', 'All')]
+        [string[]]$Platform = 'All',
+        
+        [string]$OutputPath = './artifacts',
+        
+        [string]$ConfigPath = '.'
+    )
+    
+    if (Get-Command New-DeploymentArtifacts -ErrorAction SilentlyContinue) {
+        Write-AitherStatus "Generating deployment artifacts for: $($Platform -join ', ')" -Type Info
+        
+        $params = @{
+            Platform = $Platform
+            OutputPath = $OutputPath
+            ConfigPath = $ConfigPath
+        }
+        
+        $result = New-DeploymentArtifacts @params
+        
+        # Display summary
+        Write-Host ""
+        Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+        Write-Host "  Deployment Artifacts Generated" -ForegroundColor Cyan
+        Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+        Write-Host ""
+        
+        foreach ($platformKey in $result.Keys) {
+            if ($result[$platformKey].Count -gt 0) {
+                Write-Host "  $platformKey : $($result[$platformKey].Count) artifact(s)" -ForegroundColor Green
+                foreach ($file in $result[$platformKey]) {
+                    Write-Host "    - $file" -ForegroundColor DarkGray
+                }
+            }
+        }
+        
+        Write-Host ""
+        
+        return $result
+    }
+    else {
+        Write-Warning "DeploymentArtifacts module not loaded"
+        return $null
+    }
+}
+
+function New-AitherUnattendXml {
+    <#
+    .SYNOPSIS
+        Generate Windows Unattend.xml file
+    
+    .DESCRIPTION
+        Creates a Windows Unattend.xml file for automated installation
+    
+    .PARAMETER ConfigPath
+        Path to Windows configuration file (default: ./config.windows.psd1)
+    
+    .PARAMETER OutputPath
+        Output directory (default: ./artifacts/windows)
+    
+    .EXAMPLE
+        New-AitherUnattendXml
+        
+        Generate Unattend.xml from default config
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$ConfigPath = './config.windows.psd1',
+        [string]$OutputPath = './artifacts/windows'
+    )
+    
+    if (Get-Command New-WindowsUnattendXml -ErrorAction SilentlyContinue) {
+        return New-WindowsUnattendXml -ConfigPath $ConfigPath -OutputPath $OutputPath
+    }
+    else {
+        Write-Warning "DeploymentArtifacts module not loaded"
+        return $null
+    }
+}
+
+function New-AitherBrewfile {
+    <#
+    .SYNOPSIS
+        Generate Homebrew Brewfile
+    
+    .DESCRIPTION
+        Creates a Brewfile for installing macOS packages
+    
+    .PARAMETER ConfigPath
+        Path to macOS configuration file (default: ./config.macos.psd1)
+    
+    .PARAMETER OutputPath
+        Output directory (default: ./artifacts/macos)
+    
+    .EXAMPLE
+        New-AitherBrewfile
+        
+        Generate Brewfile from default config
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$ConfigPath = './config.macos.psd1',
+        [string]$OutputPath = './artifacts/macos'
+    )
+    
+    if (Get-Command New-MacOSBrewfile -ErrorAction SilentlyContinue) {
+        return New-MacOSBrewfile -ConfigPath $ConfigPath -OutputPath $OutputPath
+    }
+    else {
+        Write-Warning "DeploymentArtifacts module not loaded"
+        return $null
+    }
+}
+
+#endregion
+
 # Export all cmdlets
 Export-ModuleMember -Function @(
     # Script Execution
@@ -1463,6 +1795,16 @@ Export-ModuleMember -Function @(
     'Get-AitherConfig',
     'Set-AitherConfig',
     'Switch-AitherEnvironment',
+    
+    # Environment Configuration
+    'Get-AitherEnvironment',
+    'Set-AitherEnvironment',
+    'Set-AitherEnvVariable',
+    
+    # Deployment Artifacts
+    'New-AitherDeploymentArtifact',
+    'New-AitherUnattendXml',
+    'New-AitherBrewfile',
     
     # Reporting & Metrics
     'Show-AitherDashboard',
