@@ -66,6 +66,16 @@
         'Test-CommandAvailable', 'Get-GitHubToken', 'Invoke-WithRetry', 'Test-GitRepository',
         'Get-ScriptMetadata', 'Format-Duration', 'Test-FeatureOrPrompt',
 
+        # From Security modules
+        'Invoke-SSHCommand', 'Test-SSHConnection', 'ConvertFrom-SecureStringSecurely',
+        
+        # From Encryption
+        'Protect-String', 'Unprotect-String', 'Protect-File', 'Unprotect-File', 
+        'New-EncryptionKey', 'Get-DataHash',
+        
+        # From LicenseManager
+        'New-License', 'Test-License', 'Get-LicenseFromGitHub', 'Get-LicenseKey', 'Find-License',
+
         # Wildcard for any additional functions
         '*'
     )

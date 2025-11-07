@@ -111,3 +111,12 @@ tests/analysis/*.json
 # Configuration consolidation - PSScriptAnalyzer settings now in config.psd1
 PSScriptAnalyzerSettings.psd1
 .psscriptanalyzer-fast.psd1
+
+# License files (sensitive - never commit)
+*.license.json
+.license.json
+license.json
+licenses/
+
+# Encrypted source file metadata (encrypted files themselves ARE committed)
+*.encrypted.meta
