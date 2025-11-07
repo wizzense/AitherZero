@@ -169,11 +169,11 @@ function Protect-String {
 .PARAMETER Salt
     Base64-encoded salt used during encryption
     
-.PARAMETER IV
+.PARAMETER InitializationVector
     Base64-encoded initialization vector used during encryption
     
 .EXAMPLE
-    $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key "mySecretKey" -Salt $encrypted.Salt -IV $encrypted.IV
+    $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key "mySecretKey" -Salt $encrypted.Salt -InitializationVector $encrypted.IV
     
 .OUTPUTS
     Decrypted string
@@ -195,13 +195,13 @@ function Unprotect-String {
         
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$IV
+        [string]$InitializationVector
     )
     
     try {
         # Convert Base64 strings to bytes
         $saltBytes = [Convert]::FromBase64String($Salt)
-        $ivBytes = [Convert]::FromBase64String($IV)
+        $ivBytes = [Convert]::FromBase64String($InitializationVector)
         $encryptedBytes = [Convert]::FromBase64String($EncryptedData)
         
         # Derive key using PBKDF2 with same parameters as encryption
@@ -389,7 +389,7 @@ function Unprotect-File {
         $metadata = Get-Content -Path $MetadataPath -Raw | ConvertFrom-Json
         
         # Decrypt the content
-        $decrypted = Unprotect-String -EncryptedData $encryptedData -Key $Key -Salt $metadata.Salt -IV $metadata.IV
+        $decrypted = Unprotect-String -EncryptedData $encryptedData -Key $Key -Salt $metadata.Salt -InitializationVector $metadata.IV
         
         # Determine output path
         if (-not $OutputPath) {

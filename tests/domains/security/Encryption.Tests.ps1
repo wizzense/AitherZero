@@ -82,7 +82,7 @@ Describe "Encryption Module Tests" {
             $key = "SecureKey456"
             
             $encrypted = Protect-String -PlainText $plainText -Key $key
-            $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $key -Salt $encrypted.Salt -IV $encrypted.IV
+            $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $key -Salt $encrypted.Salt -InitializationVector $encrypted.IV
             
             $decrypted | Should -Be $plainText
         }
@@ -105,7 +105,7 @@ Describe "Encryption Module Tests" {
             
             $encrypted = Protect-String -PlainText $plainText -Key $correctKey
             
-            { Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $wrongKey -Salt $encrypted.Salt -IV $encrypted.IV } | 
+            { Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $wrongKey -Salt $encrypted.Salt -InitializationVector $encrypted.IV } | 
                 Should -Throw
         }
         
@@ -125,7 +125,7 @@ Line 3
             $key = "MultiLineKey"
             
             $encrypted = Protect-String -PlainText $plainText -Key $key
-            $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $key -Salt $encrypted.Salt -IV $encrypted.IV
+            $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $key -Salt $encrypted.Salt -InitializationVector $encrypted.IV
             
             $decrypted | Should -Be $plainText
         }
@@ -135,7 +135,7 @@ Line 3
             $key = "SpecialKey"
             
             $encrypted = Protect-String -PlainText $plainText -Key $key
-            $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $key -Salt $encrypted.Salt -IV $encrypted.IV
+            $decrypted = Unprotect-String -EncryptedData $encrypted.EncryptedData -Key $key -Salt $encrypted.Salt -InitializationVector $encrypted.IV
             
             $decrypted | Should -Be $plainText
         }

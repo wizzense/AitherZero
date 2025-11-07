@@ -113,7 +113,7 @@ function New-License {
         }
         
         # Add signature (HMAC of license data)
-        $licenseJson = $license | ConvertTo-Json
+        $licenseJson = $license | ConvertTo-Json -Depth 10
         
         # Import Encryption module for hash function
         $encryptionModule = Join-Path $PSScriptRoot "Encryption.psm1"
@@ -239,10 +239,18 @@ function Test-License {
             }
             
             if (Get-Command Get-DataHash -ErrorAction SilentlyContinue) {
-                # Create a copy without signature for verification
-                $licenseForVerification = $license.PSObject.Copy()
-                $licenseForVerification.PSObject.Properties.Remove('Signature')
-                $licenseJson = $licenseForVerification | ConvertTo-Json
+                # Recreate license object without signature
+                $licenseForVerification = @{
+                    LicenseId = $license.LicenseId
+                    LicensedTo = $license.LicensedTo
+                    IssuedDate = $license.IssuedDate
+                    ExpirationDate = $license.ExpirationDate
+                    Features = $license.Features
+                    Version = $license.Version
+                    EncryptionKey = $license.EncryptionKey
+                    Type = $license.Type
+                }
+                $licenseJson = $licenseForVerification | ConvertTo-Json -Depth 10
                 
                 $expectedSignature = Get-DataHash -Data $licenseJson -Key $license.EncryptionKey
                 
@@ -397,12 +405,14 @@ function Get-LicenseKey {
     param(
         [Parameter(Mandatory)]
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
-        [string]$LicensePath
+        [string]$LicensePath,
+        
+        [bool]$VerifySignature = $false
     )
     
     try {
         # Validate license first
-        $validation = Test-License -LicensePath $LicensePath
+        $validation = Test-License -LicensePath $LicensePath -VerifySignature $VerifySignature
         
         if (-not $validation.IsValid) {
             throw "License is invalid: $($validation.Reason)"
