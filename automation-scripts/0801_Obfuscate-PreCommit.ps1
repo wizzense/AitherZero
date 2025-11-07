@@ -111,6 +111,40 @@ try {
     
     Write-ObfuscateLog "Valid license found: $($validation.License.LicenseId)" -Level 'Success'
     
+    # SAFETY CHECK: Verify license is backed up remotely
+    Write-ObfuscateLog "Running safety check..." -Level 'Info'
+    $safetyScript = Join-Path $PSScriptRoot "0875_Verify-LicenseBackup.ps1"
+    
+    if (Test-Path $safetyScript) {
+        # Check if GitHub config exists
+        $licenseDir = [System.IO.Path]::GetFullPath([System.Environment]::ExpandEnvironmentVariables("~/.aitherzero/licenses"))
+        $githubConfigPath = Join-Path $licenseDir "github-config.json"
+        
+        if (Test-Path $githubConfigPath) {
+            $githubConfig = Get-Content -Path $githubConfigPath -Raw | ConvertFrom-Json
+            
+            Write-ObfuscateLog "Verifying license backup at $($githubConfig.Owner)/$($githubConfig.Repo)..." -Level 'Info'
+            
+            $safetyResult = & $safetyScript -LicensePath $licensePath `
+                -GitHubOwner $githubConfig.Owner `
+                -GitHubRepo $githubConfig.Repo 2>&1
+            
+            if ($LASTEXITCODE -ne 0) {
+                Write-ObfuscateLog "🛑 SAFETY BLOCK: License not backed up remotely!" -Level 'Error'
+                Write-ObfuscateLog "Cannot encrypt without remote backup - risk of permanent data loss" -Level 'Error'
+                Write-ObfuscateLog "Deploy license first: ./automation-scripts/0874_Deploy-LicenseToGitHub.ps1" -Level 'Info'
+                exit 1
+            }
+            
+            Write-ObfuscateLog "Safety check passed - license backed up remotely ✓" -Level 'Success'
+        } else {
+            Write-ObfuscateLog "GitHub config not found - skipping remote backup check" -Level 'Warning'
+            Write-ObfuscateLog "Run 0803_Setup-LicenseInfrastructure.ps1 to configure GitHub backup" -Level 'Info'
+        }
+    } else {
+        Write-ObfuscateLog "Safety check script not found - skipping" -Level 'Warning'
+    }
+    
     # Get encryption key from license
     $key = Get-LicenseKey -LicensePath $licensePath
     

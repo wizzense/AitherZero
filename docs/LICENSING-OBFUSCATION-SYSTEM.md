@@ -1,5 +1,40 @@
 # Source Code Obfuscation and Licensing System
 
+## 🛑 CRITICAL SAFETY FEATURES
+
+**SAFETY MECHANISM: Remote Backup Verification**
+The pre-commit hook includes an automatic safety check that **PREVENTS ENCRYPTION** unless your license is backed up in a remote GitHub repository. This prevents permanent data loss if you lose your local license/key.
+
+**How It Works:**
+1. Before encrypting any files, the system verifies the license exists in your GitHub license repository
+2. It compares the encryption keys to ensure they match
+3. If the license is not backed up remotely, encryption is **BLOCKED** with a clear error message
+4. You must deploy the license to GitHub first: `./automation-scripts/0874_Deploy-LicenseToGitHub.ps1`
+
+**Why This Matters:**
+- If you encrypt with a local-only key and then lose the key, your source code is **permanently lost**
+- The safety check ensures you always have a remote backup of the decryption key
+- You can override with `-Force` but this is **NOT RECOMMENDED** (you're responsible for manual backup)
+
+**License & Credential Rotation:**
+The system includes safe rotation scripts that:
+- Back up old credentials before rotation
+- Decrypt all files with old key, re-encrypt with new key
+- Verify new license is backed up before re-encrypting
+- Provide rollback instructions if rotation fails
+
+```powershell
+# Rotate license keys safely
+./automation-scripts/0876_Rotate-LicenseKeys.ps1 `
+    -OldLicensePath "./license.json" `
+    -NewLicenseId "PROD-002" `
+    -GitHubOwner "aitherium"
+
+# Rotate GitHub credentials
+./automation-scripts/0877_Rotate-GitHubCredentials.ps1 `
+    -NewToken "ghp_newtoken..."
+```
+
 ## ⚠️ CRITICAL SECURITY CONSIDERATIONS
 
 **License Signature Security:**
@@ -17,6 +52,7 @@ The license signature system provides tamper detection but has important limitat
 **Pre-Commit Hook Behavior:**
 - The pre-commit hook encrypts matched files and **unstages the original plaintext**
 - Encrypted files (`.encrypted`) are committed; plaintext originals are not
+- The safety check **blocks encryption** unless license is backed up remotely
 - Ensure you have backups before enabling automatic encryption
 
 ## Overview
@@ -417,6 +453,111 @@ Set-AitherCredentialGitHub -Token "ghp_your_token_here"
 - Secure token storage using AitherZero's credential vault
 - Cross-platform support (Windows/Linux/macOS)
 
+
+## License & Credential Rotation
+
+### Safe Key Rotation
+
+The system includes comprehensive rotation capabilities to maintain security hygiene:
+
+**License Key Rotation:**
+```powershell
+# Rotate encryption keys with automatic re-encryption
+./automation-scripts/0876_Rotate-LicenseKeys.ps1 `
+    -OldLicensePath "./license.json" `
+    -NewLicenseId "PROD-002" `
+    -GitHubOwner "aitherium"
+
+# Dry run to preview changes
+./automation-scripts/0876_Rotate-LicenseKeys.ps1 `
+    -OldLicensePath "./license.json" `
+    -NewLicenseId "PROD-002" `
+    -GitHubOwner "aitherium" `
+    -DryRun
+```
+
+**What the rotation script does:**
+1. Verifies old license is backed up remotely (safety check)
+2. Creates backup of all encrypted files
+3. Decrypts all files with old key
+4. Generates new license with new keys
+5. Backs up new license to GitHub
+6. Re-encrypts all files with new key
+7. Provides verification steps and rollback instructions
+
+**GitHub Credential Rotation:**
+```powershell
+# Rotate GitHub access token
+./automation-scripts/0877_Rotate-GitHubCredentials.ps1 `
+    -NewToken "ghp_newtoken..."
+
+# Test with specific repository
+./automation-scripts/0877_Rotate-GitHubCredentials.ps1 `
+    -NewToken "ghp_newtoken..." `
+    -TestOwner "aitherium" `
+    -TestRepo "licenses"
+```
+
+**What the credential rotation does:**
+1. Backs up old token to temp file
+2. Validates new token format
+3. Tests API access with new token
+4. Checks repository permissions
+5. Updates stored credentials
+6. Verifies new credentials work
+7. Provides rollback instructions
+
+**Rotation Best Practices:**
+- Rotate license keys every 90-180 days
+- Rotate GitHub tokens when team members leave
+- Always use `-DryRun` first to preview changes
+- Keep rotation backups until verified
+- Test decryption after rotation
+- Document rotation dates
+
+## Safety Features
+
+### Remote Backup Verification
+
+The pre-commit hook includes an automatic safety mechanism to prevent permanent data loss:
+
+```powershell
+# Safety check runs automatically during pre-commit
+# Blocks encryption unless license is backed up remotely
+
+# Manual verification
+./automation-scripts/0875_Verify-LicenseBackup.ps1 `
+    -LicensePath "./license.json" `
+    -GitHubOwner "aitherium"
+```
+
+**How it protects you:**
+1. Before encrypting files, verifies license exists in GitHub repository
+2. Compares encryption keys to ensure they match
+3. Blocks encryption with clear error if backup not found
+4. Prevents accidental data loss from local-only keys
+
+**Override (not recommended):**
+```powershell
+# Force encryption without remote backup (DANGEROUS)
+./automation-scripts/0875_Verify-LicenseBackup.ps1 `
+    -LicensePath "./license.json" `
+    -GitHubOwner "aitherium" `
+    -Force
+```
+
+**When backup verification fails:**
+```
+🛑 SAFETY BLOCK ACTIVATED 🛑
+
+Cannot proceed with encryption - license not backed up remotely!
+This prevents permanent data loss if local key is lost.
+
+To fix:
+1. Deploy license to GitHub first:
+   ./automation-scripts/0874_Deploy-LicenseToGitHub.ps1 -LicensePath './license.json'
+2. Then retry encryption
+```
 
 ## Security Considerations
 
