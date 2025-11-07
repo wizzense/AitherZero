@@ -80,9 +80,9 @@ param(
     [Parameter()]
     [string]$ConfigPath = './config.psd1',
     
-    [Parameter(ParameterSetName='List', Mandatory=$true)]
+    [Parameter(ParameterSetName='List')]
     [ValidateSet('scripts', 'playbooks', 'all')]
-    [string]$List,
+    [string]$List = 'all',
     
     [Parameter(ParameterSetName='Dashboard')]
     [switch]$Dashboard,
@@ -196,20 +196,121 @@ if ($Playbook) {
     exit ($failed -eq 0 ? 0 : 1)
 }
 
-# No parameters - show usage
-Write-Host "Usage:" -ForegroundColor Cyan
-Write-Host "  ./Start-AitherZero.ps1 <script-number>       Run a script" -ForegroundColor Gray
-Write-Host "  ./Start-AitherZero.ps1 -Playbook <name>      Run a playbook" -ForegroundColor Gray
-Write-Host "  ./Start-AitherZero.ps1 -List scripts         List scripts" -ForegroundColor Gray
-Write-Host "  ./Start-AitherZero.ps1 -Dashboard            Show dashboard" -ForegroundColor Gray
-Write-Host "  ./Start-AitherZero.ps1 -Help                 Show help" -ForegroundColor Gray
+# No parameters - interactive mode
+Write-Host "Welcome to AitherZero Interactive Mode" -ForegroundColor Cyan
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "Examples:" -ForegroundColor Cyan
-Write-Host "  ./Start-AitherZero.ps1 0402                  Run unit tests" -ForegroundColor Gray
-Write-Host "  ./Start-AitherZero.ps1 -Playbook test-quick  Quick test suite" -ForegroundColor Gray
+
+# Show quick stats
+$scriptCount = (Get-AitherScript).Count
+$playbookCount = (Get-AitherPlaybook).Count
+Write-Host "  📋 Scripts: $scriptCount | 📦 Playbooks: $playbookCount | 🖥️  Platform: $(Get-AitherPlatform)" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "For full CLI power, use cmdlets directly:" -ForegroundColor Yellow
-Write-Host "  Get-Command -Module AitherZero | Where-Object Name -like '*-Aither*'" -ForegroundColor Gray
+
+# Interactive menu
+Write-Host "What would you like to do?" -ForegroundColor White
+Write-Host ""
+Write-Host "  [s] " -ForegroundColor Yellow -NoNewline
+Write-Host "List scripts" -ForegroundColor Gray
+Write-Host "  [p] " -ForegroundColor Yellow -NoNewline
+Write-Host "List playbooks" -ForegroundColor Gray
+Write-Host "  [d] " -ForegroundColor Yellow -NoNewline
+Write-Host "Show dashboard" -ForegroundColor Gray
+Write-Host "  [r] " -ForegroundColor Yellow -NoNewline
+Write-Host "Run a script (enter number)" -ForegroundColor Gray
+Write-Host "  [e] " -ForegroundColor Yellow -NoNewline
+Write-Host "Execute a playbook" -ForegroundColor Gray
+Write-Host "  [h] " -ForegroundColor Yellow -NoNewline
+Write-Host "Show help" -ForegroundColor Gray
+Write-Host "  [q] " -ForegroundColor Yellow -NoNewline
+Write-Host "Quit" -ForegroundColor Gray
+Write-Host ""
+
+$choice = Read-Host "Enter choice"
+
+switch ($choice.ToLower()) {
+    's' {
+        Write-Host ""
+        Write-Host "Available Scripts:" -ForegroundColor Cyan
+        Write-Host ""
+        Get-AitherScript | Format-Table Number, Name, Category -AutoSize
+    }
+    'p' {
+        Write-Host ""
+        Write-Host "Available Playbooks:" -ForegroundColor Cyan
+        Write-Host ""
+        Get-AitherPlaybook | Format-Table Name, Description, ScriptCount -AutoSize
+    }
+    'd' {
+        Write-Host ""
+        Show-AitherDashboard
+    }
+    'r' {
+        Write-Host ""
+        $scriptNum = Read-Host "Enter script number (0000-9999)"
+        if ($scriptNum -match '^\d{4}$') {
+            Write-Host ""
+            $success = Invoke-AitherScript -Number $scriptNum -PassThru
+            exit ($success.Success ? 0 : 1)
+        } else {
+            Write-Host "Invalid script number. Must be 4 digits (e.g., 0402)" -ForegroundColor Red
+            exit 1
+        }
+    }
+    'e' {
+        Write-Host ""
+        Write-Host "Available playbooks:" -ForegroundColor DarkGray
+        Get-AitherPlaybook | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor DarkGray }
+        Write-Host ""
+        $playbookName = Read-Host "Enter playbook name"
+        if ($playbookName) {
+            Write-Host ""
+            $results = Invoke-AitherPlaybook -Name $playbookName -PassThru
+            $failed = ($results | Where-Object { -not $_.Success }).Count
+            exit ($failed -eq 0 ? 0 : 1)
+        } else {
+            Write-Host "No playbook specified" -ForegroundColor Red
+            exit 1
+        }
+    }
+    'h' {
+        Write-Host ""
+        Write-Host "Quick Reference:" -ForegroundColor Cyan
+        Write-Host "  Get-AitherScript              List automation scripts" -ForegroundColor Gray
+        Write-Host "  Get-AitherPlaybook            List playbooks" -ForegroundColor Gray
+        Write-Host "  Invoke-AitherScript 0402      Run a script" -ForegroundColor Gray
+        Write-Host "  Invoke-AitherPlaybook test    Run a playbook" -ForegroundColor Gray
+        Write-Host "  Show-AitherDashboard          Show dashboard" -ForegroundColor Gray
+        Write-Host "  Get-AitherConfig              Get configuration" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "Command-line usage:" -ForegroundColor Cyan
+        Write-Host "  ./Start-AitherZero.ps1 <number>        Run script by number" -ForegroundColor Gray
+        Write-Host "  ./Start-AitherZero.ps1 -Playbook name  Run playbook" -ForegroundColor Gray
+        Write-Host "  ./Start-AitherZero.ps1 -List scripts   List scripts" -ForegroundColor Gray
+        Write-Host "  ./Start-AitherZero.ps1 -Dashboard      Show dashboard" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "For all available cmdlets:" -ForegroundColor Cyan
+        Write-Host "  Get-Command -Module AitherZero | Where-Object Name -like '*-Aither*'" -ForegroundColor Gray
+    }
+    'q' {
+        Write-Host ""
+        Write-Host "Goodbye! 👋" -ForegroundColor Cyan
+        exit 0
+    }
+    default {
+        # Check if it's a script number
+        if ($choice -match '^\d{4}$') {
+            Write-Host ""
+            $success = Invoke-AitherScript -Number $choice -PassThru
+            exit ($success.Success ? 0 : 1)
+        } else {
+            Write-Host ""
+            Write-Host "Invalid choice. Use -Help for usage information." -ForegroundColor Red
+            exit 1
+        }
+    }
+}
+
 Write-Host ""
 exit 0
 
