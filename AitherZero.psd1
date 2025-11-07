@@ -28,6 +28,9 @@
         # From UserInterface
         'Show-UIMenu', 'Show-UIProgress', 'Show-UINotification', 'Show-UIWizard',
         'Initialize-AitherUI', 'Show-UIBorder', 'Write-UIText',
+        
+        # From UnifiedMenu
+        'Start-UnifiedMenu', 'Show-UnifiedMenu',
 
         # From GitAutomation
         'New-FeatureBranch', 'New-ConventionalCommit', 'Sync-GitRepository',
@@ -71,7 +74,7 @@
 
     CmdletsToExport = @()
     VariablesToExport = @()
-    AliasesToExport = @('az', 'seq')
+    AliasesToExport = @('az', 'seq', 'Show-UnifiedMenu')
 
     # Private data
     PrivateData = @{

@@ -3589,17 +3589,11 @@ try {
 
         } else {
 
-            # Manual execution: Non-interactive list mode by default
+            # Manual execution: Show usage or list by default
 
             # Users can explicitly use -Mode Interactive for the interactive menu
 
             $NonInteractive = $false
-
-            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-
-                Write-CustomLog "Manual execution detected - defaulting to non-interactive mode" -Level 'Information'
-
-            }
 
         }
 
