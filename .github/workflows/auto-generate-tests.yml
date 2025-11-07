@@ -48,16 +48,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          # Use PAT with workflow scope to trigger workflows on bot commits
-          # Falls back to GITHUB_TOKEN if PAT not available (won't trigger workflows)
-          token: ${{ secrets.PAT_WITH_WORKFLOW_SCOPE || secrets.GITHUB_TOKEN }}
+          # Use GITHUB_TOKEN to prevent triggering workflows on bot commits
+          # This prevents cascade of workflow runs when tests are auto-generated
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 Setup PowerShell
         shell: bash
         run: |
           pwsh -Version
 
+      - name: 🔍 Check if triggered by bot commit
+        id: check-bot
+        shell: bash
+        run: |
+          LAST_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          echo "Last commit author: $LAST_COMMIT_AUTHOR"
+          
+          if [[ "$LAST_COMMIT_AUTHOR" == *"github-actions"* ]] || [[ "$LAST_COMMIT_AUTHOR" == *"[bot]"* ]]; then
+            echo "⚠️  Last commit was from a bot, skipping to prevent workflow cascade"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "✓ Last commit was from a human, proceeding with test generation"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: 🔍 Detect new scripts without tests
+        if: steps.check-bot.outputs.skip != 'true'
         id: detect
         shell: pwsh
         run: |
@@ -117,14 +133,14 @@ jobs:
           }
 
       - name: 📦 Bootstrap environment
-        if: steps.detect.outputs.missing_tests == 'true'
+        if: steps.detect.outputs.missing_tests == 'true' && steps.check-bot.outputs.skip != 'true'
         shell: pwsh
         run: |
           Write-Host "📦 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
           ./bootstrap.ps1 -Mode Update -InstallProfile Minimal
 
       - name: 🧪 Generate missing tests
-        if: steps.detect.outputs.missing_tests == 'true'
+        if: steps.detect.outputs.missing_tests == 'true' && steps.check-bot.outputs.skip != 'true'
         id: generate
         shell: pwsh
         run: |
@@ -162,7 +178,7 @@ jobs:
           }
 
       - name: 📝 Commit generated tests
-        if: github.event_name == 'pull_request' && steps.detect.outputs.missing_tests == 'true' && steps.generate.outputs.success == 'true'
+        if: github.event_name == 'pull_request' && steps.detect.outputs.missing_tests == 'true' && steps.generate.outputs.success == 'true' && steps.check-bot.outputs.skip != 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"

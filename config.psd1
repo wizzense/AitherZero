@@ -863,6 +863,7 @@
         # Script execution settings
         ScriptsPath = './automation-scripts'
         DefaultTimeout = 3600
+        MaxTimeout = 7200  # Maximum allowed timeout (2 hours)
         MaxConcurrency = 4
         ParallelExecution = $true
         DefaultMode = 'Parallel'  # Parallel, Sequential, Staged, Conditional
@@ -886,6 +887,82 @@
         HistoryRetentionDays = 30
         CacheExecutionPlans = $true
         NotificationEnabled = $true
+        
+        # Script range defaults - defines behavior per script number range
+        ScriptRangeDefaults = @{
+            '0000-0099' = @{
+                Name = 'Environment Setup'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $false
+                RequiresElevation = $true
+                Stage = 'Setup'
+                AllowParallel = $false  # Sequential for setup scripts
+            }
+            '0100-0199' = @{
+                Name = 'Infrastructure'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $false
+                RequiresElevation = $true
+                Stage = 'Infrastructure'
+                AllowParallel = $true
+            }
+            '0200-0299' = @{
+                Name = 'Development Tools'
+                DefaultTimeout = 900  # 15 minutes
+                ContinueOnError = $true  # Can continue if optional tools fail
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $true
+            }
+            '0400-0499' = @{
+                Name = 'Testing & Validation'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $true  # Show all test results
+                RequiresElevation = $false
+                Stage = 'Testing'
+                AllowParallel = $true
+            }
+            '0500-0599' = @{
+                Name = 'Reporting & Metrics'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Reporting'
+                AllowParallel = $true
+            }
+            '0700-0799' = @{
+                Name = 'Git Automation'
+                DefaultTimeout = 180  # 3 minutes
+                ContinueOnError = $false
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $false
+            }
+            '0800-0899' = @{
+                Name = 'Issue Management'
+                DefaultTimeout = 120  # 2 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Development'
+                AllowParallel = $true
+            }
+            '0900-0999' = @{
+                Name = 'Validation & Diagnostics'
+                DefaultTimeout = 300  # 5 minutes
+                ContinueOnError = $true
+                RequiresElevation = $false
+                Stage = 'Testing'
+                AllowParallel = $true
+            }
+            '9000-9999' = @{
+                Name = 'Maintenance & Cleanup'
+                DefaultTimeout = 600  # 10 minutes
+                ContinueOnError = $true
+                RequiresElevation = $true
+                Stage = 'Maintenance'
+                AllowParallel = $false
+            }
+        }
         
         # Execution profiles mapping
         Profiles = @{
@@ -912,6 +989,75 @@
                 Scripts = @('*')
                 MaxConcurrency = 8
                 Features = @('*')
+            }
+        }
+        
+        # Playbook registry - centralized playbook management
+        Playbooks = @{
+            'test-orchestration' = @{
+                Enabled = $true
+                Description = 'Simple test playbook for validation'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'project-health-check' = @{
+                Enabled = $true
+                Description = 'Complete project health validation (matches GitHub Actions)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    DefaultTimeout = 300  # Override range defaults for this playbook
+                }
+            }
+            'pr-validation-fast' = @{
+                Enabled = $true
+                Description = 'Fast PR validation (syntax + config)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    '0407' = @{ Timeout = 60 }   # Faster syntax check
+                    '0413' = @{ Timeout = 30 }   # Faster config validation
+                }
+            }
+            'pr-validation-full' = @{
+                Enabled = $true
+                Description = 'Full PR validation (syntax, quality, tests)'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'code-quality-fast' = @{
+                Enabled = $true
+                Description = 'Quick code quality checks'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'code-quality-full' = @{
+                Enabled = $true
+                Description = 'Comprehensive code quality analysis'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'integration-tests-full' = @{
+                Enabled = $true
+                Description = 'Full integration test suite'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults = @{
+                    DefaultTimeout = 600
+                    ContinueOnError = $true
+                }
+            }
+            'diagnose-ci' = @{
+                Enabled = $true
+                Description = 'Diagnose CI/CD failures'
+                RequiresApproval = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'fix-ci-validation' = @{
+                Enabled = $false  # Disabled by default - maintenance only
+                Description = 'Fix CI validation issues'
+                RequiresApproval = $true
+                AllowedEnvironments = @('Dev')
             }
         }
     }
