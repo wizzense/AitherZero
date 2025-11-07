@@ -391,24 +391,93 @@
                 Features = @('Core.PowerShell7', 'Core.Git')
                 ScriptRanges = @('0000-0099')
                 EstimatedTime = '2-5 minutes'
+                Tools = @('PowerShell', 'Git')
             }
             Standard = @{
                 Description = 'Common development environment'
                 Features = @('Core', 'Development.Node', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
                 ScriptRanges = @('0000-0299', '0400-0499')
                 EstimatedTime = '5-15 minutes'
+                Tools = @('PowerShell', 'Git', 'Node', 'Docker')
             }
             Developer = @{
                 Description = 'Full development environment with all tools'
                 Features = @('Core', 'Development', 'Testing')
                 ScriptRanges = @('0000-0499')
                 EstimatedTime = '15-30 minutes'
+                Tools = @('PowerShell', 'Git', 'Node', 'Python', 'Docker', 'VSCode', 'GitHubCLI')
+            }
+            Development = @{
+                Description = 'Complete development setup with IDE, AI tools, and workflows'
+                Features = @('Core', 'Development', 'Testing', 'AI.Development')
+                ScriptRanges = @('0000-0299', '0400-0499')
+                EstimatedTime = '20-40 minutes'
+                Tools = @(
+                    # Core development
+                    'PowerShell', 'Git', 'GitHubCLI', 'Node', 'Python', 'Go',
+                    # Editors & IDEs
+                    'VSCode', 'VimPlug',
+                    # Containers & Infrastructure
+                    'Docker', 'OpenTofu', 'Terraform',
+                    # AI & Productivity
+                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI', 'CodexCLI',
+                    # Quality & Testing
+                    'Pester', 'PSScriptAnalyzer'
+                )
+                EnvironmentSetup = $true
+                ConfigureIDE = $true
+                InstallAITools = $true
+            }
+            'AI-Development' = @{
+                Description = 'AI-enhanced development environment'
+                Features = @('Core', 'Development.Basic', 'AI.All')
+                ScriptRanges = @('0000-0099', '0200-0210', '0220-0230')
+                EstimatedTime = '15-25 minutes'
+                Tools = @(
+                    'PowerShell', 'Git', 'Node', 'VSCode',
+                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI', 'CodexCLI',
+                    'MCPServers'
+                )
+                ConfigureAI = $true
+            }
+            Deployment = @{
+                Description = 'Deployment-only environment (no dev tools)'
+                Features = @('Core.PowerShell7', 'Infrastructure', 'Automation.Orchestration')
+                ScriptRanges = @('0000-0010', '0100-0199')
+                EstimatedTime = '5-10 minutes'
+                Tools = @('PowerShell', 'Git', 'OpenTofu', 'Docker')
+                SkipDevelopment = $true
+                SkipTesting = $true
+                OptimizeForDeployment = $true
+            }
+            'Full-Stack' = @{
+                Description = 'Complete full-stack development environment'
+                Features = @('Core', 'Development', 'Testing', 'Infrastructure', 'AI')
+                ScriptRanges = @('0000-0499')
+                EstimatedTime = '30-50 minutes'
+                Tools = @(
+                    # Languages & Runtimes
+                    'PowerShell', 'Node', 'Python', 'Go', 'DotNet',
+                    # Version Control
+                    'Git', 'GitHubCLI',
+                    # Editors
+                    'VSCode',
+                    # Containers & Orchestration
+                    'Docker', 'Kubernetes', 'OpenTofu',
+                    # Databases
+                    'PostgreSQL', 'Redis', 'MongoDB',
+                    # AI Tools
+                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI',
+                    # Testing & Quality
+                    'Pester', 'PSScriptAnalyzer', 'SonarQube'
+                )
             }
             Full = @{
                 Description = 'Everything including infrastructure components'
                 Features = @('*')
                 ScriptRanges = @('*')
                 EstimatedTime = '30-60 minutes'
+                Tools = @('*')
             }
             CI = @{
                 Description = 'Optimized for CI/CD environments'
@@ -417,6 +486,19 @@
                 Parallel = $true
                 NonInteractive = $true
                 EstimatedTime = '3-8 minutes'
+                Tools = @('PowerShell', 'Git', 'Node', 'Docker')
+            }
+            'Self-Hosted-Runner' = @{
+                Description = 'GitHub Actions self-hosted runner environment'
+                Features = @('Core', 'Development.Basic', 'Testing', 'Infrastructure.Basic')
+                ScriptRanges = @('0000-0099', '0200-0210', '0400-0450', '0800-0850')
+                EstimatedTime = '10-20 minutes'
+                Tools = @(
+                    'PowerShell', 'Git', 'GitHubCLI', 'Node', 'Docker',
+                    'Pester', 'PSScriptAnalyzer', 'OpenTofu'
+                )
+                ConfigureRunner = $true
+                InstallRunnerService = $true
             }
         }
         
@@ -592,14 +674,38 @@
                         'ms-vscode.powershell'
                         'ms-azuretools.vscode-docker'
                         'github.copilot'
+                        'github.copilot-chat'
                         'ms-python.python'
                         'ms-vscode.vscode-json'
+                        'ms-vsliveshare.vsliveshare'
+                        'eamodio.gitlens'
                     )
                     Settings = @{
                         AutoSave = 'afterDelay'
                         FormatOnSave = $true
                         TabSize = 4
                     }
+                }
+            }
+            GitHubCLI = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0211'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    AuthMethod = 'browser'  # browser, token
+                    DefaultEditor = 'vim'
+                    Protocol = 'https'
+                }
+            }
+            Go = @{
+                Enabled = $false
+                Version = '1.21+'
+                InstallScript = '0212'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    GOPATH = '$HOME/go'
+                    InstallTools = @('gopls', 'golangci-lint')
                 }
             }
             Docker = @{
@@ -616,6 +722,115 @@
                         Disk = '60GB'
                     }
                 }
+            }
+        }
+        
+        # AI Tools and Services
+        AI = @{
+            GitHubCopilot = @{
+                Enabled = $false
+                InstallScript = $null  # Installed via VS Code extension
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    EnableInVSCode = $true
+                    EnableInCLI = $false
+                    Suggestions = 'auto'
+                }
+            }
+            ClaudeCLI = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0220'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    APIKeySource = 'environment'  # environment, file, prompt
+                    DefaultModel = 'claude-3-sonnet-20240229'
+                    MaxTokens = 4096
+                }
+            }
+            GeminiCLI = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0221'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    APIKeySource = 'environment'
+                    DefaultModel = 'gemini-pro'
+                    SafetySettings = 'balanced'
+                }
+            }
+            CodexCLI = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0222'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    APIKeySource = 'environment'
+                    DefaultModel = 'gpt-4'
+                    Temperature = 0.7
+                }
+            }
+            MCPServers = @{
+                Enabled = $false
+                InstallScript = '0010'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    Servers = @('filesystem', 'github', 'git', 'powershell-docs', 'sequential-thinking')
+                    AutoStart = $true
+                }
+            }
+        }
+        
+        # Infrastructure and DevOps Tools
+        InfrastructureTools = @{
+            OpenTofu = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0008'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    Providers = @('azurerm', 'aws', 'google', 'kubernetes', 'helm', 'hyperv')
+                    PluginCache = '$HOME/.terraform.d/plugin-cache'
+                    AutoInstallProviders = $true
+                }
+            }
+            Terraform = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0213'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    PreferOpenTofu = $true  # Use OpenTofu if available
+                }
+            }
+            Kubernetes = @{
+                Enabled = $false
+                InstallScript = '0214'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    InstallKubectl = $true
+                    InstallHelm = $true
+                    InstallK9s = $false
+                }
+            }
+        }
+        
+        # Self-Hosted Runner Configuration
+        GitHubRunner = @{
+            Enabled = $false
+            Version = 'latest'
+            InstallScript = '0850'
+            Platforms = @('Windows', 'Linux', 'macOS')
+            Configuration = @{
+                RunnerName = '$env:COMPUTERNAME-runner'
+                RunnerGroup = 'Default'
+                Labels = @('self-hosted', '$OS', '$ARCH')
+                WorkDirectory = '_work'
+                InstallAsService = $true
+                StartOnBoot = $true
+                AllowedRepositories = @()  # Empty = all repositories
+                RunnerURL = ''  # Set dynamically
+                RegistrationToken = ''  # Obtained at runtime
             }
         }
         
@@ -1461,6 +1676,99 @@
         DisableTCPIP6 = $false
         ConfigPXE = $false
         SetupLabProfile = $false
+    }
+    
+    # ===================================================================
+    # ENVIRONMENT CONFIGURATION - System Environment Settings
+    # ===================================================================
+    EnvironmentConfiguration = @{
+        # Automatic configuration application
+        ApplyOnBootstrap = $true      # Apply during bootstrap
+        ApplyOnStart = $false         # Apply when Start-AitherZero runs
+        
+        # Windows-specific features
+        Windows = @{
+            # Long path support (paths > 260 characters)
+            LongPathSupport = @{
+                Enabled = $true       # Enable by default for development
+                AutoApply = $true     # Automatically configure
+                Description = 'Enable NTFS long path support (> 260 characters)'
+                RegistryPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+                RegistryKey = 'LongPathsEnabled'
+                RegistryValue = 1
+                RequiresRestart = $false
+            }
+            
+            # Developer Mode
+            DeveloperMode = @{
+                Enabled = $false      # Opt-in for security
+                AutoApply = $false
+                Description = 'Enable Windows Developer Mode (sideloading, SSH, etc.)'
+                RequiresRestart = $false
+            }
+            
+            # Performance settings
+            Performance = @{
+                DisableIndexing = $false  # Disable on dev paths only
+                DisableDefender = $false  # Dangerous - requires explicit opt-in
+                OptimizeForPerformance = $false
+            }
+        }
+        
+        # Cross-platform environment variables
+        EnvironmentVariables = @{
+            # System-wide variables (requires admin on Windows)
+            System = @{
+                # Example: AITHERZERO_HOME = $env:AITHERZERO_ROOT
+                # Will be populated dynamically or via config.local.psd1
+            }
+            
+            # User-level variables
+            User = @{
+                AITHERZERO_PROFILE = ''           # Override default profile
+                AITHERZERO_CONFIG_PATH = ''       # Custom config file path
+                AITHERZERO_NONINTERACTIVE = ''    # Force non-interactive mode
+            }
+            
+            # Process-level variables (current session only)
+            Process = @{
+                AITHERZERO_DEBUG = $false
+                AITHERZERO_VERBOSE = $false
+                AITHERZERO_DRYRUN = $false
+            }
+        }
+        
+        # PATH management
+        PathConfiguration = @{
+            AddToPath = $true
+            Paths = @{
+                User = @()      # User-level paths to add
+                System = @()    # System-level paths (requires admin)
+            }
+            CleanDuplicates = $true
+            ValidateExists = $true
+        }
+        
+        # Linux/macOS specific
+        Unix = @{
+            # Shell configuration
+            ShellIntegration = @{
+                Enabled = $true
+                Shells = @('bash', 'zsh', 'fish')
+                AddToProfile = $true
+            }
+            
+            # Permissions
+            EnsureExecutable = $true  # Make scripts executable
+        }
+        
+        # Validation settings
+        Validation = @{
+            ValidateBeforeApply = $true
+            BackupBeforeChanges = $true
+            RollbackOnError = $true
+            DryRunFirst = $false      # Test before applying
+        }
     }
     
     # ===================================================================
