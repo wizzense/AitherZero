@@ -274,29 +274,57 @@ automation-scripts/98[0-9][0-9]_*.ps1
 
 ## Workflows
 
-### Initial Setup for a New Project
+### Initial Setup for AitherZero Organization
 
-```bash
+**Full Organization Setup (Recommended):**
+```powershell
+# Complete zero-to-deployment setup using orchestration
+Start-AitherZero -Mode Orchestrate -Playbook aitherium-org-setup
+
+# Or run the playbook directly
+Invoke-OrchestrationSequence -PlaybookPath "./orchestration/playbooks/aitherium-org-setup.psd1"
+```
+
+This orchestrates:
+- PowerShell 7 and development tools
+- Certificate Authority (Windows)
+- License infrastructure with master keys
+- GitHub integration for license distribution
+- Validation and summary
+
+**Manual Step-by-Step Setup:**
+```powershell
 # 1. Bootstrap environment
 ./bootstrap.ps1 -Mode Update
 
-# 2. Create organization license
-./automation-scripts/0800_Manage-License.ps1 \
-    -Action Create \
-    -LicenseId "ORG-001" \
-    -LicensedTo "Your Organization" \
-    -ExpirationDays 730
+# 2. Set up license infrastructure (integrates with CA and credential system)
+./automation-scripts/0803_Setup-LicenseInfrastructure.ps1 `
+    -OrganizationName "aitherium" `
+    -GitHubOwner "aitherium" `
+    -GitHubRepo "licenses" `
+    -SetupCA `
+    -GenerateMasterKeys
 
-# 3. Store license in secure location
-mkdir -p ~/.aitherzero
-mv ORG-001.json ~/.aitherzero/license.json
+# 3. Configure GitHub credentials (uses AitherZero credential management)
+Set-AitherCredentialGitHub -Token "ghp_your_token_here"
 
-# 4. Store encryption key securely (KeePass, 1Password, etc.)
+# 4. Create organization license with separate signing key
+./automation-scripts/0800_Manage-License.ps1 `
+    -Action Create `
+    -LicenseId "ORG-001" `
+    -LicensedTo "Your Organization" `
+    -ExpirationDays 3650 `
+    -GenerateKey `
+    -GenerateSigningKey
 
-# 5. Configure obfuscation patterns
+# 5. Deploy license to GitHub (uses Set-AitherCredentialGitHub)
+./automation-scripts/0804_Deploy-LicenseToGitHub.ps1 `
+    -LicensePath "./ORG-001.json"
+
+# 6. Configure obfuscation patterns
 vim .obfuscate-patterns
 
-# 6. Enable Git hooks
+# 7. Enable Git hooks
 git config core.hooksPath .githooks
 ```
 
@@ -312,11 +340,25 @@ git push
 ### CI/CD Integration
 
 ```yaml
-# GitHub Actions example
+# GitHub Actions example with credential integration
 jobs:
   build:
     steps:
       - uses: actions/checkout@v3
+      
+      # Retrieve license using AitherZero credential system
+      - name: Setup License
+        run: |
+          # GitHub token is automatically available in Actions
+          Set-AitherCredentialGitHub -Token "${{ secrets.GITHUB_TOKEN }}"
+          
+          # Retrieve license from private repo
+          ./automation-scripts/0800_Manage-License.ps1 `
+            -Action Retrieve `
+            -LicenseId "PROD-001" `
+            -GitHubOwner "aitherium" `
+            -GitHubRepo "licenses" `
+            -OutputPath "~/.aitherzero/license.json"
       
       # Retrieve license from secrets
       - name: Setup License
@@ -331,31 +373,50 @@ jobs:
             -EncryptedPath "./MyModule.psm1.encrypted"
 ```
 
-### Remote License Management
+### Remote License Management with Integrated Credential System
 
-```bash
-# Setup private license repository
-gh repo create aitherium/licenses --private
+```powershell
+# 1. Configure GitHub credentials (one-time setup)
+Set-AitherCredentialGitHub -Token "ghp_your_token_here"
 
-# Store licenses
-mkdir licenses
-./automation-scripts/0800_Manage-License.ps1 \
-    -Action Create \
-    -LicenseId "PROD-001" \
-    -LicensedTo "Production" \
+# 2. Set up license infrastructure with GitHub integration
+./automation-scripts/0803_Setup-LicenseInfrastructure.ps1 `
+    -OrganizationName "aitherium" `
+    -GitHubOwner "aitherium" `
+    -GitHubRepo "licenses" `
+    -GenerateMasterKeys
+
+# 3. Create licenses
+./automation-scripts/0800_Manage-License.ps1 `
+    -Action Create `
+    -LicenseId "PROD-001" `
+    -LicensedTo "Production" `
+    -GenerateKey `
+    -GenerateSigningKey `
     -OutputPath "./licenses/PROD-001.json"
 
-git add licenses/
-git commit -m "Add production license"
-git push
+# 4. Deploy to GitHub (uses Set-AitherCredentialGitHub internally)
+./automation-scripts/0804_Deploy-LicenseToGitHub.ps1 `
+    -LicensePath "./licenses/PROD-001.json"
 
-# Retrieve on another machine
-./automation-scripts/0800_Manage-License.ps1 \
-    -Action Retrieve \
-    -LicenseId "PROD-001" \
-    -GitHubOwner "aitherium" \
-    -GitHubRepo "licenses"
+# 5. Retrieve on another machine (uses Get-AitherSecretGitHub internally)
+Set-AitherCredentialGitHub -Token "ghp_your_token_here"
+
+./automation-scripts/0800_Manage-License.ps1 `
+    -Action Retrieve `
+    -LicenseId "PROD-001" `
+    -GitHubOwner "aitherium" `
+    -GitHubRepo "licenses" `
+    -OutputPath "./license.json"
 ```
+
+**Benefits of Integrated Credential System:**
+- No dependency on `gh` CLI installation
+- Consistent credential management across all AitherZero components
+- Automatic fallback to `gh` CLI if credential system unavailable
+- Secure token storage using AitherZero's credential vault
+- Cross-platform support (Windows/Linux/macOS)
+
 
 ## Security Considerations
 

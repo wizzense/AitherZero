@@ -328,8 +328,9 @@ function Test-License {
     Retrieves a license from a GitHub repository
     
 .DESCRIPTION
-    Fetches a license file from a private GitHub repository using GitHub CLI (gh).
-    Requires gh CLI to be authenticated.
+    Fetches a license file from a private GitHub repository using AitherZero's 
+    secure credential management system (Get-AitherSecretGitHub). This integrates
+    with the existing credential infrastructure instead of requiring gh CLI.
     
 .PARAMETER Owner
     Repository owner/organization
@@ -346,8 +347,14 @@ function Test-License {
 .PARAMETER Branch
     Branch to retrieve from (default: main)
     
+.PARAMETER Path
+    Path within repository where licenses are stored (default: "licenses")
+    
 .EXAMPLE
     Get-LicenseFromGitHub -Owner "aitherium" -Repo "licenses" -LicenseId "ABC123" -OutputPath "./license.json"
+    
+.NOTES
+    Requires Set-AitherCredentialGitHub to be configured with a GitHub token that has repo access
 #>
 function Get-LicenseFromGitHub {
     [CmdletBinding()]
@@ -364,48 +371,60 @@ function Get-LicenseFromGitHub {
         [Parameter(Mandatory)]
         [string]$OutputPath,
         
-        [string]$Branch = "main"
+        [string]$Branch = "main",
+        
+        [string]$Path = "licenses"
     )
     
     try {
-        # Check if gh CLI is available
-        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-            throw "GitHub CLI (gh) is not installed or not in PATH"
+        # Import Security module for GitHub credential access
+        $securityModule = Join-Path (Split-Path $PSScriptRoot -Parent) "security/Security.psm1"
+        if (Test-Path $securityModule) {
+            Import-Module $securityModule -Force -ErrorAction SilentlyContinue
         }
         
-        # Check if authenticated
-        $authStatus = gh auth status 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            throw "GitHub CLI is not authenticated. Run 'gh auth login' first."
+        # Check if Get-AitherSecretGitHub is available
+        if (-not (Get-Command Get-AitherSecretGitHub -ErrorAction SilentlyContinue)) {
+            Write-LicenseLog -Level Warning -Message "Get-AitherSecretGitHub not available, falling back to gh CLI"
+            # Fallback to gh CLI
+            if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+                throw "Neither Get-AitherSecretGitHub nor GitHub CLI (gh) is available"
+            }
+            
+            # Check if authenticated
+            $authStatus = gh auth status 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                throw "GitHub CLI is not authenticated. Run 'gh auth login' first."
+            }
+            
+            # Use gh CLI to fetch license
+            $licensePath = "$Path/$LicenseId.json"
+            $url = "https://raw.githubusercontent.com/$Owner/$Repo/$Branch/$licensePath"
+            
+            gh api "/repos/$Owner/$Repo/contents/$licensePath?ref=$Branch" --jq '.content' | 
+                base64 --decode | Out-File -FilePath $OutputPath -Force
+            
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to retrieve license from GitHub"
+            }
+        } else {
+            # Use integrated credential system
+            $licensePath = "$Path/$LicenseId.json"
+            $licenseContent = Get-AitherSecretGitHub -Owner $Owner -Repo $Repo -Path $licensePath -Branch $Branch
+            
+            if (-not $licenseContent) {
+                throw "Failed to retrieve license from GitHub using Get-AitherSecretGitHub"
+            }
+            
+            # Save to file
+            $licenseContent | Out-File -FilePath $OutputPath -Force
         }
         
-        # Construct file path in repo
-        $filePath = "licenses/$LicenseId.json"
-        
-        Write-LicenseLog -Message "Retrieving license from GitHub" -Data @{
+        Write-LicenseLog -Message "License retrieved successfully from GitHub" -Data @{
             Owner = $Owner
             Repo = $Repo
             LicenseId = $LicenseId
-            Branch = $Branch
-        }
-        
-        # Fetch file content using gh api
-        $apiUrl = "/repos/$Owner/$Repo/contents/$filePath`?ref=$Branch"
-        $response = gh api $apiUrl --jq '.content' 2>&1
-        
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to retrieve license from GitHub: $response"
-        }
-        
-        # Decode Base64 content
-        $content = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($response))
-        
-        # Save to output path
-        $content | Out-File -FilePath $OutputPath -Force
-        
-        Write-LicenseLog -Message "License retrieved successfully from GitHub" -Data @{
             OutputPath = $OutputPath
-            LicenseId = $LicenseId
         }
         
         return $OutputPath
