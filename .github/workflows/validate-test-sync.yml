@@ -29,6 +29,8 @@ permissions:
 jobs:
   validate-sync:
     name: Test-Script Synchronization
+    # Skip if triggered by bot to prevent loops
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:

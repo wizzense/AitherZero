@@ -41,6 +41,8 @@ permissions:
 jobs:
   generate-tests:
     name: Auto-Generate Tests
+    # Skip if triggered by bot to prevent loops
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:

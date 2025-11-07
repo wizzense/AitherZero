@@ -25,6 +25,8 @@ permissions:
 jobs:
   health-check:
     name: 'Validate Workflow Health'
+    # Skip if triggered by bot
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:

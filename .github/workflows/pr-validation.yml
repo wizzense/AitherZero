@@ -31,7 +31,11 @@ jobs:
   fork-pr-analysis:
     name: 🔒 Fork PR Analysis
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name != github.repository
+    if: |
+      github.event_name == 'pull_request' && 
+      !github.event.pull_request.draft && 
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      github.actor != 'github-actions[bot]'
 
     steps:
       - name: 🔒 Post Fork PR Security Notice
