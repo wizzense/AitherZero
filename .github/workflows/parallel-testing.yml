@@ -46,6 +46,8 @@ jobs:
   # Fast preparation job - sets up for parallel execution
   prepare:
     name: 🎯 Prepare Test Matrix
+    # Skip if triggered by bot to prevent unnecessary runs
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -113,7 +115,9 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'unit' || github.event.inputs.test_filter == ''
+    if: |
+      github.actor != 'github-actions[bot]' && 
+      (github.event.inputs.test_filter == 'all' || github.event.inputs.test_filter == 'unit' || github.event.inputs.test_filter == '')
 
     strategy:
       fail-fast: false  # Continue all jobs even if one fails

@@ -34,6 +34,8 @@ env:
 jobs:
   generate-ring-status:
     name: 📊 Generate Ring Status Dashboard
+    # Skip if triggered by bot to prevent loops
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

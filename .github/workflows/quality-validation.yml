@@ -34,6 +34,8 @@ env:
 jobs:
   quality-validation:
     name: Quality Validation
+    # Skip if triggered by bot
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
