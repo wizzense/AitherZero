@@ -46,6 +46,11 @@ jobs:
   # Fast preparation job - sets up for parallel execution
   prepare:
     name: 🎯 Prepare Test Matrix
+    # Skip if triggered by bot commits to prevent unnecessary runs
+    if: |
+      !contains(github.event.head_commit.message, '[auto-generated]') &&
+      !contains(github.event.head_commit.message, '[automated]') &&
+      github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
