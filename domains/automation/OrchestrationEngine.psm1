@@ -2910,7 +2910,7 @@ function Invoke-AitherWorkflow {
         
         Config precedence: ConfigFile > config.local.psd1 > config.psd1
     #>
-    [CmdletBinding(DefaultParameterSetName = 'Script')]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Script')]
     [Alias('azw')]
     param(
         [Parameter(Mandatory, ParameterSetName = 'Script', Position = 0)]
@@ -2971,7 +2971,7 @@ function Invoke-AitherWorkflow {
         'Script' {
             if (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue) {
                 # Invoke-AitherScript doesn't support Quiet/ThrowOnError
-                # Only pass supported parameters
+                # Only pass supported parameters, but include common parameters (WhatIf, Confirm, Verbose, etc.)
                 $scriptParams = @{
                     Number = $Script
                     PassThru = $PassThru
@@ -2979,6 +2979,18 @@ function Invoke-AitherWorkflow {
                 if ($Variables) {
                     $scriptParams.Variables = $Variables
                 }
+                
+                # Pass common parameters automatically
+                if ($PSBoundParameters.ContainsKey('WhatIf')) {
+                    $scriptParams.WhatIf = $PSBoundParameters['WhatIf']
+                }
+                if ($PSBoundParameters.ContainsKey('Confirm')) {
+                    $scriptParams.Confirm = $PSBoundParameters['Confirm']
+                }
+                if ($PSBoundParameters.ContainsKey('Verbose')) {
+                    $scriptParams.Verbose = $PSBoundParameters['Verbose']
+                }
+                
                 Invoke-AitherScript @scriptParams
             }
             else {
@@ -3028,7 +3040,7 @@ function Test-AitherAll {
         aztest -ConfigFile "./config.ci.psd1" -ThrowOnError
         # CI/CD with custom config (using alias)
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     [Alias('aztest')]
     param(
         [Parameter()]
@@ -3090,7 +3102,7 @@ function Invoke-AitherDeploy {
         azdeploy -Environment Staging -Variables @{SkipTests=$false}
         # Deploy to staging with testing enabled (using alias)
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     [Alias('azdeploy')]
     param(
         [Parameter(Mandatory)]
