@@ -26,6 +26,7 @@
 
         # From Configuration
         'Import-ConfigDataFile', 'Get-Configuration', 'Set-Configuration', 'Get-ModuleConfiguration',
+        'Get-MergedConfiguration',
 
         # From GitAutomation
         'New-FeatureBranch', 'New-ConventionalCommit', 'Sync-GitRepository',
@@ -41,6 +42,8 @@
 
         # From OrchestrationEngine
         'Invoke-OrchestrationSequence', 'Invoke-Sequence', 'Get-OrchestrationPlaybook',
+        'Test-CIEnvironment', 'Export-OrchestrationResult',
+        'Invoke-AitherWorkflow', 'Test-AitherAll', 'Invoke-AitherDeploy', 'Get-AitherConfig',
 
         # From Infrastructure
         'Initialize-Infrastructure', 'Get-InfrastructureProvider',
@@ -69,7 +72,8 @@
 
     CmdletsToExport = @()
     VariablesToExport = @()
-    AliasesToExport = @('az', 'seq', 'az-script', 'az-playbook', 'az-config', 'az-dashboard', 'az-metrics')
+    AliasesToExport = @('az', 'seq', 'az-script', 'az-playbook', 'az-config', 'az-dashboard', 'az-metrics',
+                        'azw', 'aztest', 'azdeploy', 'azconfig')
 
     # Private data
     PrivateData = @{
