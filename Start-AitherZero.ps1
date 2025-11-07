@@ -71,7 +71,7 @@ param(
     [ValidatePattern('^\d{4}$')]
     [string]$ScriptNumber,
     
-    [Parameter(ParameterSetName='Playbook')]
+    [Parameter(ParameterSetName='Playbook', Mandatory=$true)]
     [string]$Playbook,
     
     [Parameter(ParameterSetName='Playbook')]
@@ -80,7 +80,7 @@ param(
     [Parameter()]
     [string]$ConfigPath = './config.psd1',
     
-    [Parameter(ParameterSetName='List')]
+    [Parameter(ParameterSetName='List', Mandatory=$true)]
     [ValidateSet('scripts', 'playbooks', 'all')]
     [string]$List,
     

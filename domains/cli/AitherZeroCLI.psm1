@@ -1120,11 +1120,22 @@ function Show-AitherDashboard {
     )
     
     if (Get-Command Show-Dashboard -ErrorAction SilentlyContinue) {
-        $params = @{}
-        if ($Refresh) { $params.RefreshInterval = $Refresh }
-        if ($Detailed) { $params.Detailed = $true }
+        # Create a dashboard object that Show-Dashboard expects
+        $dashboardObj = @{
+            Title = "AitherZero System Dashboard"
+            StartTime = Get-Date
+            Components = @{
+                Status = @{
+                    Data = @{
+                        'System' = 'Running'
+                        'Platform' = (Get-AitherPlatform)
+                        'PowerShell' = "$($PSVersionTable.PSVersion)"
+                    }
+                }
+            }
+        }
         
-        Show-Dashboard @params
+        Show-Dashboard -Dashboard $dashboardObj
     }
     else {
         # Fallback simple dashboard
