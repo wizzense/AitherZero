@@ -268,7 +268,7 @@
                 'com.apple.TimeMachine DoNotOfferNewDisksForBackup' = @{
                     Value = $true
                     Type = 'bool'
-                    Description = 'Don\'t prompt for Time Machine'
+                    Description = "Don't prompt for Time Machine"
                 }
             }
             

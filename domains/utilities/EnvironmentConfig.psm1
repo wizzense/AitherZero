@@ -818,7 +818,7 @@ function Add-ShellIntegration {
 
 # AitherZero Integration
 export AITHERZERO_ROOT="$env:AITHERZERO_ROOT"
-export PATH="\$PATH:\$AITHERZERO_ROOT/automation-scripts"
+export PATH="`$PATH:`$AITHERZERO_ROOT/automation-scripts"
 "@
     
     if ($DryRun) {
