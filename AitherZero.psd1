@@ -13,7 +13,7 @@
     # Functions to export from all nested modules
     FunctionsToExport = @(
         # From CLI Module (NEW - Primary Interface)
-        'Invoke-AitherScript', 'Get-AitherScript',
+        'Invoke-AitherScript', 'Get-AitherScript', 'Invoke-AitherSequence',
         'Invoke-AitherPlaybook', 'Get-AitherPlaybook',
         'Get-AitherConfig', 'Set-AitherConfig', 'Switch-AitherEnvironment',
         'Show-AitherDashboard', 'Get-AitherMetrics', 'Export-AitherMetrics',

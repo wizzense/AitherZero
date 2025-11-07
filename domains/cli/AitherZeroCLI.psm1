@@ -488,6 +488,143 @@ function Get-AitherScript {
     return $filtered
 }
 
+function Invoke-AitherSequence {
+    <#
+    .SYNOPSIS
+        Execute a sequence of automation scripts
+    
+    .DESCRIPTION
+        Runs multiple automation scripts using the AitherZero orchestration engine.
+        Supports individual scripts, ranges, wildcards, exclusions, and advanced features.
+        
+        This is a user-friendly wrapper around Invoke-OrchestrationSequence.
+        
+        Sequence format examples:
+        - Individual: "0500,0501,0700"
+        - Ranges: "0510-0520" (executes 0510, 0511, ..., 0520)
+        - Mixed: "0500,0501,0510-0520,0700,0701"
+        - Wildcards: "04*" (all 0400-0499)
+        - Exclusions: "0400-0499,!0450" (all 0400-0499 except 0450)
+        - Stages: "stage:Testing" (all scripts tagged with Testing stage)
+    
+    .PARAMETER Sequence
+        Script sequence to execute
+        Examples: "0402,0404", "0400-0410", "0500,0510-0520,0700", "04*,!0450"
+    
+    .PARAMETER ContinueOnError
+        Continue executing remaining scripts even if one fails
+    
+    .PARAMETER Parallel
+        Execute scripts in parallel (default: true)
+    
+    .PARAMETER MaxConcurrency
+        Maximum number of parallel executions (default: 4)
+    
+    .PARAMETER DryRun
+        Show what would be executed without running
+    
+    .PARAMETER Variables
+        Hash table of variables to pass to scripts
+    
+    .PARAMETER SavePlaybook
+        Save this sequence as a reusable playbook
+    
+    .PARAMETER UseCache
+        Enable caching of execution results
+    
+    .PARAMETER GenerateSummary
+        Generate markdown execution summary
+    
+    .EXAMPLE
+        Invoke-AitherSequence "0402,0404,0407"
+        
+        Execute scripts 0402, 0404, and 0407
+    
+    .EXAMPLE
+        Invoke-AitherSequence "0500,0501,0510-0520,0700,0701"
+        
+        Execute multiple scripts and ranges
+    
+    .EXAMPLE
+        Invoke-AitherSequence "0400-0410" -Parallel -MaxConcurrency 8
+        
+        Execute range in parallel with max 8 concurrent scripts
+    
+    .EXAMPLE
+        Invoke-AitherSequence "04*,!0450" -DryRun
+        
+        Show all 0400-0499 scripts except 0450 without executing
+    
+    .EXAMPLE
+        Invoke-AitherSequence "0402,0404" -ContinueOnError -GenerateSummary
+        
+        Execute sequence, continue on error, generate summary report
+    
+    .EXAMPLE
+        Invoke-AitherSequence "0000-0099,0201,0207" -SavePlaybook "my-setup"
+        
+        Execute sequence and save as reusable playbook
+    
+    .LINK
+        Invoke-OrchestrationSequence
+        Invoke-AitherPlaybook
+    #>
+    
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter(Mandatory, Position=0, ValueFromPipeline)]
+        [string]$Sequence,
+        
+        [Parameter()]
+        [switch]$ContinueOnError,
+        
+        [Parameter()]
+        [switch]$Parallel,
+        
+        [Parameter()]
+        [ValidateRange(1, 32)]
+        [int]$MaxConcurrency = 4,
+        
+        [Parameter()]
+        [switch]$DryRun,
+        
+        [Parameter()]
+        [hashtable]$Variables,
+        
+        [Parameter()]
+        [string]$SavePlaybook,
+        
+        [Parameter()]
+        [switch]$UseCache,
+        
+        [Parameter()]
+        [switch]$GenerateSummary
+    )
+    
+    # Build parameters for orchestration engine
+    $params = @{
+        Sequence = $Sequence
+        ContinueOnError = $ContinueOnError
+        Parallel = $Parallel
+        MaxConcurrency = $MaxConcurrency
+    }
+    
+    if ($DryRun) { $params.DryRun = $true }
+    if ($Variables) { $params.Variables = $Variables }
+    if ($SavePlaybook) { $params.SavePlaybook = $SavePlaybook }
+    if ($UseCache) { $params.UseCache = $true }
+    if ($GenerateSummary) { $params.GenerateSummary = $true }
+    
+    # Call orchestration engine
+    if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
+        Invoke-OrchestrationSequence @params
+    }
+    else {
+        Write-AitherStatus "OrchestrationEngine not loaded" -Type Error
+        throw "OrchestrationEngine module not available. Ensure AitherZero module is loaded."
+    }
+}
+
 #endregion
 
 #region Playbook & Orchestration Cmdlets
@@ -501,7 +638,9 @@ function Invoke-AitherPlaybook {
         Runs a predefined sequence of automation scripts defined in a playbook.
         Playbooks orchestrate multiple scripts for complex CI/CD workflows.
         
-        Supports parallel execution, dry-run mode, and detailed reporting.
+        This is a user-friendly wrapper around Invoke-OrchestrationSequence -LoadPlaybook.
+        
+        Supports parallel execution, dry-run mode, caching, and detailed reporting.
     
     .PARAMETER Name
         Name of the playbook to execute
@@ -513,13 +652,10 @@ function Invoke-AitherPlaybook {
         Continue executing remaining scripts even if one fails
     
     .PARAMETER Parallel
-        Execute scripts in parallel when possible
+        Execute scripts in parallel (default: true)
     
     .PARAMETER MaxParallel
         Maximum number of parallel executions (default: 4)
-    
-    .PARAMETER PassThru
-        Return execution results for each script
     
     .PARAMETER Variables
         Hash table of variables to pass to all scripts
@@ -527,23 +663,43 @@ function Invoke-AitherPlaybook {
     .PARAMETER Timeout
         Maximum execution time for entire playbook in seconds
     
+    .PARAMETER DryRun
+        Show what would be executed without running
+    
+    .PARAMETER UseCache
+        Enable caching of execution results
+    
+    .PARAMETER GenerateSummary
+        Generate markdown execution summary
+    
     .EXAMPLE
         Invoke-AitherPlaybook -Name test-quick
         
         Execute the quick test playbook
     
     .EXAMPLE
-        Invoke-AitherPlaybook test-full -PassThru -Parallel
+        Invoke-AitherPlaybook test-full -Parallel
         
-        Execute full test suite in parallel and return results
+        Execute full test suite in parallel
     
     .EXAMPLE
         Invoke-AitherPlaybook pr-validation -Profile ci -Timeout 600
         
         Run PR validation with CI profile and 10-minute timeout
     
-    .OUTPUTS
-        None, or [PSCustomObject[]] if -PassThru is specified
+    .EXAMPLE
+        Invoke-AitherPlaybook test-quick -DryRun
+        
+        Show what would run without executing
+    
+    .EXAMPLE
+        Invoke-AitherPlaybook test-full -UseCache -GenerateSummary
+        
+        Run with caching and generate summary report
+    
+    .LINK
+        Invoke-OrchestrationSequence
+        Invoke-AitherSequence
     #>
     
     [CmdletBinding(SupportsShouldProcess)]
@@ -575,135 +731,39 @@ function Invoke-AitherPlaybook {
         [hashtable]$Variables,
         
         [Parameter()]
-        [int]$Timeout
+        [int]$Timeout,
+        
+        [Parameter()]
+        [switch]$DryRun,
+        
+        [Parameter()]
+        [switch]$UseCache,
+        
+        [Parameter()]
+        [switch]$GenerateSummary
     )
     
-    $playbooksPath = Join-Path $env:AITHERZERO_ROOT 'orchestration/playbooks'
-    $playbookFile = Join-Path $playbooksPath "$Name.psd1"
-    
-    if (-not (Test-Path $playbookFile)) {
-        Write-AitherStatus "Playbook '$Name' not found" -Type Error
-        
-        $available = Get-AitherPlaybook
-        if ($available) {
-            Write-Host "`nAvailable playbooks:" -ForegroundColor Cyan
-            $available | Format-Table Name, Description, ScriptCount -AutoSize
-        }
-        return
+    # Build parameters for orchestration engine
+    $params = @{
+        LoadPlaybook = $Name
+        ContinueOnError = $ContinueOnError
+        Parallel = $Parallel
+        MaxConcurrency = $MaxParallel
     }
     
-    if ($PSCmdlet.ShouldProcess($Name, "Execute playbook")) {
-        Write-AitherStatus "Loading playbook: $Name" -Type Info
-        
-        try {
-            # Load playbook
-            $content = Get-Content -Path $playbookFile -Raw
-            $scriptBlock = [scriptblock]::Create($content)
-            $playbook = & $scriptBlock
-            
-            if (-not $playbook.Scripts) {
-                Write-AitherStatus "Playbook has no scripts defined" -Type Error
-                return
-            }
-            
-            # Apply profile if specified
-            $scriptsToRun = $playbook.Scripts
-            if ($Profile -and $playbook.Profiles -and $playbook.Profiles[$Profile]) {
-                $scriptsToRun = $playbook.Profiles[$Profile].Scripts
-                Write-AitherStatus "Using profile: $Profile" -Type Info
-            }
-            
-            Write-Host "`nExecuting $($scriptsToRun.Count) scripts..." -ForegroundColor Cyan
-            if ($Parallel) {
-                Write-AitherStatus "Parallel execution enabled (max: $MaxParallel)" -Type Info
-            }
-            Write-Host ""
-            
-            $startTime = Get-Date
-            $results = @()
-            $failed = 0
-            
-            if ($Parallel) {
-                # Parallel execution
-                $jobs = @()
-                $scriptsToRun | ForEach-Object {
-                    while ($jobs.Count -ge $MaxParallel) {
-                        $completed = $jobs | Where-Object { $_.State -eq 'Completed' }
-                        if ($completed) {
-                            $jobs = $jobs | Where-Object { $_.State -ne 'Completed' }
-                        }
-                        Start-Sleep -Milliseconds 100
-                    }
-                    
-                    $scriptNum = $_
-                    $job = Start-Job -ScriptBlock {
-                        param($num, $vars)
-                        Import-Module $using:env:AITHERZERO_ROOT/AitherZero.psd1 -Force
-                        Invoke-AitherScript -Number $num -Variables $vars -PassThru
-                    } -ArgumentList $scriptNum, $Variables
-                    
-                    $jobs += $job
-                }
-                
-                # Wait for all jobs
-                $jobs | Wait-Job | ForEach-Object {
-                    $result = Receive-Job $_
-                    $results += $result
-                    if (-not $result.Success) {
-                        $failed++
-                    }
-                    Remove-Job $_
-                }
-            }
-            else {
-                # Sequential execution
-                foreach ($scriptNum in $scriptsToRun) {
-                    try {
-                        $result = Invoke-AitherScript -Number $scriptNum -Variables $Variables -PassThru
-                        $results += $result
-                        
-                        if (-not $result.Success) {
-                            $failed++
-                            if (-not $ContinueOnError) {
-                                Write-AitherStatus "Stopping playbook due to failure" -Type Warning
-                                break
-                            }
-                        }
-                    }
-                    catch {
-                        $failed++
-                        if (-not $ContinueOnError) {
-                            throw
-                        }
-                    }
-                    
-                    Write-Host ""
-                }
-            }
-            
-            # Summary
-            $duration = (Get-Date) - $startTime
-            $total = $scriptsToRun.Count
-            $succeeded = $total - $failed
-            
-            Write-Host ""
-            Write-Host "════════════════════════════════════════" -ForegroundColor DarkGray
-            if ($failed -eq 0) {
-                Write-AitherStatus "Playbook completed: $succeeded/$total scripts succeeded in $([Math]::Round($duration.TotalSeconds, 2))s" -Type Success
-            }
-            else {
-                Write-AitherStatus "Playbook completed: $succeeded/$total scripts succeeded, $failed failed in $([Math]::Round($duration.TotalSeconds, 2))s" -Type Warning
-            }
-            Write-Host "════════════════════════════════════════" -ForegroundColor DarkGray
-            
-            if ($PassThru) {
-                return $results
-            }
-        }
-        catch {
-            Write-AitherStatus "Playbook execution failed: $_" -Type Error
-            throw
-        }
+    if ($Variables) { $params.Variables = $Variables }
+    if ($Profile) { $params.Profile = $Profile }
+    if ($DryRun) { $params.DryRun = $true }
+    if ($UseCache) { $params.UseCache = $true }
+    if ($GenerateSummary) { $params.GenerateSummary = $true }
+    
+    # Call orchestration engine
+    if (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) {
+        Invoke-OrchestrationSequence @params
+    }
+    else {
+        Write-AitherStatus "OrchestrationEngine not loaded" -Type Error
+        throw "OrchestrationEngine module not available. Ensure AitherZero module is loaded."
     }
 }
 
@@ -1330,6 +1390,7 @@ Export-ModuleMember -Function @(
     # Script Execution
     'Invoke-AitherScript',
     'Get-AitherScript',
+    'Invoke-AitherSequence',
     
     # Playbook & Orchestration
     'Invoke-AitherPlaybook',

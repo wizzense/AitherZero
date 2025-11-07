@@ -11,6 +11,7 @@
         # Script Execution
         'Invoke-AitherScript',
         'Get-AitherScript',
+        'Invoke-AitherSequence',
         
         # Playbook & Orchestration
         'Invoke-AitherPlaybook',
