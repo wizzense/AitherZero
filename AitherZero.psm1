@@ -59,13 +59,6 @@ $modulesToLoad = @(
     './domains/configuration/Configuration.psm1',
     './domains/configuration/ConfigManager.psm1',
 
-    # User interface (BetterMenu first, then components, then UserInterface)
-    './domains/experience/BetterMenu.psm1',
-    './domains/experience/Components/CommandParser.psm1',
-    './domains/experience/Components/BreadcrumbNavigation.psm1',
-    './domains/experience/UserInterface.psm1',
-    './domains/experience/UnifiedMenu.psm1',
-
     # Development tools
     './domains/development/GitAutomation.psm1',
     './domains/development/IssueTracker.psm1',

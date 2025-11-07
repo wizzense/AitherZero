@@ -8,11 +8,9 @@
 
     Main entry point for the AitherZero automation platform.
 
-    Provides interactive menu and number-based orchestration capabilities.
+    Provides number-based orchestration capabilities for infrastructure automation.
 
     By default, displays comprehensive usage information with command examples.
-
-    Use -Mode Interactive to access the interactive menu interface.
 
     TAB COMPLETION: The script includes intelligent tab completion for parameters:
     
@@ -30,7 +28,9 @@
 
 .PARAMETER Mode
 
-    Startup mode: List (default), Interactive, Orchestrate, Validate, Deploy, Test, Search, Run
+    Startup mode: List (default), Orchestrate, Validate, Deploy, Test, Search, Run
+    
+    Note: Interactive mode has been removed. The UI/CLI is being redesigned from scratch.
 
 .PARAMETER Sequence
 
@@ -128,7 +128,7 @@
 
 param(
 
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
+    [ValidateSet('Orchestrate', 'Validate', 'Deploy', 'Test', 'List', 'Search', 'Run')]
 
     [string]$Mode = 'List',
 
