@@ -541,6 +541,14 @@
                 OutputPath = './artifacts/windows'
                 ConfigurationName = 'AitherZeroDSC'
             }
+            
+            # Docker Windows container
+            Dockerfile = @{
+                Generate = $true
+                OutputPath = './artifacts/docker'
+                FileName = 'Dockerfile.windows'
+                BaseImage = 'mcr.microsoft.com/powershell:lts-nanoserver-1809'  # Windows PowerShell container
+            }
         }
     }
 }

@@ -677,6 +677,7 @@ function New-Dockerfile {
         $config = & $scriptBlock
         
         $dockerLines = @()
+        $dockerConfig = $null
         
         if ($Platform -eq 'linux') {
             if (-not $config.Linux.DeploymentArtifacts.Dockerfile.Generate) {
@@ -705,7 +706,45 @@ function New-Dockerfile {
             }
             
             $dockerLines += "WORKDIR /workspace"
-            $dockerLines += "CMD [\"/bin/bash\"]"
+            $dockerLines += 'CMD ["/bin/bash"]'
+        }
+        elseif ($Platform -eq 'windows') {
+            # Windows Dockerfile generation
+            if (-not $config.Windows.DeploymentArtifacts.Dockerfile.Generate) {
+                Write-ArtifactLog "Dockerfile generation is disabled in configuration" -Level Warning
+                return $null
+            }
+            
+            $dockerConfig = $config.Windows.DeploymentArtifacts.Dockerfile
+            
+            $dockerLines += "# AitherZero Windows Container"
+            $dockerLines += "FROM $($dockerConfig.BaseImage)"
+            $dockerLines += ""
+            $dockerLines += "# Install PowerShell packages"
+            if ($config.Windows.PowerShell.Modules.Count -gt 0) {
+                $dockerLines += "RUN Install-PackageProvider -Name NuGet -Force"
+                foreach ($module in $config.Windows.PowerShell.Modules) {
+                    $dockerLines += "RUN Install-Module -Name $module -Force -SkipPublisherCheck"
+                }
+                $dockerLines += ""
+            }
+            
+            # Add environment variables
+            if ($config.Windows.EnvironmentVariables.System.Count -gt 0) {
+                $dockerLines += "# Environment variables"
+                foreach ($env in $config.Windows.EnvironmentVariables.System.GetEnumerator()) {
+                    $dockerLines += "ENV $($env.Key)=$($env.Value)"
+                }
+                $dockerLines += ""
+            }
+            
+            $dockerLines += "WORKDIR C:\\workspace"
+            $dockerLines += 'CMD ["powershell.exe"]'
+        }
+        
+        # Validate that dockerConfig was set
+        if (-not $dockerConfig) {
+            throw "Docker configuration not found for platform: $Platform"
         }
         
         # Ensure output directory exists
