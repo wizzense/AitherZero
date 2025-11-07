@@ -183,17 +183,29 @@ if ($Dashboard) {
 }
 
 if ($ScriptNumber) {
-    $success = Invoke-AitherScript -Number $ScriptNumber -PassThru
-    exit ($success.Success ? 0 : 1)
+    try {
+        $success = Invoke-AitherScript -Number $ScriptNumber -PassThru
+        exit ($success -and $success.Success ? 0 : 1)
+    }
+    catch {
+        Write-Error "Failed to execute script ${ScriptNumber}: $_"
+        exit 1
+    }
 }
 
 if ($Playbook) {
-    $params = @{ Name = $Playbook }
-    if ($Profile) { $params.Profile = $Profile }
-    
-    $results = Invoke-AitherPlaybook @params -PassThru
-    $failed = ($results | Where-Object { -not $_.Success }).Count
-    exit ($failed -eq 0 ? 0 : 1)
+    try {
+        $params = @{ Name = $Playbook }
+        if ($Profile) { $params.Profile = $Profile }
+        
+        $results = Invoke-AitherPlaybook @params -PassThru
+        $failed = ($results | Where-Object { -not $_.Success }).Count
+        exit ($failed -eq 0 ? 0 : 1)
+    }
+    catch {
+        Write-Error "Failed to execute playbook ${Playbook}: $_"
+        exit 1
+    }
 }
 
 # No parameters - interactive mode
