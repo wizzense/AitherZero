@@ -384,123 +384,6 @@
             }
         }
         
-        # Script execution profiles - what gets run for each profile
-        ExecutionProfiles = @{
-            Minimal = @{
-                Description = 'Essential components only for basic operation'
-                Features = @('Core.PowerShell7', 'Core.Git')
-                ScriptRanges = @('0000-0099')
-                EstimatedTime = '2-5 minutes'
-                Tools = @('PowerShell', 'Git')
-            }
-            Standard = @{
-                Description = 'Common development environment'
-                Features = @('Core', 'Development.Node', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                ScriptRanges = @('0000-0299', '0400-0499')
-                EstimatedTime = '5-15 minutes'
-                Tools = @('PowerShell', 'Git', 'Node', 'Docker')
-            }
-            Developer = @{
-                Description = 'Full development environment with all tools'
-                Features = @('Core', 'Development', 'Testing')
-                ScriptRanges = @('0000-0499')
-                EstimatedTime = '15-30 minutes'
-                Tools = @('PowerShell', 'Git', 'Node', 'Python', 'Docker', 'VSCode', 'GitHubCLI')
-            }
-            Development = @{
-                Description = 'Complete development setup with IDE, AI tools, and workflows'
-                Features = @('Core', 'Development', 'Testing', 'AI.Development')
-                ScriptRanges = @('0000-0299', '0400-0499')
-                EstimatedTime = '20-40 minutes'
-                Tools = @(
-                    # Core development
-                    'PowerShell', 'Git', 'GitHubCLI', 'Node', 'Python', 'Go',
-                    # Editors & IDEs
-                    'VSCode', 'VimPlug',
-                    # Containers & Infrastructure
-                    'Docker', 'OpenTofu', 'Terraform',
-                    # AI & Productivity
-                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI', 'CodexCLI',
-                    # Quality & Testing
-                    'Pester', 'PSScriptAnalyzer'
-                )
-                EnvironmentSetup = $true
-                ConfigureIDE = $true
-                InstallAITools = $true
-            }
-            'AI-Development' = @{
-                Description = 'AI-enhanced development environment'
-                Features = @('Core', 'Development.Basic', 'AI.All')
-                ScriptRanges = @('0000-0099', '0200-0210', '0220-0230')
-                EstimatedTime = '15-25 minutes'
-                Tools = @(
-                    'PowerShell', 'Git', 'Node', 'VSCode',
-                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI', 'CodexCLI',
-                    'MCPServers'
-                )
-                ConfigureAI = $true
-            }
-            Deployment = @{
-                Description = 'Deployment-only environment (no dev tools)'
-                Features = @('Core.PowerShell7', 'Infrastructure', 'Automation.Orchestration')
-                ScriptRanges = @('0000-0010', '0100-0199')
-                EstimatedTime = '5-10 minutes'
-                Tools = @('PowerShell', 'Git', 'OpenTofu', 'Docker')
-                SkipDevelopment = $true
-                SkipTesting = $true
-                OptimizeForDeployment = $true
-            }
-            'Full-Stack' = @{
-                Description = 'Complete full-stack development environment'
-                Features = @('Core', 'Development', 'Testing', 'Infrastructure', 'AI')
-                ScriptRanges = @('0000-0499')
-                EstimatedTime = '30-50 minutes'
-                Tools = @(
-                    # Languages & Runtimes
-                    'PowerShell', 'Node', 'Python', 'Go', 'DotNet',
-                    # Version Control
-                    'Git', 'GitHubCLI',
-                    # Editors
-                    'VSCode',
-                    # Containers & Orchestration
-                    'Docker', 'Kubernetes', 'OpenTofu',
-                    # Databases
-                    'PostgreSQL', 'Redis', 'MongoDB',
-                    # AI Tools
-                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI',
-                    # Testing & Quality
-                    'Pester', 'PSScriptAnalyzer', 'SonarQube'
-                )
-            }
-            Full = @{
-                Description = 'Everything including infrastructure components'
-                Features = @('*')
-                ScriptRanges = @('*')
-                EstimatedTime = '30-60 minutes'
-                Tools = @('*')
-            }
-            CI = @{
-                Description = 'Optimized for CI/CD environments'
-                Features = @('Core', 'Testing', 'Development.Node')
-                ScriptRanges = @('0000-0010', '0201', '0400-0450')
-                Parallel = $true
-                NonInteractive = $true
-                EstimatedTime = '3-8 minutes'
-                Tools = @('PowerShell', 'Git', 'Node', 'Docker')
-            }
-            'Self-Hosted-Runner' = @{
-                Description = 'GitHub Actions self-hosted runner environment'
-                Features = @('Core', 'Development.Basic', 'Testing', 'Infrastructure.Basic')
-                ScriptRanges = @('0000-0099', '0200-0210', '0400-0450', '0800-0850')
-                EstimatedTime = '10-20 minutes'
-                Tools = @(
-                    'PowerShell', 'Git', 'GitHubCLI', 'Node', 'Docker',
-                    'Pester', 'PSScriptAnalyzer', 'OpenTofu'
-                )
-                ConfigureRunner = $true
-                InstallRunnerService = $true
-            }
-        }
         
         # Domain module structure (actual repository state)
         Domains = @{
@@ -1103,6 +986,124 @@
         CacheExecutionPlans = $true
         NotificationEnabled = $true
         
+        # Script execution profiles - what gets run for each profile
+        ExecutionProfiles = @{
+            Minimal = @{
+                Description = 'Essential components only for basic operation'
+                Features = @('Core.PowerShell7', 'Core.Git')
+                ScriptRanges = @('0000-0099')
+                EstimatedTime = '2-5 minutes'
+                Tools = @('PowerShell', 'Git')
+            }
+            Standard = @{
+                Description = 'Common development environment'
+                Features = @('Core', 'Development.Node', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
+                ScriptRanges = @('0000-0299', '0400-0499')
+                EstimatedTime = '5-15 minutes'
+                Tools = @('PowerShell', 'Git', 'Node', 'Docker')
+            }
+            Developer = @{
+                Description = 'Full development environment with all tools'
+                Features = @('Core', 'Development', 'Testing')
+                ScriptRanges = @('0000-0499')
+                EstimatedTime = '15-30 minutes'
+                Tools = @('PowerShell', 'Git', 'Node', 'Python', 'Docker', 'VSCode', 'GitHubCLI')
+            }
+            Development = @{
+                Description = 'Complete development setup with IDE, AI tools, and workflows'
+                Features = @('Core', 'Development', 'Testing', 'AI.Development')
+                ScriptRanges = @('0000-0299', '0400-0499')
+                EstimatedTime = '20-40 minutes'
+                Tools = @(
+                    # Core development
+                    'PowerShell', 'Git', 'GitHubCLI', 'Node', 'Python', 'Go',
+                    # Editors & IDEs
+                    'VSCode', 'VimPlug',
+                    # Containers & Infrastructure
+                    'Docker', 'OpenTofu', 'Terraform',
+                    # AI & Productivity
+                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI', 'CodexCLI',
+                    # Quality & Testing
+                    'Pester', 'PSScriptAnalyzer'
+                )
+                EnvironmentSetup = $true
+                ConfigureIDE = $true
+                InstallAITools = $true
+            }
+            'AI-Development' = @{
+                Description = 'AI-enhanced development environment'
+                Features = @('Core', 'Development.Basic', 'AI.All')
+                ScriptRanges = @('0000-0099', '0200-0210', '0220-0230')
+                EstimatedTime = '15-25 minutes'
+                Tools = @(
+                    'PowerShell', 'Git', 'Node', 'VSCode',
+                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI', 'CodexCLI',
+                    'MCPServers'
+                )
+                ConfigureAI = $true
+            }
+            Deployment = @{
+                Description = 'Deployment-only environment (no dev tools)'
+                Features = @('Core.PowerShell7', 'Infrastructure', 'Automation.Orchestration')
+                ScriptRanges = @('0000-0010', '0100-0199')
+                EstimatedTime = '5-10 minutes'
+                Tools = @('PowerShell', 'Git', 'OpenTofu', 'Docker')
+                SkipDevelopment = $true
+                SkipTesting = $true
+                OptimizeForDeployment = $true
+            }
+            'Full-Stack' = @{
+                Description = 'Complete full-stack development environment'
+                Features = @('Core', 'Development', 'Testing', 'Infrastructure', 'AI')
+                ScriptRanges = @('0000-0499')
+                EstimatedTime = '30-50 minutes'
+                Tools = @(
+                    # Languages & Runtimes
+                    'PowerShell', 'Node', 'Python', 'Go', 'DotNet',
+                    # Version Control
+                    'Git', 'GitHubCLI',
+                    # Editors
+                    'VSCode',
+                    # Containers & Orchestration
+                    'Docker', 'Kubernetes', 'OpenTofu',
+                    # Databases
+                    'PostgreSQL', 'Redis', 'MongoDB',
+                    # AI Tools
+                    'GithubCopilot', 'ClaudeCLI', 'GeminiCLI',
+                    # Testing & Quality
+                    'Pester', 'PSScriptAnalyzer', 'SonarQube'
+                )
+            }
+            Full = @{
+                Description = 'Everything including infrastructure components'
+                Features = @('*')
+                ScriptRanges = @('*')
+                EstimatedTime = '30-60 minutes'
+                Tools = @('*')
+            }
+            CI = @{
+                Description = 'Optimized for CI/CD environments'
+                Features = @('Core', 'Testing', 'Development.Node')
+                ScriptRanges = @('0000-0010', '0201', '0400-0450')
+                Parallel = $true
+                NonInteractive = $true
+                EstimatedTime = '3-8 minutes'
+                Tools = @('PowerShell', 'Git', 'Node', 'Docker')
+            }
+            'Self-Hosted-Runner' = @{
+                Description = 'GitHub Actions self-hosted runner environment'
+                Features = @('Core', 'Development.Basic', 'Testing', 'Infrastructure.Basic')
+                ScriptRanges = @('0000-0099', '0200-0210', '0400-0450', '0800-0850')
+                EstimatedTime = '10-20 minutes'
+                Tools = @(
+                    'PowerShell', 'Git', 'GitHubCLI', 'Node', 'Docker',
+                    'Pester', 'PSScriptAnalyzer', 'OpenTofu'
+                )
+                ConfigureRunner = $true
+                InstallRunnerService = $true
+            }
+        }
+
         # Script range defaults - defines behavior per script number range
         ScriptRangeDefaults = @{
             '0000-0099' = @{
