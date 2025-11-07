@@ -1,0 +1,131 @@
+---
+name: ⚡ Quick Health Check (v2 - CLI)
+
+# Fast validation using CLI cmdlets - immediate feedback on all PRs
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+concurrency:
+  group: quick-health-v2-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+
+jobs:
+  quick-check:
+    name: ⚡ Quick Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Bootstrapping AitherZero (minimal)..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📦 Load Module
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Write-Host "✅ AitherZero module loaded" -ForegroundColor Green
+
+      - name: 🔍 Detect Changed Files
+        id: changes
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Detecting changed files..." -ForegroundColor Cyan
+          
+          # Get changed files
+          $base = "${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          $head = "HEAD"
+          
+          $changedFiles = git diff --name-only $base...$head
+          
+          $psFiles = $changedFiles | Where-Object { $_ -match '\.(ps1|psm1|psd1)$' }
+          $yamlFiles = $changedFiles | Where-Object { $_ -match '\.ya?ml$' }
+          
+          $hasPowerShell = $psFiles.Count -gt 0
+          $hasYAML = $yamlFiles.Count -gt 0
+          
+          Write-Host "PowerShell files: $($psFiles.Count)" -ForegroundColor $(if ($hasPowerShell) { 'Yellow' } else { 'Gray' })
+          Write-Host "YAML files: $($yamlFiles.Count)" -ForegroundColor $(if ($hasYAML) { 'Yellow' } else { 'Gray' })
+          
+          echo "has-powershell=$hasPowerShell" >> $env:GITHUB_OUTPUT
+          echo "has-yaml=$hasYAML" >> $env:GITHUB_OUTPUT
+          echo "ps-count=$($psFiles.Count)" >> $env:GITHUB_OUTPUT
+
+      - name: ⚡ Syntax Validation (PowerShell)
+        if: steps.changes.outputs.has-powershell == 'True'
+        shell: pwsh
+        run: |
+          Write-Host "⚡ Running syntax validation..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Use Invoke-AitherScript cmdlet
+          Invoke-AitherScript -Number 0407 -Variables @{ All = $true }
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Syntax validation failed" -ForegroundColor Red
+            exit 1
+          }
+          
+          Write-Host "✅ Syntax validation passed" -ForegroundColor Green
+
+      - name: ⚡ YAML Validation
+        if: steps.changes.outputs.has-yaml == 'True'
+        shell: bash
+        run: |
+          echo "⚡ Validating YAML files..."
+          pip install -q yamllint pyyaml
+          
+          # Find changed YAML files
+          for file in $(git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD | grep -E '\.ya?ml$'); do
+            if [ -f "$file" ]; then
+              echo "  Checking: $file"
+              python3 -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+            fi
+          done
+          
+          echo "✅ All YAML files valid"
+
+      - name: 📊 Health Check Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $hasPowerShell = "${{ steps.changes.outputs.has-powershell }}" -eq "True"
+          $hasYAML = "${{ steps.changes.outputs.has-yaml }}" -eq "True"
+          
+          Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║              QUICK HEALTH CHECK COMPLETE (v2)                ║" -ForegroundColor Cyan
+          Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Checks performed:" -ForegroundColor White
+          if ($hasPowerShell) {
+            Write-Host "  ✅ PowerShell syntax validation" -ForegroundColor Green
+          } else {
+            Write-Host "  ⏭️  PowerShell (no files changed)" -ForegroundColor Gray
+          }
+          if ($hasYAML) {
+            Write-Host "  ✅ YAML syntax validation" -ForegroundColor Green
+          } else {
+            Write-Host "  ⏭️  YAML (no files changed)" -ForegroundColor Gray
+          }
+          Write-Host ""
+          Write-Host "Powered by AitherZeroCLI" -ForegroundColor DarkCyan

@@ -1,0 +1,249 @@
+---
+name: 🔍 Quality Validation (v2 - CLI)
+
+# Quality checks using CLI cmdlets and code-quality playbooks
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Quality check mode'
+        required: false
+        default: 'fast'
+        type: choice
+        options:
+          - fast
+          - full
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  issues: write
+
+concurrency:
+  group: quality-v2-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+
+jobs:
+  quality-check:
+    name: 🔍 Quality Validation
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Bootstrapping AitherZero..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📦 Install Quality Tools
+        shell: pwsh
+        run: |
+          Write-Host "📦 Installing PSScriptAnalyzer..." -ForegroundColor Cyan
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+            Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+          Write-Host "✅ Quality tools ready" -ForegroundColor Green
+
+      - name: 🔍 Run Quality Playbook
+        id: quality
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "🔍 Running quality validation playbook..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Determine playbook based on mode
+          $mode = "${{ github.event.inputs.mode || 'fast' }}"
+          $playbook = if ($mode -eq 'full') { 'code-quality-full' } else { 'code-quality-fast' }
+          
+          Write-Host "Executing playbook: $playbook" -ForegroundColor Yellow
+          
+          try {
+            # Execute quality playbook with CLI
+            Invoke-AitherPlaybook -Name $playbook `
+              -Parallel `
+              -UseCache `
+              -GenerateSummary `
+              -ContinueOnError
+            
+            $exitCode = $LASTEXITCODE
+            $success = $exitCode -eq 0
+            
+            echo "success=$success" >> $env:GITHUB_OUTPUT
+            echo "exit-code=$exitCode" >> $env:GITHUB_OUTPUT
+            echo "playbook=$playbook" >> $env:GITHUB_OUTPUT
+            
+            if (-not $success) {
+              Write-Host "⚠️  Quality checks found issues (non-blocking)" -ForegroundColor Yellow
+            }
+            
+            exit 0  # Non-blocking
+          }
+          catch {
+            Write-Host "❌ Quality playbook failed: $_" -ForegroundColor Red
+            echo "success=false" >> $env:GITHUB_OUTPUT
+            echo "exit-code=1" >> $env:GITHUB_OUTPUT
+            echo "playbook=$playbook" >> $env:GITHUB_OUTPUT
+            exit 0  # Non-blocking
+          }
+
+      - name: 📊 Upload Quality Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports-${{ github.run_number }}
+          path: |
+            reports/quality/**/*
+            reports/**/*.md
+            reports/**/*.json
+            tests/analysis/**/*
+          retention-days: 30
+
+      - name: 💬 Post Quality Results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const prNumber = context.payload.pull_request.number;
+            const success = '${{ steps.quality.outputs.success }}' === 'true';
+            const playbook = '${{ steps.quality.outputs.playbook }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            
+            const statusIcon = success ? '✅' : '⚠️';
+            const statusText = success ? '**PASSED**' : '**ISSUES FOUND**';
+            const statusColor = success ? '🟢' : '🟡';
+            
+            let comment = `## ${statusIcon} Quality Validation Results (v2)\n\n`;
+            comment += `### ${statusColor} Status: ${statusText}\n\n`;
+            comment += `**Playbook:** \`${playbook}\`\n`;
+            comment += `**Mode:** ${playbook.includes('full') ? 'Comprehensive' : 'Fast'}\n\n`;
+            
+            // Try to read quality summary
+            try {
+              const reportsDir = './reports/quality';
+              if (fs.existsSync(reportsDir)) {
+                const summaryFiles = fs.readdirSync(reportsDir).filter(f => f.includes('summary'));
+                if (summaryFiles.length > 0) {
+                  const summaryPath = path.join(reportsDir, summaryFiles[0]);
+                  if (summaryPath.endsWith('.json')) {
+                    const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                    
+                    comment += `### 📊 Quality Metrics\n\n`;
+                    comment += `| Metric | Value |\n`;
+                    comment += `|--------|-------|\n`;
+                    comment += `| 📊 Average Score | ${summary.AverageScore || 'N/A'}% |\n`;
+                    comment += `| 📝 Files Checked | ${summary.FilesValidated || 0} |\n`;
+                    comment += `| ✅ Passed | ${summary.Passed || 0} |\n`;
+                    comment += `| ⚠️  Warnings | ${summary.Warnings || 0} |\n`;
+                    comment += `| ❌ Failed | ${summary.Failed || 0} |\n\n`;
+                  }
+                }
+              }
+            } catch (e) {
+              console.log('Could not read quality summary:', e.message);
+            }
+            
+            if (success) {
+              comment += `### ✅ Quality Standards Met!\n\n`;
+              comment += `Your code meets our quality standards:\n`;
+              comment += `- ✅ Error handling patterns\n`;
+              comment += `- ✅ Logging implementation\n`;
+              comment += `- ✅ Test coverage\n`;
+              comment += `- ✅ PSScriptAnalyzer compliance\n\n`;
+            } else {
+              comment += `### ⚠️  Quality Issues Found (Non-Blocking)\n\n`;
+              comment += `Some quality checks found issues. These are **informational** and don't block merging.\n\n`;
+              comment += `**Recommended Actions:**\n`;
+              comment += `1. 📥 Download [quality reports](${runUrl}) from artifacts\n`;
+              comment += `2. 🔍 Review findings and recommendations\n`;
+              comment += `3. 🔧 Address high-priority issues\n`;
+              comment += `4. 🧪 Test locally: \`Invoke-AitherPlaybook ${playbook}\`\n\n`;
+            }
+            
+            comment += `### 🚀 Quality Tools\n\n`;
+            comment += `Run quality checks locally:\n`;
+            comment += `\`\`\`powershell\n`;
+            comment += `# Fast quality check\n`;
+            comment += `Invoke-AitherPlaybook code-quality-fast\n\n`;
+            comment += `# Comprehensive analysis\n`;
+            comment += `Invoke-AitherPlaybook code-quality-full\n\n`;
+            comment += `# Check specific file\n`;
+            comment += `Invoke-AitherScript 0420 -Variables @{Path='./path/to/file.ps1'}\n`;
+            comment += `\`\`\`\n\n`;
+            
+            comment += `### 🔗 Links\n`;
+            comment += `- 📊 [Workflow Run](${runUrl})\n`;
+            comment += `- 📁 [Quality Reports](${runUrl})\n`;
+            comment += `- 📖 [Quality Standards](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/main/docs/QUALITY-QUICK-REFERENCE.md)\n\n`;
+            
+            comment += `---\n`;
+            comment += `*🤖 Automated by AitherZeroCLI • Quality validation is non-blocking*`;
+            
+            // Update or create comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('Quality Validation Results (v2)')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
+
+      - name: ✅ Quality Check Complete
+        if: always()
+        shell: pwsh
+        run: |
+          $success = "${{ steps.quality.outputs.success }}" -eq "true"
+          $playbook = "${{ steps.quality.outputs.playbook }}"
+          
+          Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║           QUALITY VALIDATION COMPLETE (v2)                   ║" -ForegroundColor Cyan
+          Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Playbook: $playbook" -ForegroundColor White
+          
+          if ($success) {
+            Write-Host "Status: ✅ QUALITY STANDARDS MET" -ForegroundColor Green
+          } else {
+            Write-Host "Status: ⚠️  ISSUES FOUND (non-blocking)" -ForegroundColor Yellow
+          }
+          
+          Write-Host ""
+          Write-Host "Powered by AitherZeroCLI and OrchestrationEngine" -ForegroundColor DarkCyan
