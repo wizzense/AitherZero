@@ -38,11 +38,8 @@ concurrency:
 jobs:
   track-documentation:
     name: Track Documentation Changes
-    # Skip if triggered by bot commits
-    if: |
-      !contains(github.event.head_commit.message, '[auto-generated]') &&
-      !contains(github.event.head_commit.message, '[automated]') &&
-      github.actor != 'github-actions[bot]'
+    # Skip if triggered by bot
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write

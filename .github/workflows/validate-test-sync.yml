@@ -29,11 +29,8 @@ permissions:
 jobs:
   validate-sync:
     name: Test-Script Synchronization
-    # Skip if the last commit was from a bot to prevent loops
-    if: |
-      !contains(github.event.head_commit.message, '[auto-generated]') &&
-      github.actor != 'github-actions[bot]' &&
-      github.event.head_commit.author.name != 'github-actions[bot]'
+    # Skip if triggered by bot to prevent loops
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
