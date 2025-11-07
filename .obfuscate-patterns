@@ -1,0 +1,29 @@
+# Source Code Obfuscation Patterns
+# 
+# Files matching these patterns will be encrypted before commit
+# when a valid license is present and obfuscation is enabled.
+#
+# Patterns use Git-style wildcards:
+#   * matches any string (except /)
+#   ** matches any string (including /)
+#   ? matches any single character
+#   [abc] matches any character in the set
+#
+# Lines starting with # are comments
+
+# Example: Obfuscate all proprietary module files
+# domains/proprietary/*.psm1
+# domains/proprietary/*.ps1
+
+# Example: Obfuscate specific sensitive scripts
+# automation-scripts/9800_*.ps1
+# automation-scripts/9900_*.ps1
+
+# Example: Obfuscate entire directories
+# proprietary/**/*.ps1
+# proprietary/**/*.psm1
+
+# To enable obfuscation:
+# 1. Create a license: ./automation-scripts/0800_Manage-License.ps1 -Action Create
+# 2. Uncomment patterns above or add your own
+# 3. Run pre-commit: ./automation-scripts/0801_Obfuscate-PreCommit.ps1
