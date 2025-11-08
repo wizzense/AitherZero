@@ -93,7 +93,7 @@ function Get-TestContext {
     $context = @{
         ProjectRoot = $projectRoot
         TestPath = if ($Path) { $Path } else { Join-Path $projectRoot "tests/$($TestType.ToLower())" }
-        SourcePath = Join-Path $projectRoot "domains"
+        SourcePath = Join-Path $projectRoot "aithercore"
         RecentChanges = @()
         LastTestRun = $null
     }

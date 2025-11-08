@@ -194,7 +194,7 @@ $projectReport.Documentation = @{
 
 # 6. Module Status
 Write-ReportLog "Checking module status..."
-$domains = Get-ChildItem -Path (Join-Path $ProjectPath "domains") -Directory -ErrorAction SilentlyContinue
+$domains = Get-ChildItem -Path (Join-Path $ProjectPath "aithercore") -Directory -ErrorAction SilentlyContinue
 foreach ($domain in $domains) {
     $moduleFiles = Get-ChildItem -Path $domain.FullName -Filter "*.psm1" -ErrorAction SilentlyContinue
     $projectReport.ModuleStatus[$domain.Name] = @{

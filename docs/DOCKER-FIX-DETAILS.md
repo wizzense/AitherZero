@@ -46,7 +46,7 @@ The error occurred because:
 docker run -it --rm -v "$(pwd):/app" -w /app ghcr.io/wizzense/aitherzero:latest
 
 # Output:
-# WARNING: Failed to load module: ./domains/reporting/ReportingEngine.psm1 - Access to the path '/app/reports' is denied.
+# WARNING: Failed to load module: ./aithercore/reporting/ReportingEngine.psm1 - Access to the path '/app/reports' is denied.
 # ✅ AitherZero loaded. Type Start-AitherZero to begin.
 ```
 
@@ -96,7 +96,7 @@ docker run -it --rm \
 ├── AitherZero.psd1       # Module manifest
 ├── AitherZero.psm1       # Root module
 ├── Start-AitherZero.ps1  # Main entry point
-├── domains/              # Domain modules
+├── aithercore/              # Domain modules
 ├── automation-scripts/   # Numbered scripts
 ├── logs/                 # AitherZero logs
 ├── reports/              # AitherZero reports

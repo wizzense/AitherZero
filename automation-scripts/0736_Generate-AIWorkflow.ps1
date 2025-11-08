@@ -27,7 +27,7 @@ param(
     [ValidateSet('Deployment', 'Testing', 'Monitoring', 'Custom')]
     [string]$WorkflowType = 'Custom',
 
-    [string]$OutputPath = "./domains/orchestration/playbooks/generated"
+    [string]$OutputPath = "./aithercore/orchestration/playbooks/generated"
 )
 
 #region Metadata

@@ -17,11 +17,11 @@ $ErrorActionPreference = 'Stop'
 if ($env:AITHERZERO_ROOT) {
     $script:ProjectRoot = $env:AITHERZERO_ROOT
 } else {
-    # Fallback: go up from domains/testing to project root
+    # Fallback: go up from aithercore/testing to project root
     $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 }
 
-$script:DomainsPath = Join-Path $script:ProjectRoot "domains"
+$script:DomainsPath = Join-Path $script:ProjectRoot "aithercore"
 $script:AutomationScriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
 
 # Import the test framework
@@ -129,26 +129,8 @@ function Register-ModuleTestSuites {
     Register-TestSuite -Name "UserInterface" -Categories @('Unit') -Tags @('UI', 'Experience') -Priority 20 -TestScript {
         param($config)
 
-        Describe "User Interface Module" -Tag 'Unit' {
-            BeforeAll {
-                $uiModule = Join-Path $using:script:DomainsPath "experience/BetterMenu.psm1"
-                if (Test-Path $uiModule) {
-                    Import-Module $uiModule -Force -ErrorAction Stop
-                }
-            }
-
-            It "Should provide menu functionality" {
-                if (Get-Command Show-BetterMenu -ErrorAction SilentlyContinue) {
-                    # Test menu creation (without actually displaying)
-                    $items = @("Option 1", "Option 2", "Option 3")
-                    { $null = $items } | Should -Not -Throw
-                }
-            }
-
-            AfterAll {
-                Remove-Module BetterMenu -Force -ErrorAction SilentlyContinue
-            }
-        }
+        # User Interface functionality is now provided by the cli domain
+        # Tests for UI moved to CLI module tests
     }
 
     # Testing Framework Module Tests (self-test)

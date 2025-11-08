@@ -36,7 +36,7 @@ function Initialize-ScriptUtilities {
         if ($env:AITHERZERO_ROOT) {
             $script:ProjectRoot = $env:AITHERZERO_ROOT
         }
-        # Try to find from PSScriptRoot (assumes we're in domains/automation/)
+        # Try to find from PSScriptRoot (assumes we're in aithercore/automation/)
         elseif ($PSScriptRoot) {
             $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
         }

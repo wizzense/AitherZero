@@ -74,7 +74,7 @@ Get-ConfigurationValue -Path "Core.Version"
 
 ### 1. Predictable Paths
 - All scripts in `automation-scripts/` with numeric prefixes
-- All modules in `domains/<category>/<ModuleName>.psm1`
+- All modules in `aithercore/<category>/<ModuleName>.psm1`
 - Configuration always at `config.json`
 
 ### 2. Self-Documenting

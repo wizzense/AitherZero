@@ -61,13 +61,13 @@ Category/DomainName.psm1
 ```
 
 ### Rules
-1. **Category**: Primary functional area (domains/, tests/, tools/)
+1. **Category**: Primary functional area (aithercore/, tests/, tools/)
 2. **DomainName**: PascalCase, descriptive of module purpose
 3. **Avoid generic names**: Be specific about what the module manages
 
 ### Directory Structure
 ```
-domains/
+aithercore/
 ├── configuration/
 │   └── Configuration.psm1          # ✅ Config management
 ├── infrastructure/
@@ -117,7 +117,7 @@ category/action-target-profile.json
 
 ### Directory Structure
 ```
-domains/orchestration/playbooks/
+aithercore/orchestration/playbooks/
 ├── testing/
 │   ├── run-tests-quick.json                    # ✅ Quick test run
 │   ├── run-tests-comprehensive.json            # ✅ Full test suite
@@ -244,14 +244,14 @@ category/Target.Tests.ps1
 ```
 
 ### Rules
-1. **Category**: Match source structure (domains/, unit/, integration/)
+1. **Category**: Match source structure (aithercore/, unit/, integration/)
 2. **Target**: Name of module/script being tested
 3. **Suffix**: Always `.Tests.ps1`
 
 ### Examples
 ```powershell
 ✅ GOOD
-tests/domains/configuration/Configuration.Tests.ps1
+tests/aithercore/configuration/Configuration.Tests.ps1
 tests/unit/automation-scripts/0402_Run-UnitTests.Tests.ps1
 tests/integration/orchestration/PlaybookExecution.Tests.ps1
 
@@ -306,10 +306,10 @@ guide.md                            # What kind of guide?
 ```
 ✅ GOOD
 automation-scripts/                 # Numbered automation scripts
-domains/orchestration/playbooks/            # Playbook definitions
+aithercore/orchestration/playbooks/            # Playbook definitions
 tests/unit/                         # Unit tests
 tests/integration/                  # Integration tests
-domains/configuration/              # Configuration domain
+aithercore/configuration/              # Configuration domain
 reports/metrics-history/            # Historical metrics
 
 ❌ BAD
@@ -361,10 +361,10 @@ update                         # What's being updated?
 | Component | Pattern | Example |
 |-----------|---------|---------|
 | **Automation Script** | `NNNN_Verb-NounContext.ps1` | `0402_Run-UnitTests.ps1` |
-| **Module** | `Category/DomainName.psm1` | `domains/infrastructure/ISOManager.psm1` |
+| **Module** | `Category/DomainName.psm1` | `aithercore/infrastructure/ISOManager.psm1` |
 | **Playbook** | `category/action-target-profile.json` | `testing/run-tests-quick.json` |
 | **Config** | `config-context.ext` | `config-production.psd1` |
-| **Test** | `category/Target.Tests.ps1` | `domains/Configuration.Tests.ps1` |
+| **Test** | `category/Target.Tests.ps1` | `aithercore/Configuration.Tests.ps1` |
 | **Doc** | `PURPOSE-CONTEXT.md` or `README.md` | `TESTING-OVERHAUL-COMPLETE.md` |
 | **Directory** | `lowercase-with-dashes/` | `automation-scripts/` |
 | **Branch** | `type/brief-description` | `feature/playbook-reorganization` |

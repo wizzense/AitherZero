@@ -9,7 +9,7 @@ This directory contains all tests for the AitherZero project, organized by domai
 
 ```
 tests/
-├── domains/          # Domain-specific unit tests
+├── aithercore/          # Domain-specific unit tests
 │   ├── infrastructure/
 │   ├── configuration/
 │   ├── utilities/
@@ -32,10 +32,10 @@ Invoke-Pester -Path ./tests
 ### Domain-Specific Tests
 ```powershell
 # Test a specific domain
-Invoke-Pester -Path ./tests/domains/infrastructure
+Invoke-Pester -Path ./tests/aithercore/infrastructure
 
 # Test a specific function
-Invoke-Pester -Path ./tests/domains/infrastructure -TestName "New-LabVM"
+Invoke-Pester -Path ./tests/aithercore/infrastructure -TestName "New-LabVM"
 ```
 
 ### Integration Tests
@@ -52,7 +52,7 @@ Invoke-Pester -Path ./tests/performance
 
 Generate code coverage reports:
 ```powershell
-Invoke-Pester -Path ./tests -CodeCoverage ./domains/**/*.psm1 -CodeCoverageOutputFile coverage.xml
+Invoke-Pester -Path ./tests -CodeCoverage ./aithercore/**/*.psm1 -CodeCoverageOutputFile coverage.xml
 ```
 
 ## Writing Tests

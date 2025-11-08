@@ -36,7 +36,7 @@ Provides reusable helper functions used by automation scripts:
 ```powershell
 # Import at the top of your script
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 # Use the functions
 Write-ScriptLog -Message "Starting process" -Level Information
@@ -95,7 +95,7 @@ param()
 
 # Import script utilities (replaces manual Write-ScriptLog definitions)
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 Write-ScriptLog -Message "Starting installation" -Level Information
 
@@ -120,7 +120,7 @@ try {
 ### Using DeploymentAutomation
 ```powershell
 # Import the automation domain
-Import-Module ./domains/automation/DeploymentAutomation.psm1
+Import-Module ./aithercore/automation/DeploymentAutomation.psm1
 
 # Run all automation scripts
 Start-DeploymentAutomation

@@ -187,7 +187,7 @@ try {
             Write-ScriptLog -Level Warning -Message "Failed to load main module, falling back to individual modules: $_"
             
             # Fallback: Load domain modules individually
-            $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "domains") -Filter "*.psm1" -Recurse
+            $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "aithercore") -Filter "*.psm1" -Recurse
             foreach ($module in $domainModules) {
                 try {
                     Write-ScriptLog -Level Debug -Message "Loading module: $($module.Name)"
@@ -203,7 +203,7 @@ try {
         Write-ScriptLog -Level Warning -Message "Main module not found, loading individual domain modules"
         
         # Load domain modules individually
-        $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "domains") -Filter "*.psm1" -Recurse
+        $domainModules = Get-ChildItem -Path (Join-Path $projectRoot "aithercore") -Filter "*.psm1" -Recurse
         foreach ($module in $domainModules) {
             try {
                 Write-ScriptLog -Level Debug -Message "Loading module: $($module.Name)"

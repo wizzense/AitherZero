@@ -5,7 +5,7 @@
 PR #2112 identified 2 critical errors that broke local CI/CD orchestration functionality:
 
 ### Error 1: Missing Playbook Files
-A previous commit removed all orchestration playbook JSON files from `domains/orchestration/playbooks/core/operations/` while the wrapper script (0962_Run-Playbook.ps1), documentation, and workflows still referenced them. This made local orchestration completely non-functional.
+A previous commit removed all orchestration playbook JSON files from `aithercore/orchestration/playbooks/core/operations/` while the wrapper script (0962_Run-Playbook.ps1), documentation, and workflows still referenced them. This made local orchestration completely non-functional.
 
 **Impact**: 
 - Users couldn't run `./automation-scripts/0962_Run-Playbook.ps1 -Playbook ci-pr-validation` 
@@ -27,7 +27,7 @@ The script `0962_Run-Playbook.ps1` declared `[CmdletBinding()]` without `Support
 
 ### Fix for Error 1: Restored All Missing Playbooks
 
-Created 11 playbook JSON files in `domains/orchestration/playbooks/core/operations/`:
+Created 11 playbook JSON files in `aithercore/orchestration/playbooks/core/operations/`:
 
 1. **ci-pr-validation.json** - Quick PR validation (syntax + PSScriptAnalyzer)
 2. **ci-all-validations.json** - Meta-playbook combining all validations
@@ -96,7 +96,7 @@ All fixes were tested and validated:
 
 ### Test 4: JSON Schema Valid
 ```powershell
-Get-Content ./domains/orchestration/playbooks/core/operations/ci-pr-validation.json | ConvertFrom-Json
+Get-Content ./aithercore/orchestration/playbooks/core/operations/ci-pr-validation.json | ConvertFrom-Json
 ```
 ✅ Result: All playbooks have valid JSON and follow v3 schema
 
@@ -104,10 +104,10 @@ Get-Content ./domains/orchestration/playbooks/core/operations/ci-pr-validation.j
 
 ### Modified (2 files)
 - `automation-scripts/0962_Run-Playbook.ps1` - Added SupportsShouldProcess
-- `domains/orchestration/playbooks/README.md` - Updated documentation
+- `aithercore/orchestration/playbooks/README.md` - Updated documentation
 
 ### Created (11 files)
-All in `domains/orchestration/playbooks/core/operations/`:
+All in `aithercore/orchestration/playbooks/core/operations/`:
 - ci-pr-validation.json
 - ci-all-validations.json
 - ci-comprehensive-test.json

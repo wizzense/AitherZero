@@ -221,8 +221,8 @@ jobs:
           Write-Host "🧹 Cleaning development files from package..." -ForegroundColor Cyan
 
           # Remove test files if they exist
-          if (Test-Path "./$packageName/domains/*/tests") {
-            Remove-Item "./$packageName/domains/*/tests" -Recurse -Force -ErrorAction SilentlyContinue
+          if (Test-Path "./$packageName/aithercore/*/tests") {
+            Remove-Item "./$packageName/aithercore/*/tests" -Recurse -Force -ErrorAction SilentlyContinue
             Write-Host "  ✅ Removed domain test files" -ForegroundColor Green
           }
 

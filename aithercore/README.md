@@ -1,190 +1,107 @@
-# AitherCore - Essential Modules for Basic Releases
+# AitherZero Domains
 
-## Overview
+This directory contains all domain modules for the AitherZero platform, organized by functional area.
 
-The `aithercore` directory contains the consolidated essential modules required for basic AitherZero releases. These modules form the minimal foundation needed to run core functionality without the full suite of domains.
+## Domain Architecture
 
-## Purpose
+AitherZero follows a domain-driven design where related functionality is grouped into logical domains:
 
-This consolidation serves several key purposes:
+### 🏗️ Infrastructure Domain
+**Status**: ✅ Active
 
-1. **Minimal Distribution**: Enable lightweight releases with only core functionality
-2. **Dependency Clarity**: Clearly identify and isolate critical dependencies
-3. **Quick Start**: Allow users to get started with minimal module loading
-4. **Basic Operations**: Support fundamental operations without advanced features
+Manages all infrastructure provisioning and virtual machine lifecycle operations.
+- OpenTofu/Terraform integration
+- Virtual machine management
+- Resource lifecycle operations
 
-## Included Modules
+### ⚙️ Configuration Domain
+**Status**: ✅ Active
 
-### Core Foundation (Required by most modules)
+Provides centralized configuration management with environment support.
+- Unified configuration store
+- Environment switching
+- Validation and schemas
+- Hot-reload capabilities
 
-#### 1. Logging.psm1
-- **Size**: ~959 lines
-- **Dependencies**: None
-- **Used by**: 30+ modules across all domains
-- **Purpose**: Centralized logging with structured output, audit logs, performance tracing
-- **Key Functions**: `Write-CustomLog`, `Initialize-Logging`, `Write-AuditLog`
+### 🛠️ Utilities Domain
+**Status**: ✅ Active
 
-#### 2. Configuration.psm1
-- **Size**: ~1091 lines
-- **Dependencies**: None (may use Logging optionally)
-- **Used by**: 15+ modules
-- **Purpose**: Configuration management, environment switching, feature flags
-- **Key Functions**: `Get-Configuration`, `Set-Configuration`, `Get-ConfigValue`
+Common services and helpers used across all domains.
+- Unified logging service
+- Performance monitoring
+- Cross-platform utilities
 
-#### 3. TextUtilities.psm1
-- **Size**: ~69 lines
-- **Dependencies**: None
-- **Used by**: UI modules
-- **Purpose**: Text formatting and spacing utilities
-- **Key Functions**: `Repair-TextSpacing`
+### 🔒 Security Domain
+**Status**: 📋 Planned
 
-### Platform Services
+Will handle security operations and credential management.
+- Credential storage
+- Certificate management
+- Encryption services
 
-#### 4. Performance.psm1
-- **Size**: ~702 lines
-- **Dependencies**: Logging
-- **Purpose**: Runtime performance monitoring and profiling
-- **Key Functions**: `Start-PerformanceTimer`, `Get-PerformanceMetrics`, `Measure-Performance`
+### 🎨 Experience Domain
+**Status**: 📋 Planned
 
-#### 5. Bootstrap.psm1
-- **Size**: ~713 lines
-- **Dependencies**: Logging
-- **Purpose**: Platform initialization and environment setup
-- **Key Functions**: `Initialize-AitherEnvironment`, `Test-PowerShell7`, `Install-ValidationTools`
+Will manage user interfaces and experience enhancements.
+- Interactive menus
+- Progress indicators
+- Help systems
 
-#### 6. PackageManager.psm1
-- **Size**: ~490 lines
-- **Dependencies**: Logging
-- **Purpose**: Cross-platform package and dependency management
-- **Key Functions**: `Install-SoftwarePackage`, `Test-PackageInstalled`, `Get-AvailablePackageManagers`
+### 🤖 Automation Domain
+**Status**: ✅ Active
 
-### User Interface
+Provides workflow automation and orchestration.
+- Workflow engine (OrchestrationEngine)
+- Async orchestration capabilities
+- Deployment automation
+- GitHub workflow parsing
+- Script utilities
 
-#### 7. BetterMenu.psm1
-- **Size**: ~488 lines
-- **Dependencies**: TextUtilities
-- **Purpose**: Interactive menu system with keyboard navigation
-- **Key Functions**: `Show-BetterMenu`
+### 🎭 Orchestration Domain
+**Status**: ✅ Active
 
-#### 8. UserInterface.psm1
-- **Size**: ~1029 lines
-- **Dependencies**: TextUtilities, Configuration, BetterMenu
-- **Purpose**: Unified UI system with menus, progress tracking, notifications
-- **Key Functions**: `Show-UIMenu`, `Show-UIProgress`, `Show-UINotification`, `Initialize-AitherUI`
+Contains playbooks and orchestration configurations.
+- Playbook definitions (JSON/PSD1 formats)
+- CI/CD workflow mappings
+- Test orchestration configurations
+- Playbook schema definitions
 
-### Infrastructure & Security
+## Using Domains
 
-#### 9. Infrastructure.psm1
-- **Size**: ~182 lines
-- **Dependencies**: Logging
-- **Purpose**: Lightweight infrastructure essentials and provider detection
-- **Key Functions**: `Initialize-Infrastructure`, `Get-InfrastructureProvider`
-
-#### 10. Security.psm1
-- **Size**: ~266 lines
-- **Dependencies**: Logging
-- **Purpose**: Security essentials, credential/certificate management
-- **Key Functions**: Security and credential handling
-
-### Orchestration
-
-#### 11. OrchestrationEngine.psm1
-- **Size**: ~1488 lines
-- **Dependencies**: Logging, Configuration
-- **Purpose**: Core orchestration system for script execution
-- **Key Functions**: `Invoke-OrchestrationSequence`, `Get-OrchestrationPlaybook`
-
-## Total Size
-
-**Total Lines**: ~7,477 lines
-**Total Modules**: 11 core modules
-
-This represents approximately 29.6% of the total module codebase but provides 100% of the critical foundation functionality.
-
-## Dependency Graph
-
-```
-TextUtilities (no deps)
-    └── BetterMenu
-        └── UserInterface
-            └── (depends also on Configuration)
-
-Logging (no deps)
-    ├── Configuration (optional)
-    ├── Infrastructure
-    ├── Security
-    └── OrchestrationEngine (also needs Configuration)
-```
-
-## Usage
-
-### Loading AitherCore Only
+All domains are automatically loaded when you import the core module:
 
 ```powershell
-# Load the aithercore module
-Import-Module ./aithercore/AitherCore.psd1
-
-# Verify loaded
-Get-Module AitherCore
+Import-Module ./aitherzero.psm1
 ```
 
-### Loading Full AitherZero
+To load only essential domains:
 
 ```powershell
-# Load the complete platform (includes all domains)
-Import-Module ./AitherZero.psd1
+Import-Module ./aitherzero.psm1
+Initialize-aitherzero -Minimal
 ```
 
-## What's NOT Included
+## Adding New Domains
 
-The following domains are NOT in aithercore (available in full release only):
+1. Create a new directory under `aithercore/`
+2. Add your `.psm1` files to the directory
+3. Create a `README.md` documenting the domain
+4. Add tests under `tests/aithercore/<domain-name>/`
+5. Update `Initialize-aitherzero` to include your domain
 
-- **development**: Git automation, issue tracking, PR management
-- **documentation**: Documentation generation, project indexing
-- **reporting**: Advanced reporting, tech debt analysis
-- **testing**: Testing frameworks, quality validation, test generation
-- **ai-agents**: AI workflow orchestration, Claude/Copilot integration
-- **automation**: Advanced deployment automation (beyond core orchestration)
+## Best Practices
 
-## Use Cases
+1. **Single Responsibility**: Each domain should have a clear, focused purpose
+2. **Minimal Dependencies**: Domains should minimize cross-dependencies
+3. **Public Interface**: Expose only necessary functions via `Export-ModuleMember`
+4. **Documentation**: Every domain must have a README explaining its purpose
+5. **Testing**: All public functions should have corresponding tests
 
-### Basic Release
-- Simple infrastructure operations
-- Basic configuration management
-- Interactive menus and UI
-- Core logging
-- Script orchestration
+## Domain Communication
 
-### Development/Testing
-- Use full AitherZero.psd1 for complete functionality
-- Includes all domains and advanced features
+Domains communicate through:
+- The configuration domain for settings
+- The utilities domain for logging
+- Well-defined public interfaces
 
-## Module Loading Order
-
-When loading aithercore modules, follow this order:
-
-1. TextUtilities (no dependencies)
-2. Logging (no dependencies)
-3. Configuration (optional Logging dependency)
-4. BetterMenu (needs TextUtilities)
-5. UserInterface (needs TextUtilities, Configuration, BetterMenu)
-6. Infrastructure (needs Logging)
-7. Security (needs Logging)
-8. OrchestrationEngine (needs Logging, Configuration)
-
-This order is automatically handled by the AitherCore.psm1 loader.
-
-## Maintenance
-
-When updating modules in the main `domains/` directory, remember to:
-
-1. Evaluate if the change affects aithercore modules
-2. Copy updated modules to aithercore if needed
-3. Test aithercore loading independently
-4. Update this documentation if dependencies change
-
-## Future Considerations
-
-- Consider versioning aithercore separately from full releases
-- May add minimal testing module subset for validation
-- Could extract even smaller "micro" core for embedded scenarios
+Avoid direct cross-domain dependencies where possible.

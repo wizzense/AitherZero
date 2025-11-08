@@ -157,7 +157,7 @@ jobs:
             }
             
             # Security
-            if ($file -match 'domains/security/|.*security.*\.ps1|.*certificate.*\.ps1|.*credential.*\.ps1|.*secret.*\.ps1') {
+            if ($file -match 'aithercore/security/|.*security.*\.ps1|.*certificate.*\.ps1|.*credential.*\.ps1|.*secret.*\.ps1') {
               $agentScores.sarah += 3
               $categoryFiles.Security += $file
             }
@@ -169,13 +169,13 @@ jobs:
             }
             
             # UI
-            if ($file -match 'domains/experience/|.*ui.*\.ps1|.*menu.*\.ps1|.*interface.*\.ps1|.*wizard.*\.ps1') {
+            if ($file -match 'aithercore/experience/|.*ui.*\.ps1|.*menu.*\.ps1|.*interface.*\.ps1|.*wizard.*\.ps1') {
               $agentScores.emma += 3
               $categoryFiles.UI += $file
             }
             
             # Backend
-            if ($file -match 'domains/.*\.psm1$|automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
+            if ($file -match 'aithercore/.*\.psm1$|automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
               $agentScores.marcus += 3
               $categoryFiles.Backend += $file
             }
@@ -187,7 +187,7 @@ jobs:
             }
             
             # PowerShell (applies to most .ps1/.psm1 files)
-            if ($file -match '\.(ps1|psm1|psd1)$|domains/orchestration/|automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])') {
+            if ($file -match '\.(ps1|psm1|psd1)$|aithercore/orchestration/|automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])') {
               $agentScores.rachel += 2
               $categoryFiles.PowerShell += $file
             }
@@ -307,7 +307,7 @@ jobs:
                 }
               }
               'sarah' {
-                if ($file -match 'domains/security/|.*security.*\.ps1|.*certificate.*\.ps1|.*credential.*\.ps1|.*secret.*\.ps1') {
+                if ($file -match 'aithercore/security/|.*security.*\.ps1|.*certificate.*\.ps1|.*credential.*\.ps1|.*secret.*\.ps1') {
                   $isRelevant = $true
                 }
               }
@@ -317,12 +317,12 @@ jobs:
                 }
               }
               'emma' {
-                if ($file -match 'domains/experience/|.*ui.*\.ps1|.*menu.*\.ps1|.*interface.*\.ps1|.*wizard.*\.ps1') {
+                if ($file -match 'aithercore/experience/|.*ui.*\.ps1|.*menu.*\.ps1|.*interface.*\.ps1|.*wizard.*\.ps1') {
                   $isRelevant = $true
                 }
               }
               'marcus' {
-                if ($file -match 'domains/.*\.psm1$|automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
+                if ($file -match 'aithercore/.*\.psm1$|automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
                   $isRelevant = $true
                 }
               }

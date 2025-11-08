@@ -71,7 +71,7 @@
 ```
 Changed Files:
   - automation-scripts/0150_Setup-VM.ps1
-  - domains/security/Certificate-Management.psm1
+  - aithercore/security/Certificate-Management.psm1
   - tests/unit/Security.Tests.ps1
   - README.md
 

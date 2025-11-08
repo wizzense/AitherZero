@@ -108,7 +108,7 @@ module.exports = async ({github, context, core}) => {
 | Component | Score | Errors | Logging | Tests | PSA |
 |-----------|-------|--------|---------|-------|-----|
 | ✅ utilities/Logging.psm1 | 95% | ✅ 100% | ✅ N/A | ✅ 98% | ✅ Clean |
-| ⚠️ domains/infrastructure | 78% | ⚠️ 85% | ✅ 100% | ❌ 45% | ⚠️ 15 issues |
+| ⚠️ aithercore/infrastructure | 78% | ⚠️ 85% | ✅ 100% | ❌ 45% | ⚠️ 15 issues |
 ...
 
 ### Issues by Severity

@@ -69,8 +69,8 @@ if (-not $config -or $config -isnot [hashtable]) {
 16. `0739_Validate-AIOutput.ps1`
 
 ### Domain Modules (2 files)
-1. `domains/testing/TestingFramework.psm1` ⭐ (Critical - core testing infrastructure)
-2. `domains/experience/EnhancedInteractiveUI.psm1`
+1. `aithercore/testing/TestingFramework.psm1` ⭐ (Critical - core testing infrastructure)
+2. `aithercore/experience/EnhancedInteractiveUI.psm1`
 
 ### Documentation (2 files)
 1. `.github/copilot-instructions.md` - Added CRITICAL section on config loading
@@ -146,13 +146,13 @@ With these fixes, the following workflows should now pass:
 ### Not Changed (Already Correct)
 - `automation-scripts/0003_Sync-ConfigManifest.ps1` - Already used scriptblock
 - `automation-scripts/0413_Validate-ConfigManifest.ps1` - Already used scriptblock
-- `domains/configuration/ConfigManager.psm1` - Already used scriptblock
+- `aithercore/configuration/ConfigManager.psm1` - Already used scriptblock
 
 ### Other PSD1 Files (Correctly Use Import-PowerShellDataFile)
 These files are module manifests (pure data) and correctly use `Import-PowerShellDataFile`:
-- Module manifests: `*.psd1` in domains/
+- Module manifests: `*.psd1` in aithercore/
 - Extension manifests: `*.extension.psd1`
-- Playbook files: `domains/orchestration/playbooks/*.psd1` (converted at runtime)
+- Playbook files: `aithercore/orchestration/playbooks/*.psd1` (converted at runtime)
 
 ## Future Development
 

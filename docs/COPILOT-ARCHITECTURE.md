@@ -172,7 +172,7 @@ Copilot Request → MCP Server Manager
 | Sarah Security     | Security            | security/*, *cert*      | certificate, secret   |
 | Jessica Testing    | Testing             | tests/*, *.Tests.ps1    | test, pester, qa      |
 | Emma Frontend      | Frontend/UX         | experience/*, *ui*      | ui, menu, wizard      |
-| Marcus Backend     | Backend/API         | domains/*.psm1, *api*   | module, function      |
+| Marcus Backend     | Backend/API         | aithercore/*.psm1, *api*   | module, function      |
 | Olivia Documentation | Documentation     | docs/*, *.md            | documentation, guide  |
 | Rachel PowerShell  | PowerShell          | *.ps1, *.psm1           | script, automation    |
 | David ProjectManager | Project Management| .github/*.yml, *plan*   | project, roadmap      |

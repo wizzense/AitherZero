@@ -20,7 +20,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$SourcePath = (Join-Path (Split-Path $PSScriptRoot -Parent) "domains"),
+    [string]$SourcePath = (Join-Path (Split-Path $PSScriptRoot -Parent) "aithercore"),
     [string]$TestPath = (Join-Path (Split-Path $PSScriptRoot -Parent) "tests"),
     [string]$OutputPath,
     [switch]$DryRun,

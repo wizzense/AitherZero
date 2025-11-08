@@ -8,7 +8,7 @@
     - New CLI modes
     - New automation scripts
     - New commands
-    - New domains/modules
+    - New aithercore/modules
     - Custom validators
     
     Extensions are discovered from:

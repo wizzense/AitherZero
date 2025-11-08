@@ -35,7 +35,7 @@ tests/integration/
 
 **Actually exists**:
 ```
-tests/domains/
+tests/aithercore/
 ├── configuration/     ✅ EXISTS
 ├── documentation/     ✅ EXISTS
 ├── infrastructure/    ✅ EXISTS
@@ -45,9 +45,9 @@ tests/domains/
 ```
 
 **Missing**:
-- `tests/domains/experience/` ❌ DOES NOT EXIST
-- `tests/domains/automation/` ❌ DOES NOT EXIST
-- `tests/domains/reporting/` ❌ DOES NOT EXIST
+- `tests/aithercore/experience/` ❌ DOES NOT EXIST
+- `tests/aithercore/automation/` ❌ DOES NOT EXIST
+- `tests/aithercore/reporting/` ❌ DOES NOT EXIST
 
 ### Artifact Upload Issues
 
@@ -103,7 +103,7 @@ $domainModules = @(
 
 ### 3. Updated Playbook JSON
 
-Updated `domains/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`:
+Updated `aithercore/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`:
 - Removed non-existent domain test jobs
 - Removed non-existent integration test jobs
 - Updated maxConcurrency values to match actual job count
@@ -201,13 +201,13 @@ When creating new test directories, update both:
    )
    ```
 
-2. **Playbook** (`domains/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`):
+2. **Playbook** (`aithercore/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`):
    ```json
    {
      "name": "Domain Tests [your-new-module]",
      "sequence": ["0402"],
      "variables": {
-       "TestPath": "./tests/domains/your-new-module",
+       "TestPath": "./tests/aithercore/your-new-module",
        "OutputFile": "DomainTests-your-new-module.xml"
      }
    }
@@ -218,7 +218,7 @@ When creating new test directories, update both:
 To add new test suites, create directories:
 ```
 tests/
-├── domains/
+├── aithercore/
 │   └── your-new-domain/       # Add domain tests here
 │       └── *.Tests.ps1
 ├── integration/
@@ -241,7 +241,7 @@ pwsh -c "
   ls -Directory tests/integration/ | Select -ExpandProperty Name
   
   # Domain modules  
-  ls -Directory tests/domains/ | Select -ExpandProperty Name
+  ls -Directory tests/aithercore/ | Select -ExpandProperty Name
 "
 ```
 
