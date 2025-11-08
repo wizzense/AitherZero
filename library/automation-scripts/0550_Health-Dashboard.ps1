@@ -100,7 +100,7 @@ param(
 )
 
 # Initialize environment
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Configuration constants
 $script:CoreModules = @('Logging', 'LogViewer', 'Configuration')
@@ -314,7 +314,7 @@ function Get-CodeQualityMetrics {
     }
     
     # Check for PSScriptAnalyzer results
-    $analysisPath = Join-Path $ProjectRoot "library/library/tests/analysis"
+    $analysisPath = Join-Path $ProjectRoot "library/tests/analysis"
     if (Test-Path $analysisPath) {
         $latestCSV = Get-ChildItem -Path $analysisPath -Filter "*.csv" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1

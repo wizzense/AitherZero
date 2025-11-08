@@ -27,7 +27,7 @@ param(
 )
 
 # Initialize environment
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Import LogViewer module
 $logViewerPath = Join-Path $ProjectRoot "domains/utilities/LogViewer.psm1"

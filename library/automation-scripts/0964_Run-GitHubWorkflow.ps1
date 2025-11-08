@@ -85,7 +85,7 @@ param(
 
 # Initialize
 $ErrorActionPreference = 'Stop'
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Import required modules
 try {

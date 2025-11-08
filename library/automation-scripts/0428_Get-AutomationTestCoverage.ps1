@@ -149,7 +149,7 @@ function Get-ScriptCoverageData {
 Set-StrictMode -Version Latest
 
 # Import script utilities
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 try {
             $content = Get-Content $script.FullName -First 20
