@@ -254,6 +254,15 @@ jobs:
             Write-Host "  $($_.Name): ${sizeMB} MB" -ForegroundColor White
           }
 
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          # Convert repository name to lowercase for Docker compatibility
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "REPO_LOWER=${REPO_LOWER}" >> $GITHUB_ENV
+          echo "Using lowercase repository name: ${REPO_LOWER}"
+
       - name: 📝 Generate Release Notes
         shell: pwsh
         run: |
@@ -311,7 +320,7 @@ jobs:
           - Pre-configured container with AitherZero installed
           - Multi-platform support (amd64, arm64)
           - Non-root user for security
-          - Image: \`ghcr.io/${{ github.repository }}:$($version -replace '^v','')\`
+          - Image: \`ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')\`
 
           ## 🚀 Quick Installation
 
@@ -334,10 +343,10 @@ jobs:
           ### Docker Container
           ```bash
           # Pull the image
-          docker pull ghcr.io/${{ github.repository }}:$($version -replace '^v','')
+          docker pull ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')
 
           # Run interactively
-          docker run -it --rm ghcr.io/${{ github.repository }}:$($version -replace '^v','')
+          docker run -it --rm ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')
 
           # Run with docker-compose
           docker-compose up -d
