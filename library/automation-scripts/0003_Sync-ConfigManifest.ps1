@@ -55,7 +55,7 @@ $scriptMetadata = @{
 }
 
 # Paths
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $configPath = Join-Path $projectRoot "config.psd1"
 $scriptsPath = Join-Path $projectRoot "automation-scripts"
 

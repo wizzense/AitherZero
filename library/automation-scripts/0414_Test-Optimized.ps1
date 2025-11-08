@@ -52,7 +52,7 @@ $ProgressPreference = 'SilentlyContinue'  # Disable progress bars for speed
 $VerbosePreference = if ($Verbose) { 'Continue' } else { 'SilentlyContinue' }
 
 # Initialize
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $startTime = Get-Date
 

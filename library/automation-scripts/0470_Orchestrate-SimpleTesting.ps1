@@ -46,7 +46,7 @@ Set-StrictMode -Version Latest
 # Performance settings
 $ProgressPreference = 'SilentlyContinue'
 
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
 # Simple logging (no dependencies)

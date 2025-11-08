@@ -46,7 +46,7 @@ $scriptMetadata = @{
 }
 
 # Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
 $loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
 

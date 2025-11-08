@@ -52,7 +52,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # Script paths
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $testRoot = Join-Path $projectRoot "library/library/tests/unit/automation-scripts"
 $scriptRoot = Join-Path $projectRoot "automation-scripts"
 $loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"

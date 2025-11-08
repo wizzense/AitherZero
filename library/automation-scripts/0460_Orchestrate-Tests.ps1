@@ -50,7 +50,7 @@ $scriptMetadata = @{
 }
 
 # Initialize
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $startTime = Get-Date
 
 # Logging helper

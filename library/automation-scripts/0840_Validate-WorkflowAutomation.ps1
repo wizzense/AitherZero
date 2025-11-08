@@ -49,7 +49,7 @@ $scriptMetadata = @{
 }
 
 # Configuration
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $workflowsDir = Join-Path $projectRoot ".github/workflows"
 $issuesScript = Join-Path $projectRoot "automation-scripts/0830_Generate-IssueFiles.ps1"
 
