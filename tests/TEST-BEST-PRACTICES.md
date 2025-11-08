@@ -31,7 +31,7 @@ BeforeAll {
 ### ✅ DO THIS INSTEAD:
 ```powershell
 BeforeAll {
-    $scriptPath = Join-Path $projectRoot "automation-scripts/0744_Generate-AutoDocumentation.ps1"
+    $scriptPath = Join-Path $projectRoot "library/automation-scripts/0744_Generate-AutoDocumentation.ps1"
     
     # GOOD: Extract the actual function using AST parsing
     function Get-FunctionDefinitionFromScript {
@@ -99,7 +99,7 @@ Using PowerShell's Abstract Syntax Tree (AST) parser provides several benefits:
 
 ## Reference Example
 
-See `/tests/unit/automation-scripts/0700-0799/0744_Generate-AutoDocumentation.Tests.ps1` for a complete working example of:
+See `/tests/unit/library/automation-scripts/0700-0799/0744_Generate-AutoDocumentation.Tests.ps1` for a complete working example of:
 - AST-based function extraction
 - Proper mocking setup
 - Testing the real implementation

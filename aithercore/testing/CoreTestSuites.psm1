@@ -22,7 +22,7 @@ if ($env:AITHERZERO_ROOT) {
 }
 
 $script:DomainsPath = Join-Path $script:ProjectRoot "aithercore"
-$script:AutomationScriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
+$script:AutomationScriptsPath = Join-Path $script:ProjectRoot "library/automation-scripts"
 
 # Import the test framework
 $testFrameworkPath = Join-Path $PSScriptRoot "AitherTestFramework.psm1"
@@ -238,8 +238,8 @@ function Register-AutomationScriptTestSuites {
                 # Test that scripts can be ordered by their numeric prefix
                 $scriptsPath = $using:script:AutomationScriptsPath
                 $scripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" |
-                    Where-Object { $_.Name -match '^\d{4}_' } |
-                    Sort-Object Name
+                Where-Object { $_.Name -match '^\d{4}_' } |
+                Sort-Object Name
 
                 $scripts.Count | Should -BeGreaterThan 0
 

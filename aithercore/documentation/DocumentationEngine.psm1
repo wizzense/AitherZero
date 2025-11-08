@@ -105,7 +105,7 @@ function Initialize-DocumentationEngine {
     }
     
     # Load templates
-    $templateDir = $TemplateDirectory ?? (Join-Path $script:ProjectRoot "docs/templates")
+    $templateDir = $TemplateDirectory ?? (Join-Path $script:ProjectRoot "library/templates")
     Write-DocLog "Looking for templates in: $templateDir" -Level Debug
     if (Test-Path $templateDir) {
         Write-DocLog "Loading templates from: $templateDir" -Level Information
@@ -131,7 +131,7 @@ function Get-DefaultDocumentationConfig {
             Enabled = $true
             WatchPaths = @(
                 "domains/**/*.psm1"
-                "automation-scripts/**/*.ps1" 
+                "library/automation-scripts/**/*.ps1" 
                 "*.psd1"
                 "README.md"
             )
@@ -139,13 +139,13 @@ function Get-DefaultDocumentationConfig {
                 ".git/**/*"
                 "tests/**/*"
                 "logs/**/*"
-                "reports/**/*"
+                "library/reports/**/*"
             )
             GenerateOnChange = $true
             DebounceSeconds = 30
         }
         OutputFormats = @('Markdown', 'HTML')
-        OutputDirectory = "docs/generated"
+        OutputDirectory = "library/generated"
         QualityGates = @{
             MinimumCoverage = 75
             RequireExamples = $true
@@ -842,7 +842,7 @@ Import-Module ./AitherZero.psd1
 ./Start-AitherZero.ps1
 
 # Generate documentation
-New-ProjectDocumentation -OutputPath "./docs/generated"
+New-ProjectDocumentation -OutputPath "./library/generated"
 
 # Run automation scripts
 ./az 0402  # Unit tests

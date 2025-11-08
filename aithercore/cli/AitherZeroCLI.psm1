@@ -82,7 +82,7 @@ function Get-AitherScriptPath {
         [string]$Number
     )
     
-    $scriptsPath = Join-Path $env:AITHERZERO_ROOT 'automation-scripts'
+    $scriptsPath = Join-Path $env:AITHERZERO_ROOT 'library/automation-scripts'
     
     if (-not (Test-Path $scriptsPath)) {
         return $null
@@ -411,7 +411,7 @@ function Get-AitherScript {
         [switch]$Available
     )
     
-    $scriptsPath = Join-Path $env:AITHERZERO_ROOT 'automation-scripts'
+    $scriptsPath = Join-Path $env:AITHERZERO_ROOT 'library/automation-scripts'
     
     if (-not (Test-Path $scriptsPath)) {
         Write-Warning "Automation scripts directory not found: $scriptsPath"

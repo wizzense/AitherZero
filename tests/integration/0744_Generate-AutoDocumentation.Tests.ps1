@@ -9,7 +9,7 @@
 
 BeforeAll {
     $script:projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-    $script:script0744 = Join-Path $script:projectRoot "automation-scripts/0744_Generate-AutoDocumentation.ps1"
+    $script:script0744 = Join-Path $script:projectRoot "library/automation-scripts/0744_Generate-AutoDocumentation.ps1"
     
     if (-not (Test-Path $script:script0744)) {
         throw "0744_Generate-AutoDocumentation.ps1 not found"

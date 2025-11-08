@@ -4,14 +4,25 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 on:
   # Runs on pushes targeting the default branch and ring branches
   push:
-    branches: ["main", "dev", "develop", "dev-staging", "ring-0", "ring-0-integrations", "ring-1", "ring-1-integrations", "ring-2"]
+    branches:
+      [
+        "main",
+        "dev",
+        "develop",
+        "dev-staging",
+        "ring-0",
+        "ring-0-integrations",
+        "ring-1",
+        "ring-1-integrations",
+        "ring-2",
+      ]
     paths:
-      - 'reports/**'
-      - 'docs/**'
-      - 'index.md'
-      - '_config.yml'
-      - 'integrations/mcp-server/README.md'
-      - 'integrations/mcp-server/QUICKSTART.md'
+      - "library/reports/**"
+      - "library/**"
+      - "index.md"
+      - "_config.yml"
+      - "integrations/mcp-server/README.md"
+      - "integrations/mcp-server/QUICKSTART.md"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -42,17 +53,17 @@ jobs:
       - name: Copy MCP Server Documentation
         run: |
           echo "📄 Copying MCP server documentation to docs..."
-          mkdir -p ./docs/mcp-server
-          if [ -f "./integrations/mcp-server/README.md" ]; then
-            cp ./integrations/mcp-server/README.md ./docs/integrations/mcp-server/index.md
+          mkdir -p ./library/mcp-server
+          if [ -f "./mcp-server/README.md" ]; then
+            cp ./mcp-server/README.md ./library/mcp-server/index.md
             echo "✅ Copied MCP server README"
           fi
-          if [ -f "./integrations/mcp-server/QUICKSTART.md" ]; then
-            cp ./integrations/mcp-server/QUICKSTART.md ./docs/integrations/mcp-server/quickstart.md
+          if [ -f "./mcp-server/QUICKSTART.md" ]; then
+            cp ./mcp-server/QUICKSTART.md ./library/mcp-server/quickstart.md
             echo "✅ Copied MCP server quickstart"
           fi
-          if [ -f "./integrations/mcp-server/IMPLEMENTATION-SUMMARY.md" ]; then
-            cp ./integrations/mcp-server/IMPLEMENTATION-SUMMARY.md ./docs/integrations/mcp-server/implementation.md
+          if [ -f "./mcp-server/IMPLEMENTATION-SUMMARY.md" ]; then
+            cp ./mcp-server/IMPLEMENTATION-SUMMARY.md ./library/mcp-server/implementation.md
             echo "✅ Copied MCP server implementation summary"
           fi
 

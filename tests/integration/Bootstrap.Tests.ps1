@@ -226,7 +226,7 @@ Describe "Bootstrap Configuration" {
 Describe "Bootstrap Bug Fix Validations" {
     Context "Critical Bug Fixes" {
         It "Should handle OpenTofu initialization without crashing (Bug #5)" {
-            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0009_Initialize-OpenTofu.ps1"
+            $scriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0009_Initialize-OpenTofu.ps1"
             if (Test-Path $scriptPath) {
                 $content = Get-Content $scriptPath -Raw
 
@@ -241,7 +241,7 @@ Describe "Bootstrap Bug Fix Validations" {
         }
 
         It "Should not require admin for testing tools installation (Bug #7)" {
-            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0400_Install-TestingTools.ps1"
+            $scriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0400_Install-TestingTools.ps1"
             if (Test-Path $scriptPath) {
                 $content = Get-Content $scriptPath -Raw
 
@@ -253,7 +253,7 @@ Describe "Bootstrap Bug Fix Validations" {
         }
 
         It "Should handle environment validation flexibly (Bug #3)" {
-            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0500_Validate-Environment.ps1"
+            $scriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0500_Validate-Environment.ps1"
             if (Test-Path $scriptPath) {
                 $content = Get-Content $scriptPath -Raw
 
@@ -268,7 +268,7 @@ Describe "Bootstrap Bug Fix Validations" {
         }
 
         It "Should return correct exit codes in log viewer (Bug #4)" {
-            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0530_View-Logs.ps1"
+            $scriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0530_View-Logs.ps1"
             if (Test-Path $scriptPath) {
                 $content = Get-Content $scriptPath -Raw
 

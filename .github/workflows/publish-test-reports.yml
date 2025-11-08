@@ -9,7 +9,7 @@ on:
   push:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
-      - 'reports/**'
+      - 'library/reports/**'
   workflow_dispatch:
     inputs:
       force_publish:
@@ -84,7 +84,7 @@ jobs:
             if (Test-Path $domainPath) {
               Write-Host "  Validating: $domainPath" -ForegroundColor Yellow
               try {
-                ./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $domainPath -Recursive -ErrorAction Continue
+                ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $domainPath -Recursive -ErrorAction Continue
               } catch {
                 Write-Host "  ⚠️ Quality validation for $domainPath had issues (continuing): $_" -ForegroundColor Yellow
               }
@@ -94,16 +94,16 @@ jobs:
           # Also validate key automation scripts
           Write-Host "Validating automation scripts..." -ForegroundColor Cyan
           $criticalScripts = @(
-            "./automation-scripts/0402_Run-UnitTests.ps1",
-            "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
-            "./automation-scripts/0512_Generate-Dashboard.ps1"
+            "./library/automation-scripts/0402_Run-UnitTests.ps1",
+            "./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+            "./library/automation-scripts/0512_Generate-Dashboard.ps1"
           )
 
           foreach ($scriptPath in $criticalScripts) {
             if (Test-Path $scriptPath) {
               Write-Host "  Validating: $(Split-Path $scriptPath -Leaf)" -ForegroundColor Yellow
               try {
-                ./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $scriptPath -ErrorAction Continue
+                ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $scriptPath -ErrorAction Continue
               } catch {
                 Write-Host "  ⚠️ Quality validation for $(Split-Path $scriptPath -Leaf) had issues (continuing): $_" -ForegroundColor Yellow
               }
@@ -114,7 +114,7 @@ jobs:
 
           # Generate FULL COMPREHENSIVE dashboard (0512 does all the heavy lifting)
           Write-Host "Generating comprehensive dashboard with all metrics..." -ForegroundColor Cyan
-          ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+          ./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format All
 
           # Create beginner-friendly LANDING PAGE that guides to the detailed dashboard
           $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending
@@ -127,7 +127,7 @@ jobs:
           $indexContent = "# 🎯 AitherZero Project Dashboard - Landing Page`n`n"
 
           if ($hasDashboard) {
-            $indexContent += "## 🚀 [VIEW COMPREHENSIVE DASHBOARD →](reports/dashboard.html)`n`n"
+            $indexContent += "## 🚀 [VIEW COMPREHENSIVE DASHBOARD →](docs/reports/dashboard.html)`n`n"
             $indexContent += "> Click above for the full interactive dashboard with all metrics, charts, and detailed analysis`n`n"
             $indexContent += "---`n`n"
           }
@@ -135,14 +135,14 @@ jobs:
           $indexContent += "## 📊 Quick Navigation`n`n"
           $indexContent += "### For Non-Technical Users`n"
           $indexContent += "Start here if you're new to coding projects or need a high-level overview:`n`n"
-          $indexContent += "1. **[Dashboard](reports/dashboard.html)** - Visual overview with health scores and trends`n"
+          $indexContent += "1. **[Dashboard](docs/reports/dashboard.html)** - Visual overview with health scores and trends`n"
           $indexContent += "2. **What does it mean?** - Health scores tell you if things are working (0-100, higher is better)`n"
           $indexContent += "3. **What should I do?** - Look for red items in the dashboard - those need attention first`n`n"
           $indexContent += "### For Technical Users`n"
           $indexContent += "Direct access to detailed reports and raw data:`n`n"
 
           foreach ($file in $reportFiles) {
-            $relativePath = "reports/$($file.Name)"
+            $relativePath = "library/reports/$($file.Name)"
             $fileTime = Get-Date $file.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss'
             $indexContent += "- [$($file.Name)]($relativePath) - $fileTime`n"
           }
@@ -167,7 +167,7 @@ jobs:
           Write-Host "✅ Reports organized successfully" -ForegroundColor Green
           Write-Host "Total reports: $($reportFiles.Count)" -ForegroundColor Cyan
           if ($hasDashboard) {
-            Write-Host "✅ Comprehensive dashboard available at reports/dashboard.html" -ForegroundColor Green
+            Write-Host "✅ Comprehensive dashboard available at library/reports/dashboard.html" -ForegroundColor Green
           }
 
       - name: 💾 Commit Updated Persisted Reports
@@ -196,7 +196,7 @@ jobs:
         with:
           name: combined-reports
           path: |
-            reports/
+            library/reports/
             reports-index.md
             index.md
             _config.yml
@@ -242,6 +242,6 @@ jobs:
           Write-Host "🔗 URL: ${{ steps.deployment.outputs.page_url }}" -ForegroundColor Cyan
           Write-Host ""
           Write-Host "📊 Available Reports:" -ForegroundColor Yellow
-          Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}reports/dashboard.html"
+          Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}docs/reports/dashboard.html"
           Write-Host "  - Reports Index: ${{ steps.deployment.outputs.page_url }}reports-index.html"
-          Write-Host "  - All Reports: ${{ steps.deployment.outputs.page_url }}reports/"
+          Write-Host "  - All Reports: ${{ steps.deployment.outputs.page_url }}docs/reports/"

@@ -87,7 +87,7 @@ jobs:
             $patterns = @{
               infrastructure = @($changedFiles | Where-Object {
                 $_ -match 'infrastructure/' -or
-                $_ -match 'automation-scripts/01[0-9][0-9]' -or
+                $_ -match 'library/automation-scripts/01[0-9][0-9]' -or
                 $_ -match '(vm|network|hyperv|infrastructure).*\.ps1' -or
                 $_ -match '\.(tf|tfvars)$'
               })
@@ -98,7 +98,7 @@ jobs:
               testing = @($changedFiles | Where-Object {
                 $_ -match 'tests/' -or
                 $_ -match '\.Tests\.ps1$' -or
-                $_ -match 'automation-scripts/04[0-9][0-9]'
+                $_ -match 'library/automation-scripts/04[0-9][0-9]'
               })
               ui = @($changedFiles | Where-Object {
                 $_ -match 'aithercore/experience/' -or
@@ -106,18 +106,18 @@ jobs:
               })
               backend = @($changedFiles | Where-Object {
                 $_ -match 'aithercore/.*\.psm1$' -or
-                $_ -match 'automation-scripts/02[0-9][0-9]' -or
+                $_ -match 'library/automation-scripts/02[0-9][0-9]' -or
                 $_ -match '(api|module).*\.ps1'
               })
               documentation = @($changedFiles | Where-Object {
                 $_ -match '\.md$' -or
-                $_ -match 'docs/' -or
-                $_ -match 'automation-scripts/05[0-9][0-9]'
+                $_ -match 'library/' -or
+                $_ -match 'library/automation-scripts/05[0-9][0-9]'
               })
               powershell = @($changedFiles | Where-Object {
                 $_ -match '\.(ps1|psm1|psd1)$' -or
                 $_ -match 'aithercore/orchestration/' -or
-                $_ -match 'automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])'
+                $_ -match 'library/automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])'
               })
               projectmgmt = @($changedFiles | Where-Object {
                 $_ -match '\.github/workflows/' -or

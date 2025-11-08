@@ -130,22 +130,22 @@ cd AitherZero
 
 # Step 2: Use the container manager for automated operations
 # QuickStart: Pull + Run + Verify in one command
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1677
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1677
 
 # Open interactive shell (aitherzero command available immediately)
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
 
 # Check status
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber 1677
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Status -PRNumber 1677
 
 # View logs
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
 
 # Execute the aitherzero command in container
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "aitherzero"
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "aitherzero"
 
 # Cleanup when done
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1677
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber 1677
 ```
 
 ### Method 3: Interactive Testing (Recommended for Development)
@@ -175,9 +175,9 @@ The `az` command is an alias automatically created when the AitherZero module is
 When the AitherZero module is imported (which happens automatically in containers), the `az` alias is created:
 ```powershell
 # Inside containers or when module is loaded
-az 0402        # Runs automation-scripts/0402_Run-UnitTests.ps1
-az 0404        # Runs automation-scripts/0404_Run-PSScriptAnalyzer.ps1
-az 0510        # Runs automation-scripts/0510_Generate-ProjectReport.ps1
+az 0402        # Runs library/automation-scripts/0402_Run-UnitTests.ps1
+az 0404        # Runs library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+az 0510        # Runs library/automation-scripts/0510_Generate-ProjectReport.ps1
 ```
 
 ### Using from Outside Container
@@ -216,25 +216,25 @@ The `0854_Manage-PRContainer.ps1` script provides these actions:
 **Quick Test PR Changes:**
 ```bash
 cd AitherZero
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1677
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action QuickStart -PRNumber 1677
 # Container is now running and ready to use
 ```
 
 **Run Tests in Container:**
 ```bash
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "az 0402"
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber 1677 -Command "az 0402"
 ```
 
 **Interactive Debugging Session:**
 ```bash
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber 1677
 # Opens interactive shell in container (module auto-loads, az alias available)
 # Use exit or Ctrl+D to close
 ```
 
 **Monitor Container Activity:**
 ```bash
-pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
+pwsh library/automation-scripts/0854_Manage-PRContainer.ps1 -Action Logs -PRNumber 1677 -Follow
 # Use Ctrl+C to stop following
 ```
 
@@ -679,5 +679,5 @@ docker run -it \
 For more information:
 - **Main README**: [README.md](README.md)
 - **Docker Compose Setup**: [docker-compose.yml](docker-compose.yml)
-- **Container Manager Script**: [automation-scripts/0854_Manage-PRContainer.ps1](automation-scripts/0854_Manage-PRContainer.ps1)
+- **Container Manager Script**: [library/automation-scripts/0854_Manage-PRContainer.ps1](library/automation-scripts/0854_Manage-PRContainer.ps1)
 - **GitHub Issues**: https://github.com/wizzense/AitherZero/issues

@@ -92,8 +92,8 @@ jobs:
         with:
           name: pr-validation-summary
           path: |
-            reports/*.md
-            reports/*.json
+            library/reports/*.md
+            library/reports/*.json
             logs/*.log
           retention-days: 7
 
@@ -138,7 +138,7 @@ jobs:
             comment += `### 🔗 Links\n`;
             comment += `- 📊 [View Workflow Run](${runUrl})\n`;
             comment += `- 📁 [Download Artifacts](${runUrl})\n`;
-            comment += `- 📖 [CLI Documentation](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/CLI-UNIFICATION-PLAN.md)\n\n`;
+            comment += `- 📖 [CLI Documentation](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/library/CLI-UNIFICATION-PLAN.md)\n\n`;
             
             comment += `---\n`;
             comment += `*🤖 Automated by AitherZeroCLI • Using playbook orchestration*`;

@@ -8,7 +8,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "./automation-scripts/0402_Run-UnitTests.ps1"
+        "./library/automation-scripts/0402_Run-UnitTests.ps1"
       ],
       "group": {
         "kind": "test",
@@ -27,7 +27,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1"
+        "./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1"
       ],
       "group": {
         "kind": "build",
@@ -46,7 +46,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "./automation-scripts/0407_Validate-PowerShellSyntax.ps1"
+        "./library/automation-scripts/0407_Validate-PowerShellSyntax.ps1"
       ],
       "presentation": {
         "reveal": "always",
@@ -77,7 +77,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "./automation-scripts/0510_Generate-ProjectReport.ps1 -ShowAll"
+        "./library/automation-scripts/0510_Generate-ProjectReport.ps1 -ShowAll"
       ],
       "presentation": {
         "reveal": "always",
@@ -110,7 +110,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ${input:componentPath}"
+        "./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ${input:componentPath}"
       ],
       "presentation": {
         "reveal": "always",

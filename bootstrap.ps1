@@ -810,7 +810,7 @@ function Install-AitherZero {
     $currentPath = Get-Location
     $isAitherProject = (Test-Path "./Start-AitherZero.ps1") -or
                        (Test-Path "./domains") -or
-                       (Test-Path "./automation-scripts")
+                       (Test-Path "./library/automation-scripts")
 
     # If script resides inside an existing project but user executed from parent directory,
     # prefer the script's directory as the install/initialize target. This prevents creating
@@ -865,7 +865,7 @@ function Install-AitherZero {
         Push-Location $installPath
         $existingProject = (Test-Path "./Start-AitherZero.ps1") -or
                           (Test-Path "./domains") -or
-                          (Test-Path "./automation-scripts")
+                          (Test-Path "./library/automation-scripts")
         Pop-Location
 
         if ($existingProject) {
@@ -968,7 +968,7 @@ function Initialize-Configuration {
                 Targets = @("Console", "File")
             }
             Automation = @{
-                ScriptsPath = "./automation-scripts"
+                ScriptsPath = "./library/automation-scripts"
                 MaxConcurrency = [Environment]::ProcessorCount
                 DefaultTimeout = 30
             }

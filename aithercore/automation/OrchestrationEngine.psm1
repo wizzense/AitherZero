@@ -12,7 +12,7 @@
 
 # Initialize module
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$script:ScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
+$script:ScriptsPath = Join-Path $script:ProjectRoot 'library/automation-scripts'
 $script:OrchestrationPath = Join-Path $script:ProjectRoot 'orchestration'
 
 # Exit code constants

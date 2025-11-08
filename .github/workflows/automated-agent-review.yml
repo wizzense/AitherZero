@@ -151,7 +151,7 @@ jobs:
           
           foreach ($file in $changedFiles) {
             # Infrastructure
-            if ($file -match 'infrastructure/|automation-scripts/01[0-9][0-9]|.*vm.*\.ps1|.*network.*\.ps1|.*hyperv.*\.ps1|\.(tf|tfvars)$') {
+            if ($file -match 'infrastructure/|library/automation-scripts/01[0-9][0-9]|.*vm.*\.ps1|.*network.*\.ps1|.*hyperv.*\.ps1|\.(tf|tfvars)$') {
               $agentScores.maya += 3
               $categoryFiles.Infrastructure += $file
             }
@@ -163,7 +163,7 @@ jobs:
             }
             
             # Testing
-            if ($file -match 'tests/|\.Tests\.ps1$|automation-scripts/04[0-9][0-9]') {
+            if ($file -match 'tests/|\.Tests\.ps1$|library/automation-scripts/04[0-9][0-9]') {
               $agentScores.jessica += 3
               $categoryFiles.Testing += $file
             }
@@ -175,19 +175,19 @@ jobs:
             }
             
             # Backend
-            if ($file -match 'aithercore/.*\.psm1$|automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
+            if ($file -match 'aithercore/.*\.psm1$|library/automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
               $agentScores.marcus += 3
               $categoryFiles.Backend += $file
             }
             
             # Documentation
-            if ($file -match '\.md$|^docs/|automation-scripts/05[0-9][0-9]') {
+            if ($file -match '\.md$|^docs/|library/automation-scripts/05[0-9][0-9]') {
               $agentScores.olivia += 3
               $categoryFiles.Documentation += $file
             }
             
             # PowerShell (applies to most .ps1/.psm1 files)
-            if ($file -match '\.(ps1|psm1|psd1)$|aithercore/orchestration/|automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])') {
+            if ($file -match '\.(ps1|psm1|psd1)$|domains/orchestration/|library/automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])') {
               $agentScores.rachel += 2
               $categoryFiles.PowerShell += $file
             }
@@ -302,7 +302,7 @@ jobs:
             
             switch ($agentId) {
               'maya' {
-                if ($file -match 'infrastructure/|automation-scripts/01[0-9][0-9]|.*vm.*\.ps1|.*network.*\.ps1|.*hyperv.*\.ps1|\.(tf|tfvars)$') {
+                if ($file -match 'infrastructure/|library/automation-scripts/01[0-9][0-9]|.*vm.*\.ps1|.*network.*\.ps1|.*hyperv.*\.ps1|\.(tf|tfvars)$') {
                   $isRelevant = $true
                 }
               }
@@ -312,7 +312,7 @@ jobs:
                 }
               }
               'jessica' {
-                if ($file -match 'tests/|\.Tests\.ps1$|automation-scripts/04[0-9][0-9]') {
+                if ($file -match 'tests/|\.Tests\.ps1$|library/automation-scripts/04[0-9][0-9]') {
                   $isRelevant = $true
                 }
               }
@@ -322,12 +322,12 @@ jobs:
                 }
               }
               'marcus' {
-                if ($file -match 'aithercore/.*\.psm1$|automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
+                if ($file -match 'aithercore/.*\.psm1$|library/automation-scripts/02[0-9][0-9]|.*api.*\.ps1|.*module.*\.ps1') {
                   $isRelevant = $true
                 }
               }
               'olivia' {
-                if ($file -match '\.md$|^docs/|automation-scripts/05[0-9][0-9]') {
+                if ($file -match '\.md$|^docs/|library/automation-scripts/05[0-9][0-9]') {
                   $isRelevant = $true
                 }
               }
@@ -438,7 +438,7 @@ jobs:
                 
                 # Jessica - Testing checks
                 if ($agentId -eq 'jessica') {
-                  if ($file -match '\.ps1$' -and $file -notmatch '\.Tests\.ps1$' -and $file -match 'automation-scripts/') {
+                  if ($file -match '\.ps1$' -and $file -notmatch '\.Tests\.ps1$' -and $file -match 'library/automation-scripts/') {
                     $testFile = $file -replace '\.ps1$', '.Tests.ps1'
                     $testFileName = [System.IO.Path]::GetFileName($testFile)
                     $testExists = Get-ChildItem -Path "tests" -Filter $testFileName -Recurse -File -ErrorAction SilentlyContinue
@@ -447,7 +447,7 @@ jobs:
                         File = $file
                         Line = 0
                         Severity = 'Information'
-                        Message = "Consider adding tests for this script. Auto-generate with: ./automation-scripts/0950_Generate-AllTests.ps1"
+                        Message = "Consider adding tests for this script. Auto-generate with: ./library/automation-scripts/0950_Generate-AllTests.ps1"
                         RuleName = 'CustomRule-MissingTests'
                       }
                     }

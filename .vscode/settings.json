@@ -12,14 +12,12 @@
     "**/logs": true,
     "**/testResults.xml": true
   },
-
   // PowerShell settings
   "powershell.powerShellDefaultVersion": "PowerShell (x64)",
   "powershell.integratedConsole.showOnStartup": false,
   "powershell.codeFormatting.preset": "OTBS",
   "powershell.scriptAnalysis.enable": true,
   "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
-
   // Language-specific settings
   "[powershell]": {
     "editor.tabSize": 4,
@@ -44,8 +42,7 @@
       "other": "off"
     }
   },
-
-  // GitHub Copilot settings
+  // GitHub Copilot settings (simplified)
   "github.copilot.enable": {
     "*": true,
     "yaml": true,
@@ -54,64 +51,6 @@
     "powershell": true
   },
   "github.copilot.editor.enableAutoCompletions": true,
-  "github.copilot.chat.mcp.enabled": true,
-  "github.copilot.chat.mcp.servers": {
-    "aitherzero": {
-      "command": "node",
-      "args": [
-        "/workspaces/AitherZero/integrations/mcp-server/scripts/start-with-build.mjs"
-      ],
-      "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
-      "capabilities": {
-        "resources": true,
-        "tools": true
-      },
-      "env": {
-        "AITHERZERO_ROOT": "/workspaces/AitherZero",
-        "AITHERZERO_NONINTERACTIVE": "1"
-      }
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/workspaces/AitherZero"
-      ],
-      "description": "Filesystem access to AitherZero repository",
-      "capabilities": {
-        "resources": true,
-        "tools": true
-      }
-    },
-    "github": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "description": "GitHub API access",
-      "capabilities": {
-        "resources": true,
-        "tools": true
-      },
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
-      }
-    },
-    "sequential-thinking": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
-      "description": "Detailed reasoning for complex tasks",
-      "capabilities": {
-        "prompts": true,
-        "tools": true
-      }
-    }
-  },
   // Terminal settings
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.defaultProfile.linux": "pwsh",
@@ -126,7 +65,7 @@
         "-NoExit",
         "-NoLogo",
         "-Command",
-        "if (Test-Path ./.azprofile.ps1) { . ./.azprofile.ps1 }"
+        "if (Test-Path ./library/automation-scripts/profile.ps1) { . ./library/automation-scripts/profile.ps1 }"
       ],
       "icon": "terminal-powershell"
     }
@@ -142,17 +81,15 @@
         "-NoExit",
         "-NoLogo",
         "-Command",
-        "if (Test-Path ./.azprofile.ps1) { . ./.azprofile.ps1 }"
+        "if (Test-Path ./library/automation-scripts/profile.ps1) { . ./library/automation-scripts/profile.ps1 }"
       ],
       "icon": "terminal-powershell"
     }
   },
-
   // Git settings
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
-
   // Search settings
   "search.exclude": {
     "**/node_modules": true,

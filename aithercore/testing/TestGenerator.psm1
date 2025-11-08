@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 
 # Module initialization
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
+$script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'library/automation-scripts'
 $script:TestsPath = Join-Path $script:ProjectRoot 'tests'
 
 # Logging helper
@@ -40,13 +40,13 @@ function New-AutomationScriptTest {
     .PARAMETER ScriptPath
         Path to the automation script to generate tests for
     .PARAMETER OutputPath
-        Path where the test file should be created (defaults to tests/unit/automation-scripts)
+        Path where the test file should be created (defaults to tests/unit/library/automation-scripts)
     .PARAMETER IncludeMocks
         Include mock generation for external commands
     .PARAMETER IncludeIntegration
         Generate integration test stubs
     .EXAMPLE
-        New-AutomationScriptTest -ScriptPath "./automation-scripts/0218_Install-GeminiCLI.ps1"
+        New-AutomationScriptTest -ScriptPath "./library/automation-scripts/0218_Install-GeminiCLI.ps1"
     #>
     [CmdletBinding()]
     param(
@@ -83,7 +83,7 @@ function New-AutomationScriptTest {
 
             # Determine output path
             if (-not $OutputPath) {
-                $testDir = Join-Path $script:TestsPath "unit/automation-scripts"
+                $testDir = Join-Path $script:TestsPath "unit/library/automation-scripts"
                 if (-not (Test-Path $testDir)) {
                     New-Item -Path $testDir -ItemType Directory -Force | Out-Null
                 }
@@ -96,7 +96,7 @@ function New-AutomationScriptTest {
 
             # Generate integration tests if requested
             if ($IncludeIntegration) {
-                $integrationDir = Join-Path $script:TestsPath "integration/automation-scripts"
+                $integrationDir = Join-Path $script:TestsPath "integration/library/automation-scripts"
                 if (-not (Test-Path $integrationDir)) {
                     New-Item -Path $integrationDir -ItemType Directory -Force | Out-Null
                 }
@@ -468,7 +468,7 @@ function New-AllAutomationTests {
     .SYNOPSIS
         Generate tests for all automation scripts
     .DESCRIPTION
-        Scans the automation-scripts directory and generates tests for all scripts
+        Scans the library/automation-scripts directory and generates tests for all scripts
     .PARAMETER Filter
         Filter pattern for script selection (e.g., "02*" for 0200-0299 scripts)
     .PARAMETER IncludeMocks
@@ -497,7 +497,7 @@ function New-AllAutomationTests {
     $results = @()
 
     foreach ($script in $scripts) {
-        $testPath = Join-Path $script:TestsPath "unit/automation-scripts/$([System.IO.Path]::GetFileNameWithoutExtension($script.Name)).Tests.ps1"
+        $testPath = Join-Path $script:TestsPath "unit/library/automation-scripts/$([System.IO.Path]::GetFileNameWithoutExtension($script.Name)).Tests.ps1"
 
         if ((Test-Path $testPath) -and -not $Force) {
             Write-GeneratorLog "Skipping $($script.Name) - test already exists" -Level 'Warning'

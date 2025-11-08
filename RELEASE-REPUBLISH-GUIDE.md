@@ -176,8 +176,8 @@ After the workflow completes:
 
 ## 📚 Additional Resources
 
-- **Full Release Process:** See [docs/RELEASE-PROCESS.md](docs/RELEASE-PROCESS.md)
-- **Comment-Triggered Releases:** See [docs/COMMENT-RELEASE.md](docs/COMMENT-RELEASE.md)
+- **Full Release Process:** See [library/docs/RELEASE-PROCESS.md](library/docs/RELEASE-PROCESS.md)
+- **Comment-Triggered Releases:** See [library/docs/COMMENT-RELEASE.md](library/docs/COMMENT-RELEASE.md)
 - **Workflow Details:** See [.github/workflows/release-automation.yml](.github/workflows/release-automation.yml)
 
 ## 🎯 Expected Timeline

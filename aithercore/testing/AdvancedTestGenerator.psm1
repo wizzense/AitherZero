@@ -16,7 +16,7 @@ $ErrorActionPreference = 'Stop'
 
 # Module state
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
+$script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'library/automation-scripts'
 $script:TestsPath = Join-Path $script:ProjectRoot 'tests'
 $script:DomainsPath = Join-Path $script:ProjectRoot 'domains'
 
@@ -186,7 +186,7 @@ function New-ComprehensiveAutomationScriptTest {
     .PARAMETER Force
         Overwrite existing tests
     .EXAMPLE
-        New-ComprehensiveAutomationScriptTest -ScriptPath "./automation-scripts/0201_Install-Node.ps1"
+        New-ComprehensiveAutomationScriptTest -ScriptPath "./library/automation-scripts/0201_Install-Node.ps1"
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
@@ -225,8 +225,8 @@ function New-ComprehensiveAutomationScriptTest {
 
             # Determine output paths
             $rangeDir = Get-ScriptRangeDirectory -ScriptName $scriptName
-            $unitTestDir = Join-Path $script:TestsPath "unit/automation-scripts/$rangeDir"
-            $integrationTestDir = Join-Path $script:TestsPath "integration/automation-scripts"
+            $unitTestDir = Join-Path $script:TestsPath "unit/library/automation-scripts/$rangeDir"
+            $integrationTestDir = Join-Path $script:TestsPath "integration/library/automation-scripts"
 
             # Create directories if needed
             if (-not (Test-Path $unitTestDir)) {

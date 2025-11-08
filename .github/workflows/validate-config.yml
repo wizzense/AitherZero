@@ -1,16 +1,27 @@
 ---
-name: 'Validate Config Manifest'
+name: "Validate Config Manifest"
 
 on:
   push:
     # Only run on base branches to avoid duplicate runs with pull_request events
-    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+    branches:
+      [
+        main,
+        dev,
+        develop,
+        dev-staging,
+        ring-0,
+        ring-0-integrations,
+        ring-1,
+        ring-1-integrations,
+        ring-2,
+      ]
     paths:
-      - 'config.psd1'
-      - 'automation-scripts/0003_Sync-ConfigManifest.ps1'
-      - 'automation-scripts/0413_Validate-ConfigManifest.ps1'
-      - 'aithercore/**/*.psm1'
-      - 'automation-scripts/*.ps1'
+      - "config.psd1"
+      - "library/automation-scripts/0003_Sync-ConfigManifest.ps1"
+      - "library/automation-scripts/0413_Validate-ConfigManifest.ps1"
+      - "aithercore/**/*.psm1"
+      - "library/automation-scripts/*.ps1"
   pull_request:
     # Run on all PRs to ensure config validation
   workflow_dispatch:
@@ -25,16 +36,16 @@ permissions:
 
 jobs:
   validate-config:
-    name: 'Validate Config.psd1'
+    name: "Validate Config.psd1"
     # Skip if triggered by bot
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup PowerShell'
+      - name: "Setup PowerShell"
         shell: pwsh
         run: |
           Write-Host "PowerShell $($PSVersionTable.PSVersion) ready" -ForegroundColor Cyan
@@ -45,14 +56,14 @@ jobs:
             Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -AllowClobber
           }
 
-      - name: 'Validate Config Manifest'
+      - name: "Validate Config Manifest"
         shell: pwsh
         run: |
           Write-Host "🔍 Validating config.psd1 manifest..." -ForegroundColor Cyan
           Write-Host ""
 
           # Run the validation script
-          & ./automation-scripts/0413_Validate-ConfigManifest.ps1
+          & ./library/automation-scripts/0413_Validate-ConfigManifest.ps1
           $exitCode = $LASTEXITCODE
 
           Write-Host ""
@@ -66,7 +77,7 @@ jobs:
             Write-Host "  • Missing required sections or subsections" -ForegroundColor Yellow
             Write-Host ""
             Write-Host "To fix:" -ForegroundColor Cyan
-            Write-Host "  1. Run: pwsh -File ./automation-scripts/0413_Validate-ConfigManifest.ps1" -ForegroundColor White
+            Write-Host "  1. Run: pwsh -File ./library/automation-scripts/0413_Validate-ConfigManifest.ps1" -ForegroundColor White
             Write-Host "  2. Update config.psd1 based on the validation output" -ForegroundColor White
             Write-Host "  3. Commit the changes" -ForegroundColor White
             exit 1
@@ -74,14 +85,14 @@ jobs:
             Write-Host "✅ Config manifest is valid and synchronized!" -ForegroundColor Green
           }
 
-      - name: 'Sync Config with Automation Scripts'
+      - name: "Sync Config with Automation Scripts"
         shell: pwsh
         run: |
           Write-Host "🔄 Checking config.psd1 synchronization with automation scripts..." -ForegroundColor Cyan
           Write-Host ""
 
           # Run the sync check script
-          & ./automation-scripts/0003_Sync-ConfigManifest.ps1
+          & ./library/automation-scripts/0003_Sync-ConfigManifest.ps1
           $exitCode = $LASTEXITCODE
 
           Write-Host ""
@@ -89,7 +100,7 @@ jobs:
             Write-Host "❌ Config is out of sync with automation scripts!" -ForegroundColor Red
             Write-Host ""
             Write-Host "To fix:" -ForegroundColor Cyan
-            Write-Host "  1. Run: pwsh -File ./automation-scripts/0003_Sync-ConfigManifest.ps1" -ForegroundColor White
+            Write-Host "  1. Run: pwsh -File ./library/automation-scripts/0003_Sync-ConfigManifest.ps1" -ForegroundColor White
             Write-Host "  2. Review the missing scripts listed above" -ForegroundColor White
             Write-Host "  3. Add script numbers to appropriate sections in config.psd1" -ForegroundColor White
             Write-Host "  4. Commit the changes" -ForegroundColor White
@@ -98,7 +109,7 @@ jobs:
             Write-Host "✅ Config is synchronized with all automation scripts!" -ForegroundColor Green
           }
 
-      - name: 'Summary'
+      - name: "Summary"
         if: always()
         shell: pwsh
         run: |
@@ -127,7 +138,7 @@ jobs:
               ""
               "If validation fails, run the sync script locally to identify missing scripts:"
               ""
-              "    ./automation-scripts/0003_Sync-ConfigManifest.ps1"
+              "    ./library/automation-scripts/0003_Sync-ConfigManifest.ps1"
               ""
             )
 

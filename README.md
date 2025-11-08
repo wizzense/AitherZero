@@ -23,11 +23,13 @@
 ### One-Liner Installation (Recommended)
 
 **Windows/Linux/macOS (PowerShell 5.1+)**
+
 ```powershell
 iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
 ```
 
 **Linux/macOS (Bash)**
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 ```
@@ -35,6 +37,7 @@ curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.s
 ### Download Latest Release Package
 
 **Option 1: Direct Download (Latest Release)**
+
 ```powershell
 # Download latest release ZIP
 $latest = (Invoke-RestMethod "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | Where-Object {$_.name -like "*.zip"}
@@ -45,6 +48,7 @@ cd AitherZero-*
 ```
 
 **Option 2: GitHub CLI**
+
 ```bash
 # Using GitHub CLI (gh)
 gh repo clone wizzense/AitherZero
@@ -53,7 +57,8 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ./bootstrap.sh
 ```
 
-**Note**: After cloning, run this setup command:
+**Note**: After cloning, run these setup commands:
+
 ```bash
 # Enable pre-commit hooks and Git merge strategy (recommended for contributors)
 pwsh -File automation-scripts/0004_Setup-GitHooks.ps1
@@ -62,9 +67,10 @@ pwsh -File automation-scripts/0004_Setup-GitHooks.ps1
 aitherzero 0004
 ```
 
-See [Git Hooks README](./.githooks/README.md) for details.
+See [Git Merge Setup Guide](./library/docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
 
 **Option 3: Git Clone**
+
 ```bash
 # Traditional git clone
 git clone https://github.com/wizzense/AitherZero.git
@@ -77,10 +83,12 @@ cd AitherZero
 ## 📋 Requirements
 
 **Automatically Installed:**
+
 - PowerShell 7.0+ (auto-installed if missing)
 - Git (auto-installed if missing)
 
 **Optional:**
+
 - OpenTofu or Terraform (for infrastructure automation)
 - Docker (for containerized workflows) - [See Docker Guide](DOCKER.md)
 
@@ -100,6 +108,7 @@ docker-compose up -d
 ```
 
 **Available Docker images:**
+
 - `ghcr.io/wizzense/aitherzero:latest` - Latest stable release
 - `ghcr.io/wizzense/aitherzero:1.0.0` - Specific version
 - Multi-platform support: `linux/amd64`, `linux/arm64`
@@ -119,6 +128,7 @@ npm install -g @aitherzero/mcp-server
 ```
 
 **Configure with Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
 ```json
 {
   "mcpServers": {
@@ -131,6 +141,7 @@ npm install -g @aitherzero/mcp-server
 ```
 
 **Configure with VS Code / GitHub Copilot** (`.github/mcp-servers.json`):
+
 ```json
 {
   "mcpServers": {
@@ -186,6 +197,7 @@ After installation via `bootstrap.ps1`, the `aitherzero` command is automaticall
 - **Windows**: Installed to `%LocalAppData%\AitherZero\bin\aitherzero.cmd`
 
 The global command:
+
 - Automatically locates your AitherZero installation
 - Forwards all arguments to `Start-AitherZero.ps1`
 - Works from any directory
@@ -196,9 +208,10 @@ The global command:
 ## 📦 What's Included
 
 The AitherZero package includes:
+
 - **Complete PowerShell module** with all domains and functions
 - **200+ automation scripts** (numbered 0000-9999) for systematic execution
-- **Cross-platform bootstrap scripts** for automatic dependency installation  
+- **Cross-platform bootstrap scripts** for automatic dependency installation
 - **Comprehensive test suite** with validation tools
 - **Quality validation system** for code standards enforcement
 - **CI/CD workflow templates** for GitHub Actions
@@ -220,6 +233,7 @@ docker run -it --rm aitherzero:latest pwsh
 ```
 
 **Benefits:**
+
 - ✅ Consistent environment across platforms
 - ✅ No dependency conflicts
 - ✅ Perfect for CI/CD pipelines
@@ -257,6 +271,7 @@ AitherZero maintains high code quality standards through automated validation:
 ```
 
 **Quality checks include:**
+
 - ✅ Error handling validation
 - ✅ Logging implementation
 - ✅ Test coverage verification
@@ -264,8 +279,9 @@ AitherZero maintains high code quality standards through automated validation:
 - ✅ PSScriptAnalyzer compliance
 
 **Documentation:**
-- [Quality Standards](docs/QUALITY-STANDARDS.md) - Complete quality guidelines
-- [Quick Reference](docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
+
+- [Quality Standards](library/docs/QUALITY-STANDARDS.md) - Complete quality guidelines
+- [Quick Reference](library/docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
 - [Docker Usage Guide](DOCKER.md) - Container deployment and workflows
 
 ## Features
@@ -308,24 +324,28 @@ cp aithercore/orchestration/playbooks/templates/custom-playbook-template.json ai
 ### Pre-Built Recipes
 
 **Web Development** (30-45 min):
+
 ```powershell
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile web-development
 # Installs: Git, Node.js, Docker, VS Code, testing tools
 ```
 
 **Python Data Science** (25-35 min):
+
 ```powershell
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile python-datascience
 # Installs: Git, Python, Poetry, VS Code, testing tools
 ```
 
 **AI-Powered Development** (30-40 min):
+
 ```powershell
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile ai-powered-development
 # Installs: Complete dev stack + AI agents, MCP servers, Copilot integration
 ```
 
 **Cloud DevOps** (25-35 min):
+
 ```powershell
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile cloud-devops
 # Installs: Git, Docker, Azure CLI, AWS CLI, OpenTofu, Packer
@@ -333,10 +353,10 @@ cp aithercore/orchestration/playbooks/templates/custom-playbook-template.json ai
 
 ### Documentation
 
-- **[Building-Block Index](docs/BUILDING-BLOCKS-INDEX.md)** - Start here for overview and quick access
-- **[Quick Reference](docs/BUILDING-BLOCKS-QUICK-REFERENCE.md)** - Script lookup and common patterns (5 min read)
-- **[Complete Guide](docs/BUILDING-BLOCKS.md)** - Full documentation with all blocks (15 min read)
-- **[Reorganization Plan](docs/BUILDING-BLOCKS-REORGANIZATION.md)** - Architecture decisions (10 min read)
+- **[Building-Block Index](library/docs/BUILDING-BLOCKS-INDEX.md)** - Start here for overview and quick access
+- **[Quick Reference](library/docs/BUILDING-BLOCKS-QUICK-REFERENCE.md)** - Script lookup and common patterns (5 min read)
+- **[Complete Guide](library/docs/BUILDING-BLOCKS.md)** - Full documentation with all blocks (15 min read)
+- **[Reorganization Plan](library/docs/BUILDING-BLOCKS-REORGANIZATION.md)** - Architecture decisions (10 min read)
 - **[Custom Playbook Guide](aithercore/orchestration/playbooks/custom/README.md)** - Create your own playbooks (10 min read)
 
 ## Core Modules
@@ -370,6 +390,7 @@ The main configuration file is `config.psd1` in the project root.
 AitherZero includes comprehensive GitHub Copilot integration to enhance developer productivity:
 
 ### Features
+
 - **Custom Instructions**: Project-specific guidance for AI coding assistants
 - **Agent Routing**: 8 specialized expert agents for different domains
 - **MCP Client**: Model Context Protocol integration for enhanced context (uses external MCP servers)
@@ -401,12 +422,14 @@ AitherZero is available in multiple formats for different use cases:
    - Enables natural language infrastructure management
 
 ### Quick Setup
+
 1. **Install GitHub Copilot** extensions in VS Code
 2. **Open in Dev Container** (recommended) or install recommended extensions
 3. **Set GitHub Token** for MCP servers: `export GITHUB_TOKEN="your_token"`
 4. **Start coding** with AI assistance!
 
 ### Using Copilot Effectively
+
 ```
 # Leverage specialized agents
 /infrastructure Design a VM network topology
@@ -422,12 +445,13 @@ AitherZero is available in multiple formats for different use cases:
 ```
 
 ### Documentation
-- [Development Environment Setup](docs/COPILOT-DEV-ENVIRONMENT.md) - Complete guide
-- [MCP Server Configuration](docs/COPILOT-MCP-SETUP.md) - Enhanced context setup
+
+- [Development Environment Setup](library/docs/COPILOT-DEV-ENVIRONMENT.md) - Complete guide
+- [MCP Server Configuration](library/docs/COPILOT-MCP-SETUP.md) - Enhanced context setup
 - [Custom Instructions](.github/copilot-instructions.md) - AI coding guidance
 - [Agent Routing](.github/copilot.yaml) - Specialized experts
 
-**Learn more**: See [docs/COPILOT-DEV-ENVIRONMENT.md](docs/COPILOT-DEV-ENVIRONMENT.md) for the complete setup guide.
+**Learn more**: See [library/docs/COPILOT-DEV-ENVIRONMENT.md](library/docs/COPILOT-DEV-ENVIRONMENT.md) for the complete setup guide.
 
 ## Uninstallation
 

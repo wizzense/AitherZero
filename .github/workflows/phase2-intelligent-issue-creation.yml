@@ -469,7 +469,7 @@ jobs:
               }
 
               // Documentation issues
-              if (file.endsWith('.md') || file.includes('docs/')) {
+              if (file.endsWith('.md') || file.includes('library/')) {
                 return { agent: 'olivia', name: 'Olivia Documentation', mention: '@olivia' };
               }
 

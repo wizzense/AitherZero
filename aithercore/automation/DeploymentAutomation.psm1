@@ -11,7 +11,7 @@
 # Module initialization
 $script:ModuleName = "DeploymentAutomation"
 $script:ProjectRoot = Split-Path -Parent -Path $PSScriptRoot | Split-Path -Parent
-$script:AutomationScriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
+$script:AutomationScriptsPath = Join-Path $script:ProjectRoot "library/automation-scripts"
 $script:DeploymentCache = @{}
 
 # Module initialization - ensure logging is available

@@ -145,7 +145,7 @@ jobs:
 
             try {
               # Run quality validation
-              $result = & ./automation-scripts/0420_Validate-ComponentQuality.ps1 `
+              $result = & ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 `
                 -Path $file `
                 -Format JSON `
                 -MinimumScore 70 `
@@ -312,7 +312,7 @@ jobs:
                   reportContent += `- **Test Coverage**: Corresponding test files exist\n`;
                   reportContent += `- **PSScriptAnalyzer**: No critical issues\n`;
                   reportContent += `- **Documentation**: Function help and comments\n\n`;
-                  reportContent += `📖 [View Quality Guidelines](${repoUrl}/blob/main/docs/QUALITY-QUICK-REFERENCE.md)\n\n`;
+                  reportContent += `📖 [View Quality Guidelines](${repoUrl}/blob/main/library/QUALITY-QUICK-REFERENCE.md)\n\n`;
 
                 } else {
                   reportContent += '⚠️ No quality reports found.\n';

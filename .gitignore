@@ -38,22 +38,11 @@ backups/
 test-output/
 test-results/
 
-# Generated test reports (ephemeral - only kept as workflow artifacts)
-# Test reports are published to GitHub Pages, not committed to git
-reports/TestReport-*.json
-reports/VALIDATION-*.md
-reports/PR-DOCKER-*.md
-reports/*-validation.json
+# Generated test reports
+library/reports/*.json
+!library/reports/dashboard.json
+!library/reports/psscriptanalyzer-fast-results.json
 tests/reports/*.json
-
-# Persisted reports (these ARE committed to track history)
-# Keep dashboard and analyzer results for trending
-!reports/dashboard.json
-!reports/dashboard.html
-!reports/dashboard.md
-!reports/psscriptanalyzer-fast-results.json
-!reports/README.md
-!reports/index.md
 
 # IDE files
 # Allow workspace VS Code settings for Copilot integration
@@ -98,7 +87,7 @@ tests/results/*
 !tests/results/index.md
 
 # Quality reports (generated artifacts - linting results, analysis output)
-reports/quality/
+library/reports/quality/
 
 # Linting tools (downloaded binaries)
 actionlint
