@@ -48,12 +48,23 @@ Will manage user interfaces and experience enhancements.
 - Help systems
 
 ### 🤖 Automation Domain
-**Status**: 📋 Planned
+**Status**: ✅ Active
 
-Will provide workflow automation and orchestration.
-- Workflow engine
-- Scheduling
-- Event handling
+Provides workflow automation and orchestration.
+- Workflow engine (OrchestrationEngine)
+- Async orchestration capabilities
+- Deployment automation
+- GitHub workflow parsing
+- Script utilities
+
+### 🎭 Orchestration Domain
+**Status**: ✅ Active
+
+Contains playbooks and orchestration configurations.
+- Playbook definitions (JSON/PSD1 formats)
+- CI/CD workflow mappings
+- Test orchestration configurations
+- Playbook schema definitions
 
 ## Using Domains
 

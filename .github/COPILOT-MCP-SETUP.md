@@ -24,7 +24,7 @@ The MCP server is configured in `.vscode/mcp-servers.json` (workspace-level):
   "mcpServers": {
     "aitherzero": {
       "command": "node",
-      "args": ["${workspaceFolder}/mcp-server/dist/index.js"],
+      "args": ["${workspaceFolder}/integrations/mcp-server/dist/index.js"],
       "description": "AitherZero infrastructure automation platform",
       "env": {
         "AITHERZERO_ROOT": "${workspaceFolder}",
@@ -230,7 +230,7 @@ To modify the MCP server:
 
 ## Related Documentation
 
-- [MCP Server README](../mcp-server/README.md)
+- [MCP Server README](../integrations/mcp-server/README.md)
 - [Model Context Protocol Specification](https://modelcontextprotocol.io/)
 - [AitherZero Automation Scripts](../automation-scripts/README.md)
 - [Orchestration Playbooks](../orchestration/playbooks/README.md)

@@ -271,7 +271,7 @@ Get-Command -Module AitherZero | Where-Object Name -like '*-Aither*'
 Get-AitherPlaybook
 
 # Check playbook exists
-Test-Path ./orchestration/playbooks/playbook-name.psd1
+Test-Path ./domains/orchestration/playbooks/playbook-name.psd1
 ```
 
 ### Sequence Syntax Errors
@@ -320,7 +320,7 @@ Invoke-AitherSequence "0402,0404,0407" -DryRun
 
 - **Documentation:** [CLI Unification Plan](./CLI-UNIFICATION-PLAN.md)
 - **Cmdlet Help:** `Get-Help Invoke-AitherPlaybook -Full`
-- **Playbook Docs:** Check `orchestration/playbooks/*.psd1`
+- **Playbook Docs:** Check `domains/orchestration/playbooks/*.psd1`
 - **Issues:** Create GitHub issue with `cli` or `workflows` label
 
 ---

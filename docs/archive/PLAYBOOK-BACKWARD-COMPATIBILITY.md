@@ -62,7 +62,7 @@ Enhanced structure with metadata and stages:
 ```
 
 **Status**: ✅ Fully Supported (primary format)  
-**Use Case**: All current JSON playbooks in `/orchestration/playbooks/`  
+**Use Case**: All current JSON playbooks in `/domains/orchestration/playbooks/`  
 **Backward Compatibility**: 100% - No changes needed to existing playbooks
 
 ### v3.0 - Jobs-Based Format (New)
@@ -219,7 +219,7 @@ Invoke-OrchestrationSequence -LoadPlaybook "ci-pr-validation" -DryRun
 ### Example 1: Existing v2.0 Playbook (No Changes)
 
 ```json
-// File: orchestration/playbooks/core/operations/ci-pr-validation.json
+// File: domains/orchestration/playbooks/core/operations/ci-pr-validation.json
 // This file works exactly as before - no modifications needed
 {
   "metadata": {
@@ -246,7 +246,7 @@ Invoke-OrchestrationSequence -LoadPlaybook "ci-pr-validation"
 ### Example 2: New v3.0 Playbook (Auto-Converted)
 
 ```json
-// File: orchestration/playbooks/converted/test-workflow.json
+// File: domains/orchestration/playbooks/converted/test-workflow.json
 // Converted from GitHub Actions workflow
 {
   "metadata": {
@@ -357,7 +357,7 @@ else {
 
 - **Documentation**: This file (`PLAYBOOK-BACKWARD-COMPATIBILITY.md`)
 - **Issues**: https://github.com/wizzense/AitherZero/issues
-- **Examples**: All existing playbooks in `orchestration/playbooks/`
+- **Examples**: All existing playbooks in `domains/orchestration/playbooks/`
 
 ---
 
