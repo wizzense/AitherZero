@@ -51,11 +51,9 @@
         @{
             Script = "0900_Test-SelfDeployment.ps1"
             Description = "Validate self-deployment works"
-            Parameters = @{
-                QuickTest = $true
-            }
+            Parameters = @{}  # Full validation always performed
             ContinueOnError = $true  # Don't fail build if validation has issues
-            Timeout = 300
+            Timeout = 600  # Increased timeout for full validation
             Phase = "validate"
             Parallel = $false
         }

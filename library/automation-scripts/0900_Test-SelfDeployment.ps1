@@ -5,8 +5,8 @@
     Test AitherZero self-deployment capabilities
 .DESCRIPTION
     Validates that AitherZero can fully deploy and set up itself using its own
-    automation pipeline. This is the ultimate test to prove the CI/CD system
-    works end-to-end.
+    automation pipeline. Uses the OrchestrationEngine to execute the self-deployment
+    test playbook.
 
     Exit Codes:
     0   - Self-deployment test passed
@@ -23,10 +23,10 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
+    [switch]$QuickTest,  # Deprecated: Full validation is always performed
+    [switch]$FullTest,   # Deprecated: Full validation is always performed
     [string]$TestPath = (Join-Path ([System.IO.Path]::GetTempPath()) "aitherzero-self-deploy-test"),
     [switch]$CleanupOnSuccess,
-    [switch]$FullTest,
-    [switch]$QuickTest,
     [string]$Branch = "main"
 )
 
@@ -43,10 +43,15 @@ $scriptMetadata = @{
     SupportsWhatIf = $true
 }
 
-# Import modules
+# Import required modules
 $loggingModule = Join-Path $ProjectPath "aithercore/utilities/Logging.psm1"
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force
+}
+
+$orchestrationModule = Join-Path $ProjectPath "aithercore/automation/OrchestrationEngine.psm1"
+if (Test-Path $orchestrationModule) {
+    Import-Module $orchestrationModule -Force
 }
 
 function Write-ScriptLog {
@@ -71,12 +76,17 @@ function Write-ScriptLog {
 }
 
 function Test-Prerequisites {
+    <#
+    .SYNOPSIS
+        Check prerequisites for self-deployment test
+    #>
     Write-ScriptLog -Message "Checking prerequisites for self-deployment test"
 
     $prerequisites = @{
         Git = Get-Command git -ErrorAction SilentlyContinue
         PowerShell = $PSVersionTable.PSVersion -ge [Version]"7.0"
         Internet = $false
+        OrchestrationEngine = Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue
     }
 
     # Test internet connectivity
@@ -87,15 +97,16 @@ function Test-Prerequisites {
         Write-ScriptLog -Level Warning -Message "Internet connectivity test failed"
     }
 
-    $passed = $prerequisites.Git -and $prerequisites.PowerShell -and $prerequisites.Internet
+    $passed = $prerequisites.Git -and $prerequisites.PowerShell -and $prerequisites.Internet -and $prerequisites.OrchestrationEngine
 
-    Write-ScriptLog -Message "Prerequisites check" -Data $prerequisites
+    Write-ScriptLog -Message "Prerequisites check completed" -Data $prerequisites
 
     if (-not $passed) {
         $missing = @()
         if (-not $prerequisites.Git) { $missing += "Git" }
         if (-not $prerequisites.PowerShell) { $missing += "PowerShell 7+" }
         if (-not $prerequisites.Internet) { $missing += "Internet connectivity" }
+        if (-not $prerequisites.OrchestrationEngine) { $missing += "OrchestrationEngine module" }
 
         throw "Missing prerequisites: $($missing -join ', ')"
     }
@@ -104,6 +115,10 @@ function Test-Prerequisites {
 }
 
 function New-CleanTestEnvironment {
+    <#
+    .SYNOPSIS
+        Create a clean test environment
+    #>
     Write-ScriptLog -Message "Creating clean test environment at: $TestPath"
 
     if (Test-Path $TestPath) {
@@ -119,6 +134,10 @@ function New-CleanTestEnvironment {
 }
 
 function Invoke-SelfClone {
+    <#
+    .SYNOPSIS
+        Clone the repository for self-deployment test
+    #>
     Write-ScriptLog -Message "Cloning AitherZero repository for self-deployment test"
 
     $repoUrl = "https://github.com/wizzense/AitherZero.git"
@@ -129,7 +148,7 @@ function Invoke-SelfClone {
             Push-Location $TestPath
 
             # Clone the repository
-            Write-ScriptLog -Message "Executing: git clone $repoUrl"
+            Write-ScriptLog -Message "Executing: git clone $repoUrl --branch $Branch --depth 1"
             $gitOutput = git clone $repoUrl --branch $Branch --depth 1 2>&1
 
             if ($LASTEXITCODE -ne 0) {
@@ -157,6 +176,10 @@ function Invoke-SelfClone {
 }
 
 function Test-BootstrapProcess {
+    <#
+    .SYNOPSIS
+        Test the bootstrap process
+    #>
     param([string]$ClonePath)
 
     Write-ScriptLog -Message "Testing bootstrap process"
@@ -171,11 +194,11 @@ function Test-BootstrapProcess {
                 throw "Bootstrap script not found: $bootstrapScript"
             }
 
-            # Run bootstrap in non-interactive mode (auto-detected by CI environment)
+            # Run bootstrap in non-interactive mode
             Write-ScriptLog -Message "Running bootstrap process..."
             $startTime = Get-Date
 
-            & pwsh -c "$bootstrapScript -Mode New"
+            & pwsh -c "$bootstrapScript -Mode New -InstallProfile Minimal -NonInteractive"
 
             if ($LASTEXITCODE -ne 0) {
                 throw "Bootstrap process failed with exit code: $LASTEXITCODE"
@@ -194,363 +217,91 @@ function Test-BootstrapProcess {
     return $false
 }
 
-function Test-CoreFunctionality {
+function Invoke-SelfDeploymentPlaybook {
+    <#
+    .SYNOPSIS
+        Execute the self-deployment test playbook using OrchestrationEngine
+    #>
     param([string]$ClonePath)
 
-    Write-ScriptLog -Message "Testing core functionality"
+    Write-ScriptLog -Message "Executing self-deployment test playbook"
 
-    $tests = @{
-        ModuleLoad = $false
-        SyntaxValidation = $false
-        BasicCommands = $false
-        ReportGeneration = $false
-    }
-
-    if ($PSCmdlet.ShouldProcess($ClonePath, "Test core functionality")) {
+    if ($PSCmdlet.ShouldProcess($ClonePath, "Run self-deployment playbook")) {
         try {
             Push-Location $ClonePath
 
-            # Test module loading
-            Write-ScriptLog -Message "Testing module loading..."
-            try {
-                Import-Module "./AitherZero.psd1" -Force
-                $tests.ModuleLoad = $true
-                Write-ScriptLog -Level Information -Message "Module loaded successfully"
-            } catch {
-                Write-ScriptLog -Level Error -Message "Module loading failed: $_"
-            }
+            # Import AitherZero module
+            Write-ScriptLog -Message "Importing AitherZero module..."
+            Import-Module "./AitherZero.psd1" -Force
 
-            # Test syntax validation
-            Write-ScriptLog -Message "Testing syntax validation..."
-            try {
-                $result = & pwsh -c "./automation-scripts/0407_Validate-Syntax.ps1 -All"
-                if ($LASTEXITCODE -eq 0) {
-                    $tests.SyntaxValidation = $true
-                    Write-ScriptLog -Level Information -Message "Syntax validation passed"
-                } else {
-                    Write-ScriptLog -Level Error -Message "Syntax validation failed"
-                }
-            } catch {
-                Write-ScriptLog -Level Error -Message "Syntax validation error: $_"
-            }
+            # Execute the self-deployment test playbook
+            Write-ScriptLog -Message "Running self-deployment-test playbook via OrchestrationEngine..."
+            
+            $playbookResult = Invoke-OrchestrationSequence `
+                -LoadPlaybook "self-deployment-test" `
+                -PassThru `
+                -GenerateSummary `
+                -OutputFormat "JSON" `
+                -OutputPath "./library/reports/self-deployment-result.json"
 
-            # Test basic commands
-            Write-ScriptLog -Message "Testing basic commands..."
-            try {
-                if (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue) {
-                    $tests.BasicCommands = $true
-                    Write-ScriptLog -Level Information -Message "Basic commands available"
-                }
-            } catch {
-                Write-ScriptLog -Level Error -Message "Basic commands test failed: $_"
-            }
-
-            # Test report generation
-            if (-not $QuickTest) {
-                Write-ScriptLog -Message "Testing report generation..."
-                try {
-                    $result = & pwsh -c "./automation-scripts/0512_Generate-Dashboard.ps1 -Format JSON"
-                    if ($LASTEXITCODE -eq 0 -and (Test-Path "./reports/dashboard.json")) {
-                        $tests.ReportGeneration = $true
-                        Write-ScriptLog -Level Information -Message "Report generation successful"
-                    } else {
-                        Write-ScriptLog -Level Error -Message "Report generation failed"
-                    }
-                } catch {
-                    Write-ScriptLog -Level Error -Message "Report generation error: $_"
-                }
+            # Check results
+            if ($playbookResult -and $playbookResult.Success) {
+                Write-ScriptLog -Level Information -Message "Self-deployment playbook completed successfully"
+                Write-ScriptLog -Message "Completed: $($playbookResult.Completed), Failed: $($playbookResult.Failed), Duration: $($playbookResult.Duration) seconds"
+                return $true
             } else {
-                $tests.ReportGeneration = $true  # Skip in quick mode
-            }
-
-        } finally {
-            Pop-Location
-        }
-    }
-
-    return $tests
-}
-
-function Test-CICDPipeline {
-    param([string]$ClonePath)
-
-    Write-ScriptLog -Message "Testing CI/CD pipeline components"
-
-    $pipelineTests = @{
-        WorkflowFiles = $false
-        AutomationScripts = $false
-        AIIntegration = $false
-        IssueManagement = $false
-        Documentation = $false
-    }
-
-    if ($PSCmdlet.ShouldProcess($ClonePath, "Test CI/CD pipeline")) {
-        try {
-            Push-Location $ClonePath
-
-            # Test workflow files exist
-            $workflowFiles = @(
-                ".github/workflows/pr-validation.yml",
-                ".github/workflows/pr-ecosystem.yml"
-            )
-
-            $allWorkflowsExist = $true
-            foreach ($workflow in $workflowFiles) {
-                if (-not (Test-Path $workflow)) {
-                    Write-ScriptLog -Level Error -Message "Missing workflow file: $workflow"
-                    $allWorkflowsExist = $false
+                $failedScripts = if ($playbookResult.Results) {
+                    ($playbookResult.Results | Where-Object { -not $_.Success } | ForEach-Object { $_.Script }) -join ', '
                 } else {
-                    Write-ScriptLog -Message "Found workflow: $workflow"
+                    "Unknown"
                 }
-            }
-            $pipelineTests.WorkflowFiles = $allWorkflowsExist
-
-            # Test automation scripts
-            $keyScripts = @(
-                "automation-scripts/0402_Run-UnitTests.ps1"
-                "automation-scripts/0404_Run-PSScriptAnalyzer.ps1"
-                "automation-scripts/0512_Generate-Dashboard.ps1"
-                "automation-scripts/0740_Integrate-AITools.ps1"
-                "automation-scripts/0815_Setup-IssueManagement.ps1"
-            )
-
-            $allScriptsExist = $true
-            foreach ($script in $keyScripts) {
-                if (-not (Test-Path $script)) {
-                    Write-ScriptLog -Level Error -Message "Missing automation script: $script"
-                    $allScriptsExist = $false
-                } else {
-                    Write-ScriptLog -Message "Found automation script: $script"
-                }
-            }
-            $pipelineTests.AutomationScripts = $allScriptsExist
-
-            # Test AI integration setup
-            try {
-                $result = & pwsh -c "./automation-scripts/0740_Integrate-AITools.ps1 -SkipInstallation -WhatIf"
-                if ($LASTEXITCODE -eq 0) {
-                    $pipelineTests.AIIntegration = $true
-                    Write-ScriptLog -Level Information -Message "AI integration setup validated"
-                }
-            } catch {
-                Write-ScriptLog -Level Warning -Message "AI integration test skipped: $_"
-                $pipelineTests.AIIntegration = $true  # Don't fail on this
+                Write-ScriptLog -Level Error -Message "Self-deployment playbook failed. Failed scripts: $failedScripts"
+                return $false
             }
 
-            # Test issue management setup
-            try {
-                $result = & pwsh -c "./automation-scripts/0815_Setup-IssueManagement.ps1 -WhatIf"
-                if ($LASTEXITCODE -eq 0) {
-                    $pipelineTests.IssueManagement = $true
-                    Write-ScriptLog -Level Information -Message "Issue management setup validated"
-                }
-            } catch {
-                Write-ScriptLog -Level Error -Message "Issue management test failed: $_"
-            }
-
-            # Test documentation deployment
-            try {
-                $result = & pwsh -c "./automation-scripts/0515_Deploy-Documentation.ps1 -WhatIf"
-                if ($LASTEXITCODE -eq 0) {
-                    $pipelineTests.Documentation = $true
-                    Write-ScriptLog -Level Information -Message "Documentation deployment validated"
-                }
-            } catch {
-                Write-ScriptLog -Level Error -Message "Documentation deployment test failed: $_"
-            }
-
+        } catch {
+            Write-ScriptLog -Level Error -Message "Self-deployment playbook execution error: $_"
+            return $false
         } finally {
             Pop-Location
         }
     }
 
-    return $pipelineTests
+    return $false
 }
 
-function Test-EndToEndScenario {
-    param([string]$ClonePath)
-
-    Write-ScriptLog -Message "Running end-to-end deployment scenario"
-
-    if ($QuickTest) {
-        Write-ScriptLog -Message "Skipping end-to-end test in quick mode"
-        return @{
-            Setup = $false
-            Testing = $false
-            Reporting = $false
-            Deployment = $false
-        }
-    }
-
-    $scenario = @{
-        Setup = $false
-        Testing = $false
-        Reporting = $false
-        Deployment = $false
-    }
-
-    if ($PSCmdlet.ShouldProcess($ClonePath, "Run end-to-end scenario")) {
-        try {
-            Push-Location $ClonePath
-
-            # Phase 1: Setup and validation
-            Write-ScriptLog -Message "Phase 1: Setup and validation"
-            try {
-                & pwsh -c "./automation-scripts/0407_Validate-Syntax.ps1 -All" | Out-Null
-                if ($LASTEXITCODE -eq 0) {
-                    $scenario.Setup = $true
-                    Write-ScriptLog -Level Information -Message "Setup phase completed"
-                }
-            } catch {
-                Write-ScriptLog -Level Error -Message "Setup phase failed: $_"
-            }
-
-            # Phase 2: Testing (quick subset)
-            Write-ScriptLog -Message "Phase 2: Testing"
-            try {
-                # Run a quick test with no coverage to avoid timeout
-                $testResult = & pwsh -c "./automation-scripts/0402_Run-UnitTests.ps1 -NoCoverage -WhatIf" 2>&1
-                $scenario.Testing = $true  # WhatIf mode, just verify script works
-                Write-ScriptLog -Level Information -Message "Testing phase validated"
-            } catch {
-                Write-ScriptLog -Level Error -Message "Testing phase failed: $_"
-            }
-
-            # Phase 3: Reporting
-            Write-ScriptLog -Message "Phase 3: Reporting"
-            try {
-                & pwsh -c "./automation-scripts/0512_Generate-Dashboard.ps1 -Format JSON" | Out-Null
-                if ($LASTEXITCODE -eq 0 -and (Test-Path "./reports/dashboard.json")) {
-                    $scenario.Reporting = $true
-                    Write-ScriptLog -Level Information -Message "Reporting phase completed"
-                }
-            } catch {
-                Write-ScriptLog -Level Error -Message "Reporting phase failed: $_"
-            }
-
-            # Phase 4: Deployment preparation
-            Write-ScriptLog -Message "Phase 4: Deployment preparation"
-            try {
-                & pwsh -c "./automation-scripts/0515_Deploy-Documentation.ps1 -WhatIf" | Out-Null
-                if ($LASTEXITCODE -eq 0) {
-                    $scenario.Deployment = $true
-                    Write-ScriptLog -Level Information -Message "Deployment phase validated"
-                }
-            } catch {
-                Write-ScriptLog -Level Error -Message "Deployment phase failed: $_"
-            }
-
-        } finally {
-            Pop-Location
-        }
-    }
-
-    return $scenario
-}
-
-function New-TestReport {
+function Show-TestSummary {
+    <#
+    .SYNOPSIS
+        Display test summary
+    #>
     param(
-        [hashtable]$Prerequisites,
-        [hashtable]$CoreTests,
-        [hashtable]$PipelineTests,
-        [hashtable]$EndToEndTests,
+        [bool]$BootstrapSuccess,
+        [bool]$PlaybookSuccess,
         [string]$ClonePath
     )
 
-    Write-ScriptLog -Message "Generating self-deployment test report"
-
-    $report = @{
-        TestRun = @{
-            Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-            Duration = ((Get-Date) - $script:TestStartTime).TotalSeconds
-            TestType = if ($QuickTest) { "Quick" } elseif ($FullTest) { "Full" } else { "Standard" }
-            Environment = @{
-                PowerShell = $PSVersionTable.PSVersion.ToString()
-                Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { "Windows" }
-                WorkingDirectory = $TestPath
-            }
-        }
-        Results = @{
-            Prerequisites = $Prerequisites
-            CoreFunctionality = $CoreTests
-            CICDPipeline = $PipelineTests
-            EndToEndScenario = $EndToEndTests
-        }
-        Summary = @{
-            OverallResult = "Unknown"
-            PassedTests = 0
-            TotalTests = 0
-            SuccessRate = 0
-        }
-    }
-
-    # Calculate summary
-    $allTests = @()
-    $allTests += $Prerequisites.Values
-    $allTests += $CoreTests.Values
-    $allTests += $PipelineTests.Values
-    $allTests += $EndToEndTests.Values
-
-    $report.Summary.TotalTests = $allTests.Count
-    $report.Summary.PassedTests = ($allTests | Where-Object { $_ }).Count
-    $report.Summary.SuccessRate = if ($report.Summary.TotalTests -gt 0) {
-        [Math]::Round(($report.Summary.PassedTests / $report.Summary.TotalTests) * 100, 2)
-    } else { 0 }
-
-    $report.Summary.OverallResult = if ($report.Summary.SuccessRate -eq 100) {
-        "PASSED"
-    } elseif ($report.Summary.SuccessRate -ge 80) {
-        "PASSED WITH WARNINGS"
-    } else {
-        "FAILED"
-    }
-
-    # Save report
-    $reportPath = Join-Path $TestPath "self-deployment-test-report.json"
-    $report | ConvertTo-Json -Depth 10 | Set-Content -Path $reportPath
-
-    # Display summary
     Write-Host "`n" + "="*80 -ForegroundColor Cyan
     Write-Host "🚀 AitherZero Self-Deployment Test Results" -ForegroundColor Cyan
     Write-Host "="*80 -ForegroundColor Cyan
 
-    $resultColor = switch ($report.Summary.OverallResult) {
-        "PASSED" { 'Green' }
-        "PASSED WITH WARNINGS" { 'Yellow' }
-        default { 'Red' }
+    $overallSuccess = $BootstrapSuccess -and $PlaybookSuccess
+    $resultColor = if ($overallSuccess) { 'Green' } else { 'Red' }
+    $resultText = if ($overallSuccess) { "PASSED" } else { "FAILED" }
+
+    Write-Host "`n📊 Overall Result: $resultText" -ForegroundColor $resultColor
+    Write-Host "   Bootstrap: $(if ($BootstrapSuccess) { '✅ PASSED' } else { '❌ FAILED' })" -ForegroundColor $(if ($BootstrapSuccess) { 'Green' } else { 'Red' })
+    Write-Host "   Playbook:  $(if ($PlaybookSuccess) { '✅ PASSED' } else { '❌ FAILED' })" -ForegroundColor $(if ($PlaybookSuccess) { 'Green' } else { 'Red' })
+
+    # Show playbook results if available
+    $resultFile = Join-Path $ClonePath "library/reports/self-deployment-result.json"
+    if (Test-Path $resultFile) {
+        Write-Host "`n📋 Detailed Results: $resultFile" -ForegroundColor White
     }
 
-    Write-Host "`n📊 Overall Result: $($report.Summary.OverallResult)" -ForegroundColor $resultColor
-    Write-Host "✅ Passed: $($report.Summary.PassedTests)/$($report.Summary.TotalTests) ($($report.Summary.SuccessRate)%)" -ForegroundColor White
-    Write-Host "⏱️ Duration: $($report.TestRun.Duration.ToString('F1')) seconds" -ForegroundColor White
-    Write-Host "🎯 Test Type: $($report.TestRun.TestType)" -ForegroundColor White
+    Write-Host "`n📁 Test Environment: $TestPath" -ForegroundColor White
 
-    Write-Host "`n📋 Test Breakdown:" -ForegroundColor Cyan
-
-    # Prerequisites
-    $preReqPassed = ($Prerequisites.Values | Where-Object { $_ }).Count
-    $preReqColor = if ($preReqPassed -eq $Prerequisites.Count) { 'Green' } else { 'Red' }
-    Write-Host "  Prerequisites: $preReqPassed/$($Prerequisites.Count)" -ForegroundColor $preReqColor
-
-    # Core Functionality
-    $corePassed = ($CoreTests.Values | Where-Object { $_ }).Count
-    $coreColor = if ($corePassed -eq $CoreTests.Count) { 'Green' } else { 'Yellow' }
-    Write-Host "  Core Functionality: $corePassed/$($CoreTests.Count)" -ForegroundColor $coreColor
-
-    # CI/CD Pipeline
-    $pipelinePassed = ($PipelineTests.Values | Where-Object { $_ }).Count
-    $pipelineColor = if ($pipelinePassed -eq $PipelineTests.Count) { 'Green' } else { 'Yellow' }
-    Write-Host "  CI/CD Pipeline: $pipelinePassed/$($PipelineTests.Count)" -ForegroundColor $pipelineColor
-
-    # End-to-End
-    $e2ePassed = ($EndToEndTests.Values | Where-Object { $_ }).Count
-    $e2eColor = if ($e2ePassed -eq $EndToEndTests.Count) { 'Green' } else { 'Yellow' }
-    Write-Host "  End-to-End: $e2ePassed/$($EndToEndTests.Count)" -ForegroundColor $e2eColor
-
-    Write-Host "`n📁 Test Report: $reportPath" -ForegroundColor White
-    Write-Host "📁 Test Environment: $TestPath" -ForegroundColor White
-
-    if ($CleanupOnSuccess -and $report.Summary.OverallResult -eq "PASSED") {
+    if ($CleanupOnSuccess -and $overallSuccess) {
         Write-Host "`n🧹 Cleaning up test environment..." -ForegroundColor Yellow
         Remove-Item -Path $TestPath -Recurse -Force
         Write-Host "✅ Cleanup completed" -ForegroundColor Green
@@ -558,15 +309,20 @@ function New-TestReport {
 
     Write-Host "`n" + "="*80 -ForegroundColor Cyan
 
-    return $report
+    return $overallSuccess
 }
 
+# Main execution
 try {
     $script:TestStartTime = Get-Date
+    
+    # Display deprecation warnings
+    if ($QuickTest -or $FullTest) {
+        Write-ScriptLog -Level Warning -Message "QuickTest and FullTest parameters are deprecated. Full validation is always performed."
+    }
+    
     Write-ScriptLog -Message "Starting AitherZero self-deployment test" -Data @{
         TestPath = $TestPath
-        QuickTest = $QuickTest
-        FullTest = $FullTest
         Branch = $Branch
     }
 
@@ -584,30 +340,19 @@ try {
 
     # Phase 4: Test bootstrap
     Write-Host "`n🚀 Testing bootstrap process..." -ForegroundColor Cyan
-    $bootstrapResult = Test-BootstrapProcess -ClonePath $clonePath
+    $bootstrapSuccess = Test-BootstrapProcess -ClonePath $clonePath
 
-    # Phase 5: Test core functionality
-    Write-Host "`n🧪 Testing core functionality..." -ForegroundColor Cyan
-    $coreTests = Test-CoreFunctionality -ClonePath $clonePath
+    # Phase 5: Run self-deployment playbook via OrchestrationEngine
+    Write-Host "`n🎯 Running self-deployment validation playbook..." -ForegroundColor Cyan
+    $playbookSuccess = Invoke-SelfDeploymentPlaybook -ClonePath $clonePath
 
-    # Phase 6: Test CI/CD pipeline
-    Write-Host "`n⚙️ Testing CI/CD pipeline..." -ForegroundColor Cyan
-    $pipelineTests = Test-CICDPipeline -ClonePath $clonePath
+    # Phase 6: Show summary
+    Write-Host "`n📊 Generating test summary..." -ForegroundColor Cyan
+    $overallSuccess = Show-TestSummary -BootstrapSuccess $bootstrapSuccess -PlaybookSuccess $playbookSuccess -ClonePath $clonePath
 
-    # Phase 7: End-to-end scenario (unless quick test)
-    Write-Host "`n🎯 Running end-to-end scenario..." -ForegroundColor Cyan
-    $endToEndTests = Test-EndToEndScenario -ClonePath $clonePath
-
-    # Phase 8: Generate report
-    Write-Host "`n📊 Generating test report..." -ForegroundColor Cyan
-    $report = New-TestReport -Prerequisites $prerequisites -CoreTests $coreTests -PipelineTests $pipelineTests -EndToEndTests $endToEndTests -ClonePath $clonePath
-
-    # Final result
-    if ($report.Summary.OverallResult -eq "PASSED") {
+    # Exit with appropriate code
+    if ($overallSuccess) {
         Write-ScriptLog -Level Information -Message "Self-deployment test PASSED! AitherZero can successfully deploy itself."
-        exit 0
-    } elseif ($report.Summary.OverallResult -eq "PASSED WITH WARNINGS") {
-        Write-ScriptLog -Level Warning -Message "Self-deployment test passed with warnings. Some non-critical components failed."
         exit 0
     } else {
         Write-ScriptLog -Level Error -Message "Self-deployment test FAILED. Critical issues found."
