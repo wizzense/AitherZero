@@ -428,7 +428,7 @@
             'development'    = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation'  = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
-            'orchestration'  = @{ Modules = 0; Description = 'Playbooks and workflow schemas' }
+            'orchestration'  = @{ Modules = 0; Description = 'Playbook orchestration and workflow management' }
             'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 1; Description = 'Security and credential management' }
             'testing'        = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
