@@ -220,7 +220,7 @@ function Get-ModuleExportedFunctions {
                 $valueIndex = $export.CommandElements.IndexOf($functionParam) + 1
                 if ($valueIndex -lt $export.CommandElements.Count) {
                     $value = $export.CommandElements[$valueIndex]
-                    $text = $value.Extent.Text -replace "['\"`@()]", ''
+                    $text = $value.Extent.Text -replace "['\""@()]", ''
                     $functions += $text -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
                 }
             }
@@ -337,7 +337,7 @@ function Get-ScriptNumberRange {
     $rangeStart = [math]::Floor($ScriptNumber / 100) * 100
     $rangeEnd = $rangeStart + 99
     
-    return "{0:D4}-{1:D4}" -f $rangeStart, $rangeEnd
+    return "$($rangeStart.ToString().PadLeft(4, '0'))-$($rangeEnd.ToString().PadLeft(4, '0'))"
 }
 
 function Get-ScriptCategory {

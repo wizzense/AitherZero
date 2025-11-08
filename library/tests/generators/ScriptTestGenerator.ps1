@@ -343,11 +343,13 @@ try {
     }
     elseif ($ScriptNumber) {
         # Process specific script
-        $scriptFile = Get-ChildItem -Path $scriptsPath -Filter "$ScriptNumber`_*.ps1" |
+        # Format the script number to ensure it has leading zeros
+        $scriptNumFormatted = $ScriptNumber.ToString().PadLeft(4, '0')
+        $scriptFile = Get-ChildItem -Path $scriptsPath -Filter "${scriptNumFormatted}_*.ps1" |
             Select-Object -First 1
         
         if (-not $scriptFile) {
-            throw "Script not found: $ScriptNumber"
+            throw "Script not found: $scriptNumFormatted"
         }
         
         $scriptsToProcess = @($scriptFile)
