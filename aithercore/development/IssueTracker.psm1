@@ -480,40 +480,6 @@ function Get-GitHubIssue {
     }
 }
 
-function Get-GitHubIssues {
-    <#
-    .SYNOPSIS
-        [DEPRECATED] Get GitHub issues with filtering options
-    .DESCRIPTION
-        This function is deprecated. Use Get-GitHubIssue (singular) instead.
-        The singular version supports pipeline processing and parallel execution.
-    .NOTES
-        DEPRECATED: Use Get-GitHubIssue instead
-    #>
-    [CmdletBinding()]
-    param(
-        [ValidateSet('open', 'closed', 'all')]
-        [string]$State = 'open',
-
-        [string[]]$Labels,
-
-        [string]$Assignee,
-
-        [string]$Author,
-
-        [string]$Milestone,
-
-        [int]$Limit = 30,
-
-        [string]$Search
-    )
-
-    Write-Warning "Get-GitHubIssues is deprecated. Use Get-GitHubIssue (singular) for better pipeline support."
-    
-    # Forward to singular version
-    Get-GitHubIssue -State $State -Labels $Labels -Assignee $Assignee -Author $Author -Milestone $Milestone -Search $Search
-}
-
 function Add-GitHubIssueComment {
     <#
     .SYNOPSIS
@@ -644,8 +610,7 @@ Export-ModuleMember -Function @(
     'Get-GitHubRepository',
     'New-GitHubIssue',
     'Update-GitHubIssue',
-    'Get-GitHubIssue',      # New singular version
-    'Get-GitHubIssues',     # Deprecated - forwards to Get-GitHubIssue
+    'Get-GitHubIssue',
     'Add-GitHubIssueComment',
     'Close-GitHubIssue',
     'Get-GitHubLabels'
