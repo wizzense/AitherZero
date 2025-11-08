@@ -179,7 +179,7 @@ Easy to mock, validate, test
 ```
 Menu auto-generates from available:
 ├─ Scripts (automation-scripts/)
-├─ Playbooks (orchestration/playbooks/)
+├─ Playbooks (domains/orchestration/playbooks/)
 └─ Modes (Start-AitherZero.ps1 params)
 ```
 

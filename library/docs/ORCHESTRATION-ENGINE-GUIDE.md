@@ -279,7 +279,7 @@ Invoke-OrchestrationSequence -LoadPlaybook 'test-orchestration'
 ### Playbook Not Found
 ```powershell
 # Check playbook exists
-ls orchestration/playbooks/*.psd1
+ls domains/orchestration/playbooks/*.psd1
 
 # Verify playbook name (without extension)
 Invoke-OrchestrationSequence -LoadPlaybook 'my-playbook'  # Not 'my-playbook.psd1'
@@ -369,7 +369,7 @@ aitherzero orchestrate test-orchestration
 
 ## See Also
 
-- [Playbook Examples](../orchestration/playbooks/README.md)
+- [Playbook Examples](../domains/orchestration/playbooks/README.md)
 - [Script Metadata](./SCRIPT-METADATA.md)
 - [Testing Guide](./TESTING-README.md)
 - [Project Health Validation](./PROJECT-HEALTH-VALIDATION.md)

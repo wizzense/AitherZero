@@ -4,14 +4,25 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 on:
   # Runs on pushes targeting the default branch and ring branches
   push:
-    branches: ["main", "dev", "develop", "dev-staging", "ring-0", "ring-0-integrations", "ring-1", "ring-1-integrations", "ring-2"]
+    branches:
+      [
+        "main",
+        "dev",
+        "develop",
+        "dev-staging",
+        "ring-0",
+        "ring-0-integrations",
+        "ring-1",
+        "ring-1-integrations",
+        "ring-2",
+      ]
     paths:
-      - 'library/reports/**'
-      - 'library/**'
-      - 'index.md'
-      - '_config.yml'
-      - 'mcp-server/README.md'
-      - 'mcp-server/QUICKSTART.md'
+      - "library/reports/**"
+      - "library/**"
+      - "index.md"
+      - "_config.yml"
+      - "integrations/mcp-server/README.md"
+      - "integrations/mcp-server/QUICKSTART.md"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -87,7 +98,7 @@ jobs:
           Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}reports/dashboard.html"
           Write-Host "  - Reports: ${{ steps.deployment.outputs.page_url }}reports/"
           Write-Host "  - Docs: ${{ steps.deployment.outputs.page_url }}docs/"
-          Write-Host "  - MCP Server: ${{ steps.deployment.outputs.page_url }}docs/mcp-server/"
+          Write-Host "  - MCP Server: ${{ steps.deployment.outputs.page_url }}docs/integrations/mcp-server/"
           Write-Host ""
           Write-Host "⏱️ Deployment Duration: <5 minutes is normal" -ForegroundColor Cyan
 

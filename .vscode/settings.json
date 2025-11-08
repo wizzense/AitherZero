@@ -59,7 +59,7 @@
     "aitherzero": {
       "command": "node",
       "args": [
-        "/workspaces/AitherZero/mcp-server/scripts/start-with-build.mjs"
+        "/workspaces/AitherZero/integrations/mcp-server/scripts/start-with-build.mjs"
       ],
       "description": "AitherZero infrastructure automation - run scripts, playbooks, tests",
       "capabilities": {

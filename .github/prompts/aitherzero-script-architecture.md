@@ -55,7 +55,7 @@ Each script has ONE clear purpose. No confusion about what each does.
 **For Complex Workflows - Use Orchestration:**
 ```
 ✅ CORRECT - Playbook for workflows:
-orchestration/playbooks/code-quality-full.psd1
+domains/orchestration/playbooks/code-quality-full.psd1
 
 Sequence:
   1. Run 0404 with parameters
@@ -145,7 +145,7 @@ if ($Parallel) {
 0416_Generate-AnalysisReport.ps1  # Reporting
 
 # Then create playbook:
-orchestration/playbooks/code-quality-full.psd1
+domains/orchestration/playbooks/code-quality-full.psd1
 ```
 
 ## Real-World Example
@@ -164,7 +164,7 @@ Result: Confusion, which one to use? Which is canonical?
 Agent created:
 - 0404_Run-PSScriptAnalyzer.ps1 (enhanced with caching)
 - 0415_Manage-PSScriptAnalyzerCache.ps1 (new functionality)
-- orchestration/playbooks/code-quality-full.psd1 (workflow)
+- domains/orchestration/playbooks/code-quality-full.psd1 (workflow)
 
 Result: Clear separation of concerns, no confusion
 ```

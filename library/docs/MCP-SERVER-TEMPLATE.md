@@ -51,6 +51,7 @@ az 0754 -ServerName "my-server" -Description "My MCP server"
 ```
 
 This automatically:
+
 - Copies and customizes the template
 - Renames all `.template` files
 - Replaces placeholders with your values
@@ -64,8 +65,8 @@ This automatically:
 AI agents can use the template via automation script:
 
 ```
-@agent Create a new MCP server called "infrastructure-monitor" that monitors 
-system infrastructure. Use the MCP server template at 
+@agent Create a new MCP server called "infrastructure-monitor" that monitors
+system infrastructure. Use the MCP server template at
 docs/templates/mcp-server-template and automation script 0754_Create-MCPServer.ps1.
 ```
 
@@ -74,6 +75,7 @@ docs/templates/mcp-server-template and automation script 0754_Create-MCPServer.p
 ### 1. Auto-Build System
 
 The template includes `scripts/start-with-build.mjs` that:
+
 - Checks if server is built
 - Installs dependencies if needed
 - Builds TypeScript if needed
@@ -137,6 +139,7 @@ async function getServerStatus(): Promise<string> {
 ### 5. Comprehensive Documentation
 
 Template includes documentation templates for:
+
 - **README.md**: Overview and quick start
 - **TEMPLATE-GUIDE.md**: Step-by-step customization
 - **docs/SETUP.md**: Installation and configuration
@@ -173,12 +176,14 @@ Template includes documentation templates for:
 ### 4. Resources vs Tools
 
 **When to use Resources**:
+
 - Static or semi-static data
 - Can be cached
 - Read-only
 - Configuration, status, lists
 
 **When to use Tools**:
+
 - Actions that change state
 - Cannot be safely cached
 - Operations with side effects
@@ -196,6 +201,7 @@ Template includes documentation templates for:
 ### 6. Documentation for Multiple Audiences
 
 Different people need different docs:
+
 - **Users**: Setup and usage guides
 - **Developers**: Architecture and customization guides
 - **AI Assistants**: Tool/resource descriptions
@@ -399,9 +405,9 @@ npm test
 
 - **Template Guide**: `docs/templates/mcp-server-template/TEMPLATE-GUIDE.md`
 - **Example Implementation**: `/mcp-server/` (AitherZero MCP server)
-- **MCP Specification**: https://modelcontextprotocol.io/
-- **MCP SDK**: https://github.com/modelcontextprotocol/sdk
-- **Issues**: https://github.com/wizzense/AitherZero/issues
+- **MCP Specification**: <https://modelcontextprotocol.io/>
+- **MCP SDK**: <https://github.com/modelcontextprotocol/sdk>
+- **Issues**: <https://github.com/wizzense/AitherZero/issues>
 
 ## Contributing Template Improvements
 
@@ -414,7 +420,7 @@ If you improve the template:
 
 ## Related Resources
 
-- **AitherZero MCP Server**: `/mcp-server/` - Reference implementation
+- **AitherZero MCP Server**: `/integrations/mcp-server/` - Reference implementation
 - **MCP Documentation**: `docs/AITHERZERO-MCP-SERVER.md`
 - **MCP Setup Guide**: `docs/COPILOT-MCP-SETUP.md`
 - **GitHub Copilot Integration**: `.github/copilot-instructions.md`

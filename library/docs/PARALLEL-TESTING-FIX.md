@@ -103,7 +103,7 @@ $domainModules = @(
 
 ### 3. Updated Playbook JSON
 
-Updated `orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`:
+Updated `domains/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`:
 - Removed non-existent domain test jobs
 - Removed non-existent integration test jobs
 - Updated maxConcurrency values to match actual job count
@@ -201,7 +201,7 @@ When creating new test directories, update both:
    )
    ```
 
-2. **Playbook** (`orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`):
+2. **Playbook** (`domains/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json`):
    ```json
    {
      "name": "Domain Tests [your-new-module]",

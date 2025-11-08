@@ -170,6 +170,27 @@ jobs:
             Write-Host "✅ Comprehensive dashboard available at library/reports/dashboard.html" -ForegroundColor Green
           }
 
+      - name: 💾 Commit Updated Persisted Reports
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add only the persisted reports that should be tracked
+          git add reports/dashboard.html reports/dashboard.md reports/dashboard.json
+          git add reports/psscriptanalyzer-fast-results.json
+          git add reports/README.md reports/index.md
+          git add reports/metrics-history/*.json
+          
+          # Commit if there are changes
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update persisted reports - $(date -u +"%Y-%m-%d %H:%M UTC") [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+            echo "✅ Persisted reports committed and pushed"
+          else
+            echo "ℹ️ No changes to persisted reports"
+          fi
+
       - name: 📤 Upload Combined Reports
         uses: actions/upload-artifact@v4
         with:

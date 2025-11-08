@@ -27,7 +27,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$mcpServerPath = Join-Path $PSScriptRoot ".." "mcp-server"
+$mcpServerPath = Join-Path $PSScriptRoot ".." "integrations" "mcp-server"
 
 Write-Host "╔══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║                                                                      ║" -ForegroundColor Cyan

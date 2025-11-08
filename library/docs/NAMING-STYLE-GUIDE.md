@@ -117,7 +117,7 @@ category/action-target-profile.json
 
 ### Directory Structure
 ```
-orchestration/playbooks/
+domains/orchestration/playbooks/
 ├── testing/
 │   ├── run-tests-quick.json                    # ✅ Quick test run
 │   ├── run-tests-comprehensive.json            # ✅ Full test suite
@@ -306,7 +306,7 @@ guide.md                            # What kind of guide?
 ```
 ✅ GOOD
 automation-scripts/                 # Numbered automation scripts
-orchestration/playbooks/            # Playbook definitions
+domains/orchestration/playbooks/            # Playbook definitions
 tests/unit/                         # Unit tests
 tests/integration/                  # Integration tests
 domains/configuration/              # Configuration domain

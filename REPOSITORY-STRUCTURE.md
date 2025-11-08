@@ -61,12 +61,12 @@ AitherZero/
 │   │   └── TestingFramework.psm1
 │   ├── reporting/
 │   │   └── ReportingEngine.psm1
+│   ├── orchestration/       # Playbooks and sequences
+│   │   ├── playbooks/
+│   │   │   └── test-orchestrated.json  # THE ONLY ONE
+│   │   └── schema/
+│   │       └── playbook-schema-v3.json
 │   └── ...
-├── orchestration/          # CLEANED UP
-│   ├── playbooks/
-│   │   └── test-orchestrated.json  # THE ONLY ONE
-│   └── schema/
-│       └── playbook-schema-v3.json
 ├── tests/                  # 316 test files
 │   ├── unit/
 │   ├── integration/
@@ -94,7 +94,7 @@ AitherZero/
 ## Migration Completed
 
 All testing now goes through:
-1. **Playbook:** `orchestration/playbooks/test-orchestrated.json`
+1. **Playbook:** `domains/orchestration/playbooks/test-orchestrated.json`
 2. **Workflow:** `.github/workflows/unified-testing.yml`
 3. **Dashboard:** `reports/dashboard.html`
 

@@ -376,7 +376,7 @@ Describe "Modern CLI Functionality" {
 
         It "Should support listing playbooks" {
             $script:ScriptContent | Should -BeLike "*'playbooks'*"
-            $script:ScriptContent | Should -BeLike "*orchestration/playbooks*"
+            $script:ScriptContent | Should -BeLike "*domains/orchestration/playbooks*"
         }
     }
 
@@ -390,7 +390,7 @@ Describe "Modern CLI Functionality" {
         }
 
         It "Should search playbooks" {
-            $script:ScriptContent | Should -BeLike "*Get-ChildItem*orchestration/playbooks*"
+            $script:ScriptContent | Should -BeLike "*Get-ChildItem*domains/orchestration/playbooks*"
         }
     }
 
