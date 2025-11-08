@@ -61,7 +61,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $testGeneratorPath = Join-Path $projectRoot "aithercore/testing/FunctionalTestGenerator.psm1"
 
 # Banner
@@ -110,11 +110,11 @@ $scriptsToRegenerate = switch ($Mode) {
         }
         
         $rangePattern = "$Range/*.ps1"
-        Get-ChildItem -Path (Join-Path $projectRoot "automation-scripts") -Filter "*.ps1" |
+        Get-ChildItem -Path (Join-Path $projectRoot "library/automation-scripts") -Filter "*.ps1" |
             Where-Object { $_.Name -match "^$($Range.Split('-')[0])" }
     }
     'All' {
-        Get-ChildItem -Path (Join-Path $projectRoot "automation-scripts") -Filter "*.ps1" -File
+        Get-ChildItem -Path (Join-Path $projectRoot "library/automation-scripts") -Filter "*.ps1" -File
     }
 }
 

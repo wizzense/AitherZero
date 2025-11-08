@@ -52,10 +52,10 @@ param(
 
 # Import required functions
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$projectRoot = Split-Path -Parent $scriptRoot
+$projectRoot = Split-Path -Parent (Split-Path -Parent $scriptRoot)
 
 # Source the validation tool
-$validationScript = Join-Path $projectRoot "automation-scripts/0416_Validate-ModuleManifest.ps1"
+$validationScript = Join-Path $projectRoot "library/automation-scripts/0416_Validate-ModuleManifest.ps1"
 if (-not (Test-Path $validationScript)) {
     Write-Error "Validation script not found: $validationScript"
     exit 1

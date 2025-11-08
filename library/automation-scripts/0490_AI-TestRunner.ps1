@@ -70,7 +70,7 @@ $ProgressPreference = 'SilentlyContinue'
 $VerbosePreference = 'SilentlyContinue'
 
 # Project structure
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $testRoot = Join-Path $projectRoot "tests"
 $dataDir = Join-Path $projectRoot "library/tests/.ai-data"
 $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
