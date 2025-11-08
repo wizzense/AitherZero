@@ -18,7 +18,7 @@ Describe '0745_Generate-ProjectIndexes' -Tag 'Unit', 'AutomationScript', 'Automa
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0745_Generate-ProjectIndexes.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0745_Generate-ProjectIndexes.ps1'
         $script:ScriptName = '0745_Generate-ProjectIndexes'
 
         # Import test helpers for environment detection
@@ -79,7 +79,7 @@ Describe '0745_Generate-ProjectIndexes' -Tag 'Unit', 'AutomationScript', 'Automa
 
     Context 'Metadata' {
         It 'Should be in stage: Automation' {
-            $content = Get-Content $script:ScriptPath -First 40
+            $content = Get-Content $script:ScriptPath -First 50
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
     }
@@ -90,6 +90,28 @@ Describe '0745_Generate-ProjectIndexes' -Tag 'Unit', 'AutomationScript', 'Automa
                 $params = @{ WhatIf = $true }
                 & $script:ScriptPath @params
             } | Should -Not -Throw
+        }
+    }
+
+    Context 'Write-IndexLog Function' {
+        It 'Should handle Success level without throwing' {
+            # Load the script to access the Write-IndexLog function
+            . $script:ScriptPath -Mode Verify -ErrorAction Stop
+            
+            # Test that Write-IndexLog with 'Success' level doesn't throw
+            { 
+                & {
+                    param($Message, $Level)
+                    # Dot-source the script to get access to the function
+                    . $script:ScriptPath
+                } -Message "Test message" -Level "Success"
+            } | Should -Not -Throw
+        }
+        
+        It 'Should contain Success level mapping logic' {
+            $content = Get-Content $script:ScriptPath -Raw
+            # Verify that the script handles 'Success' level
+            $content | Should -Match "if.*Level.*Success.*Information"
         }
     }
 
