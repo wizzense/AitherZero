@@ -892,6 +892,16 @@
         ParallelExecution       = $true
         DefaultMode             = 'Parallel'  # Parallel, Sequential, Staged, Conditional
 
+        # Success criteria defaults - applied to all playbooks unless overridden
+        # Individual playbooks can override these in their SuccessCriteria section
+        DefaultSuccessCriteria  = @{
+            RequireAllSuccess      = $true   # Default: 100% success required (strict mode)
+            MinimumSuccessCount    = 0       # Ignored when RequireAllSuccess is true
+            MinimumSuccessPercent  = 100     # Alternative: percentage-based threshold
+            AllowedFailures        = @()     # Default: no failures allowed
+            StopOnError            = $false  # Continue through all steps by default
+        }
+
         # Error handling and retries
         ContinueOnError         = $false
         MaxRetries              = 3

@@ -233,6 +233,52 @@ function Invoke-SelfDeploymentPlaybook {
             Write-ScriptLog -Message "Importing AitherZero module..."
             Import-Module "./AitherZero.psd1" -Force
 
+            # Load global defaults from config.psd1
+            $configPath = "./config.psd1"
+            $defaultSuccessCriteria = @{
+                RequireAllSuccess = $true  # Default to 100% success
+                MinimumSuccessCount = 0
+                MinimumSuccessPercent = 100
+                AllowedFailures = @()
+            }
+            
+            if (Test-Path $configPath) {
+                try {
+                    $configContent = Get-Content $configPath -Raw
+                    $config = & ([scriptblock]::Create($configContent))
+                    if ($config.Automation.DefaultSuccessCriteria) {
+                        $defaultSuccessCriteria = $config.Automation.DefaultSuccessCriteria
+                        Write-ScriptLog -Message "Loaded default success criteria from config.psd1"
+                    }
+                } catch {
+                    Write-ScriptLog -Level Warning -Message "Could not load config defaults: $_"
+                }
+            }
+
+            # Load playbook to read playbook-specific SuccessCriteria (overrides defaults)
+            $playbookPath = "./library/playbooks/self-deployment-test.psd1"
+            $playbookSuccessCriteria = $null
+            if (Test-Path $playbookPath) {
+                try {
+                    $playbookContent = Get-Content $playbookPath -Raw
+                    $playbookConfig = & ([scriptblock]::Create($playbookContent))
+                    if ($playbookConfig.SuccessCriteria) {
+                        $playbookSuccessCriteria = $playbookConfig.SuccessCriteria
+                        Write-ScriptLog -Message "Loaded playbook-specific success criteria"
+                    }
+                } catch {
+                    Write-ScriptLog -Level Warning -Message "Could not load playbook config: $_"
+                }
+            }
+            
+            # Merge: playbook settings override defaults
+            $successCriteria = $defaultSuccessCriteria.Clone()
+            if ($playbookSuccessCriteria) {
+                foreach ($key in $playbookSuccessCriteria.Keys) {
+                    $successCriteria[$key] = $playbookSuccessCriteria[$key]
+                }
+            }
+
             # Execute the self-deployment test playbook
             Write-ScriptLog -Message "Running self-deployment-test playbook via OrchestrationEngine..."
             
@@ -243,29 +289,10 @@ function Invoke-SelfDeploymentPlaybook {
             $exitCode = $LASTEXITCODE
             if ($null -eq $exitCode) { $exitCode = 0 }
             
-            # Check multiple success indicators for robustness
-            $success = $false
+            Write-ScriptLog -Message "Success criteria: RequireAllSuccess=$($successCriteria.RequireAllSuccess), MinimumSuccessCount=$($successCriteria.MinimumSuccessCount)"
             
-            # Method 1: Check exit code
-            if ($exitCode -eq 0) {
-                $success = $true
-            }
-            
-            # Method 2: If result is an object, check its properties
-            if ($result -and $result -is [PSCustomObject]) {
-                # Check if there's a Success property
-                if ($null -ne $result.Success) {
-                    $success = $result.Success
-                }
-                # Or check Completed vs Failed counts
-                elseif ($null -ne $result.Completed -and $null -ne $result.Failed) {
-                    # Success if we completed scripts and failures are acceptable
-                    # The playbook requires MinimumSuccessCount = 3
-                    if ($result.Completed -ge 3 -and ($result.Failed -eq 0 -or $result.Completed -gt $result.Failed)) {
-                        $success = $true
-                    }
-                }
-            }
+            # Validate success based on merged SuccessCriteria
+            $success = Test-PlaybookSuccess -Result $result -ExitCode $exitCode -SuccessCriteria $successCriteria
             
             if ($success) {
                 Write-ScriptLog -Level Information -Message "Self-deployment playbook completed successfully"
@@ -297,6 +324,64 @@ function Invoke-SelfDeploymentPlaybook {
         # In WhatIf mode, return false (simulation)
         return $false
     }
+}
+
+function Test-PlaybookSuccess {
+    <#
+    .SYNOPSIS
+        Validate playbook success based on SuccessCriteria configuration
+    #>
+    param(
+        $Result,
+        [int]$ExitCode,
+        [hashtable]$SuccessCriteria
+    )
+    
+    # Method 1: Check if result has explicit Success property
+    if ($Result -and $Result -is [PSCustomObject] -and $null -ne $Result.Success) {
+        return $Result.Success
+    }
+    
+    # Method 2: Check exit code
+    if ($ExitCode -ne 0) {
+        return $false
+    }
+    
+    # Method 3: Apply SuccessCriteria rules
+    if ($Result -and $Result -is [PSCustomObject] -and $null -ne $Result.Completed) {
+        $completed = $Result.Completed
+        $failed = $Result.Failed -or 0
+        
+        # If RequireAllSuccess is true, no failures allowed
+        if ($SuccessCriteria.RequireAllSuccess -eq $true) {
+            if ($failed -gt 0) {
+                Write-ScriptLog -Level Warning -Message "RequireAllSuccess=true but $failed script(s) failed"
+                return $false
+            }
+            return $true
+        }
+        
+        # Check MinimumSuccessCount
+        $minRequired = $SuccessCriteria.MinimumSuccessCount -or 0
+        if ($completed -lt $minRequired) {
+            Write-ScriptLog -Level Warning -Message "Only $completed scripts completed, but MinimumSuccessCount=$minRequired"
+            return $false
+        }
+        
+        # Check if failures exceed successes
+        if ($failed -gt $completed) {
+            Write-ScriptLog -Level Warning -Message "More failures ($failed) than successes ($completed)"
+            return $false
+        }
+        
+        # If we have AllowedFailures list, we could check against it here
+        # (would require script names in result, which may not be available)
+        
+        return $true
+    }
+    
+    # Fallback: exit code was 0
+    return $true
 }
 
 function Show-TestSummary {
