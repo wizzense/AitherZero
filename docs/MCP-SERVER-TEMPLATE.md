@@ -6,7 +6,7 @@ AitherZero provides a comprehensive template system for creating new Model Conte
 
 ## What's Included
 
-The MCP server template (`templates/mcp-server-template/`) provides:
+The MCP server template (`docs/templates/mcp-server-template/`) provides:
 
 - **Complete TypeScript scaffold** with MCP SDK integration
 - **Auto-build system** for seamless first-time setup
@@ -25,7 +25,7 @@ The MCP server template (`templates/mcp-server-template/`) provides:
 
 ```bash
 # Copy the template
-cp -r templates/mcp-server-template /path/to/my-new-server
+cp -r docs/templates/mcp-server-template /path/to/my-new-server
 
 # Navigate and customize
 cd /path/to/my-new-server
@@ -66,7 +66,7 @@ AI agents can use the template via automation script:
 ```
 @agent Create a new MCP server called "infrastructure-monitor" that monitors 
 system infrastructure. Use the MCP server template at 
-templates/mcp-server-template and automation script 0754_Create-MCPServer.ps1.
+docs/templates/mcp-server-template and automation script 0754_Create-MCPServer.ps1.
 ```
 
 ## Template Features
@@ -397,7 +397,7 @@ npm test
 
 ## Getting Help
 
-- **Template Guide**: `templates/mcp-server-template/TEMPLATE-GUIDE.md`
+- **Template Guide**: `docs/templates/mcp-server-template/TEMPLATE-GUIDE.md`
 - **Example Implementation**: `/mcp-server/` (AitherZero MCP server)
 - **MCP Specification**: https://modelcontextprotocol.io/
 - **MCP SDK**: https://github.com/modelcontextprotocol/sdk

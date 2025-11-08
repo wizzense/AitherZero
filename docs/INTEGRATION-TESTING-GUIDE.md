@@ -659,8 +659,8 @@ Describe "CI Integration Tests" -Tag 'CI' {
             $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
             
             $demos = @(
-                "demos/Demo-CommandParser.ps1",
-                "demos/Demo-BreadcrumbNavigation.ps1"
+                "docs/demos/Demo-CommandParser.ps1",
+                "docs/demos/Demo-BreadcrumbNavigation.ps1"
             )
             
             foreach ($demo in $demos) {

@@ -139,7 +139,7 @@ function Get-DefaultDocumentationConfig {
                 ".git/**/*"
                 "tests/**/*"
                 "logs/**/*"
-                "reports/**/*"
+                "docs/reports/**/*"
             )
             GenerateOnChange = $true
             DebounceSeconds = 30

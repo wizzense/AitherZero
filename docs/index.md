@@ -10,20 +10,31 @@ See [README.md](./README.md) for detailed information about this directory.
 
 ### 📊 Contents
 
-- **Subdirectories**: 7
+- **Subdirectories**: 13
 - **Files**: 42
 
 ## 📁 Subdirectories
 
+- [📂 **_layouts**](./_layouts/index.md)
+  - *Jekyll layouts for documentation pages*
 - [📂 **archive**](./archive/index.md)
   - *This directory contains historical documentation, implementation summaries, and outdated content ...*
+- [📂 **assets**](./assets/index.md)
+  - *Static assets including ASCII art and branding*
+- [📂 **demos**](./demos/index.md)
+  - *Demonstration scripts and examples*
+- [📂 **examples**](./examples/index.md)
+  - *Example code and usage patterns*
 - [📂 **generated**](./generated/index.md)
 - [📂 **guides**](./guides/index.md)
   - *This directory contains detailed technical guides and documentation for specific features, proces...*
 - [📂 **integrations**](./integrations/index.md)
+- [📂 **reports**](./reports/index.md)
+  - *Generated reports, dashboards, and analysis*
 - [📂 **strategic**](./strategic/index.md)
   - ***Created**: October 30, 2025*
 - [📂 **templates**](./templates/index.md)
+  - *Documentation templates and code generation templates*
 - [📂 **troubleshooting**](./troubleshooting/index.md)
 
 ## 📄 Files

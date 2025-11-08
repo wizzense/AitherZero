@@ -276,7 +276,7 @@ Show-ConfigurationSelector
 **Still stuck?**
 - Check `.github/prompts/` for troubleshooting prompts
 - Review `docs/COPILOT-QUICK-REFERENCE.md`
-- Run demo scripts: `demos/Demo-*.ps1`
+- Run demo scripts: `docs/demos/Demo-*.ps1`
 
 ---
 

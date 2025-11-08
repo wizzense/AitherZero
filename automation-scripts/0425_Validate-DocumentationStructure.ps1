@@ -343,7 +343,7 @@ if ($validationResults.Errors -gt 0) {
 }
 
 # Save results to file
-$reportPath = Join-Path $projectRoot "reports/documentation-validation.json"
+$reportPath = Join-Path $projectRoot "docs/reports/documentation-validation.json"
 $reportDir = Split-Path $reportPath -Parent
 if (-not (Test-Path $reportDir)) {
     New-Item -ItemType Directory -Path $reportDir -Force | Out-Null

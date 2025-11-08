@@ -394,7 +394,7 @@ try {
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Magenta
     
     # Save detailed results
-    $reportPath = Join-Path $ProjectRoot "reports/pr-docker-quick-validation.json"
+    $reportPath = Join-Path $ProjectRoot "docs/reports/pr-docker-quick-validation.json"
     $reportDir = Split-Path -Parent $reportPath
     if (-not (Test-Path $reportDir)) {
         New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
@@ -447,7 +447,7 @@ try {
         Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     }
     
-    $reportPath = Join-Path $ProjectRoot "reports/pr-docker-quick-validation.json"
+    $reportPath = Join-Path $ProjectRoot "docs/reports/pr-docker-quick-validation.json"
     $reportDir = Split-Path -Parent $reportPath
     if (-not (Test-Path $reportDir)) {
         New-Item -ItemType Directory -Path $reportDir -Force | Out-Null

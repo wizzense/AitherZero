@@ -92,8 +92,8 @@ jobs:
         with:
           name: pr-validation-summary
           path: |
-            reports/*.md
-            reports/*.json
+            docs/reports/*.md
+            docs/reports/*.json
             logs/*.log
           retention-days: 7
 

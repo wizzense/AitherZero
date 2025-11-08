@@ -321,7 +321,7 @@ function New-CodeMapHTML {
     Write-ScriptLog -Message "Generating interactive code map HTML from templates..."
     
     # Load template files
-    $templatePath = Join-Path $ProjectPath "templates/code-map"
+    $templatePath = Join-Path $ProjectPath "docs/templates/code-map"
     $htmlTemplate = Get-Content (Join-Path $templatePath "code-map.html") -Raw
     $cssContent = Get-Content (Join-Path $templatePath "code-map.css") -Raw
     $jsContent = Get-Content (Join-Path $templatePath "code-map.js") -Raw

@@ -439,7 +439,7 @@ function Get-ProjectMetrics {
     # Priority: 1) Parallel results (comprehensive), 2) Baseline results, 3) Fast results
     
     # Check for parallel analysis results first (most comprehensive)
-    $parallelResultsPath = Join-Path $ProjectPath "reports/psscriptanalyzer-results.json"
+    $parallelResultsPath = Join-Path $ProjectPath "docs/reports/psscriptanalyzer-results.json"
     $pssaSummaryPath = Join-Path $ProjectPath "tests/results"
     $latestPssaSummary = $null
     
@@ -520,7 +520,7 @@ function Get-ProjectMetrics {
     
     # Fallback to fast results if baseline not available
     if ($metrics.QualityCoverage.TotalValidated -eq 0) {
-        $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+        $pssaPath = Join-Path $ProjectPath "docs/reports/psscriptanalyzer-fast-results.json"
         if (Test-Path $pssaPath) {
             try {
                 $pssaData = Get-Content $pssaPath -Raw | ConvertFrom-Json
@@ -852,7 +852,7 @@ function Get-QualityMetrics {
     }
     
     # Find quality reports
-    $qualityReportsPath = Join-Path $ProjectPath "reports/quality"
+    $qualityReportsPath = Join-Path $ProjectPath "docs/reports/quality"
     if (-not (Test-Path $qualityReportsPath)) {
         Write-ScriptLog -Message "Quality reports directory does not exist yet. Creating: $qualityReportsPath"
         try {
@@ -999,7 +999,7 @@ function Get-PSScriptAnalyzerMetrics {
     }
     
     # Find latest PSScriptAnalyzer results
-    $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+    $pssaPath = Join-Path $ProjectPath "docs/reports/psscriptanalyzer-fast-results.json"
     if (Test-Path $pssaPath) {
         try {
             $pssaData = Get-Content $pssaPath | ConvertFrom-Json
@@ -1249,7 +1249,7 @@ function Get-BuildStatus {
     }
     
     # Check PSScriptAnalyzer results for security/quality
-    $pssaPath = Join-Path $ProjectPath "reports/psscriptanalyzer-fast-results.json"
+    $pssaPath = Join-Path $ProjectPath "docs/reports/psscriptanalyzer-fast-results.json"
     if (Test-Path $pssaPath) {
         try {
             $pssaData = Get-Content $pssaPath | ConvertFrom-Json
@@ -2744,7 +2744,7 @@ function New-HTMLDashboard {
     Write-ScriptLog -Message "Generating HTML dashboard with interactive features"
     
     # Load enhanced template files
-    $templatePath = Join-Path $ProjectPath "templates/dashboard"
+    $templatePath = Join-Path $ProjectPath "docs/templates/dashboard"
     $enhancedStylesPath = Join-Path $templatePath "enhanced-styles.css"
     $enhancedScriptsPath = Join-Path $templatePath "enhanced-scripts.js"
     

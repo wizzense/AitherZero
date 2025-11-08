@@ -110,9 +110,9 @@ jobs:
         with:
           name: quality-reports-${{ github.run_number }}
           path: |
-            reports/quality/**/*
-            reports/**/*.md
-            reports/**/*.json
+            docs/reports/quality/**/*
+            docs/reports/**/*.md
+            docs/reports/**/*.json
             tests/analysis/**/*
           retention-days: 30
 
@@ -139,7 +139,7 @@ jobs:
             
             // Try to read quality summary
             try {
-              const reportsDir = './reports/quality';
+              const reportsDir = './docs/reports/quality';
               if (fs.existsSync(reportsDir)) {
                 const summaryFiles = fs.readdirSync(reportsDir).filter(f => f.includes('summary'));
                 if (summaryFiles.length > 0) {

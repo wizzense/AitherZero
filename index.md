@@ -12,28 +12,22 @@ See [README.md](./README.md) for detailed information about this directory.
 
 ## 📁 Subdirectories
 
-- [📂 **_layouts**](./_layouts/index.md)
 - [📂 **.claude**](./.claude/index.md)
   - *This directory contains the Claude Code hooks configuration for AitherZero, providing intelligent...*
 - 📂 **.github**
   - *This directory contains GitHub-specific configuration files, workflows, and the GitHub Copilot ag...*
 - [📂 **aithercore**](./aithercore/index.md)
   - *The `aithercore` directory contains the consolidated essential modules required for basic AitherZ...*
-- [📂 **assets**](./assets/index.md)
 - [📂 **automation-scripts**](./automation-scripts/index.md)
   - *This directory contains all automated installation and configuration scripts used by the AitherZe...*
-- [📂 **demos**](./demos/index.md)
 - [📂 **docs**](./docs/index.md)
 - [📂 **domains**](./domains/index.md)
   - *This directory contains all domain modules for the AitherZero platform, organized by functional a...*
-- [📂 **examples**](./examples/index.md)
 - [📂 **infrastructure**](./infrastructure/index.md)
   - *This directory contains infrastructure-as-code definitions for deploying AitherZero environments.*
 - 📂 **logs**
 - [📂 **orchestration**](./orchestration/index.md)
   - *A powerful number-based orchestration language for automating complex deployments and configurati...*
-- [📂 **reports**](./reports/index.md)
-  - *- [📊 HTML Dashboard](dashboard.html) - Interactive web dashboard*
 - [📂 **tests**](./tests/index.md)
   - *This directory contains all tests for the AitherZero project, organized by domain and test type.*
 - [📂 **tools**](./tools/index.md)
@@ -126,7 +120,7 @@ See [README.md](./README.md) for detailed information about this directory.
 ---
 layout: default
 title: AitherZero Dashboard
-redirect_to: /AitherZero/reports/dashboard.html
+redirect_to: /AitherZero/docs/reports/dashboard.html
 ---
 
 <!DOCTYPE html>
@@ -134,7 +128,7 @@ redirect_to: /AitherZero/reports/dashboard.html
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=reports/dashboard.html">
+    <meta http-equiv="refresh" content="0; url=docs/reports/dashboard.html">
     <title>AitherZero - Infrastructure Automation Platform</title>
     <style>
         * {
@@ -223,7 +217,7 @@ redirect_to: /AitherZero/reports/dashboard.html
         <p>Infrastructure Automation Platform</p>
         <div class="spinner"></div>
         <p style="font-size: 1rem; opacity: 0.8;">Redirecting to dashboard...</p>
-        <a href="reports/dashboard.html" class="link">
+        <a href="docs/reports/dashboard.html" class="link">
             Click here if not redirected automatically
         </a>
     </div>
