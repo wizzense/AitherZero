@@ -50,13 +50,13 @@ jobs:
             // Function to check if title already has branch info
             function hasBranchInfo(title) {
               // Check for patterns: [xxx→yyy], (yyy←xxx), [xxx->yyy], (yyy<-xxx)
-              return /^\[.+?[→->].+?\]/.test(title) || /^\(.+?[←<-].+?\)/.test(title);
+              return /^\[.+?[→\->].+?\]/.test(title) || /^\(.+?[←<\-].+?\)/.test(title);
             }
 
             // Function to remove existing branch info
             function removeBranchInfo(title) {
-              let clean = title.replace(/^\[.+?[→->].+?\]\s*/, '');
-              clean = clean.replace(/^\(.+?[←<-].+?\)\s*/, '');
+              let clean = title.replace(/^\[.+?[→\->].+?\]\s*/, '');
+              clean = clean.replace(/^\(.+?[←<\-].+?\)\s*/, '');
               return clean.trim();
             }
 
