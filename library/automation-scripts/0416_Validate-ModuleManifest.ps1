@@ -72,17 +72,7 @@ function Test-UnicodeCharacters {
             $line = $lines[$i]
             $lineNumber = $i + 1
             
-            # Check for Unicode arrow characters that commonly cause issues
-            if ($line -match '[→←↑↓]') {
-                $issues += @{
-                    Type = 'UnicodeArrow'
-                    Line = $lineNumber
-                    Content = $line
-                    Message = "Line $lineNumber contains Unicode arrow characters that may cause parsing issues"
-                }
-            }
-            
-            # Check for other problematic Unicode characters
+            # Check for problematic Unicode characters
             if ($line -match '[^\x00-\x7F]') {
                 # Find non-ASCII characters
                 try {
@@ -97,12 +87,21 @@ function Test-UnicodeCharacters {
                     $unicodeChars = @()
                 }
                 
+                # Determine if these are Unicode arrow characters
+                $hasArrows = $line -match '[→←↑↓]'
+                $issueType = if ($hasArrows) { 'UnicodeArrow' } else { 'NonAsciiCharacter' }
+                $message = if ($hasArrows) {
+                    "Line $lineNumber contains Unicode arrow characters that may cause parsing issues"
+                } else {
+                    "Line $lineNumber contains non-ASCII characters: $($unicodeChars -join ', ')"
+                }
+                
                 $issues += @{
-                    Type = 'NonAsciiCharacter'
+                    Type = $issueType
                     Line = $lineNumber
                     Content = $line
                     Characters = $unicodeChars
-                    Message = "Line $lineNumber contains non-ASCII characters: $($unicodeChars -join ', ')"
+                    Message = $message
                 }
             }
             
