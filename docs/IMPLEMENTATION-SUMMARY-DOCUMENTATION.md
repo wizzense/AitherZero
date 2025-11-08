@@ -4,6 +4,26 @@
 
 This document summarizes the completion of the documentation phase for the singular noun refactoring project.
 
+## Complete Cmdlet Inventory
+
+After comprehensive codebase scanning, we identified:
+
+- **Total cmdlets with plural nouns**: 61 (verified by scanning aithercore modules)
+- **Cmdlets to refactor**: 22 across Priorities 2-7
+- **Cmdlets to keep plural**: 39 (batch operations, collections, coordination functions)
+
+**Note**: Original estimate was 69 cmdlets. After comprehensive scanning, the actual count is 61.
+
+### Breakdown by Category:
+- **Priority 1**: 3 cmdlets ✅ COMPLETED (Infrastructure submodules)
+- **Priority 2**: 4 cmdlets (High-impact pipeline)
+- **Priority 3**: 11 cmdlets (Test generation)
+- **Priority 4**: 15 cmdlets (Metrics and reporting - includes statistics/trends)
+- **Priority 5**: 6 cmdlets (Maintenance operations)
+- **Priority 6**: 10 cmdlets (Analysis and results)
+- **Priority 7**: 2 cmdlets (Dependencies and features)
+- **Keep Plural**: 39 cmdlets (documented with rationale)
+
 ## What Was Completed
 
 ### ✅ Priority 1: Infrastructure Submodules

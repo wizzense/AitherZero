@@ -4,10 +4,12 @@
 
 This document tracks the refactoring of plural noun cmdlets to follow the singular noun design pattern across the AitherZero project.
 
-**Total Functions Found**: 69 with plural nouns  
+**Total Functions Found**: 61 with plural nouns (verified by codebase scan)  
 **Priority 1 Status**: ✅ COMPLETED (Infrastructure submodules)  
 **Documentation Status**: ✅ COMPLETE (All guides ready)  
 **Priorities 2-6**: Planned for future sprints
+
+**Note**: Original estimate was 69, actual count is 61 after comprehensive scan of aithercore modules.
 
 ## Refactoring Priorities
 
@@ -62,6 +64,9 @@ Metrics cmdlets should stream individual metric objects:
 | `Get-AutomationMetrics` | `Get-AutomationMetric` | Pending | Per-script metric |
 | `Get-MockMetrics` | `Get-MockMetric` | Pending | Mock usage metrics |
 | `Show-ProjectMetrics` | `Show-ProjectMetric` | Pending | Display one metric |
+| `Get-LogStatistics` | `Get-LogStatistic` | Pending | Stream log statistics |
+| `Get-TestCacheStatistics` | `Get-TestCacheStatistic` | Pending | Cache statistics |
+| `Show-TestTrends` | `Show-TestTrend` | Pending | Display trend data |
 
 ### Priority 4: Maintenance Operations (Medium)
 
@@ -89,7 +94,16 @@ Metrics cmdlets should stream individual metric objects:
 | `Merge-AnalysisResults` | `Merge-AnalysisResult` | Pending | Merge one result |
 | `Format-SearchResults` | `Format-SearchResult` | Pending | Format one result |
 
-### Priority 6: Keep as Plural (Batch Operations)
+### Priority 6: Dependencies and Features (Low)
+
+These cmdlets could be refactored to handle individual dependencies:
+
+| Current Name | Proposed Name | Status | Notes |
+|--------------|---------------|--------|-------|
+| `Get-FeatureDependencies` | `Get-FeatureDependency` | Pending | Stream dependencies |
+| `Get-ModuleDependencies` | `Get-ModuleDependency` | Pending | Per-module dependency |
+
+### Priority 7: Keep as Plural (Batch Operations)
 
 These cmdlets perform inherently batch operations and should remain plural:
 
@@ -103,11 +117,28 @@ These cmdlets perform inherently batch operations and should remain plural:
 | `Get-AllLogFiles` | Explicit "all" operation | Keep |
 | `Get-AllPowerShellFiles` | Explicit "all" operation | Keep |
 | `Get-AuditLogs` | Audit log is a collection | Keep |
+| `Get-ContributingGuidelines` | Returns documentation collection | Keep |
+| `Get-InstallationInstructions` | Returns instruction collection | Keep |
+| `Get-ProjectExamples` | Returns example collection | Keep |
 | `Get-HistoricalMetrics` | Time-series data | Keep |
 | `Get-OrchestrationLogs` | Orchestration log stream | Keep |
 | `Get-StagedChanges` | Git staging area | Keep |
+| `Initialize-DefaultTemplates` | Batch template initialization | Keep |
+| `Initialize-ValidationRules` | Batch rule initialization | Keep |
+| `Install-DevelopmentTools` | Batch tool installation | Keep |
+| `Install-TestingTools` | Batch tool installation | Keep |
+| `Install-ValidationTools` | Batch tool installation | Keep |
+| `Invoke-AllTestSuites` | Batch test suite runner | Keep |
 | `Invoke-LegacyPesterTests` | Legacy batch runner | Keep |
 | `Invoke-ViewLogs` | Interactive viewer | Keep |
+| `Load-DocumentationTemplates` | Batch template loading | Keep |
+| `Register-AutomationScriptTestSuites` | Registers suite collection | Keep |
+| `Register-CoreTestSuites` | Registers suite collection | Keep |
+| `Register-InfrastructureTestSuites` | Registers suite collection | Keep |
+| `Register-IntegrationTestSuites` | Registers suite collection | Keep |
+| `Register-ModuleTestSuites` | Registers suite collection | Keep |
+| `Register-PerformanceTestSuites` | Registers suite collection | Keep |
+| `Resolve-FeatureDependencies` | Coordination across dependencies | Keep |
 | `Search-InteractiveLogs` | Interactive search | Keep |
 | `Show-AuditLogs` | Display audit trail | Keep |
 | `Show-RecentLogs` | Display recent entries | Keep |
@@ -294,13 +325,20 @@ Describe "Get-Item" {
 - [ ] Test generation cmdlets (11 total)
 
 ### Priority 4: Metrics and Reporting (Future Sprint)
-- [ ] Metrics cmdlets (13 total)
+- [ ] Metrics cmdlets (15 total - includes statistics and trends)
 
 ### Priority 5: Maintenance Operations (Future Sprint)
 - [ ] Maintenance cmdlets (6 total)
 
 ### Priority 6: Analysis and Result Cmdlets (Future Sprint)
 - [ ] Analysis cmdlets (10 total)
+
+### Priority 7: Dependencies and Features (Future Sprint)
+- [ ] Dependency cmdlets (2 total)
+
+### Cmdlets to Keep as Plural (Documented)
+- [x] Identified 39 cmdlets that should remain plural
+- [x] Documented reasons for keeping plural form
 
 ## Documentation Updates Required
 
@@ -358,5 +396,8 @@ See docs/SINGULAR-NOUN-DESIGN.md for complete guidelines.
 ---
 
 **Last Updated**: 2025-11-08  
-**Status**: Priority 1 COMPLETE - Documentation Ready - Priorities 2-6 Planned  
+**Total Cmdlets**: 61 with plural nouns (verified by codebase scan)
+- **To Refactor**: 22 cmdlets across Priorities 2-7
+- **Keep Plural**: 39 cmdlets (batch operations, collections, coordination)
+**Status**: Priority 1 COMPLETE - Documentation Ready - All cmdlets catalogued  
 **Next Phase**: Priority 2 cmdlets (scheduled for future sprint)
