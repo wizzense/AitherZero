@@ -332,7 +332,7 @@ function Get-ProjectMetrics {
                 $testFileName = $codeFile.Name -replace '\.ps1$', '.Tests.ps1'
                 
                 # Check in the appropriate range directory
-                $testPath = Join-Path $ProjectPath "library/library/tests/unit/automation-scripts/$rangeDir/$testFileName"
+                $testPath = Join-Path $ProjectPath "library/tests/unit/automation-scripts/$rangeDir/$testFileName"
                 
                 if (Test-Path $testPath) {
                     # Verify test has meaningful content
@@ -353,7 +353,7 @@ function Get-ProjectMetrics {
             $relativeDir = Split-Path $relativePath -Parent
             
             $possibleTestPaths = @(
-                (Join-Path (Join-Path $ProjectPath "library/library/tests/unit") $relativeDir | Join-Path -ChildPath $testFileName),
+                (Join-Path (Join-Path $ProjectPath "library/tests/unit") $relativeDir | Join-Path -ChildPath $testFileName),
                 (Join-Path (Join-Path $ProjectPath "library/tests/domains") ($relativeDir -replace 'domains/', '') | Join-Path -ChildPath $testFileName)
             )
             
@@ -440,7 +440,7 @@ function Get-ProjectMetrics {
     
     # Check for parallel analysis results first (most comprehensive)
     $parallelResultsPath = Join-Path $ProjectPath "library/reports/psscriptanalyzer-results.json"
-    $pssaSummaryPath = Join-Path $ProjectPath "library/library/tests/results"
+    $pssaSummaryPath = Join-Path $ProjectPath "library/tests/results"
     $latestPssaSummary = $null
     
     if (Test-Path $parallelResultsPath) {
@@ -572,8 +572,8 @@ function Get-ProjectMetrics {
     # Get latest test results - check multiple possible locations including JSON
     $testResultsPaths = @(
         (Join-Path $ProjectPath "testResults.xml"),
-        (Join-Path $ProjectPath "library/library/tests/results/*.xml"),
-        (Join-Path $ProjectPath "library/library/tests/results/*Summary*.json"),
+        (Join-Path $ProjectPath "library/tests/results/*.xml"),
+        (Join-Path $ProjectPath "library/tests/results/*Summary*.json"),
         (Join-Path $ProjectPath "TestResults.json")
     )
     
@@ -1173,7 +1173,7 @@ function Get-BuildStatus {
     
     # Also check library/tests/results directory for additional test data if no results yet
     if ($status.Tests -eq "Unknown") {
-        $testResultsDir = Join-Path $ProjectPath "library/library/tests/results"
+        $testResultsDir = Join-Path $ProjectPath "library/tests/results"
         if (Test-Path $testResultsDir) {
             $latestResults = Get-ChildItem -Path $testResultsDir -Filter "*.xml" -ErrorAction SilentlyContinue | 
                             Sort-Object LastWriteTime -Descending | 
@@ -1485,7 +1485,7 @@ function Get-FileLevelMetrics {
             
             # Check if file has tests
             $testPath = $file.FullName -replace '\.ps(m?)1$', '.Tests.ps1'
-            $testPath = $testPath -replace '(domains|automation-scripts)', 'library/library/tests/unit/$1'
+            $testPath = $testPath -replace '(domains|automation-scripts)', 'library/tests/unit/$1'
             $fileData.HasTests = Test-Path $testPath
             
             $fileMetrics.Files += $fileData
@@ -1672,7 +1672,7 @@ function Get-DetailedTestResults {
     
     # Parse TestReport JSON files for actual execution results (created by 0402 and 0403)
     # Look for latest TestReport-*.json files in library/tests/results
-    $testResultsDir = Join-Path $ProjectPath "library/library/tests/results"
+    $testResultsDir = Join-Path $ProjectPath "library/tests/results"
     $testReportFiles = @()
     
     if (Test-Path $testResultsDir) {
@@ -1826,8 +1826,8 @@ function Get-CodeCoverageDetails {
     
     # Look for latest coverage XML - check both library/tests/results and library/tests/coverage
     $searchPaths = @(
-        (Join-Path $ProjectPath "library/library/tests/results"),
-        (Join-Path $ProjectPath "library/library/tests/coverage")
+        (Join-Path $ProjectPath "library/tests/results"),
+        (Join-Path $ProjectPath "library/tests/coverage")
     )
     
     $coverageFiles = @()

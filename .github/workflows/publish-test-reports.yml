@@ -1,21 +1,30 @@
 ---
-name: 📊 Publish Test Reports to GitHub Pages
+name: 📊 Publish Test Reports & Dashboard to GitHub Pages
 
-# Publish comprehensive test reports and dashboards to GitHub Pages
+# Publish comprehensive test reports, dashboards, and PR-specific status to GitHub Pages
+# Integrates with test-execution.yml and generates navigable reports for each PR
 on:
   workflow_run:
-    workflows: ["Intelligent CI Orchestrator", "Quality Validation", "🎯 Unified Testing Orchestration", "⚡ Parallel Testing (High Performance)"]
+    workflows: ["🧪 Test Execution (Complete Suite)", "✅ PR Validation (v2 - CLI)", "🔍 Quality Validation (v2 - CLI)"]
     types: [completed]
   push:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'library/reports/**'
+      - 'library/tests/results/**'
+      - 'library/tests/coverage/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       force_publish:
         description: 'Force publish even if no changes detected'
         type: boolean
         default: true
+      pr_number:
+        description: 'PR number for PR-specific publishing (leave empty for main)'
+        type: string
+        required: false
 
 permissions:
   contents: write
@@ -29,166 +38,275 @@ concurrency:
 
 jobs:
   collect-reports:
-    name: 📥 Collect Test Reports and Artifacts
+    name: 📥 Collect Test Reports and Generate Dashboard
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
-          # Always checkout from the base repository, not from PR/fork
-          # This is safe because we only publish reports from trusted CI runs
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
+          fetch-depth: 0
 
-      - name: 📊 Download Workflow Artifacts
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📊 Download Test Artifacts from test-execution.yml
         if: github.event.workflow_run
         uses: dawidd6/action-download-artifact@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_id: ${{ github.event.workflow_run.id }}
           path: ./downloaded-artifacts
-          workflow: ${{ github.event.workflow_run.workflow_id }}
+          workflow: test-execution.yml
         continue-on-error: true
 
-      - name: 📦 Organize Reports
+      - name: 📦 Organize Test Results
         shell: pwsh
         run: |
-          Write-Host "📦 Organizing test reports..." -ForegroundColor Cyan
-
-          # Create reports directory if it doesn't exist
-          $reportsDir = "./reports"
-          if (-not (Test-Path $reportsDir)) {
-            New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
-          }
-
-          # Copy downloaded artifacts to reports directory
+          Write-Host "📦 Organizing test results from new test structure..." -ForegroundColor Cyan
+          
+          # Ensure directories exist
+          New-Item -ItemType Directory -Path "library/tests/results" -Force | Out-Null
+          New-Item -ItemType Directory -Path "library/tests/coverage" -Force | Out-Null
+          New-Item -ItemType Directory -Path "library/reports" -Force | Out-Null
+          
+          # Copy downloaded artifacts to test results
           if (Test-Path "./downloaded-artifacts") {
-            Write-Host "Copying downloaded artifacts..." -ForegroundColor Yellow
-            Get-ChildItem "./downloaded-artifacts" -Recurse -File | ForEach-Object {
-              $destPath = Join-Path $reportsDir $_.Name
+            Write-Host "Copying test artifacts from test-execution.yml..." -ForegroundColor Yellow
+            
+            Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.xml" | ForEach-Object {
+              $destPath = Join-Path "library/tests/results" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  Copied: $($_.Name)" -ForegroundColor Green
+              Write-Host "  ✓ Test Result: $($_.Name)" -ForegroundColor Green
             }
-          }
-
-          # Run quality validation to generate quality metrics for dashboard
-          Write-Host "Running quality validation for key domains..." -ForegroundColor Cyan
-          $domainPaths = @(
-            "./aithercore/utilities",
-            "./aithercore/configuration",
-            "./aithercore/security",
-            "./aithercore/experience"
-          )
-
-          foreach ($domainPath in $domainPaths) {
-            if (Test-Path $domainPath) {
-              Write-Host "  Validating: $domainPath" -ForegroundColor Yellow
-              try {
-                ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $domainPath -Recursive -ErrorAction Continue
-              } catch {
-                Write-Host "  ⚠️ Quality validation for $domainPath had issues (continuing): $_" -ForegroundColor Yellow
+            
+            Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.json" | ForEach-Object {
+              $destPath = Join-Path "library/tests/results" $_.Name
+              Copy-Item $_.FullName -Destination $destPath -Force
+              Write-Host "  ✓ Test Data: $($_.Name)" -ForegroundColor Green
+            }
+            
+            # Copy coverage data
+            Get-ChildItem "./downloaded-artifacts" -Recurse -Include "coverage*" | ForEach-Object {
+              if ($_.PSIsContainer) {
+                Copy-Item $_.FullName -Destination "library/tests/coverage" -Recurse -Force
+              } else {
+                Copy-Item $_.FullName -Destination "library/tests/coverage" -Force
               }
+              Write-Host "  ✓ Coverage: $($_.Name)" -ForegroundColor Green
             }
           }
+          
+          Write-Host "✅ Test results organized" -ForegroundColor Green
 
-          # Also validate key automation scripts
-          Write-Host "Validating automation scripts..." -ForegroundColor Cyan
-          $criticalScripts = @(
-            "./library/automation-scripts/0402_Run-UnitTests.ps1",
-            "./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
-            "./library/automation-scripts/0512_Generate-Dashboard.ps1"
-          )
-
-          foreach ($scriptPath in $criticalScripts) {
-            if (Test-Path $scriptPath) {
-              Write-Host "  Validating: $(Split-Path $scriptPath -Leaf)" -ForegroundColor Yellow
-              try {
-                ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $scriptPath -ErrorAction Continue
-              } catch {
-                Write-Host "  ⚠️ Quality validation for $(Split-Path $scriptPath -Leaf) had issues (continuing): $_" -ForegroundColor Yellow
-              }
-            }
+      - name: 🎯 Run Comprehensive Tests for Dashboard
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running tests to generate fresh metrics..." -ForegroundColor Cyan
+          
+          # Run quick validation to get current metrics
+          if (Test-Path "./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1") {
+            Write-Host "Running PSScriptAnalyzer for quality metrics..." -ForegroundColor Yellow
+            ./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Fast -ErrorAction Continue
           }
+          
+          # Run unit tests for test metrics
+          if (Test-Path "./library/automation-scripts/0402_Run-UnitTests.ps1") {
+            Write-Host "Running unit tests for coverage metrics..." -ForegroundColor Yellow
+            ./library/automation-scripts/0402_Run-UnitTests.ps1 -NoCoverage -ErrorAction Continue
+          }
+          
+          Write-Host "✅ Test execution completed" -ForegroundColor Green
 
-          Write-Host "✅ Quality validation completed" -ForegroundColor Green
-
-          # Generate FULL COMPREHENSIVE dashboard (0512 does all the heavy lifting)
-          Write-Host "Generating comprehensive dashboard with all metrics..." -ForegroundColor Cyan
+      - name: 📊 Generate Comprehensive Dashboard
+        shell: pwsh
+        run: |
+          Write-Host "📊 Generating comprehensive project dashboard..." -ForegroundColor Cyan
+          
+          # Generate main dashboard with all metrics
           ./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+          
+          # Generate project report
+          if (Test-Path "./library/automation-scripts/0510_Generate-ProjectReport.ps1") {
+            ./library/automation-scripts/0510_Generate-ProjectReport.ps1 -ErrorAction Continue
+          }
+          
+          Write-Host "✅ Dashboard generated successfully" -ForegroundColor Green
 
-          # Create beginner-friendly LANDING PAGE that guides to the detailed dashboard
-          $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending
+      - name: 🏷️ Generate PR-Specific Dashboard
+        if: github.event.pull_request
+        shell: pwsh
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+        run: |
+          Write-Host "🏷️ Generating PR-specific dashboard for PR #$env:PR_NUMBER..." -ForegroundColor Cyan
+          
+          $prDir = "library/reports/pr-$env:PR_NUMBER"
+          New-Item -ItemType Directory -Path $prDir -Force | Out-Null
+          
+          # Copy main dashboard to PR-specific location
+          if (Test-Path "library/reports/dashboard.html") {
+            Copy-Item "library/reports/dashboard.html" "$prDir/dashboard.html" -Force
+            Copy-Item "library/reports/dashboard.json" "$prDir/dashboard.json" -Force -ErrorAction SilentlyContinue
+          }
+          
+          # Create PR-specific index
+          $prIndexContent = @"
+# 🎯 PR #$env:PR_NUMBER Dashboard
+
+**Title:** $env:PR_TITLE  
+**Branch:** ``$env:PR_BRANCH`` → ``$env:PR_BASE``  
+**Status:** ${{ github.event.pull_request.state }}  
+**Updated:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+
+## 📊 Quick Links
+
+- [View Dashboard](dashboard.html) - Comprehensive metrics and status
+- [Back to Main Dashboard](../dashboard.html)
+- [All PRs](/prs/)
+
+## 📈 Latest Test Results
+
+"@
+          
+          # Add test result summary if available
+          $testResults = Get-ChildItem "library/tests/results" -Filter "*.xml" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if ($testResults) {
+            try {
+              [xml]$testXml = Get-Content $testResults.FullName
+              $total = [int]$testXml.'test-results'.total
+              $failures = [int]$testXml.'test-results'.failures
+              $errors = [int]$testXml.'test-results'.errors
+              $passed = $total - $failures - $errors
+              
+              $prIndexContent += @"
+
+### Test Summary
+- ✅ **Passed:** $passed
+- ❌ **Failed:** $($failures + $errors)
+- 📊 **Total:** $total
+- 🎯 **Success Rate:** $([math]::Round(($passed / $total) * 100, 1))%
+
+"@
+            } catch {
+              Write-Host "⚠️ Could not parse test results: $_" -ForegroundColor Yellow
+            }
+          }
+          
+          $prIndexContent | Out-File -FilePath "$prDir/index.md" -Encoding UTF8
+          
+          Write-Host "✅ PR #$env:PR_NUMBER dashboard created at $prDir" -ForegroundColor Green
+
+      - name: 📑 Create Main Navigation Index
+        shell: pwsh
+        run: |
+          Write-Host "📑 Creating main navigation index..." -ForegroundColor Cyan
+          
           $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+          
+          # Get all PR dashboards
+          $prDirs = Get-ChildItem "library/reports" -Directory -Filter "pr-*" -ErrorAction SilentlyContinue | Sort-Object Name -Descending
+          
+          $indexContent = @"
+# 🎯 AitherZero Project Dashboard
 
-          # Check if comprehensive dashboard exists
-          $dashboardHTML = Join-Path $reportsDir "dashboard.html"
-          $hasDashboard = Test-Path $dashboardHTML
+**Last Updated:** $timestamp
 
-          $indexContent = "# 🎯 AitherZero Project Dashboard - Landing Page`n`n"
+## 🚀 Main Dashboard
 
-          if ($hasDashboard) {
-            $indexContent += "## 🚀 [VIEW COMPREHENSIVE DASHBOARD →](docs/reports/dashboard.html)`n`n"
-            $indexContent += "> Click above for the full interactive dashboard with all metrics, charts, and detailed analysis`n`n"
-            $indexContent += "---`n`n"
+📊 [**View Comprehensive Dashboard**](library/reports/dashboard.html) - Real-time project metrics, test results, and code quality
+
+---
+
+## 📋 Pull Request Dashboards
+
+"@
+          
+          if ($prDirs.Count -gt 0) {
+            foreach ($prDir in $prDirs) {
+              $prNum = $prDir.Name -replace 'pr-', ''
+              $prIndexPath = Join-Path $prDir.FullName "index.md"
+              
+              if (Test-Path $prIndexPath) {
+                $prContent = Get-Content $prIndexPath -Raw
+                if ($prContent -match 'Title:\*\* (.+)') {
+                  $prTitle = $matches[1].Trim()
+                } else {
+                  $prTitle = "PR #$prNum"
+                }
+              } else {
+                $prTitle = "PR #$prNum"
+              }
+              
+              $indexContent += "- [PR #$prNum - $prTitle](library/reports/$($prDir.Name)/)`n"
+            }
+          } else {
+            $indexContent += "*No open PRs with dashboards*`n"
           }
+          
+          $indexContent += @"
 
-          $indexContent += "## 📊 Quick Navigation`n`n"
-          $indexContent += "### For Non-Technical Users`n"
-          $indexContent += "Start here if you're new to coding projects or need a high-level overview:`n`n"
-          $indexContent += "1. **[Dashboard](docs/reports/dashboard.html)** - Visual overview with health scores and trends`n"
-          $indexContent += "2. **What does it mean?** - Health scores tell you if things are working (0-100, higher is better)`n"
-          $indexContent += "3. **What should I do?** - Look for red items in the dashboard - those need attention first`n`n"
-          $indexContent += "### For Technical Users`n"
-          $indexContent += "Direct access to detailed reports and raw data:`n`n"
+---
 
-          foreach ($file in $reportFiles) {
-            $relativePath = "library/reports/$($file.Name)"
-            $fileTime = Get-Date $file.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss'
-            $indexContent += "- [$($file.Name)]($relativePath) - $fileTime`n"
-          }
+## 📚 Additional Resources
 
-          $indexContent += "`n---`n`n"
-          $indexContent += "## 🎓 Quick Reference Guide`n`n"
-          $indexContent += "### Health Scores Explained`n"
-          $indexContent += "- **90-100**: 🟢 Excellent`n"
-          $indexContent += "- **70-89**: 🟡 Good`n"
-          $indexContent += "- **50-69**: 🟠 Needs Work`n"
-          $indexContent += "- **0-49**: 🔴 Urgent`n`n"
-          $indexContent += "### Priority Guide`n"
-          $indexContent += "1. Fix anything marked 'Critical' or 'Error'`n"
-          $indexContent += "2. Address failing tests`n"
-          $indexContent += "3. Review warnings`n"
-          $indexContent += "4. Plan for features`n`n"
-          $indexContent += "---`n`n"
-          $indexContent += "Generated: $timestamp`n"
+- [Test Reports](library/tests/results/) - Raw test execution data
+- [Coverage Reports](library/tests/coverage/) - Code coverage analysis
+- [Quality Metrics](library/reports/psscriptanalyzer-fast-results.json) - PSScriptAnalyzer results
+- [Project Reports](library/reports/) - All generated reports
 
-          $indexContent | Out-File -FilePath "./reports-index.md" -Encoding UTF8
+## 🎓 Dashboard Guide
 
-          Write-Host "✅ Reports organized successfully" -ForegroundColor Green
-          Write-Host "Total reports: $($reportFiles.Count)" -ForegroundColor Cyan
-          if ($hasDashboard) {
-            Write-Host "✅ Comprehensive dashboard available at library/reports/dashboard.html" -ForegroundColor Green
-          }
+### Health Scores
+- 🟢 **90-100**: Excellent
+- 🟡 **70-89**: Good  
+- 🟠 **50-69**: Needs Work
+- 🔴 **0-49**: Urgent
 
-      - name: 💾 Commit Updated Persisted Reports
+### Priority Actions
+1. Fix Critical/Error items
+2. Address failing tests
+3. Review warnings
+4. Plan new features
+
+---
+
+*Generated: $timestamp*
+"@
+          
+          $indexContent | Out-File -FilePath "index.md" -Encoding UTF8
+          
+          Write-Host "✅ Navigation index created" -ForegroundColor Green
+          Write-Host "  - PRs tracked: $($prDirs.Count)" -ForegroundColor Cyan
+
+      - name: 💾 Commit Updated Reports
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Add only the persisted reports that should be tracked
-          git add reports/dashboard.html reports/dashboard.md reports/dashboard.json
-          git add reports/psscriptanalyzer-fast-results.json
-          git add reports/README.md reports/index.md
-          git add reports/metrics-history/*.json
+          # Add reports and dashboards
+          git add library/reports/dashboard.* library/reports/psscriptanalyzer-fast-results.json
+          git add library/reports/pr-*/
+          git add library/reports/README.md library/reports/index.md
+          git add library/reports/metrics-history/*.json
+          git add index.md
           
           # Commit if there are changes
           if ! git diff --staged --quiet; then
-            git commit -m "chore: update persisted reports - $(date -u +"%Y-%m-%d %H:%M UTC") [skip ci]"
+            git commit -m "chore: update dashboards and reports - $(date -u +"%Y-%m-%d %H:%M UTC") [skip ci]"
             git push origin HEAD:${{ github.ref_name }}
-            echo "✅ Persisted reports committed and pushed"
+            echo "✅ Reports committed and pushed"
           else
-            echo "ℹ️ No changes to persisted reports"
+            echo "ℹ️ No changes to reports"
           fi
 
       - name: 📤 Upload Combined Reports
@@ -197,7 +315,8 @@ jobs:
           name: combined-reports
           path: |
             library/reports/
-            reports-index.md
+            library/tests/results/
+            library/tests/coverage/
             index.md
             _config.yml
           retention-days: 30
@@ -206,6 +325,7 @@ jobs:
     name: 🚀 Publish to GitHub Pages
     runs-on: ubuntu-latest
     needs: collect-reports
+    timeout-minutes: 10
 
     steps:
       - name: 📥 Checkout Repository
@@ -237,11 +357,78 @@ jobs:
 
       - name: 📋 Report Deployment
         shell: pwsh
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
-          Write-Host "🔗 URL: ${{ steps.deployment.outputs.page_url }}" -ForegroundColor Cyan
+          Write-Host "🔗 Main URL: $env:PAGE_URL" -ForegroundColor Cyan
           Write-Host ""
-          Write-Host "📊 Available Reports:" -ForegroundColor Yellow
-          Write-Host "  - Dashboard: ${{ steps.deployment.outputs.page_url }}docs/reports/dashboard.html"
-          Write-Host "  - Reports Index: ${{ steps.deployment.outputs.page_url }}reports-index.html"
-          Write-Host "  - All Reports: ${{ steps.deployment.outputs.page_url }}docs/reports/"
+          Write-Host "📊 Available Dashboards:" -ForegroundColor Yellow
+          Write-Host "  - Main Dashboard: ${env:PAGE_URL}library/reports/dashboard.html"
+          Write-Host "  - Navigation Index: ${env:PAGE_URL}index.html"
+          
+          if ($env:PR_NUMBER) {
+            Write-Host "  - PR #$env:PR_NUMBER Dashboard: ${env:PAGE_URL}library/reports/pr-$env:PR_NUMBER/"
+          }
+          
+          Write-Host ""
+          Write-Host "📂 All Reports: ${env:PAGE_URL}library/reports/"
+          Write-Host "🧪 Test Results: ${env:PAGE_URL}library/tests/results/"
+          Write-Host "📈 Coverage: ${env:PAGE_URL}library/tests/coverage/"
+
+      - name: 💬 Comment on PR with Dashboard Link
+        if: github.event.pull_request
+        uses: actions/github-script@v7
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          script: |
+            const pageUrl = process.env.PAGE_URL;
+            const prNumber = process.env.PR_NUMBER;
+            
+            const comment = `## 📊 Dashboard Published
+
+Your PR-specific dashboard has been published to GitHub Pages!
+
+### 🔗 Quick Links
+- **[View PR Dashboard](${pageUrl}library/reports/pr-${prNumber}/)** - Your PR's current status
+- **[Main Project Dashboard](${pageUrl}library/reports/dashboard.html)** - Overall project health
+- **[All Test Results](${pageUrl}library/tests/results/)** - Detailed test data
+
+### 📈 What's Included
+- ✅ Test execution results
+- 📊 Code coverage metrics
+- 🔍 Quality analysis
+- 📋 Project status
+
+---
+*🤖 Auto-generated by publish-test-reports workflow*`;
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const existingComment = comments.find(c => 
+              c.user.login === 'github-actions[bot]' && 
+              c.body.includes('Dashboard Published')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
