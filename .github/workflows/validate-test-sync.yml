@@ -144,7 +144,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
 
           if [[ -n $(git status --porcelain) ]]; then
-            git add -A tests/unit/library/automation-scripts/
+            git add -A library/tests/unit/library/automation-scripts/
             git commit -m "chore: Remove orphaned test files [automated]
 
             Removed test files that reference non-existent automation scripts.

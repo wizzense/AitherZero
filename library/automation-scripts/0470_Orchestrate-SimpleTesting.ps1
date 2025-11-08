@@ -212,7 +212,7 @@ if ($PSCmdlet.ShouldProcess("Test execution via $($profileConfig.Runner)", "Run 
         }
 
         # Save summary
-        $summaryFile = Join-Path $projectRoot "tests/results/orchestration-summary-$timestamp.json"
+        $summaryFile = Join-Path $projectRoot "library/library/tests/results/orchestration-summary-$timestamp.json"
         $resultsDir = [System.IO.Path]::GetDirectoryName($summaryFile)
         if (-not (Test-Path $resultsDir)) {
             New-Item -Path $resultsDir -ItemType Directory -Force | Out-Null

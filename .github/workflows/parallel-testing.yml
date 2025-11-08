@@ -10,7 +10,7 @@ on:
     paths:
       - 'aithercore/**'
       - 'library/automation-scripts/**'
-      - 'tests/**'
+      - 'library/tests/**'
       - '**.ps1'
       - '**.psm1'
   pull_request:
@@ -143,7 +143,7 @@ jobs:
         run: |
           Write-Host "⚡ Running unit tests for range: ${{ matrix.range }}" -ForegroundColor Cyan
 
-          $testPath = "./tests/unit/library/automation-scripts/${{ matrix.range }}"
+          $testPath = "./library/tests/unit/library/automation-scripts/${{ matrix.range }}"
 
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
@@ -152,7 +152,7 @@ jobs:
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Normal'
             $config.TestResult.Enabled = $true
-            $config.TestResult.OutputPath = "./tests/results/UnitTests-${{ matrix.range }}.xml"
+            $config.TestResult.OutputPath = "./library/tests/results/UnitTests-${{ matrix.range }}.xml"
             $config.TestResult.OutputFormat = 'NUnitXml'
 
             $result = Invoke-Pester -Configuration $config
@@ -227,7 +227,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-tests-${{ matrix.range }}
-          path: ./tests/results/UnitTests-${{ matrix.range }}.xml
+          path: ./library/tests/results/UnitTests-${{ matrix.range }}.xml
           retention-days: 7
           if-no-files-found: warn
 
@@ -271,7 +271,7 @@ jobs:
         run: |
           Write-Host "⚡ Running domain tests for: ${{ matrix.module }}" -ForegroundColor Cyan
 
-          $testPath = "./tests/aithercore/${{ matrix.module }}"
+          $testPath = "./library/tests/aithercore/${{ matrix.module }}"
 
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
@@ -280,7 +280,7 @@ jobs:
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Normal'
             $config.TestResult.Enabled = $true
-            $config.TestResult.OutputPath = "./tests/results/DomainTests-${{ matrix.module }}.xml"
+            $config.TestResult.OutputPath = "./library/tests/results/DomainTests-${{ matrix.module }}.xml"
             $config.TestResult.OutputFormat = 'NUnitXml'
 
             $result = Invoke-Pester -Configuration $config
@@ -355,7 +355,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: domain-tests-${{ matrix.module }}
-          path: ./tests/results/DomainTests-${{ matrix.module }}.xml
+          path: ./library/tests/results/DomainTests-${{ matrix.module }}.xml
           retention-days: 7
           if-no-files-found: warn
 
@@ -399,7 +399,7 @@ jobs:
         run: |
           Write-Host "⚡ Running integration tests for: ${{ matrix.suite }}" -ForegroundColor Cyan
 
-          $testPath = "./tests/integration/${{ matrix.suite }}"
+          $testPath = "./library/tests/integration/${{ matrix.suite }}"
 
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
@@ -408,7 +408,7 @@ jobs:
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Normal'
             $config.TestResult.Enabled = $true
-            $config.TestResult.OutputPath = "./tests/results/IntegrationTests-${{ matrix.suite }}.xml"
+            $config.TestResult.OutputPath = "./library/tests/results/IntegrationTests-${{ matrix.suite }}.xml"
             $config.TestResult.OutputFormat = 'NUnitXml'
 
             $result = Invoke-Pester -Configuration $config
@@ -483,7 +483,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: integration-tests-${{ matrix.suite }}
-          path: ./tests/results/IntegrationTests-${{ matrix.suite }}.xml
+          path: ./library/tests/results/IntegrationTests-${{ matrix.suite }}.xml
           retention-days: 7
           if-no-files-found: warn
 
@@ -529,7 +529,7 @@ jobs:
           ./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
 
           # Capture summary for later use
-          $summaryPath = Get-ChildItem "./tests/analysis" -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue |
+          $summaryPath = Get-ChildItem "./library/tests/analysis" -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
           if ($summaryPath) {
@@ -549,7 +549,7 @@ jobs:
           Write-Host "⚡ Analyzing code coverage from test runs..." -ForegroundColor Cyan
 
           # Check for coverage files from test runs
-          $coverageFiles = Get-ChildItem "./tests/coverage" -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue
+          $coverageFiles = Get-ChildItem "./library/tests/coverage" -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue
 
           if ($coverageFiles) {
             Write-Host "Found $($coverageFiles.Count) coverage file(s)" -ForegroundColor Cyan
@@ -573,11 +573,11 @@ jobs:
           }
 
       - name: 📊 Upload Analysis Results
-        if: always() && hashFiles('./tests/analysis/*') != ''
+        if: always() && hashFiles('./library/tests/analysis/*') != ''
         uses: actions/upload-artifact@v4
         with:
           name: static-analysis
-          path: ./tests/analysis/*
+          path: ./library/tests/analysis/*
           retention-days: 7
 
       - name: 🐛 Collect Open Issues
@@ -741,7 +741,7 @@ jobs:
       - name: 📥 Download All Test Results
         uses: actions/download-artifact@v4
         with:
-          path: ./tests/results-consolidated
+          path: ./library/tests/results-consolidated
 
       - name: 📊 Consolidate Results
         id: consolidate
@@ -752,7 +752,7 @@ jobs:
           Write-Host "📊 Consolidating Parallel Test Results" -ForegroundColor Cyan
           Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
 
-          $allResults = Get-ChildItem -Path "./tests/results-consolidated" -Recurse -Filter "*.xml"
+          $allResults = Get-ChildItem -Path "./library/tests/results-consolidated" -Recurse -Filter "*.xml"
 
           Write-Host "Found $($allResults.Count) test result files" -ForegroundColor Cyan
 
@@ -881,8 +881,8 @@ jobs:
 
           $testReportJson = $testReport | ConvertTo-Json -Depth 10
 
-          # Save to tests/results for dashboard
-          $resultsDir = "./tests/results"
+          # Save to library/tests/results for dashboard
+          $resultsDir = "./library/tests/results"
           if (-not (Test-Path $resultsDir)) {
             New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
           }
@@ -907,7 +907,7 @@ jobs:
         continue-on-error: true
         with:
           name: '⚡ Parallel Test Results'
-          path: './tests/results-consolidated/**/*.xml'
+          path: './library/tests/results-consolidated/**/*.xml'
           reporter: 'java-junit'
           fail-on-error: false
 
@@ -1108,7 +1108,7 @@ jobs:
             reports/**/*.html
             reports/**/*.json
             reports/**/*.md
-            tests/results/TestReport-Parallel-*.json
+            library/tests/results/TestReport-Parallel-*.json
           retention-days: 30
           if-no-files-found: warn
 

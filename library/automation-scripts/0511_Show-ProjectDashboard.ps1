@@ -83,7 +83,7 @@ function Show-ProjectMetrics {
     Write-Host ("-" * 40) -ForegroundColor Gray
 
     # Get latest report
-    $reportPath = Join-Path $ProjectPath "tests/reports"
+    $reportPath = Join-Path $ProjectPath "library/library/tests/reports"
     $latestReport = Get-ChildItem -Path $reportPath -Filter "ProjectReport-*.json" -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
@@ -119,7 +119,7 @@ function Show-TestResults {
     Write-Host "TEST RESULTS" -ForegroundColor Yellow
     Write-Host ("-" * 40) -ForegroundColor Gray
 
-    $testResultsPath = Join-Path $ProjectPath "tests/results"
+    $testResultsPath = Join-Path $ProjectPath "library/library/tests/results"
     if (-not (Test-Path $testResultsPath)) {
         Write-Host "Test results directory not found" -ForegroundColor Yellow
         Write-Host ""

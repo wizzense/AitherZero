@@ -67,8 +67,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            tests/results
-            tests/coverage
+            library/tests/results
+            library/tests/coverage
           key: ${{ runner.os }}-test-results-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-test-results-
@@ -121,9 +121,9 @@ jobs:
         with:
           name: test-results-${{ github.run_number }}
           path: |
-            tests/results/**/*.xml
-            tests/results/**/*.json
-            tests/coverage/**/*
+            library/tests/results/**/*.xml
+            library/tests/results/**/*.json
+            library/tests/coverage/**/*
             library/reports/**/*.md
             library/reports/**/*.json
             library/reports/**/*.html
@@ -134,7 +134,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: |
-            tests/results/**/*.xml
+            library/tests/results/**/*.xml
           check_name: 'Test Results (v2)'
           comment_mode: always
 

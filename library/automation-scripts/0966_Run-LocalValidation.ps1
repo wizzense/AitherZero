@@ -217,7 +217,7 @@ $(if ($allPassed) {
 } else {
     '- ✗ Fix the failing checks above'
     '- Re-run validation: `./automation-scripts/0960_Run-LocalValidation.ps1 -ValidationLevel $ValidationLevel`'
-    '- Review detailed logs in `./reports/` and `./tests/results/`'
+    '- Review detailed logs in `./reports/` and `./library/tests/results/`'
 })
 
 ## Comparison with GitHub Actions

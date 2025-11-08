@@ -979,7 +979,7 @@ function Initialize-Configuration {
     }
 
     # Create necessary directories
-    $directories = @("logs", "tests/results", "tests/reports", "tests/analysis")
+    $directories = @("logs", "library/tests/results", "library/tests/reports", "library/tests/analysis")
     foreach ($dir in $directories) {
         if (-not (Test-Path $dir)) {
             New-Item -ItemType Directory -Path $dir -Force | Out-Null

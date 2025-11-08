@@ -198,18 +198,18 @@ Write-Host ""
 # Show example
 if ($results.Generated -gt 0) {
     Write-Host "💡 Example Test Generated:" -ForegroundColor Cyan
-    Write-Host "   Location: tests/unit/automation-scripts/" -ForegroundColor White
+    Write-Host "   Location: library/tests/unit/automation-scripts/" -ForegroundColor White
     Write-Host "   Features: ✅ Structural ✅ Functional ✅ Error Handling ✅ Mocks" -ForegroundColor White
     Write-Host ""
-    Write-Host "   To run: Invoke-Pester -Path tests/unit/automation-scripts/" -ForegroundColor Yellow
+    Write-Host "   To run: Invoke-Pester -Path library/tests/unit/automation-scripts/" -ForegroundColor Yellow
     Write-Host ""
 }
 
 # Next steps
 if ($Mode -eq 'Sample') {
     Write-Host "🎯 Next Steps:" -ForegroundColor Cyan
-    Write-Host "   1. Review generated tests in tests/unit/automation-scripts/"
-    Write-Host "   2. Run them: Invoke-Pester -Path tests/unit/automation-scripts/0400-0499/"
+    Write-Host "   1. Review generated tests in library/tests/unit/automation-scripts/"
+    Write-Host "   2. Run them: Invoke-Pester -Path library/tests/unit/automation-scripts/0400-0499/"
     Write-Host "   3. If satisfied, regenerate more: -Mode Range or -Mode All"
     Write-Host ""
 }

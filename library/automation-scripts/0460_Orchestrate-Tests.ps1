@@ -29,7 +29,7 @@ param(
     [string]$Profile = 'smart',
 
     [string]$TestPath = "./tests",
-    [string]$OutputPath = "./tests/results/orchestrated",
+    [string]$OutputPath = "./library/tests/results/orchestrated",
 
     [switch]$DryRun,
     [switch]$ShowProgress,

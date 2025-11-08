@@ -212,7 +212,7 @@ try {
             @{ Pattern = '\.git'; Name = 'Git files excluded' }
             @{ Pattern = '\.vscode|\.idea'; Name = 'IDE files excluded' }
             @{ Pattern = 'logs/|\.log'; Name = 'Log files excluded' }
-            @{ Pattern = 'tests/|\.Tests\.ps1'; Name = 'Test files excluded' }
+            @{ Pattern = 'library/tests/|\.Tests\.ps1'; Name = 'Test files excluded' }
             @{ Pattern = '\.md'; Name = 'Documentation excluded' }
         )
         

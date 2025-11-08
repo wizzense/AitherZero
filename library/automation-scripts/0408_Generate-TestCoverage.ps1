@@ -51,7 +51,7 @@ try {
     $shouldGenerate = $false
     $testConfig = @{
         TargetCoverage = 80
-        OutputPath = Join-Path (Split-Path $PSScriptRoot -Parent) "tests/generated"
+        OutputPath = Join-Path (Split-Path $PSScriptRoot -Parent) "library/library/tests/generated"
         IncludeModules = @()
         ExcludeModules = @()
         GenerateBaseline = $true

@@ -17,7 +17,7 @@ param(
     [ValidateSet('Pester', 'PSScriptAnalyzer', 'All')]
     [string]$Source = 'All',
 
-    [string]$ResultsPath = './tests/results',
+    [string]$ResultsPath = './library/tests/results',
 
     [string[]]$Labels = @('bug', 'automated'),
 

@@ -163,7 +163,7 @@ jobs:
             }
             
             # Testing
-            if ($file -match 'tests/|\.Tests\.ps1$|library/automation-scripts/04[0-9][0-9]') {
+            if ($file -match 'library/tests/|\.Tests\.ps1$|library/automation-scripts/04[0-9][0-9]') {
               $agentScores.jessica += 3
               $categoryFiles.Testing += $file
             }
@@ -312,7 +312,7 @@ jobs:
                 }
               }
               'jessica' {
-                if ($file -match 'tests/|\.Tests\.ps1$|library/automation-scripts/04[0-9][0-9]') {
+                if ($file -match 'library/tests/|\.Tests\.ps1$|library/automation-scripts/04[0-9][0-9]') {
                   $isRelevant = $true
                 }
               }

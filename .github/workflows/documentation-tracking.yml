@@ -10,7 +10,7 @@ on:
     paths:
       - 'aithercore/**'
       - 'library/automation-scripts/**'
-      - 'tests/**'
+      - 'library/tests/**'
       - '**.ps1'
       - '**.psm1'
       - '**.md'

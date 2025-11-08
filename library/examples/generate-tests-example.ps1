@@ -137,7 +137,7 @@ Add to your CI/CD pipeline:
   New-AllAutomationTests
 
   # Run all generated tests
-  Invoke-Pester -Path "./tests/unit/automation-scripts" -OutputFile TestResults.xml
+  Invoke-Pester -Path "./library/tests/unit/automation-scripts" -OutputFile TestResults.xml
 
 "@ -ForegroundColor White
 

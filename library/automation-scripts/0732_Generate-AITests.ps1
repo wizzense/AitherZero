@@ -30,7 +30,7 @@ param(
     [ValidateSet('Unit', 'Integration', 'E2E', 'All')]
     [string]$TestType = 'Unit',
 
-    [string]$OutputPath = "./tests/generated"
+    [string]$OutputPath = "./library/tests/generated"
 )
 
 #region Metadata

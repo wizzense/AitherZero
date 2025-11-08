@@ -2,7 +2,8 @@
 
 BeforeAll {
     # Import the core module which loads all domains
-    $projectRoot = Split-Path -Parent -Path $PSScriptRoot | Split-Path -Parent | Split-Path -Parent
+    # From library/tests/domains/configuration -> library/tests/domains -> library/tests -> library -> project root
+    $projectRoot = Split-Path -Parent -Path $PSScriptRoot | Split-Path -Parent | Split-Path -Parent | Split-Path -Parent
     Import-Module (Join-Path $projectRoot "AitherZero.psm1") -Force
 }
 
@@ -10,7 +11,8 @@ Describe "Configuration Module Tests" {
     BeforeEach {
         # Use a copy of config.psd1 for testing to avoid overwriting the real file
         $script:TestConfigPath = Join-Path $TestDrive "test-config.psd1"
-        $realConfigPath = Join-Path $PSScriptRoot "../../../config.psd1" | Resolve-Path
+        $projectRoot = Split-Path -Parent -Path $PSScriptRoot | Split-Path -Parent | Split-Path -Parent | Split-Path -Parent
+        $realConfigPath = Join-Path $projectRoot "config.psd1"
         Copy-Item $realConfigPath $script:TestConfigPath -Force
         Initialize-ConfigurationSystem -ConfigPath $script:TestConfigPath
     }
