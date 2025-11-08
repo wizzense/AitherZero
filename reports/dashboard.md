@@ -2,7 +2,7 @@
 
 **Infrastructure Automation Platform**
 
-*Last updated: 2025-11-04 04:34:53*
+*Last updated: 2025-11-08 00:03:09*
 
 ---
 
@@ -11,45 +11,45 @@
 ### File Statistics
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📁 **Total Files** | **203** | 139 Scripts, 58 Modules, 6 Data |
-| 📄 **Documentation** | **407** | Markdown files |
-| 🔧 **Configuration** | **133** | 3 YAML, 130 JSON |
+| 📁 **Total Files** | **228** | 157 Scripts, 55 Modules, 16 Data |
+| 📄 **Documentation** | **362** | Markdown files |
+| 🔧 **Configuration** | **102** | 3 YAML, 99 JSON |
 
 ### Code Statistics
 | Metric | Value | Details |
 |--------|-------|---------|
-| 📝 **Lines of Code** | **94,195** | Total lines across all PowerShell files |
-| 🔨 **Functions** | **1115** | Public and private functions |
-| 💬 **Comments** | **7,722** | 8.2% of total code |
-| ⚪ **Blank Lines** | **15,687** | Whitespace and formatting |
+| 📝 **Lines of Code** | **98,113** | Total lines across all PowerShell files |
+| 🔨 **Functions** | **1078** | Public and private functions |
+| 💬 **Comments** | **8,159** | 8.3% of total code |
+| ⚪ **Blank Lines** | **15,057** | Whitespace and formatting |
 
 ### Automation & Infrastructure  
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🤖 **Automation Scripts** | **134** | Number-based orchestration (0000-9999) |
-| ⚡ **GitHub Workflows** | **21** | CI/CD automation |
-| 🗂️ **Domain Modules** | **11** | 37 total modules |
+| 🤖 **Automation Scripts** | **144** | Number-based orchestration (0000-9999) |
+| ⚡ **GitHub Workflows** | **30** | CI/CD automation |
+| 🗂️ **Domain Modules** | **11** | 40 total modules |
 
 ### Testing & Quality
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🧪 **Test Files** | **307** | 154 Unit, 153 Integration |
-| ✅ **Last Test Run** | **5/22 cases** | Success Rate: 22.7%; Duration: 1.26s |
-| 📊 **Test Details** | **2025-11-04 04:18:10** | ✅ 5 passed, ❌ 17 failed |
- | ⚠️ **Note** | **Partial Run** | Only 22 test cases executed from available test files. Run `./az 0402` for full suite. |
+| 🧪 **Test Files** | **324** | 162 Unit, 162 Integration |
+| ✅ **Last Test Run** | **0/0 cases** | Success Rate: 0%; Duration: Run tests to see duration |
+| 📊 **Test Details** | **Not run recently** | ✅ 0 passed, ❌ 0 failed |
+ | ⚠️ **Note** | **Partial Run** | Only 0 test cases executed from available test files. Run `./automation-scripts/0402_Run-UnitTests.ps1` for full suite. |
 
-> **⚠️ Only 22 test cases executed.** Run `./az 0402` for full test suite.
-| 🧪 **Test Coverage** | **71.3%** | 127 / 178 files have tests |
-| 📚 **Documentation Coverage** | **9.3%** | 104 / 1115 functions documented |
-| ✨ **Code Quality** | **94/100** | 236 issues in 10 files (✅ 190 clean / ⚠️ 9 warnings / ❌ 1 errors) |
+> **⚠️ Only 0 test cases executed.** Run `./automation-scripts/0402_Run-UnitTests.ps1` for full test suite.
+| 🧪 **Test Coverage** | **68.5%** | 126 / 184 files have tests |
+| 📚 **Documentation Coverage** | **9.6%** | 104 / 1078 functions documented |
+| ✨ **Code Quality** | **51.3/100** | 22 issues in 22 files (✅ 203 clean / ⚠️ 22 warnings / ❌ 0 errors) |
 
 ### Git Repository
 | Metric | Value | Details |
 |--------|-------|---------|
-| 🌿 **Branch** | **`copilot/generate-dashboard`** | Current working branch |
-| 📝 **Total Commits** | **3** | Repository history |
-| 👥 **Contributors** | **1** | Unique contributors |
-| 🔄 **Latest Commit** | **52ea37c - Fix GitHub API data fetching with proper fallback handling (51 seconds ago)** | Most recent change |
+| 🌿 **Branch** | **`copilot/fix-reports-folder-updating`** | Current working branch |
+| 📝 **Total Commits** | **2** | Repository history |
+| 👥 **Contributors** | **2** | Unique contributors |
+| 🔄 **Latest Commit** | **ee5ff1b - Initial plan (3 minutes ago)** | Most recent change |
 
 
 ## ✨ Code Quality Validation
@@ -63,33 +63,32 @@
 | 🧪 **Test Coverage** | **0%** | ✅ 0 / ⚠️ 0 / ❌ 0 |
 | 🔬 **PSScriptAnalyzer** | **0%** | ✅ 0 / ⚠️ 0 / ❌ 0 |
 
-*⚠️ No quality validation data available. Run `./az 0420` to generate quality reports.*
+*⚠️ No quality validation data available. Run `./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive` to generate quality reports.*
 
 ## 🎯 Project Health
 
-⚠️ **Status: Issues Detected** - Attention required
+❓ **Status: Unknown** - Monitoring in progress
 
 ### Build Status
-- **Tests:** ❌ Failing
+- **Tests:** ❓ Unknown
 - **Security:** 🛡️ Scanned
-- **Code Quality:** 📊 94/100
+- **Code Quality:** 📊 51.3/100
 - **Platform:** 💻 Unix
 - **PowerShell:** ⚡ 7.4.13
 
 ## 🔄 Recent Activity
 
-- `52ea37c` Fix GitHub API data fetching with proper fallback handling
-- `bf6752b` Initial plan
-- `fdfd0cd` refactor: use duck typing for PSScriptAnalyzer results filtering
+- `ee5ff1b` Initial plan
+- `a7e1237` Delete legacy-to-migrate directory
 
 ## 🎯 Quick Commands
 
 | Action | Command |
 |--------|---------|
-| Run Tests | `./az 0402` |
-| Code Analysis | `./az 0404` |
-| Generate Reports | `./az 0510` |
-| View Dashboard | `./az 0511` |
+| Run Tests | `./automation-scripts/0402_Run-UnitTests.ps1` |
+| Code Analysis | `./automation-scripts/0404_Run-PSScriptAnalyzer.ps1` |
+| Generate Reports | `./automation-scripts/0510_Generate-ProjectReport.ps1` |
+| View Dashboard | `./automation-scripts/0511_Show-ProjectDashboard.ps1` |
 | Syntax Check | `./az 0407` |
 
 ## 📋 System Information
