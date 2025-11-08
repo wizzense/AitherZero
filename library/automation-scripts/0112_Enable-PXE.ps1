@@ -10,7 +10,7 @@ param(
 )
 
 # Import script utilities
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 Write-ScriptLog "Starting PXE boot configuration"

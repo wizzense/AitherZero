@@ -61,7 +61,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $testGeneratorPath = Join-Path $projectRoot "aithercore/testing/FunctionalTestGenerator.psm1"
 
 # Banner

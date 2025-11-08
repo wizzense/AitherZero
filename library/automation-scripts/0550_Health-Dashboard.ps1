@@ -100,7 +100,7 @@ param(
 )
 
 # Initialize environment
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Configuration constants
 $script:CoreModules = @('Logging', 'LogViewer', 'Configuration')

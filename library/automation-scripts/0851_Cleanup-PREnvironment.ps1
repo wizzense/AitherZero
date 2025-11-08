@@ -56,7 +56,7 @@ $ScriptRoot = $PSScriptRoot
 if (-not $ScriptRoot) {
     $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 }
-$ProjectRoot = Split-Path -Parent $ScriptRoot
+$ProjectRoot = Split-Path -Parent (Split-Path -Parent $ScriptRoot)
 
 # Track cleanup results
 $CleanupResults = @{
