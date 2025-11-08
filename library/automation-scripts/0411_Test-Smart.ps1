@@ -103,7 +103,7 @@ function Get-TestContext {
         Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-$CacheMinutes) }
 
     # Check for recent test runs in results directory
-    $resultsPath = Join-Path $projectRoot "library/library/tests/results"
+    $resultsPath = Join-Path $projectRoot "library/tests/results"
     if (Test-Path $resultsPath) {
         $recentResults = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending |

@@ -20,7 +20,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "library/library/tests/unit"),
+    [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "library/tests/unit"),
     [string]$OutputPath,
     [switch]$DryRun,
     [switch]$PassThru,
@@ -210,7 +210,7 @@ try {
         if ($testFile.FullName -match 'automation-scripts') {
             # Extract script name from test file name
             $scriptName = $testFile.BaseName -replace '\.Tests$', ''
-            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName.ps1"
+            $scriptPath = Join-Path $projectRoot "library/automation-scripts/$scriptName.ps1"
             
             # Check if the corresponding script exists
             if (-not (Test-Path $scriptPath)) {
@@ -452,7 +452,7 @@ try {
 
     # Output configuration
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "library/library/tests/results"
+        $OutputPath = Join-Path $projectRoot "library/tests/results"
     }
 
     if (-not (Test-Path $OutputPath)) {
@@ -843,7 +843,7 @@ catch {
     $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
     
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $scriptProjectRoot "library/library/tests/results"
+        $OutputPath = Join-Path $scriptProjectRoot "library/tests/results"
     }
     
     if (-not (Test-Path $OutputPath)) {

@@ -8,7 +8,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
-    [string]$OutputPath = (Join-Path $ProjectPath "library/library/tests/reports"),
+    [string]$OutputPath = (Join-Path $ProjectPath "library/tests/reports"),
     [ValidateSet('HTML', 'JSON', 'Markdown', 'All')]
     [string]$Format = 'All'
 )

@@ -444,7 +444,7 @@ try {
     # Save results
     if ($allIssues.Count -gt 0) {
         if (-not $OutputPath) {
-            $OutputPath = Join-Path $projectRoot "library/library/tests/analysis"
+            $OutputPath = Join-Path $projectRoot "library/tests/analysis"
         }
 
         if (-not (Test-Path $OutputPath)) {

@@ -57,7 +57,7 @@ $scriptMetadata = @{
 # Paths
 $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $configPath = Join-Path $projectRoot "config.psd1"
-$scriptsPath = Join-Path $projectRoot "automation-scripts"
+$scriptsPath = Join-Path $projectRoot "library/automation-scripts"
 
 function Write-SyncLog {
     param(

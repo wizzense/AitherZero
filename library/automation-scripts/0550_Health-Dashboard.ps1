@@ -314,7 +314,7 @@ function Get-CodeQualityMetrics {
     }
     
     # Check for PSScriptAnalyzer results
-    $analysisPath = Join-Path $ProjectRoot "library/library/tests/analysis"
+    $analysisPath = Join-Path $ProjectRoot "library/tests/analysis"
     if (Test-Path $analysisPath) {
         $latestCSV = Get-ChildItem -Path $analysisPath -Filter "*.csv" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1
