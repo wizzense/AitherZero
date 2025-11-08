@@ -97,7 +97,7 @@ $scriptsToRegenerate = switch ($Mode) {
         )
         
         foreach ($scriptName in $sampleScripts) {
-            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName"
+            $scriptPath = Join-Path $projectRoot "library/automation-scripts/$scriptName"
             if (Test-Path $scriptPath) {
                 Get-Item $scriptPath
             }

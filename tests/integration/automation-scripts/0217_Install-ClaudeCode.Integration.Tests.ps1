@@ -15,7 +15,7 @@ Describe '0217_Install-ClaudeCode Integration' -Tag 'Integration', 'AutomationSc
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0217_Install-ClaudeCode.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0217_Install-ClaudeCode.ps1'
     }
 
     Context 'Integration' {

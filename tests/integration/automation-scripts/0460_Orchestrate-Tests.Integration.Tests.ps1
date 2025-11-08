@@ -15,7 +15,7 @@ Describe '0460_Orchestrate-Tests Integration' -Tag 'Integration', 'AutomationScr
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0460_Orchestrate-Tests.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0460_Orchestrate-Tests.ps1'
     }
 
     Context 'Integration' {

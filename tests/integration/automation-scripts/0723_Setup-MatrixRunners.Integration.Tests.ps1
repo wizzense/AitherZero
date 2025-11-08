@@ -16,7 +16,7 @@ Describe '0723_Setup-MatrixRunners Integration' -Tag 'Integration', 'AutomationS
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0723_Setup-MatrixRunners.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0723_Setup-MatrixRunners.ps1'
     }
 
     Context 'Integration' {

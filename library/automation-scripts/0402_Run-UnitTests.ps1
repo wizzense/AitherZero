@@ -210,7 +210,7 @@ try {
         if ($testFile.FullName -match 'automation-scripts') {
             # Extract script name from test file name
             $scriptName = $testFile.BaseName -replace '\.Tests$', ''
-            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName.ps1"
+            $scriptPath = Join-Path $projectRoot "library/automation-scripts/$scriptName.ps1"
             
             # Check if the corresponding script exists
             if (-not (Test-Path $scriptPath)) {

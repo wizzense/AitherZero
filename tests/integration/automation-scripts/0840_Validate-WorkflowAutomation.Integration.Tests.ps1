@@ -15,7 +15,7 @@ Describe '0840_Validate-WorkflowAutomation Integration' -Tag 'Integration', 'Aut
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0840_Validate-WorkflowAutomation.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0840_Validate-WorkflowAutomation.ps1'
     }
 
     Context 'Integration' {
