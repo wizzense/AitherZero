@@ -250,7 +250,7 @@ try {
             type = "stdio"
             command = "node"
             args = @(
-                "`${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+                "`${workspaceFolder}/integrations/mcp-server/scripts/start-with-build.mjs"
             )
             env = [PSCustomObject]@{
                 AITHERZERO_ROOT = "`${workspaceFolder}"

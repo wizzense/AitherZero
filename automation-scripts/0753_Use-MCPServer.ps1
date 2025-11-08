@@ -19,7 +19,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
-$mcpServerPath = Join-Path $PSScriptRoot ".." "mcp-server"
+$mcpServerPath = Join-Path $PSScriptRoot ".." "integrations" "mcp-server"
 $serverJs = Join-Path $mcpServerPath "dist" "index.js"
 
 function Invoke-MCPToolCall {

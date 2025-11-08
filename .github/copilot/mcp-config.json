@@ -4,7 +4,7 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "mcp-server/scripts/start-with-build.mjs"
+        "integrations/mcp-server/scripts/start-with-build.mjs"
       ],
       "env": {
         "AITHERZERO_ROOT": ".",

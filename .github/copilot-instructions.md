@@ -500,7 +500,8 @@ if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
 ├── reports/                     # Generated reports
 ├── logs/                        # Transcript and execution logs
 ├── infrastructure/             # OpenTofu/Terraform configs
-├── mcp-server/                 # MCP server (Node.js) - AI integration
+├── integrations/               # External integrations
+│   └── mcp-server/             # MCP server (Node.js) - AI integration
 └── tools/                      # Utility scripts
 ```
 

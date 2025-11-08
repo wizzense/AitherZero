@@ -257,7 +257,7 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
     Context "MCP Server Integration Tests" {
 
         BeforeEach {
-            $script:MCPServerPath = Join-Path $script:ProjectRoot "src/tools/ProjectManager/mcp-server"
+            $script:MCPServerPath = Join-Path $script:ProjectRoot "integrations" "mcp-server"
             $script:MCPConfigFile = Join-Path $script:ProjectRoot ".mcp.json"
         }
 
