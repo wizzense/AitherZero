@@ -71,7 +71,7 @@ Set-StrictMode -Version Latest
 
 # Import script utilities
 $ProjectRoot = if ($PSScriptRoot) { Split-Path $PSScriptRoot -Parent } else { Get-Location }
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 # Category mappings to script number ranges
 $CategoryRanges = @{
@@ -150,7 +150,7 @@ Set-StrictMode -Version Latest
 
 # Import script utilities
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 try {
             $content = Get-Content $script.FullName -First 20
             foreach ($line in $content) {

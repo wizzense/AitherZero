@@ -31,7 +31,7 @@ Set-StrictMode -Version Latest
 
 # Import script utilities
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 Write-ScriptLog "Setting up Git hooks for AitherZero..." -Level 'Information'
 

@@ -181,7 +181,7 @@ try {
     } elseif (-not $Execute) {
         # Auto-save to converted directory
         $workflowName = [System.IO.Path]::GetFileNameWithoutExtension($WorkflowPath)
-        $savedPath = Join-Path $ProjectRoot "domains/orchestration/playbooks/converted/$workflowName.json"
+        $savedPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/converted/$workflowName.json"
     }
     
     if ($savedPath) {

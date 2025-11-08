@@ -59,8 +59,8 @@ $projectRoot = Split-Path $PSScriptRoot -Parent
 $modulePaths = @(
     "$projectRoot/domains/ai-agents/ClaudeCodeIntegration.psm1"
     "$projectRoot/domains/ai-agents/AIWorkflowOrchestrator.psm1"
-    "$projectRoot/domains/utilities/Logging.psm1"
-    "$projectRoot/domains/testing/TestingFramework.psm1"
+    "$projectRoot/aithercore/utilities/Logging.psm1"
+    "$projectRoot/aithercore/testing/TestingFramework.psm1"
 )
 
 foreach ($modulePath in $modulePaths) {

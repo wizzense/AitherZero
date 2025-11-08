@@ -11,11 +11,11 @@ param(
 
 # Import script utilities
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 # Import PackageManager module
 try {
-    $packageManagerPath = Join-Path $ProjectRoot "domains/utilities/PackageManager.psm1"
+    $packageManagerPath = Join-Path $ProjectRoot "aithercore/utilities/PackageManager.psm1"
     if (Test-Path $packageManagerPath) {
         Import-Module $packageManagerPath -Force -Global
         $script:PackageManagerAvailable = $true
@@ -31,7 +31,7 @@ Write-ScriptLog "Starting Node.js installation using package managers"
 
 try {
     # Import Configuration module for manifest-driven configuration
-    $configModule = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/configuration/Configuration.psm1"
+    $configModule = Join-Path (Split-Path $PSScriptRoot -Parent) "aithercore/configuration/Configuration.psm1"
     if (Test-Path $configModule) {
         Import-Module $configModule -Force -ErrorAction SilentlyContinue
     }

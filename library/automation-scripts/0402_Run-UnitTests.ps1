@@ -46,11 +46,11 @@ if (-not $env:TERM) {
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
-$testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
-$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
+$testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
+$testCacheModule = Join-Path $projectRoot "aithercore/testing/TestCacheManager.psm1"
+$configModule = Join-Path $projectRoot "aithercore/configuration/Configuration.psm1"
 
 # Import Configuration module to use Get-ConfiguredValue
 if (Test-Path $configModule) {

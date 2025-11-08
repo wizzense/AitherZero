@@ -55,7 +55,7 @@ Set-StrictMode -Version Latest
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $testRoot = Join-Path $projectRoot "library/library/tests/unit/automation-scripts"
 $scriptRoot = Join-Path $projectRoot "automation-scripts"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
 
 # Import Logging module if available
 if (Test-Path $loggingModule) {

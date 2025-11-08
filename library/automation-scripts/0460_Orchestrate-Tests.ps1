@@ -186,7 +186,7 @@ if ($PSCmdlet.ShouldProcess("Test orchestration ($Profile profile)", "Execute te
         # Use playbook-based orchestration
         Write-OrchLog "📖 Using playbook: $($selectedProfile.Playbook)" "Info"
 
-        $playbookPath = Join-Path $projectRoot "domains/orchestration/playbooks/testing/$($selectedProfile.Playbook).json"
+        $playbookPath = Join-Path $projectRoot "aithercore/orchestration/playbooks/testing/$($selectedProfile.Playbook).json"
 
         if (-not (Test-Path $playbookPath)) {
             Write-OrchLog "❌ Playbook not found: $playbookPath" "Error"

@@ -50,7 +50,7 @@
 .PARAMETER NoIssueCreation
     Disable automatic issue creation even if configured in config.psd1
 .EXAMPLE
-    ./0420_Validate-ComponentQuality.ps1 -Path ./domains/testing/NewModule.psm1
+    ./0420_Validate-ComponentQuality.ps1 -Path ./aithercore/testing/NewModule.psm1
     Validate a single module file
 .EXAMPLE
     ./0420_Validate-ComponentQuality.ps1 -Path ./domains/testing -Recursive
@@ -110,8 +110,8 @@ $projectRoot = Split-Path $PSScriptRoot -Parent
 $env:AITHERZERO_ROOT = $projectRoot
 
 # Import modules
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
-$qualityModule = Join-Path $projectRoot "domains/testing/QualityValidator.psm1"
+$loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
+$qualityModule = Join-Path $projectRoot "aithercore/testing/QualityValidator.psm1"
 
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force -ErrorAction SilentlyContinue

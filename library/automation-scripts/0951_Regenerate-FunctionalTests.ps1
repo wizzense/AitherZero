@@ -62,7 +62,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$testGeneratorPath = Join-Path $projectRoot "domains/testing/FunctionalTestGenerator.psm1"
+$testGeneratorPath = Join-Path $projectRoot "aithercore/testing/FunctionalTestGenerator.psm1"
 
 # Banner
 Write-Host "`n╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan

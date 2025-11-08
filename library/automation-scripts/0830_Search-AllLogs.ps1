@@ -122,7 +122,7 @@ $ProjectRoot = Split-Path $PSScriptRoot -Parent
 # Import required modules
 $modulesToImport = @(
     "domains/utilities/LogViewer.psm1",
-    "domains/utilities/Logging.psm1"
+    "aithercore/utilities/Logging.psm1"
 )
 
 foreach ($modulePath in $modulesToImport) {

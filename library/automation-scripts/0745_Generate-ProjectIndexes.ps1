@@ -71,8 +71,8 @@ Write-Host "══════════════════════�
 Write-Host ""
 
 # Import required modules
-$loggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
-$indexerModule = Join-Path $script:ProjectRoot "domains/documentation/ProjectIndexer.psm1"
+$loggingModule = Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1"
+$indexerModule = Join-Path $script:ProjectRoot "aithercore/documentation/ProjectIndexer.psm1"
 
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force -ErrorAction SilentlyContinue

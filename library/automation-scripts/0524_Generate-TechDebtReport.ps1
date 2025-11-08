@@ -31,8 +31,8 @@ $script:StartTime = Get-Date
 
 # Import modules
 Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/TechDebtAnalysis.psm1') -Force
-Import-Module (Join-Path $script:ProjectRoot 'domains/utilities/Logging.psm1') -Force -ErrorAction SilentlyContinue
-Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/ReportingEngine.psm1') -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $script:ProjectRoot 'aithercore/utilities/Logging.psm1') -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $script:ProjectRoot 'aithercore/reporting/ReportingEngine.psm1') -Force -ErrorAction SilentlyContinue
 
 # Initialize
 if ($PSCmdlet.ShouldProcess($AnalysisPath, "Initialize tech debt analysis results directory")) {

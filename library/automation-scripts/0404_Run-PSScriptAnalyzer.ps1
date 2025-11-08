@@ -61,9 +61,9 @@ if (-not $OutputPath) {
 
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
-$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
+$configModule = Join-Path $projectRoot "aithercore/configuration/Configuration.psm1"
 
 if (Test-Path $configModule) {
     Import-Module $configModule -Force -ErrorAction SilentlyContinue
