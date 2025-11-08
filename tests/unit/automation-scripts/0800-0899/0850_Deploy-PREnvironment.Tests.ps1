@@ -18,7 +18,7 @@ Describe '0850_Deploy-PREnvironment' -Tag 'Unit', 'AutomationScript', 'Environme
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0850_Deploy-PREnvironment.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0850_Deploy-PREnvironment.ps1'
         $script:ScriptName = '0850_Deploy-PREnvironment'
 
         # Import test helpers for environment detection

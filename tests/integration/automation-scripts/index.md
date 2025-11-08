@@ -156,8 +156,8 @@
   - *Integration tests for 0514_Generate-CodeMap*
 - ⚙️ [0514_Schedule-ReportGeneration.Integration.Tests.ps1](./0514_Schedule-ReportGeneration.Integration.Tests.ps1)
   - *Integration tests for 0514_Schedule-ReportGeneration*
-- ⚙️ [0515_Deploy-Documentation.Integration.Tests.ps1](./0515_Deploy-Documentation.Integration.Tests.ps1)
-  - *Integration tests for 0515_Deploy-Documentation*
+- ⚙️ [0525_Deploy-Documentation.Integration.Tests.ps1](./0525_Deploy-Documentation.Integration.Tests.ps1)
+  - *Integration tests for 0525_Deploy-Documentation*
 - ⚙️ [0516_Schedule-ReportGeneration.Integration.Tests.ps1](./0516_Schedule-ReportGeneration.Integration.Tests.ps1)
   - *Integration tests for 0516_Schedule-ReportGeneration*
 - ⚙️ [0520_Analyze-ConfigurationUsage.Integration.Tests.ps1](./0520_Analyze-ConfigurationUsage.Integration.Tests.ps1)
