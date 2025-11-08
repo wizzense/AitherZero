@@ -60,16 +60,20 @@ param(
     [switch]$UpdateExisting,
 
     [Parameter()]
-    [string]$Name,
-
-    [Parameter()]
-    [switch]$WhatIf
+    [string]$Name
 )
 
 #region Setup and Initialization
 
 # Import ScriptUtilities for common functions
-$ProjectRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
+$ProjectRoot = if ($env:AITHERZERO_ROOT) { 
+    $env:AITHERZERO_ROOT 
+} else { 
+    $scriptPath = Split-Path -Parent $PSScriptRoot
+    $scriptPath = Split-Path -Parent $scriptPath
+    $scriptPath
+}
+
 $ScriptUtilPath = Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1"
 
 if (Test-Path $ScriptUtilPath) {
@@ -88,18 +92,23 @@ function Write-Log {
     )
     
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    
+    # Map Success to Information for logging functions that don't support it
+    $logLevel = if ($Level -eq 'Success') { 'Information' } else { $Level }
+    
     $color = @{
         'Error' = 'Red'
         'Warning' = 'Yellow'
-        'Information' = 'White'
+        'Information' = 'Green'  # Green for info messages
         'Success' = 'Green'
+        'Debug' = 'Gray'
     }[$Level]
     
     if (Get-Command Write-ScriptLog -ErrorAction SilentlyContinue) {
-        Write-ScriptLog -Message $Message -Level $Level
+        Write-ScriptLog -Message $Message -Level $logLevel
     }
     elseif (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $Level -Source $ScriptName
+        Write-CustomLog -Message $Message -Level $logLevel -Source $ScriptName
     }
     else {
         Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
@@ -114,7 +123,6 @@ try {
     Write-Log -Message "==================================================="
     Write-Log -Message "Initialize Infrastructure Git Submodules"
     Write-Log -Message "==================================================="
-    Write-Log -Message ""
 
     # Check prerequisites
     Write-Log -Message "Checking prerequisites..."
@@ -157,7 +165,7 @@ try {
     }
 
     # Load configuration
-    Write-Log -Message ""
+    Write-Host ""
     Write-Log -Message "Loading configuration..."
     
     try {
@@ -191,7 +199,7 @@ try {
     }
 
     # Display configured submodules
-    Write-Log -Message ""
+    Write-Host ""
     Write-Log -Message "Configured submodules:"
     
     $submoduleCount = 0
@@ -221,13 +229,15 @@ try {
     }
 
     # Initialize submodules
-    Write-Log -Message ""
+    Write-Host ""
     Write-Log -Message "Initializing infrastructure submodules..."
-    Write-Log -Message ""
+    Write-Host ""
 
     try {
-        $initParams = @{
-            WhatIf = $WhatIf
+        $initParams = @{}
+        
+        if ($WhatIfPreference) {
+            $initParams['WhatIf'] = $true
         }
         
         if ($Force) {
@@ -240,7 +250,7 @@ try {
         
         Initialize-InfrastructureSubmodule @initParams
         
-        Write-Log -Message "" 
+        Write-Host "" 
         Write-Log -Message "✓ Submodule initialization complete" -Level 'Success'
     }
     catch {
@@ -250,12 +260,14 @@ try {
 
     # Update existing submodules if requested
     if ($UpdateExisting) {
-        Write-Log -Message ""
+        Write-Host ""
         Write-Log -Message "Updating existing submodules..."
         
         try {
-            $updateParams = @{
-                WhatIf = $WhatIf
+            $updateParams = @{}
+            
+            if ($WhatIfPreference) {
+                $updateParams['WhatIf'] = $true
             }
             
             if ($Name) {
@@ -273,9 +285,9 @@ try {
     }
 
     # Display final status
-    Write-Log -Message ""
+    Write-Host ""
     Write-Log -Message "Getting submodule status..."
-    Write-Log -Message ""
+    Write-Host ""
     
     try {
         Get-InfrastructureSubmodules -Detailed
@@ -285,22 +297,22 @@ try {
     }
 
     # Summary
-    Write-Log -Message ""
+    Write-Host ""
     Write-Log -Message "==================================================="
     Write-Log -Message "Infrastructure Submodule Initialization Summary"
     Write-Log -Message "==================================================="
     Write-Log -Message "✓ Initialized $submoduleCount submodule(s)" -Level 'Success'
-    Write-Log -Message ""
+    Write-Host ""
     Write-Log -Message "Next steps:" -Level 'Information'
     Write-Log -Message "  1. Review submodule documentation: ./infrastructure/SUBMODULES.md" -Level 'Information'
     Write-Log -Message "  2. Explore infrastructure templates in: ./infrastructure/aitherium/" -Level 'Information'
     Write-Log -Message "  3. Use Invoke-InfrastructurePlan to plan deployments" -Level 'Information'
     Write-Log -Message "  4. Use Invoke-InfrastructureApply to deploy infrastructure" -Level 'Information'
-    Write-Log -Message ""
+    Write-Host ""
     Write-Log -Message "For more information, see:" -Level 'Information'
     Write-Log -Message "  - ./infrastructure/SUBMODULES.md" -Level 'Information'
     Write-Log -Message "  - ./aithercore/infrastructure/README.md" -Level 'Information'
-    Write-Log -Message ""
+    Write-Host ""
 
     exit 0
 }
