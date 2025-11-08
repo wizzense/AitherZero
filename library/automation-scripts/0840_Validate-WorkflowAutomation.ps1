@@ -254,7 +254,7 @@ if ($Quick) {
     Write-Host "`n🔍 Checking test files..." -ForegroundColor Cyan
     
     $testDirs = @(
-        (Join-Path $projectRoot "library/library/tests/unit"),
+        (Join-Path $projectRoot "library/tests/unit"),
         (Join-Path $projectRoot "library/tests/integration"),
         (Join-Path $projectRoot "library/tests/domains")
     )
