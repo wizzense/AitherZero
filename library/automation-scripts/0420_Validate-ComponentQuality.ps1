@@ -106,7 +106,7 @@ $script:ScriptName = '0420_Validate-ComponentQuality'
 $script:StartTime = Get-Date
 
 # Get project root
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $env:AITHERZERO_ROOT = $projectRoot
 
 # Import modules

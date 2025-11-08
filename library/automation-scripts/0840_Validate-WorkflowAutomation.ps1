@@ -49,7 +49,7 @@ $scriptMetadata = @{
 }
 
 # Configuration
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $workflowsDir = Join-Path $projectRoot ".github/workflows"
 $issuesScript = Join-Path $projectRoot "automation-scripts/0830_Generate-IssueFiles.ps1"
 
@@ -254,7 +254,7 @@ if ($Quick) {
     Write-Host "`n🔍 Checking test files..." -ForegroundColor Cyan
     
     $testDirs = @(
-        (Join-Path $projectRoot "library/library/tests/unit"),
+        (Join-Path $projectRoot "library/tests/unit"),
         (Join-Path $projectRoot "library/tests/integration"),
         (Join-Path $projectRoot "library/tests/domains")
     )

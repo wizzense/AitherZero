@@ -41,7 +41,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # Import script utilities
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 function ConvertTo-V2Format {
@@ -184,7 +184,7 @@ foreach ($file in $v1Playbooks) {
 Set-StrictMode -Version Latest
 
 # Import script utilities
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 try {
         $content = Get-Content $file.FullName -Raw | ConvertFrom-Json -AsHashtable
