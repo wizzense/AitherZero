@@ -2639,8 +2639,10 @@ function Get-OrchestrationPlaybook {
     param([string]$Name)
 
     # Try both .psd1 and .json formats
-    # $script:OrchestrationPath already points to library/playbooks, so use it directly
-    $playbooksDir = $script:OrchestrationPath
+    # Dynamically resolve playbooks directory based on current module location
+    # This ensures the correct path is used even when module is re-imported in different locations
+    $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+    $playbooksDir = Join-Path $currentProjectRoot 'library/playbooks'
     
     # First try .psd1 format (PowerShell Data File)
     $psd1Path = Join-Path $playbooksDir "$Name.psd1"

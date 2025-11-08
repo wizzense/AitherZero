@@ -71,6 +71,8 @@ kicker-git-backup.ps1
 # CI/CD artifacts
 AitherZero-v*.zip
 AitherZero-v*.tar.gz
+AitherZero-*.zip
+AitherZero-*.tar.gz
 build-info.json
 pr-analysis.json
 release-notes.md
