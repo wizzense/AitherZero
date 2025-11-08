@@ -175,7 +175,7 @@ try {
             }
 
             Write-Host "`n🔍 Searching for: '$SearchPattern'" -ForegroundColor Cyan
-            Search-Logs -Pattern $SearchPattern -Type All
+            Search-Log -Pattern $SearchPattern -Type All
         }
 
         'Status' {

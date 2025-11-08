@@ -433,7 +433,7 @@ function Show-LogDashboard {
     } while ($true)
 }
 
-function Search-Logs {
+function Search-Log {
     <#
     .SYNOPSIS
         Searches through log files

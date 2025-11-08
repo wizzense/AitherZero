@@ -347,7 +347,7 @@ function Stop-PerformanceTrace {
 }
 
 # Log querying
-function Get-Logs {
+function Get-Log {
     [CmdletBinding()]
     param(
         [datetime]$StartTime,
@@ -836,7 +836,7 @@ function Export-LogReport {
     # Gather log data
     $logData = @{
         StandardLogs = Get-Logs -StartTime $StartTime -EndTime $EndTime
-        StructuredLogs = Search-Logs -LogTypes @('structured') -StartTime $StartTime -EndTime $EndTime
+        StructuredLogs = Search-StructuredLog -LogTypes @('structured') -StartTime $StartTime -EndTime $EndTime
     }
 
     if ($IncludeAudit) {
