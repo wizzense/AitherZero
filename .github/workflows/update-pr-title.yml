@@ -1,0 +1,154 @@
+---
+name: 🏷️ Update PR Title with Branch Info
+
+# Automatically updates PR titles to include branch merge direction
+# Format: [source→target] Title
+# Example: [devstaging→dev] Add new feature
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Prevent concurrent updates to the same PR
+concurrency:
+  group: pr-title-update-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  update-pr-title:
+    name: 🏷️ Add Branch Info to Title
+    runs-on: ubuntu-latest
+    # Skip if bot created the PR or if PR is from a fork
+    if: |
+      github.actor != 'github-actions[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🔍 Analyze PR and Update Title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const currentTitle = context.payload.pull_request.title;
+            const sourceRef = context.payload.pull_request.head.ref;
+            const targetRef = context.payload.pull_request.base.ref;
+
+            console.log(`Processing PR #${prNumber}`);
+            console.log(`Current title: ${currentTitle}`);
+            console.log(`Source: ${sourceRef}`);
+            console.log(`Target: ${targetRef}`);
+
+            // Function to check if title already has branch info
+            function hasBranchInfo(title) {
+              // Check for patterns: [xxx→yyy], (yyy←xxx), [xxx->yyy], (yyy<-xxx)
+              return /^\[.+?[→->].+?\]/.test(title) || /^\(.+?[←<-].+?\)/.test(title);
+            }
+
+            // Function to remove existing branch info
+            function removeBranchInfo(title) {
+              let clean = title.replace(/^\[.+?[→->].+?\]\s*/, '');
+              clean = clean.replace(/^\(.+?[←<-].+?\)\s*/, '');
+              return clean.trim();
+            }
+
+            // Function to format branch info
+            function formatBranchInfo(source, target) {
+              // Use arrow format: [source→target]
+              return `[${source}→${target}]`;
+            }
+
+            // Check if update is needed
+            const hasInfo = hasBranchInfo(currentTitle);
+            const cleanTitle = removeBranchInfo(currentTitle);
+            const branchInfo = formatBranchInfo(sourceRef, targetRef);
+            const newTitle = `${branchInfo} ${cleanTitle}`;
+
+            // Skip if title is already correct
+            if (currentTitle === newTitle) {
+              console.log('✓ PR title already has correct branch information');
+              console.log(`  ${newTitle}`);
+              return;
+            }
+
+            // Update PR title
+            console.log(`Updating PR title...`);
+            if (hasInfo) {
+              console.log('  Replacing existing branch info');
+            } else {
+              console.log('  Adding branch info');
+            }
+
+            try {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                title: newTitle
+              });
+
+              console.log('✓ Successfully updated PR title');
+              console.log(`  Old: ${currentTitle}`);
+              console.log(`  New: ${newTitle}`);
+
+              // Add a comment to notify about the update
+              const commentBody = [
+                '## 🏷️ PR Title Updated',
+                '',
+                'The PR title has been automatically updated to include branch information:',
+                '',
+                `**New Title:** \`${newTitle}\``,
+                '',
+                'This helps identify the merge direction: `[source→target]`',
+                `- **Source branch:** \`${sourceRef}\``,
+                `- **Target branch:** \`${targetRef}\``,
+                '',
+                hasInfo ? '_Note: Existing branch info was replaced with the current branch names._' : '',
+                '',
+                '---',
+                `*🤖 Automated by PR Title Update Workflow • [View Workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`
+              ].filter(line => line !== null).join('\n');
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+
+            } catch (error) {
+              console.error('Failed to update PR title:', error.message);
+              
+              // Post error comment
+              const errorCommentBody = [
+                '## ❌ PR Title Update Failed',
+                '',
+                'There was an error updating the PR title with branch information.',
+                '',
+                `**Error:** ${error.message}`,
+                '',
+                `**Expected title:** \`${newTitle}\``,
+                '',
+                'You can manually update the title or contact a maintainer for assistance.',
+                '',
+                '---',
+                `*🤖 Automated by PR Title Update Workflow • [View Workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`
+              ].join('\n');
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: errorCommentBody
+              });
+
+              core.setFailed(`Failed to update PR title: ${error.message}`);
+            }
