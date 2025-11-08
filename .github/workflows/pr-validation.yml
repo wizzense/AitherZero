@@ -187,7 +187,7 @@ jobs:
           # Test syntax with -All switch to validate all PowerShell files
           try {
             Write-Host "Running syntax validation on all PowerShell files..." -ForegroundColor Cyan
-            $output = & "./automation-scripts/0407_Validate-Syntax.ps1" -All 2>&1
+            $output = & "./library/automation-scripts/0407_Validate-Syntax.ps1" -All 2>&1
 
             if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ Syntax validation passed" -ForegroundColor Green
@@ -269,7 +269,7 @@ jobs:
               comment += `#### 🔧 How to Fix\n\n`;
               comment += `1. 📝 Review the error messages above\n`;
               comment += `2. 🔍 Identify and fix syntax errors in the affected files\n`;
-              comment += `3. 🧪 Test locally: \`./automation-scripts/0407_Validate-Syntax.ps1 -All\`\n`;
+              comment += `3. 🧪 Test locally: \`./library/automation-scripts/0407_Validate-Syntax.ps1 -All\`\n`;
               comment += `4. 🚀 Push changes to trigger re-validation\n\n`;
             } else if (syntaxDetails && syntaxStatus.includes('PASSED')) {
               comment += `### ✅ All Syntax Checks Passed!\n\n`;
@@ -293,7 +293,7 @@ jobs:
             comment += `### 🚀 What Happens Next?\n\n`;
             if (syntaxStatus.includes('FAILED')) {
               comment += `1. ❗ **Fix the syntax errors** listed above\n`;
-              comment += `2. 🧪 **Test locally** using: \`./automation-scripts/0407_Validate-Syntax.ps1 -All\`\n`;
+              comment += `2. 🧪 **Test locally** using: \`./library/automation-scripts/0407_Validate-Syntax.ps1 -All\`\n`;
               comment += `3. 🚀 **Push your changes** - validation will re-run automatically\n`;
               comment += `4. ✅ Once validation passes, **comprehensive CI tests** will run\n`;
             } else {
@@ -304,9 +304,9 @@ jobs:
               comment += `#### 🧪 Optional: Test Locally\n\n`;
               comment += `\`\`\`bash\n`;
               comment += `# Run syntax validation\n`;
-              comment += `./automation-scripts/0407_Validate-Syntax.ps1 -All\n\n`;
+              comment += `./library/automation-scripts/0407_Validate-Syntax.ps1 -All\n\n`;
               comment += `# Run unit tests\n`;
-              comment += `./automation-scripts/0402_Run-UnitTests.ps1\n\n`;
+              comment += `./library/automation-scripts/0402_Run-UnitTests.ps1\n\n`;
               comment += `# Full test suite\n`;
               comment += `./Start-AitherZero.ps1 -Mode Orchestrate -Playbook "test-orchestrated" -PlaybookProfile quick\n`;
               comment += `\`\`\`\n`;

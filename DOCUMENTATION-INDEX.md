@@ -159,7 +159,7 @@ extensions/
 2. Follow templates from: `AI-AGENT-GUIDE.md`
 3. Write tests per: `INTEGRATION-TESTING-GUIDE.md`
 4. Update: `config.psd1` if needed
-5. Validate: `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+5. Validate: `./library/library/automation-scripts/0413_Validate-ConfigManifest.ps1`
 6. Test: `Invoke-Pester -Path "./tests"`
 
 ### Creating Extension
@@ -174,7 +174,7 @@ extensions/
 1. Read: `library/docs/CONFIG-DRIVEN-ARCHITECTURE.md`
 2. Follow rules from: `library/docs/STYLE-GUIDE.md` (Config section)
 3. Make changes to: `config.psd1`
-4. Validate: `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+4. Validate: `./library/library/automation-scripts/0413_Validate-ConfigManifest.ps1`
 5. Test rendering per: `library/docs/INTEGRATION-TESTING-GUIDE.md`
 
 ### Writing Tests
@@ -230,9 +230,9 @@ extensions/
 **Quick Commands:**
 ```powershell
 # Validate everything
-./automation-scripts/0413_Validate-ConfigManifest.ps1
-./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
-./automation-scripts/0407_Validate-Syntax.ps1 -All
+./library/library/automation-scripts/0413_Validate-ConfigManifest.ps1
+./library/library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+./library/library/automation-scripts/0407_Validate-Syntax.ps1 -All
 Invoke-Pester -Path "./tests"
 
 # Create extension

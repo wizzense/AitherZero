@@ -15,7 +15,7 @@ $ErrorActionPreference = 'Stop'
 
 # Module state
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'automation-scripts'
+$script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'library/automation-scripts'
 $script:TestsPath = Join-Path $script:ProjectRoot 'tests'
 
 # Script number to stage mapping constants
@@ -158,8 +158,8 @@ function New-AutoTest {
     $rangeEnd = $rangeStart + 99
     $rangeDir = "$($rangeStart.ToString('0000'))-$($rangeEnd.ToString('0000'))"
     
-    $unitTestDir = Join-Path $script:TestsPath "unit/automation-scripts/$rangeDir"
-    $integrationTestDir = Join-Path $script:TestsPath "integration/automation-scripts"
+    $unitTestDir = Join-Path $script:TestsPath "unit/library/automation-scripts/$rangeDir"
+    $integrationTestDir = Join-Path $script:TestsPath "integration/library/automation-scripts"
     
     # Create directories
     foreach ($dir in @($unitTestDir, $integrationTestDir)) {
@@ -266,7 +266,7 @@ function Build-UnitTest {
     [void]$sb.AppendLine('    BeforeAll {')
     [void]$sb.AppendLine('        # Compute path relative to repository root using $PSScriptRoot')
     [void]$sb.AppendLine('        $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent')
-    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'automation-scripts/$ScriptName.ps1'")
+    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'library/automation-scripts/$ScriptName.ps1'")
     [void]$sb.AppendLine("        " + '$script:ScriptName = ' + "'$ScriptName'")
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('        # Import test helpers for environment detection')
@@ -485,7 +485,7 @@ function Build-IntegrationTest {
     [void]$sb.AppendLine('    BeforeAll {')
     [void]$sb.AppendLine('        # Compute path relative to repository root using $PSScriptRoot')
     [void]$sb.AppendLine('        $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent')
-    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'automation-scripts/$ScriptName.ps1'")
+    [void]$sb.AppendLine("        " + '$script:ScriptPath = Join-Path $repoRoot ' + "'library/automation-scripts/$ScriptName.ps1'")
     
     # Add ScriptUtilities module import if script uses it
     if ($UsesScriptUtilities) {

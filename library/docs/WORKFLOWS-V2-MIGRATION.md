@@ -177,8 +177,8 @@ Invoke-AitherPlaybook test-full -Parallel -UseCache -GenerateSummary
 # Old - Direct script invocation
 - name: Run Tests
   run: |
-    ./automation-scripts/0402_Run-UnitTests.ps1
-    ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+    ./library/automation-scripts/0402_Run-UnitTests.ps1
+    ./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
 ```
 
 ### New Workflow Pattern

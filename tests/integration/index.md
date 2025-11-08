@@ -16,7 +16,7 @@
 
 ## 📁 Subdirectories
 
-- [📂 **automation-scripts**](./automation-scripts/index.md)
+- [📂 **automation-scripts**](./library/automation-scripts/index.md)
 
 ## 📄 Files
 

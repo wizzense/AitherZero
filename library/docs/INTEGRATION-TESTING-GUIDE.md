@@ -55,7 +55,7 @@ tests/
 │   │   └── experience/
 │   │       ├── BreadcrumbNavigation.Tests.ps1
 │   │       └── CommandParser.Tests.ps1
-│   └── automation-scripts/
+│   └── library/automation-scripts/
 ├── integration/                    # Integration tests
 │   ├── CLI-Integration.Tests.ps1
 │   ├── Menu-Integration.Tests.ps1

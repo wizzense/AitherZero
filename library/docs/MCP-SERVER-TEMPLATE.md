@@ -41,7 +41,7 @@ npm test
 
 ```bash
 # Use AitherZero automation script
-./automation-scripts/0754_Create-MCPServer.ps1 \
+./library/automation-scripts/0754_Create-MCPServer.ps1 \
   -ServerName "docker-manager" \
   -Description "Docker container management MCP server" \
   -Author "Your Name"

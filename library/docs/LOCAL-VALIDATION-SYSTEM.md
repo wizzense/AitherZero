@@ -28,18 +28,18 @@ Three validation playbooks mirror GitHub Actions workflows:
 
 ### 2. **Convenience Wrapper Script**
 
-**Script**: `automation-scripts/0966_Run-LocalValidation.ps1`
+**Script**: `library/automation-scripts/0966_Run-LocalValidation.ps1`
 
 **Usage**:
 ```powershell
 # Fast validation (syntax + config)
-./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Fast
+./library/automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Fast
 
 # Standard validation (syntax + linting + unit tests)
-./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Standard
+./library/automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Standard
 
 # Full validation (all checks including integration tests)
-./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Full -GenerateReport
+./library/automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Full -GenerateReport
 
 # Or use the global wrapper:
 aitherzero 0966 -ValidationLevel Fast
@@ -255,7 +255,7 @@ Error: Playbook not found: ./domains/orchestration/playbooks/pr-validation-full.
 **Solution**: Ensure you're in the project root directory:
 ```powershell
 cd /path/to/AitherZero
-./automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Standard
+./library/automation-scripts/0966_Run-LocalValidation.ps1 -ValidationLevel Standard
 ```
 
 ### Issue: Module not loaded

@@ -9,7 +9,7 @@ AitherZero now supports **runtime feature prompting** - when you try to run a sc
 Previously, if you tried to run a script with a disabled feature:
 
 ```
-PS> ./automation-scripts/0201_Install-Node.ps1
+PS> ./library/automation-scripts/0201_Install-Node.ps1
 Node.js installation is not enabled for current profile/platform
 ```
 
@@ -28,7 +28,7 @@ This was tedious and error-prone, especially for new users.
 Now when you run the same script:
 
 ```
-PS> ./automation-scripts/0201_Install-Node.ps1
+PS> ./library/automation-scripts/0201_Install-Node.ps1
 
 Feature Required: Development.Node
 Reason: Script 0201 requires Node.js to install the Node runtime and npm packages

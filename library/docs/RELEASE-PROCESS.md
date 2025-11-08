@@ -88,7 +88,7 @@ Before creating a release:
 1. ✅ All tests passing on main branch
 2. ✅ Code quality checks passing (PSScriptAnalyzer)
 3. ✅ Documentation up to date
-4. ✅ CHANGELOG updated (use `./automation-scripts/0798_generate-changelog.ps1`)
+4. ✅ CHANGELOG updated (use `./library/automation-scripts/0798_generate-changelog.ps1`)
 5. ✅ VERSION file updated
 6. ✅ Module manifest version updated (AitherZero.psd1)
 
@@ -119,16 +119,16 @@ git push
 
 ```powershell
 # Generate changelog from last release
-./automation-scripts/0798_generate-changelog.ps1 -FromTag v1.0.7 -ToTag HEAD -Output CHANGELOG.md
+./library/automation-scripts/0798_generate-changelog.ps1 -FromTag v1.0.7 -ToTag HEAD -Output CHANGELOG.md
 ```
 
 ### 3. Run Pre-Release Validation
 
 ```powershell
 # Full validation suite
-./automation-scripts/0407_validate-powershell-syntax.ps1
-./automation-scripts/0402_run-unit-tests.ps1
-./automation-scripts/0404_run-psscriptanalyzer.ps1
+./library/automation-scripts/0407_validate-powershell-syntax.ps1
+./library/automation-scripts/0402_run-unit-tests.ps1
+./library/automation-scripts/0404_run-psscriptanalyzer.ps1
 
 # Verify module loads
 Import-Module ./AitherZero.psd1 -Force
@@ -267,10 +267,10 @@ To maintain a clean tag history, periodically run:
 
 ```powershell
 # Dry run to see what would be deleted
-./automation-scripts/0799_cleanup-old-tags.ps1 -DryRun
+./library/automation-scripts/0799_cleanup-old-tags.ps1 -DryRun
 
 # Actually delete old tags
-./automation-scripts/0799_cleanup-old-tags.ps1
+./library/automation-scripts/0799_cleanup-old-tags.ps1
 ```
 
 This removes:
@@ -301,7 +301,7 @@ Each release includes:
 1. Check GitHub Actions logs
 2. Verify all tests pass locally
 3. Ensure VERSION and manifest are updated
-4. Check for syntax errors with `./automation-scripts/0407_validate-powershell-syntax.ps1`
+4. Check for syntax errors with `./library/automation-scripts/0407_validate-powershell-syntax.ps1`
 
 ### Release Workflow Cancelled or Incomplete
 

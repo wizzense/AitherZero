@@ -48,22 +48,22 @@ These ephemeral reports are:
 ### Generate Dashboard
 ```powershell
 # Generate all dashboard formats
-./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format All
 
 # Generate specific format
-./automation-scripts/0512_Generate-Dashboard.ps1 -Format HTML -Open
+./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format HTML -Open
 ```
 
 ### Generate Project Report
 ```powershell
 # Comprehensive project report
-./automation-scripts/0510_Generate-ProjectReport.ps1 -Format All
+./library/automation-scripts/0510_Generate-ProjectReport.ps1 -Format All
 ```
 
 ### View Dashboard
 ```powershell
 # Interactive dashboard viewer
-./automation-scripts/0511_Show-ProjectDashboard.ps1
+./library/automation-scripts/0511_Show-ProjectDashboard.ps1
 ```
 
 ## 🌐 GitHub Pages
@@ -102,7 +102,7 @@ This includes:
 
 3. **Generate reports locally:**
    ```powershell
-   ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+   ./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format All
    ```
 
 ### Old Reports Still Showing?

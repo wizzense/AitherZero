@@ -5,7 +5,7 @@ on:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'domains/**/*.psm1'
-      - 'automation-scripts/**/*.ps1'
+      - 'library/automation-scripts/**/*.ps1'
       - 'AitherZero.psd1'
       - 'README.md'
       - 'library/**'
@@ -14,7 +14,7 @@ on:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'domains/**/*.psm1'
-      - 'automation-scripts/**/*.ps1'
+      - 'library/automation-scripts/**/*.ps1'
       - 'AitherZero.psd1'
       - 'README.md'
       - 'library/**'
@@ -184,7 +184,7 @@ jobs:
 
         # Run documentation generation
         try {
-          ./automation-scripts/0744_Generate-AutoDocumentation.ps1 -Mode $mode -Format $format -Quality
+          ./library/automation-scripts/0744_Generate-AutoDocumentation.ps1 -Mode $mode -Format $format -Quality
           Write-Host "Documentation generation completed successfully" -ForegroundColor Green
         } catch {
           Write-Error "Documentation generation failed: $_"

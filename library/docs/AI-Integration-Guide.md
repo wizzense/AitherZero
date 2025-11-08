@@ -20,13 +20,13 @@ AitherZero includes comprehensive AI integration capabilities for automating dev
 
 ```powershell
 # Configure all AI providers
-./automation-scripts/0730_Setup-AIAgents.ps1 -Provider All
+./library/automation-scripts/0730_Setup-AIAgents.ps1 -Provider All
 
 # Configure specific provider
-./automation-scripts/0730_Setup-AIAgents.ps1 -Provider Claude
+./library/automation-scripts/0730_Setup-AIAgents.ps1 -Provider Claude
 
 # Validate existing configuration
-./automation-scripts/0730_Setup-AIAgents.ps1 -ValidateOnly
+./library/automation-scripts/0730_Setup-AIAgents.ps1 -ValidateOnly
 ```
 
 ### 2. Set API Keys
@@ -52,10 +52,10 @@ export OPENAI_API_KEY="sk-..."
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ai-development
 
 # Perform AI code review
-./automation-scripts/0731_Invoke-AICodeReview.ps1 -Path ./src -Profile Standard
+./library/automation-scripts/0731_Invoke-AICodeReview.ps1 -Path ./src -Profile Standard
 
 # Generate tests with AI
-./automation-scripts/0732_Generate-AITests.ps1 -Path ./module.psm1 -TestType Unit
+./library/automation-scripts/0732_Generate-AITests.ps1 -Path ./module.psm1 -TestType Unit
 ```
 
 ## Configuration
@@ -591,7 +591,7 @@ Enable debug logging for detailed troubleshooting:
 # GitHub Actions example
 - name: AI Code Review
   run: |
-    ./automation-scripts/0731_Invoke-AICodeReview.ps1 `
+    ./library/automation-scripts/0731_Invoke-AICodeReview.ps1 `
       -Path . `
       -Profile Standard `
       -PRNumber ${{ github.event.pull_request.number }}
@@ -602,7 +602,7 @@ Enable debug logging for detailed troubleshooting:
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
-pwsh -File ./automation-scripts/0739_Validate-AIOutput.ps1 \
+pwsh -File ./library/automation-scripts/0739_Validate-AIOutput.ps1 \
   -Path . \
   -ValidationType Security \
   -StrictMode

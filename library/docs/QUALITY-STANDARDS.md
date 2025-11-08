@@ -21,7 +21,7 @@ The AitherZero Quality Validation System ensures that all new features and compo
 ### Components
 
 1. **QualityValidator.psm1** - Core validation module (`domains/testing/QualityValidator.psm1`)
-2. **0420_Validate-ComponentQuality.ps1** - Automation script (`automation-scripts/0420_Validate-ComponentQuality.ps1`)
+2. **0420_Validate-ComponentQuality.ps1** - Automation script (`library/automation-scripts/0420_Validate-ComponentQuality.ps1`)
 3. **quality-validation.yml** - GitHub Actions workflow (`.github/workflows/quality-validation.yml`)
 
 ### Automated Checks
@@ -266,17 +266,17 @@ The overall score is the average of all non-skipped checks. A minimum score of *
 
 #### Validate a Single File
 ```powershell
-./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/testing/MyModule.psm1
+./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/testing/MyModule.psm1
 ```
 
 #### Validate a Directory
 ```powershell
-./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/testing -Recursive
+./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/testing -Recursive
 ```
 
 #### Generate HTML Report
 ```powershell
-./automation-scripts/0420_Validate-ComponentQuality.ps1 `
+./library/automation-scripts/0420_Validate-ComponentQuality.ps1 `
     -Path ./MyScript.ps1 `
     -Format HTML `
     -OutputPath ./reports
@@ -284,14 +284,14 @@ The overall score is the average of all non-skipped checks. A minimum score of *
 
 #### Skip Specific Checks
 ```powershell
-./automation-scripts/0420_Validate-ComponentQuality.ps1 `
+./library/automation-scripts/0420_Validate-ComponentQuality.ps1 `
     -Path ./MyModule.psm1 `
     -SkipChecks @('GitHubActions', 'PSScriptAnalyzer')
 ```
 
 #### Fail on Warnings
 ```powershell
-./automation-scripts/0420_Validate-ComponentQuality.ps1 `
+./library/automation-scripts/0420_Validate-ComponentQuality.ps1 `
     -Path ./MyScript.ps1 `
     -FailOnWarnings
 ```
@@ -355,7 +355,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'domains/**/*.psm1'
-      - 'automation-scripts/*.ps1'
+      - 'library/automation-scripts/*.ps1'
   workflow_dispatch:
     inputs:
       path:

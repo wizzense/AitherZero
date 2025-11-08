@@ -84,7 +84,7 @@ jobs:
             if (Test-Path $domainPath) {
               Write-Host "  Validating: $domainPath" -ForegroundColor Yellow
               try {
-                ./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $domainPath -Recursive -ErrorAction Continue
+                ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $domainPath -Recursive -ErrorAction Continue
               } catch {
                 Write-Host "  ⚠️ Quality validation for $domainPath had issues (continuing): $_" -ForegroundColor Yellow
               }
@@ -94,16 +94,16 @@ jobs:
           # Also validate key automation scripts
           Write-Host "Validating automation scripts..." -ForegroundColor Cyan
           $criticalScripts = @(
-            "./automation-scripts/0402_Run-UnitTests.ps1",
-            "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
-            "./automation-scripts/0512_Generate-Dashboard.ps1"
+            "./library/automation-scripts/0402_Run-UnitTests.ps1",
+            "./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+            "./library/automation-scripts/0512_Generate-Dashboard.ps1"
           )
 
           foreach ($scriptPath in $criticalScripts) {
             if (Test-Path $scriptPath) {
               Write-Host "  Validating: $(Split-Path $scriptPath -Leaf)" -ForegroundColor Yellow
               try {
-                ./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $scriptPath -ErrorAction Continue
+                ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path $scriptPath -ErrorAction Continue
               } catch {
                 Write-Host "  ⚠️ Quality validation for $(Split-Path $scriptPath -Leaf) had issues (continuing): $_" -ForegroundColor Yellow
               }
@@ -114,7 +114,7 @@ jobs:
 
           # Generate FULL COMPREHENSIVE dashboard (0512 does all the heavy lifting)
           Write-Host "Generating comprehensive dashboard with all metrics..." -ForegroundColor Cyan
-          ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+          ./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format All
 
           # Create beginner-friendly LANDING PAGE that guides to the detailed dashboard
           $reportFiles = Get-ChildItem $reportsDir -File | Sort-Object LastWriteTime -Descending

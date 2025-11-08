@@ -399,7 +399,7 @@ function Get-ScriptMetadata {
     .OUTPUTS
         Hashtable - Metadata key-value pairs
     .EXAMPLE
-        $metadata = Get-ScriptMetadata -Path "./automation-scripts/0402_Run-UnitTests.ps1"
+        $metadata = Get-ScriptMetadata -Path "./library/automation-scripts/0402_Run-UnitTests.ps1"
         Write-Output $metadata.Stage
     #>
     [CmdletBinding()]

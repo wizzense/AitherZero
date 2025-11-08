@@ -9,7 +9,7 @@ on:
     branches: [main, develop, dev, dev-staging, ring-0-integrations]
     paths:
       - 'domains/**'
-      - 'automation-scripts/**'
+      - 'library/automation-scripts/**'
       - 'tests/**'
       - '**.ps1'
       - '**.psm1'
@@ -143,7 +143,7 @@ jobs:
         run: |
           Write-Host "⚡ Running unit tests for range: ${{ matrix.range }}" -ForegroundColor Cyan
 
-          $testPath = "./tests/unit/automation-scripts/${{ matrix.range }}"
+          $testPath = "./tests/unit/library/automation-scripts/${{ matrix.range }}"
 
           if (Test-Path $testPath) {
             $config = New-PesterConfiguration
@@ -517,7 +517,7 @@ jobs:
         timeout-minutes: 2
         run: |
           Write-Host "⚡ Running syntax validation" -ForegroundColor Cyan
-          ./automation-scripts/0407_Validate-Syntax.ps1 -All
+          ./library/automation-scripts/0407_Validate-Syntax.ps1 -All
 
       - name: 🔍 PSScriptAnalyzer
         id: pssa
@@ -526,7 +526,7 @@ jobs:
         continue-on-error: true
         run: |
           Write-Host "⚡ Running PSScriptAnalyzer" -ForegroundColor Cyan
-          ./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+          ./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
 
           # Capture summary for later use
           $summaryPath = Get-ChildItem "./tests/analysis" -Filter "PSScriptAnalyzer-Summary-*.json" -ErrorAction SilentlyContinue |
@@ -1076,7 +1076,7 @@ jobs:
         continue-on-error: true
         run: |
           Write-Host "📊 Generating comprehensive dashboard..." -ForegroundColor Cyan
-          ./automation-scripts/0512_Generate-Dashboard.ps1 -Format All
+          ./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format All
 
       - name: 💾 Commit Updated Persisted Reports
         if: always() && github.event_name != 'pull_request'

@@ -47,8 +47,8 @@ git config merge.ours.driver
 # Should output: true
 
 # Verify the attribute is applied to index.md files
-git check-attr merge automation-scripts/index.md
-# Should output: automation-scripts/index.md: merge: ours
+git check-attr merge library/automation-scripts/index.md
+# Should output: library/automation-scripts/index.md: merge: ours
 ```
 
 ## How It Works

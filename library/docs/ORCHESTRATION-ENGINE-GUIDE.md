@@ -198,7 +198,7 @@ Invoke-OrchestrationSequence -Sequence "0407,0413,0402"
 1. **Syntax Validation**
 ```powershell
 # Validate OrchestrationEngine.psm1
-./automation-scripts/0407_Validate-Syntax.ps1 -FilePath domains/automation/OrchestrationEngine.psm1
+./library/automation-scripts/0407_Validate-Syntax.ps1 -FilePath domains/automation/OrchestrationEngine.psm1
 ```
 
 2. **Dry Run Test**
@@ -262,7 +262,7 @@ Invoke-OrchestrationSequence -LoadPlaybook 'my-playbook' -DryRun
 ### 4. Validate Before Commit
 ```powershell
 # Run syntax check
-./automation-scripts/0407_Validate-Syntax.ps1 -All
+./library/automation-scripts/0407_Validate-Syntax.ps1 -All
 
 # Test orchestration
 Invoke-OrchestrationSequence -LoadPlaybook 'test-orchestration'
@@ -291,7 +291,7 @@ Invoke-OrchestrationSequence -LoadPlaybook 'my-playbook'  # Not 'my-playbook.psd
 # This is now handled automatically (commit ade1ae0)
 
 # Verify scripts exist
-ls automation-scripts/0407*.ps1
+ls library/automation-scripts/0407*.ps1
 ```
 
 ### Timeout Issues

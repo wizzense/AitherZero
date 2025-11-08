@@ -73,7 +73,7 @@ Get-ConfigurationValue -Path "Core.Version"
 ## AI Agent-Friendly Features
 
 ### 1. Predictable Paths
-- All scripts in `automation-scripts/` with numeric prefixes
+- All scripts in `library/automation-scripts/` with numeric prefixes
 - All modules in `domains/<category>/<ModuleName>.psm1`
 - Configuration always at `config.json`
 
@@ -154,7 +154,7 @@ $PSVersionTable.PSVersion
 
 1. **Always use absolute paths from AITHERZERO_ROOT**
    ```powershell
-   $scriptPath = Join-Path $env:AITHERZERO_ROOT "automation-scripts/0402_Run-UnitTests.ps1"
+   $scriptPath = Join-Path $env:AITHERZERO_ROOT "library/automation-scripts/0402_Run-UnitTests.ps1"
    ```
 
 2. **Check if environment is loaded**
@@ -166,7 +166,7 @@ $PSVersionTable.PSVersion
 
 3. **Use the az wrapper for running scripts**
    ```powershell
-   # Instead of: ./automation-scripts/0402_Run-UnitTests.ps1
+   # Instead of: ./library/automation-scripts/0402_Run-UnitTests.ps1
    # Use: az 0402
    ```
 

@@ -18,7 +18,7 @@ See [README.md](./README.md) for detailed information about this directory.
   - *This directory contains GitHub-specific configuration files, workflows, and the GitHub Copilot ag...*
 - [📂 **aithercore**](./aithercore/index.md)
   - *The `aithercore` directory contains the consolidated essential modules required for basic AitherZ...*
-- [📂 **automation-scripts**](./automation-scripts/index.md)
+- [📂 **automation-scripts**](./library/library/automation-scripts/index.md)
   - *This directory contains all automated installation and configuration scripts used by the AitherZe...*
 - [📂 **domains**](./domains/index.md)
   - *This directory contains all domain modules for the AitherZero platform, organized by functional a...*

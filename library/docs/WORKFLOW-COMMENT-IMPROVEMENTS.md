@@ -220,7 +220,7 @@ module.exports = async ({github, context, core}) => {
 - Related: Issue #123
 
 **Recommended Actions**:
-1. Run `./automation-scripts/0413_Validate-ConfigManifest.ps1`
+1. Run `./library/automation-scripts/0413_Validate-ConfigManifest.ps1`
 2. Fix syntax errors in `config.psd1`
 3. Re-run tests
 

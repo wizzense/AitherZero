@@ -131,7 +131,7 @@ function Get-DefaultDocumentationConfig {
             Enabled = $true
             WatchPaths = @(
                 "domains/**/*.psm1"
-                "automation-scripts/**/*.ps1" 
+                "library/automation-scripts/**/*.ps1" 
                 "*.psd1"
                 "README.md"
             )

@@ -69,7 +69,7 @@ jobs:
           }
 
           Write-Host ""
-          $result = & ./automation-scripts/0426_Validate-TestScriptSync.ps1 @params
+          $result = & ./library/automation-scripts/0426_Validate-TestScriptSync.ps1 @params
           $exitCode = $LASTEXITCODE
 
           # Set outputs for next steps
@@ -110,10 +110,10 @@ jobs:
               These test files reference non-existent scripts and will be skipped during test execution.
 
               Run the validation script to see details:
-              \`./automation-scripts/0426_Validate-TestScriptSync.ps1\`
+              \`./library/automation-scripts/0426_Validate-TestScriptSync.ps1\`
 
               To automatically remove orphaned tests:
-              \`./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned\``;
+              \`./library/automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned\``;
             } else {
               conclusion = 'failure';
               summary = '❌ Validation failed';
@@ -144,7 +144,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
 
           if [[ -n $(git status --porcelain) ]]; then
-            git add -A tests/unit/automation-scripts/
+            git add -A tests/unit/library/automation-scripts/
             git commit -m "chore: Remove orphaned test files [automated]
 
             Removed test files that reference non-existent automation scripts.
@@ -171,7 +171,7 @@ jobs:
             This PR includes test files that reference non-existent automation scripts. These tests will be skipped during execution to prevent pipeline failures.
 
             ### What are orphaned tests?
-            Orphaned tests are test files (*.Tests.ps1) that reference automation scripts that don't exist in the \`automation-scripts/\` directory.
+            Orphaned tests are test files (*.Tests.ps1) that reference automation scripts that don't exist in the \`library/automation-scripts/\` directory.
 
             ### Why is this a problem?
             - Test execution may fail or skip tests
@@ -182,11 +182,11 @@ jobs:
 
             **Option 1: Remove orphaned tests** (if scripts were intentionally deleted)
             \`\`\`bash
-            ./automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned
+            ./library/automation-scripts/0426_Validate-TestScriptSync.ps1 -RemoveOrphaned
             \`\`\`
 
             **Option 2: Create missing scripts** (if tests are valid)
-            - Create the missing automation scripts in \`automation-scripts/\`
+            - Create the missing automation scripts in \`library/automation-scripts/\`
 
             **Option 3: Let CI handle it automatically**
             - Re-run this workflow with \`remove_orphaned: true\` input
@@ -194,7 +194,7 @@ jobs:
             ### Validation
             Run the validation script to check status:
             \`\`\`bash
-            ./automation-scripts/0426_Validate-TestScriptSync.ps1
+            ./library/automation-scripts/0426_Validate-TestScriptSync.ps1
             \`\`\`
             `;
 

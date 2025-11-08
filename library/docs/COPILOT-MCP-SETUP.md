@@ -156,7 +156,7 @@ The configuration also includes context providers that help Copilot understand d
 ### Codebase Provider
 Focuses Copilot on PowerShell modules and scripts:
 - Domain modules (`domains/**/*.psm1`)
-- Automation scripts (`automation-scripts/**/*.ps1`)
+- Automation scripts (`library/automation-scripts/**/*.ps1`)
 - Test files (`tests/**/*.Tests.ps1`)
 
 ### Documentation Provider

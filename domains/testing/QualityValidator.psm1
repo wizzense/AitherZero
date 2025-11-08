@@ -361,17 +361,17 @@ function Test-TestCoverage {
     }
     
     # For automation scripts
-    if ($fileDir -like "*automation-scripts*") {
+    if ($fileDir -like "*library/automation-scripts*") {
         # Check for range-based unit test organization (e.g., 0000-0099, 0900-0999)
         if ($fileName -match '^(\d{4})_') {
             $scriptNum = [int]$Matches[1]
             $rangeStart = [Math]::Floor($scriptNum / 100) * 100
             $rangeEnd = $rangeStart + 99
             $rangeDir = "$($rangeStart.ToString('0000'))-$($rangeEnd.ToString('0000'))"
-            $possibleTestPaths += Join-Path $TestsPath "unit/automation-scripts/$rangeDir/$fileName.Tests.ps1"
+            $possibleTestPaths += Join-Path $TestsPath "unit/library/automation-scripts/$rangeDir/$fileName.Tests.ps1"
         }
-        $possibleTestPaths += Join-Path $TestsPath "integration/automation-scripts/$fileName.Integration.Tests.ps1"
-        $possibleTestPaths += Join-Path $TestsPath "unit/automation-scripts/$fileName.Tests.ps1"
+        $possibleTestPaths += Join-Path $TestsPath "integration/library/automation-scripts/$fileName.Integration.Tests.ps1"
+        $possibleTestPaths += Join-Path $TestsPath "unit/library/automation-scripts/$fileName.Tests.ps1"
         $possibleTestPaths += Join-Path $TestsPath "integration/$fileName.Tests.ps1"
         $possibleTestPaths += Join-Path $TestsPath "unit/$fileName.Tests.ps1"
     }
@@ -540,7 +540,7 @@ function Test-UIIntegration {
     }
     
     # For automation scripts, check if it's referenced in the main launcher
-    if ($Path -like "*automation-scripts*") {
+    if ($Path -like "*library/automation-scripts*") {
         $scriptNumber = [regex]::Match($Path, '\d{4}').Value
         if ($scriptNumber) {
             $launcherPath = Join-Path $script:ProjectRoot 'Start-AitherZero.ps1'

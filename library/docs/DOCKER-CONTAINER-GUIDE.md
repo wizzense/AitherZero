@@ -377,7 +377,7 @@ docker cp <container>:/opt/aitherzero/logs ./local-logs
 docker cp <container>:/opt/aitherzero/reports/test-results.xml ./
 
 # Copy files to container
-docker cp ./my-script.ps1 <container>:/opt/aitherzero/automation-scripts/
+docker cp ./my-script.ps1 <container>:/opt/aitherzero/library/automation-scripts/
 
 # Browse filesystem
 docker exec <container> ls -la /opt/aitherzero
@@ -473,7 +473,7 @@ docker inspect --format='{{json .State.Health}}' <container> | jq
 - [Docker Usage Guide](DOCKER-USAGE.md) - Simplified usage instructions
 - [Main README](../README.md) - General AitherZero documentation
 - [Docker Compose File](../docker-compose.yml) - Compose configuration
-- [Container Manager Script](../automation-scripts/0854_Manage-PRContainer.ps1)
+- [Container Manager Script](../library/automation-scripts/0854_Manage-PRContainer.ps1)
 
 ## 📞 Support
 

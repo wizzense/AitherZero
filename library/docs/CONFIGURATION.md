@@ -310,7 +310,7 @@ $env:AITHERZERO_TESTING_COVERAGETHRESHOLD = "90"
 az 0402
 
 # Via parameter
-./automation-scripts/0402_Run-UnitTests.ps1 -CoverageThreshold 90
+./library/automation-scripts/0402_Run-UnitTests.ps1 -CoverageThreshold 90
 
 # Via config file (config.local.psd1)
 @{

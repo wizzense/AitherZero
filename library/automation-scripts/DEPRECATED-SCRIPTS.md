@@ -6,7 +6,7 @@ The following scripts are **DEPRECATED** and should no longer be used.
 
 **ONE command for all testing:**
 ```bash
-./automation-scripts/0962_Run-Playbook.ps1 -Playbook test-orchestrated -Profile <quick|standard|full|ci>
+./library/automation-scripts/0962_Run-Playbook.ps1 -Playbook test-orchestrated -Profile <quick|standard|full|ci>
 ```
 
 ## Deprecated Scripts

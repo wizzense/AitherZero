@@ -49,7 +49,7 @@ AitherZero/
 │   ├── copilot.yaml
 │   ├── mcp-servers.json
 │   └── prompts/
-├── automation-scripts/     # 125+ numbered scripts
+├── library/automation-scripts/     # 125+ numbered scripts
 │   ├── DEPRECATED-SCRIPTS.md
 │   ├── 0400-0499/          # Testing scripts
 │   ├── 0500-0599/          # Reporting scripts

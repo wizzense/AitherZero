@@ -9,7 +9,7 @@ on:
     branches: [main, develop, dev, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - 'domains/**'
-      - 'automation-scripts/**'
+      - 'library/automation-scripts/**'
       - 'tests/**'
       - '**.ps1'
       - '**.psm1'
@@ -62,19 +62,19 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Analyzing documentation freshness..."
-          ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
+          ./library/automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
 
       - name: 🔍 Check for stale documentation
         shell: pwsh
         run: |
           Write-Host "📅 Checking for stale documentation (>90 days)..."
-          ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -CheckStale -StaleDays 90
+          ./library/automation-scripts/0960_Track-DocumentationFreshness.ps1 -CheckStale -StaleDays 90
 
       - name: 📝 Check for missing README files
         shell: pwsh
         run: |
           Write-Host "📋 Checking for directories without README.md..."
-          ./automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
+          ./library/automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
 
       - name: 📤 Upload documentation tracking report
         uses: actions/upload-artifact@v4

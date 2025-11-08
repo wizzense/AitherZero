@@ -22,7 +22,7 @@ if ($env:AITHERZERO_ROOT) {
 }
 
 $script:DomainsPath = Join-Path $script:ProjectRoot "domains"
-$script:AutomationScriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
+$script:AutomationScriptsPath = Join-Path $script:ProjectRoot "library/automation-scripts"
 
 # Import the test framework
 $testFrameworkPath = Join-Path $PSScriptRoot "AitherTestFramework.psm1"

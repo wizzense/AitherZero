@@ -20,42 +20,42 @@ This document explains how to run the same validation checks locally that GitHub
 
 ```powershell
 # 1. Syntax Validation (matches quick-health-check.yml)
-./automation-scripts/0407_Validate-Syntax.ps1 -All
+./library/automation-scripts/0407_Validate-Syntax.ps1 -All
 # Duration: ~2 seconds
 # Validates: PowerShell syntax for all 505 files
 
 # 2. Code Quality (matches pr-validation.yml)  
-./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
 # Duration: ~60-90 seconds
 # Validates: PSScriptAnalyzer rules for all PowerShell files
 
 # 3. Component Quality (matches quality-validation.yml)
-./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive
+./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive
 # Duration: ~2-5 minutes
 # Validates: Error handling, logging, tests, UI integration
 
 # 4. Unit Tests (matches parallel-testing.yml)
-./automation-scripts/0402_Run-UnitTests.ps1
+./library/automation-scripts/0402_Run-UnitTests.ps1
 # Duration: ~45-60 seconds
 # Runs: All Pester unit tests
 
 # 5. Integration Tests
-./automation-scripts/0403_Run-IntegrationTests.ps1
+./library/automation-scripts/0403_Run-IntegrationTests.ps1
 # Duration: ~2-3 minutes
 # Runs: Integration test suites
 
 # 6. Config Validation
-./automation-scripts/0413_Validate-ConfigManifest.ps1
+./library/automation-scripts/0413_Validate-ConfigManifest.ps1
 # Duration: ~5 seconds
 # Validates: config.psd1 structure and integrity
 
 # 7. Test Coverage Check
-./automation-scripts/0426_Validate-TestScriptSync.ps1
+./library/automation-scripts/0426_Validate-TestScriptSync.ps1
 # Duration: ~10 seconds
 # Validates: All automation scripts have corresponding tests
 
 # 8. Project Report
-./automation-scripts/0510_Generate-ProjectReport.ps1 -ShowAll
+./library/automation-scripts/0510_Generate-ProjectReport.ps1 -ShowAll
 # Duration: ~30 seconds
 # Generates: Comprehensive project statistics and health metrics
 ```
@@ -140,11 +140,11 @@ aitherzero 0403               # Integration tests
 
 ```powershell
 # Quick validation (< 2 minutes)
-./automation-scripts/0407_Validate-Syntax.ps1 -All
-./automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+./library/automation-scripts/0407_Validate-Syntax.ps1 -All
+./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
 
 # If you modified tests or core functionality
-./automation-scripts/0402_Run-UnitTests.ps1
+./library/automation-scripts/0402_Run-UnitTests.ps1
 ```
 
 ### Before Creating a PR
@@ -161,7 +161,7 @@ aitherzero 0403               # Integration tests
 
 ```powershell
 # Re-run specific checks
-./automation-scripts/0407_Validate-Syntax.ps1 -All
+./library/automation-scripts/0407_Validate-Syntax.ps1 -All
 
 # Or re-run full health check
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook project-health-check
@@ -233,10 +233,10 @@ Import-Module ./AitherZero.psd1 -Force
 ### Script Execution Errors
 ```powershell
 # Check if script exists
-ls ./automation-scripts/0407_Validate-Syntax.ps1
+ls ./library/automation-scripts/0407_Validate-Syntax.ps1
 
 # Run with verbose output
-./automation-scripts/0407_Validate-Syntax.ps1 -All -Verbose
+./library/automation-scripts/0407_Validate-Syntax.ps1 -All -Verbose
 ```
 
 ## See Also
@@ -244,4 +244,4 @@ ls ./automation-scripts/0407_Validate-Syntax.ps1
 - [Orchestration Playbooks](../domains/orchestration/playbooks/README.md)
 - [Testing Guide](./TESTING-README.md)
 - [CI/CD Workflows](../.github/workflows/README.md)
-- [Quality Validation](../automation-scripts/0420_Validate-ComponentQuality.ps1)
+- [Quality Validation](../library/automation-scripts/0420_Validate-ComponentQuality.ps1)

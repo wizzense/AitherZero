@@ -193,21 +193,21 @@ gh workflow run parallel-testing.yml -f test_filter=domains
 
 **Quick parallel test**:
 ```powershell
-./automation-scripts/0962_Run-Playbook.ps1 `
+./library/automation-scripts/0962_Run-Playbook.ps1 `
     -Playbook "run-tests-parallel-comprehensive" `
     -Profile "quick"
 ```
 
 **Standard parallel test**:
 ```powershell
-./automation-scripts/0962_Run-Playbook.ps1 `
+./library/automation-scripts/0962_Run-Playbook.ps1 `
     -Playbook "run-tests-parallel-comprehensive" `
     -Profile "standard"
 ```
 
 **Full comprehensive parallel test**:
 ```powershell
-./automation-scripts/0962_Run-Playbook.ps1 `
+./library/automation-scripts/0962_Run-Playbook.ps1 `
     -Playbook "run-tests-parallel-comprehensive" `
     -Profile "comprehensive"
 ```

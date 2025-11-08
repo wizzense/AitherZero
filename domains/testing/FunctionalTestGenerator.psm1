@@ -450,7 +450,7 @@ function Get-TestFilePath {
     $rangeEnd = $rangeStart + 99
     $rangeDir = "$($rangeStart.ToString('0000'))-$($rangeEnd.ToString('0000'))"
     
-    $testDir = Join-Path $script:ProjectRoot "tests/unit/automation-scripts/$rangeDir"
+    $testDir = Join-Path $script:ProjectRoot "tests/unit/library/automation-scripts/$rangeDir"
     return Join-Path $testDir "$ScriptName.Tests.ps1"
 }
 

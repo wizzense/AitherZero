@@ -23,7 +23,7 @@ This guide provides specific instructions for GitHub Copilot, custom agents, and
 
 1. **Always validate config.psd1 after changes**
    ```powershell
-   ./automation-scripts/0413_Validate-ConfigManifest.ps1
+   ./library/automation-scripts/0413_Validate-ConfigManifest.ps1
    ```
 
 2. **Generate tests for all new code**
@@ -398,7 +398,7 @@ Invoke-Pester -Path "./tests/ExtensionName.Tests.ps1"
 1. **Make changes to config.psd1**
 2. **Validate immediately:**
    ```powershell
-   ./automation-scripts/0413_Validate-ConfigManifest.ps1
+   ./library/automation-scripts/0413_Validate-ConfigManifest.ps1
    ```
 3. **If validation fails, fix issues**
 4. **Re-validate until successful**
@@ -432,7 +432,7 @@ Extensions = @{
 **Updating script inventory:**
 ```powershell
 # Count actual scripts first
-$scriptCount = (Get-ChildItem ./automation-scripts/*.ps1).Count
+$scriptCount = (Get-ChildItem ./library/automation-scripts/*.ps1).Count
 
 # Update config
 Manifest = @{
@@ -590,12 +590,12 @@ Describe "FunctionName" {
 Describe "NNNN_Script-Name" {
     Context "Script validation" {
         It "Script file should exist" {
-            $scriptPath = "./automation-scripts/NNNN_Script-Name.ps1"
+            $scriptPath = "./library/automation-scripts/NNNN_Script-Name.ps1"
             $scriptPath | Should -Exist
         }
         
         It "Script should have valid syntax" {
-            $scriptPath = "./automation-scripts/NNNN_Script-Name.ps1"
+            $scriptPath = "./library/automation-scripts/NNNN_Script-Name.ps1"
             $errors = $null
             $null = [System.Management.Automation.PSParser]::Tokenize(
                 (Get-Content $scriptPath -Raw), [ref]$errors
@@ -604,7 +604,7 @@ Describe "NNNN_Script-Name" {
         }
         
         It "Script should have metadata comments" {
-            $scriptPath = "./automation-scripts/NNNN_Script-Name.ps1"
+            $scriptPath = "./library/automation-scripts/NNNN_Script-Name.ps1"
             $content = Get-Content $scriptPath -Raw
             $content | Should -Match '\.SYNOPSIS'
             $content | Should -Match 'Stage:'
@@ -613,7 +613,7 @@ Describe "NNNN_Script-Name" {
     
     Context "Execution" {
         It "Script should execute with -WhatIf" {
-            { ./automation-scripts/NNNN_Script-Name.ps1 -WhatIf } | Should -Not -Throw
+            { ./library/automation-scripts/NNNN_Script-Name.ps1 -WhatIf } | Should -Not -Throw
         }
         
         It "Script should handle errors" {
@@ -767,7 +767,7 @@ Describe "NewMode" {
 }
 
 # 5. Validate
-./automation-scripts/0413_Validate-ConfigManifest.ps1
+./library/automation-scripts/0413_Validate-ConfigManifest.ps1
 Invoke-Pester -Path "./tests"
 ```
 
@@ -775,8 +775,8 @@ Invoke-Pester -Path "./tests"
 
 ```powershell
 # 1. Create scripts in range (e.g., 0600-0699 for new category)
-# ./automation-scripts/0600_Category-Setup.ps1
-# ./automation-scripts/0601_Category-Status.ps1
+# ./library/automation-scripts/0600_Category-Setup.ps1
+# ./library/automation-scripts/0601_Category-Status.ps1
 
 # 2. Update config.psd1
 Manifest = @{
@@ -790,10 +790,10 @@ Manifest = @{
 }
 
 # 3. Create tests
-# ./tests/unit/automation-scripts/0600-0699/0600.Tests.ps1
+# ./tests/unit/library/automation-scripts/0600-0699/0600.Tests.ps1
 
 # 4. Validate
-./automation-scripts/0413_Validate-ConfigManifest.ps1
+./library/automation-scripts/0413_Validate-ConfigManifest.ps1
 ```
 
 ### Pattern: Feature Flag
@@ -847,7 +847,7 @@ Before finalizing code generation:
 
 ```powershell
 # 1. Run validation to see errors
-./automation-scripts/0413_Validate-ConfigManifest.ps1
+./library/automation-scripts/0413_Validate-ConfigManifest.ps1
 
 # 2. Common issues:
 # - ScriptInventory count mismatch → Count actual scripts
@@ -857,7 +857,7 @@ Before finalizing code generation:
 # 3. Fix issues in config.psd1
 
 # 4. Re-validate
-./automation-scripts/0413_Validate-ConfigManifest.ps1
+./library/automation-scripts/0413_Validate-ConfigManifest.ps1
 ```
 
 ### If Tests Fail

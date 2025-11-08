@@ -6,8 +6,8 @@
 
 .DESCRIPTION
     This script provides a comprehensive analysis of test coverage for automation scripts by:
-    - Counting total automation scripts in /automation-scripts/
-    - Counting existing test files in /tests/unit/automation-scripts/
+    - Counting total automation scripts in /library/automation-scripts/
+    - Counting existing test files in /tests/unit/library/automation-scripts/
     - Identifying scripts without tests
     - Categorizing coverage by script ranges (0000-0099, etc.)
     - Generating coverage statistics and recommendations
@@ -92,7 +92,7 @@ function Get-ScriptCoverageData {
     $automationScripts = Get-ChildItem -Path './automation-scripts' -Filter '*.ps1'
 
     if (-not $automationScripts) {
-        Write-Warning "No automation scripts found in ./automation-scripts/"
+        Write-Warning "No automation scripts found in ./library/automation-scripts/"
         return $null
     }
 
@@ -251,7 +251,7 @@ function Write-ConsoleReport {
             Write-Host "To create test files for untested scripts, run:" -ForegroundColor Yellow
             Write-Host ""
             foreach ($script in $untested | Select-Object -First 5) {
-                Write-Host "  New-Item './tests/unit/automation-scripts/$($script.Name).Tests.ps1'" -ForegroundColor Gray
+                Write-Host "  New-Item './tests/unit/library/automation-scripts/$($script.Name).Tests.ps1'" -ForegroundColor Gray
             }
             if ($untested.Count -gt 5) {
                 Write-Host "  ... and $($untested.Count - 5) more" -ForegroundColor Gray

@@ -380,7 +380,7 @@ function Get-IncrementalTestScope {
             }
         }
 
-        if ($file -match 'automation-scripts[/\\](\d{4}_.+\.ps1)$') {
+        if ($file -match 'library/automation-scripts[/\\](\d{4}_.+\.ps1)$') {
             $testScope.Scripts += $Matches[1]
         }
 

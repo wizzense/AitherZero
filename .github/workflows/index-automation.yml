@@ -16,7 +16,7 @@ on:
       ]
     paths:
       - "domains/**"
-      - "automation-scripts/**"
+      - "library/automation-scripts/**"
       - "infrastructure/**"
       - "tests/**"
       - "integrations/**"
@@ -40,7 +40,7 @@ on:
       ]
     paths:
       - "domains/**"
-      - "automation-scripts/**"
+      - "library/automation-scripts/**"
       - "infrastructure/**"
       - "tests/**"
       - "integrations/**"
@@ -135,10 +135,10 @@ jobs:
           # Run index generation with Force flag on main/develop pushes
           try {
             if ($mode -eq 'Full') {
-              ./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode $mode -Force
+              ./library/automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode $mode -Force
               Write-Host "Full index regeneration completed (post-merge)" -ForegroundColor Green
             } else {
-              ./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode $mode
+              ./library/automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode $mode
               Write-Host "Index generation completed successfully" -ForegroundColor Green
             }
           } catch {
@@ -153,7 +153,7 @@ jobs:
 
           # Check for missing README.md or index.md files
           try {
-            ./automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
+            ./library/automation-scripts/0961_Validate-DirectoryDocumentation.ps1 -CheckMissing
             Write-Host "Documentation validation completed" -ForegroundColor Green
           } catch {
             Write-Warning "Some directories are missing documentation"
@@ -167,7 +167,7 @@ jobs:
 
           # Track when docs were last updated
           try {
-            ./automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
+            ./library/automation-scripts/0960_Track-DocumentationFreshness.ps1 -ReportOnly
             Write-Host "Documentation tracking completed" -ForegroundColor Green
           } catch {
             Write-Warning "Documentation tracking encountered issues"
@@ -234,7 +234,7 @@ jobs:
             git status --porcelain | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
 
             Write-Host "`n💡 To fix this, contributors should:" -ForegroundColor Cyan
-            Write-Host "  1. Run: ./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Full" -ForegroundColor White
+            Write-Host "  1. Run: ./library/automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Full" -ForegroundColor White
             Write-Host "  2. Commit the updated index.md files to their PR" -ForegroundColor White
             Write-Host "  3. Push the changes before merging" -ForegroundColor White
 

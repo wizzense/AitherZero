@@ -4,14 +4,14 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'automation-scripts/**/*.ps1'
+      - 'library/automation-scripts/**/*.ps1'
       - 'domains/**/*.psm1'
   push:
     branches:
       - main
       - develop
     paths:
-      - 'automation-scripts/**/*.ps1'
+      - 'library/automation-scripts/**/*.ps1'
       - 'domains/**/*.psm1'
   workflow_dispatch:
     inputs:
@@ -163,7 +163,7 @@ jobs:
           }
 
           try {
-              $result = & ./automation-scripts/0950_Generate-AllTests.ps1 @params
+              $result = & ./library/automation-scripts/0950_Generate-AllTests.ps1 @params
               $exitCode = $LASTEXITCODE
 
               Write-Host ""
@@ -237,7 +237,7 @@ jobs:
               conclusion = 'failure';
               summary = `❌ ${missingCount} script(s) missing tests`;
               text = `Found ${missingCount} automation script(s) without tests. Test generation failed. Please run manually:
-              \`./automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick\``;
+              \`./library/automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick\``;
             }
 
             if (context.eventName === 'pull_request') {
@@ -292,10 +292,10 @@ jobs:
             If you need to regenerate tests:
             \`\`\`bash
             # Quick mode (missing tests only)
-            ./automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick
+            ./library/automation-scripts/0950_Generate-AllTests.ps1 -Mode Quick
 
             # Full mode (all tests)
-            ./automation-scripts/0950_Generate-AllTests.ps1 -Mode Full -Force
+            ./library/automation-scripts/0950_Generate-AllTests.ps1 -Mode Full -Force
             \`\`\`
             `;
 

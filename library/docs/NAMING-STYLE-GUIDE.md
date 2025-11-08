@@ -252,7 +252,7 @@ category/Target.Tests.ps1
 ```powershell
 ✅ GOOD
 tests/domains/configuration/Configuration.Tests.ps1
-tests/unit/automation-scripts/0402_Run-UnitTests.Tests.ps1
+tests/unit/library/automation-scripts/0402_Run-UnitTests.Tests.ps1
 tests/integration/orchestration/PlaybookExecution.Tests.ps1
 
 ❌ BAD
@@ -298,14 +298,14 @@ guide.md                            # What kind of guide?
 ## Directory Structure
 
 ### Rules
-1. **Lowercase with dashes**: `automation-scripts/`, `test-results/`
+1. **Lowercase with dashes**: `library/automation-scripts/`, `test-results/`
 2. **Descriptive names**: Purpose should be obvious
 3. **Consistent depth**: Avoid deeply nested structures
 
 ### Examples
 ```
 ✅ GOOD
-automation-scripts/                 # Numbered automation scripts
+library/automation-scripts/                 # Numbered automation scripts
 domains/orchestration/playbooks/            # Playbook definitions
 tests/unit/                         # Unit tests
 tests/integration/                  # Integration tests
@@ -366,7 +366,7 @@ update                         # What's being updated?
 | **Config** | `config-context.ext` | `config-production.psd1` |
 | **Test** | `category/Target.Tests.ps1` | `domains/Configuration.Tests.ps1` |
 | **Doc** | `PURPOSE-CONTEXT.md` or `README.md` | `TESTING-OVERHAUL-COMPLETE.md` |
-| **Directory** | `lowercase-with-dashes/` | `automation-scripts/` |
+| **Directory** | `lowercase-with-dashes/` | `library/automation-scripts/` |
 | **Branch** | `type/brief-description` | `feature/playbook-reorganization` |
 
 ---

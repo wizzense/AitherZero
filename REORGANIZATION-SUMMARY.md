@@ -115,7 +115,7 @@ library/
 ### Index Files (115 files)
 All index.md files regenerated automatically using:
 ```powershell
-./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Full -Force
+./library/library/automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Full -Force
 ```
 
 ## Path Updates
@@ -166,9 +166,9 @@ None - all references updated. The reorganization is transparent to users.
 ## Testing
 
 Recommended tests after merging:
-1. Run `./automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Verify`
-2. Run `./automation-scripts/0512_Generate-Dashboard.ps1`
-3. Run `./automation-scripts/0514_Generate-CodeMap.ps1`
+1. Run `./library/library/automation-scripts/0745_Generate-ProjectIndexes.ps1 -Mode Verify`
+2. Run `./library/library/automation-scripts/0512_Generate-Dashboard.ps1`
+3. Run `./library/library/automation-scripts/0514_Generate-CodeMap.ps1`
 4. Verify GitHub Pages build succeeds
 5. Check navigation links in generated index.md files
 

@@ -11,7 +11,7 @@ aitherzero orchestrate test-orchestrated                  # 10min (default)
 open reports/dashboard.html
 
 # Regenerate tests
-./automation-scripts/0951_Regenerate-FunctionalTests.ps1 -Mode Sample -Force
+./library/library/automation-scripts/0951_Regenerate-FunctionalTests.ps1 -Mode Sample -Force
 ```
 
 ## What Changed
@@ -90,13 +90,13 @@ Context '🎭 Mocked Dependencies' {
 - `domains/orchestration/playbooks/testing/test-orchestrated.json` - Main playbook
 - `.github/workflows/unified-testing.yml` - CI/CD workflow
 - `domains/testing/FunctionalTestGenerator.psm1` - Test generator
-- `automation-scripts/0951_Regenerate-FunctionalTests.ps1` - Batch regeneration
+- `library/automation-scripts/0951_Regenerate-FunctionalTests.ps1` - Batch regeneration
 
 ### Deprecated (Don't Use)
-- `automation-scripts/0460_Orchestrate-Tests.ps1` → Use playbook
-- `automation-scripts/0470_Orchestrate-SimpleTesting.ps1` → Use playbook
-- `automation-scripts/0480_Test-Simple.ps1` → Use playbook
-- `automation-scripts/0490_AI-TestRunner.ps1` → Use playbook
+- `library/automation-scripts/0460_Orchestrate-Tests.ps1` → Use playbook
+- `library/automation-scripts/0470_Orchestrate-SimpleTesting.ps1` → Use playbook
+- `library/automation-scripts/0480_Test-Simple.ps1` → Use playbook
+- `library/automation-scripts/0490_AI-TestRunner.ps1` → Use playbook
 
 ## Metrics
 
@@ -131,8 +131,8 @@ The `unified-testing.yml` workflow:
 
 | Old Command | New Command |
 |-------------|-------------|
-| `./automation-scripts/0409_Run-AllTests.ps1` | `aitherzero orchestrate test-orchestrated --profile full` |
-| `./automation-scripts/0480_Test-Simple.ps1` | `aitherzero orchestrate test-orchestrated --profile quick` |
+| `./library/library/automation-scripts/0409_Run-AllTests.ps1` | `aitherzero orchestrate test-orchestrated --profile full` |
+| `./library/library/automation-scripts/0480_Test-Simple.ps1` | `aitherzero orchestrate test-orchestrated --profile quick` |
 | Multiple result files | One dashboard: `reports/dashboard.html` |
 
 ---

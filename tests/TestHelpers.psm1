@@ -389,7 +389,7 @@ function New-TestConfiguration {
             MaxConcurrency = if ($testEnv.IsCI) { 1 } else { 2 }  # CI: sequential, Local: parallel
             DryRun = $true
             ValidateBeforeRun = $true
-            ScriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
+            ScriptsPath = Join-Path $script:ProjectRoot "library/automation-scripts"
         }
         Logging = @{
             Level = if ($testEnv.IsCI) { "Information" } else { "Debug" }
@@ -450,7 +450,7 @@ function New-MockBootstrapEnvironment {
     }
 
     # Create directory structure
-    $dirs = @('logs', 'config', 'temp', 'domains', 'automation-scripts')
+    $dirs = @('logs', 'config', 'temp', 'domains', 'library/automation-scripts')
     foreach ($dir in $dirs) {
         New-Item -Path (Join-Path $Path $dir) -ItemType Directory -Force | Out-Null
     }

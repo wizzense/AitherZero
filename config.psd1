@@ -861,7 +861,7 @@
     # ===================================================================
     Automation = @{
         # Script execution settings
-        ScriptsPath = './automation-scripts'
+        ScriptsPath = './library/automation-scripts'
         DefaultTimeout = 3600
         MaxTimeout = 7200  # Maximum allowed timeout (2 hours)
         MaxConcurrency = 4

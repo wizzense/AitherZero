@@ -42,10 +42,10 @@ The updated `0215_Configure-MCPServers.ps1` script now creates the correct forma
 
 ```bash
 # Configure MCP servers in workspace
-./automation-scripts/0215_Configure-MCPServers.ps1
+./library/automation-scripts/0215_Configure-MCPServers.ps1
 
 # Verify configuration
-./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
+./library/automation-scripts/0215_Configure-MCPServers.ps1 -Verify
 ```
 
 ## How It Works Now
@@ -80,7 +80,7 @@ The updated `0215_Configure-MCPServers.ps1` script now creates the correct forma
 ### Step 1: Run Configuration Script
 ```bash
 cd /path/to/AitherZero
-./automation-scripts/0215_Configure-MCPServers.ps1
+./library/automation-scripts/0215_Configure-MCPServers.ps1
 ```
 
 This creates `.vscode/mcp.json` with 5 MCP servers configured.
@@ -103,7 +103,7 @@ VS Code will prompt you to trust each MCP server when it starts for the first ti
 
 ### Step 5: Verify MCP Servers Are Running
 ```bash
-./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
+./library/automation-scripts/0215_Configure-MCPServers.ps1 -Verify
 ```
 
 Should show:
@@ -162,9 +162,9 @@ cd /path/to/AitherZero
 node mcp-server/scripts/start-with-build.mjs
 
 # Or use the automation scripts
-./automation-scripts/0751_Start-MCPServer.ps1
-./automation-scripts/0752_Demo-MCPServer.ps1
-./automation-scripts/0753_Use-MCPServer.ps1
+./library/automation-scripts/0751_Start-MCPServer.ps1
+./library/automation-scripts/0752_Demo-MCPServer.ps1
+./library/automation-scripts/0753_Use-MCPServer.ps1
 ```
 
 ### Option 3: Use MCP Inspector
@@ -199,7 +199,7 @@ npx @modelcontextprotocol/inspector npx -y @modelcontextprotocol/server-filesyst
 ### 4. Node.js Requirements
 - **Minimum**: Node.js 18+ required for MCP servers
 - **Check**: `node --version`
-- **Install**: https://nodejs.org/ or use `./automation-scripts/0201_Install-Node.ps1`
+- **Install**: https://nodejs.org/ or use `./library/automation-scripts/0201_Install-Node.ps1`
 
 ## Verification Commands
 
@@ -218,7 +218,7 @@ npx -y @modelcontextprotocol/server-filesystem --help
 npx -y @modelcontextprotocol/server-github --help
 
 # Verify MCP configuration
-./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
+./library/automation-scripts/0215_Configure-MCPServers.ps1 -Verify
 
 # Check for GITHUB_TOKEN (required for github MCP server)
 echo $env:GITHUB_TOKEN  # Windows PowerShell
@@ -247,7 +247,7 @@ echo 'export GITHUB_TOKEN="your_token"' >> ~/.bashrc
 **Solution**:
 ```bash
 # Install Node.js using AitherZero automation
-./automation-scripts/0201_Install-Node.ps1
+./library/automation-scripts/0201_Install-Node.ps1
 
 # Or download from nodejs.org
 ```
@@ -275,7 +275,7 @@ If MCP still doesn't work after following these steps:
    - Direct MCP server usage for development/testing
 
 4. **Verify your environment**
-   - Run diagnostics: `./automation-scripts/0500_Validate-Environment.ps1`
+   - Run diagnostics: `./library/automation-scripts/0500_Validate-Environment.ps1`
    - Check logs: `.vscode/settings.json` configuration
 
 5. **File issue with GitHub Copilot**
@@ -313,7 +313,7 @@ node --version
 
 echo ""
 echo "4. MCP Configuration:"
-./automation-scripts/0215_Configure-MCPServers.ps1 -Verify
+./library/automation-scripts/0215_Configure-MCPServers.ps1 -Verify
 
 echo ""
 echo "5. GitHub Token:"

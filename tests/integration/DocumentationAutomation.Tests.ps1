@@ -12,7 +12,7 @@
 BeforeAll {
     # Calculate project root: tests/integration -> tests -> project_root
     $script:projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-    $script:script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+    $script:script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
     
     # Verify script exists
     if (-not (Test-Path $script:script0746)) {
@@ -23,7 +23,7 @@ BeforeAll {
 Describe "Documentation Automation (0746)" {
     Context "Script Execution" {
         It "Script file exists and is executable" {
-            $script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+            $script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
             Test-Path $script0746 | Should -Be $true
             
             # Check if file has execute permissions (on Unix-like systems)
@@ -34,7 +34,7 @@ Describe "Documentation Automation (0746)" {
         }
         
         It "Script has valid PowerShell syntax" {
-            $script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+            $script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
             $result = $null
             $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($script0746, [ref]$result, [ref]$errors) | Out-Null
@@ -42,7 +42,7 @@ Describe "Documentation Automation (0746)" {
         }
         
         It "Script accepts valid parameters" {
-            $script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+            $script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
             $content = Get-Content $script0746 -Raw
             $content | Should -Match 'param\s*\('
             $content | Should -Match '\[ValidateSet.*Mode'
@@ -63,7 +63,7 @@ Describe "Documentation Automation (0746)" {
         }
         
         It "0744 script uses lowercase index.md" {
-            $script0744 = Join-Path $script:projectRoot "automation-scripts/0744_Generate-AutoDocumentation.ps1"
+            $script0744 = Join-Path $script:projectRoot "library/automation-scripts/0744_Generate-AutoDocumentation.ps1"
             $content = Get-Content $script0744 -Raw
             
             # Check for lowercase index.md in relevant contexts
@@ -86,12 +86,12 @@ Describe "Documentation Automation (0746)" {
     
     Context "Script Dependencies" {
         It "0744 script exists (dependency)" {
-            $script0744 = Join-Path $script:projectRoot "automation-scripts/0744_Generate-AutoDocumentation.ps1"
+            $script0744 = Join-Path $script:projectRoot "library/automation-scripts/0744_Generate-AutoDocumentation.ps1"
             Test-Path $script0744 | Should -Be $true
         }
         
         It "0745 script exists (dependency)" {
-            $script0745 = Join-Path $script:projectRoot "automation-scripts/0745_Generate-ProjectIndexes.ps1"
+            $script0745 = Join-Path $script:projectRoot "library/automation-scripts/0745_Generate-ProjectIndexes.ps1"
             Test-Path $script0745 | Should -Be $true
         }
         
@@ -108,7 +108,7 @@ Describe "Documentation Automation (0746)" {
     
     Context "Cleanup Logic" {
         It "0746 script has case-sensitive INDEX.md detection" {
-            $script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+            $script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
             $content = Get-Content $script0746 -Raw
             
             # Should use case-sensitive comparison operator
@@ -116,7 +116,7 @@ Describe "Documentation Automation (0746)" {
         }
         
         It "0746 script checks for lowercase index.md before removing uppercase" {
-            $script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+            $script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
             $content = Get-Content $script0746 -Raw
             
             # Should check for lowercase before removing
@@ -128,7 +128,7 @@ Describe "Documentation Automation (0746)" {
 Describe "Documentation Generation Workflow" {
     Context "Integration" {
         It "WhatIf mode executes without errors" {
-            $script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+            $script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
             
             # Run with WhatIf to test logic without making changes
             $result = & $script0746 -Mode Incremental -WhatIf -ErrorAction Stop 2>&1

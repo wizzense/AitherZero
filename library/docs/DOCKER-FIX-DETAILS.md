@@ -34,8 +34,8 @@ The error occurred because:
 
 - `Dockerfile` - Install to `/opt/aitherzero`, set WORKDIR to `/app`
 - `docker-compose.yml` - Update environment and volume paths
-- `automation-scripts/0850_Deploy-PREnvironment.ps1` - Update paths in docker-compose generation
-- `automation-scripts/0852_Validate-PRDockerDeployment.ps1` - Update validation paths
+- `library/automation-scripts/0850_Deploy-PREnvironment.ps1` - Update paths in docker-compose generation
+- `library/automation-scripts/0852_Validate-PRDockerDeployment.ps1` - Update validation paths
 - `docs/IMPLEMENTATION-SUMMARY.md` - Update Docker test commands
 - `docs/PR-DEPLOYMENT-SETUP-CHECKLIST.md` - Update testing commands
 
@@ -97,7 +97,7 @@ docker run -it --rm \
 ├── AitherZero.psm1       # Root module
 ├── Start-AitherZero.ps1  # Main entry point
 ├── domains/              # Domain modules
-├── automation-scripts/   # Numbered scripts
+├── library/automation-scripts/   # Numbered scripts
 ├── logs/                 # AitherZero logs
 ├── reports/              # AitherZero reports
 └── ...

@@ -44,7 +44,7 @@ AitherZero includes three MCP configuration files for different use cases:
 - Supports input variables for secure data
 - Schema: VS Code-specific
 
-**Created By**: `./automation-scripts/0215_Configure-MCPServers.ps1`
+**Created By**: `./library/automation-scripts/0215_Configure-MCPServers.ps1`
 
 **Documentation**: https://code.visualstudio.com/docs/copilot/customization/mcp-servers
 
@@ -132,7 +132,7 @@ All three files configure these 6 MCP servers:
 
 1. Run configuration script:
    ```bash
-   ./automation-scripts/0215_Configure-MCPServers.ps1
+   ./library/automation-scripts/0215_Configure-MCPServers.ps1
    ```
 
 2. Reload VS Code window:
@@ -187,7 +187,7 @@ cat .vscode/mcp-servers.json | jq 'keys'
 
 **Solution**: 
 - VS Code reads `.vscode/mcp.json` (not `mcp-servers.json`)
-- Run: `./automation-scripts/0215_Configure-MCPServers.ps1`
+- Run: `./library/automation-scripts/0215_Configure-MCPServers.ps1`
 - See: `docs/MCP-TROUBLESHOOTING.md`
 
 ### Claude Desktop Not Finding Servers
@@ -213,7 +213,7 @@ Update MCP configuration files when:
 
 **VS Code format** (`.vscode/mcp.json`):
 ```bash
-./automation-scripts/0215_Configure-MCPServers.ps1
+./library/automation-scripts/0215_Configure-MCPServers.ps1
 ```
 
 **MCP standard format** (`.vscode/mcp-servers.json`, `.github/mcp-servers.json`):

@@ -7,7 +7,7 @@ on:
     paths:
       - '**/*.psd1'
       - 'tools/Validate-ModuleManifest.ps1'
-      - 'automation-scripts/0405_Validate-ModuleManifests.ps1'
+      - 'library/automation-scripts/0405_Validate-ModuleManifests.ps1'
   pull_request:
     # Run on all PRs to validate manifests
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
           Write-Host "🔍 Validating PowerShell module manifests for Unicode and syntax issues..." -ForegroundColor Cyan
 
           # Run the validation script
-          $result = & ./automation-scripts/0405_Validate-ModuleManifests.ps1 2>&1
+          $result = & ./library/automation-scripts/0405_Validate-ModuleManifests.ps1 2>&1
           $exitCode = $LASTEXITCODE
 
           # Display results
@@ -51,7 +51,7 @@ jobs:
             Write-Host "  • Invalid PowerShell restricted language usage" -ForegroundColor Yellow
             Write-Host ""
             Write-Host "To fix automatically, run locally:" -ForegroundColor Cyan
-            Write-Host "  pwsh -File ./automation-scripts/0405_Validate-ModuleManifests.ps1 -Fix" -ForegroundColor White
+            Write-Host "  pwsh -File ./library/automation-scripts/0405_Validate-ModuleManifests.ps1 -Fix" -ForegroundColor White
             exit 1
           } else {
             Write-Host "✅ All module manifests validated successfully!" -ForegroundColor Green
@@ -63,7 +63,7 @@ jobs:
           Write-Host "🧪 Testing validation tools..." -ForegroundColor Cyan
 
           # Run validation tool tests
-          $testResult = Invoke-Pester -Path './tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1' -PassThru
+          $testResult = Invoke-Pester -Path './tests/unit/library/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1' -PassThru
 
           if ($testResult.FailedCount -gt 0) {
             Write-Host "❌ Validation tool tests failed!" -ForegroundColor Red

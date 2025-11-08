@@ -311,8 +311,8 @@ pwsh -Command "Import-Module ./AitherZero.psd1; Get-Module AitherZero"
 
 **Issue**: Scripts fail with permission errors
 **Solution**:
-- Check file permissions: `ls -la automation-scripts/`
-- Set execute permissions: `chmod +x automation-scripts/*.ps1`
+- Check file permissions: `ls -la library/automation-scripts/`
+- Set execute permissions: `chmod +x library/automation-scripts/*.ps1`
 - Verify AITHERZERO_ROOT is correct
 
 ### AI Assistant Not Seeing Server

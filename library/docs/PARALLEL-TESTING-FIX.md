@@ -19,7 +19,7 @@ The parallel testing workflow (`.github/workflows/parallel-testing.yml`) was fai
 **Actually exists**:
 ```
 tests/integration/
-└── automation-scripts/    ✅ EXISTS
+└── library/automation-scripts/    ✅ EXISTS
 ```
 
 **Missing**:
@@ -225,7 +225,7 @@ tests/
 │   └── your-new-suite/        # Add integration tests here
 │       └── *.Tests.ps1
 └── unit/
-    └── automation-scripts/
+    └── library/automation-scripts/
         └── NNNN-NNNN/         # Unit tests by script range
             └── *.Tests.ps1
 ```

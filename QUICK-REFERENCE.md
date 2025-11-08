@@ -152,8 +152,8 @@ Legend: ✅ Done | ⏳ Pending | 🚫 Blocked
 **Testing PRs locally**:
 ```bash
 gh pr checkout 1700
-./automation-scripts/0402_run-unit-tests.ps1
-./automation-scripts/0404_run-psscriptanalyzer.ps1
+./library/library/automation-scripts/0402_run-unit-tests.ps1
+./library/library/automation-scripts/0404_run-psscriptanalyzer.ps1
 ```
 
 **Workflow debugging**:

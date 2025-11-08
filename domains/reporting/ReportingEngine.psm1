@@ -1323,7 +1323,7 @@ function New-ProjectReport {
         TotalFiles = (Get-ChildItem -Path $script:ProjectRoot -Recurse -File | Measure-Object).Count
         PowerShellFiles = (Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1", "*.psd1" | Measure-Object).Count
         ModuleFiles = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Recurse -Filter "*.psm1" | Measure-Object).Count
-        AutomationScripts = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "automation-scripts") -Filter "*.ps1" | Measure-Object).Count
+        AutomationScripts = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "library/automation-scripts") -Filter "*.ps1" | Measure-Object).Count
         TestFiles = if (Test-Path (Join-Path $script:ProjectRoot "tests")) {
             (Get-ChildItem -Path (Join-Path $script:ProjectRoot "tests") -Recurse -Filter "*.Tests.ps1" | Measure-Object).Count
         } else { 0 }

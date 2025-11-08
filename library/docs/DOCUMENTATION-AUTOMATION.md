@@ -17,7 +17,7 @@ The documentation automation system ensures that:
 
 ### Validation Script: 0425_Validate-DocumentationStructure.ps1
 
-**Location**: `automation-scripts/0425_Validate-DocumentationStructure.ps1`
+**Location**: `library/automation-scripts/0425_Validate-DocumentationStructure.ps1`
 
 **Purpose**: Validates documentation organization and structure
 
@@ -32,7 +32,7 @@ The documentation automation system ensures that:
 **Usage**:
 ```powershell
 # Basic validation
-./automation-scripts/0425_Validate-DocumentationStructure.ps1
+./library/automation-scripts/0425_Validate-DocumentationStructure.ps1
 
 # Or using the az shortcut
 az 0425
@@ -140,7 +140,7 @@ Add to `.github/workflows/validation.yml`:
 ```yaml
 - name: Validate Documentation Structure
   run: |
-    pwsh -File ./automation-scripts/0425_Validate-DocumentationStructure.ps1 -Strict
+    pwsh -File ./library/automation-scripts/0425_Validate-DocumentationStructure.ps1 -Strict
 ```
 
 The `-Strict` flag treats warnings as errors, failing the CI build if documentation issues are found.
@@ -151,7 +151,7 @@ Add to `.git/hooks/pre-commit`:
 
 ```bash
 #!/bin/sh
-pwsh -File ./automation-scripts/0425_Validate-DocumentationStructure.ps1
+pwsh -File ./library/automation-scripts/0425_Validate-DocumentationStructure.ps1
 if [ $? -ne 0 ]; then
     echo "Documentation validation failed. Please fix issues before committing."
     exit 1
@@ -291,7 +291,7 @@ git rm -r legacy-to-migrate/
 **Solution**: Ensure PowerShell 7+ is installed and script is executable:
 ```bash
 pwsh --version  # Should be 7.0 or higher
-chmod +x automation-scripts/0425_Validate-DocumentationStructure.ps1
+chmod +x library/automation-scripts/0425_Validate-DocumentationStructure.ps1
 ```
 
 ## Future Enhancements

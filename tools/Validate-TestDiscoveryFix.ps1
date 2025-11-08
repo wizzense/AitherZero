@@ -119,43 +119,43 @@ Write-Host "   📊 Total test files: $totalTests" -ForegroundColor Gray
 # Test 4: Check test scripts exist
 Write-Host "`n🤖 Test Automation Scripts" -ForegroundColor Yellow
 Test-Condition "0402_Run-UnitTests.ps1 exists" {
-    Test-Path (Join-Path $projectRoot "automation-scripts/0402_Run-UnitTests.ps1")
+    Test-Path (Join-Path $projectRoot "library/automation-scripts/0402_Run-UnitTests.ps1")
 }
 
 Test-Condition "0403_Run-IntegrationTests.ps1 exists" {
-    Test-Path (Join-Path $projectRoot "automation-scripts/0403_Run-IntegrationTests.ps1")
+    Test-Path (Join-Path $projectRoot "library/automation-scripts/0403_Run-IntegrationTests.ps1")
 }
 
 Test-Condition "0512_Generate-Dashboard.ps1 exists" {
-    Test-Path (Join-Path $projectRoot "automation-scripts/0512_Generate-Dashboard.ps1")
+    Test-Path (Join-Path $projectRoot "library/automation-scripts/0512_Generate-Dashboard.ps1")
 }
 
 # Test 5: Validate test script logic
 Write-Host "`n🔧 Test Script Logic Validation" -ForegroundColor Yellow
 Test-Condition "0402 script has ContainsKey logic" {
-    $content = Get-Content (Join-Path $projectRoot "automation-scripts/0402_Run-UnitTests.ps1") -Raw
+    $content = Get-Content (Join-Path $projectRoot "library/automation-scripts/0402_Run-UnitTests.ps1") -Raw
     $content -match "ContainsKey\('Tag'\)"
 }
 
 Test-Condition "0402 script logs filter mode" {
-    $content = Get-Content (Join-Path $projectRoot "automation-scripts/0402_Run-UnitTests.ps1") -Raw
+    $content = Get-Content (Join-Path $projectRoot "library/automation-scripts/0402_Run-UnitTests.ps1") -Raw
     $content -match "Running all tests - no tag filter applied"
 }
 
 # Test 6: Check dashboard updates
 Write-Host "`n📊 Dashboard Updates" -ForegroundColor Yellow
 Test-Condition "Dashboard uses 'Test Files' label" {
-    $content = Get-Content (Join-Path $projectRoot "automation-scripts/0512_Generate-Dashboard.ps1") -Raw
+    $content = Get-Content (Join-Path $projectRoot "library/automation-scripts/0512_Generate-Dashboard.ps1") -Raw
     $content -match "Test Files"
 }
 
 Test-Condition "Dashboard has 'Last Test Run Results' header" {
-    $content = Get-Content (Join-Path $projectRoot "automation-scripts/0512_Generate-Dashboard.ps1") -Raw
+    $content = Get-Content (Join-Path $projectRoot "library/automation-scripts/0512_Generate-Dashboard.ps1") -Raw
     $content -match "Last Test Run Results"
 }
 
 Test-Condition "Dashboard has partial run warning" {
-    $content = Get-Content (Join-Path $projectRoot "automation-scripts/0512_Generate-Dashboard.ps1") -Raw
+    $content = Get-Content (Join-Path $projectRoot "library/automation-scripts/0512_Generate-Dashboard.ps1") -Raw
     $content -match "Only.*test cases executed"
 }
 

@@ -9,7 +9,7 @@
 
 BeforeAll {
     $script:projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-    $script:script0746 = Join-Path $script:projectRoot "automation-scripts/0746_Generate-AllDocumentation.ps1"
+    $script:script0746 = Join-Path $script:projectRoot "library/automation-scripts/0746_Generate-AllDocumentation.ps1"
     
     if (-not (Test-Path $script:script0746)) {
         throw "0746_Generate-AllDocumentation.ps1 not found"
@@ -51,12 +51,12 @@ Describe "0746 Documentation Orchestrator Script" {
     
     Context "Script Dependencies" {
         It "0744 script exists (dependency)" {
-            $script0744 = Join-Path $script:projectRoot "automation-scripts/0744_Generate-AutoDocumentation.ps1"
+            $script0744 = Join-Path $script:projectRoot "library/automation-scripts/0744_Generate-AutoDocumentation.ps1"
             Test-Path $script0744 | Should -Be $true
         }
         
         It "0745 script exists (dependency)" {
-            $script0745 = Join-Path $script:projectRoot "automation-scripts/0745_Generate-ProjectIndexes.ps1"
+            $script0745 = Join-Path $script:projectRoot "library/automation-scripts/0745_Generate-ProjectIndexes.ps1"
             Test-Path $script0745 | Should -Be $true
         }
         

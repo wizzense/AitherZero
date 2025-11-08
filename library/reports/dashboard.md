@@ -36,9 +36,9 @@
 | 🧪 **Test Files** | **324** | 162 Unit, 162 Integration |
 | ✅ **Last Test Run** | **0/0 cases** | Success Rate: 0%; Duration: Run tests to see duration |
 | 📊 **Test Details** | **Not run recently** | ✅ 0 passed, ❌ 0 failed |
- | ⚠️ **Note** | **Partial Run** | Only 0 test cases executed from available test files. Run `./automation-scripts/0402_Run-UnitTests.ps1` for full suite. |
+ | ⚠️ **Note** | **Partial Run** | Only 0 test cases executed from available test files. Run `./library/automation-scripts/0402_Run-UnitTests.ps1` for full suite. |
 
-> **⚠️ Only 0 test cases executed.** Run `./automation-scripts/0402_Run-UnitTests.ps1` for full test suite.
+> **⚠️ Only 0 test cases executed.** Run `./library/automation-scripts/0402_Run-UnitTests.ps1` for full test suite.
 | 🧪 **Test Coverage** | **68.5%** | 126 / 184 files have tests |
 | 📚 **Documentation Coverage** | **9.6%** | 104 / 1078 functions documented |
 | ✨ **Code Quality** | **51.3/100** | 22 issues in 22 files (✅ 203 clean / ⚠️ 22 warnings / ❌ 0 errors) |
@@ -63,7 +63,7 @@
 | 🧪 **Test Coverage** | **0%** | ✅ 0 / ⚠️ 0 / ❌ 0 |
 | 🔬 **PSScriptAnalyzer** | **0%** | ✅ 0 / ⚠️ 0 / ❌ 0 |
 
-*⚠️ No quality validation data available. Run `./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive` to generate quality reports.*
+*⚠️ No quality validation data available. Run `./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive` to generate quality reports.*
 
 ## 🎯 Project Health
 
@@ -87,10 +87,10 @@
 
 | Action | Command |
 |--------|---------|
-| Run Tests | `./automation-scripts/0402_Run-UnitTests.ps1` |
-| Code Analysis | `./automation-scripts/0404_Run-PSScriptAnalyzer.ps1` |
-| Generate Reports | `./automation-scripts/0510_Generate-ProjectReport.ps1` |
-| View Dashboard | `./automation-scripts/0511_Show-ProjectDashboard.ps1` |
+| Run Tests | `./library/automation-scripts/0402_Run-UnitTests.ps1` |
+| Code Analysis | `./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1` |
+| Generate Reports | `./library/automation-scripts/0510_Generate-ProjectReport.ps1` |
+| View Dashboard | `./library/automation-scripts/0511_Show-ProjectDashboard.ps1` |
 | Syntax Check | `./az 0407` |
 
 ## 📋 System Information

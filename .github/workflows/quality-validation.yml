@@ -145,7 +145,7 @@ jobs:
 
             try {
               # Run quality validation
-              $result = & ./automation-scripts/0420_Validate-ComponentQuality.ps1 `
+              $result = & ./library/automation-scripts/0420_Validate-ComponentQuality.ps1 `
                 -Path $file `
                 -Format JSON `
                 -MinimumScore 70 `
