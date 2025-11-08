@@ -132,8 +132,6 @@ function Find-Configurations {
             } catch {
                 Write-Verbose "Skipping $($file.FullName): $_"
             }
-                Write-Warning "Failed to read config: $($file.FullName) - $_"
-            }
         }
     }
 }

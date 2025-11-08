@@ -218,26 +218,32 @@ jobs:
           # Create PR directory
           New-Item -ItemType Directory -Path $prDir -Force | Out-Null
           
-          # Copy all generated reports to PR directory
-          $reportFiles = @(
-            "library/reports/*.html",
-            "library/reports/*.md", 
-            "library/reports/*.json",
-            "library/reports/CHANGELOG-*.md"
-          )
+          # Copy all files and subdirectories from library/reports to PR directory
+          # This ensures subdirectories like metrics-history/ and tech-debt/ are included
+          $sourceDir = "./library/reports"
           
-          foreach ($pattern in $reportFiles) {
-            $files = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue
-            if ($files) {
-              Write-Host "Copying $($files.Count) files matching $pattern" -ForegroundColor Gray
-              $files | Copy-Item -Destination $prDir -Force
+          # Get all files and directories, excluding the PR directories themselves
+          Get-ChildItem -Path $sourceDir -Recurse -Exclude "pr-*" | ForEach-Object {
+            $targetPath = $_.FullName.Replace($sourceDir, $prDir)
+            
+            if ($_.PSIsContainer) {
+              # Create directory
+              if (-not (Test-Path $targetPath)) {
+                New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+              }
+            } else {
+              # Copy file
+              $targetDir = Split-Path $targetPath -Parent
+              if (-not (Test-Path $targetDir)) {
+                New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+              }
+              Copy-Item -Path $_.FullName -Destination $targetPath -Force
             }
           }
           
           # Verify files were copied
           $copiedFiles = Get-ChildItem -Path $prDir -Recurse -File
           Write-Host "✓ Organized $($copiedFiles.Count) files for GitHub Pages deployment" -ForegroundColor Green
-          $copiedFiles | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Gray }
 
       - name: 🌐 Deploy to GitHub Pages
         if: hashFiles('./library/reports/pr-${{ env.PR_NUMBER }}/**') != ''
