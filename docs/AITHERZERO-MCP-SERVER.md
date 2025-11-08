@@ -97,7 +97,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
     "aitherzero": {
       "command": "node",
       "args": [
-        "/Users/yourname/AitherZero/mcp-server/dist/index.js"
+        "/Users/yourname/AitherZero/integrations/mcp-server/dist/index.js"
       ],
       "env": {
         "AITHERZERO_ROOT": "/Users/yourname/AitherZero"
@@ -120,7 +120,7 @@ Add to your workspace's `.vscode/mcp-servers.json`:
     "aitherzero": {
       "command": "node",
       "args": [
-        "${workspaceFolder}/mcp-server/dist/index.js"
+        "${workspaceFolder}/integrations/mcp-server/dist/index.js"
       ],
       "description": "AitherZero infrastructure automation",
       "capabilities": {
@@ -142,7 +142,7 @@ For any MCP-compatible client that supports stdio transport:
 ```json
 {
   "command": "node",
-  "args": ["/path/to/AitherZero/mcp-server/dist/index.js"],
+  "args": ["/path/to/AitherZero/integrations/mcp-server/dist/index.js"],
   "env": {
     "AITHERZERO_ROOT": "/path/to/AitherZero"
   }

@@ -398,7 +398,7 @@ npm test
 ## Getting Help
 
 - **Template Guide**: `templates/mcp-server-template/TEMPLATE-GUIDE.md`
-- **Example Implementation**: `/mcp-server/` (AitherZero MCP server)
+- **Example Implementation**: `/integrations/mcp-server/` (AitherZero MCP server)
 - **MCP Specification**: https://modelcontextprotocol.io/
 - **MCP SDK**: https://github.com/modelcontextprotocol/sdk
 - **Issues**: https://github.com/wizzense/AitherZero/issues
@@ -414,7 +414,7 @@ If you improve the template:
 
 ## Related Resources
 
-- **AitherZero MCP Server**: `/mcp-server/` - Reference implementation
+- **AitherZero MCP Server**: `/integrations/mcp-server/` - Reference implementation
 - **MCP Documentation**: `docs/AITHERZERO-MCP-SERVER.md`
 - **MCP Setup Guide**: `docs/COPILOT-MCP-SETUP.md`
 - **GitHub Copilot Integration**: `.github/copilot-instructions.md`

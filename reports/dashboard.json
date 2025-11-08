@@ -3613,70 +3613,70 @@
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/EXAMPLE-CONVERSATIONS.md",
+          "Path": "integrations/mcp-server/EXAMPLE-CONVERSATIONS.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 447
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/IMPLEMENTATION-SUMMARY.md",
+          "Path": "integrations/mcp-server/IMPLEMENTATION-SUMMARY.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 328
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/index.md",
+          "Path": "integrations/mcp-server/index.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 55
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/QUICKSTART.md",
+          "Path": "integrations/mcp-server/QUICKSTART.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 172
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/README.md",
+          "Path": "integrations/mcp-server/README.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 236
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/examples/index.md",
+          "Path": "integrations/mcp-server/examples/index.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 32
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/examples/README.md",
+          "Path": "integrations/mcp-server/examples/README.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 50
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/scripts/index.md",
+          "Path": "integrations/mcp-server/scripts/index.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 29
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/test/index.md",
+          "Path": "integrations/mcp-server/test/index.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 29
         },
         {
           "LastModified": "2025-11-04",
-          "Path": "mcp-server/src/index.md",
+          "Path": "integrations/mcp-server/src/index.md",
           "Status": "Current",
           "AgeDays": 0.0,
           "Lines": 29
