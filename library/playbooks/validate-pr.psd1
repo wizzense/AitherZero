@@ -21,7 +21,7 @@
             Timeout = 60
         },
         @{
-            Script = "0416_Validate-ModuleManifest.ps1"
+            Script = "0405_Validate-ModuleManifests.ps1"
             Description = "Validate module manifests"
             Parameters = @{}
             ContinueOnError = $false
