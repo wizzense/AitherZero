@@ -127,9 +127,9 @@ if ($missingManifest) {
 Write-Host ""
 Write-Host "4. DOMAIN/MODULE COUNT VALIDATION" -ForegroundColor Yellow
 
-if (Test-Path './domains') {
-    $actualDomains = Get-ChildItem -Path './domains' -Directory | Sort-Object Name
-    $actualModules = (Get-ChildItem -Path './domains' -Filter '*.psm1' -Recurse).Count
+if (Test-Path './aithercore') {
+    $actualDomains = Get-ChildItem -Path './aithercore' -Directory | Sort-Object Name
+    $actualModules = (Get-ChildItem -Path './aithercore' -Filter '*.psm1' -Recurse).Count
     $configDomains = $config.Manifest.Domains.Count
     $configModules = ($config.Manifest.Domains.Values | ForEach-Object { $_.Modules } | Measure-Object -Sum).Sum
     
@@ -146,7 +146,7 @@ if (Test-Path './domains') {
         Write-ValidationResult "Domain and module counts match" -Level Success
     }
 } else {
-    Write-ValidationResult "Domains directory not found, skipping domain validation" -Level Warning
+    Write-ValidationResult "aithercore directory not found, skipping domain validation" -Level Warning
 }
 
 # 5. Script Inventory Validation

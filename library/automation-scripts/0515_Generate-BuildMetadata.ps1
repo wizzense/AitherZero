@@ -91,11 +91,27 @@ if ($IncludeEnvironmentInfo) {
 # Artifacts
 $buildInfo.artifacts = @{
     container_image_base = "ghcr.io/$($env:GITHUB_REPOSITORY)".ToLower()
-    pr_container_tags = @(
+}
+
+# Add PR container tags only if we have the required variables
+if ($env:PR_NUMBER -and $env:GITHUB_SHA) {
+    $buildInfo.artifacts.pr_container_tags = @(
         "pr-$($env:PR_NUMBER)-$($env:GITHUB_SHA.Substring(0,8))",
         "pr-$($env:PR_NUMBER)-latest"
     )
-    package_prefix = "AitherZero-PR$($env:PR_NUMBER)"
+    $buildInfo.artifacts.package_prefix = "AitherZero-PR$($env:PR_NUMBER)"
+} elseif ($env:PR_NUMBER) {
+    # Fallback to git rev-parse if GITHUB_SHA not available
+    try {
+        $shortSha = git rev-parse --short HEAD
+        $buildInfo.artifacts.pr_container_tags = @(
+            "pr-$($env:PR_NUMBER)-$shortSha",
+            "pr-$($env:PR_NUMBER)-latest"
+        )
+        $buildInfo.artifacts.package_prefix = "AitherZero-PR$($env:PR_NUMBER)"
+    } catch {
+        Write-Warning "Could not generate PR container tags: $_"
+    }
 }
 
 # GitHub Pages
