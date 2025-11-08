@@ -2495,7 +2495,8 @@ function Get-OrchestrationPlaybook {
     param([string]$Name)
 
     # Try both .psd1 and .json formats
-    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    # $script:OrchestrationPath already points to library/playbooks, so use it directly
+    $playbooksDir = $script:OrchestrationPath
     
     # First try .psd1 format (PowerShell Data File)
     $psd1Path = Join-Path $playbooksDir "$Name.psd1"
