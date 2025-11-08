@@ -444,11 +444,11 @@
             '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 28; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 24; Category = 'Reporting & Analytics' }
+            '0500-0599' = @{ Count = 22; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 21; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 13; Category = 'Validation & Test Generation' }
-            '9000-9999' = @{ Count = 0; Category = 'Maintenance' }
+            '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
 
         # Configuration schema version for validation
