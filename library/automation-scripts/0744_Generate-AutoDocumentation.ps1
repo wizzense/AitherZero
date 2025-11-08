@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -45,14 +45,14 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Initialize
-$script:ProjectRoot = Split-Path $PSScriptRoot -Parent
+$script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:StartTime = Get-Date
 $script:WatchTimeout = $WatchTimeout
 $script:OutputPath = $OutputPath
 
 # Import required modules
-Import-Module (Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1") -Force -ErrorAction SilentlyContinue
-Import-Module (Join-Path $script:ProjectRoot "domains/documentation/DocumentationEngine.psm1") -Force
+Import-Module (Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1") -Force -ErrorAction SilentlyContinue
+Import-Module (Join-Path $script:ProjectRoot "aithercore/documentation/DocumentationEngine.psm1") -Force
 
 function Write-DocLog {
     param([string]$Message, [string]$Level = 'Information', [hashtable]$Data = @{})

@@ -42,10 +42,10 @@ $scriptMetadata = @{
 }
 
 # Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+Import-Module (Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
-$testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
+$testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
 
 if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
@@ -142,7 +142,7 @@ try {
 
     # Output configuration
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "library/library/tests/results"
+        $OutputPath = Join-Path $projectRoot "library/tests/results"
     }
 
     if (-not (Test-Path $OutputPath)) {

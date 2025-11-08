@@ -49,9 +49,9 @@ $scriptMetadata = @{
 }
 
 # Configuration
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $workflowsDir = Join-Path $projectRoot ".github/workflows"
-$issuesScript = Join-Path $projectRoot "automation-scripts/0830_Generate-IssueFiles.ps1"
+$issuesScript = Join-Path $projectRoot "library/automation-scripts/0830_Generate-IssueFiles.ps1"
 
 $validationResults = @{
     Total = 0
@@ -216,7 +216,7 @@ if (Test-Path $issuesScript) {
 # 3. Check for proper exit code handling in test scripts
 Write-Host "`n🔍 Checking test script exit codes..." -ForegroundColor Cyan
 
-$testScript = Join-Path $projectRoot "automation-scripts/0402_Run-UnitTests.ps1"
+$testScript = Join-Path $projectRoot "library/automation-scripts/0402_Run-UnitTests.ps1"
 if (Test-Path $testScript) {
     $content = Get-Content $testScript -Raw
     
@@ -254,7 +254,7 @@ if ($Quick) {
     Write-Host "`n🔍 Checking test files..." -ForegroundColor Cyan
     
     $testDirs = @(
-        (Join-Path $projectRoot "library/library/tests/unit"),
+        (Join-Path $projectRoot "library/tests/unit"),
         (Join-Path $projectRoot "library/tests/integration"),
         (Join-Path $projectRoot "library/tests/domains")
     )

@@ -32,8 +32,8 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # Import script utilities
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 $workflowsPath = Join-Path $PSScriptRoot "../.github/workflows"
 

@@ -55,8 +55,8 @@ $script:Condition = '$IsAdmin -or (Get-Command sudo -ErrorAction SilentlyContinu
 #endregion
 
 # Import required modules and functions
-if (Test-Path "$PSScriptRoot/../domains/utilities/Logging.psm1") {
-    Import-Module "$PSScriptRoot/../domains/utilities/Logging.psm1" -Force
+if (Test-Path "$PSScriptRoot/../aithercore/utilities/Logging.psm1") {
+    Import-Module "$PSScriptRoot/../aithercore/utilities/Logging.psm1" -Force
 }
 
 function Write-ServiceLog {

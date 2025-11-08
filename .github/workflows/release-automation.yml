@@ -198,8 +198,8 @@ jobs:
             "QUICKSTART-AUTOMATED-REPORTS.md", "README-ModernCLI.md",
             "FUNCTIONALITY-INDEX.md", "DOCKER.md",
             # Essential directories - Runtime modules only
-            "domains",
-            "automation-scripts",
+            "aithercore",
+            "library/automation-scripts",
             # Configuration templates (examples only)
             "config.example.psd1", ".env.example",
             # Build metadata
@@ -253,6 +253,15 @@ jobs:
             $sizeMB = [math]::Round($_.Length / 1MB, 2)
             Write-Host "  $($_.Name): ${sizeMB} MB" -ForegroundColor White
           }
+
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          # Convert repository name to lowercase for Docker compatibility
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "REPO_LOWER=${REPO_LOWER}" >> $GITHUB_ENV
+          echo "Using lowercase repository name: ${REPO_LOWER}"
 
       - name: 📝 Generate Release Notes
         shell: pwsh
@@ -311,7 +320,7 @@ jobs:
           - Pre-configured container with AitherZero installed
           - Multi-platform support (amd64, arm64)
           - Non-root user for security
-          - Image: \`ghcr.io/${{ github.repository }}:$($version -replace '^v','')\`
+          - Image: \`ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')\`
 
           ## 🚀 Quick Installation
 
@@ -334,10 +343,10 @@ jobs:
           ### Docker Container
           ```bash
           # Pull the image
-          docker pull ghcr.io/${{ github.repository }}:$($version -replace '^v','')
+          docker pull ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')
 
           # Run interactively
-          docker run -it --rm ghcr.io/${{ github.repository }}:$($version -replace '^v','')
+          docker run -it --rm ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')
 
           # Run with docker-compose
           docker-compose up -d
@@ -681,11 +690,19 @@ jobs:
           
           echo "✅ Generated release tags for version ${VERSION_NUMBER}"
 
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          # Convert repository name to lowercase for Docker compatibility
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "Using lowercase repository name: ${REPO_LOWER}"
+
       - name: 📋 Extract Docker Metadata with Enhanced Labels
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ steps.repo-name.outputs.repo-lower }}
           tags: ${{ steps.generate-tags.outputs.tags }}
           labels: |
             org.opencontainers.image.title=AitherZero
@@ -721,7 +738,7 @@ jobs:
         run: |
           echo "🧪 Testing Docker image..."
 
-          IMAGE_TAG="ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}"
+          IMAGE_TAG="ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:${{ env.RELEASE_VERSION }}"
 
           docker run --rm ${IMAGE_TAG} pwsh -NoProfile -Command "
             Write-Host '✅ Container started' -ForegroundColor Green;
@@ -742,17 +759,17 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Image Details" >> $GITHUB_STEP_SUMMARY
           echo "- **Registry:** GitHub Container Registry" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image:** ghcr.io/${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** ghcr.io/${{ steps.repo-name.outputs.repo-lower }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Usage" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "# Pull the image" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Run interactively" >> $GITHUB_STEP_SUMMARY
-          echo "docker run -it --rm ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -it --rm ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:${{ env.RELEASE_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   post-release:
@@ -764,6 +781,14 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          # Convert repository name to lowercase for Docker compatibility
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "Using lowercase repository name: ${REPO_LOWER}"
 
       - name: 📊 Release Summary
         shell: pwsh
@@ -781,9 +806,9 @@ jobs:
           Write-Host "   • build-info.json (Build metadata)" -ForegroundColor White
           Write-Host ""
           Write-Host "🐳 **Docker Image:**" -ForegroundColor Cyan
-          Write-Host "   • ghcr.io/${{ github.repository }}:$($version -replace '^v','')" -ForegroundColor White
+          Write-Host "   • ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:$($version -replace '^v','')" -ForegroundColor White
           if ('${{ github.event.inputs.prerelease }}' -ne 'true') {
-            Write-Host "   • ghcr.io/${{ github.repository }}:latest" -ForegroundColor White
+            Write-Host "   • ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:latest" -ForegroundColor White
           }
           Write-Host ""
           Write-Host "📦 **MCP Server Package:**" -ForegroundColor Cyan
@@ -795,7 +820,7 @@ jobs:
           Write-Host "   iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex" -ForegroundColor Yellow
           Write-Host ""
           Write-Host "   # Docker" -ForegroundColor Gray
-          Write-Host "   docker pull ghcr.io/${{ github.repository }}:$($version -replace '^v','')" -ForegroundColor Yellow
+          Write-Host "   docker pull ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:$($version -replace '^v','')" -ForegroundColor Yellow
           Write-Host ""
           Write-Host "   # MCP Server" -ForegroundColor Gray
           Write-Host "   npm install @aitherzero/mcp-server@$($version -replace '^v','')" -ForegroundColor Yellow

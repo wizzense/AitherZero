@@ -13,7 +13,7 @@
 # Initialize module
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:ScriptsPath = Join-Path $script:ProjectRoot 'library/automation-scripts'
-$script:OrchestrationPath = Join-Path $script:ProjectRoot 'orchestration'
+$script:OrchestrationPath = Join-Path $script:ProjectRoot 'library/playbooks'
 
 # Exit code constants
 $script:EXIT_SUCCESS = 0
@@ -23,7 +23,7 @@ $script:EXIT_TIMEOUT = 124  # Standard timeout exit code (used by GNU timeout co
 # Import logging
 $script:LoggingAvailable = $false
 try {
-    $loggingPath = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
+    $loggingPath = Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1"
     if (Test-Path $loggingPath) {
         Import-Module $loggingPath -Force -Global
         $script:LoggingAvailable = $true
@@ -1763,6 +1763,90 @@ function Show-OrchestrationPlan {
     Write-Host "`nTotal scripts: $($Scripts.Count)" -ForegroundColor Green
 }
 
+function ConvertTo-ParameterValue {
+    <#
+    .SYNOPSIS
+        Convert a variable value to match the expected parameter type
+    .DESCRIPTION
+        Handles type conversion for common PowerShell parameter types,
+        especially switch parameters that can't accept string values.
+    .PARAMETER Value
+        The value to convert
+    .PARAMETER ParameterType
+        The target parameter type
+    .EXAMPLE
+        ConvertTo-ParameterValue -Value "true" -ParameterType ([System.Management.Automation.SwitchParameter])
+    #>
+    param(
+        [Parameter(Mandatory)]
+        $Value,
+        
+        [Parameter(Mandatory)]
+        [System.Type]$ParameterType
+    )
+    
+    # Handle null/empty values
+    if ($null -eq $Value -or $Value -eq '') {
+        return $null
+    }
+    
+    # Already correct type
+    if ($Value.GetType() -eq $ParameterType) {
+        return $Value
+    }
+    
+    # Handle switch parameters
+    if ($ParameterType -eq [System.Management.Automation.SwitchParameter]) {
+        if ($Value -is [bool]) {
+            return [System.Management.Automation.SwitchParameter]::new($Value)
+        }
+        elseif ($Value -is [string]) {
+            $boolValue = $Value -in @('true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES')
+            return [System.Management.Automation.SwitchParameter]::new($boolValue)
+        }
+        elseif ($Value -is [int]) {
+            return [System.Management.Automation.SwitchParameter]::new($Value -ne 0)
+        }
+        else {
+            # Try to convert to bool first
+            try {
+                $boolValue = [bool]$Value
+                return [System.Management.Automation.SwitchParameter]::new($boolValue)
+            }
+            catch {
+                return [System.Management.Automation.SwitchParameter]::new($false)
+            }
+        }
+    }
+    
+    # Handle boolean parameters
+    if ($ParameterType -eq [bool]) {
+        if ($Value -is [string]) {
+            return $Value -in @('true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES')
+        }
+        elseif ($Value -is [int]) {
+            return $Value -ne 0
+        }
+        else {
+            try {
+                return [bool]$Value
+            }
+            catch {
+                return $false
+            }
+        }
+    }
+    
+    # For other types, try standard PowerShell type conversion
+    try {
+        return [System.Management.Automation.LanguagePrimitives]::ConvertTo($Value, $ParameterType)
+    }
+    catch {
+        # If conversion fails, return original value and let PowerShell handle it
+        return $Value
+    }
+}
+
 function Invoke-ParallelOrchestration {
     param(
         [array]$Scripts,
@@ -1839,7 +1923,23 @@ function Invoke-ParallelOrchestration {
                         if ($null -ne $Vars[$key] -and $Vars[$key] -ne '') {
                             # Check if the script has this parameter
                             if ($scriptInfo -and $scriptInfo.Parameters.ContainsKey($key)) {
-                                $params[$key] = $Vars[$key]
+                                $paramInfo = $scriptInfo.Parameters[$key]
+                                $paramType = $paramInfo.ParameterType
+                                
+                                # Convert value to match parameter type
+                                $convertedValue = $Vars[$key]
+                                if ($paramType -eq [System.Management.Automation.SwitchParameter]) {
+                                    # Handle switch parameters
+                                    if ($convertedValue -is [string]) {
+                                        $convertedValue = $convertedValue -in @('true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES')
+                                    }
+                                    elseif ($convertedValue -is [int]) {
+                                        $convertedValue = $convertedValue -ne 0
+                                    }
+                                    # PowerShell will auto-convert bool to switch
+                                }
+                                
+                                $params[$key] = $convertedValue
                             }
                         }
                     }
@@ -2021,9 +2121,37 @@ function Invoke-SequentialOrchestration {
                 # Debug logging
                 Write-OrchestrationLog "Script: $($script.Number) - Variables available: $($scriptVars.Keys -join ', ')" -Level 'Debug'
                 
-                # Add playbook-defined parameters first (if available)
-                if ($script.Parameters -and $script.Parameters.Count -gt 0) {
+                # Add playbook-defined parameters first (if available) - with type conversion
+                if ($script.Parameters -and $script.Parameters.Count -gt 0 -and $scriptInfo) {
                     Write-OrchestrationLog "Script: $($script.Number) - Applying playbook parameters: $($script.Parameters.Keys -join ', ')" -Level 'Debug'
+                    foreach ($key in $script.Parameters.Keys) {
+                        # Only add if script accepts this parameter
+                        if ($scriptInfo.Parameters.ContainsKey($key)) {
+                            $paramInfo = $scriptInfo.Parameters[$key]
+                            $paramType = $paramInfo.ParameterType
+                            
+                            # Convert value to match parameter type
+                            $convertedValue = $script.Parameters[$key]
+                            if ($paramType -eq [System.Management.Automation.SwitchParameter]) {
+                                # Handle switch parameters
+                                if ($convertedValue -is [string]) {
+                                    $convertedValue = $convertedValue -in @('true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES')
+                                }
+                                elseif ($convertedValue -is [int]) {
+                                    $convertedValue = $convertedValue -ne 0
+                                }
+                                # PowerShell will auto-convert bool to switch
+                            }
+                            
+                            $params[$key] = $convertedValue
+                        } else {
+                            # Log warning if parameter doesn't exist on script
+                            Write-OrchestrationLog "Warning: Script $($script.Number) has invalid playbook parameters: $key" -Level 'Warning'
+                        }
+                    }
+                }
+                elseif ($script.Parameters -and $script.Parameters.Count -gt 0) {
+                    # No scriptInfo available, add parameters as-is (fallback)
                     foreach ($key in $script.Parameters.Keys) {
                         $params[$key] = $script.Parameters[$key]
                     }
@@ -2040,7 +2168,23 @@ function Invoke-SequentialOrchestration {
                         if ($scriptInfo.Parameters.ContainsKey($key) -and -not $params.ContainsKey($key)) {
                             # Skip null or empty values
                             if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
-                                $params[$key] = $scriptVars[$key]
+                                $paramInfo = $scriptInfo.Parameters[$key]
+                                $paramType = $paramInfo.ParameterType
+                                
+                                # Convert value to match parameter type
+                                $convertedValue = $scriptVars[$key]
+                                if ($paramType -eq [System.Management.Automation.SwitchParameter]) {
+                                    # Handle switch parameters
+                                    if ($convertedValue -is [string]) {
+                                        $convertedValue = $convertedValue -in @('true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES')
+                                    }
+                                    elseif ($convertedValue -is [int]) {
+                                        $convertedValue = $convertedValue -ne 0
+                                    }
+                                    # PowerShell will auto-convert bool to switch
+                                }
+                                
+                                $params[$key] = $convertedValue
                             }
                         }
                     }
@@ -2495,7 +2639,8 @@ function Get-OrchestrationPlaybook {
     param([string]$Name)
 
     # Try both .psd1 and .json formats
-    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    # $script:OrchestrationPath already points to library/playbooks, so use it directly
+    $playbooksDir = $script:OrchestrationPath
     
     # First try .psd1 format (PowerShell Data File)
     $psd1Path = Join-Path $playbooksDir "$Name.psd1"

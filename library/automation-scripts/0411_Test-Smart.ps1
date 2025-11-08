@@ -50,9 +50,9 @@ $scriptMetadata = @{
 }
 
 # Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$testCacheModule = Join-Path $projectRoot "aithercore/testing/TestCacheManager.psm1"
+$loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
 
 if (Test-Path $testCacheModule) {
     Import-Module $testCacheModule -Force
@@ -103,7 +103,7 @@ function Get-TestContext {
         Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-$CacheMinutes) }
 
     # Check for recent test runs in results directory
-    $resultsPath = Join-Path $projectRoot "library/library/tests/results"
+    $resultsPath = Join-Path $projectRoot "library/tests/results"
     if (Test-Path $resultsPath) {
         $recentResults = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending |

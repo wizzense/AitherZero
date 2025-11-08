@@ -39,54 +39,90 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # Import script utilities
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
+# Note: Script is in library/automation-scripts/, need to go up 2 levels to reach project root
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$scriptUtilitiesPath = Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1"
+if (Test-Path $scriptUtilitiesPath) {
+    Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue
+}
+
+# Fallback logging function if Write-ScriptLog is not available
+if (-not (Get-Command Write-ScriptLog -ErrorAction SilentlyContinue)) {
+    function Write-ScriptLog {
+        param([string]$Message, [string]$Level = 'Information')
+        $colors = @{
+            'Information' = 'White'
+            'Warning' = 'Yellow'
+            'Error' = 'Red'
+            'Success' = 'Green'
+        }
+        $color = if ($colors.ContainsKey($Level)) { $colors[$Level] } else { 'White' }
+        Write-Host $Message -ForegroundColor $color
+    }
+}
 
 function Test-UnicodeCharacters {
     param([string]$Content, [string]$FilePath)
     
-    $issues = @()
-    $lines = $Content -split "`n"
-    
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        $line = $lines[$i]
-        $lineNumber = $i + 1
+    try {
+        $issues = @()
+        $lines = $Content -split "`n"
         
-        # Check for Unicode arrow characters that commonly cause issues
-        if ($line -match '[→←↑↓]') {
-            $issues += @{
-                Type = 'UnicodeArrow'
-                Line = $lineNumber
-                Content = $line
-                Message = "Line $lineNumber contains Unicode arrow characters that may cause parsing issues"
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = $lines[$i]
+            $lineNumber = $i + 1
+            
+            # Check for problematic Unicode characters
+            if ($line -match '[^\x00-\x7F]') {
+                # Find non-ASCII characters
+                try {
+                    $matches = [regex]::Matches($line, '[^\x00-\x7F]')
+                    if ($matches -and $matches.Count -gt 0) {
+                        $unicodeChars = $matches | ForEach-Object { $_.Value } | Sort-Object -Unique
+                    } else {
+                        $unicodeChars = @()
+                    }
+                } catch {
+                    Write-Verbose "Error processing regex matches for line ${lineNumber}: $($_.ToString())" -Verbose
+                    $unicodeChars = @()
+                }
+                
+                # Determine if these are Unicode arrow characters
+                $hasArrows = $line -match '[→←↑↓]'
+                $issueType = if ($hasArrows) { 'UnicodeArrow' } else { 'NonAsciiCharacter' }
+                $message = if ($hasArrows) {
+                    "Line $lineNumber contains Unicode arrow characters that may cause parsing issues"
+                } else {
+                    "Line $lineNumber contains non-ASCII characters: $($unicodeChars -join ', ')"
+                }
+                
+                $issues += @{
+                    Type = $issueType
+                    Line = $lineNumber
+                    Content = $line
+                    Characters = $unicodeChars
+                    Message = $message
+                }
+            }
+            
+            # Check for unterminated strings
+            if ($line -match "='[^']*$" -and $line -notmatch "='[^']*'") {
+                $issues += @{
+                    Type = 'UnterminatedString'
+                    Line = $lineNumber
+                    Content = $line
+                    Message = "Line $lineNumber appears to have an unterminated string"
+                }
             }
         }
         
-        # Check for other problematic Unicode characters
-        if ($line -match '[^\x00-\x7F]') {
-            # Find non-ASCII characters
-            $unicodeChars = [regex]::Matches($line, '[^\x00-\x7F]') | ForEach-Object { $_.Value } | Sort-Object -Unique
-            $issues += @{
-                Type = 'NonAsciiCharacter'
-                Line = $lineNumber
-                Content = $line
-                Characters = $unicodeChars
-                Message = "Line $lineNumber contains non-ASCII characters: $($unicodeChars -join ', ')"
-            }
-        }
-        
-        # Check for unterminated strings
-        if ($line -match "='[^']*$" -and $line -notmatch "='[^']*'") {
-            $issues += @{
-                Type = 'UnterminatedString'
-                Line = $lineNumber
-                Content = $line
-                Message = "Line $lineNumber appears to have an unterminated string"
-            }
-        }
+        # Ensure we always return an array, even if empty
+        # Use comma operator to prevent PowerShell from unwrapping empty arrays
+        , @($issues)
+    } catch {
+        Write-Verbose "Error in Test-UnicodeCharacters: $($_.ToString())" -Verbose
+        throw
     }
-    
-    return $issues
 }
 
 function Fix-UnicodeIssues {
@@ -210,6 +246,7 @@ try {
     exit 0
     
 } catch {
-    Write-Error "Validation failed: $($_.Exception.Message)"
+    $errorMessage = if ($_.Exception.Message) { $_.Exception.Message } else { $_.ToString() }
+    Write-Error "Validation failed: $errorMessage"
     exit 1
 }

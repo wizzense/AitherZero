@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "name": "ci-workflow-health",
+    "description": "Validate GitHub Actions workflow health and configuration",
+    "version": "1.0.0",
+    "category": "operations",
+    "tags": ["ci", "workflows", "validation", "health"],
+    "estimatedDuration": "2-5 minutes",
+    "githubWorkflow": "workflow-health-check.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": [],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false,
+      "detailed": true
+    },
+    "profiles": {
+      "quick": {
+        "description": "Quick health check",
+        "variables": {
+          "detailed": false
+        }
+      },
+      "standard": {
+        "description": "Standard health check with details",
+        "variables": {
+          "detailed": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Workflow Health Check",
+        "description": "Validate workflow health and configuration",
+        "sequences": ["0440"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 180
+      }
+    ]
+  }
+}

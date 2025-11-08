@@ -55,7 +55,7 @@ $WarningPreference = 'SilentlyContinue'
 $InformationPreference = 'SilentlyContinue'
 
 # Get absolute paths
-$projectRoot = Split-Path $PSScriptRoot -Parent
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $testRoot = if ([System.IO.Path]::IsPathRooted($TestPath)) { $TestPath } else { Join-Path $projectRoot $TestPath }
 $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $startTime = Get-Date

@@ -42,9 +42,9 @@ Set-StrictMode -Version Latest
 # SupportsWhatIf: Yes
 
 # Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
+$loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
 
 if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
@@ -247,7 +247,7 @@ try {
 
     # Set output path
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "library/library/tests/coverage"
+        $OutputPath = Join-Path $projectRoot "library/tests/coverage"
     }
 
     if (-not (Test-Path $OutputPath)) {

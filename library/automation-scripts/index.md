@@ -1,8 +1,8 @@
 # automation-scripts
 
-**Navigation**: [🏠 Root](../index.md) → **automation-scripts**
+**Navigation**: [🏠 Root](../../index.md) → [library](../index.md) → **automation-scripts**
 
-⬆️ **Parent**: [Root](../index.md)
+⬆️ **Parent**: [library](../index.md)
 
 ## 📖 Overview
 
@@ -11,8 +11,8 @@ See [README.md](./README.md) for detailed information about this directory.
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 150
-- **PowerShell Scripts**: 144
+- **Files**: 162
+- **PowerShell Scripts**: 156
 
 ## 📄 Files
 
@@ -34,6 +34,8 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0002_Setup-Directories.ps1](./0002_Setup-Directories.ps1)
 - ⚙️ [0003_Sync-ConfigManifest.ps1](./0003_Sync-ConfigManifest.ps1)
   - *Synchronize config.psd1 with actual automation scripts*
+- ⚙️ [0004_Setup-GitHooks.ps1](./0004_Setup-GitHooks.ps1)
+  - *Setup Git hooks for AitherZero development*
 - ⚙️ [0006_Install-ValidationTools.ps1](./0006_Install-ValidationTools.ps1)
 - ⚙️ [0007_Install-Go.ps1](./0007_Install-Go.ps1)
 - ⚙️ [0008_Install-OpenTofu.ps1](./0008_Install-OpenTofu.ps1)
@@ -45,6 +47,8 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0105_Install-HyperV.ps1](./0105_Install-HyperV.ps1)
 - ⚙️ [0106_Install-WSL2.ps1](./0106_Install-WSL2.ps1)
 - ⚙️ [0107_Install-WindowsAdminCenter.ps1](./0107_Install-WindowsAdminCenter.ps1)
+- ⚙️ [0109_Initialize-InfrastructureSubmodules.ps1](./0109_Initialize-InfrastructureSubmodules.ps1)
+  - *Initialize Infrastructure Git Submodules*
 - ⚙️ [0112_Enable-PXE.ps1](./0112_Enable-PXE.ps1)
 - ⚙️ [0201_Install-Node.ps1](./0201_Install-Node.ps1)
 - ⚙️ [0204_Install-Poetry.ps1](./0204_Install-Poetry.ps1)
@@ -92,12 +96,16 @@ See [README.md](./README.md) for detailed information about this directory.
   - *High-performance parallel test execution optimized for AitherZero*
 - ⚙️ [0415_Manage-PSScriptAnalyzerCache.ps1](./0415_Manage-PSScriptAnalyzerCache.ps1)
   - *Manage PSScriptAnalyzer cache for performance optimization*
+- ⚙️ [0416_Validate-ModuleManifest.ps1](./0416_Validate-ModuleManifest.ps1)
+  - *Validates PowerShell module manifest files for common issues including Unicode characters*
 - ⚙️ [0420_Validate-ComponentQuality.ps1](./0420_Validate-ComponentQuality.ps1)
   - *Validate component quality for new features and components*
 - ⚙️ [0425_Validate-DocumentationStructure.ps1](./0425_Validate-DocumentationStructure.ps1)
   - *Validates and maintains documentation structure and organization*
 - ⚙️ [0426_Validate-TestScriptSync.ps1](./0426_Validate-TestScriptSync.ps1)
   - *Validate synchronization between test files and automation scripts*
+- ⚙️ [0428_Get-AutomationTestCoverage.ps1](./0428_Get-AutomationTestCoverage.ps1)
+  - *Analyzes test coverage for automation scripts by comparing existing scripts to available test files.*
 - ⚙️ [0440_Validate-Workflows.ps1](./0440_Validate-Workflows.ps1)
   - *Validates GitHub Actions workflow files for syntax, schema compliance, and best practices*
 - ⚙️ [0441_Test-WorkflowsLocally.ps1](./0441_Test-WorkflowsLocally.ps1)
@@ -126,12 +134,22 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Generate comprehensive CI/CD dashboard with real-time status monitoring*
 - ⚙️ [0513_Enable-ContinuousReporting.ps1](./0513_Enable-ContinuousReporting.ps1)
   - *Enable continuous reporting and monitoring for development workflow*
+- ⚙️ [0513_Generate-Changelog.ps1](./0513_Generate-Changelog.ps1)
+  - *Generate PR changelog from commits with categorization*
+- ⚙️ [0514_Analyze-Diff.ps1](./0514_Analyze-Diff.ps1)
+  - *Analyze PR diff and calculate impact metrics*
 - ⚙️ [0514_Generate-CodeMap.ps1](./0514_Generate-CodeMap.ps1)
   - *Generate comprehensive interactive code map visualizer*
-- ⚙️ [0515_Deploy-Documentation.ps1](./0515_Deploy-Documentation.ps1)
-  - *Deploy documentation and reports to GitHub Pages*
+- ⚙️ [0515_Generate-BuildMetadata.ps1](./0515_Generate-BuildMetadata.ps1)
+  - *Generate comprehensive build metadata for PR and releases*
 - ⚙️ [0516_Schedule-ReportGeneration.ps1](./0516_Schedule-ReportGeneration.ps1)
   - *Schedule automatic report generation for AitherZero project*
+- ⚙️ [0517_Aggregate-AnalysisResults.ps1](./0517_Aggregate-AnalysisResults.ps1)
+  - *Aggregate analysis results and generate action able recommendations*
+- ⚙️ [0518_Generate-Recommendations.ps1](./0518_Generate-Recommendations.ps1)
+  - *Generate actionable recommendations from analysis results*
+- ⚙️ [0519_Generate-PRComment.ps1](./0519_Generate-PRComment.ps1)
+  - *Generate consolidated PR comment with all ecosystem information*
 - ⚙️ [0520_Analyze-ConfigurationUsage.ps1](./0520_Analyze-ConfigurationUsage.ps1)
   - *Analyzes configuration usage across the codebase*
 - ⚙️ [0521_Analyze-DocumentationCoverage.ps1](./0521_Analyze-DocumentationCoverage.ps1)
@@ -142,6 +160,8 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Analyzes security issues across the codebase*
 - ⚙️ [0524_Generate-TechDebtReport.ps1](./0524_Generate-TechDebtReport.ps1)
   - *Generates comprehensive tech debt report from analysis results*
+- ⚙️ [0525_Deploy-Documentation.ps1](./0525_Deploy-Documentation.ps1)
+  - *Deploy documentation and reports to GitHub Pages*
 - ⚙️ [0530_View-Logs.ps1](./0530_View-Logs.ps1)
 - ⚙️ [0531_Get-WorkflowRunReport.ps1](./0531_Get-WorkflowRunReport.ps1)
   - *Get detailed workflow run reports for CI debugging.*
@@ -245,6 +265,8 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Generates AI prompts from structured data*
 - ⚙️ [0840_Validate-WorkflowAutomation.ps1](./0840_Validate-WorkflowAutomation.ps1)
   - *Validate automated workflow configuration and health*
+- ⚙️ [0841_Validate-WorkflowIntegration.ps1](./0841_Validate-WorkflowIntegration.ps1)
+  - *Validate AitherCore workflow integration with existing GitHub Actions workflows*
 - ⚙️ [0850_Deploy-PREnvironment.ps1](./0850_Deploy-PREnvironment.ps1)
   - *Deploy PR environment for testing*
 - ⚙️ [0851_Cleanup-PREnvironment.ps1](./0851_Cleanup-PREnvironment.ps1)
@@ -281,9 +303,11 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Run local PR validation checks without requiring GitHub Actions.*
 - ⚙️ [0967_Test-OrchestrationEngine.ps1](./0967_Test-OrchestrationEngine.ps1)
   - *Test OrchestrationEngine functionality*
+- ⚙️ [0968_Migrate-PlaybooksV2.ps1](./0968_Migrate-PlaybooksV2.ps1)
+  - *Migrate legacy v1 playbooks to new v2.0 format*
 - ⚙️ [9999_Reset-Machine.ps1](./9999_Reset-Machine.ps1)
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 00:26:29 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 14:56:36 UTC
 

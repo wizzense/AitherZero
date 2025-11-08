@@ -60,10 +60,10 @@ if (-not $OutputPath) {
 # SupportsWhatIf: Yes
 
 # Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+Import-Module (Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
-$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
+$configModule = Join-Path $projectRoot "aithercore/configuration/Configuration.psm1"
 
 if (Test-Path $configModule) {
     Import-Module $configModule -Force -ErrorAction SilentlyContinue
@@ -558,7 +558,7 @@ try {
     # Save results
     if ($totalIssues -gt 0) {
         if (-not $OutputPath) {
-            $OutputPath = Join-Path $projectRoot "library/library/tests/analysis"
+            $OutputPath = Join-Path $projectRoot "library/tests/analysis"
         }
 
         if (-not (Test-Path $OutputPath)) {

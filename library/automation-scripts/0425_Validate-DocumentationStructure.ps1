@@ -57,8 +57,8 @@ $scriptInfo = @{
 }
 
 # Import logging if available
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
 
 $useLogging = $false
 if (Test-Path $loggingModule) {

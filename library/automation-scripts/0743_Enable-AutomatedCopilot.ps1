@@ -50,7 +50,7 @@ $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
 
 # Import required modules
 $requiredModules = @(
-    "$script:ProjectRoot/domains/utilities/Logging.psm1"
+    "$script:ProjectRoot/aithercore/utilities/Logging.psm1"
     "$script:ProjectRoot/domains/ai-agents/CopilotOrchestrator.psm1"
     "$script:ProjectRoot/domains/ai-agents/AIWorkflowOrchestrator.psm1"
 )

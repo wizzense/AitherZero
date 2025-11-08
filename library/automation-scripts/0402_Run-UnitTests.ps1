@@ -20,7 +20,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "library/library/tests/unit"),
+    [string]$Path = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "tests/unit"),
     [string]$OutputPath,
     [switch]$DryRun,
     [switch]$PassThru,
@@ -45,12 +45,12 @@ if (-not $env:TERM) {
 # It is referenced by automation infrastructure even if not directly used in this script
 
 # Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $projectRoot "domains/automation/ScriptUtilities.psm1") -Force
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+Import-Module (Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
-$testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
-$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
+$testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
+$testCacheModule = Join-Path $projectRoot "aithercore/testing/TestCacheManager.psm1"
+$configModule = Join-Path $projectRoot "aithercore/configuration/Configuration.psm1"
 
 # Import Configuration module to use Get-ConfiguredValue
 if (Test-Path $configModule) {
@@ -210,7 +210,7 @@ try {
         if ($testFile.FullName -match 'automation-scripts') {
             # Extract script name from test file name
             $scriptName = $testFile.BaseName -replace '\.Tests$', ''
-            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName.ps1"
+            $scriptPath = Join-Path $projectRoot "library/automation-scripts/$scriptName.ps1"
             
             # Check if the corresponding script exists
             if (-not (Test-Path $scriptPath)) {
@@ -452,7 +452,7 @@ try {
 
     # Output configuration
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "library/library/tests/results"
+        $OutputPath = Join-Path $projectRoot "library/tests/results"
     }
 
     if (-not (Test-Path $OutputPath)) {
@@ -843,7 +843,7 @@ catch {
     $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
     
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $scriptProjectRoot "library/library/tests/results"
+        $OutputPath = Join-Path $scriptProjectRoot "library/tests/results"
     }
     
     if (-not (Test-Path $OutputPath)) {

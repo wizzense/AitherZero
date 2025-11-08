@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "name": "mcp-server-setup",
+    "description": "Build, demonstrate, and test the AitherZero MCP server for AI assistant integration",
+    "version": "1.0.0",
+    "category": "operations",
+    "author": "AitherZero AI Tools Team",
+    "tags": ["mcp", "ai", "automation", "integration", "server"],
+    "estimatedDuration": "2-3 minutes",
+    "lastUpdated": "2025-11-02T15:00:00Z"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredTools": ["node", "npm"],
+    "platforms": ["CrossPlatform"]
+  },
+  "orchestration": {
+    "env": {
+      "MCP_SERVER_PATH": "./mcp-server",
+      "SHOW_RESULTS": "true"
+    },
+    "defaults": {
+      "continueOnError": false,
+      "timeout": 120,
+      "shell": "pwsh"
+    },
+    "jobs": {
+      "build": {
+        "name": "Build MCP Server",
+        "description": "Install dependencies and compile TypeScript MCP server",
+        "steps": [
+          {
+            "id": "build_server",
+            "name": "Build MCP Server",
+            "run": "0750"
+          }
+        ]
+      },
+      "demonstrate": {
+        "name": "Demonstrate MCP Protocol",
+        "description": "Show real MCP JSON-RPC 2.0 protocol functionality",
+        "needs": ["build"],
+        "steps": [
+          {
+            "id": "demo_protocol",
+            "name": "Demonstrate MCP Protocol",
+            "run": "0752"
+          }
+        ]
+      },
+      "use_server": {
+        "name": "Use MCP Server",
+        "description": "Execute real tool calls and show actual results",
+        "needs": ["demonstrate"],
+        "steps": [
+          {
+            "id": "use_tools",
+            "name": "Use MCP Tools",
+            "run": "0753"
+          }
+        ]
+      }
+    }
+  },
+  "notifications": {
+    "onStart": {
+      "message": "🚀 Setting up AitherZero MCP Server...",
+      "level": "Information",
+      "channels": ["console"]
+    },
+    "onSuccess": {
+      "message": "✅ MCP Server ready! AI assistants can now control AitherZero.",
+      "level": "Information",
+      "channels": ["console"]
+    },
+    "onFailure": {
+      "message": "❌ MCP Server setup failed - check logs for details",
+      "level": "Error",
+      "channels": ["console", "log"]
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["JSON", "Markdown"],
+    "outputPath": "./reports/mcp-server",
+    "includeMetrics": true,
+    "summary": true
+  }
+}

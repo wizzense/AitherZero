@@ -61,8 +61,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$testGeneratorPath = Join-Path $projectRoot "domains/testing/FunctionalTestGenerator.psm1"
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$testGeneratorPath = Join-Path $projectRoot "aithercore/testing/FunctionalTestGenerator.psm1"
 
 # Banner
 Write-Host "`n╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -97,7 +97,7 @@ $scriptsToRegenerate = switch ($Mode) {
         )
         
         foreach ($scriptName in $sampleScripts) {
-            $scriptPath = Join-Path $projectRoot "automation-scripts/$scriptName"
+            $scriptPath = Join-Path $projectRoot "library/automation-scripts/$scriptName"
             if (Test-Path $scriptPath) {
                 Get-Item $scriptPath
             }
@@ -110,11 +110,11 @@ $scriptsToRegenerate = switch ($Mode) {
         }
         
         $rangePattern = "$Range/*.ps1"
-        Get-ChildItem -Path (Join-Path $projectRoot "automation-scripts") -Filter "*.ps1" |
+        Get-ChildItem -Path (Join-Path $projectRoot "library/automation-scripts") -Filter "*.ps1" |
             Where-Object { $_.Name -match "^$($Range.Split('-')[0])" }
     }
     'All' {
-        Get-ChildItem -Path (Join-Path $projectRoot "automation-scripts") -Filter "*.ps1" -File
+        Get-ChildItem -Path (Join-Path $projectRoot "library/automation-scripts") -Filter "*.ps1" -File
     }
 }
 

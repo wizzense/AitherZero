@@ -15,10 +15,10 @@ Describe '0830_Search-AllLogs Integration' -Tag 'Integration', 'AutomationScript
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0830_Search-AllLogs.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0830_Search-AllLogs.ps1'
 
         # Import ScriptUtilities module (script uses it)
-        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"
+        $scriptUtilitiesPath = Join-Path $repoRoot "aithercore/automation/ScriptUtilities.psm1"
         if (Test-Path $scriptUtilitiesPath) {
             Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue
         }

@@ -20,7 +20,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "library/tests/integration"),
+    [string]$Path = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "tests/integration"),
     [string]$OutputPath,
     [switch]$DryRun,
     [switch]$PassThru,
@@ -46,9 +46,9 @@ $scriptMetadata = @{
 }
 
 # Import modules
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
-$loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
+$loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
 
 if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
@@ -317,7 +317,7 @@ try {
 
     # Output configuration
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "library/library/tests/results"
+        $OutputPath = Join-Path $projectRoot "library/tests/results"
     }
 
     if (-not (Test-Path $OutputPath)) {
@@ -552,7 +552,7 @@ catch {
     $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
     
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $scriptProjectRoot "library/library/tests/results"
+        $OutputPath = Join-Path $scriptProjectRoot "library/tests/results"
     }
     
     if (-not (Test-Path $OutputPath)) {

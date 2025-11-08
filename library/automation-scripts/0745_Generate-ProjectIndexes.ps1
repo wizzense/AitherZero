@@ -60,7 +60,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Initialize
-$script:ProjectRoot = Split-Path $PSScriptRoot -Parent
+$script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:StartTime = Get-Date
 
 # Banner
@@ -71,8 +71,8 @@ Write-Host "══════════════════════�
 Write-Host ""
 
 # Import required modules
-$loggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
-$indexerModule = Join-Path $script:ProjectRoot "domains/documentation/ProjectIndexer.psm1"
+$loggingModule = Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1"
+$indexerModule = Join-Path $script:ProjectRoot "aithercore/documentation/ProjectIndexer.psm1"
 
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force -ErrorAction SilentlyContinue
@@ -96,8 +96,11 @@ function Write-IndexLog {
         default { 'White' }
     }
     
+    # Map 'Success' to 'Information' for Write-CustomLog compatibility
+    $logLevel = if ($Level -eq 'Success') { 'Information' } else { $Level }
+    
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "ProjectIndexer"
+        Write-CustomLog -Level $logLevel -Message $Message -Source "ProjectIndexer"
     }
     
     Write-Host "  $Message" -ForegroundColor $color

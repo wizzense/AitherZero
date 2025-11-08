@@ -27,7 +27,7 @@ param(
 )
 
 # Initialize environment
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Import LogViewer module
 $logViewerPath = Join-Path $ProjectRoot "domains/utilities/LogViewer.psm1"
@@ -39,7 +39,7 @@ if (Test-Path $logViewerPath) {
 }
 
 # Import Logging module for Write-CustomLog
-$loggingPath = Join-Path $ProjectRoot "domains/utilities/Logging.psm1"
+$loggingPath = Join-Path $ProjectRoot "aithercore/utilities/Logging.psm1"
 if (Test-Path $loggingPath) {
     Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
 }

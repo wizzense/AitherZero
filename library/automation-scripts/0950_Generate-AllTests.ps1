@@ -39,7 +39,7 @@ param(
 
 # Initialize
 $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
-$script:TestGeneratorModule = Join-Path $script:ProjectRoot 'domains/testing/AutoTestGenerator.psm1'
+$script:TestGeneratorModule = Join-Path $script:ProjectRoot 'aithercore/testing/AutoTestGenerator.psm1'
 
 # Logging
 function Write-OrchestratorLog {

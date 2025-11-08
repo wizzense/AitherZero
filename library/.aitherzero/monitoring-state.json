@@ -1,0 +1,16 @@
+{
+  "FileWatcher": {
+    "IsPresent": false
+  },
+  "TestWatcher": {
+    "IsPresent": false
+  },
+  "EventCount": 0,
+  "Enabled": true,
+  "GitHooks": {
+    "IsPresent": false
+  },
+  "LastReportTime": "2025-11-08T15:01:42.6291317+00:00",
+  "StartTime": "2025-11-08T15:01:42.2534993+00:00",
+  "ReportInterval": 30
+}

@@ -74,13 +74,13 @@ $ErrorActionPreference = 'Stop'
 
 # Import required modules
 $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
-$script:LoggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
+$script:LoggingModule = Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1"
 if (Test-Path $script:LoggingModule) {
     Import-Module $script:LoggingModule -Force -ErrorAction SilentlyContinue
 }
 
 # Import Configuration module for auto-install settings
-$script:ConfigModule = Join-Path $script:ProjectRoot "domains/configuration/Configuration.psm1"
+$script:ConfigModule = Join-Path $script:ProjectRoot "aithercore/configuration/Configuration.psm1"
 if (Test-Path $script:ConfigModule) {
     Import-Module $script:ConfigModule -Force -ErrorAction SilentlyContinue
 }

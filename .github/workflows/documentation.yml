@@ -1,0 +1,52 @@
+---
+name: 📚 Documentation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'aithercore/**/*.psm1'
+      - 'library/automation-scripts/**/*.ps1'
+      - 'AitherZero.psd1'
+  push:
+    branches: [main, dev, dev-staging]
+    paths:
+      - 'aithercore/**/*.psm1'
+      - 'library/automation-scripts/**/*.ps1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Mode'
+        default: 'Incremental'
+        type: choice
+        options: [Full, Incremental]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: docs-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    name: 📖 Generate Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 📚 Run Documentation Playbook
+        shell: pwsh
+        env:
+          DOC_MODE: ${{ github.event.inputs.mode || 'Incremental' }}
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-OrchestrationSequence -LoadPlaybook generate-documentation

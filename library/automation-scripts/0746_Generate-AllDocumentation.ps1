@@ -67,7 +67,7 @@ Write-Host "══════════════════════�
 Write-Host ""
 
 # Import logging module if available
-$loggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
+$loggingModule = Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1"
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force -ErrorAction SilentlyContinue
 }

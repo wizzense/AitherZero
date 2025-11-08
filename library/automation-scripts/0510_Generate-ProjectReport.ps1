@@ -8,7 +8,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
-    [string]$OutputPath = (Join-Path $ProjectPath "library/library/tests/reports"),
+    [string]$OutputPath = (Join-Path $ProjectPath "library/tests/reports"),
     [ValidateSet('HTML', 'JSON', 'Markdown', 'All')]
     [string]$Format = 'All'
 )
@@ -17,7 +17,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Import logging module
-$loggingModule = Join-Path $ProjectPath "domains/utilities/Logging.psm1"
+$loggingModule = Join-Path $ProjectPath "aithercore/utilities/Logging.psm1"
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force
     $script:LoggingAvailable = $true

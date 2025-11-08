@@ -42,7 +42,7 @@ param(
 
 # Initialize
 $ErrorActionPreference = 'Stop'
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Import modules
 Import-Module (Join-Path $ProjectRoot "AitherZero.psd1") -Force
@@ -149,7 +149,7 @@ if ($Format -eq 'All' -or $Format -eq 'v3.0') {
     Write-Host "─────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
     
     # Check if converted workflow exists
-    $convertedPath = Join-Path $ProjectRoot "domains/orchestration/playbooks/converted/pr-validation.json"
+    $convertedPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/converted/pr-validation.json"
     if (Test-Path $convertedPath) {
         Test-PlaybookFormat -FormatVersion 'v3.0' -TestName 'v3.0 playbook has jobs' -TestBlock {
             $content = Get-Content $convertedPath -Raw | ConvertFrom-Json -AsHashtable

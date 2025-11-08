@@ -15,7 +15,7 @@ Describe '0404_Run-PSScriptAnalyzer Integration' -Tag 'Integration', 'Automation
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0404_Run-PSScriptAnalyzer.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1'
     }
 
     Context 'Integration' {

@@ -53,8 +53,8 @@ Set-StrictMode -Version Latest
 # Stage: Reporting, Order: 0512, Dependencies: 0510
 
 # Import modules
-$loggingModule = Join-Path $ProjectPath "domains/utilities/Logging.psm1"
-$configModule = Join-Path $ProjectPath "domains/configuration/Configuration.psm1"
+$loggingModule = Join-Path $ProjectPath "aithercore/utilities/Logging.psm1"
+$configModule = Join-Path $ProjectPath "aithercore/configuration/Configuration.psm1"
 
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force

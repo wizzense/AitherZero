@@ -127,9 +127,9 @@ if ($missingManifest) {
 Write-Host ""
 Write-Host "4. DOMAIN/MODULE COUNT VALIDATION" -ForegroundColor Yellow
 
-if (Test-Path './domains') {
-    $actualDomains = Get-ChildItem -Path './domains' -Directory | Sort-Object Name
-    $actualModules = (Get-ChildItem -Path './domains' -Filter '*.psm1' -Recurse).Count
+if (Test-Path './aithercore') {
+    $actualDomains = Get-ChildItem -Path './aithercore' -Directory | Sort-Object Name
+    $actualModules = (Get-ChildItem -Path './aithercore' -Filter '*.psm1' -Recurse).Count
     $configDomains = $config.Manifest.Domains.Count
     $configModules = ($config.Manifest.Domains.Values | ForEach-Object { $_.Modules } | Measure-Object -Sum).Sum
     
@@ -146,15 +146,15 @@ if (Test-Path './domains') {
         Write-ValidationResult "Domain and module counts match" -Level Success
     }
 } else {
-    Write-ValidationResult "Domains directory not found, skipping domain validation" -Level Warning
+    Write-ValidationResult "aithercore directory not found, skipping domain validation" -Level Warning
 }
 
 # 5. Script Inventory Validation
 Write-Host ""
 Write-Host "5. SCRIPT INVENTORY VALIDATION" -ForegroundColor Yellow
 
-if (Test-Path './automation-scripts') {
-    $allScripts = Get-ChildItem -Path './automation-scripts' -Filter '*.ps1'
+if (Test-Path './library/automation-scripts') {
+    $allScripts = Get-ChildItem -Path './library/automation-scripts' -Filter '*.ps1'
     $uniqueNumbers = $allScripts | ForEach-Object { [int]($_.Name -replace '(\d+)_.*', '$1') } | Sort-Object -Unique
     
     Write-Host "  Total script files: $($allScripts.Count)" -ForegroundColor Gray
@@ -218,7 +218,7 @@ foreach ($category in $config.Manifest.FeatureDependencies.Keys) {
 $invalidRefs = @()
 foreach ($scriptNum in $allScriptRefs | Sort-Object -Unique) {
     $pattern = "$scriptNum`_*.ps1"
-    if (-not (Test-Path "./automation-scripts/$pattern")) {
+    if (-not (Test-Path "./library/automation-scripts/$pattern")) {
         $invalidRefs += $scriptNum
     }
 }

@@ -13,7 +13,7 @@ param(
 # Initialize logging
 $script:LoggingAvailable = $false
 try {
-    $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/Logging.psm1"
+    $loggingPath = Join-Path (Split-Path $PSScriptRoot -Parent) "aithercore/utilities/Logging.psm1"
     if (Test-Path $loggingPath) {
         Import-Module $loggingPath -Force -Global
         $script:LoggingAvailable = $true
@@ -24,7 +24,7 @@ try {
 
 # Import PackageManager module
 try {
-    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/utilities/PackageManager.psm1"
+    $packageManagerPath = Join-Path (Split-Path $PSScriptRoot -Parent) "aithercore/utilities/PackageManager.psm1"
     if (Test-Path $packageManagerPath) {
         Import-Module $packageManagerPath -Force -Global
         $script:PackageManagerAvailable = $true

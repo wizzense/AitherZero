@@ -117,12 +117,12 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # Initialize environment
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Import required modules
 $modulesToImport = @(
     "domains/utilities/LogViewer.psm1",
-    "domains/utilities/Logging.psm1"
+    "aithercore/utilities/Logging.psm1"
 )
 
 foreach ($modulePath in $modulesToImport) {

@@ -105,7 +105,7 @@ $ScriptRoot = $PSScriptRoot
 if (-not $ScriptRoot) {
     $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 }
-$ProjectRoot = Split-Path -Parent $ScriptRoot
+$ProjectRoot = Split-Path (Split-Path -Parent $ScriptRoot) -Parent
 
 # Environment configuration
 $ContainerName = "aitherzero-pr-$PRNumber"
