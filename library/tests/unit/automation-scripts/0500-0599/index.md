@@ -36,8 +36,8 @@
   - *Unit tests for 0513_Enable-ContinuousReporting*
 - ⚙️ [0514_Generate-CodeMap.Tests.ps1](./0514_Generate-CodeMap.Tests.ps1)
   - *Unit tests for 0514_Generate-CodeMap*
-- ⚙️ [0515_Deploy-Documentation.Tests.ps1](./0515_Deploy-Documentation.Tests.ps1)
-  - *Unit tests for 0515_Deploy-Documentation*
+- ⚙️ [0525_Deploy-Documentation.Tests.ps1](./0525_Deploy-Documentation.Tests.ps1)
+  - *Unit tests for 0525_Deploy-Documentation*
 - ⚙️ [0516_Schedule-ReportGeneration.Tests.ps1](./0516_Schedule-ReportGeneration.Tests.ps1)
   - *Unit tests for 0516_Schedule-ReportGeneration*
 - ⚙️ [0520_Analyze-ConfigurationUsage.Tests.ps1](./0520_Analyze-ConfigurationUsage.Tests.ps1)

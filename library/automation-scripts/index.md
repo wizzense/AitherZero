@@ -140,7 +140,7 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Analyze PR diff and calculate impact metrics*
 - ⚙️ [0514_Generate-CodeMap.ps1](./0514_Generate-CodeMap.ps1)
   - *Generate comprehensive interactive code map visualizer*
-- ⚙️ [0515_Deploy-Documentation.ps1](./0515_Deploy-Documentation.ps1)
+- ⚙️ [0525_Deploy-Documentation.ps1](./0525_Deploy-Documentation.ps1)
   - *Deploy documentation and reports to GitHub Pages*
 - ⚙️ [0515_Generate-BuildMetadata.ps1](./0515_Generate-BuildMetadata.ps1)
   - *Generate comprehensive build metadata for PR and releases*

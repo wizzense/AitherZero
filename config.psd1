@@ -203,7 +203,7 @@
                 }
                 CodeQuality       = @{
                     DependsOn   = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts     = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0416', '0420', '0425', '0426', '0427', '0428')
+                    Scripts     = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0416', '0420', '0425', '0426', '0428')
                     Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, component quality, documentation structure validation, test-script synchronization, test discovery validation, test coverage analysis'
                 }
                 WorkflowTesting   = @{
@@ -232,7 +232,7 @@
                 }
                 Analysis       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0515', '0520', '0521', '0522', '0523', '0524')
+                    Scripts     = @('0520', '0521', '0522', '0523', '0524', '0525')
                     Description = 'Documentation deployment, configuration, code quality, security, and tech debt analysis'
                 }
                 Logging        = @{
@@ -428,22 +428,23 @@
             'development'    = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation'  = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
+            'orchestration'  = @{ Modules = 0; Description = 'Playbooks and workflow schemas' }
             'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 1; Description = 'Security and credential management' }
             'testing'        = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
             'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
-        # Script inventory by range (138 total files, 137 unique numbers)
+        # Script inventory by range (156 total files, 153 unique numbers)
         # All scripts now have unique numbers
         # Counts represent unique script NUMBERS, not total files
         ScriptInventory     = @{
             '0000-0099' = @{ Count = 9; Category = 'Environment Setup' }
-            '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
+            '0100-0199' = @{ Count = 7; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 29; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 18; Category = 'Reporting & Analytics' }
+            '0400-0499' = @{ Count = 28; Category = 'Testing & Quality' }
+            '0500-0599' = @{ Count = 21; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 21; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 13; Category = 'Validation & Test Generation' }
