@@ -67,28 +67,36 @@ function Find-Configurations {
     
     foreach ($file in $configFiles) {
         try {
+            # Skip example and template files - they're not meant to be loaded
+            if ($file.BaseName -match '(example|template)') {
+                Write-Verbose "Skipping template file: $($file.BaseName)"
+                continue
+            }
+            
             # Use scriptblock evaluation for config files
             $content = Get-Content -Path $file.FullName -Raw
             $scriptBlock = [scriptblock]::Create($content)
             $config = & $scriptBlock
             
             if (-not $config -or $config -isnot [hashtable]) {
-                throw "Config file did not return a valid hashtable"
+                Write-Verbose "Skipping $($file.FullName) - not a valid config hashtable"
+                continue
             }
             
+            # Build config info with safe property access
             $configInfo = @{
                 Name = $file.BaseName
                 Path = $file.FullName
-                Profile = if ($config.Core) { $config.Core.Profile } else { "Unknown" }
-                Environment = if ($config.Core) { $config.Core.Environment } else { "Development" }
-                Description = if ($config.Manifest) { $config.Manifest.Description } else { "Configuration file" }
+                Profile = if ($config.ContainsKey('Core') -and $config.Core.ContainsKey('Profile')) { $config.Core.Profile } else { "Unknown" }
+                Environment = if ($config.ContainsKey('Core') -and $config.Core.ContainsKey('Environment')) { $config.Core.Environment } else { "Development" }
+                Description = if ($config.ContainsKey('Manifest') -and $config.Manifest.ContainsKey('Description')) { $config.Manifest.Description } else { "Configuration file" }
                 LastModified = $file.LastWriteTime
             }
             
             $script:ConfigManager.AvailableConfigs[$file.BaseName] = $configInfo
             
         } catch {
-            Write-Warning "Failed to read config: $($file.FullName) - $_"
+            Write-Verbose "Skipping $($file.FullName): $_"
         }
     }
     
@@ -105,22 +113,24 @@ function Find-Configurations {
                 $config = & $scriptBlock
                 
                 if (-not $config -or $config -isnot [hashtable]) {
-                    throw "Config file did not return a valid hashtable"
+                    Write-Verbose "Skipping $($file.FullName) - not a valid config hashtable"
+                    continue
                 }
                 
+                # Build config info with safe property access
                 $configInfo = @{
                     Name = $file.BaseName
                     Path = $file.FullName
-                    Profile = if ($config.Core) { $config.Core.Profile } else { "Unknown" }
-                    Environment = if ($config.Core) { $config.Core.Environment } else { "Development" }
-                    Description = if ($config.Manifest) { $config.Manifest.Description } else { "Configuration file" }
+                    Profile = if ($config.ContainsKey('Core') -and $config.Core.ContainsKey('Profile')) { $config.Core.Profile } else { "Unknown" }
+                    Environment = if ($config.ContainsKey('Core') -and $config.Core.ContainsKey('Environment')) { $config.Core.Environment } else { "Development" }
+                    Description = if ($config.ContainsKey('Manifest') -and $config.Manifest.ContainsKey('Description')) { $config.Manifest.Description } else { "Configuration file" }
                     LastModified = $file.LastWriteTime
                 }
                 
                 $script:ConfigManager.AvailableConfigs["configs/$($file.BaseName)"] = $configInfo
                 
             } catch {
-                Write-Warning "Failed to read config: $($file.FullName) - $_"
+                Write-Verbose "Skipping $($file.FullName): $_"
             }
         }
     }
@@ -220,9 +230,11 @@ function Build-CapabilitiesFromManifest {
         }
     }
     
-    # Extract enabled extensions
-    if ($Config.ContainsKey('Extensions') -and $Config.Extensions -and $Config.Extensions.ContainsKey('EnabledExtensions')) {
-        $script:ConfigManager.ManifestCapabilities.Extensions = $Config.Extensions.EnabledExtensions
+    # Extract enabled extensions - use defensive checks to avoid property access errors
+    if ($Config.ContainsKey('Extensions') -and $null -ne $Config.Extensions -and $Config.Extensions -is [hashtable]) {
+        if ($Config.Extensions.ContainsKey('EnabledExtensions')) {
+            $script:ConfigManager.ManifestCapabilities.Extensions = $Config.Extensions.EnabledExtensions
+        }
     }
     
     Write-Verbose "Built capabilities: $($script:ConfigManager.ManifestCapabilities.Modes.Count) modes, $($script:ConfigManager.ManifestCapabilities.Features.Count) features"

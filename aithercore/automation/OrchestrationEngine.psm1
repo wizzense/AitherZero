@@ -730,17 +730,20 @@ function Invoke-OrchestrationSequence {
                             $scriptName = $normalized.Script
                             $scriptNumber = $null
                             
-                            # If it's a full filename like "0407_Validate-Syntax.ps1", extract the number
-                            if ($scriptName -match '^(\d{4})_.*\.ps1$') {
+                            # Strip off anything besides the four-digit number
+                            # Handles formats like:
+                            # - "0407_Validate-Syntax.ps1" -> "0407"
+                            # - "0407" -> "0407"
+                            # - "automation-scripts/0407_Validate-Syntax.ps1" -> "0407"
+                            # - "library/automation-scripts/0407.ps1" -> "0407"
+                            if ($scriptName -match '(\d{4})') {
                                 $scriptNumber = $Matches[1]
-                            } 
-                            # If it's already just a number
-                            elseif ($scriptName -match '^\d{4}$') {
-                                $scriptNumber = $scriptName
                             }
-                            # Otherwise use as-is (might be a path or name)
+                            # If no four-digit number found, throw an exception
                             else {
-                                $scriptNumber = $scriptName
+                                $errorMsg = "Script name '$scriptName' does not contain a four-digit number. All scripts must be referenced by their four-digit number (e.g., '0407', '0413', or '0512')."
+                                Write-OrchestrationLog $errorMsg -Level 'Error'
+                                throw $errorMsg
                             }
                             
                             if ($scriptNumber) {
@@ -1074,7 +1077,9 @@ function ConvertTo-ScriptNumbers {
             $end = [int]$Matches[2]
 
             # Get all scripts in range that actually exist
-            $existingScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "*.ps1" -File |
+            $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+            $currentScriptsPath = Join-Path $currentProjectRoot 'library/automation-scripts'
+            $existingScripts = Get-ChildItem -Path $currentScriptsPath -Filter "*.ps1" -File |
                 Where-Object {
                     $_.Name -match '^(\d{4})_' | Out-Null
                     $num = [int]$Matches[1]
@@ -1091,7 +1096,9 @@ function ConvertTo-ScriptNumbers {
             $prefix = $Matches[1].PadLeft(2, '0')
             $pattern = "$prefix*"
 
-            $matchingScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "${pattern}_*.ps1" -File |
+            $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+            $currentScriptsPath = Join-Path $currentProjectRoot 'library/automation-scripts'
+            $matchingScripts = Get-ChildItem -Path $currentScriptsPath -Filter "${pattern}_*.ps1" -File |
                 ForEach-Object { $_.Name -match '^(\d{4})_' | Out-Null; $Matches[1] }
 
             $numbers += $matchingScripts
@@ -1394,7 +1401,11 @@ function Get-OrchestrationScripts {
     }
 
     foreach ($number in $Numbers) {
-        $scriptFile = Get-ChildItem -Path $script:ScriptsPath -Filter "${number}_*.ps1" -File | Select-Object -First 1
+        # Dynamically resolve scripts path (same as playbooks path fix)
+        $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+        $currentScriptsPath = Join-Path $currentProjectRoot 'library/automation-scripts'
+        
+        $scriptFile = Get-ChildItem -Path $currentScriptsPath -Filter "${number}_*.ps1" -File | Select-Object -First 1
 
         if (-not $scriptFile) {
             Write-OrchestrationLog "Script not found for number: $number" -Level 'Warning'
@@ -2639,8 +2650,10 @@ function Get-OrchestrationPlaybook {
     param([string]$Name)
 
     # Try both .psd1 and .json formats
-    # $script:OrchestrationPath already points to library/playbooks, so use it directly
-    $playbooksDir = $script:OrchestrationPath
+    # Dynamically resolve playbooks directory based on current module location
+    # This ensures the correct path is used even when module is re-imported in different locations
+    $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+    $playbooksDir = Join-Path $currentProjectRoot 'library/playbooks'
     
     # First try .psd1 format (PowerShell Data File)
     $psd1Path = Join-Path $playbooksDir "$Name.psd1"

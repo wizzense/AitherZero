@@ -9,7 +9,7 @@
     Sequence = @(
         # Generate PR changelog
         @{
-            Script = "0513_Generate-Changelog.ps1"
+            Script = "0513"
             Description = "Generate PR changelog from commits"
             Parameters = @{
                 BaseBranch = $env:GITHUB_BASE_REF
@@ -26,7 +26,7 @@
         
         # Generate actionable recommendations
         @{
-            Script = "0518_Generate-Recommendations.ps1"
+            Script = "0518"
             Description = "Generate actionable recommendations"
             Parameters = @{
                 AnalysisPath = "library/reports/analysis-summary.json"
@@ -42,7 +42,7 @@
         
         # Generate comprehensive dashboard
         @{
-            Script = "0512_Generate-Dashboard.ps1"
+            Script = "0512"
             Description = "Generate comprehensive PR dashboard"
             Parameters = @{
                 ProjectPath = $env:GITHUB_WORKSPACE
@@ -55,7 +55,7 @@
                 IncludeChangelog = $true
                 IncludeRecommendations = $true
                 IncludeHistoricalTrends = $true
-                PRNumber = $env:PR_NUMBER
+                PRScript = $env:PR_NUMBER
                 BaseBranch = $env:GITHUB_BASE_REF
             }
             ContinueOnError = $false
@@ -65,7 +65,7 @@
         
         # Generate detailed reports
         @{
-            Script = "0510_Generate-ProjectReport.ps1"
+            Script = "0510"
             Description = "Generate detailed project report"
             Parameters = @{
                 OutputFormat = "Markdown"
@@ -80,7 +80,7 @@
         
         # Create PR comment content
         @{
-            Script = "0519_Generate-PRComment.ps1"
+            Script = "0519"
             Description = "Generate consolidated PR comment"
             Parameters = @{
                 BuildMetadataPath = "library/reports/build-metadata.json"
@@ -104,12 +104,12 @@
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
         REPORT_PHASE = "pr-ecosystem-report"
-        PR_NUMBER = $env:PR_NUMBER
+        PR_Script = $env:PR_NUMBER
         GITHUB_BASE_REF = $env:GITHUB_BASE_REF
         GITHUB_HEAD_REF = $env:GITHUB_HEAD_REF
         GITHUB_REPOSITORY = $env:GITHUB_REPOSITORY
         GITHUB_SHA = $env:GITHUB_SHA
-        GITHUB_RUN_NUMBER = $env:GITHUB_RUN_NUMBER
+        GITHUB_RUN_Script = $env:GITHUB_RUN_NUMBER
         PAGES_URL = "https://$($env:GITHUB_REPOSITORY_OWNER).github.io/$($env:GITHUB_REPOSITORY -replace '.*/','')/"
     }
     
@@ -129,9 +129,9 @@
         RequireAllSuccess = $false
         MinimumSuccessCount = 3  # At least changelog, dashboard, and PR comment
         CriticalScripts = @(
-            "0513_Generate-Changelog.ps1",
-            "0512_Generate-Dashboard.ps1",
-            "0519_Generate-PRComment.ps1"
+            "0513",
+            "0512",
+            "0519"
         )
     }
     

@@ -9,7 +9,7 @@
     Sequence = @(
         # Pre-build validation
         @{
-            Script = "0407_Validate-Syntax.ps1"
+            Script = "0407"
             Description = "Syntax validation before build"
             Parameters = @{ All = $true }
             ContinueOnError = $false
@@ -19,7 +19,7 @@
         
         # Generate build metadata
         @{
-            Script = "0515_Generate-BuildMetadata.ps1"
+            Script = "0515"
             Description = "Generate comprehensive build metadata"
             Parameters = @{
                 OutputPath = "library/reports/build-metadata.json"
@@ -34,7 +34,7 @@
         
         # Create release package (executes in parallel with container if supported)
         @{
-            Script = "0902_Create-ReleasePackage.ps1"
+            Script = "0902"
             Description = "Create deployable package"
             Parameters = @{
                 PackageFormat = "Both"  # ZIP and TAR.GZ
@@ -49,7 +49,7 @@
         
         # Validate self-deployment capability
         @{
-            Script = "0900_Test-SelfDeployment.ps1"
+            Script = "0900"
             Description = "Validate self-deployment works"
             Parameters = @{
                 QuickTest = $true

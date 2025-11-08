@@ -7,7 +7,7 @@
     # Execute these scripts in sequence - mirrors .github/workflows/pr-validation.yml
     Sequence = @(
         @{
-            Script = "0407_Validate-Syntax.ps1"
+            Script = "0407"
             Description = "Phase 1: Syntax validation (fast feedback)"
             Parameters = @{
                 All = $true
@@ -17,7 +17,7 @@
             RetryCount = 0
         },
         @{
-            Script = "0404_Run-PSScriptAnalyzer.ps1"
+            Script = "0404"
             Description = "Phase 2: PSScriptAnalyzer code quality check"
             Parameters = @{
                 UseCache = $true
@@ -27,7 +27,7 @@
             RetryCount = 1
         },
         @{
-            Script = "0402_Run-UnitTests.ps1"
+            Script = "0402"
             Description = "Phase 3: Unit test execution"
             Parameters = @{}
             ContinueOnError = $false
@@ -35,7 +35,7 @@
             RetryCount = 1
         },
         @{
-            Script = "0420_Validate-ComponentQuality.ps1"
+            Script = "0420"
             Description = "Phase 4: Component quality validation"
             Parameters = @{
                 Path = "./domains"
@@ -46,7 +46,7 @@
             RetryCount = 0
         },
         @{
-            Script = "0413_Validate-ConfigManifest.ps1"
+            Script = "0413"
             Description = "Phase 5: Configuration validation"
             Parameters = @{}
             ContinueOnError = $false
@@ -54,7 +54,7 @@
             RetryCount = 0
         },
         @{
-            Script = "0426_Validate-TestScriptSync.ps1"
+            Script = "0426"
             Description = "Phase 6: Test-script synchronization check"
             Parameters = @{}
             ContinueOnError = $true

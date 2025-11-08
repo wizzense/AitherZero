@@ -6,7 +6,7 @@
     # Execute these scripts in sequence
     Sequence = @(
         @{
-            Script = "0404_Run-PSScriptAnalyzer.ps1"
+            Script = "0404"
             Description = "Run comprehensive PSScriptAnalyzer with caching"
             Parameters = @{
                 UseCache = $true
@@ -15,7 +15,7 @@
             Timeout = 300
         },
         @{
-            Script = "0407_Validate-Syntax.ps1"
+            Script = "0407"
             Description = "Validate PowerShell syntax"
             Parameters = @{
                 All = $true
@@ -24,7 +24,7 @@
             Timeout = 60
         },
         @{
-            Script = "0512_Generate-Dashboard.ps1"
+            Script = "0512"
             Description = "Generate updated dashboard with new quality metrics"
             Parameters = @{
                 Format = "HTML"

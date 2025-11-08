@@ -7,21 +7,21 @@
     
     Sequence = @(
         @{
-            Script = "0407_Validate-Syntax.ps1"
+            Script = "0407"
             Description = "Validate PowerShell syntax"
             Parameters = @{ All = $true }
             ContinueOnError = $false
             Timeout = 120
         },
         @{
-            Script = "0413_Validate-ConfigManifest.ps1"
+            Script = "0413"
             Description = "Validate config.psd1"
             Parameters = @{}
             ContinueOnError = $false
             Timeout = 60
         },
         @{
-            Script = "0405_Validate-ModuleManifests.ps1"
+            Script = "0405"
             Description = "Validate module manifests"
             Parameters = @{}
             ContinueOnError = $false
