@@ -712,8 +712,8 @@ function Invoke-OrchestrationSequence {
                     $validationIssues = @()
                     
                     foreach ($scriptDef in $playbook.Sequence) {
-                        # Normalize the script definition (pass Configuration for defaults)
-                        $normalized = ConvertTo-NormalizedScriptDefinition -Definition $scriptDef -ScriptNumber 'Unknown' -Configuration $Configuration
+                        # Normalize the script definition (pass loaded config for defaults)
+                        $normalized = ConvertTo-NormalizedScriptDefinition -Definition $scriptDef -ScriptNumber 'Unknown' -Configuration $config
                         
                         if (-not $normalized.Valid) {
                             $validationIssues += "Skipping invalid script definition: $($normalized.ValidationIssues -join '; ')"
@@ -765,11 +765,12 @@ function Invoke-OrchestrationSequence {
                         Write-OrchestrationLog "Playbook validation found $($validationIssues.Count) issue(s)" -Level 'Warning'
                     }
                     
-                    $Sequence = $extractedSequence
-                    Write-OrchestrationLog "Extracted sequence: $($Sequence -join ', ')"
+                    # Use script-scoped variable to propagate to process block
+                    $script:ExtractedSequence = $extractedSequence
+                    Write-OrchestrationLog "Extracted sequence: $($script:ExtractedSequence -join ', ')"
                 } else {
                     # Traditional format - already strings/numbers
-                    $Sequence = $playbook.Sequence
+                    $script:ExtractedSequence = $playbook.Sequence
                     $script:PlaybookScriptDefinitions = $null
                 }
             }
@@ -780,11 +781,11 @@ function Invoke-OrchestrationSequence {
                 $script:PlaybookStages = if ($playbook.Stages) { $playbook.Stages } else { $playbook.stages }
 
                 # Flatten all stage sequences for compatibility
-                $Sequence = @()
+                $script:ExtractedSequence = @()
                 foreach ($stage in $script:PlaybookStages) {
                     $stageSeq = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
                     if ($stageSeq) {
-                        $Sequence += $stageSeq
+                        $script:ExtractedSequence += $stageSeq
                     }
                 }
                 Write-OrchestrationLog "Loaded $($script:PlaybookStages.Count) stages from playbook" -Level 'Information'
@@ -832,13 +833,16 @@ function Invoke-OrchestrationSequence {
                 $ExecutionProfile = $playbook.Profile
             }
 
-            Write-OrchestrationLog "Loaded playbook: $LoadPlaybook with sequences: $($Sequence -join ', ')"
+            Write-OrchestrationLog "Loaded playbook: $LoadPlaybook with sequences: $($script:ExtractedSequence -join ', ')"
 
             # Force sequential for playbooks with stages to maintain stage order
             if ($script:PlaybookStages) {
                 Write-OrchestrationLog "Forcing sequential execution for staged playbook"
                 $Parallel = $false
             }
+        } else {
+            # No playbook - initialize ExtractedSequence to null
+            $script:ExtractedSequence = $null
         }
 
         # Initialize caching system if enabled
@@ -861,8 +865,21 @@ function Invoke-OrchestrationSequence {
     }
 
     process {
+        # Use sequence from playbook if available, otherwise use the parameter
+        $sequenceToUse = if ($script:ExtractedSequence) { 
+            $script:ExtractedSequence 
+        } else { 
+            $Sequence 
+        }
+        
+        # Validate sequence is not null
+        if (-not $sequenceToUse) {
+            Write-OrchestrationLog "No sequence specified and no playbook loaded" -Level 'Error'
+            throw "No sequence specified. Use -Sequence parameter or -LoadPlaybook to load a playbook."
+        }
+        
         # Parse sequences into script numbers
-        $scriptNumbers = ConvertTo-ScriptNumbers -Sequence $Sequence -Profile $ExecutionProfile -Configuration $config
+        $scriptNumbers = ConvertTo-ScriptNumbers -Sequence $sequenceToUse -Profile $ExecutionProfile -Configuration $config
 
         if ($scriptNumbers.Count -eq 0) {
             Write-OrchestrationLog "No scripts match the specified sequence" -Level 'Warning'
@@ -871,8 +888,8 @@ function Invoke-OrchestrationSequence {
 
         Write-OrchestrationLog "Resolved to $($scriptNumbers.Count) scripts: $($scriptNumbers -join ', ')"
 
-        # Get script metadata
-        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions -Configuration $Configuration -PlaybookName $LoadPlaybook
+        # Get script metadata (use loaded config, not the parameter)
+        $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions -Configuration $config -PlaybookName $LoadPlaybook
 
         # Matrix build handling - expand scripts for each matrix combination
         if ($Matrix) {
@@ -1473,7 +1490,8 @@ function Get-OrchestrationScripts {
 
         # Only use global variables if no stage-specific variables were defined
         if (-not $foundStageVars) {
-            $stageVariables = $Variables.Clone()
+            # Ensure Variables is not null before cloning
+            $stageVariables = if ($Variables) { $Variables.Clone() } else { @{} }
         }
 
         # Check conditions
@@ -1495,7 +1513,8 @@ function Get-OrchestrationScripts {
             # Validate parameters against script signature
             if ($playbookDefinition.Parameters -and $playbookDefinition.Parameters.Count -gt 0) {
                 $scriptInfo = Get-Command $scriptFile.FullName -ErrorAction SilentlyContinue
-                if ($scriptInfo) {
+                # Check both that scriptInfo exists AND has Parameters property
+                if ($scriptInfo -and $scriptInfo.Parameters) {
                     $invalidParams = @()
                     foreach ($paramName in $playbookDefinition.Parameters.Keys) {
                         if (-not $scriptInfo.Parameters.ContainsKey($paramName)) {
@@ -1510,6 +1529,8 @@ function Get-OrchestrationScripts {
                             $playbookDefinition.Parameters.Remove($invalidParam)
                         }
                     }
+                } else {
+                    Write-OrchestrationLog "Warning: Could not validate parameters for script $number - script info unavailable" -Level 'Debug'
                 }
             }
         }
@@ -1761,7 +1782,7 @@ function Show-OrchestrationPlan {
             }
             Write-Host $status
 
-            if ($script.Dependencies.Count -gt 0) {
+            if ($script.Dependencies -and $script.Dependencies.Count -gt 0) {
                 Write-Host "       Dependencies: $($script.Dependencies -join ', ')" -ForegroundColor DarkGray
             }
 
