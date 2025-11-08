@@ -1,8 +1,6 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
-# Stage: Testing
-# Dependencies: None
-# Tags: validation, manifest, module, testing, quality
+
 <#
 .SYNOPSIS
     Validates PowerShell module manifest files for common issues including Unicode characters
@@ -12,14 +10,21 @@
     - Proper string termination
     - Encoding issues
     - PowerShell restricted language compliance
+    
+    Part of the Testing & Quality stage (0400-0499).
 .PARAMETER Path
     Path to the .psd1 module manifest file to validate
 .PARAMETER Fix
     If specified, attempts to fix common issues automatically
 .EXAMPLE
-    ./automation-scripts/0413_Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1
+    ./automation-scripts/0416_Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1
 .EXAMPLE
-    ./automation-scripts/0413_Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1 -Fix
+    ./automation-scripts/0416_Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1 -Fix
+.NOTES
+    Stage: Testing
+    Order: 0416
+    Dependencies: None
+    Tags: validation, manifest, module, testing, quality
 #>
 
 [CmdletBinding()]
@@ -29,6 +34,13 @@ param(
     
     [switch]$Fix
 )
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 function Test-UnicodeCharacters {
     param([string]$Content, [string]$FilePath)
@@ -131,11 +143,11 @@ function Test-PowerShellSyntax {
 # Main validation logic
 try {
     if (-not (Test-Path $Path)) {
-        Write-Error "File not found: $Path"
+        Write-ScriptLog "File not found: $Path" -Level 'Error'
         exit 1
     }
     
-    Write-Host "Validating module manifest: $Path" -ForegroundColor Cyan
+    Write-ScriptLog "Validating module manifest: $Path" -Level 'Information'
     
     # Read file content
     $content = Get-Content -Path $Path -Raw -Encoding UTF8
@@ -143,14 +155,14 @@ try {
     # Check for BOM issues
     $bytes = [System.IO.File]::ReadAllBytes($Path)
     if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
-        Write-Warning "File contains UTF-8 BOM which may cause issues. Consider saving without BOM."
+        Write-ScriptLog "File contains UTF-8 BOM which may cause issues" -Level 'Warning'
     }
     
     # Check for Unicode issues
     $unicodeIssues = Test-UnicodeCharacters -Content $content -FilePath $Path
     
     if ($unicodeIssues.Count -gt 0) {
-        Write-Host "Found $($unicodeIssues.Count) Unicode issues:" -ForegroundColor Yellow
+        Write-ScriptLog "Found $($unicodeIssues.Count) Unicode issues" -Level 'Warning'
         foreach ($issue in $unicodeIssues) {
             Write-Host "  [$($issue.Type)] $($issue.Message)" -ForegroundColor Yellow
             if ($issue.Characters) {

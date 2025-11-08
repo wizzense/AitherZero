@@ -203,8 +203,8 @@
                 }
                 CodeQuality = @{
                     DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0420', '0425', '0426')
-                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, component quality, documentation structure validation, test-script synchronization'
+                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0416', '0420', '0425', '0426', '0427', '0428')
+                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, component quality, documentation structure validation, test-script synchronization, test discovery validation, test coverage analysis'
                 }
                 WorkflowTesting = @{
                     DependsOn = @('Core.PowerShell7')
@@ -324,8 +324,8 @@
                 }
                 Automation = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0840')
-                    Description = 'Automated workflow validation and priority-based issue processing'
+                    Scripts = @('0840', '0841')
+                    Description = 'Automated workflow validation, priority-based issue processing, and workflow integration validation'
                 }
                 PRDeployment = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
@@ -358,8 +358,8 @@
                 }
                 Orchestration = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0962', '0963', '0964', '0965', '0966')
-                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, and local validation'
+                    Scripts = @('0962', '0963', '0964', '0965', '0966', '0967', '0968')
+                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, local validation, orchestration engine testing, and playbook v2 migration'
                 }
             }
             
@@ -367,8 +367,8 @@
             Maintenance = @{
                 Environment = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0000', '0002', '0003')
-                    Description = 'Environment cleanup, directory setup, and config sync'
+                    Scripts = @('0000', '0002', '0003', '0004')
+                    Description = 'Environment cleanup, directory setup, config sync, and git hooks setup'
                 }
                 Reset = @{
                     DependsOn = @('Core.PowerShell7')
