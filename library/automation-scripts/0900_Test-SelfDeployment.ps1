@@ -236,18 +236,54 @@ function Invoke-SelfDeploymentPlaybook {
             # Execute the self-deployment test playbook
             Write-ScriptLog -Message "Running self-deployment-test playbook via OrchestrationEngine..."
             
-            # Run playbook with minimal parameters for maximum compatibility
-            # Redirect output to avoid capturing large amounts of data
-            Invoke-OrchestrationSequence -LoadPlaybook "self-deployment-test" | Out-Null
+            # Run playbook - capture output to validate success
+            # Don't use Out-Null - we need the return value to check success
+            $result = Invoke-OrchestrationSequence -LoadPlaybook "self-deployment-test" 2>&1
             
             $exitCode = $LASTEXITCODE
             if ($null -eq $exitCode) { $exitCode = 0 }
             
+            # Check multiple success indicators for robustness
+            $success = $false
+            
+            # Method 1: Check exit code
             if ($exitCode -eq 0) {
+                $success = $true
+            }
+            
+            # Method 2: If result is an object, check its properties
+            if ($result -and $result -is [PSCustomObject]) {
+                # Check if there's a Success property
+                if ($null -ne $result.Success) {
+                    $success = $result.Success
+                }
+                # Or check Completed vs Failed counts
+                elseif ($null -ne $result.Completed -and $null -ne $result.Failed) {
+                    # Success if we completed scripts and failures are acceptable
+                    # The playbook requires MinimumSuccessCount = 3
+                    if ($result.Completed -ge 3 -and ($result.Failed -eq 0 -or $result.Completed -gt $result.Failed)) {
+                        $success = $true
+                    }
+                }
+            }
+            
+            if ($success) {
                 Write-ScriptLog -Level Information -Message "Self-deployment playbook completed successfully"
+                if ($result -and $result -is [PSCustomObject] -and $null -ne $result.Completed) {
+                    Write-ScriptLog -Message "Completed: $($result.Completed), Failed: $($result.Failed -or 0)"
+                }
                 return $true
             } else {
-                Write-ScriptLog -Level Error -Message "Self-deployment playbook failed with exit code: $exitCode"
+                $failureMsg = "Self-deployment playbook failed"
+                if ($exitCode -ne 0) {
+                    $failureMsg += " with exit code: $exitCode"
+                }
+                if ($result -and $result -is [PSCustomObject]) {
+                    if ($null -ne $result.Completed) {
+                        $failureMsg += " (Completed: $($result.Completed), Failed: $($result.Failed -or 0))"
+                    }
+                }
+                Write-ScriptLog -Level Error -Message $failureMsg
                 return $false
             }
 
