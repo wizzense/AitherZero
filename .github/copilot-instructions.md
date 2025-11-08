@@ -200,6 +200,112 @@ $token = Get-GitHubToken -ErrorAction SilentlyContinue
 **Core Principle:**
 > "DRY (Don't Repeat Yourself) - Extract reusable code to ScriptUtilities, not copy-paste to every script"
 
+### ⚠️ HARD REQUIREMENT: Use Singular Nouns for Cmdlets
+
+**ALWAYS use singular nouns for PowerShell cmdlets to enable pipeline processing and parallel execution!**
+
+All AitherZero cmdlets MUST follow the singular noun design pattern:
+- Process **ONE object at a time**
+- Support **pipeline input** with `Begin/Process/End` blocks
+- Enable **parallel processing** with `ForEach-Object -Parallel`
+- **Compose naturally** in pipeline chains
+
+❌ **WRONG - Plural nouns (batch operations):**
+```powershell
+function Update-Items {
+    param([string]$Name)
+    
+    # Process all items at once
+    $items = Get-AllItems
+    foreach ($item in $items) {
+        # Update logic
+    }
+}
+
+# Usage - can't filter or parallelize easily
+Update-Items
+```
+
+✅ **CORRECT - Singular noun (pipeline-friendly):**
+```powershell
+function Update-Item {
+    [CmdletBinding(DefaultParameterSetName = 'ByName')]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = 'ByObject')]
+        [PSCustomObject]$InputObject,
+
+        [Parameter(ParameterSetName = 'ByName')]
+        [string]$Name
+    )
+
+    begin {
+        # One-time initialization
+        $config = Get-Configuration
+    }
+
+    process {
+        # Process ONE item at a time
+        $item = if ($InputObject) { $InputObject } else { Get-Item -Name $Name }
+        # Update logic for single item
+        Write-Output $item  # Return for pipeline
+    }
+}
+
+# Usage - flexible, pipeable, parallelizable
+Get-Item | Update-Item
+Get-Item | Where-Object { $_.Enabled } | Update-Item
+Get-Item | ForEach-Object -Parallel { Update-Item -InputObject $_ } -ThrottleLimit 4
+```
+
+**Benefits:**
+1. **Memory Efficient**: Stream objects instead of loading all in memory
+2. **Parallel Processing**: Each item can be processed concurrently  
+3. **Composability**: Chain operations with `|` operator
+4. **Flexibility**: Filter with `Where-Object`, transform with `ForEach-Object`
+5. **PowerShell Conventions**: Follows official best practices
+
+**Implementation Checklist:**
+- [ ] Use singular noun (Get-Item, not Get-Items)
+- [ ] Add `Begin/Process/End` blocks
+- [ ] Support pipeline with `ValueFromPipeline`
+- [ ] Add `InputObject` parameter for pipeline input
+- [ ] Return processed objects with `Write-Output`
+- [ ] Add parameter sets (ByObject, ByName, ByPath)
+- [ ] Include ShouldProcess support
+- [ ] Add PSTypeName to output objects
+
+**Real Example - Infrastructure Submodules:**
+```powershell
+# Get all submodules and update in parallel
+Get-InfrastructureSubmodule -Initialized | 
+    ForEach-Object -Parallel {
+        Update-InfrastructureSubmodule -InputObject $_ -Remote
+    } -ThrottleLimit 4
+
+# Filter and process
+Get-InfrastructureSubmodule | 
+    Where-Object { $_.Name -like '*test*' } | 
+    Update-InfrastructureSubmodule -Merge
+
+# Chain operations
+Get-InfrastructureSubmodule -All | 
+    Where-Object { -not $_.Enabled } | 
+    Remove-InfrastructureSubmodule -Clean
+```
+
+**Exception - Keep Plural When:**
+- Cmdlet performs coordination/sync across multiple items (e.g., `Sync-InfrastructureSubmodule`)
+- Cmdlet explicitly returns entire collection (e.g., `Get-AllFiles`)
+- Cmdlet is a batch validator (e.g., `Test-AllConfigurations`)
+
+**Documentation:**
+- See `docs/SINGULAR-NOUN-DESIGN.md` for complete guidelines
+- See `docs/REFACTORING-PLAN-SINGULAR-NOUNS.md` for project-wide refactoring plan
+- Infrastructure submodule cmdlets demonstrate this pattern perfectly
+
+**Core Principle:**
+> "Cmdlets process ONE object, pipelines process MANY objects"
+
 ### Module Scope Issues
 Functions in scriptblocks may lose module scope. Call directly:
 ```powershell
