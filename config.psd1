@@ -1442,6 +1442,59 @@
             RepoUrl      = 'https://github.com/Aitherium/AitherLabs.git'
             InfraRepoUrl = 'https://github.com/Aitherium/aitherium-infrastructure.git'
         }
+
+        # Git Submodule Management for Infrastructure
+        # Infrastructure repositories are configured as Git submodules for flexible, versioned deployments
+        Submodules       = @{
+            Enabled      = $true
+            AutoInit     = $true  # Automatically initialize submodules on bootstrap
+            AutoUpdate   = $false # Don't auto-update submodules (requires explicit action)
+            
+            # Default infrastructure repository (Aitherium Infrastructure)
+            # Tailored for customized mass deployments to any environment
+            Default      = @{
+                Name        = 'aitherium-infrastructure'
+                Url         = 'https://github.com/Aitherium/aitherium-infrastructure.git'
+                Path        = 'infrastructure/aitherium'
+                Branch      = 'main'
+                Description = 'Default Aitherium infrastructure templates for mass deployment'
+                Enabled     = $true
+            }
+
+            # Additional infrastructure repositories can be configured here
+            # Each entry will be managed as a separate Git submodule
+            Repositories = @{
+                # Example: Custom infrastructure for specific environments
+                # 'custom-infra' = @{
+                #     Name        = 'custom-infrastructure'
+                #     Url         = 'https://github.com/YourOrg/custom-infrastructure.git'
+                #     Path        = 'infrastructure/custom'
+                #     Branch      = 'main'
+                #     Description = 'Custom infrastructure for specific deployments'
+                #     Enabled     = $false
+                # }
+                
+                # Example: Kubernetes-specific infrastructure
+                # 'k8s-infra' = @{
+                #     Name        = 'kubernetes-infrastructure'
+                #     Url         = 'https://github.com/YourOrg/k8s-infrastructure.git'
+                #     Path        = 'infrastructure/kubernetes'
+                #     Branch      = 'main'
+                #     Description = 'Kubernetes-specific infrastructure templates'
+                #     Enabled     = $false
+                # }
+            }
+
+            # Submodule behavior settings
+            Behavior     = @{
+                RecursiveInit    = $true  # Initialize submodules recursively
+                ShallowClone     = $false # Use full clone (not shallow) for better git history
+                ParallelJobs     = 4      # Number of parallel jobs for submodule operations
+                TimeoutSeconds   = 300    # Timeout for submodule operations
+                RetryAttempts    = 3      # Number of retry attempts for failed operations
+                VerifySignatures = $false # Verify GPG signatures on submodule commits
+            }
+        }
     }
 
     # ===================================================================

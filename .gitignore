@@ -111,3 +111,11 @@ tests/analysis/*.json
 # Configuration consolidation - PSScriptAnalyzer settings now in config.psd1
 PSScriptAnalyzerSettings.psd1
 .psscriptanalyzer-fast.psd1
+
+# Infrastructure submodules (managed via Git submodules)
+# Keep only documentation files, actual infrastructure repos are submodules
+infrastructure/*/
+!infrastructure/SUBMODULES.md
+!infrastructure/README.md
+!infrastructure/index.md
+!infrastructure/.gitkeep
