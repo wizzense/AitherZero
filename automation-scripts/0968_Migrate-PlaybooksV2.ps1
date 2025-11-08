@@ -1,22 +1,32 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
-# Stage: Quality
-# Dependencies: None
-# Tags: playbook, migration, orchestration, quality
+
 <#
 .SYNOPSIS
     Migrate legacy v1 playbooks to new v2.0 format
 .DESCRIPTION
     This script helps convert existing v1 playbooks to the new v2.0 standardized format.
     It analyzes existing playbooks and provides migration suggestions.
+    
+    Part of the Quality & Validation stage (0900-0999).
 .PARAMETER InputPath
     Path to directory containing v1 playbooks
 .PARAMETER OutputPath  
     Path to output converted v2.0 playbooks
 .PARAMETER DryRun
     Show what would be converted without making changes
+.EXAMPLE
+    ./automation-scripts/0968_Migrate-PlaybooksV2.ps1 -InputPath ./old -OutputPath ./new
+.EXAMPLE
+    ./automation-scripts/0968_Migrate-PlaybooksV2.ps1 -InputPath ./old -OutputPath ./new -DryRun
+.NOTES
+    Stage: Quality
+    Order: 0968
+    Dependencies: None
+    Tags: playbook, migration, orchestration, quality
 #>
 
+[CmdletBinding()]
 param(
     [Parameter(Mandatory)]
     [string]$InputPath,
@@ -26,6 +36,13 @@ param(
     
     [switch]$DryRun
 )
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 function ConvertTo-V2Format {
     param(
@@ -163,7 +180,13 @@ $convertedCount = 0
 $skippedCount = 0
 
 foreach ($file in $v1Playbooks) {
-    try {
+    $ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
+try {
         $content = Get-Content $file.FullName -Raw | ConvertFrom-Json -AsHashtable
         
         # Check if already v2.0 format

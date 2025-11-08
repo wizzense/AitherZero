@@ -1,23 +1,39 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
-# Stage: IssueManagement
-# Dependencies: None
-# Tags: workflow, validation, ci-cd, github-actions
+
 <#
 .SYNOPSIS
     Validate AitherCore workflow integration with existing GitHub Actions workflows
 .DESCRIPTION
     Checks for potential conflicts, permission issues, and integration points
     between the AitherCore build workflow and existing CI/CD workflows.
+    
+    Part of the Issue Management & Workflow stage (0800-0899).
+.PARAMETER Detailed
+    Show detailed integration report with additional analysis
+.EXAMPLE
+    ./automation-scripts/0841_Validate-WorkflowIntegration.ps1
+.EXAMPLE
+    ./automation-scripts/0841_Validate-WorkflowIntegration.ps1 -Detailed
+.NOTES
+    Stage: IssueManagement
+    Order: 0841
+    Dependencies: None
+    Tags: workflow, validation, ci-cd, github-actions
 #>
 
+[CmdletBinding()]
 param(
     [Parameter()]
     [switch]$Detailed
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 $workflowsPath = Join-Path $PSScriptRoot "../.github/workflows"
 
