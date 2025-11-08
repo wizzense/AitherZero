@@ -176,7 +176,7 @@ az 0520
 
 ## Orchestration Playbooks
 
-Located in `/orchestration/playbooks/`:
+Located in `/domains/orchestration/playbooks/`:
 
 ### Testing Playbooks
 
@@ -307,7 +307,7 @@ catch {
 |------|---------|
 | `/automation-scripts/` | Numbered scripts (0000-9999) |
 | `/domains/` | PowerShell modules by domain |
-| `/orchestration/playbooks/` | Workflow definitions |
+| `/domains/orchestration/playbooks/` | Workflow definitions |
 | `/tests/` | Pester tests (unit + integration) |
 | `/reports/` | Generated reports and metrics |
 | `/logs/` | Transcript logs |
@@ -460,10 +460,10 @@ ls ./automation-scripts/*0402*
 
 ```powershell
 # List available playbooks
-Get-ChildItem ./orchestration/playbooks/ -Recurse -Filter "*.json"
+Get-ChildItem ./domains/orchestration/playbooks/ -Recurse -Filter "*.json"
 
 # Validate playbook JSON
-Get-Content ./orchestration/playbooks/testing/test-quick.json | ConvertFrom-Json
+Get-Content ./domains/orchestration/playbooks/testing/test-quick.json | ConvertFrom-Json
 ```
 
 ## When to Use This Prompt

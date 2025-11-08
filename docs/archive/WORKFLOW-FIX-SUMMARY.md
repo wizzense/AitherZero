@@ -152,7 +152,7 @@ With these fixes, the following workflows should now pass:
 These files are module manifests (pure data) and correctly use `Import-PowerShellDataFile`:
 - Module manifests: `*.psd1` in domains/
 - Extension manifests: `*.extension.psd1`
-- Playbook files: `orchestration/playbooks/*.psd1` (converted at runtime)
+- Playbook files: `domains/orchestration/playbooks/*.psd1` (converted at runtime)
 
 ## Future Development
 

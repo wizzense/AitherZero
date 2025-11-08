@@ -79,7 +79,7 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
                 "config",
                 "temp",
                 "infrastructure/state",
-                "orchestration/playbooks"
+                "domains/orchestration/playbooks"
             )
 
             foreach ($dir in $requiredDirs) {

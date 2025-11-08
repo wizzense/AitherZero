@@ -16,7 +16,7 @@ The required JSON is in `.github/copilot/mcp-config.json`:
   "aitherzero": {
     "command": "node",
     "args": [
-      "mcp-server/scripts/start-with-build.mjs"
+      "integrations/mcp-server/scripts/start-with-build.mjs"
     ],
     "env": {
       "AITHERZERO_ROOT": ".",

@@ -360,7 +360,7 @@ function Update-GlobalMCPConfig {
         $globalConfig.servers = @{
             "aitherzero"          = @{
                 "command"      = "node"
-                "args"         = @("${WorkspaceRoot}/mcp-server/scripts/start-with-build.mjs")
+                "args"         = @("${WorkspaceRoot}/integrations/mcp-server/scripts/start-with-build.mjs")
                 "description"  = "AitherZero infrastructure automation - run scripts, playbooks, tests"
                 "capabilities" = @{ "resources" = $true; "tools" = $true }
                 "env"          = @{ "AITHERZERO_ROOT" = $WorkspaceRoot; "AITHERZERO_NONINTERACTIVE" = "1" }
