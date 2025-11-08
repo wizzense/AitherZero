@@ -400,7 +400,7 @@ try {
 
     # Save results
     if ($PSCmdlet.ShouldProcess($OutputPath, "Save code quality analysis results")) {
-        $outputFile = Save-AnalysisResults -AnalysisType "CodeQuality" -Results $results -OutputPath $OutputPath
+        $outputFile = Save-AnalysisResult -AnalysisType "CodeQuality" -Results $results -OutputPath $OutputPath
     }
 
     # Display summary

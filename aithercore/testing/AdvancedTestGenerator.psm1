@@ -588,11 +588,11 @@ function New-EnhancedUnitTest {
     
     # Generate components first
     $mockSetup = New-MockSetup -Behavior $Behavior
-    $paramTests = New-ParameterTests -Parameters $Metadata.Parameters
-    $functionTests = New-FunctionTests -Functions $Metadata.Functions
-    $execTests = New-ExecutionTests -Metadata $Metadata -Behavior $Behavior
-    $platformTests = New-PlatformTests -Behavior $Behavior
-    $errorTests = New-ErrorHandlingTests -Behavior $Behavior
+    $paramTests = New-ParameterTest -Parameters $Metadata.Parameters
+    $functionTests = New-FunctionTest -Functions $Metadata.Functions
+    $execTests = New-ExecutionTest -Metadata $Metadata -Behavior $Behavior
+    $platformTests = New-PlatformTest -Behavior $Behavior
+    $errorTests = New-ErrorHandlingTest -Behavior $Behavior
     $cleanup = New-TestCleanup -Behavior $Behavior
     
     # Create a hashtable of replacements
@@ -636,7 +636,7 @@ function New-EnhancedIntegrationTest {
     
     # Generate components
     $integrationTests = New-IntegrationTestContexts -Metadata $Metadata -Behavior $Behavior
-    $dependencyTests = New-DependencyTests -Dependencies $Metadata.Dependencies
+    $dependencyTests = New-DependencyTest -Dependencies $Metadata.Dependencies
     
     # Create replacements hashtable
     $replacements = @{
@@ -712,7 +712,7 @@ function New-MockSetup {
     return $sb.ToString()
 }
 
-function New-ParameterTests {
+function New-ParameterTest {
     param([array]$Parameters)
 
     if ($Parameters.Count -eq 0) {
@@ -744,7 +744,7 @@ function New-ParameterTests {
     return $sb.ToString()
 }
 
-function New-FunctionTests {
+function New-FunctionTest {
     param([array]$Functions)
 
     if ($Functions.Count -eq 0) {
@@ -768,7 +768,7 @@ function New-FunctionTests {
     return $sb.ToString()
 }
 
-function New-ExecutionTests {
+function New-ExecutionTest {
     param([hashtable]$Metadata, [hashtable]$Behavior)
 
     $sb = [System.Text.StringBuilder]::new()
@@ -807,7 +807,7 @@ function New-ExecutionTests {
     return $sb.ToString()
 }
 
-function New-PlatformTests {
+function New-PlatformTest {
     param([hashtable]$Behavior)
 
     if ($Behavior.RequiresPlatform -eq 'Any') {
@@ -839,7 +839,7 @@ function New-PlatformTests {
     return $sb.ToString()
 }
 
-function New-ErrorHandlingTests {
+function New-ErrorHandlingTest {
     param([hashtable]$Behavior)
 
     $sb = [System.Text.StringBuilder]::new()
@@ -893,7 +893,7 @@ function New-IntegrationTestContexts {
     return $sb.ToString()
 }
 
-function New-DependencyTests {
+function New-DependencyTest {
     param([array]$Dependencies)
 
     if ($Dependencies.Count -eq 0) {

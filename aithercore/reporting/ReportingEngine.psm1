@@ -365,7 +365,7 @@ function Stop-DashboardRefresh {
     }
 }
 
-function Get-ExecutionMetrics {
+function Get-ExecutionMetric {
     <#
     .SYNOPSIS
         Collect current execution metrics
@@ -453,7 +453,7 @@ function New-TestReport {
 
     # Collect data if not provided
     if ($IncludeTests -and -not $TestResults) {
-        $TestResults = Get-LatestTestResults
+        $TestResults = Get-LatestTestResult
     }
 
     if ($IncludeCoverage -and -not $CoverageData) {
@@ -461,7 +461,7 @@ function New-TestReport {
     }
 
     if ($IncludeAnalysis -and -not $AnalysisResults) {
-        $AnalysisResults = Get-LatestAnalysisResults
+        $AnalysisResults = Get-LatestAnalysisResult
     }
 
     # Create report structure
@@ -881,7 +881,7 @@ function New-HtmlReport {
     return $html
 }
 
-function Get-LatestTestResults {
+function Get-LatestTestResult {
     <#
     .SYNOPSIS
         Get the latest test results from the test directory
@@ -929,7 +929,7 @@ function Get-LatestCoverageData {
     return $null
 }
 
-function Get-LatestAnalysisResults {
+function Get-LatestAnalysisResult {
     <#
     .SYNOPSIS
         Get the latest PSScriptAnalyzer results
@@ -953,7 +953,7 @@ function Get-LatestAnalysisResults {
     return $null
 }
 
-function Show-TestTrends {
+function Show-TestTrend {
     <#
     .SYNOPSIS
         Display test result trends over time
@@ -1033,7 +1033,7 @@ function Export-MetricsReport {
     foreach ($type in $MetricTypes) {
         switch ($type) {
             'Tests' {
-                $metrics.Metrics.Tests = Get-LatestTestResults
+                $metrics.Metrics.Tests = Get-LatestTestResult
             }
             'Coverage' {
                 $metrics.Metrics.Coverage = Get-LatestCoverageData
@@ -1049,7 +1049,7 @@ function Export-MetricsReport {
             }
             'Quality' {
                 $metrics.Metrics.Quality = @{
-                    CodeIssues = (Get-LatestAnalysisResults | Measure-Object).Count
+                    CodeIssues = (Get-LatestAnalysisResult | Measure-Object).Count
                 }
             }
         }
@@ -1477,9 +1477,9 @@ Export-ModuleMember -Function @(
     'Update-ExecutionDashboard',
     'Show-Dashboard',
     'Stop-DashboardRefresh',
-    'Get-ExecutionMetrics',
+    'Get-ExecutionMetric',
     'New-TestReport',
-    'Show-TestTrends',
+    'Show-TestTrend',
     'Export-MetricsReport',
 
     # New consolidated exports (from automation scripts 0500-0599)

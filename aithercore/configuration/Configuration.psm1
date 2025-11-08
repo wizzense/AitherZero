@@ -1375,7 +1375,7 @@ function Get-ExecutionProfile {
     return $manifest.ExecutionProfiles.$ProfileName
 }
 
-function Get-FeatureDependencies {
+function Get-FeatureDependency {
     <#
     .SYNOPSIS
         Gets dependencies for a feature
@@ -1386,7 +1386,7 @@ function Get-FeatureDependencies {
     .PARAMETER Category
         Feature category
     .EXAMPLE
-        Get-FeatureDependencies -Category 'Development' -FeatureName 'Node'
+        Get-FeatureDependency -Category 'Development' -FeatureName 'Node'
     #>
     [CmdletBinding()]
     param(
@@ -1468,7 +1468,7 @@ function Resolve-FeatureDependencies {
         $featureName = if ($parts.Count -gt 1) { $parts[1] } else { $parts[0] }
         
         # Get dependencies for this feature
-        $deps = Get-FeatureDependencies -FeatureName $featureName -Category $category
+        $deps = Get-FeatureDependency -FeatureName $featureName -Category $category
         
         if ($deps -and $deps.DependsOn) {
             foreach ($dep in $deps.DependsOn) {
@@ -1518,6 +1518,6 @@ Export-ModuleMember -Function @(
     'Test-FeatureEnabled',
     'Request-FeatureEnable',
     'Get-ExecutionProfile',
-    'Get-FeatureDependencies',
+    'Get-FeatureDependency',
     'Resolve-FeatureDependencies'
 )

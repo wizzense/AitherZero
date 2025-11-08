@@ -255,7 +255,7 @@ try {
 
     # Save results
     if ($PSCmdlet.ShouldProcess($OutputPath, "Save documentation coverage analysis results")) {
-        $outputFile = Save-AnalysisResults -AnalysisType "DocumentationCoverage" -Results $results -OutputPath $OutputPath
+        $outputFile = Save-AnalysisResult -AnalysisType "DocumentationCoverage" -Results $results -OutputPath $OutputPath
     }
 
     # Display summary

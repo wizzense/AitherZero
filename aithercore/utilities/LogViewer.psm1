@@ -24,45 +24,128 @@ function Write-ModuleLog {
     }
 }
 
-function Get-LogFiles {
+function Get-LogFile {
     <#
     .SYNOPSIS
-        Gets available log files
+        Gets log files one at a time
     .DESCRIPTION
-        Returns list of log files with metadata
+        Returns log files with metadata, supporting pipeline processing and filtering.
+        Follows the singular noun design pattern for efficient streaming.
+    .PARAMETER Path
+        Specific log file path to retrieve
+    .PARAMETER InputObject
+        Log file object from pipeline
     .PARAMETER Type
         Type of log files to retrieve (Application, Transcript, All)
+    .PARAMETER Pattern
+        Filter files by name pattern
+    .EXAMPLE
+        Get-LogFile -Type Application
+        Streams all application log files
+    .EXAMPLE
+        Get-LogFile | Where-Object { $_.SizeKB -gt 100 }
+        Filters large log files
+    .EXAMPLE
+        Get-LogFile -Type Transcript | ForEach-Object -Parallel { $_ }
+        Process log files in parallel
+    .INPUTS
+        System.IO.FileInfo
+    .OUTPUTS
+        AitherZero.LogFile
     #>
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ByType')]
+    [OutputType('AitherZero.LogFile')]
     param(
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName, ParameterSetName = 'ByPath')]
+        [Alias('FullName')]
+        [string]$Path,
+
+        [Parameter(ValueFromPipeline, ParameterSetName = 'ByObject')]
+        [PSCustomObject]$InputObject,
+
+        [Parameter(ParameterSetName = 'ByType')]
         [ValidateSet('Application', 'Transcript', 'All')]
-        [string]$Type = 'All'
+        [string]$Type = 'All',
+
+        [Parameter(ParameterSetName = 'ByType')]
+        [string]$Pattern
     )
 
-    $logPath = Join-Path $script:ProjectRoot 'logs'
-
-    if (-not (Test-Path $logPath)) {
-        Write-ModuleLog "Log directory not found: $logPath" -Level 'Warning'
-        return @()
+    begin {
+        Write-Verbose "Starting Get-LogFile operation"
+        $logPath = Join-Path $script:ProjectRoot 'logs'
     }
 
-    $files = @()
+    process {
+        # Handle pipeline object passthrough
+        if ($PSCmdlet.ParameterSetName -eq 'ByObject') {
+            Write-Output $InputObject
+            return
+        }
 
-    if ($Type -in @('Application', 'All')) {
-        $files += Get-ChildItem -Path $logPath -Filter "aitherzero-*.log" |
-            Select-Object Name, FullName, Length, LastWriteTime,
-                @{Name='Type'; Expression={'Application'}},
-                @{Name='SizeKB'; Expression={[Math]::Round($_.Length / 1KB, 2)}}
+        # Handle specific path
+        if ($PSCmdlet.ParameterSetName -eq 'ByPath') {
+            if (Test-Path $Path) {
+                $file = Get-Item $Path
+                $logType = if ($file.Name -like 'aitherzero-*.log') { 'Application' }
+                          elseif ($file.Name -like 'transcript-*.log') { 'Transcript' }
+                          else { 'Unknown' }
+
+                $logFile = [PSCustomObject]@{
+                    PSTypeName = 'AitherZero.LogFile'
+                    Name = $file.Name
+                    FullName = $file.FullName
+                    Length = $file.Length
+                    LastWriteTime = $file.LastWriteTime
+                    Type = $logType
+                    SizeKB = [Math]::Round($file.Length / 1KB, 2)
+                }
+                Write-Output $logFile
+            }
+            return
+        }
+
+        # ByType parameter set - stream files
+        if (-not (Test-Path $logPath)) {
+            Write-ModuleLog "Log directory not found: $logPath" -Level 'Warning'
+            return
+        }
+
+        # Get files based on type
+        $filters = @()
+        if ($Type -in @('Application', 'All')) {
+            $filters += 'aitherzero-*.log'
+        }
+        if ($Type -in @('Transcript', 'All')) {
+            $filters += 'transcript-*.log'
+        }
+
+        foreach ($filter in $filters) {
+            Get-ChildItem -Path $logPath -Filter $filter | ForEach-Object {
+                # Apply pattern filter if specified
+                if ($Pattern -and $_.Name -notlike "*$Pattern*") {
+                    return
+                }
+
+                $logType = if ($filter -eq 'aitherzero-*.log') { 'Application' } else { 'Transcript' }
+                
+                $logFile = [PSCustomObject]@{
+                    PSTypeName = 'AitherZero.LogFile'
+                    Name = $_.Name
+                    FullName = $_.FullName
+                    Length = $_.Length
+                    LastWriteTime = $_.LastWriteTime
+                    Type = $logType
+                    SizeKB = [Math]::Round($_.Length / 1KB, 2)
+                }
+                Write-Output $logFile
+            }
+        }
     }
 
-    if ($Type -in @('Transcript', 'All')) {
-        $files += Get-ChildItem -Path $logPath -Filter "transcript-*.log" |
-            Select-Object Name, FullName, Length, LastWriteTime,
-                @{Name='Type'; Expression={'Transcript'}},
-                @{Name='SizeKB'; Expression={[Math]::Round($_.Length / 1KB, 2)}}
+    end {
+        Write-Verbose "Get-LogFile operation complete"
     }
-
-    return $files | Sort-Object LastWriteTime -Descending
 }
 
 function Show-LogContent {
@@ -134,7 +217,7 @@ function Show-LogContent {
     }
 }
 
-function Get-LogStatistics {
+function Get-LogStatistic {
     <#
     .SYNOPSIS
         Gets statistics about log files
@@ -147,7 +230,7 @@ function Get-LogStatistics {
     )
 
     if (-not $Path) {
-        $logFiles = Get-LogFiles -Type Application
+        $logFiles = Get-LogFile -Type Application
         if ($logFiles) {
             $Path = $logFiles[0].FullName
         }
@@ -213,7 +296,7 @@ function Show-LogDashboard {
         Write-Host "`n  LOG DASHBOARD (Non-Interactive)" -ForegroundColor Cyan
         Write-Host "  ═══════════════════════════════════════════════════════" -ForegroundColor DarkGray
 
-        $logFiles = Get-LogFiles -Type All
+        $logFiles = Get-LogFile -Type All
         if ($logFiles) {
             Write-Host "`n  Available Logs: $($logFiles.Count) files" -ForegroundColor White
             foreach ($file in $logFiles | Select-Object -First 3) {
@@ -223,7 +306,7 @@ function Show-LogDashboard {
 
             $appLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
             if ($appLog) {
-                $stats = Get-LogStatistics -Path $appLog.FullName
+                $stats = Get-LogStatistic -Path $appLog.FullName
                 if ($stats) {
                     Write-Host "`n  Statistics:" -ForegroundColor White
                     Write-Host "    Lines: $($stats.TotalLines) | Errors: $($stats.LogLevels.Error) | Warnings: $($stats.LogLevels.Warning)" -ForegroundColor Gray
@@ -242,7 +325,7 @@ function Show-LogDashboard {
         Write-Host "  ═══════════════════════════════════════════════════════" -ForegroundColor DarkGray
 
         # Get log files
-        $logFiles = Get-LogFiles -Type All
+        $logFiles = Get-LogFile -Type All
 
         if ($logFiles.Count -eq 0) {
             Write-Host "`n  No log files found" -ForegroundColor Yellow
@@ -261,7 +344,7 @@ function Show-LogDashboard {
             if ($logFiles.Count -gt 0) {
                 $latestLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
                 if ($latestLog) {
-                    $stats = Get-LogStatistics -Path $latestLog.FullName
+                    $stats = Get-LogStatistic -Path $latestLog.FullName
 
                     if ($stats) {
                         Write-Host "`n  📊 CURRENT LOG STATISTICS:" -ForegroundColor White
@@ -336,7 +419,7 @@ function Show-LogDashboard {
                     Read-Host "`nPress Enter to continue"
                 }
                 'C' {
-                    Clear-OldLogs
+                    Clear-OldLog
                     Read-Host "`nPress Enter to continue"
                 }
                 'Q' {
@@ -350,7 +433,7 @@ function Show-LogDashboard {
     } while ($true)
 }
 
-function Search-Logs {
+function Search-Log {
     <#
     .SYNOPSIS
         Searches through log files
@@ -366,7 +449,7 @@ function Search-Logs {
         [string]$Type = 'All'
     )
 
-    $logFiles = Get-LogFiles -Type $Type
+    $logFiles = Get-LogFile -Type $Type
     $results = @()
 
     foreach ($file in $logFiles) {
@@ -393,7 +476,7 @@ function Search-Logs {
     }
 }
 
-function Clear-OldLogs {
+function Clear-OldLog {
     <#
     .SYNOPSIS
         Clears old log files
@@ -473,11 +556,11 @@ Write-ModuleLog "LogViewer module initialized"
 
 # Export functions
 Export-ModuleMember -Function @(
-    'Get-LogFiles'
+    'Get-LogFile'
     'Show-LogContent'
-    'Get-LogStatistics'
+    'Get-LogStatistic'
     'Show-LogDashboard'
     'Search-Logs'
-    'Clear-OldLogs'
+    'Clear-OldLog'
     'Get-LoggingStatus'
 )

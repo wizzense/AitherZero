@@ -371,7 +371,7 @@ try {
 
     # Save results
     if ($PSCmdlet.ShouldProcess($OutputPath, "Save security analysis results")) {
-        $outputFile = Save-AnalysisResults -AnalysisType "SecurityIssues" -Results $results -OutputPath $OutputPath
+        $outputFile = Save-AnalysisResult -AnalysisType "SecurityIssues" -Results $results -OutputPath $OutputPath
     }
 
     # Display summary

@@ -57,11 +57,11 @@ Write-Host "Example 2: Batch Test Generation" -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
 
 Write-Host "`nTo generate tests for all scripts in a range, run:" -ForegroundColor White
-Write-Host '  New-AllAutomationTests -Filter "02*" -IncludeMocks' -ForegroundColor Green
+Write-Host '  New-AutomationTest -Filter "02*" -IncludeMocks' -ForegroundColor Green
 Write-Host "`nThis would generate tests for all 0200-0299 scripts`n" -ForegroundColor DarkGray
 
 Write-Host "To generate tests for ALL automation scripts:" -ForegroundColor White
-Write-Host '  New-AllAutomationTests -IncludeMocks -Force' -ForegroundColor Green
+Write-Host '  New-AutomationTest -IncludeMocks -Force' -ForegroundColor Green
 Write-Host "`n(Use -Force to overwrite existing tests)`n" -ForegroundColor DarkGray
 
 # Example 3: Run the generated test
@@ -120,7 +120,7 @@ New-AutomationScriptTest -ScriptPath "./automation-scripts/0402_Run-UnitTests.ps
 Get-ChildItem ./automation-scripts -Filter "04*.ps1" | New-AutomationScriptTest -IncludeMocks
 
 # Generate all tests with overwrite
-New-AllAutomationTests -Force -IncludeMocks
+New-AutomationTest -Force -IncludeMocks
 
 '@ -ForegroundColor Green
 
@@ -134,7 +134,7 @@ Add to your CI/CD pipeline:
 
   # Generate missing tests
   Import-Module ./domains/testing/TestGenerator.psm1
-  New-AllAutomationTests
+  New-AutomationTest
 
   # Run all generated tests
   Invoke-Pester -Path "./library/tests/unit/automation-scripts" -OutputFile TestResults.xml
