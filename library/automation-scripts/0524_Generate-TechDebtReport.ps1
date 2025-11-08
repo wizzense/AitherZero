@@ -772,7 +772,7 @@ try {
 
     # Merge all analysis results
     Write-AnalysisLog "Merging analysis results..." -Component "TechDebtReport"
-    $mergedResults = Merge-AnalysisResults -AnalysisTypes $AnalysisTypes -ResultsPath $AnalysisPath
+    $mergedResults = Merge-AnalysisResult -AnalysisTypes $AnalysisTypes -ResultsPath $AnalysisPath
 
     # Generate summary
     Write-AnalysisLog "Generating summary..." -Component "TechDebtReport"

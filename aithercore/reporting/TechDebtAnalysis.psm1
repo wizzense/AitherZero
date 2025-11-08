@@ -111,7 +111,7 @@ function Test-CacheValid {
     return $true
 }
 
-function Get-CachedResults {
+function Get-CachedResult {
     <#
     .SYNOPSIS
         Retrieve cached analysis results
@@ -132,7 +132,7 @@ function Get-CachedResults {
     return $null
 }
 
-function Set-CachedResults {
+function Set-CachedResult {
     <#
     .SYNOPSIS
         Store analysis results in cache
@@ -191,7 +191,7 @@ function Write-AnalysisLog {
     }
 }
 
-function Save-AnalysisResults {
+function Save-AnalysisResult {
     <#
     .SYNOPSIS
         Save analysis results to file
@@ -227,7 +227,7 @@ function Save-AnalysisResults {
     return $filepath
 }
 
-function Get-AnalysisResults {
+function Get-AnalysisResult {
     <#
     .SYNOPSIS
         Load analysis results from file
@@ -266,7 +266,7 @@ function Get-AnalysisResults {
     return $data.Results
 }
 
-function Merge-AnalysisResults {
+function Merge-AnalysisResult {
     <#
     .SYNOPSIS
         Merge results from multiple analysis types
@@ -283,7 +283,7 @@ function Merge-AnalysisResults {
     }
 
     foreach ($type in $AnalysisTypes) {
-        $results = Get-AnalysisResults -AnalysisType $type -ResultsPath $ResultsPath -Latest
+        $results = Get-AnalysisResult -AnalysisType $type -ResultsPath $ResultsPath -Latest
         if ($results) {
             $mergedResults.Analyses[$type] = $results
         } else {
@@ -383,12 +383,12 @@ Export-ModuleMember -Function @(
     'Initialize-TechDebtAnalysis'
     'Get-FileHash'
     'Test-CacheValid'
-    'Get-CachedResults'
-    'Set-CachedResults'
+    'Get-CachedResult'
+    'Set-CachedResult'
     'Write-AnalysisLog'
-    'Save-AnalysisResults'
-    'Get-AnalysisResults'
-    'Merge-AnalysisResults'
+    'Save-AnalysisResult'
+    'Get-AnalysisResult'
+    'Merge-AnalysisResult'
     'Get-FilesToAnalyze'
     'Start-ParallelAnalysis'
 )

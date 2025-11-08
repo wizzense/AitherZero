@@ -1174,7 +1174,7 @@ function Show-AitherDashboard {
     }
 }
 
-function Get-AitherMetrics {
+function Get-AitherMetric {
     <#
     .SYNOPSIS
         Get execution metrics
@@ -1189,12 +1189,12 @@ function Get-AitherMetrics {
         Output format (Object, JSON, CSV)
     
     .EXAMPLE
-        Get-AitherMetrics
+        Get-AitherMetric
         
         Get metrics for all time
     
     .EXAMPLE
-        Get-AitherMetrics -Period Week -Format JSON
+        Get-AitherMetric -Period Week -Format JSON
         
         Get last week's metrics as JSON
     #>
@@ -1210,8 +1210,8 @@ function Get-AitherMetrics {
         [string]$Format = 'Object'
     )
     
-    if (Get-Command Get-ExecutionMetrics -ErrorAction SilentlyContinue) {
-        $metrics = Get-ExecutionMetrics -Period $Period
+    if (Get-Command Get-ExecutionMetric -ErrorAction SilentlyContinue) {
+        $metrics = Get-ExecutionMetric -Period $Period
         
         switch ($Format) {
             'JSON' { return $metrics | ConvertTo-Json -Depth 5 }
@@ -1225,7 +1225,7 @@ function Get-AitherMetrics {
     }
 }
 
-function Export-AitherMetrics {
+function Export-AitherMetric {
     <#
     .SYNOPSIS
         Export metrics to file
@@ -1240,7 +1240,7 @@ function Export-AitherMetrics {
         Export format (JSON, CSV, HTML, Markdown)
     
     .EXAMPLE
-        Export-AitherMetrics -Path ./metrics.json -Format JSON
+        Export-AitherMetric -Path ./metrics.json -Format JSON
         
         Export metrics to JSON file
     #>
@@ -1466,8 +1466,8 @@ Export-ModuleMember -Function @(
     
     # Reporting & Metrics
     'Show-AitherDashboard',
-    'Get-AitherMetrics',
-    'Export-AitherMetrics',
+    'Get-AitherMetric',
+    'Export-AitherMetric',
     
     # Utilities
     'Get-AitherPlatform',

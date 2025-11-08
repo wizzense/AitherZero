@@ -192,7 +192,7 @@ function Get-RecentErrors {
     .SYNOPSIS
         Gets recent errors and warnings from logs
     #>
-    $logFiles = Get-LogFiles -Type Application -ErrorAction SilentlyContinue
+    $logFiles = Get-LogFile -Type Application -ErrorAction SilentlyContinue
     if (-not $logFiles) {
         return @()
     }
@@ -402,10 +402,10 @@ function Get-ComprehensiveHealth {
     }
     
     # Get log statistics
-    $logFiles = Get-LogFiles -Type Application -ErrorAction SilentlyContinue
+    $logFiles = Get-LogFile -Type Application -ErrorAction SilentlyContinue
     if ($logFiles) {
         $latest = $logFiles[0]
-        $health.LogStats = Get-LogStatistics -Path $latest.FullName -ErrorAction SilentlyContinue
+        $health.LogStats = Get-LogStatistic -Path $latest.FullName -ErrorAction SilentlyContinue
     }
     
     # Determine overall status based on all checks
@@ -1045,10 +1045,10 @@ function Show-HealthDashboard {
     Write-Host "`n📋 Log Statistics" -ForegroundColor White
     Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor DarkGray
     
-    $logFiles = Get-LogFiles -Type Application -ErrorAction SilentlyContinue
+    $logFiles = Get-LogFile -Type Application -ErrorAction SilentlyContinue
     if ($logFiles) {
         $latest = $logFiles[0]
-        $stats = Get-LogStatistics -Path $latest.FullName -ErrorAction SilentlyContinue
+        $stats = Get-LogStatistic -Path $latest.FullName -ErrorAction SilentlyContinue
         
         if ($stats) {
             Write-Host "  Current Log: $($stats.FileName)" -ForegroundColor Gray

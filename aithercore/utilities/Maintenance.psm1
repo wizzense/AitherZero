@@ -98,20 +98,20 @@ function Reset-AitherEnvironment {
         switch ($Level) {
             'Soft' {
                 Clear-AitherCache
-                Clear-TestResults -KeepLatest 3
+                Clear-TestResult -KeepLatest 3
             }
             'Standard' {
                 Clear-AitherCache
-                Clear-TestResults
-                Clear-TemporaryFiles
-                Clear-LogFiles -KeepDays 7
+                Clear-TestResult
+                Clear-TemporaryFile
+                Clear-LogFile -KeepDays 7
             }
             'Hard' {
                 Clear-AitherCache
-                Clear-TestResults
-                Clear-TemporaryFiles
-                Clear-LogFiles
-                Clear-ReportFiles -KeepLatest 5
+                Clear-TestResult
+                Clear-TemporaryFile
+                Clear-LogFile
+                Clear-ReportFile -KeepLatest 5
                 Reset-Configuration -CreateBackup
             }
             'Nuclear' {
@@ -172,7 +172,7 @@ function Clear-AitherCache {
     Write-MaintenanceLog "Cache cleanup completed"
 }
 
-function Clear-TestResults {
+function Clear-TestResult {
     <#
     .SYNOPSIS
         Clear test result files
@@ -216,7 +216,7 @@ function Clear-TestResults {
     Write-MaintenanceLog "Test results cleanup completed. Removed: $($filesToDelete.Count), Kept: $($files.Count - $filesToDelete.Count)"
 }
 
-function Clear-TemporaryFiles {
+function Clear-TemporaryFile {
     <#
     .SYNOPSIS
         Clear temporary files and directories
@@ -250,7 +250,7 @@ function Clear-TemporaryFiles {
     Write-MaintenanceLog "Temporary files cleanup completed"
 }
 
-function Clear-LogFiles {
+function Clear-LogFile {
     <#
     .SYNOPSIS
         Clear log files with retention policy
@@ -295,7 +295,7 @@ function Clear-LogFiles {
     Write-MaintenanceLog "Log files cleanup completed. Removed: $($filesToDelete.Count), Kept: $($logFiles.Count - $filesToDelete.Count)"
 }
 
-function Clear-ReportFiles {
+function Clear-ReportFile {
     <#
     .SYNOPSIS
         Clear report files with retention
@@ -564,10 +564,10 @@ function Get-MaintenanceStatus {
 Export-ModuleMember -Function @(
     'Reset-AitherEnvironment',
     'Clear-AitherCache',
-    'Clear-TestResults',
-    'Clear-TemporaryFiles',
-    'Clear-LogFiles',
-    'Clear-ReportFiles',
+    'Clear-TestResult',
+    'Clear-TemporaryFile',
+    'Clear-LogFile',
+    'Clear-ReportFile',
     'Clear-AllAitherData',
     'Backup-AitherEnvironment',
     'Reset-Configuration',

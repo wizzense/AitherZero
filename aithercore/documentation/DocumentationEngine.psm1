@@ -600,7 +600,7 @@ function Get-ModuleAnalysis {
         Description = $moduleHelp.Description
         Path = $ModulePath
         Functions = $functionInfo
-        Dependencies = Get-ModuleDependencies -Content $content
+        Dependencies = Get-ModuleDependency -Content $content
         VersionHistory = Get-ModuleVersionHistory -ModulePath $ModulePath
     }
 }
@@ -724,7 +724,7 @@ function Get-ModuleHelp {
     }
 }
 
-function Get-ModuleDependencies {
+function Get-ModuleDependency {
     param([string]$Content)
     
     $dependencies = @()

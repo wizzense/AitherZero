@@ -74,7 +74,7 @@ try {
                 Write-Host "─────────────────────────────────────────────────" -ForegroundColor DarkGray
 
                 # Show log files
-                $logFiles = Get-LogFiles -Type All
+                $logFiles = Get-LogFile -Type All
                 Write-Host "`nAvailable Log Files:" -ForegroundColor White
                 foreach ($file in $logFiles | Select-Object -First 5) {
                     $icon = if ($file.Type -eq 'Application') { '📋' } else { '📜' }
@@ -84,7 +84,7 @@ try {
                 # Show statistics
                 $appLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
                 if ($appLog) {
-                    $stats = Get-LogStatistics -Path $appLog.FullName
+                    $stats = Get-LogStatistic -Path $appLog.FullName
                     if ($stats) {
                         Write-Host "`nLog Statistics:" -ForegroundColor White
                         Write-Host "  Total Lines: $($stats.TotalLines)" -ForegroundColor Gray
@@ -105,7 +105,7 @@ try {
 
         'Latest' {
             Write-Host "`n📋 Showing Latest Log Entries..." -ForegroundColor Cyan
-            $logFiles = Get-LogFiles -Type Application
+            $logFiles = Get-LogFile -Type Application
             if ($logFiles) {
                 $latest = $logFiles[0]
                 Write-Host "File: $($latest.Name)" -ForegroundColor DarkGray
@@ -133,7 +133,7 @@ try {
 
         'Errors' {
             Write-Host "`n❌ Showing Error Log Entries..." -ForegroundColor Red
-            $logFiles = Get-LogFiles -Type Application
+            $logFiles = Get-LogFile -Type Application
             if ($logFiles) {
                 $latest = $logFiles[0]
                 Write-Host "File: $($latest.Name)" -ForegroundColor DarkGray
@@ -151,7 +151,7 @@ try {
 
         'Transcript' {
             Write-Host "`n📜 Showing PowerShell Transcript..." -ForegroundColor Cyan
-            $transcripts = Get-LogFiles -Type Transcript
+            $transcripts = Get-LogFile -Type Transcript
             if ($transcripts) {
                 $latest = $transcripts[0]
                 Write-Host "File: $($latest.Name)" -ForegroundColor DarkGray
@@ -175,7 +175,7 @@ try {
             }
 
             Write-Host "`n🔍 Searching for: '$SearchPattern'" -ForegroundColor Cyan
-            Search-Logs -Pattern $SearchPattern -Type All
+            Search-Log -Pattern $SearchPattern -Type All
         }
 
         'Status' {
@@ -212,7 +212,7 @@ try {
 
             # Show log files summary
             Write-Host "`nLog Files:" -ForegroundColor White
-            $allLogs = Get-LogFiles -Type All
+            $allLogs = Get-LogFile -Type All
             $appLogs = $allLogs | Where-Object { $_.Type -eq 'Application' }
             $transcripts = $allLogs | Where-Object { $_.Type -eq 'Transcript' }
 
