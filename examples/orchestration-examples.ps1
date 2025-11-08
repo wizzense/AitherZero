@@ -109,7 +109,7 @@ seq 01*,!0100 -DryRun
 
 # Show available playbooks
 Write-Host "`n=== Available Playbooks ===" -ForegroundColor Cyan
-Get-ChildItem ../orchestration/playbooks/*.json | ForEach-Object {
+Get-ChildItem ../domains/orchestration/playbooks/*.json | ForEach-Object {
     $playbook = Get-Content $_.FullName | ConvertFrom-Json
     Write-Host "- $($playbook.Name): $($playbook.Description)" -ForegroundColor Green
 }

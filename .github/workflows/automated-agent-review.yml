@@ -187,7 +187,7 @@ jobs:
             }
             
             # PowerShell (applies to most .ps1/.psm1 files)
-            if ($file -match '\.(ps1|psm1|psd1)$|orchestration/|automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])') {
+            if ($file -match '\.(ps1|psm1|psd1)$|domains/orchestration/|automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])') {
               $agentScores.rachel += 2
               $categoryFiles.PowerShell += $file
             }

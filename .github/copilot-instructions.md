@@ -88,7 +88,7 @@ automation-scripts/
 ├── 0404_Run-PSScriptAnalyzer.ps1          # Analysis (with -Fast parameter)
 └── 0415_Manage-PSScriptAnalyzerCache.ps1  # Cache management (different purpose)
 
-orchestration/playbooks/
+domains/orchestration/playbooks/
 └── code-quality-full.psd1    ✅ Orchestrates complex workflows
 ```
 
@@ -124,7 +124,7 @@ orchestration/playbooks/
 0416_Generate-AnalysisReport.ps1       # Report generation
 
 # Complex workflow = playbook:
-orchestration/playbooks/code-quality-full.psd1
+domains/orchestration/playbooks/code-quality-full.psd1
 ```
 
 ### ⚠️ HARD REQUIREMENT: Use ScriptUtilities Module for Common Code
@@ -492,14 +492,16 @@ if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
 │   ├── results/                # Test output (XML, JSON)
 │   ├── analysis/               # PSScriptAnalyzer results (CSV, JSON)
 │   └── coverage/               # Code coverage reports
-├── orchestration/              # Playbooks and sequences
-│   ├── playbooks/              # Predefined execution sequences
-│   └── sequences/              # Script execution groups
+├── domains/                     # 11+ functional domains
+│   ├── orchestration/          # Playbooks and sequences
+│   │   ├── playbooks/          # Predefined execution sequences
+│   │   └── schema/             # Playbook schema definitions
 ├── docs/                        # Documentation
 ├── reports/                     # Generated reports
 ├── logs/                        # Transcript and execution logs
 ├── infrastructure/             # OpenTofu/Terraform configs
-├── mcp-server/                 # MCP server (Node.js) - AI integration
+├── integrations/               # External integrations
+│   └── mcp-server/             # MCP server (Node.js) - AI integration
 └── tools/                      # Utility scripts
 ```
 

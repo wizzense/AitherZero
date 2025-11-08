@@ -298,7 +298,7 @@ If querying databases:
 
 ## Getting Help
 
-- Review AitherZero's MCP server: `/mcp-server/src/index.ts`
+- Review AitherZero's MCP server: `/integrations/mcp-server/src/index.ts`
 - Check MCP SDK docs: https://github.com/modelcontextprotocol/sdk
 - Read MCP spec: https://modelcontextprotocol.io/
 - Ask in discussions: https://github.com/wizzense/AitherZero/discussions

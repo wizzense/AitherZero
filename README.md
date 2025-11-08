@@ -286,7 +286,7 @@ AitherZero provides **134 automation scripts** organized as building blocks that
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile web-development
 
 # Create custom playbook from template
-cp orchestration/playbooks/templates/custom-playbook-template.json orchestration/playbooks/custom/my-playbook.json
+cp domains/orchestration/playbooks/templates/custom-playbook-template.json domains/orchestration/playbooks/custom/my-playbook.json
 
 # Execute custom playbook
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook my-playbook
@@ -337,7 +337,7 @@ cp orchestration/playbooks/templates/custom-playbook-template.json orchestration
 - **[Quick Reference](docs/BUILDING-BLOCKS-QUICK-REFERENCE.md)** - Script lookup and common patterns (5 min read)
 - **[Complete Guide](docs/BUILDING-BLOCKS.md)** - Full documentation with all blocks (15 min read)
 - **[Reorganization Plan](docs/BUILDING-BLOCKS-REORGANIZATION.md)** - Architecture decisions (10 min read)
-- **[Custom Playbook Guide](orchestration/playbooks/custom/README.md)** - Create your own playbooks (10 min read)
+- **[Custom Playbook Guide](domains/orchestration/playbooks/custom/README.md)** - Create your own playbooks (10 min read)
 
 ## Core Modules
 

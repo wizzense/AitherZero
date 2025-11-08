@@ -119,7 +119,7 @@ $startTime = Get-Date
 try {
     # Load configuration and run playbook
     $config = Get-Configuration
-    $playbookPath = Join-Path $ProjectRoot "orchestration/playbooks/$selectedPlaybook.psd1"
+    $playbookPath = Join-Path $ProjectRoot "domains/orchestration/playbooks/$selectedPlaybook.psd1"
     
     if (-not (Test-Path $playbookPath)) {
         throw "Playbook not found: $playbookPath"

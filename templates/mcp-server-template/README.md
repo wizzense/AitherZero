@@ -221,7 +221,7 @@ These lessons come from building the AitherZero MCP server:
 
 - **MCP Specification**: https://modelcontextprotocol.io/
 - **MCP SDK Documentation**: https://github.com/modelcontextprotocol/sdk
-- **AitherZero MCP Server**: `/mcp-server/` (reference implementation)
+- **AitherZero MCP Server**: `/integrations/mcp-server/` (reference implementation)
 - **TypeScript Handbook**: https://www.typescriptlang.org/docs/
 
 ## License
