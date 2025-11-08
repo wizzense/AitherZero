@@ -249,7 +249,7 @@ Start-AitherZero -Mode Orchestrate -Playbook pr-validation-full
 
 ### Issue: Playbook not found
 ```
-Error: Playbook not found: ./orchestration/playbooks/pr-validation-full.psd1
+Error: Playbook not found: ./domains/orchestration/playbooks/pr-validation-full.psd1
 ```
 
 **Solution**: Ensure you're in the project root directory:
@@ -361,6 +361,6 @@ The Local Validation System provides complete CI/CD parity for validation checks
 ## See Also
 
 - **Orchestration Engine Documentation**: `docs/ORCHESTRATION-ARCHITECTURE.md`
-- **Playbook Format**: `orchestration/playbooks/README.md`
+- **Playbook Format**: `domains/orchestration/playbooks/README.md`
 - **GitHub Actions Parity**: `docs/ORCHESTRATION-ENHANCEMENTS-SUMMARY.md`
 - **Testing Guide**: `docs/INTEGRATION-TESTING-GUIDE.md`
