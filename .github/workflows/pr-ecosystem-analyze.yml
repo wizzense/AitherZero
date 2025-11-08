@@ -1,0 +1,70 @@
+---
+name: 🔍 PR Ecosystem (Analyze)
+
+# Simple workflow - just invokes orchestration playbook
+# All logic is in aithercore/orchestration/playbooks/pr-ecosystem-analyze.psd1
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number'
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: pr-analyze-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
+  GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+jobs:
+  analyze:
+    name: 🔍 Analysis Phase
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff analysis
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 📦 Install Analysis Tools
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester, PSScriptAnalyzer -Force -SkipPublisherCheck
+
+      - name: 🔍 Run Analysis Playbook
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-AitherPlaybook -Name pr-ecosystem-analyze -ContinueOnError
+
+      - name: 📊 Upload Analysis Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-analysis
+          path: |
+            library/reports/analysis-*.json
+            library/reports/analysis-*.md
+            library/reports/diff-*.json
+            library/reports/quality-*.json
+            library/reports/security-*.json
+            library/tests/results/**
+            library/tests/coverage/**
+          retention-days: 30

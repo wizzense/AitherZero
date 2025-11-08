@@ -1,0 +1,78 @@
+---
+name: 🚀 PR Ecosystem (Build)
+
+# Simple workflow - just invokes orchestration playbook
+# All logic is in aithercore/orchestration/playbooks/pr-ecosystem-build.psd1
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number'
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+concurrency:
+  group: pr-build-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
+  GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+jobs:
+  build:
+    name: 🔨 Build Phase
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🚀 Run Build Playbook
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-AitherPlaybook -Name pr-ecosystem-build -ThrowOnError
+
+      - name: 📦 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-build
+          path: |
+            library/reports/build-*.json
+            library/reports/build-*.md
+            AitherZero-*.zip
+            AitherZero-*.tar.gz
+          retention-days: 30
+
+      - name: 🐳 Build Container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-${{ github.sha }}
+            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🐳 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
