@@ -209,6 +209,36 @@ jobs:
           Import-Module ./AitherZero.psd1 -Force
           Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
 
+      - name: 📁 Organize Reports for GitHub Pages
+        shell: pwsh
+        run: |
+          $prDir = "./library/reports/pr-$env:PR_NUMBER"
+          Write-Host "Creating PR-specific directory: $prDir" -ForegroundColor Cyan
+          
+          # Create PR directory
+          New-Item -ItemType Directory -Path $prDir -Force | Out-Null
+          
+          # Copy all generated reports to PR directory
+          $reportFiles = @(
+            "library/reports/*.html",
+            "library/reports/*.md", 
+            "library/reports/*.json",
+            "library/reports/CHANGELOG-*.md"
+          )
+          
+          foreach ($pattern in $reportFiles) {
+            $files = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue
+            if ($files) {
+              Write-Host "Copying $($files.Count) files matching $pattern" -ForegroundColor Gray
+              $files | Copy-Item -Destination $prDir -Force
+            }
+          }
+          
+          # Verify files were copied
+          $copiedFiles = Get-ChildItem -Path $prDir -Recurse -File
+          Write-Host "✓ Organized $($copiedFiles.Count) files for GitHub Pages deployment" -ForegroundColor Green
+          $copiedFiles | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Gray }
+
       - name: 🌐 Deploy to GitHub Pages
         if: hashFiles('./library/reports/pr-${{ env.PR_NUMBER }}/**') != ''
         uses: peaceiris/actions-gh-pages@v3
