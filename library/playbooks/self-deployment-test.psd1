@@ -84,15 +84,11 @@
         SummaryPath = "library/reports/self-deployment-summary.json"
     }
     
-    # Success criteria - flexible for validation
+    # Success criteria - strict validation for self-deployment
     SuccessCriteria = @{
-        RequireAllSuccess = $false
-        MinimumSuccessCount = 3  # At least validation + testing + quality must pass
-        AllowedFailures = @(
-            "0402_Run-UnitTests.ps1",  # Tests may have known failures
-            "0404_Run-PSScriptAnalyzer.ps1",  # Code quality warnings acceptable
-            "0512_Generate-Dashboard.ps1"  # Report generation is nice-to-have
-        )
+        RequireAllSuccess = $true   # Require 100% success - all steps must pass
+        MinimumSuccessCount = 5     # All 5 scripts must succeed
+        AllowedFailures = @()       # No failures allowed
     }
     
     # Required artifacts
