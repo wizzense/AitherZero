@@ -20,7 +20,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "tests/integration"),
+    [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "library/tests/integration"),
     [string]$OutputPath,
     [switch]$DryRun,
     [switch]$PassThru,
@@ -317,7 +317,7 @@ try {
 
     # Output configuration
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "tests/results"
+        $OutputPath = Join-Path $projectRoot "library/library/tests/results"
     }
 
     if (-not (Test-Path $OutputPath)) {
@@ -552,7 +552,7 @@ catch {
     $scriptProjectRoot = Split-Path $PSScriptRoot -Parent
     
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $scriptProjectRoot "tests/results"
+        $OutputPath = Join-Path $scriptProjectRoot "library/library/tests/results"
     }
     
     if (-not (Test-Path $OutputPath)) {

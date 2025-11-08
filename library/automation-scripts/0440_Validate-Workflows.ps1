@@ -41,7 +41,7 @@ param(
     [ValidateSet('Console', 'JSON', 'HTML', 'Markdown')]
     [string]$OutputFormat = 'Console',
 
-    [string]$OutputPath = "./tests/results",
+    [string]$OutputPath = "./library/tests/results",
 
     [switch]$CI,
 

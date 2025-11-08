@@ -142,7 +142,7 @@ try {
 
     # Output configuration
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "tests/results"
+        $OutputPath = Join-Path $projectRoot "library/library/tests/results"
     }
 
     if (-not (Test-Path $OutputPath)) {

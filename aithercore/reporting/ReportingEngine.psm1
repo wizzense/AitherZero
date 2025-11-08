@@ -889,7 +889,7 @@ function Get-LatestTestResults {
     [CmdletBinding()]
     param()
 
-    $resultsPath = Join-Path $script:ProjectRoot "tests/results"
+    $resultsPath = Join-Path $script:ProjectRoot "library/tests/results"
     if (-not (Test-Path $resultsPath)) {
         return $null
     }
@@ -913,7 +913,7 @@ function Get-LatestCoverageData {
     [CmdletBinding()]
     param()
 
-    $coveragePath = Join-Path $script:ProjectRoot "tests/coverage"
+    $coveragePath = Join-Path $script:ProjectRoot "library/tests/coverage"
     if (-not (Test-Path $coveragePath)) {
         return $null
     }
@@ -937,7 +937,7 @@ function Get-LatestAnalysisResults {
     [CmdletBinding()]
     param()
 
-    $analysisPath = Join-Path $script:ProjectRoot "tests/analysis"
+    $analysisPath = Join-Path $script:ProjectRoot "library/tests/analysis"
     if (-not (Test-Path $analysisPath)) {
         return $null
     }
@@ -971,7 +971,7 @@ function Show-TestTrends {
     Write-Host ("=" * 40) -ForegroundColor Cyan
 
     # This is a simplified version - real implementation would aggregate historical data
-    $resultsPath = Join-Path $script:ProjectRoot "tests/results"
+    $resultsPath = Join-Path $script:ProjectRoot "library/tests/results"
     $cutoffDate = (Get-Date).AddDays(-$Days)
 
     $summaryFiles = Get-ChildItem -Path $resultsPath -Filter "*-Summary.json" -ErrorAction SilentlyContinue |

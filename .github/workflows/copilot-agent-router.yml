@@ -96,7 +96,7 @@ jobs:
                 $_ -match '(security|certificate|credential|secret).*\.ps1'
               })
               testing = @($changedFiles | Where-Object {
-                $_ -match 'tests/' -or
+                $_ -match 'library/tests/' -or
                 $_ -match '\.Tests\.ps1$' -or
                 $_ -match 'library/automation-scripts/04[0-9][0-9]'
               })

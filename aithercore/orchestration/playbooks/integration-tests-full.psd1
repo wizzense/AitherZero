@@ -59,7 +59,7 @@
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
         ReportsPath = "./reports"
-        TestResultsPath = "./tests/results"
+        TestResultsPath = "./library/tests/results"
         CoverageThreshold = 70
     }
     

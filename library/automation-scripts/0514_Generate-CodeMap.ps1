@@ -82,7 +82,7 @@ function Get-AllPowerShellFiles {
     
     foreach ($script in $scripts) {
         $relativePath = $script.FullName.Replace($Path, '').TrimStart('\', '/')
-        $isTest = $relativePath -match 'tests/'
+        $isTest = $relativePath -match 'library/tests/'
         
         if ($isTest) {
             $files.Tests += @{

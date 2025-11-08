@@ -131,7 +131,7 @@ try {
                                     Import-Module $testCacheModule -Force
 
                                     # Find most recent test summary
-                                    $resultsPath = "$env:CLAUDE_PROJECT_DIR/tests/results"
+                                    $resultsPath = "$env:CLAUDE_PROJECT_DIR/library/tests/results"
                                     if (Test-Path $resultsPath) {
                                         $latestSummary = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
                                             Sort-Object LastWriteTime -Descending |
@@ -280,7 +280,7 @@ try {
                         Remove-Item -Force -ErrorAction SilentlyContinue
 
                     # Clean up test results
-                    Get-ChildItem "./tests/results" -ErrorAction SilentlyContinue |
+                    Get-ChildItem "./library/tests/results" -ErrorAction SilentlyContinue |
                         Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-3) } |
                         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 

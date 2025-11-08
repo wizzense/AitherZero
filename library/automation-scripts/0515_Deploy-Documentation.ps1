@@ -374,7 +374,7 @@ function Copy-ExistingReports {
     # Copy reports from various locations
     $reportSources = @(
         @{ Source = Join-Path $ProjectPath "library/reports"; Destination = Join-Path $OutputPath "reports/latest" }
-        @{ Source = Join-Path $ProjectPath "tests/reports"; Destination = Join-Path $OutputPath "reports/latest" }
+        @{ Source = Join-Path $ProjectPath "library/library/tests/reports"; Destination = Join-Path $OutputPath "reports/latest" }
         @{ Source = Join-Path $ProjectPath "docs"; Destination = Join-Path $OutputPath "docs" }
     )
 

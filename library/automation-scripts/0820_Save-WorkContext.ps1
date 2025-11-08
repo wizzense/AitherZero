@@ -144,7 +144,7 @@ function Get-TestContext {
     }
 
     # Check for recent test results
-    $testResultsPath = "./tests/results"
+    $testResultsPath = "./library/tests/results"
     if (Test-Path $testResultsPath) {
         $latestResults = Get-ChildItem $testResultsPath -Filter "*.json" |
             Sort-Object LastWriteTime -Descending |
@@ -162,7 +162,7 @@ function Get-TestContext {
     }
 
     # Check for PSScriptAnalyzer results
-    $analyzerPath = "./tests/results/psscriptanalyzer-results.json"
+    $analyzerPath = "./library/tests/results/psscriptanalyzer-results.json"
     if (Test-Path $analyzerPath) {
         try {
             $analyzerData = Get-Content $analyzerPath | ConvertFrom-Json

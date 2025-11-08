@@ -464,7 +464,7 @@ function New-IssueBody {
             $body += "@copilot **URGENT**: These test failures indicate broken functionality:"
             $body += ""
             $body += "1. **🔍 INVESTIGATE** each failing test immediately"
-            $body += "2. **🏃 RUN LOCALLY**: ``Invoke-Pester -Path ./tests/unit -Output Detailed``"  
+            $body += "2. **🏃 RUN LOCALLY**: ``Invoke-Pester -Path ./library/tests/unit -Output Detailed``"  
             $body += "3. **🔧 FIX ROOT CAUSE** - don't just update tests"
             $body += "4. **✅ VERIFY ALL PASS**: ``./automation-scripts/0402_Run-UnitTests.ps1``"
             $body += "5. **📝 DOCUMENT** what was broken and how it was fixed"
@@ -472,7 +472,7 @@ function New-IssueBody {
             $body += "### 🎯 Testing Commands"
             $body += '```powershell'
             $body += "# Run all unit tests"
-            $body += "Invoke-Pester -Path ./tests/unit -Output Detailed"
+            $body += "Invoke-Pester -Path ./library/tests/unit -Output Detailed"
             $body += ""
             $body += "# Run specific failed tests"
             foreach ($test in ($Finding.Details | Select-Object -First 3)) {
