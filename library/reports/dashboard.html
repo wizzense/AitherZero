@@ -1,0 +1,3499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AitherZero - Project Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --bg-dark: #0d1117;
+            --bg-darker: #010409;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --success: #238636;
+            --warning: #d29922;
+            --error: #da3633;
+            --info: #1f6feb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            margin-left: 290px;
+        }
+        
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+                padding: 10px;
+            }
+        }
+
+        /* Navigation TOC */
+        .toc {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 250px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .toc-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 101;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .toc h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 10px;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .toc a:hover {
+            color: var(--primary-color);
+        }
+
+        .toc a.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .badges-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .badges-container img {
+            height: 20px;
+            transition: transform 0.2s;
+        }
+
+        .badges-container img:hover {
+            transform: scale(1.05);
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .status-badge {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+
+        .status-healthy { 
+            background: linear-gradient(135deg, rgba(35, 134, 54, 0.3), rgba(35, 134, 54, 0.1)); 
+            border-color: var(--success);
+        }
+        .status-issues { 
+            background: linear-gradient(135deg, rgba(218, 54, 51, 0.3), rgba(218, 54, 51, 0.1)); 
+            border-color: var(--error);
+        }
+        .status-warning { 
+            background: linear-gradient(135deg, rgba(210, 153, 34, 0.3), rgba(210, 153, 34, 0.1)); 
+            border-color: var(--warning);
+        }
+        .status-unknown { 
+            background: linear-gradient(135deg, rgba(139, 148, 158, 0.3), rgba(139, 148, 158, 0.1)); 
+            border-color: var(--text-secondary);
+        }
+
+        .content {
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            scroll-margin-top: 20px;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(22, 27, 34, 0.5) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .metric-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .info-card-header {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px 20px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-primary);
+        }
+
+        .info-card-body {
+            padding: 20px;
+        }
+
+        .info-card-body p {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .info-card-body strong {
+            color: var(--text-primary);
+        }
+
+        .info-card-body a {
+            color: var(--info);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .info-card-body a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .info-card-body code {
+            background: var(--bg-darker);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--primary-color);
+        }
+
+        .commit-list {
+            list-style: none;
+        }
+
+        .commit-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .commit-item:last-child {
+            border-bottom: none;
+        }
+
+        .commit-hash {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            background: var(--bg-darker);
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 12px;
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+
+        .commit-message {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .progress-bar {
+            background: var(--bg-darker);
+            border-radius: 10px;
+            height: 24px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid var(--card-border);
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-grid {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: var(--success);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .badge.warning { 
+            background: var(--warning); 
+            color: var(--bg-darker); 
+        }
+        .badge.error { 
+            background: var(--error); 
+        }
+        .badge.info { 
+            background: var(--info); 
+        }
+
+        .manifest-info {
+            background: var(--bg-darker);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .manifest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .manifest-item {
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+        }
+
+        .manifest-item .label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .manifest-item .value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .domains-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .domain-card {
+            background: var(--bg-darker);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            transition: all 0.2s;
+        }
+
+        .domain-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .domain-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .domain-card .module-count {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--info);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--primary-color);
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--card-border);
+            z-index: 100;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                margin-left: 0;
+            }
+
+            .toc {
+                transform: translateX(-270px);
+            }
+
+            .toc.open {
+                transform: translateX(0);
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Link styling */
+        a {
+            color: var(--info);
+        }
+
+        /* Roadmap Styles */
+        .roadmap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .roadmap-priority {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .roadmap-priority:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .priority-header {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--card-border);
+            user-select: none;
+        }
+
+        .priority-header:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.1));
+        }
+
+        .priority-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .priority-header.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .priority-content {
+            padding: 20px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .progress-indicator {
+            margin-bottom: 20px;
+        }
+
+        .roadmap-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 15px 0;
+        }
+
+        .roadmap-item {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .roadmap-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .roadmap-item.completed .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .roadmap-item.in-progress .status-dot {
+            background: var(--warning);
+            box-shadow: 0 0 8px var(--warning);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .roadmap-item.pending .status-dot {
+            background: var(--text-secondary);
+            opacity: 0.3;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .timeline {
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--bg-darker);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Interactive enhancements */
+        .metric-card {
+            cursor: pointer;
+            transition: all 0.3s ease, transform 0.2s ease;
+        }
+
+        .metric-card.expanded {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(102, 126, 234, 0.05) 100%);
+        }
+
+        .metric-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--card-border);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .metric-card.expanded .metric-details {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Chart styles */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            min-height: 20px;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: translateY(-5px);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        /* Enhanced Interactive Styles */
+        /* ============================================================================
+   AitherZero Interactive Dashboard - Enhanced Styles
+   ============================================================================ */
+
+/* Base styles from original (preserved for compatibility) */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --bg-dark: #0d1117;
+    --bg-darker: #010409;
+    --card-bg: #161b22;
+    --card-border: #30363d;
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+    --success: #238636;
+    --warning: #d29922;
+    --error: #da3633;
+    --danger: #da3633;
+    --info: #1f6feb;
+    --hover-bg: #21262d;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--bg-darker);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 20px;
+    margin-left: 290px;
+}
+
+@media (max-width: 1024px) {
+    body {
+        margin-left: 0;
+        padding: 10px;
+    }
+}
+
+/* ============================================================================
+   Breadcrumb Navigation
+   ============================================================================ */
+
+#breadcrumbs {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    background: var(--bg-darker);
+    border-bottom: 1px solid var(--card-border);
+    padding: 12px 20px;
+    margin: -20px -20px 20px -20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+    background: rgba(1, 4, 9, 0.95);
+}
+
+.breadcrumb-item {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-item:hover {
+    color: var(--primary-color);
+}
+
+.breadcrumb-item.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.breadcrumb-separator {
+    color: var(--card-border);
+    user-select: none;
+}
+
+/* ============================================================================
+   Action Buttons & Controls
+   ============================================================================ */
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-color: transparent;
+    color: white;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: rgba(35, 134, 54, 0.15);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.btn-warning {
+    background: rgba(210, 153, 34, 0.15);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.btn-danger {
+    background: rgba(218, 54, 51, 0.15);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.btn-explore,
+.btn-view-file,
+.btn-release {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
+/* ============================================================================
+   Dependency Graph Visualization
+   ============================================================================ */
+
+.dependency-network {
+    background: var(--bg-dark);
+    border-radius: 12px;
+    padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.dependency-domain {
+    margin-bottom: 20px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+}
+
+.domain-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.domain-header:hover {
+    background: var(--hover-bg);
+}
+
+.domain-header h4 {
+    flex: 1;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.toggle-icon {
+    color: var(--text-secondary);
+    user-select: none;
+    font-family: monospace;
+    font-size: 0.9rem;
+    transition: transform 0.2s;
+}
+
+.domain-content {
+    padding: 0 15px 15px;
+}
+
+.dependency-item {
+    margin: 10px 0;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    border-left: 3px solid var(--info);
+}
+
+.script-name {
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: color 0.2s;
+}
+
+.script-name:hover {
+    color: var(--primary-color);
+}
+
+.deps-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-left: 8px;
+    background: var(--info);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.dependency-list {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.dep-link {
+    padding: 5px 10px;
+    margin: 3px 0;
+    background: var(--hover-bg);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.dep-link:hover {
+    background: var(--card-border);
+    color: var(--primary-color);
+    padding-left: 15px;
+}
+
+.highlight-flash {
+    animation: flashHighlight 2s ease-in-out;
+}
+
+@keyframes flashHighlight {
+    0%, 100% { background: var(--bg-dark); }
+    50% { background: var(--primary-color); box-shadow: 0 0 20px var(--primary-color); }
+}
+
+/* ============================================================================
+   Domain Explorer
+   ============================================================================ */
+
+.domain-explorer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.domain-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.domain-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+.domain-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    cursor: pointer;
+    background: var(--bg-dark);
+}
+
+.domain-card-header h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.domain-card-content {
+    padding: 20px;
+}
+
+.domain-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.stat-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Configuration Explorer
+   ============================================================================ */
+
+.config-explorer {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.config-search {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+#config-search-input {
+    flex: 1;
+    padding: 10px 15px;
+    background: var(--bg-dark);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+#config-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.config-tree {
+    max-height: 600px;
+    overflow-y: auto;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.config-node {
+    margin: 5px 0;
+}
+
+.config-item {
+    margin: 5px 0;
+}
+
+.config-key {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.config-key:hover {
+    background: var(--hover-bg);
+}
+
+.key-name {
+    font-weight: 500;
+    color: var(--info);
+}
+
+.config-value {
+    color: var(--success);
+    font-family: 'Courier New', monospace;
+    margin-left: 24px;
+}
+
+.config-array {
+    margin-left: 24px;
+}
+
+.array-item {
+    padding: 5px 10px;
+    margin: 3px 0;
+    background: var(--hover-bg);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.search-highlight {
+    background: rgba(255, 255, 0, 0.1);
+    border-left: 3px solid var(--warning);
+}
+
+/* ============================================================================
+   Quality Drill-down
+   ============================================================================ */
+
+.quality-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.quality-item {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.quality-item.success {
+    border-left: 4px solid var(--success);
+}
+
+.quality-item.warning {
+    border-left: 4px solid var(--warning);
+}
+
+.quality-item.error {
+    border-left: 4px solid var(--error);
+}
+
+.quality-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.quality-header:hover {
+    background: var(--hover-bg);
+}
+
+.file-name {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.quality-score {
+    padding: 4px 12px;
+    background: var(--bg-dark);
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.quality-details {
+    padding: 15px;
+    border-top: 1px solid var(--card-border);
+}
+
+.quality-checks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.check-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+}
+
+.check-name {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.check-value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ============================================================================
+   Release Tracker
+   ============================================================================ */
+
+.release-timeline {
+    position: relative;
+    padding-left: 40px;
+}
+
+.release-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--card-border);
+}
+
+.release-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.release-marker {
+    position: absolute;
+    left: -32px;
+    width: 30px;
+    height: 30px;
+    background: var(--card-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.release-content {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.release-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.release-header h4 {
+    flex: 1;
+    margin: 0;
+}
+
+.badge-latest {
+    padding: 2px 8px;
+    background: var(--success);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.release-date {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.release-details {
+    padding-top: 15px;
+}
+
+.release-assets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.asset-link {
+    padding: 6px 12px;
+    background: var(--bg-dark);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.asset-link:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+.release-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ============================================================================
+   Index Navigation
+   ============================================================================ */
+
+.index-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.index-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.index-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+.index-icon {
+    font-size: 2.5rem;
+}
+
+.index-label {
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ============================================================================
+   Modal System
+   ============================================================================ */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    max-width: 800px;
+    max-height: 80vh;
+    width: 90%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid var(--card-border);
+    background: var(--bg-dark);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ============================================================================
+   Responsive Design
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .domain-explorer-grid,
+    .quality-checks,
+    .domain-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-container {
+        max-width: 95%;
+        max-height: 90vh;
+    }
+    
+    .release-timeline {
+        padding-left: 30px;
+    }
+    
+    .release-marker {
+        left: -27px;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+    }
+}
+
+/* ============================================================================
+   Badge Variants
+   ============================================================================ */
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge.success {
+    background: rgba(35, 134, 54, 0.15);
+    color: var(--success);
+}
+
+.badge.warning {
+    background: rgba(210, 153, 34, 0.15);
+    color: var(--warning);
+}
+
+.badge.error {
+    background: rgba(218, 54, 51, 0.15);
+    color: var(--error);
+}
+
+.badge.info {
+    background: rgba(31, 111, 235, 0.15);
+    color: var(--info);
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+.text-center {
+    text-align: center;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* ============================================================================
+   Scrollbar Styling
+   ============================================================================ */
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+    </style>
+</head>
+<body>
+    <!-- Breadcrumb Navigation -->
+    <div id="breadcrumbs"></div>
+    
+    <div class="toc-toggle" onclick="toggleToc()">☰</div>
+    
+    <nav class="toc" id="toc">
+        <h3>📑 Contents</h3>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#actions">Quick Actions</a></li>
+            <li><a href="#metrics">Project Metrics</a></li>
+            <li><a href="#dependencies">Dependencies</a></li>
+            <li><a href="#domains">Domain Explorer</a></li>
+            <li><a href="#config">Configuration</a></li>
+            <li><a href="#quality">Code Quality</a></li>
+            <li><a href="#pssa">PSScriptAnalyzer</a></li>
+            <li><a href="#manifest">Module Manifest</a></li>
+            <li><a href="#health">Project Health</a></li>
+            <li><a href="#releases">Releases</a></li>
+            <li><a href="#git">Git & VCS</a></li>
+            <li><a href="#activity">Recent Activity</a></li>
+            <li><a href="#indices">Index Navigation</a></li>
+            <li><a href="#system">System Info</a></li>
+            <li><a href="#resources">Resources</a></li>
+            <li><a href="#roadmap">🗺️ Roadmap</a></li>
+            <li><a href="#github-activity">🌟 GitHub</a></li>
+            <li><a href="#workflow-status">⚙️ CI/CD</a></li>
+            <li><a href="#github-issues">🐛 Issues</a></li>
+            <li><a href="#trends">📈 Trends</a></li>
+        </ul>
+    </nav>
+
+    <div class="refresh-indicator">
+        🔄 Last updated: 2025-11-08 00:13:22
+    </div>
+
+    <div class="container">
+        <div class="header" id="overview">
+            <h1>🚀 AitherZero</h1>
+            <div class="subtitle">Infrastructure Automation Platform</div>
+
+            <div class="badges-container">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/quality-validation.yml?label=Quality&logo=github" alt="Quality Check">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/pr-validation.yml?label=PR%20Validation&logo=github" alt="PR Validation">
+                <img src="https://img.shields.io/github/actions/workflow/status/wizzense/AitherZero/jekyll-gh-pages.yml?label=GitHub%20Pages&logo=github" alt="GitHub Pages">
+                <img src="https://img.shields.io/badge/tests-not%20run%20(324%20tests)-yellow" alt="Tests Status">
+                <img src="https://img.shields.io/badge/PowerShell-7.0+-blue?logo=powershell" alt="PowerShell Version">
+                <img src="https://img.shields.io/github/license/wizzense/AitherZero" alt="License">
+                <img src="https://img.shields.io/github/last-commit/wizzense/AitherZero" alt="Last Commit">
+            </div>
+
+            <div class="status-bar">
+                <div class="status-badge status-warning">
+                    🎯 Overall: Warning
+                </div>
+                <div class="status-badge status-unknown">
+                    🧪 Tests: Not Run
+                </div>
+                <div class="status-badge status-healthy">
+                    🔒 Security: Clean
+                </div>
+                <div class="status-badge status-healthy">
+                    📦 Deployment: CI/CD Active
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Quick Actions Section with GitHub Integration -->
+            <section class="section" id="actions">
+                <h2>⚡ Quick Actions & GitHub Integration</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="window.location.href='code-map.html'" style="font-size: 1.1rem; padding: 12px 24px;">
+                        🗺️ Explore Interactive Code Map
+                    </button>
+                    <button class="btn btn-primary" onclick="window.open('https://github.com/wizzense/AitherZero', '_blank')">
+                        🏠 View Repository
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('bug')">
+                        🐛 Report Bug
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('feature')">
+                        ✨ Request Feature
+                    </button>
+                    <button class="btn btn-success" onclick="createGitHubIssue('docs')">
+                        📚 Improve Docs
+                    </button>
+                    <button class="btn btn-primary" onclick="createPullRequest()">
+                        🔀 Create Pull Request
+                    </button>
+                    <button class="btn" onclick="openDocumentation()">
+                        📖 Browse Documentation
+                    </button>
+                    <button class="btn" onclick="openDocumentation('README.md')">
+                        📄 View README
+                    </button>
+                    <button class="btn" onclick="window.open('https://github.com/wizzense/AitherZero/releases', '_blank')">
+                        📦 View Releases
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 Click any button to open GitHub in a new tab with pre-filled templates | 🗺️ Click Code Map for full codebase visualization
+                </p>
+            </section>
+            
+            <section class="section" id="metrics">
+                <h2>📊 Project Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Project Files</h3>
+                        <div class="metric-value">228</div>
+                        <div class="metric-label">
+                            157 Scripts | 55 Modules | 16 Data
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                        📄 362 Markdown | 🔧 3 YAML | 📋 92 JSON
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Lines of Code</h3>
+                        <div class="metric-value">98,113</div>
+                        <div class="metric-label">
+                            1078 Functions
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            💬 8,159 Comments (8.3%) | ⚪ 15,057 Blank Lines
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🤖 Automation Scripts</h3>
+                        <div class="metric-value">144</div>
+                        <div class="metric-label">Number-based orchestration (0000-9999)</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚡ 30 GitHub Workflows
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>🗂️ Domain Modules</h3>
+                        <div class="metric-value">11</div>
+                        <div class="metric-label">
+                            40 Total Modules
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Consolidated architecture
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Files</h3>
+                        <div class="metric-value">324</div>
+                        <div class="metric-label">
+                            162 Unit | 162 Integration
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--card-border);">
+                            <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
+                                Last Test Run Results:
+                            </div>
+                                                <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px; border-left: 3px solid var(--error);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">
+                                Last Test Run Results:
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                ✅ 0 Passed | ❌ 0 Failed
+                            </div>
+                                                        <div style="margin-top: 10px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 6px; border-left: 3px solid var(--warning);">
+                                <div style="font-size: 0.8rem; color: var(--warning); font-weight: 600;">
+                                    ⚠️ Only 0 test cases executed. Run <code>./automation-scripts/0402_Run-UnitTests.ps1</code> for full test suite.
+                                </div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Last run: Not run recently
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">68.5%</div>
+                        <div class="metric-label">
+                            126 / 184 Files Have Tests
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 68.5%; background: var(--warning)">
+                                68.5%
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ 58 files without tests
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>📚 Documentation Coverage</h3>
+                        <div class="metric-value">9.6%</div>
+                        <div class="metric-label">
+                            104 / 1078 Functions Documented
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 9.6%; background: var(--error)">
+                                9.6%
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ⚠️ 966 functions without docs
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>✨ Code Quality</h3>
+                        <div class="metric-value">51.3/100</div>
+                        <div class="metric-label">
+                            22 issues in 22 files
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 51.3%; background: var(--error)">
+                                51.3/100
+                            </div>
+                        </div>
+                                                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            ✅ 203 clean, ⚠️ 22 warnings, ❌ 0 errors
+                        </div>
+                    </div>
+                    
+                                        <div class="metric-card">
+                        <h3>🌿 Git Repository</h3>
+                        <div class="metric-value" style="font-size: 1.8rem;">4</div>
+                        <div class="metric-label">Total Commits</div>
+                        <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                🔀 Branch: <span style="color: var(--primary-color); font-weight: 600;">copilot/fix-reports-folder-updating</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                👥 2 Contributors
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
+                                Latest: 676592f - fix: remove stale reports and implement persisted report updates (2 minutes ago)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h3>💻 Platform</h3>
+                        <div class="metric-value" style="font-size: 2rem;">Unix</div>
+                        <div class="metric-label">PowerShell 7.4.13</div>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+                            Environment: Development
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Dependency Mapping Section -->
+            <section class="section" id="dependencies">
+                <h2>🔗 Interactive Dependency Mapping</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Explore project dependencies, module relationships, and script dependencies
+                </p>
+                <div id="dependency-graph"></div>
+                <script>
+                    // Initialize dependency graph with data
+                    const dependencyData = {"Total":55,"Scripts":{"9000-9999":{"Count":1,"Category":"Maintenance"},"0900-0999":{"Count":11,"Category":"Validation & Test Generation"},"0400-0499":{"Count":26,"Category":"Testing & Quality"},"0100-0199":{"Count":6,"Category":"Infrastructure"},"0200-0299":{"Count":17,"Category":"Development Tools"},"0800-0899":{"Count":20,"Category":"Issue Management & PR Deployment"},"0000-0099":{"Count":8,"Category":"Environment Setup"},"0300-0399":{"Count":1,"Category":"Deployment"},"0700-0799":{"Count":35,"Category":"Git & AI Automation"},"0500-0599":{"Count":18,"Category":"Reporting & Analytics"}},"Modules":{"security":{"Description":"Security and credential management","Modules":1},"documentation":{"Description":"Documentation generation engine and project indexing","Modules":2},"automation":{"Description":"Orchestration engine and script utilities","Modules":5},"ai-agents":{"Description":"AI integration and workflow orchestration","Modules":3},"reporting":{"Description":"Analytics, reporting, and tech debt analysis","Modules":2},"utilities":{"Description":"Core utilities, logging, and maintenance","Modules":10},"cli":{"Description":"CLI cmdlets and interactive interface","Modules":1},"development":{"Description":"Developer tools and Git automation","Modules":4},"configuration":{"Description":"Unified configuration management","Modules":2},"testing":{"Description":"Testing framework, quality validation, and test generation","Modules":9},"infrastructure":{"Description":"Infrastructure automation and management","Modules":1}},"Features":[{"Name":"PRDeployment","Category":"IssueManagement","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Creation","Category":"IssueManagement","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Analysis","Category":"IssueManagement","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Automation","Category":"IssueManagement","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Workflow","Category":"IssueManagement","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Validation","Category":"Deployment","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"DocumentationTracking","Category":"Deployment","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Orchestration","Category":"Deployment","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Infrastructure","Category":"Deployment","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"TestGeneration","Category":"Deployment","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"CodeReview","Category":"AIAgents","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Workflows","Category":"AIAgents","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"MCPServer","Category":"AIAgents","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Documentation","Category":"AIAgents","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"TestGeneration","Category":"AIAgents","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Optimization","Category":"AIAgents","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Setup","Category":"AIAgents","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"GitWorkflow","Category":"Git","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"GitSetup","Category":"Git","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"GitHubRunners","Category":"Git","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"TestingTools","Category":"Testing","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Pester","Category":"Testing","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"PSScriptAnalyzer","Category":"Testing","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"TestOrchestration","Category":"Testing","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"CodeQuality","Category":"Testing","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"WorkflowTesting","Category":"Testing","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"OpenTofu","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"WindowsAdminCenter","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"System","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Go","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"PXE","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"HyperV","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"CertificateAuthority","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"ValidationTools","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"WSL2","Category":"Infrastructure","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Environment","Category":"Maintenance","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Reset","Category":"Maintenance","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"QualityValidation","Category":"Maintenance","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Python","Category":"Development","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"DevTools","Category":"Development","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Docker","Category":"Development","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"CloudCLI","Category":"Development","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"VSCode","Category":"Development","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Node","Category":"Development","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"AITools","Category":"Development","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Analysis","Category":"Reporting","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"CI","Category":"Reporting","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Logging","Category":"Reporting","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"ProjectReports","Category":"Reporting","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"SystemInfo","Category":"Reporting","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"MCPServers","Category":"Core","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Configuration","Category":"Core","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Logging","Category":"Core","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"PowerShell7","Category":"Core","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""},{"Name":"Git","Category":"Core","Platform":[],"DependsOn":[],"Required":false,"Scripts":[],"Description":""}]};
+                    if (Object.keys(dependencyData).length > 0) {
+                        initDependencyGraph(dependencyData);
+                    } else {
+                        document.getElementById('dependency-graph').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0512</code> with full analysis to generate dependency map</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Domain Explorer Section -->
+            <section class="section" id="domain-explorer-section">
+                <h2>🗂️ Interactive Domain Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Click to explore each domain module, view functions, and navigate code
+                </p>
+                <div id="domain-explorer"></div>
+                <script>
+                    // Initialize domain explorer with data
+                    const domainData = [{"Modules":3,"Name":"ai-agents","Path":"/home/runner/work/AitherZero/AitherZero/domains/ai-agents"},{"Modules":5,"Name":"automation","Path":"/home/runner/work/AitherZero/AitherZero/domains/automation"},{"Modules":1,"Name":"cli","Path":"/home/runner/work/AitherZero/AitherZero/domains/cli"},{"Modules":2,"Name":"configuration","Path":"/home/runner/work/AitherZero/AitherZero/domains/configuration"},{"Modules":4,"Name":"development","Path":"/home/runner/work/AitherZero/AitherZero/domains/development"},{"Modules":2,"Name":"documentation","Path":"/home/runner/work/AitherZero/AitherZero/domains/documentation"},{"Modules":1,"Name":"infrastructure","Path":"/home/runner/work/AitherZero/AitherZero/domains/infrastructure"},{"Modules":2,"Name":"reporting","Path":"/home/runner/work/AitherZero/AitherZero/domains/reporting"},{"Modules":1,"Name":"security","Path":"/home/runner/work/AitherZero/AitherZero/domains/security"},{"Modules":9,"Name":"testing","Path":"/home/runner/work/AitherZero/AitherZero/domains/testing"},{"Modules":10,"Name":"utilities","Path":"/home/runner/work/AitherZero/AitherZero/domains/utilities"}];
+                    if (domainData && domainData.length > 0) {
+                        initDomainExplorer(domainData);
+                    } else {
+                        document.getElementById('domain-explorer').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No domain data available</p>';
+                    }
+                </script>
+            </section>
+
+            <!-- Interactive Configuration Explorer Section -->
+            <section class="section" id="config">
+                <h2>⚙️ Interactive Configuration Explorer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Browse and search through config.psd1 manifest interactively
+                </p>
+                <div id="config-explorer"></div>
+                <script>
+                    // Load configuration from manifest
+                    fetch('https://raw.githubusercontent.com/wizzense/AitherZero/main/config.psd1')
+                        .then(response => response.text())
+                        .then(data => {
+                            // Parse PowerShell data file (simplified)
+                            const configData = {
+                                Core: { Profile: 'Standard', MaxConcurrency: 4 },
+                                Automation: { OrchestrationEnabled: true },
+                                Testing: { Profile: 'Standard', CoverageThreshold: 80 },
+                                Note: 'Full config parsing requires PowerShell - this is a simplified view'
+                            };
+                            initConfigExplorer(configData);
+                        })
+                        .catch(err => {
+                            document.getElementById('config-explorer').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">Configuration explorer - Run dashboard locally for full config browsing</p>';
+                        });
+                </script>
+            </section>
+
+            <!-- File-Level Quality Drill-down Section -->
+            <section class="section" id="quality-drilldown-section">
+                <h2>🔍 File-Level Quality Drill-down</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Detailed quality metrics for every file - expand to see checks and issues
+                </p>
+                <div id="quality-drilldown"></div>
+                <script>
+                    // Initialize quality drilldown with file metrics
+                    // Wrap in DOMContentLoaded to ensure initQualityDrilldown function is defined
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const qualityData = [{"Domain":"other","Issues":[{"Rule":"PSAvoidUsingEmptyCatchBlock","Line":1246,"Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":72,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":148,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":149,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":151,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":1350,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":1351,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":1352,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":1353,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":1355,"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1}],"Path":"bootstrap.ps1","Score":0,"HasTests":false,"Lines":1378,"Functions":16,"Name":"bootstrap.ps1"},{"Domain":"other","Issues":[{"Rule":"PSAvoidAssignmentToAutomaticVariable","Line":78,"Message":"The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.","Severity":1},{"Rule":"PSReviewUnusedParameter","Line":81,"Message":"The parameter 'ConfigPath' has been declared but not used.","Severity":1},{"Rule":"PSAvoidTrailingWhitespace","Line":10,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":13,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":16,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":18,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":42,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":44,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":47,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":49,"Message":"Line has trailing whitespace","Severity":0}],"Path":"Start-AitherZero.ps1","Score":0,"HasTests":false,"Lines":329,"Functions":0,"Name":"Start-AitherZero.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0000_Cleanup-Environment.ps1","Score":100,"HasTests":false,"Lines":99,"Functions":0,"Name":"0000_Cleanup-Environment.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0002_Setup-Directories.ps1","Score":100,"HasTests":false,"Lines":118,"Functions":0,"Name":"0002_Setup-Directories.ps1"},{"Domain":"automation-scripts","Issues":[{"Rule":"PSAvoidTrailingWhitespace","Line":8,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":11,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":68,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":75,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":82,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":105,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":106,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":117,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":125,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":151,"Message":"Line has trailing whitespace","Severity":0}],"Path":"automation-scripts/0003_Sync-ConfigManifest.ps1","Score":0,"HasTests":false,"Lines":297,"Functions":1,"Name":"0003_Sync-ConfigManifest.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0006_Install-ValidationTools.ps1","Score":100,"HasTests":false,"Lines":116,"Functions":0,"Name":"0006_Install-ValidationTools.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0007_Install-Go.ps1","Score":100,"HasTests":false,"Lines":361,"Functions":0,"Name":"0007_Install-Go.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0008_Install-OpenTofu.ps1","Score":100,"HasTests":false,"Lines":212,"Functions":0,"Name":"0008_Install-OpenTofu.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0009_Initialize-OpenTofu.ps1","Score":100,"HasTests":false,"Lines":184,"Functions":0,"Name":"0009_Initialize-OpenTofu.ps1"},{"Domain":"automation-scripts","Issues":[{"Rule":"PSAvoidUsingWriteHost","Line":90,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":395,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":396,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":397,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":398,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":399,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":412,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":413,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":425,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":436,"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1}],"Path":"automation-scripts/0010_Setup-MCPServers.ps1","Score":45,"HasTests":false,"Lines":471,"Functions":8,"Name":"0010_Setup-MCPServers.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0100_Configure-System.ps1","Score":100,"HasTests":false,"Lines":184,"Functions":0,"Name":"0100_Configure-System.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0104_Install-CertificateAuthority.ps1","Score":100,"HasTests":false,"Lines":232,"Functions":0,"Name":"0104_Install-CertificateAuthority.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0105_Install-HyperV.ps1","Score":100,"HasTests":false,"Lines":182,"Functions":0,"Name":"0105_Install-HyperV.ps1"},{"Domain":"automation-scripts","Issues":[{"Rule":"PSPossibleIncorrectComparisonWithNull","Line":260,"Message":"$null should be on the left side of equality comparisons.","Severity":1}],"Path":"automation-scripts/0106_Install-WSL2.ps1","Score":97,"HasTests":false,"Lines":333,"Functions":0,"Name":"0106_Install-WSL2.ps1"},{"Domain":"automation-scripts","Issues":[{"Rule":"PSUseDeclaredVarsMoreThanAssignments","Line":66,"Message":"The variable 'wacInstalled' is assigned but never used.","Severity":1}],"Path":"automation-scripts/0107_Install-WindowsAdminCenter.ps1","Score":97,"HasTests":false,"Lines":260,"Functions":0,"Name":"0107_Install-WindowsAdminCenter.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0112_Enable-PXE.ps1","Score":100,"HasTests":false,"Lines":164,"Functions":0,"Name":"0112_Enable-PXE.ps1"},{"Domain":"automation-scripts","Issues":[{"Rule":"PSAvoidTrailingWhitespace","Line":47,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":68,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":161,"Message":"Line has trailing whitespace","Severity":0},{"Rule":"PSAvoidTrailingWhitespace","Line":168,"Message":"Line has trailing whitespace","Severity":0}],"Path":"automation-scripts/0201_Install-Node.ps1","Score":96,"HasTests":false,"Lines":290,"Functions":0,"Name":"0201_Install-Node.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0204_Install-Poetry.ps1","Score":100,"HasTests":false,"Lines":183,"Functions":0,"Name":"0204_Install-Poetry.ps1"},{"Domain":"automation-scripts","Issues":[],"Path":"automation-scripts/0205_Install-Sysinternals.ps1","Score":100,"HasTests":false,"Lines":197,"Functions":0,"Name":"0205_Install-Sysinternals.ps1"},{"Domain":"automation-scripts","Issues":[{"Rule":"PSAvoidUsingEmptyCatchBlock","Line":21,"Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Severity":1},{"Rule":"PSAvoidUsingWriteHost","Line":55,"Message":"File '0206_Install-Python.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1}],"Path":"automation-scripts/0206_Install-Python.ps1","Score":94,"HasTests":false,"Lines":360,"Functions":1,"Name":"0206_Install-Python.ps1"}];
+                        if (qualityData && qualityData.length > 0) {
+                            const fileQualityMap = {};
+                            qualityData.forEach(file => {
+                                fileQualityMap[file.Path] = {
+                                    score: file.Score || 0,
+                                    errorHandling: file.ErrorHandling ? '✅' : '❌',
+                                    logging: file.Logging ? '✅' : '❌',
+                                    testCoverage: file.HasTests ? '✅' : '❌',
+                                    pssa: file.Issues && file.Issues.length === 0 ? '✅' : file.Issues ? file.Issues.length + ' issues' : 'N/A'
+                                };
+                            });
+                            // Function will be available after enhanced-scripts.js loads
+                            if (typeof initQualityDrilldown === 'function') {
+                                initQualityDrilldown(fileQualityMap);
+                            }
+                        } else {
+                            document.getElementById('quality-drilldown').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Run <code>./az 0420</code> to generate detailed quality metrics</p>';
+                        }
+                    });
+                </script>
+            </section>
+
+            <section class="section" id="quality">
+                <h2>✨ Code Quality Validation</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card error">
+                        <h3>📈 Quality Score</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            Average across 0 validated files
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%; background: var(--error)">
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>✅ Validation Results</h3>
+                        <div class="metric-value">0</div>
+                        <div class="metric-label">
+                            ✅ 0 Passed | 
+                            ⚠️ 0 Warnings | 
+                            ❌ 0 Failed
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔍 Error Handling</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>📝 Logging</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🧪 Test Coverage</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>🔬 PSScriptAnalyzer</h3>
+                        <div class="metric-value">0%</div>
+                        <div class="metric-label">
+                            ✅ 0 | 
+                            ⚠️ 0 | 
+                            ❌ 0
+                        </div>
+                    </div>
+                </div>
+                
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>⚠️ No quality validation data available. Run <code>./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains -Recursive</code> to generate quality reports.</p>
+            </section>
+
+            <section class="section" id="pssa">
+                <h2>🔬 PSScriptAnalyzer Analysis</h2>
+                                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📁 Files Analyzed</h3>
+                        <div class="metric-value">22</div>
+                        <div class="metric-label">Last run: 2025-10-26 22:29:41 UTC</div>
+                    </div>
+                    
+                    <div class="metric-card" style="border-left-color: var(--warning);">
+                        <h3>⚠️ Total Issues</h3>
+                        <div class="metric-value" style="color: var(--warning);">22</div>
+                        <div class="metric-label">
+                            ❌ 0 Errors | 
+                            ⚠️ 22 Warnings | 
+                            ℹ️ 0 Info
+                        </div>
+                    </div>
+                </div>
+                
+                                <div style="margin-top: 20px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 15px;">🔝 Top Issues</h3>
+                    <div style="background: var(--bg-darker); padding: 20px; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <ul style="list-style: none; margin: 0;">
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSUseDeclaredVarsMoreThanAssignments</strong> - 11 instances</li>
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSPossibleIncorrectComparisonWithNull</strong> - 7 instances</li>
+<li style='padding: 8px 0; border-bottom: 1px solid var(--card-border);'>ℹ️ <strong>PSAvoidGlobalVars</strong> - 4 instances</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze code quality</p>
+            </section>
+
+            <section class="section" id="manifest">
+                <h2>📦 Module Manifest</h2>
+                <div class="manifest-info">
+                    <h4>AitherZero.psd1</h4>
+                    <div class="manifest-grid">
+                        <div class="manifest-item">
+                            <div class="label">Version</div>
+                            <div class="value">1.0.0.0</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">GUID</div>
+                            <div class="value">a7d4e8f1-2b3c-4d5e-6f7a-8b9c0d1e2f3a</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Author</div>
+                            <div class="value">AitherZero Team</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">PowerShell Version</div>
+                            <div class="value">7.0+</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Functions Exported</div>
+                            <div class="value">82</div>
+                        </div>
+                        <div class="manifest-item">
+                            <div class="label">Aliases</div>
+                            <div class="value">az, seq, az-script, az-playbook, az-config, az-dashboard, az-metrics, azw, aztest, azdeploy, azconfig</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div class="label" style="margin-bottom: 10px;">Description</div>
+                        <div class="value" style="color: var(--text-secondary);">AitherZero Automation Platform - Infrastructure automation with number-based orchestration</div>
+                    </div>
+                <div style="margin-top: 15px;">
+                    <div class="label" style="margin-bottom: 10px;">Tags</div>
+                    <div class="badge-grid">
+                        <span class='badge info'>Automation</span> <span class='badge info'>Infrastructure</span> <span class='badge info'>DevOps</span> <span class='badge info'>OpenTofu</span> <span class='badge info'>Terraform</span> <span class='badge info'>Orchestration</span>
+                    </div>
+                </div>
+                </div>
+            </section>
+
+            <section class="section" id="domains">
+                <h2>🗂️ Domain Modules</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Consolidated domain-based module architecture with 11 domains
+                </p>
+                <div class="domains-list">
+                    <div class="domain-card">
+                        <h4>ai-agents</h4>
+                        <div class="module-count">3 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>automation</h4>
+                        <div class="module-count">5 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>cli</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>configuration</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>development</h4>
+                        <div class="module-count">4 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>documentation</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>infrastructure</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>reporting</h4>
+                        <div class="module-count">2 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>security</h4>
+                        <div class="module-count">1 module</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>testing</h4>
+                        <div class="module-count">9 modules</div>
+                    </div>
+                    <div class="domain-card">
+                        <h4>utilities</h4>
+                        <div class="module-count">10 modules</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="health">
+                <h2>📈 Project Health</h2>
+                <div class="badge-grid">
+                    <div class="badge warning">
+                        Build: Unknown
+                    </div>
+                    <div class="badge warning">
+                        Tests: Not Run
+                    </div>
+                    <div class="badge info">Quality: 51.3/100</div>
+                    <div class="badge">Security: Scanned</div>
+                    <div class="badge">Platform: Unix</div>
+                    <div class="badge">PowerShell: 7.4.13</div>
+                    <div class='badge info'>Workflows: 30</div>
+                </div>
+            </section>
+            
+                        <section class="section" id="git">
+                <h2>🌿 Git Repository & Version Control</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                    <div class="info-card">
+                        <div class="info-card-header">📊 Repository Statistics</div>
+                        <div class="info-card-body">
+                            <p><strong>Branch:</strong> <code>copilot/fix-reports-folder-updating</code></p>
+                            <p><strong>Total Commits:</strong> 4</p>
+                            <p><strong>Contributors:</strong> 2</p>
+                            <p><strong>Automation Scripts:</strong> 144</p>
+                            <p><strong>GitHub Workflows:</strong> 30</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-card-header">📝 Latest Commit</div>
+                        <div class="info-card-body">
+                            <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
+                                676592f - fix: remove stale reports and implement persisted report updates (2 minutes ago)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="info-grid">
+                <div class="info-card" id="activity">
+                    <div class="info-card-header">🔄 Recent Activity</div>
+                    <div class="info-card-body">
+                        <ul class="commit-list">
+                            <li class='commit-item'>
+                                <span class='commit-hash'>676592f</span>
+                                <span class='commit-message'>fix: remove stale reports and implement persisted report updates</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>491d135</span>
+                                <span class='commit-message'>Initial analysis: Reports folder update investigation</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>ee5ff1b</span>
+                                <span class='commit-message'>Initial plan</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>a7e1237</span>
+                                <span class='commit-message'>Delete legacy-to-migrate directory</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card" id="actions">
+                    <div class="info-card-header">🎯 Quick Actions</div>
+                    <div class="info-card-body">
+                        <p><strong>Run Tests:</strong> <code>./automation-scripts/0402_Run-UnitTests.ps1</code></p>
+                        <p><strong>Generate Report:</strong> <code>./automation-scripts/0510_Generate-ProjectReport.ps1</code></p>
+                        <p><strong>View Dashboard:</strong> <code>./automation-scripts/0511_Show-ProjectDashboard.ps1</code></p>
+                        <p><strong>Validate Code:</strong> <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code></p>
+                        <p><strong>Update Project:</strong> <code>git pull && ./bootstrap.ps1</code></p>
+                    </div>
+                </div>
+
+                <div class="info-card" id="system">
+                    <div class="info-card-header">📋 System Information</div>
+                    <div class="info-card-body">
+                        <p><strong>Platform:</strong> Unix</p>
+                        <p><strong>PowerShell:</strong> 7.4.13</p>
+                        <p><strong>Environment:</strong> Development</p>
+                        <p><strong>Last Scan:</strong> 2025-11-08 00:13:22</p>
+                        <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
+                    </div>
+                </div>
+
+                <div class="info-card" id="resources">
+                    <div class="info-card-header">🔗 Resources</div>
+                    <div class="info-card-body">
+                        <p><a href="https://github.com/wizzense/AitherZero" target="_blank">🏠 GitHub Repository</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/actions" target="_blank">⚡ CI/CD Pipeline</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/releases" target="_blank">📦 Releases</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/issues" target="_blank">🐛 Issues</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/tree/main/docs" target="_blank">📖 Documentation</a></p>
+                        <p><a href="https://github.com/wizzense/AitherZero/blob/main/README.md" target="_blank">📄 README</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strategic Roadmap Section -->
+            <section class="section" id="roadmap" style="margin-top: 30px;">
+                <h2>🗺️ Strategic Roadmap</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                    Current strategic priorities and project direction
+                </p>
+                
+                <div class="roadmap-container">
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority1')">
+                            <h3>🚀 Priority 1: Expand Distribution & Discoverability</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority1" class="priority-content">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 30%">30%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Make AitherZero easily discoverable across all platforms</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Publish to PowerShell Gallery (<code>Install-Module -Name AitherZero</code>)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Create Windows installer (MSI/EXE) with WinGet integration
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Submit to package managers (Homebrew consideration)
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 2-3 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority2')">
+                            <h3>📚 Priority 2: Enhance Documentation & Onboarding</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority2" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%">45%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Reduce time-to-value for new users from hours to minutes</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Comprehensive documentation structure
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Quick start guide for common scenarios
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Video tutorials and interactive demos
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    API reference documentation
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 3-4 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority3')">
+                            <h3>🎯 Priority 3: Build Community & Ecosystem</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority3" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 15%">15%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Foster active community and enable contributions</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community contribution guidelines (CONTRIBUTING.md)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Plugin/extension system for community additions
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    User showcase and case studies
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Community Discord or Discussions forum
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 4-6 weeks</p>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-priority">
+                        <div class="priority-header" onclick="togglePriority('priority4')">
+                            <h3>⚡ Priority 4: Advanced Features & Integrations</h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="priority4" class="priority-content" style="display: none;">
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 20%">20%</div>
+                                </div>
+                            </div>
+                            <p><strong>Goal:</strong> Expand capabilities and integrations</p>
+                            <ul class="roadmap-list">
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Cross-platform support (Windows, Linux, macOS)
+                                </li>
+                                <li class="roadmap-item completed">
+                                    <span class="status-dot"></span>
+                                    Docker containerization with multi-arch support
+                                </li>
+                                <li class="roadmap-item in-progress">
+                                    <span class="status-dot"></span>
+                                    Web-based dashboard and monitoring (this page!)
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Enhanced cloud provider integrations
+                                </li>
+                                <li class="roadmap-item pending">
+                                    <span class="status-dot"></span>
+                                    Metrics and telemetry for usage insights
+                                </li>
+                            </ul>
+                            <p class="timeline"><strong>Timeline:</strong> 6-8 weeks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);">
+                    <h4 style="color: var(--info); margin-bottom: 10px;">📊 Overall Progress</h4>
+                    <div class="progress-bar" style="height: 30px; margin-bottom: 10px;">
+                        <div class="progress-fill" style="width: 28%; font-size: 0.9rem;">28% Complete</div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Based on strategic priorities outlined in <a href="https://github.com/wizzense/AitherZero/blob/main/STRATEGIC-ROADMAP.md" target="_blank" style="color: var(--info);">STRATEGIC-ROADMAP.md</a>
+                    </p>
+                </div>
+            </section>
+
+            <!-- GitHub Activity Section -->
+            <section class="section" id="github-activity" style="margin-top: 30px;">
+                <h2>🌟 GitHub Activity & Metrics</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>⭐ Stars</h3>
+                        <div class="metric-value" style="font-size: 2rem;">1</div>
+                        <div class="metric-label">GitHub Stars</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🍴 Forks</h3>
+                        <div class="metric-value" style="font-size: 2rem;">0</div>
+                        <div class="metric-label">Repository Forks</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>👥 Contributors</h3>
+                        <div class="metric-value" style="font-size: 2rem;">2</div>
+                        <div class="metric-label">Active Contributors</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🔀 Pull Requests</h3>
+                        <div class="metric-value" style="font-size: 2rem;">22</div>
+                        <div class="metric-label">Open PRs</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🐛 Issues</h3>
+                        <div class="metric-value" style="font-size: 2rem;">256</div>
+                        <div class="metric-label">Open Issues</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>👀 Watchers</h3>
+                        <div class="metric-value" style="font-size: 2rem;">1</div>
+                        <div class="metric-label">Repository Watchers</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    ✅ <em>Live data from GitHub API | Updated in real-time</em>
+                </p>
+            </section>
+
+            <!-- GitHub Actions Workflow Status Section -->
+            <section class="section" id="workflow-status" style="margin-top: 30px;">
+                <h2>⚙️ CI/CD Workflow Status</h2>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="metric-card">
+                        <h3>📋 Total Workflows</h3>
+                        <div class="metric-value" style="font-size: 2rem;">30</div>
+                        <div class="metric-label">Active Workflows</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>✅ Successful</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">0</div>
+                        <div class="metric-label">Recent Successes</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>❌ Failed</h3>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--text-secondary);">0</div>
+                        <div class="metric-label">Recent Failures</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🕐 Last Run</h3>
+                        <div class="metric-value" style="font-size: 1.2rem;">skipped</div>
+                        <div class="metric-label">Status</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    ✅ <em>Live workflow data from GitHub Actions API</em>
+                </p>
+            </section>
+
+            <!-- GitHub Issues Section -->
+            <section class="section" id="github-issues" style="margin-top: 30px;">
+                <h2>🐛 Open GitHub Issues</h2>
+                                <div style='margin: 15px 0; padding: 15px; background: var(--card-bg); border-radius: 8px; border-left: 4px solid var(--info);'>
+                    <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;'>
+                        <h3 style='margin: 0; font-size: 1.1rem; color: var(--text-primary);'>
+                            <a href='https://github.com/wizzense/AitherZero/issues/2175' target='_blank' style='color: var(--primary-color); text-decoration: none;'>
+                                #2175: Quality Validation Failed: AitherZero.psm1 (Score: 70%)
+                            </a>
+                        </h3>
+                    </div>
+                    <div style='font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;'>
+                        Opened by <strong>github-actions[bot]</strong> on 2025-11-06
+                    </div>
+                    <div style='margin-top: 8px;'>
+                        <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>automated</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>quality-validation</span> <span style='display: inline-block; padding: 2px 8px; margin: 2px; background: var(--info); color: white; border-radius: 12px; font-size: 0.75rem;'>needs-fix</span>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    Showing up to 10 open issues | <a href="https://github.com/wizzense/AitherZero/issues" target="_blank" style="color: var(--info);">View all issues</a>
+                </p>
+            </section>
+
+            <!-- Historical Trends Section -->
+            <section class="section" id="trends" style="margin-top: 30px;">
+                <h2>📈 Historical Trends</h2>
+                <div class="info-card">
+                    <div class="info-card-header">📊 Test Execution Trends</div>
+                    <div class="info-card-content">
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-08</strong>: 0/324 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-08</strong>: 0/324 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-08</strong>: 0/324 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/320 passed (0%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 0/320 passed (0%)</div>
+                    </div>
+                </div>
+                
+                <div class="info-card" style="margin-top: 20px;">
+                    <div class="info-card-header">📏 Lines of Code Growth</div>
+                    <div class="info-card-content">
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-08</strong>: 98,113 LOC, 1078 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-08</strong>: 98,113 LOC, 1078 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-08</strong>: 98,113 LOC, 1078 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 96,145 LOC, 1131 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-04</strong>: 96,145 LOC, 1131 functions</div>
+                    </div>
+                </div>
+                
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px; text-align: center;">
+                    💡 <em>Historical data accumulates automatically with each dashboard generation</em>
+                </p>
+            </section>
+
+            <!-- Release Tracker Section -->
+            <section class="section" id="releases">
+                <h2>📦 Releases & Version History</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Track releases, packages, and container versions
+                </p>
+                <div id="release-tracker"></div>
+                <script>
+                    // Fetch releases from GitHub API
+                    fetch('https://api.github.com/repos/wizzense/AitherZero/releases')
+                        .then(response => response.json())
+                        .then(releases => {
+                            if (releases && releases.length > 0) {
+                                const releaseData = releases.slice(0, 10).map(r => ({
+                                    version: r.tag_name || r.name,
+                                    date: new Date(r.published_at).toLocaleDateString(),
+                                    description: r.body ? r.body.substring(0, 200) + '...' : 'No description',
+                                    url: r.html_url,
+                                    assets: r.assets ? r.assets.map(a => ({ name: a.name, url: a.browser_download_url })) : []
+                                }));
+                                initReleaseTracker(releaseData);
+                            } else {
+                                document.getElementById('release-tracker').innerHTML = 
+                                    '<p style="text-align: center; color: var(--text-secondary);">No releases yet. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">Create your first release</a></p>';
+                            }
+                        })
+                        .catch(err => {
+                            document.getElementById('release-tracker').innerHTML = 
+                                '<p style="text-align: center; color: var(--text-secondary);">⚠️ Unable to fetch releases. <a href="https://github.com/wizzense/AitherZero/releases" target="_blank">View releases on GitHub</a></p>';
+                        });
+                </script>
+            </section>
+
+            <!-- Index Navigation Section -->
+            <section class="section" id="indices">
+                <h2>📑 Navigate Project Indices</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Quick access to all index files and documentation hubs throughout the project
+                </p>
+                <div id="index-navigation"></div>
+            </section>
+        </div>
+
+        <div class="footer">
+            Generated by AitherZero Dashboard | 2025-11-08 00:13:22 |
+            <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
+        </div>
+    </div>
+
+    <script>
+        /* Enhanced Interactive Dashboard Scripts */
+        // ============================================================================
+// AitherZero Interactive Dashboard - Enhanced Scripts
+// ============================================================================
+
+// Global state management
+const DashboardState = {
+    currentView: 'overview',
+    filters: {},
+    expandedSections: new Set(),
+    searchResults: [],
+    dependencyGraph: null,
+    configExplorer: null
+};
+
+// ============================================================================
+// Core Navigation & TOC
+// ============================================================================
+
+function toggleToc() {
+    const toc = document.getElementById('toc');
+    if (toc) {
+        toc.classList.toggle('open');
+    }
+}
+
+function highlightToc() {
+    const sections = document.querySelectorAll('.section, .header');
+    const tocLinks = document.querySelectorAll('.toc a');
+    
+    let current = '';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (window.pageYOffset >= sectionTop - 100) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    tocLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+// ============================================================================
+// Breadcrumb Navigation
+// ============================================================================
+
+function initBreadcrumbs() {
+    const breadcrumbContainer = document.getElementById('breadcrumbs');
+    if (!breadcrumbContainer) return;
+    
+    // Build breadcrumb trail based on current section
+    window.addEventListener('scroll', updateBreadcrumbs);
+    updateBreadcrumbs();
+}
+
+function updateBreadcrumbs() {
+    const breadcrumbContainer = document.getElementById('breadcrumbs');
+    if (!breadcrumbContainer) return;
+    
+    const sections = document.querySelectorAll('.section, .header');
+    let currentSection = null;
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (window.pageYOffset >= sectionTop - 150) {
+            currentSection = section;
+        }
+    });
+    
+    if (currentSection) {
+        const sectionId = currentSection.getAttribute('id');
+        const sectionTitle = currentSection.querySelector('h2, h1')?.textContent || sectionId;
+        
+        breadcrumbContainer.innerHTML = `
+            <a href="#top" class="breadcrumb-item">🏠 Dashboard</a>
+            <span class="breadcrumb-separator">›</span>
+            <a href="#${sectionId}" class="breadcrumb-item active">${sectionTitle}</a>
+        `;
+    }
+}
+
+// ============================================================================
+// Interactive Dependency Visualization
+// ============================================================================
+
+function initDependencyGraph(dependencyData) {
+    const container = document.getElementById('dependency-graph');
+    if (!container || !dependencyData) return;
+    
+    DashboardState.dependencyGraph = dependencyData;
+    renderDependencyGraph(dependencyData);
+}
+
+function renderDependencyGraph(data) {
+    const container = document.getElementById('dependency-graph');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="graph-loading">Rendering dependency graph...</div>';
+    
+    // Create interactive network visualization
+    setTimeout(() => {
+        const graphHTML = createDependencyGraphHTML(data);
+        container.innerHTML = graphHTML;
+        attachDependencyHandlers();
+    }, 100);
+}
+
+function createDependencyGraphHTML(data) {
+    let html = '<div class="dependency-network">';
+    
+    // Group by domain
+    const domains = {};
+    Object.keys(data).forEach(script => {
+        const deps = data[script];
+        const domain = script.split('/')[0] || 'core';
+        if (!domains[domain]) domains[domain] = [];
+        domains[domain].push({ script, deps });
+    });
+    
+    // Render domains
+    Object.keys(domains).sort().forEach(domain => {
+        html += `
+            <div class="dependency-domain" data-domain="${domain}">
+                <div class="domain-header" onclick="toggleDependencyDomain('${domain}')">
+                    <span class="toggle-icon">▼</span>
+                    <h4>📦 ${domain}</h4>
+                    <span class="badge">${domains[domain].length} scripts</span>
+                </div>
+                <div class="domain-content" id="deps-${domain}">
+        `;
+        
+        domains[domain].forEach(({ script, deps }) => {
+            const depsCount = Array.isArray(deps) ? deps.length : 0;
+            html += `
+                <div class="dependency-item" data-script="${script}">
+                    <div class="script-name" onclick="showDependencyDetails('${script}')">
+                        📄 ${script}
+                        ${depsCount > 0 ? `<span class="deps-badge">${depsCount} deps</span>` : ''}
+                    </div>
+                    ${depsCount > 0 ? `
+                        <div class="dependency-list" id="deps-list-${script.replace(/[^a-zA-Z0-9]/g, '_')}">
+                            ${deps.map(dep => `<div class="dep-link" onclick="navigateToDependency('${dep}')">→ ${dep}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function toggleDependencyDomain(domain) {
+    const content = document.getElementById(`deps-${domain}`);
+    const header = content?.previousElementSibling;
+    
+    if (content && header) {
+        const isOpen = content.style.display !== 'none';
+        content.style.display = isOpen ? 'none' : 'block';
+        header.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function showDependencyDetails(script) {
+    const modal = createModal(`Dependency Details: ${script}`, `
+        <div class="dependency-details">
+            <h4>Direct Dependencies</h4>
+            <div id="direct-deps"></div>
+            <h4>Reverse Dependencies (Used By)</h4>
+            <div id="reverse-deps"></div>
+            <h4>Dependency Chain</h4>
+            <div id="dep-chain"></div>
+        </div>
+    `);
+    
+    // Calculate and show dependencies
+    const deps = DashboardState.dependencyGraph[script] || [];
+    document.getElementById('direct-deps').innerHTML = deps.length > 0 
+        ? deps.map(d => `<div class="dep-item">→ ${d}</div>`).join('') 
+        : '<em>No direct dependencies</em>';
+    
+    // Find reverse dependencies
+    const reverseDeps = Object.keys(DashboardState.dependencyGraph).filter(s => 
+        (DashboardState.dependencyGraph[s] || []).includes(script)
+    );
+    document.getElementById('reverse-deps').innerHTML = reverseDeps.length > 0
+        ? reverseDeps.map(d => `<div class="dep-item">← ${d}</div>`).join('')
+        : '<em>Not used by any scripts</em>';
+}
+
+function navigateToDependency(dep) {
+    const element = document.querySelector(`[data-script="${dep}"]`);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('highlight-flash');
+        setTimeout(() => element.classList.remove('highlight-flash'), 2000);
+    }
+}
+
+function attachDependencyHandlers() {
+    // Handlers are attached via onclick in HTML for better compatibility
+}
+
+// ============================================================================
+// Domain Module Explorer
+// ============================================================================
+
+function initDomainExplorer(domainData) {
+    const container = document.getElementById('domain-explorer');
+    if (!container || !domainData) return;
+    
+    renderDomainExplorer(domainData);
+}
+
+function renderDomainExplorer(data) {
+    const container = document.getElementById('domain-explorer');
+    if (!container) return;
+    
+    let html = '<div class="domain-explorer-grid">';
+    
+    data.forEach(domain => {
+        html += `
+            <div class="domain-card" data-domain="${domain.Name}">
+                <div class="domain-card-header" onclick="toggleDomainCard('${domain.Name}')">
+                    <h3>🗂️ ${domain.Name}</h3>
+                    <span class="badge">${domain.Modules} modules</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="domain-card-content" id="domain-${domain.Name}">
+                    <div class="domain-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Modules:</span>
+                            <span class="stat-value">${domain.Modules}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Functions:</span>
+                            <span class="stat-value">${domain.Functions || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <button class="btn-explore" onclick="exploreDomain('${domain.Name}')">
+                        🔍 Explore Domain
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function toggleDomainCard(domainName) {
+    const content = document.getElementById(`domain-${domainName}`);
+    const card = content?.closest('.domain-card');
+    
+    if (content && card) {
+        const isOpen = content.style.display !== 'none';
+        content.style.display = isOpen ? 'none' : 'block';
+        card.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function exploreDomain(domainName) {
+    createModal(`Domain: ${domainName}`, `
+        <div class="domain-details">
+            <h4>📂 Module Files</h4>
+            <div id="domain-files"></div>
+            <h4>🔧 Exported Functions</h4>
+            <div id="domain-functions"></div>
+            <h4>📊 Domain Metrics</h4>
+            <div id="domain-metrics"></div>
+        </div>
+    `);
+    
+    // This would be populated with actual data from the dashboard
+    document.getElementById('domain-files').innerHTML = '<em>Loading module information...</em>';
+}
+
+// ============================================================================
+// Configuration Explorer
+// ============================================================================
+
+function initConfigExplorer(configData) {
+    const container = document.getElementById('config-explorer');
+    if (!container) return;
+    
+    DashboardState.configExplorer = configData;
+    renderConfigExplorer(configData);
+}
+
+function renderConfigExplorer(config) {
+    const container = document.getElementById('config-explorer');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="config-explorer">
+            <div class="config-search">
+                <input type="text" id="config-search-input" placeholder="🔍 Search configuration..." 
+                       onkeyup="searchConfig(this.value)">
+                <button onclick="expandAllConfig()">Expand All</button>
+                <button onclick="collapseAllConfig()">Collapse All</button>
+            </div>
+            <div class="config-tree" id="config-tree">
+                ${renderConfigTree(config)}
+            </div>
+        </div>
+    `;
+}
+
+function renderConfigTree(obj, path = '', level = 0) {
+    if (!obj || typeof obj !== 'object') {
+        return `<span class="config-value">${JSON.stringify(obj)}</span>`;
+    }
+    
+    let html = '<div class="config-node" style="margin-left: ' + (level * 20) + 'px;">';
+    
+    Object.keys(obj).forEach(key => {
+        const value = obj[key];
+        const fullPath = path ? `${path}.${key}` : key;
+        const isObject = value && typeof value === 'object' && !Array.isArray(value);
+        const isArray = Array.isArray(value);
+        
+        html += `
+            <div class="config-item" data-path="${fullPath}">
+                <div class="config-key" onclick="toggleConfigNode('${fullPath}')">
+                    ${isObject || isArray ? '<span class="toggle-icon">▼</span>' : ''}
+                    <span class="key-name">${key}</span>
+                    ${isArray ? `<span class="badge">${value.length} items</span>` : ''}
+                </div>
+                <div class="config-value-container" id="config-${fullPath.replace(/[^a-zA-Z0-9]/g, '_')}">
+        `;
+        
+        if (isObject) {
+            html += renderConfigTree(value, fullPath, level + 1);
+        } else if (isArray) {
+            html += '<div class="config-array">';
+            value.forEach((item, idx) => {
+                html += `<div class="array-item">[${idx}]: ${JSON.stringify(item)}</div>`;
+            });
+            html += '</div>';
+        } else {
+            html += `<span class="config-value">${JSON.stringify(value)}</span>`;
+        }
+        
+        html += '</div></div>';
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function toggleConfigNode(path) {
+    const node = document.getElementById(`config-${path.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    const item = node?.closest('.config-item');
+    
+    if (node && item) {
+        const isOpen = node.style.display !== 'none';
+        node.style.display = isOpen ? 'none' : 'block';
+        const icon = item.querySelector('.toggle-icon');
+        if (icon) icon.textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function searchConfig(query) {
+    const items = document.querySelectorAll('.config-item');
+    const lowerQuery = query.toLowerCase();
+    
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        const matches = text.includes(lowerQuery);
+        item.style.display = matches || query === '' ? 'block' : 'none';
+        
+        if (matches && query !== '') {
+            item.classList.add('search-highlight');
+        } else {
+            item.classList.remove('search-highlight');
+        }
+    });
+}
+
+function expandAllConfig() {
+    document.querySelectorAll('.config-value-container').forEach(node => {
+        node.style.display = 'block';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▼';
+    });
+}
+
+function collapseAllConfig() {
+    document.querySelectorAll('.config-value-container').forEach(node => {
+        node.style.display = 'none';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▶';
+    });
+}
+
+// ============================================================================
+// Test & Quality Drill-downs
+// ============================================================================
+
+function initQualityDrilldown(qualityData) {
+    const container = document.getElementById('quality-drilldown');
+    if (!container || !qualityData) return;
+    
+    renderQualityDrilldown(qualityData);
+}
+
+function renderQualityDrilldown(data) {
+    const container = document.getElementById('quality-drilldown');
+    if (!container) return;
+    
+    let html = '<div class="quality-grid">';
+    
+    Object.keys(data).forEach(file => {
+        const metrics = data[file];
+        const score = metrics.score || 0;
+        const statusClass = score >= 80 ? 'success' : score >= 60 ? 'warning' : 'error';
+        
+        html += `
+            <div class="quality-item ${statusClass}" data-file="${file}">
+                <div class="quality-header" onclick="toggleQualityDetails('${file}')">
+                    <span class="file-name">${file}</span>
+                    <span class="quality-score">${score}/100</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="quality-details" id="quality-${file.replace(/[^a-zA-Z0-9]/g, '_')}">
+                    <div class="quality-checks">
+                        ${renderQualityChecks(metrics)}
+                    </div>
+                    <button class="btn-view-file" onclick="viewFileDetails('${file}')">View File</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderQualityChecks(metrics) {
+    const checks = [
+        { name: 'Error Handling', value: metrics.errorHandling },
+        { name: 'Logging', value: metrics.logging },
+        { name: 'Test Coverage', value: metrics.testCoverage },
+        { name: 'PSScriptAnalyzer', value: metrics.pssa }
+    ];
+    
+    return checks.map(check => `
+        <div class="check-item">
+            <span class="check-name">${check.name}:</span>
+            <span class="check-value">${check.value || 'N/A'}</span>
+        </div>
+    `).join('');
+}
+
+function toggleQualityDetails(file) {
+    const details = document.getElementById(`quality-${file.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    const item = details?.closest('.quality-item');
+    
+    if (details && item) {
+        const isOpen = details.style.display !== 'none';
+        details.style.display = isOpen ? 'none' : 'block';
+        item.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+function viewFileDetails(file) {
+    createModal(`File Details: ${file}`, `
+        <div class="file-details">
+            <h4>📊 Metrics</h4>
+            <div id="file-metrics"></div>
+            <h4>🔍 Issues</h4>
+            <div id="file-issues"></div>
+            <h4>🧪 Tests</h4>
+            <div id="file-tests"></div>
+        </div>
+    `);
+}
+
+// ============================================================================
+// GitHub Actions: Issue & PR Creation
+// ============================================================================
+
+function createGitHubIssue(template = 'bug') {
+    const templates = {
+        bug: {
+            title: 'Bug Report',
+            labels: 'bug',
+            body: `**Describe the bug**\nA clear and concise description of what the bug is.\n\n**To Reproduce**\nSteps to reproduce the behavior\n\n**Expected behavior**\nWhat you expected to happen\n\n**Screenshots**\nIf applicable, add screenshots`
+        },
+        feature: {
+            title: 'Feature Request',
+            labels: 'enhancement',
+            body: `**Is your feature request related to a problem?**\nA clear description of the problem\n\n**Describe the solution**\nWhat you want to happen\n\n**Additional context**\nAny other context`
+        },
+        docs: {
+            title: 'Documentation',
+            labels: 'documentation',
+            body: `**Documentation issue**\nDescribe what needs to be documented or improved`
+        }
+    };
+    
+    const templateData = templates[template] || templates.bug;
+    const url = `https://github.com/wizzense/AitherZero/issues/new?` +
+                `title=${encodeURIComponent(templateData.title)}&` +
+                `labels=${encodeURIComponent(templateData.labels)}&` +
+                `body=${encodeURIComponent(templateData.body)}`;
+    
+    window.open(url, '_blank');
+}
+
+function createPullRequest() {
+    const url = 'https://github.com/wizzense/AitherZero/compare';
+    window.open(url, '_blank');
+}
+
+function openDocumentation(section = '') {
+    const url = section 
+        ? `https://github.com/wizzense/AitherZero/tree/main/docs/${section}`
+        : 'https://github.com/wizzense/AitherZero/tree/main/docs';
+    window.open(url, '_blank');
+}
+
+// ============================================================================
+// Release & Build Information
+// ============================================================================
+
+function initReleaseTracker(releases) {
+    const container = document.getElementById('release-tracker');
+    if (!container || !releases) return;
+    
+    renderReleaseTracker(releases);
+}
+
+function renderReleaseTracker(releases) {
+    const container = document.getElementById('release-tracker');
+    if (!container) return;
+    
+    let html = '<div class="release-timeline">';
+    
+    releases.forEach((release, idx) => {
+        html += `
+            <div class="release-item" data-version="${release.version}">
+                <div class="release-marker">${idx === 0 ? '🎯' : '📦'}</div>
+                <div class="release-content">
+                    <div class="release-header" onclick="toggleRelease('${release.version}')">
+                        <h4>${release.version}${idx === 0 ? ' <span class="badge-latest">Latest</span>' : ''}</h4>
+                        <span class="release-date">${release.date}</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="release-details" id="release-${release.version.replace(/[^a-zA-Z0-9]/g, '_')}">
+                        <p>${release.description || 'No description'}</p>
+                        <div class="release-assets">
+                            ${release.assets ? release.assets.map(asset => 
+                                `<a href="${asset.url}" class="asset-link">📥 ${asset.name}</a>`
+                            ).join('') : ''}
+                        </div>
+                        <div class="release-actions">
+                            <button onclick="window.open('${release.url}', '_blank')" class="btn-release">View on GitHub</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function toggleRelease(version) {
+    const details = document.getElementById(`release-${version.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    const item = details?.closest('.release-item');
+    
+    if (details && item) {
+        const isOpen = details.style.display !== 'none';
+        details.style.display = isOpen ? 'none' : 'block';
+        item.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+    }
+}
+
+// ============================================================================
+// Index File Navigation
+// ============================================================================
+
+function initIndexNavigation() {
+    const indexContainer = document.getElementById('index-navigation');
+    if (!indexContainer) return;
+    
+    // Discover all index files in the project
+    const indices = [
+        { path: 'docs/index.md', label: 'Documentation Index' },
+        { path: 'automation-scripts/index.md', label: 'Automation Scripts Index' },
+        { path: 'domains/index.md', label: 'Domains Index' },
+        { path: 'tests/index.md', label: 'Tests Index' },
+        { path: 'templates/index.md', label: 'Templates Index' }
+    ];
+    
+    let html = '<div class="index-grid">';
+    indices.forEach(index => {
+        html += `
+            <div class="index-card" onclick="navigateToIndex('${index.path}')">
+                <div class="index-icon">📑</div>
+                <div class="index-label">${index.label}</div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    indexContainer.innerHTML = html;
+}
+
+function navigateToIndex(path) {
+    const url = `https://github.com/wizzense/AitherZero/blob/main/${path}`;
+    window.open(url, '_blank');
+}
+
+// ============================================================================
+// Modal System
+// ============================================================================
+
+function createModal(title, content) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('dashboard-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'dashboard-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>${title}</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                ${content}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    return modal;
+}
+
+function closeModal() {
+    const modal = document.getElementById('dashboard-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all interactive components
+    initBreadcrumbs();
+    initIndexNavigation();
+    
+    // Smooth scroll for all anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K: Toggle TOC
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            toggleToc();
+        }
+        // Escape: Close modals and menus
+        if (e.key === 'Escape') {
+            closeModal();
+            document.getElementById('toc')?.classList.remove('open');
+        }
+        // Ctrl/Cmd + /: Focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+            e.preventDefault();
+            document.getElementById('config-search-input')?.focus();
+        }
+    });
+    
+    // Scroll event handlers
+    window.addEventListener('scroll', highlightToc);
+    highlightToc();
+    
+    // Copy to clipboard for code blocks
+    document.querySelectorAll('code').forEach(code => {
+        code.style.cursor = 'pointer';
+        code.title = 'Click to copy';
+        code.addEventListener('click', function() {
+            navigator.clipboard.writeText(this.textContent).then(() => {
+                const originalText = this.textContent;
+                this.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    this.textContent = originalText;
+                }, 1500);
+            });
+        });
+    });
+    
+    // Animate progress bars on scroll
+    const progressBars = document.querySelectorAll('.progress-fill');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.transition = 'width 1.5s ease-out';
+                const width = entry.target.style.width;
+                entry.target.style.width = '0%';
+                setTimeout(() => {
+                    entry.target.style.width = width;
+                }, 100);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    progressBars.forEach(bar => observer.observe(bar));
+    
+    // Interactive card effects
+    document.querySelectorAll('.metric-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' || e.target.closest('a') || e.target.tagName === 'BUTTON') {
+                return;
+            }
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+    
+    console.log('🚀 AitherZero Interactive Dashboard Initialized');
+    console.log('📋 Keyboard Shortcuts:');
+    console.log('  • Ctrl/Cmd + K: Toggle navigation');
+    console.log('  • Ctrl/Cmd + /: Focus search');
+    console.log('  • Escape: Close modals/menus');
+    console.log('  • Click code blocks to copy');
+});
+
+// Update timestamp
+function updateTimestamp() {
+    const now = new Date();
+    const timeString = now.toLocaleString();
+    document.title = 'AitherZero Dashboard - Updated ' + timeString;
+}
+setInterval(updateTimestamp, 60000);
+
+        
+        // TOC toggle for mobile
+        function toggleToc() {
+            document.getElementById('toc').classList.toggle('open');
+        }
+
+        // Roadmap priority toggle
+        function togglePriority(id) {
+            const content = document.getElementById(id);
+            const header = content.previousElementSibling;
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                header.classList.add('active');
+            } else {
+                content.style.display = 'none';
+                header.classList.remove('active');
+            }
+        }
+
+        // Highlight active section in TOC
+        const sections = document.querySelectorAll('.section, .header');
+        const tocLinks = document.querySelectorAll('.toc a');
+
+        function highlightToc() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightToc);
+        highlightToc();
+
+        // Interactive card expansion
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.metric-card');
+            cards.forEach(card => {
+                // Add click animation
+                card.addEventListener('click', function(e) {
+                    // Don't expand if clicking on a link
+                    if (e.target.tagName === 'A' || e.target.closest('a')) {
+                        return;
+                    }
+                    
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+
+                // Add hover effects
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.25)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '';
+                });
+            });
+
+            // Smooth scroll for TOC links
+            document.querySelectorAll('.toc a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Close mobile TOC after navigation
+                        if (window.innerWidth < 768) {
+                            document.getElementById('toc').classList.remove('open');
+                        }
+                    }
+                });
+            });
+
+            // Add copy-to-clipboard for code blocks
+            document.querySelectorAll('code').forEach(code => {
+                code.style.cursor = 'pointer';
+                code.title = 'Click to copy';
+                code.addEventListener('click', function() {
+                    navigator.clipboard.writeText(this.textContent).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = '✓ Copied!';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 1500);
+                    });
+                });
+            });
+
+            // Animate progress bars on scroll
+            const progressBars = document.querySelectorAll('.progress-fill');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transition = 'width 1.5s ease-out';
+                        const width = entry.target.style.width;
+                        entry.target.style.width = '0%';
+                        setTimeout(() => {
+                            entry.target.style.width = width;
+                        }, 100);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            progressBars.forEach(bar => observer.observe(bar));
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K to toggle TOC
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    toggleToc();
+                }
+                // Escape to close TOC
+                if (e.key === 'Escape') {
+                    document.getElementById('toc').classList.remove('open');
+                }
+            });
+
+            // Add search functionality hint (for future enhancement)
+            console.log('💡 Dashboard Pro Tip: Use Ctrl+F to search this dashboard');
+            console.log('🔍 Keyboard shortcuts:');
+            console.log('  - Ctrl/Cmd + K: Toggle navigation');
+            console.log('  - Escape: Close navigation');
+            console.log('  - Click code blocks to copy');
+        });
+
+        // Auto-refresh every 5 minutes (optional - can be disabled)
+        // setTimeout(() => {
+        //     window.location.reload();
+        // }, 300000);
+
+        // Add live timestamp update
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            document.title = 'AitherZero Dashboard - Updated ' + timeString;
+        }
+        setInterval(updateTimestamp, 60000); // Update every minute
+    </script>
+</body>
+</html>

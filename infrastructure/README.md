@@ -1,19 +1,79 @@
 # AitherZero Infrastructure
 
-This directory contains infrastructure-as-code definitions for deploying AitherZero environments.
+This directory is a **stub directory** for infrastructure-as-code managed as Git submodules.
+
+> ⚠️ **Important**: Infrastructure definitions are managed as Git submodules, not stored directly in this directory. See [SUBMODULES.md](./SUBMODULES.md) for complete documentation on the submodule system.
+
+## Quick Start
+
+```bash
+# Initialize infrastructure submodules (automated)
+aitherzero 0109
+
+# Or use PowerShell cmdlets directly
+Initialize-InfrastructureSubmodule
+```
 
 ## 📁 Directory Structure
 
+After initialization:
+
 ```
 infrastructure/
-├── kubernetes/         # Kubernetes manifests
+├── SUBMODULES.md         # Submodule system documentation (READ THIS FIRST)
+├── README.md             # This file
+├── aitherium/            # Default Aitherium infrastructure (Git submodule)
+│   ├── terraform/        # OpenTofu/Terraform configurations
+│   ├── kubernetes/       # Kubernetes manifests
+│   ├── docker/           # Container definitions
+│   └── ...
+├── custom/               # Custom infrastructure repo (optional Git submodule)
+└── [other-submodules]/   # Additional configured infrastructure repos
+```
+
+## Why Submodules?
+
+Infrastructure as Git submodules provides:
+
+- **Version Control**: Pin specific infrastructure versions
+- **Reusability**: Share templates across projects
+- **Flexibility**: Different repos for different environments
+- **Independence**: Infrastructure teams work separately
+- **Collaboration**: Multi-team infrastructure development
+
+## Configuration
+
+Configure infrastructure submodules in `config.psd1`:
+
+```powershell
+Infrastructure = @{
+    Submodules = @{
+        Enabled  = $true
+        Default  = @{
+            Url  = 'https://github.com/Aitherium/aitherium-infrastructure.git'
+            Path = 'infrastructure/aitherium'
+        }
+    }
+}
+```
+
+See [SUBMODULES.md](./SUBMODULES.md) for complete configuration options.
+
+## Legacy Content
+
+The sections below describe the legacy infrastructure stored directly in this repository. This content is being migrated to the submodule system.
+
+### 📁 Legacy Directory Structure (Deprecated)
+
+```
+infrastructure/
+├── kubernetes/         # Kubernetes manifests (legacy - being moved to submodule)
 │   └── deployment.yml  # K8s deployment, service, ingress
-├── terraform/          # Terraform/OpenTofu configurations
+├── terraform/          # Terraform/OpenTofu configurations (legacy)
 │   └── pr-environment.tf  # Azure container instances
-├── examples/           # Example configurations
-├── infrastructure/     # Additional infrastructure modules
-├── main.tf            # Root Terraform configuration
-└── README.md          # This file
+├── examples/           # Example configurations (legacy)
+├── infrastructure/     # Additional infrastructure modules (legacy)
+└── main.tf            # Root Terraform configuration (legacy)
 ```
 
 ## 🚀 Deployment Targets

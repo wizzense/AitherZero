@@ -86,9 +86,9 @@ Get-Module -Name AitherZero -ListAvailable
 
 | Document | Purpose | When to Use |
 |----------|---------|-------------|
-| **[docs/strategic/NEXT-STEPS-SUMMARY.md](docs/strategic/NEXT-STEPS-SUMMARY.md)** | Executive overview | Quick decisions, stakeholder updates |
-| **[docs/strategic/NEXT-ACTIONS.md](docs/strategic/NEXT-ACTIONS.md)** | Week-by-week tactics | Daily execution, task details |
-| **[docs/strategic/STRATEGIC-ROADMAP.md](docs/strategic/STRATEGIC-ROADMAP.md)** | 180-day strategy | Planning, prioritization |
+| **[library/docs/strategic/NEXT-STEPS-SUMMARY.md](library/docs/strategic/NEXT-STEPS-SUMMARY.md)** | Executive overview | Quick decisions, stakeholder updates |
+| **[library/docs/strategic/NEXT-ACTIONS.md](library/docs/strategic/NEXT-ACTIONS.md)** | Week-by-week tactics | Daily execution, task details |
+| **[library/docs/strategic/STRATEGIC-ROADMAP.md](library/docs/strategic/STRATEGIC-ROADMAP.md)** | 180-day strategy | Planning, prioritization |
 | **This Card** | Quick reference | Daily reminders, commands |
 
 ---
@@ -152,8 +152,8 @@ Legend: ✅ Done | ⏳ Pending | 🚫 Blocked
 **Testing PRs locally**:
 ```bash
 gh pr checkout 1700
-./automation-scripts/0402_run-unit-tests.ps1
-./automation-scripts/0404_run-psscriptanalyzer.ps1
+./library/library/automation-scripts/0402_run-unit-tests.ps1
+./library/library/automation-scripts/0404_run-psscriptanalyzer.ps1
 ```
 
 **Workflow debugging**:
@@ -179,12 +179,12 @@ Publish-Module -Path . -WhatIf -NuGetApiKey $key
 ## 📞 Getting Help
 
 **For technical issues**: Open GitHub Discussion in Q&A category  
-**For strategic questions**: Review [docs/strategic/STRATEGIC-ROADMAP.md](docs/strategic/STRATEGIC-ROADMAP.md)  
-**For tactical execution**: Follow [docs/strategic/NEXT-ACTIONS.md](docs/strategic/NEXT-ACTIONS.md)  
-**For quick decisions**: Use [docs/strategic/NEXT-STEPS-SUMMARY.md](docs/strategic/NEXT-STEPS-SUMMARY.md)
+**For strategic questions**: Review [library/docs/strategic/STRATEGIC-ROADMAP.md](library/docs/strategic/STRATEGIC-ROADMAP.md)  
+**For tactical execution**: Follow [library/docs/strategic/NEXT-ACTIONS.md](library/docs/strategic/NEXT-ACTIONS.md)  
+**For quick decisions**: Use [library/docs/strategic/NEXT-STEPS-SUMMARY.md](library/docs/strategic/NEXT-STEPS-SUMMARY.md)
 
 **Escalation path**:
-1. Check documentation (this card, [docs/strategic/NEXT-ACTIONS.md](docs/strategic/NEXT-ACTIONS.md))
+1. Check documentation (this card, [library/docs/strategic/NEXT-ACTIONS.md](library/docs/strategic/NEXT-ACTIONS.md))
 2. Search GitHub Discussions
 3. Open new Discussion thread
 4. Tag @wizzense for urgent items
@@ -264,7 +264,7 @@ Use this for status updates:
 
 **Print this card** and keep it visible during Week 1 execution! 🚀
 
-**Questions?** Check [docs/strategic/NEXT-ACTIONS.md](docs/strategic/NEXT-ACTIONS.md) for detailed steps.
+**Questions?** Check [library/docs/strategic/NEXT-ACTIONS.md](library/docs/strategic/NEXT-ACTIONS.md) for detailed steps.
 
 ---
 

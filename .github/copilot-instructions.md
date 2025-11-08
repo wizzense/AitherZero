@@ -44,13 +44,18 @@ Use the `aitherzero` wrapper for script execution: `aitherzero 0402` runs unit t
 
 ## Domain Structure (Consolidated Architecture v2.0)
 
-Located in `/domains/` (legacy references may point to `aither-core/`):
+Located in `/aithercore/`:
 - **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management (57 functions)
 - **configuration/**: Config management with environment switching (36 functions)
 - **utilities/**: Logging, maintenance, cross-platform helpers (24 functions)
 - **security/**: Credentials, certificates (41 functions)
-- **experience/**: UI components, menus, wizards (22 functions)
 - **automation/**: Orchestration engine, workflows (16 functions)
+- **cli/**: Command-line interface and script execution (unified menu/CLI system)
+- **development/**: Git automation, issue tracking, PR management
+- **testing/**: Testing frameworks, quality validation
+- **reporting/**: Report generation, tech debt analysis
+- **documentation/**: Documentation generation and indexing
+- **ai-agents/**: AI workflow orchestration
 
 ## Critical Development Patterns
 
@@ -88,7 +93,7 @@ automation-scripts/
 ├── 0404_Run-PSScriptAnalyzer.ps1          # Analysis (with -Fast parameter)
 └── 0415_Manage-PSScriptAnalyzerCache.ps1  # Cache management (different purpose)
 
-orchestration/playbooks/
+aithercore/orchestration/playbooks/
 └── code-quality-full.psd1    ✅ Orchestrates complex workflows
 ```
 
@@ -124,7 +129,7 @@ orchestration/playbooks/
 0416_Generate-AnalysisReport.ps1       # Report generation
 
 # Complex workflow = playbook:
-orchestration/playbooks/code-quality-full.psd1
+aithercore/orchestration/playbooks/code-quality-full.psd1
 ```
 
 ### ⚠️ HARD REQUIREMENT: Use ScriptUtilities Module for Common Code
@@ -160,7 +165,7 @@ param(
 
 # Import ScriptUtilities for common functions
 $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 # Now use the functions directly
 Write-ScriptLog "Starting PSScriptAnalyzer..." -Level 'Information'
@@ -194,6 +199,112 @@ $token = Get-GitHubToken -ErrorAction SilentlyContinue
 
 **Core Principle:**
 > "DRY (Don't Repeat Yourself) - Extract reusable code to ScriptUtilities, not copy-paste to every script"
+
+### ⚠️ HARD REQUIREMENT: Use Singular Nouns for Cmdlets
+
+**ALWAYS use singular nouns for PowerShell cmdlets to enable pipeline processing and parallel execution!**
+
+All AitherZero cmdlets MUST follow the singular noun design pattern:
+- Process **ONE object at a time**
+- Support **pipeline input** with `Begin/Process/End` blocks
+- Enable **parallel processing** with `ForEach-Object -Parallel`
+- **Compose naturally** in pipeline chains
+
+❌ **WRONG - Plural nouns (batch operations):**
+```powershell
+function Update-Items {
+    param([string]$Name)
+    
+    # Process all items at once
+    $items = Get-AllItems
+    foreach ($item in $items) {
+        # Update logic
+    }
+}
+
+# Usage - can't filter or parallelize easily
+Update-Items
+```
+
+✅ **CORRECT - Singular noun (pipeline-friendly):**
+```powershell
+function Update-Item {
+    [CmdletBinding(DefaultParameterSetName = 'ByName')]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = 'ByObject')]
+        [PSCustomObject]$InputObject,
+
+        [Parameter(ParameterSetName = 'ByName')]
+        [string]$Name
+    )
+
+    begin {
+        # One-time initialization
+        $config = Get-Configuration
+    }
+
+    process {
+        # Process ONE item at a time
+        $item = if ($InputObject) { $InputObject } else { Get-Item -Name $Name }
+        # Update logic for single item
+        Write-Output $item  # Return for pipeline
+    }
+}
+
+# Usage - flexible, pipeable, parallelizable
+Get-Item | Update-Item
+Get-Item | Where-Object { $_.Enabled } | Update-Item
+Get-Item | ForEach-Object -Parallel { Update-Item -InputObject $_ } -ThrottleLimit 4
+```
+
+**Benefits:**
+1. **Memory Efficient**: Stream objects instead of loading all in memory
+2. **Parallel Processing**: Each item can be processed concurrently  
+3. **Composability**: Chain operations with `|` operator
+4. **Flexibility**: Filter with `Where-Object`, transform with `ForEach-Object`
+5. **PowerShell Conventions**: Follows official best practices
+
+**Implementation Checklist:**
+- [ ] Use singular noun (Get-Item, not Get-Items)
+- [ ] Add `Begin/Process/End` blocks
+- [ ] Support pipeline with `ValueFromPipeline`
+- [ ] Add `InputObject` parameter for pipeline input
+- [ ] Return processed objects with `Write-Output`
+- [ ] Add parameter sets (ByObject, ByName, ByPath)
+- [ ] Include ShouldProcess support
+- [ ] Add PSTypeName to output objects
+
+**Real Example - Infrastructure Submodules:**
+```powershell
+# Get all submodules and update in parallel
+Get-InfrastructureSubmodule -Initialized | 
+    ForEach-Object -Parallel {
+        Update-InfrastructureSubmodule -InputObject $_ -Remote
+    } -ThrottleLimit 4
+
+# Filter and process
+Get-InfrastructureSubmodule | 
+    Where-Object { $_.Name -like '*test*' } | 
+    Update-InfrastructureSubmodule -Merge
+
+# Chain operations
+Get-InfrastructureSubmodule -All | 
+    Where-Object { -not $_.Enabled } | 
+    Remove-InfrastructureSubmodule -Clean
+```
+
+**Exception - Keep Plural When:**
+- Cmdlet performs coordination/sync across multiple items (e.g., `Sync-InfrastructureSubmodule`)
+- Cmdlet explicitly returns entire collection (e.g., `Get-AllFiles`)
+- Cmdlet is a batch validator (e.g., `Test-AllConfigurations`)
+
+**Documentation:**
+- See `docs/SINGULAR-NOUN-DESIGN.md` for complete guidelines
+- See `docs/REFACTORING-PLAN-SINGULAR-NOUNS.md` for project-wide refactoring plan
+- Infrastructure submodule cmdlets demonstrate this pattern perfectly
+
+**Core Principle:**
+> "Cmdlets process ONE object, pipelines process MANY objects"
 
 ### Module Scope Issues
 Functions in scriptblocks may lose module scope. Call directly:
@@ -253,7 +364,7 @@ aitherzero 0703 -Title "Add feature"                 # PR creation
 Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
 
 # Domain tests with coverage
-Invoke-Pester -Path "./tests/domains/configuration" -CodeCoverage "./domains/configuration/*.psm1"
+Invoke-Pester -Path "./tests/aithercore/configuration" -CodeCoverage "./aithercore/configuration/*.psm1"
 
 # All tests
 Invoke-Pester -Path "./tests"
@@ -291,7 +402,7 @@ Invoke-Pester -Path "./tests"
 **Test Structure:**
 - Unit tests: `tests/unit/automation-scripts/{range}/` (e.g., `0400-0499/`)
 - Integration tests: `tests/integration/automation-scripts/`
-- Domain tests: `tests/domains/{domain}/`
+- Domain tests: `tests/aithercore/{domain}/`
 
 **Validation:**
 ```powershell
@@ -472,7 +583,7 @@ if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
 │   ├── 0800-0899/              # Issue management
 │   ├── 0900-0999/              # Validation
 │   └── 9000-9999/              # Maintenance & cleanup
-├── domains/                     # 11 functional domains (modular architecture)
+├── aithercore/                     # 11 functional domains (modular architecture)
 │   ├── ai-agents/              # 3 modules - AI integration
 │   ├── automation/             # 2 modules - Orchestration engine
 │   ├── configuration/          # 1 module - Config management (36 functions)
@@ -487,19 +598,21 @@ if ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') {
 ├── tests/                       # Test suite (~74 test files)
 │   ├── unit/                   # Unit tests (by domain and script range)
 │   ├── integration/            # Integration tests
-│   ├── domains/                # Domain-specific tests
+│   ├── aithercore/                # Domain-specific tests
 │   ├── TestHelpers.psm1        # Shared test utilities
 │   ├── results/                # Test output (XML, JSON)
 │   ├── analysis/               # PSScriptAnalyzer results (CSV, JSON)
 │   └── coverage/               # Code coverage reports
-├── orchestration/              # Playbooks and sequences
-│   ├── playbooks/              # Predefined execution sequences
-│   └── sequences/              # Script execution groups
+├── aithercore/                     # 11+ functional domains
+│   ├── orchestration/          # Playbooks and sequences
+│   │   ├── playbooks/          # Predefined execution sequences
+│   │   └── schema/             # Playbook schema definitions
 ├── docs/                        # Documentation
 ├── reports/                     # Generated reports
 ├── logs/                        # Transcript and execution logs
 ├── infrastructure/             # OpenTofu/Terraform configs
-├── mcp-server/                 # MCP server (Node.js) - AI integration
+├── integrations/               # External integrations
+│   └── mcp-server/             # MCP server (Node.js) - AI integration
 └── tools/                      # Utility scripts
 ```
 
@@ -648,10 +761,10 @@ if ($shouldCreateIssues -and ($overallStatus -eq 'Failed')) {
 5. Export script number in orchestration playbooks if needed
 
 **To add a new domain function**:
-1. Add function to appropriate domain module in `domains/*/`
+1. Add function to appropriate domain module in `aithercore/*/`
 2. Add `Export-ModuleMember -Function 'YourFunction'` at module end
 3. Add function name to `AitherZero.psd1` FunctionsToExport array
-4. Create unit test in `tests/domains/your-domain/`
+4. Create unit test in `tests/aithercore/your-domain/`
 5. Add comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, etc.)
 
 **To modify configuration**:
@@ -742,10 +855,10 @@ aitherzero 0402
 ./automation-scripts/0407_Validate-Syntax.ps1 -FilePath ./path/to/changed.ps1
 
 # Run PSScriptAnalyzer on specific path
-./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path ./domains/utilities
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path ./aithercore/utilities
 
 # Run tests for specific domain
-Invoke-Pester -Path "./tests/domains/configuration" -Output Detailed
+Invoke-Pester -Path "./tests/aithercore/configuration" -Output Detailed
 
 # Run single test file
 Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
@@ -758,7 +871,7 @@ Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
 
 ```powershell
 # Comprehensive quality check - Takes ~2-3 minutes
-./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/utilities
+./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./aithercore/utilities
 
 # Checks performed:
 # - Error handling (try/catch patterns)
@@ -848,7 +961,7 @@ Import-Module ./AitherZero.psd1 -Force
 **Issue**: PSScriptAnalyzer timeout
 ```powershell
 # Solution: Run on specific path instead of entire codebase
-aitherzero 0404 -Path ./domains/utilities
+aitherzero 0404 -Path ./aithercore/utilities
 ```
 
 ### Before Making Changes
@@ -1269,7 +1382,7 @@ $env:AITHERZERO_INITIALIZED -eq 'true'
 **PSScriptAnalyzer timeout**:
 ```powershell
 # Run on specific path instead
-aitherzero 0404 -Path ./domains/utilities
+aitherzero 0404 -Path ./aithercore/utilities
 ```
 
 **Issue creation failures in CI**:
@@ -1290,7 +1403,7 @@ if ($env:GITHUB_ACTIONS -eq 'true') {
 | `config.psd1` | Master configuration | 1476 lines |
 | `bootstrap.ps1` | Setup script | ~900 lines |
 | `automation-scripts/` | Numbered scripts | 125 scripts |
-| `domains/` | Functional modules | 11 domains |
+| `aithercore/` | Functional modules | 11 domains |
 | `tests/` | Test suite | ~74 test files |
 | `.github/workflows/` | CI/CD pipelines | 17 workflows |
 

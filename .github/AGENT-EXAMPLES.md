@@ -13,7 +13,7 @@ Title: Add nested virtualization support for lab VMs
 Files Changed:
 - infrastructure/vm/New-LabVM.ps1
 - automation-scripts/0105_Create-LabVM.ps1
-- domains/infrastructure/VMManagement.psm1
+- aithercore/infrastructure/VMManagement.psm1
 ```
 
 ### Automatic Suggestion
@@ -58,7 +58,7 @@ You're implementing certificate rotation automation.
 ```
 Title: Implement automatic certificate rotation
 Files Changed:
-- domains/security/CertificateManagement.psm1
+- aithercore/security/CertificateManagement.psm1
 - automation-scripts/0150_Rotate-Certificates.ps1
 - tests/security/CertificateRotation.Tests.ps1
 ```
@@ -137,9 +137,9 @@ Modernizing the console menu system.
 ```
 Title: Redesign interactive menu system with improved UX
 Files Changed:
-- domains/experience/Menu.psm1
-- domains/experience/UserInterface.psm1
-- domains/experience/Wizard.psm1
+- aithercore/experience/Menu.psm1
+- aithercore/experience/UserInterface.psm1
+- aithercore/experience/Wizard.psm1
 - tests/experience/Menu.Tests.ps1
 ```
 
@@ -217,8 +217,8 @@ Creating new orchestration playbook system.
 ```
 Title: Implement dynamic playbook execution engine
 Files Changed:
-- orchestration/PlaybookEngine.ps1
-- orchestration/SequenceRunner.ps1
+- aithercore/orchestration/PlaybookEngine.ps1
+- aithercore/orchestration/SequenceRunner.ps1
 - automation-scripts/0705_Execute-Playbook.ps1
 - automation-scripts/0706_Validate-Playbook.ps1
 ```
@@ -294,8 +294,8 @@ Adding new feature that touches multiple areas.
 Title: Implement automated lab deployment with security hardening
 Files Changed:
 - infrastructure/LabDeployment.ps1
-- domains/security/Hardening.psm1
-- domains/infrastructure/VMProvisioning.psm1
+- aithercore/security/Hardening.psm1
+- aithercore/infrastructure/VMProvisioning.psm1
 - tests/integration/LabDeployment.Tests.ps1
 - docs/guides/lab-deployment.md
 - automation-scripts/0180_Deploy-Lab.ps1

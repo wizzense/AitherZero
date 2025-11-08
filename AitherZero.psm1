@@ -52,50 +52,46 @@ if ($env:PATH -notlike "*$automationPath*") {
 # Import all nested modules and re-export their functions
 $modulesToLoad = @(
     # Core utilities first
-    './domains/utilities/Logging.psm1',
-    './domains/utilities/ExtensionManager.psm1',
-    './domains/utilities/EnvironmentConfig.psm1',
+    './aithercore/utilities/Logging.psm1',
+    './aithercore/utilities/ExtensionManager.psm1',
 
     # Configuration (both old and new for backward compatibility)
-    './domains/configuration/Configuration.psm1',
-    './domains/configuration/ConfigManager.psm1',
+    './aithercore/configuration/Configuration.psm1',
+    './aithercore/configuration/ConfigManager.psm1',
 
     # CLI Module (NEW - loads after configuration)
-    './domains/cli/AitherZeroCLI.psm1',
+    './aithercore/cli/AitherZeroCLI.psm1',
 
     # Development tools
-    './domains/development/GitAutomation.psm1',
-    './domains/development/IssueTracker.psm1',
-    './domains/development/PullRequestManager.psm1',
+    './aithercore/development/GitAutomation.psm1',
+    './aithercore/development/IssueTracker.psm1',
+    './aithercore/development/PullRequestManager.psm1',
 
     # Testing (Legacy and New)
-    './domains/testing/TestingFramework.psm1',
-    './domains/testing/AitherTestFramework.psm1',
-    './domains/testing/CoreTestSuites.psm1',
+    './aithercore/testing/TestingFramework.psm1',
+    './aithercore/testing/AitherTestFramework.psm1',
+    './aithercore/testing/CoreTestSuites.psm1',
 
     # Reporting
-    './domains/reporting/ReportingEngine.psm1',
-    './domains/reporting/TechDebtAnalysis.psm1',
+    './aithercore/reporting/ReportingEngine.psm1',
+    './aithercore/reporting/TechDebtAnalysis.psm1',
 
     # Automation (exports Invoke-OrchestrationSequence)
-    './domains/automation/OrchestrationEngine.psm1',
-    './domains/automation/AsyncOrchestration.psm1',
-    './domains/automation/GitHubWorkflowParser.psm1',
-    './domains/automation/DeploymentAutomation.psm1',
-    './domains/automation/ScriptUtilities.psm1',
+    './aithercore/automation/OrchestrationEngine.psm1',
+    './aithercore/automation/AsyncOrchestration.psm1',
+    './aithercore/automation/GitHubWorkflowParser.psm1',
+    './aithercore/automation/DeploymentAutomation.psm1',
+    './aithercore/automation/ScriptUtilities.psm1',
 
     # Infrastructure
-    './domains/infrastructure/Infrastructure.psm1',
-    './domains/infrastructure/DeploymentArtifacts.psm1',
+    './aithercore/infrastructure/Infrastructure.psm1',
     
     # Security
-    './domains/security/Security.psm1',
-    './domains/security/Encryption.psm1',
-    './domains/security/LicenseManager.psm1',
+    './aithercore/security/Security.psm1',
     
     # Documentation
-    './domains/documentation/DocumentationEngine.psm1',
-    './domains/documentation/ProjectIndexer.psm1'
+    './aithercore/documentation/DocumentationEngine.psm1',
+    './aithercore/documentation/ProjectIndexer.psm1'
 )
 
 # Parallel module loading for better performance
@@ -108,10 +104,10 @@ $script:LoadStartTime = Get-Date
 
 # Load critical modules first (synchronously)
 $criticalModules = @(
-    './domains/utilities/Logging.psm1',
-    './domains/configuration/Configuration.psm1',
-    './domains/configuration/ConfigManager.psm1',
-    './domains/utilities/ExtensionManager.psm1'
+    './aithercore/utilities/Logging.psm1',
+    './aithercore/configuration/Configuration.psm1',
+    './aithercore/configuration/ConfigManager.psm1',
+    './aithercore/utilities/ExtensionManager.psm1'
 )
 
 foreach ($modulePath in $criticalModules) {

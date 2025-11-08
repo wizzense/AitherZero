@@ -454,7 +454,7 @@ jobs:
               }
 
               // Test infrastructure issues
-              if (file.includes('tests/') || file.includes('.Tests.ps1') || error.includes('pester')) {
+              if (file.includes('library/tests/') || file.includes('.Tests.ps1') || error.includes('pester')) {
                 return { agent: 'jessica', name: 'Jessica Testing', mention: '@jessica' };
               }
 
@@ -469,7 +469,7 @@ jobs:
               }
 
               // Documentation issues
-              if (file.endsWith('.md') || file.includes('docs/')) {
+              if (file.endsWith('.md') || file.includes('library/')) {
                 return { agent: 'olivia', name: 'Olivia Documentation', mention: '@olivia' };
               }
 

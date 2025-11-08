@@ -85,7 +85,7 @@ Note: Run '/test --force' to bypass cache
 /test --incremental
 
 Analyzing changed files...
-📝 Changes detected in: domains/testing/
+📝 Changes detected in: aithercore/testing/
 🎯 Running targeted tests for testing module...
 ✅ 12 tests passed
 ⏱️ Duration: 3.2s (saved 26s by skipping unchanged modules)

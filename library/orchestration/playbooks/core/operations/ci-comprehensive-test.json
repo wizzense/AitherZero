@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "name": "ci-comprehensive-test",
+    "description": "Run full test suite (unit + integration)",
+    "version": "1.0.0",
+    "category": "operations",
+    "tags": ["ci", "testing", "unit", "integration"],
+    "estimatedDuration": "20-30 minutes",
+    "githubWorkflow": "comprehensive-test-execution.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": ["Pester"],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false,
+      "generateReport": true
+    },
+    "profiles": {
+      "unit-only": {
+        "description": "Run unit tests only",
+        "variables": {
+          "skipIntegration": true
+        }
+      },
+      "integration-only": {
+        "description": "Run integration tests only",
+        "variables": {
+          "skipUnit": true
+        }
+      },
+      "ci": {
+        "description": "CI optimized - full test suite with reporting",
+        "variables": {
+          "skipUnit": false,
+          "skipIntegration": false,
+          "generateReport": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Install Testing Tools",
+        "description": "Ensure Pester is installed",
+        "sequences": ["0400"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 300
+      },
+      {
+        "name": "Unit Tests",
+        "description": "Run unit tests",
+        "sequences": ["0402"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 900,
+        "condition": "{{skipUnit}} == false"
+      },
+      {
+        "name": "Integration Tests",
+        "description": "Run integration tests",
+        "sequences": ["0403"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 900,
+        "condition": "{{skipIntegration}} == false"
+      },
+      {
+        "name": "Generate Test Report",
+        "description": "Generate comprehensive test report",
+        "sequences": ["0450"],
+        "variables": {},
+        "continueOnError": true,
+        "timeout": 300,
+        "condition": "{{generateReport}} == true"
+      }
+    ]
+  }
+}

@@ -15,7 +15,7 @@ Describe '0406_Generate-Coverage Integration' -Tag 'Integration', 'AutomationScr
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0406_Generate-Coverage.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0406_Generate-Coverage.ps1'
     }
 
     Context 'Integration' {

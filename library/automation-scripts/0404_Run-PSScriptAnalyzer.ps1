@@ -1,0 +1,630 @@
+#Requires -Version 7.0
+
+<#
+.SYNOPSIS
+    Run PSScriptAnalyzer on AitherZero codebase
+.DESCRIPTION
+    Performs static code analysis to identify potential issues and ensure code quality
+
+    Exit Codes:
+    0   - No issues found
+    1   - Issues found
+    2   - Analysis error
+
+.NOTES
+    Stage: Testing
+    Order: 0404
+    Dependencies: 0400
+    Tags: testing, code-quality, psscriptanalyzer, static-analysis
+#>
+
+[CmdletBinding(SupportsShouldProcess)]
+param(
+    [string]$Path = (Split-Path $PSScriptRoot -Parent),
+    [string]$OutputPath,
+    
+    # Performance & Mode Options
+    [switch]$Fast,              # Fast mode: analyze only core/critical files
+    [switch]$UseCache,          # Use cached results for unchanged files  
+    [int]$MaxFiles = 0,         # Max files to analyze (0 = all, used with -Fast)
+    [switch]$CoreOnly,          # Analyze only core files (most restrictive)
+    
+    # Standard Options
+    [switch]$DryRun,
+    [switch]$Fix,
+    [switch]$IncludeSuppressed,
+    [string[]]$ExcludePaths = @('tests'),
+    [string[]]$Severity,
+    [string[]]$ExcludeRules,
+    [string[]]$IncludeRules
+)
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Determine output path based on mode
+if (-not $OutputPath) {
+    if ($Fast) {
+        $OutputPath = "./library/reports/psscriptanalyzer-fast-results.json"
+    } else {
+        $OutputPath = "./library/reports/psscriptanalyzer-results.json"
+    }
+}
+
+# Script metadata (kept as comment for documentation)
+# Stage: Testing
+# Order: 0404
+# Dependencies: 0400
+# Tags: testing, code-quality, psscriptanalyzer, static-analysis
+# RequiresAdmin: No
+# SupportsWhatIf: Yes
+
+# Import modules
+$projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+Import-Module (Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
+
+$configModule = Join-Path $projectRoot "aithercore/configuration/Configuration.psm1"
+
+if (Test-Path $configModule) {
+    Import-Module $configModule -Force -ErrorAction SilentlyContinue
+}
+
+$settingsPath = $null  # Initialize for cleanup in finally block
+
+try {
+    Write-ScriptLog -Message "Starting PSScriptAnalyzer analysis"
+
+    # Check if running in DryRun mode
+    if ($DryRun) {
+        Write-ScriptLog -Message "DRY RUN: Would run PSScriptAnalyzer"
+        Write-ScriptLog -Message "Analysis path: $Path"
+        Write-ScriptLog -Message "Fix mode: $Fix"
+        Write-ScriptLog -Message "Excluded paths: $($ExcludePaths -join ', ')"
+
+        # List PowerShell files that would be analyzed
+        $psFiles = @(Get-ChildItem -Path $Path -Include "*.ps1", "*.psm1", "*.psd1" -Recurse |
+            Where-Object {
+                $file = $_
+                -not ($ExcludePaths | Where-Object { $file.FullName -like "*\$_\*" })
+            })
+        Write-ScriptLog -Message "Would analyze $($psFiles.Count) PowerShell files"
+        exit 0
+    }
+
+    # Ensure PSScriptAnalyzer is available
+    if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+        Write-ScriptLog -Level Error -Message "PSScriptAnalyzer is required. Run 0400_Install-TestingTools.ps1 first."
+        exit 2
+    }
+
+    Import-Module PSScriptAnalyzer
+
+    # Load configuration from config.psd1
+    $analysisConfig = @{}
+
+    # Try to get configuration from config.psd1
+    if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
+        $config = Get-Configuration
+        if ($config -and $config.Testing -and $config.Testing.PSScriptAnalyzer) {
+            $analysisConfig = $config.Testing.PSScriptAnalyzer
+        }
+    }
+    
+    # Detect CI environment for performance optimizations
+    $isCI = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true') -or ($env:TF_BUILD -eq 'true')
+    if (-not $isCI -and (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue)) {
+        $envValue = Get-ConfiguredValue -Name 'Environment' -Section 'Core' -Default 'Development'
+        $isCI = ($envValue -eq 'CI')
+    }
+             
+    if ($isCI) {
+        Write-ScriptLog -Message "CI environment detected - applying performance optimizations while maintaining full fidelity"
+        # In CI, maintain full analysis but optimize for performance
+        # Exclude legacy directories and temp files for cleaner analysis
+        if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
+            $ExcludePaths = @('.archive', 'temp', 'logs', 'reports', '.git', 'node_modules')
+        } else {
+            # Ensure legacy directories are always excluded in CI
+            $ExcludePaths = @($ExcludePaths) + @('.archive', 'temp', 'logs', 'reports')
+        }
+        Write-ScriptLog -Message "CI mode: Full analysis with performance optimizations, excluded $($ExcludePaths.Count) path patterns"
+    }
+
+    # Apply parameter overrides or use config defaults
+    if (-not $PSBoundParameters.ContainsKey('Severity')) {
+        $Severity = if ($analysisConfig -and $analysisConfig.PSObject.Properties['Severity'] -ne $null -and $analysisConfig.Severity) {
+            $analysisConfig.Severity
+        } else {
+            @('Error', 'Warning', 'Information')
+        }
+    }
+
+    if (-not $PSBoundParameters.ContainsKey('ExcludeRules')) {
+        $ExcludeRules = if ($analysisConfig -and $analysisConfig.PSObject.Properties['ExcludeRules'] -ne $null -and $analysisConfig.ExcludeRules) {
+            $analysisConfig.ExcludeRules
+        } else {
+            @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
+        }
+    }
+
+    if (-not $PSBoundParameters.ContainsKey('IncludeRules')) {
+        $IncludeRules = if ($analysisConfig -and $analysisConfig.PSObject.Properties['IncludeRules'] -ne $null -and $analysisConfig.IncludeRules) {
+            $analysisConfig.IncludeRules
+        } else {
+            @('*')
+        }
+    }
+
+    # Build PSScriptAnalyzer parameters
+    $analyzerParams = @{
+        Path = $Path
+        Recurse = $true
+        Severity = $Severity
+        ExcludeRule = $ExcludeRules
+    }
+
+    # Add IncludeRule if not all rules
+    if ($IncludeRules -and $IncludeRules -ne @('*')) {
+        $analyzerParams['IncludeRule'] = $IncludeRules
+    }
+
+    # Add rule-specific settings if available
+    if ($analysisConfig -and $analysisConfig.PSObject.Properties['Rules'] -ne $null -and $analysisConfig.Rules) {
+        # Create settings object if we have rule-specific settings
+        $tempPath = if ($IsWindows) { $env:TEMP } else { '/tmp' }
+        $settingsPath = Join-Path $tempPath "PSScriptAnalyzer-Settings-$(Get-Random).psd1"
+        $settingsContent = "@{"
+        $settingsContent += "`n    IncludeRules = @($($IncludeRules | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
+        $settingsContent += "`n    ExcludeRules = @($($ExcludeRules | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
+        if ($analysisConfig.PSObject.Properties['Rules'] -ne $null -and $analysisConfig.Rules) {
+            $settingsContent += "`n    Rules = @{"
+            foreach ($rule in $analysisConfig.Rules.GetEnumerator()) {
+                $settingsContent += "`n        '$($rule.Key)' = @{"
+                foreach ($setting in $rule.Value.GetEnumerator()) {
+                    if ($setting.Value -is [bool]) {
+                        $settingsContent += "`n            $($setting.Key) = `$$($setting.Value)"
+                    } elseif ($setting.Value -is [array]) {
+                        $settingsContent += "`n            $($setting.Key) = @($($setting.Value | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
+                    } else {
+                        $settingsContent += "`n            $($setting.Key) = '$($setting.Value)'"
+                    }
+                }
+                $settingsContent += "`n        }"
+            }
+            $settingsContent += "`n    }"
+        }
+        $settingsContent += "`n}"
+
+        # Write settings file temporarily
+        $settingsContent | Out-File -FilePath $settingsPath -Encoding UTF8
+
+        # Use settings file instead of individual parameters
+        $analyzerParams = @{
+            Path = $Path
+            Recurse = $true
+            Settings = $settingsPath
+        }
+    }
+
+    # FAST MODE: Limit files to core/critical files only
+    if ($Fast -or $CoreOnly) {
+        Write-ScriptLog -Message "Fast mode enabled - analyzing only core/critical files"
+        
+        # Core application files
+        $coreFiles = @(
+            './Start-AitherZero.ps1',
+            './Initialize-AitherEnvironment.ps1',
+            './bootstrap.ps1'
+        ) | Where-Object { Test-Path (Join-Path $Path $_) } | ForEach-Object { Join-Path $Path $_ }
+        
+        # Key automation scripts (most important)
+        $keyPattern = '^(0[0-4]\d{2}_|0815_|0820_|0830_|0835_|0400_|0402_|0404_)'
+        $keyAutomationScripts = @()
+        $automationPath = Join-Path $Path 'automation-scripts'
+        if (Test-Path $automationPath) {
+            $keyAutomationScripts = Get-ChildItem $automationPath -Filter '*.ps1' | 
+                                   Where-Object { $_.Name -match $keyPattern } |
+                                   Select-Object -First 15 -ExpandProperty FullName
+        }
+        
+        # Essential domain modules
+        $domainFiles = @()
+        $domainsPath = Join-Path $Path 'domains'
+        if (Test-Path $domainsPath) {
+            $domainFiles = Get-ChildItem $domainsPath -Filter '*.psm1' -Recurse | 
+                          Select-Object -First 5 -ExpandProperty FullName
+        }
+        
+        # Combine and limit
+        $allFastFiles = @($coreFiles + $keyAutomationScripts + $domainFiles) | Where-Object { $_ -and (Test-Path $_) }
+        
+        if ($MaxFiles -gt 0 -and $allFastFiles.Count -gt $MaxFiles) {
+            $allFastFiles = $allFastFiles | Select-Object -First $MaxFiles
+        }
+        
+        Write-ScriptLog -Message "Fast mode: Selected $($allFastFiles.Count) critical files for analysis"
+        
+        # Override file discovery
+        $filesToAnalyze = $allFastFiles
+        $analyzerParams = @{
+            Path = $filesToAnalyze
+            Recurse = $false
+        }
+        if ($settingsPath -and (Test-Path $settingsPath)) {
+            $analyzerParams['Settings'] = $settingsPath
+        }
+    }
+
+    # Optimize file discovery with efficient exclusion filtering
+    $filesToAnalyze = $null
+    if ($ExcludePaths) {
+        Write-ScriptLog -Message "Filtering files to exclude paths: $($ExcludePaths -join ', ')"
+        
+        # Build efficient exclusion filters - separate directory patterns from file patterns
+        $dirPatterns = @()
+        $filePatterns = @()
+        
+        foreach ($pattern in $ExcludePaths) {
+            if ($pattern.Contains('*') -or $pattern.Contains('.')) {
+                $filePatterns += [regex]::Escape($pattern).Replace('\*', '.*')
+            } else {
+                $dirPatterns += $pattern
+            }
+        }
+        
+        # Use Get-ChildItem with optimized filtering
+        $allFiles = Get-ChildItem -Path $Path -Recurse -Include "*.ps1", "*.psm1", "*.psd1" -File | Where-Object {
+            $file = $_
+            $relativePath = $file.FullName.Substring($Path.Length).TrimStart('\', '/')
+            
+            # Check directory exclusions first (faster)
+            $excludeDir = $false
+            foreach ($dirPattern in $dirPatterns) {
+                if ($relativePath -like "*$dirPattern*") {
+                    $excludeDir = $true
+                    break
+                }
+            }
+            
+            if ($excludeDir) { return $false }
+            
+            # Check file pattern exclusions
+            foreach ($filePattern in $filePatterns) {
+                if ($file.Name -match $filePattern -or $relativePath -match $filePattern) {
+                    return $false
+                }
+            }
+            
+            return $true
+        }
+        
+        $analyzerParams.Remove('Path')
+        $analyzerParams.Remove('Recurse')
+        if ($allFiles) {
+            $filesToAnalyze = @($allFiles | ForEach-Object { $_.FullName })
+            Write-ScriptLog -Message "Found $($filesToAnalyze.Count) files to analyze after exclusions"
+            
+            # For large file sets, use batch processing
+            if ($filesToAnalyze.Count -gt 100) {
+                Write-ScriptLog -Message "Large file set detected - will use batch processing for efficiency"
+            }
+            $analyzerParams['Path'] = $filesToAnalyze
+        } else {
+            Write-ScriptLog -Message "No files found after applying exclusions"
+            return @{
+                Success = $true
+                Results = @()
+                Summary = @{
+                    TotalIssues = 0
+                    FilesAnalyzed = 0
+                    Message = "No files found to analyze after exclusions"
+                }
+            }
+        }
+    }
+
+    # Settings file is already set if rule-specific settings exist (from config.psd1)
+    # No need to check for PSScriptAnalyzerSettings.psd1 anymore
+
+    # Add fix parameter if requested
+    if ($Fix) {
+        $analyzerParams['Fix'] = $true
+        Write-ScriptLog -Level Warning -Message "Running in FIX mode - files will be modified!"
+    }
+
+    # Include suppressed if requested
+    if ($IncludeSuppressed) {
+        $analyzerParams['IncludeSuppressed'] = $true
+    }
+
+    # Performance tracking
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Start-PerformanceTrace -Name "PSScriptAnalyzer" -Description "Static code analysis"
+    }
+
+    Write-ScriptLog -Message "Analyzing PowerShell files..."
+    Write-Host "`nRunning PSScriptAnalyzer. This may take a few minutes..." -ForegroundColor Yellow
+
+    # Run analysis with timeout handling for CI
+    if ($PSCmdlet.ShouldProcess("PowerShell files", "Run PSScriptAnalyzer analysis")) {
+        $analysisJob = $null
+        try {
+            # For CI environments, use job with intelligent resource management
+            if ($isCI) {
+                Write-ScriptLog -Message "Running PSScriptAnalyzer with CI optimizations and adaptive timeout"
+                
+                # Extract file paths and other parameters separately to avoid serialization issues
+                $filePaths = @($analyzerParams.Path)
+                $otherParams = @{}
+                foreach ($key in $analyzerParams.Keys) {
+                    if ($key -ne 'Path') {
+                        $otherParams[$key] = $analyzerParams[$key]
+                    }
+                }
+                
+                $analysisJob = Start-Job -ScriptBlock {
+                    param([object]$FilesArg, [hashtable]$Params)
+                    Import-Module PSScriptAnalyzer -Force
+                    
+                    # Convert to array if needed
+                    $Files = if ($FilesArg -is [array]) { $FilesArg } else { @($FilesArg) }
+                    
+                    if ($Files.Count -gt 100) {
+                        # Use highly optimized batch processing for large file sets
+                        $allResults = @()
+                        $batchSize = 25  # Optimal batch size for memory vs speed
+                        $totalFiles = $Files.Count
+                        
+                        # Split files into batches and process each batch together
+                        for ($i = 0; $i -lt $totalFiles; $i += $batchSize) {
+                            $endIndex = [Math]::Min($i + $batchSize - 1, $totalFiles - 1)
+                            $batch = $Files[$i..$endIndex]
+                            
+                            Write-Progress -Activity "Batch Analysis" -Status "Processing batch $([Math]::Ceiling(($i + 1) / $batchSize)) of $([Math]::Ceiling($totalFiles / $batchSize))" -PercentComplete (($i / $totalFiles) * 100)
+                            
+                            # Process each file individually to avoid array conversion issues
+                            foreach ($file in $batch) {
+                                $fileParams = $Params.Clone()
+                                $fileParams['Path'] = $file
+                                $fileParams['Recurse'] = $false
+                                
+                                try {
+                                    $fileResult = Invoke-ScriptAnalyzer @fileParams -ErrorAction SilentlyContinue
+                                    if ($fileResult) {
+                                        $allResults += $fileResult
+                                    }
+                                } catch {
+                                    Write-Warning "Failed to analyze file ${file}: $($_.Exception.Message)"
+                                }
+                            }
+                        }
+                        return $allResults
+                    } elseif ($Files.Count -gt 1) {
+                        # Use individual file processing for smaller sets to avoid array conversion issues
+                        $allResults = @()
+                        foreach ($file in $Files) {
+                            $fileParams = $Params.Clone()
+                            $fileParams['Path'] = $file
+                            $fileParams['Recurse'] = $false
+                            
+                            try {
+                                $fileResult = Invoke-ScriptAnalyzer @fileParams -ErrorAction SilentlyContinue
+                                if ($fileResult) {
+                                    $allResults += $fileResult
+                                }
+                            } catch {
+                                $errorMsg = $_.Exception.Message
+                                Write-Warning "Failed to analyze file ${file}: $errorMsg"
+                            }
+                        }
+                        return $allResults
+                    } else {
+                        # Single file - use original params approach
+                        $singleParams = $Params.Clone()
+                        $singleParams['Path'] = $Files[0]
+                        return Invoke-ScriptAnalyzer @singleParams
+                    }
+                } -ArgumentList $filePaths, $otherParams
+                
+                # Wait for job with adaptive timeout based on file count
+                $fileCount = $filePaths.Count
+                $timeoutSeconds = [Math]::Min(300, [Math]::Max(60, $fileCount * 2))  # 2 seconds per file, min 60, max 300
+                Write-ScriptLog -Message "Using adaptive timeout of $timeoutSeconds seconds for $fileCount files"
+                
+                $results = Wait-Job $analysisJob -Timeout $timeoutSeconds | Receive-Job
+                
+                if ($analysisJob.State -eq 'Running') {
+                    Write-ScriptLog -Level Warning -Message "PSScriptAnalyzer timed out after $timeoutSeconds seconds, stopping job"
+                    Stop-Job $analysisJob -PassThru | Remove-Job
+                    # Return minimal results to allow CI to continue
+                    $results = @()
+                } else {
+                    Remove-Job $analysisJob
+                }
+            } else {
+                # For non-CI, use optimized processing
+                if ($analyzerParams.Path -is [array] -and $analyzerParams.Path.Count -gt 1) {
+                    # Use direct array processing - PSScriptAnalyzer can handle multiple files efficiently
+                    $analyzerParams['Recurse'] = $false  # Files are already specified
+                    $results = Invoke-ScriptAnalyzer @analyzerParams
+                } else {
+                    $results = Invoke-ScriptAnalyzer @analyzerParams
+                }
+            }
+        } catch {
+            if ($analysisJob) {
+                Stop-Job $analysisJob -PassThru | Remove-Job -ErrorAction SilentlyContinue
+            }
+            throw $_
+        }
+    } else {
+        Write-ScriptLog -Message "WhatIf: Would run PSScriptAnalyzer analysis"
+        return @{
+            Success = $true
+            Results = @()
+            Summary = @{
+                TotalIssues = 0
+                FilesAnalyzed = 0
+                Message = "WhatIf mode - analysis skipped"
+            }
+        }
+    }
+
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        $duration = Stop-PerformanceTrace -Name "PSScriptAnalyzer"
+    }
+
+    # Process results
+    $totalIssues = if ($results -and $results.Count) { $results.Count } else { 0 }
+    $resultSummary = @{
+        TotalIssues = $totalIssues
+        ByScript = @{}
+        BySeverity = @{}
+        ByRule = @{}
+    }
+
+    # Group results
+    if ($results) {
+        $severityGroups = $results | Group-Object Severity
+        $resultSummary.BySeverity = @{}
+        foreach ($group in $severityGroups) {
+            $resultSummary.BySeverity[$group.Name] = $group.Count
+        }
+
+        $ruleGroups = $results | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 10
+        $resultSummary.ByRule = @{}
+        foreach ($group in $ruleGroups) {
+            $resultSummary.ByRule[$group.Name] = $group.Count
+        }
+
+        $scriptGroups = $results | Group-Object ScriptName | Sort-Object Count -Descending | Select-Object -First 10
+        $resultSummary.ByScript = @{}
+        foreach ($group in $scriptGroups) {
+            $resultSummary.ByScript[$group.Name] = $group.Count
+        }
+    }
+
+    Write-ScriptLog -Message "PSScriptAnalyzer analysis completed" -Data $resultSummary
+
+    # Display summary
+    Write-Host "`nPSScriptAnalyzer Summary:" -ForegroundColor Cyan
+    Write-Host "  Total Issues: $totalIssues"
+
+    if ($totalIssues -gt 0) {
+        # By severity
+        Write-Host "`n  By Severity:" -ForegroundColor Yellow
+        foreach ($severity in @('Error', 'Warning', 'Information')) {
+            $severityResults = @($results | Where-Object { $_.Severity -eq $severity })
+            $count = if ($severityResults) { $severityResults.Count } else { 0 }
+            if ($count -gt 0) {
+                $color = @{ 'Error' = 'Red'; 'Warning' = 'Yellow'; 'Information' = 'Cyan' }[$severity]
+                Write-Host "    $severity : $count" -ForegroundColor $color
+            }
+        }
+
+        # Top rules
+        Write-Host "`n  Top Rules Violated:" -ForegroundColor Yellow
+        $results | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 5 | ForEach-Object {
+            Write-Host "    $($_.Name): $($_.Count)"
+        }
+
+        # Top files
+        Write-Host "`n  Files with Most Issues:" -ForegroundColor Yellow
+        $results | Group-Object ScriptName | Sort-Object Count -Descending | Select-Object -First 5 | ForEach-Object {
+            $fileName = Split-Path $_.Name -Leaf
+            Write-Host "    $fileName : $($_.Count)"
+        }
+
+        # Show errors if any
+        $errors = $results | Where-Object { $_.Severity -eq 'Error' }
+        if ($errors) {
+            Write-Host "`nErrors Found:" -ForegroundColor Red
+            $errors | Select-Object -First 10 | ForEach-Object {
+                Write-Host "  File: $(Split-Path $_.ScriptName -Leaf):$($_.Line)" -ForegroundColor Red
+                Write-Host "  Rule: $($_.RuleName)" -ForegroundColor DarkRed
+                Write-Host "  Message: $($_.Message)" -ForegroundColor DarkRed
+                Write-Host ""
+            }
+
+            $errorCount = if ($errors) { $errors.Count } else { 0 }
+            if ($errorCount -gt 10) {
+                Write-Host "  ... and $($errorCount - 10) more errors" -ForegroundColor DarkRed
+            }
+        }
+    } else {
+        Write-Host "  No issues found! Code meets all PSScriptAnalyzer rules." -ForegroundColor Green
+    }
+
+    # Save results
+    if ($totalIssues -gt 0) {
+        if (-not $OutputPath) {
+            $OutputPath = Join-Path $projectRoot "library/tests/analysis"
+        }
+
+        if (-not (Test-Path $OutputPath)) {
+            if ($PSCmdlet.ShouldProcess($OutputPath, "Create analysis output directory")) {
+                New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+            }
+        }
+
+        $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+
+        # Save as CSV for easy analysis
+        $csvPath = Join-Path $OutputPath "PSScriptAnalyzer-$timestamp.csv"
+        if ($PSCmdlet.ShouldProcess($csvPath, "Export analysis results to CSV")) {
+            $results | Export-Csv -Path $csvPath -NoTypeInformation
+            Write-ScriptLog -Message "Analysis results saved to: $csvPath"
+        }
+
+        # Save as JSON with summary
+        $jsonPath = Join-Path $OutputPath "PSScriptAnalyzer-Summary-$timestamp.json"
+        if ($PSCmdlet.ShouldProcess($jsonPath, "Save analysis summary as JSON")) {
+            @{
+                Timestamp = Get-Date
+                Summary = $resultSummary
+                Details = $results | Select-Object RuleName, Severity, ScriptName, Line, Column, Message
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $jsonPath
+            Write-ScriptLog -Message "Analysis summary saved to: $jsonPath"
+        }
+
+        # Generate SARIF format for integration with other tools
+        if (Get-Command -Name ConvertTo-SarifReport -ErrorAction SilentlyContinue) {
+            $sarifPath = Join-Path $OutputPath "PSScriptAnalyzer-$timestamp.sarif"
+            if ($PSCmdlet.ShouldProcess($sarifPath, "Generate SARIF report")) {
+                $results | ConvertTo-SarifReport | Set-Content -Path $sarifPath
+                Write-ScriptLog -Message "SARIF report saved to: $sarifPath"
+            }
+        }
+    }
+
+    # Exit based on results
+    if ($totalIssues -eq 0) {
+        Write-ScriptLog -Message "PSScriptAnalyzer found no issues!"
+        exit 0
+    } else {
+        $errorResults = @($results | Where-Object { $_.Severity -eq 'Error' })
+        $errorCount = if ($errorResults) { $errorResults.Count } else { 0 }
+        if ($errorCount -gt 0) {
+            Write-ScriptLog -Level Error -Message "PSScriptAnalyzer found $errorCount errors"
+        } else {
+            Write-ScriptLog -Level Warning -Message "PSScriptAnalyzer found $totalIssues warnings"
+        }
+        exit 1
+    }
+}
+catch {
+    Write-ScriptLog -Level Error -Message "PSScriptAnalyzer analysis failed: $_" -Data @{
+        Exception = $_.Exception.Message
+        ScriptStackTrace = $_.ScriptStackTrace
+    }
+    exit 2
+}
+finally {
+    # Clean up temporary settings file if created
+    if ($settingsPath -and $settingsPath -like "*\PSScriptAnalyzer-Settings-*.psd1" -and (Test-Path $settingsPath)) {
+        Remove-Item -Path $settingsPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
+# Helper function to merge hashtables - removed as unused
+# If needed in future, use: $merged = @{}; $hashtables | ForEach-Object { $merged += $_ }

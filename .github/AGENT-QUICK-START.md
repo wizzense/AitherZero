@@ -47,12 +47,12 @@ When you **open or update a PR**, the system automatically:
 | Files Changed | Suggested Agents |
 |---------------|------------------|
 | `infrastructure/`, `*.tf` | 🏗️ Maya, 🔒 Sarah |
-| `domains/security/`, `*credential*.ps1` | 🔒 Sarah, 🏗️ Maya |
+| `aithercore/security/`, `*credential*.ps1` | 🔒 Sarah, 🏗️ Maya |
 | `tests/`, `*.Tests.ps1` | 🧪 Jessica, ⚙️ Marcus |
-| `domains/experience/`, `*menu*.ps1` | 🎨 Emma, ⚙️ Marcus |
-| `domains/*.psm1`, `*api*.ps1` | ⚙️ Marcus, ⚡ Rachel |
+| `aithercore/experience/`, `*menu*.ps1` | 🎨 Emma, ⚙️ Marcus |
+| `aithercore/*.psm1`, `*api*.ps1` | ⚙️ Marcus, ⚡ Rachel |
 | `*.md`, `docs/`, `README.md` | 📚 Olivia, 🎨 Emma |
-| `*.ps1`, `orchestration/` | ⚡ Rachel, ⚙️ Marcus |
+| `*.ps1`, `aithercore/orchestration/` | ⚡ Rachel, ⚙️ Marcus |
 | `.github/workflows/*.yml` | 📋 David, ⚡ Rachel |
 
 ## 🔢 Script Range Mapping

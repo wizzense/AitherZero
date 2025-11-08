@@ -19,11 +19,11 @@
 - `index.md` - Auto-generated index
 
 ### To Archive
-- `RELEASE-REPUBLISH-GUIDE.md` → Move to docs/
-- `STRATEGIC-DOCS-README.md` → Move to docs/
-- `STRATEGIC-ROADMAP.md` → Move to docs/
-- `VISUAL-GUIDE.md` → Move to docs/
-- `WORK_COMPLETED.md` → Move to docs/archived/
+- `RELEASE-REPUBLISH-GUIDE.md` → Move to library/docs/
+- `STRATEGIC-DOCS-README.md` → Move to library/docs/
+- `STRATEGIC-ROADMAP.md` → Move to library/docs/
+- `VISUAL-GUIDE.md` → Move to library/docs/
+- `WORK_COMPLETED.md` → Move to library/docs/archived/
 
 ## Directory Structure
 
@@ -49,29 +49,29 @@ AitherZero/
 │   ├── copilot.yaml
 │   ├── mcp-servers.json
 │   └── prompts/
-├── automation-scripts/     # 125+ numbered scripts
+├── library/automation-scripts/     # 125+ numbered scripts
 │   ├── DEPRECATED-SCRIPTS.md
 │   ├── 0400-0499/          # Testing scripts
 │   ├── 0500-0599/          # Reporting scripts
 │   └── 0951_Regenerate-FunctionalTests.ps1
-├── domains/                # 11 functional domains
+├── aithercore/                # 11 functional domains
 │   ├── testing/
 │   │   ├── FunctionalTestGenerator.psm1  # NEW v2.0
 │   │   ├── AutoTestGenerator.psm1
 │   │   └── TestingFramework.psm1
 │   ├── reporting/
 │   │   └── ReportingEngine.psm1
+│   ├── orchestration/       # Playbooks and sequences
+│   │   ├── playbooks/
+│   │   │   └── test-orchestrated.json  # THE ONLY ONE
+│   │   └── schema/
+│   │       └── playbook-schema-v3.json
 │   └── ...
-├── orchestration/          # CLEANED UP
-│   ├── playbooks/
-│   │   └── test-orchestrated.json  # THE ONLY ONE
-│   └── schema/
-│       └── playbook-schema-v3.json
 ├── tests/                  # 316 test files
 │   ├── unit/
 │   ├── integration/
 │   └── TestHelpers.psm1
-├── docs/                   # Documentation
+├── library/docs/                   # Documentation
 ├── reports/                # Generated reports
 └── ...
 ```
@@ -94,7 +94,7 @@ AitherZero/
 ## Migration Completed
 
 All testing now goes through:
-1. **Playbook:** `orchestration/playbooks/test-orchestrated.json`
+1. **Playbook:** `aithercore/orchestration/playbooks/test-orchestrated.json`
 2. **Workflow:** `.github/workflows/unified-testing.yml`
 3. **Dashboard:** `reports/dashboard.html`
 

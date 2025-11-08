@@ -51,7 +51,7 @@ cleanup-report-*.json
 *.Tests.ps1
 tests/unit/
 tests/integration/
-tests/domains/
+tests/aithercore/
 
 # Exclude legacy and migration files
 legacy-to-migrate/
@@ -89,5 +89,5 @@ secrets/
 !config.example.psd1
 !config.psd1
 !automation-scripts/
-!domains/
+!aithercore/
 !orchestration/

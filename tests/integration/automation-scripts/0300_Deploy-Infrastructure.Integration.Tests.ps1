@@ -15,7 +15,7 @@ Describe '0300_Deploy-Infrastructure Integration' -Tag 'Integration', 'Automatio
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0300_Deploy-Infrastructure.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0300_Deploy-Infrastructure.ps1'
     }
 
     Context 'Integration' {

@@ -19,7 +19,7 @@
       "name": "PowerShell: Debug Unit Tests",
       "type": "PowerShell",
       "request": "launch",
-      "script": "${workspaceFolder}/automation-scripts/0402_Run-UnitTests.ps1",
+      "script": "${workspaceFolder}/library/automation-scripts/0402_Run-UnitTests.ps1",
       "cwd": "${workspaceFolder}"
     },
     {

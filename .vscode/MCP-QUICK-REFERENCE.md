@@ -151,6 +151,6 @@ Edit `.vscode/mcp-servers.json` and reload VS Code window.
 ## References
 
 - [MCP Setup Documentation](../docs/COPILOT-MCP-SETUP.md)
-- [MCP Server Implementation](../mcp-server/README.md)
+- [MCP Server Implementation](../integrations/mcp-server/README.md)
 - [Custom Instructions](../.github/copilot-instructions.md)
 - [Model Context Protocol](https://github.com/modelcontextprotocol/specification)

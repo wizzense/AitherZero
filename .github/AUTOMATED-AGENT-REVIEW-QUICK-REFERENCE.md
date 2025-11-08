@@ -79,12 +79,12 @@
 ---
 
 ### ⚠️ Warnings (1)
-- **`domains/security/Certs.psm1`** (Line 85)
+- **`aithercore/security/Certs.psm1`** (Line 85)
   - Avoid using -AsPlainText with ConvertTo-SecureString
   - Rule: `CustomRule-AvoidPlainTextSecureString`
 
 ### 💡 Suggestions (1)
-- **`domains/security/Creds.psm1`**
+- **`aithercore/security/Creds.psm1`**
   - Add certificate validation before operations
   - Rule: `CustomRule-ValidateCertificates`
 
@@ -106,7 +106,7 @@ Your Changes → Agent Scoring → Top 3 Selected
 
 Example:
   Changed: automation-scripts/0150_Setup-VM.ps1
-           domains/security/Certificates.psm1
+           aithercore/security/Certificates.psm1
            tests/unit/Security.Tests.ps1
 
   Scores:  Maya 🏗️ = 3 (VM script)

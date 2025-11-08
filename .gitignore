@@ -39,9 +39,9 @@ test-output/
 test-results/
 
 # Generated test reports
-reports/*.json
-!reports/dashboard.json
-!reports/psscriptanalyzer-fast-results.json
+library/reports/*.json
+!library/reports/dashboard.json
+!library/reports/psscriptanalyzer-fast-results.json
 tests/reports/*.json
 
 # IDE files
@@ -87,7 +87,7 @@ tests/results/*
 !tests/results/index.md
 
 # Quality reports (generated artifacts - linting results, analysis output)
-reports/quality/
+library/reports/quality/
 
 # Linting tools (downloaded binaries)
 actionlint
@@ -112,11 +112,10 @@ tests/analysis/*.json
 PSScriptAnalyzerSettings.psd1
 .psscriptanalyzer-fast.psd1
 
-# License files (sensitive - never commit)
-*.license.json
-.license.json
-license.json
-licenses/
-
-# Encrypted source file metadata (encrypted files themselves ARE committed)
-*.encrypted.meta
+# Infrastructure submodules (managed via Git submodules)
+# Keep only documentation files, actual infrastructure repos are submodules
+infrastructure/*/
+!infrastructure/SUBMODULES.md
+!infrastructure/README.md
+!infrastructure/index.md
+!infrastructure/.gitkeep
