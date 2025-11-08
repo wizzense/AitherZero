@@ -857,7 +857,7 @@ function Get-AitherPlaybook {
         [string[]]$Tag
     )
     
-    $playbooksPath = Join-Path $env:AITHERZERO_ROOT 'domains/orchestration/playbooks'
+    $playbooksPath = Join-Path $env:AITHERZERO_ROOT 'library/playbooks'
     
     if (-not (Test-Path $playbooksPath)) {
         Write-Warning "Playbooks directory not found: $playbooksPath"
