@@ -73,7 +73,7 @@ Write-Host "Creating documentation from code/data" -ForegroundColor Gray
 $docExample = @'
 # Generate documentation for orchestration playbook
 ./automation-scripts/0830_Generate-PromptFromData.ps1 `
-    -InputPath "./orchestration/playbooks/test-full.json" `
+    -InputPath "./domains/orchestration/playbooks/test-full.json" `
     -DataType "JSON" `
     -PromptTemplate "Documentation" `
     -IncludeExamples

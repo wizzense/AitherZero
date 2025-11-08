@@ -224,7 +224,7 @@ Running the playbook locally ensures your changes will pass CI/CD validation.
 ### Playbook Not Found
 ```powershell
 # Verify playbook exists
-ls ./orchestration/playbooks/project-health-check.psd1
+ls ./domains/orchestration/playbooks/project-health-check.psd1
 
 # Load module first
 Import-Module ./AitherZero.psd1 -Force
@@ -241,7 +241,7 @@ ls ./automation-scripts/0407_Validate-Syntax.ps1
 
 ## See Also
 
-- [Orchestration Playbooks](../orchestration/playbooks/README.md)
+- [Orchestration Playbooks](../domains/orchestration/playbooks/README.md)
 - [Testing Guide](./TESTING-README.md)
 - [CI/CD Workflows](../.github/workflows/README.md)
 - [Quality Validation](../automation-scripts/0420_Validate-ComponentQuality.ps1)

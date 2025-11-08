@@ -36,14 +36,14 @@ Describe "Orchestration Engine Core Functions" -Tag 'E2E', 'Orchestration' {
     
     Context "Playbook Discovery" {
         It "Should discover available playbooks using file system" {
-            $playbooksDir = Join-Path $script:ProjectRoot "orchestration/playbooks"
+            $playbooksDir = Join-Path $script:ProjectRoot "domains/orchestration/playbooks"
             # Playbooks may or may not exist, so we just check the function works
             { Get-ChildItem -Path $playbooksDir -Filter "*.json" -Recurse -ErrorAction SilentlyContinue } | Should -Not -Throw
         }
         
         It "Should load specific playbooks by name" {
             # Discover playbooks using file system
-            $playbooksDir = Join-Path $script:ProjectRoot "orchestration/playbooks"
+            $playbooksDir = Join-Path $script:ProjectRoot "domains/orchestration/playbooks"
             $playbookFiles = Get-ChildItem -Path $playbooksDir -Filter "*.json" -Recurse -ErrorAction SilentlyContinue
             
             if ($playbookFiles -and $playbookFiles.Count -gt 0) {
@@ -68,7 +68,7 @@ Describe "Orchestration Engine Core Functions" -Tag 'E2E', 'Orchestration' {
     Context "Playbook Structure Validation" {
         It "Should validate playbook has required properties" {
             # Discover playbooks using file system
-            $playbooksDir = Join-Path $script:ProjectRoot "orchestration/playbooks"
+            $playbooksDir = Join-Path $script:ProjectRoot "domains/orchestration/playbooks"
             $playbookFiles = Get-ChildItem -Path $playbooksDir -Filter "*.json" -Recurse -ErrorAction SilentlyContinue
             
             if ($playbookFiles.Count -gt 0) {

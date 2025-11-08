@@ -217,8 +217,8 @@ Creating new orchestration playbook system.
 ```
 Title: Implement dynamic playbook execution engine
 Files Changed:
-- orchestration/PlaybookEngine.ps1
-- orchestration/SequenceRunner.ps1
+- domains/orchestration/PlaybookEngine.ps1
+- domains/orchestration/SequenceRunner.ps1
 - automation-scripts/0705_Execute-Playbook.ps1
 - automation-scripts/0706_Validate-Playbook.ps1
 ```
