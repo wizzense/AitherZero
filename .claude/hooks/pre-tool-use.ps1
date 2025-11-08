@@ -132,7 +132,7 @@ try {
                             $contextToAdd += "To force full test run anyway, add -ForceRun parameter"
 
                             # Check recent test results
-                            $resultsPath = "$env:CLAUDE_PROJECT_DIR/tests/results"
+                            $resultsPath = "$env:CLAUDE_PROJECT_DIR/library/tests/results"
                             if (Test-Path $resultsPath) {
                                 $recentResults = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
                                     Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-10) } |
@@ -274,7 +274,7 @@ try {
         }
 
         # Check if tests are passing
-        $testResultsPath = "$env:CLAUDE_PROJECT_DIR/tests/results"
+        $testResultsPath = "$env:CLAUDE_PROJECT_DIR/library/tests/results"
         if (Test-Path $testResultsPath) {
             $latestResults = Get-ChildItem $testResultsPath -Filter "*.xml" -ErrorAction SilentlyContinue |
                            Sort-Object LastWriteTime -Descending |

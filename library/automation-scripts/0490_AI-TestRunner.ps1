@@ -72,7 +72,7 @@ $VerbosePreference = 'SilentlyContinue'
 # Project structure
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $testRoot = Join-Path $projectRoot "tests"
-$dataDir = Join-Path $projectRoot "tests/.ai-data"
+$dataDir = Join-Path $projectRoot "library/tests/.ai-data"
 $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
 # Ensure AI data directory

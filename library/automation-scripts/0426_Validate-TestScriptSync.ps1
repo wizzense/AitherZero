@@ -53,7 +53,7 @@ Set-StrictMode -Version Latest
 
 # Script paths
 $projectRoot = Split-Path $PSScriptRoot -Parent
-$testRoot = Join-Path $projectRoot "tests/unit/automation-scripts"
+$testRoot = Join-Path $projectRoot "library/library/tests/unit/automation-scripts"
 $scriptRoot = Join-Path $projectRoot "automation-scripts"
 $loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
 

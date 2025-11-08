@@ -113,7 +113,7 @@ jobs:
             library/reports/quality/**/*
             library/reports/**/*.md
             library/reports/**/*.json
-            tests/analysis/**/*
+            library/tests/analysis/**/*
           retention-days: 30
 
       - name: 💬 Post Quality Results

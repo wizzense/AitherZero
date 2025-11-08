@@ -104,7 +104,7 @@ $ProjectRoot = Split-Path $PSScriptRoot -Parent
 
 # Configuration constants
 $script:CoreModules = @('Logging', 'LogViewer', 'Configuration')
-$script:TestResultsPath = 'tests/test-results.json'
+$script:TestResultsPath = 'library/tests/test-results.json'
 
 # Import required modules
 $modulesToImport = @(
@@ -314,7 +314,7 @@ function Get-CodeQualityMetrics {
     }
     
     # Check for PSScriptAnalyzer results
-    $analysisPath = Join-Path $ProjectRoot "tests/analysis"
+    $analysisPath = Join-Path $ProjectRoot "library/library/tests/analysis"
     if (Test-Path $analysisPath) {
         $latestCSV = Get-ChildItem -Path $analysisPath -Filter "*.csv" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1

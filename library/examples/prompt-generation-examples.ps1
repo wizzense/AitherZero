@@ -120,7 +120,7 @@ Write-Host "Combine with context saving for continuity" -ForegroundColor Gray
 $chainExample = @'
 # Save context and generate continuation prompt with data analysis
 seq 0820  # Save work context
-seq 0830 -InputPath "./tests/results/latest-test-results.json" -DataType "TestResults"
+seq 0830 -InputPath "./library/tests/results/latest-test-results.json" -DataType "TestResults"
 seq 0821  # Generate continuation prompt
 
 # Result: Complete context with test analysis for AI handoff
@@ -185,7 +185,7 @@ Get-ChildItem "./examples/*.json" | ForEach-Object {
 }
 
 # Process test results
-Get-ChildItem "./tests/results/*-results.json" | ForEach-Object {
+Get-ChildItem "./library/tests/results/*-results.json" | ForEach-Object {
     ./automation-scripts/0830_Generate-PromptFromData.ps1 `
         -InputPath $_.FullName `
         -DataType "TestResults" `
@@ -222,7 +222,7 @@ $pipelineExample = @'
   if: failure()
   run: |
     ./automation-scripts/0830_Generate-PromptFromData.ps1 `
-        -InputPath "./tests/results/latest-test-results.json" `
+        -InputPath "./library/tests/results/latest-test-results.json" `
         -DataType "TestResults" `
         -PromptTemplate "Implementation" `
         -OutputPath "./ai-fix-prompt.md"

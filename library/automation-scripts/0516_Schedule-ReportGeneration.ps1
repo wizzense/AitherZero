@@ -215,7 +215,7 @@ if ($Schedule -eq 'Disable') {
     if ($Schedule -eq 'Daily') {
         Write-Host "Time: $Time" -ForegroundColor Green
     }
-    Write-Host "Reports Path: $ProjectPath/tests/reports" -ForegroundColor Green
+    Write-Host "Reports Path: $ProjectPath/library/tests/reports" -ForegroundColor Green
     Write-Host ""
     Write-Host "Reports will be generated:" -ForegroundColor Cyan
     Write-Host "  - Automatically based on schedule" -ForegroundColor White

@@ -7,7 +7,7 @@
 .DESCRIPTION
     This script provides a comprehensive analysis of test coverage for automation scripts by:
     - Counting total automation scripts in /library/automation-scripts/
-    - Counting existing test files in /tests/unit/library/automation-scripts/
+    - Counting existing test files in /library/tests/unit/library/automation-scripts/
     - Identifying scripts without tests
     - Categorizing coverage by script ranges (0000-0099, etc.)
     - Generating coverage statistics and recommendations
@@ -63,7 +63,7 @@ param(
     [ValidateSet('Environment', 'Infrastructure', 'Development', 'Testing', 'Reporting', 'Git', 'Issues', 'Maintenance', 'All')]
     [string[]]$Category = @('All'),
 
-    [string]$OutputPath = './tests/results/coverage'
+    [string]$OutputPath = './library/tests/results/coverage'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -111,7 +111,7 @@ function Get-ScriptCoverageData {
     }
 
     # Get all test files
-    $testFiles = Get-ChildItem -Path './tests/unit/automation-scripts' -Include '*.Tests.ps1' -Recurse
+    $testFiles = Get-ChildItem -Path './library/tests/unit/automation-scripts' -Include '*.Tests.ps1' -Recurse
 
     Write-Host "Found $($automationScripts.Count) automation scripts and $($testFiles.Count) test files" -ForegroundColor Green
 
@@ -271,7 +271,7 @@ function Write-ConsoleReport {
             Write-Host "To create test files for untested scripts, run:" -ForegroundColor Yellow
             Write-Host ""
             foreach ($script in $untested | Select-Object -First 5) {
-                Write-Host "  New-Item './tests/unit/library/automation-scripts/$($script.Name).Tests.ps1'" -ForegroundColor Gray
+                Write-Host "  New-Item './library/tests/unit/library/automation-scripts/$($script.Name).Tests.ps1'" -ForegroundColor Gray
             }
             if ($untested.Count -gt 5) {
                 Write-Host "  ... and $($untested.Count - 5) more" -ForegroundColor Gray

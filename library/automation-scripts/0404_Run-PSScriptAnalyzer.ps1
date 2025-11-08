@@ -558,7 +558,7 @@ try {
     # Save results
     if ($totalIssues -gt 0) {
         if (-not $OutputPath) {
-            $OutputPath = Join-Path $projectRoot "tests/analysis"
+            $OutputPath = Join-Path $projectRoot "library/library/tests/analysis"
         }
 
         if (-not (Test-Path $OutputPath)) {

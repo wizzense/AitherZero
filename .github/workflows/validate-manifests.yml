@@ -63,7 +63,7 @@ jobs:
           Write-Host "🧪 Testing validation tools..." -ForegroundColor Cyan
 
           # Run validation tool tests
-          $testResult = Invoke-Pester -Path './tests/unit/library/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1' -PassThru
+          $testResult = Invoke-Pester -Path './library/tests/unit/library/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1' -PassThru
 
           if ($testResult.FailedCount -gt 0) {
             Write-Host "❌ Validation tool tests failed!" -ForegroundColor Red

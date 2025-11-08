@@ -15,7 +15,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$TestResults = "./tests/results/latest-test-results.json",
+    [string]$TestResults = "./library/tests/results/latest-test-results.json",
 
     [Parameter(Mandatory = $false)]
     [ValidateSet('TestFailure', 'CodeViolation', 'Bug')]
@@ -103,7 +103,7 @@ function Get-TestFailures {
 
 # Parse PSScriptAnalyzer results
 function Get-CodeViolations {
-    param([string]$ResultsPath = "./tests/results/psscriptanalyzer-results.json")
+    param([string]$ResultsPath = "./library/tests/results/psscriptanalyzer-results.json")
 
     if (-not (Test-Path $ResultsPath)) {
         # Run PSScriptAnalyzer if results don't exist

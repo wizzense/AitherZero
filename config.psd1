@@ -1199,7 +1199,7 @@
         # PSScriptAnalyzer settings
         PSScriptAnalyzer   = @{
             Enabled      = $true
-            OutputPath   = './tests/analysis'
+            OutputPath   = './library/tests/analysis'
 
             # Select which rules to run
             IncludeRules = @('*')
@@ -1232,14 +1232,14 @@
         # Code coverage
         CodeCoverage       = @{
             Enabled        = $true
-            OutputPath     = './tests/coverage'
+            OutputPath     = './library/tests/coverage'
             Format         = @('JaCoCo', 'Cobertura')
             MinimumPercent = 80
             ExcludePaths   = @('*/tests/*', '*/legacy-to-migrate/*', '*/library/examples/*')
         }
 
         # Test output
-        OutputPath         = './tests/results'
+        OutputPath         = './library/tests/results'
         OutputFormat       = @('NUnitXml', 'JUnitXml')
         GenerateReport     = $true
         OpenReportAfterRun = $false

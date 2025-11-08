@@ -92,7 +92,7 @@ function Get-TestContext {
     # Analyze current context to determine test needs
     $context = @{
         ProjectRoot = $projectRoot
-        TestPath = if ($Path) { $Path } else { Join-Path $projectRoot "tests/$($TestType.ToLower())" }
+        TestPath = if ($Path) { $Path } else { Join-Path $projectRoot "library/tests/$($TestType.ToLower())" }
         SourcePath = Join-Path $projectRoot "aithercore"
         RecentChanges = @()
         LastTestRun = $null
@@ -103,7 +103,7 @@ function Get-TestContext {
         Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-$CacheMinutes) }
 
     # Check for recent test runs in results directory
-    $resultsPath = Join-Path $projectRoot "tests/results"
+    $resultsPath = Join-Path $projectRoot "library/library/tests/results"
     if (Test-Path $resultsPath) {
         $recentResults = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending |

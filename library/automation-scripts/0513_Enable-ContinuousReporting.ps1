@@ -70,7 +70,7 @@ if ($Action -eq 'Status') {
     }
 
     # Check last report generation
-    $reportsPath = Join-Path $ProjectPath "tests/reports"
+    $reportsPath = Join-Path $ProjectPath "library/library/tests/reports"
     $latestReport = Get-ChildItem -Path $reportsPath -Filter "ProjectReport-*.html" -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
@@ -151,7 +151,7 @@ if ($IncludeFileWatcher) {
             $changeType = $EventName.SourceEventArgs.ChangeType
 
             # Skip test results and reports
-            if ($path -match 'tests/(results|reports)' -or $path -match '\.git') {
+            if ($path -match 'library/tests/(results|reports)' -or $path -match '\.git') {
                 return
             }
 
@@ -212,7 +212,7 @@ if ($IncludeTestWatcher) {
     $testWatcherScript = {
         param($ProjectPath)
 
-        $testResultsPath = Join-Path $ProjectPath "tests/results"
+        $testResultsPath = Join-Path $ProjectPath "library/library/tests/results"
         $watcher = New-Object System.IO.FileSystemWatcher
         $watcher.Path = $testResultsPath
         $watcher.Filter = "*.xml"

@@ -40,7 +40,7 @@ function New-AutomationScriptTest {
     .PARAMETER ScriptPath
         Path to the automation script to generate tests for
     .PARAMETER OutputPath
-        Path where the test file should be created (defaults to tests/unit/library/automation-scripts)
+        Path where the test file should be created (defaults to library/tests/unit/library/automation-scripts)
     .PARAMETER IncludeMocks
         Include mock generation for external commands
     .PARAMETER IncludeIntegration

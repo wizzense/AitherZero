@@ -38,7 +38,7 @@ param(
     [switch]$UseCache,
     [int]$CacheMinutes = 10,
 
-    [string]$OutputPath = "./tests/results/optimized",
+    [string]$OutputPath = "./library/tests/results/optimized",
     [switch]$CI,
     [switch]$Verbose,
     [switch]$DryRun

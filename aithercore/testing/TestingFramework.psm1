@@ -352,7 +352,7 @@ function Invoke-TestSuite {
 
         # Code coverage
         if ($testConfig.CodeCoverage.Enabled) {
-            $effectiveOutputPath = if ([string]::IsNullOrWhiteSpace($OutputPath)) { './tests/coverage' } else { $OutputPath }
+            $effectiveOutputPath = if ([string]::IsNullOrWhiteSpace($OutputPath)) { './library/tests/coverage' } else { $OutputPath }
             $coveragePath = Join-Path $effectiveOutputPath "Coverage-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
             Write-TestingLog -Message "Code coverage enabled" -Data @{
                 CoveragePath = $coveragePath
@@ -891,7 +891,7 @@ function Invoke-UnitTestSuite {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
-        [string]$Path = (Join-Path $script:ProjectRoot "tests/unit"),
+        [string]$Path = (Join-Path $script:ProjectRoot "library/tests/unit"),
         [string]$OutputPath = (Join-Path $script:ProjectRoot "test-results"),
         [switch]$NoCoverage,
         [switch]$CI,
