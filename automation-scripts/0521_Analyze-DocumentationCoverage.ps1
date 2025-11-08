@@ -16,7 +16,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = ".",
-    [string]$OutputPath = "./reports/tech-debt/analysis",
+    [string]$OutputPath = "./docs/reports/tech-debt/analysis",
     [switch]$UseCache = $true,
     [switch]$Detailed = $false,
     [switch]$CheckOutdated = $true,

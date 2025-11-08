@@ -15,8 +15,8 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$AnalysisPath = "./reports/tech-debt/analysis",
-    [string]$OutputPath = "./reports/tech-debt",
+    [string]$AnalysisPath = "./docs/reports/tech-debt/analysis",
+    [string]$OutputPath = "./docs/reports/tech-debt",
     [string[]]$Format = @('HTML', 'Markdown', 'JSON'),
     [switch]$RunAnalysis = $false,
     [switch]$UseLatest = $true,
