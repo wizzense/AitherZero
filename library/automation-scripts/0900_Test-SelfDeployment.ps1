@@ -182,7 +182,7 @@ function Test-BootstrapProcess {
             }
 
             $duration = (Get-Date) - $startTime
-            Write-ScriptLog -Level Success -Message "Bootstrap completed successfully in $($duration.TotalSeconds.ToString('F1')) seconds"
+            Write-ScriptLog -Level Information -Message "Bootstrap completed successfully in $($duration.TotalSeconds.ToString('F1')) seconds"
 
             return $true
 
@@ -215,7 +215,7 @@ function Test-CoreFunctionality {
             try {
                 Import-Module "./AitherZero.psd1" -Force
                 $tests.ModuleLoad = $true
-                Write-ScriptLog -Level Success -Message "Module loaded successfully"
+                Write-ScriptLog -Level Information -Message "Module loaded successfully"
             } catch {
                 Write-ScriptLog -Level Error -Message "Module loading failed: $_"
             }
@@ -226,7 +226,7 @@ function Test-CoreFunctionality {
                 $result = & pwsh -c "./automation-scripts/0407_Validate-Syntax.ps1 -All"
                 if ($LASTEXITCODE -eq 0) {
                     $tests.SyntaxValidation = $true
-                    Write-ScriptLog -Level Success -Message "Syntax validation passed"
+                    Write-ScriptLog -Level Information -Message "Syntax validation passed"
                 } else {
                     Write-ScriptLog -Level Error -Message "Syntax validation failed"
                 }
@@ -239,7 +239,7 @@ function Test-CoreFunctionality {
             try {
                 if (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue) {
                     $tests.BasicCommands = $true
-                    Write-ScriptLog -Level Success -Message "Basic commands available"
+                    Write-ScriptLog -Level Information -Message "Basic commands available"
                 }
             } catch {
                 Write-ScriptLog -Level Error -Message "Basic commands test failed: $_"
@@ -252,7 +252,7 @@ function Test-CoreFunctionality {
                     $result = & pwsh -c "./automation-scripts/0512_Generate-Dashboard.ps1 -Format JSON"
                     if ($LASTEXITCODE -eq 0 -and (Test-Path "./reports/dashboard.json")) {
                         $tests.ReportGeneration = $true
-                        Write-ScriptLog -Level Success -Message "Report generation successful"
+                        Write-ScriptLog -Level Information -Message "Report generation successful"
                     } else {
                         Write-ScriptLog -Level Error -Message "Report generation failed"
                     }
@@ -290,8 +290,8 @@ function Test-CICDPipeline {
 
             # Test workflow files exist
             $workflowFiles = @(
-                ".github/workflows/ci-cd-pipeline.yml",
-                ".github/workflows/comprehensive-ci-cd.yml"
+                ".github/workflows/pr-validation.yml",
+                ".github/workflows/pr-ecosystem.yml"
             )
 
             $allWorkflowsExist = $true
@@ -330,7 +330,7 @@ function Test-CICDPipeline {
                 $result = & pwsh -c "./automation-scripts/0740_Integrate-AITools.ps1 -SkipInstallation -WhatIf"
                 if ($LASTEXITCODE -eq 0) {
                     $pipelineTests.AIIntegration = $true
-                    Write-ScriptLog -Level Success -Message "AI integration setup validated"
+                    Write-ScriptLog -Level Information -Message "AI integration setup validated"
                 }
             } catch {
                 Write-ScriptLog -Level Warning -Message "AI integration test skipped: $_"
@@ -342,7 +342,7 @@ function Test-CICDPipeline {
                 $result = & pwsh -c "./automation-scripts/0815_Setup-IssueManagement.ps1 -WhatIf"
                 if ($LASTEXITCODE -eq 0) {
                     $pipelineTests.IssueManagement = $true
-                    Write-ScriptLog -Level Success -Message "Issue management setup validated"
+                    Write-ScriptLog -Level Information -Message "Issue management setup validated"
                 }
             } catch {
                 Write-ScriptLog -Level Error -Message "Issue management test failed: $_"
@@ -353,7 +353,7 @@ function Test-CICDPipeline {
                 $result = & pwsh -c "./automation-scripts/0515_Deploy-Documentation.ps1 -WhatIf"
                 if ($LASTEXITCODE -eq 0) {
                     $pipelineTests.Documentation = $true
-                    Write-ScriptLog -Level Success -Message "Documentation deployment validated"
+                    Write-ScriptLog -Level Information -Message "Documentation deployment validated"
                 }
             } catch {
                 Write-ScriptLog -Level Error -Message "Documentation deployment test failed: $_"
@@ -374,7 +374,12 @@ function Test-EndToEndScenario {
 
     if ($QuickTest) {
         Write-ScriptLog -Message "Skipping end-to-end test in quick mode"
-        return $true
+        return @{
+            Setup = $false
+            Testing = $false
+            Reporting = $false
+            Deployment = $false
+        }
     }
 
     $scenario = @{
@@ -394,7 +399,7 @@ function Test-EndToEndScenario {
                 & pwsh -c "./automation-scripts/0407_Validate-Syntax.ps1 -All" | Out-Null
                 if ($LASTEXITCODE -eq 0) {
                     $scenario.Setup = $true
-                    Write-ScriptLog -Level Success -Message "Setup phase completed"
+                    Write-ScriptLog -Level Information -Message "Setup phase completed"
                 }
             } catch {
                 Write-ScriptLog -Level Error -Message "Setup phase failed: $_"
@@ -406,7 +411,7 @@ function Test-EndToEndScenario {
                 # Run a quick test with no coverage to avoid timeout
                 $testResult = & pwsh -c "./automation-scripts/0402_Run-UnitTests.ps1 -NoCoverage -WhatIf" 2>&1
                 $scenario.Testing = $true  # WhatIf mode, just verify script works
-                Write-ScriptLog -Level Success -Message "Testing phase validated"
+                Write-ScriptLog -Level Information -Message "Testing phase validated"
             } catch {
                 Write-ScriptLog -Level Error -Message "Testing phase failed: $_"
             }
@@ -417,7 +422,7 @@ function Test-EndToEndScenario {
                 & pwsh -c "./automation-scripts/0512_Generate-Dashboard.ps1 -Format JSON" | Out-Null
                 if ($LASTEXITCODE -eq 0 -and (Test-Path "./reports/dashboard.json")) {
                     $scenario.Reporting = $true
-                    Write-ScriptLog -Level Success -Message "Reporting phase completed"
+                    Write-ScriptLog -Level Information -Message "Reporting phase completed"
                 }
             } catch {
                 Write-ScriptLog -Level Error -Message "Reporting phase failed: $_"
@@ -429,7 +434,7 @@ function Test-EndToEndScenario {
                 & pwsh -c "./automation-scripts/0515_Deploy-Documentation.ps1 -WhatIf" | Out-Null
                 if ($LASTEXITCODE -eq 0) {
                     $scenario.Deployment = $true
-                    Write-ScriptLog -Level Success -Message "Deployment phase validated"
+                    Write-ScriptLog -Level Information -Message "Deployment phase validated"
                 }
             } catch {
                 Write-ScriptLog -Level Error -Message "Deployment phase failed: $_"
@@ -599,7 +604,7 @@ try {
 
     # Final result
     if ($report.Summary.OverallResult -eq "PASSED") {
-        Write-ScriptLog -Level Success -Message "Self-deployment test PASSED! AitherZero can successfully deploy itself."
+        Write-ScriptLog -Level Information -Message "Self-deployment test PASSED! AitherZero can successfully deploy itself."
         exit 0
     } elseif ($report.Summary.OverallResult -eq "PASSED WITH WARNINGS") {
         Write-ScriptLog -Level Warning -Message "Self-deployment test passed with warnings. Some non-critical components failed."
