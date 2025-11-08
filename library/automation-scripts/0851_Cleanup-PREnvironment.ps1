@@ -56,6 +56,7 @@ $ScriptRoot = $PSScriptRoot
 if (-not $ScriptRoot) {
     $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 }
+# Script is in library/automation-scripts/, so go up two levels to get to repo root
 $ProjectRoot = Split-Path -Parent (Split-Path -Parent $ScriptRoot)
 
 # Track cleanup results
