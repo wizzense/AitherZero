@@ -9,8 +9,15 @@
     1. Filter configuration is properly set in config.psd1
     2. Test discovery finds all test files
     3. Dashboard generation shows correct metrics
+    
+    Part of the Testing & Quality stage (0400-0499).
 .EXAMPLE
-    ./Validate-TestDiscoveryFix.ps1
+    ./automation-scripts/0427_Validate-TestDiscoveryFix.ps1
+.NOTES
+    Stage: Testing
+    Order: 0427
+    Dependencies: None
+    Tags: testing, validation, pester, discovery
 #>
 
 [CmdletBinding()]
@@ -18,6 +25,10 @@ param()
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 $projectRoot = $PSScriptRoot
 $passed = 0
