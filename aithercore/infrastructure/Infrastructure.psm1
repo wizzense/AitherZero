@@ -420,13 +420,20 @@ function Initialize-InfrastructureSubmodule {
 
 <#
 .SYNOPSIS
-    Update infrastructure Git submodules.
+    Update an infrastructure Git submodule.
 
 .DESCRIPTION
-    Updates Git submodules to the latest commits on their configured branches.
+    Updates a single infrastructure Git submodule to the latest commit on its configured branch.
+    Designed to work with pipeline input from Get-InfrastructureSubmodule.
+
+.PARAMETER InputObject
+    Submodule object from Get-InfrastructureSubmodule (pipeline input).
 
 .PARAMETER Name
-    Name of a specific submodule to update. If not specified, updates all submodules.
+    Name of a specific submodule to update.
+
+.PARAMETER Path
+    Path of the submodule to update.
 
 .PARAMETER Merge
     Merge changes instead of checking out (default is checkout).
@@ -435,22 +442,32 @@ function Initialize-InfrastructureSubmodule {
     Update to the latest remote commit instead of the pinned commit.
 
 .EXAMPLE
-    Update-InfrastructureSubmodules
-    Updates all submodules to their pinned commits.
+    Update-InfrastructureSubmodule -Name 'aitherium-infrastructure'
+    Updates a specific submodule by name.
 
 .EXAMPLE
-    Update-InfrastructureSubmodules -Remote
-    Updates all submodules to the latest commits from remote.
+    Get-InfrastructureSubmodule | Update-InfrastructureSubmodule
+    Gets all submodules and updates each one via pipeline.
 
 .EXAMPLE
-    Update-InfrastructureSubmodules -Name 'aitherium-infrastructure' -Merge
-    Updates the default submodule and merges changes.
+    Get-InfrastructureSubmodule -Initialized | Update-InfrastructureSubmodule -Remote
+    Updates only initialized submodules to their latest remote commits.
+
+.EXAMPLE
+    Get-InfrastructureSubmodule | Where-Object { $_.Name -like '*test*' } | Update-InfrastructureSubmodule -Merge
+    Filters submodules and updates them with merge strategy.
 #>
-function Update-InfrastructureSubmodules {
-    [CmdletBinding(SupportsShouldProcess)]
+function Update-InfrastructureSubmodule {
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'ByName')]
     param(
-        [Parameter(ValueFromPipelineByPropertyName)]
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName = 'ByObject')]
+        [PSCustomObject]$InputObject,
+
+        [Parameter(ParameterSetName = 'ByName')]
         [string]$Name,
+
+        [Parameter(ParameterSetName = 'ByPath')]
+        [string]$Path,
 
         [Parameter()]
         [switch]$Merge,
@@ -459,216 +476,290 @@ function Update-InfrastructureSubmodules {
         [switch]$Remote
     )
 
-    Write-InfraLog -Message "Updating infrastructure submodules"
-
-    # Check if git is available
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-InfraLog -Level Error -Message "Git is not installed or not in PATH"
-        throw "Git is required for submodule management"
-    }
-
-    try {
-        # Build update command
-        $updateArgs = @('submodule', 'update', '--init')
+    begin {
+        Write-InfraLog -Level Debug -Message "Starting submodule update operation"
         
-        if ($Merge) {
-            $updateArgs += '--merge'
+        # Check if git is available
+        if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+            Write-InfraLog -Level Error -Message "Git is not installed or not in PATH"
+            throw "Git is required for submodule management"
         }
-        
-        if ($Remote) {
-            $updateArgs += '--remote'
-        }
-        
-        # Add recursive flag from config
+
+        # Load config once in begin block
         try {
             $config = Get-Configuration
-            if ($config.Infrastructure.Submodules.Behavior.RecursiveInit) {
-                $updateArgs += '--recursive'
-            }
+            $recursiveInit = $config.Infrastructure.Submodules.Behavior.RecursiveInit
         }
         catch {
             Write-InfraLog -Level Warning -Message "Could not load configuration, using default behavior"
+            $recursiveInit = $true
         }
+    }
 
-        # Add specific submodule if specified
-        if ($Name) {
-            # Find submodule path from configuration
-            try {
+    process {
+        try {
+            # Determine submodule path
+            $submodulePath = $null
+            $submoduleName = $null
+
+            if ($PSCmdlet.ParameterSetName -eq 'ByObject') {
+                $submodulePath = $InputObject.Path
+                $submoduleName = $InputObject.Name
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'ByPath') {
+                $submodulePath = $Path
+                $submoduleName = Split-Path $Path -Leaf
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'ByName') {
+                # Find submodule from configuration
                 $config = Get-Configuration
                 $submoduleConfig = $config.Infrastructure.Submodules
                 
-                $submodulePath = $null
                 if ($Name -eq 'default' -or $Name -eq $submoduleConfig.Default.Name) {
                     $submodulePath = $submoduleConfig.Default.Path
+                    $submoduleName = $submoduleConfig.Default.Name
                 }
                 elseif ($submoduleConfig.Repositories.ContainsKey($Name)) {
                     $submodulePath = $submoduleConfig.Repositories[$Name].Path
-                }
-                
-                if ($submodulePath) {
-                    $updateArgs += $submodulePath
-                    Write-InfraLog -Message "Updating specific submodule: $Name at $submodulePath"
+                    $submoduleName = $Name
                 }
                 else {
                     Write-InfraLog -Level Error -Message "Submodule '$Name' not found in configuration"
                     throw "Submodule '$Name' not configured"
                 }
             }
-            catch {
-                Write-InfraLog -Level Error -Message "Failed to determine submodule path: $($_.Exception.Message)"
-                throw
+
+            if (-not $submodulePath) {
+                throw "Could not determine submodule path"
+            }
+
+            Write-InfraLog -Message "Updating submodule: $submoduleName at $submodulePath"
+
+            # Build update command
+            $updateArgs = @('submodule', 'update', '--init')
+            
+            if ($Merge) {
+                $updateArgs += '--merge'
+            }
+            
+            if ($Remote) {
+                $updateArgs += '--remote'
+            }
+            
+            if ($recursiveInit) {
+                $updateArgs += '--recursive'
+            }
+            
+            $updateArgs += $submodulePath
+
+            if ($PSCmdlet.ShouldProcess($submodulePath, "Update submodule")) {
+                Write-InfraLog -Level Debug -Message "Executing: git $($updateArgs -join ' ')"
+                
+                $output = & git @updateArgs 2>&1
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-InfraLog -Message "Successfully updated submodule: $submoduleName"
+                    Write-Host "✓ Updated: $submoduleName" -ForegroundColor Green
+                    
+                    # Return updated submodule object for pipeline
+                    if ($InputObject) {
+                        return $InputObject
+                    }
+                }
+                else {
+                    Write-InfraLog -Level Error -Message "Failed to update submodule: $submoduleName" -Data @{ Output = ($output | Out-String) }
+                    Write-Host "✗ Failed: $submoduleName - $output" -ForegroundColor Red
+                    throw "Git submodule update failed for $submoduleName"
+                }
             }
         }
-
-        if ($PSCmdlet.ShouldProcess("Infrastructure submodules", "Update")) {
-            Write-InfraLog -Level Debug -Message "Executing: git $($updateArgs -join ' ')"
-            
-            $output = & git @updateArgs 2>&1
-            
-            if ($LASTEXITCODE -eq 0) {
-                Write-InfraLog -Message "Successfully updated submodules"
-                Write-Host "✓ Submodules updated successfully" -ForegroundColor Green
-            }
-            else {
-                Write-InfraLog -Level Error -Message "Failed to update submodules" -Data @{ Output = ($output | Out-String) }
-                Write-Host "✗ Failed to update submodules: $output" -ForegroundColor Red
-                throw "Git submodule update failed"
-            }
+        catch {
+            Write-InfraLog -Level Error -Message "Failed to update submodule: $($_.Exception.Message)"
+            throw
         }
     }
-    catch {
-        Write-InfraLog -Level Error -Message "Failed to update submodules: $($_.Exception.Message)"
-        throw
+
+    end {
+        Write-InfraLog -Level Debug -Message "Submodule update operation complete"
     }
 }
 
 <#
 .SYNOPSIS
-    Get information about configured infrastructure submodules.
+    Get information about infrastructure submodules.
 
 .DESCRIPTION
-    Lists infrastructure submodules configured in config.psd1 and their status.
+    Retrieves infrastructure submodule configuration and status.
+    Outputs one submodule object at a time, suitable for pipeline processing.
+
+.PARAMETER Name
+    Get a specific submodule by name.
 
 .PARAMETER Initialized
     Show only initialized submodules.
 
+.PARAMETER Enabled
+    Show only enabled submodules (default).
+
+.PARAMETER All
+    Show all submodules (enabled and disabled).
+
 .PARAMETER Detailed
-    Show detailed information including commit hashes and branches.
+    Include detailed information (current commit, branch).
 
 .EXAMPLE
-    Get-InfrastructureSubmodules
-    Lists all configured submodules.
+    Get-InfrastructureSubmodule
+    Gets all enabled submodules.
 
 .EXAMPLE
-    Get-InfrastructureSubmodules -Initialized
-    Lists only initialized submodules.
+    Get-InfrastructureSubmodule -Initialized
+    Gets only initialized submodules.
 
 .EXAMPLE
-    Get-InfrastructureSubmodules -Detailed
-    Shows detailed information about all submodules.
+    Get-InfrastructureSubmodule -All -Detailed
+    Gets all submodules with detailed information.
+
+.EXAMPLE
+    Get-InfrastructureSubmodule | Update-InfrastructureSubmodule
+    Pipeline: Gets all submodules and updates each one.
+
+.EXAMPLE
+    Get-InfrastructureSubmodule -Name 'aitherium-infrastructure'
+    Gets a specific submodule by name.
 #>
-function Get-InfrastructureSubmodules {
+function Get-InfrastructureSubmodule {
     [CmdletBinding()]
     param(
+        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [string]$Name,
+
         [Parameter()]
         [switch]$Initialized,
+
+        [Parameter()]
+        [switch]$Enabled,
+
+        [Parameter()]
+        [switch]$All,
 
         [Parameter()]
         [switch]$Detailed
     )
 
-    Write-InfraLog -Level Debug -Message "Getting infrastructure submodules"
+    begin {
+        Write-InfraLog -Level Debug -Message "Getting infrastructure submodules"
 
-    try {
-        # Load configuration
-        $config = Get-Configuration
-        $submoduleConfig = $config.Infrastructure.Submodules
+        try {
+            # Load configuration once in begin block
+            $config = Get-Configuration
+            $submoduleConfig = $config.Infrastructure.Submodules
 
-        if (-not $submoduleConfig.Enabled) {
-            Write-InfraLog -Level Warning -Message "Infrastructure submodules are disabled in configuration"
-            Write-Host "Infrastructure submodules are disabled in configuration" -ForegroundColor Yellow
-            return
-        }
-
-        $submodules = @()
-
-        # Add default submodule
-        if ($submoduleConfig.Default) {
-            $submodules += [PSCustomObject]@{
-                Name        = $submoduleConfig.Default.Name
-                Url         = $submoduleConfig.Default.Url
-                Path        = $submoduleConfig.Default.Path
-                Branch      = $submoduleConfig.Default.Branch
-                Description = $submoduleConfig.Default.Description
-                Enabled     = $submoduleConfig.Default.Enabled
-                IsDefault   = $true
+            if (-not $submoduleConfig.Enabled) {
+                Write-InfraLog -Level Warning -Message "Infrastructure submodules are disabled in configuration"
+                return
             }
-        }
 
-        # Add additional repositories
-        foreach ($key in $submoduleConfig.Repositories.Keys) {
-            $repo = $submoduleConfig.Repositories[$key]
-            $submodules += [PSCustomObject]@{
-                Name        = if ($repo.Name) { $repo.Name } else { $key }
-                Url         = $repo.Url
-                Path        = $repo.Path
-                Branch      = $repo.Branch
-                Description = $repo.Description
-                Enabled     = $repo.Enabled
-                IsDefault   = $false
+            $gitAvailable = Get-Command git -ErrorAction SilentlyContinue
+        }
+        catch {
+            Write-InfraLog -Level Error -Message "Failed to load configuration: $($_.Exception.Message)"
+            throw
+        }
+    }
+
+    process {
+        try {
+            $submodules = @()
+
+            # If Name is specified, only get that one
+            if ($Name) {
+                if ($Name -eq 'default' -or $Name -eq $submoduleConfig.Default.Name) {
+                    if ($submoduleConfig.Default) {
+                        $submodules += $submoduleConfig.Default
+                    }
+                }
+                elseif ($submoduleConfig.Repositories.ContainsKey($Name)) {
+                    $repo = $submoduleConfig.Repositories[$Name]
+                    $repo.Name = $Name
+                    $submodules += $repo
+                }
+                else {
+                    Write-InfraLog -Level Warning -Message "Submodule '$Name' not found in configuration"
+                    return
+                }
             }
-        }
+            else {
+                # Get all submodules
+                
+                # Add default submodule
+                if ($submoduleConfig.Default) {
+                    $submodules += $submoduleConfig.Default
+                }
 
-        # Check git status for each submodule
-        $gitAvailable = Get-Command git -ErrorAction SilentlyContinue
-        
-        foreach ($submodule in $submodules) {
-            $isInitialized = $false
-            $currentCommit = $null
-            $currentBranch = $null
-
-            if ($gitAvailable -and (Test-Path $submodule.Path)) {
-                # Check if path is a git submodule
-                $gitmodulesContent = git config --file .gitmodules --get-regexp "submodule\.$($submodule.Path)\." 2>$null
-                $isInitialized = $LASTEXITCODE -eq 0
-
-                if ($isInitialized -and $Detailed) {
-                    Push-Location $submodule.Path
-                    try {
-                        $currentCommit = git rev-parse --short HEAD 2>$null
-                        $currentBranch = git rev-parse --abbrev-ref HEAD 2>$null
+                # Add additional repositories
+                foreach ($key in $submoduleConfig.Repositories.Keys) {
+                    $repo = $submoduleConfig.Repositories[$key]
+                    if (-not $repo.Name) {
+                        $repo.Name = $key
                     }
-                    finally {
-                        Pop-Location
-                    }
+                    $submodules += $repo
                 }
             }
 
-            $submodule | Add-Member -NotePropertyName 'Initialized' -NotePropertyValue $isInitialized -Force
-            if ($Detailed) {
-                $submodule | Add-Member -NotePropertyName 'CurrentCommit' -NotePropertyValue $currentCommit -Force
-                $submodule | Add-Member -NotePropertyName 'CurrentBranch' -NotePropertyValue $currentBranch -Force
+            # Process each submodule and output one at a time
+            foreach ($submodule in $submodules) {
+                # Skip disabled unless -All is specified
+                if (-not $All -and -not $submodule.Enabled) {
+                    continue
+                }
+
+                # Create output object
+                $outputObject = [PSCustomObject]@{
+                    PSTypeName  = 'AitherZero.InfrastructureSubmodule'
+                    Name        = $submodule.Name
+                    Url         = $submodule.Url
+                    Path        = $submodule.Path
+                    Branch      = $submodule.Branch
+                    Description = $submodule.Description
+                    Enabled     = $submodule.Enabled
+                    IsDefault   = if ($submodule.PSObject.Properties['IsDefault']) { $submodule.IsDefault } else { $false }
+                    Initialized = $false
+                }
+
+                # Check git status
+                if ($gitAvailable -and (Test-Path $submodule.Path)) {
+                    # Check if path is a git submodule
+                    $gitmodulesContent = git config --file .gitmodules --get-regexp "submodule\.$($submodule.Path)\." 2>$null
+                    $outputObject.Initialized = $LASTEXITCODE -eq 0
+
+                    if ($outputObject.Initialized -and $Detailed) {
+                        Push-Location $submodule.Path
+                        try {
+                            $currentCommit = git rev-parse --short HEAD 2>$null
+                            $currentBranch = git rev-parse --abbrev-ref HEAD 2>$null
+                            
+                            $outputObject | Add-Member -NotePropertyName 'CurrentCommit' -NotePropertyValue $currentCommit
+                            $outputObject | Add-Member -NotePropertyName 'CurrentBranch' -NotePropertyValue $currentBranch
+                        }
+                        finally {
+                            Pop-Location
+                        }
+                    }
+                }
+
+                # Filter if requested
+                if ($Initialized -and -not $outputObject.Initialized) {
+                    continue
+                }
+
+                # Output one submodule at a time for pipeline
+                Write-Output $outputObject
             }
         }
-
-        # Filter if requested
-        if ($Initialized) {
-            $submodules = $submodules | Where-Object { $_.Initialized }
+        catch {
+            Write-InfraLog -Level Error -Message "Failed to get submodule information: $($_.Exception.Message)"
+            throw
         }
-
-        # Display results
-        if ($Detailed) {
-            $submodules | Format-Table -Property Name, Path, Url, Branch, CurrentBranch, CurrentCommit, Enabled, Initialized -AutoSize
-        }
-        else {
-            $submodules | Format-Table -Property Name, Path, Branch, Enabled, Initialized, Description -AutoSize
-        }
-
-        return $submodules
-    }
-    catch {
-        Write-InfraLog -Level Error -Message "Failed to get submodule information: $($_.Exception.Message)"
-        throw
     }
 }
 
@@ -684,14 +775,14 @@ function Get-InfrastructureSubmodules {
     Remove submodules that are not in configuration.
 
 .EXAMPLE
-    Sync-InfrastructureSubmodules
+    Sync-InfrastructureSubmodule
     Adds missing submodules from configuration.
 
 .EXAMPLE
-    Sync-InfrastructureSubmodules -Force
+    Sync-InfrastructureSubmodule -Force
     Adds missing and removes unmanaged submodules.
 #>
-function Sync-InfrastructureSubmodules {
+function Sync-InfrastructureSubmodule {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter()]
@@ -702,7 +793,7 @@ function Sync-InfrastructureSubmodules {
 
     try {
         # Get configured submodules
-        $configured = Get-InfrastructureSubmodules
+        $configured = Get-InfrastructureSubmodule
 
         # Get actual git submodules
         $actual = @()
@@ -871,4 +962,4 @@ function Remove-InfrastructureSubmodule {
 
 #endregion Infrastructure Submodule Management
 
-Export-ModuleMember -Function Test-OpenTofu, Get-InfrastructureTool, Invoke-InfrastructurePlan, Invoke-InfrastructureApply, Invoke-InfrastructureDestroy, Initialize-InfrastructureSubmodule, Update-InfrastructureSubmodules, Get-InfrastructureSubmodules, Sync-InfrastructureSubmodules, Remove-InfrastructureSubmodule
+Export-ModuleMember -Function Test-OpenTofu, Get-InfrastructureTool, Invoke-InfrastructurePlan, Invoke-InfrastructureApply, Invoke-InfrastructureDestroy, Initialize-InfrastructureSubmodule, Update-InfrastructureSubmodule, Get-InfrastructureSubmodule, Sync-InfrastructureSubmodule, Remove-InfrastructureSubmodule

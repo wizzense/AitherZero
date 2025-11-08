@@ -274,7 +274,7 @@ try {
                 $updateParams['Name'] = $Name
             }
             
-            Update-InfrastructureSubmodules @updateParams
+            Update-InfrastructureSubmodule @updateParams
             
             Write-Log -Message "✓ Submodule update complete" -Level 'Success'
         }
@@ -290,7 +290,7 @@ try {
     Write-Host ""
     
     try {
-        Get-InfrastructureSubmodules -Detailed
+        Get-InfrastructureSubmodule -Detailed
     }
     catch {
         Write-Log -Message "Failed to get submodule status: $($_.Exception.Message)" -Level 'Warning'

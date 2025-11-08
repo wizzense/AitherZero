@@ -105,7 +105,15 @@ For environment-specific configurations, create `config.local.psd1`:
 
 ## Automation Commands
 
-AitherZero provides PowerShell cmdlets for managing infrastructure submodules:
+AitherZero provides PowerShell cmdlets for managing infrastructure submodules. These cmdlets follow the **singular noun design pattern** - they process single submodules and work seamlessly with PowerShell pipelines for parallel processing and scripting.
+
+### Design Philosophy
+
+All submodule cmdlets are designed to:
+- **Handle single objects** - Each cmdlet processes one submodule at a time
+- **Support pipeline** - Use `Begin/Process/End` blocks for efficient streaming
+- **Enable parallel** - Work with `ForEach-Object -Parallel` for concurrent operations
+- **Compose well** - Chain multiple operations together naturally
 
 ### Initialize Submodules
 
@@ -116,57 +124,103 @@ Initialize-InfrastructureSubmodule
 # Initialize specific submodule
 Initialize-InfrastructureSubmodule -Name 'custom-infra'
 
-# Initialize with custom URL
+# Initialize with custom URL (ad-hoc)
 Initialize-InfrastructureSubmodule -Name 'my-infra' -Url 'https://github.com/me/infra.git' -Path 'infrastructure/my-infra'
+
+# Pipeline: Get and initialize selectively
+Get-InfrastructureSubmodule | Where-Object { $_.Enabled } | Initialize-InfrastructureSubmodule
 ```
 
 ### Update Submodules
 
 ```powershell
-# Update all submodules to latest commits
-Update-InfrastructureSubmodules
+# Update a single submodule by name
+Update-InfrastructureSubmodule -Name 'aitherium-infrastructure'
 
-# Update specific submodule
-Update-InfrastructureSubmodules -Name 'aitherium-infrastructure'
+# Pipeline: Update all initialized submodules
+Get-InfrastructureSubmodule -Initialized | Update-InfrastructureSubmodule
 
-# Update and merge (instead of checkout)
-Update-InfrastructureSubmodules -Merge
+# Pipeline: Update with merge strategy
+Get-InfrastructureSubmodule | Update-InfrastructureSubmodule -Merge
+
+# Pipeline: Update to latest remote commits
+Get-InfrastructureSubmodule -Initialized | Update-InfrastructureSubmodule -Remote
+
+# Pipeline with filtering: Update only test environments
+Get-InfrastructureSubmodule | Where-Object { $_.Name -like '*test*' } | Update-InfrastructureSubmodule
+
+# Parallel: Update multiple submodules concurrently
+Get-InfrastructureSubmodule -Initialized | ForEach-Object -Parallel {
+    Update-InfrastructureSubmodule -InputObject $_ -Remote
+} -ThrottleLimit 4
 ```
 
 ### List Submodules
 
 ```powershell
-# List all configured submodules
-Get-InfrastructureSubmodules
+# Get all enabled submodules (streams one at a time)
+Get-InfrastructureSubmodule
 
-# Show only initialized submodules
-Get-InfrastructureSubmodules -Initialized
+# Get only initialized submodules
+Get-InfrastructureSubmodule -Initialized
 
-# Show detailed status
-Get-InfrastructureSubmodules -Detailed
+# Get all submodules (enabled and disabled)
+Get-InfrastructureSubmodule -All
+
+# Get with detailed information (commit, branch)
+Get-InfrastructureSubmodule -Detailed
+
+# Get specific submodule by name
+Get-InfrastructureSubmodule -Name 'aitherium-infrastructure'
+
+# Pipeline chaining: Get, filter, process
+Get-InfrastructureSubmodule -All | 
+    Where-Object { $_.Branch -eq 'main' } |
+    ForEach-Object { 
+        Write-Host "Processing: $($_.Name)" -ForegroundColor Cyan
+        $_
+    }
+
+# Store for later use
+$submodules = Get-InfrastructureSubmodule | Where-Object { $_.Enabled }
+$submodules | Update-InfrastructureSubmodule -Remote
 ```
 
 ### Sync Configuration
 
 ```powershell
 # Sync .gitmodules with config.psd1 configuration
-Sync-InfrastructureSubmodules
+Sync-InfrastructureSubmodule
 
 # Preview changes without applying
-Sync-InfrastructureSubmodules -WhatIf
+Sync-InfrastructureSubmodule -WhatIf
 
 # Force sync (remove unmanaged submodules)
-Sync-InfrastructureSubmodules -Force
+Sync-InfrastructureSubmodule -Force
 ```
 
 ### Remove Submodules
 
 ```powershell
-# Remove a submodule
+# Remove a single submodule by name
 Remove-InfrastructureSubmodule -Name 'old-infra'
 
 # Remove and clean working directory
 Remove-InfrastructureSubmodule -Name 'old-infra' -Clean
+
+# Pipeline: Remove multiple submodules
+Get-InfrastructureSubmodule -All | 
+    Where-Object { -not $_.Enabled } | 
+    Remove-InfrastructureSubmodule -Clean
+
+# Pipeline with confirmation
+Get-InfrastructureSubmodule | 
+    Where-Object { $_.Name -like '*deprecated*' } |
+    ForEach-Object {
+        Write-Host "Remove $($_.Name)?" -ForegroundColor Yellow
+        Read-Host "Press Enter to continue"
+        Remove-InfrastructureSubmodule -InputObject $_
+    }
 ```
 
 ## Automation Script
@@ -295,7 +349,7 @@ Initialize-InfrastructureSubmodule
 
 ```powershell
 # Check configuration
-Get-InfrastructureSubmodules
+Get-InfrastructureSubmodule
 
 # Force re-initialization
 Remove-InfrastructureSubmodule -Name 'problem-submodule' -Clean
@@ -316,10 +370,10 @@ git config --global credential.helper store
 
 ```powershell
 # Sync configuration with actual submodules
-Sync-InfrastructureSubmodules
+Sync-InfrastructureSubmodule
 
 # Or update to latest
-Update-InfrastructureSubmodules
+Update-InfrastructureSubmodule
 ```
 
 ### Detached HEAD State
@@ -373,7 +427,7 @@ git commit -m "chore: add infrastructure as submodule"
 
 # 5. Verify
 Initialize-InfrastructureSubmodule
-Get-InfrastructureSubmodules
+Get-InfrastructureSubmodule
 ```
 
 ## Additional Resources
