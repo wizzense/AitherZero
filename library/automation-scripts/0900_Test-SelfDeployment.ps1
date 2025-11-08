@@ -86,7 +86,6 @@ function Test-Prerequisites {
         Git = Get-Command git -ErrorAction SilentlyContinue
         PowerShell = $PSVersionTable.PSVersion -ge [Version]"7.0"
         Internet = $false
-        OrchestrationEngine = Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue
     }
 
     # Test internet connectivity
@@ -97,7 +96,7 @@ function Test-Prerequisites {
         Write-ScriptLog -Level Warning -Message "Internet connectivity test failed"
     }
 
-    $passed = $prerequisites.Git -and $prerequisites.PowerShell -and $prerequisites.Internet -and $prerequisites.OrchestrationEngine
+    $passed = $prerequisites.Git -and $prerequisites.PowerShell -and $prerequisites.Internet
 
     Write-ScriptLog -Message "Prerequisites check completed" -Data $prerequisites
 
@@ -106,7 +105,6 @@ function Test-Prerequisites {
         if (-not $prerequisites.Git) { $missing += "Git" }
         if (-not $prerequisites.PowerShell) { $missing += "PowerShell 7+" }
         if (-not $prerequisites.Internet) { $missing += "Internet connectivity" }
-        if (-not $prerequisites.OrchestrationEngine) { $missing += "OrchestrationEngine module" }
 
         throw "Missing prerequisites: $($missing -join ', ')"
     }
