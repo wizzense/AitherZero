@@ -2451,186 +2451,73 @@ function Save-OrchestrationPlaybook {
 function ConvertTo-StandardPlaybookFormat {
     <#
     .SYNOPSIS
-    Converts playbooks from different versions to a standardized format
+    Validates and normalizes playbook format
     .DESCRIPTION
-    Handles legacy playbook formats, converting them to use the modern Sequence-based format.
-    
-    Stages format has been deprecated - all playbooks must use Sequence.
+    Validates that playbooks use the modern Sequence format.
+    All playbooks must have a Sequence property - legacy formats are not supported.
     #>
     param(
         [hashtable]$Playbook
     )
 
-    # Check if this is a v3.0 playbook (has jobs instead of Sequence)
-    if ($Playbook.ContainsKey('metadata') -and 
-        $Playbook.ContainsKey('orchestration') -and 
-        $Playbook.orchestration.ContainsKey('jobs')) {
-        
-        Write-OrchestrationLog "Loading v3.0 jobs-based playbook: $($Playbook.metadata.name)" -Level 'Information'
-        
-        # Convert v3.0 jobs to Sequence format
-        $standardPlaybook = @{
-            # Metadata
-            Name = $Playbook.metadata.name
-            Description = $Playbook.metadata.description
-            Version = $Playbook.metadata.version
-            Category = $Playbook.metadata.category
-            Author = $Playbook.metadata.author
-            Tags = $Playbook.metadata.tags
-            EstimatedDuration = $Playbook.metadata.estimatedDuration
-            
-            # Requirements
-            Requirements = $Playbook.requirements
-            
-            # Variables and profiles
-            Variables = if ($Playbook.orchestration.defaultVariables) { 
-                $Playbook.orchestration.defaultVariables 
-            } else { @{} }
-            Profiles = if ($Playbook.orchestration.profiles) { 
-                $Playbook.orchestration.profiles 
-            } else { @{} }
-            
-            # Convert jobs to Sequence format
-            Sequence = @()
-            
-            # Store original jobs for advanced execution
-            Jobs = $Playbook.orchestration.jobs
-            
-            # Validation and notifications
-            Validation = $Playbook.validation
-            Notifications = $Playbook.notifications
-            Reporting = $Playbook.reporting
-        }
-        
-        # Convert jobs to Sequence format
-        foreach ($jobKey in $Playbook.orchestration.jobs.Keys) {
-            $job = $Playbook.orchestration.jobs[$jobKey]
-            
-            # Extract script numbers from steps
-            foreach ($step in $job.steps) {
-                if ($step.run) {
-                    $convertedStep = @{
-                        Script = $step.run
-                        Description = if ($job.description) { $job.description } else { "" }
-                        Variables = if ($job.env) { $job.env } else { @{} }
-                        ContinueOnError = if ($job.continueOnError) { $job.continueOnError } else { $false }
-                        Timeout = if ($job.timeout) { $job.timeout } else { 3600 }
-                    }
-                    
-                    if ($job.if) {
-                        $convertedStep.Condition = $job.if
-                    }
-                    
-                    $standardPlaybook.Sequence += $convertedStep
-                }
-            }
-        }
-        
-        return $standardPlaybook
-    }
-    
-    # Check if this is a v2.0 playbook (has metadata and orchestration)
-    elseif ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
-        Write-OrchestrationLog "Loading v2.0 playbook: $($Playbook.metadata.name)" -Level 'Information'
-        
-        # Check for deprecated Stages format and throw clear error
-        if ($Playbook.orchestration.ContainsKey('stages') -and 
-            -not $Playbook.orchestration.ContainsKey('sequence')) {
-            $errorMsg = @"
-Playbook '$($Playbook.metadata.name)' uses deprecated Stages format which is no longer supported.
-
-The Stages format has been removed in favor of the modern Sequence format.
-Please migrate this playbook to use Sequence format.
-
-Migration steps:
-1. Replace 'orchestration.stages' with 'orchestration.sequence'
-2. Convert stage definitions to sequence items
-3. See docs/STAGES-DEPRECATION-MIGRATION.md for examples
-
-Example migration:
-  OLD: orchestration.stages = @( @{ name = 'Setup'; sequences = @('0001') } )
-  NEW: orchestration.sequence = @( @{ Script = '0001'; Description = 'Setup' } )
-"@
-            throw $errorMsg
-        }
-        
-        # Convert v2.0 format to internal Sequence format
-        $standardPlaybook = @{
-            # Metadata
-            Name = $Playbook.metadata.name
-            Description = $Playbook.metadata.description
-            Version = $Playbook.metadata.version
-            Category = $Playbook.metadata.category
-            Author = $Playbook.metadata.author
-            Tags = $Playbook.metadata.tags
-            EstimatedDuration = $Playbook.metadata.estimatedDuration
-            
-            # Requirements
-            Requirements = $Playbook.requirements
-            
-            # Variables and profiles from orchestration section
-            Variables = $Playbook.orchestration.defaultVariables
-            Profiles = $Playbook.orchestration.profiles
-            
-            # Use Sequence if available
-            Sequence = $Playbook.orchestration.sequence
-            
-            # Validation and notifications
-            Validation = $Playbook.validation
-            Notifications = $Playbook.notifications
-            Reporting = $Playbook.reporting
-        }
-        
-        return $standardPlaybook
-    }
-    
-    # Handle legacy v1 playbook formats
-    else {
-        Write-OrchestrationLog "Loading legacy v1 playbook" -Level 'Information'
-        
-        # Check for deprecated Stages format and throw clear error
-        if (($Playbook.ContainsKey('Stages') -or $Playbook.ContainsKey('stages')) -and 
-            -not ($Playbook.ContainsKey('Sequence') -or $Playbook.ContainsKey('sequence'))) {
+    # Validate playbook has required Sequence property
+    if (-not ($Playbook.ContainsKey('Sequence') -or $Playbook.ContainsKey('sequence'))) {
+        # Check if they're using unsupported legacy format
+        if ($Playbook.ContainsKey('Stages') -or $Playbook.ContainsKey('stages')) {
             $playbookName = if ($Playbook.Name) { $Playbook.Name } else { $Playbook.name }
             $errorMsg = @"
-Playbook '$playbookName' uses deprecated Stages format which is no longer supported.
+Playbook '$playbookName' uses unsupported legacy format.
 
-The Stages format has been removed in favor of the modern Sequence format.
-Please migrate this playbook to use Sequence format.
+All playbooks must use the Sequence format.
 
-Migration steps:
-1. Replace 'Stages = @(...)' with 'Sequence = @(...)'
-2. Flatten nested 'Scripts' arrays into sequence items
-3. Move stage-specific variables to global 'Variables' section
-4. See docs/STAGES-DEPRECATION-MIGRATION.md for examples
+Required format:
+  Sequence = @(
+      @{
+          Script = '0001'
+          Description = 'Script description'
+          Parameters = @{}
+          ContinueOnError = `$false
+          Timeout = 300
+      }
+  )
 
-Example migration:
-  OLD: Stages = @( @{ Name = 'Setup'; Scripts = @( @{ Path = '0001.ps1' } ) } )
-  NEW: Sequence = @( @{ Script = '0001'; Description = 'Setup' } )
+See docs/STAGES-DEPRECATION-MIGRATION.md for migration examples.
 "@
             throw $errorMsg
         }
         
-        # Return as-is for legacy playbooks, but normalize key cases
-        $standardPlaybook = @{}
-        
-        # Handle different naming conventions in legacy playbooks
-        $standardPlaybook.Name = if ($Playbook.Name) { $Playbook.Name } else { $Playbook.name }
-        $standardPlaybook.Description = if ($Playbook.Description) { $Playbook.Description } else { $Playbook.description }
-        $standardPlaybook.Version = if ($Playbook.Version) { $Playbook.Version } else { $Playbook.version }
-        $standardPlaybook.Sequence = if ($Playbook.Sequence) { $Playbook.Sequence } else { $Playbook.sequence }
-        $standardPlaybook.Variables = if ($Playbook.Variables) { $Playbook.Variables } else { $Playbook.variables }
-        
-        # Copy other properties as-is (excluding deprecated Stages)
-        foreach ($key in $Playbook.Keys) {
-            if ($key -notin @('Name', 'name', 'Description', 'description', 'Version', 'version', 
-                             'Sequence', 'sequence', 'Variables', 'variables', 'Stages', 'stages')) {
-                $standardPlaybook[$key] = $Playbook[$key]
-            }
-        }
-        
-        return $standardPlaybook
+        $errorMsg = @"
+Playbook is missing required 'Sequence' property.
+
+All playbooks must define a Sequence of scripts to execute.
+
+Example:
+  Sequence = @(
+      @{ Script = '0001'; Description = 'First script' }
+  )
+"@
+        throw $errorMsg
     }
+
+    # Return normalized playbook (just normalize key casing)
+    $standardPlaybook = @{}
+    
+    # Normalize common properties
+    $standardPlaybook.Name = if ($Playbook.Name) { $Playbook.Name } else { $Playbook.name }
+    $standardPlaybook.Description = if ($Playbook.Description) { $Playbook.Description } else { $Playbook.description }
+    $standardPlaybook.Version = if ($Playbook.Version) { $Playbook.Version } else { $Playbook.version }
+    $standardPlaybook.Sequence = if ($Playbook.Sequence) { $Playbook.Sequence } else { $Playbook.sequence }
+    $standardPlaybook.Variables = if ($Playbook.Variables) { $Playbook.Variables } else { $Playbook.variables }
+    
+    # Copy all other properties as-is (skip deprecated Stages)
+    foreach ($key in $Playbook.Keys) {
+        if ($key -notin @('Name', 'name', 'Description', 'description', 'Version', 'version', 
+                         'Sequence', 'sequence', 'Variables', 'variables', 'Stages', 'stages')) {
+            $standardPlaybook[$key] = $Playbook[$key]
+        }
+    }
+    
+    return $standardPlaybook
 }
 
 function Get-OrchestrationPlaybook {
