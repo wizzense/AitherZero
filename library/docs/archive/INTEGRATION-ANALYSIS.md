@@ -142,7 +142,7 @@ Interactive Mode:
 
 ### Current State
 - **Orchestration Engine**: Works well, supports number sequences
-- **Playbooks**: Exist in `domains/orchestration/playbooks/` as JSON
+- **Playbooks**: Exist in `aithercore/orchestration/playbooks/` as JSON
 - **Integration**: Playbooks are loaded and executed via `Invoke-OrchestrationSequence`
 
 ### Issues

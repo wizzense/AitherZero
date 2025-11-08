@@ -198,7 +198,7 @@ Invoke-OrchestrationSequence -Sequence "0407,0413,0402"
 1. **Syntax Validation**
 ```powershell
 # Validate OrchestrationEngine.psm1
-./library/automation-scripts/0407_Validate-Syntax.ps1 -FilePath domains/automation/OrchestrationEngine.psm1
+./librar./library/library/automation-scripts/0407_Validate-Syntax.ps1 -FilePath aithercore/automation/OrchestrationEngine.psm1
 ```
 
 2. **Dry Run Test**
@@ -262,7 +262,7 @@ Invoke-OrchestrationSequence -LoadPlaybook 'my-playbook' -DryRun
 ### 4. Validate Before Commit
 ```powershell
 # Run syntax check
-./library/automation-scripts/0407_Validate-Syntax.ps1 -All
+./librar./library/library/automation-scripts/0407_Validate-Syntax.ps1 -All
 
 # Test orchestration
 Invoke-OrchestrationSequence -LoadPlaybook 'test-orchestration'
@@ -279,7 +279,7 @@ Invoke-OrchestrationSequence -LoadPlaybook 'test-orchestration'
 ### Playbook Not Found
 ```powershell
 # Check playbook exists
-ls domains/orchestration/playbooks/*.psd1
+ls aithercore/orchestration/playbooks/*.psd1
 
 # Verify playbook name (without extension)
 Invoke-OrchestrationSequence -LoadPlaybook 'my-playbook'  # Not 'my-playbook.psd1'
@@ -291,7 +291,7 @@ Invoke-OrchestrationSequence -LoadPlaybook 'my-playbook'  # Not 'my-playbook.psd
 # This is now handled automatically (commit ade1ae0)
 
 # Verify scripts exist
-ls library/automation-scripts/0407*.ps1
+ls librar./library/library/automation-scripts/0407*.ps1
 ```
 
 ### Timeout Issues
@@ -369,7 +369,7 @@ aitherzero orchestrate test-orchestration
 
 ## See Also
 
-- [Playbook Examples](../domains/orchestration/playbooks/README.md)
+- [Playbook Examples](../aithercore/orchestration/playbooks/README.md)
 - [Script Metadata](./SCRIPT-METADATA.md)
 - [Testing Guide](./TESTING-README.md)
 - [Project Health Validation](./PROJECT-HEALTH-VALIDATION.md)

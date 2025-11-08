@@ -386,7 +386,7 @@ Analysis Result for 'actions':
 
 **Distribution:**
 - `tests/unit/automation-scripts/`: 97 test files
-- `tests/domains/`: 5 test files
+- `tests/aithercore/`: 5 test files
 - `tests/integration/`: 7 test files
 - `tests/unit/`: 3 test files
 

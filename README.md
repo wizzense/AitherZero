@@ -58,13 +58,12 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ```
 
 **Note**: After cloning, run these setup commands:
-
 ```bash
-# Configure Git merge strategy for auto-generated files
-bash tools/setup-git-merge.sh
+# Enable pre-commit hooks and Git merge strategy (recommended for contributors)
+pwsh -File automation-scripts/0004_Setup-GitHooks.ps1
 
-# Enable pre-commit hooks for validation (recommended for contributors)
-pwsh -File tools/Setup-GitHooks.ps1
+# Or using the global command (after bootstrap):
+aitherzero 0004
 ```
 
 See [Git Merge Setup Guide](./library/docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
@@ -252,7 +251,7 @@ Get-Module AitherZero
 ./az.ps1 0407
 
 # Run quality checks
-./aitherzero 0420 -Path ./domains/utilities/Logging.psm1
+./aitherzero 0420 -Path ./aithercore/utilities/Logging.psm1
 
 # Generate and view project report
 ./az.ps1 0510 -ShowAll
@@ -267,7 +266,7 @@ AitherZero maintains high code quality standards through automated validation:
 ./aitherzero 0420 -Path ./MyModule.psm1
 
 # Validate entire domain
-./aitherzero 0420 -Path ./domains/testing -Recursive
+./aitherzero 0420 -Path ./aithercore/testing -Recursive
 ```
 
 **Quality checks include:**
@@ -302,7 +301,7 @@ AitherZero provides **134 automation scripts** organized as building blocks that
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook endpoint-configuration-example -Profile web-development
 
 # Create custom playbook from template
-cp domains/orchestration/playbooks/templates/custom-playbook-template.json domains/orchestration/playbooks/custom/my-playbook.json
+cp aithercore/orchestration/playbooks/templates/custom-playbook-template.json aithercore/orchestration/playbooks/custom/my-playbook.json
 
 # Execute custom playbook
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook my-playbook
@@ -357,7 +356,7 @@ cp domains/orchestration/playbooks/templates/custom-playbook-template.json domai
 - **[Quick Reference](library/docs/BUILDING-BLOCKS-QUICK-REFERENCE.md)** - Script lookup and common patterns (5 min read)
 - **[Complete Guide](library/docs/BUILDING-BLOCKS.md)** - Full documentation with all blocks (15 min read)
 - **[Reorganization Plan](library/docs/BUILDING-BLOCKS-REORGANIZATION.md)** - Architecture decisions (10 min read)
-- **[Custom Playbook Guide](orchestration/playbooks/custom/README.md)** - Create your own playbooks (10 min read)
+- **[Custom Playbook Guide](aithercore/orchestration/playbooks/custom/README.md)** - Create your own playbooks (10 min read)
 
 ## Core Modules
 

@@ -77,7 +77,7 @@ CommandParser:
 ### 4. Documentation
 
 - **docs/UNIFIED-MENU-DESIGN.md** - Complete design philosophy (7KB)
-- **domains/experience/README.md** - Component reference (cleaned up)
+- **aithercore/experience/README.md** - Component reference (cleaned up)
 - Both docs include examples, user journey, and future GUI plans
 
 ## Technical Implementation
@@ -179,7 +179,7 @@ Easy to mock, validate, test
 ```
 Menu auto-generates from available:
 ├─ Scripts (automation-scripts/)
-├─ Playbooks (domains/orchestration/playbooks/)
+├─ Playbooks (aithercore/orchestration/playbooks/)
 └─ Modes (Start-AitherZero.ps1 params)
 ```
 
@@ -187,13 +187,13 @@ Menu auto-generates from available:
 
 ### Created (New)
 ```
-domains/experience/
+aithercore/experience/
 ├── Components/
 │   ├── BreadcrumbNavigation.psm1    (NEW)
 │   └── CommandParser.psm1           (NEW)
 └── UnifiedMenu.psm1                 (NEW)
 
-tests/unit/domains/experience/
+tests/unit/aithercore/experience/
 ├── BreadcrumbNavigation.Tests.ps1   (NEW)
 └── CommandParser.Tests.ps1          (NEW)
 
@@ -203,13 +203,13 @@ docs/
 
 ### Modified
 ```
-domains/experience/README.md         (UPDATED - removed outdated info)
+aithercore/experience/README.md         (UPDATED - removed outdated info)
 ```
 
 ## Test Results
 
 ```bash
-$ pwsh -Command "Invoke-Pester -Path './tests/unit/domains/experience/*.Tests.ps1'"
+$ pwsh -Command "Invoke-Pester -Path './tests/unit/aithercore/experience/*.Tests.ps1'"
 
 Starting discovery in 2 files.
 Discovery found 43 tests in 237ms.
@@ -278,15 +278,15 @@ Run these commands to verify:
 ```bash
 # 1. Run tests
 cd /home/runner/work/AitherZero/AitherZero
-pwsh -Command "Invoke-Pester -Path './tests/unit/domains/experience/BreadcrumbNavigation.Tests.ps1' -Output Detailed"
-pwsh -Command "Invoke-Pester -Path './tests/unit/domains/experience/CommandParser.Tests.ps1' -Output Detailed"
+pwsh -Command "Invoke-Pester -Path './tests/unit/aithercore/experience/BreadcrumbNavigation.Tests.ps1' -Output Detailed"
+pwsh -Command "Invoke-Pester -Path './tests/unit/aithercore/experience/CommandParser.Tests.ps1' -Output Detailed"
 
 # 2. Check documentation
 cat docs/UNIFIED-MENU-DESIGN.md
-cat domains/experience/README.md
+cat aithercore/experience/README.md
 
 # 3. Test command parser
-pwsh -Command "Import-Module ./domains/experience/Components/CommandParser.psm1; Parse-AitherCommand '-Mode Run -Target 0402'"
+pwsh -Command "Import-Module ./aithercore/experience/Components/CommandParser.psm1; Parse-AitherCommand '-Mode Run -Target 0402'"
 ```
 
 ## Success Criteria Met

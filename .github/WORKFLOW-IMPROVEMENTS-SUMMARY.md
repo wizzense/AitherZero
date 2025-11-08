@@ -141,7 +141,7 @@ Each workflow comment builds on previous:
 
 - `.github/WORKFLOW-COMMENT-STRATEGY.md` - Comment coordination guidelines
 - `.github/workflows/comprehensive-test-execution.yml.disabled.README.md` - Why old workflow was disabled
-- `domains/orchestration/playbooks/testing/test-orchestrated.json` - Test playbook configuration
+- `aithercore/orchestration/playbooks/testing/test-orchestrated.json` - Test playbook configuration
 
 ## Benefits
 

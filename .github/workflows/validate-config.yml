@@ -9,7 +9,7 @@ on:
       - 'config.psd1'
       - 'library/automation-scripts/0003_Sync-ConfigManifest.ps1'
       - 'library/automation-scripts/0413_Validate-ConfigManifest.ps1'
-      - 'domains/**/*.psm1'
+      - 'aithercore/**/*.psm1'
       - 'library/automation-scripts/*.ps1'
   pull_request:
     # Run on all PRs to ensure config validation

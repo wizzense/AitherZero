@@ -16,8 +16,8 @@
 
 ## 📁 Subdirectories
 
-- [📂 **automation-scripts**](./library/automation-scripts/index.md)
-- [📂 **domains**](./domains/index.md)
+- [📂 **automation-scripts**](./automation-scripts/index.md)
+- [📂 **aithercore**](./aithercore/index.md)
 
 ## 📄 Files
 

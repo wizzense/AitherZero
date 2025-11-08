@@ -102,7 +102,7 @@ The recommended way to use configuration in scripts:
 
 ```powershell
 # Import the Configuration module
-Import-Module ./domains/configuration/Configuration.psm1
+Import-Module ./aithercore/configuration/Configuration.psm1
 
 # Simple usage with default
 $ProfileName = Get-ConfiguredValue -Name 'Profile' -Default 'Standard'
@@ -353,7 +353,7 @@ $env:AITHERZERO_AUTOMATION_WHATIF = "false"
 
 3. **Check module loaded**:
    ```powershell
-   Import-Module ./domains/configuration/Configuration.psm1 -Force
+   Import-Module ./aithercore/configuration/Configuration.psm1 -Force
    Get-Configuration
    ```
 
@@ -484,7 +484,7 @@ If you have an existing `config.json`:
 code ./config.psd1
 
 # 3. Test configuration loading
-Import-Module ./domains/configuration/Configuration.psm1 -Force
+Import-Module ./aithercore/configuration/Configuration.psm1 -Force
 $config = Get-Configuration
 $config | ConvertTo-Json -Depth 10
 
@@ -574,7 +574,7 @@ See `config.example.psd1` for the complete schema with all available settings an
 
 ### Module Source
 
-- [domains/configuration/Configuration.psm1](../domains/configuration/Configuration.psm1) - Configuration module implementation
+- [aithercore/configuration/Configuration.psm1](../aithercore/configuration/Configuration.psm1) - Configuration module implementation
 
 ## Support
 

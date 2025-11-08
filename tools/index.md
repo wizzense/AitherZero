@@ -6,13 +6,15 @@
 
 ## 📖 Overview
 
-*This directory contains AitherZero project files.*
+*This directory contains build and infrastructure tools for AitherZero.*
+
+The tools directory contains utilities essential for building, packaging, and bootstrapping AitherZero. User-facing automation scripts have been moved to the `automation-scripts/` directory to integrate with the number-based orchestration system.
 
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 12
-- **PowerShell Scripts**: 9
+- **Files**: 5
+- **PowerShell Scripts**: 3
 
 ## 📄 Files
 
@@ -27,24 +29,27 @@
   - *Global launcher for AitherZero - callable from anywhere as 'aitherzero'*
 - ⚙️ [Build-AitherCorePackage.ps1](./Build-AitherCorePackage.ps1)
   - *Build and package AitherCore for distribution across platforms*
-- ⚙️ [Get-AutomationTestCoverage.ps1](./Get-AutomationTestCoverage.ps1)
-  - *Analyzes test coverage for automation scripts by comparing existing scripts to available test files.*
 - ⚙️ [Install-GlobalCommand.ps1](./Install-GlobalCommand.ps1)
   - *Installs or uninstalls the global 'aitherzero' command*
-- ⚙️ [migrate-playbooks-v2.ps1](./migrate-playbooks-v2.ps1)
-  - *Migrate legacy v1 playbooks to new v2.0 format*
-- ⚙️ [Setup-GitHooks.ps1](./Setup-GitHooks.ps1)
-  - *Setup Git hooks for AitherZero development*
-- ⚙️ [Validate-ModuleManifest.ps1](./Validate-ModuleManifest.ps1)
-  - *Validates PowerShell module manifest files for common issues including Unicode characters*
-- ⚙️ [Validate-TestDiscoveryFix.ps1](./Validate-TestDiscoveryFix.ps1)
-  - *Validates the test discovery fix is working correctly*
-- ⚙️ [Validate-WorkflowIntegration.ps1](./Validate-WorkflowIntegration.ps1)
-  - *Validate AitherCore workflow integration with existing GitHub Actions workflows*
 
-### .sh Files
+## 🔀 Moved Scripts
 
-- 📄 [setup-git-merge.sh](./setup-git-merge.sh)
+The following scripts have been moved to `automation-scripts/` for better integration with AitherZero's orchestration system:
+
+- `Get-AutomationTestCoverage.ps1` → `0428_Get-AutomationTestCoverage.ps1`
+- `Setup-GitHooks.ps1` → `0004_Setup-GitHooks.ps1`
+- `Validate-ModuleManifest.ps1` → `0416_Validate-ModuleManifest.ps1`
+- `Validate-TestDiscoveryFix.ps1` → `0427_Validate-TestDiscoveryFix.ps1`
+- `Validate-WorkflowIntegration.ps1` → `0841_Validate-WorkflowIntegration.ps1`
+- `migrate-playbooks-v2.ps1` → `0968_Migrate-PlaybooksV2.ps1`
+- `setup-git-merge.sh` → Integrated into `0004_Setup-GitHooks.ps1`
+
+These scripts can now be run using the `aitherzero` command or the `az` alias:
+```powershell
+aitherzero 0004  # Setup Git hooks
+aitherzero 0415  # Validate module manifest
+aitherzero 0428  # Get test coverage
+```
 
 ---
 

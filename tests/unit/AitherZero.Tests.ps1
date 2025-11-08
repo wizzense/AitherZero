@@ -13,12 +13,13 @@ BeforeAll {
     $script:OriginalEnv.AITHERZERO_DISABLE_TRANSCRIPT = $env:AITHERZERO_DISABLE_TRANSCRIPT
     $script:OriginalEnv.PATH = $env:PATH
 
-    # Expected module loading order
+    # Expected module loading order (critical modules that must be loaded first)
     $script:ExpectedModuleOrder = @(
         'Logging.psm1',
+        'ExtensionManager.psm1',
         'Configuration.psm1',
-        'BetterMenu.psm1',
-        'UserInterface.psm1',
+        'ConfigManager.psm1',
+        'AitherZeroCLI.psm1',
         'GitAutomation.psm1',
         'IssueTracker.psm1',
         'PullRequestManager.psm1',
@@ -27,7 +28,8 @@ BeforeAll {
         'TechDebtAnalysis.psm1',
         'OrchestrationEngine.psm1',
         'DeploymentAutomation.psm1',
-        'Infrastructure.psm1'
+        'Infrastructure.psm1',
+        'Security.psm1'
     )
 
     # Mock cross-platform detection
@@ -447,17 +449,14 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
 
         It "Should ensure critical modules are loaded before dependent modules" {
             # Configuration module should be loaded before modules that might use it
-            # BetterMenu should be loaded before UserInterface
+            # Logging should be loaded before Configuration
             # This is validated by checking the order in the module loading sequence
 
             $content = Get-Content $script:RootModule -Raw
             $loggingIndex = $content.IndexOf('Logging.psm1')
             $configIndex = $content.IndexOf('Configuration.psm1')
-            $betterMenuIndex = $content.IndexOf('BetterMenu.psm1')
-            $uiIndex = $content.IndexOf('UserInterface.psm1')
 
-            $loggingIndex | Should -BeLessThan $configIndex
-            $betterMenuIndex | Should -BeLessThan $uiIndex
+            $loggingIndex | Should -BeLessThan $configIndex -Because "Logging should be loaded before Configuration"
         }
     }
 

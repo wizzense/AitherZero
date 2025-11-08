@@ -38,7 +38,7 @@ Successfully enhanced the AitherZero orchestration engine to achieve **feature p
 ### 1. Code Changes
 
 **File Modified:**
-- `domains/automation/OrchestrationEngine.psm1` (+315 lines)
+- `aithercore/automation/OrchestrationEngine.psm1` (+315 lines)
   - Added matrix build support (3 functions)
   - Added caching system (4 functions)  
   - Added summary generation (1 function)
@@ -46,7 +46,7 @@ Successfully enhanced the AitherZero orchestration engine to achieve **feature p
 
 **Files Created:**
 - `ORCHESTRATION-ENHANCEMENTS.md` (13KB documentation)
-- `domains/orchestration/playbooks/core/testing/test-matrix-example.json` (example playbook)
+- `aithercore/orchestration/playbooks/core/testing/test-matrix-example.json` (example playbook)
 - `automation-scripts/0963_Demo-OrchestrationFeatures.ps1` (demo script)
 
 ### 2. New Functions (7 total)
@@ -344,7 +344,7 @@ Documentation and communication are critical. Summaries provide:
    - Troubleshooting
    - Best practices
 
-2. **`domains/orchestration/playbooks/core/testing/test-matrix-example.json`**
+2. **`aithercore/orchestration/playbooks/core/testing/test-matrix-example.json`**
    - Working example playbook
    - Demonstrates matrix builds
    - Production-ready template

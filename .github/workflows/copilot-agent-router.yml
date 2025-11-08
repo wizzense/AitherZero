@@ -92,7 +92,7 @@ jobs:
                 $_ -match '\.(tf|tfvars)$'
               })
               security = @($changedFiles | Where-Object {
-                $_ -match 'domains/security/' -or
+                $_ -match 'aithercore/security/' -or
                 $_ -match '(security|certificate|credential|secret).*\.ps1'
               })
               testing = @($changedFiles | Where-Object {
@@ -101,11 +101,11 @@ jobs:
                 $_ -match 'library/automation-scripts/04[0-9][0-9]'
               })
               ui = @($changedFiles | Where-Object {
-                $_ -match 'domains/experience/' -or
+                $_ -match 'aithercore/experience/' -or
                 $_ -match '(ui|menu|interface|wizard).*\.ps1'
               })
               backend = @($changedFiles | Where-Object {
-                $_ -match 'domains/.*\.psm1$' -or
+                $_ -match 'aithercore/.*\.psm1$' -or
                 $_ -match 'library/automation-scripts/02[0-9][0-9]' -or
                 $_ -match '(api|module).*\.ps1'
               })
@@ -116,7 +116,7 @@ jobs:
               })
               powershell = @($changedFiles | Where-Object {
                 $_ -match '\.(ps1|psm1|psd1)$' -or
-                $_ -match 'domains/orchestration/' -or
+                $_ -match 'aithercore/orchestration/' -or
                 $_ -match 'library/automation-scripts/(00[0-9][0-9]|07[0-9][0-9]|9[0-9][0-9][0-9])'
               })
               projectmgmt = @($changedFiles | Where-Object {

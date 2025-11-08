@@ -35,7 +35,7 @@ AitherZero had systemic code duplication issues:
 
 ### 3. Created ScriptUtilities Module ✅
 
-**New File**: `domains/automation/ScriptUtilities.psm1` (508 lines)
+**New File**: `aithercore/automation/ScriptUtilities.psm1` (508 lines)
 
 **10 Exported Functions:**
 1. `Write-ScriptLog` - Centralized logging with fallback to Write-Host
@@ -51,7 +51,7 @@ AitherZero had systemic code duplication issues:
 
 **Module Integration:**
 - Added to `AitherZero.psd1` FunctionsToExport list
-- Created comprehensive README in `domains/automation/README.md`
+- Created comprehensive README in `aithercore/automation/README.md`
 - Follows existing domain module patterns
 - Auto-loads with main module system
 
@@ -111,7 +111,7 @@ function Test-Prerequisites { ... }
 
 # Import ScriptUtilities
 $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 # Actual script logic starts here...
 Write-ScriptLog "Starting..." -Level 'Information'
@@ -134,7 +134,7 @@ Write-ScriptLog "Starting..." -Level 'Information'
 
 **Documentation Files Updated:**
 - `.github/copilot-instructions.md` - Added ScriptUtilities section
-- `domains/automation/README.md` - Comprehensive module documentation
+- `aithercore/automation/README.md` - Comprehensive module documentation
 - `.github/workflows/release-automation.yml` - Removed 0001 reference
 - `.github/prompts/use-aitherzero-workflows.md` - Removed 0001
 - `docs/guides/README-ModernCLI.md` - Updated examples
@@ -152,7 +152,7 @@ Write-ScriptLog "Starting..." -Level 'Information'
 - ✅ **Established DRY principle** for automation layer
 - ✅ **Created extensible pattern** for adding common functions
 - ✅ **Improved separation of concerns** - infrastructure vs business logic
-- ✅ **Better module organization** within domains/automation/
+- ✅ **Better module organization** within aithercore/automation/
 
 ### Developer Experience Improvements
 - ✅ **Clear guidelines** in copilot instructions prevent future duplication
@@ -177,7 +177,7 @@ Write-ScriptLog "Starting..." -Level 'Information'
 ### Module Validation ✅
 ```powershell
 # Module loads successfully
-Import-Module ./domains/automation/ScriptUtilities.psm1 -Force
+Import-Module ./aithercore/automation/ScriptUtilities.psm1 -Force
 
 # All 10 functions export correctly
 Get-Command -Module ScriptUtilities

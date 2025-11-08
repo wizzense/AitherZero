@@ -124,15 +124,15 @@ Export-ConfigurationTemplate -OutputPath "./config.dev.psd1"
 ## Files Created (Summary)
 
 ### Core Components (5 files)
-1. `domains/experience/Components/BreadcrumbNavigation.psm1` (4.5KB)
-2. `domains/experience/Components/CommandParser.psm1` (8.4KB)
-3. `domains/experience/UnifiedMenu.psm1` (24KB)
-4. `domains/utilities/ExtensionManager.psm1` (17KB)
-5. `domains/configuration/ConfigManager.psm1` (18KB)
+1. `aithercore/experience/Components/BreadcrumbNavigation.psm1` (4.5KB)
+2. `aithercore/experience/Components/CommandParser.psm1` (8.4KB)
+3. `aithercore/experience/UnifiedMenu.psm1` (24KB)
+4. `aithercore/utilities/ExtensionManager.psm1` (17KB)
+5. `aithercore/configuration/ConfigManager.psm1` (18KB)
 
 ### Tests (2 files)
-1. `tests/unit/domains/experience/BreadcrumbNavigation.Tests.ps1` (15 tests)
-2. `tests/unit/domains/experience/CommandParser.Tests.ps1` (28 tests)
+1. `tests/unit/aithercore/experience/BreadcrumbNavigation.Tests.ps1` (15 tests)
+2. `tests/unit/aithercore/experience/CommandParser.Tests.ps1` (28 tests)
 
 ### Documentation (4 files)
 1. `docs/UNIFIED-MENU-DESIGN.md` (7KB)

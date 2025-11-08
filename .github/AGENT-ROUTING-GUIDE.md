@@ -47,7 +47,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 - Secret management
 
 **Triggers:**
-- Files: `domains/security/`, `*security*.ps1`, `*certificate*.ps1`, `*credential*.ps1`
+- Files: `aithercore/security/`, `*security*.ps1`, `*certificate*.ps1`, `*credential*.ps1`
 - Keywords: `security`, `certificate`, `credential`, `vulnerability`
 - Labels: `security`, `vulnerability`, `compliance`
 
@@ -93,7 +93,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 - Accessibility features
 
 **Triggers:**
-- Files: `domains/experience/`, `*ui*.ps1`, `*menu*.ps1`, `*wizard*.ps1`
+- Files: `aithercore/experience/`, `*ui*.ps1`, `*menu*.ps1`, `*wizard*.ps1`
 - Keywords: `ui`, `ux`, `menu`, `interface`, `user experience`
 - Labels: `ui`, `ux`, `user-experience`
 
@@ -116,7 +116,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 - Dev tools setup (0200-0299 range)
 
 **Triggers:**
-- Files: `domains/*.psm1`, `*api*.ps1`, `automation-scripts/02*.ps1`
+- Files: `aithercore/*.psm1`, `*api*.ps1`, `automation-scripts/02*.ps1`
 - Keywords: `api`, `module`, `backend`, `performance`, `optimization`
 - Labels: `backend`, `api`, `performance`
 
@@ -162,7 +162,7 @@ The AitherZero repository includes 8 specialized custom agents that automaticall
 - Environment prep (0000-0099), Git automation (0700-0799), Maintenance (9000-9999)
 
 **Triggers:**
-- Files: `*.ps1`, `*.psm1`, `domains/orchestration/`, `automation-scripts/00*.ps1`, `07*.ps1`, `9*.ps1`
+- Files: `*.ps1`, `*.psm1`, `aithercore/orchestration/`, `automation-scripts/00*.ps1`, `07*.ps1`, `9*.ps1`
 - Keywords: `powershell`, `automation`, `orchestration`, `script`, `workflow`
 - Labels: `automation`, `powershell`, `scripting`
 

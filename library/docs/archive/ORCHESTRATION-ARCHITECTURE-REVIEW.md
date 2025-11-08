@@ -360,7 +360,7 @@ All interfaces use the same core API:
 
 ### 1. Async Orchestration (2 days)
 
-**File**: `domains/automation/AsyncOrchestration.psm1`
+**File**: `aithercore/automation/AsyncOrchestration.psm1`
 
 ```powershell
 function Start-OrchestrationAsync {
@@ -412,7 +412,7 @@ function Start-OrchestrationAsync {
 
 ### 2. CLI Progress Display (1 day)
 
-**File**: `domains/experience/ProgressDisplay.psm1`
+**File**: `aithercore/experience/ProgressDisplay.psm1`
 
 ```powershell
 function Show-OrchestrationProgress {

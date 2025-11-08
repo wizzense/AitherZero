@@ -202,7 +202,7 @@ The orchestration engine now provides feature parity with GitHub Actions:
 ### Fast Development Loop
 ```powershell
 # Make changes to code
-code domains/utilities/Logging.psm1
+code aithercore/utilities/Logging.psm1
 
 # Quick validation (30 seconds)
 aitherzero 0966 -ValidationLevel Fast
@@ -249,7 +249,7 @@ Start-AitherZero -Mode Orchestrate -Playbook pr-validation-full
 
 ### Issue: Playbook not found
 ```
-Error: Playbook not found: ./domains/orchestration/playbooks/pr-validation-full.psd1
+Error: Playbook not found: ./aithercore/orchestration/playbooks/pr-validation-full.psd1
 ```
 
 **Solution**: Ensure you're in the project root directory:
@@ -361,6 +361,6 @@ The Local Validation System provides complete CI/CD parity for validation checks
 ## See Also
 
 - **Orchestration Engine Documentation**: `docs/ORCHESTRATION-ARCHITECTURE.md`
-- **Playbook Format**: `domains/orchestration/playbooks/README.md`
+- **Playbook Format**: `aithercore/orchestration/playbooks/README.md`
 - **GitHub Actions Parity**: `docs/ORCHESTRATION-ENHANCEMENTS-SUMMARY.md`
 - **Testing Guide**: `docs/INTEGRATION-TESTING-GUIDE.md`

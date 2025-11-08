@@ -99,7 +99,7 @@ try {
     }
 
     # Discover modules
-    $modulesPath = Join-Path (Split-Path $PSScriptRoot -Parent) "domains"
+    $modulesPath = Join-Path (Split-Path $PSScriptRoot -Parent) "aithercore"
     Write-ScriptLog "Discovering modules in: $modulesPath"
 
     $allModules = Get-ChildItem -Path $modulesPath -Directory -Recurse -Depth 2 |

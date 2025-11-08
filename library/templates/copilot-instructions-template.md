@@ -31,7 +31,7 @@ AitherZero.psd1 (Module Manifest)
 
 ### Number-Based Orchestration System
 
-Scripts in `/library/automation-scripts/` follow numeric ranges:
+Scripts in `/librar./library/library/automation-scripts/` follow numeric ranges:
 - **0000-0099**: Environment prep (PowerShell 7, directories)
 - **0100-0199**: Infrastructure (Hyper-V, certificates, networking)
 - **0200-0299**: Dev tools (Git, Node, Python, Docker, VS Code)
@@ -44,13 +44,18 @@ Use the `az` wrapper for script execution: `az 0402` runs unit tests, `az 0404` 
 
 ## Domain Structure (Consolidated Architecture v2.0)
 
-Located in `/domains/` (legacy references may point to `aither-core/`):
+Located in `/aithercore/`:
 - **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management (57 functions)
 - **configuration/**: Config management with environment switching (36 functions)
 - **utilities/**: Logging, maintenance, cross-platform helpers (24 functions)
 - **security/**: Credentials, certificates (41 functions)
-- **experience/**: UI components, menus, wizards (22 functions)
 - **automation/**: Orchestration engine, workflows (16 functions)
+- **cli/**: Command-line interface and script execution (unified menu/CLI system)
+- **development/**: Git automation, issue tracking, PR management
+- **testing/**: Testing frameworks, quality validation
+- **reporting/**: Report generation, tech debt analysis
+- **documentation/**: Documentation generation and indexing
+- **ai-agents/**: AI workflow orchestration
 
 ## Critical Development Patterns
 
@@ -112,7 +117,7 @@ az 0703 -Title "Add feature"                 # PR creation
 Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
 
 # Domain tests with coverage
-Invoke-Pester -Path "./tests/domains/configuration" -CodeCoverage "./domains/configuration/*.psm1"
+Invoke-Pester -Path "./tests/aithercore/configuration" -CodeCoverage "./aithercore/configuration/*.psm1"
 
 # All tests
 Invoke-Pester -Path "./tests"
@@ -190,7 +195,7 @@ Key sections:
 │   └── prompts/                 # Reusable prompt templates
 ├── .vscode/                     # VS Code settings, tasks, launch configs
 ├── .devcontainer/               # DevContainer configuration
-├── library/automation-scripts/          # 125 numbered scripts (0000-9999)
+├── librar./library/library/automation-scripts/          # 125 numbered scripts (0000-9999)
 │   ├── 0000-0099/              # Environment setup
 │   ├── 0100-0199/              # Infrastructure (Hyper-V, certificates)
 │   ├── 0200-0299/              # Dev tools (Git, Node, Docker, VS Code)
@@ -200,7 +205,7 @@ Key sections:
 │   ├── 0800-0899/              # Issue management
 │   ├── 0900-0999/              # Validation
 │   └── 9000-9999/              # Maintenance & cleanup
-├── domains/                     # 11 functional domains (modular architecture)
+├── aithercore/                     # 11 functional domains (modular architecture)
 │   ├── ai-agents/              # 3 modules - AI integration
 │   ├── automation/             # 2 modules - Orchestration engine
 │   ├── configuration/          # 1 module - Config management (36 functions)
@@ -215,7 +220,7 @@ Key sections:
 ├── tests/                       # Test suite (~74 test files)
 │   ├── unit/                   # Unit tests (by domain and script range)
 │   ├── integration/            # Integration tests
-│   ├── domains/                # Domain-specific tests
+│   ├── aithercore/                # Domain-specific tests
 │   ├── TestHelpers.psm1        # Shared test utilities
 │   ├── results/                # Test output (XML, JSON)
 │   ├── analysis/               # PSScriptAnalyzer results (CSV, JSON)
@@ -307,22 +312,22 @@ Key sections:
 ### Common Patterns and Locations
 
 **To add a new automation script**:
-1. Create `library/automation-scripts/NNNN_Description.ps1` (use next available number)
+1. Create `librar./library/library/automation-scripts/NNNN_Description.ps1` (use next available number)
 2. Add metadata comment block with Stage, Dependencies, Tags
 3. Add to `config.psd1` FeatureDependencies section
-4. Create unit test in `tests/unit/library/automation-scripts/NNNN-range/`
+4. Create unit test in `tests/unit/librar./library/library/automation-scripts/NNNN-range/`
 5. Export script number in orchestration playbooks if needed
 
 **To add a new domain function**:
-1. Add function to appropriate domain module in `domains/*/`
+1. Add function to appropriate domain module in `aithercore/*/`
 2. Add `Export-ModuleMember -Function 'YourFunction'` at module end
 3. Add function name to `AitherZero.psd1` FunctionsToExport array
-4. Create unit test in `tests/domains/your-domain/`
+4. Create unit test in `tests/aithercore/your-domain/`
 5. Add comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, etc.)
 
 **To modify configuration**:
 1. Edit `config.psd1` (master file)
-2. Validate with `./library/automation-scripts/0413_Validate-ConfigManifest.ps1`
+2. Validate with `./librar./library/library/automation-scripts/0413_Validate-ConfigManifest.ps1`
 3. Test configuration loading with `Get-Configuration`
 
 **To add tests**:
@@ -371,13 +376,13 @@ Check exit codes: 0=success, 1=error, 3010=restart required
 
 ```powershell
 # 1. Syntax validation - Takes ~1-2 seconds for all 457 files
-./library/automation-scripts/0407_Validate-Syntax.ps1 -All
+./librar./library/library/automation-scripts/0407_Validate-Syntax.ps1 -All
 
 # 2. PSScriptAnalyzer - Takes ~75 seconds for full codebase
-./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
+./librar./library/library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
 
 # 3. Unit tests - Takes ~54 seconds (may have 5-15 known failures)
-./library/automation-scripts/0402_Run-UnitTests.ps1
+./librar./library/library/automation-scripts/0402_Run-UnitTests.ps1
 
 # Alternative: Use the 'az' wrapper (shorter syntax)
 ./az.ps1 0407 -All          # Syntax validation
@@ -400,26 +405,26 @@ Check exit codes: 0=success, 1=error, 3010=restart required
 
 ```powershell
 # Test syntax only for changed files
-./library/automation-scripts/0407_Validate-Syntax.ps1 -FilePath ./path/to/changed.ps1
+./librar./library/library/automation-scripts/0407_Validate-Syntax.ps1 -FilePath ./path/to/changed.ps1
 
 # Run PSScriptAnalyzer on specific path
-./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path ./domains/utilities
+./librar./library/library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path ./aithercore/utilities
 
 # Run tests for specific domain
-Invoke-Pester -Path "./tests/domains/configuration" -Output Detailed
+Invoke-Pester -Path "./tests/aithercore/configuration" -Output Detailed
 
 # Run single test file
 Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
 
 # Run all tests (comprehensive)
-./library/automation-scripts/0409_Run-AllTests.ps1
+./librar./library/library/automation-scripts/0409_Run-AllTests.ps1
 ```
 
 ### Quality Validation (Before Committing)
 
 ```powershell
 # Comprehensive quality check - Takes ~2-3 minutes
-./library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/utilities
+./librar./library/library/automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./aithercore/utilities
 
 # Checks performed:
 # - Error handling (try/catch patterns)
@@ -478,9 +483,9 @@ The GitHub Actions workflows use these exact commands:
 
 # Comprehensive Tests (.github/workflows/comprehensive-test-execution.yml)  
 - Bootstrap minimal environment
-- Install testing tools: ./library/automation-scripts/0400_Install-TestingTools.ps1
-- Run unit tests: ./library/automation-scripts/0402_Run-UnitTests.ps1
-- Run integration tests: ./library/automation-scripts/0403_Run-IntegrationTests.ps1
+- Install testing tools: ./librar./library/library/automation-scripts/0400_Install-TestingTools.ps1
+- Run unit tests: ./librar./library/library/automation-scripts/0402_Run-UnitTests.ps1
+- Run integration tests: ./librar./library/library/automation-scripts/0403_Run-IntegrationTests.ps1
 - Aggregate and report results
 ```
 
@@ -509,7 +514,7 @@ Import-Module ./AitherZero.psd1 -Force
 **Issue**: PSScriptAnalyzer timeout
 ```powershell
 # Solution: Run on specific path instead of entire codebase
-./az.ps1 0404 -Path ./domains/utilities
+./az.ps1 0404 -Path ./aithercore/utilities
 ```
 
 ### Before Making Changes
@@ -895,7 +900,7 @@ $env:AITHERZERO_INITIALIZED -eq 'true'
 **PSScriptAnalyzer timeout**:
 ```powershell
 # Run on specific path instead
-./az.ps1 0404 -Path ./domains/utilities
+./az.ps1 0404 -Path ./aithercore/utilities
 ```
 
 ### File Locations at a Glance
@@ -906,8 +911,8 @@ $env:AITHERZERO_INITIALIZED -eq 'true'
 | `AitherZero.psm1` | Root module loader | ~300 lines |
 | `config.psd1` | Master configuration | 1476 lines |
 | `bootstrap.ps1` | Setup script | ~900 lines |
-| `library/automation-scripts/` | Numbered scripts | 125 scripts |
-| `domains/` | Functional modules | 11 domains |
+| `librar./library/library/automation-scripts/` | Numbered scripts | 125 scripts |
+| `aithercore/` | Functional modules | 11 domains |
 | `tests/` | Test suite | ~74 test files |
 | `.github/workflows/` | CI/CD pipelines | 17 workflows |
 

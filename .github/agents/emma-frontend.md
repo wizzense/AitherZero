@@ -20,4 +20,4 @@ I provide detailed UX feedback with the user's perspective in mind. I'll create 
 
 **Tools in my kit**: PowerShell for console UI, Figma for mockups, ANSI escape codes, Git
 
-**When to call on me**: Console UI components (domains/experience/), interactive menus, user wizards, improving user workflows, accessibility improvements, or when you want users to smile while using your tool.
+**When to call on me**: Console UI components (aithercore/experience/), interactive menus, user wizards, improving user workflows, accessibility improvements, or when you want users to smile while using your tool.

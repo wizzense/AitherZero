@@ -20,7 +20,9 @@ See [README.md](./README.md) for detailed information about this directory.
   - *The `aithercore` directory contains the consolidated essential modules required for basic AitherZ...*
 - [📂 **automation-scripts**](./library/library/automation-scripts/index.md)
   - *This directory contains all automated installation and configuration scripts used by the AitherZe...*
-- [📂 **domains**](./domains/index.md)
+- [📂 **demos**](./demos/index.md)
+- [📂 **docs**](./docs/index.md)
+- [📂 **aithercore**](./aithercore/index.md)
   - *This directory contains all domain modules for the AitherZero platform, organized by functional a...*
 - [📂 **infrastructure**](./infrastructure/index.md)
   - *This directory contains infrastructure-as-code definitions for deploying AitherZero environments.*

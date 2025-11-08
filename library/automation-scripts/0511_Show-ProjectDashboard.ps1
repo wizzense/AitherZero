@@ -200,7 +200,7 @@ function Show-ModuleStatus {
     Write-Host "MODULE STATUS" -ForegroundColor Yellow
     Write-Host ("-" * 40) -ForegroundColor Gray
 
-    $domains = Get-ChildItem -Path (Join-Path $ProjectPath "domains") -Directory -ErrorAction SilentlyContinue
+    $domains = Get-ChildItem -Path (Join-Path $ProjectPath "aithercore") -Directory -ErrorAction SilentlyContinue
 
     foreach ($domain in $domains) {
         $modules = Get-ChildItem -Path $domain.FullName -Filter "*.psm1" -ErrorAction SilentlyContinue

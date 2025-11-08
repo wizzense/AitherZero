@@ -4,8 +4,8 @@ on:
   push:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
-      - 'domains/**/*.psm1'
-      - 'library/automation-scripts/**/*.ps1'
+      - 'aithercore/**/*.psm1'
+      - 'library/library/library/automation-scripts/**/*.ps1'
       - 'AitherZero.psd1'
       - 'README.md'
       - 'library/**'
@@ -13,8 +13,8 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
-      - 'domains/**/*.psm1'
-      - 'library/automation-scripts/**/*.ps1'
+      - 'aithercore/**/*.psm1'
+      - 'library/library/library/automation-scripts/**/*.ps1'
       - 'AitherZero.psd1'
       - 'README.md'
       - 'library/**'
@@ -197,7 +197,7 @@ jobs:
         Write-Host "Validating documentation quality..." -ForegroundColor Cyan
 
         # Import documentation engine
-        Import-Module ./domains/documentation/DocumentationEngine.psm1 -Force
+        Import-Module ./aithercore/documentation/DocumentationEngine.psm1 -Force
         Initialize-DocumentationEngine
 
         # Run quality validation

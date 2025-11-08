@@ -278,7 +278,7 @@ function Get-ProjectMetrics {
     }
 
     # Count domain modules
-    $domainsPath = Join-Path $ProjectPath "domains"
+    $domainsPath = Join-Path $ProjectPath "aithercore"
     if (Test-Path $domainsPath) {
         $domainDirs = Get-ChildItem -Path $domainsPath -Directory
         foreach ($domain in $domainDirs) {
@@ -1733,7 +1733,7 @@ function Get-DetailedTestResults {
                         $testName = if ($null -ne $testDetail.PSObject.Properties['Name']) { $testDetail.Name } else { 'Unknown' }
                         $testPath = if ($null -ne $testDetail.PSObject.Properties['ExpandedPath']) { $testDetail.ExpandedPath } else { $testName }
                         
-                        $domain = if ($testPath -match '/domains/([^/]+)/') { $matches[1] }
+                        $domain = if ($testPath -match '/aithercore/([^/]+)/') { $matches[1] }
                                  elseif ($testPath -match '/automation-scripts/') { 'automation-scripts' }
                                  else { 'other' }
                         
@@ -2799,7 +2799,7 @@ function New-HTMLDashboard {
     }
 
     # Get domain module information
-    $domainsPath = Join-Path $ProjectPath "domains"
+    $domainsPath = Join-Path $ProjectPath "aithercore"
     $domains = @()
     if (Test-Path $domainsPath) {
         $domainDirs = Get-ChildItem -Path $domainsPath -Directory
@@ -2843,7 +2843,7 @@ function New-HTMLDashboard {
         $domainCardsJoined = $domainCardsHTML | Join-String -Separator "`n"
         
         $domainsHTML = @"
-            <section class="section" id="domains">
+            <section class="section" id="aithercore">
                 <h2>🗂️ Domain Modules</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">
                     Consolidated domain-based module architecture with $domainsCount domains

@@ -72,7 +72,7 @@ This document provides a complete audit of all testing, checks, documentation tr
 | Weekly Schedule | ✅ | Line 20 | Automatic checks |
 
 **Triggers:**
-- Push to main/develop/dev (paths: domains/**, automation-scripts/**, **.md)
+- Push to main/develop/dev (paths: aithercore/**, automation-scripts/**, **.md)
 - Pull requests
 - Weekly schedule (Mondays 8 AM UTC)
 - Manual workflow_dispatch

@@ -121,7 +121,7 @@ function Invoke-FullDocumentationGeneration {
         Write-DocLog "Generated project documentation: $projectDocPath" -Level Information
 
         # Generate individual module documentation
-        $domainsPath = Join-Path $script:ProjectRoot "domains"
+        $domainsPath = Join-Path $script:ProjectRoot "aithercore"
         Write-DocLog "Scanning for modules in: $domainsPath" -Level Debug
 
         if (Test-Path $domainsPath) {
@@ -228,7 +228,7 @@ function Invoke-ReactiveDocumentationMode {
         $watchers = @()
 
         # Watch domains directory
-        $domainsPath = Join-Path $script:ProjectRoot "domains"
+        $domainsPath = Join-Path $script:ProjectRoot "aithercore"
         if (Test-Path $domainsPath) {
             $domainsWatcher = New-Object System.IO.FileSystemWatcher
             $domainsWatcher.Path = $domainsPath
@@ -475,7 +475,7 @@ function Get-RecentlyChangedFile {
     $changedFiles = @()
 
     # Check domains
-    $domainsPath = Join-Path $script:ProjectRoot "domains"
+    $domainsPath = Join-Path $script:ProjectRoot "aithercore"
     if (Test-Path $domainsPath) {
         $changedFiles += Get-ChildItem -Path $domainsPath -Recurse -Filter "*.psm1" |
             Where-Object { $_.LastWriteTime -gt $cutoffTime }
@@ -570,7 +570,7 @@ function Update-FunctionalityIndex {
 }
 
 function Get-CurrentDomainCount {
-    $domainsPath = Join-Path $script:ProjectRoot "domains"
+    $domainsPath = Join-Path $script:ProjectRoot "aithercore"
     if (Test-Path $domainsPath) {
         return Get-ChildItem -Path $domainsPath -Directory
     }

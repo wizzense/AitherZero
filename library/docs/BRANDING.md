@@ -150,7 +150,7 @@ The main README.md should include:
 
 ### Key Files with Branding
 1. `/Start-AitherZero.ps1` - Show-Banner function with gradient
-2. `/domains/reporting/ReportingEngine.psm1` - HTML report templates
+2. `/aithercore/reporting/ReportingEngine.psm1` - HTML report templates
 3. `/README.md` - Main documentation with logo
 4. `/AitherZero.psm1` - Root module with copyright
 5. All domain modules - Header with Aitherium branding

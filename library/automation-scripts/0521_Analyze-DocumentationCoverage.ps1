@@ -180,7 +180,7 @@ function Analyze-DocumentationCoverage {
     Write-AnalysisLog "Checking for README files..." -Component "DocCoverage"
 
     $moduleDirectories = @()
-    $moduleDirectories += Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Directory -ErrorAction SilentlyContinue
+    $moduleDirectories += Get-ChildItem -Path (Join-Path $script:ProjectRoot "aithercore") -Directory -ErrorAction SilentlyContinue
     $moduleDirectories += Get-ChildItem -Path (Join-Path $script:ProjectRoot "modules") -Directory -ErrorAction SilentlyContinue
     $moduleDirectories += Get-ChildItem -Path (Join-Path $script:ProjectRoot "automation-scripts") -Directory -ErrorAction SilentlyContinue
 

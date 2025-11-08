@@ -134,7 +134,7 @@ Once configured, you can leverage MCP servers in Copilot Chat:
 
 ```
 @workspace How is the infrastructure module organized?
-# Uses filesystem server to analyze /domains/infrastructure/
+# Uses filesystem server to analyze /aithercore/infrastructure/
 
 @workspace Show me recent changes to the testing domain
 # Uses git server to show commit history
@@ -155,8 +155,8 @@ The configuration also includes context providers that help Copilot understand d
 
 ### Codebase Provider
 Focuses Copilot on PowerShell modules and scripts:
-- Domain modules (`domains/**/*.psm1`)
-- Automation scripts (`library/automation-scripts/**/*.ps1`)
+- Domain modules (`aithercore/**/*.psm1`)
+- Automation scripts (`librar./library/library/automation-scripts/**/*.ps1`)
 - Test files (`tests/**/*.Tests.ps1`)
 
 ### Documentation Provider

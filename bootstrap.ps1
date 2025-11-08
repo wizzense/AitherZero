@@ -1160,7 +1160,7 @@ function Initialize-CleanEnvironment {
             # Verify critical functions
             $criticalFunctions = @(
                 'Write-CustomLog',
-                'Show-UIMenu',
+                'Invoke-AitherScript',
                 'Invoke-OrchestrationSequence'
             )
 

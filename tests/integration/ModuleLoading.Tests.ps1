@@ -104,14 +104,6 @@ Describe "Module Loading Order" {
             # Verify Configuration comes after Logging
             $content | Should -BeLike "*Logging.psm1*Configuration.psm1*"
         }
-
-        It "Should load BetterMenu before UserInterface" {
-            $rootModulePath = Join-Path $script:ProjectRoot "AitherZero.psm1"
-            $content = Get-Content $rootModulePath -Raw
-
-            # Verify order
-            $content | Should -BeLike "*BetterMenu.psm1*UserInterface.psm1*"
-        }
     }
 
     Context "Module Dependencies" {

@@ -137,7 +137,7 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
             $dirSetup = @{
                 ProjectDirs = @(
                     "automation-scripts",
-                    "domains",
+                    "aithercore",
                     "infrastructure",
                     "orchestration"
                 )

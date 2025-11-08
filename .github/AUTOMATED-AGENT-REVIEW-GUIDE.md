@@ -53,7 +53,7 @@ Agents are selected based on:
 3. **Top 3 Rule**: Maximum of 3 agents review per commit (highest scores)
 
 **Example:**
-- Changed `domains/security/certificates.psm1` → **Sarah Security** (score: 3)
+- Changed `aithercore/security/certificates.psm1` → **Sarah Security** (score: 3)
 - Changed `automation-scripts/0150_Setup-VM.ps1` → **Maya Infrastructure** (score: 3)
 - Changed `tests/unit/Security.Tests.ps1` → **Jessica Testing** (score: 3)
 - All `.ps1` files → **Rachel PowerShell** (score: 2 per file)
@@ -188,7 +188,7 @@ Agents are selected based on:
 
 ### Example 1: Security Code Change
 
-**Scenario:** You commit changes to `domains/security/Certificate-Management.psm1`
+**Scenario:** You commit changes to `aithercore/security/Certificate-Management.psm1`
 
 **Result:**
 - 🔒 **Sarah Security** reviews the changes

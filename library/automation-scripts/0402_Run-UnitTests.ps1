@@ -107,7 +107,7 @@ try {
 
         # Generate cache key
         $cacheKey = Get-TestCacheKey -TestPath $Path -TestType 'Unit'
-        $sourcePath = Join-Path $projectRoot "domains"
+        $sourcePath = Join-Path $projectRoot "aithercore"
 
         # Check if tests should run
         $testDecision = Test-ShouldRunTests -TestPath $Path -SourcePath $sourcePath -MinutesSinceLastRun $CacheMinutes

@@ -78,8 +78,8 @@ Test 1: Same error different line numbers should match
 ### 4. Different Files
 **Validates**: Same error in different files produces different fingerprints
 ```javascript
-File: "domains/infrastructure/VmManagement.psm1", Error: "Failed to create VM"
-File: "domains/security/CertificateManagement.psm1", Error: "Failed to create VM"
+File: "aithercore/infrastructure/VmManagement.psm1", Error: "Failed to create VM"
+File: "aithercore/security/CertificateManagement.psm1", Error: "Failed to create VM"
 // Should NOT MATCH
 ```
 
@@ -102,8 +102,8 @@ File: "tests/unit/Logging.Tests.ps1", Error: "Expected log level ERROR"
 ### 7. Path Variations
 **Validates**: Absolute vs relative paths produce same fingerprint
 ```javascript
-"/home/runner/work/AitherZero/AitherZero/domains/experience/UserInterface.psm1"
-"domains/experience/UserInterface.psm1"
+"/home/runner/work/AitherZero/AitherZero/aithercore/experience/UserInterface.psm1"
+"aithercore/experience/UserInterface.psm1"
 // Should MATCH
 ```
 

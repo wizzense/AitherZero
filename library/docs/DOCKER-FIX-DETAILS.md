@@ -34,8 +34,8 @@ The error occurred because:
 
 - `Dockerfile` - Install to `/opt/aitherzero`, set WORKDIR to `/app`
 - `docker-compose.yml` - Update environment and volume paths
-- `library/automation-scripts/0850_Deploy-PREnvironment.ps1` - Update paths in docker-compose generation
-- `library/automation-scripts/0852_Validate-PRDockerDeployment.ps1` - Update validation paths
+- `librar./library/library/automation-scripts/0850_Deploy-PREnvironment.ps1` - Update paths in docker-compose generation
+- `librar./library/library/automation-scripts/0852_Validate-PRDockerDeployment.ps1` - Update validation paths
 - `docs/IMPLEMENTATION-SUMMARY.md` - Update Docker test commands
 - `docs/PR-DEPLOYMENT-SETUP-CHECKLIST.md` - Update testing commands
 
@@ -46,7 +46,7 @@ The error occurred because:
 docker run -it --rm -v "$(pwd):/app" -w /app ghcr.io/wizzense/aitherzero:latest
 
 # Output:
-# WARNING: Failed to load module: ./domains/reporting/ReportingEngine.psm1 - Access to the path '/app/reports' is denied.
+# WARNING: Failed to load module: ./aithercore/reporting/ReportingEngine.psm1 - Access to the path '/app/reports' is denied.
 # ✅ AitherZero loaded. Type Start-AitherZero to begin.
 ```
 
@@ -96,8 +96,8 @@ docker run -it --rm \
 ├── AitherZero.psd1       # Module manifest
 ├── AitherZero.psm1       # Root module
 ├── Start-AitherZero.ps1  # Main entry point
-├── domains/              # Domain modules
-├── library/automation-scripts/   # Numbered scripts
+├── aithercore/              # Domain modules
+├── librar./library/library/automation-scripts/   # Numbered scripts
 ├── logs/                 # AitherZero logs
 ├── reports/              # AitherZero reports
 └── ...

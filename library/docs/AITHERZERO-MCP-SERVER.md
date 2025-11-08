@@ -177,7 +177,7 @@ AI: [Uses search_scripts with query="infrastructure"]
 ### Example 3: Quality Checks
 ```
 You: "Check the code quality of the testing domain"
-AI: [Uses run_quality_check with path="./domains/testing"]
+AI: [Uses run_quality_check with path="./aithercore/testing"]
     "Quality validation complete:
      - PSScriptAnalyzer: 0 errors, 2 warnings
      - Error handling: Compliant
@@ -204,7 +204,7 @@ AI assistants can execute scripts with parameters:
 
 ```
 You: "Run script 0420 to validate the utilities domain recursively"
-AI: [Uses run_script with scriptNumber="0420", params={Path: "./domains/utilities", Recursive: true}]
+AI: [Uses run_script with scriptNumber="0420", params={Path: "./aithercore/utilities", Recursive: true}]
 ```
 
 ### Playbook Execution

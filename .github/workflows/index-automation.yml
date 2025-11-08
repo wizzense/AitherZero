@@ -15,12 +15,13 @@ on:
         ring-2,
       ]
     paths:
-      - "domains/**"
+      - "aithercore/**"
       - "library/automation-scripts/**"
       - "infrastructure/**"
       - "tests/**"
       - "integrations/**"
       - "library/**"
+      - "docs/**"
       - "**/*.md"
       - "**/*.ps1"
       - "**/*.psm1"
@@ -39,12 +40,13 @@ on:
         ring-2,
       ]
     paths:
-      - "domains/**"
+      - "aithercore/**"
       - "library/automation-scripts/**"
       - "infrastructure/**"
       - "tests/**"
       - "integrations/**"
       - "library/**"
+      - "docs/**"
       - "**/*.md"
       - "**/*.ps1"
       - "**/*.psm1"

@@ -66,7 +66,7 @@ seq 0007-0009
 ./orchestration/Start-OrchestrationUI.ps1 -Playbook infrastructure-lab -NonInteractive
 
 # Option 3: Direct orchestration engine
-Import-Module ./domains/automation/OrchestrationEngine.psm1
+Import-Module ./aithercore/automation/OrchestrationEngine.psm1
 Invoke-OrchestrationSequence -LoadPlaybook infrastructure-lab
 ```
 

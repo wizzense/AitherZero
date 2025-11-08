@@ -73,7 +73,7 @@ Write-Host "Creating documentation from code/data" -ForegroundColor Gray
 $docExample = @'
 # Generate documentation for orchestration playbook
 ./automation-scripts/0830_Generate-PromptFromData.ps1 `
-    -InputPath "./domains/orchestration/playbooks/test-full.json" `
+    -InputPath "./aithercore/orchestration/playbooks/test-full.json" `
     -DataType "JSON" `
     -PromptTemplate "Documentation" `
     -IncludeExamples
@@ -94,7 +94,7 @@ $templateExample = @'
 ./automation-scripts/0831_Prompt-Templates.ps1 `
     -TemplateName "CodeReview" `
     -Variables @{
-        FilePath = "./domains/automation/OrchestrationEngine.psm1"
+        FilePath = "./aithercore/automation/OrchestrationEngine.psm1"
         Language = "PowerShell"
         LineCount = 500
         Concerns = "Performance and error handling"
