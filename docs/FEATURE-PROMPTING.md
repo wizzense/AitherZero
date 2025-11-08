@@ -56,7 +56,7 @@ param()
 
 # Import ScriptUtilities
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force
+Import-Module (Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 # Check feature and prompt if needed
 if (-not (Test-FeatureOrPrompt -FeatureName 'Python' -Category 'Development' -Reason 'Required to run Python scripts')) {
@@ -80,7 +80,7 @@ For more control, use `Request-FeatureEnable` directly:
 
 ```powershell
 # Import Configuration module
-$configModule = Join-Path (Split-Path $PSScriptRoot -Parent) "domains/configuration/Configuration.psm1"
+$configModule = Join-Path (Split-Path $PSScriptRoot -Parent) "aithercore/configuration/Configuration.psm1"
 Import-Module $configModule -Force
 
 # Check if feature is enabled first
@@ -310,8 +310,8 @@ if ($pythonConfig.Configuration.InstallPoetry) {
 
 ### Files Involved
 
-- `domains/configuration/Configuration.psm1` - Contains `Request-FeatureEnable` function
-- `domains/automation/ScriptUtilities.psm1` - Contains `Test-FeatureOrPrompt` helper
+- `aithercore/configuration/Configuration.psm1` - Contains `Request-FeatureEnable` function
+- `aithercore/automation/ScriptUtilities.psm1` - Contains `Test-FeatureOrPrompt` helper
 - `config.psd1` - Master configuration file (not modified by prompts)
 - `config.local.psd1` - Local overrides file (created/modified by prompts, gitignored)
 

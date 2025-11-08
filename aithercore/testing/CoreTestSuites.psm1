@@ -17,11 +17,11 @@ $ErrorActionPreference = 'Stop'
 if ($env:AITHERZERO_ROOT) {
     $script:ProjectRoot = $env:AITHERZERO_ROOT
 } else {
-    # Fallback: go up from domains/testing to project root
+    # Fallback: go up from aithercore/testing to project root
     $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 }
 
-$script:DomainsPath = Join-Path $script:ProjectRoot "domains"
+$script:DomainsPath = Join-Path $script:ProjectRoot "aithercore"
 $script:AutomationScriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
 
 # Import the test framework

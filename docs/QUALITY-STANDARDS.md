@@ -20,7 +20,7 @@ The AitherZero Quality Validation System ensures that all new features and compo
 
 ### Components
 
-1. **QualityValidator.psm1** - Core validation module (`domains/testing/QualityValidator.psm1`)
+1. **QualityValidator.psm1** - Core validation module (`aithercore/testing/QualityValidator.psm1`)
 2. **0420_Validate-ComponentQuality.ps1** - Automation script (`automation-scripts/0420_Validate-ComponentQuality.ps1`)
 3. **quality-validation.yml** - GitHub Actions workflow (`.github/workflows/quality-validation.yml`)
 
@@ -116,7 +116,7 @@ function Process-Data {
 **Checks:**
 - ✅ Existence of corresponding test file (`.Tests.ps1`)
 - ✅ Test file is in appropriate location:
-  - Domain modules: `tests/domains/{domain}/*.Tests.ps1`
+  - Domain modules: `tests/aithercore/{domain}/*.Tests.ps1`
   - Automation scripts: `tests/integration/*.Tests.ps1`
   - Unit tests: `tests/unit/*.Tests.ps1`
 - ✅ Adequate number of test cases (minimum 3 recommended)
@@ -266,12 +266,12 @@ The overall score is the average of all non-skipped checks. A minimum score of *
 
 #### Validate a Single File
 ```powershell
-./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/testing/MyModule.psm1
+./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./aithercore/testing/MyModule.psm1
 ```
 
 #### Validate a Directory
 ```powershell
-./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/testing -Recursive
+./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./aithercore/testing -Recursive
 ```
 
 #### Generate HTML Report
@@ -299,7 +299,7 @@ The overall score is the average of all non-skipped checks. A minimum score of *
 ### Via AitherZero Launcher
 ```powershell
 # Using the aitherzero wrapper
-aitherzero 0420 -Path ./domains/testing/MyModule.psm1
+aitherzero 0420 -Path ./aithercore/testing/MyModule.psm1
 
 # Or with Start-AitherZero
 ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0420
@@ -308,7 +308,7 @@ aitherzero 0420 -Path ./domains/testing/MyModule.psm1
 ### Programmatic Usage
 ```powershell
 # Import the module
-Import-Module ./domains/testing/QualityValidator.psm1
+Import-Module ./aithercore/testing/QualityValidator.psm1
 
 # Run validation
 $report = Invoke-QualityValidation -Path ./MyModule.psm1
@@ -354,7 +354,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'domains/**/*.psm1'
+      - 'aithercore/**/*.psm1'
       - 'automation-scripts/*.ps1'
   workflow_dispatch:
     inputs:
@@ -387,7 +387,7 @@ on:
 **Solution:** Create a test file in the appropriate location:
 ```powershell
 # For domain module
-tests/domains/{domain}/MyModule.Tests.ps1
+tests/aithercore/{domain}/MyModule.Tests.ps1
 
 # For automation script
 tests/integration/0XXX_MyScript.Tests.ps1

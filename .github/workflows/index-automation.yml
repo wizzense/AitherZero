@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
-      - 'domains/**'
+      - 'aithercore/**'
       - 'automation-scripts/**'
       - 'infrastructure/**'
       - 'tests/**'
@@ -16,7 +16,7 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
-      - 'domains/**'
+      - 'aithercore/**'
       - 'automation-scripts/**'
       - 'infrastructure/**'
       - 'tests/**'

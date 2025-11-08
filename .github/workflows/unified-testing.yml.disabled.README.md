@@ -9,7 +9,7 @@ This workflow has been disabled because it's redundant with `parallel-testing.ym
 Both `unified-testing.yml` and `parallel-testing.yml` were running on the same triggers:
 - Push to main/develop/dev branches
 - Pull requests
-- Same path filters (domains/**, automation-scripts/**, tests/**)
+- Same path filters (aithercore/**, automation-scripts/**, tests/**)
 
 This caused:
 - Duplicate test execution

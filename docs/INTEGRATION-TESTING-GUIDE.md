@@ -51,7 +51,7 @@ Test configuration-driven behavior:
 ```
 tests/
 ├── unit/                           # Unit tests
-│   ├── domains/
+│   ├── aithercore/
 │   │   └── experience/
 │   │       ├── BreadcrumbNavigation.Tests.ps1
 │   │       └── CommandParser.Tests.ps1
@@ -75,8 +75,8 @@ BeforeAll {
     $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
     
     # Import modules under test
-    Import-Module (Join-Path $ProjectRoot "domains/experience/Components/CommandParser.psm1") -Force
-    Import-Module (Join-Path $ProjectRoot "domains/experience/Components/BreadcrumbNavigation.psm1") -Force
+    Import-Module (Join-Path $ProjectRoot "aithercore/experience/Components/CommandParser.psm1") -Force
+    Import-Module (Join-Path $ProjectRoot "aithercore/experience/Components/BreadcrumbNavigation.psm1") -Force
     
     # Import test helpers
     Import-Module (Join-Path $PSScriptRoot "../TestHelpers.psm1") -Force
@@ -635,10 +635,10 @@ Describe "CI Integration Tests" -Tag 'CI' {
             $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
             
             $modules = @(
-                "domains/experience/Components/CommandParser.psm1",
-                "domains/experience/Components/BreadcrumbNavigation.psm1",
-                "domains/utilities/ExtensionManager.psm1",
-                "domains/configuration/ConfigManager.psm1"
+                "aithercore/experience/Components/CommandParser.psm1",
+                "aithercore/experience/Components/BreadcrumbNavigation.psm1",
+                "aithercore/utilities/ExtensionManager.psm1",
+                "aithercore/configuration/ConfigManager.psm1"
             )
             
             foreach ($module in $modules) {

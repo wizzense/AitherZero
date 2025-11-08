@@ -373,7 +373,7 @@ jobs:
 
 #### Week 5-6: Infrastructure Plugin
 
-**Goal**: Convert domains/infrastructure to standalone plugin
+**Goal**: Convert aithercore/infrastructure to standalone plugin
 
 **Structure**:
 ```
@@ -405,7 +405,7 @@ plugins/Infrastructure/
 ```
 
 **Migration Checklist**:
-- [ ] Extract from domains/
+- [ ] Extract from aithercore/
 - [ ] Create plugin manifest
 - [ ] Update imports to use DI
 - [ ] Write plugin-specific tests

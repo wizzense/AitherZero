@@ -24,7 +24,7 @@ See [README.md](./README.md) for detailed information about this directory.
   - *This directory contains all automated installation and configuration scripts used by the AitherZe...*
 - [📂 **demos**](./demos/index.md)
 - [📂 **docs**](./docs/index.md)
-- [📂 **domains**](./domains/index.md)
+- [📂 **domains**](./aithercore/index.md)
   - *This directory contains all domain modules for the AitherZero platform, organized by functional a...*
 - [📂 **examples**](./examples/index.md)
 - [📂 **infrastructure**](./infrastructure/index.md)

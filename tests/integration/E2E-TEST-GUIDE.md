@@ -230,9 +230,9 @@ Tests are executed with:
 ## Related Documentation
 
 - [Test Best Practices](./TEST-BEST-PRACTICES.md)
-- [Testing Framework](../domains/testing/README.md)
-- [Orchestration Engine](../domains/automation/README.md)
-- [Interactive UI](../domains/experience/README.md)
+- [Testing Framework](../aithercore/testing/README.md)
+- [Orchestration Engine](../aithercore/automation/README.md)
+- [Interactive UI](../aithercore/experience/README.md)
 
 ## Contact
 

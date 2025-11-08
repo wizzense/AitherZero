@@ -406,7 +406,7 @@ function Search-AllLogSources {
 
 **Files to Create/Modify:**
 - ✨ NEW: `automation-scripts/0830_Search-AllLogs.ps1`
-- 📝 UPDATE: `domains/utilities/LogViewer.psm1` (add advanced search functions)
+- 📝 UPDATE: `aithercore/utilities/LogViewer.psm1` (add advanced search functions)
 
 ### Task 2: Enhance Health Dashboard (6 hours)
 
@@ -488,7 +488,7 @@ function New-HTMLHealthDashboard {
 
 **Files to Modify:**
 - 📝 UPDATE: `automation-scripts/0550_Health-Dashboard.ps1`
-- 📝 UPDATE: `domains/utilities/LoggingDashboard.psm1` (add helpers)
+- 📝 UPDATE: `aithercore/utilities/LoggingDashboard.psm1` (add helpers)
 
 ### Task 3: Integration & Testing (3 hours)
 

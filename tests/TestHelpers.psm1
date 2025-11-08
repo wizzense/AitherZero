@@ -339,7 +339,7 @@ function Initialize-TestEnvironment {
 
         # Import any additional required modules
         foreach ($moduleName in $RequiredModules) {
-            $modulePath = Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Filter "$moduleName.psm1" -Recurse | Select-Object -First 1
+            $modulePath = Get-ChildItem -Path (Join-Path $script:ProjectRoot "aithercore") -Filter "$moduleName.psm1" -Recurse | Select-Object -First 1
             if ($modulePath) {
                 Import-Module $modulePath.FullName -Force -Global
             }

@@ -5,14 +5,14 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'automation-scripts/**/*.ps1'
-      - 'domains/**/*.psm1'
+      - 'aithercore/**/*.psm1'
   push:
     branches:
       - main
       - develop
     paths:
       - 'automation-scripts/**/*.ps1'
-      - 'domains/**/*.psm1'
+      - 'aithercore/**/*.psm1'
   workflow_dispatch:
     inputs:
       mode:

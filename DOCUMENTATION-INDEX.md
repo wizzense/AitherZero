@@ -81,14 +81,14 @@ This index provides a comprehensive map of all AitherZero documentation, organiz
 - `docs/EXTENSIONS.md` - User guide
 - `docs/STYLE-GUIDE.md` (Extension section) - Templates
 - `docs/AI-AGENT-GUIDE.md` (Extension section) - Generation
-- `domains/utilities/ExtensionManager.psm1` - Implementation
+- `aithercore/utilities/ExtensionManager.psm1` - Implementation
 
 ### CLI/Menu System
 - `docs/UNIFIED-MENU-DESIGN.md` - Design philosophy
 - `docs/STYLE-GUIDE.md` (CLI section) - Command patterns
 - `docs/INTEGRATION-TESTING-GUIDE.md` (CLI section) - Testing
-- `domains/experience/Components/CommandParser.psm1` - Implementation
-- `domains/experience/Components/BreadcrumbNavigation.psm1` - Navigation
+- `aithercore/experience/Components/CommandParser.psm1` - Implementation
+- `aithercore/experience/Components/BreadcrumbNavigation.psm1` - Navigation
 
 ### Testing
 - `docs/INTEGRATION-TESTING-GUIDE.md` - Integration tests
@@ -100,7 +100,7 @@ This index provides a comprehensive map of all AitherZero documentation, organiz
 - `docs/UNIFIED-MENU-DESIGN.md` - Menu design
 - `docs/STYLE-GUIDE.md` (UI section) - Rendering guidelines
 - `docs/INTEGRATION-TESTING-GUIDE.md` (UI section) - UI tests
-- `domains/experience/InteractiveUI.psm1` - Implementation
+- `aithercore/experience/InteractiveUI.psm1` - Implementation
 
 ## By File Type
 
@@ -136,7 +136,7 @@ docs/
 
 ### Code Documentation
 ```
-domains/
+aithercore/
 ├── experience/
 │   ├── README.md                  # Experience domain
 │   └── Components/

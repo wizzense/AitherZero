@@ -216,7 +216,7 @@ CHANGED_FILES=$(git diff --cached --name-only)
 
 # Run copilot workflow
 pwsh -Command "
-    Import-Module './domains/ai-agents/CopilotOrchestrator.psm1' -Force
+    Import-Module './aithercore/ai-agents/CopilotOrchestrator.psm1' -Force
     Start-AutomatedCopilotWorkflow -Trigger 'commit' -ChangedFiles @($CHANGED_FILES) -DryRun:$false
 "
 

@@ -38,7 +38,7 @@ utilities/         9 modules  - Logging, bootstrap, extensions, perf        ⭐ 
 
 ### Phase 1: Core CLI Module (PRIORITY)
 
-**Create:** `domains/cli/AitherZeroCLI.psm1`
+**Create:** `aithercore/cli/AitherZeroCLI.psm1`
 
 **Integrate from automation/OrchestrationEngine.psm1:**
 ```powershell
@@ -159,7 +159,7 @@ Get-AitherProjectRoot                           # Project root
 
 ### Step 1: Create CLI Module Skeleton
 ```powershell
-domains/cli/
+aithercore/cli/
 ├── AitherZeroCLI.psm1           # Main CLI module
 ├── AitherZeroCLI.psd1           # Module manifest
 └── Private/                     # Internal helpers
@@ -247,7 +247,7 @@ Get-Help Invoke-AitherScript -Examples  # Examples
 
 ## Next Actions
 
-1. **Create CLI module structure** (`domains/cli/`)
+1. **Create CLI module structure** (`aithercore/cli/`)
 2. **Wrap orchestration functions** (Invoke-AitherPlaybook, Get-AitherPlaybook)
 3. **Wrap script execution** (Invoke-AitherScript, Get-AitherScript)
 4. **Add comment-based help** (all cmdlets)

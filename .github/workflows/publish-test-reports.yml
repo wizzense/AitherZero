@@ -74,10 +74,10 @@ jobs:
           # Run quality validation to generate quality metrics for dashboard
           Write-Host "Running quality validation for key domains..." -ForegroundColor Cyan
           $domainPaths = @(
-            "./domains/utilities",
-            "./domains/configuration",
-            "./domains/security",
-            "./domains/experience"
+            "./aithercore/utilities",
+            "./aithercore/configuration",
+            "./aithercore/security",
+            "./aithercore/experience"
           )
 
           foreach ($domainPath in $domainPaths) {

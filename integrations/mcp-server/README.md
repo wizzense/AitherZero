@@ -129,7 +129,7 @@ Once connected, you can ask your AI assistant to:
 → Uses: get_configuration tool or aitherzero://config resource
 
 "Run quality checks on the utilities domain"
-→ Uses: run_quality_check with path="./domains/utilities"
+→ Uses: run_quality_check with path="./aithercore/utilities"
 
 "Show me the project report"
 → Uses: get_project_report tool or aitherzero://project-report resource

@@ -48,7 +48,7 @@ Automated documentation generation script with modes:
 ### Basic Documentation Generation
 ```powershell
 # Import the documentation engine
-Import-Module ./domains/documentation/DocumentationEngine.psm1
+Import-Module ./aithercore/documentation/DocumentationEngine.psm1
 
 # Initialize with templates
 Initialize-DocumentationEngine -TemplateDirectory "./docs/templates"
@@ -57,7 +57,7 @@ Initialize-DocumentationEngine -TemplateDirectory "./docs/templates"
 New-ProjectDocumentation -OutputPath "./docs/generated"
 
 # Generate module documentation
-New-ModuleDocumentation -ModulePath "./domains/utilities/Logging.psm1"
+New-ModuleDocumentation -ModulePath "./aithercore/utilities/Logging.psm1"
 ```
 
 ### Automated Generation
@@ -91,7 +91,7 @@ The documentation engine supports configuration through:
 @{
     ReactiveMode = @{
         Enabled = $true
-        WatchPaths = @("domains/**/*.psm1", "automation-scripts/**/*.ps1")
+        WatchPaths = @("aithercore/**/*.psm1", "automation-scripts/**/*.ps1")
         DebounceSeconds = 30
     }
     OutputFormats = @('Markdown', 'HTML')
@@ -164,7 +164,7 @@ docs/
 │   └── INDEX.md        # Navigation index
 └── static/             # Static documentation files
 
-domains/documentation/
+aithercore/documentation/
 ├── DocumentationEngine.psm1  # Core documentation engine
 └── README.md           # This file
 

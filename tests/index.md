@@ -18,7 +18,7 @@ See [README.md](./README.md) for detailed information about this directory.
 
 - [📂 **analysis**](./analysis/index.md)
 - [📂 **coverage**](./coverage/index.md)
-- [📂 **domains**](./domains/index.md)
+- [📂 **domains**](./aithercore/index.md)
 - [📂 **integration**](./integration/index.md)
 - [📂 **reports**](./reports/index.md)
 - [📂 **results**](./results/index.md)

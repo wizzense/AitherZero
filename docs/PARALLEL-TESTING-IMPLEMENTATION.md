@@ -36,7 +36,7 @@ Resolved the failing checks issue by:
 
 **Files Created**:
 - ✅ `.github/workflows/parallel-testing.yml` - GitHub Actions workflow
-- ✅ `domains/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json` - Playbook definition
+- ✅ `aithercore/orchestration/playbooks/testing/run-tests-parallel-comprehensive.json` - Playbook definition
 
 **Architecture**:
 ```
@@ -128,7 +128,7 @@ Resolved the failing checks issue by:
 
 **Proposed Structure** (Following Style Guide):
 ```
-domains/orchestration/playbooks/
+aithercore/orchestration/playbooks/
 ├── testing/
 │   ├── run-tests-parallel-comprehensive.json       ⚡ NEW
 │   ├── run-tests-sequential-comprehensive.json

@@ -612,7 +612,7 @@ function Get-ProjectAnalysis {
     Write-DocLog "Include private modules: $IncludePrivate" -Level Debug
     
     $projectName = "AitherZero"
-    $domainsPath = Join-Path $script:ProjectRoot "domains"
+    $domainsPath = Join-Path $script:ProjectRoot "aithercore"
     
     Write-DocLog "Scanning domains at: $domainsPath" -Level Debug
     
@@ -929,7 +929,7 @@ function Get-DocumentationCoverage {
     $totalModules = 0
     $documentedModules = 0
     
-    $domainsPath = Join-Path $script:ProjectRoot "domains"
+    $domainsPath = Join-Path $script:ProjectRoot "aithercore"
     if (Test-Path $domainsPath) {
         $moduleFiles = Get-ChildItem -Path $domainsPath -Filter "*.psm1" -Recurse
         $totalModules = $moduleFiles.Count

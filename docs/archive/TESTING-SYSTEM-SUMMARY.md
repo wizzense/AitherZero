@@ -225,7 +225,7 @@ tests/
 ### Generate All Tests
 
 ```powershell
-Import-Module ./domains/testing/AutoTestGenerator.psm1
+Import-Module ./aithercore/testing/AutoTestGenerator.psm1
 Invoke-AutoTestGeneration -Force
 
 # Output:

@@ -172,16 +172,16 @@ Extensions (Plugin System)
 1. `AitherZero.psm1` - Added 11 new modules to loading chain
 2. `config.psd1` - Added Extensions section (45 lines)
 3. `Start-AitherZero.ps1` - Initial unified menu integration (25 lines)
-4. `domains/experience/UnifiedMenu.psm1` - Show-UnifiedMenu alias (4 lines)
+4. `aithercore/experience/UnifiedMenu.psm1` - Show-UnifiedMenu alias (4 lines)
 
 ### Phase 2 Files (4 files, ~240 lines)
 1. `Start-AitherZero.ps1` - Auto-discovery + CommandParser integration (110 lines)
-2. `domains/utilities/ExtensionManager.psm1` - AsHashtable support (10 lines)
-3. `domains/experience/UnifiedMenu.psm1` - Config-driven menu generation (93 lines)
-4. `domains/configuration/ConfigManager.psm1` - Get-ManifestCapabilities (25 lines)
+2. `aithercore/utilities/ExtensionManager.psm1` - AsHashtable support (10 lines)
+3. `aithercore/experience/UnifiedMenu.psm1` - Config-driven menu generation (93 lines)
+4. `aithercore/configuration/ConfigManager.psm1` - Get-ManifestCapabilities (25 lines)
 
 ### Bug Fixes (1 file, ~20 lines)
-1. `domains/configuration/ConfigManager.psm1` - Config selector Key fix (bb01b05)
+1. `aithercore/configuration/ConfigManager.psm1` - Config selector Key fix (bb01b05)
 
 ### Total Changes
 - **Files Modified:** 8 (5 core, 3 domains)

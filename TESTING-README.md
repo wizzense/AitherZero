@@ -87,9 +87,9 @@ Context '🎭 Mocked Dependencies' {
 ## Files
 
 ### Core
-- `domains/orchestration/playbooks/testing/test-orchestrated.json` - Main playbook
+- `aithercore/orchestration/playbooks/testing/test-orchestrated.json` - Main playbook
 - `.github/workflows/unified-testing.yml` - CI/CD workflow
-- `domains/testing/FunctionalTestGenerator.psm1` - Test generator
+- `aithercore/testing/FunctionalTestGenerator.psm1` - Test generator
 - `automation-scripts/0951_Regenerate-FunctionalTests.ps1` - Batch regeneration
 
 ### Deprecated (Don't Use)
@@ -122,7 +122,7 @@ The `unified-testing.yml` workflow:
 - Review logs: `logs/transcript-*.log`
 
 **Want to customize?**
-- Edit `domains/orchestration/playbooks/testing/test-orchestrated.json`
+- Edit `aithercore/orchestration/playbooks/testing/test-orchestrated.json`
 - Add/remove stages
 - Adjust timeouts
 - Create custom profiles

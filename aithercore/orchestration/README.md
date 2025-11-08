@@ -7,7 +7,7 @@ The Orchestration domain contains playbook definitions and orchestration configu
 ## Directory Structure
 
 ```
-domains/orchestration/
+aithercore/orchestration/
 ├── README.md              # This file
 ├── index.md               # Auto-generated index
 ├── playbooks/            # Playbook definitions
@@ -53,8 +53,8 @@ Contains JSON schema definitions for validating playbook formats:
 Playbooks in this domain are executed via:
 
 1. **Automation Scripts**: `0962_Run-Playbook.ps1` and related scripts
-2. **CLI Module**: `domains/cli/AitherZeroCLI.psm1` playbook commands
-3. **Orchestration Engine**: `domains/automation/OrchestrationEngine.psm1`
+2. **CLI Module**: `aithercore/cli/AitherZeroCLI.psm1` playbook commands
+3. **Orchestration Engine**: `aithercore/automation/OrchestrationEngine.psm1`
 
 ### Example
 
@@ -71,7 +71,7 @@ Playbooks in this domain are executed via:
 
 ## Relationship with Automation Domain
 
-The orchestration domain contains the **data** (playbooks, schemas), while the automation domain (`domains/automation/`) contains the **execution logic**:
+The orchestration domain contains the **data** (playbooks, schemas), while the automation domain (`aithercore/automation/`) contains the **execution logic**:
 
 - **Orchestration Domain**: Playbook definitions, configurations, schemas
 - **Automation Domain**: `OrchestrationEngine.psm1`, `AsyncOrchestration.psm1`, execution logic
@@ -87,7 +87,7 @@ This separation follows the domain-driven design principle of separating data fr
 
 ## Migration Note
 
-This domain was moved from the root `orchestration/` directory to `domains/orchestration/` to align with the domain-based architecture of AitherZero. All path references have been updated across the codebase.
+This domain was moved from the root `orchestration/` directory to `aithercore/orchestration/` to align with the domain-based architecture of AitherZero. All path references have been updated across the codebase.
 
 ## Best Practices
 

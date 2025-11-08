@@ -44,7 +44,7 @@ Use the `az` wrapper for script execution: `az 0402` runs unit tests, `az 0404` 
 
 ## Domain Structure (Consolidated Architecture v2.0)
 
-Located in `/domains/`:
+Located in `/aithercore/`:
 - **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management (57 functions)
 - **configuration/**: Config management with environment switching (36 functions)
 - **utilities/**: Logging, maintenance, cross-platform helpers (24 functions)
@@ -117,7 +117,7 @@ az 0703 -Title "Add feature"                 # PR creation
 Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
 
 # Domain tests with coverage
-Invoke-Pester -Path "./tests/domains/configuration" -CodeCoverage "./domains/configuration/*.psm1"
+Invoke-Pester -Path "./tests/aithercore/configuration" -CodeCoverage "./aithercore/configuration/*.psm1"
 
 # All tests
 Invoke-Pester -Path "./tests"
@@ -205,7 +205,7 @@ Key sections:
 │   ├── 0800-0899/              # Issue management
 │   ├── 0900-0999/              # Validation
 │   └── 9000-9999/              # Maintenance & cleanup
-├── domains/                     # 11 functional domains (modular architecture)
+├── aithercore/                     # 11 functional domains (modular architecture)
 │   ├── ai-agents/              # 3 modules - AI integration
 │   ├── automation/             # 2 modules - Orchestration engine
 │   ├── configuration/          # 1 module - Config management (36 functions)
@@ -220,7 +220,7 @@ Key sections:
 ├── tests/                       # Test suite (~74 test files)
 │   ├── unit/                   # Unit tests (by domain and script range)
 │   ├── integration/            # Integration tests
-│   ├── domains/                # Domain-specific tests
+│   ├── aithercore/                # Domain-specific tests
 │   ├── TestHelpers.psm1        # Shared test utilities
 │   ├── results/                # Test output (XML, JSON)
 │   ├── analysis/               # PSScriptAnalyzer results (CSV, JSON)
@@ -319,10 +319,10 @@ Key sections:
 5. Export script number in orchestration playbooks if needed
 
 **To add a new domain function**:
-1. Add function to appropriate domain module in `domains/*/`
+1. Add function to appropriate domain module in `aithercore/*/`
 2. Add `Export-ModuleMember -Function 'YourFunction'` at module end
 3. Add function name to `AitherZero.psd1` FunctionsToExport array
-4. Create unit test in `tests/domains/your-domain/`
+4. Create unit test in `tests/aithercore/your-domain/`
 5. Add comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, etc.)
 
 **To modify configuration**:
@@ -408,10 +408,10 @@ Check exit codes: 0=success, 1=error, 3010=restart required
 ./automation-scripts/0407_Validate-Syntax.ps1 -FilePath ./path/to/changed.ps1
 
 # Run PSScriptAnalyzer on specific path
-./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path ./domains/utilities
+./automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Path ./aithercore/utilities
 
 # Run tests for specific domain
-Invoke-Pester -Path "./tests/domains/configuration" -Output Detailed
+Invoke-Pester -Path "./tests/aithercore/configuration" -Output Detailed
 
 # Run single test file
 Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
@@ -424,7 +424,7 @@ Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
 
 ```powershell
 # Comprehensive quality check - Takes ~2-3 minutes
-./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./domains/utilities
+./automation-scripts/0420_Validate-ComponentQuality.ps1 -Path ./aithercore/utilities
 
 # Checks performed:
 # - Error handling (try/catch patterns)
@@ -514,7 +514,7 @@ Import-Module ./AitherZero.psd1 -Force
 **Issue**: PSScriptAnalyzer timeout
 ```powershell
 # Solution: Run on specific path instead of entire codebase
-./az.ps1 0404 -Path ./domains/utilities
+./az.ps1 0404 -Path ./aithercore/utilities
 ```
 
 ### Before Making Changes
@@ -900,7 +900,7 @@ $env:AITHERZERO_INITIALIZED -eq 'true'
 **PSScriptAnalyzer timeout**:
 ```powershell
 # Run on specific path instead
-./az.ps1 0404 -Path ./domains/utilities
+./az.ps1 0404 -Path ./aithercore/utilities
 ```
 
 ### File Locations at a Glance
@@ -912,7 +912,7 @@ $env:AITHERZERO_INITIALIZED -eq 'true'
 | `config.psd1` | Master configuration | 1476 lines |
 | `bootstrap.ps1` | Setup script | ~900 lines |
 | `automation-scripts/` | Numbered scripts | 125 scripts |
-| `domains/` | Functional modules | 11 domains |
+| `aithercore/` | Functional modules | 11 domains |
 | `tests/` | Test suite | ~74 test files |
 | `.github/workflows/` | CI/CD pipelines | 17 workflows |
 

@@ -83,10 +83,10 @@ Initialize-aitherzero -Minimal
 
 ## Adding New Domains
 
-1. Create a new directory under `domains/`
+1. Create a new directory under `aithercore/`
 2. Add your `.psm1` files to the directory
 3. Create a `README.md` documenting the domain
-4. Add tests under `tests/domains/<domain-name>/`
+4. Add tests under `tests/aithercore/<domain-name>/`
 5. Update `Initialize-aitherzero` to include your domain
 
 ## Best Practices

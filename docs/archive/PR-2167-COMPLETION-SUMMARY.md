@@ -9,7 +9,7 @@
 ## Original PR Review Issues (Fixed)
 
 ### Issue 1: Retry Attempt Logging Confusion ✅
-**File:** `domains/automation/OrchestrationEngine.psm1` (line 1103)  
+**File:** `aithercore/automation/OrchestrationEngine.psm1` (line 1103)  
 **Problem:** `$retryCount` incremented AFTER log message, causing incorrect "Retry attempt 0/0" messages  
 **Solution:**
 - Moved `$retryCount++` to start of loop iteration
@@ -20,7 +20,7 @@
 **Commit:** 495c297
 
 ### Issue 2: Duplicate Function Definition ✅
-**File:** `domains/configuration/ConfigManager.psm1` (lines 609-611)  
+**File:** `aithercore/configuration/ConfigManager.psm1` (lines 609-611)  
 **Problem:** Duplicate `Get-CurrentConfiguration` function calling non-existent `Get-ActiveConfiguration`  
 **Solution:**
 - Removed duplicate function at lines 609-611
@@ -207,12 +207,12 @@
 ## Files Changed
 
 ### Modified (2 files)
-1. `domains/automation/OrchestrationEngine.psm1`
+1. `aithercore/automation/OrchestrationEngine.psm1`
    - Lines 1098-1109: Fixed retry logging logic
    - Moved increment before log message
    - Clarified comments
 
-2. `domains/configuration/ConfigManager.psm1`
+2. `aithercore/configuration/ConfigManager.psm1`
    - Lines 605-611: Removed duplicate function
    - Cleaned up unnecessary code
    - Maintained exports list
