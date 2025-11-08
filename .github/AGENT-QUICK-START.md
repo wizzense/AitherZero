@@ -52,7 +52,7 @@ When you **open or update a PR**, the system automatically:
 | `domains/experience/`, `*menu*.ps1` | 🎨 Emma, ⚙️ Marcus |
 | `domains/*.psm1`, `*api*.ps1` | ⚙️ Marcus, ⚡ Rachel |
 | `*.md`, `docs/`, `README.md` | 📚 Olivia, 🎨 Emma |
-| `*.ps1`, `orchestration/` | ⚡ Rachel, ⚙️ Marcus |
+| `*.ps1`, `domains/orchestration/` | ⚡ Rachel, ⚙️ Marcus |
 | `.github/workflows/*.yml` | 📋 David, ⚡ Rachel |
 
 ## 🔢 Script Range Mapping

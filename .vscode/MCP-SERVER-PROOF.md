@@ -169,7 +169,7 @@ AitherZero MCP Server running on stdio
     "aitherzero": {
       "command": "node",
       "args": [
-        "${workspaceFolder}/mcp-server/scripts/start-with-build.mjs"
+        "${workspaceFolder}/integrations/mcp-server/scripts/start-with-build.mjs"
       ],
       "description": "AitherZero infrastructure automation platform",
       "capabilities": {

@@ -50,9 +50,9 @@ This document describes the implementation of automated MCP server publishing an
 ### 3. GitHub Pages Documentation
 
 **Added:**
-- MCP server documentation automatically copied to `docs/mcp-server/`
+- MCP server documentation automatically copied to `docs/integrations/mcp-server/`
 - Deployed to GitHub Pages on every update
-- Accessible at: `https://wizzense.github.io/AitherZero/docs/mcp-server/`
+- Accessible at: `https://wizzense.github.io/AitherZero/docs/integrations/mcp-server/`
 
 **Included Files:**
 - `README.md` → `index.md`
@@ -143,8 +143,8 @@ docker run --rm ghcr.io/wizzense/aitherzero:1.0.1-test pwsh -Command "Get-Module
 ### 3. Test GitHub Pages Deployment
 ```bash
 # After pages workflow completes
-# Visit: https://wizzense.github.io/AitherZero/docs/mcp-server/
-curl -I https://wizzense.github.io/AitherZero/docs/mcp-server/
+# Visit: https://wizzense.github.io/AitherZero/docs/integrations/mcp-server/
+curl -I https://wizzense.github.io/AitherZero/docs/integrations/mcp-server/
 ```
 
 ## Security Considerations
@@ -217,7 +217,7 @@ Potential improvements:
 
 ## Related Documentation
 
-- [MCP Server README](../mcp-server/README.md)
+- [MCP Server README](../integrations/mcp-server/README.md)
 - [Docker Documentation](../DOCKER.md)
 - [Release Automation Workflow](../.github/workflows/release-automation.yml)
 - [GitHub Pages Workflow](../.github/workflows/jekyll-gh-pages.yml)

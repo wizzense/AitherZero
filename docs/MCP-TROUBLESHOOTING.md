@@ -141,7 +141,7 @@ Claude Desktop has native MCP support. Configure in `claude_desktop_config.json`
   "mcpServers": {
     "aitherzero": {
       "command": "node",
-      "args": ["/absolute/path/to/AitherZero/mcp-server/scripts/start-with-build.mjs"],
+      "args": ["/absolute/path/to/AitherZero/integrations/mcp-server/scripts/start-with-build.mjs"],
       "env": {
         "AITHERZERO_ROOT": "/absolute/path/to/AitherZero"
       }

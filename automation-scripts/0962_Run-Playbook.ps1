@@ -84,7 +84,7 @@ $script:ProjectRoot = Split-Path $script:ScriptPath -Parent
 
 # Import required modules
 $startAitherZeroPath = Join-Path $script:ProjectRoot "Start-AitherZero.ps1"
-$orchestrationPath = Join-Path $script:ProjectRoot "orchestration/playbooks"
+$orchestrationPath = Join-Path $script:ProjectRoot "domains/orchestration/playbooks"
 
 function Write-ColorOutput {
     param(
