@@ -190,9 +190,9 @@ $($availableScripts -join "`n`n")
     }
 
     # Available orchestration playbooks
-    if ($env:CLAUDE_PROJECT_DIR -and (Test-Path "$env:CLAUDE_PROJECT_DIR/orchestration/playbooks")) {
+    if ($env:CLAUDE_PROJECT_DIR -and (Test-Path "$env:CLAUDE_PROJECT_DIR/domains/orchestration/playbooks")) {
         try {
-            $playbooks = Get-ChildItem "$env:CLAUDE_PROJECT_DIR/orchestration/playbooks" -Filter "*.json" |
+            $playbooks = Get-ChildItem "$env:CLAUDE_PROJECT_DIR/domains/orchestration/playbooks" -Filter "*.json" |
                         Select-Object -First 10
 
             if ($playbooks.Count -gt 0) {

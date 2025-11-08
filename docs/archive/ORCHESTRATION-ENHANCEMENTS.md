@@ -487,15 +487,15 @@ Invoke-OrchestrationSequence -LoadPlaybook "test-quick" `
 ## Documentation
 
 - **Schema**: `orchestration/schema/playbook-schema-v3.json`
-- **Examples**: `orchestration/playbooks/core/testing/test-matrix-example.json`
-- **Mapping**: `orchestration/playbooks/GITHUB-WORKFLOWS-MAPPING.md`
+- **Examples**: `domains/orchestration/playbooks/core/testing/test-matrix-example.json`
+- **Mapping**: `domains/orchestration/playbooks/GITHUB-WORKFLOWS-MAPPING.md`
 - **This Guide**: `ORCHESTRATION-ENHANCEMENTS.md`
 
 ## Support
 
 - **Issues**: https://github.com/wizzense/AitherZero/issues
 - **Discussions**: https://github.com/wizzense/AitherZero/discussions
-- **Examples**: `orchestration/playbooks/core/`
+- **Examples**: `domains/orchestration/playbooks/core/`
 
 ---
 

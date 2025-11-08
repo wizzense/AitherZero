@@ -48,7 +48,7 @@ function ConvertFrom-GitHubWorkflow {
     ConvertFrom-GitHubWorkflow -WorkflowPath ".github/workflows/test.yml"
     
     .EXAMPLE
-    ConvertFrom-GitHubWorkflow -WorkflowPath ".github/workflows/test.yml" -OutputPath "orchestration/playbooks/test.json"
+    ConvertFrom-GitHubWorkflow -WorkflowPath ".github/workflows/test.yml" -OutputPath "domains/orchestration/playbooks/test.json"
     
     .EXAMPLE
     $playbook = ConvertFrom-GitHubWorkflow -WorkflowPath ".github/workflows/test.yml"
@@ -539,7 +539,7 @@ function Invoke-GitHubWorkflow {
     Write-Host "The playbook has been converted successfully and can be saved for manual execution." -ForegroundColor Yellow
     
     # Save the converted playbook
-    $playbookPath = "orchestration/playbooks/converted/$(Split-Path $WorkflowPath -Leaf).json"
+    $playbookPath = "domains/orchestration/playbooks/converted/$(Split-Path $WorkflowPath -Leaf).json"
     $playbookDir = Split-Path $playbookPath -Parent
     if (-not (Test-Path $playbookDir)) {
         New-Item -ItemType Directory -Path $playbookDir -Force | Out-Null
