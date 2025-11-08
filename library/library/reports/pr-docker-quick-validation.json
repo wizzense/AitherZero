@@ -1,0 +1,113 @@
+{
+  "Summary": {
+    "Failed": 5,
+    "Passed": 8,
+    "Warnings": 4,
+    "Total": 17
+  },
+  "Timestamp": "2025-11-08 06:45:36",
+  "Tests": [
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Docker Installed",
+      "Message": "Docker is available: Docker version 28.0.4, build b8034c0"
+    },
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Docker Compose",
+      "Message": "Docker Compose is available: Docker Compose version v2.38.2"
+    },
+    {
+      "Details": null,
+      "Status": "Failed",
+      "TestName": "Dockerfile",
+      "Message": "Dockerfile not found"
+    },
+    {
+      "Details": null,
+      "Status": "Failed",
+      "TestName": "Compose File",
+      "Message": "docker-compose.yml not found"
+    },
+    {
+      "Details": null,
+      "Status": "Warning",
+      "TestName": ".dockerignore",
+      "Message": ".dockerignore not found"
+    },
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Deploy Script",
+      "Message": "Deployment script exists"
+    },
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Deploy Parameters",
+      "Message": "Script has parameters"
+    },
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Deploy Docker Commands",
+      "Message": "Docker commands present"
+    },
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Docker Deployment Function",
+      "Message": "Docker deployment function exists"
+    },
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Cleanup Script",
+      "Message": "Cleanup script exists"
+    },
+    {
+      "Details": null,
+      "Status": "Passed",
+      "TestName": "Docker Cleanup Function",
+      "Message": "Docker cleanup function exists"
+    },
+    {
+      "Details": null,
+      "Status": "Warning",
+      "TestName": "Workflow File",
+      "Message": "PR deployment workflow not found"
+    },
+    {
+      "Details": null,
+      "Status": "Warning",
+      "TestName": "Deployment Guide",
+      "Message": "Documentation not found"
+    },
+    {
+      "Details": null,
+      "Status": "Warning",
+      "TestName": "Quick Reference",
+      "Message": "Documentation not found"
+    },
+    {
+      "Details": null,
+      "Status": "Failed",
+      "TestName": "Module Manifest",
+      "Message": "File not found"
+    },
+    {
+      "Details": null,
+      "Status": "Failed",
+      "TestName": "Root Module",
+      "Message": "File not found"
+    },
+    {
+      "Details": null,
+      "Status": "Failed",
+      "TestName": "Entry Point",
+      "Message": "File not found"
+    }
+  ]
+}
