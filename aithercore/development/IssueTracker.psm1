@@ -304,12 +304,191 @@ function Update-GitHubIssue {
     }
 }
 
+function Get-GitHubIssue {
+    <#
+    .SYNOPSIS
+        Gets a GitHub issue or streams issues one at a time
+    .DESCRIPTION
+        Retrieves GitHub issues one at a time, supporting pipeline input and parallel processing.
+        Follows the singular noun design pattern for efficient streaming and composition.
+    .PARAMETER Number
+        Specific issue number to retrieve
+    .PARAMETER InputObject
+        Issue object from pipeline
+    .PARAMETER State
+        Filter by issue state (open, closed, all)
+    .PARAMETER Labels
+        Filter by labels
+    .PARAMETER Assignee
+        Filter by assignee username
+    .PARAMETER Author
+        Filter by author username
+    .PARAMETER Milestone
+        Filter by milestone
+    .PARAMETER Search
+        Search query string
+    .EXAMPLE
+        Get-GitHubIssue -Number 123
+        Gets issue #123
+    .EXAMPLE
+        Get-GitHubIssue -State open | Where-Object { $_.Labels -contains 'bug' }
+        Streams open issues and filters for bugs
+    .EXAMPLE
+        Get-GitHubIssue -State open | ForEach-Object -Parallel { $_ } -ThrottleLimit 4
+        Process issues in parallel
+    .INPUTS
+        PSCustomObject - Issue object from pipeline
+    .OUTPUTS
+        AitherZero.GitHubIssue
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'ByFilter')]
+    [OutputType('AitherZero.GitHubIssue')]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = 'ByNumber')]
+        [int]$Number,
+
+        [Parameter(ValueFromPipeline, ParameterSetName = 'ByObject')]
+        [PSCustomObject]$InputObject,
+
+        [Parameter(ParameterSetName = 'ByFilter')]
+        [ValidateSet('open', 'closed', 'all')]
+        [string]$State = 'open',
+
+        [Parameter(ParameterSetName = 'ByFilter')]
+        [string[]]$Labels,
+
+        [Parameter(ParameterSetName = 'ByFilter')]
+        [string]$Assignee,
+
+        [Parameter(ParameterSetName = 'ByFilter')]
+        [string]$Author,
+
+        [Parameter(ParameterSetName = 'ByFilter')]
+        [string]$Milestone,
+
+        [Parameter(ParameterSetName = 'ByFilter')]
+        [string]$Search
+    )
+
+    begin {
+        Write-Verbose "Starting Get-GitHubIssue operation"
+        $issuesCache = @()
+    }
+
+    process {
+        try {
+            # Handle different parameter sets
+            if ($PSCmdlet.ParameterSetName -eq 'ByObject') {
+                # Pass through pipeline object
+                Write-Output $InputObject
+                return
+            }
+
+            if ($PSCmdlet.ParameterSetName -eq 'ByNumber') {
+                # Get specific issue
+                Test-GitHubCLI
+                $ghArgs = @('issue', 'view', $Number, '--json', 'number,title,state,author,assignees,labels,createdAt,updatedAt,url,body')
+                $issue = gh @ghArgs | ConvertFrom-Json
+
+                $formattedIssue = [PSCustomObject]@{
+                    PSTypeName = 'AitherZero.GitHubIssue'
+                    Number = $issue.number
+                    Title = $issue.title
+                    State = $issue.state
+                    Author = $issue.author.login
+                    Assignees = $issue.assignees.login
+                    Labels = $issue.labels.name
+                    CreatedAt = $issue.createdAt
+                    UpdatedAt = $issue.updatedAt
+                    Url = $issue.url
+                    Body = $issue.body
+                }
+
+                Write-Output $formattedIssue
+                return
+            }
+
+            # ByFilter parameter set - fetch and stream issues
+            if ($issuesCache.Count -eq 0) {
+                Test-GitHubCLI
+
+                # Build gh command for listing
+                $ghArgs = @('issue', 'list', '--state', $State, '--limit', 100)
+
+                if ($Labels) {
+                    $ghArgs += '--label', ($Labels -join ',')
+                }
+
+                if ($Assignee) {
+                    $ghArgs += '--assignee', $Assignee
+                }
+
+                if ($Author) {
+                    $ghArgs += '--author', $Author
+                }
+
+                if ($Milestone) {
+                    $ghArgs += '--milestone', $Milestone
+                }
+
+                if ($Search) {
+                    $ghArgs += '--search', $Search
+                }
+
+                # Get JSON output
+                $ghArgs += '--json', 'number,title,state,author,assignees,labels,createdAt,updatedAt,url'
+
+                $issues = gh @ghArgs | ConvertFrom-Json
+
+                Write-IssueLog "Retrieved $($issues.Count) issues" -Data @{
+                    State = $State
+                    Count = $issues.Count
+                }
+
+                # Cache for streaming
+                $script:issuesCache = $issues
+            }
+
+            # Stream one issue at a time
+            foreach ($issue in $script:issuesCache) {
+                $formattedIssue = [PSCustomObject]@{
+                    PSTypeName = 'AitherZero.GitHubIssue'
+                    Number = $issue.number
+                    Title = $issue.title
+                    State = $issue.state
+                    Author = $issue.author.login
+                    Assignees = $issue.assignees.login
+                    Labels = $issue.labels.name
+                    CreatedAt = $issue.createdAt
+                    UpdatedAt = $issue.updatedAt
+                    Url = $issue.url
+                }
+
+                Write-Output $formattedIssue
+            }
+
+        } catch {
+            Write-IssueLog "Failed to get issue: $_" -Level Error
+            throw
+        }
+    }
+
+    end {
+        Write-Verbose "Get-GitHubIssue operation complete"
+        # Clear cache
+        $script:issuesCache = @()
+    }
+}
+
 function Get-GitHubIssues {
     <#
     .SYNOPSIS
-        Get GitHub issues with filtering options
+        [DEPRECATED] Get GitHub issues with filtering options
     .DESCRIPTION
-        Retrieves GitHub issues with various filtering options.
+        This function is deprecated. Use Get-GitHubIssue (singular) instead.
+        The singular version supports pipeline processing and parallel execution.
+    .NOTES
+        DEPRECATED: Use Get-GitHubIssue instead
     #>
     [CmdletBinding()]
     param(
@@ -329,63 +508,10 @@ function Get-GitHubIssues {
         [string]$Search
     )
 
-    try {
-        Test-GitHubCLI
-
-        # Build gh command
-        $ghArgs = @('issue', 'list', '--state', $State, '--limit', $Limit)
-
-        if ($Labels) {
-            $ghArgs += '--label', ($Labels -join ',')
-        }
-
-        if ($Assignee) {
-            $ghArgs += '--assignee', $Assignee
-        }
-
-        if ($Author) {
-            $ghArgs += '--author', $Author
-        }
-
-        if ($Milestone) {
-            $ghArgs += '--milestone', $Milestone
-        }
-
-        if ($Search) {
-            $ghArgs += '--search', $Search
-        }
-
-        # Get JSON output
-        $ghArgs += '--json', 'number,title,state,author,assignees,labels,createdAt,updatedAt,url'
-
-        $issues = gh @ghArgs | ConvertFrom-Json
-
-        Write-IssueLog "Retrieved $($issues.Count) issues" -Data @{
-            State = $State
-            Count = $issues.Count
-        }
-
-        # Transform to consistent format
-        $formattedIssues = $issues | ForEach-Object {
-            @{
-                Number = $_.number
-                Title = $_.title
-                State = $_.state
-                Author = $_.author.login
-                Assignees = $_.assignees.login
-                Labels = $_.labels.name
-                CreatedAt = $_.createdAt
-                UpdatedAt = $_.updatedAt
-                Url = $_.url
-            }
-        }
-
-        return $formattedIssues
-
-    } catch {
-        Write-IssueLog "Failed to get issues: $_" -Level Error
-        throw
-    }
+    Write-Warning "Get-GitHubIssues is deprecated. Use Get-GitHubIssue (singular) for better pipeline support."
+    
+    # Forward to singular version
+    Get-GitHubIssue -State $State -Labels $Labels -Assignee $Assignee -Author $Author -Milestone $Milestone -Search $Search
 }
 
 function Add-GitHubIssueComment {
@@ -518,7 +644,8 @@ Export-ModuleMember -Function @(
     'Get-GitHubRepository',
     'New-GitHubIssue',
     'Update-GitHubIssue',
-    'Get-GitHubIssues',
+    'Get-GitHubIssue',      # New singular version
+    'Get-GitHubIssues',     # Deprecated - forwards to Get-GitHubIssue
     'Add-GitHubIssueComment',
     'Close-GitHubIssue',
     'Get-GitHubLabels'
