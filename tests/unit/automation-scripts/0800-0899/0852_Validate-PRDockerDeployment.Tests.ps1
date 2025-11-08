@@ -18,7 +18,7 @@ Describe '0852_Validate-PRDockerDeployment' -Tag 'Unit', 'AutomationScript', 'Te
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0852_Validate-PRDockerDeployment.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0852_Validate-PRDockerDeployment.ps1'
         $script:ScriptName = '0852_Validate-PRDockerDeployment'
 
         # Import test helpers for environment detection

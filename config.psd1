@@ -232,7 +232,7 @@
                 }
                 Analysis       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0515', '0520', '0521', '0522', '0523', '0524')
+                    Scripts     = @('0520', '0521', '0522', '0523', '0524', '0525')
                     Description = 'Documentation deployment, configuration, code quality, security, and tech debt analysis'
                 }
                 Logging        = @{

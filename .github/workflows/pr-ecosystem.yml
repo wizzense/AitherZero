@@ -46,6 +46,30 @@ jobs:
           Import-Module ./AitherZero.psd1 -Force
           Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
 
+      - name: 📋 Create Build Summary (Fallback)
+        if: always()
+        shell: pwsh
+        run: |
+          # Ensure directory exists
+          New-Item -ItemType Directory -Path "library/reports" -Force | Out-Null
+          
+          # Create a minimal summary file if none exists
+          $summaryPath = "library/reports/build-summary.json"
+          if (-not (Test-Path $summaryPath)) {
+            Write-Host "Creating fallback build summary..." -ForegroundColor Yellow
+            
+            $fallbackSummary = @{
+              status = "incomplete"
+              outcome = "${{ steps.build.outcome }}"
+              timestamp = (Get-Date -Format 'o')
+              pr_number = $env:PR_NUMBER
+              message = "Build job did not complete successfully or did not generate all expected artifacts"
+            } | ConvertTo-Json -Depth 5
+            
+            $fallbackSummary | Out-File -FilePath $summaryPath -Encoding UTF8
+            Write-Host "✅ Fallback summary created" -ForegroundColor Green
+          }
+
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -57,6 +81,7 @@ jobs:
             AitherZero-*.zip
             AitherZero-*.tar.gz
           retention-days: 30
+          if-no-files-found: warn
 
   analyze:
     name: 🔍 Analyze
@@ -87,6 +112,31 @@ jobs:
           Import-Module ./AitherZero.psd1 -Force
           Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-analyze
 
+      - name: 📋 Create Analysis Summary (Fallback)
+        if: always()
+        shell: pwsh
+        run: |
+          # Ensure directories exist
+          New-Item -ItemType Directory -Path "library/reports" -Force | Out-Null
+          New-Item -ItemType Directory -Path "library/tests/results" -Force | Out-Null
+          
+          # Create a minimal summary file if none exists
+          $summaryPath = "library/reports/analysis-summary.json"
+          if (-not (Test-Path $summaryPath)) {
+            Write-Host "Creating fallback analysis summary..." -ForegroundColor Yellow
+            
+            $fallbackSummary = @{
+              status = "incomplete"
+              outcome = "${{ steps.analyze.outcome }}"
+              timestamp = (Get-Date -Format 'o')
+              pr_number = $env:PR_NUMBER
+              message = "Analysis job did not complete successfully or did not generate all expected artifacts"
+            } | ConvertTo-Json -Depth 5
+            
+            $fallbackSummary | Out-File -FilePath $summaryPath -Encoding UTF8
+            Write-Host "✅ Fallback summary created" -ForegroundColor Green
+          }
+
       - name: 📊 Upload Analysis Results
         uses: actions/upload-artifact@v4
         if: always()
@@ -101,6 +151,7 @@ jobs:
             library/tests/results/**
             library/tests/coverage/**
           retention-days: 30
+          if-no-files-found: warn
 
   report:
     name: 📊 Report & Deploy
@@ -122,12 +173,33 @@ jobs:
         with:
           name: pr-${{ env.PR_NUMBER }}-build
           path: ./artifacts/build
+        continue-on-error: true
 
       - name: 📥 Download Analysis Artifacts
         uses: actions/download-artifact@v4
         with:
           name: pr-${{ env.PR_NUMBER }}-analysis
           path: ./artifacts/analysis
+        continue-on-error: true
+
+      - name: 🔍 Check Artifact Availability
+        shell: pwsh
+        run: |
+          Write-Host "Checking artifact availability..." -ForegroundColor Cyan
+          
+          $buildAvailable = Test-Path "./artifacts/build"
+          $analysisAvailable = Test-Path "./artifacts/analysis"
+          
+          Write-Host "Build artifacts: $buildAvailable" -ForegroundColor $(if ($buildAvailable) { 'Green' } else { 'Yellow' })
+          Write-Host "Analysis artifacts: $analysisAvailable" -ForegroundColor $(if ($analysisAvailable) { 'Green' } else { 'Yellow' })
+          
+          # Set environment variables for report generation
+          "BUILD_ARTIFACTS_AVAILABLE=$buildAvailable" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ANALYSIS_ARTIFACTS_AVAILABLE=$analysisAvailable" | Out-File -FilePath $env:GITHUB_ENV -Append
+          
+          if (-not $buildAvailable -and -not $analysisAvailable) {
+            Write-Host "⚠️ No artifacts available. Report will be generated with limited data." -ForegroundColor Yellow
+          }
 
       - name: 📊 Run Report Playbook
         shell: pwsh
@@ -136,6 +208,7 @@ jobs:
           Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
 
       - name: 🌐 Deploy to GitHub Pages
+        if: hashFiles('./library/reports/pr-${{ env.PR_NUMBER }}/**') != ''
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -205,14 +278,22 @@ jobs:
       - name: 🏗️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          # Convert repository name to lowercase for Docker compatibility
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "Using lowercase repository name: ${REPO_LOWER}"
+
       - name: 🐳 Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-latest
-            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-${{ github.sha }}
+            ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}-latest
+            ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}-${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
