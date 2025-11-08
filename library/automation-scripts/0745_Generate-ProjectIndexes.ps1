@@ -96,8 +96,11 @@ function Write-IndexLog {
         default { 'White' }
     }
     
+    # Map 'Success' to 'Information' for Write-CustomLog compatibility
+    $logLevel = if ($Level -eq 'Success') { 'Information' } else { $Level }
+    
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "ProjectIndexer"
+        Write-CustomLog -Level $logLevel -Message $Message -Source "ProjectIndexer"
     }
     
     Write-Host "  $Message" -ForegroundColor $color

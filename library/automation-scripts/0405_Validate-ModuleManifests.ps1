@@ -52,7 +52,7 @@ param(
 
 # Import required functions
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$projectRoot = Split-Path -Parent $scriptRoot
+$projectRoot = Split-Path -Parent (Split-Path -Parent $scriptRoot)
 
 # Source the validation tool
 $validationScript = Join-Path $projectRoot "library/automation-scripts/0416_Validate-ModuleManifest.ps1"
