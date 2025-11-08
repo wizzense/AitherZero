@@ -238,8 +238,8 @@ function Register-AutomationScriptTestSuites {
                 # Test that scripts can be ordered by their numeric prefix
                 $scriptsPath = $using:script:AutomationScriptsPath
                 $scripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1" |
-                    Where-Object { $_.Name -match '^\d{4}_' } |
-                    Sort-Object Name
+                Where-Object { $_.Name -match '^\d{4}_' } |
+                Sort-Object Name
 
                 $scripts.Count | Should -BeGreaterThan 0
 

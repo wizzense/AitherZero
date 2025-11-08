@@ -4,27 +4,27 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'library/automation-scripts/**/*.ps1'
-      - 'aithercore/**/*.psm1'
+      - "library/automation-scripts/**/*.ps1"
+      - "aithercore/**/*.psm1"
   push:
     branches:
       - main
       - develop
     paths:
-      - 'library/automation-scripts/**/*.ps1'
-      - 'aithercore/**/*.psm1'
+      - "library/automation-scripts/**/*.ps1"
+      - "aithercore/**/*.psm1"
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Generation mode'
+        description: "Generation mode"
         required: false
         type: choice
         options:
           - Quick
           - Full
-        default: 'Quick'
+        default: "Quick"
       force:
-        description: 'Force regenerate existing tests'
+        description: "Force regenerate existing tests"
         required: false
         type: boolean
         default: false
@@ -65,7 +65,7 @@ jobs:
         run: |
           LAST_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
           echo "Last commit author: $LAST_COMMIT_AUTHOR"
-          
+
           if [[ "$LAST_COMMIT_AUTHOR" == *"github-actions"* ]] || [[ "$LAST_COMMIT_AUTHOR" == *"[bot]"* ]]; then
             echo "⚠️  Last commit was from a bot, skipping to prevent workflow cascade"
             echo "skip=true" >> $GITHUB_OUTPUT

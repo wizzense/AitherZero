@@ -21,10 +21,10 @@ $ErrorActionPreference = 'Stop'
 # Module state
 $script:ReportingState = @{
     CurrentDashboard = $null
-    ReportHistory = @()
-    MetricsCache = @{}
-    RefreshInterval = 5
-    Config = $null
+    ReportHistory    = @()
+    MetricsCache     = @{}
+    RefreshInterval  = 5
+    Config           = $null
 }
 
 # Import dependencies
@@ -140,22 +140,22 @@ function New-ExecutionDashboard {
     Write-ReportLog "Creating execution dashboard: $Title"
 
     $dashboard = @{
-        Title = $Title
-        Layout = $Layout
+        Title           = $Title
+        Layout          = $Layout
         RefreshInterval = $RefreshInterval
-        AutoRefresh = $AutoRefresh
-        StartTime = Get-Date
-        Components = @{
-            Header = @{
-                Type = 'Header'
+        AutoRefresh     = $AutoRefresh
+        StartTime       = Get-Date
+        Components      = @{
+            Header   = @{
+                Type    = 'Header'
                 Content = $Title
             }
-            Status = @{
-                Type = 'StatusPanel'
+            Status   = @{
+                Type     = 'StatusPanel'
                 Position = 'Top'
             }
             Progress = @{
-                Type = 'ProgressBar'
+                Type     = 'ProgressBar'
                 Position = 'Middle'
             }
         }
@@ -163,15 +163,15 @@ function New-ExecutionDashboard {
 
     if ($ShowMetrics) {
         $dashboard.Components.Metrics = @{
-            Type = 'MetricsGrid'
+            Type     = 'MetricsGrid'
             Position = 'Right'
-            Metrics = @('CPU', 'Memory', 'Disk', 'Network')
+            Metrics  = @('CPU', 'Memory', 'Disk', 'Network')
         }
     }
 
     if ($ShowLogs) {
         $dashboard.Components.Logs = @{
-            Type = 'LogViewer'
+            Type     = 'LogViewer'
             Position = 'Bottom'
             MaxLines = 20
         }
@@ -235,7 +235,7 @@ function Update-ExecutionDashboard {
         # Keep only last MaxLines
         $maxLines = $Dashboard.Components.Logs.MaxLines
         if ($Dashboard.Components.Logs.Data.Count -gt $maxLines) {
-            $Dashboard.Components.Logs.Data = $Dashboard.Components.Logs.Data[-$maxLines..-1]
+            $Dashboard.Components.Logs.Data = $Dashboard.Components.Logs.Data[ - $maxLines..-1]
         }
     }
 
@@ -466,14 +466,14 @@ function New-TestReport {
 
     # Create report structure
     $report = @{
-        Title = $Title
-        Generated = Get-Date
-        Format = $Format
+        Title       = $Title
+        Generated   = Get-Date
+        Format      = $Format
         Environment = @{
-            Platform = $PSVersionTable.Platform
+            Platform          = $PSVersionTable.Platform
             PowerShellVersion = $PSVersionTable.PSVersion.ToString()
-            User = if ($IsWindows) { [System.Security.Principal.WindowsIdentity]::GetCurrent().Name } else { $env:USER }
-            Computer = if ($env:COMPUTERNAME) { $env:COMPUTERNAME } else { $env:HOSTNAME }
+            User              = if ($IsWindows) { [System.Security.Principal.WindowsIdentity]::GetCurrent().Name } else { $env:USER }
+            Computer          = if ($env:COMPUTERNAME) { $env:COMPUTERNAME } else { $env:HOSTNAME }
         }
     }
 
@@ -481,11 +481,11 @@ function New-TestReport {
     if ($TestResults) {
         $report.TestResults = @{
             Summary = @{
-                Total = $TestResults.TotalCount
-                Passed = $TestResults.PassedCount
-                Failed = $TestResults.FailedCount
-                Skipped = $TestResults.SkippedCount
-                Duration = $TestResults.Duration
+                Total       = $TestResults.TotalCount
+                Passed      = $TestResults.PassedCount
+                Failed      = $TestResults.FailedCount
+                Skipped     = $TestResults.SkippedCount
+                Duration    = $TestResults.Duration
                 SuccessRate = if ($TestResults.TotalCount -gt 0) {
                     [Math]::Round(($TestResults.PassedCount / $TestResults.TotalCount) * 100, 2)
                 } else { 0 }
@@ -497,8 +497,8 @@ function New-TestReport {
     # Add coverage data
     if ($CoverageData) {
         $report.Coverage = @{
-            Overall = $CoverageData.CoveragePercent
-            Files = $CoverageData.Files
+            Overall        = $CoverageData.CoveragePercent
+            Files          = $CoverageData.Files
             UncoveredLines = $CoverageData.MissedLines
         }
     }
@@ -510,7 +510,7 @@ function New-TestReport {
             BySeverity = $AnalysisResults | Group-Object Severity | ForEach-Object {
                 @{ $_.Name = $_.Count }
             }
-            ByRule = $AnalysisResults | Group-Object RuleName | ForEach-Object {
+            ByRule     = $AnalysisResults | Group-Object RuleName | ForEach-Object {
                 @{ $_.Name = $_.Count }
             }
         }
@@ -558,10 +558,10 @@ function New-TestReport {
 
     # Store in history
     $script:ReportingState.ReportHistory += @{
-        Path = $reportPath
-        Format = $Format
+        Path      = $reportPath
+        Format    = $Format
         Generated = $report.Generated
-        Title = $Title
+        Title     = $Title
     }
 
     Write-ReportLog "Report generated: $reportPath"
@@ -895,8 +895,8 @@ function Get-LatestTestResults {
     }
 
     $latestResult = Get-ChildItem -Path $resultsPath -Filter "*-Summary.json" |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
 
     if ($latestResult) {
         return Get-Content $latestResult.FullName | ConvertFrom-Json -AsHashtable
@@ -919,8 +919,8 @@ function Get-LatestCoverageData {
     }
 
     $latestCoverage = Get-ChildItem -Path $coveragePath -Filter "coverage-summary.json" |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
 
     if ($latestCoverage) {
         return Get-Content $latestCoverage.FullName | ConvertFrom-Json -AsHashtable
@@ -943,8 +943,8 @@ function Get-LatestAnalysisResults {
     }
 
     $latestAnalysis = Get-ChildItem -Path $analysisPath -Filter "PSScriptAnalyzer-*.csv" |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
 
     if ($latestAnalysis) {
         return Import-Csv $latestAnalysis.FullName
@@ -975,8 +975,8 @@ function Show-TestTrends {
     $cutoffDate = (Get-Date).AddDays(-$Days)
 
     $summaryFiles = Get-ChildItem -Path $resultsPath -Filter "*-Summary.json" -ErrorAction SilentlyContinue |
-        Where-Object { $_.LastWriteTime -ge $cutoffDate } |
-        Sort-Object LastWriteTime
+    Where-Object { $_.LastWriteTime -ge $cutoffDate } |
+    Sort-Object LastWriteTime
 
     if ($summaryFiles.Count -eq 0) {
         Write-Host "No test results found in the specified period" -ForegroundColor Yellow
@@ -1021,12 +1021,12 @@ function Export-MetricsReport {
     Write-ReportLog "Exporting metrics report in $Format format"
 
     $metrics = @{
-        Period = @{
+        Period      = @{
             Start = $StartDate
-            End = $EndDate
+            End   = $EndDate
         }
         CollectedAt = Get-Date
-        Metrics = @{}
+        Metrics     = @{}
     }
 
     # Collect metrics based on types
@@ -1043,7 +1043,7 @@ function Export-MetricsReport {
                     # Get performance metrics from logs
                     $metrics.Metrics.Performance = @{
                         AverageExecutionTime = "N/A"
-                        PeakMemoryUsage = "N/A"
+                        PeakMemoryUsage      = "N/A"
                     }
                 }
             }
@@ -1082,9 +1082,9 @@ function Export-MetricsReport {
                     foreach ($metric in $categoryData.Keys) {
                         $flatMetrics += [PSCustomObject]@{
                             Timestamp = $metrics.CollectedAt
-                            Category = $category
-                            Metric = $metric
-                            Value = $categoryData[$metric]
+                            Category  = $category
+                            Metric    = $metric
+                            Value     = $categoryData[$metric]
                         }
                     }
                 }
@@ -1140,22 +1140,22 @@ function Test-EnvironmentValidation {
     Write-ReportLog "Running environment validation"
 
     $validation = @{
-        Timestamp = Get-Date
-        Overall = $true
-        PowerShell = @{}
-        Modules = @{}
-        Directories = @{}
-        Tools = @{}
+        Timestamp     = Get-Date
+        Overall       = $true
+        PowerShell    = @{}
+        Modules       = @{}
+        Directories   = @{}
+        Tools         = @{}
         Configuration = @{}
-        Issues = @()
+        Issues        = @()
     }
 
     # PowerShell validation
     $validation.PowerShell = @{
-        Version = $PSVersionTable.PSVersion
+        Version    = $PSVersionTable.PSVersion
         Compatible = $PSVersionTable.PSVersion.Major -ge 7
-        Edition = $PSVersionTable.PSEdition
-        OS = $PSVersionTable.OS
+        Edition    = $PSVersionTable.PSEdition
+        OS         = $PSVersionTable.OS
     }
 
     if (-not $validation.PowerShell.Compatible) {
@@ -1169,7 +1169,7 @@ function Test-EnvironmentValidation {
         $module = Get-Module -ListAvailable -Name $moduleName | Sort-Object Version -Descending | Select-Object -First 1
         $validation.Modules[$moduleName] = @{
             Available = $null -ne $module
-            Version = if ($module) { $module.Version } else { $null }
+            Version   = if ($module) { $module.Version } else { $null }
         }
 
         if (-not $module) {
@@ -1184,7 +1184,7 @@ function Test-EnvironmentValidation {
         $dirPath = Join-Path $script:ProjectRoot $dir
         $validation.Directories[$dir] = @{
             Exists = Test-Path $dirPath
-            Path = $dirPath
+            Path   = $dirPath
         }
 
         if (-not (Test-Path $dirPath)) {
@@ -1199,7 +1199,7 @@ function Test-EnvironmentValidation {
         $command = Get-Command $tool -ErrorAction SilentlyContinue
         $validation.Tools[$tool] = @{
             Available = $null -ne $command
-            Path = if ($command) { $command.Source } else { $null }
+            Path      = if ($command) { $command.Source } else { $null }
         }
     }
 
@@ -1226,26 +1226,26 @@ function Get-SystemInformation {
     Write-ReportLog "Gathering system information"
 
     $systemInfo = @{
-        Timestamp = Get-Date
+        Timestamp   = Get-Date
         Environment = @{
-            OS = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
-            OSVersion = [System.Environment]::OSVersion
-            Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
-            ProcessorCount = [System.Environment]::ProcessorCount
-            MachineName = [System.Environment]::MachineName
-            UserName = [System.Environment]::UserName
+            OS               = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
+            OSVersion        = [System.Environment]::OSVersion
+            Architecture     = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+            ProcessorCount   = [System.Environment]::ProcessorCount
+            MachineName      = [System.Environment]::MachineName
+            UserName         = [System.Environment]::UserName
             WorkingDirectory = Get-Location
         }
-        PowerShell = @{
-            Version = $PSVersionTable.PSVersion
-            Edition = $PSVersionTable.PSEdition
-            Host = $Host.Name
+        PowerShell  = @{
+            Version         = $PSVersionTable.PSVersion
+            Edition         = $PSVersionTable.PSEdition
+            Host            = $Host.Name
             ExecutionPolicy = Get-ExecutionPolicy
-            Modules = (Get-Module | Measure-Object).Count
+            Modules         = (Get-Module | Measure-Object).Count
         }
-        AitherZero = @{
-            ProjectRoot = $script:ProjectRoot
-            Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) {
+        AitherZero  = @{
+            ProjectRoot   = $script:ProjectRoot
+            Version       = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) {
                 Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw
             } else { "Unknown" }
             ModulesLoaded = (Get-Module | Where-Object { $_.Path -like "*$script:ProjectRoot*" }).Count
@@ -1254,7 +1254,7 @@ function Get-SystemInformation {
 
     if ($IncludeHardware) {
         $systemInfo.Hardware = @{
-            TotalMemory = [System.GC]::GetTotalMemory($true)
+            TotalMemory     = [System.GC]::GetTotalMemory($true)
             AvailableMemory = if ($IsWindows) {
                 try {
                     Get-WmiObject -Class Win32_OperatingSystem | ForEach-Object { $_.FreePhysicalMemory * 1KB }
@@ -1265,14 +1265,14 @@ function Get-SystemInformation {
 
     if ($IncludeNetwork) {
         $systemInfo.Network = @{
-            HostName = [System.Net.Dns]::GetHostName()
+            HostName    = [System.Net.Dns]::GetHostName()
             IPAddresses = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) | ForEach-Object { $_.IPAddressToString }
         }
     }
 
     if ($IncludeProcesses) {
         $systemInfo.Processes = @{
-            Total = (Get-Process | Measure-Object).Count
+            Total               = (Get-Process | Measure-Object).Count
             PowerShellProcesses = (Get-Process -Name pwsh, powershell -ErrorAction SilentlyContinue | Measure-Object).Count
         }
     }
@@ -1303,28 +1303,28 @@ function New-ProjectReport {
 
     $report = @{
         GeneratedAt = Get-Date
-        ReportType = $ReportType
+        ReportType  = $ReportType
         ProjectInfo = @{
-            Name = "AitherZero"
-            Root = $script:ProjectRoot
+            Name    = "AitherZero"
+            Root    = $script:ProjectRoot
             Version = if (Test-Path (Join-Path $script:ProjectRoot "VERSION")) {
                 Get-Content (Join-Path $script:ProjectRoot "VERSION") -Raw
             } else { "Unknown" }
         }
         Environment = Get-SystemInformation
-        Validation = Test-EnvironmentValidation
-        Statistics = @{}
+        Validation  = Test-EnvironmentValidation
+        Statistics  = @{}
         TestResults = @{}
         CodeMetrics = @{}
     }
 
     # Gather project statistics
     $report.Statistics = @{
-        TotalFiles = (Get-ChildItem -Path $script:ProjectRoot -Recurse -File | Measure-Object).Count
-        PowerShellFiles = (Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1", "*.psd1" | Measure-Object).Count
-        ModuleFiles = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "aithercore") -Recurse -Filter "*.psm1" | Measure-Object).Count
+        TotalFiles        = (Get-ChildItem -Path $script:ProjectRoot -Recurse -File | Measure-Object).Count
+        PowerShellFiles   = (Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1", "*.psd1" | Measure-Object).Count
+        ModuleFiles       = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "aithercore") -Recurse -Filter "*.psm1" | Measure-Object).Count
         AutomationScripts = (Get-ChildItem -Path (Join-Path $script:ProjectRoot "library/automation-scripts") -Filter "*.ps1" | Measure-Object).Count
-        TestFiles = if (Test-Path (Join-Path $script:ProjectRoot "tests")) {
+        TestFiles         = if (Test-Path (Join-Path $script:ProjectRoot "tests")) {
             (Get-ChildItem -Path (Join-Path $script:ProjectRoot "tests") -Recurse -Filter "*.Tests.ps1" | Measure-Object).Count
         } else { 0 }
     }

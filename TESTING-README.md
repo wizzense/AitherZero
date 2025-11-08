@@ -17,11 +17,13 @@ open reports/dashboard.html
 ## What Changed
 
 ### Before
+
 - 8+ orchestration scripts (confusing)
 - Results scattered in 3+ locations
 - Tests only checked "file exists" (useless)
 
-### After  
+### After
+
 - **ONE** playbook: `test-orchestrated.json`
 - **ONE** dashboard: `reports/dashboard.html`
 - **Functional** tests: validate actual behavior
@@ -87,12 +89,14 @@ Context '🎭 Mocked Dependencies' {
 ## Files
 
 ### Core
+
 - `aithercore/orchestration/playbooks/testing/test-orchestrated.json` - Main playbook
 - `.github/workflows/unified-testing.yml` - CI/CD workflow
 - `aithercore/testing/FunctionalTestGenerator.psm1` - Test generator
 - `library/automation-scripts/0951_Regenerate-FunctionalTests.ps1` - Batch regeneration
 
 ### Deprecated (Don't Use)
+
 - `library/automation-scripts/0460_Orchestrate-Tests.ps1` → Use playbook
 - `library/automation-scripts/0470_Orchestrate-SimpleTesting.ps1` → Use playbook
 - `library/automation-scripts/0480_Test-Simple.ps1` → Use playbook
@@ -110,6 +114,7 @@ Context '🎭 Mocked Dependencies' {
 ## CI/CD
 
 The `unified-testing.yml` workflow:
+
 1. Runs playbook on push/PR
 2. Generates dashboard
 3. Publishes to GitHub Pages
@@ -118,10 +123,12 @@ The `unified-testing.yml` workflow:
 ## Troubleshooting
 
 **Tests fail?**
+
 - Check `reports/dashboard.html` for prioritized issues
 - Review logs: `logs/transcript-*.log`
 
 **Want to customize?**
+
 - Edit `aithercore/orchestration/playbooks/testing/test-orchestrated.json`
 - Add/remove stages
 - Adjust timeouts
@@ -137,6 +144,6 @@ The `unified-testing.yml` workflow:
 
 ---
 
-**Version:** 2.0  
-**Status:** Production Ready  
+**Version:** 2.0
+**Status:** Production Ready
 **Documentation:** This file replaces 6 previous guides

@@ -58,6 +58,7 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ```
 
 **Note**: After cloning, run these setup commands:
+
 ```bash
 # Enable pre-commit hooks and Git merge strategy (recommended for contributors)
 pwsh -File automation-scripts/0004_Setup-GitHooks.ps1

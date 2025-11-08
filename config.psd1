@@ -322,9 +322,9 @@
                     Scripts     = @('0820', '0821', '0822', '0831')
                     Description = 'Work context, continuation prompts, issue creation testing, and templates'
                 }
-                Automation = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0840', '0841')
+                Automation   = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0840', '0841')
                     Description = 'Automated workflow validation, priority-based issue processing, and workflow integration validation'
                 }
                 PRDeployment = @{
@@ -356,17 +356,17 @@
                     Scripts     = @('0960', '0961')
                     Description = 'Documentation freshness tracking and directory documentation validation'
                 }
-                Orchestration = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0962', '0963', '0964', '0965', '0966', '0967', '0968')
+                Orchestration         = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0962', '0963', '0964', '0965', '0966', '0967', '0968')
                     Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, local validation, orchestration engine testing, and playbook v2 migration'
                 }
             }
 
-            Maintenance = @{
-                Environment = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0000', '0002', '0003', '0004')
+            Maintenance     = @{
+                Environment       = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0000', '0002', '0003', '0004')
                     Description = 'Environment cleanup, directory setup, config sync, and git hooks setup'
                 }
                 Reset             = @{
@@ -437,7 +437,7 @@
         # Script inventory by range (138 total files, 137 unique numbers)
         # All scripts now have unique numbers
         # Counts represent unique script NUMBERS, not total files
-        ScriptInventory = @{
+        ScriptInventory     = @{
             '0000-0099' = @{ Count = 9; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
             '0200-0299' = @{ Count = 17; Category = 'Development Tools' }

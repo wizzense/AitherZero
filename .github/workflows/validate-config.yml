@@ -1,16 +1,27 @@
 ---
-name: 'Validate Config Manifest'
+name: "Validate Config Manifest"
 
 on:
   push:
     # Only run on base branches to avoid duplicate runs with pull_request events
-    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+    branches:
+      [
+        main,
+        dev,
+        develop,
+        dev-staging,
+        ring-0,
+        ring-0-integrations,
+        ring-1,
+        ring-1-integrations,
+        ring-2,
+      ]
     paths:
-      - 'config.psd1'
-      - 'library/automation-scripts/0003_Sync-ConfigManifest.ps1'
-      - 'library/automation-scripts/0413_Validate-ConfigManifest.ps1'
-      - 'aithercore/**/*.psm1'
-      - 'library/automation-scripts/*.ps1'
+      - "config.psd1"
+      - "library/automation-scripts/0003_Sync-ConfigManifest.ps1"
+      - "library/automation-scripts/0413_Validate-ConfigManifest.ps1"
+      - "aithercore/**/*.psm1"
+      - "library/automation-scripts/*.ps1"
   pull_request:
     # Run on all PRs to ensure config validation
   workflow_dispatch:
@@ -25,16 +36,16 @@ permissions:
 
 jobs:
   validate-config:
-    name: 'Validate Config.psd1'
+    name: "Validate Config.psd1"
     # Skip if triggered by bot
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup PowerShell'
+      - name: "Setup PowerShell"
         shell: pwsh
         run: |
           Write-Host "PowerShell $($PSVersionTable.PSVersion) ready" -ForegroundColor Cyan
@@ -45,7 +56,7 @@ jobs:
             Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -AllowClobber
           }
 
-      - name: 'Validate Config Manifest'
+      - name: "Validate Config Manifest"
         shell: pwsh
         run: |
           Write-Host "🔍 Validating config.psd1 manifest..." -ForegroundColor Cyan
@@ -74,7 +85,7 @@ jobs:
             Write-Host "✅ Config manifest is valid and synchronized!" -ForegroundColor Green
           }
 
-      - name: 'Sync Config with Automation Scripts'
+      - name: "Sync Config with Automation Scripts"
         shell: pwsh
         run: |
           Write-Host "🔄 Checking config.psd1 synchronization with automation scripts..." -ForegroundColor Cyan
@@ -98,7 +109,7 @@ jobs:
             Write-Host "✅ Config is synchronized with all automation scripts!" -ForegroundColor Green
           }
 
-      - name: 'Summary'
+      - name: "Summary"
         if: always()
         shell: pwsh
         run: |
