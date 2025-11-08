@@ -44,13 +44,18 @@ Use the `aitherzero` wrapper for script execution: `aitherzero 0402` runs unit t
 
 ## Domain Structure (Consolidated Architecture v2.0)
 
-Located in `/domains/` (legacy references may point to `aither-core/`):
+Located in `/domains/`:
 - **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management (57 functions)
 - **configuration/**: Config management with environment switching (36 functions)
 - **utilities/**: Logging, maintenance, cross-platform helpers (24 functions)
 - **security/**: Credentials, certificates (41 functions)
-- **experience/**: UI components, menus, wizards (22 functions)
 - **automation/**: Orchestration engine, workflows (16 functions)
+- **cli/**: Command-line interface and script execution (unified menu/CLI system)
+- **development/**: Git automation, issue tracking, PR management
+- **testing/**: Testing frameworks, quality validation
+- **reporting/**: Report generation, tech debt analysis
+- **documentation/**: Documentation generation and indexing
+- **ai-agents/**: AI workflow orchestration
 
 ## Critical Development Patterns
 
