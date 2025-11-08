@@ -45,7 +45,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Initialize
-$script:ProjectRoot = Split-Path $PSScriptRoot -Parent
+$script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:StartTime = Get-Date
 $script:WatchTimeout = $WatchTimeout
 $script:OutputPath = $OutputPath

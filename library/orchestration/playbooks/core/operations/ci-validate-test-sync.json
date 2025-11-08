@@ -1,0 +1,55 @@
+{
+  "metadata": {
+    "name": "ci-validate-test-sync",
+    "description": "Validate test files are synchronized with automation scripts",
+    "version": "1.0.0",
+    "category": "operations",
+    "tags": ["ci", "validation", "tests", "synchronization"],
+    "estimatedDuration": "2-5 minutes",
+    "githubWorkflow": "validate-test-sync.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": [],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false,
+      "removeOrphaned": false
+    },
+    "profiles": {
+      "standard": {
+        "description": "Check for orphaned test files",
+        "variables": {
+          "removeOrphaned": false
+        }
+      },
+      "cleanup": {
+        "description": "Remove orphaned test files",
+        "variables": {
+          "removeOrphaned": true
+        }
+      },
+      "quick": {
+        "description": "Quick check only",
+        "variables": {
+          "removeOrphaned": false
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Test Sync Validation",
+        "description": "Validate test-script synchronization",
+        "sequences": ["0426"],
+        "variables": {
+          "RemoveOrphaned": "{{removeOrphaned}}"
+        },
+        "continueOnError": false,
+        "timeout": 180
+      }
+    ]
+  }
+}

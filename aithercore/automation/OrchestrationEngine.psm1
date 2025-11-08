@@ -13,7 +13,7 @@
 # Initialize module
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:ScriptsPath = Join-Path $script:ProjectRoot 'library/automation-scripts'
-$script:OrchestrationPath = Join-Path $script:ProjectRoot 'orchestration'
+$script:OrchestrationPath = Join-Path $script:ProjectRoot 'library/playbooks'
 
 # Exit code constants
 $script:EXIT_SUCCESS = 0
@@ -23,7 +23,7 @@ $script:EXIT_TIMEOUT = 124  # Standard timeout exit code (used by GNU timeout co
 # Import logging
 $script:LoggingAvailable = $false
 try {
-    $loggingPath = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
+    $loggingPath = Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1"
     if (Test-Path $loggingPath) {
         Import-Module $loggingPath -Force -Global
         $script:LoggingAvailable = $true

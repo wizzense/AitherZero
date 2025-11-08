@@ -45,7 +45,7 @@ jobs:
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-AitherPlaybook -Name pr-ecosystem-build -ThrowOnError
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4

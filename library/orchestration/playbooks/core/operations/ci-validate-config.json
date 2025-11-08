@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "name": "ci-validate-config",
+    "description": "Validate config.psd1 manifest structure and synchronization",
+    "version": "1.0.0",
+    "category": "operations",
+    "tags": ["ci", "validation", "config", "manifest"],
+    "estimatedDuration": "2-5 minutes",
+    "githubWorkflow": "validate-config.yml"
+  },
+  "requirements": {
+    "minimumPowerShellVersion": "7.0",
+    "requiredModules": [],
+    "requiredTools": [],
+    "platforms": ["Windows", "Linux", "macOS"]
+  },
+  "orchestration": {
+    "defaultVariables": {
+      "verbose": false,
+      "autoFix": false
+    },
+    "profiles": {
+      "standard": {
+        "description": "Standard config validation",
+        "variables": {
+          "autoFix": false
+        }
+      },
+      "fix": {
+        "description": "Validate and fix issues",
+        "variables": {
+          "autoFix": true
+        }
+      }
+    },
+    "stages": [
+      {
+        "name": "Config Manifest Validation",
+        "description": "Validate config.psd1 structure and syntax",
+        "sequences": ["0413"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 120
+      },
+      {
+        "name": "Config Synchronization",
+        "description": "Sync config with automation scripts",
+        "sequences": ["0003"],
+        "variables": {},
+        "continueOnError": false,
+        "timeout": 120,
+        "condition": "{{autoFix}} == true"
+      }
+    ]
+  }
+}

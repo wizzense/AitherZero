@@ -153,8 +153,8 @@ if (Test-Path './domains') {
 Write-Host ""
 Write-Host "5. SCRIPT INVENTORY VALIDATION" -ForegroundColor Yellow
 
-if (Test-Path './automation-scripts') {
-    $allScripts = Get-ChildItem -Path './automation-scripts' -Filter '*.ps1'
+if (Test-Path './library/automation-scripts') {
+    $allScripts = Get-ChildItem -Path './library/automation-scripts' -Filter '*.ps1'
     $uniqueNumbers = $allScripts | ForEach-Object { [int]($_.Name -replace '(\d+)_.*', '$1') } | Sort-Object -Unique
     
     Write-Host "  Total script files: $($allScripts.Count)" -ForegroundColor Gray
@@ -218,7 +218,7 @@ foreach ($category in $config.Manifest.FeatureDependencies.Keys) {
 $invalidRefs = @()
 foreach ($scriptNum in $allScriptRefs | Sort-Object -Unique) {
     $pattern = "$scriptNum`_*.ps1"
-    if (-not (Test-Path "./automation-scripts/$pattern")) {
+    if (-not (Test-Path "./library/automation-scripts/$pattern")) {
         $invalidRefs += $scriptNum
     }
 }

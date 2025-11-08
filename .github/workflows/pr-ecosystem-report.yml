@@ -72,7 +72,7 @@ jobs:
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-AitherPlaybook -Name pr-ecosystem-report -ContinueOnError
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
 
       - name: 🌐 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

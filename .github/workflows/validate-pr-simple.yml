@@ -1,0 +1,35 @@
+---
+name: ✅ Validate PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: validate-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: 🔍 Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: ✅ Run Validation Playbook
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-OrchestrationSequence -LoadPlaybook validate-pr
