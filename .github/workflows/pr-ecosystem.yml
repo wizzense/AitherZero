@@ -205,14 +205,22 @@ jobs:
       - name: 🏗️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          # Convert repository name to lowercase for Docker compatibility
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "Using lowercase repository name: ${REPO_LOWER}"
+
       - name: 🐳 Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-latest
-            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-${{ github.sha }}
+            ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}-latest
+            ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}-${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
