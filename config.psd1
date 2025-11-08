@@ -425,13 +425,14 @@
             'automation'     = @{ Modules = 5; Description = 'Orchestration engine and script utilities' }
             'cli'            = @{ Modules = 1; Description = 'CLI cmdlets and interactive interface' }
             'configuration'  = @{ Modules = 2; Description = 'Unified configuration management' }
-            'development'    = @{ Modules = 4; Description = 'Developer tools and Git automation' }
+            'development'    = @{ Modules = 5; Description = 'Developer tools and Git automation' }
             'documentation'  = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
+            'experience'     = @{ Modules = 8; Description = 'User experience, menus, wizards, help system' }
             'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
             'orchestration'  = @{ Modules = 0; Description = 'Playbook orchestration and workflow management' }
             'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 1; Description = 'Security and credential management' }
-            'testing'        = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
+            'testing'        = @{ Modules = 8; Description = 'Testing framework, quality validation, and test generation' }
             'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
