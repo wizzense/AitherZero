@@ -196,7 +196,7 @@ function Process-MenuChoice {
         '5' { Show-AuditLogs }
         '6' { Search-InteractiveLogs }
         '7' { Export-InteractiveReport }
-        '8' { Clear-OldLogs }
+        '8' { Clear-OldLog }
         '9' { Toggle-AutoRefresh }
         '0' { Show-Settings }
         'r' { Clear-Host }
@@ -367,15 +367,15 @@ function Export-InteractiveReport {
     Read-Host "`nPress Enter to continue"
 }
 
-function Clear-OldLogs {
+function Clear-OldLog {
     Write-Host "`n🗑️ CLEAR OLD LOGS" -ForegroundColor Yellow
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
 
     $days = Read-Host "Keep logs from last how many days? (default: 7)"
     if (-not $days) { $days = 7 }
 
-    if (Get-Command Clear-Logs -ErrorAction SilentlyContinue) {
-        Clear-Logs -DaysToKeep $days -Confirm
+    if (Get-Command Clear-Log -ErrorAction SilentlyContinue) {
+        Clear-Log -DaysToKeep $days -Confirm
         Write-Host "✅ Old logs cleared" -ForegroundColor Green
     }
 

@@ -396,7 +396,7 @@ function Get-Log {
 }
 
 # Clear logs
-function Clear-Logs {
+function Clear-Log {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [int]$DaysToKeep = 7
@@ -953,7 +953,7 @@ Export-ModuleMember -Function @(
     'Start-PerformanceTrace',
     'Stop-PerformanceTrace',
     'Get-Logs',
-    'Clear-Logs',
+    'Clear-Log',
     'Get-LogPath',
     'Initialize-Logging',
     'Clear-LogBuffer',

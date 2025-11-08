@@ -419,7 +419,7 @@ function Show-LogDashboard {
                     Read-Host "`nPress Enter to continue"
                 }
                 'C' {
-                    Clear-OldLogs
+                    Clear-OldLog
                     Read-Host "`nPress Enter to continue"
                 }
                 'Q' {
@@ -476,7 +476,7 @@ function Search-Log {
     }
 }
 
-function Clear-OldLogs {
+function Clear-OldLog {
     <#
     .SYNOPSIS
         Clears old log files
@@ -561,6 +561,6 @@ Export-ModuleMember -Function @(
     'Get-LogStatistic'
     'Show-LogDashboard'
     'Search-Logs'
-    'Clear-OldLogs'
+    'Clear-OldLog'
     'Get-LoggingStatus'
 )
