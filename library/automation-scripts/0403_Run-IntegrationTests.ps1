@@ -20,7 +20,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "library/tests/integration"),
+    [string]$Path = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "tests/integration"),
     [string]$OutputPath,
     [switch]$DryRun,
     [switch]$PassThru,
