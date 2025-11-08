@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
-
+# Stage: IssueManagement
+# Dependencies: None
+# Tags: workflow, validation, ci-cd, github-actions
 <#
 .SYNOPSIS
     Validate AitherCore workflow integration with existing GitHub Actions workflows

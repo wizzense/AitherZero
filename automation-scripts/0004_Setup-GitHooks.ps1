@@ -1,13 +1,20 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
+# Stage: Environment
+# Dependencies: None
+# Tags: git, hooks, development, setup
 <#
 .SYNOPSIS
     Setup Git hooks for AitherZero development
 .DESCRIPTION
     Configures Git to use the custom hooks in .githooks/ directory.
     These hooks help maintain code quality by validating changes before commits.
+    
+    This script is part of the Environment Setup stage (0000-0099).
 .EXAMPLE
-    ./tools/Setup-GitHooks.ps1
+    ./automation-scripts/0003_Setup-GitHooks.ps1
+    
+    Configures Git to use AitherZero hooks
 .NOTES
     Run this once after cloning the repository to enable pre-commit validation.
 #>
@@ -74,8 +81,31 @@ if ($hooks) {
 Write-Host ""
 Write-Host "✅ Git hooks setup complete!" -ForegroundColor Green
 Write-Host ""
+
+# Configure Git merge strategy for auto-generated files
+Write-Host "🔧 Configuring Git merge strategy for auto-generated files..." -ForegroundColor Cyan
+try {
+    # Configure the merge.ours driver
+    git config --local merge.ours.name "Always use our version for auto-generated files"
+    git config --local merge.ours.driver "true"
+    Write-Host "✅ Git merge configuration complete!" -ForegroundColor Green
+    
+    # Verify attributes are set
+    $indexMdMerge = git check-attr merge automation-scripts/index.md 2>$null
+    if ($indexMdMerge -match "ours") {
+        Write-Host "✅ Merge attribute correctly applied to index.md files" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️  Warning: Merge attribute not found in .gitattributes" -ForegroundColor Yellow
+        Write-Host "   Expected: **/index.md merge=ours" -ForegroundColor Gray
+    }
+} catch {
+    Write-Host "⚠️  Failed to configure Git merge strategy: $_" -ForegroundColor Yellow
+}
+
+Write-Host ""
 Write-Host "What's enabled:" -ForegroundColor Cyan
 Write-Host "  • pre-commit: Validates config.psd1 before commits" -ForegroundColor White
+Write-Host "  • merge.ours: Auto-generated files use 'ours' strategy" -ForegroundColor White
 Write-Host ""
 Write-Host "To disable hooks (not recommended):" -ForegroundColor Yellow
 Write-Host "  git config --unset core.hooksPath" -ForegroundColor Gray

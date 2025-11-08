@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
-
+# Stage: Quality
+# Dependencies: None
+# Tags: playbook, migration, orchestration, quality
 <#
 .SYNOPSIS
     Migrate legacy v1 playbooks to new v2.0 format

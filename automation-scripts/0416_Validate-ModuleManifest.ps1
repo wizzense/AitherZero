@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
-
+# Stage: Testing
+# Dependencies: None
+# Tags: validation, manifest, module, testing, quality
 <#
 .SYNOPSIS
     Validates PowerShell module manifest files for common issues including Unicode characters
@@ -15,9 +17,9 @@
 .PARAMETER Fix
     If specified, attempts to fix common issues automatically
 .EXAMPLE
-    ./tools/Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1
+    ./automation-scripts/0413_Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1
 .EXAMPLE
-    ./tools/Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1 -Fix
+    ./automation-scripts/0413_Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1 -Fix
 #>
 
 [CmdletBinding()]
