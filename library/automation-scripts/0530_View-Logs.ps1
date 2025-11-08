@@ -84,7 +84,7 @@ try {
                 # Show statistics
                 $appLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
                 if ($appLog) {
-                    $stats = Get-LogStatistics -Path $appLog.FullName
+                    $stats = Get-LogStatistic -Path $appLog.FullName
                     if ($stats) {
                         Write-Host "`nLog Statistics:" -ForegroundColor White
                         Write-Host "  Total Lines: $($stats.TotalLines)" -ForegroundColor Gray

@@ -42,7 +42,7 @@ function Analyze-ConfigurationUsage {
     # Check cache
     if ($UseCache) {
         $cacheKey = "config-usage-$(Get-FileHash -Path $ConfigPath)"
-        $cachedResults = Get-CachedResults -CacheKey $cacheKey
+        $cachedResults = Get-CachedResult -CacheKey $cacheKey
 
         if ($cachedResults) {
             Write-AnalysisLog "Using cached results" -Component "ConfigUsage" -Level Success
@@ -208,7 +208,7 @@ function Analyze-ConfigurationUsage {
     # Cache results if enabled
     if ($UseCache -and -not $usage.Error) {
         if ($PSCmdlet.ShouldProcess("Analysis cache", "Save configuration usage analysis results")) {
-            Set-CachedResults -CacheKey $cacheKey -Results $usage -DependentFiles @($configFullPath)
+            Set-CachedResult -CacheKey $cacheKey -Results $usage -DependentFiles @($configFullPath)
         }
     }
 
@@ -223,7 +223,7 @@ try {
 
     # Save results
     if ($PSCmdlet.ShouldProcess($OutputPath, "Save configuration usage analysis results")) {
-        $outputFile = Save-AnalysisResults -AnalysisType "ConfigurationUsage" -Results $results -OutputPath $OutputPath
+        $outputFile = Save-AnalysisResult -AnalysisType "ConfigurationUsage" -Results $results -OutputPath $OutputPath
     }
 
     # Display summary

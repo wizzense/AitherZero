@@ -239,7 +239,7 @@ function Clear-TestCache {
     }
 }
 
-function Get-TestCacheStatistics {
+function Get-TestCacheStatistic {
     <#
     .SYNOPSIS
     Get statistics about test cache usage
@@ -400,7 +400,7 @@ Export-ModuleMember -Function @(
     'Get-CachedTestResult'
     'Set-CachedTestResult'
     'Clear-TestCache'
-    'Get-TestCacheStatistics'
+    'Get-TestCacheStatistic'
     'Test-ShouldRunTests'
     'Get-IncrementalTestScope'
 )

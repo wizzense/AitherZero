@@ -513,7 +513,7 @@ function Toggle-TranscriptLogging {
     }
 }
 
-function Get-LogStatistics {
+function Get-LogStatistic {
     <#
     .SYNOPSIS
         Get detailed statistics about logs
@@ -596,5 +596,5 @@ function Get-LogStatistics {
 # Export functions
 Export-ModuleMember -Function @(
     'Show-LogDashboard',
-    'Get-LogStatistics'
+    'Get-LogStatistic'
 )

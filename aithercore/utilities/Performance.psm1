@@ -165,7 +165,7 @@ function Measure-Performance {
 
 #region Metrics Collection and Analysis
 
-function Get-PerformanceMetrics {
+function Get-PerformanceMetric {
     <#
     .SYNOPSIS
     Retrieves performance metrics with optional filtering.
@@ -239,7 +239,7 @@ function Get-PerformanceSummary {
         [string]$GroupBy = 'Category'
     )
 
-    $metrics = Get-PerformanceMetrics -Category $Category
+    $metrics = Get-PerformanceMetric -Category $Category
 
     if ($GroupBy -eq 'Hour') {
         $grouped = $metrics | Group-Object { $_.StartTime.ToString('yyyy-MM-dd HH') }
@@ -319,7 +319,7 @@ function Show-PerformanceDashboard {
 
         # Recent Metrics Summary
         Write-Host "Recent Performance (Last Hour):" -ForegroundColor Yellow
-        $recent = Get-PerformanceMetrics -Since (Get-Date).AddHours(-1)
+        $recent = Get-PerformanceMetric -Since (Get-Date).AddHours(-1)
         if ($recent.Count -gt 0) {
             $summary = Get-PerformanceSummary -GroupBy Category
             $summary | Select-Object -First $Top | ForEach-Object {
@@ -691,7 +691,7 @@ Export-ModuleMember -Function @(
     'Start-PerformanceTimer',
     'Stop-PerformanceTimer',
     'Measure-Performance',
-    'Get-PerformanceMetrics',
+    'Get-PerformanceMetric',
     'Get-PerformanceSummary',
     'Show-PerformanceDashboard',
     'Measure-FileProcessing',

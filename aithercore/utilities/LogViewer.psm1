@@ -217,7 +217,7 @@ function Show-LogContent {
     }
 }
 
-function Get-LogStatistics {
+function Get-LogStatistic {
     <#
     .SYNOPSIS
         Gets statistics about log files
@@ -306,7 +306,7 @@ function Show-LogDashboard {
 
             $appLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
             if ($appLog) {
-                $stats = Get-LogStatistics -Path $appLog.FullName
+                $stats = Get-LogStatistic -Path $appLog.FullName
                 if ($stats) {
                     Write-Host "`n  Statistics:" -ForegroundColor White
                     Write-Host "    Lines: $($stats.TotalLines) | Errors: $($stats.LogLevels.Error) | Warnings: $($stats.LogLevels.Warning)" -ForegroundColor Gray
@@ -344,7 +344,7 @@ function Show-LogDashboard {
             if ($logFiles.Count -gt 0) {
                 $latestLog = $logFiles | Where-Object { $_.Type -eq 'Application' } | Select-Object -First 1
                 if ($latestLog) {
-                    $stats = Get-LogStatistics -Path $latestLog.FullName
+                    $stats = Get-LogStatistic -Path $latestLog.FullName
 
                     if ($stats) {
                         Write-Host "`n  📊 CURRENT LOG STATISTICS:" -ForegroundColor White
@@ -558,7 +558,7 @@ Write-ModuleLog "LogViewer module initialized"
 Export-ModuleMember -Function @(
     'Get-LogFile'
     'Show-LogContent'
-    'Get-LogStatistics'
+    'Get-LogStatistic'
     'Show-LogDashboard'
     'Search-Logs'
     'Clear-OldLogs'
