@@ -7,14 +7,14 @@
     
     Sequence = @(
         @{
-            Script = "0404_Run-PSScriptAnalyzer.ps1"
+            Script = "0404"
             Description = "Run PSScriptAnalyzer"
             Parameters = @{}
             ContinueOnError = $true
             Timeout = 300
         },
         @{
-            Script = "0420_Validate-ComponentQuality.ps1"
+            Script = "0420"
             Description = "Validate component quality"
             Parameters = @{ Path = "./aithercore" }
             ContinueOnError = $true

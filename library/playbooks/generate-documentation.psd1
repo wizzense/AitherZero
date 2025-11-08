@@ -7,7 +7,7 @@
     
     Sequence = @(
         @{
-            Script = "0744_Generate-AutoDocumentation.ps1"
+            Script = "0744"
             Description = "Generate code documentation"
             Parameters = @{
                 Mode = $env:DOC_MODE ?? "Incremental"

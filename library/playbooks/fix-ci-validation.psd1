@@ -14,7 +14,7 @@
     # Scripts to execute in order
     Scripts = @(
         @{
-            Number = '0407'
+            Script = '0407'
             Name = 'Validate-Syntax'
             Description = 'Validate PowerShell syntax for all scripts'
             Parameters = @{
@@ -24,7 +24,7 @@
             Stage = 'Validation'
         }
         @{
-            Number = '0413'
+            Script = '0413'
             Name = 'Validate-ConfigManifest'
             Description = 'Validate config.psd1 manifest'
             Parameters = @{}
@@ -32,7 +32,7 @@
             Stage = 'Validation'
         }
         @{
-            Number = '0405'
+            Script = '0405'
             Name = 'Validate-ModuleManifests'
             Description = 'Validate all PowerShell module manifests'
             Parameters = @{}
@@ -40,7 +40,7 @@
             Stage = 'Validation'
         }
         @{
-            Number = '0404'
+            Script = '0404'
             Name = 'Run-PSScriptAnalyzer'
             Description = 'Run quality analysis'
             Parameters = @{}
@@ -48,7 +48,7 @@
             Stage = 'Quality'
         }
         @{
-            Number = '0402'
+            Script = '0402'
             Name = 'Run-UnitTests'
             Description = 'Run unit tests'
             Parameters = @{}
@@ -56,7 +56,7 @@
             Stage = 'Testing'
         }
         @{
-            Number = '0531'
+            Script = '0531'
             Name = 'Get-WorkflowRunReport'
             Description = 'Generate diagnostic report'
             Parameters = @{

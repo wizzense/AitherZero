@@ -7,7 +7,7 @@
     
     Sequence = @(
         @{
-            Script = "0745_Generate-ProjectIndexes.ps1"
+            Script = "0745"
             Description = "Generate project navigation indexes"
             Parameters = @{}
             ContinueOnError = $false

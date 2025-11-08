@@ -7,7 +7,7 @@
     # Execute these scripts in sequence - fast feedback
     Sequence = @(
         @{
-            Script = "0407_Validate-Syntax.ps1"
+            Script = "0407"
             Description = "Quick syntax validation"
             Parameters = @{
                 All = $true
@@ -17,7 +17,7 @@
             RetryCount = 0
         },
         @{
-            Script = "0413_Validate-ConfigManifest.ps1"
+            Script = "0413"
             Description = "Config validation"
             Parameters = @{}
             ContinueOnError = $false

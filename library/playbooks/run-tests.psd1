@@ -7,7 +7,7 @@
     
     Sequence = @(
         @{
-            Script = "0402_Run-UnitTests.ps1"
+            Script = "0402"
             Description = "Run unit tests"
             Parameters = @{
                 CodeCoverage = $true
@@ -19,7 +19,7 @@
             Group = 1
         },
         @{
-            Script = "0403_Run-IntegrationTests.ps1"
+            Script = "0403"
             Description = "Run integration tests"
             Parameters = @{
                 OutputFormat = "NUnitXml"

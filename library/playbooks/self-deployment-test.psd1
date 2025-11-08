@@ -9,7 +9,7 @@
     Sequence = @(
         # Phase 1: Complete syntax validation
         @{
-            Script = "0407_Validate-Syntax.ps1"
+            Script = "0407"
             Description = "Validate PowerShell syntax across entire codebase"
             Parameters = @{
                 All = $true
@@ -21,7 +21,7 @@
         
         # Phase 2: Validate configuration manifest
         @{
-            Script = "0413_Validate-ConfigManifest.ps1"
+            Script = "0413"
             Description = "Validate configuration manifest integrity"
             Parameters = @{}
             ContinueOnError = $false
@@ -31,7 +31,7 @@
         
         # Phase 3: Run full unit test suite
         @{
-            Script = "0402_Run-UnitTests.ps1"
+            Script = "0402"
             Description = "Execute complete unit test suite"
             Parameters = @{
                 NoCoverage = $true  # Coverage slows down CI significantly
@@ -43,7 +43,7 @@
         
         # Phase 4: Complete code quality analysis
         @{
-            Script = "0404_Run-PSScriptAnalyzer.ps1"
+            Script = "0404"
             Description = "Full static code analysis"
             Parameters = @{}  # No Fast parameter - do complete analysis
             ContinueOnError = $true  # Don't fail on warnings
@@ -53,7 +53,7 @@
         
         # Phase 5: Generate deployment report
         @{
-            Script = "0512_Generate-Dashboard.ps1"
+            Script = "0512"
             Description = "Generate deployment dashboard"
             Parameters = @{
                 Format = "JSON"

@@ -6,7 +6,7 @@
     # Execute these scripts in sequence
     Sequence = @(
         @{
-            Script = "0404_Run-PSScriptAnalyzer.ps1"
+            Script = "0404"
             Description = "Fast PSScriptAnalyzer scan (core files only)"
             Parameters = @{
                 Fast = $true
@@ -17,7 +17,7 @@
             Timeout = 60
         },
         @{
-            Script = "0407_Validate-Syntax.ps1"
+            Script = "0407"
             Description = "Validate PowerShell syntax"
             Parameters = @{
                 All = $true

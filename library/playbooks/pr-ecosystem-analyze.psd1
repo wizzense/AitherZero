@@ -9,7 +9,7 @@
     Sequence = @(
         # Test execution (parallel group 1)
         @{
-            Script = "0402_Run-UnitTests.ps1"
+            Script = "0402"
             Description = "Execute unit tests with coverage"
             Parameters = @{
                 CodeCoverage = $true
@@ -23,7 +23,7 @@
             Group = 1
         },
         @{
-            Script = "0403_Run-IntegrationTests.ps1"
+            Script = "0403"
             Description = "Execute integration tests"
             Parameters = @{
                 OutputFormat = "NUnitXml"
@@ -38,7 +38,7 @@
         
         # Quality analysis (parallel group 2)
         @{
-            Script = "0404_Run-PSScriptAnalyzer.ps1"
+            Script = "0404"
             Description = "Code quality analysis"
             Parameters = @{
                 Fast = $false
@@ -52,7 +52,7 @@
             Group = 2
         },
         @{
-            Script = "0420_Validate-ComponentQuality.ps1"
+            Script = "0420"
             Description = "Component quality validation"
             Parameters = @{
                 Path = "./aithercore"
@@ -68,7 +68,7 @@
         
         # Documentation analysis (parallel group 3)
         @{
-            Script = "0521_Analyze-DocumentationCoverage.ps1"
+            Script = "0521"
             Description = "Documentation coverage analysis"
             Parameters = @{
                 IncludeMetrics = $true
@@ -81,7 +81,7 @@
             Group = 3
         },
         @{
-            Script = "0425_Validate-DocumentationStructure.ps1"
+            Script = "0425"
             Description = "Documentation structure validation"
             Parameters = @{}
             ContinueOnError = $true
@@ -93,7 +93,7 @@
         
         # Security analysis (parallel group 4)
         @{
-            Script = "0523_Analyze-SecurityIssues.ps1"
+            Script = "0523"
             Description = "Security vulnerability scan"
             Parameters = @{
                 ScanCredentials = $true
@@ -109,7 +109,7 @@
         
         # Diff and change analysis (sequential, after all parallel)
         @{
-            Script = "0514_Analyze-Diff.ps1"
+            Script = "0514"
             Description = "PR diff and impact analysis"
             Parameters = @{
                 BaseBranch = $env:GITHUB_BASE_REF
@@ -126,7 +126,7 @@
         
         # Aggregate results (sequential, final step)
         @{
-            Script = "0517_Aggregate-AnalysisResults.ps1"
+            Script = "0517"
             Description = "Aggregate all analysis results"
             Parameters = @{
                 SourcePath = "library/reports"
@@ -149,7 +149,7 @@
         ANALYSIS_PHASE = "pr-ecosystem-analyze"
         GITHUB_BASE_REF = $env:GITHUB_BASE_REF
         GITHUB_HEAD_REF = $env:GITHUB_HEAD_REF
-        PR_NUMBER = $env:PR_NUMBER
+        PR_Script = $env:PR_NUMBER
     }
     
     # Execution options
