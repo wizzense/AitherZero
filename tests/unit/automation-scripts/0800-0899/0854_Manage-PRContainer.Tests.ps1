@@ -18,7 +18,7 @@ Describe '0854_Manage-PRContainer' -Tag 'Unit', 'AutomationScript', 'Integration
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0854_Manage-PRContainer.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0854_Manage-PRContainer.ps1'
         $script:ScriptName = '0854_Manage-PRContainer'
 
         # Import test helpers for environment detection

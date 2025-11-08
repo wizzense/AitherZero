@@ -3,19 +3,19 @@
 
 <#
 .SYNOPSIS
-    Integration tests for 0515_Deploy-Documentation
+    Integration tests for 0525_Deploy-Documentation
 .DESCRIPTION
     Auto-generated integration tests
     Supports WhatIf: True
     Generated: 2025-11-04 20:50:00
 #>
 
-Describe '0515_Deploy-Documentation Integration' -Tag 'Integration', 'AutomationScript' {
+Describe '0525_Deploy-Documentation Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0515_Deploy-Documentation.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0525_Deploy-Documentation.ps1'
     }
 
     Context 'Integration' {

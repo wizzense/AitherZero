@@ -63,7 +63,7 @@
       {
         "name": "Prepare GitHub Pages",
         "description": "Prepare documentation for GitHub Pages",
-        "sequences": ["0515"],
+        "sequences": ["0525"],
         "variables": {},
         "continueOnError": true,
         "timeout": 180
