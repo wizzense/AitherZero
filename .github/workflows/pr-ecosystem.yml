@@ -1,0 +1,218 @@
+---
+name: 🚀 Deploy PR Ecosystem
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pr-ecosystem-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+  GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
+  GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+
+jobs:
+  build:
+    name: 🔨 Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      build-status: ${{ steps.build.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔨 Run Build Playbook
+        id: build
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
+
+      - name: 📦 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-build
+          path: |
+            library/reports/build-*.json
+            library/reports/build-*.md
+            AitherZero-*.zip
+            AitherZero-*.tar.gz
+          retention-days: 30
+
+  analyze:
+    name: 🔍 Analyze
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      analysis-status: ${{ steps.analyze.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 📦 Install Tools
+        shell: pwsh
+        run: Install-Module -Name Pester, PSScriptAnalyzer -Force -SkipPublisherCheck
+
+      - name: 🔍 Run Analysis Playbook
+        id: analyze
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-analyze
+
+      - name: 📊 Upload Analysis Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-analysis
+          path: |
+            library/reports/analysis-*.json
+            library/reports/analysis-*.md
+            library/reports/diff-*.json
+            library/reports/quality-*.json
+            library/reports/security-*.json
+            library/tests/results/**
+            library/tests/coverage/**
+          retention-days: 30
+
+  report:
+    name: 📊 Report & Deploy
+    needs: [build, analyze]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-${{ env.PR_NUMBER }}-build
+          path: ./artifacts/build
+
+      - name: 📥 Download Analysis Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-${{ env.PR_NUMBER }}-analysis
+          path: ./artifacts/analysis
+
+      - name: 📊 Run Report Playbook
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
+
+      - name: 🌐 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./library/reports/pr-${{ env.PR_NUMBER }}
+          destination_dir: pr-${{ env.PR_NUMBER }}
+          keep_files: false
+
+      - name: 💬 Post PR Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const commentPath = './library/reports/pr-comment.md';
+            
+            if (!fs.existsSync(commentPath)) {
+              console.log('No PR comment generated');
+              return;
+            }
+            
+            const comment = fs.readFileSync(commentPath, 'utf8');
+            
+            // Find existing bot comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && c.body.includes('🚀 PR Ecosystem Status')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+  container:
+    name: 🐳 Build Container
+    needs: [build, analyze]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: always()
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-latest
+            ghcr.io/${{ github.repository }}:pr-${{ env.PR_NUMBER }}-${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

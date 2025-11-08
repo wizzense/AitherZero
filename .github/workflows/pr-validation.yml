@@ -1,5 +1,5 @@
 ---
-name: ✅ Validate PR
+name: ✅ PR Validation
 
 on:
   pull_request:
