@@ -730,17 +730,20 @@ function Invoke-OrchestrationSequence {
                             $scriptName = $normalized.Script
                             $scriptNumber = $null
                             
-                            # If it's a full filename like "0407_Validate-Syntax.ps1", extract the number
-                            if ($scriptName -match '^(\d{4})_.*\.ps1$') {
+                            # Strip off anything besides the four-digit number
+                            # Handles formats like:
+                            # - "0407_Validate-Syntax.ps1" -> "0407"
+                            # - "0407" -> "0407"
+                            # - "automation-scripts/0407_Validate-Syntax.ps1" -> "0407"
+                            # - "library/automation-scripts/0407.ps1" -> "0407"
+                            if ($scriptName -match '(\d{4})') {
                                 $scriptNumber = $Matches[1]
-                            } 
-                            # If it's already just a number
-                            elseif ($scriptName -match '^\d{4}$') {
-                                $scriptNumber = $scriptName
                             }
-                            # Otherwise use as-is (might be a path or name)
+                            # If no four-digit number found, throw an exception
                             else {
-                                $scriptNumber = $scriptName
+                                $errorMsg = "Script name '$scriptName' does not contain a four-digit number. All scripts must be referenced by their four-digit number (e.g., '0407', '0413', or '0512')."
+                                Write-OrchestrationLog $errorMsg -Level 'Error'
+                                throw $errorMsg
                             }
                             
                             if ($scriptNumber) {

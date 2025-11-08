@@ -129,9 +129,9 @@
         RequireAllSuccess = $false
         MinimumSuccessCount = 3  # At least changelog, dashboard, and PR comment
         CriticalScripts = @(
-            "0513_Generate-Changelog.ps1",
-            "0512_Generate-Dashboard.ps1",
-            "0519_Generate-PRComment.ps1"
+            "0513",
+            "0512",
+            "0519"
         )
     }
     
