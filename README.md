@@ -53,16 +53,16 @@ bash tools/setup-git-merge.sh  # Configure merge strategy for auto-generated fil
 ./bootstrap.sh
 ```
 
-**Note**: After cloning, run these setup commands:
+**Note**: After cloning, run this setup command:
 ```bash
-# Configure Git merge strategy for auto-generated files
-bash tools/setup-git-merge.sh
+# Enable pre-commit hooks and Git merge strategy (recommended for contributors)
+pwsh -File automation-scripts/0004_Setup-GitHooks.ps1
 
-# Enable pre-commit hooks for validation (recommended for contributors)
-pwsh -File tools/Setup-GitHooks.ps1
+# Or using the global command (after bootstrap):
+aitherzero 0004
 ```
 
-See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
+See [Git Hooks README](./.githooks/README.md) for details.
 
 **Option 3: Git Clone**
 ```bash

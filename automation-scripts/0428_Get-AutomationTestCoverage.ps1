@@ -11,6 +11,8 @@
     - Identifying scripts without tests
     - Categorizing coverage by script ranges (0000-0099, etc.)
     - Generating coverage statistics and recommendations
+    
+    Part of the Testing & Quality stage (0400-0499).
 
 .PARAMETER OutputFormat
     Output format for results: Console, Json, or Html. Default: Console
@@ -28,20 +30,25 @@
     Path to save output files when using Json or Html format.
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1
+    ./automation-scripts/0428_Get-AutomationTestCoverage.ps1
     Show basic test coverage statistics
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1 -ShowUntested -ShowTested
+    ./automation-scripts/0428_Get-AutomationTestCoverage.ps1 -ShowUntested -ShowTested
     Show detailed lists of tested and untested scripts
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1 -Category Development -OutputFormat Html
+    ./automation-scripts/0428_Get-AutomationTestCoverage.ps1 -Category Development -OutputFormat Html
     Generate HTML report for development scripts (0200-0299)
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1 -OutputFormat Json -OutputPath ./reports/
+    ./automation-scripts/0428_Get-AutomationTestCoverage.ps1 -OutputFormat Json -OutputPath ./reports/
     Export coverage data as JSON
+.NOTES
+    Stage: Testing
+    Order: 0428
+    Dependencies: None
+    Tags: testing, coverage, validation, quality
 #>
 
 [CmdletBinding()]
@@ -58,6 +65,13 @@ param(
 
     [string]$OutputPath = './tests/results/coverage'
 )
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Import script utilities
+$ProjectRoot = if ($PSScriptRoot) { Split-Path $PSScriptRoot -Parent } else { Get-Location }
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
 
 # Category mappings to script number ranges
 $CategoryRanges = @{
@@ -131,7 +145,13 @@ function Get-ScriptCoverageData {
 
         # Get script description from file header
         $description = "No description available"
-        try {
+        $ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Import script utilities
+$ProjectRoot = Split-Path $PSScriptRoot -Parent
+Import-Module (Join-Path $ProjectRoot "domains/automation/ScriptUtilities.psm1") -Force -ErrorAction SilentlyContinue
+try {
             $content = Get-Content $script.FullName -First 20
             foreach ($line in $content) {
                 if ($line -match '^\s*#\s*Description:\s*(.+)') {

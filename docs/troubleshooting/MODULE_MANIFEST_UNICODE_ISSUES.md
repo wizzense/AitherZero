@@ -49,10 +49,10 @@ az 0405
 az 0405 -Fix
 
 # Validate a specific file
-./tools/Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1
+az 0416 -Path ./AitherZero.psd1
 
 # Validate and fix a specific file
-./tools/Validate-ModuleManifest.ps1 -Path ./AitherZero.psd1 -Fix
+az 0416 -Path ./AitherZero.psd1 -Fix
 ```
 
 ## Prevention
@@ -73,7 +73,7 @@ The project includes automatic validation in GitHub Actions:
 
 ## Related Files
 
-- **Validation Tool**: `tools/Validate-ModuleManifest.ps1`
+- **Validation Tool**: `automation-scripts/0416_Validate-ModuleManifest.ps1`
 - **Automation Script**: `automation-scripts/0405_Validate-ModuleManifests.ps1`
 - **Tests**: `tests/unit/automation-scripts/0400-0499/0405_Validate-ModuleManifests.Tests.ps1`
 - **GitHub Workflow**: `.github/workflows/validate-manifests.yml`
