@@ -198,8 +198,8 @@ jobs:
             "QUICKSTART-AUTOMATED-REPORTS.md", "README-ModernCLI.md",
             "FUNCTIONALITY-INDEX.md", "DOCKER.md",
             # Essential directories - Runtime modules only
-            "domains",
-            "automation-scripts",
+            "aithercore",
+            "library/automation-scripts",
             # Configuration templates (examples only)
             "config.example.psd1", ".env.example",
             # Build metadata
