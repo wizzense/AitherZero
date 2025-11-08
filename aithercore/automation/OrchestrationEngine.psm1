@@ -775,22 +775,7 @@ function Invoke-OrchestrationSequence {
                 }
             }
 
-            # Also check for stages (playbook can have both Sequence and Stages)
-            if ($playbook.stages -or $playbook.Stages) {
-                # Store stages for proper variable handling (check both cases)
-                $script:PlaybookStages = if ($playbook.Stages) { $playbook.Stages } else { $playbook.stages }
 
-                # Flatten all stage sequences for compatibility
-                $script:ExtractedSequence = @()
-                foreach ($stage in $script:PlaybookStages) {
-                    $stageSeq = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
-                    if ($stageSeq) {
-                        $script:ExtractedSequence += $stageSeq
-                    }
-                }
-                Write-OrchestrationLog "Loaded $($script:PlaybookStages.Count) stages from playbook" -Level 'Information'
-                Write-OrchestrationLog "Stages: $($script:PlaybookStages | ConvertTo-Json -Compress)" -Level 'Information'
-            }
 
             # First, merge playbook default variables (without expansion)
             $defaultVars = @{}
@@ -834,12 +819,6 @@ function Invoke-OrchestrationSequence {
             }
 
             Write-OrchestrationLog "Loaded playbook: $LoadPlaybook with sequences: $($script:ExtractedSequence -join ', ')"
-
-            # Force sequential for playbooks with stages to maintain stage order
-            if ($script:PlaybookStages) {
-                Write-OrchestrationLog "Forcing sequential execution for staged playbook"
-                $Parallel = $false
-            }
         } else {
             # No playbook - initialize ExtractedSequence to null
             $script:ExtractedSequence = $null
@@ -857,7 +836,6 @@ function Invoke-OrchestrationSequence {
                 StartTime = Get-Date
                 Playbook = $LoadPlaybook
                 Variables = $Variables
-                Stages = @()
                 Outputs = @{}
             }
             Write-OrchestrationLog "Execution summary generation enabled" -Level 'Information'
@@ -1462,37 +1440,9 @@ function Get-OrchestrationScripts {
         }
 
         # Check if this script has stage-specific variables
-        # Use stage-specific variables if defined, otherwise use global variables
-        $stageVariables = @{}
-        $foundStageVars = $false
-
-        if ($script:PlaybookStages) {
-            foreach ($stage in $script:PlaybookStages) {
-                # Check both lowercase and uppercase for compatibility
-                $stageSequence = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
-                $stageVars = if ($stage.Variables) { $stage.Variables } else { $stage.variables }
-                if ($stageSequence -contains $number -and $stageVars) {
-                    # Use ONLY stage-specific variables (don't merge with global)
-                    foreach ($key in $stageVars.Keys) {
-                        $value = $stageVars[$key]
-                        # Expand variable references in the value using global variables for lookups
-                        if ($value -is [string]) {
-                            $value = Expand-PlaybookVariables -Value $value -Variables $Variables
-                        }
-                        $stageVariables[$key] = $value
-                    }
-                    Write-OrchestrationLog "Applied stage variables for script $number - Variables: $($stageVariables | ConvertTo-Json -Compress)" -Level 'Information'
-                    $foundStageVars = $true
-                    break
-                }
-            }
-        }
-
-        # Only use global variables if no stage-specific variables were defined
-        if (-not $foundStageVars) {
-            # Ensure Variables is not null before cloning
-            $stageVariables = if ($Variables) { $Variables.Clone() } else { @{} }
-        }
+        # Use global playbook variables
+        # Ensure Variables is not null before cloning
+        $stageVariables = if ($Variables) { $Variables.Clone() } else { @{} }
 
         # Check conditions
         if ($metadata.Condition -and $Conditions.Count -gt 0) {
@@ -2503,23 +2453,22 @@ function ConvertTo-StandardPlaybookFormat {
     .SYNOPSIS
     Converts playbooks from different versions to a standardized format
     .DESCRIPTION
-    Handles v1 (legacy), v2.0 (stages-based), and v3.0 (jobs-based) playbooks,
-    converting them to a consistent internal format for execution.
+    Handles legacy playbook formats, converting them to use the modern Sequence-based format.
     
-    Ensures full backward compatibility with existing JSON playbooks.
+    Stages format has been deprecated - all playbooks must use Sequence.
     #>
     param(
         [hashtable]$Playbook
     )
 
-    # Check if this is a v3.0 playbook (has jobs instead of stages)
+    # Check if this is a v3.0 playbook (has jobs instead of Sequence)
     if ($Playbook.ContainsKey('metadata') -and 
         $Playbook.ContainsKey('orchestration') -and 
         $Playbook.orchestration.ContainsKey('jobs')) {
         
         Write-OrchestrationLog "Loading v3.0 jobs-based playbook: $($Playbook.metadata.name)" -Level 'Information'
         
-        # Convert v3.0 jobs to v2.0 stages format for backward compatibility
+        # Convert v3.0 jobs to Sequence format
         $standardPlaybook = @{
             # Metadata
             Name = $Playbook.metadata.name
@@ -2541,8 +2490,8 @@ function ConvertTo-StandardPlaybookFormat {
                 $Playbook.orchestration.profiles 
             } else { @{} }
             
-            # Convert jobs to stages
-            Stages = @()
+            # Convert jobs to Sequence format
+            Sequence = @()
             
             # Store original jobs for advanced execution
             Jobs = $Playbook.orchestration.jobs
@@ -2553,46 +2502,38 @@ function ConvertTo-StandardPlaybookFormat {
             Reporting = $Playbook.reporting
         }
         
-        # Convert jobs to stages format for compatibility
+        # Convert jobs to Sequence format
         foreach ($jobKey in $Playbook.orchestration.jobs.Keys) {
             $job = $Playbook.orchestration.jobs[$jobKey]
             
             # Extract script numbers from steps
-            $sequences = @()
             foreach ($step in $job.steps) {
                 if ($step.run) {
-                    $sequences += $step.run
+                    $convertedStep = @{
+                        Script = $step.run
+                        Description = if ($job.description) { $job.description } else { "" }
+                        Variables = if ($job.env) { $job.env } else { @{} }
+                        ContinueOnError = if ($job.continueOnError) { $job.continueOnError } else { $false }
+                        Timeout = if ($job.timeout) { $job.timeout } else { 3600 }
+                    }
+                    
+                    if ($job.if) {
+                        $convertedStep.Condition = $job.if
+                    }
+                    
+                    $standardPlaybook.Sequence += $convertedStep
                 }
             }
-            
-            $convertedStage = @{
-                Name = $job.name
-                Description = if ($job.description) { $job.description } else { "" }
-                Sequence = $sequences
-                Variables = if ($job.env) { $job.env } else { @{} }
-                Condition = if ($job.if) { $job.if } else { $null }
-                ContinueOnError = if ($job.continueOnError) { $job.continueOnError } else { $false }
-                Parallel = $false  # Jobs run sequentially by default
-                Timeout = if ($job.timeout) { $job.timeout } else { 3600 }
-                Retries = 0
-            }
-            
-            # Handle matrix strategy
-            if ($job.strategy -and $job.strategy.matrix) {
-                $convertedStage.Matrix = $job.strategy.matrix
-            }
-            
-            $standardPlaybook.Stages += $convertedStage
         }
         
         return $standardPlaybook
     }
     
-    # Check if this is a v2.0 playbook (has metadata and orchestration with stages)
+    # Check if this is a v2.0 playbook (has metadata and orchestration)
     elseif ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
-        Write-OrchestrationLog "Loading v2.0 stages-based playbook: $($Playbook.metadata.name)" -Level 'Information'
+        Write-OrchestrationLog "Loading v2.0 playbook: $($Playbook.metadata.name)" -Level 'Information'
         
-        # Convert v2.0 format to internal format
+        # Convert v2.0 format to internal Sequence format
         $standardPlaybook = @{
             # Metadata
             Name = $Playbook.metadata.name
@@ -2610,31 +2551,13 @@ function ConvertTo-StandardPlaybookFormat {
             Variables = $Playbook.orchestration.defaultVariables
             Profiles = $Playbook.orchestration.profiles
             
-            # Convert stages to internal format
-            Stages = @()
+            # Use Sequence if available
+            Sequence = $Playbook.orchestration.sequence
             
             # Validation and notifications
             Validation = $Playbook.validation
             Notifications = $Playbook.notifications
             Reporting = $Playbook.reporting
-        }
-        
-        # Convert stages format
-        if ($Playbook.orchestration.stages) {
-            foreach ($stage in $Playbook.orchestration.stages) {
-                $convertedStage = @{
-                    Name = $stage.name
-                    Description = $stage.description
-                    Sequence = $stage.sequences  # Note: v2.0 uses 'sequences' (plural)
-                    Variables = $stage.variables
-                    Condition = $stage.condition
-                    ContinueOnError = $stage.continueOnError
-                    Parallel = $stage.parallel
-                    Timeout = $stage.timeout
-                    Retries = $stage.retries
-                }
-                $standardPlaybook.Stages += $convertedStage
-            }
         }
         
         return $standardPlaybook
@@ -2653,9 +2576,8 @@ function ConvertTo-StandardPlaybookFormat {
         $standardPlaybook.Version = if ($Playbook.Version) { $Playbook.Version } else { $Playbook.version }
         $standardPlaybook.Sequence = if ($Playbook.Sequence) { $Playbook.Sequence } else { $Playbook.sequence }
         $standardPlaybook.Variables = if ($Playbook.Variables) { $Playbook.Variables } else { $Playbook.variables }
-        $standardPlaybook.Stages = if ($Playbook.Stages) { $Playbook.Stages } else { $Playbook.stages }
         
-        # Copy other properties as-is
+        # Copy other properties as-is (excluding deprecated Stages)
         foreach ($key in $Playbook.Keys) {
             if ($key -notin @('Name', 'name', 'Description', 'description', 'Version', 'version', 
                              'Sequence', 'sequence', 'Variables', 'variables', 'Stages', 'stages')) {
