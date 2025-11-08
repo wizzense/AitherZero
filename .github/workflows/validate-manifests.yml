@@ -6,7 +6,7 @@ on:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
       - '**/*.psd1'
-      - 'tools/Validate-ModuleManifest.ps1'
+      - 'automation-scripts/0416_Validate-ModuleManifest.ps1'
       - 'automation-scripts/0405_Validate-ModuleManifests.ps1'
   pull_request:
     # Run on all PRs to validate manifests

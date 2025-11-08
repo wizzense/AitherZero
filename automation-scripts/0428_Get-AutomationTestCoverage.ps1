@@ -1,5 +1,7 @@
 #Requires -Version 7.0
-
+# Stage: Testing
+# Dependencies: None
+# Tags: testing, coverage, validation, quality
 <#
 .SYNOPSIS
     Analyzes test coverage for automation scripts by comparing existing scripts to available test files.
@@ -28,19 +30,19 @@
     Path to save output files when using Json or Html format.
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1
+    ./automation-scripts/0426_Get-AutomationTestCoverage.ps1
     Show basic test coverage statistics
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1 -ShowUntested -ShowTested
+    ./automation-scripts/0426_Get-AutomationTestCoverage.ps1 -ShowUntested -ShowTested
     Show detailed lists of tested and untested scripts
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1 -Category Development -OutputFormat Html
+    ./automation-scripts/0426_Get-AutomationTestCoverage.ps1 -Category Development -OutputFormat Html
     Generate HTML report for development scripts (0200-0299)
 
 .EXAMPLE
-    ./tools/Get-AutomationTestCoverage.ps1 -OutputFormat Json -OutputPath ./reports/
+    ./automation-scripts/0426_Get-AutomationTestCoverage.ps1 -OutputFormat Json -OutputPath ./reports/
     Export coverage data as JSON
 #>
 

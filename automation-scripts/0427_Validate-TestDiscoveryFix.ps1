@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
-
+# Stage: Testing
+# Dependencies: None
+# Tags: testing, validation, pester, discovery
 <#
 .SYNOPSIS
     Validates the test discovery fix is working correctly
@@ -10,7 +12,7 @@
     2. Test discovery finds all test files
     3. Dashboard generation shows correct metrics
 .EXAMPLE
-    ./Validate-TestDiscoveryFix.ps1
+    ./automation-scripts/0427_Validate-TestDiscoveryFix.ps1
 #>
 
 [CmdletBinding()]
