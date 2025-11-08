@@ -42,7 +42,7 @@ param(
 
 # Initialize
 $ErrorActionPreference = 'Stop'
-$ProjectRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Import modules
 Import-Module (Join-Path $ProjectRoot "AitherZero.psd1") -Force

@@ -15,7 +15,7 @@ Describe '0443_Install-PowerShellYaml Integration' -Tag 'Integration', 'Automati
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0443_Install-PowerShellYaml.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0443_Install-PowerShellYaml.ps1'
     }
 
     Context 'Integration' {

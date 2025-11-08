@@ -15,7 +15,7 @@ Describe '9999_Reset-Machine Integration' -Tag 'Integration', 'AutomationScript'
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/9999_Reset-Machine.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/9999_Reset-Machine.ps1'
     }
 
     Context 'Integration' {

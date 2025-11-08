@@ -15,7 +15,7 @@ Describe '0442_Install-Act Integration' -Tag 'Integration', 'AutomationScript' {
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0442_Install-Act.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0442_Install-Act.ps1'
     }
 
     Context 'Integration' {
