@@ -1077,7 +1077,9 @@ function ConvertTo-ScriptNumbers {
             $end = [int]$Matches[2]
 
             # Get all scripts in range that actually exist
-            $existingScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "*.ps1" -File |
+            $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+            $currentScriptsPath = Join-Path $currentProjectRoot 'library/automation-scripts'
+            $existingScripts = Get-ChildItem -Path $currentScriptsPath -Filter "*.ps1" -File |
                 Where-Object {
                     $_.Name -match '^(\d{4})_' | Out-Null
                     $num = [int]$Matches[1]
@@ -1094,7 +1096,9 @@ function ConvertTo-ScriptNumbers {
             $prefix = $Matches[1].PadLeft(2, '0')
             $pattern = "$prefix*"
 
-            $matchingScripts = Get-ChildItem -Path $script:ScriptsPath -Filter "${pattern}_*.ps1" -File |
+            $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+            $currentScriptsPath = Join-Path $currentProjectRoot 'library/automation-scripts'
+            $matchingScripts = Get-ChildItem -Path $currentScriptsPath -Filter "${pattern}_*.ps1" -File |
                 ForEach-Object { $_.Name -match '^(\d{4})_' | Out-Null; $Matches[1] }
 
             $numbers += $matchingScripts
@@ -1397,7 +1401,11 @@ function Get-OrchestrationScripts {
     }
 
     foreach ($number in $Numbers) {
-        $scriptFile = Get-ChildItem -Path $script:ScriptsPath -Filter "${number}_*.ps1" -File | Select-Object -First 1
+        # Dynamically resolve scripts path (same as playbooks path fix)
+        $currentProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+        $currentScriptsPath = Join-Path $currentProjectRoot 'library/automation-scripts'
+        
+        $scriptFile = Get-ChildItem -Path $currentScriptsPath -Filter "${number}_*.ps1" -File | Select-Object -First 1
 
         if (-not $scriptFile) {
             Write-OrchestrationLog "Script not found for number: $number" -Level 'Warning'
