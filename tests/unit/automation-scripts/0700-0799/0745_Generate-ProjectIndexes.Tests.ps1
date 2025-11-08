@@ -95,17 +95,23 @@ Describe '0745_Generate-ProjectIndexes' -Tag 'Unit', 'AutomationScript', 'Automa
 
     Context 'Write-IndexLog Function' {
         It 'Should handle Success level without throwing' {
-            # Load the script to access the Write-IndexLog function
-            . $script:ScriptPath -Mode Verify -ErrorAction Stop
+            # Extract and define Write-IndexLog function in test scope
+            $scriptContent = Get-Content $script:ScriptPath -Raw
+            $functionMatch = [regex]::Match($scriptContent, '(?s)function Write-IndexLog\s*\{.*?\n\}')
+            
+            if (-not $functionMatch.Success) {
+                throw "Could not extract Write-IndexLog function from script"
+            }
+            
+            # Define the function in current scope
+            $functionDef = $functionMatch.Value
+            Invoke-Expression $functionDef
+            
+            # Mock Write-CustomLog to avoid dependency
+            Mock Write-CustomLog -MockWith {}
             
             # Test that Write-IndexLog with 'Success' level doesn't throw
-            { 
-                & {
-                    param($Message, $Level)
-                    # Dot-source the script to get access to the function
-                    . $script:ScriptPath
-                } -Message "Test message" -Level "Success"
-            } | Should -Not -Throw
+            { Write-IndexLog -Message "Test message" -Level "Success" } | Should -Not -Throw
         }
         
         It 'Should contain Success level mapping logic' {
