@@ -2533,6 +2533,27 @@ function ConvertTo-StandardPlaybookFormat {
     elseif ($Playbook.ContainsKey('metadata') -and $Playbook.ContainsKey('orchestration')) {
         Write-OrchestrationLog "Loading v2.0 playbook: $($Playbook.metadata.name)" -Level 'Information'
         
+        # Check for deprecated Stages format and throw clear error
+        if ($Playbook.orchestration.ContainsKey('stages') -and 
+            -not $Playbook.orchestration.ContainsKey('sequence')) {
+            $errorMsg = @"
+Playbook '$($Playbook.metadata.name)' uses deprecated Stages format which is no longer supported.
+
+The Stages format has been removed in favor of the modern Sequence format.
+Please migrate this playbook to use Sequence format.
+
+Migration steps:
+1. Replace 'orchestration.stages' with 'orchestration.sequence'
+2. Convert stage definitions to sequence items
+3. See docs/STAGES-DEPRECATION-MIGRATION.md for examples
+
+Example migration:
+  OLD: orchestration.stages = @( @{ name = 'Setup'; sequences = @('0001') } )
+  NEW: orchestration.sequence = @( @{ Script = '0001'; Description = 'Setup' } )
+"@
+            throw $errorMsg
+        }
+        
         # Convert v2.0 format to internal Sequence format
         $standardPlaybook = @{
             # Metadata
@@ -2566,6 +2587,29 @@ function ConvertTo-StandardPlaybookFormat {
     # Handle legacy v1 playbook formats
     else {
         Write-OrchestrationLog "Loading legacy v1 playbook" -Level 'Information'
+        
+        # Check for deprecated Stages format and throw clear error
+        if (($Playbook.ContainsKey('Stages') -or $Playbook.ContainsKey('stages')) -and 
+            -not ($Playbook.ContainsKey('Sequence') -or $Playbook.ContainsKey('sequence'))) {
+            $playbookName = if ($Playbook.Name) { $Playbook.Name } else { $Playbook.name }
+            $errorMsg = @"
+Playbook '$playbookName' uses deprecated Stages format which is no longer supported.
+
+The Stages format has been removed in favor of the modern Sequence format.
+Please migrate this playbook to use Sequence format.
+
+Migration steps:
+1. Replace 'Stages = @(...)' with 'Sequence = @(...)'
+2. Flatten nested 'Scripts' arrays into sequence items
+3. Move stage-specific variables to global 'Variables' section
+4. See docs/STAGES-DEPRECATION-MIGRATION.md for examples
+
+Example migration:
+  OLD: Stages = @( @{ Name = 'Setup'; Scripts = @( @{ Path = '0001.ps1' } ) } )
+  NEW: Sequence = @( @{ Script = '0001'; Description = 'Setup' } )
+"@
+            throw $errorMsg
+        }
         
         # Return as-is for legacy playbooks, but normalize key cases
         $standardPlaybook = @{}

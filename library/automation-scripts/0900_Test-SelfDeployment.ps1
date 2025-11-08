@@ -272,6 +272,15 @@ function Invoke-SelfDeploymentPlaybook {
             }
             
             # Merge: playbook settings override defaults
+            # Ensure we have a valid hashtable before cloning
+            if ($null -eq $defaultSuccessCriteria -or $defaultSuccessCriteria -isnot [hashtable]) {
+                $defaultSuccessCriteria = @{
+                    RequireAllSuccess = $true
+                    MinimumSuccessCount = 0
+                    MinimumSuccessPercent = 100
+                    AllowedFailures = @()
+                }
+            }
             $successCriteria = $defaultSuccessCriteria.Clone()
             if ($playbookSuccessCriteria) {
                 foreach ($key in $playbookSuccessCriteria.Keys) {
