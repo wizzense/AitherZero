@@ -11,8 +11,8 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 150
-- **PowerShell Scripts**: 149
+- **Files**: 164
+- **PowerShell Scripts**: 163
 
 ## 📄 Files
 
@@ -24,6 +24,8 @@
 
 - ⚙️ [0000_Cleanup-Environment.Integration.Tests.ps1](./0000_Cleanup-Environment.Integration.Tests.ps1)
   - *Integration tests for 0000_Cleanup-Environment*
+- ⚙️ [0001_Configure-Environment.Integration.Tests.ps1](./0001_Configure-Environment.Integration.Tests.ps1)
+  - *Integration tests for 0001_Configure-Environment*
 - ⚙️ [0002_Setup-Directories.Integration.Tests.ps1](./0002_Setup-Directories.Integration.Tests.ps1)
   - *Integration tests for 0002_Setup-Directories*
 - ⚙️ [0003_Sync-ConfigManifest.Integration.Tests.ps1](./0003_Sync-ConfigManifest.Integration.Tests.ps1)
@@ -68,10 +70,14 @@
   - *Integration tests for 0209_Install-7Zip*
 - ⚙️ [0210_Install-VSCode.Integration.Tests.ps1](./0210_Install-VSCode.Integration.Tests.ps1)
   - *Integration tests for 0210_Install-VSCode*
+- ⚙️ [0211_Install-GitHubCLI.Integration.Tests.ps1](./0211_Install-GitHubCLI.Integration.Tests.ps1)
+  - *Integration tests for 0211_Install-GitHubCLI*
 - ⚙️ [0211_Install-VSBuildTools.Integration.Tests.ps1](./0211_Install-VSBuildTools.Integration.Tests.ps1)
   - *Integration tests for 0211_Install-VSBuildTools*
 - ⚙️ [0212_Install-AzureCLI.Integration.Tests.ps1](./0212_Install-AzureCLI.Integration.Tests.ps1)
   - *Integration tests for 0212_Install-AzureCLI*
+- ⚙️ [0212_Install-Go.Integration.Tests.ps1](./0212_Install-Go.Integration.Tests.ps1)
+  - *Integration tests for 0212_Install-Go*
 - ⚙️ [0213_Install-AWSCLI.Integration.Tests.ps1](./0213_Install-AWSCLI.Integration.Tests.ps1)
   - *Integration tests for 0213_Install-AWSCLI*
 - ⚙️ [0214_Install-Packer.Integration.Tests.ps1](./0214_Install-Packer.Integration.Tests.ps1)
@@ -86,6 +92,8 @@
   - *Integration tests for 0218_Install-GeminiCLI*
 - ⚙️ [0219_Install-Chocolatey.Integration.Tests.ps1](./0219_Install-Chocolatey.Integration.Tests.ps1)
   - *Integration tests for 0219_Install-Chocolatey*
+- ⚙️ [0220_Install-AI-CLIs.Integration.Tests.ps1](./0220_Install-AI-CLIs.Integration.Tests.ps1)
+  - *Integration tests for 0220_Install-AI-CLIs*
 - ⚙️ [0300_Deploy-Infrastructure.Integration.Tests.ps1](./0300_Deploy-Infrastructure.Integration.Tests.ps1)
   - *Integration tests for 0300_Deploy-Infrastructure*
 - ⚙️ [0400_Install-TestingTools.Integration.Tests.ps1](./0400_Install-TestingTools.Integration.Tests.ps1)
@@ -252,8 +260,18 @@
   - *Integration tests for 0799_cleanup-old-tags*
 - ⚙️ [0800_Create-TestIssues.Integration.Tests.ps1](./0800_Create-TestIssues.Integration.Tests.ps1)
   - *Integration tests for 0800_Create-TestIssues*
+- ⚙️ [0800_Manage-License.Integration.Tests.ps1](./0800_Manage-License.Integration.Tests.ps1)
+  - *Integration tests for 0800_Manage-License*
+- ⚙️ [0801_Obfuscate-PreCommit.Integration.Tests.ps1](./0801_Obfuscate-PreCommit.Integration.Tests.ps1)
+  - *Integration tests for 0801_Obfuscate-PreCommit*
 - ⚙️ [0801_Parse-PesterResults.Integration.Tests.ps1](./0801_Parse-PesterResults.Integration.Tests.ps1)
   - *Integration tests for 0801_Parse-PesterResults*
+- ⚙️ [0802_Load-ObfuscatedModule.Integration.Tests.ps1](./0802_Load-ObfuscatedModule.Integration.Tests.ps1)
+  - *Integration tests for 0802_Load-ObfuscatedModule*
+- ⚙️ [0803_Setup-LicenseInfrastructure.Integration.Tests.ps1](./0803_Setup-LicenseInfrastructure.Integration.Tests.ps1)
+  - *Integration tests for 0803_Setup-LicenseInfrastructure*
+- ⚙️ [0804_Deploy-LicenseToGitHub.Integration.Tests.ps1](./0804_Deploy-LicenseToGitHub.Integration.Tests.ps1)
+  - *Integration tests for 0804_Deploy-LicenseToGitHub*
 - ⚙️ [0805_Analyze-OpenIssues.Integration.Tests.ps1](./0805_Analyze-OpenIssues.Integration.Tests.ps1)
   - *Integration tests for 0805_Analyze-OpenIssues*
 - ⚙️ [0810_Create-IssueFromTestFailure.Integration.Tests.ps1](./0810_Create-IssueFromTestFailure.Integration.Tests.ps1)
@@ -282,6 +300,8 @@
   - *Integration tests for 0841_Validate-WorkflowIntegration*
 - ⚙️ [0850_Deploy-PREnvironment.Integration.Tests.ps1](./0850_Deploy-PREnvironment.Integration.Tests.ps1)
   - *Integration tests for 0850_Deploy-PREnvironment*
+- ⚙️ [0850_Install-GitHub-Runner.Integration.Tests.ps1](./0850_Install-GitHub-Runner.Integration.Tests.ps1)
+  - *Integration tests for 0850_Install-GitHub-Runner*
 - ⚙️ [0851_Cleanup-PREnvironment.Integration.Tests.ps1](./0851_Cleanup-PREnvironment.Integration.Tests.ps1)
   - *Integration tests for 0851_Cleanup-PREnvironment*
 - ⚙️ [0852_Validate-PRDockerDeployment.Integration.Tests.ps1](./0852_Validate-PRDockerDeployment.Integration.Tests.ps1)
@@ -292,6 +312,14 @@
   - *Integration tests for 0854_Manage-PRContainer*
 - ⚙️ [0860_Validate-Deployments.Integration.Tests.ps1](./0860_Validate-Deployments.Integration.Tests.ps1)
   - *Integration tests for 0860_Validate-Deployments*
+- ⚙️ [0870_Create-LicenseStorage.Integration.Tests.ps1](./0870_Create-LicenseStorage.Integration.Tests.ps1)
+  - *Integration tests for 0870_Create-LicenseStorage*
+- ⚙️ [0875_Verify-LicenseBackup.Integration.Tests.ps1](./0875_Verify-LicenseBackup.Integration.Tests.ps1)
+  - *Integration tests for 0875_Verify-LicenseBackup*
+- ⚙️ [0876_Rotate-LicenseKeys.Integration.Tests.ps1](./0876_Rotate-LicenseKeys.Integration.Tests.ps1)
+  - *Integration tests for 0876_Rotate-LicenseKeys*
+- ⚙️ [0877_Rotate-GitHubCredentials.Integration.Tests.ps1](./0877_Rotate-GitHubCredentials.Integration.Tests.ps1)
+  - *Integration tests for 0877_Rotate-GitHubCredentials*
 - ⚙️ [0900_Test-SelfDeployment.Integration.Tests.ps1](./0900_Test-SelfDeployment.Integration.Tests.ps1)
   - *Integration tests for 0900_Test-SelfDeployment*
 - ⚙️ [0901_Test-LocalDeployment.Integration.Tests.ps1](./0901_Test-LocalDeployment.Integration.Tests.ps1)
@@ -323,5 +351,5 @@
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 14:56:43 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 23:14:55 UTC
 

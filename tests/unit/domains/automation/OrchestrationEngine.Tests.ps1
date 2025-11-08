@@ -2,8 +2,9 @@
 
 BeforeAll {
     # Setup test environment
-    $script:ProjectRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-    $script:ModulePath = Join-Path $script:ProjectRoot "domains/automation/OrchestrationEngine.psm1"
+    # From tests/unit/domains/automation -> tests/unit -> tests -> AitherZero
+    $script:ProjectRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+    $script:ModulePath = Join-Path $script:ProjectRoot "aithercore/automation/OrchestrationEngine.psm1"
 
     # Import the module under test
     Import-Module $script:ModulePath -Force -ErrorAction Stop
