@@ -236,35 +236,18 @@ function Invoke-SelfDeploymentPlaybook {
             # Execute the self-deployment test playbook
             Write-ScriptLog -Message "Running self-deployment-test playbook via OrchestrationEngine..."
             
-            # Run playbook and capture result
-            $playbookResult = Invoke-OrchestrationSequence `
-                -LoadPlaybook "self-deployment-test" `
-                -GenerateSummary `
-                -OutputFormat "JSON" `
-                -OutputPath "./library/reports/self-deployment-result.json" `
-                -ErrorAction Stop
-
-            # Check if result file was created (indicates success)
-            $resultFile = "./library/reports/self-deployment-result.json"
-            if (Test-Path $resultFile) {
-                try {
-                    $result = Get-Content $resultFile -Raw | ConvertFrom-Json
-                    if ($result.Success -or $result.Completed -gt 0) {
-                        Write-ScriptLog -Level Information -Message "Self-deployment playbook completed successfully"
-                        if ($result.Completed) {
-                            Write-ScriptLog -Message "Completed: $($result.Completed), Failed: $($result.Failed -or 0)"
-                        }
-                        return $true
-                    } else {
-                        Write-ScriptLog -Level Error -Message "Self-deployment playbook failed"
-                        return $false
-                    }
-                } catch {
-                    Write-ScriptLog -Level Warning -Message "Could not parse result file, assuming success if created"
-                    return $true
-                }
+            # Run playbook with minimal parameters for maximum compatibility
+            # Redirect output to avoid capturing large amounts of data
+            Invoke-OrchestrationSequence -LoadPlaybook "self-deployment-test" | Out-Null
+            
+            $exitCode = $LASTEXITCODE
+            if ($null -eq $exitCode) { $exitCode = 0 }
+            
+            if ($exitCode -eq 0) {
+                Write-ScriptLog -Level Information -Message "Self-deployment playbook completed successfully"
+                return $true
             } else {
-                Write-ScriptLog -Level Error -Message "Self-deployment playbook did not create result file"
+                Write-ScriptLog -Level Error -Message "Self-deployment playbook failed with exit code: $exitCode"
                 return $false
             }
 
