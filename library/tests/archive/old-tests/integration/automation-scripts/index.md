@@ -1,6 +1,6 @@
 # automation-scripts
 
-**Navigation**: [🏠 Root](../../../index.md) → [tests](../../index.md) → [integration](../index.md) → **automation-scripts**
+**Navigation**: [🏠 Root](../../../../../../index.md) → [library](../../../../../index.md) → [tests](../../../../index.md) → [archive](../../../index.md) → [old-tests](../../index.md) → [integration](../index.md) → **automation-scripts**
 
 ⬆️ **Parent**: [integration](../index.md)
 
@@ -11,8 +11,8 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 148
-- **PowerShell Scripts**: 147
+- **Files**: 154
+- **PowerShell Scripts**: 153
 
 ## 📄 Files
 
@@ -28,6 +28,8 @@
   - *Integration tests for 0002_Setup-Directories*
 - ⚙️ [0003_Sync-ConfigManifest.Integration.Tests.ps1](./0003_Sync-ConfigManifest.Integration.Tests.ps1)
   - *Integration tests for 0003_Sync-ConfigManifest*
+- ⚙️ [0004_Setup-GitHooks.Integration.Tests.ps1](./0004_Setup-GitHooks.Integration.Tests.ps1)
+  - *Integration tests for 0004_Setup-GitHooks*
 - ⚙️ [0006_Install-ValidationTools.Integration.Tests.ps1](./0006_Install-ValidationTools.Integration.Tests.ps1)
   - *Integration tests for 0006_Install-ValidationTools*
 - ⚙️ [0007_Install-Go.Integration.Tests.ps1](./0007_Install-Go.Integration.Tests.ps1)
@@ -116,12 +118,18 @@
   - *Integration tests for 0414_Test-Optimized*
 - ⚙️ [0415_Manage-PSScriptAnalyzerCache.Integration.Tests.ps1](./0415_Manage-PSScriptAnalyzerCache.Integration.Tests.ps1)
   - *Integration tests for 0415_Manage-PSScriptAnalyzerCache*
+- ⚙️ [0416_Validate-ModuleManifest.Integration.Tests.ps1](./0416_Validate-ModuleManifest.Integration.Tests.ps1)
+  - *Integration tests for 0416_Validate-ModuleManifest*
 - ⚙️ [0420_Validate-ComponentQuality.Integration.Tests.ps1](./0420_Validate-ComponentQuality.Integration.Tests.ps1)
   - *Integration tests for 0420_Validate-ComponentQuality*
 - ⚙️ [0425_Validate-DocumentationStructure.Integration.Tests.ps1](./0425_Validate-DocumentationStructure.Integration.Tests.ps1)
   - *Integration tests for 0425_Validate-DocumentationStructure*
 - ⚙️ [0426_Validate-TestScriptSync.Integration.Tests.ps1](./0426_Validate-TestScriptSync.Integration.Tests.ps1)
   - *Integration tests for 0426_Validate-TestScriptSync*
+- ⚙️ [0427_Validate-TestDiscoveryFix.Integration.Tests.ps1](./0427_Validate-TestDiscoveryFix.Integration.Tests.ps1)
+  - *Integration tests for 0427_Validate-TestDiscoveryFix*
+- ⚙️ [0428_Get-AutomationTestCoverage.Integration.Tests.ps1](./0428_Get-AutomationTestCoverage.Integration.Tests.ps1)
+  - *Integration tests for 0428_Get-AutomationTestCoverage*
 - ⚙️ [0440_Validate-Workflows.Integration.Tests.ps1](./0440_Validate-Workflows.Integration.Tests.ps1)
   - *Integration tests for 0440_Validate-Workflows*
 - ⚙️ [0441_Test-WorkflowsLocally.Integration.Tests.ps1](./0441_Test-WorkflowsLocally.Integration.Tests.ps1)
@@ -156,8 +164,6 @@
   - *Integration tests for 0514_Generate-CodeMap*
 - ⚙️ [0514_Schedule-ReportGeneration.Integration.Tests.ps1](./0514_Schedule-ReportGeneration.Integration.Tests.ps1)
   - *Integration tests for 0514_Schedule-ReportGeneration*
-- ⚙️ [0525_Deploy-Documentation.Integration.Tests.ps1](./0525_Deploy-Documentation.Integration.Tests.ps1)
-  - *Integration tests for 0525_Deploy-Documentation*
 - ⚙️ [0516_Schedule-ReportGeneration.Integration.Tests.ps1](./0516_Schedule-ReportGeneration.Integration.Tests.ps1)
   - *Integration tests for 0516_Schedule-ReportGeneration*
 - ⚙️ [0520_Analyze-ConfigurationUsage.Integration.Tests.ps1](./0520_Analyze-ConfigurationUsage.Integration.Tests.ps1)
@@ -170,6 +176,8 @@
   - *Integration tests for 0523_Analyze-SecurityIssues*
 - ⚙️ [0524_Generate-TechDebtReport.Integration.Tests.ps1](./0524_Generate-TechDebtReport.Integration.Tests.ps1)
   - *Integration tests for 0524_Generate-TechDebtReport*
+- ⚙️ [0525_Deploy-Documentation.Integration.Tests.ps1](./0525_Deploy-Documentation.Integration.Tests.ps1)
+  - *Integration tests for 0515_Deploy-Documentation*
 - ⚙️ [0530_View-Logs.Integration.Tests.ps1](./0530_View-Logs.Integration.Tests.ps1)
   - *Integration tests for 0530_View-Logs*
 - ⚙️ [0531_Get-WorkflowRunReport.Integration.Tests.ps1](./0531_Get-WorkflowRunReport.Integration.Tests.ps1)
@@ -276,6 +284,8 @@
   - *Integration tests for 0832_Generate-PromptFromData*
 - ⚙️ [0840_Validate-WorkflowAutomation.Integration.Tests.ps1](./0840_Validate-WorkflowAutomation.Integration.Tests.ps1)
   - *Integration tests for 0840_Validate-WorkflowAutomation*
+- ⚙️ [0841_Validate-WorkflowIntegration.Integration.Tests.ps1](./0841_Validate-WorkflowIntegration.Integration.Tests.ps1)
+  - *Integration tests for 0841_Validate-WorkflowIntegration*
 - ⚙️ [0850_Deploy-PREnvironment.Integration.Tests.ps1](./0850_Deploy-PREnvironment.Integration.Tests.ps1)
   - *Integration tests for 0850_Deploy-PREnvironment*
 - ⚙️ [0851_Cleanup-PREnvironment.Integration.Tests.ps1](./0851_Cleanup-PREnvironment.Integration.Tests.ps1)
@@ -314,10 +324,12 @@
   - *Integration tests for 0966_Test-OrchestrationEngine*
 - ⚙️ [0967_Test-OrchestrationEngine.Integration.Tests.ps1](./0967_Test-OrchestrationEngine.Integration.Tests.ps1)
   - *Integration tests for 0967_Test-OrchestrationEngine*
+- ⚙️ [0968_Migrate-PlaybooksV2.Integration.Tests.ps1](./0968_Migrate-PlaybooksV2.Integration.Tests.ps1)
+  - *Integration tests for 0968_Migrate-PlaybooksV2*
 - ⚙️ [9999_Reset-Machine.Integration.Tests.ps1](./9999_Reset-Machine.Integration.Tests.ps1)
   - *Integration tests for 9999_Reset-Machine*
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 00:26:30 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 14:22:47 UTC
 
