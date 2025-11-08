@@ -78,8 +78,10 @@ jobs:
           path: |
             library/reports/build-*.json
             library/reports/build-*.md
-            AitherZero-*.zip
-            AitherZero-*.tar.gz
+            AitherZero-*-runtime.zip
+            AitherZero-*-runtime.tar.gz
+            AitherZero-*-full.zip
+            AitherZero-*-full.tar.gz
           retention-days: 30
           if-no-files-found: warn
 
