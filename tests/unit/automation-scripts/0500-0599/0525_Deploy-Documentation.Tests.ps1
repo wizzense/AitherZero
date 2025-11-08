@@ -3,23 +3,23 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0515_Deploy-Documentation
+    Unit tests for 0525_Deploy-Documentation
 .DESCRIPTION
     Auto-generated comprehensive tests with environment awareness
-    Script: 0515_Deploy-Documentation
+    Script: 0525_Deploy-Documentation
     Stage: Deployment
     Description: Prepares and deploys project documentation, dashboards, reports, and
     Supports WhatIf: True
     Generated: 2025-11-04 20:50:00
 #>
 
-Describe '0515_Deploy-Documentation' -Tag 'Unit', 'AutomationScript', 'Deployment' {
+Describe '0525_Deploy-Documentation' -Tag 'Unit', 'AutomationScript', 'Deployment' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0515_Deploy-Documentation.ps1'
-        $script:ScriptName = '0515_Deploy-Documentation'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0525_Deploy-Documentation.ps1'
+        $script:ScriptName = '0525_Deploy-Documentation'
 
         # Import test helpers for environment detection
         $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
