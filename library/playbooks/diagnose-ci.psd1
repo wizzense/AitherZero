@@ -11,8 +11,8 @@
         Timeout = 300
     }
     
-    # Scripts to execute in order
-    Scripts = @(
+    # Modern Sequence format for execution
+    Sequence = @(
         @{
             Script = '0531'
             Name = 'Get-WorkflowRunReport'
@@ -23,7 +23,8 @@
                 Limit = 10
             }
             Required = $true
-            Stage = 'Diagnostic'
+            ContinueOnError = $true
+            Timeout = 120
         }
     )
     
