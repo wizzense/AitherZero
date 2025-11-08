@@ -65,11 +65,12 @@ $script:IsCI = (
 )
 
 # Robust profile normalization & validation (must run immediately after param binding & CI detection)
-$validProfiles = @('Minimal','Standard','Developer','Full')
+$validProfiles = @('Minimal','Standard','Developer','Development','AI-Development','Deployment','Full-Stack','Full','CI','Self-Hosted-Runner')
 if ([string]::IsNullOrWhiteSpace($InstallProfile)) {
     $InstallProfile = if ($script:IsCI) { 'Full' } else { 'Standard' }
 } elseif ($validProfiles -notcontains $InstallProfile) {
     Write-Host "[!] Provided InstallProfile '$InstallProfile' is not valid. Falling back to 'Standard'" -ForegroundColor Yellow
+    Write-Host "[i] Valid profiles: $($validProfiles -join ', ')" -ForegroundColor Gray
     $InstallProfile = 'Standard'
 }
 
@@ -990,6 +991,50 @@ function Initialize-Configuration {
 
 function Setup-DevelopmentEnvironment {
     Write-BootstrapLog "Setting up development environment..." -Level Info
+
+    # Apply profile-based environment configuration
+    if ($InstallProfile -and $InstallProfile -ne 'Minimal') {
+        Write-BootstrapLog "Applying profile-based configuration: $InstallProfile" -Level Info
+        
+        # Check if environment configuration script exists
+        $envConfigScript = Join-Path $PWD "automation-scripts/0001_Configure-Environment.ps1"
+        if (Test-Path $envConfigScript) {
+            try {
+                Write-BootstrapLog "  Running environment configuration..." -Level Info
+                
+                # Run environment configuration based on profile
+                if ($NonInteractive -or $script:IsCI) {
+                    & $envConfigScript -Force -ErrorAction SilentlyContinue
+                }
+                else {
+                    & $envConfigScript -ErrorAction SilentlyContinue
+                }
+                
+                Write-BootstrapLog "  Environment configuration completed" -Level Success
+            }
+            catch {
+                Write-BootstrapLog "  Warning: Environment configuration failed: $($_.Exception.Message)" -Level Warning
+            }
+        }
+        
+        # Check if there's a playbook for this profile
+        $playbookMap = @{
+            'Development' = 'dev-environment-setup'
+            'AI-Development' = 'dev-environment-setup'
+            'Deployment' = 'deployment-environment'
+            'Self-Hosted-Runner' = 'self-hosted-runner-setup'
+        }
+        
+        if ($playbookMap.ContainsKey($InstallProfile)) {
+            $playbookName = $playbookMap[$InstallProfile]
+            $playbookPath = Join-Path $PWD "orchestration/playbooks/$playbookName.psd1"
+            
+            if (Test-Path $playbookPath) {
+                Write-BootstrapLog "  Profile-specific playbook available: $playbookName" -Level Info
+                Write-BootstrapLog "  Run manually: Invoke-AitherPlaybook -Name $playbookName" -Level Info
+            }
+        }
+    }
 
     # 1. Add to PowerShell profile for automatic loading
     $ProfileNameContent = @'

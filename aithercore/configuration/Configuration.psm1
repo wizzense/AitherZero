@@ -80,10 +80,12 @@ function Get-MergedConfiguration {
         Loads and merges configuration files in the following precedence order (highest to lowest):
         1. Custom config file (if specified via -ConfigFile parameter)
         2. config.local.psd1 (local developer overrides, gitignored by default)
-        3. config.psd1 (base configuration, version controlled)
+        3. config.<os>.psd1 (OS-specific: windows, linux, or macos - auto-detected)
+        4. config.psd1 (base configuration, version controlled)
         
         This hierarchical system allows for:
         - Local development customization without modifying version-controlled files
+        - OS-specific configurations (Windows, Linux, macOS)
         - Environment-specific configurations (CI/CD, staging, production)
         - Scenario-specific settings (testing, deployment, debugging)
         - Secure handling of sensitive local settings (via config.local.psd1)
@@ -245,6 +247,18 @@ function Get-MergedConfiguration {
     $baseConfigPath = Join-Path $script:ProjectRoot "config.psd1"
     $localConfigPath = Join-Path $script:ProjectRoot "config.local.psd1"
     
+    # Detect OS for OS-specific configuration loading
+    $osConfigPath = $null
+    if ($IsWindows -or $PSVersionTable.Platform -eq 'Win32NT') {
+        $osConfigPath = Join-Path $script:ProjectRoot "config.windows.psd1"
+    }
+    elseif ($IsLinux) {
+        $osConfigPath = Join-Path $script:ProjectRoot "config.linux.psd1"
+    }
+    elseif ($IsMacOS) {
+        $osConfigPath = Join-Path $script:ProjectRoot "config.macos.psd1"
+    }
+    
     # Start with base configuration
     $mergedConfig = $null
     if (Test-Path $baseConfigPath) {
@@ -254,6 +268,13 @@ function Get-MergedConfiguration {
     else {
         Write-ConfigLog -Message "Base config.psd1 not found" -Level Warning
         return $null
+    }
+    
+    # Merge OS-specific configuration (after base, before local)
+    if ($osConfigPath -and (Test-Path $osConfigPath)) {
+        Write-ConfigLog -Message "Merging OS-specific configuration" -Level Debug -Data @{ Path = $osConfigPath; OS = $PSVersionTable.OS }
+        $osConfig = Import-ConfigDataFile -Path $osConfigPath
+        $mergedConfig = Merge-Configuration -Current $mergedConfig -New $osConfig
     }
     
     # Merge local overrides (config.local.psd1)

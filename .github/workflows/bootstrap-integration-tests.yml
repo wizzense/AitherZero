@@ -1,0 +1,385 @@
+name: Bootstrap Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'bootstrap.ps1'
+      - 'bootstrap.sh'
+      - 'config.psd1'
+      - 'config.*.psd1'
+      - 'domains/configuration/Configuration.psm1'
+      - '.github/workflows/bootstrap-integration-tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'bootstrap.ps1'
+      - 'bootstrap.sh'
+      - 'config.psd1'
+      - 'config.*.psd1'
+  workflow_dispatch:
+    inputs:
+      skip-matrix:
+        description: 'Skip matrix testing (test single profile only)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  # ============================================================================
+  # Test Bootstrap on Windows with All Profiles
+  # ============================================================================
+  bootstrap-windows:
+    name: Bootstrap Windows - ${{ matrix.profile }}
+    runs-on: windows-latest
+    timeout-minutes: 45
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - Minimal
+          - Standard
+          - Developer
+          - Development
+          - AI-Development
+          - Deployment
+          - Full-Stack
+          - Self-Hosted-Runner
+          - CI
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell 7
+        uses: PowerShell/PowerShell@main
+        with:
+          pwsh: true
+
+      - name: Test Bootstrap - ${{ matrix.profile }} Profile
+        shell: pwsh
+        run: |
+          Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host "Testing Bootstrap with Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
+          Write-Host "Platform: Windows" -ForegroundColor Cyan
+          Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host ""
+          
+          # Run bootstrap
+          $ErrorActionPreference = 'Stop'
+          try {
+            ./bootstrap.ps1 `
+              -Mode Update `
+              -InstallProfile "${{ matrix.profile }}" `
+              -NonInteractive `
+              -Verbose
+            
+            Write-Host ""
+            Write-Host "✅ Bootstrap completed successfully" -ForegroundColor Green
+          }
+          catch {
+            Write-Host ""
+            Write-Host "❌ Bootstrap failed: $($_.Exception.Message)" -ForegroundColor Red
+            throw
+          }
+        env:
+          CI: true
+
+      - name: Validate Module Loading
+        shell: pwsh
+        run: |
+          Write-Host "Validating module loading..." -ForegroundColor Cyan
+          
+          # Import module
+          Import-Module ./AitherZero.psd1 -Force -ErrorAction Stop
+          
+          # Check exported commands
+          $commands = Get-Command -Module AitherZero
+          Write-Host "Exported commands: $($commands.Count)"
+          
+          if ($commands.Count -lt 120) {
+            throw "Expected at least 120 commands, but got $($commands.Count)"
+          }
+          
+          Write-Host "✅ Module loaded successfully with $($commands.Count) commands"
+
+      - name: Validate Configuration Loading
+        shell: pwsh
+        run: |
+          Write-Host "Validating configuration loading..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Get configuration
+          $config = Get-Configuration
+          
+          # Validate sections
+          $requiredSections = @(
+            'Manifest',
+            'Core',
+            'Automation',
+            'EnvironmentConfiguration',
+            'Features',
+            'UI',
+            'Testing',
+            'Development',
+            'Infrastructure',
+            'Logging'
+          )
+          
+          foreach ($section in $requiredSections) {
+            if (-not $config.ContainsKey($section)) {
+              throw "Missing required config section: $section"
+            }
+          }
+          
+          Write-Host "✅ Configuration loaded with all required sections"
+
+      - name: Validate Profile-Specific Features
+        shell: pwsh
+        run: |
+          Write-Host "Validating profile-specific features for: ${{ matrix.profile }}" -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          $config = Get-Configuration
+          $profile = "${{ matrix.profile }}"
+          
+          # Check profile exists
+          if (-not $config.Automation.ExecutionProfiles.ContainsKey($profile)) {
+            throw "Profile '$profile' not found in configuration"
+          }
+          
+          $profileConfig = $config.Automation.ExecutionProfiles[$profile]
+          Write-Host "Profile description: $($profileConfig.Description)"
+          Write-Host "Profile level: $($profileConfig.Level)"
+          Write-Host "Profile stages: $($profileConfig.Stages -join ', ')"
+          
+          Write-Host "✅ Profile configuration validated"
+
+      - name: Test Environment Configuration
+        shell: pwsh
+        run: |
+          Write-Host "Testing environment configuration..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Test Get-EnvironmentConfiguration
+          $envConfig = Get-EnvironmentConfiguration
+          
+          if (-not $envConfig) {
+            throw "Failed to get environment configuration"
+          }
+          
+          Write-Host "Environment configuration retrieved successfully"
+          Write-Host "  Windows features detected: $($envConfig.Windows.Features.Count)"
+          Write-Host "  Environment variables: $($envConfig.EnvironmentVariables.Count)"
+          
+          Write-Host "✅ Environment configuration working"
+
+      - name: Upload Bootstrap Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-logs-windows-${{ matrix.profile }}
+          path: |
+            logs/
+            *.log
+
+  # ============================================================================
+  # Test Bootstrap on Linux with All Profiles
+  # ============================================================================
+  bootstrap-linux:
+    name: Bootstrap Linux - ${{ matrix.profile }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - Minimal
+          - Standard
+          - Developer
+          - Development
+          - Deployment
+          - Self-Hosted-Runner
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell 7
+        run: |
+          sudo apt-get update
+          wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y powershell
+
+      - name: Test Bootstrap - ${{ matrix.profile }} Profile
+        shell: pwsh
+        run: |
+          Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host "Testing Bootstrap with Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
+          Write-Host "Platform: Linux" -ForegroundColor Cyan
+          Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host ""
+          
+          $ErrorActionPreference = 'Stop'
+          try {
+            ./bootstrap.ps1 `
+              -Mode Update `
+              -InstallProfile "${{ matrix.profile }}" `
+              -NonInteractive `
+              -Verbose
+            
+            Write-Host ""
+            Write-Host "✅ Bootstrap completed successfully" -ForegroundColor Green
+          }
+          catch {
+            Write-Host ""
+            Write-Host "❌ Bootstrap failed: $($_.Exception.Message)" -ForegroundColor Red
+            throw
+          }
+        env:
+          CI: true
+
+      - name: Validate Module Loading
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force -ErrorAction Stop
+          $commands = Get-Command -Module AitherZero
+          Write-Host "✅ Module loaded with $($commands.Count) commands"
+
+      - name: Validate Configuration Loading
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          $config = Get-Configuration
+          
+          if (-not $config.ContainsKey('EnvironmentConfiguration')) {
+            throw "Missing EnvironmentConfiguration section"
+          }
+          
+          Write-Host "✅ Configuration loaded successfully"
+
+      - name: Upload Bootstrap Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-logs-linux-${{ matrix.profile }}
+          path: |
+            logs/
+            *.log
+
+  # ============================================================================
+  # Test Bootstrap on macOS
+  # ============================================================================
+  bootstrap-macos:
+    name: Bootstrap macOS - ${{ matrix.profile }}
+    runs-on: macos-latest
+    timeout-minutes: 45
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - Minimal
+          - Development
+          - Deployment
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell 7
+        run: |
+          brew install --cask powershell
+
+      - name: Test Bootstrap - ${{ matrix.profile }} Profile
+        shell: pwsh
+        run: |
+          Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host "Testing Bootstrap with Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
+          Write-Host "Platform: macOS" -ForegroundColor Cyan
+          Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Cyan
+          Write-Host ""
+          
+          $ErrorActionPreference = 'Stop'
+          try {
+            ./bootstrap.ps1 `
+              -Mode Update `
+              -InstallProfile "${{ matrix.profile }}" `
+              -NonInteractive `
+              -Verbose
+            
+            Write-Host ""
+            Write-Host "✅ Bootstrap completed successfully" -ForegroundColor Green
+          }
+          catch {
+            Write-Host ""
+            Write-Host "❌ Bootstrap failed: $($_.Exception.Message)" -ForegroundColor Red
+            throw
+          }
+        env:
+          CI: true
+
+      - name: Validate Module Loading
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force -ErrorAction Stop
+          $commands = Get-Command -Module AitherZero
+          Write-Host "✅ Module loaded with $($commands.Count) commands"
+
+      - name: Upload Bootstrap Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-logs-macos-${{ matrix.profile }}
+          path: |
+            logs/
+            *.log
+
+  # ============================================================================
+  # Summary Report
+  # ============================================================================
+  bootstrap-summary:
+    name: Bootstrap Test Summary
+    runs-on: ubuntu-latest
+    needs: [bootstrap-windows, bootstrap-linux, bootstrap-macos]
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        shell: pwsh
+        run: |
+          Write-Host "## Bootstrap Integration Test Results" -ForegroundColor Cyan
+          Write-Host ""
+          
+          $windowsStatus = "${{ needs.bootstrap-windows.result }}"
+          $linuxStatus = "${{ needs.bootstrap-linux.result }}"
+          $macosStatus = "${{ needs.bootstrap-macos.result }}"
+          
+          Write-Host "Platform Results:"
+          Write-Host "  Windows: $windowsStatus"
+          Write-Host "  Linux:   $linuxStatus"
+          Write-Host "  macOS:   $macosStatus"
+          Write-Host ""
+          
+          if ($windowsStatus -ne 'success' -or $linuxStatus -ne 'success' -or $macosStatus -ne 'success') {
+            Write-Host "⚠️  Some bootstrap tests failed" -ForegroundColor Yellow
+            exit 1
+          }
+          
+          Write-Host "✅ All bootstrap integration tests passed!" -ForegroundColor Green

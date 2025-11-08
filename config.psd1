@@ -592,14 +592,38 @@
                         'ms-vscode.powershell'
                         'ms-azuretools.vscode-docker'
                         'github.copilot'
+                        'github.copilot-chat'
                         'ms-python.python'
                         'ms-vscode.vscode-json'
+                        'ms-vsliveshare.vsliveshare'
+                        'eamodio.gitlens'
                     )
                     Settings   = @{
                         AutoSave     = 'afterDelay'
                         FormatOnSave = $true
                         TabSize      = 4
                     }
+                }
+            }
+            GitHubCLI = @{
+                Enabled = $false
+                Version = 'latest'
+                InstallScript = '0211'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    AuthMethod = 'browser'  # browser, token
+                    DefaultEditor = 'vim'
+                    Protocol = 'https'
+                }
+            }
+            Go = @{
+                Enabled = $false
+                Version = '1.21+'
+                InstallScript = '0212'
+                Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    GOPATH = '$HOME/go'
+                    InstallTools = @('gopls', 'golangci-lint')
                 }
             }
             Docker = @{
@@ -1516,6 +1540,99 @@
         SetupLabProfile    = $false
     }
 
+    # ===================================================================
+    # ENVIRONMENT CONFIGURATION - System Environment Settings
+    # ===================================================================
+    EnvironmentConfiguration = @{
+        # Automatic configuration application
+        ApplyOnBootstrap = $true      # Apply during bootstrap
+        ApplyOnStart = $false         # Apply when Start-AitherZero runs
+        
+        # Windows-specific features
+        Windows = @{
+            # Long path support (paths > 260 characters)
+            LongPathSupport = @{
+                Enabled = $true       # Enable by default for development
+                AutoApply = $true     # Automatically configure
+                Description = 'Enable NTFS long path support (> 260 characters)'
+                RegistryPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+                RegistryKey = 'LongPathsEnabled'
+                RegistryValue = 1
+                RequiresRestart = $false
+            }
+            
+            # Developer Mode
+            DeveloperMode = @{
+                Enabled = $false      # Opt-in for security
+                AutoApply = $false
+                Description = 'Enable Windows Developer Mode (sideloading, SSH, etc.)'
+                RequiresRestart = $false
+            }
+            
+            # Performance settings
+            Performance = @{
+                DisableIndexing = $false  # Disable on dev paths only
+                DisableDefender = $false  # Dangerous - requires explicit opt-in
+                OptimizeForPerformance = $false
+            }
+        }
+        
+        # Cross-platform environment variables
+        EnvironmentVariables = @{
+            # System-wide variables (requires admin on Windows)
+            System = @{
+                # Example: AITHERZERO_HOME = $env:AITHERZERO_ROOT
+                # Will be populated dynamically or via config.local.psd1
+            }
+            
+            # User-level variables
+            User = @{
+                AITHERZERO_PROFILE = ''           # Override default profile
+                AITHERZERO_CONFIG_PATH = ''       # Custom config file path
+                AITHERZERO_NONINTERACTIVE = ''    # Force non-interactive mode
+            }
+            
+            # Process-level variables (current session only)
+            Process = @{
+                AITHERZERO_DEBUG = $false
+                AITHERZERO_VERBOSE = $false
+                AITHERZERO_DRYRUN = $false
+            }
+        }
+        
+        # PATH management
+        PathConfiguration = @{
+            AddToPath = $true
+            Paths = @{
+                User = @()      # User-level paths to add
+                System = @()    # System-level paths (requires admin)
+            }
+            CleanDuplicates = $true
+            ValidateExists = $true
+        }
+        
+        # Linux/macOS specific
+        Unix = @{
+            # Shell configuration
+            ShellIntegration = @{
+                Enabled = $true
+                Shells = @('bash', 'zsh', 'fish')
+                AddToProfile = $true
+            }
+            
+            # Permissions
+            EnsureExecutable = $true  # Make scripts executable
+        }
+        
+        # Validation settings
+        Validation = @{
+            ValidateBeforeApply = $true
+            BackupBeforeChanges = $true
+            RollbackOnError = $true
+            DryRunFirst = $false      # Test before applying
+        }
+    }
+    
     # ===================================================================
     # CERTIFICATE AUTHORITY - CA Configuration
     # ===================================================================
