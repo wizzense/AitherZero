@@ -272,28 +272,28 @@ function Build-FunctionalTestSuite {
     
     # Structural Tests
     if ($TestType -in @('Structural', 'All')) {
-        $structuralTests = Build-StructuralTests -Analysis $Analysis
+        $structuralTests = Build-StructuralTest -Analysis $Analysis
         [void]$sb.Append($structuralTests)
         $testCount += 3
     }
     
     # Functional Tests
     if ($TestType -in @('Functional', 'All')) {
-        $functionalTests = Build-FunctionalTests -Analysis $Analysis -Strategy $Strategy
+        $functionalTests = Build-FunctionalTest -Analysis $Analysis -Strategy $Strategy
         [void]$sb.Append($functionalTests)
         $testCount += $Strategy.FunctionalTests.Count
     }
     
     # Error Handling Tests
     if ($TestType -in @('Functional', 'All')) {
-        $errorTests = Build-ErrorHandlingTests -Analysis $Analysis
+        $errorTests = Build-ErrorHandlingTest -Analysis $Analysis
         [void]$sb.Append($errorTests)
         $testCount += 2
     }
     
     # Mock Tests (if external calls detected)
     if ($TestType -eq 'All' -and $Analysis.ExternalCalls.Count -gt 0) {
-        $mockTests = Build-MockTests -Analysis $Analysis
+        $mockTests = Build-MockTest -Analysis $Analysis
         [void]$sb.Append($mockTests)
         $testCount += $Analysis.ExternalCalls.Count
     }
@@ -306,7 +306,7 @@ function Build-FunctionalTestSuite {
     return $sb.ToString()
 }
 
-function Build-StructuralTests {
+function Build-StructuralTest {
     param($Analysis)
     
     $sb = [System.Text.StringBuilder]::new()
@@ -346,7 +346,7 @@ function Build-StructuralTests {
     return $sb.ToString()
 }
 
-function Build-FunctionalTests {
+function Build-FunctionalTest {
     param($Analysis, $Strategy)
     
     $sb = [System.Text.StringBuilder]::new()
@@ -387,7 +387,7 @@ function Build-FunctionalTests {
     return $sb.ToString()
 }
 
-function Build-ErrorHandlingTests {
+function Build-ErrorHandlingTest {
     param($Analysis)
     
     $sb = [System.Text.StringBuilder]::new()
@@ -417,7 +417,7 @@ function Build-ErrorHandlingTests {
     return $sb.ToString()
 }
 
-function Build-MockTests {
+function Build-MockTest {
     param($Analysis)
     
     $sb = [System.Text.StringBuilder]::new()

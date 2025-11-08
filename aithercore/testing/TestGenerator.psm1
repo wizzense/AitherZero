@@ -463,7 +463,7 @@ function New-IntegrationTestStructure {
     return $sb.ToString()
 }
 
-function New-AllAutomationTests {
+function New-AutomationTest {
     <#
     .SYNOPSIS
         Generate tests for all automation scripts
@@ -476,7 +476,7 @@ function New-AllAutomationTests {
     .PARAMETER Force
         Overwrite existing test files
     .EXAMPLE
-        New-AllAutomationTests -Filter "02*" -IncludeMocks
+        New-AutomationTest -Filter "02*" -IncludeMocks
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
@@ -543,5 +543,5 @@ function New-AllAutomationTests {
 # Export functions
 Export-ModuleMember -Function @(
     'New-AutomationScriptTest',
-    'New-AllAutomationTests'
+    'New-AutomationTest'
 )
