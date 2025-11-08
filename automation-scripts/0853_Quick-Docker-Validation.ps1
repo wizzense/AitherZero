@@ -314,8 +314,8 @@ try {
     Write-Host "`n📋 Test 7: Documentation" -ForegroundColor Cyan
     
     $docFiles = @(
-        @{ Path = "docs/PR-DEPLOYMENT-GUIDE.md"; Name = "Deployment Guide" }
-        @{ Path = "docs/PR-DEPLOYMENT-QUICKREF.md"; Name = "Quick Reference" }
+        @{ Path = "library/PR-DEPLOYMENT-GUIDE.md"; Name = "Deployment Guide" }
+        @{ Path = "library/PR-DEPLOYMENT-QUICKREF.md"; Name = "Quick Reference" }
     )
     
     foreach ($doc in $docFiles) {
@@ -394,7 +394,7 @@ try {
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Magenta
     
     # Save detailed results
-    $reportPath = Join-Path $ProjectRoot "docs/reports/pr-docker-quick-validation.json"
+    $reportPath = Join-Path $ProjectRoot "library/reports/pr-docker-quick-validation.json"
     $reportDir = Split-Path -Parent $reportPath
     if (-not (Test-Path $reportDir)) {
         New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
@@ -447,7 +447,7 @@ try {
         Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     }
     
-    $reportPath = Join-Path $ProjectRoot "docs/reports/pr-docker-quick-validation.json"
+    $reportPath = Join-Path $ProjectRoot "library/reports/pr-docker-quick-validation.json"
     $reportDir = Split-Path -Parent $reportPath
     if (-not (Test-Path $reportDir)) {
         New-Item -ItemType Directory -Path $reportDir -Force | Out-Null

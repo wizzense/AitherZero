@@ -8,7 +8,7 @@ on:
       - 'automation-scripts/**/*.ps1'
       - 'AitherZero.psd1'
       - 'README.md'
-      - 'docs/**'
+      - 'library/**'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
@@ -17,7 +17,7 @@ on:
       - 'automation-scripts/**/*.ps1'
       - 'AitherZero.psd1'
       - 'README.md'
-      - 'docs/**'
+      - 'library/**'
   workflow_dispatch:
     inputs:
       mode:
@@ -201,7 +201,7 @@ jobs:
         Initialize-DocumentationEngine
 
         # Run quality validation
-        $results = Test-DocumentationQuality -Path "./docs/generated"
+        $results = Test-DocumentationQuality -Path "./library/generated"
 
         Write-Host "Quality Score: $($results.Score)%" -ForegroundColor White
         Write-Host "Quality Gate: $(if ($results.Passed) { 'PASSED' } else { 'FAILED' })" -ForegroundColor $(if ($results.Passed) { 'Green' } else { 'Red' })
@@ -217,7 +217,7 @@ jobs:
         Write-Host "Generating documentation report..." -ForegroundColor Cyan
 
         # Count generated files
-        $generatedPath = "./docs/generated"
+        $generatedPath = "./library/generated"
         if (Test-Path $generatedPath) {
           $markdownFiles = @(Get-ChildItem -Path $generatedPath -Filter "*.md" -Recurse).Count
           $htmlFiles = @(Get-ChildItem -Path $generatedPath -Filter "*.html" -Recurse).Count
@@ -239,7 +239,7 @@ jobs:
         Write-Host "Checking for uncommitted documentation changes..." -ForegroundColor Cyan
 
         # Check if there are uncommitted changes after generation
-        $changes = git status --porcelain | Where-Object { $_ -match 'docs/generated/' }
+        $changes = git status --porcelain | Where-Object { $_ -match 'library/generated/' }
         $hasUncommittedChanges = @($changes).Count -gt 0
 
         if ($hasUncommittedChanges) {
@@ -331,7 +331,7 @@ jobs:
         git checkout "$AUTO_BRANCH"
 
         # Add and commit documentation changes
-        git add docs/generated/
+        git add library/generated/
 
         # Create commit message with details
         MARKDOWN_COUNT="${{ env.MARKDOWN_FILES }}"
@@ -483,8 +483,8 @@ jobs:
 
         New-Item -Path $deployPath -ItemType Directory -Force
 
-        if (Test-Path "./docs/generated") {
-          Copy-Item -Path "./docs/generated/*" -Destination $deployPath -Recurse -Force
+        if (Test-Path "./library/generated") {
+          Copy-Item -Path "./library/generated/*" -Destination $deployPath -Recurse -Force
 
           # Create index.html if it doesn't exist
           $indexPath = Join-Path $deployPath "index.html"
@@ -513,7 +513,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: generated-documentation
-        path: docs/generated/
+        path: library/generated/
         retention-days: 30
 
     - name: 📈 Update Documentation Badge

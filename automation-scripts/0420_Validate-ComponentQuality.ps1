@@ -647,7 +647,7 @@ try {
     
     # Save reports
     if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "docs/reports/quality"
+        $OutputPath = Join-Path $projectRoot "library/reports/quality"
     }
     
     if (-not (Test-Path $OutputPath)) {

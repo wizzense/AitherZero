@@ -8,105 +8,105 @@ This index provides a comprehensive map of all AitherZero documentation, organiz
 
 **Start Here:**
 1. `README.md` - Project overview and quick start
-2. `docs/DEVELOPMENT-SETUP.md` - Environment setup
-3. `docs/UNIFIED-MENU-DESIGN.md` - Understanding the CLI/menu system
+2. `library/docs/DEVELOPMENT-SETUP.md` - Environment setup
+3. `library/docs/UNIFIED-MENU-DESIGN.md` - Understanding the CLI/menu system
 
 ## For Developers
 
 ### Architecture Documentation
-- **`docs/CONFIG-DRIVEN-ARCHITECTURE.md`** - How config.psd1 drives the entire system
-- **`docs/UNIFIED-MENU-DESIGN.md`** - CLI/menu unification design philosophy
-- **`docs/EXTENSIONS.md`** - Extension system and plugin architecture
-- **`docs/ARCHITECTURE-AUTOMATED-REPORTS.md`** - Reporting system architecture
-- **`docs/COPILOT-ARCHITECTURE.md`** - Copilot integration architecture
+- **`library/docs/CONFIG-DRIVEN-ARCHITECTURE.md`** - How config.psd1 drives the entire system
+- **`library/docs/UNIFIED-MENU-DESIGN.md`** - CLI/menu unification design philosophy
+- **`library/docs/EXTENSIONS.md`** - Extension system and plugin architecture
+- **`library/docs/ARCHITECTURE-AUTOMATED-REPORTS.md`** - Reporting system architecture
+- **`library/docs/COPILOT-ARCHITECTURE.md`** - Copilot integration architecture
 
 ### Development Guides
-- **`docs/STYLE-GUIDE.md`** ⭐ - **Code style, naming conventions, templates**
-- **`docs/INTEGRATION-TESTING-GUIDE.md`** ⭐ - **Integration test patterns and requirements**
-- **`docs/AI-AGENT-GUIDE.md`** ⭐ - **AI agent code generation guidelines**
-- **`docs/DEVELOPMENT-SETUP.md`** - Local development environment
-- **`docs/CI-CD-GUIDE.md`** - CI/CD pipeline guide
-- **`docs/TESTING-GUIDE.md`** - Testing framework (to be created)
+- **`library/docs/STYLE-GUIDE.md`** ⭐ - **Code style, naming conventions, templates**
+- **`library/docs/INTEGRATION-TESTING-GUIDE.md`** ⭐ - **Integration test patterns and requirements**
+- **`library/docs/AI-AGENT-GUIDE.md`** ⭐ - **AI agent code generation guidelines**
+- **`library/docs/DEVELOPMENT-SETUP.md`** - Local development environment
+- **`library/docs/CI-CD-GUIDE.md`** - CI/CD pipeline guide
+- **`library/docs/TESTING-GUIDE.md`** - Testing framework (to be created)
 
 ### Configuration & Setup
-- **`docs/CONFIGURATION.md`** - Configuration system details
-- **`docs/Bootstrap-To-Infrastructure-Flow.md`** - Bootstrap process
-- **`docs/COPILOT-DEV-ENVIRONMENT.md`** - VS Code + Copilot setup
-- **`docs/COPILOT-MCP-SETUP.md`** - Model Context Protocol setup
+- **`library/docs/CONFIGURATION.md`** - Configuration system details
+- **`library/docs/Bootstrap-To-Infrastructure-Flow.md`** - Bootstrap process
+- **`library/docs/COPILOT-DEV-ENVIRONMENT.md`** - VS Code + Copilot setup
+- **`library/docs/COPILOT-MCP-SETUP.md`** - Model Context Protocol setup
 
 ### Infrastructure & Operations
-- **`docs/DOCKER-CONTAINER-GUIDE.md`** - Container usage
-- **`docs/DOCKER-USAGE.md`** - Docker integration
+- **`library/docs/DOCKER-CONTAINER-GUIDE.md`** - Container usage
+- **`library/docs/DOCKER-USAGE.md`** - Docker integration
 - **`.github/workflows/README.md`** - Workflow documentation
 
 ## For AI Agents & Copilot
 
 ### Essential Reading (in order)
 1. **`.github/copilot-instructions.md`** - Main instructions for AI agents
-2. **`docs/AI-AGENT-GUIDE.md`** ⭐ - Templates and generation patterns
-3. **`docs/STYLE-GUIDE.md`** ⭐ - Code standards and conventions
-4. **`docs/INTEGRATION-TESTING-GUIDE.md`** ⭐ - Testing requirements
+2. **`library/docs/AI-AGENT-GUIDE.md`** ⭐ - Templates and generation patterns
+3. **`library/docs/STYLE-GUIDE.md`** ⭐ - Code standards and conventions
+4. **`library/docs/INTEGRATION-TESTING-GUIDE.md`** ⭐ - Testing requirements
 
 ### Quick Reference
-- **`docs/COPILOT-QUICK-REFERENCE.md`** - Quick commands and patterns
+- **`library/docs/COPILOT-QUICK-REFERENCE.md`** - Quick commands and patterns
 - **`.github/prompts/`** - Reusable one-shot prompts
 - **`.github/copilot.yaml`** - Custom agent routing config
 
 ## For Maintainers
 
 ### Style & Standards
-- **`docs/STYLE-GUIDE.md`** - PowerShell standards, extension templates, UI guidelines
-- **`docs/INTEGRATION-TESTING-GUIDE.md`** - Integration test requirements
+- **`library/docs/STYLE-GUIDE.md`** - PowerShell standards, extension templates, UI guidelines
+- **`library/docs/INTEGRATION-TESTING-GUIDE.md`** - Integration test requirements
 - **`CONTRIBUTING.md`** - Contribution guidelines (if exists)
 
 ### Architecture & Design
-- **`docs/CONFIG-DRIVEN-ARCHITECTURE.md`** - System design principles
-- **`docs/EXTENSIONS.md`** - Extension system internals
-- **`docs/UNIFIED-MENU-DESIGN.md`** - CLI/UI design rationale
+- **`library/docs/CONFIG-DRIVEN-ARCHITECTURE.md`** - System design principles
+- **`library/docs/EXTENSIONS.md`** - Extension system internals
+- **`library/docs/UNIFIED-MENU-DESIGN.md`** - CLI/UI design rationale
 
 ### Operations
-- **`docs/CI-CD-GUIDE.md`** - CI/CD management
-- **`docs/ARCHIVE-SYSTEM.md`** - Archive management
-- **`docs/AUTOMATED-ISSUE-TRACKING.md`** - Issue automation
+- **`library/docs/CI-CD-GUIDE.md`** - CI/CD management
+- **`library/docs/ARCHIVE-SYSTEM.md`** - Archive management
+- **`library/docs/AUTOMATED-ISSUE-TRACKING.md`** - Issue automation
 
 ## By Topic
 
 ### Configuration System
-- `docs/CONFIG-DRIVEN-ARCHITECTURE.md` - Architecture
-- `docs/CONFIGURATION.md` - Details
-- `docs/STYLE-GUIDE.md` (Config section) - Standards
+- `library/docs/CONFIG-DRIVEN-ARCHITECTURE.md` - Architecture
+- `library/docs/CONFIGURATION.md` - Details
+- `library/docs/STYLE-GUIDE.md` (Config section) - Standards
 - Script: `0413_Validate-ConfigManifest.ps1` - Validation
 
 ### Extension System
-- `docs/EXTENSIONS.md` - User guide
-- `docs/STYLE-GUIDE.md` (Extension section) - Templates
-- `docs/AI-AGENT-GUIDE.md` (Extension section) - Generation
+- `library/docs/EXTENSIONS.md` - User guide
+- `library/docs/STYLE-GUIDE.md` (Extension section) - Templates
+- `library/docs/AI-AGENT-GUIDE.md` (Extension section) - Generation
 - `domains/utilities/ExtensionManager.psm1` - Implementation
 
 ### CLI/Menu System
-- `docs/UNIFIED-MENU-DESIGN.md` - Design philosophy
-- `docs/STYLE-GUIDE.md` (CLI section) - Command patterns
-- `docs/INTEGRATION-TESTING-GUIDE.md` (CLI section) - Testing
+- `library/docs/UNIFIED-MENU-DESIGN.md` - Design philosophy
+- `library/docs/STYLE-GUIDE.md` (CLI section) - Command patterns
+- `library/docs/INTEGRATION-TESTING-GUIDE.md` (CLI section) - Testing
 - `domains/experience/Components/CommandParser.psm1` - Implementation
 - `domains/experience/Components/BreadcrumbNavigation.psm1` - Navigation
 
 ### Testing
-- `docs/INTEGRATION-TESTING-GUIDE.md` - Integration tests
-- `docs/STYLE-GUIDE.md` (Testing section) - Test standards
-- `docs/AI-AGENT-GUIDE.md` (Testing section) - Test generation
+- `library/docs/INTEGRATION-TESTING-GUIDE.md` - Integration tests
+- `library/docs/STYLE-GUIDE.md` (Testing section) - Test standards
+- `library/docs/AI-AGENT-GUIDE.md` (Testing section) - Test generation
 - Scripts: `0402` (unit), `0403` (integration), `0409` (all)
 
 ### UI/UX
-- `docs/UNIFIED-MENU-DESIGN.md` - Menu design
-- `docs/STYLE-GUIDE.md` (UI section) - Rendering guidelines
-- `docs/INTEGRATION-TESTING-GUIDE.md` (UI section) - UI tests
+- `library/docs/UNIFIED-MENU-DESIGN.md` - Menu design
+- `library/docs/STYLE-GUIDE.md` (UI section) - Rendering guidelines
+- `library/docs/INTEGRATION-TESTING-GUIDE.md` (UI section) - UI tests
 - `domains/experience/InteractiveUI.psm1` - Implementation
 
 ## By File Type
 
-### Markdown Documentation (docs/)
+### Markdown Documentation (library/docs/)
 ```
-docs/
+library/docs/
 ├── AI-AGENT-GUIDE.md ⭐           # AI agent code generation
 ├── STYLE-GUIDE.md ⭐              # Code style standards
 ├── INTEGRATION-TESTING-GUIDE.md ⭐ # Integration tests
@@ -163,24 +163,24 @@ extensions/
 6. Test: `Invoke-Pester -Path "./tests"`
 
 ### Creating Extension
-1. Read: `docs/EXTENSIONS.md`
-2. Use templates from: `docs/STYLE-GUIDE.md` (Extension section)
+1. Read: `library/docs/EXTENSIONS.md`
+2. Use templates from: `library/docs/STYLE-GUIDE.md` (Extension section)
 3. Generate with: `New-ExtensionTemplate`
-4. Test per: `docs/INTEGRATION-TESTING-GUIDE.md`
+4. Test per: `library/docs/INTEGRATION-TESTING-GUIDE.md`
 5. Update: `config.psd1` EnabledExtensions
 6. Validate and test
 
 ### Modifying Config
-1. Read: `docs/CONFIG-DRIVEN-ARCHITECTURE.md`
-2. Follow rules from: `docs/STYLE-GUIDE.md` (Config section)
+1. Read: `library/docs/CONFIG-DRIVEN-ARCHITECTURE.md`
+2. Follow rules from: `library/docs/STYLE-GUIDE.md` (Config section)
 3. Make changes to: `config.psd1`
 4. Validate: `./automation-scripts/0413_Validate-ConfigManifest.ps1`
-5. Test rendering per: `docs/INTEGRATION-TESTING-GUIDE.md`
+5. Test rendering per: `library/docs/INTEGRATION-TESTING-GUIDE.md`
 
 ### Writing Tests
-1. Read: `docs/INTEGRATION-TESTING-GUIDE.md`
-2. Follow standards from: `docs/STYLE-GUIDE.md` (Testing section)
-3. Use templates from: `docs/AI-AGENT-GUIDE.md` (Testing section)
+1. Read: `library/docs/INTEGRATION-TESTING-GUIDE.md`
+2. Follow standards from: `library/docs/STYLE-GUIDE.md` (Testing section)
+3. Use templates from: `library/docs/AI-AGENT-GUIDE.md` (Testing section)
 4. Run: `Invoke-Pester`
 5. Verify coverage: 80%+ required
 
@@ -222,10 +222,10 @@ extensions/
 
 **Most Important Documents:**
 1. `.github/copilot-instructions.md` - Start here (AI agents)
-2. `docs/STYLE-GUIDE.md` - Code standards
-3. `docs/AI-AGENT-GUIDE.md` - Generation templates
-4. `docs/INTEGRATION-TESTING-GUIDE.md` - Testing requirements
-5. `docs/CONFIG-DRIVEN-ARCHITECTURE.md` - System design
+2. `library/docs/STYLE-GUIDE.md` - Code standards
+3. `library/docs/AI-AGENT-GUIDE.md` - Generation templates
+4. `library/docs/INTEGRATION-TESTING-GUIDE.md` - Testing requirements
+5. `library/docs/CONFIG-DRIVEN-ARCHITECTURE.md` - System design
 
 **Quick Commands:**
 ```powershell
@@ -266,17 +266,17 @@ Show-ConfigurationSelector
 ## Getting Help
 
 **Questions about:**
-- **Code style?** → `docs/STYLE-GUIDE.md`
-- **Integration tests?** → `docs/INTEGRATION-TESTING-GUIDE.md`
-- **AI generation?** → `docs/AI-AGENT-GUIDE.md`
-- **Config system?** → `docs/CONFIG-DRIVEN-ARCHITECTURE.md`
-- **Extensions?** → `docs/EXTENSIONS.md`
-- **CLI/Menu?** → `docs/UNIFIED-MENU-DESIGN.md`
+- **Code style?** → `library/docs/STYLE-GUIDE.md`
+- **Integration tests?** → `library/docs/INTEGRATION-TESTING-GUIDE.md`
+- **AI generation?** → `library/docs/AI-AGENT-GUIDE.md`
+- **Config system?** → `library/docs/CONFIG-DRIVEN-ARCHITECTURE.md`
+- **Extensions?** → `library/docs/EXTENSIONS.md`
+- **CLI/Menu?** → `library/docs/UNIFIED-MENU-DESIGN.md`
 
 **Still stuck?**
 - Check `.github/prompts/` for troubleshooting prompts
-- Review `docs/COPILOT-QUICK-REFERENCE.md`
-- Run demo scripts: `docs/demos/Demo-*.ps1`
+- Review `library/docs/COPILOT-QUICK-REFERENCE.md`
+- Run demo scripts: `library/docs/demos/Demo-*.ps1`
 
 ---
 

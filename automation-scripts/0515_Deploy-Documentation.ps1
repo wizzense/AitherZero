@@ -373,7 +373,7 @@ function Copy-ExistingReports {
 
     # Copy reports from various locations
     $reportSources = @(
-        @{ Source = Join-Path $ProjectPath "docs/reports"; Destination = Join-Path $OutputPath "reports/latest" }
+        @{ Source = Join-Path $ProjectPath "library/reports"; Destination = Join-Path $OutputPath "reports/latest" }
         @{ Source = Join-Path $ProjectPath "tests/reports"; Destination = Join-Path $OutputPath "reports/latest" }
         @{ Source = Join-Path $ProjectPath "docs"; Destination = Join-Path $OutputPath "docs" }
     )
@@ -727,7 +727,7 @@ try {
             "index.html - Main navigation portal",
             "reports/latest/ - Current reports and dashboards",
             "api/ - API documentation",
-            "docs/ - General documentation",
+            "library/ - General documentation",
             "_config.yml - Jekyll configuration"
         )
     }

@@ -16,7 +16,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ConfigPath = "./config.psd1",
-    [string]$OutputPath = "./docs/reports/tech-debt/analysis",
+    [string]$OutputPath = "./library/reports/tech-debt/analysis",
     [switch]$UseCache,
     [switch]$Detailed = $false,
     [string[]]$ExcludePaths = @('tests', 'examples', 'reports')

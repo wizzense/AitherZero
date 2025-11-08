@@ -457,7 +457,7 @@ The AI tools are now integrated into the CI/CD pipeline and will:
 Configure API keys in GitHub repository secrets for full automation.
 "@
 
-    $instructionsPath = Join-Path $projectRoot "docs/ai-tools-setup.md"
+    $instructionsPath = Join-Path $projectRoot "library/ai-tools-setup.md"
     if ($PSCmdlet.ShouldProcess($instructionsPath, "Create setup instructions")) {
         $instructions | Set-Content -Path $instructionsPath
         Write-ScriptLog -Message "Setup instructions created: $instructionsPath"

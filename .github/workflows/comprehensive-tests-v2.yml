@@ -124,9 +124,9 @@ jobs:
             tests/results/**/*.xml
             tests/results/**/*.json
             tests/coverage/**/*
-            docs/reports/**/*.md
-            docs/reports/**/*.json
-            docs/reports/**/*.html
+            library/reports/**/*.md
+            library/reports/**/*.json
+            library/reports/**/*.html
           retention-days: 30
 
       - name: 📈 Publish Test Results
@@ -161,8 +161,8 @@ jobs:
             
             // Try to read summary if available
             try {
-              if (fs.existsSync('docs/reports/execution-summary.md')) {
-                const summary = fs.readFileSync('docs/reports/execution-summary.md', 'utf8');
+              if (fs.existsSync('library/reports/execution-summary.md')) {
+                const summary = fs.readFileSync('library/reports/execution-summary.md', 'utf8');
                 comment += `### 📊 Execution Summary\n\n`;
                 comment += summary + '\n\n';
               }

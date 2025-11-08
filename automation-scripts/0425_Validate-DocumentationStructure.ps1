@@ -128,10 +128,10 @@ $docRules = @{
     # Expected directory structure
     RequiredDirectories = @(
         'docs'
-        'docs/strategic'
-        'docs/archive'
-        'docs/guides'
-        'docs/troubleshooting'
+        'library/strategic'
+        'library/archive'
+        'library/guides'
+        'library/troubleshooting'
     )
     
     # Directories that should NOT exist
@@ -245,12 +245,12 @@ foreach ($file in $docRules.RequiredRootFiles) {
 Write-ValidationLog "`nChecking subdirectory README files..." -Level Information
 $docsSubdirs = @('strategic', 'archive', 'guides')
 foreach ($subdir in $docsSubdirs) {
-    $readmePath = Join-Path $projectRoot "docs/$subdir/README.md"
+    $readmePath = Join-Path $projectRoot "library/$subdir/README.md"
     if (Test-Path $readmePath) {
         Write-ValidationLog "  ✓ docs/$subdir/README.md exists" -Level Success
         $validationResults.Passed++
     } else {
-        Add-ValidationIssue -Type 'MissingReadme' -Message "README.md missing in docs/$subdir/" -File "docs/$subdir/README.md" -Severity 'Warning'
+        Add-ValidationIssue -Type 'MissingReadme' -Message "README.md missing in docs/$subdir/" -File "library/$subdir/README.md" -Severity 'Warning'
     }
 }
 
@@ -343,7 +343,7 @@ if ($validationResults.Errors -gt 0) {
 }
 
 # Save results to file
-$reportPath = Join-Path $projectRoot "docs/reports/documentation-validation.json"
+$reportPath = Join-Path $projectRoot "library/reports/documentation-validation.json"
 $reportDir = Split-Path $reportPath -Parent
 if (-not (Test-Path $reportDir)) {
     New-Item -ItemType Directory -Path $reportDir -Force | Out-Null

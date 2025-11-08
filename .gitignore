@@ -39,9 +39,9 @@ test-output/
 test-results/
 
 # Generated test reports
-docs/reports/*.json
-!docs/reports/dashboard.json
-!docs/reports/psscriptanalyzer-fast-results.json
+library/reports/*.json
+!library/reports/dashboard.json
+!library/reports/psscriptanalyzer-fast-results.json
 tests/reports/*.json
 
 # IDE files
@@ -87,7 +87,7 @@ tests/results/*
 !tests/results/index.md
 
 # Quality reports (generated artifacts - linting results, analysis output)
-docs/reports/quality/
+library/reports/quality/
 
 # Linting tools (downloaded binaries)
 actionlint

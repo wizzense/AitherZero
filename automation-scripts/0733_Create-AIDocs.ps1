@@ -30,7 +30,7 @@ param(
     [ValidateSet('CommentBasedHelp', 'README', 'API', 'Architecture', 'All')]
     [string]$DocType = 'All',
 
-    [string]$OutputPath = "./docs/generated"
+    [string]$OutputPath = "./library/generated"
 )
 
 #region Metadata

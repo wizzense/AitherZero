@@ -6,8 +6,8 @@ on:
   push:
     branches: ["main", "dev", "develop", "dev-staging", "ring-0", "ring-0-integrations", "ring-1", "ring-1-integrations", "ring-2"]
     paths:
-      - 'docs/reports/**'
-      - 'docs/**'
+      - 'library/reports/**'
+      - 'library/**'
       - 'index.md'
       - '_config.yml'
       - 'mcp-server/README.md'
@@ -42,17 +42,17 @@ jobs:
       - name: Copy MCP Server Documentation
         run: |
           echo "📄 Copying MCP server documentation to docs..."
-          mkdir -p ./docs/mcp-server
+          mkdir -p ./library/mcp-server
           if [ -f "./mcp-server/README.md" ]; then
-            cp ./mcp-server/README.md ./docs/mcp-server/index.md
+            cp ./mcp-server/README.md ./library/mcp-server/index.md
             echo "✅ Copied MCP server README"
           fi
           if [ -f "./mcp-server/QUICKSTART.md" ]; then
-            cp ./mcp-server/QUICKSTART.md ./docs/mcp-server/quickstart.md
+            cp ./mcp-server/QUICKSTART.md ./library/mcp-server/quickstart.md
             echo "✅ Copied MCP server quickstart"
           fi
           if [ -f "./mcp-server/IMPLEMENTATION-SUMMARY.md" ]; then
-            cp ./mcp-server/IMPLEMENTATION-SUMMARY.md ./docs/mcp-server/implementation.md
+            cp ./mcp-server/IMPLEMENTATION-SUMMARY.md ./library/mcp-server/implementation.md
             echo "✅ Copied MCP server implementation summary"
           fi
 

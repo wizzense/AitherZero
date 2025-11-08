@@ -19,11 +19,11 @@
 - `index.md` - Auto-generated index
 
 ### To Archive
-- `RELEASE-REPUBLISH-GUIDE.md` → Move to docs/
-- `STRATEGIC-DOCS-README.md` → Move to docs/
-- `STRATEGIC-ROADMAP.md` → Move to docs/
-- `VISUAL-GUIDE.md` → Move to docs/
-- `WORK_COMPLETED.md` → Move to docs/archived/
+- `RELEASE-REPUBLISH-GUIDE.md` → Move to library/docs/
+- `STRATEGIC-DOCS-README.md` → Move to library/docs/
+- `STRATEGIC-ROADMAP.md` → Move to library/docs/
+- `VISUAL-GUIDE.md` → Move to library/docs/
+- `WORK_COMPLETED.md` → Move to library/docs/archived/
 
 ## Directory Structure
 
@@ -71,7 +71,7 @@ AitherZero/
 │   ├── unit/
 │   ├── integration/
 │   └── TestHelpers.psm1
-├── docs/                   # Documentation
+├── library/docs/                   # Documentation
 ├── reports/                # Generated reports
 └── ...
 ```

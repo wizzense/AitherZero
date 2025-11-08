@@ -111,7 +111,7 @@ jobs:
               })
               documentation = @($changedFiles | Where-Object {
                 $_ -match '\.md$' -or
-                $_ -match 'docs/' -or
+                $_ -match 'library/' -or
                 $_ -match 'automation-scripts/05[0-9][0-9]'
               })
               powershell = @($changedFiles | Where-Object {

@@ -17,7 +17,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = "./tests",
-    [string]$OutputPath = "./docs/reports",
+    [string]$OutputPath = "./library/reports",
     [switch]$IncludeTrends
 )
 

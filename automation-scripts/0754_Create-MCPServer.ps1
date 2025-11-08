@@ -270,10 +270,10 @@ if (Test-Path $testTemplate) {
 
 # Process documentation templates
 $docFiles = @(
-    "docs/SETUP.md.template",
-    "docs/USAGE.md.template",
-    "docs/ARCHITECTURE.md.template",
-    "docs/TROUBLESHOOTING.md.template"
+    "library/SETUP.md.template",
+    "library/USAGE.md.template",
+    "library/ARCHITECTURE.md.template",
+    "library/TROUBLESHOOTING.md.template"
 )
 
 foreach ($file in $docFiles) {

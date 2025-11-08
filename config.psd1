@@ -833,7 +833,7 @@
                     FailOnWarnings = $false  # Fail validation on warnings
                     SkipChecks = @()  # Checks to skip: ErrorHandling, Logging, TestCoverage, UIIntegration, GitHubActions, PSScriptAnalyzer
                     ReportFormat = 'Text'  # Text, HTML, JSON
-                    ReportPath = './docs/reports/quality'
+                    ReportPath = './library/reports/quality'
                     AutoCreateIssues = $true  # Create GitHub issues for failures in CI
                     IssueLabels = @('quality-validation', 'automated', 'needs-fix')
                 }
@@ -1236,7 +1236,7 @@
             OutputPath = './tests/coverage'
             Format = @('JaCoCo', 'Cobertura')
             MinimumPercent = 80
-            ExcludePaths = @('*/tests/*', '*/legacy-to-migrate/*', '*/docs/examples/*')
+            ExcludePaths = @('*/tests/*', '*/legacy-to-migrate/*', '*/library/examples/*')
         }
         
         # Test output
@@ -1495,7 +1495,7 @@
         # Report generation
         AutoGenerateReports = $true
         DefaultFormat = 'HTML'
-        ReportPath = './docs/reports'
+        ReportPath = './library/reports'
         ExportFormats = @('HTML', 'JSON', 'CSV', 'PDF', 'Markdown')
         CompressReports = $false
         IncludeSystemInfo = $true

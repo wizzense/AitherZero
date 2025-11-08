@@ -15,7 +15,7 @@
 
     Uses the official VS Code MCP configuration format with .vscode/mcp.json
     or user profile mcp.json file as documented at:
-    https://code.visualstudio.com/docs/copilot/customization/mcp-servers
+    https://code.visualstudio.com/library/copilot/customization/mcp-servers
     
     Stage: Development
     Category: Development Environment Setup
@@ -39,7 +39,7 @@
     Requires GITHUB_TOKEN environment variable for GitHub server
     
     Format follows VS Code MCP specification:
-    https://code.visualstudio.com/docs/copilot/customization/mcp-servers
+    https://code.visualstudio.com/library/copilot/customization/mcp-servers
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Low')]
@@ -358,7 +358,7 @@ try {
         Write-ColorOutput "  Or VS Code will prompt you for it when starting the server" -Level 'Warning'
     }
 
-    Write-ColorOutput "`nDocumentation: https://code.visualstudio.com/docs/copilot/customization/mcp-servers" -Level 'Info'
+    Write-ColorOutput "`nDocumentation: https://code.visualstudio.com/library/copilot/customization/mcp-servers" -Level 'Info'
 
     exit 0
 

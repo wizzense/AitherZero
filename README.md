@@ -62,7 +62,7 @@ bash tools/setup-git-merge.sh
 pwsh -File tools/Setup-GitHooks.ps1
 ```
 
-See [Git Merge Setup Guide](./docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
+See [Git Merge Setup Guide](./library/docs/GIT-MERGE-SETUP.md) and [Git Hooks README](./.githooks/README.md) for details.
 
 **Option 3: Git Clone**
 ```bash
@@ -264,8 +264,8 @@ AitherZero maintains high code quality standards through automated validation:
 - ✅ PSScriptAnalyzer compliance
 
 **Documentation:**
-- [Quality Standards](docs/QUALITY-STANDARDS.md) - Complete quality guidelines
-- [Quick Reference](docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
+- [Quality Standards](library/docs/QUALITY-STANDARDS.md) - Complete quality guidelines
+- [Quick Reference](library/docs/QUALITY-QUICK-REFERENCE.md) - Quick reference guide
 - [Docker Usage Guide](DOCKER.md) - Container deployment and workflows
 
 ## Features
@@ -333,10 +333,10 @@ cp orchestration/playbooks/templates/custom-playbook-template.json orchestration
 
 ### Documentation
 
-- **[Building-Block Index](docs/BUILDING-BLOCKS-INDEX.md)** - Start here for overview and quick access
-- **[Quick Reference](docs/BUILDING-BLOCKS-QUICK-REFERENCE.md)** - Script lookup and common patterns (5 min read)
-- **[Complete Guide](docs/BUILDING-BLOCKS.md)** - Full documentation with all blocks (15 min read)
-- **[Reorganization Plan](docs/BUILDING-BLOCKS-REORGANIZATION.md)** - Architecture decisions (10 min read)
+- **[Building-Block Index](library/docs/BUILDING-BLOCKS-INDEX.md)** - Start here for overview and quick access
+- **[Quick Reference](library/docs/BUILDING-BLOCKS-QUICK-REFERENCE.md)** - Script lookup and common patterns (5 min read)
+- **[Complete Guide](library/docs/BUILDING-BLOCKS.md)** - Full documentation with all blocks (15 min read)
+- **[Reorganization Plan](library/docs/BUILDING-BLOCKS-REORGANIZATION.md)** - Architecture decisions (10 min read)
 - **[Custom Playbook Guide](orchestration/playbooks/custom/README.md)** - Create your own playbooks (10 min read)
 
 ## Core Modules
@@ -422,12 +422,12 @@ AitherZero is available in multiple formats for different use cases:
 ```
 
 ### Documentation
-- [Development Environment Setup](docs/COPILOT-DEV-ENVIRONMENT.md) - Complete guide
-- [MCP Server Configuration](docs/COPILOT-MCP-SETUP.md) - Enhanced context setup
+- [Development Environment Setup](library/docs/COPILOT-DEV-ENVIRONMENT.md) - Complete guide
+- [MCP Server Configuration](library/docs/COPILOT-MCP-SETUP.md) - Enhanced context setup
 - [Custom Instructions](.github/copilot-instructions.md) - AI coding guidance
 - [Agent Routing](.github/copilot.yaml) - Specialized experts
 
-**Learn more**: See [docs/COPILOT-DEV-ENVIRONMENT.md](docs/COPILOT-DEV-ENVIRONMENT.md) for the complete setup guide.
+**Learn more**: See [library/docs/COPILOT-DEV-ENVIRONMENT.md](library/docs/COPILOT-DEV-ENVIRONMENT.md) for the complete setup guide.
 
 ## Uninstallation
 

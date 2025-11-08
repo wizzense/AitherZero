@@ -9,7 +9,7 @@ on:
   push:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     paths:
-      - 'docs/reports/**'
+      - 'library/reports/**'
   workflow_dispatch:
     inputs:
       force_publish:
@@ -142,7 +142,7 @@ jobs:
           $indexContent += "Direct access to detailed reports and raw data:`n`n"
 
           foreach ($file in $reportFiles) {
-            $relativePath = "docs/reports/$($file.Name)"
+            $relativePath = "library/reports/$($file.Name)"
             $fileTime = Get-Date $file.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss'
             $indexContent += "- [$($file.Name)]($relativePath) - $fileTime`n"
           }
@@ -167,7 +167,7 @@ jobs:
           Write-Host "✅ Reports organized successfully" -ForegroundColor Green
           Write-Host "Total reports: $($reportFiles.Count)" -ForegroundColor Cyan
           if ($hasDashboard) {
-            Write-Host "✅ Comprehensive dashboard available at docs/reports/dashboard.html" -ForegroundColor Green
+            Write-Host "✅ Comprehensive dashboard available at library/reports/dashboard.html" -ForegroundColor Green
           }
 
       - name: 📤 Upload Combined Reports
@@ -175,7 +175,7 @@ jobs:
         with:
           name: combined-reports
           path: |
-            docs/reports/
+            library/reports/
             reports-index.md
             index.md
             _config.yml

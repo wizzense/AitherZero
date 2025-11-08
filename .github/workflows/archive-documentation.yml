@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'docs/archive/**'
+      - 'library/archive/**'
   workflow_dispatch:
 
 permissions:
@@ -32,8 +32,8 @@ jobs:
         id: check
         run: |
           # Check if archive directory exists and has files
-          if [ -d "docs/archive" ] && [ "$(ls -A docs/archive 2>/dev/null)" ]; then
-            ARCHIVE_COUNT=$(find docs/archive -type f -name "*.md" | wc -l)
+          if [ -d "library/archive" ] && [ "$(ls -A library/archive 2>/dev/null)" ]; then
+            ARCHIVE_COUNT=$(find library/archive -type f -name "*.md" | wc -l)
             echo "archive_count=$ARCHIVE_COUNT" >> $GITHUB_OUTPUT
 
             # Check if there are changes in the archive directory
@@ -80,7 +80,7 @@ jobs:
           EOF
 
           # List all archived files with details
-          cd docs/archive
+          cd library/archive
           for file in *.md; do
             if [ "$file" != "README.md" ] && [ "$file" != "index.md" ]; then
               SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
@@ -102,7 +102,7 @@ jobs:
           echo "## Direct File Access" >> _archive_staging/ARCHIVE-INDEX.md
           echo "" >> _archive_staging/ARCHIVE-INDEX.md
           echo "Individual files can also be viewed directly from the GitHub repository:" >> _archive_staging/ARCHIVE-INDEX.md
-          echo "\`https://github.com/${{ github.repository }}/tree/${{ github.sha }}/docs/archive\`" >> _archive_staging/ARCHIVE-INDEX.md
+          echo "\`https://github.com/${{ github.repository }}/tree/${{ github.sha }}/library/archive\`" >> _archive_staging/ARCHIVE-INDEX.md
 
       - name: Create documentation archive
         run: |
@@ -110,7 +110,7 @@ jobs:
           ARCHIVE_NAME="documentation-archive-${ARCHIVE_DATE}.zip"
 
           echo "📦 Creating archive: ${ARCHIVE_NAME}"
-          cd docs/archive
+          cd library/archive
 
           # Create zip file with all markdown files except README and index
           zip -r "../../_archive_staging/${ARCHIVE_NAME}" *.md \
@@ -230,7 +230,7 @@ jobs:
 
               <h2>Browse on GitHub</h2>
               <p>You can also view the archived files directly in the repository:</p>
-              <p><a href="https://github.com/${{ github.repository }}/tree/${{ github.sha }}/docs/archive">View on GitHub</a></p>
+              <p><a href="https://github.com/${{ github.repository }}/tree/${{ github.sha }}/library/archive">View on GitHub</a></p>
             </div>
           </body>
           </html>

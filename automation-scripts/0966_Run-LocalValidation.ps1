@@ -102,7 +102,7 @@ Write-Host ""
 # Configure report path
 if (-not $ReportPath) {
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-    $ReportPath = Join-Path $ProjectRoot "docs/reports/local-validation-$timestamp.md"
+    $ReportPath = Join-Path $ProjectRoot "library/reports/local-validation-$timestamp.md"
 }
 
 # Ensure reports directory exists

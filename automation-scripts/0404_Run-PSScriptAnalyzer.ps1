@@ -45,9 +45,9 @@ Set-StrictMode -Version Latest
 # Determine output path based on mode
 if (-not $OutputPath) {
     if ($Fast) {
-        $OutputPath = "./docs/reports/psscriptanalyzer-fast-results.json"
+        $OutputPath = "./library/reports/psscriptanalyzer-fast-results.json"
     } else {
-        $OutputPath = "./docs/reports/psscriptanalyzer-results.json"
+        $OutputPath = "./library/reports/psscriptanalyzer-results.json"
     }
 }
 

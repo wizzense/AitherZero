@@ -110,9 +110,9 @@ jobs:
         with:
           name: quality-reports-${{ github.run_number }}
           path: |
-            docs/reports/quality/**/*
-            docs/reports/**/*.md
-            docs/reports/**/*.json
+            library/reports/quality/**/*
+            library/reports/**/*.md
+            library/reports/**/*.json
             tests/analysis/**/*
           retention-days: 30
 
@@ -139,7 +139,7 @@ jobs:
             
             // Try to read quality summary
             try {
-              const reportsDir = './docs/reports/quality';
+              const reportsDir = './library/reports/quality';
               if (fs.existsSync(reportsDir)) {
                 const summaryFiles = fs.readdirSync(reportsDir).filter(f => f.includes('summary'));
                 if (summaryFiles.length > 0) {
@@ -193,7 +193,7 @@ jobs:
             comment += `### 🔗 Links\n`;
             comment += `- 📊 [Workflow Run](${runUrl})\n`;
             comment += `- 📁 [Quality Reports](${runUrl})\n`;
-            comment += `- 📖 [Quality Standards](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/main/docs/QUALITY-QUICK-REFERENCE.md)\n\n`;
+            comment += `- 📖 [Quality Standards](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/main/library/QUALITY-QUICK-REFERENCE.md)\n\n`;
             
             comment += `---\n`;
             comment += `*🤖 Automated by AitherZeroCLI • Quality validation is non-blocking*`;

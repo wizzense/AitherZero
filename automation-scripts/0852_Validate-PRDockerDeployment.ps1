@@ -458,7 +458,7 @@ try {
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Magenta
     
     # Save detailed results
-    $reportPath = Join-Path $ProjectRoot "docs/reports/pr-docker-validation-$PRNumber.json"
+    $reportPath = Join-Path $ProjectRoot "library/reports/pr-docker-validation-$PRNumber.json"
     $reportDir = Split-Path -Parent $reportPath
     if (-not (Test-Path $reportDir)) {
         New-Item -ItemType Directory -Path $reportDir -Force | Out-Null
@@ -494,7 +494,7 @@ try {
         StackTrace = $_.ScriptStackTrace
     }
     
-    $reportPath = Join-Path $ProjectRoot "docs/reports/pr-docker-validation-$PRNumber-error.json"
+    $reportPath = Join-Path $ProjectRoot "library/reports/pr-docker-validation-$PRNumber-error.json"
     $reportDir = Split-Path -Parent $reportPath
     if (-not (Test-Path $reportDir)) {
         New-Item -ItemType Directory -Path $reportDir -Force | Out-Null

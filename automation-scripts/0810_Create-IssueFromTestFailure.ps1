@@ -180,7 +180,7 @@ function New-IssueBody {
             $body += ""
             $body += "## Suggested Fix"
             $body += "Review the PSScriptAnalyzer documentation for rule: $($Data.RuleName)"
-            $body += "https://github.com/PowerShell/PSScriptAnalyzer/tree/master/docs/Rules/$($Data.RuleName).md"
+            $body += "https://github.com/PowerShell/PSScriptAnalyzer/tree/master/library/Rules/$($Data.RuleName).md"
         }
 
         'Bug' {

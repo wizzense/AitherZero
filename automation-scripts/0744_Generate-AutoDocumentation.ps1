@@ -83,7 +83,7 @@ function Initialize-Documentation {
     # Initialize documentation engine
     try {
         Write-DocLog "Importing and initializing documentation engine..." -Level Debug
-        Initialize-DocumentationEngine -TemplateDirectory (Join-Path $script:ProjectRoot "docs/templates")
+        Initialize-DocumentationEngine -TemplateDirectory (Join-Path $script:ProjectRoot "library/templates")
         Write-DocLog "Documentation engine initialized successfully" -Level Information
     } catch {
         Write-DocLog "Failed to initialize documentation engine: $_" -Level Error
@@ -94,7 +94,7 @@ function Initialize-Documentation {
     $script:OutputPath = if ($OutputPath) { 
         $OutputPath 
     } else { 
-        Join-Path $script:ProjectRoot "docs/generated" 
+        Join-Path $script:ProjectRoot "library/generated" 
     }
     Write-DocLog "Using output path: $script:OutputPath" -Level Debug
 

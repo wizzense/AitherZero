@@ -90,7 +90,7 @@ function Write-DocOrchLog {
 
 # Set default output path
 if (-not $OutputPath) {
-    $OutputPath = Join-Path $script:ProjectRoot "docs/generated"
+    $OutputPath = Join-Path $script:ProjectRoot "library/generated"
     Write-DocOrchLog "Using default output path: $OutputPath"
 }
 
