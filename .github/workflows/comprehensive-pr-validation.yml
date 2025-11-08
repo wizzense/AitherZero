@@ -11,76 +11,11 @@ env:
   GITHUB_HEAD_REF: ${{ github.head_ref }}
 
 jobs:
-  validate-all-scripts:
-    name: 📝 Validate All Script Syntax
+  comprehensive-validation:
+    name: ✅ Run Comprehensive Validation
     runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
+    timeout-minutes: 10
 
-      - name: ⚙️ Setup PowerShell
-        shell: pwsh
-        run: |
-          $PSVersionTable.PSVersion
-          
-      - name: 🔍 Test ALL Playbook Scripts
-        shell: pwsh
-        run: |
-          Write-Host "=== COMPREHENSIVE SCRIPT VALIDATION ===" -ForegroundColor Cyan
-          Write-Host ""
-          
-          # Get ALL scripts in playbooks
-          $playbookScripts = @(
-              "0407", "0515", "0900", "0902",  # pr-ecosystem-build
-              "0402", "0403", "0404", "0413", "0420", "0425", "0514", "0517", "0521", "0523",  # pr-ecosystem-analyze
-              "0510", "0512", "0513", "0518", "0519"   # pr-ecosystem-report
-          )
-          
-          $failed = @()
-          $passed = 0
-          
-          foreach ($num in $playbookScripts) {
-              $scriptPath = "./library/automation-scripts/${num}_*.ps1"
-              $script = Get-Item $scriptPath -ErrorAction SilentlyContinue
-              
-              if ($script) {
-                  Write-Host "Testing $num : $($script.Name)" -ForegroundColor Yellow
-                  
-                  $errors = $null
-                  [System.Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref]$null, [ref]$errors)
-                  
-                  if ($errors) {
-                      Write-Host "  ✗ SYNTAX ERROR" -ForegroundColor Red
-                      $errors | ForEach-Object { 
-                          Write-Host "    Line $($_.Extent.StartLineNumber): $($_.Message)" -ForegroundColor Red 
-                      }
-                      $failed += $num
-                  } else {
-                      Write-Host "  ✓ Syntax OK" -ForegroundColor Green
-                      $passed++
-                  }
-              } else {
-                  Write-Host "Testing $num : NOT FOUND" -ForegroundColor Red
-                  $failed += $num
-              }
-          }
-          
-          Write-Host ""
-          Write-Host "===========================================" -ForegroundColor Cyan
-          Write-Host "Results: $passed passed, $($failed.Count) failed" -ForegroundColor $(if ($failed.Count -eq 0) { 'Green' } else { 'Red' })
-          Write-Host "===========================================" -ForegroundColor Cyan
-          
-          if ($failed.Count -gt 0) {
-              Write-Host ""
-              Write-Host "FAILED SCRIPTS:" -ForegroundColor Red
-              $failed | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-              exit 1
-          }
-
-  validate-playbooks:
-    name: 📚 Validate All Playbooks Load
-    runs-on: ubuntu-latest
-    needs: validate-all-scripts
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -90,164 +25,24 @@ jobs:
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
 
-      - name: 🔍 Test All Playbooks
+      - name: 🔍 Run Comprehensive Validation Playbook
         shell: pwsh
         run: |
-          Import-Module ./AitherZero.psd1 -Force 2>&1 | Out-Null
+          Import-Module ./AitherZero.psd1 -Force
           
-          Write-Host "=== TESTING ALL PLAYBOOKS ===" -ForegroundColor Cyan
-          Write-Host ""
-          
-          $playbooks = @('pr-ecosystem-build', 'pr-ecosystem-analyze', 'pr-ecosystem-report')
-          $results = @{}
-          
-          foreach ($pb in $playbooks) {
-              Write-Host "Testing: $pb" -ForegroundColor Yellow
-              try {
-                  Invoke-OrchestrationSequence -LoadPlaybook $pb -DryRun -Quiet 2>&1 | Out-Null
-                  Write-Host "  ✓ PASSED" -ForegroundColor Green
-                  $results[$pb] = 'PASS'
-              } catch {
-                  Write-Host "  ✗ FAILED: $_" -ForegroundColor Red
-                  $results[$pb] = 'FAIL'
-              }
-          }
-          
-          Write-Host ""
-          Write-Host "Summary:" -ForegroundColor Cyan
-          $results.GetEnumerator() | ForEach-Object {
-              $color = if ($_.Value -eq 'PASS') { 'Green' } else { 'Red' }
-              Write-Host "  $($_.Key): $($_.Value)" -ForegroundColor $color
-          }
-          
-          $failed = ($results.Values | Where-Object { $_ -eq 'FAIL' }).Count
-          if ($failed -gt 0) {
-              exit 1
-          }
-
-  validate-config:
-    name: ⚙️ Validate Config Manifest
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚀 Bootstrap Environment
-        shell: pwsh
-        run: |
-          ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
-
-      - name: 🔍 Validate Config Manifest
-        shell: pwsh
-        run: |
-          # Count actual modules and scripts
-          $actualModules = (Get-ChildItem -Path ./aithercore -Filter "*.psm1" -Recurse).Count
-          $actualScripts = (Get-ChildItem -Path ./library/automation-scripts -Filter "*.ps1").Count
-          
-          Write-Host "Actual counts:" -ForegroundColor Cyan
-          Write-Host "  Modules: $actualModules" -ForegroundColor White
-          Write-Host "  Scripts: $actualScripts" -ForegroundColor White
-          
-          # Run validation script
-          $validationScript = "./library/automation-scripts/0413_Validate-ConfigManifest.ps1"
-          if (Test-Path $validationScript) {
-              & $validationScript
-              if ($LASTEXITCODE -ne 0) {
-                  Write-Host ""
-                  Write-Host "Config validation failed!" -ForegroundColor Red
-                  Write-Host "Expected: modules=$actualModules, scripts=$actualScripts" -ForegroundColor Yellow
-                  Write-Host ""
-                  Write-Host "To fix: Update config.psd1 Manifest section with correct counts" -ForegroundColor Yellow
-                  exit 1
-              }
-          } else {
-              Write-Host "✓ Validation script not found - skipping" -ForegroundColor Yellow
-          }
-
-  test-module-loading:
-    name: 🔧 Test Module Loading
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚀 Bootstrap Environment
-        shell: pwsh
-        run: |
-          ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
-
-      - name: 🔍 Test Module Load
-        shell: pwsh
-        run: |
-          Write-Host "=== TESTING MODULE LOADING ===" -ForegroundColor Cyan
-          
-          try {
-              Import-Module ./AitherZero.psd1 -Force -ErrorAction Stop
-              Write-Host "✓ Module loaded successfully" -ForegroundColor Green
-              
-              # Check for warnings
-              $warnings = Import-Module ./AitherZero.psd1 -Force 2>&1 | 
-                Where-Object { $_ -is [System.Management.Automation.WarningRecord] }
-              
-              if ($warnings) {
-                  Write-Host ""
-                  Write-Host "Warnings detected:" -ForegroundColor Yellow
-                  $warnings | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
-              } else {
-                  Write-Host "✓ No warnings during module load" -ForegroundColor Green
-              }
-          } catch {
-              Write-Host "✗ Module loading FAILED: $_" -ForegroundColor Red
-              exit 1
-          }
-
-  final-summary:
-    name: 📊 Validation Summary
-    runs-on: ubuntu-latest
-    needs: [validate-all-scripts, validate-playbooks, validate-config, test-module-loading]
-    if: always()
-    steps:
-      - name: 📊 Display Summary
-        shell: pwsh
-        run: |
-          Write-Host ""
           Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Cyan
-          Write-Host "║  ✅ ALL COMPREHENSIVE VALIDATIONS PASSED  ✅  ║" -ForegroundColor Green
+          Write-Host "║     COMPREHENSIVE PR VALIDATION PLAYBOOK      ║" -ForegroundColor Cyan
           Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Cyan
           Write-Host ""
-          Write-Host "Validated:" -ForegroundColor Cyan
-          Write-Host "  ✓ All playbook script syntax" -ForegroundColor Green
-          Write-Host "  ✓ All playbooks load correctly" -ForegroundColor Green
-          Write-Host "  ✓ Config manifest accuracy" -ForegroundColor Green
-          Write-Host "  ✓ Module loading without errors" -ForegroundColor Green
-          Write-Host ""
-
-      - name: ❌ Report Failures
-        if: needs.validate-all-scripts.result == 'failure' || needs.validate-playbooks.result == 'failure' || needs.validate-config.result == 'failure' || needs.test-module-loading.result == 'failure'
-        shell: pwsh
-        run: |
-          Write-Host ""
-          Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Red
-          Write-Host "║  ❌ VALIDATION FAILURES DETECTED  ❌          ║" -ForegroundColor Red
-          Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Red
-          Write-Host ""
           
-          $failures = @()
-          if ('${{ needs.validate-all-scripts.result }}' -eq 'failure') {
-              $failures += "Script Syntax Validation"
-          }
-          if ('${{ needs.validate-playbooks.result }}' -eq 'failure') {
-              $failures += "Playbook Loading"
-          }
-          if ('${{ needs.validate-config.result }}' -eq 'failure') {
-              $failures += "Config Manifest"
-          }
-          if ('${{ needs.test-module-loading.result }}' -eq 'failure') {
-              $failures += "Module Loading"
+          # Run the comprehensive validation playbook
+          Invoke-OrchestrationSequence -LoadPlaybook validate-pr-comprehensive
+          
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host ""
+              Write-Host "❌ Validation playbook FAILED" -ForegroundColor Red
+              exit 1
           }
           
-          Write-Host "Failed checks:" -ForegroundColor Red
-          $failures | ForEach-Object { Write-Host "  ✗ $_" -ForegroundColor Red }
           Write-Host ""
-          
-          exit 1
+          Write-Host "✅ All validations PASSED" -ForegroundColor Green
