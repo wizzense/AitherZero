@@ -215,12 +215,14 @@ try {
         # Use NodeSource repository for consistent versions
         if (Get-Command apt-get -ErrorAction SilentlyContinue) {
             # Debian/Ubuntu
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt-get install -y nodejs
+            $setupScript = Invoke-WebRequest -Uri 'https://deb.nodesource.com/setup_20.x' -UseBasicParsing
+            $setupScript.Content | & bash -
+            & apt-get install -y nodejs
         } elseif (Get-Command yum -ErrorAction SilentlyContinue) {
             # RHEL/CentOS
-            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-            sudo yum install -y nodejs
+            $setupScript = Invoke-WebRequest -Uri 'https://rpm.nodesource.com/setup_20.x' -UseBasicParsing
+            $setupScript.Content | & bash -
+            & yum install -y nodejs
         } else {
             Write-ScriptLog "Unsupported Linux distribution" -Level 'Error'
             throw "Cannot install Node.js on this Linux distribution"
@@ -230,15 +232,15 @@ try {
         Write-ScriptLog "Installing Node.js for macOS..."
 
         if (Get-Command brew -ErrorAction SilentlyContinue) {
-            brew install node
+            & brew install node
         } else {
             # Download and install pkg
             $downloadUrl = 'https://nodejs.org/dist/v20.18.1/node-v20.18.1.pkg'
             $installerPath = '/tmp/node-installer.pkg'
 
-            curl -o $installerPath $downloadUrl
-            sudo installer -pkg $installerPath -target /
-            rm $installerPath
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $installerPath -UseBasicParsing
+            & installer -pkg $installerPath -target /
+            Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
         }
     } else {
         Write-ScriptLog "Unsupported operating system" -Level 'Error'
