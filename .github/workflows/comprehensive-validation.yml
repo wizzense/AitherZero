@@ -42,12 +42,14 @@ jobs:
       
       - name: 📊 Run Three-Tier Validation
         shell: pwsh
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
         run: |
           # Import three-tier validation framework
           Import-Module ./aithercore/testing/ThreeTierValidation.psm1 -Force
           
           # Get changed scripts
-          $baseBranch = "${{ github.base_ref }}"
+          $baseBranch = $env:BASE_BRANCH
           $changedFiles = git diff --name-only "origin/$baseBranch...HEAD" | 
             Where-Object { $_ -match 'library/automation-scripts/.*\.ps1$' }
           
@@ -94,8 +96,10 @@ jobs:
       
       - name: 🎭 Run Comprehensive Validation Playbook
         shell: pwsh
+        env:
+          PLAYBOOK_NAME: ${{ inputs.playbook || 'comprehensive-validation' }}
         run: |
-          $playbook = "${{ inputs.playbook || 'comprehensive-validation' }}"
+          $playbook = $env:PLAYBOOK_NAME
           Write-Host "Running playbook: $playbook"
           
           ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -NonInteractive
