@@ -598,7 +598,7 @@ function Get-ProjectMetrics {
             Write-ScriptLog -Level Warning -Message "Failed to load three-tier quality metrics: $_"
         }
     } else {
-        Write-ScriptLog -Level Information -Message "Three-tier quality metrics not found. Run './library/automation-scripts/0514_Generate-QualityMetrics.ps1' to generate."
+        Write-ScriptLog -Level Information -Message "Three-tier quality metrics not found. Run './library/automation-scripts/0528_Generate-QualityMetrics.ps1' to generate."
     }
     
     # Integrate quality trends (historical data)

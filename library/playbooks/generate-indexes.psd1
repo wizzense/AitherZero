@@ -16,7 +16,7 @@
     )
     
     Variables = @{
-        CI = $env:CI
+        CI = "true"
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
     }

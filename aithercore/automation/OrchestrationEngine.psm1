@@ -2622,11 +2622,12 @@ Example:
     $standardPlaybook = @{}
     
     # Normalize common properties
-    $standardPlaybook.Name = if ($Playbook.Name) { $Playbook.Name } else { $Playbook.name }
-    $standardPlaybook.Description = if ($Playbook.Description) { $Playbook.Description } else { $Playbook.description }
-    $standardPlaybook.Version = if ($Playbook.Version) { $Playbook.Version } else { $Playbook.version }
-    $standardPlaybook.Sequence = if ($Playbook.Sequence) { $Playbook.Sequence } else { $Playbook.sequence }
-    $standardPlaybook.Variables = if ($Playbook.Variables) { $Playbook.Variables } else { $Playbook.variables }
+    # Use ContainsKey and array wrapper @() to preserve arrays (avoid PowerShell unwrapping single-element arrays)
+    $standardPlaybook.Name = if ($Playbook.ContainsKey('Name')) { $Playbook['Name'] } else { $Playbook['name'] }
+    $standardPlaybook.Description = if ($Playbook.ContainsKey('Description')) { $Playbook['Description'] } else { $Playbook['description'] }
+    $standardPlaybook.Version = if ($Playbook.ContainsKey('Version')) { $Playbook['Version'] } else { $Playbook['version'] }
+    $standardPlaybook.Sequence = @(if ($Playbook.ContainsKey('Sequence')) { $Playbook['Sequence'] } else { $Playbook['sequence'] })
+    $standardPlaybook.Variables = if ($Playbook.ContainsKey('Variables')) { $Playbook['Variables'] } else { $Playbook['variables'] }
     
     # Copy all other properties as-is (skip deprecated Stages)
     foreach ($key in $Playbook.Keys) {
