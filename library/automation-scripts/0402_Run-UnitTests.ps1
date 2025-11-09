@@ -16,6 +16,7 @@
     Order: 0402
     Dependencies: 0400
     Tags: testing, unit-tests, pester, coverage
+    AllowParallel: false
 #>
 
 [CmdletBinding(SupportsShouldProcess)]

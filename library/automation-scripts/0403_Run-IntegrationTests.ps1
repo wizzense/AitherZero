@@ -16,6 +16,7 @@
     Order: 0403
     Dependencies: 0400
     Tags: testing, integration-tests, pester, e2e
+    AllowParallel: false
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
