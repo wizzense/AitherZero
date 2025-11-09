@@ -55,7 +55,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '🚀 **PR Complete Workflow Started**\n\n**Phase 1:** ⚡ Quick Validation\n- Syntax check\n- Config validation\n- Manifest validation'
@@ -101,7 +101,7 @@ jobs:
             const status = '${{ steps.validate.outcome }}';
             const icon = status === 'success' ? '✅' : '❌';
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `${icon} **Quick Validation ${status === 'success' ? 'PASSED' : 'FAILED'}**`
@@ -134,7 +134,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 2:** 🧪 Comprehensive Testing Started\n\nPreparing test matrix for parallel execution...'
@@ -321,7 +321,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '✅ **Comprehensive Testing Complete**\n\n- Unit tests: Completed\n- Domain tests: Completed\n- Integration tests: Completed\n\n*All test results uploaded as artifacts*'
@@ -349,7 +349,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 3:** 🔨 Build & Package Started'
@@ -388,7 +388,7 @@ jobs:
             const status = '${{ steps.build.outcome }}';
             const icon = status === 'success' ? '✅' : '⚠️';
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `${icon} **Build & Package ${status === 'success' ? 'PASSED' : 'COMPLETED WITH ISSUES'}**`
@@ -417,7 +417,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 3B:** 🐳 Docker Container Build Started'
@@ -515,7 +515,7 @@ jobs:
             }
             
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: body
@@ -543,7 +543,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 4:** 🔍 Quality Analysis Started\n\n- PSScriptAnalyzer\n- Component Quality\n- Security Scan'
@@ -585,7 +585,7 @@ jobs:
             const status = '${{ steps.quality.outcome }}';
             const icon = status === 'success' ? '✅' : 'ℹ️';
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `${icon} **Quality Analysis ${status === 'success' ? 'PASSED' : 'COMPLETED'}**`
@@ -611,7 +611,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 5:** 📊 Dashboard Generation Started\n\nConsolidating all results...'
@@ -700,8 +700,8 @@ jobs:
             const dockerIcon = dockerStatus === 'success' ? '✅' : '⚠️';
             const qualityIcon = qualityStatus === 'success' ? '✅' : 'ℹ️';
             
-            const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${context.issue.number}/`;
-            const dockerImageTag = `ghcr.io/${context.repo.owner}/${context.repo.repo}:pr-${context.issue.number}`.toLowerCase();
+            const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${process.env.PR_NUMBER}/`;
+            const dockerImageTag = `ghcr.io/${context.repo.owner}/${context.repo.repo}:pr-${process.env.PR_NUMBER}`.toLowerCase();
             
             const summary = `## 🚀 PR Complete Workflow - FINISHED
             
@@ -746,7 +746,7 @@ jobs:
             *Complete PR workflow - all phases executed including Docker container build*`;
             
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: summary
