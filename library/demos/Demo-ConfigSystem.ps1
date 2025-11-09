@@ -93,30 +93,9 @@ if ($capabilities.Extensions.Count -gt 0) {
     }
 }
 
-# Section 4: Extension System
+# Section 4: Config-Driven UI Example
 Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
-Write-Host "4. Extension System" -ForegroundColor Yellow
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
-Write-Host ""
-
-Initialize-ExtensionSystem
-$extensions = Get-AvailableExtensions
-
-Write-Host "Found $($extensions.Count) extension(s):" -ForegroundColor White
-Write-Host ""
-
-foreach ($ext in $extensions) {
-    $statusColor = if ($ext.Status -eq 'Loaded') { "Green" } else { "Yellow" }
-    
-    Write-Host "  [$($ext.Status)]" -ForegroundColor $statusColor -NoNewline
-    Write-Host " $($ext.Name) v$($ext.Version)" -ForegroundColor White
-    Write-Host "    $($ext.Description)" -ForegroundColor DarkGray
-    Write-Host ""
-}
-
-# Section 5: Config-Driven UI Example
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
-Write-Host "5. Config-Driven UI Example" -ForegroundColor Yellow
+Write-Host "4. Config-Driven UI Example" -ForegroundColor Yellow
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
 Write-Host ""
 
