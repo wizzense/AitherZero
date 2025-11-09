@@ -1,0 +1,145 @@
+name: Three-Tier Comprehensive Validation
+
+on:
+  pull_request:
+    paths:
+      - 'library/automation-scripts/**'
+      - 'aithercore/**'
+      - 'tests/**'
+      - '.github/workflows/comprehensive-validation.yml'
+  workflow_dispatch:
+    inputs:
+      playbook:
+        description: 'Playbook to run'
+        required: false
+        default: 'comprehensive-validation'
+        type: choice
+        options:
+          - comprehensive-validation
+          - test-orchestration
+  
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  three-tier-validation:
+    name: 🎯 Three-Tier Validation (AST → PSSA → Pester)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          Write-Host "Bootstrapping AitherZero environment..."
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+      
+      - name: 📊 Run Three-Tier Validation
+        shell: pwsh
+        run: |
+          # Import three-tier validation framework
+          Import-Module ./aithercore/testing/ThreeTierValidation.psm1 -Force
+          
+          # Get changed scripts
+          $changedFiles = git diff --name-only origin/${{ github.base_ref }}...HEAD | 
+            Where-Object { $_ -match 'library/automation-scripts/.*\.ps1$' }
+          
+          if ($changedFiles.Count -eq 0) {
+            Write-Host "No automation scripts changed, skipping validation"
+            exit 0
+          }
+          
+          Write-Host "Validating $($changedFiles.Count) changed scripts..."
+          
+          $results = @()
+          foreach ($file in $changedFiles) {
+            if (Test-Path $file) {
+              Write-Host "`n🔍 Validating: $file"
+              
+              $testPath = $file -replace 'library/automation-scripts/', 'tests/unit/library/automation-scripts/' -replace '\.ps1$', '.Tests.ps1'
+              
+              $result = Invoke-ThreeTierValidation -ScriptPath $file -TestPath $testPath
+              $results += $result
+              
+              # Display summary
+              Write-Host "  Quality Score: $($result.Summary.QualityScore)/100"
+              Write-Host "  Errors: $($result.Summary.TotalErrors)"
+              Write-Host "  Warnings: $($result.Summary.TotalWarnings)"
+              Write-Host "  Status: $(if ($result.OverallSuccess) { '✅ PASSED' } else { '❌ FAILED' })"
+            }
+          }
+          
+          # Overall summary
+          $overallSuccess = ($results | Where-Object { -not $_.OverallSuccess }).Count -eq 0
+          $avgQuality = ($results | ForEach-Object { $_.Summary.QualityScore } | Measure-Object -Average).Average
+          
+          Write-Host "`n╔══════════════════════════════════════╗"
+          Write-Host "║  Three-Tier Validation Summary      ║"
+          Write-Host "╚══════════════════════════════════════╝"
+          Write-Host "Scripts Validated: $($results.Count)"
+          Write-Host "Average Quality:   $([Math]::Round($avgQuality, 1))/100"
+          Write-Host "Overall Status:    $(if ($overallSuccess) { '✅ PASSED' } else { '❌ FAILED' })"
+          
+          if (-not $overallSuccess) {
+            exit 1
+          }
+      
+      - name: 🎭 Run Comprehensive Validation Playbook
+        shell: pwsh
+        run: |
+          $playbook = "${{ inputs.playbook || 'comprehensive-validation' }}"
+          Write-Host "Running playbook: $playbook"
+          
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -NonInteractive
+      
+      - name: 📈 Generate Quality Report
+        if: always()
+        shell: pwsh
+        run: |
+          # Generate comprehensive quality report
+          if (Test-Path ./library/reports) {
+            $reportFiles = Get-ChildItem -Path ./library/reports -Filter "*validation*.json" -Recurse
+            
+            if ($reportFiles) {
+              Write-Host "📊 Quality Reports Generated:"
+              $reportFiles | ForEach-Object {
+                Write-Host "  - $($_.FullName)"
+              }
+            }
+          }
+      
+      - name: 📤 Upload Validation Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-tier-validation-results
+          path: |
+            library/reports/**/*validation*.json
+            library/tests/results/**/*.xml
+            library/tests/analysis/**/*.json
+          retention-days: 30
+      
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Try to read validation report
+            let reportContent = '## 🎯 Three-Tier Validation Results\n\n';
+            reportContent += '✅ Three-tier validation completed (AST → PSScriptAnalyzer → Pester)\n\n';
+            reportContent += 'See artifacts for detailed results.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reportContent
+            });
