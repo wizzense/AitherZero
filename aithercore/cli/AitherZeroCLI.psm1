@@ -508,8 +508,9 @@ function Invoke-AitherSequence {
         - Stages: "stage:Testing" (all scripts tagged with Testing stage)
     
     .PARAMETER Sequence
-        Script sequence to execute
-        Examples: "0402,0404", "0400-0410", "0500,0510-0520,0700", "04*,!0450"
+        Script sequence(s) to execute. Can be a single string or an array of strings.
+        Single string examples: "0402,0404", "0400-0410", "0500,0510-0520,0700", "04*,!0450"
+        Array examples: 0500,0501 or @("0500", "0501") or @("0400-0410", "0500")
     
     .PARAMETER ContinueOnError
         Continue executing remaining scripts even if one fails
@@ -538,7 +539,17 @@ function Invoke-AitherSequence {
     .EXAMPLE
         Invoke-AitherSequence "0402,0404,0407"
         
-        Execute scripts 0402, 0404, and 0407
+        Execute scripts 0402, 0404, and 0407 using comma-separated string
+    
+    .EXAMPLE
+        Invoke-AitherSequence 0500,0501
+        
+        Execute scripts 0500 and 0501 using PowerShell array syntax (no quotes)
+    
+    .EXAMPLE
+        Invoke-AitherSequence @("0500", "0501", "0510-0520")
+        
+        Execute scripts using explicit array with ranges
     
     .EXAMPLE
         Invoke-AitherSequence "0500,0501,0510-0520,0700,0701"
@@ -573,7 +584,7 @@ function Invoke-AitherSequence {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory, Position=0, ValueFromPipeline)]
-        [string]$Sequence,
+        [string[]]$Sequence,
         
         [Parameter()]
         [switch]$ContinueOnError,
@@ -602,6 +613,7 @@ function Invoke-AitherSequence {
     )
     
     # Build parameters for orchestration engine
+    # Invoke-OrchestrationSequence expects string[] for -Sequence parameter
     $params = @{
         Sequence = $Sequence
         ContinueOnError = $ContinueOnError
@@ -1068,12 +1080,12 @@ function Switch-AitherEnvironment {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, Position=0)]
-        [ValidateSet('Development', 'Production', 'Staging', 'Test')]
+        [ValidateSet('Development', 'Testing', 'Staging', 'Production')]
         [string]$Name
     )
     
     if (Get-Command Switch-ConfigurationEnvironment -ErrorAction SilentlyContinue) {
-        Switch-ConfigurationEnvironment -Name $Name
+        Switch-ConfigurationEnvironment -Environment $Name
         Write-AitherStatus "Switched to $Name environment" -Type Success
     }
     else {
@@ -1439,7 +1451,7 @@ function Write-AitherLog {
     )
     
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $Level -Category $Category
+        Write-CustomLog -Message $Message -Level $Level -Source $Category
     }
     else {
         Write-Host "[$Level] $Message"

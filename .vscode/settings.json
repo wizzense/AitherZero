@@ -1,6 +1,7 @@
 {
   "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "terminal.integrated.env.windows": {
+  "powershell.startAutomatically": false,
+  "terminal.integrated.env.osx": {
     "AITHERZERO_ROOT": "${workspaceFolder}"
   },
   "terminal.integrated.profiles.windows": {
@@ -13,12 +14,6 @@
       ]
     }
   },
-  "terminal.integrated.env.osx": {
-    "AITHERZERO_ROOT": "${workspaceFolder}"
-  },
-  "terminal.integrated.env.linux": {
-    "AITHERZERO_ROOT": "${workspaceFolder}"
-  },
   "terminal.integrated.profiles.linux": {
     "PowerShell": {
       "path": "pwsh",
@@ -29,5 +24,10 @@
       ]
     }
   },
-  "powershell.startAutomatically": false
+  "terminal.integrated.env.linux": {
+    "AITHERZERO_ROOT": "${workspaceFolder}"
+  },
+  "terminal.integrated.env.windows": {
+    "AITHERZERO_ROOT": "${workspaceFolder}"
+  }
 }
