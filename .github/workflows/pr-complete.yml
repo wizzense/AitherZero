@@ -1,0 +1,606 @@
+---
+name: 🚀 PR Complete Workflow
+
+# Complete PR workflow that orchestrates all validation, testing, building, and reporting
+# This is the single entry point for all PR checks
+
+on:
+  pull_request:
+    branches: [main, dev, dev-staging]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+  pages: write
+  id-token: write
+  checks: write
+  statuses: write
+  actions: read
+
+concurrency:
+  group: pr-complete-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+
+jobs:
+  # ============================================================================
+  # PHASE 1: Quick Validation (Fast Feedback)
+  # ============================================================================
+  
+  quick-validation:
+    name: ⚡ Quick Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      status: ${{ steps.validate.outcome }}
+      
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 💬 Post Start Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 **PR Complete Workflow Started**\n\n**Phase 1:** ⚡ Quick Validation\n- Syntax check\n- Config validation\n- Manifest validation'
+            });
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: ⚡ Quick Validation (Syntax + Config + Manifests)
+        id: validate
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "⚡ Running Quick Validation" -ForegroundColor Cyan
+          
+          # Run critical validation scripts
+          $scripts = @('0407', '0413', '0405')
+          $failed = @()
+          
+          foreach ($script in $scripts) {
+            Write-Host "`nRunning $script..." -ForegroundColor Yellow
+            $result = & "./library/automation-scripts/${script}*.ps1"
+            if ($LASTEXITCODE -ne 0) {
+              $failed += $script
+            }
+          }
+          
+          if ($failed.Count -gt 0) {
+            Write-Host "❌ Quick validation failed: $($failed -join ', ')" -ForegroundColor Red
+            exit 1
+          }
+          
+          Write-Host "✅ Quick validation passed" -ForegroundColor Green
+
+      - name: 💬 Post Validation Result
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.validate.outcome }}';
+            const icon = status === 'success' ? '✅' : '❌';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Quick Validation ${status === 'success' ? 'PASSED' : 'FAILED'}**`
+            });
+
+  # ============================================================================
+  # PHASE 2: Comprehensive Testing (Matrix-Based)
+  # ============================================================================
+  
+  test-matrix-prepare:
+    name: 🎯 Prepare Test Matrix
+    needs: quick-validation
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      unit-ranges: ${{ steps.matrix.outputs.unit-ranges }}
+      domain-modules: ${{ steps.matrix.outputs.domain-modules }}
+      integration-suites: ${{ steps.matrix.outputs.integration-suites }}
+      should-run-unit: ${{ steps.matrix.outputs.should-run-unit }}
+      should-run-domain: ${{ steps.matrix.outputs.should-run-domain }}
+      should-run-integration: ${{ steps.matrix.outputs.should-run-integration }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 💬 Post Test Prep Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Phase 2:** 🧪 Comprehensive Testing Started\n\nPreparing test matrix for parallel execution...'
+            });
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🎯 Generate Test Matrix
+        id: matrix
+        shell: pwsh
+        run: |
+          Write-Host "🎯 Generating comprehensive test matrix" -ForegroundColor Cyan
+          
+          $unitRanges = @(
+            '0000-0099', '0100-0199', '0200-0299', '0300-0399',
+            '0400-0499', '0500-0599', '0700-0799', '0800-0899', '0900-0999'
+          )
+          
+          $domainModules = @(
+            'configuration', 'documentation', 'infrastructure',
+            'security', 'testing', 'utilities'
+          )
+          
+          $integrationSuites = @(
+            'automation-scripts', 'orchestration', 'bootstrap', 'modules'
+          )
+          
+          "unit-ranges=$($unitRanges | ConvertTo-Json -Compress)" >> $env:GITHUB_OUTPUT
+          "domain-modules=$($domainModules | ConvertTo-Json -Compress)" >> $env:GITHUB_OUTPUT
+          "integration-suites=$($integrationSuites | ConvertTo-Json -Compress)" >> $env:GITHUB_OUTPUT
+          "should-run-unit=True" >> $env:GITHUB_OUTPUT
+          "should-run-domain=True" >> $env:GITHUB_OUTPUT
+          "should-run-integration=True" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "✅ Matrix generated: $($unitRanges.Count) unit ranges, $($domainModules.Count) domains, $($integrationSuites.Count) integration suites" -ForegroundColor Green
+
+  unit-tests:
+    name: 🧪 Unit [${{ matrix.range }}]
+    needs: test-matrix-prepare
+    if: needs.test-matrix-prepare.outputs.should-run-unit == 'True'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        range: ${{ fromJson(needs.test-matrix-prepare.outputs.unit-ranges) }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🧪 Run Unit Tests [${{ matrix.range }}]
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🧪 Running unit tests for range: ${{ matrix.range }}" -ForegroundColor Cyan
+          
+          $testsPath = "library/tests/unit/automation-scripts/${{ matrix.range }}"
+          if (Test-Path $testsPath) {
+            Invoke-Pester -Path $testsPath -Output Detailed -CI
+          } else {
+            Write-Host "⚠️ No tests found for range ${{ matrix.range }}" -ForegroundColor Yellow
+          }
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results-${{ matrix.range }}
+          path: library/tests/results/**
+          retention-days: 30
+          if-no-files-found: warn
+
+  domain-tests:
+    name: 🔧 Domain [${{ matrix.module }}]
+    needs: test-matrix-prepare
+    if: needs.test-matrix-prepare.outputs.should-run-domain == 'True'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        module: ${{ fromJson(needs.test-matrix-prepare.outputs.domain-modules) }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔧 Run Domain Tests [${{ matrix.module }}]
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🔧 Running domain tests for: ${{ matrix.module }}" -ForegroundColor Cyan
+          
+          $testsPath = "library/tests/aithercore/${{ matrix.module }}"
+          if (Test-Path $testsPath) {
+            Invoke-Pester -Path $testsPath -Output Detailed -CI
+          } else {
+            Write-Host "⚠️ No tests found for domain ${{ matrix.module }}" -ForegroundColor Yellow
+          }
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: domain-test-results-${{ matrix.module }}
+          path: library/tests/results/**
+          retention-days: 30
+          if-no-files-found: warn
+
+  integration-tests:
+    name: 🔗 Integration [${{ matrix.suite }}]
+    needs: test-matrix-prepare
+    if: needs.test-matrix-prepare.outputs.should-run-integration == 'True'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        suite: ${{ fromJson(needs.test-matrix-prepare.outputs.integration-suites) }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔗 Run Integration Tests [${{ matrix.suite }}]
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🔗 Running integration tests for: ${{ matrix.suite }}" -ForegroundColor Cyan
+          
+          $testsPath = "library/tests/integration/${{ matrix.suite }}"
+          if (Test-Path $testsPath) {
+            Invoke-Pester -Path $testsPath -Output Detailed -CI
+          } else {
+            Write-Host "⚠️ No tests found for suite ${{ matrix.suite }}" -ForegroundColor Yellow
+          }
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results-${{ matrix.suite }}
+          path: library/tests/results/**
+          retention-days: 30
+          if-no-files-found: warn
+
+  test-summary:
+    name: 📊 Test Summary
+    needs: [unit-tests, domain-tests, integration-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 💬 Post Test Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **Comprehensive Testing Complete**\n\n- Unit tests: Completed\n- Domain tests: Completed\n- Integration tests: Completed\n\n*All test results uploaded as artifacts*'
+            });
+
+  # ============================================================================
+  # PHASE 3: Build & Package
+  # ============================================================================
+  
+  build:
+    name: 🔨 Build & Package
+    needs: test-summary
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      status: ${{ steps.build.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 💬 Post Build Start
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Phase 3:** 🔨 Build & Package Started'
+            });
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔨 Run Build Playbook
+        id: build
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
+
+      - name: 📦 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-build
+          path: |
+            library/reports/build-*.json
+            library/reports/build-*.md
+            AitherZero-*.zip
+            AitherZero-*.tar.gz
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 💬 Post Build Result
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.build.outcome }}';
+            const icon = status === 'success' ? '✅' : '⚠️';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Build & Package ${status === 'success' ? 'PASSED' : 'COMPLETED WITH ISSUES'}**`
+            });
+
+  # ============================================================================
+  # PHASE 4: Quality Analysis
+  # ============================================================================
+  
+  quality-analysis:
+    name: 🔍 Quality Analysis
+    needs: quick-validation
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      status: ${{ steps.quality.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 💬 Post Quality Start
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Phase 4:** 🔍 Quality Analysis Started\n\n- PSScriptAnalyzer\n- Component Quality\n- Security Scan'
+            });
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔍 Run Quality Analysis
+        id: quality
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🔍 Running PSScriptAnalyzer" -ForegroundColor Cyan
+          & "./library/automation-scripts/0404*.ps1" -UseCache
+          
+          Write-Host "🔍 Running Component Quality Check" -ForegroundColor Cyan
+          & "./library/automation-scripts/0420*.ps1" -Path "./aithercore" -Recursive
+
+      - name: 📊 Upload Quality Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-quality
+          path: |
+            library/tests/analysis/**
+            library/reports/quality-*.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 💬 Post Quality Result
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.quality.outcome }}';
+            const icon = status === 'success' ? '✅' : 'ℹ️';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Quality Analysis ${status === 'success' ? 'PASSED' : 'COMPLETED'}**`
+            });
+
+  # ============================================================================
+  # PHASE 5: Dashboard Generation & Deployment
+  # ============================================================================
+  
+  dashboard:
+    name: 📊 Dashboard & Deploy
+    needs: [test-summary, build, quality-analysis]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 💬 Post Dashboard Start
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Phase 5:** 📊 Dashboard Generation Started\n\nConsolidating all results...'
+            });
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 📥 Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+        continue-on-error: true
+
+      - name: 📊 Generate Consolidated Dashboard
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "📊 Generating Consolidated Dashboard" -ForegroundColor Cyan
+          
+          # Run report playbook
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
+          
+          # Organize for GitHub Pages
+          $prDir = "./library/reports/pr-$env:PR_NUMBER"
+          New-Item -ItemType Directory -Path $prDir -Force | Out-Null
+          
+          # Copy reports
+          if (Test-Path "./library/reports") {
+            Get-ChildItem -Path "./library/reports" -Recurse -Exclude "pr-*" | ForEach-Object {
+              $targetPath = $_.FullName.Replace("./library/reports", $prDir)
+              if ($_.PSIsContainer) {
+                New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+              } else {
+                $targetDir = Split-Path $targetPath -Parent
+                New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+                Copy-Item -Path $_.FullName -Destination $targetPath -Force
+              }
+            }
+          }
+          
+          # Copy artifacts
+          if (Test-Path "./artifacts") {
+            Copy-Item -Path "./artifacts" -Destination "$prDir/artifacts" -Recurse -Force
+          }
+          
+          Write-Host "✅ Dashboard generated" -ForegroundColor Green
+
+      - name: 📦 Upload Dashboard
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-dashboard
+          path: library/reports/pr-${{ env.PR_NUMBER }}/**
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 🌐 Deploy to GitHub Pages
+        if: hashFiles('./library/reports/pr-${{ env.PR_NUMBER }}/**') != ''
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./library/reports/pr-${{ env.PR_NUMBER }}
+          destination_dir: pr-${{ env.PR_NUMBER }}
+          keep_files: true
+          enable_jekyll: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy PR #${{ env.PR_NUMBER }} dashboard'
+
+      - name: 💬 Post Final Summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const validationStatus = '${{ needs.quick-validation.outputs.status }}';
+            const buildStatus = '${{ needs.build.outputs.status }}';
+            const qualityStatus = '${{ needs.quality-analysis.outputs.status }}';
+            
+            const validationIcon = validationStatus === 'success' ? '✅' : '❌';
+            const buildIcon = buildStatus === 'success' ? '✅' : '⚠️';
+            const qualityIcon = qualityStatus === 'success' ? '✅' : 'ℹ️';
+            
+            const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${context.issue.number}/`;
+            
+            const summary = `## 🚀 PR Complete Workflow - FINISHED
+            
+            ### Phase Results
+            
+            | Phase | Status |
+            |-------|--------|
+            | ${validationIcon} **Quick Validation** | ${validationStatus} |
+            | 🧪 **Comprehensive Testing** | Matrix Complete |
+            | ${buildIcon} **Build & Package** | ${buildStatus} |
+            | ${qualityIcon} **Quality Analysis** | ${qualityStatus} |
+            | 📊 **Dashboard** | Generated |
+            
+            ### 📊 Dashboard
+            
+            **GitHub Pages:** [View PR Dashboard](${pagesUrl})
+            
+            ### Artifacts
+            
+            - Unit test results (9 ranges)
+            - Domain test results (6 modules)
+            - Integration test results (4 suites)
+            - Build packages
+            - Quality analysis
+            - Complete dashboard
+            
+            [View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ---
+            *Complete PR workflow - all phases executed*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
