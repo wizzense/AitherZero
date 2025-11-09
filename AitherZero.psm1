@@ -53,8 +53,6 @@ if ($env:PATH -notlike "*$automationPath*") {
 $modulesToLoad = @(
     # Core utilities first
     './aithercore/utilities/Logging.psm1',
-    './aithercore/utilities/ExtensionManager.psm1',
-    './aithercore/utilities/EnvironmentConfig.psm1',
 
     # Configuration (both old and new for backward compatibility)
     './aithercore/configuration/Configuration.psm1',
@@ -107,8 +105,7 @@ $script:LoadStartTime = Get-Date
 $criticalModules = @(
     './aithercore/utilities/Logging.psm1',
     './aithercore/configuration/Configuration.psm1',
-    './aithercore/configuration/ConfigManager.psm1',
-    './aithercore/utilities/ExtensionManager.psm1'
+    './aithercore/configuration/ConfigManager.psm1'
 )
 
 foreach ($modulePath in $criticalModules) {
@@ -176,20 +173,7 @@ if ($env:AITHERZERO_DEBUG) {
 # Set up aliases (CLI module exports the function)
 Set-Alias -Name 'az' -Value 'Invoke-AitherScript' -Force
 
-# Initialize extension and config systems if available
-if (Get-Command Initialize-ExtensionSystem -ErrorAction SilentlyContinue) {
-    try {
-        Initialize-ExtensionSystem
-        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-            Write-CustomLog -Message "Extension system initialized" -Level 'Information' -Source "AitherZero"
-        }
-    } catch {
-        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-            Write-CustomLog -Message "Failed to initialize extension system: $_" -Level 'Warning' -Source "AitherZero"
-        }
-    }
-}
-
+# Initialize config manager if available
 if (Get-Command Initialize-ConfigManager -ErrorAction SilentlyContinue) {
     try {
         Initialize-ConfigManager
