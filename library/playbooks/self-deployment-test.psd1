@@ -64,13 +64,12 @@
         }
     )
     
-    # Variables available to all scripts - COMPREHENSIVE mode
+    # Variables available to all scripts
     Variables = @{
         CI = $env:CI
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
         SELF_DEPLOYMENT_TEST = "true"
-        COMPREHENSIVE_MODE = "true"  # Full comprehensive testing
     }
     
     # Execution options

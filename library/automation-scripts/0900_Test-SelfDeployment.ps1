@@ -76,7 +76,6 @@ $scriptMetadata = @{
     Tags = @('self-deployment', 'validation', 'ci-cd', 'end-to-end', 'comprehensive')
     RequiresAdmin = $false
     SupportsWhatIf = $true
-    TestingMode = 'Comprehensive'  # Full comprehensive testing, no shortcuts
 }
 
 # Import required modules
