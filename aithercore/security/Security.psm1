@@ -1948,7 +1948,10 @@ function Initialize-AitherEnvironment {
         [string]$Repository,
         
         [Parameter()]
-        [hashtable]$CustomMapping = @{}
+        [hashtable]$CustomMapping = @{},
+        
+        [Parameter()]
+        [switch]$SkipMissing
     )
     
     # Define profile mappings
@@ -1997,6 +2000,33 @@ function Initialize-AitherEnvironment {
                 $params.Repository = $Repository
             }
             
+            # First check if credential exists when SkipMissing is enabled
+            # Only check local credentials - skip check for GitHub credentials since they require API call
+            if ($SkipMissing -and -not $FromGitHub) {
+                # Check credential file existence directly (avoid throw from Get-AitherCredential)
+                $credentialPath = if ($IsWindows) {
+                    Join-Path $env:USERPROFILE ".aitherzero/credentials"
+                } else {
+                    Join-Path $env:HOME ".aitherzero/credentials"
+                }
+                $credFile = Join-Path $credentialPath "$credName.cred"
+                
+                if (-not (Test-Path $credFile)) {
+                    Write-SecurityLog -Level Warning -Message "Skipping missing credential" -Data @{
+                        CredentialName = $credName
+                        Variable = $envVar
+                    }
+                    $results += [PSCustomObject]@{
+                        Variable = $envVar
+                        CredentialName = $credName
+                        Scope = $Scope
+                        Status = 'Skipped'
+                        Error = "Credential not found (skipped)"
+                    }
+                    continue
+                }
+            }
+            
             Set-AitherEnvironmentVariable @params
             
             $results += [PSCustomObject]@{
@@ -2024,6 +2054,7 @@ function Initialize-AitherEnvironment {
         Total = $results.Count
         Success = ($results | Where-Object Status -eq 'Success').Count
         Failed = ($results | Where-Object Status -eq 'Failed').Count
+        Skipped = ($results | Where-Object Status -eq 'Skipped').Count
     }
     
     return $results
