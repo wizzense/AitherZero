@@ -123,7 +123,12 @@
         GITHUB_REPOSITORY = $env:GITHUB_REPOSITORY
         GITHUB_SHA = $env:GITHUB_SHA
         GITHUB_RUN_NUMBER = $env:GITHUB_RUN_NUMBER
-        PAGES_URL = "https://$($env:GITHUB_REPOSITORY_OWNER).github.io/$($env:GITHUB_REPOSITORY -replace '.*/','')/"
+        # Branch-specific GitHub Pages URL (supports main, dev, dev-staging, etc.)
+        PAGES_URL = if ($env:GITHUB_REF_NAME -eq "main") {
+            "https://$($env:GITHUB_REPOSITORY_OWNER).github.io/$($env:GITHUB_REPOSITORY -replace '.*/','')/"
+        } else {
+            "https://$($env:GITHUB_REPOSITORY_OWNER).github.io/$($env:GITHUB_REPOSITORY -replace '.*/','')/$($env:GITHUB_REF_NAME)/"
+        }
     }
     
     # Execution options
