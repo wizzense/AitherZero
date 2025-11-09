@@ -415,6 +415,11 @@ function Get-ExtensionConfiguration {
     $config = @{
         EnabledExtensions = @()
         ExtensionRepositories = @()
+        Enabled = $false
+        SearchPaths = @()
+        AutoLoad = $false
+        RequireManifest = $true
+        RequireSignature = $false
     }
     
     # Try to load from config.psd1
@@ -428,7 +433,21 @@ function Get-ExtensionConfiguration {
             $scriptBlock = [scriptblock]::Create($configContent)
             $mainConfig = & $scriptBlock
             if ($mainConfig.Extensions) {
-                $config = $mainConfig.Extensions
+                # Merge with defaults, preserving all properties from config
+                $extensionConfig = $mainConfig.Extensions
+                
+                # If EnabledExtensions doesn't exist, default to empty array
+                if (-not $extensionConfig.ContainsKey('EnabledExtensions')) {
+                    $extensionConfig.EnabledExtensions = @()
+                }
+                
+                # If ExtensionRepositories doesn't exist, default to empty array
+                if (-not $extensionConfig.ContainsKey('ExtensionRepositories')) {
+                    $extensionConfig.ExtensionRepositories = @()
+                }
+                
+                # Return the extension config from file
+                return $extensionConfig
             }
         } catch {
             Write-Warning "Failed to load extension configuration: $_"
