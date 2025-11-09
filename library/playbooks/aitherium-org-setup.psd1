@@ -88,8 +88,13 @@
             Script = '0104'
             Description = 'Install and configure Certificate Authority for PKI'
             Parameters = @{
-                CAName = "Aitherium Root CA"
-                ValidityYears = 10
+                Configuration = @{
+                    CertificateAuthority = @{
+                        InstallCA = $true
+                        CommonName = "Aitherium Root CA"
+                        ValidityYears = 10
+                    }
+                }
             }
             ContinueOnError = $false
             Condition = { $IsWindows }

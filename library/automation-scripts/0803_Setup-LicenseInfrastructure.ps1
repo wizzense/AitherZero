@@ -99,7 +99,7 @@ try {
     
     # Load required modules
     $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-    $securityPath = Join-Path $projectRoot "domains/security"
+    $securityPath = Join-Path $projectRoot "aithercore/security"
     
     Import-Module (Join-Path $securityPath "Security.psm1") -Force -ErrorAction Stop
     Import-Module (Join-Path $securityPath "Encryption.psm1") -Force -ErrorAction Stop
