@@ -3,8 +3,12 @@
 # Site settings
 title: AitherZero Dashboard
 description: Infrastructure automation platform with comprehensive testing and reporting
-baseurl: "" # Leave empty for user/org pages
+baseurl: "" # Will be overridden by branch-specific config
 url: "https://wizzense.github.io/AitherZero"
+
+# Branch information (will be set by workflow)
+branch: "main"  # Default, overridden by _config_branch.yml
+deployment_time: ""  # Set by workflow
 
 # Theme - using custom layout instead of minima for better dark theme support
 # theme: minima
@@ -17,10 +21,11 @@ kramdown:
 
 # Include/exclude files
 include:
-  - reports
-  - reports/dashboard.html
-  - reports/*.json
-  - reports/*.md
+  - library/reports
+  - library/reports/dashboard.html
+  - library/reports/*.json
+  - library/reports/*.md
+  - branch-info.md
 
 exclude:
   - .git
@@ -41,6 +46,7 @@ exclude:
   - docker-compose.yml
   - bootstrap.sh
   - bootstrap.ps1
+  - _config_branch.yml
 
 # Plugins
 # plugins:
