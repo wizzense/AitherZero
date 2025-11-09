@@ -1224,6 +1224,16 @@
                 RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
             }
+            'self-deployment-test'   = @{
+                Enabled             = $true
+                Description         = 'Self-deployment validation - tests that AitherZero can deploy itself'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                ScriptDefaults      = @{
+                    DefaultTimeout  = 600  # Self-deployment can take time
+                    ContinueOnError = $true  # Don't fail on individual test failures
+                }
+            }
         }
     }
 

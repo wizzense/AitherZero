@@ -69,10 +69,10 @@ jobs:
               $results += $result
               
               # Display summary
-              Write-Host "  Quality Score: $($result.Summary.QualityScore)/100"
-              Write-Host "  Errors: $($result.Summary.TotalErrors)"
-              Write-Host "  Warnings: $($result.Summary.TotalWarnings)"
-              Write-Host "  Status: $(if ($result.OverallSuccess) { '✅ PASSED' } else { '❌ FAILED' })"
+              Write-Host "  Quality Score - $($result.Summary.QualityScore)/100"
+              Write-Host "  Errors - $($result.Summary.TotalErrors)"
+              Write-Host "  Warnings - $($result.Summary.TotalWarnings)"
+              Write-Host "  Status - $(if ($result.OverallSuccess) { '✅ PASSED' } else { '❌ FAILED' })"
             }
           }
           
@@ -80,12 +80,13 @@ jobs:
           $overallSuccess = ($results | Where-Object { -not $_.OverallSuccess }).Count -eq 0
           $avgQuality = ($results | ForEach-Object { $_.Summary.QualityScore } | Measure-Object -Average).Average
           
-          Write-Host "`n╔══════════════════════════════════════╗"
-          Write-Host "║  Three-Tier Validation Summary      ║"
-          Write-Host "╚══════════════════════════════════════╝"
-          Write-Host "Scripts Validated: $($results.Count)"
-          Write-Host "Average Quality:   $([Math]::Round($avgQuality, 1))/100"
-          Write-Host "Overall Status:    $(if ($overallSuccess) { '✅ PASSED' } else { '❌ FAILED' })"
+          Write-Host ""
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  Three-Tier Validation Summary" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "Scripts Validated - $($results.Count)"
+          Write-Host "Average Quality - $([Math]::Round($avgQuality, 1))/100"
+          Write-Host "Overall Status - $(if ($overallSuccess) { '✅ PASSED' } else { '❌ FAILED' })"
           
           if (-not $overallSuccess) {
             exit 1

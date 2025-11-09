@@ -819,6 +819,27 @@ function Invoke-OrchestrationSequence {
             }
 
             Write-OrchestrationLog "Loaded playbook: $LoadPlaybook with sequences: $($script:ExtractedSequence -join ', ')"
+            
+            # Apply playbook Options if present (overrides parameter defaults)
+            if ($playbook.Options) {
+                # Override Parallel setting from playbook
+                if ($null -ne $playbook.Options.Parallel -and -not $PSBoundParameters.ContainsKey('Parallel')) {
+                    $Parallel = $playbook.Options.Parallel
+                    Write-OrchestrationLog "Playbook Options: Parallel execution set to $Parallel"
+                }
+                
+                # Override MaxConcurrency from playbook
+                if ($playbook.Options.MaxConcurrency -and -not $PSBoundParameters.ContainsKey('MaxConcurrency')) {
+                    $config.Automation.MaxConcurrency = $playbook.Options.MaxConcurrency
+                    Write-OrchestrationLog "Playbook Options: MaxConcurrency set to $($config.Automation.MaxConcurrency)"
+                }
+                
+                # Override StopOnError (inverse of ContinueOnError)
+                if ($null -ne $playbook.Options.StopOnError -and -not $PSBoundParameters.ContainsKey('ContinueOnError')) {
+                    $ContinueOnError = -not $playbook.Options.StopOnError
+                    Write-OrchestrationLog "Playbook Options: ContinueOnError set to $ContinueOnError"
+                }
+            }
         } else {
             # No playbook - initialize ExtractedSequence to null
             $script:ExtractedSequence = $null
@@ -1523,7 +1544,14 @@ function Get-OrchestrationScripts {
                 [bool]$configDefaults.ContinueOnError  # Config default second
             }
             RequiresElevation = $configDefaults.RequiresElevation
-            AllowParallel = $configDefaults.AllowParallel
+            # AllowParallel priority: Script metadata > Config defaults > true (default)
+            AllowParallel = if ($null -ne $metadata.AllowParallel) {
+                $metadata.AllowParallel  # Script metadata wins
+            } elseif ($null -ne $configDefaults.AllowParallel) {
+                $configDefaults.AllowParallel  # Config default second
+            } else {
+                $true  # Default to allowing parallel execution
+            }
         }
         
         $scripts += $scriptObj
@@ -1543,26 +1571,32 @@ function Get-ScriptMetadata {
         Description = ''
         Condition = $null
         Tags = @()
+        AllowParallel = $null  # null means use default, true/false means explicit
     }
 
-    # Read first 20 lines for metadata
-    $content = Get-Content $Path -First 20
+    # Read first 30 lines for metadata (increased to catch more metadata)
+    $content = Get-Content $Path -First 30
 
     foreach ($line in $content) {
-        if ($line -match '^# Stage:\s*(.+)$') {
+        if ($line -match '^#\s*Stage:\s*(.+)$') {
             $metadata.Stage = $Matches[1].Trim()
         }
-        elseif ($line -match '^# Dependencies:\s*(.+)$') {
+        elseif ($line -match '^#\s*Dependencies:\s*(.+)$') {
             $metadata.Dependencies = $Matches[1].Trim() -split ',\s*'
         }
-        elseif ($line -match '^# Description:\s*(.+)$') {
+        elseif ($line -match '^#\s*Description:\s*(.+)$') {
             $metadata.Description = $Matches[1].Trim()
         }
-        elseif ($line -match '^# Condition:\s*(.+)$') {
+        elseif ($line -match '^#\s*Condition:\s*(.+)$') {
             $metadata.Condition = $Matches[1].Trim()
         }
-        elseif ($line -match '^# Tags:\s*(.+)$') {
+        elseif ($line -match '^#\s*Tags:\s*(.+)$') {
             $metadata.Tags = $Matches[1].Trim() -split ',\s*'
+        }
+        elseif ($line -match '^#\s*AllowParallel:\s*(true|false|yes|no|1|0)$') {
+            # Parse boolean-like values
+            $value = $Matches[1].Trim().ToLower()
+            $metadata.AllowParallel = $value -in @('true', 'yes', '1')
         }
     }
 
@@ -1837,20 +1871,121 @@ function Invoke-ParallelOrchestration {
         [switch]$ContinueOnError
     )
 
-    Write-OrchestrationLog "Starting parallel orchestration with max concurrency: $($Configuration.Automation.MaxConcurrency)"
+    # Initialize start time at the beginning to track total orchestration duration
+    $startTime = Get-Date
 
-    # Build dependency graph
-    $graph = Build-DependencyGraph -Scripts $Scripts
+    Write-OrchestrationLog "Starting parallel orchestration with max concurrency: $($Configuration.Automation.MaxConcurrency)"
+    
+    # Separate scripts that don't allow parallel execution
+    $parallelScripts = @($Scripts | Where-Object { $_.AllowParallel -ne $false })
+    $sequentialScripts = @($Scripts | Where-Object { $_.AllowParallel -eq $false })
+    
+    # Track completed and failed scripts across both sequential and parallel execution
+    $completed = @{}
+    $failed = @{}
+    
+    if ($sequentialScripts.Count -gt 0) {
+        Write-OrchestrationLog "Detected $($sequentialScripts.Count) script(s) that must run sequentially: $($sequentialScripts.Number -join ', ')" -Level 'Information'
+        Write-OrchestrationLog "These scripts will be executed first, then parallel execution will continue" -Level 'Information'
+        
+        # Run sequential scripts first
+        foreach ($script in $sequentialScripts | Sort-Object Priority) {
+            Write-OrchestrationLog "Executing (sequential-only): [$($script.Number)] $($script.Name)"
+            
+            try {
+                $scriptStart = Get-Date
+                
+                # Use script-specific variables if available
+                $scriptVars = if ($script.Variables) { $script.Variables } else { $Variables }
+                
+                # Merge playbook-defined parameters
+                $mergedParams = $scriptVars.Clone()
+                if ($script.Parameters -and $script.Parameters.Count -gt 0) {
+                    foreach ($key in $script.Parameters.Keys) {
+                        $mergedParams[$key] = $script.Parameters[$key]
+                    }
+                }
+                
+                # Execute script directly (not in job)
+                $scriptInfo = Get-Command $script.Path -ErrorAction SilentlyContinue
+                $params = @{}
+                
+                foreach ($key in $mergedParams.Keys) {
+                    if ($null -ne $mergedParams[$key] -and $mergedParams[$key] -ne '') {
+                        if ($scriptInfo -and $scriptInfo.Parameters.ContainsKey($key)) {
+                            $params[$key] = $mergedParams[$key]
+                        }
+                    }
+                }
+                
+                & $script.Path @params
+                $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+                
+                $duration = New-TimeSpan -Start $scriptStart -End (Get-Date)
+                
+                if ($exitCode -eq 0) {
+                    Write-OrchestrationLog "Completed (sequential): [$($script.Number)] $($script.Name) (Duration: $($duration.TotalSeconds)s)"
+                    # Mark as completed to prevent re-execution in parallel phase
+                    $completed[$script.Number] = @{
+                        Success = $true
+                        ExitCode = $exitCode
+                        Duration = $duration
+                    }
+                } else {
+                    Write-OrchestrationLog "Failed (sequential): [$($script.Number)] $($script.Name) with exit code $exitCode" -Level 'Error'
+                    # Mark as failed to prevent re-execution in parallel phase
+                    $failed[$script.Number] = @{
+                        Success = $false
+                        ExitCode = $exitCode
+                        Error = "Script exited with code $exitCode"
+                    }
+                    
+                    if (-not $ContinueOnError) {
+                        throw "Script $($script.Number) failed with exit code $exitCode"
+                    }
+                }
+            }
+            catch {
+                Write-OrchestrationLog "Error executing (sequential): [$($script.Number)] $($script.Name) - $($_.Exception.Message)" -Level 'Error'
+                # Mark as failed to prevent re-execution in parallel phase
+                $failed[$script.Number] = @{
+                    Success = $false
+                    Error = $_.Exception.Message
+                    ExitCode = 1
+                }
+                
+                if (-not $ContinueOnError) {
+                    throw
+                }
+            }
+        }
+    }
+    
+    # If no parallel scripts, return early
+    if ($parallelScripts.Count -eq 0) {
+        Write-OrchestrationLog "All scripts executed sequentially (no parallel execution needed)"
+        return [PSCustomObject]@{
+            Total = $Scripts.Count
+            Completed = $completed.Count
+            Failed = $failed.Count
+            Duration = New-TimeSpan -Start $startTime -End (Get-Date)
+            Results = @{
+                Completed = $completed
+                Failed = $failed
+            }
+        }
+    }
+
+    # Build dependency graph for parallel scripts only
+    $graph = Build-DependencyGraph -Scripts $parallelScripts
 
     # Execute in parallel with dependency resolution
     $jobs = @{}
-    $completed = @{}
-    $failed = @{}
-    $startTime = Get-Date  # Initialize start time for duration calculation
 
+    # Loop only over parallel scripts count (sequential scripts already completed)
     while ($completed.Count -lt $Scripts.Count -and (-not $failed.Count -or $ContinueOnError)) {
-        # Find scripts ready to run
-        $ready = $Scripts | Where-Object {
+        # Find scripts ready to run - only from parallelScripts, not all Scripts
+        $ready = $parallelScripts | Where-Object {
             $_.Number -notin $completed.Keys -and
             $_.Number -notin $failed.Keys -and
             $_.Number -notin $jobs.Keys -and
@@ -1928,6 +2063,9 @@ function Invoke-ParallelOrchestration {
 
                     # Set non-interactive environment flag for child scripts
                     $env:AITHERZERO_NONINTERACTIVE = 'true'
+                    # Set orchestrated parallel flag to prevent nested parallelism
+                    # Scripts should check this and disable their own parallel execution
+                    $env:AITHERZERO_ORCHESTRATED_PARALLEL = 'true'
 
                     try {
                         # Execute the script
@@ -1936,8 +2074,9 @@ function Invoke-ParallelOrchestration {
                         $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
                         return @{ Success = $true; ExitCode = $exitCode; Output = $result }
                     } finally {
-                        # Clean up environment variable
+                        # Clean up environment variables
                         $env:AITHERZERO_NONINTERACTIVE = $null
+                        $env:AITHERZERO_ORCHESTRATED_PARALLEL = $null
                     }
                 } catch {
                     return @{ Success = $false; Error = $_.ToString(); ExitCode = 1 }
@@ -1951,8 +2090,11 @@ function Invoke-ParallelOrchestration {
             }
         }
 
-        # Check for completed jobs
-        $completedJobs = $jobs.GetEnumerator() | Where-Object { $_.Value.Job.State -eq 'Completed' }
+        # Check for completed jobs (includes Completed, Failed, Stopped states)
+        # Jobs can fail with State='Failed' and must be processed to avoid infinite loops
+        $completedJobs = $jobs.GetEnumerator() | Where-Object { 
+            $_.Value.Job.State -in @('Completed', 'Failed', 'Stopped')
+        }
         
         # Check for timed-out jobs
         $currentTime = Get-Date

@@ -10,13 +10,14 @@
 
 ### 📊 Contents
 
-- **Subdirectories**: 15
+- **Subdirectories**: 16
 - **Files**: 1
 
 ## 📁 Subdirectories
 
 - [📂 **_layouts**](./_layouts/index.md)
 - [📂 **.aitherzero**](./.aitherzero/index.md)
+- [📂 **.orchestration-jobs**](./.orchestration-jobs/index.md)
 - [📂 **assets**](./assets/index.md)
 - [📂 **automation-scripts**](./automation-scripts/index.md)
   - *This directory contains all automated installation and configuration scripts used by the AitherZe...*

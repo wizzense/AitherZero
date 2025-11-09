@@ -27,11 +27,41 @@ param(
     [switch]$FullTest,   # Deprecated: Full validation is always performed
     [string]$TestPath = (Join-Path ([System.IO.Path]::GetTempPath()) "aitherzero-self-deploy-test"),
     [switch]$CleanupOnSuccess,
-    [string]$Branch = "main"
+    [string]$Branch = ""  # Auto-detect from environment or use current branch
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Auto-detect branch if not specified
+if ([string]::IsNullOrEmpty($Branch)) {
+    # In CI, use GITHUB_HEAD_REF (PR branch) or GITHUB_REF_NAME (branch/tag)
+    if ($env:GITHUB_HEAD_REF) {
+        $Branch = $env:GITHUB_HEAD_REF
+        Write-Verbose "Detected PR branch from GITHUB_HEAD_REF: $Branch"
+    } elseif ($env:GITHUB_REF_NAME) {
+        $Branch = $env:GITHUB_REF_NAME
+        Write-Verbose "Detected branch from GITHUB_REF_NAME: $Branch"
+    } else {
+        # Try to get current branch from git
+        try {
+            Push-Location $ProjectPath
+            $gitBranch = git rev-parse --abbrev-ref HEAD 2>$null
+            if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrEmpty($gitBranch)) {
+                $Branch = $gitBranch
+                Write-Verbose "Detected branch from git: $Branch"
+            } else {
+                $Branch = "main"
+                Write-Verbose "Falling back to default branch: $Branch"
+            }
+        } catch {
+            $Branch = "main"
+            Write-Verbose "Error detecting branch, using default: $Branch"
+        } finally {
+            Pop-Location
+        }
+    }
+}
 
 # Script metadata
 $scriptMetadata = @{
