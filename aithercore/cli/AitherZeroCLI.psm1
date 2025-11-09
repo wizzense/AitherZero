@@ -1439,7 +1439,7 @@ function Write-AitherLog {
     )
     
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $Level -Category $Category
+        Write-CustomLog -Message $Message -Level $Level -Source $Category
     }
     else {
         Write-Host "[$Level] $Message"
