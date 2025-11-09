@@ -1211,7 +1211,7 @@ function Get-AitherMetric {
     )
     
     if (Get-Command Get-ExecutionMetric -ErrorAction SilentlyContinue) {
-        $metrics = Get-ExecutionMetric -Period $Period
+        $metrics = Get-ExecutionMetric -Period $Period -IncludeSystem -IncludeProcess -IncludeCustom
         
         switch ($Format) {
             'JSON' { return $metrics | ConvertTo-Json -Depth 5 }

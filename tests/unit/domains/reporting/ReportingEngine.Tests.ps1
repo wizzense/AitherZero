@@ -4,7 +4,7 @@
 BeforeAll {
     # Setup test environment
     $script:ProjectRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-    $script:ReportingModule = Join-Path $script:ProjectRoot "domains/reporting/ReportingEngine.psm1"
+    $script:ReportingModule = Join-Path $script:ProjectRoot "aithercore/reporting/ReportingEngine.psm1"
 
     # Create test directories
     $script:TestReportPath = Join-Path $TestDrive "reports"
@@ -345,7 +345,7 @@ Describe "Show-Dashboard" -Tag 'Unit' {
     }
 }
 
-Describe "Get-ExecutionMetrics" -Tag 'Unit' {
+Describe "Get-ExecutionMetric" -Tag 'Unit' {
     Context "System Metrics" -Skip {
         # System metrics collection uses Windows-specific counters and CIM
         # Skip these tests as they're platform dependent and require specific infrastructure
@@ -371,12 +371,36 @@ Describe "Get-ExecutionMetrics" -Tag 'Unit' {
 
         It "Should collect process metrics when IncludeProcess is specified" {
             # Act
-            $metrics = Get-ExecutionMetrics -IncludeProcess
+            $metrics = Get-ExecutionMetric -IncludeProcess
 
             # Assert
             $metrics.ProcessCPU | Should -Match "[\d.]+%"
             $metrics.ProcessMemory | Should -Match "[\d]+MB"
             $metrics.ProcessThreads | Should -Be 8
+        }
+
+        It "Should accept Period parameter" {
+            # Act
+            $metrics = Get-ExecutionMetric -Period Week -IncludeProcess
+
+            # Assert
+            $metrics.ProcessCPU | Should -Match "[\d.]+%"
+            $metrics.ProcessMemory | Should -Match "[\d]+MB"
+            $metrics.ProcessThreads | Should -Be 8
+        }
+
+        It "Should accept All period values" {
+            # Act
+            $metricsToday = Get-ExecutionMetric -Period Today -IncludeProcess
+            $metricsWeek = Get-ExecutionMetric -Period Week -IncludeProcess
+            $metricsMonth = Get-ExecutionMetric -Period Month -IncludeProcess
+            $metricsAll = Get-ExecutionMetric -Period All -IncludeProcess
+
+            # Assert - all should return metrics without error
+            $metricsToday | Should -Not -BeNullOrEmpty
+            $metricsWeek | Should -Not -BeNullOrEmpty
+            $metricsMonth | Should -Not -BeNullOrEmpty
+            $metricsAll | Should -Not -BeNullOrEmpty
         }
     }
 

@@ -369,9 +369,22 @@ function Get-ExecutionMetric {
     <#
     .SYNOPSIS
         Collect current execution metrics
+    .PARAMETER Period
+        Time period for metrics collection (Today, Week, Month, All). 
+        Currently collects current metrics regardless of period.
+    .PARAMETER IncludeSystem
+        Include system-level metrics (CPU, Memory, Disk)
+    .PARAMETER IncludeProcess
+        Include process-level metrics
+    .PARAMETER IncludeCustom
+        Include custom performance traces
     #>
     [CmdletBinding()]
     param(
+        [Parameter()]
+        [ValidateSet('Today', 'Week', 'Month', 'All')]
+        [string]$Period = 'All',
+
         [switch]$IncludeSystem,
 
         [switch]$IncludeProcess,
@@ -382,20 +395,47 @@ function Get-ExecutionMetric {
     $metrics = @{}
 
     if ($IncludeSystem) {
-        # CPU usage
-        $cpu = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue).CounterSamples[0].CookedValue
-        $metrics['CPU'] = "{0:N1}%" -f $cpu
+        # CPU usage (Windows-specific)
+        try {
+            if (Get-Command Get-Counter -ErrorAction SilentlyContinue) {
+                $cpu = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue).CounterSamples[0].CookedValue
+                if ($cpu) {
+                    $metrics['CPU'] = "{0:N1}%" -f $cpu
+                }
+            }
+        }
+        catch {
+            # Get-Counter not available on this platform
+        }
 
-        # Memory usage
-        $os = Get-CimInstance Win32_OperatingSystem
-        $memUsed = ($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize * 100
-        $metrics['Memory'] = "{0:N1}%" -f $memUsed
+        # Memory usage (Windows-specific)
+        try {
+            if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) {
+                $os = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
+                if ($os) {
+                    $memUsed = ($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize * 100
+                    $metrics['Memory'] = "{0:N1}%" -f $memUsed
+                }
+            }
+        }
+        catch {
+            # CIM not available on this platform
+        }
 
-        # Disk usage
-        $disk = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -and $_.Used }
-        $diskUsed = ($disk.Used | Measure-Object -Sum).Sum
-        $diskTotal = (($disk.Used + $disk.Free) | Measure-Object -Sum).Sum
-        $metrics['Disk'] = "{0:N1}%" -f (($diskUsed / $diskTotal) * 100)
+        # Disk usage (cross-platform)
+        try {
+            $disk = Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue | Where-Object { $_.Free -and $_.Used }
+            if ($disk) {
+                $diskUsed = ($disk.Used | Measure-Object -Sum).Sum
+                $diskTotal = (($disk.Used + $disk.Free) | Measure-Object -Sum).Sum
+                if ($diskTotal -gt 0) {
+                    $metrics['Disk'] = "{0:N1}%" -f (($diskUsed / $diskTotal) * 100)
+                }
+            }
+        }
+        catch {
+            # Disk metrics not available
+        }
     }
 
     if ($IncludeProcess) {
