@@ -294,7 +294,7 @@ function Show-Dashboard {
 
         Write-Host "  $bar $percent% ($completed/$total)" -ForegroundColor Green
 
-        if ($progress.CurrentTask) {
+        if ($progress.ContainsKey('CurrentTask') -and $progress.CurrentTask) {
             Write-Host "  Current: $($progress.CurrentTask)" -ForegroundColor Gray
         }
     }
