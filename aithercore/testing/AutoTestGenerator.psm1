@@ -1,13 +1,21 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Simplified Automatic Test Generator for AitherZero - 100% Solution
+    Enhanced Automatic Test Generator for AitherZero - Functional Testing Edition
 .DESCRIPTION
-    Generates comprehensive tests automatically for ALL scripts with ZERO manual work.
+    Generates comprehensive FUNCTIONAL tests automatically for ALL scripts with ZERO manual work.
+    
+    **NEW**: Tests validate ACTUAL BEHAVIOR, not just syntax!
+    - Functional behavior validation
+    - Output result checking
+    - Side-effect verification
+    - Mock/stub support
+    - Integration test scenarios
+    
     Uses direct StringBuilder approach to avoid template replacement issues.
 .NOTES
     Copyright © 2025 Aitherium Corporation
-    This is the "it just works" solution for automatic test generation.
+    Part of the Test Infrastructure Overhaul
 #>
 
 Set-StrictMode -Version Latest
@@ -17,6 +25,12 @@ $ErrorActionPreference = 'Stop'
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:AutomationScriptsPath = Join-Path $script:ProjectRoot 'library/automation-scripts'
 $script:TestsPath = Join-Path $script:ProjectRoot 'tests'
+
+# Import functional test templates
+$functionalTemplatesPath = Join-Path $PSScriptRoot 'FunctionalTestTemplates.psm1'
+if (Test-Path $functionalTemplatesPath) {
+    Import-Module $functionalTemplatesPath -Force -ErrorAction SilentlyContinue
+}
 
 # Script number to stage mapping constants
 $script:StageRanges = @{
@@ -286,7 +300,7 @@ function Build-UnitTest {
     if ($UsesScriptUtilities) {
         [void]$sb.AppendLine('')
         [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
-        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "aithercore/automation/ScriptUtilities.psm1"')
         [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
         [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
         [void]$sb.AppendLine('        }')
@@ -438,6 +452,34 @@ function Build-UnitTest {
         [void]$sb.AppendLine('    }')
     }
     
+    # === NEW: Add functional tests based on script type ===
+    # Import functional test framework
+    [void]$sb.AppendLine('')
+    [void]$sb.AppendLine('    BeforeAll {')
+    [void]$sb.AppendLine('        # Import functional test framework for advanced testing')
+    [void]$sb.AppendLine('        $functionalFrameworkPath = Join-Path $repoRoot "aithercore/testing/FunctionalTestFramework.psm1"')
+    [void]$sb.AppendLine('        if (Test-Path $functionalFrameworkPath) {')
+    [void]$sb.AppendLine('            Import-Module $functionalFrameworkPath -Force -ErrorAction SilentlyContinue')
+    [void]$sb.AppendLine('        }')
+    [void]$sb.AppendLine('    }')
+    [void]$sb.AppendLine('')
+    
+    # Add functional test contexts using templates
+    if (Get-Command Select-FunctionalTestTemplate -ErrorAction SilentlyContinue) {
+        $metadata = @{
+            Stage = $Stage
+            Description = $Description
+            SupportsWhatIf = $SupportsWhatIf
+        }
+        
+        $functionalTests = Select-FunctionalTestTemplate -ScriptName $ScriptName -ScriptPath $ScriptPath -Metadata $metadata
+        if ($functionalTests) {
+            [void]$sb.AppendLine('')
+            [void]$sb.AppendLine('    # === FUNCTIONAL TESTS - Validate actual behavior ===')
+            [void]$sb.AppendLine($functionalTests)
+        }
+    }
+    
     [void]$sb.AppendLine('}')
     
     return $sb.ToString()
@@ -491,7 +533,7 @@ function Build-IntegrationTest {
     if ($UsesScriptUtilities) {
         [void]$sb.AppendLine('')
         [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
-        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "aithercore/automation/ScriptUtilities.psm1"')
         [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
         [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
         [void]$sb.AppendLine('        }')
@@ -501,17 +543,29 @@ function Build-IntegrationTest {
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine("    Context 'Integration' {")
     
+    # Import functional test framework in integration tests too
+    [void]$sb.AppendLine("        BeforeAll {")
+    [void]$sb.AppendLine('            # Import functional test framework')
+    [void]$sb.AppendLine('            $functionalFrameworkPath = Join-Path $repoRoot "aithercore/testing/FunctionalTestFramework.psm1"')
+    [void]$sb.AppendLine('            if (Test-Path $functionalFrameworkPath) {')
+    [void]$sb.AppendLine('                Import-Module $functionalFrameworkPath -Force -ErrorAction SilentlyContinue')
+    [void]$sb.AppendLine('            }')
+    [void]$sb.AppendLine('        }')
+    [void]$sb.AppendLine('')
+    
     # Generate appropriate test based on script characteristics
     if ($SupportsWhatIf) {
-        # Script supports WhatIf - test with it
-        [void]$sb.AppendLine("        It 'Should execute in test mode with WhatIf' {")
-        [void]$sb.AppendLine('            {')
-        [void]$sb.AppendLine('                $params = @{ WhatIf = $true; ErrorAction = ''Stop'' }')
-        if ($HasConfiguration) {
-            [void]$sb.AppendLine('                $params.Configuration = @{ Automation = @{ DryRun = $true } }')
-        }
-        [void]$sb.AppendLine('                & $script:ScriptPath @params')
-        [void]$sb.AppendLine('            } | Should -Not -Throw')
+        # Script supports WhatIf - test with real execution validation
+        [void]$sb.AppendLine("        It 'Should execute in test mode with WhatIf and produce expected output' {")
+        [void]$sb.AppendLine('            # FUNCTIONAL TEST: Validate actual WhatIf behavior')
+        [void]$sb.AppendLine('            $output = & $script:ScriptPath -WhatIf 2>&1 | Out-String')
+        [void]$sb.AppendLine('            ')
+        [void]$sb.AppendLine('            # Should produce informative WhatIf output')
+        [void]$sb.AppendLine('            $output | Should -Not -BeNullOrEmpty')
+        [void]$sb.AppendLine('            ')
+        [void]$sb.AppendLine('            # WhatIf output should indicate what would be done')
+        [void]$sb.AppendLine('            # Common patterns: "What if:", "Would", "Performing the operation"')
+        [void]$sb.AppendLine('            $output | Should -Match ''(What if:|Would|Performing|DRY RUN)''')
         [void]$sb.AppendLine('        }')
     } elseif ($isInteractive) {
         # Interactive script - can't test execution in CI

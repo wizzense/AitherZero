@@ -27,7 +27,7 @@ param(
     [switch]$FullTest,   # Deprecated: Full validation is always performed
     [string]$TestPath = (Join-Path ([System.IO.Path]::GetTempPath()) "aitherzero-self-deploy-test"),
     [switch]$CleanupOnSuccess,
-    [string]$Branch = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { "main" }
+    [string]$Branch = "main"
 )
 
 $ErrorActionPreference = 'Stop'

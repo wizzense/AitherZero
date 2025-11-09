@@ -937,14 +937,30 @@
                 InstallScript = '0950'
                 Required      = $false
                 Platforms     = @('Windows', 'Linux', 'macOS')
-                Description   = '100% automatic test generation for all automation scripts'
+                Description   = '100% automatic test generation with three-tier functional validation'
                 Configuration = @{
-                    Mode           = 'Full'  # Full, Quick, Changed, Watch
-                    Force          = $false  # Regenerate existing tests
-                    RunTests       = $false  # Run tests after generation
-                    AutoGenerate   = $true  # Auto-generate on script changes
-                    TestsPath      = './tests'
-                    CoverageTarget = 100  # Target test coverage percentage
+                    Mode                  = 'Full'  # Full, Quick, Changed, Watch
+                    Force                 = $false  # Regenerate existing tests
+                    RunTests              = $false  # Run tests after generation
+                    AutoGenerate          = $true   # Auto-generate on script changes
+                    TestsPath             = './tests'
+                    CoverageTarget        = 100     # Target test coverage percentage
+                    # NEW: Three-tier validation integration
+                    EnableFunctionalTests = $true   # Enable functional test generation
+                    EnableThreeTierValidation = $true  # Enable AST→PSSA→Pester validation
+                    FunctionalTemplates   = './aithercore/testing/FunctionalTestTemplates.psm1'
+                    ValidationFramework   = './aithercore/testing/ThreeTierValidation.psm1'
+                    PlaybookFramework     = './aithercore/testing/PlaybookTestFramework.psm1'
+                    # Test frameworks to include in generated tests
+                    TestFrameworks        = @(
+                        'FunctionalTestFramework'
+                        'PlaybookTestFramework'
+                        'ThreeTierValidation'
+                    )
+                    # Quality thresholds
+                    MinimumQualityScore   = 70      # Minimum quality score (0-100)
+                    MaxComplexity         = 20      # Maximum cyclomatic complexity
+                    MaxNestingDepth       = 5       # Maximum nesting depth
                 }
             }
         }
@@ -1095,9 +1111,23 @@
         Playbooks               = @{
             'test-orchestration'     = @{
                 Enabled             = $true
-                Description         = 'Simple test playbook for validation'
+                Description         = 'Enhanced test orchestration with three-tier validation'
                 RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
+            }
+            'comprehensive-validation' = @{
+                Enabled             = $true
+                Description         = 'Complete three-tier validation: AST → PSScriptAnalyzer → Pester'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI', 'Staging', 'Production')
+                Features            = @('AST', 'PSScriptAnalyzer', 'Pester', 'FunctionalTests', 'QualityScore')
+            }
+            'pr-ecosystem-complete' = @{
+                Enabled             = $true
+                Description         = 'Complete PR ecosystem: Build → Analyze → Report with full deployment artifacts'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                Features            = @('Build', 'Analyze', 'Report', 'Dashboard', 'QualityMetrics', 'Deployment', 'Container', 'ReleasePackages')
             }
             'project-health-check'   = @{
                 Enabled             = $true

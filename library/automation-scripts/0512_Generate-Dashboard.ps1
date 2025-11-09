@@ -577,6 +577,50 @@ function Get-ProjectMetrics {
         }
     }
 
+    # Integrate three-tier quality metrics (AST → PSScriptAnalyzer → Pester)
+    $qualityMetricsPath = Join-Path $ProjectPath "library/reports/quality-metrics.json"
+    if (Test-Path $qualityMetricsPath) {
+        try {
+            $threeTierData = Get-Content $qualityMetricsPath -Raw | ConvertFrom-Json
+            
+            # Add three-tier metrics to dashboard
+            $metrics.ThreeTierValidation = @{
+                AverageQualityScore = $threeTierData.AverageQualityScore
+                MinQualityScore = $threeTierData.MinQualityScore
+                MaxQualityScore = $threeTierData.MaxQualityScore
+                Distribution = $threeTierData.QualityDistribution
+                ASTMetrics = $threeTierData.ASTMetrics
+                LastUpdated = $threeTierData.Timestamp
+            }
+            
+            Write-ScriptLog -Message "Integrated three-tier validation metrics: Avg Score $($threeTierData.AverageQualityScore)/100"
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to load three-tier quality metrics: $_"
+        }
+    } else {
+        Write-ScriptLog -Level Information -Message "Three-tier quality metrics not found. Run './library/automation-scripts/0514_Generate-QualityMetrics.ps1' to generate."
+    }
+    
+    # Integrate quality trends (historical data)
+    $qualityTrendsPath = Join-Path $ProjectPath "library/reports/quality-trends.json"
+    if (Test-Path $qualityTrendsPath) {
+        try {
+            $trendsData = Get-Content $qualityTrendsPath -Raw | ConvertFrom-Json
+            
+            # Add trends to dashboard
+            $metrics.QualityTrends = @{
+                DataPoints = $trendsData.DataPoints
+                Trend = $trendsData.Trend
+                AverageImprovement = $trendsData.AverageImprovement
+                LastUpdated = $trendsData.Timestamp
+            }
+            
+            Write-ScriptLog -Message "Integrated quality trends: $($trendsData.DataPoints.Count) historical snapshots"
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to load quality trends: $_"
+        }
+    }
+
     # Get latest test results - check multiple possible locations including JSON
     $testResultsPaths = @(
         (Join-Path $ProjectPath "testResults.xml"),
