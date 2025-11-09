@@ -216,13 +216,13 @@ try {
         if (Get-Command apt-get -ErrorAction SilentlyContinue) {
             # Debian/Ubuntu
             $setupScript = Invoke-WebRequest -Uri 'https://deb.nodesource.com/setup_20.x' -UseBasicParsing
-            $setupScript.Content | & bash -
-            & apt-get install -y nodejs
+            $setupScript.Content | & bash -c "sudo -E bash -"
+            & sudo apt-get install -y nodejs
         } elseif (Get-Command yum -ErrorAction SilentlyContinue) {
             # RHEL/CentOS
             $setupScript = Invoke-WebRequest -Uri 'https://rpm.nodesource.com/setup_20.x' -UseBasicParsing
-            $setupScript.Content | & bash -
-            & yum install -y nodejs
+            $setupScript.Content | & bash -c "sudo bash -"
+            & sudo yum install -y nodejs
         } else {
             Write-ScriptLog "Unsupported Linux distribution" -Level 'Error'
             throw "Cannot install Node.js on this Linux distribution"
@@ -239,7 +239,7 @@ try {
             $installerPath = '/tmp/node-installer.pkg'
 
             Invoke-WebRequest -Uri $downloadUrl -OutFile $installerPath -UseBasicParsing
-            & installer -pkg $installerPath -target /
+            & sudo installer -pkg $installerPath -target /
             Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
         }
     } else {

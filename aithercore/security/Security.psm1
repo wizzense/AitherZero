@@ -1897,7 +1897,10 @@ function Initialize-AitherEnvironment {
         [string]$Repository,
         
         [Parameter()]
-        [hashtable]$CustomMapping = @{}
+        [hashtable]$CustomMapping = @{},
+        
+        [Parameter()]
+        [switch]$SkipMissing
     )
     
     # Define profile mappings
@@ -1946,6 +1949,25 @@ function Initialize-AitherEnvironment {
                 $params.Repository = $Repository
             }
             
+            # First check if credential exists when SkipMissing is enabled
+            if ($SkipMissing) {
+                $credExists = $null -ne (Get-AitherCredential -Name $credName -ErrorAction SilentlyContinue)
+                if (-not $credExists) {
+                    Write-SecurityLog -Level Warning -Message "Skipping missing credential" -Data @{
+                        CredentialName = $credName
+                        Variable = $envVar
+                    }
+                    $results += [PSCustomObject]@{
+                        Variable = $envVar
+                        CredentialName = $credName
+                        Scope = $Scope
+                        Status = 'Skipped'
+                        Error = "Credential not found (skipped)"
+                    }
+                    continue
+                }
+            }
+            
             Set-AitherEnvironmentVariable @params
             
             $results += [PSCustomObject]@{
@@ -1973,6 +1995,7 @@ function Initialize-AitherEnvironment {
         Total = $results.Count
         Success = ($results | Where-Object Status -eq 'Success').Count
         Failed = ($results | Where-Object Status -eq 'Failed').Count
+        Skipped = ($results | Where-Object Status -eq 'Skipped').Count
     }
     
     return $results
