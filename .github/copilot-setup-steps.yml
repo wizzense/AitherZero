@@ -51,11 +51,23 @@ steps:
       # Run bootstrap script with minimal profile for CI performance
       ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive -AutoInstallDeps
       
-      # Verify bootstrap succeeded
-      if ($env:AITHERZERO_INITIALIZED -eq 'true') {
-        Write-Host "✅ AitherZero bootstrap completed successfully" -ForegroundColor Green
+      # Verify bootstrap succeeded by checking if module manifest exists and is valid
+      $manifestPath = "./AitherZero.psd1"
+      if (Test-Path $manifestPath) {
+        try {
+          $manifest = Import-PowerShellDataFile -Path $manifestPath
+          Write-Host "✅ AitherZero bootstrap completed successfully" -ForegroundColor Green
+          Write-Host "   Version: $($manifest.ModuleVersion)" -ForegroundColor Cyan
+          
+          # Persist initialization flag for subsequent steps
+          echo "AITHERZERO_INITIALIZED=true" >> $env:GITHUB_ENV
+        }
+        catch {
+          Write-Error "Bootstrap failed - module manifest is invalid: $_"
+          exit 1
+        }
       } else {
-        Write-Error "Bootstrap failed - environment not initialized"
+        Write-Error "Bootstrap failed - module manifest not found"
         exit 1
       }
 
