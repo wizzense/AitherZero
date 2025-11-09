@@ -1,0 +1,5 @@
+# Branch-specific configuration for copilot/full-validation-and-deployment
+baseurl: ""
+branch: "copilot/full-validation-and-deployment"
+deployment_time: "$(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+deployment_type: "dev-staging"
