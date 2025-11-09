@@ -405,7 +405,7 @@ function Get-ExecutionMetric {
             }
         }
         catch {
-            # Get-Counter not available on this platform
+            # Get-Counter not available on non-Windows platforms - skip metric
         }
 
         # Memory usage (Windows-specific)
@@ -419,7 +419,7 @@ function Get-ExecutionMetric {
             }
         }
         catch {
-            # CIM not available on this platform
+            # Win32_OperatingSystem CIM class not available on non-Windows platforms - skip metric
         }
 
         # Disk usage (cross-platform)
@@ -434,7 +434,7 @@ function Get-ExecutionMetric {
             }
         }
         catch {
-            # Disk metrics not available
+            # Disk metrics collection failed - skip metric
         }
     }
 
