@@ -432,7 +432,7 @@
             'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 3; Description = 'Security and credential management' }
             'testing'        = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
-            'utilities'      = @{ Modules = 11; Description = 'Core utilities, logging, and maintenance' }
+            'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
         # Script inventory by range (173 total files, 166 unique numbers)
@@ -447,7 +447,7 @@
             '0500-0599' = @{ Count = 22; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 28; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 15; Category = 'Validation & Test Generation' }
+            '0900-0999' = @{ Count = 16; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
 
@@ -1765,47 +1765,6 @@
         # Internal modules and scripts (placeholder for future expansion)
         Modules             = @{}
         Scripts             = @{}
-    }
-
-    # ===================================================================
-    # EXTENSION SYSTEM - Plugin Architecture
-    # ===================================================================
-    Extensions               = @{
-        # Enable extension system
-        Enabled            = $true
-
-        # Extension search paths (ordered by priority)
-        SearchPaths        = @(
-            './extensions'                           # Local extensions
-            "$HOME/.aitherzero/extensions"          # User extensions
-            "$env:AITHERZERO_EXTENSIONS_PATH"       # Custom path via environment variable
-        )
-
-        # Auto-load extensions at startup
-        AutoLoad           = $true
-
-        # Extension validation
-        RequireManifest    = $true
-        RequireSignature   = $false  # Set to true for production environments
-
-        # Reserved script number ranges
-        ScriptNumberRanges = @{
-            Core        = @{ Start = 0; End = 7999; Description = 'AitherZero Core Scripts' }
-            Extensions  = @{ Start = 8000; End = 8999; Description = 'Extension Scripts' }
-            Maintenance = @{ Start = 9000; End = 9999; Description = 'Maintenance Scripts' }
-        }
-
-        # Extension feature flags
-        Features           = @{
-            CustomModes    = $true           # Allow extensions to add CLI modes
-            CustomCommands = $true        # Allow extensions to add PowerShell commands
-            CustomScripts  = $true         # Allow extensions to add automation scripts
-            CustomDomains  = $true         # Allow extensions to add domain modules
-            HotReload      = $false           # Hot-reload extensions without restart (experimental)
-        }
-
-        # Registered extensions (populated at runtime by ExtensionManager)
-        Loaded             = @()
     }
 
     # ===================================================================

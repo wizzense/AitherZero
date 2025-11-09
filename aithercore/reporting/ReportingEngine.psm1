@@ -29,9 +29,9 @@ $script:ReportingState = @{
 
 # Import dependencies
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$script:LoggingModule = Join-Path $script:ProjectRoot "domains/utilities/Logging.psm1"
-$script:TestingModule = Join-Path $script:ProjectRoot "domains/testing/TestingFramework.psm1"
-$script:ConfigModule = Join-Path $script:ProjectRoot "domains/configuration/Configuration.psm1"
+$script:LoggingModule = Join-Path $script:ProjectRoot "aithercore/utilities/Logging.psm1"
+$script:TestingModule = Join-Path $script:ProjectRoot "aithercore/testing/TestingFramework.psm1"
+$script:ConfigModule = Join-Path $script:ProjectRoot "aithercore/configuration/Configuration.psm1"
 
 # Import logging if available (only if not already loaded)
 if (-not (Get-Module -Name "Logging")) {
@@ -96,20 +96,7 @@ function Initialize-ReportingEngine {
             New-Item -ItemType Directory -Path $script:ReportingState.ReportPath -Force | Out-Null
         }
 
-        Write-ReportLog "Reporting engine initialized with configuration"
-    }
-}
-
-function Write-ReportLog {
-    param(
-        [string]$Message,
-        [string]$Level = 'Information'
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "ReportingEngine"
-    } else {
-        Write-Host "[$Level] $Message"
+        Write-CustomLog -Level 'Information' -Message "Reporting engine initialized with configuration" -Source "ReportingEngine"
     }
 }
 
@@ -137,7 +124,7 @@ function New-ExecutionDashboard {
         [switch]$ShowLogs
     )
 
-    Write-ReportLog "Creating execution dashboard: $Title"
+    Write-CustomLog -Level 'Information' -Message "Creating execution dashboard: $Title" -Source "ReportingEngine"
 
     $dashboard = @{
         Title           = $Title
@@ -206,7 +193,7 @@ function Update-ExecutionDashboard {
     )
 
     if (-not $Dashboard) {
-        Write-ReportLog "No active dashboard to update" -Level Warning
+        Write-CustomLog -Level 'Warning' -Message "No active dashboard to update" -Source "ReportingEngine"
         return
     }
 
@@ -369,9 +356,22 @@ function Get-ExecutionMetric {
     <#
     .SYNOPSIS
         Collect current execution metrics
+    .PARAMETER Period
+        Time period for metrics collection (Today, Week, Month, All). 
+        Currently collects current metrics regardless of period.
+    .PARAMETER IncludeSystem
+        Include system-level metrics (CPU, Memory, Disk)
+    .PARAMETER IncludeProcess
+        Include process-level metrics
+    .PARAMETER IncludeCustom
+        Include custom performance traces
     #>
     [CmdletBinding()]
     param(
+        [Parameter()]
+        [ValidateSet('Today', 'Week', 'Month', 'All')]
+        [string]$Period = 'All',
+
         [switch]$IncludeSystem,
 
         [switch]$IncludeProcess,
@@ -382,20 +382,47 @@ function Get-ExecutionMetric {
     $metrics = @{}
 
     if ($IncludeSystem) {
-        # CPU usage
-        $cpu = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue).CounterSamples[0].CookedValue
-        $metrics['CPU'] = "{0:N1}%" -f $cpu
+        # CPU usage (Windows-specific)
+        try {
+            if (Get-Command Get-Counter -ErrorAction SilentlyContinue) {
+                $cpu = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue).CounterSamples[0].CookedValue
+                if ($cpu) {
+                    $metrics['CPU'] = "{0:N1}%" -f $cpu
+                }
+            }
+        }
+        catch {
+            # Get-Counter not available on non-Windows platforms - skip metric
+        }
 
-        # Memory usage
-        $os = Get-CimInstance Win32_OperatingSystem
-        $memUsed = ($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize * 100
-        $metrics['Memory'] = "{0:N1}%" -f $memUsed
+        # Memory usage (Windows-specific)
+        try {
+            if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) {
+                $os = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
+                if ($os) {
+                    $memUsed = ($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize * 100
+                    $metrics['Memory'] = "{0:N1}%" -f $memUsed
+                }
+            }
+        }
+        catch {
+            # Win32_OperatingSystem CIM class not available on non-Windows platforms - skip metric
+        }
 
-        # Disk usage
-        $disk = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -and $_.Used }
-        $diskUsed = ($disk.Used | Measure-Object -Sum).Sum
-        $diskTotal = (($disk.Used + $disk.Free) | Measure-Object -Sum).Sum
-        $metrics['Disk'] = "{0:N1}%" -f (($diskUsed / $diskTotal) * 100)
+        # Disk usage (cross-platform)
+        try {
+            $disk = Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue | Where-Object { $_.Free -and $_.Used }
+            if ($disk) {
+                $diskUsed = ($disk.Used | Measure-Object -Sum).Sum
+                $diskTotal = (($disk.Used + $disk.Free) | Measure-Object -Sum).Sum
+                if ($diskTotal -gt 0) {
+                    $metrics['Disk'] = "{0:N1}%" -f (($diskUsed / $diskTotal) * 100)
+                }
+            }
+        }
+        catch {
+            # Disk metrics collection failed - skip metric
+        }
     }
 
     if ($IncludeProcess) {
@@ -449,7 +476,7 @@ function New-TestReport {
         [hashtable]$AnalysisResults
     )
 
-    Write-ReportLog "Generating $Format test report: $Title"
+    Write-CustomLog -Level 'Information' -Message "Generating $Format test report: $Title" -Source "ReportingEngine"
 
     # Collect data if not provided
     if ($IncludeTests -and -not $TestResults) {
@@ -546,12 +573,12 @@ function New-TestReport {
         }
 
         'PDF' {
-            Write-ReportLog "PDF generation not yet implemented" -Level Warning
+            Write-CustomLog -Level 'Warning' -Message "PDF generation not yet implemented" -Source "ReportingEngine"
             return $null
         }
 
         'Excel' {
-            Write-ReportLog "Excel generation not yet implemented" -Level Warning
+            Write-CustomLog -Level 'Warning' -Message "Excel generation not yet implemented" -Source "ReportingEngine"
             return $null
         }
     }
@@ -564,7 +591,7 @@ function New-TestReport {
         Title     = $Title
     }
 
-    Write-ReportLog "Report generated: $reportPath"
+    Write-CustomLog -Level 'Information' -Message "Report generated: $reportPath" -Source "ReportingEngine"
     return $reportPath
 }
 
@@ -1018,7 +1045,7 @@ function Export-MetricsReport {
         [string[]]$MetricTypes = @('Tests', 'Coverage', 'Performance', 'Quality')
     )
 
-    Write-ReportLog "Exporting metrics report in $Format format"
+    Write-CustomLog -Level 'Information' -Message "Exporting metrics report in $Format format" -Source "ReportingEngine"
 
     $metrics = @{
         Period      = @{
@@ -1112,7 +1139,7 @@ function Export-MetricsReport {
         }
     }
 
-    Write-ReportLog "Metrics report exported to: $reportPath"
+    Write-CustomLog -Level 'Information' -Message "Metrics report exported to: $reportPath" -Source "ReportingEngine"
     return $reportPath
 }
 
@@ -1137,7 +1164,7 @@ function Test-EnvironmentValidation {
         [string]$OutputPath = (Join-Path $script:ProjectRoot "reports")
     )
 
-    Write-ReportLog "Running environment validation"
+    Write-CustomLog -Level 'Information' -Message "Running environment validation" -Source "ReportingEngine"
 
     $validation = @{
         Timestamp     = Get-Date
@@ -1203,7 +1230,7 @@ function Test-EnvironmentValidation {
         }
     }
 
-    Write-ReportLog "Environment validation completed. Overall status: $($validation.Overall)"
+    Write-CustomLog -Level 'Information' -Message "Environment validation completed. Overall status: $($validation.Overall)" -Source "ReportingEngine"
 
     return $validation
 }
@@ -1223,7 +1250,7 @@ function Get-SystemInformation {
         [switch]$IncludeProcesses
     )
 
-    Write-ReportLog "Gathering system information"
+    Write-CustomLog -Level 'Information' -Message "Gathering system information" -Source "ReportingEngine"
 
     $systemInfo = @{
         Timestamp   = Get-Date
@@ -1277,7 +1304,7 @@ function Get-SystemInformation {
         }
     }
 
-    Write-ReportLog "System information gathered successfully"
+    Write-CustomLog -Level 'Information' -Message "System information gathered successfully" -Source "ReportingEngine"
 
     return $systemInfo
 }
@@ -1299,7 +1326,7 @@ function New-ProjectReport {
         [switch]$ShowAll
     )
 
-    Write-ReportLog "Generating $ReportType project report"
+    Write-CustomLog -Level 'Information' -Message "Generating $ReportType project report" -Source "ReportingEngine"
 
     $report = @{
         GeneratedAt = Get-Date
@@ -1344,14 +1371,14 @@ function New-ProjectReport {
         $htmlContent = ConvertTo-ProjectReportHTML -Report $report
         if ($PSCmdlet.ShouldProcess($htmlPath, "Save HTML report")) {
             Set-Content -Path $htmlPath -Value $htmlContent -Encoding UTF8
-            Write-ReportLog "Project report saved: $htmlPath"
+            Write-CustomLog -Level 'Information' -Message "Project report saved: $htmlPath" -Source "ReportingEngine"
         }
         return $htmlPath
     } else {
         $jsonPath = Join-Path $OutputPath "$reportFileName.json"
         if ($PSCmdlet.ShouldProcess($jsonPath, "Save JSON report")) {
             $report | ConvertTo-Json -Depth 10 | Set-Content -Path $jsonPath -Encoding UTF8
-            Write-ReportLog "Project report saved: $jsonPath"
+            Write-CustomLog -Level 'Information' -Message "Project report saved: $jsonPath" -Source "ReportingEngine"
         }
         return $jsonPath
     }
@@ -1371,7 +1398,7 @@ function Show-ProjectDashboard {
         [int]$RefreshSeconds = 30
     )
 
-    Write-ReportLog "Launching project dashboard"
+    Write-CustomLog -Level 'Information' -Message "Launching project dashboard" -Source "ReportingEngine"
 
     do {
         Clear-Host
