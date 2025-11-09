@@ -1,33 +1,33 @@
 {
-  "terminal.integrated.env.windows": {
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.env.linux": {
     "AITHERZERO_ROOT": "${workspaceFolder}"
   },
-  "terminal.integrated.profiles.linux": {
+  "powershell.startAutomatically": false,
+  "terminal.integrated.profiles.windows": {
     "PowerShell": {
       "args": [
         "-NoExit",
         "-Command",
         "& { if (Test-Path ./AitherZero.psd1) { Import-Module ./AitherZero.psd1 -Force } }"
       ],
-      "path": "pwsh"
+      "source": "PowerShell"
     }
   },
-  "terminal.integrated.profiles.windows": {
+  "terminal.integrated.env.windows": {
+    "AITHERZERO_ROOT": "${workspaceFolder}"
+  },
+  "terminal.integrated.env.osx": {
+    "AITHERZERO_ROOT": "${workspaceFolder}"
+  },
+  "terminal.integrated.profiles.linux": {
     "PowerShell": {
-      "source": "PowerShell",
+      "path": "pwsh",
       "args": [
         "-NoExit",
         "-Command",
         "& { if (Test-Path ./AitherZero.psd1) { Import-Module ./AitherZero.psd1 -Force } }"
       ]
     }
-  },
-  "powershell.startAutomatically": false,
-  "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "terminal.integrated.env.linux": {
-    "AITHERZERO_ROOT": "${workspaceFolder}"
-  },
-  "terminal.integrated.env.osx": {
-    "AITHERZERO_ROOT": "${workspaceFolder}"
   }
 }

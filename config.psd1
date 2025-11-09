@@ -242,8 +242,8 @@
                 }
                 Analysis       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0513', '0514', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527')
-                    Description = 'Changelog generation, diff analysis, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, and code mapping'
+                    Scripts     = @('0513', '0514', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527', '0528')
+                    Description = 'Changelog generation, diff analysis, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, code mapping, and quality metrics'
                 }
                 Logging        = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -1187,6 +1187,42 @@
                 Description         = 'Fix CI validation issues'
                 RequiresApproval    = $true
                 AllowedEnvironments = @('Dev')
+            }
+            'generate-documentation' = @{
+                Enabled             = $true
+                Description         = 'Generate all project documentation'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'generate-indexes'       = @{
+                Enabled             = $true
+                Description         = 'Generate all project indexes'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-validation'          = @{
+                Enabled             = $true
+                Description         = 'Comprehensive PR validation (8 phases)'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-ecosystem-build'     = @{
+                Enabled             = $true
+                Description         = 'PR ecosystem build phase'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-ecosystem-analyze'   = @{
+                Enabled             = $true
+                Description         = 'PR ecosystem analysis phase'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-ecosystem-report'    = @{
+                Enabled             = $true
+                Description         = 'PR ecosystem reporting phase'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
             }
         }
     }

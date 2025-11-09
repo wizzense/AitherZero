@@ -10,7 +10,7 @@
             Script = "0744"
             Description = "Generate code documentation"
             Parameters = @{
-                Mode = $env:DOC_MODE ?? "Incremental"
+                Mode = "Incremental"
                 Format = "Both"
                 Quality = $true
             }
@@ -20,10 +20,10 @@
     )
     
     Variables = @{
-        CI = $env:CI
+        CI = "true"
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
-        DOC_MODE = $env:DOC_MODE ?? "Incremental"
+        DOC_MODE = "Incremental"
     }
     
     Options = @{
