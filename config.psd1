@@ -1188,6 +1188,42 @@
                 RequiresApproval    = $true
                 AllowedEnvironments = @('Dev')
             }
+            'generate-documentation' = @{
+                Enabled             = $true
+                Description         = 'Generate all project documentation'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'generate-indexes'       = @{
+                Enabled             = $true
+                Description         = 'Generate all project indexes'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-validation'          = @{
+                Enabled             = $true
+                Description         = 'Comprehensive PR validation (8 phases)'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-ecosystem-build'     = @{
+                Enabled             = $true
+                Description         = 'PR ecosystem build phase'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-ecosystem-analyze'   = @{
+                Enabled             = $true
+                Description         = 'PR ecosystem analysis phase'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
+            'pr-ecosystem-report'    = @{
+                Enabled             = $true
+                Description         = 'PR ecosystem reporting phase'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+            }
         }
     }
 
