@@ -57,19 +57,31 @@ if ($IncludePRInfo -and $env:PR_NUMBER) {
 
 # Git Information
 if ($IncludeGitInfo) {
-    try {
-        $buildInfo.git = @{
-            commit_sha = if ($env:GITHUB_SHA) { $env:GITHUB_SHA } else { git rev-parse HEAD }
-            commit_short = if ($env:GITHUB_SHA) { $env:GITHUB_SHA.Substring(0,8) } else { git rev-parse --short HEAD }
-            commit_message = git log -1 --pretty=%B
-            commit_author = git log -1 --pretty=%an
-            commit_date = git log -1 --pretty=%cI
-            branch = git rev-parse --abbrev-ref HEAD
-            tag = git describe --tags --exact-match 2>$null
-            commits_count = git rev-list --count HEAD
+    # Check if we're in a git repository before running git commands
+    $isGitRepo = if (Get-Command Test-GitRepository -ErrorAction SilentlyContinue) {
+        Test-GitRepository -Path $ProjectRoot
+    } else {
+        # Fallback: Check for .git directory
+        Test-Path (Join-Path $ProjectRoot ".git")
+    }
+    
+    if ($isGitRepo) {
+        try {
+            $buildInfo.git = @{
+                commit_sha = if ($env:GITHUB_SHA) { $env:GITHUB_SHA } else { git rev-parse HEAD 2>$null }
+                commit_short = if ($env:GITHUB_SHA) { $env:GITHUB_SHA.Substring(0,8) } else { git rev-parse --short HEAD 2>$null }
+                commit_message = git log -1 --pretty=%B 2>$null
+                commit_author = git log -1 --pretty=%an 2>$null
+                commit_date = git log -1 --pretty=%cI 2>$null
+                branch = git rev-parse --abbrev-ref HEAD 2>$null
+                tag = git describe --tags --exact-match 2>$null
+                commits_count = git rev-list --count HEAD 2>$null
+            }
+        } catch {
+            Write-Warning "Could not retrieve git information: $_"
         }
-    } catch {
-        Write-Warning "Could not retrieve git information: $_"
+    } else {
+        Write-Verbose "Not in a git repository, skipping git information"
     }
 }
 
@@ -102,15 +114,28 @@ if ($env:PR_NUMBER -and $env:GITHUB_SHA) {
     $buildInfo.artifacts.package_prefix = "AitherZero-PR$($env:PR_NUMBER)"
 } elseif ($env:PR_NUMBER) {
     # Fallback to git rev-parse if GITHUB_SHA not available
-    try {
-        $shortSha = git rev-parse --short HEAD
-        $buildInfo.artifacts.pr_container_tags = @(
-            "pr-$($env:PR_NUMBER)-$shortSha",
-            "pr-$($env:PR_NUMBER)-latest"
-        )
-        $buildInfo.artifacts.package_prefix = "AitherZero-PR$($env:PR_NUMBER)"
-    } catch {
-        Write-Warning "Could not generate PR container tags: $_"
+    # Check if we're in a git repository before running git commands
+    $isGitRepo = if (Get-Command Test-GitRepository -ErrorAction SilentlyContinue) {
+        Test-GitRepository -Path $ProjectRoot
+    } else {
+        Test-Path (Join-Path $ProjectRoot ".git")
+    }
+    
+    if ($isGitRepo) {
+        try {
+            $shortSha = git rev-parse --short HEAD 2>$null
+            if ($shortSha) {
+                $buildInfo.artifacts.pr_container_tags = @(
+                    "pr-$($env:PR_NUMBER)-$shortSha",
+                    "pr-$($env:PR_NUMBER)-latest"
+                )
+                $buildInfo.artifacts.package_prefix = "AitherZero-PR$($env:PR_NUMBER)"
+            }
+        } catch {
+            Write-Warning "Could not generate PR container tags: $_"
+        }
+    } else {
+        Write-Verbose "Not in a git repository, cannot generate git-based container tags"
     }
 }
 

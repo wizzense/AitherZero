@@ -26,7 +26,6 @@
                 IncludePRInfo = $true
                 IncludeGitInfo = $true
                 IncludeEnvironmentInfo = $true
-                IncludeDockerInfo = $true
             }
             ContinueOnError = $false
             Timeout = 60
