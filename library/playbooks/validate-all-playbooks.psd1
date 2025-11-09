@@ -14,8 +14,7 @@
             Script = "0407"
             Description = "Validate PowerShell syntax of all playbooks"
             Parameters = @{
-                Path = "library/playbooks"
-                Recurse = $true
+                All = $true
             }
             ContinueOnError = $false
             Timeout = 120
