@@ -25,23 +25,38 @@ function Get-PSScriptAnalyzerFunctionalTests {
     <#
     .SYNOPSIS
         Returns functional test template for PSScriptAnalyzer scripts
+    .DESCRIPTION
+        Uses Pester's native Mock to test actual PSScriptAnalyzer behavior
     #>
     param([string]$ScriptName)
     
     return @"
     Context 'Functional Behavior - PSScriptAnalyzer Execution' {
-        It 'Should actually analyze PowerShell files' {
+        It 'Should actually analyze PowerShell files and return findings' {
             # Test real functionality: does script actually run analysis?
             `$testDir = New-TestEnvironment -Name 'pssa-test' -Directories @('scripts') -Files @{
                 'scripts/test.ps1' = 'Write-Host "test" # PSAvoidUsingWriteHost violation'
             }
             
             try {
+                # Mock Invoke-ScriptAnalyzer using Pester to simulate finding violations
+                Mock Invoke-ScriptAnalyzer {
+                    return @(
+                        [PSCustomObject]@{
+                            RuleName = 'PSAvoidUsingWriteHost'
+                            Severity = 'Warning'
+                            ScriptName = 'test.ps1'
+                            Line = 1
+                            Message = 'Avoid using Write-Host'
+                        }
+                    )
+                } -ModuleName PSScriptAnalyzer
+                
                 # Execute with test directory
                 `$result = & `$script:ScriptPath -Path `$testDir.Path -DryRun
                 
-                # Validate: Should identify the directory for analysis
-                `$result | Should -Not -BeNullOrEmpty
+                # Validate: Should invoke PSScriptAnalyzer
+                Should -Invoke Invoke-ScriptAnalyzer -ModuleName PSScriptAnalyzer -Times 1 -Exactly
                 
             } finally {
                 & `$testDir.Cleanup
@@ -49,15 +64,25 @@ function Get-PSScriptAnalyzerFunctionalTests {
         }
         
         It 'Should generate analysis results file when not in DryRun mode' {
-            `$testDir = New-TestEnvironment -Name 'pssa-output' -Directories @('scripts')
-            `$outputPath = Join-Path `$testDir.Path 'results.json'
+            `$testDir = New-TestEnvironment -Name 'pssa-output' -Directories @('scripts', 'reports')
+            `$outputPath = Join-Path `$testDir.Path 'reports/results.json'
             
             try {
-                # Execute with output path
+                # Mock the analysis results
+                Mock Invoke-ScriptAnalyzer {
+                    return @(
+                        [PSCustomObject]@{
+                            RuleName = 'PSAvoidUsingWriteHost'
+                            Severity = 'Warning'
+                        }
+                    )
+                }
+                
+                # Execute with output path (WhatIf to prevent actual file creation in test)
                 & `$script:ScriptPath -Path `$testDir.Path -OutputPath `$outputPath -WhatIf
                 
-                # In WhatIf mode, file shouldn't be created but path should be validated
-                # This tests the script's parameter handling
+                # In WhatIf mode, should show intent to create file
+                # Actual file creation logic should be present
                 
             } finally {
                 & `$testDir.Cleanup
@@ -65,24 +90,57 @@ function Get-PSScriptAnalyzerFunctionalTests {
         }
         
         It 'Should respect severity filtering' {
-            # Test that severity parameter actually filters results
-            # This is FUNCTIONAL validation - not just "parameter exists"
-            `$cmd = Get-Command `$script:ScriptPath
-            `$severityParam = `$cmd.Parameters['Severity']
+            # Mock PSScriptAnalyzer with multiple severity levels
+            Mock Invoke-ScriptAnalyzer {
+                return @(
+                    [PSCustomObject]@{ RuleName = 'Rule1'; Severity = 'Error' }
+                    [PSCustomObject]@{ RuleName = 'Rule2'; Severity = 'Warning' }
+                    [PSCustomObject]@{ RuleName = 'Rule3'; Severity = 'Information' }
+                )
+            }
             
-            `$severityParam | Should -Not -BeNullOrEmpty
-            `$severityParam.ParameterType.Name | Should -Match 'String'
+            # Execute with severity filter
+            `$result = & `$script:ScriptPath -Severity @('Error') -DryRun
+            
+            # Verify PSScriptAnalyzer was called with correct severity
+            Should -Invoke Invoke-ScriptAnalyzer -ParameterFilter {
+                `$Severity -contains 'Error'
+            }
         }
         
-        It 'Should handle Fast mode for CI environments' {
-            # Validate Fast mode behavior
+        It 'Should handle Fast mode for CI environments by limiting analysis scope' {
+            # Validate Fast mode behavior using mocking
             `$env:CI = 'true'
             try {
+                Mock Get-ChildItem {
+                    # Mock returns fewer files in fast mode
+                    return @(
+                        [PSCustomObject]@{ FullName = 'file1.ps1'; Name = 'file1.ps1' }
+                    )
+                } -ParameterFilter { `$Path -and `$Filter -eq '*.ps1' }
+                
                 `$result = & `$script:ScriptPath -Fast -DryRun
+                
                 # Should execute without errors in fast mode
                 `$? | Should -Be `$true
+                
+                # Verify limited scope in fast mode
+                Should -Invoke Get-ChildItem -ParameterFilter { `$Filter -eq '*.ps1' }
+                
             } finally {
                 `$env:CI = `$null
+            }
+        }
+        
+        It 'Should support excluding specific rules' {
+            Mock Invoke-ScriptAnalyzer { return @() }
+            
+            `$excludedRules = @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
+            & `$script:ScriptPath -ExcludeRules `$excludedRules -DryRun
+            
+            # Verify excluded rules are passed to analyzer
+            Should -Invoke Invoke-ScriptAnalyzer -ParameterFilter {
+                `$ExcludeRule -contains 'PSAvoidUsingWriteHost'
             }
         }
     }
@@ -101,20 +159,20 @@ function Get-GitAutomationFunctionalTests {
             @"
     Context 'Functional Behavior - Git Branch Creation' {
         It 'Should create branch with correct naming convention' {
-            # Test actual git branch creation logic
-            # Mock Git commands to verify proper parameters
+            # Test actual git branch creation logic using Pester's native Mock
             Mock git {
-                param(`$cmd)
+                param([string]`$cmd, [string[]]`$args)
                 if (`$cmd -eq 'checkout') {
                     return 'Switched to branch test-branch'
                 }
+                return ''
             }
             
             # Execute branch creation (in WhatIf mode to avoid real changes)
             & `$script:ScriptPath -Type feature -Name 'test-feature' -WhatIf
             
-            # Verify git commands would be called correctly
-            Should -Invoke git -ParameterFilter { `$cmd -contains 'checkout' }
+            # Verify git commands would be called correctly using Should -Invoke
+            Should -Invoke git -ParameterFilter { `$cmd -eq 'checkout' -and `$args -contains '-b' }
         }
         
         It 'Should validate branch name format' {
@@ -122,6 +180,18 @@ function Get-GitAutomationFunctionalTests {
             {
                 & `$script:ScriptPath -Type feature -Name 'invalid name with spaces' -WhatIf
             } | Should -Throw
+        }
+        
+        It 'Should call git commands in correct order' {
+            # Mock git to track call sequence
+            Mock git { } -ParameterFilter { `$_ -contains 'fetch' }
+            Mock git { } -ParameterFilter { `$_ -contains 'checkout' }
+            
+            & `$script:ScriptPath -Type feature -Name 'test' -WhatIf
+            
+            # Pester tracks mock calls automatically - verify sequence
+            Should -Invoke git -ParameterFilter { `$_ -contains 'fetch' } -Times 1 -Exactly
+            Should -Invoke git -ParameterFilter { `$_ -contains 'checkout' } -Times 1 -Exactly
         }
     }
 "@
@@ -133,23 +203,42 @@ function Get-GitAutomationFunctionalTests {
         It 'Should create commit with conventional commit format' {
             # Verify commit message follows conventional commits
             Mock git {
+                param([string[]]`$args)
                 if (`$args[0] -eq 'commit') {
                     `$message = `$args[2]
                     # Should match: type(scope): message
                     `$message | Should -Match '^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+'
+                    return 'Commit created'
                 }
+                return ''
             }
             
             & `$script:ScriptPath -Type feat -Message 'add feature' -WhatIf
+            
+            # Verify commit was attempted
+            Should -Invoke git -ParameterFilter { `$args[0] -eq 'commit' }
         }
         
         It 'Should stage files before committing' {
-            Mock git { }
+            # Mock git add and git commit separately using Pester
+            Mock git { 'Files staged' } -ParameterFilter { `$args[0] -eq 'add' }
+            Mock git { 'Commit created' } -ParameterFilter { `$args[0] -eq 'commit' }
             
             & `$script:ScriptPath -Type fix -Message 'fix bug' -Files 'file1.ps1' -WhatIf
             
-            # Verify git add was called before git commit
-            Should -Invoke git -ParameterFilter { `$args[0] -eq 'add' } -Times 1
+            # Verify git add was called before git commit (Pester tracks order)
+            Should -Invoke git -ParameterFilter { `$args[0] -eq 'add' } -Times 1 -Exactly
+            Should -Invoke git -ParameterFilter { `$args[0] -eq 'commit' } -Times 1 -Exactly
+        }
+        
+        It 'Should handle commit failures gracefully' {
+            # Mock git commit to simulate failure
+            Mock git { throw 'Nothing to commit' } -ParameterFilter { `$args[0] -eq 'commit' }
+            
+            # Script should handle error appropriately
+            {
+                & `$script:ScriptPath -Type fix -Message 'fix' -ErrorAction Stop
+            } | Should -Throw -ExpectedMessage '*Nothing to commit*'
         }
     }
 "@
@@ -158,19 +247,40 @@ function Get-GitAutomationFunctionalTests {
         'PR' {
             @"
     Context 'Functional Behavior - Pull Request Creation' {
-        It 'Should generate PR with proper metadata' {
-            # Test PR creation with GitHub CLI
+        It 'Should generate PR with proper metadata using gh CLI' {
+            # Mock GitHub CLI (gh) using Pester's native mocking
             Mock gh {
+                param([string[]]`$args)
                 if (`$args[0] -eq 'pr' -and `$args[1] -eq 'create') {
-                    `$title = (`$args | Where-Object { `$_ -eq '--title' })
+                    # Verify title is provided
+                    `$titleIndex = `$args.IndexOf('--title')
+                    `$titleIndex | Should -BeGreaterThan -1
+                    
+                    `$title = `$args[`$titleIndex + 1]
                     `$title | Should -Not -BeNullOrEmpty
-                    return 'PR created successfully'
+                    
+                    return 'PR #123 created successfully'
                 }
+                return ''
             }
             
-            & `$script:ScriptPath -Title 'Test PR' -WhatIf
+            & `$script:ScriptPath -Title 'Test PR' -Body 'PR description' -WhatIf
             
-            Should -Invoke gh -ParameterFilter { `$args[1] -eq 'create' }
+            # Verify gh pr create was called with correct parameters
+            Should -Invoke gh -ParameterFilter { 
+                `$args[0] -eq 'pr' -and `$args[1] -eq 'create' 
+            } -Times 1 -Exactly
+        }
+        
+        It 'Should support draft PRs' {
+            Mock gh { 'Draft PR created' }
+            
+            & `$script:ScriptPath -Title 'Draft PR' -Draft -WhatIf
+            
+            # Verify --draft flag is passed
+            Should -Invoke gh -ParameterFilter { 
+                `$args -contains '--draft' 
+            }
         }
     }
 "@

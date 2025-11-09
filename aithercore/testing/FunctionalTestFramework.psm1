@@ -241,150 +241,224 @@ function Assert-SideEffect {
 
 #endregion
 
-#region Mock/Stub Infrastructure
+#region Mock/Stub Infrastructure - Pester Native Integration
+
+<#
+.NOTES
+    This framework uses Pester's native Mock command for all mocking.
+    Pester mocking is extremely powerful and handles:
+    - ANY PowerShell command (cmdlets, functions, external commands)
+    - Module-scoped mocking
+    - Parameter filters for conditional mocking
+    - Call history tracking with Should -Invoke
+    - Mock verification
+    
+    We provide helper functions that wrap Pester's mocking for convenience,
+    but all the heavy lifting is done by Pester itself.
+#>
 
 function New-TestMock {
     <#
     .SYNOPSIS
-        Creates a mock for a command/function
+        Creates a Pester mock for a command/function
     .DESCRIPTION
-        Lightweight mock system for testing:
-        - Records calls made
-        - Returns configured responses
-        - Validates call count and parameters
+        Wrapper around Pester's Mock command with simplified interface:
+        - Leverages Pester's native mocking capabilities
+        - Works with ANY PowerShell command
+        - Supports parameter filtering
+        - Automatic call tracking
+        
+    .PARAMETER CommandName
+        Name of command to mock (cmdlet, function, or external command)
+    
+    .PARAMETER MockBehavior
+        Scriptblock to execute when mock is called
+    
+    .PARAMETER ReturnValue
+        Value to return from mock
+    
+    .PARAMETER ParameterFilter
+        Pester parameter filter for conditional mocking
+    
+    .PARAMETER ModuleName
+        Module name for module-scoped mocking
+    
+    .EXAMPLE
+        # Simple mock with return value
+        New-TestMock -CommandName 'Get-Process' -ReturnValue @{ Name = 'pwsh' }
+        
+    .EXAMPLE
+        # Mock with custom behavior
+        New-TestMock -CommandName 'Invoke-WebRequest' -MockBehavior {
+            return @{ StatusCode = 200; Content = 'Success' }
+        }
+        
+    .EXAMPLE
+        # Conditional mock with parameter filter
+        New-TestMock -CommandName 'Get-Item' -ReturnValue 'file.txt' -ParameterFilter {
+            $Path -eq './test.txt'
+        }
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string]$CommandName,
         
-        [scriptblock]$MockBehavior = { },
+        [scriptblock]$MockBehavior,
         
         [object]$ReturnValue,
         
-        [switch]$PassThru
+        [scriptblock]$ParameterFilter,
+        
+        [string]$ModuleName
     )
     
-    $mockData = @{
+    # Build Mock parameters
+    $mockParams = @{
         CommandName = $CommandName
-        Behavior = $MockBehavior
-        ReturnValue = $ReturnValue
-        CallCount = 0
-        Calls = @()
-        PassThru = $PassThru.IsPresent
     }
     
-    $script:TestMocks[$CommandName] = $mockData
+    if ($MockBehavior) {
+        $mockParams.MockWith = $MockBehavior
+    } elseif ($null -ne $ReturnValue) {
+        # Create scriptblock that returns the value
+        $mockParams.MockWith = { $ReturnValue }.GetNewClosure()
+    }
     
-    # Create mock function
-    $mockFunction = {
-        param($ArgumentList)
-        
-        $mockData = $script:TestMocks[$CommandName]
-        $mockData.CallCount++
-        $mockData.Calls += @{
-            Arguments = $ArgumentList
-            Timestamp = Get-Date
-        }
-        
-        if ($mockData.Behavior) {
-            & $mockData.Behavior @ArgumentList
-        }
-        
-        if ($null -ne $mockData.ReturnValue) {
-            return $mockData.ReturnValue
-        }
-    }.GetNewClosure()
+    if ($ParameterFilter) {
+        $mockParams.ParameterFilter = $ParameterFilter
+    }
     
-    # Register mock globally
-    Set-Item "Function:\global:$CommandName" -Value $mockFunction -Force
+    if ($ModuleName) {
+        $mockParams.ModuleName = $ModuleName
+    }
     
-    return $mockData
+    # Use Pester's native Mock command
+    Mock @mockParams
+    
+    # Return mock info for tracking
+    return @{
+        CommandName = $CommandName
+        ModuleName = $ModuleName
+        ParameterFilter = $ParameterFilter
+        MockedAt = Get-Date
+    }
 }
 
 function Assert-MockCalled {
     <#
     .SYNOPSIS
-        Verifies a mock was called
+        Verifies a Pester mock was called
     .DESCRIPTION
-        Validates mock invocations:
-        - Call count matches expectation
-        - Called with expected parameters
-        - Called in expected order
+        Wrapper around Pester's Should -Invoke for mock verification.
+        Uses Pester's native call tracking and verification.
+        
+    .PARAMETER CommandName
+        Name of mocked command
+    
+    .PARAMETER Times
+        Expected number of calls
+    
+    .PARAMETER Exactly
+        Expect exactly this many calls
+    
+    .PARAMETER AtLeast
+        Expect at least this many calls
+    
+    .PARAMETER AtMost
+        Expect at most this many calls
+    
+    .PARAMETER ParameterFilter
+        Parameter filter to match specific calls
+    
+    .PARAMETER ModuleName
+        Module name for module-scoped verification
+    
+    .EXAMPLE
+        # Verify mock was called exactly once
+        Assert-MockCalled -CommandName 'Get-Process' -Times 1 -Exactly
+        
+    .EXAMPLE
+        # Verify mock was called at least twice
+        Assert-MockCalled -CommandName 'Invoke-WebRequest' -Times 2 -AtLeast
+        
+    .EXAMPLE
+        # Verify mock was called with specific parameters
+        Assert-MockCalled -CommandName 'Get-Item' -ParameterFilter {
+            $Path -eq './test.txt'
+        }
     #>
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Exactly')]
     param(
         [Parameter(Mandatory)]
         [string]$CommandName,
         
-        [int]$Times = -1,
+        [Parameter(ParameterSetName = 'Exactly')]
+        [Parameter(ParameterSetName = 'AtLeast')]
+        [Parameter(ParameterSetName = 'AtMost')]
+        [int]$Times = 1,
         
-        [hashtable]$WithParameters,
+        [Parameter(ParameterSetName = 'Exactly')]
+        [switch]$Exactly,
         
-        [ValidateSet('Exactly', 'AtLeast', 'AtMost')]
-        [string]$Qualifier = 'Exactly'
+        [Parameter(ParameterSetName = 'AtLeast')]
+        [switch]$AtLeast,
+        
+        [Parameter(ParameterSetName = 'AtMost')]
+        [switch]$AtMost,
+        
+        [scriptblock]$ParameterFilter,
+        
+        [string]$ModuleName
     )
     
-    if (-not $script:TestMocks.ContainsKey($CommandName)) {
-        throw "No mock found for command: $CommandName"
+    # Build Should -Invoke parameters
+    $invokeParams = @{
+        CommandName = $CommandName
+        Times = $Times
     }
     
-    $mockData = $script:TestMocks[$CommandName]
-    $actualCount = $mockData.CallCount
-    
-    # Validate call count
-    if ($Times -ge 0) {
-        $valid = switch ($Qualifier) {
-            'Exactly' { $actualCount -eq $Times }
-            'AtLeast' { $actualCount -ge $Times }
-            'AtMost' { $actualCount -le $Times }
-        }
-        
-        if (-not $valid) {
-            throw "Mock '$CommandName' was called $actualCount times, expected $Qualifier $Times times"
-        }
+    # Add qualifier
+    if ($Exactly -or $PSCmdlet.ParameterSetName -eq 'Exactly') {
+        $invokeParams.Exactly = $true
+    } elseif ($AtLeast) {
+        $invokeParams.AtLeast = $true
+    } elseif ($AtMost) {
+        $invokeParams.AtMost = $true
     }
     
-    # Validate parameters if specified
-    if ($WithParameters) {
-        $foundMatch = $false
-        foreach ($call in $mockData.Calls) {
-            $match = $true
-            foreach ($key in $WithParameters.Keys) {
-                if ($call.Arguments[$key] -ne $WithParameters[$key]) {
-                    $match = $false
-                    break
-                }
-            }
-            if ($match) {
-                $foundMatch = $true
-                break
-            }
-        }
-        
-        if (-not $foundMatch) {
-            throw "Mock '$CommandName' was not called with expected parameters: $($WithParameters | ConvertTo-Json)"
-        }
+    if ($ParameterFilter) {
+        $invokeParams.ParameterFilter = $ParameterFilter
     }
     
-    return $true
+    if ($ModuleName) {
+        $invokeParams.ModuleName = $ModuleName
+    }
+    
+    # Use Pester's Should -Invoke
+    Should -Invoke @invokeParams
 }
 
 function Clear-TestMocks {
     <#
     .SYNOPSIS
-        Clears all test mocks
+        Clears test mocks (placeholder for Pester context management)
+    .DESCRIPTION
+        In Pester, mocks are automatically scoped to Describe/Context blocks.
+        This function is provided for API compatibility but doesn't need to
+        do anything - Pester handles cleanup automatically.
+        
+        Mocks are cleared when:
+        - Exiting a Context block
+        - Exiting a Describe block
+        - Test run completes
     #>
     [CmdletBinding()]
     param()
     
-    foreach ($mockName in $script:TestMocks.Keys) {
-        if (Test-Path "Function:\$mockName") {
-            Remove-Item "Function:\$mockName" -Force -ErrorAction SilentlyContinue
-        }
-    }
-    
-    $script:TestMocks.Clear()
+    # Pester handles mock cleanup automatically via scoping
+    # This is just here for API compatibility
+    Write-Verbose "Mock cleanup handled automatically by Pester scoping"
 }
 
 #endregion
