@@ -7,6 +7,14 @@
     # Execute these scripts in sequence - fast feedback
     Sequence = @(
         @{
+            Script = "0003"
+            Description = "Config sync validation"
+            Parameters = @{}
+            ContinueOnError = $false
+            Timeout = 30
+            RetryCount = 0
+        },
+        @{
             Script = "0407"
             Description = "Quick syntax validation"
             Parameters = @{

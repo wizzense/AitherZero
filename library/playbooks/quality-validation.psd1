@@ -7,6 +7,13 @@
     
     Sequence = @(
         @{
+            Script = "0003"
+            Description = "Sync and validate config manifest with repository"
+            Parameters = @{}
+            ContinueOnError = $false
+            Timeout = 60
+        },
+        @{
             Script = "0404"
             Description = "Run PSScriptAnalyzer"
             Parameters = @{}

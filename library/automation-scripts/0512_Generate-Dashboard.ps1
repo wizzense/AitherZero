@@ -38,7 +38,7 @@
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Format', Justification='Used in switch statement')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Open', Justification='Used to open HTML dashboard')]
 param(
-    [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
+    [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent | Split-Path -Parent),
     [string]$OutputPath = (Join-Path $ProjectPath "reports"),
     [ValidateSet('HTML', 'Markdown', 'JSON', 'All')]
     [string]$Format = 'All',
@@ -293,12 +293,20 @@ function Get-ProjectMetrics {
         }
     }
 
-    # Count test files
+    # Count test files from canonical locations ONLY (not library/tests)
     $testPath = Join-Path $ProjectPath "tests"
     if (Test-Path $testPath) {
-        $metrics.Tests.Unit = @(Get-ChildItem -Path $testPath -Filter "*Tests.ps1" -Recurse | Where-Object { $_.FullName -match 'unit' }).Count
-        $metrics.Tests.Integration = @(Get-ChildItem -Path $testPath -Filter "*Tests.ps1" -Recurse | Where-Object { $_.FullName -match 'integration' }).Count
+        # Test counts from canonical locations only
+        $unitTestPath = Join-Path $ProjectPath "tests/unit"
+        $integrationTestPath = Join-Path $ProjectPath "tests/integration"
+        
+        Write-ScriptLog -Message "Counting test files from: Unit=$unitTestPath, Integration=$integrationTestPath" -Level Debug
+        
+        $metrics.Tests.Unit = @(Get-ChildItem -Path $unitTestPath -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue).Count
+        $metrics.Tests.Integration = @(Get-ChildItem -Path $integrationTestPath -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue).Count
         $metrics.Tests.Total = $metrics.Tests.Unit + $metrics.Tests.Integration
+        
+        Write-ScriptLog -Message "Test file counts: Unit=$($metrics.Tests.Unit), Integration=$($metrics.Tests.Integration), Total=$($metrics.Tests.Total)" -Level Information
     }
     
     # Calculate test coverage for automation scripts specifically (number-based tests in range directories)
@@ -684,6 +692,8 @@ function Get-ProjectMetrics {
     if (-not $latestTestResults -or ($metrics.Tests.Total -eq 0 -and $metrics.Tests.Passed -eq 0)) {
         # We have test files but no results - tests haven't been run recently
         if ($metrics.Tests.Unit -gt 0 -or $metrics.Tests.Integration -gt 0) {
+            # Ensure Total reflects file count, not execution results
+            $metrics.Tests.Total = $metrics.Tests.Unit + $metrics.Tests.Integration
             $metrics.Tests.LastRun = "Not run recently"
             $metrics.Tests.Duration = "Run tests to see duration"
             Write-ScriptLog -Level Warning -Message "Test files exist ($($metrics.Tests.Unit) unit, $($metrics.Tests.Integration) integration) but no recent test results found. Run './automation-scripts/0402_Run-UnitTests.ps1' to generate results."
@@ -1646,12 +1656,18 @@ function Get-DetailedTestResults {
         }
     }
     
-    # Count all test files
-    # Get all test files - wrap with @() to handle empty results under StrictMode
-    $allTestFiles = @(Get-ChildItem -Path (Join-Path $ProjectPath "tests") -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue)
+    # Count all test files from canonical locations only (tests/unit and tests/integration)
+    # NOT from library/tests which may contain old/duplicate tests
+    $unitTestPath = Join-Path $ProjectPath "tests/unit"
+    $integrationTestPath = Join-Path $ProjectPath "tests/integration"
+    
+    $unitTestFiles = @(Get-ChildItem -Path $unitTestPath -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue)
+    $integrationTestFiles = @(Get-ChildItem -Path $integrationTestPath -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue)
+    $allTestFiles = $unitTestFiles + $integrationTestFiles
+    
     $testResults.TestFiles.Total = $allTestFiles.Count
-    $testResults.TestFiles.Unit = @($allTestFiles | Where-Object { $_.FullName -match '/unit/' }).Count
-    $testResults.TestFiles.Integration = @($allTestFiles | Where-Object { $_.FullName -match '/integration/' }).Count
+    $testResults.TestFiles.Unit = $unitTestFiles.Count
+    $testResults.TestFiles.Integration = $integrationTestFiles.Count
     
     # Count potential test cases in all test files
     foreach ($testFile in $allTestFiles) {

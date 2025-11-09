@@ -16,6 +16,13 @@
     # Scripts to execute in order (use 'Sequence' for v1 compatibility)
     Sequence = @(
         @{
+            Script      = '0003'
+            Description = 'Sync config manifest with repository inventory'
+            Parameters  = @{
+                # Run in check mode (no -Fix) to validate sync status
+            }
+        }
+        @{
             Script      = '0407'
             Description = 'Validate syntax of all PowerShell files'
             Parameters  = @{
