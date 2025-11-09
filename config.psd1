@@ -114,7 +114,7 @@
                 }
                 DevTools = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0205', '0209', '0211', '0214', '0215', '0216', '0219')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
+                    Scripts     = @('0205', '0209', '0214', '0215', '0216', '0219', '0221')  # Sysinternals, 7Zip, Packer, Chocolatey, PowerShell Profile, VS Build Tools
                     Description = 'Additional development utilities'
                 }
                 AITools  = @{
@@ -237,13 +237,13 @@
                 }
                 ProjectReports = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0510', '0511', '0512', '0513', '0514', '0515', '0516')
+                    Scripts     = @('0510', '0511', '0512', '0515', '0516')
                     Description = 'Project reports, dashboards, build metadata, scheduling, and automated report generation'
                 }
                 Analysis       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525')
-                    Description = 'Aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, and tech debt analysis'
+                    Scripts     = @('0513', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527')
+                    Description = 'Changelog generation, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, and code mapping'
                 }
                 Logging        = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -271,8 +271,8 @@
                 }
                 GitHubRunners = @{
                     DependsOn   = @('Core.Git', 'Core.PowerShell7')
-                    Scripts     = @('0720', '0721', '0722', '0723')
-                    Description = 'GitHub Actions runner setup and configuration'
+                    Scripts     = @('0720', '0721', '0722', '0723', '0724')
+                    Description = 'GitHub Actions runner setup, configuration, and installation'
                 }
             }
 
@@ -319,13 +319,23 @@
             IssueManagement = @{
                 Creation           = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0800', '0810', '0825', '0832')
-                    Description = 'Issue creation from tests, manual triggers, file generation, and prompt generation'
+                    Scripts     = @('0810', '0825', '0832')
+                    Description = 'Issue creation from manual triggers, file generation, and prompt generation'
+                }
+                TestIssues         = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0800')
+                    Description = 'Create test issues for automation validation'
                 }
                 Analysis           = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0801', '0805', '0815', '0816')
-                    Description = 'Result parsing, issue analysis, setup, and automation health monitoring'
+                    Scripts     = @('0805', '0815', '0816')
+                    Description = 'Issue analysis, setup, and automation health monitoring'
+                }
+                ResultParsing      = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0801')
+                    Description = 'Parse Pester test results for issue tracking'
                 }
                 LicenseManagement  = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -344,13 +354,18 @@
                 }
                 PRDeployment       = @{
                     DependsOn   = @('Core.PowerShell7', 'Core.Git')
-                    Scripts     = @('0850', '0851', '0852', '0853', '0854', '0860')
-                    Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, container management, and deployment validation'
+                    Scripts     = @('0851', '0852', '0853', '0854', '0860')
+                    Description = 'Ephemeral PR environment cleanup, Docker validation, container management, and deployment validation'
+                }
+                PREnvironment      = @{
+                    DependsOn   = @('Core.PowerShell7', 'Core.Git')
+                    Scripts     = @('0850')
+                    Description = 'Deploy ephemeral PR environments'
                 }
                 LicenseOperations  = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0870', '0875', '0876', '0877')
-                    Description = 'License storage, backup verification, key rotation, and credential rotation'
+                    Scripts     = @('0870', '0875', '0876', '0877', '0878', '0879')
+                    Description = 'License storage, backup verification, key rotation, credential rotation, license management, and pre-commit obfuscation'
                 }
             }
 
@@ -460,18 +475,18 @@
             'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
-        # Script inventory by range (174 total files, 167 unique numbers)
-        # All scripts now have unique numbers
+        # Script inventory by range (180 total files, 173 unique numbers)
+        # All scripts now have unique numbers (duplicates resolved in Phase 2)
         # Counts represent unique script NUMBERS, not total files
         ScriptInventory     = @{
             '0000-0099' = @{ Count = 10; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 8; Category = 'Infrastructure' }
-            '0200-0299' = @{ Count = 18; Category = 'Development Tools' }
+            '0200-0299' = @{ Count = 19; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 28; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 22; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 28; Category = 'Issue Management & PR Deployment' }
+            '0500-0599' = @{ Count = 24; Category = 'Reporting & Analytics' }
+            '0700-0799' = @{ Count = 36; Category = 'Git & AI Automation' }
+            '0800-0899' = @{ Count = 30; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 16; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
