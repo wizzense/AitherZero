@@ -280,10 +280,10 @@ jobs:
           Write-Host "🧪 Running comprehensive test suite" -ForegroundColor Cyan
           
           # Run unit tests
-          & "./automation-scripts/0402_Run-UnitTests.ps1"
+          & "./library/automation-scripts/0402_Run-UnitTests.ps1"
           
           # Run integration tests
-          & "./automation-scripts/0403_Run-IntegrationTests.ps1"
+          & "./library/automation-scripts/0403_Run-IntegrationTests.ps1"
 
       - name: 📊 Upload Test Results
         uses: actions/upload-artifact@v4

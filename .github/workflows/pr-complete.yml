@@ -8,6 +8,10 @@ on:
   pull_request:
     branches: [main, dev, dev-staging]
     types: [opened, synchronize, reopened]
+  
+  workflow_call:
+    secrets:
+      inherit
 
 permissions:
   contents: write
