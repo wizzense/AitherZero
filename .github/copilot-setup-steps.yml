@@ -1,0 +1,245 @@
+---
+# GitHub Copilot Coding Agent Setup Steps
+# This file tells Copilot how to set up the development environment
+# so it can build, test, and validate changes effectively.
+
+# Operating system to use for the development environment
+# Options: ubuntu-latest, windows-latest, macos-latest
+os: ubuntu-latest
+
+# Steps to run to set up the environment
+# These run before Copilot starts working on the task
+steps:
+  # Step 1: Set up PowerShell 7
+  - name: Install PowerShell 7
+    run: |
+      # Check if PowerShell 7 is already installed
+      if ! command -v pwsh &> /dev/null; then
+        echo "Installing PowerShell 7..."
+        
+        # Ubuntu/Debian installation
+        if [ -f /etc/debian_version ]; then
+          # Update package list
+          sudo apt-get update
+          
+          # Install prerequisites
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          
+          # Download Microsoft repository GPG keys
+          wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+          
+          # Register the Microsoft repository
+          sudo dpkg -i packages-microsoft-prod.deb
+          rm packages-microsoft-prod.deb
+          
+          # Update package list again
+          sudo apt-get update
+          
+          # Install PowerShell
+          sudo apt-get install -y powershell
+        fi
+      else
+        echo "PowerShell 7 already installed: $(pwsh --version)"
+      fi
+
+  # Step 2: Bootstrap AitherZero environment
+  - name: Bootstrap AitherZero
+    shell: pwsh
+    run: |
+      Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
+      
+      # Run bootstrap script with minimal profile for CI performance
+      ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive -AutoInstallDeps
+      
+      # Verify bootstrap succeeded by checking if module manifest exists and is valid
+      $manifestPath = "./AitherZero.psd1"
+      if (Test-Path $manifestPath) {
+        try {
+          $manifest = Import-PowerShellDataFile -Path $manifestPath
+          Write-Host "✅ AitherZero bootstrap completed successfully" -ForegroundColor Green
+          Write-Host "   Version: $($manifest.ModuleVersion)" -ForegroundColor Cyan
+          
+          # Persist initialization flag for subsequent steps
+          echo "AITHERZERO_INITIALIZED=true" >> $env:GITHUB_ENV
+        }
+        catch {
+          Write-Error "Bootstrap failed - module manifest is invalid: $_"
+          exit 1
+        }
+      } else {
+        Write-Error "Bootstrap failed - module manifest not found"
+        exit 1
+      }
+
+  # Step 3: Install Pester testing framework
+  - name: Install Pester
+    shell: pwsh
+    run: |
+      Write-Host "📦 Installing Pester testing framework..." -ForegroundColor Cyan
+      
+      # Check if Pester 5.x is already installed
+      $pester = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge '5.0.0' }
+      
+      if (-not $pester) {
+        Write-Host "Installing Pester 5.x..."
+        Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+      } else {
+        Write-Host "Pester already installed: $($pester.Version)"
+      }
+
+  # Step 4: Install PSScriptAnalyzer for code quality
+  - name: Install PSScriptAnalyzer
+    shell: pwsh
+    run: |
+      Write-Host "📦 Installing PSScriptAnalyzer..." -ForegroundColor Cyan
+      
+      # Check if PSScriptAnalyzer is already installed
+      $pssa = Get-Module -ListAvailable -Name PSScriptAnalyzer
+      
+      if (-not $pssa) {
+        Write-Host "Installing PSScriptAnalyzer..."
+        Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser
+      } else {
+        Write-Host "PSScriptAnalyzer already installed: $($pssa.Version)"
+      }
+
+  # Step 5: Load AitherZero module
+  - name: Load AitherZero Module
+    shell: pwsh
+    run: |
+      Write-Host "📦 Loading AitherZero module..." -ForegroundColor Cyan
+      
+      # Import the module
+      Import-Module ./AitherZero.psd1 -Force -ErrorAction Stop
+      
+      # Verify module loaded
+      $module = Get-Module AitherZero
+      if ($module) {
+        Write-Host "✅ AitherZero module loaded successfully" -ForegroundColor Green
+        Write-Host "   Version: $($module.Version)"
+        Write-Host "   Exported functions: $($module.ExportedFunctions.Count)"
+      } else {
+        Write-Error "Failed to load AitherZero module"
+        exit 1
+      }
+
+  # Step 6: Verify test infrastructure
+  - name: Verify Test Infrastructure
+    shell: pwsh
+    run: |
+      Write-Host "🔍 Verifying test infrastructure..." -ForegroundColor Cyan
+      
+      # Check for test directories
+      $testDirs = @(
+        "tests/unit",
+        "tests/integration",
+        "tests/aithercore"
+      )
+      
+      foreach ($dir in $testDirs) {
+        if (Test-Path $dir) {
+          $testCount = (Get-ChildItem -Path $dir -Recurse -Filter "*.Tests.ps1").Count
+          Write-Host "✅ $dir - $testCount test files" -ForegroundColor Green
+        } else {
+          Write-Host "⚠️  $dir - not found" -ForegroundColor Yellow
+        }
+      }
+
+  # Step 7: Set environment variables
+  - name: Set Environment Variables
+    shell: pwsh
+    run: |
+      Write-Host "🔧 Setting environment variables..." -ForegroundColor Cyan
+      
+      # Set standard CI environment variables
+      $env:AITHERZERO_CI = 'true'
+      $env:AITHERZERO_NONINTERACTIVE = 'true'
+      $env:AITHERZERO_SUPPRESS_BANNER = 'true'
+      $env:TERM = 'xterm-256color'
+      
+      # Export to GitHub environment for subsequent steps
+      echo "AITHERZERO_CI=true" >> $env:GITHUB_ENV
+      echo "AITHERZERO_NONINTERACTIVE=true" >> $env:GITHUB_ENV
+      echo "AITHERZERO_SUPPRESS_BANNER=true" >> $env:GITHUB_ENV
+      echo "TERM=xterm-256color" >> $env:GITHUB_ENV
+      
+      Write-Host "✅ Environment variables configured" -ForegroundColor Green
+
+# Validation step - optional step to verify everything is working
+validation:
+  # Run a quick validation to ensure environment is ready
+  - name: Validate Environment
+    shell: pwsh
+    run: |
+      Write-Host "✅ Running environment validation..." -ForegroundColor Cyan
+      
+      # Check PowerShell version
+      $psVersion = $PSVersionTable.PSVersion
+      if ($psVersion.Major -lt 7) {
+        Write-Error "PowerShell 7+ required, found: $psVersion"
+        exit 1
+      }
+      Write-Host "✅ PowerShell version: $psVersion" -ForegroundColor Green
+      
+      # Check if AitherZero is initialized
+      if ($env:AITHERZERO_INITIALIZED -ne 'true') {
+        Write-Error "AitherZero not initialized"
+        exit 1
+      }
+      Write-Host "✅ AitherZero initialized" -ForegroundColor Green
+      
+      # Check if module is loaded
+      $module = Get-Module AitherZero
+      if (-not $module) {
+        Write-Error "AitherZero module not loaded"
+        exit 1
+      }
+      Write-Host "✅ AitherZero module loaded ($($module.ExportedFunctions.Count) functions)" -ForegroundColor Green
+      
+      # Check Pester
+      $pester = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge '5.0.0' }
+      if (-not $pester) {
+        Write-Error "Pester 5.x not found"
+        exit 1
+      }
+      Write-Host "✅ Pester installed: $($pester.Version)" -ForegroundColor Green
+      
+      # Check PSScriptAnalyzer
+      $pssa = Get-Module -ListAvailable -Name PSScriptAnalyzer
+      if (-not $pssa) {
+        Write-Error "PSScriptAnalyzer not found"
+        exit 1
+      }
+      Write-Host "✅ PSScriptAnalyzer installed: $($pssa.Version)" -ForegroundColor Green
+      
+      Write-Host "`n🎉 Environment validation complete - ready for development!" -ForegroundColor Green
+
+# Cache configuration - speeds up subsequent runs
+cache:
+  # Cache PowerShell modules
+  - path: ~/.local/share/powershell/Modules
+    key: powershell-modules-${{ hashFiles('**/AitherZero.psd1') }}
+    restore-keys: |
+      powershell-modules-
+  
+  # Cache AitherZero configuration
+  - path: ~/.aitherzero
+    key: aitherzero-config-${{ hashFiles('config.psd1') }}
+    restore-keys: |
+      aitherzero-config-
+
+# Timeout configuration
+timeout:
+  # Maximum time for setup steps (in minutes)
+  setup: 15
+  
+  # Maximum time for validation (in minutes)
+  validation: 5
+
+# Notes for Copilot coding agent:
+# - This environment is optimized for PowerShell 7+ development
+# - All AitherZero automation scripts are available via the module
+# - Use `Import-Module ./AitherZero.psd1 -Force` if you need to reload
+# - Tests can be run with `Invoke-Pester` or automation scripts (0402, 0404, etc.)
+# - PSScriptAnalyzer is configured with custom rules in PSScriptAnalyzerSettings.psd1
+# - See .github/copilot-instructions.md for detailed development guidelines
