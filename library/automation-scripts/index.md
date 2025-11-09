@@ -11,8 +11,8 @@ See [README.md](./README.md) for detailed information about this directory.
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 162
-- **PowerShell Scripts**: 156
+- **Files**: 180
+- **PowerShell Scripts**: 174
 
 ## 📄 Files
 
@@ -31,6 +31,8 @@ See [README.md](./README.md) for detailed information about this directory.
 ### .ps1 Files
 
 - ⚙️ [0000_Cleanup-Environment.ps1](./0000_Cleanup-Environment.ps1)
+- ⚙️ [0001_Configure-Environment.ps1](./0001_Configure-Environment.ps1)
+  - *Configure system environment based on AitherZero configuration files*
 - ⚙️ [0002_Setup-Directories.ps1](./0002_Setup-Directories.ps1)
 - ⚙️ [0003_Sync-ConfigManifest.ps1](./0003_Sync-ConfigManifest.ps1)
   - *Synchronize config.psd1 with actual automation scripts*
@@ -50,6 +52,8 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0109_Initialize-InfrastructureSubmodules.ps1](./0109_Initialize-InfrastructureSubmodules.ps1)
   - *Initialize Infrastructure Git Submodules*
 - ⚙️ [0112_Enable-PXE.ps1](./0112_Enable-PXE.ps1)
+- ⚙️ [0195_Inject-ISO-Artifacts.ps1](./0195_Inject-ISO-Artifacts.ps1)
+  - *Inject deployment artifacts into ISO images for automated OS installation.*
 - ⚙️ [0201_Install-Node.ps1](./0201_Install-Node.ps1)
 - ⚙️ [0204_Install-Poetry.ps1](./0204_Install-Poetry.ps1)
 - ⚙️ [0205_Install-Sysinternals.ps1](./0205_Install-Sysinternals.ps1)
@@ -58,8 +62,12 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0208_Install-Docker.ps1](./0208_Install-Docker.ps1)
 - ⚙️ [0209_Install-7Zip.ps1](./0209_Install-7Zip.ps1)
 - ⚙️ [0210_Install-VSCode.ps1](./0210_Install-VSCode.ps1)
+- ⚙️ [0211_Install-GitHubCLI.ps1](./0211_Install-GitHubCLI.ps1)
+  - *Install GitHub CLI (gh)*
 - ⚙️ [0211_Install-VSBuildTools.ps1](./0211_Install-VSBuildTools.ps1)
 - ⚙️ [0212_Install-AzureCLI.ps1](./0212_Install-AzureCLI.ps1)
+- ⚙️ [0212_Install-Go.ps1](./0212_Install-Go.ps1)
+  - *Install Go programming language*
 - ⚙️ [0213_Install-AWSCLI.ps1](./0213_Install-AWSCLI.ps1)
 - ⚙️ [0214_Install-Packer.ps1](./0214_Install-Packer.ps1)
 - ⚙️ [0215_Configure-MCPServers.ps1](./0215_Configure-MCPServers.ps1)
@@ -68,6 +76,8 @@ See [README.md](./README.md) for detailed information about this directory.
 - ⚙️ [0217_Install-ClaudeCode.ps1](./0217_Install-ClaudeCode.ps1)
 - ⚙️ [0218_Install-GeminiCLI.ps1](./0218_Install-GeminiCLI.ps1)
 - ⚙️ [0219_Install-Chocolatey.ps1](./0219_Install-Chocolatey.ps1)
+- ⚙️ [0220_Install-AI-CLIs.ps1](./0220_Install-AI-CLIs.ps1)
+  - *Install AI CLI tools (Claude, Gemini, Codex)*
 - ⚙️ [0300_Deploy-Infrastructure.ps1](./0300_Deploy-Infrastructure.ps1)
 - ⚙️ [0400_Install-TestingTools.ps1](./0400_Install-TestingTools.ps1)
   - *Install testing and validation tools for AitherZero*
@@ -239,8 +249,18 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Clean up old and development tags from the repository.*
 - ⚙️ [0800_Create-TestIssues.ps1](./0800_Create-TestIssues.ps1)
   - *Create GitHub issues from test failures*
+- ⚙️ [0800_Manage-License.ps1](./0800_Manage-License.ps1)
+  - *Manages AitherZero licenses for source code protection*
+- ⚙️ [0801_Obfuscate-PreCommit.ps1](./0801_Obfuscate-PreCommit.ps1)
+  - *Pre-commit hook for source code obfuscation*
 - ⚙️ [0801_Parse-PesterResults.ps1](./0801_Parse-PesterResults.ps1)
   - *Parse Pester test results for analysis*
+- ⚙️ [0802_Load-ObfuscatedModule.ps1](./0802_Load-ObfuscatedModule.ps1)
+  - *Runtime loader for obfuscated source code*
+- ⚙️ [0803_Setup-LicenseInfrastructure.ps1](./0803_Setup-LicenseInfrastructure.ps1)
+  - *Sets up license infrastructure including CA integration and key management*
+- ⚙️ [0804_Deploy-LicenseToGitHub.ps1](./0804_Deploy-LicenseToGitHub.ps1)
+  - *Deploys licenses to GitHub using AitherZero's secure credential system*
 - ⚙️ [0805_Analyze-OpenIssues.ps1](./0805_Analyze-OpenIssues.ps1)
   - *Analyze open GitHub issues for PR linkage*
 - ⚙️ [0810_Create-IssueFromTestFailure.ps1](./0810_Create-IssueFromTestFailure.ps1)
@@ -269,6 +289,8 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Validate AitherCore workflow integration with existing GitHub Actions workflows*
 - ⚙️ [0850_Deploy-PREnvironment.ps1](./0850_Deploy-PREnvironment.ps1)
   - *Deploy PR environment for testing*
+- ⚙️ [0850_Install-GitHub-Runner.ps1](./0850_Install-GitHub-Runner.ps1)
+  - *Install and configure GitHub Actions self-hosted runner*
 - ⚙️ [0851_Cleanup-PREnvironment.ps1](./0851_Cleanup-PREnvironment.ps1)
   - *Cleanup PR environment after testing*
 - ⚙️ [0852_Validate-PRDockerDeployment.ps1](./0852_Validate-PRDockerDeployment.ps1)
@@ -279,10 +301,20 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Manage PR container environments with automated operations*
 - ⚙️ [0860_Validate-Deployments.ps1](./0860_Validate-Deployments.ps1)
   - *Validates deployment configuration and status for GitHub Pages and containers.*
+- ⚙️ [0870_Create-LicenseStorage.ps1](./0870_Create-LicenseStorage.ps1)
+  - *Creates license storage directory structure*
+- ⚙️ [0875_Verify-LicenseBackup.ps1](./0875_Verify-LicenseBackup.ps1)
+  - *Verifies license is safely backed up before allowing encryption*
+- ⚙️ [0876_Rotate-LicenseKeys.ps1](./0876_Rotate-LicenseKeys.ps1)
+  - *Rotates license keys and re-encrypts files safely*
+- ⚙️ [0877_Rotate-GitHubCredentials.ps1](./0877_Rotate-GitHubCredentials.ps1)
+  - *Rotates GitHub credentials safely*
 - ⚙️ [0900_Test-SelfDeployment.ps1](./0900_Test-SelfDeployment.ps1)
   - *Test AitherZero self-deployment capabilities*
 - ⚙️ [0901_Test-LocalDeployment.ps1](./0901_Test-LocalDeployment.ps1)
   - *Test AitherZero local deployment capabilities (offline mode)*
+- ⚙️ [0902_Create-ReleasePackage.ps1](./0902_Create-ReleasePackage.ps1)
+  - *Create AitherZero release packages (ZIP/TAR.GZ)*
 - ⚙️ [0950_Generate-AllTests.ps1](./0950_Generate-AllTests.ps1)
   - *Automatic Test Generation Orchestrator - "The 100% Solution"*
 - ⚙️ [0951_Regenerate-FunctionalTests.ps1](./0951_Regenerate-FunctionalTests.ps1)
@@ -305,9 +337,13 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Test OrchestrationEngine functionality*
 - ⚙️ [0968_Migrate-PlaybooksV2.ps1](./0968_Migrate-PlaybooksV2.ps1)
   - *Migrate legacy v1 playbooks to new v2.0 format*
+- ⚙️ [0969_Validate-PREcosystem.ps1](./0969_Validate-PREcosystem.ps1)
+  - *Validate PR Ecosystem end-to-end functionality*
+- ⚙️ [0970_Validate-AllPlaybooks.ps1](./0970_Validate-AllPlaybooks.ps1)
+  - *Comprehensive validation of all playbooks in the repository*
 - ⚙️ [9999_Reset-Machine.ps1](./9999_Reset-Machine.ps1)
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 14:56:36 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 23:14:48 UTC
 
