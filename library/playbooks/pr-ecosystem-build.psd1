@@ -47,15 +47,15 @@
             Parallel = $true
         },
         
-        # Validate self-deployment capability
+        # Validate self-deployment capability - COMPREHENSIVE (no quick modes)
         @{
             Script = "0900"
-            Description = "Validate self-deployment works"
+            Description = "Comprehensive self-deployment validation (full bootstrap + all tests)"
             Parameters = @{
-                QuickTest = $true
+                # No parameters - run full comprehensive test
             }
             ContinueOnError = $true  # Don't fail build if validation has issues
-            Timeout = 300
+            Timeout = 1800  # Increased: Full bootstrap(600s) + comprehensive playbook(1000s) = ~1600s + buffer
             Phase = "validate"
             Parallel = $false
         }

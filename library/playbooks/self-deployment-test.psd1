@@ -1,9 +1,9 @@
 @{
     Name = "self-deployment-test"
-    Description = "Self-deployment validation - tests that AitherZero can deploy itself"
+    Description = "COMPREHENSIVE self-deployment validation - full bootstrap + complete test suite with coverage"
     Version = "1.0.0"
     Author = "AitherZero"
-    Tags = @("validation", "self-deployment", "ci-cd", "end-to-end")
+    Tags = @("validation", "self-deployment", "ci-cd", "end-to-end", "comprehensive")
     
     # Sequential execution - test deployment pipeline
     Sequence = @(
@@ -29,25 +29,25 @@
             Phase = "validation"
         },
         
-        # Phase 3: Run full unit test suite
+        # Phase 3: Run full unit test suite with coverage
         @{
             Script = "0402"
-            Description = "Execute complete unit test suite"
+            Description = "Execute complete unit test suite with code coverage"
             Parameters = @{
-                NoCoverage = $true  # Coverage slows down CI significantly
+                # No NoCoverage - run with full coverage for comprehensive testing
             }
             ContinueOnError = $true  # Don't fail build on test failures
-            Timeout = 300
+            Timeout = 600  # Increased for coverage analysis
             Phase = "testing"
         },
         
         # Phase 4: Complete code quality analysis
         @{
             Script = "0404"
-            Description = "Full static code analysis"
+            Description = "Full comprehensive static code analysis"
             Parameters = @{}  # No Fast parameter - do complete analysis
             ContinueOnError = $true  # Don't fail on warnings
-            Timeout = 180
+            Timeout = 300  # Increased for comprehensive analysis
             Phase = "quality"
         },
         
@@ -64,13 +64,13 @@
         }
     )
     
-    # Variables available to all scripts
+    # Variables available to all scripts - COMPREHENSIVE mode
     Variables = @{
         CI = $env:CI
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
         SELF_DEPLOYMENT_TEST = "true"
-        QUICK_MODE = "true"
+        COMPREHENSIVE_MODE = "true"  # Full comprehensive testing
     }
     
     # Execution options
