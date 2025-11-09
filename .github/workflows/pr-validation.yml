@@ -3,33 +3,75 @@ name: ✅ PR Validation
 
 on:
   pull_request:
+    branches: [main, dev, dev-staging]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 concurrency:
-  group: validate-pr-${{ github.event.pull_request.number || github.run_id }}
+  group: pr-validation-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    name: 🔍 Validate
+    name: 🔍 Comprehensive PR Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 🔧 Bootstrap
+      - name: 🔧 Bootstrap Environment
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
 
-      - name: ✅ Run Validation Playbook
+      - name: 📦 Install Analysis Tools
+        shell: pwsh
+        run: Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck
+
+      - name: ✅ Run Comprehensive PR Validation Playbook
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-OrchestrationSequence -LoadPlaybook validate-pr
+          
+          Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║  COMPREHENSIVE PR VALIDATION (8 PHASES)       ║" -ForegroundColor Cyan
+          Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Phases:" -ForegroundColor Yellow
+          Write-Host "  1️⃣  Config Sync        (0003)" -ForegroundColor Gray
+          Write-Host "  2️⃣  Syntax Validation  (0407)" -ForegroundColor Gray
+          Write-Host "  3️⃣  Config Validation  (0413)" -ForegroundColor Gray
+          Write-Host "  4️⃣  Manifest Validation(0405)" -ForegroundColor Gray
+          Write-Host "  5️⃣  Quality Analysis   (0404)" -ForegroundColor Gray
+          Write-Host "  6️⃣  Component Quality  (0420)" -ForegroundColor Gray
+          Write-Host "  7️⃣  Unit Tests         (0402)" -ForegroundColor Gray
+          Write-Host "  8️⃣  Test-Script Sync   (0426)" -ForegroundColor Gray
+          Write-Host ""
+          
+          Invoke-OrchestrationSequence -LoadPlaybook pr-validation
+          
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host ""
+              Write-Host "❌ Validation FAILED" -ForegroundColor Red
+              exit 1
+          }
+          
+          Write-Host ""
+          Write-Host "✅ All critical validations PASSED" -ForegroundColor Green
+
+      - name: 📊 Upload Validation Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-validation-results
+          path: |
+            reports/pr-validation-summary.md
+            tests/results/**
+            tests/analysis/**
+          retention-days: 30

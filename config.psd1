@@ -508,13 +508,13 @@
         }
 
         # Playbook inventory - orchestration playbook tracking
-        PlaybookInventory = @{ Count = 25
+        PlaybookInventory = @{ Count = 21
             Path  = 'library/playbooks'
             Types = @('validation', 'quality', 'testing', 'ecosystem', 'pr-environment')
         }
 
         # Workflow inventory - GitHub Actions workflow tracking
-        WorkflowInventory = @{ Count = 20
+        WorkflowInventory = @{ Count = 18
             Path  = '.github/workflows'
             Categories = @('ci', 'automation', 'security', 'publishing', 'validation')
         }
