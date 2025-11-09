@@ -11,8 +11,8 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 164
-- **PowerShell Scripts**: 163
+- **Files**: 163
+- **PowerShell Scripts**: 162
 
 ## 📄 Files
 
@@ -72,12 +72,8 @@
   - *Integration tests for 0210_Install-VSCode*
 - ⚙️ [0211_Install-GitHubCLI.Integration.Tests.ps1](./0211_Install-GitHubCLI.Integration.Tests.ps1)
   - *Integration tests for 0211_Install-GitHubCLI*
-- ⚙️ [0211_Install-VSBuildTools.Integration.Tests.ps1](./0211_Install-VSBuildTools.Integration.Tests.ps1)
-  - *Integration tests for 0211_Install-VSBuildTools*
 - ⚙️ [0212_Install-AzureCLI.Integration.Tests.ps1](./0212_Install-AzureCLI.Integration.Tests.ps1)
   - *Integration tests for 0212_Install-AzureCLI*
-- ⚙️ [0212_Install-Go.Integration.Tests.ps1](./0212_Install-Go.Integration.Tests.ps1)
-  - *Integration tests for 0212_Install-Go*
 - ⚙️ [0213_Install-AWSCLI.Integration.Tests.ps1](./0213_Install-AWSCLI.Integration.Tests.ps1)
   - *Integration tests for 0213_Install-AWSCLI*
 - ⚙️ [0214_Install-Packer.Integration.Tests.ps1](./0214_Install-Packer.Integration.Tests.ps1)
@@ -94,6 +90,8 @@
   - *Integration tests for 0219_Install-Chocolatey*
 - ⚙️ [0220_Install-AI-CLIs.Integration.Tests.ps1](./0220_Install-AI-CLIs.Integration.Tests.ps1)
   - *Integration tests for 0220_Install-AI-CLIs*
+- ⚙️ [0221_Install-VSBuildTools.Integration.Tests.ps1](./0221_Install-VSBuildTools.Integration.Tests.ps1)
+  - *Integration tests for 0211_Install-VSBuildTools*
 - ⚙️ [0300_Deploy-Infrastructure.Integration.Tests.ps1](./0300_Deploy-Infrastructure.Integration.Tests.ps1)
   - *Integration tests for 0300_Deploy-Infrastructure*
 - ⚙️ [0400_Install-TestingTools.Integration.Tests.ps1](./0400_Install-TestingTools.Integration.Tests.ps1)
@@ -162,10 +160,6 @@
   - *Integration tests for 0511_Show-ProjectDashboard*
 - ⚙️ [0512_Generate-Dashboard.Integration.Tests.ps1](./0512_Generate-Dashboard.Integration.Tests.ps1)
   - *Integration tests for 0512_Generate-Dashboard*
-- ⚙️ [0513_Enable-ContinuousReporting.Integration.Tests.ps1](./0513_Enable-ContinuousReporting.Integration.Tests.ps1)
-  - *Integration tests for 0513_Enable-ContinuousReporting*
-- ⚙️ [0514_Generate-CodeMap.Integration.Tests.ps1](./0514_Generate-CodeMap.Integration.Tests.ps1)
-  - *Integration tests for 0514_Generate-CodeMap*
 - ⚙️ [0516_Schedule-ReportGeneration.Integration.Tests.ps1](./0516_Schedule-ReportGeneration.Integration.Tests.ps1)
   - *Integration tests for 0516_Schedule-ReportGeneration*
 - ⚙️ [0520_Analyze-ConfigurationUsage.Integration.Tests.ps1](./0520_Analyze-ConfigurationUsage.Integration.Tests.ps1)
@@ -180,6 +174,10 @@
   - *Integration tests for 0524_Generate-TechDebtReport*
 - ⚙️ [0525_Deploy-Documentation.Integration.Tests.ps1](./0525_Deploy-Documentation.Integration.Tests.ps1)
   - *Integration tests for 0525_Deploy-Documentation*
+- ⚙️ [0526_Enable-ContinuousReporting.Integration.Tests.ps1](./0526_Enable-ContinuousReporting.Integration.Tests.ps1)
+  - *Integration tests for 0513_Enable-ContinuousReporting*
+- ⚙️ [0527_Generate-CodeMap.Integration.Tests.ps1](./0527_Generate-CodeMap.Integration.Tests.ps1)
+  - *Integration tests for 0514_Generate-CodeMap*
 - ⚙️ [0530_View-Logs.Integration.Tests.ps1](./0530_View-Logs.Integration.Tests.ps1)
   - *Integration tests for 0530_View-Logs*
 - ⚙️ [0531_Get-WorkflowRunReport.Integration.Tests.ps1](./0531_Get-WorkflowRunReport.Integration.Tests.ps1)
@@ -210,6 +208,8 @@
   - *Integration tests for 0722_Install-RunnerServices*
 - ⚙️ [0723_Setup-MatrixRunners.Integration.Tests.ps1](./0723_Setup-MatrixRunners.Integration.Tests.ps1)
   - *Integration tests for 0723_Setup-MatrixRunners*
+- ⚙️ [0724_Install-GitHub-Runner.Integration.Tests.ps1](./0724_Install-GitHub-Runner.Integration.Tests.ps1)
+  - *Integration tests for 0850_Install-GitHub-Runner*
 - ⚙️ [0730_Setup-AIAgents.Integration.Tests.ps1](./0730_Setup-AIAgents.Integration.Tests.ps1)
   - *Integration tests for 0730_Setup-AIAgents*
 - ⚙️ [0731_Invoke-AICodeReview.Integration.Tests.ps1](./0731_Invoke-AICodeReview.Integration.Tests.ps1)
@@ -260,10 +260,6 @@
   - *Integration tests for 0799_cleanup-old-tags*
 - ⚙️ [0800_Create-TestIssues.Integration.Tests.ps1](./0800_Create-TestIssues.Integration.Tests.ps1)
   - *Integration tests for 0800_Create-TestIssues*
-- ⚙️ [0800_Manage-License.Integration.Tests.ps1](./0800_Manage-License.Integration.Tests.ps1)
-  - *Integration tests for 0800_Manage-License*
-- ⚙️ [0801_Obfuscate-PreCommit.Integration.Tests.ps1](./0801_Obfuscate-PreCommit.Integration.Tests.ps1)
-  - *Integration tests for 0801_Obfuscate-PreCommit*
 - ⚙️ [0801_Parse-PesterResults.Integration.Tests.ps1](./0801_Parse-PesterResults.Integration.Tests.ps1)
   - *Integration tests for 0801_Parse-PesterResults*
 - ⚙️ [0802_Load-ObfuscatedModule.Integration.Tests.ps1](./0802_Load-ObfuscatedModule.Integration.Tests.ps1)
@@ -300,8 +296,6 @@
   - *Integration tests for 0841_Validate-WorkflowIntegration*
 - ⚙️ [0850_Deploy-PREnvironment.Integration.Tests.ps1](./0850_Deploy-PREnvironment.Integration.Tests.ps1)
   - *Integration tests for 0850_Deploy-PREnvironment*
-- ⚙️ [0850_Install-GitHub-Runner.Integration.Tests.ps1](./0850_Install-GitHub-Runner.Integration.Tests.ps1)
-  - *Integration tests for 0850_Install-GitHub-Runner*
 - ⚙️ [0851_Cleanup-PREnvironment.Integration.Tests.ps1](./0851_Cleanup-PREnvironment.Integration.Tests.ps1)
   - *Integration tests for 0851_Cleanup-PREnvironment*
 - ⚙️ [0852_Validate-PRDockerDeployment.Integration.Tests.ps1](./0852_Validate-PRDockerDeployment.Integration.Tests.ps1)
@@ -320,6 +314,10 @@
   - *Integration tests for 0876_Rotate-LicenseKeys*
 - ⚙️ [0877_Rotate-GitHubCredentials.Integration.Tests.ps1](./0877_Rotate-GitHubCredentials.Integration.Tests.ps1)
   - *Integration tests for 0877_Rotate-GitHubCredentials*
+- ⚙️ [0878_Manage-License.Integration.Tests.ps1](./0878_Manage-License.Integration.Tests.ps1)
+  - *Integration tests for 0800_Manage-License*
+- ⚙️ [0879_Obfuscate-PreCommit.Integration.Tests.ps1](./0879_Obfuscate-PreCommit.Integration.Tests.ps1)
+  - *Integration tests for 0801_Obfuscate-PreCommit*
 - ⚙️ [0900_Test-SelfDeployment.Integration.Tests.ps1](./0900_Test-SelfDeployment.Integration.Tests.ps1)
   - *Integration tests for 0900_Test-SelfDeployment*
 - ⚙️ [0901_Test-LocalDeployment.Integration.Tests.ps1](./0901_Test-LocalDeployment.Integration.Tests.ps1)
@@ -351,5 +349,5 @@
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 23:14:55 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-09 17:16:17 UTC
 

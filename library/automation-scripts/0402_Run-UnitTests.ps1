@@ -494,7 +494,18 @@ try {
     $env:AITHERZERO_TEST_MODE = 'true'
 
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
-    $useParallel = $pesterSettings.ContainsKey('Parallel') -and $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
+    # Disable parallel execution if we're already running in an orchestrated parallel context
+    # to avoid nested parallelism which can cause deadlocks
+    $useParallel = $pesterSettings.ContainsKey('Parallel') -and 
+                   $pesterSettings.Parallel -and 
+                   $pesterSettings.Parallel.Enabled -and 
+                   $testFiles.Count -gt 1 -and
+                   -not $env:AITHERZERO_ORCHESTRATED_PARALLEL
+    
+    if ($env:AITHERZERO_ORCHESTRATED_PARALLEL) {
+        Write-ScriptLog -Message "Parallel execution disabled: Running in orchestrated parallel context"
+    }
+    
     $parallelExecutionFailed = $false
 
     if ($useParallel) {

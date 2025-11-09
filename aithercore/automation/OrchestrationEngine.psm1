@@ -1928,6 +1928,9 @@ function Invoke-ParallelOrchestration {
 
                     # Set non-interactive environment flag for child scripts
                     $env:AITHERZERO_NONINTERACTIVE = 'true'
+                    # Set orchestrated parallel flag to prevent nested parallelism
+                    # Scripts should check this and disable their own parallel execution
+                    $env:AITHERZERO_ORCHESTRATED_PARALLEL = 'true'
 
                     try {
                         # Execute the script
@@ -1936,8 +1939,9 @@ function Invoke-ParallelOrchestration {
                         $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
                         return @{ Success = $true; ExitCode = $exitCode; Output = $result }
                     } finally {
-                        # Clean up environment variable
+                        # Clean up environment variables
                         $env:AITHERZERO_NONINTERACTIVE = $null
+                        $env:AITHERZERO_ORCHESTRATED_PARALLEL = $null
                     }
                 } catch {
                     return @{ Success = $false; Error = $_.ToString(); ExitCode = 1 }
@@ -1951,8 +1955,11 @@ function Invoke-ParallelOrchestration {
             }
         }
 
-        # Check for completed jobs
-        $completedJobs = $jobs.GetEnumerator() | Where-Object { $_.Value.Job.State -eq 'Completed' }
+        # Check for completed jobs (includes Completed, Failed, Stopped states)
+        # Jobs can fail with State='Failed' and must be processed to avoid infinite loops
+        $completedJobs = $jobs.GetEnumerator() | Where-Object { 
+            $_.Value.Job.State -in @('Completed', 'Failed', 'Stopped')
+        }
         
         # Check for timed-out jobs
         $currentTime = Get-Date

@@ -15,7 +15,7 @@
             }
             ContinueOnError = $true
             Timeout = 600
-            Parallel = $true
+            Parallel = $false  # Run sequentially to avoid module loading conflicts in ThreadJobs
             Group = 1
         },
         @{
@@ -26,7 +26,7 @@
             }
             ContinueOnError = $true
             Timeout = 600
-            Parallel = $true
+            Parallel = $false  # Run sequentially to avoid module loading conflicts in ThreadJobs
             Group = 1
         }
     )
@@ -38,8 +38,8 @@
     }
     
     Options = @{
-        Parallel = $true
-        MaxConcurrency = 2
+        Parallel = $false  # Disable parallel execution to prevent deadlocks with module loading
+        MaxConcurrency = 1  # Run tests sequentially - each script uses internal parallelism
         StopOnError = $false
         CaptureOutput = $true
         GenerateSummary = $true
