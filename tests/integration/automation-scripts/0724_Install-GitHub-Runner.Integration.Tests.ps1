@@ -10,12 +10,12 @@
     Generated: 2025-11-07 21:40:55
 #>
 
-Describe '0850_Install-GitHub-Runner Integration' -Tag 'Integration', 'AutomationScript' {
+Describe '0724_Install-GitHub-Runner Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0850_Install-GitHub-Runner.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0724_Install-GitHub-Runner.ps1'
     }
 
     Context 'Integration' {

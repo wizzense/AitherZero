@@ -13,13 +13,13 @@
     Generated: 2025-11-04 20:50:00
 #>
 
-Describe '0211_Install-VSBuildTools' -Tag 'Unit', 'AutomationScript', 'Development' {
+Describe '0221_Install-VSBuildTools' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0211_Install-VSBuildTools.ps1'
-        $script:ScriptName = '0211_Install-VSBuildTools'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0221_Install-VSBuildTools.ps1'
+        $script:ScriptName = '0221_Install-VSBuildTools'
 
         # Import test helpers for environment detection
         $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"

@@ -13,13 +13,13 @@
     Generated: 2025-11-07 21:40:55
 #>
 
-Describe '0850_Install-GitHub-Runner' -Tag 'Unit', 'AutomationScript', 'CI/CD Infrastructure' {
+Describe '0724_Install-GitHub-Runner' -Tag 'Unit', 'AutomationScript', 'CI/CD Infrastructure' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0850_Install-GitHub-Runner.ps1'
-        $script:ScriptName = '0850_Install-GitHub-Runner'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0724_Install-GitHub-Runner.ps1'
+        $script:ScriptName = '0724_Install-GitHub-Runner'
 
         # Import test helpers for environment detection
         $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"

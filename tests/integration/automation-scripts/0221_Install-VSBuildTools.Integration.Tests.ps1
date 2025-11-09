@@ -10,12 +10,12 @@
     Generated: 2025-11-04 20:50:00
 #>
 
-Describe '0211_Install-VSBuildTools Integration' -Tag 'Integration', 'AutomationScript' {
+Describe '0221_Install-VSBuildTools Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0211_Install-VSBuildTools.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0221_Install-VSBuildTools.ps1'
     }
 
     Context 'Integration' {
