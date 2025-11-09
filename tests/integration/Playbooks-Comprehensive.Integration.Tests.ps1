@@ -22,8 +22,26 @@
 
 BeforeAll {
     # Setup
-    $script:RepoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-    $script:PlaybooksPath = Join-Path $script:RepoRoot 'library/orchestration/playbooks'
+    $script:RepoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+    
+    # Try multiple possible paths for playbooks
+    $possiblePaths = @(
+        Join-Path $script:RepoRoot 'library/orchestration/playbooks'
+        Join-Path $script:RepoRoot 'orchestration/playbooks'
+        Join-Path $script:RepoRoot 'library/playbooks'
+    )
+    
+    $script:PlaybooksPath = $null
+    foreach ($path in $possiblePaths) {
+        if (Test-Path $path) {
+            $script:PlaybooksPath = $path
+            break
+        }
+    }
+    
+    if (-not $script:PlaybooksPath) {
+        throw "Could not find playbooks directory in any expected location"
+    }
     
     # Import testing frameworks
     $playbookFramework = Join-Path $script:RepoRoot 'aithercore/testing/PlaybookTestFramework.psm1'

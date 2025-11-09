@@ -300,7 +300,7 @@ function Build-UnitTest {
     if ($UsesScriptUtilities) {
         [void]$sb.AppendLine('')
         [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
-        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "aithercore/automation/ScriptUtilities.psm1"')
         [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
         [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
         [void]$sb.AppendLine('        }')
@@ -533,7 +533,7 @@ function Build-IntegrationTest {
     if ($UsesScriptUtilities) {
         [void]$sb.AppendLine('')
         [void]$sb.AppendLine('        # Import ScriptUtilities module (script uses it)')
-        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "domains/automation/ScriptUtilities.psm1"')
+        [void]$sb.AppendLine('        $scriptUtilitiesPath = Join-Path $repoRoot "aithercore/automation/ScriptUtilities.psm1"')
         [void]$sb.AppendLine('        if (Test-Path $scriptUtilitiesPath) {')
         [void]$sb.AppendLine('            Import-Module $scriptUtilitiesPath -Force -ErrorAction SilentlyContinue')
         [void]$sb.AppendLine('        }')
