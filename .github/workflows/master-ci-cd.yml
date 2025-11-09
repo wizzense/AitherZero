@@ -1,0 +1,430 @@
+---
+name: 🎯 Master CI/CD Orchestrator
+
+# Central coordination workflow that orchestrates all CI/CD processes
+# This is the single source of truth for build, test, and release automation
+
+on:
+  pull_request:
+    branches: [main, dev, dev-staging]
+    types: [opened, synchronize, reopened, ready_for_review]
+  
+  push:
+    branches: [main, dev, dev-staging]
+    tags: ['v*']
+  
+  workflow_dispatch:
+    inputs:
+      workflow:
+        description: 'Specific workflow to run'
+        required: true
+        type: choice
+        options:
+          - all
+          - pr-validation
+          - testing
+          - build
+          - release
+          - documentation
+      
+      force_all_tests:
+        description: 'Force all tests regardless of file changes'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+  pages: write
+  id-token: write
+  checks: write
+  statuses: write
+  actions: read
+
+concurrency:
+  group: master-ci-cd-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+
+jobs:
+  # ============================================================================
+  # ORCHESTRATION: Determine what needs to run based on context
+  # ============================================================================
+  
+  orchestration:
+    name: 🎯 Workflow Orchestration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run-pr-workflow: ${{ steps.decide.outputs.run-pr-workflow }}
+      run-tests: ${{ steps.decide.outputs.run-tests }}
+      run-build: ${{ steps.decide.outputs.run-build }}
+      run-docker: ${{ steps.decide.outputs.run-docker }}
+      run-docs: ${{ steps.decide.outputs.run-docs }}
+      run-release: ${{ steps.decide.outputs.run-release }}
+      changed-files: ${{ steps.changes.outputs.all_changed_files }}
+      is-pr: ${{ steps.context.outputs.is-pr }}
+      is-release: ${{ steps.context.outputs.is-release }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detect Context
+        id: context
+        run: |
+          IS_PR="${{ github.event_name == 'pull_request' }}"
+          IS_RELEASE="${{ startsWith(github.ref, 'refs/tags/v') }}"
+          IS_MAIN="${{ github.ref == 'refs/heads/main' }}"
+          
+          echo "is-pr=${IS_PR}" >> $GITHUB_OUTPUT
+          echo "is-release=${IS_RELEASE}" >> $GITHUB_OUTPUT
+          echo "is-main=${IS_MAIN}" >> $GITHUB_OUTPUT
+          
+          echo "📋 Workflow Context:"
+          echo "  Event: ${{ github.event_name }}"
+          echo "  Ref: ${{ github.ref }}"
+          echo "  Is PR: ${IS_PR}"
+          echo "  Is Release: ${IS_RELEASE}"
+          echo "  Is Main: ${IS_MAIN}"
+
+      - name: 🔍 Detect Changed Files
+        id: changes
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/*.ps1
+            **/*.psm1
+            **/*.psd1
+            **/Dockerfile
+            **/*.yml
+            **/*.yaml
+          files_yaml: |
+            powershell:
+              - '**/*.ps1'
+              - '**/*.psm1'
+              - '**/*.psd1'
+            docker:
+              - '**/Dockerfile'
+              - '**/docker-compose.yml'
+              - '.dockerignore'
+            workflows:
+              - '.github/workflows/**/*.yml'
+              - '.github/workflows/**/*.yaml'
+            docs:
+              - 'docs/**/*'
+              - '**/*.md'
+            tests:
+              - 'tests/**/*'
+              - 'library/tests/**/*'
+
+      - name: 🎯 Decide What to Run
+        id: decide
+        run: |
+          # Default: run nothing
+          RUN_PR_WORKFLOW="false"
+          RUN_TESTS="false"
+          RUN_BUILD="false"
+          RUN_DOCKER="false"
+          RUN_DOCS="false"
+          RUN_RELEASE="false"
+          
+          # Manual workflow_dispatch override
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            CHOICE="${{ inputs.workflow }}"
+            case "$CHOICE" in
+              all)
+                RUN_TESTS="true"
+                RUN_BUILD="true"
+                RUN_DOCKER="true"
+                RUN_DOCS="true"
+                ;;
+              pr-validation)
+                RUN_PR_WORKFLOW="true"
+                ;;
+              testing)
+                RUN_TESTS="true"
+                ;;
+              build)
+                RUN_BUILD="true"
+                RUN_DOCKER="true"
+                ;;
+              release)
+                RUN_RELEASE="true"
+                ;;
+              documentation)
+                RUN_DOCS="true"
+                ;;
+            esac
+          fi
+          
+          # Release workflow
+          if [ "${{ steps.context.outputs.is-release }}" == "true" ]; then
+            RUN_RELEASE="true"
+            RUN_BUILD="true"
+            RUN_DOCKER="true"
+            RUN_TESTS="true"
+          fi
+          
+          # PR workflow - comprehensive
+          if [ "${{ steps.context.outputs.is-pr }}" == "true" ]; then
+            RUN_PR_WORKFLOW="true"
+            # pr-complete.yml handles everything for PRs
+          fi
+          
+          # Push to main/dev - run tests and build
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ steps.context.outputs.is-release }}" != "true" ]; then
+            RUN_TESTS="true"
+            RUN_BUILD="true"
+            
+            # Check file changes
+            if [ "${{ steps.changes.outputs.docker_any_changed }}" == "true" ]; then
+              RUN_DOCKER="true"
+            fi
+            
+            if [ "${{ steps.changes.outputs.docs_any_changed }}" == "true" ]; then
+              RUN_DOCS="true"
+            fi
+          fi
+          
+          # Force all tests if requested
+          if [ "${{ inputs.force_all_tests }}" == "true" ]; then
+            RUN_TESTS="true"
+          fi
+          
+          echo "run-pr-workflow=${RUN_PR_WORKFLOW}" >> $GITHUB_OUTPUT
+          echo "run-tests=${RUN_TESTS}" >> $GITHUB_OUTPUT
+          echo "run-build=${RUN_BUILD}" >> $GITHUB_OUTPUT
+          echo "run-docker=${RUN_DOCKER}" >> $GITHUB_OUTPUT
+          echo "run-docs=${RUN_DOCS}" >> $GITHUB_OUTPUT
+          echo "run-release=${RUN_RELEASE}" >> $GITHUB_OUTPUT
+          
+          echo "🎯 Orchestration Decision:"
+          echo "  PR Workflow: ${RUN_PR_WORKFLOW}"
+          echo "  Tests: ${RUN_TESTS}"
+          echo "  Build: ${RUN_BUILD}"
+          echo "  Docker: ${RUN_DOCKER}"
+          echo "  Docs: ${RUN_DOCS}"
+          echo "  Release: ${RUN_RELEASE}"
+
+  # ============================================================================
+  # PR WORKFLOW: Complete PR validation (delegates to pr-complete.yml)
+  # ============================================================================
+  
+  pr-workflow:
+    name: 🚀 PR Complete Workflow
+    needs: orchestration
+    if: needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/pr-complete.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+      pages: write
+      id-token: write
+      checks: write
+      statuses: write
+      actions: read
+
+  # ============================================================================
+  # RELEASE WORKFLOW: Full release process (delegates to release-automation.yml)
+  # ============================================================================
+  
+  release-workflow:
+    name: 🚀 Release Automation
+    needs: orchestration
+    if: needs.orchestration.outputs.run-release == 'true'
+    uses: ./.github/workflows/release-automation.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write
+      pages: write
+      id-token: write
+
+  # ============================================================================
+  # STANDALONE JOBS: For non-PR, non-release events
+  # ============================================================================
+  
+  standalone-tests:
+    name: 🧪 Comprehensive Tests
+    needs: orchestration
+    if: |
+      needs.orchestration.outputs.run-tests == 'true' && 
+      needs.orchestration.outputs.run-pr-workflow != 'true' &&
+      needs.orchestration.outputs.run-release != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🧪 Run Test Suite
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🧪 Running comprehensive test suite" -ForegroundColor Cyan
+          
+          # Run unit tests
+          & "./automation-scripts/0402_Run-UnitTests.ps1"
+          
+          # Run integration tests
+          & "./automation-scripts/0403_Run-IntegrationTests.ps1"
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-standalone
+          path: library/tests/results/**
+          retention-days: 14
+
+  standalone-build:
+    name: 🔨 Build Packages
+    needs: orchestration
+    if: |
+      needs.orchestration.outputs.run-build == 'true' && 
+      needs.orchestration.outputs.run-pr-workflow != 'true' &&
+      needs.orchestration.outputs.run-release != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔨 Run Build
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🔨 Running build process" -ForegroundColor Cyan
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
+
+      - name: 📦 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-artifacts-standalone
+          path: |
+            library/reports/build-*.json
+            AitherZero-*.zip
+            AitherZero-*.tar.gz
+          retention-days: 14
+
+  standalone-docker:
+    name: 🐳 Build Docker Image
+    needs: [orchestration, standalone-build]
+    if: |
+      needs.orchestration.outputs.run-docker == 'true' && 
+      needs.orchestration.outputs.run-pr-workflow != 'true' &&
+      needs.orchestration.outputs.run-release != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+
+      - name: 📋 Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ steps.repo-name.outputs.repo-lower }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=dev
+
+      - name: 🔨 Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  standalone-docs:
+    name: 📚 Generate Documentation
+    needs: orchestration
+    if: |
+      needs.orchestration.outputs.run-docs == 'true' && 
+      needs.orchestration.outputs.run-pr-workflow != 'true' &&
+      needs.orchestration.outputs.run-release != 'true'
+    uses: ./.github/workflows/documentation.yml
+    secrets: inherit
+    permissions:
+      contents: write
+
+  # ============================================================================
+  # FINAL SUMMARY
+  # ============================================================================
+  
+  summary:
+    name: 📊 Workflow Summary
+    needs: [orchestration, pr-workflow, release-workflow, standalone-tests, standalone-build, standalone-docker, standalone-docs]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📊 Generate Summary
+        run: |
+          echo "## 🎯 Master CI/CD Orchestration Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Workflow Context" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ref:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is PR:** ${{ needs.orchestration.outputs.is-pr }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is Release:** ${{ needs.orchestration.outputs.is-release }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Executed Workflows" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow | Executed | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Complete | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release | ${{ needs.orchestration.outputs.run-release }} | ${{ needs.release-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.orchestration.outputs.run-tests }} | ${{ needs.standalone-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.orchestration.outputs.run-build }} | ${{ needs.standalone-build.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker | ${{ needs.orchestration.outputs.run-docker }} | ${{ needs.standalone-docker.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docs | ${{ needs.orchestration.outputs.run-docs }} | ${{ needs.standalone-docs.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Master orchestrator ensures coordinated execution of all CI/CD workflows*" >> $GITHUB_STEP_SUMMARY
