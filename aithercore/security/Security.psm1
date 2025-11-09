@@ -1666,22 +1666,44 @@ function Set-AitherEnvironmentVariable {
     Get environment variable value
     
 .DESCRIPTION
-    Retrieves environment variable value, optionally as SecureString.
+    Retrieves environment variable value(s), optionally as SecureString.
+    Supports wildcards to retrieve multiple environment variables.
     
 .PARAMETER Name
-    Environment variable name
+    Environment variable name or pattern. Supports wildcards (* and ?).
+    Defaults to '*' to list all environment variables.
     
 .PARAMETER AsSecureString
-    Return value as SecureString (for sensitive data)
+    Return value as SecureString (for sensitive data).
+    Note: Only applicable when retrieving a single variable.
     
 .EXAMPLE
     $token = Get-AitherEnvironmentVariable -Name "GITHUB_TOKEN"
     
+    Retrieves a specific environment variable
+    
 .EXAMPLE
     $secureToken = Get-AitherEnvironmentVariable -Name "API_KEY" -AsSecureString
     
+    Retrieves an environment variable as a SecureString
+    
+.EXAMPLE
+    Get-AitherEnvironmentVariable
+    
+    Lists all environment variables (same as Get-AitherEnvironmentVariable -Name "*")
+    
+.EXAMPLE
+    Get-AitherEnvironmentVariable -Name "PATH*"
+    
+    Lists all environment variables starting with "PATH"
+    
+.EXAMPLE
+    Get-AitherEnvironmentVariable -Name "*TOKEN*"
+    
+    Lists all environment variables containing "TOKEN"
+    
 .OUTPUTS
-    [string] or [SecureString]
+    [string], [SecureString], or [PSCustomObject[]] when using wildcards
     
 .LINK
     Set-AitherEnvironmentVariable
@@ -1689,26 +1711,55 @@ function Set-AitherEnvironmentVariable {
 function Get-AitherEnvironmentVariable {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory, Position = 0)]
+        [Parameter(Position = 0)]
         [ValidateNotNullOrEmpty()]
-        [string]$Name,
+        [string]$Name = '*',
         
         [Parameter()]
         [switch]$AsSecureString
     )
     
-    $value = [Environment]::GetEnvironmentVariable($Name)
+    # Check if the name contains wildcards
+    $hasWildcards = $Name -match '[*?]'
     
-    if (-not $value) {
-        Write-Warning "Environment variable '$Name' not found"
-        return $null
-    }
-    
-    if ($AsSecureString) {
-        return ConvertTo-SecureString $value -AsPlainText -Force
+    if ($hasWildcards) {
+        # Get all environment variables that match the pattern
+        $allEnvVars = [Environment]::GetEnvironmentVariables()
+        $matchingVars = @()
+        
+        foreach ($key in $allEnvVars.Keys) {
+            if ($key -like $Name) {
+                $matchingVars += [PSCustomObject]@{
+                    Name = $key
+                    Value = $allEnvVars[$key]
+                }
+            }
+        }
+        
+        if ($matchingVars.Count -eq 0) {
+            Write-Warning "No environment variables found matching pattern '$Name'"
+            # Use comma operator to force array return even when empty
+            return , @()
+        }
+        
+        # Sort by name for consistent output
+        return $matchingVars | Sort-Object Name
     }
     else {
-        return $value
+        # Single variable lookup (original behavior)
+        $value = [Environment]::GetEnvironmentVariable($Name)
+        
+        if (-not $value) {
+            Write-Warning "Environment variable '$Name' not found"
+            return $null
+        }
+        
+        if ($AsSecureString) {
+            return ConvertTo-SecureString $value -AsPlainText -Force
+        }
+        else {
+            return $value
+        }
     }
 }
 
