@@ -1,9 +1,9 @@
 @{
     Name = "pr-ecosystem-report"
-    Description = "Complete PR Reporting Phase - Dashboard, changelog, deployment"
-    Version = "2.0.0"
+    Description = "Complete PR Reporting Phase - Dashboard, changelog, deployment, Docker status"
+    Version = "2.1.0"
     Author = "AitherZero"
-    Tags = @("pr", "report", "dashboard", "changelog", "ecosystem")
+    Tags = @("pr", "report", "dashboard", "changelog", "ecosystem", "docker")
     
     # Reporting phase - sequential to aggregate all prior data
     Sequence = @(
@@ -50,6 +50,7 @@
                 Format = "All"  # HTML, Markdown, JSON
                 IncludeBootstrapQuickstart = $true
                 IncludeContainerInfo = $true
+                IncludeDockerImageInfo = $true
                 IncludePRContext = $true
                 IncludeDiffAnalysis = $true
                 IncludeChangelog = $true
@@ -90,6 +91,7 @@
                 RecommendationsPath = "library/reports/recommendations.json"
                 OutputPath = "library/reports/pr-comment.md"
                 IncludeDeploymentInstructions = $true
+                IncludeDockerInstructions = $true
                 IncludeQuickActions = $true
             }
             ContinueOnError = $false
@@ -111,6 +113,8 @@
         GITHUB_SHA = $env:GITHUB_SHA
         GITHUB_RUN_Script = $env:GITHUB_RUN_NUMBER
         PAGES_URL = "https://$($env:GITHUB_REPOSITORY_OWNER).github.io/$($env:GITHUB_REPOSITORY -replace '.*/','')/"
+        DOCKER_REGISTRY = "ghcr.io"
+        DOCKER_IMAGE_TAG = "pr-$($env:PR_NUMBER)"
     }
     
     # Execution options
@@ -149,6 +153,12 @@
             "library/reports/project-report.md",
             "library/reports/code-map.html"
         )
+        Container = @{
+            Registry = "ghcr.io"
+            ImageFormat = "pr-{PR_NUMBER}"
+            IncludeInDashboard = $true
+            IncludeInComment = $true
+        }
     }
     
     # Reporting
@@ -156,6 +166,7 @@
         GenerateReport = $true
         IncludeTimings = $true
         IncludeArtifacts = $true
+        IncludeContainerStatus = $true
         ReportPath = "library/reports/reporting-summary.md"
     }
     
@@ -164,5 +175,6 @@
         ValidateArtifacts = $true
         CreateIndex = $true
         IndexPath = "library/reports/index.md"
+        IncludeDockerImageInfo = $true
     }
 }

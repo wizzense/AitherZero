@@ -2,12 +2,17 @@
 name: 🚀 PR Complete Workflow
 
 # Complete PR workflow that orchestrates all validation, testing, building, and reporting
-# This is the single entry point for all PR checks
+# Called by master-ci-cd.yml orchestrator - does not trigger independently
 
 on:
-  pull_request:
-    branches: [main, dev, dev-staging]
-    types: [opened, synchronize, reopened]
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'Pull Request number'
+        required: false
+        type: string
+    secrets:
+      inherit
 
 permissions:
   contents: write
@@ -20,11 +25,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: pr-complete-${{ github.event.pull_request.number }}
+  group: pr-complete-${{ inputs.pr_number || github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 env:
-  PR_NUMBER: ${{ github.event.pull_request.number }}
+  PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
   AITHERZERO_CI: true
   AITHERZERO_NONINTERACTIVE: true
   AITHERZERO_SUPPRESS_BANNER: true
@@ -50,7 +55,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '🚀 **PR Complete Workflow Started**\n\n**Phase 1:** ⚡ Quick Validation\n- Syntax check\n- Config validation\n- Manifest validation'
@@ -96,7 +101,7 @@ jobs:
             const status = '${{ steps.validate.outcome }}';
             const icon = status === 'success' ? '✅' : '❌';
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `${icon} **Quick Validation ${status === 'success' ? 'PASSED' : 'FAILED'}**`
@@ -129,7 +134,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 2:** 🧪 Comprehensive Testing Started\n\nPreparing test matrix for parallel execution...'
@@ -316,7 +321,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '✅ **Comprehensive Testing Complete**\n\n- Unit tests: Completed\n- Domain tests: Completed\n- Integration tests: Completed\n\n*All test results uploaded as artifacts*'
@@ -344,7 +349,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 3:** 🔨 Build & Package Started'
@@ -383,10 +388,137 @@ jobs:
             const status = '${{ steps.build.outcome }}';
             const icon = status === 'success' ? '✅' : '⚠️';
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `${icon} **Build & Package ${status === 'success' ? 'PASSED' : 'COMPLETED WITH ISSUES'}**`
+            });
+
+  # ============================================================================
+  # PHASE 3B: Docker Container Build (Parallel with Quality Analysis)
+  # ============================================================================
+  
+  build-docker-image:
+    name: 🐳 Build PR Docker Image
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      status: ${{ steps.docker-build.outcome }}
+      image-tag: ${{ steps.docker-meta.outputs.tags }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 💬 Post Docker Build Start
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: process.env.PR_NUMBER,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Phase 3B:** 🐳 Docker Container Build Started'
+            });
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "Using lowercase repository name: ${REPO_LOWER}"
+
+      - name: 📋 Extract Docker Metadata
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ steps.repo-name.outputs.repo-lower }}
+          tags: |
+            type=raw,value=pr-${{ env.PR_NUMBER }}
+            type=raw,value=pr-${{ env.PR_NUMBER }}-${{ github.sha }}
+            type=ref,event=pr
+          labels: |
+            org.opencontainers.image.title=AitherZero (PR #${{ env.PR_NUMBER }})
+            org.opencontainers.image.description=Infrastructure automation platform - PR build
+            org.opencontainers.image.vendor=wizzense
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            com.aitherzero.pr.number=${{ env.PR_NUMBER }}
+            com.aitherzero.build.type=pr
+
+      - name: 🔨 Build and Push Docker Image
+        id: docker-build
+        uses: docker/build-push-action@v5
+        continue-on-error: true
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=pr-${{ env.PR_NUMBER }}
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 🧪 Test Docker Image
+        if: steps.docker-build.outcome == 'success'
+        shell: bash
+        run: |
+          echo "🧪 Testing Docker image..."
+          IMAGE_TAG="ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}"
+          
+          docker run --rm ${IMAGE_TAG} pwsh -NoProfile -Command "
+            Write-Host '✅ Container started' -ForegroundColor Green;
+            if (Test-Path /opt/aitherzero/AitherZero.psd1) {
+              Write-Host '✅ Module manifest found' -ForegroundColor Green;
+            } else {
+              Write-Error '❌ Module manifest not found';
+              exit 1;
+            }
+          "
+          
+          echo "✅ Docker image test passed"
+
+      - name: 💬 Post Docker Build Result
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.docker-build.outcome }}';
+            const icon = status === 'success' ? '✅' : '⚠️';
+            const imageTag = 'ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}';
+            let body = `${icon} **Docker Container Build ${status === 'success' ? 'PASSED' : 'COMPLETED WITH ISSUES'}**\n\n`;
+            
+            if (status === 'success') {
+              body += `**Docker Image:** \`${imageTag}\`\n\n`;
+              body += '**Quick Test:**\n';
+              body += '```bash\n';
+              body += `docker pull ${imageTag}\n`;
+              body += `docker run -it --rm ${imageTag}\n`;
+              body += '```';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: process.env.PR_NUMBER,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
             });
 
   # ============================================================================
@@ -411,7 +543,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 4:** 🔍 Quality Analysis Started\n\n- PSScriptAnalyzer\n- Component Quality\n- Security Scan'
@@ -453,7 +585,7 @@ jobs:
             const status = '${{ steps.quality.outcome }}';
             const icon = status === 'success' ? '✅' : 'ℹ️';
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `${icon} **Quality Analysis ${status === 'success' ? 'PASSED' : 'COMPLETED'}**`
@@ -465,7 +597,7 @@ jobs:
   
   dashboard:
     name: 📊 Dashboard & Deploy
-    needs: [test-summary, build, quality-analysis]
+    needs: [test-summary, build, build-docker-image, quality-analysis]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -479,7 +611,7 @@ jobs:
         with:
           script: |
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '**Phase 5:** 📊 Dashboard Generation Started\n\nConsolidating all results...'
@@ -560,13 +692,16 @@ jobs:
           script: |
             const validationStatus = '${{ needs.quick-validation.outputs.status }}';
             const buildStatus = '${{ needs.build.outputs.status }}';
+            const dockerStatus = '${{ needs.build-docker-image.outputs.status }}';
             const qualityStatus = '${{ needs.quality-analysis.outputs.status }}';
             
             const validationIcon = validationStatus === 'success' ? '✅' : '❌';
             const buildIcon = buildStatus === 'success' ? '✅' : '⚠️';
+            const dockerIcon = dockerStatus === 'success' ? '✅' : '⚠️';
             const qualityIcon = qualityStatus === 'success' ? '✅' : 'ℹ️';
             
-            const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${context.issue.number}/`;
+            const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${process.env.PR_NUMBER}/`;
+            const dockerImageTag = `ghcr.io/${context.repo.owner}/${context.repo.repo}:pr-${process.env.PR_NUMBER}`.toLowerCase();
             
             const summary = `## 🚀 PR Complete Workflow - FINISHED
             
@@ -577,6 +712,7 @@ jobs:
             | ${validationIcon} **Quick Validation** | ${validationStatus} |
             | 🧪 **Comprehensive Testing** | Matrix Complete |
             | ${buildIcon} **Build & Package** | ${buildStatus} |
+            | ${dockerIcon} **Docker Container** | ${dockerStatus} |
             | ${qualityIcon} **Quality Analysis** | ${qualityStatus} |
             | 📊 **Dashboard** | Generated |
             
@@ -584,22 +720,33 @@ jobs:
             
             **GitHub Pages:** [View PR Dashboard](${pagesUrl})
             
-            ### Artifacts
+            ### 🐳 Docker Image
+            
+            ${dockerStatus === 'success' ? `**Image:** \`${dockerImageTag}\`
+            
+            **Quick Test:**
+            \`\`\`bash
+            docker pull ${dockerImageTag}
+            docker run -it --rm ${dockerImageTag}
+            \`\`\`` : '*Docker build failed or was skipped*'}
+            
+            ### 📦 Artifacts
             
             - Unit test results (9 ranges)
             - Domain test results (6 modules)
             - Integration test results (4 suites)
-            - Build packages
-            - Quality analysis
+            - Build packages (ZIP, TAR.GZ)
+            - Docker container image${dockerStatus === 'success' ? '' : ' (failed)'}
+            - Quality analysis results
             - Complete dashboard
             
             [View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})
             
             ---
-            *Complete PR workflow - all phases executed*`;
+            *Complete PR workflow - all phases executed including Docker container build*`;
             
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: summary

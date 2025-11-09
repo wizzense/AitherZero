@@ -1,7 +1,7 @@
 @{
     Name = "pr-ecosystem-build"
     Description = "Complete PR Build Phase - Container, packages, MCP server"
-    Version = "2.0.0"
+    Version = "2.1.0"
     Author = "AitherZero"
     Tags = @("pr", "build", "container", "release", "ecosystem")
     
@@ -26,6 +26,7 @@
                 IncludePRInfo = $true
                 IncludeGitInfo = $true
                 IncludeEnvironmentInfo = $true
+                IncludeDockerInfo = $true
             }
             ContinueOnError = $false
             Timeout = 60
@@ -68,6 +69,8 @@
         AITHERZERO_NONINTERACTIVE = "true"
         BUILD_PHASE = "pr-ecosystem-build"
         GENERATE_ARTIFACTS = "true"
+        DOCKER_BUILD_ENABLED = "true"
+        DOCKER_REGISTRY = "ghcr.io"
     }
     
     # Execution options
@@ -100,6 +103,13 @@
             "AitherZero-*-runtime.tar.gz",
             "library/reports/build-summary.json"
         )
+        Container = @{
+            Enabled = $true
+            Registry = "ghcr.io"
+            ImageName = $env:GITHUB_REPOSITORY
+            TagFormat = "pr-{PR_NUMBER}"
+            Platforms = @("linux/amd64", "linux/arm64")
+        }
     }
     
     # Reporting
@@ -107,6 +117,7 @@
         GenerateReport = $true
         IncludeTimings = $true
         IncludeArtifacts = $true
+        IncludeContainerInfo = $true
         ReportPath = "library/reports/build-report.md"
     }
 }
