@@ -1,6 +1,22 @@
 {
   "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2025-06-18/schema.json",
   "mcpServers": {
+    "aitherzero": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/integrations/mcp-server/dist/index.js"
+      ],
+      "description": "AitherZero infrastructure automation platform - 14 tools, 5 resources, 4 prompts for complete infrastructure control",
+      "capabilities": {
+        "resources": true,
+        "tools": true,
+        "prompts": true
+      },
+      "env": {
+        "AITHERZERO_ROOT": "${workspaceFolder}",
+        "AITHERZERO_NONINTERACTIVE": "1"
+      }
+    },
     "filesystem": {
       "command": "npx",
       "args": [
@@ -16,12 +32,11 @@
       "config": {
         "allowedDirectories": [
           "${workspaceFolder}",
-          "${workspaceFolder}/domains",
-          "${workspaceFolder}/automation-scripts",
+          "${workspaceFolder}/aithercore",
+          "${workspaceFolder}/library",
           "${workspaceFolder}/tests",
           "${workspaceFolder}/docs",
-          "${workspaceFolder}/infrastructure",
-          "${workspaceFolder}/orchestration"
+          "${workspaceFolder}/infrastructure"
         ],
         "readOnly": false
       }
@@ -90,6 +105,7 @@
     }
   },
   "defaultServers": [
+    "aitherzero",
     "filesystem",
     "github",
     "git"
@@ -98,8 +114,8 @@
     "codebase": {
       "enabled": true,
       "paths": [
-        "${workspaceFolder}/domains/**/*.psm1",
-        "${workspaceFolder}/automation-scripts/**/*.ps1",
+        "${workspaceFolder}/aithercore/**/*.psm1",
+        "${workspaceFolder}/library/automation-scripts/**/*.ps1",
         "${workspaceFolder}/tests/**/*.Tests.ps1"
       ]
     },
