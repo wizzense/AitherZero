@@ -1871,11 +1871,18 @@ function Invoke-ParallelOrchestration {
         [switch]$ContinueOnError
     )
 
+    # Initialize start time at the beginning to track total orchestration duration
+    $startTime = Get-Date
+
     Write-OrchestrationLog "Starting parallel orchestration with max concurrency: $($Configuration.Automation.MaxConcurrency)"
     
     # Separate scripts that don't allow parallel execution
     $parallelScripts = @($Scripts | Where-Object { $_.AllowParallel -ne $false })
     $sequentialScripts = @($Scripts | Where-Object { $_.AllowParallel -eq $false })
+    
+    # Track completed and failed scripts across both sequential and parallel execution
+    $completed = @{}
+    $failed = @{}
     
     if ($sequentialScripts.Count -gt 0) {
         Write-OrchestrationLog "Detected $($sequentialScripts.Count) script(s) that must run sequentially: $($sequentialScripts.Number -join ', ')" -Level 'Information'
@@ -1918,8 +1925,20 @@ function Invoke-ParallelOrchestration {
                 
                 if ($exitCode -eq 0) {
                     Write-OrchestrationLog "Completed (sequential): [$($script.Number)] $($script.Name) (Duration: $($duration.TotalSeconds)s)"
+                    # Mark as completed to prevent re-execution in parallel phase
+                    $completed[$script.Number] = @{
+                        Success = $true
+                        ExitCode = $exitCode
+                        Duration = $duration
+                    }
                 } else {
                     Write-OrchestrationLog "Failed (sequential): [$($script.Number)] $($script.Name) with exit code $exitCode" -Level 'Error'
+                    # Mark as failed to prevent re-execution in parallel phase
+                    $failed[$script.Number] = @{
+                        Success = $false
+                        ExitCode = $exitCode
+                        Error = "Script exited with code $exitCode"
+                    }
                     
                     if (-not $ContinueOnError) {
                         throw "Script $($script.Number) failed with exit code $exitCode"
@@ -1928,6 +1947,12 @@ function Invoke-ParallelOrchestration {
             }
             catch {
                 Write-OrchestrationLog "Error executing (sequential): [$($script.Number)] $($script.Name) - $($_.Exception.Message)" -Level 'Error'
+                # Mark as failed to prevent re-execution in parallel phase
+                $failed[$script.Number] = @{
+                    Success = $false
+                    Error = $_.Exception.Message
+                    ExitCode = 1
+                }
                 
                 if (-not $ContinueOnError) {
                     throw
@@ -1941,12 +1966,12 @@ function Invoke-ParallelOrchestration {
         Write-OrchestrationLog "All scripts executed sequentially (no parallel execution needed)"
         return [PSCustomObject]@{
             Total = $Scripts.Count
-            Completed = $sequentialScripts.Count
-            Failed = 0
+            Completed = $completed.Count
+            Failed = $failed.Count
             Duration = New-TimeSpan -Start $startTime -End (Get-Date)
             Results = @{
-                Completed = @{}
-                Failed = @{}
+                Completed = $completed
+                Failed = $failed
             }
         }
     }
@@ -1956,13 +1981,11 @@ function Invoke-ParallelOrchestration {
 
     # Execute in parallel with dependency resolution
     $jobs = @{}
-    $completed = @{}
-    $failed = @{}
-    $startTime = Get-Date  # Initialize start time for duration calculation
 
+    # Loop only over parallel scripts count (sequential scripts already completed)
     while ($completed.Count -lt $Scripts.Count -and (-not $failed.Count -or $ContinueOnError)) {
-        # Find scripts ready to run
-        $ready = $Scripts | Where-Object {
+        # Find scripts ready to run - only from parallelScripts, not all Scripts
+        $ready = $parallelScripts | Where-Object {
             $_.Number -notin $completed.Keys -and
             $_.Number -notin $failed.Keys -and
             $_.Number -notin $jobs.Keys -and
