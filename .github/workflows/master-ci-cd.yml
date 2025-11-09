@@ -223,6 +223,8 @@ jobs:
     needs: orchestration
     if: needs.orchestration.outputs.run-pr-workflow == 'true'
     uses: ./.github/workflows/pr-complete.yml
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
     secrets: inherit
     permissions:
       contents: write

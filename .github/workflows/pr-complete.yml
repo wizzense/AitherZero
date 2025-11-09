@@ -2,14 +2,15 @@
 name: 🚀 PR Complete Workflow
 
 # Complete PR workflow that orchestrates all validation, testing, building, and reporting
-# This is the single entry point for all PR checks
+# Called by master-ci-cd.yml orchestrator - does not trigger independently
 
 on:
-  pull_request:
-    branches: [main, dev, dev-staging]
-    types: [opened, synchronize, reopened]
-  
   workflow_call:
+    inputs:
+      pr_number:
+        description: 'Pull Request number'
+        required: false
+        type: string
     secrets:
       inherit
 
@@ -24,11 +25,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: pr-complete-${{ github.event.pull_request.number }}
+  group: pr-complete-${{ inputs.pr_number || github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 env:
-  PR_NUMBER: ${{ github.event.pull_request.number }}
+  PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
   AITHERZERO_CI: true
   AITHERZERO_NONINTERACTIVE: true
   AITHERZERO_SUPPRESS_BANNER: true
