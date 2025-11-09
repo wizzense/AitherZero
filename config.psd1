@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -242,8 +242,8 @@
                 }
                 Analysis       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0513', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527')
-                    Description = 'Changelog generation, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, and code mapping'
+                    Scripts     = @('0513', '0514', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527')
+                    Description = 'Changelog generation, diff analysis, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, and code mapping'
                 }
                 Logging        = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -263,6 +263,11 @@
                     DependsOn   = @('Core.Git')
                     Scripts     = @('0700')
                     Description = 'Git environment configuration'
+                }
+                GitHubCLI     = @{
+                    DependsOn   = @('Core.Git')
+                    Scripts     = @('0211')
+                    Description = 'GitHub CLI installation and configuration'
                 }
                 GitWorkflow   = @{
                     DependsOn   = @('Core.Git')
@@ -489,6 +494,29 @@
             '0800-0899' = @{ Count = 30; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 16; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
+        }
+
+        # Test inventory - comprehensive test file tracking
+        TestInventory       = @{
+            Unit = @{ Count = 184
+                Path  = 'tests/unit'
+            }
+            Integration = @{ Count = 175
+                Path  = 'tests/integration'
+            }
+            Total = 359
+        }
+
+        # Playbook inventory - orchestration playbook tracking
+        PlaybookInventory = @{ Count = 25
+            Path  = 'library/playbooks'
+            Types = @('validation', 'quality', 'testing', 'ecosystem', 'pr-environment')
+        }
+
+        # Workflow inventory - GitHub Actions workflow tracking
+        WorkflowInventory = @{ Count = 20
+            Path  = '.github/workflows'
+            Categories = @('ci', 'automation', 'security', 'publishing', 'validation')
         }
 
         # Configuration schema version for validation
