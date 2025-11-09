@@ -7,6 +7,19 @@
     
     # Reporting phase - sequential to aggregate all prior data
     Sequence = @(
+        # Generate quality metrics artifacts FIRST (for dashboard ingestion)
+        @{
+            Script = "0514_Generate-QualityMetrics.ps1"
+            Description = "Generate quality metrics with historical tracking"
+            Parameters = @{
+                IncludeHistory = $true
+                OutputPath = "library/reports"
+            }
+            ContinueOnError = $false
+            Timeout = 180
+            Phase = "quality-metrics"
+        },
+        
         # Generate PR changelog
         @{
             Script = "0513_Generate-Changelog.ps1"

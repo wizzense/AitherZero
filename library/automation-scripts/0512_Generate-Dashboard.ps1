@@ -600,6 +600,26 @@ function Get-ProjectMetrics {
     } else {
         Write-ScriptLog -Level Information -Message "Three-tier quality metrics not found. Run './library/automation-scripts/0514_Generate-QualityMetrics.ps1' to generate."
     }
+    
+    # Integrate quality trends (historical data)
+    $qualityTrendsPath = Join-Path $ProjectPath "library/reports/quality-trends.json"
+    if (Test-Path $qualityTrendsPath) {
+        try {
+            $trendsData = Get-Content $qualityTrendsPath -Raw | ConvertFrom-Json
+            
+            # Add trends to dashboard
+            $metrics.QualityTrends = @{
+                DataPoints = $trendsData.DataPoints
+                Trend = $trendsData.Trend
+                AverageImprovement = $trendsData.AverageImprovement
+                LastUpdated = $trendsData.Timestamp
+            }
+            
+            Write-ScriptLog -Message "Integrated quality trends: $($trendsData.DataPoints.Count) historical snapshots"
+        } catch {
+            Write-ScriptLog -Level Warning -Message "Failed to load quality trends: $_"
+        }
+    }
 
     # Get latest test results - check multiple possible locations including JSON
     $testResultsPaths = @(

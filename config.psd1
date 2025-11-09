@@ -1122,6 +1122,13 @@
                 AllowedEnvironments = @('Dev', 'CI', 'Staging', 'Production')
                 Features            = @('AST', 'PSScriptAnalyzer', 'Pester', 'FunctionalTests', 'QualityScore')
             }
+            'pr-ecosystem-complete' = @{
+                Enabled             = $true
+                Description         = 'Complete PR ecosystem: Build → Analyze → Report with full deployment artifacts'
+                RequiresApproval    = $false
+                AllowedEnvironments = @('Dev', 'CI')
+                Features            = @('Build', 'Analyze', 'Report', 'Dashboard', 'QualityMetrics', 'Deployment', 'Container', 'ReleasePackages')
+            }
             'project-health-check'   = @{
                 Enabled             = $true
                 Description         = 'Complete project health validation (matches GitHub Actions)'
