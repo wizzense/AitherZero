@@ -139,13 +139,25 @@ if ($env:PR_NUMBER -and $env:GITHUB_SHA) {
     }
 }
 
-# GitHub Pages
+# GitHub Pages - Branch-specific URLs
 $repoName = ($env:GITHUB_REPOSITORY -split '/')[-1]
 $owner = ($env:GITHUB_REPOSITORY -split '/')[0]
+$branch = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { git rev-parse --abbrev-ref HEAD 2>$null }
+
+# Determine branch-specific base URL
+$branchPath = if ($branch -eq "main") { "" } else { "/$branch" }
+$baseUrl = "https://$owner.github.io/$repoName$branchPath"
+
 $buildInfo.pages = @{
-    base_url = "https://$owner.github.io/$repoName"
-    pr_dashboard = "https://$owner.github.io/$repoName/pr-$($env:PR_NUMBER)/"
-    pr_reports = "https://$owner.github.io/$repoName/pr-$($env:PR_NUMBER)/reports/"
+    base_url = $baseUrl
+    branch = $branch
+    branch_path = $branchPath
+}
+
+# Add PR-specific URLs if this is a PR
+if ($env:PR_NUMBER) {
+    $buildInfo.pages.pr_dashboard = "$baseUrl/pr-$($env:PR_NUMBER)/"
+    $buildInfo.pages.pr_reports = "$baseUrl/pr-$($env:PR_NUMBER)/reports/"
 }
 
 # Ensure output directory exists
