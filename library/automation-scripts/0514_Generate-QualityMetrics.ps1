@@ -27,7 +27,7 @@
 .NOTES
     Stage: Reporting
     Dependencies: ThreeTierValidation, 0512_Generate-Dashboard.ps1
-    Tags: reporting, metrics, dashboard, phase2
+    Tags: reporting, metrics, dashboard, phase2, quality-metrics
 #>
 
 [CmdletBinding()]

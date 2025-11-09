@@ -47,7 +47,8 @@ jobs:
           Import-Module ./aithercore/testing/ThreeTierValidation.psm1 -Force
           
           # Get changed scripts
-          $changedFiles = git diff --name-only origin/${{ github.base_ref }}...HEAD | 
+          $baseBranch = "${{ github.base_ref }}"
+          $changedFiles = git diff --name-only "origin/$baseBranch...HEAD" | 
             Where-Object { $_ -match 'library/automation-scripts/.*\.ps1$' }
           
           if ($changedFiles.Count -eq 0) {

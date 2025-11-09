@@ -1,9 +1,9 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Regenerate all tests with enhanced functional validation
+    Generate all tests with enhanced functional validation
 .DESCRIPTION
-    Regenerates all 150+ automation script tests using the new AutoTestGenerator
+    Generates all 150+ automation script tests using the new AutoTestGenerator
     with three-tier validation and functional testing capabilities.
     
     **Phase 2 Implementation**:
@@ -16,24 +16,24 @@
     Path to automation scripts directory
     
 .PARAMETER Force
-    Force regeneration of existing tests
+    Force generation of existing tests
     
 .PARAMETER Filter
     Filter pattern for scripts (e.g., "04*" for 0400-0499)
     
 .PARAMETER WhatIf
-    Show what would be regenerated without actually doing it
+    Show what would be generated without actually doing it
     
 .EXAMPLE
-    ./library/automation-scripts/0951_Regenerate-AllTests.ps1
+    ./library/automation-scripts/0951_Generate-AllTests.ps1
     
 .EXAMPLE
-    ./library/automation-scripts/0951_Regenerate-AllTests.ps1 -Filter "04*" -Force
+    ./library/automation-scripts/0951_Generate-AllTests.ps1 -Filter "04*" -Force
     
 .NOTES
     Stage: Testing
     Dependencies: 0950_Generate-AllTests.ps1, AutoTestGenerator
-    Tags: testing, automation, phase2
+    Tags: testing, automation, phase2, functional-tests
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -61,7 +61,7 @@ if (-not (Test-Path $AutoTestGeneratorPath)) {
 Import-Module $AutoTestGeneratorPath -Force
 
 Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║     Regenerate All Tests - Phase 2 Implementation          ║" -ForegroundColor Cyan
+Write-Host "║     Generate All Tests - Phase 2 Implementation            ║" -ForegroundColor Cyan
 Write-Host "║     Enhanced with Functional Validation                    ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
 
@@ -79,7 +79,7 @@ Write-Host "Found $($scripts.Count) scripts to process`n" -ForegroundColor Green
 
 $stats = @{
     Total = $scripts.Count
-    Regenerated = 0
+    Generated = 0
     Skipped = 0
     Failed = 0
     StartTime = Get-Date
@@ -98,14 +98,14 @@ for ($batchNum = 0; $batchNum -lt $batches; $batchNum++) {
     foreach ($script in $batch) {
         $scriptName = $script.BaseName
         
-        if ($PSCmdlet.ShouldProcess($scriptName, "Regenerate tests")) {
+        if ($PSCmdlet.ShouldProcess($scriptName, "Generate tests")) {
             try {
                 Write-Host "  🔄 $scriptName..." -NoNewline
                 
                 $result = New-AutoTest -ScriptPath $script.FullName -Force:$Force
                 
                 if ($result.Generated) {
-                    $stats.Regenerated++
+                    $stats.Generated++
                     Write-Host " ✅ Generated" -ForegroundColor Green
                 } else {
                     $stats.Skipped++
@@ -127,22 +127,22 @@ $stats.Duration = ($stats.EndTime - $stats.StartTime).TotalSeconds
 
 # Summary
 Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║                    Regeneration Summary                     ║" -ForegroundColor Cyan
+Write-Host "║                    Generation Summary                       ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host "Total Scripts:    $($stats.Total)" -ForegroundColor White
-Write-Host "Regenerated:      $($stats.Regenerated)" -ForegroundColor Green
+Write-Host "Generated:        $($stats.Generated)" -ForegroundColor Green
 Write-Host "Skipped:          $($stats.Skipped)" -ForegroundColor Yellow
 Write-Host "Failed:           $($stats.Failed)" -ForegroundColor $(if ($stats.Failed -gt 0) { 'Red' } else { 'Green' })
 Write-Host "Duration:         $([Math]::Round($stats.Duration, 2))s" -ForegroundColor Gray
 
-if ($stats.Regenerated -gt 0) {
-    $newCoverage = (($stats.Regenerated + $stats.Skipped) / $stats.Total) * 100
+if ($stats.Generated -gt 0) {
+    $newCoverage = (($stats.Generated + $stats.Skipped) / $stats.Total) * 100
     Write-Host "`nTest Coverage:    $([Math]::Round($newCoverage, 1))%" -ForegroundColor Green
     Write-Host "Functional Tests: ✅ ENABLED" -ForegroundColor Green
     Write-Host "Pester Mocking:   ✅ NATIVE" -ForegroundColor Green
     Write-Host "Three-Tier:       ✅ INTEGRATED" -ForegroundColor Green
 }
 
-Write-Host "`n✨ Phase 2 test regeneration complete!`n" -ForegroundColor Cyan
+Write-Host "`n✨ Phase 2 test generation complete!`n" -ForegroundColor Cyan
 
 return $stats

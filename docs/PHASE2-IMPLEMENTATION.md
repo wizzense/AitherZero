@@ -17,7 +17,7 @@ This document describes the Phase 2 implementation of the test infrastructure ov
 **Rationale**: These modules were overlapping and have been fully replaced by the new enhanced frameworks.
 
 ### 2. Test Regeneration Script ✅
-**File**: `library/automation-scripts/0951_Regenerate-AllTests.ps1`
+**File**: `library/automation-scripts/0951_Generate-AllTests.ps1`
 
 **Features**:
 - Regenerates all 150+ automation script tests
@@ -28,20 +28,20 @@ This document describes the Phase 2 implementation of the test infrastructure ov
 
 **Usage**:
 ```powershell
-# Regenerate all tests
-./library/automation-scripts/0951_Regenerate-AllTests.ps1 -Force
+# Generate all tests
+./library/automation-scripts/0951_Generate-AllTests.ps1 -Force
 
 # Regenerate specific range
-./library/automation-scripts/0951_Regenerate-AllTests.ps1 -Filter "04*" -Force
+./library/automation-scripts/0951_Generate-AllTests.ps1 -Filter "04*" -Force
 
 # Dry run
-./library/automation-scripts/0951_Regenerate-AllTests.ps1 -WhatIf
+./library/automation-scripts/0951_Generate-AllTests.ps1 -WhatIf
 ```
 
 **Output**:
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║     Regenerate All Tests - Phase 2 Implementation          ║
+║     Generate All Tests - Phase 2 Implementation          ║
 ║     Enhanced with Functional Validation                    ║
 ╚══════════════════════════════════════════════════════════════╝
 
@@ -106,7 +106,7 @@ Overall Status:    ✅ PASSED
 ```
 
 ### 4. Dashboard Quality Metrics ✅
-**File**: `library/automation-scripts/0513_Generate-QualityMetrics.ps1`
+**File**: `library/automation-scripts/0514_Generate-QualityMetrics.ps1`
 
 **Features**:
 - Collects three-tier validation metrics
@@ -125,10 +125,10 @@ Overall Status:    ✅ PASSED
 **Usage**:
 ```powershell
 # Generate metrics
-./library/automation-scripts/0513_Generate-QualityMetrics.ps1
+./library/automation-scripts/0514_Generate-QualityMetrics.ps1
 
 # With history
-./library/automation-scripts/0513_Generate-QualityMetrics.ps1 -IncludeHistory
+./library/automation-scripts/0514_Generate-QualityMetrics.ps1 -IncludeHistory
 ```
 
 **Output**:
@@ -256,10 +256,10 @@ All cmdlets follow PowerShell best practices:
 
 ### Immediate (This Week)
 1. ✅ Archive deprecated modules - DONE
-2. ✅ Create test regeneration script - DONE
+2. ✅ Create test generation script - DONE
 3. ✅ Update GitHub workflows - DONE
 4. ✅ Add dashboard metrics - DONE
-5. [ ] Run 0951 to regenerate all tests
+5. [ ] Run 0951 to generate all tests
 6. [ ] Monitor workflow execution
 
 ### Short Term (Next 2 Weeks)
@@ -289,7 +289,7 @@ All cmdlets follow PowerShell best practices:
 
 Phase 2 implementation is complete with:
 - ✅ 3 deprecated modules archived
-- ✅ 1 new test regeneration script (0951)
+- ✅ 1 new test generation script (0951)
 - ✅ 1 new workflow (comprehensive-validation.yml)
 - ✅ 1 new metrics script (0513)
 - ✅ Full integration with orchestration, playbooks, config, workflows, dashboard
