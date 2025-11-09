@@ -54,6 +54,7 @@ $modulesToLoad = @(
     # Core utilities first
     './aithercore/utilities/Logging.psm1',
     './aithercore/utilities/ExtensionManager.psm1',
+    './aithercore/utilities/EnvironmentConfig.psm1',
 
     # Configuration (both old and new for backward compatibility)
     './aithercore/configuration/Configuration.psm1',
