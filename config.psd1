@@ -547,9 +547,11 @@
         ShowWelcomeMessage = $true
         EnableAnimations   = $true    # Disable in CI automatically
 
-        # Monitoring and analytics
-        UsageAnalytics     = $false
-        TelemetryEnabled   = $false
+        # Removed unused features (Phase 4 tech debt cleanup):
+        # - UsageAnalytics: Not implemented
+        # - TelemetryEnabled: Not implemented
+        # Use logging and ErrorReporting instead for diagnostics
+        
         ErrorReporting     = $true
         CheckForUpdates    = $true
 
@@ -1066,31 +1068,26 @@
             }
         }
 
-        # Execution profiles mapping
-        Profiles                = @{
-            Minimal   = @{
-                Description    = 'Core infrastructure deployment only'
-                Scripts        = @('0000-0099', '0100-0199')
+        # Execution profiles mapping - references Manifest.ExecutionProfiles
+        # Profiles are defined in Manifest.ExecutionProfiles (lines 432-465)
+        # This section provides automation-specific settings for each profile
+        ProfileSettings         = @{
+            Minimal = @{
                 MaxConcurrency = 2
-                Features       = @('Core')
             }
-            Standard  = @{
-                Description    = 'Production-ready automation'
-                Scripts        = @('0000-0299', '0400-0499')
+            Standard = @{
                 MaxConcurrency = 4
-                Features       = @('Core', 'Development.Node', 'Testing')
             }
             Developer = @{
-                Description    = 'Complete development environment'
-                Scripts        = @('0000-0499')
                 MaxConcurrency = 6
-                Features       = @('Core', 'Development', 'Testing')
             }
-            Full      = @{
-                Description    = 'Everything including optional components'
-                Scripts        = @('*')
+            Full = @{
                 MaxConcurrency = 8
-                Features       = @('*')
+            }
+            CI = @{
+                MaxConcurrency = 4
+                Parallel = $true
+                NonInteractive = $true
             }
         }
 
@@ -1731,7 +1728,7 @@
         RequireAdminForInstall = $false
         EnforceExecutionPolicy = $false
         AllowUnsignedScripts   = $true
-        EnableMFA              = $false
+        # EnableMFA = $false  # Removed - not implemented (Phase 4 tech debt cleanup)
         MaxLoginAttempts       = 3
         SessionTimeout         = 3600
     }
@@ -1753,9 +1750,10 @@
         MetricsRetentionDays = 90
         TemplateEngine       = 'Default'
 
-        # Report distribution
-        EmailReports         = $false
-        UploadToCloud        = $false
+        # Removed unused features (Phase 4 tech debt cleanup):
+        # - EmailReports: Not implemented
+        # - UploadToCloud: Not implemented
+        # Use local report generation and manual distribution instead
 
         # Dashboard
         DashboardEnabled     = $true

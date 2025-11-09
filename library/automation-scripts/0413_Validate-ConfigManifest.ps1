@@ -247,7 +247,152 @@ if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
     Write-ValidationResult "PSScriptAnalyzer not installed, skipping analysis" -Level Warning
 }
 
-# 8. Summary
+# 8. PROFILE COMPLETENESS CHECK
+Write-Host ""
+Write-Host "8. PROFILE COMPLETENESS CHECK" -ForegroundColor Cyan
+if ($config.Manifest.ExecutionProfiles) {
+    $requiredProfiles = @('Minimal', 'Standard', 'Developer', 'Full', 'CI')
+    $actualProfiles = $config.Manifest.ExecutionProfiles.Keys
+    $missingProfiles = $requiredProfiles | Where-Object { $_ -notin $actualProfiles }
+    
+    if ($missingProfiles.Count -gt 0) {
+        Write-ValidationResult "Missing profiles: $($missingProfiles -join ', ')" -Level Error
+        $script:ValidationErrors += "Missing execution profiles: $($missingProfiles -join ', ')"
+    } else {
+        Write-ValidationResult "All required execution profiles present" -Level Success
+    }
+    
+    # Check each profile has required fields
+    foreach ($profileName in $requiredProfiles) {
+        if ($actualProfiles -contains $profileName) {
+            $profile = $config.Manifest.ExecutionProfiles[$profileName]
+            $requiredFields = @('Description', 'Features', 'ScriptRanges', 'EstimatedTime')
+            $missingFields = $requiredFields | Where-Object { -not $profile.ContainsKey($_) }
+            
+            if ($missingFields.Count -gt 0) {
+                Write-ValidationResult "Profile '$profileName' missing fields: $($missingFields -join ', ')" -Level Warning
+                $script:ValidationWarnings += "Profile '$profileName' missing: $($missingFields -join ', ')"
+            }
+        }
+    }
+} else {
+    Write-ValidationResult "ExecutionProfiles section missing" -Level Error
+    $script:ValidationErrors += "ExecutionProfiles section not found in Manifest"
+}
+
+# 9. PATH VALIDATION
+Write-Host ""
+Write-Host "9. PATH VALIDATION" -ForegroundColor Cyan
+$projectRoot = Split-Path $ConfigPath -Parent
+$pathsToValidate = @(
+    @{ Path = 'library/automation-scripts'; Type = 'Scripts' }
+    @{ Path = 'tests/unit'; Type = 'Unit Tests' }
+    @{ Path = 'tests/integration'; Type = 'Integration Tests' }
+    @{ Path = 'library/playbooks'; Type = 'Playbooks' }
+    @{ Path = '.github/workflows'; Type = 'Workflows' }
+    @{ Path = 'aithercore'; Type = 'Domains' }
+)
+
+$pathErrors = 0
+foreach ($pathCheck in $pathsToValidate) {
+    $fullPath = Join-Path $projectRoot $pathCheck.Path
+    if (Test-Path $fullPath) {
+        Write-ValidationResult "$($pathCheck.Type) path exists: $($pathCheck.Path)" -Level Success
+    } else {
+        Write-ValidationResult "$($pathCheck.Type) path missing: $($pathCheck.Path)" -Level Error
+        $script:ValidationErrors += "Path not found: $($pathCheck.Path)"
+        $pathErrors++
+    }
+}
+
+if ($pathErrors -eq 0) {
+    Write-ValidationResult "All critical paths validated" -Level Success
+}
+
+# 10. INVENTORY COMPLETENESS CHECK
+Write-Host ""
+Write-Host "10. INVENTORY COMPLETENESS CHECK" -ForegroundColor Cyan
+$requiredInventory = @('ScriptInventory', 'TestInventory', 'PlaybookInventory', 'WorkflowInventory')
+$missingInventory = @()
+
+foreach ($inventory in $requiredInventory) {
+    if (-not $config.Manifest.ContainsKey($inventory)) {
+        $missingInventory += $inventory
+        Write-ValidationResult "$inventory section missing" -Level Error
+        $script:ValidationErrors += "Missing inventory section: $inventory"
+    } else {
+        Write-ValidationResult "$inventory section present" -Level Success
+    }
+}
+
+if ($missingInventory.Count -eq 0) {
+    Write-ValidationResult "All required inventory sections present" -Level Success
+}
+
+# 11. FEATURE FLAG VALIDATION
+Write-Host ""
+Write-Host "11. FEATURE FLAG VALIDATION" -ForegroundColor Cyan
+$featureSections = @('Core', 'Development', 'Testing', 'Infrastructure', 'Git', 'IssueManagement', 'Reporting', 'Security')
+$invalidFeatures = @()
+
+foreach ($section in $featureSections) {
+    if ($config.Manifest.FeatureDependencies.ContainsKey($section)) {
+        $features = $config.Manifest.FeatureDependencies[$section]
+        foreach ($featureName in $features.Keys) {
+            $feature = $features[$featureName]
+            if ($feature -is [hashtable]) {
+                # Check required fields
+                if (-not $feature.ContainsKey('Scripts')) {
+                    Write-ValidationResult "Feature $section.$featureName missing 'Scripts' field" -Level Warning
+                    $script:ValidationWarnings += "$section.$featureName has no Scripts defined"
+                }
+                if (-not $feature.ContainsKey('Description')) {
+                    Write-ValidationResult "Feature $section.$featureName missing 'Description' field" -Level Warning
+                    $script:ValidationWarnings += "$section.$featureName has no Description"
+                }
+            }
+        }
+    }
+}
+Write-ValidationResult "Feature flag validation complete" -Level Success
+
+# 12. DEPENDENCY VALIDATION
+Write-Host ""
+Write-Host "12. DEPENDENCY VALIDATION" -ForegroundColor Cyan
+$dependencyErrors = 0
+foreach ($section in $featureSections) {
+    if ($config.Manifest.FeatureDependencies.ContainsKey($section)) {
+        $features = $config.Manifest.FeatureDependencies[$section]
+        foreach ($featureName in $features.Keys) {
+            $feature = $features[$featureName]
+            if ($feature -is [hashtable] -and $feature.ContainsKey('DependsOn')) {
+                foreach ($dependency in $feature.DependsOn) {
+                    # Check if dependency exists
+                    $depParts = $dependency -split '\.'
+                    if ($depParts.Count -eq 2) {
+                        $depSection = $depParts[0]
+                        $depFeature = $depParts[1]
+                        
+                        if (-not ($config.Manifest.FeatureDependencies.ContainsKey($depSection) -and 
+                                  $config.Manifest.FeatureDependencies[$depSection].ContainsKey($depFeature))) {
+                            Write-ValidationResult "Invalid dependency: $section.$featureName depends on non-existent $dependency" -Level Warning
+                            $script:ValidationWarnings += "Dependency not found: $dependency (required by $section.$featureName)"
+                            $dependencyErrors++
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+if ($dependencyErrors -eq 0) {
+    Write-ValidationResult "All dependencies valid" -Level Success
+} else {
+    Write-ValidationResult "Found $dependencyErrors dependency warnings" -Level Warning
+}
+
+# 13. Summary
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "                   VALIDATION SUMMARY" -ForegroundColor Cyan
