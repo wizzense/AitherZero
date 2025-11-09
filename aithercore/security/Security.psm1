@@ -1951,8 +1951,15 @@ function Initialize-AitherEnvironment {
             
             # First check if credential exists when SkipMissing is enabled
             if ($SkipMissing) {
-                $credExists = $null -ne (Get-AitherCredential -Name $credName -ErrorAction SilentlyContinue)
-                if (-not $credExists) {
+                # Check credential file existence directly (avoid throw from Get-AitherCredential)
+                $credentialPath = if ($IsWindows) {
+                    Join-Path $env:USERPROFILE ".aitherzero/credentials"
+                } else {
+                    Join-Path $env:HOME ".aitherzero/credentials"
+                }
+                $credFile = Join-Path $credentialPath "$credName.cred"
+                
+                if (-not (Test-Path $credFile)) {
                     Write-SecurityLog -Level Warning -Message "Skipping missing credential" -Data @{
                         CredentialName = $credName
                         Variable = $envVar
