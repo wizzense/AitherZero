@@ -2,11 +2,18 @@
 
 <#
 .SYNOPSIS
-    Test AitherZero self-deployment capabilities
+    COMPREHENSIVE AitherZero self-deployment validation test
 .DESCRIPTION
     Validates that AitherZero can fully deploy and set up itself using its own
-    automation pipeline. Uses the OrchestrationEngine to execute the self-deployment
-    test playbook.
+    automation pipeline with COMPREHENSIVE testing (no quick modes).
+    
+    This test performs:
+    - Full repository clone
+    - Complete bootstrap with Full profile
+    - Comprehensive validation playbook with all scripts
+    - Full unit test suite with code coverage
+    - Complete static code analysis
+    - Full deployment report generation
 
     Exit Codes:
     0   - Self-deployment test passed
@@ -17,14 +24,12 @@
     Stage: Validation
     Order: 0900
     Dependencies: All
-    Tags: self-deployment, validation, ci-cd, end-to-end
+    Tags: self-deployment, validation, ci-cd, end-to-end, comprehensive
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
-    [switch]$QuickTest,  # Deprecated: Full validation is always performed
-    [switch]$FullTest,   # Deprecated: Full validation is always performed
     [string]$TestPath = (Join-Path ([System.IO.Path]::GetTempPath()) "aitherzero-self-deploy-test"),
     [switch]$CleanupOnSuccess,
     [string]$Branch = ""  # Auto-detect from environment or use current branch
@@ -68,7 +73,7 @@ $scriptMetadata = @{
     Stage = 'Validation'
     Order = 0900
     Dependencies = @('All')
-    Tags = @('self-deployment', 'validation', 'ci-cd', 'end-to-end')
+    Tags = @('self-deployment', 'validation', 'ci-cd', 'end-to-end', 'comprehensive')
     RequiresAdmin = $false
     SupportsWhatIf = $true
 }
@@ -222,17 +227,28 @@ function Test-BootstrapProcess {
                 throw "Bootstrap script not found: $bootstrapScript"
             }
 
-            # Run bootstrap in non-interactive mode
-            Write-ScriptLog -Message "Running bootstrap process..."
+            # Run bootstrap in non-interactive mode with FULL profile for comprehensive testing
+            Write-ScriptLog -Message "Running FULL bootstrap process (comprehensive mode, may take 5-10 minutes)..."
             $startTime = Get-Date
 
-            & pwsh -c "$bootstrapScript -Mode New -InstallProfile Minimal -NonInteractive" | Out-Null
-
-            if ($LASTEXITCODE -ne 0) {
-                throw "Bootstrap process failed with exit code: $LASTEXITCODE"
-            }
+            # Run bootstrap and capture output for better error reporting
+            # Don't use Out-Null to avoid blocking - capture to variable instead
+            # Use Full profile for comprehensive testing
+            $bootstrapOutput = & pwsh -c "$bootstrapScript -Mode New -InstallProfile Full -NonInteractive" 2>&1
+            $bootstrapExitCode = $LASTEXITCODE
 
             $duration = (Get-Date) - $startTime
+            
+            if ($bootstrapExitCode -ne 0) {
+                Write-ScriptLog -Level Error -Message "Bootstrap process failed after $($duration.TotalSeconds.ToString('F1'))s with exit code: $bootstrapExitCode"
+                # Log last few lines of output for debugging
+                if ($bootstrapOutput) {
+                    $lastLines = ($bootstrapOutput | Select-Object -Last 10) -join "`n"
+                    Write-ScriptLog -Level Error -Message "Bootstrap output (last 10 lines):`n$lastLines"
+                }
+                throw "Bootstrap process failed with exit code: $bootstrapExitCode"
+            }
+
             Write-ScriptLog -Level Information -Message "Bootstrap completed successfully in $($duration.TotalSeconds.ToString('F1')) seconds"
 
             return $true
@@ -253,11 +269,13 @@ function Invoke-SelfDeploymentPlaybook {
     #>
     param([string]$ClonePath)
 
-    Write-ScriptLog -Message "Executing self-deployment test playbook"
+    Write-ScriptLog -Message "Executing self-deployment test playbook (COMPREHENSIVE - may take 10-20 minutes)"
 
     if ($PSCmdlet.ShouldProcess($ClonePath, "Run self-deployment playbook")) {
         try {
             Push-Location $ClonePath
+            
+            $playbookStartTime = Get-Date
 
             # Import AitherZero module
             Write-ScriptLog -Message "Importing AitherZero module..."
@@ -319,11 +337,17 @@ function Invoke-SelfDeploymentPlaybook {
             }
 
             # Execute the self-deployment test playbook
-            Write-ScriptLog -Message "Running self-deployment-test playbook via OrchestrationEngine..."
+            Write-ScriptLog -Message "Running COMPREHENSIVE self-deployment-test playbook via OrchestrationEngine..."
+            Write-ScriptLog -Message "  Scripts: 0407 (full syntax), 0413 (config), 0402 (tests+coverage), 0404 (full analyzer), 0512 (report)"
+            Write-ScriptLog -Message "  Mode: COMPREHENSIVE - Full bootstrap, all tests with coverage, complete analysis"
+            Write-ScriptLog -Message "  Estimated time: 10-20 minutes depending on system performance"
             
             # Run playbook - capture output to validate success
             # Don't use Out-Null - we need the return value to check success
             $result = Invoke-OrchestrationSequence -LoadPlaybook "self-deployment-test" 2>&1
+            
+            $playbookDuration = New-TimeSpan -Start $playbookStartTime -End (Get-Date)
+            Write-ScriptLog -Message "Playbook execution completed in $($playbookDuration.TotalSeconds.ToString('F1')) seconds"
             
             $exitCode = $LASTEXITCODE
             if ($null -eq $exitCode) { $exitCode = 0 }
@@ -469,12 +493,7 @@ function Show-TestSummary {
 try {
     $script:TestStartTime = Get-Date
     
-    # Display deprecation warnings
-    if ($QuickTest -or $FullTest) {
-        Write-ScriptLog -Level Warning -Message "QuickTest and FullTest parameters are deprecated. Full validation is always performed."
-    }
-    
-    Write-ScriptLog -Message "Starting AitherZero self-deployment test" -Data @{
+    Write-ScriptLog -Message "Starting AitherZero COMPREHENSIVE self-deployment test (no quick modes)" -Data @{
         TestPath = $TestPath
         Branch = $Branch
     }
@@ -503,12 +522,16 @@ try {
     Write-Host "`n📊 Generating test summary..." -ForegroundColor Cyan
     $overallSuccess = Show-TestSummary -BootstrapSuccess $bootstrapSuccess -PlaybookSuccess $playbookSuccess -ClonePath $clonePath
 
+    # Show total duration
+    $totalDuration = New-TimeSpan -Start $script:TestStartTime -End (Get-Date)
+    Write-Host "`n⏱️  Total test duration: $($totalDuration.TotalSeconds.ToString('F1')) seconds ($($totalDuration.TotalMinutes.ToString('F1')) minutes)" -ForegroundColor Cyan
+
     # Exit with appropriate code
     if ($overallSuccess) {
-        Write-ScriptLog -Level Information -Message "Self-deployment test PASSED! AitherZero can successfully deploy itself."
+        Write-ScriptLog -Level Information -Message "Self-deployment test PASSED! AitherZero can successfully deploy itself. (Total time: $($totalDuration.TotalSeconds.ToString('F1'))s)"
         exit 0
     } else {
-        Write-ScriptLog -Level Error -Message "Self-deployment test FAILED. Critical issues found."
+        Write-ScriptLog -Level Error -Message "Self-deployment test FAILED. Critical issues found. (Total time: $($totalDuration.TotalSeconds.ToString('F1'))s)"
         exit 1
     }
 
