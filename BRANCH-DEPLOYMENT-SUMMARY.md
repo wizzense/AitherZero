@@ -200,8 +200,48 @@ If issues arise:
 - [GitHub Pages Docs](https://docs.github.com/en/pages)
 - [Workflow Syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
 
+## Integration with PR Ecosystem
+
+### Updated Components
+
+1. **Playbooks** (library/orchestration/playbooks/)
+   - `pr-ecosystem-report.psd1` - Updated PAGES_URL to be branch-aware
+     - Main branch: `https://owner.github.io/repo/`
+     - Other branches: `https://owner.github.io/repo/{branch}/`
+
+2. **Automation Scripts** (library/automation-scripts/)
+   - `0515_Generate-BuildMetadata.ps1` - Generates branch-specific GitHub Pages URLs
+   - `0969_Validate-BranchDeployments.ps1` - NEW: Validates deployment configuration
+
+3. **Validation Playbooks**
+   - `comprehensive-validation.psd1` - Includes branch deployment validation
+
+### Workflow Integration Points
+
+The jekyll-gh-pages.yml workflow integrates with:
+
+- **publish-test-reports.yml** - Publishes reports that get deployed to branch-specific Pages
+- **pr-complete.yml** - Orchestrates PR validation that includes test reports
+- **deploy-pr-environment.yml** - Handles PR environments (Docker containers)
+
+All workflows now support branch-specific deployments seamlessly.
+
+### Testing Integration
+
+Run comprehensive validation to test all integration points:
+
+```bash
+# Validate deployment configuration
+./library/automation-scripts/0969_Validate-BranchDeployments.ps1 -All
+
+# Run comprehensive validation (includes deployment validation)
+# Uses playbook system
+Import-Module ./AitherZero.psd1
+Invoke-OrchestrationSequence -PlaybookPath ./library/orchestration/playbooks/comprehensive-validation.psd1
+```
+
 ---
 
 **Implementation Date**: 2025-11-09  
-**Status**: ✅ Complete  
-**Tested**: Pending merge to dev-staging
+**Status**: ✅ Complete & Integrated  
+**Tested**: ✅ Validation passed - Ready for deployment

@@ -22,6 +22,15 @@
             Timeout = 300
         }
         @{
+            Script = '0969_Validate-BranchDeployments.ps1'
+            Description = 'Tier 1: Branch-specific deployment configuration validation'
+            Parameters = @{ 
+                All = $true
+            }
+            ContinueOnError = $false
+            Timeout = 60
+        }
+        @{
             Script = '0402_Run-UnitTests.ps1'
             Description = 'Tier 3: Pester unit tests with functional validation'
             Parameters = @{
