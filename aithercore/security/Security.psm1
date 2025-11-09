@@ -2001,7 +2001,8 @@ function Initialize-AitherEnvironment {
             }
             
             # First check if credential exists when SkipMissing is enabled
-            if ($SkipMissing) {
+            # Only check local credentials - skip check for GitHub credentials since they require API call
+            if ($SkipMissing -and -not $FromGitHub) {
                 # Check credential file existence directly (avoid throw from Get-AitherCredential)
                 $credentialPath = if ($IsWindows) {
                     Join-Path $env:USERPROFILE ".aitherzero/credentials"
