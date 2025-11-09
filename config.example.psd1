@@ -163,7 +163,7 @@
         # PSScriptAnalyzer settings
         PSScriptAnalyzer = @{
             Enable = $true            # Run static code analysis
-            OutputPath = './tests/analysis'  # Analysis results output
+            OutputPath = './library/tests/analysis'  # Analysis results output
 
             # Select which rules to run ('*' for all)
             IncludeRules = @('*')

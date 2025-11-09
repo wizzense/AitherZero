@@ -1,1030 +1,533 @@
 # AitherZero Style Guide
 
-## Purpose
-
-This guide ensures consistency across all AitherZero components: CLI, UI, extensions, and configurations. Following these standards guarantees proper integration, rendering, and functionality.
+This guide defines coding standards, naming conventions, and best practices for the AitherZero project.
 
 ## Table of Contents
 
-1. [PowerShell Code Style](#powershell-code-style)
-2. [Extension Development](#extension-development)
-3. [Configuration Manifests](#configuration-manifests)
-4. [CLI Command Structure](#cli-command-structure)
-5. [UI Rendering](#ui-rendering)
-6. [Testing Requirements](#testing-requirements)
-7. [Documentation Standards](#documentation-standards)
+- [PowerShell Cmdlet Naming](#powershell-cmdlet-naming)
+- [Code Organization](#code-organization)
+- [Error Handling](#error-handling)
+- [Documentation](#documentation)
+- [Testing](#testing)
 
----
+## PowerShell Cmdlet Naming
 
-## PowerShell Code Style
+### Singular Noun Principle
 
-### Naming Conventions
+**ALWAYS use singular nouns for PowerShell cmdlets:**
 
-**Functions:**
+All AitherZero cmdlets follow the singular noun design pattern to enable pipeline processing, parallel execution, and composability.
+
+#### ❌ Wrong - Plural Nouns
+
 ```powershell
-# ✅ CORRECT - Approved verb, PascalCase noun
-Get-ConfigurationData
-Set-ExtensionMode
-Invoke-CommandParser
-
-# ❌ WRONG - Unapproved verb, wrong case
-Fetch-ConfigurationData  # Use Get-
-set-extensionMode        # Use Set- and PascalCase
-Run-CommandParser        # Use Invoke-
+Get-Items
+Update-Files
+Remove-Logs
+Get-Submodules
+Export-Results
 ```
 
-**Approved Verbs:** Use `Get-Verb` to check. Common: `Get`, `Set`, `New`, `Remove`, `Invoke`, `Test`, `Show`
+#### ✅ Correct - Singular Nouns
 
-**Variables:**
 ```powershell
-# ✅ CORRECT - PascalCase for important variables
-$ConfigPath = "./config.psd1"
-$ExtensionName = "MyExtension"
-
-# ✅ CORRECT - camelCase for local/temporary variables
-$configData = Get-Content $ConfigPath
-$tempFile = Join-Path $env:TEMP "output.txt"
+Get-Item        # Processes one, supports pipeline
+Update-File     # Updates one, supports pipeline
+Remove-Log      # Removes one, supports pipeline
+Get-Submodule   # Returns submodules one at a time
+Export-Result   # Exports one result
 ```
 
-**Parameters:**
-```powershell
-# ✅ CORRECT - PascalCase with full names
-param(
-    [Parameter(Mandatory)]
-    [string]$ConfigurationName,
-    
-    [Parameter()]
-    [string]$OutputPath = "./output",
-    
-    [switch]$Force
-)
-```
+### Key Principles
 
-### Function Structure
+1. **Cmdlets process ONE object at a time**
+   - Use `Begin/Process/End` blocks
+   - Process objects in the `process` block
 
-**Standard Template:**
+2. **Support pipeline input**
+   - Add `ValueFromPipeline` parameter attribute
+   - Accept `InputObject` parameter
+
+3. **Enable parallel processing**
+   - Works with `ForEach-Object -Parallel`
+   - Stream objects for efficiency
+
+4. **Return processed objects**
+   - Use `Write-Output` to return objects
+   - Enable pipeline chaining
+
+5. **Use parameter sets**
+   - Support multiple ways to target objects (ByName, ByPath, ByObject)
+   - Use `DefaultParameterSetName` attribute
+
+### Implementation Template
+
 ```powershell
-function Get-ExampleData {
-    <#
-    .SYNOPSIS
-        Brief one-line description
-    
-    .DESCRIPTION
-        Detailed multi-line description of what the function does
-    
-    .PARAMETER Source
-        Description of the Source parameter
-    
-    .PARAMETER Force
-        Description of the Force switch
-    
-    .EXAMPLE
-        Get-ExampleData -Source "test"
-        
-        Gets example data from the test source
-    
-    .EXAMPLE
-        Get-ExampleData -Source "prod" -Force
-        
-        Forces retrieval from production source
-    
-    .OUTPUTS
-        PSCustomObject with example data
-    
-    .NOTES
-        Author: Team Name
-        Version: 1.0.0
-        Requires: PowerShell 7.0+
-    #>
-    [CmdletBinding()]
+function Verb-SingularNoun {
+    [CmdletBinding(
+        SupportsShouldProcess,
+        DefaultParameterSetName = 'ByName'
+    )]
+    [OutputType('AitherZero.TypeName')]
     param(
-        [Parameter(Mandatory)]
-        [ValidateSet('test', 'dev', 'prod')]
-        [string]$Source,
-        
+        # Pipeline input - accepts single object
+        [Parameter(
+            Mandatory,
+            ValueFromPipeline,
+            ParameterSetName = 'ByObject'
+        )]
+        [PSCustomObject]$InputObject,
+
+        # Alternative: By name
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'ByName',
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Name,
+
+        # Alternative: By path
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'ByPath',
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Path,
+
+        # Optional parameters
+        [Parameter()]
         [switch]$Force
     )
-    
+
     begin {
-        # Initialization - runs once
-        Write-Verbose "Starting $($MyInvocation.MyCommand)"
-        $results = @()
+        # One-time initialization
+        Write-Verbose "Starting $($MyInvocation.MyCommand.Name)"
+        $config = Get-Configuration -ErrorAction SilentlyContinue
     }
-    
+
     process {
-        # Main logic - runs per pipeline input
+        # Process ONE object at a time
         try {
-            # Your logic here
-            $data = Get-DataFromSource -Source $Source -Force:$Force
-            $results += $data
+            # Determine target based on parameter set
+            $target = switch ($PSCmdlet.ParameterSetName) {
+                'ByObject' { $InputObject }
+                'ByName'   { Get-TargetByName -Name $Name }
+                'ByPath'   { Get-TargetByPath -Path $Path }
+            }
+
+            if ($PSCmdlet.ShouldProcess($target.Name, "Perform operation")) {
+                # Process single object
+                # ... operation logic ...
+                
+                # Return object for pipeline chaining
+                Write-Output $target
+            }
         }
         catch {
-            Write-Error "Failed to get data: $_"
-            throw
+            Write-Error "Failed to process $($target.Name): $_"
+            if (-not $Force) {
+                throw
+            }
         }
     }
-    
+
     end {
-        # Cleanup - runs once
-        Write-Verbose "Completed with $($results.Count) items"
-        return $results
+        Write-Verbose "Completed $($MyInvocation.MyCommand.Name)"
     }
 }
 ```
 
-### Error Handling
+### Usage Examples
 
 ```powershell
-# ✅ CORRECT - Proper try/catch with meaningful errors
-try {
-    $config = Get-Content $ConfigPath -ErrorAction Stop | ConvertFrom-Json
-}
-catch [System.IO.FileNotFoundException] {
-    Write-Error "Config file not found: $ConfigPath"
-    throw
-}
-catch {
-    Write-Error "Failed to parse config: $_"
-    throw
-}
+# Single object
+Update-InfrastructureSubmodule -Name 'myapp'
 
-# ❌ WRONG - Empty catch or swallowing errors
-try {
-    $config = Get-Content $ConfigPath | ConvertFrom-Json
-}
-catch {
-    # Silent failure - BAD!
-}
+# Pipeline - process multiple objects one at a time
+Get-InfrastructureSubmodule | Update-InfrastructureSubmodule
+
+# Pipeline with filtering
+Get-InfrastructureSubmodule | 
+    Where-Object { $_.Enabled } | 
+    Update-InfrastructureSubmodule -Remote
+
+# Parallel processing
+Get-InfrastructureSubmodule -Initialized | 
+    ForEach-Object -Parallel {
+        Update-InfrastructureSubmodule -InputObject $_
+    } -ThrottleLimit 4
+
+# Chain operations
+Get-InfrastructureSubmodule |
+    Update-InfrastructureSubmodule -Remote |
+    Where-Object { $_.Status -eq 'Updated' } |
+    Export-Result
 ```
 
-### Logging
+### When to Keep Plural Nouns
 
+Some operations are inherently batch-oriented and should remain plural:
+
+#### Coordination/Sync Operations
 ```powershell
-# ✅ CORRECT - Use Write-CustomLog if available
-if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-    Write-CustomLog -Message "Processing config" -Level 'Information'
-    Write-CustomLog -Message "Warning detected" -Level 'Warning'
-    Write-CustomLog -Message "Error occurred" -Level 'Error'
-}
-else {
-    # Fallback to standard cmdlets
-    Write-Verbose "Processing config"
-    Write-Warning "Warning detected"
-    Write-Error "Error occurred"
-}
+Sync-InfrastructureSubmodule  # Compares config with reality
+Initialize-Environment         # Sets up multiple components
+Test-Configuration            # Validates entire config
 ```
 
-### Cross-Platform Code
-
+#### Explicit Collection Returns
 ```powershell
-# ✅ CORRECT - Check platform variables
-$configDir = if ($IsWindows) {
-    "$env:USERPROFILE\.aitherzero"
-}
-elseif ($IsLinux -or $IsMacOS) {
-    "$HOME/.aitherzero"
-}
-else {
-    throw "Unsupported platform"
-}
-
-# Use forward slashes (works on all platforms)
-$scriptPath = Join-Path $PSScriptRoot "scripts/example.ps1"
-
-# ❌ WRONG - Windows-only paths
-$configDir = "C:\Users\$env:USERNAME\.aitherzero"
-$scriptPath = "$PSScriptRoot\scripts\example.ps1"
+Get-AllLogFiles              # Explicit "all" operation
+Get-AuditLogs                # Audit log is a collection
+Get-HistoricalMetrics        # Time-series data
 ```
 
-### Configuration File Loading
+#### Batch Operations
+```powershell
+Analyze-Changes              # Analyzes git changeset as whole
+Copy-ExistingReports         # Batch copy operation
+Fix-UnicodeIssues            # Batch fix operation
+```
 
-**CRITICAL:** The `config.psd1` file contains PowerShell expressions (`$true`, `$false`) that `Import-PowerShellDataFile` treats as "dynamic expressions" and cannot load.
+### Approved Verbs
+
+Use PowerShell approved verbs only. Check with:
 
 ```powershell
-# ✅ CORRECT - Use scriptblock evaluation for config.psd1
-$configPath = "./config.psd1"
-if (Test-Path $configPath) {
+Get-Verb
+```
+
+Common approved verbs:
+- **Get**: Retrieve data
+- **Set**: Assign or replace data
+- **New**: Create new resource
+- **Remove**: Delete resource
+- **Update**: Modify existing data
+- **Test**: Verify or validate
+- **Invoke**: Execute or run
+- **Export**: Output to external format
+- **Import**: Load from external format
+
+## Code Organization
+
+### Module Structure
+
+```
+aithercore/
+├── domain-name/
+│   ├── DomainName.psm1          # Module file
+│   ├── Public/                  # Public functions
+│   │   ├── Get-Item.ps1
+│   │   └── Update-Item.ps1
+│   └── Private/                 # Private functions
+│       └── Get-ItemInternal.ps1
+```
+
+### Function File Organization
+
+- One function per file in Public/Private directories
+- File name matches function name: `Get-Item.ps1`
+- Use dot-sourcing to load functions in `.psm1`
+
+### Export Functions
+
+Always explicitly export public functions:
+
+```powershell
+# At end of module file
+Export-ModuleMember -Function @(
+    'Get-Item'
+    'Update-Item'
+    'Remove-Item'
+)
+```
+
+## Error Handling
+
+### Use Try-Catch-Finally
+
+```powershell
+function Do-Something {
+    param($Path)
+    
     try {
-        # Use scriptblock evaluation instead of Import-PowerShellDataFile
-        # because config.psd1 contains PowerShell expressions ($true/$false) that
-        # Import-PowerShellDataFile treats as "dynamic expressions"
-        $configContent = Get-Content -Path $configPath -Raw
-        $scriptBlock = [scriptblock]::Create($configContent)
-        $config = & $scriptBlock
-        
-        if (-not $config -or $config -isnot [hashtable]) {
-            throw "Config file did not return a valid hashtable"
-        }
-        
-        # Now use $config safely
-        $version = $config.Manifest.Version
+        # Main logic
+        $item = Get-Item -Path $Path
+        Process-Item -Item $item
     }
     catch {
-        Write-Error "Failed to load config: $($_.Exception.Message)"
+        # Log error
+        Write-CustomLog -Message "Failed to process: $_" -Level 'Error'
+        
+        # Re-throw or handle
         throw
     }
+    finally {
+        # Cleanup
+        if ($tempFile) {
+            Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
-
-# ❌ WRONG - Import-PowerShellDataFile fails with config.psd1
-$config = Import-PowerShellDataFile "./config.psd1"
-# Error: "Cannot generate a PowerShell object for a ScriptBlock evaluating dynamic expressions"
 ```
 
-**Why This Matters:**
-- `Import-PowerShellDataFile` is designed for **pure data files** (like module manifests)
-- It does NOT evaluate PowerShell expressions for security reasons
-- `config.psd1` uses `$true`/`$false` boolean values, which are expressions
-- Using scriptblock evaluation is the correct approach for configuration files with expressions
+### Logging Pattern
 
-**When to Use Each:**
-- **Import-PowerShellDataFile**: Module manifests (`.psd1`), pure data files
-- **Scriptblock Evaluation**: `config.psd1`, configuration files with expressions
-- **ConvertFrom-Json**: JSON configuration files (`.json`)
-
----
-
-## Extension Development
-
-### Extension Manifest Structure
-
-**File:** `MyExtension.extension.psd1`
+Always check for logging availability:
 
 ```powershell
-@{
-    # Required fields
-    Name = 'MyExtension'
-    Version = '1.0.0'
-    Description = 'Brief description of extension'
-    Author = 'Your Name'
-    
-    # Extension metadata
-    Manifest = @{
-        # Minimum AitherZero version required
-        RequiredVersion = '2.0.0'
-        
-        # Extension type (values: 'Feature', 'Integration', 'Tool', 'Domain')
-        Type = 'Feature'
-        
-        # Extension category for organization
-        Category = 'Development'
-    }
-    
-    # CLI modes this extension provides
-    CLIModes = @(
-        @{
-            Name = 'MyMode'
-            Handler = 'Invoke-MyModeHandler'
-            Description = 'Description of mode'
-            Parameters = @('Target', 'Action', 'Options')
-        }
-    )
-    
-    # PowerShell modules to load
-    Modules = @(
-        @{
-            Path = './modules/MyExtension.psm1'
-            Functions = @('Get-MyData', 'Set-MyConfig')
-        }
-    )
-    
-    # Automation scripts (8000-8999 range)
-    Scripts = @(
-        @{
-            Number = 8000
-            Name = 'MyExtension-Setup'
-            Path = './scripts/8000_MyExtension-Setup.ps1'
-            Description = 'Setup script'
-            Stage = 'Setup'
-        },
-        @{
-            Number = 8001
-            Name = 'MyExtension-Status'
-            Path = './scripts/8001_MyExtension-Status.ps1'
-            Description = 'Status check'
-            Stage = 'Validation'
-        }
-    )
-    
-    # Dependencies on other extensions
-    Dependencies = @(
-        @{
-            Name = 'CoreExtension'
-            MinVersion = '1.0.0'
-        }
-    )
-    
-    # Initialization hook (optional)
-    Initialize = './Initialize.ps1'
-    
-    # Cleanup hook (optional)
-    Cleanup = './Cleanup.ps1'
-    
-    # Configuration schema (optional)
-    ConfigSchema = @{
-        ApiEndpoint = @{
-            Type = 'String'
-            Required = $true
-            Default = 'https://api.example.com'
-        }
-        EnableFeature = @{
-            Type = 'Boolean'
-            Required = $false
-            Default = $true
-        }
-    }
+if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+    Write-CustomLog -Message "Processing item" -Level 'Information'
+} else {
+    Write-Verbose "Processing item"
 }
 ```
 
-### Extension Directory Structure
+### Error Messages
 
-```
-extensions/MyExtension/
-├── MyExtension.extension.psd1  # Manifest (required)
-├── README.md                    # Documentation (required)
-├── Initialize.ps1               # Init hook (optional)
-├── Cleanup.ps1                  # Cleanup hook (optional)
-├── modules/
-│   └── MyExtension.psm1        # PowerShell module
-├── scripts/
-│   ├── 8000_MyExtension-Setup.ps1
-│   └── 8001_MyExtension-Status.ps1
-└── tests/
-    └── MyExtension.Tests.ps1    # Pester tests (required)
-```
-
-### Extension Module Template
-
-**File:** `modules/MyExtension.psm1`
+- Be specific about what failed
+- Include context (file path, item name, etc.)
+- Suggest remediation when possible
 
 ```powershell
-#Requires -Version 7.0
+# Good
+Write-Error "Failed to update submodule 'myapp': Repository not found at 'C:\repos\myapp'"
 
-<#
-.SYNOPSIS
-    MyExtension PowerShell module
-
-.DESCRIPTION
-    Provides functionality for MyExtension integration
-#>
-
-# Get extension root
-$ExtensionRoot = Split-Path $PSScriptRoot -Parent
-
-# Import dependencies if needed
-# Import-Module SomeDependency -ErrorAction Stop
-
-function Get-MyData {
-    <#
-    .SYNOPSIS
-        Get data from MyExtension
-    
-    .PARAMETER Source
-        Data source to query
-    
-    .EXAMPLE
-        Get-MyData -Source "api"
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [ValidateSet('api', 'local', 'cache')]
-        [string]$Source
-    )
-    
-    # Implementation
-    Write-Verbose "Getting data from $Source"
-    
-    # Return data
-    return @{
-        Source = $Source
-        Data = "Sample data"
-    }
-}
-
-function Set-MyConfig {
-    <#
-    .SYNOPSIS
-        Configure MyExtension settings
-    
-    .PARAMETER Setting
-        Setting name
-    
-    .PARAMETER Value
-        Setting value
-    
-    .EXAMPLE
-        Set-MyConfig -Setting "ApiKey" -Value "abc123"
-    #>
-    [CmdletBinding(SupportsShouldProcess)]
-    param(
-        [Parameter(Mandatory)]
-        [string]$Setting,
-        
-        [Parameter(Mandatory)]
-        [string]$Value
-    )
-    
-    if ($PSCmdlet.ShouldProcess($Setting, "Set configuration")) {
-        # Implementation
-        Write-Verbose "Setting $Setting = $Value"
-    }
-}
-
-# Export functions
-Export-ModuleMember -Function @(
-    'Get-MyData',
-    'Set-MyConfig'
-)
+# Bad
+Write-Error "Update failed"
 ```
 
-### Extension Script Template
-
-**File:** `scripts/8000_MyExtension-Setup.ps1`
-
-```powershell
-#Requires -Version 7.0
-
-<#
-.SYNOPSIS
-    Setup script for MyExtension
-
-.DESCRIPTION
-    Performs initial setup and configuration for MyExtension
-
-.PARAMETER Force
-    Force setup even if already configured
-
-.EXAMPLE
-    ./8000_MyExtension-Setup.ps1
-    
-.EXAMPLE
-    ./8000_MyExtension-Setup.ps1 -Force
-
-.NOTES
-    Stage: Setup
-    Dependencies: None
-    Tags: setup, initialization
-#>
-
-[CmdletBinding(SupportsShouldProcess)]
-param(
-    [switch]$Force
-)
-
-# Import extension module
-$ExtensionRoot = Split-Path $PSScriptRoot -Parent
-Import-Module (Join-Path $ExtensionRoot "modules/MyExtension.psm1") -Force
-
-# Script logic
-try {
-    Write-Host "Setting up MyExtension..." -ForegroundColor Cyan
-    
-    if ($PSCmdlet.ShouldProcess("MyExtension", "Setup")) {
-        # Setup logic here
-        Set-MyConfig -Setting "Initialized" -Value $true
-        
-        Write-Host "✅ Setup completed successfully" -ForegroundColor Green
-    }
-}
-catch {
-    Write-Error "Setup failed: $_"
-    exit 1
-}
-```
-
-### Extension Testing
-
-**File:** `tests/MyExtension.Tests.ps1`
-
-```powershell
-#Requires -Module Pester
-
-BeforeAll {
-    $ExtensionRoot = Split-Path $PSScriptRoot -Parent
-    $ModulePath = Join-Path $ExtensionRoot "modules/MyExtension.psm1"
-    Import-Module $ModulePath -Force
-}
-
-Describe "MyExtension Module" {
-    Context "Get-MyData" {
-        It "Should return data from specified source" {
-            $result = Get-MyData -Source "api"
-            $result | Should -Not -BeNullOrEmpty
-            $result.Source | Should -Be "api"
-        }
-        
-        It "Should validate source parameter" {
-            { Get-MyData -Source "invalid" } | Should -Throw
-        }
-    }
-    
-    Context "Set-MyConfig" {
-        It "Should set configuration value" {
-            { Set-MyConfig -Setting "test" -Value "value" } | Should -Not -Throw
-        }
-        
-        It "Should support -WhatIf" {
-            { Set-MyConfig -Setting "test" -Value "value" -WhatIf } | Should -Not -Throw
-        }
-    }
-}
-
-Describe "Extension Integration" {
-    It "Extension manifest should exist" {
-        $manifestPath = Join-Path $ExtensionRoot "MyExtension.extension.psd1"
-        $manifestPath | Should -Exist
-    }
-    
-    It "Extension manifest should be valid" {
-        $manifestPath = Join-Path $ExtensionRoot "MyExtension.extension.psd1"
-        $manifest = Import-PowerShellDataFile $manifestPath
-        $manifest.Name | Should -Be "MyExtension"
-        $manifest.Version | Should -Match '^\d+\.\d+\.\d+$'
-    }
-}
-```
-
----
-
-## Configuration Manifests
-
-### Config.psd1 Structure
-
-```powershell
-@{
-    # Core settings
-    Core = @{
-        Version = '2.0.0'
-        Profile = 'Standard'  # Minimal, Standard, Developer, Full
-        Environment = 'Development'  # Development, Staging, Production
-    }
-    
-    # Manifest section - drives UI/CLI capabilities
-    Manifest = @{
-        # CLI modes available
-        SupportedModes = @(
-            'Interactive',
-            'Run',
-            'Orchestrate',
-            'List',
-            'Search',
-            'Test',
-            'Validate'
-        )
-        
-        # Script inventory (must be accurate!)
-        ScriptInventory = @{
-            Total = 130
-            ByRange = @{
-                '0000-0099' = 8   # Environment
-                '0100-0199' = 12  # Infrastructure
-                '0200-0299' = 15  # Development
-                '0400-0499' = 20  # Testing
-                '0500-0599' = 10  # Reports
-                '0700-0799' = 15  # Git/AI
-                '0800-0899' = 5   # Issues
-                '0900-0999' = 10  # Validation
-                '9000-9999' = 35  # Maintenance
-            }
-        }
-    }
-    
-    # Features section - controls visibility
-    Features = @{
-        Git = @{
-            Enabled = $true
-            Config = @{
-                DefaultBranch = 'main'
-                AutoCommit = $false
-            }
-        }
-        Docker = @{
-            Enabled = $true
-            Config = @{
-                Registry = 'local'
-            }
-        }
-    }
-    
-    # Extensions section
-    Extensions = @{
-        Enabled = $true
-        SearchPaths = @(
-            './extensions',
-            "$HOME/.aitherzero/extensions"
-        )
-        EnabledExtensions = @(
-            'ExampleExtension'
-        )
-    }
-    
-    # Automation settings
-    Automation = @{
-        MaxConcurrency = 4
-        TimeoutSeconds = 600
-        RetryCount = 3
-    }
-    
-    # Testing configuration
-    Testing = @{
-        Profile = 'Standard'  # Quick, Standard, Full, CI
-        Coverage = @{
-            Enabled = $true
-            Threshold = 80
-        }
-    }
-}
-```
-
-### Config Validation Rules
-
-1. **Version must be semantic:** `X.Y.Z`
-2. **Profile must be valid:** `Minimal`, `Standard`, `Developer`, `Full`
-3. **ScriptInventory must match actual scripts** (validate with `0413_Validate-ConfigManifest.ps1`)
-4. **SupportedModes must be consistent** with Start-AitherZero.ps1
-5. **Extensions must exist** if listed in EnabledExtensions
-
----
-
-## CLI Command Structure
-
-### Command Pattern
-
-All CLI commands follow this structure:
-
-```
-./Start-AitherZero.ps1 -Mode <Mode> -Target <Target> [-Action <Action>] [-Options <Options>]
-```
-
-### Mode Definitions
-
-**Standard Modes:**
-- `Interactive` - Interactive menu
-- `Run` - Execute script(s)
-- `Orchestrate` - Run playbook
-- `List` - List available scripts
-- `Search` - Search scripts
-- `Test` - Run tests
-- `Validate` - Validate configuration
-
-**Extension Modes:**
-Extensions register custom modes via manifest
-
-### Parameter Guidelines
-
-```powershell
-# ✅ CORRECT - Standard parameter names
--Mode Run -Target 0402
--Mode Orchestrate -Target test-quick
--Mode Example -Target demo -Action run
-
-# ❌ WRONG - Non-standard names
--Type Run -Script 0402
--Mode Orchestrate -Playbook test-quick
-```
-
-### Shortcuts
-
-```powershell
-# These shortcuts are parsed by CommandParser
-test        → -Mode Run -Target 0402,0404,0407
-lint        → -Mode Run -Target 0404
-quick-test  → -Mode Orchestrate -Target test-quick
-0402        → -Mode Run -Target 0402
-```
-
----
-
-## UI Rendering
-
-### Menu Hierarchy
-
-```
-Main Menu
-├── Mode Selection (Run, Orchestrate, etc.)
-│   ├── Category Selection (if Mode = Run)
-│   │   ├── Script Selection
-│   │   └── Execution Confirmation
-│   └── Target Selection (if other modes)
-└── Direct Command Input
-```
-
-### Breadcrumb Format
-
-```
-AitherZero > Mode > Category > Target
-```
-
-Examples:
-```
-AitherZero > _
-AitherZero > Run > _
-AitherZero > Run > Testing & Validation > _
-AitherZero > Run > Testing & Validation > [0402] Run Unit Tests
-```
-
-### Command Display
-
-```
-Current Command: -Mode Run -Target 0402
-```
-
-### Menu Item Format
-
-```
-► [1] 🎯 Mode Name - Description
-  [2] 📚 Mode Name - Description
-```
-
-- `►` indicates current selection
-- Emoji provides visual distinction
-- Number in brackets for selection
-- Clear description
-
-### Color Scheme
-
-```powershell
-# Use these colors consistently
-Cyan       # Headers, titles
-Green      # Success, completion
-Yellow     # Warnings, prompts
-Red        # Errors, failures
-White      # Normal text
-Gray       # Secondary text, hints
-```
-
----
-
-## Testing Requirements
-
-### Test File Naming
-
-```
-{ComponentName}.Tests.ps1
-```
-
-Examples:
-- `BreadcrumbNavigation.Tests.ps1`
-- `CommandParser.Tests.ps1`
-- `MyExtension.Tests.ps1`
-
-### Test Structure
-
-```powershell
-#Requires -Module Pester
-
-BeforeAll {
-    # Module imports
-    $ModulePath = Join-Path $PSScriptRoot "../ComponentName.psm1"
-    Import-Module $ModulePath -Force
-}
-
-Describe "Component Name" {
-    Context "Function Name" {
-        It "Should do expected behavior" {
-            $result = Invoke-Function -Parameter "value"
-            $result | Should -Be "expected"
-        }
-        
-        It "Should handle invalid input" {
-            { Invoke-Function -Parameter "" } | Should -Throw
-        }
-    }
-}
-
-Describe "Integration" {
-    It "Should integrate with system" {
-        # Integration test
-    }
-}
-```
-
-### Coverage Requirements
-
-- **Minimum coverage:** 80%
-- **Critical paths:** 100%
-- **Error handling:** Must be tested
-- **Cross-platform:** Test on Windows + Linux
-
-### Test Execution
-
-```powershell
-# Single test file
-Invoke-Pester -Path "./ComponentName.Tests.ps1" -Output Detailed
-
-# With coverage
-Invoke-Pester -Path "./ComponentName.Tests.ps1" -CodeCoverage "./ComponentName.psm1"
-
-# All tests
-Invoke-Pester -Path "./tests"
-```
-
----
-
-## Documentation Standards
-
-### README.md Template
-
-```markdown
-# Component/Extension Name
-
-Brief one-line description
-
-## Overview
-
-Detailed description of what this component does and why it exists.
-
-## Features
-
-- Feature 1
-- Feature 2
-- Feature 3
-
-## Installation
-
-\`\`\`powershell
-# Installation steps
-\`\`\`
-
-## Usage
-
-### Basic Usage
-
-\`\`\`powershell
-# Example 1
-Get-Example -Parameter "value"
-\`\`\`
-
-### Advanced Usage
-
-\`\`\`powershell
-# Example 2 with explanation
-Get-Example -Parameter "value" -Advanced
-\`\`\`
-
-## Configuration
-
-Describe any configuration options
-
-## API Reference
-
-### Function-Name
-
-Description
-
-**Parameters:**
-- `Parameter1` (String, Required) - Description
-- `Parameter2` (Switch, Optional) - Description
-
-**Returns:** Description of return value
-
-**Example:**
-\`\`\`powershell
-Function-Name -Parameter1 "value"
-\`\`\`
-
-## Testing
-
-\`\`\`powershell
-# Run tests
-Invoke-Pester -Path "./tests"
-\`\`\`
-
-## Troubleshooting
-
-Common issues and solutions
-
-## Contributing
-
-How to contribute to this component
-
-## License
-
-License information
-```
+## Documentation
 
 ### Comment-Based Help
 
-Always include for public functions:
+All public functions must have comment-based help:
 
 ```powershell
-<#
-.SYNOPSIS
-    Brief description
+function Get-Item {
+    <#
+    .SYNOPSIS
+        Gets an item from the repository.
 
-.DESCRIPTION
-    Detailed description
+    .DESCRIPTION
+        The Get-Item cmdlet retrieves items from the repository one at a time,
+        supporting pipeline input and parallel processing.
 
-.PARAMETER ParameterName
-    Parameter description
+    .PARAMETER Name
+        Specifies the name of the item to retrieve.
 
-.EXAMPLE
-    Example-Function -Parameter "value"
+    .PARAMETER Path
+        Specifies the path to the item to retrieve.
+
+    .PARAMETER InputObject
+        Accepts an item object from the pipeline.
+
+    .EXAMPLE
+        Get-Item -Name 'myitem'
+        
+        Gets the item named 'myitem'.
+
+    .EXAMPLE
+        Get-Item | Update-Item
+        
+        Gets all items and updates them through the pipeline.
+
+    .EXAMPLE
+        Get-Item | ForEach-Object -Parallel { $_ } -ThrottleLimit 4
+        
+        Gets items and processes them in parallel with 4 concurrent threads.
+
+    .INPUTS
+        PSCustomObject
+        You can pipe item objects to this cmdlet.
+
+    .OUTPUTS
+        AitherZero.Item
+        Returns item objects.
+
+    .NOTES
+        This cmdlet follows the singular noun design pattern.
+    #>
+    [CmdletBinding()]
+    param(...)
     
-    Example description
+    # Function body
+}
+```
 
-.OUTPUTS
-    Output type description
+### Required Help Sections
 
-.NOTES
-    Additional notes
+- `.SYNOPSIS`: One-line description
+- `.DESCRIPTION`: Detailed description
+- `.PARAMETER`: For each parameter
+- `.EXAMPLE`: At least 2 examples showing different usage
+- `.INPUTS`: What can be piped in
+- `.OUTPUTS`: What is returned
+
+### README Files
+
+- Each module/domain should have a README.md
+- Explain purpose, usage, and examples
+- Keep updated with code changes
+
+## Testing
+
+### Test File Naming
+
+- Test files end with `.Tests.ps1`
+- Match the file being tested: `Get-Item.Tests.ps1`
+
+### Pester Test Structure
+
+```powershell
+Describe "Get-Item" {
+    BeforeAll {
+        # Setup
+        Import-Module ./AitherZero.psd1 -Force
+    }
+
+    Context "Pipeline Support" {
+        It "Should accept pipeline input" {
+            $items = @(
+                [PSCustomObject]@{ Name = 'item1' }
+                [PSCustomObject]@{ Name = 'item2' }
+            )
+            
+            { $items | Get-Item } | Should -Not -Throw
+        }
+
+        It "Should process each item individually" {
+            $count = 0
+            Get-Item | ForEach-Object { $count++ }
+            $count | Should -BeGreaterThan 0
+        }
+
+        It "Should work with Where-Object" {
+            $filtered = Get-Item | Where-Object { $_.Name -like '*test*' }
+            $filtered | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context "Parameter Sets" {
+        It "Should work with -Name parameter" {
+            { Get-Item -Name 'test' } | Should -Not -Throw
+        }
+
+        It "Should work with -Path parameter" {
+            { Get-Item -Path '/test/path' } | Should -Not -Throw
+        }
+    }
+
+    AfterAll {
+        # Cleanup
+    }
+}
+```
+
+### Test Coverage
+
+- Test each parameter set
+- Test pipeline scenarios
+- Test error conditions
+- Test edge cases
+
+### Mock External Dependencies
+
+```powershell
+BeforeEach {
+    Mock Get-ExternalData {
+        return [PSCustomObject]@{
+            Name = 'test'
+            Value = 42
+        }
+    }
+}
+```
+
+## Cross-Platform Compatibility
+
+### Check Platform Variables
+
+```powershell
+$path = if ($IsWindows) {
+    'C:\temp\file.txt'
+} elseif ($IsLinux) {
+    '/tmp/file.txt'
+} elseif ($IsMacOS) {
+    '/tmp/file.txt'
+} else {
+    # Fallback
+    Join-Path $env:TEMP 'file.txt'
+}
+```
+
+### Path Handling
+
+Use `Join-Path` for cross-platform compatibility:
+
+```powershell
+# Good
+$configPath = Join-Path $PSScriptRoot 'config.psd1'
+
+# Avoid
+$configPath = "$PSScriptRoot\config.psd1"  # Windows-only
+```
+
+### Line Endings
+
+- Use LF (`\n`) line endings
+- Configure git to normalize: `git config core.autocrlf input`
+- EditorConfig handles this in VS Code
+
+## Formatting
+
+### Indentation
+
+- Use 4 spaces (no tabs)
+- Configured in `.editorconfig`
+
+### Braces
+
+Use K&R style (opening brace on same line):
+
+```powershell
+# Good
+if ($condition) {
+    # code
+}
+
+# Avoid
+if ($condition)
+{
+    # code
+}
+```
+
+### Line Length
+
+- Prefer 100-120 characters
+- Break long lines for readability
+
+### Comments
+
+```powershell
+# Single-line comment for simple explanations
+
+<#
+    Multi-line comment block
+    for complex explanations
 #>
 ```
 
----
+## References
 
-## Validation Checklist
+- [PowerShell Best Practices](https://docs.microsoft.com/powershell/scripting/developer/cmdlet/cmdlet-development-guidelines)
+- [docs/SINGULAR-NOUN-DESIGN.md](./SINGULAR-NOUN-DESIGN.md) - Detailed singular noun design guide
+- [docs/REFACTORING-PLAN-SINGULAR-NOUNS.md](./REFACTORING-PLAN-SINGULAR-NOUNS.md) - Refactoring roadmap
+- [PowerShell Approved Verbs](https://docs.microsoft.com/powershell/scripting/developer/cmdlet/approved-verbs-for-windows-powershell-commands)
 
-Before committing changes, verify:
+## See Also
 
-### Code Quality
-- [ ] PowerShell code follows naming conventions
-- [ ] Functions have comment-based help
-- [ ] Error handling is implemented
-- [ ] Cross-platform compatibility checked
-- [ ] PSScriptAnalyzer passes (`az 0404`)
-- [ ] Syntax validation passes (`az 0407`)
-
-### Extension Integration
-- [ ] Extension manifest is valid
-- [ ] Extension tests pass
-- [ ] CLI modes register correctly
-- [ ] Scripts use 8000-8999 range
-- [ ] README.md is complete
-
-### Configuration
-- [ ] Config.psd1 syntax is valid
-- [ ] ScriptInventory matches actual scripts
-- [ ] SupportedModes are consistent
-- [ ] Config validation passes (`az 0413`)
-
-### UI/CLI Rendering
-- [ ] Breadcrumbs display correctly
-- [ ] Menu items format properly
-- [ ] Commands build correctly
-- [ ] Navigation works smoothly
-
-### Testing
-- [ ] Unit tests written and passing
-- [ ] Integration tests added
-- [ ] Coverage meets threshold (80%+)
-- [ ] Tests run on multiple platforms
-
-### Documentation
-- [ ] README.md updated
-- [ ] API reference complete
-- [ ] Examples provided
-- [ ] Comments are clear
-
----
-
-## Quick Reference
-
-### Common Commands
-
-```powershell
-# Validate code
-aitherzero 0404  # PSScriptAnalyzer
-aitherzero 0407  # Syntax check
-
-# Run tests
-aitherzero 0402  # Unit tests
-aitherzero 0403  # Integration tests
-
-# Validate config
-aitherzero 0413  # Config manifest validation
-
-# Create extension
-New-ExtensionTemplate -Name "MyExt" -Path "./extensions"
-
-# Load extension
-Import-Extension -Name "MyExt"
-
-# Switch config
-Show-ConfigurationSelector
-```
-
-### File Locations
-
-```
-Code Style:           docs/STYLE-GUIDE.md (this file)
-Copilot Instructions: .github/copilot-instructions.md
-Architecture:         docs/CONFIG-DRIVEN-ARCHITECTURE.md
-Extensions:           docs/EXTENSIONS.md
-Testing:              docs/TESTING-GUIDE.md (to be created)
-```
-
----
-
-## Getting Help
-
-- **Style questions:** Check this guide first
-- **Architecture questions:** See `docs/CONFIG-DRIVEN-ARCHITECTURE.md`
-- **Extension help:** See `docs/EXTENSIONS.md`
-- **Copilot guidance:** See `.github/copilot-instructions.md`
-
----
-
-**Version:** 1.0.0  
-**Last Updated:** 2025-11-05  
-**Maintainer:** AitherZero Team
+- `.github/copilot-instructions.md` - AI agent coding guidelines
+- `PSScriptAnalyzerSettings.psd1` - Linter configuration
+- `infrastructure/SUBMODULES.md` - Infrastructure submodule guide

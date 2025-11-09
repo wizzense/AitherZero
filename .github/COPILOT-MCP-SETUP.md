@@ -111,7 +111,7 @@ When you ask Copilot to perform infrastructure tasks, it will:
 {
   "tool": "run_quality_check",
   "arguments": {
-    "path": "./domains/configuration"
+    "path": "./aithercore/configuration"
   }
 }
 ```

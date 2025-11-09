@@ -11,8 +11,8 @@
 ### 📊 Contents
 
 - **Subdirectories**: 0
-- **Files**: 147
-- **PowerShell Scripts**: 146
+- **Files**: 164
+- **PowerShell Scripts**: 163
 
 ## 📄 Files
 
@@ -24,10 +24,14 @@
 
 - ⚙️ [0000_Cleanup-Environment.Integration.Tests.ps1](./0000_Cleanup-Environment.Integration.Tests.ps1)
   - *Integration tests for 0000_Cleanup-Environment*
+- ⚙️ [0001_Configure-Environment.Integration.Tests.ps1](./0001_Configure-Environment.Integration.Tests.ps1)
+  - *Integration tests for 0001_Configure-Environment*
 - ⚙️ [0002_Setup-Directories.Integration.Tests.ps1](./0002_Setup-Directories.Integration.Tests.ps1)
   - *Integration tests for 0002_Setup-Directories*
 - ⚙️ [0003_Sync-ConfigManifest.Integration.Tests.ps1](./0003_Sync-ConfigManifest.Integration.Tests.ps1)
   - *Integration tests for 0003_Sync-ConfigManifest*
+- ⚙️ [0004_Setup-GitHooks.Integration.Tests.ps1](./0004_Setup-GitHooks.Integration.Tests.ps1)
+  - *Integration tests for 0004_Setup-GitHooks*
 - ⚙️ [0006_Install-ValidationTools.Integration.Tests.ps1](./0006_Install-ValidationTools.Integration.Tests.ps1)
   - *Integration tests for 0006_Install-ValidationTools*
 - ⚙️ [0007_Install-Go.Integration.Tests.ps1](./0007_Install-Go.Integration.Tests.ps1)
@@ -66,10 +70,14 @@
   - *Integration tests for 0209_Install-7Zip*
 - ⚙️ [0210_Install-VSCode.Integration.Tests.ps1](./0210_Install-VSCode.Integration.Tests.ps1)
   - *Integration tests for 0210_Install-VSCode*
+- ⚙️ [0211_Install-GitHubCLI.Integration.Tests.ps1](./0211_Install-GitHubCLI.Integration.Tests.ps1)
+  - *Integration tests for 0211_Install-GitHubCLI*
 - ⚙️ [0211_Install-VSBuildTools.Integration.Tests.ps1](./0211_Install-VSBuildTools.Integration.Tests.ps1)
   - *Integration tests for 0211_Install-VSBuildTools*
 - ⚙️ [0212_Install-AzureCLI.Integration.Tests.ps1](./0212_Install-AzureCLI.Integration.Tests.ps1)
   - *Integration tests for 0212_Install-AzureCLI*
+- ⚙️ [0212_Install-Go.Integration.Tests.ps1](./0212_Install-Go.Integration.Tests.ps1)
+  - *Integration tests for 0212_Install-Go*
 - ⚙️ [0213_Install-AWSCLI.Integration.Tests.ps1](./0213_Install-AWSCLI.Integration.Tests.ps1)
   - *Integration tests for 0213_Install-AWSCLI*
 - ⚙️ [0214_Install-Packer.Integration.Tests.ps1](./0214_Install-Packer.Integration.Tests.ps1)
@@ -84,6 +92,8 @@
   - *Integration tests for 0218_Install-GeminiCLI*
 - ⚙️ [0219_Install-Chocolatey.Integration.Tests.ps1](./0219_Install-Chocolatey.Integration.Tests.ps1)
   - *Integration tests for 0219_Install-Chocolatey*
+- ⚙️ [0220_Install-AI-CLIs.Integration.Tests.ps1](./0220_Install-AI-CLIs.Integration.Tests.ps1)
+  - *Integration tests for 0220_Install-AI-CLIs*
 - ⚙️ [0300_Deploy-Infrastructure.Integration.Tests.ps1](./0300_Deploy-Infrastructure.Integration.Tests.ps1)
   - *Integration tests for 0300_Deploy-Infrastructure*
 - ⚙️ [0400_Install-TestingTools.Integration.Tests.ps1](./0400_Install-TestingTools.Integration.Tests.ps1)
@@ -104,8 +114,6 @@
   - *Integration tests for 0408_Generate-TestCoverage*
 - ⚙️ [0409_Run-AllTests.Integration.Tests.ps1](./0409_Run-AllTests.Integration.Tests.ps1)
   - *Integration tests for 0409_Run-AllTests*
-- ⚙️ [0410_Run-PSScriptAnalyzer-Fast.Integration.Tests.ps1](./0410_Run-PSScriptAnalyzer-Fast.Integration.Tests.ps1)
-  - *Integration tests for 0410_Run-PSScriptAnalyzer-Fast*
 - ⚙️ [0411_Test-Smart.Integration.Tests.ps1](./0411_Test-Smart.Integration.Tests.ps1)
   - *Integration tests for 0411_Test-Smart*
 - ⚙️ [0412_Validate-AST.Integration.Tests.ps1](./0412_Validate-AST.Integration.Tests.ps1)
@@ -116,12 +124,16 @@
   - *Integration tests for 0414_Test-Optimized*
 - ⚙️ [0415_Manage-PSScriptAnalyzerCache.Integration.Tests.ps1](./0415_Manage-PSScriptAnalyzerCache.Integration.Tests.ps1)
   - *Integration tests for 0415_Manage-PSScriptAnalyzerCache*
+- ⚙️ [0416_Validate-ModuleManifest.Integration.Tests.ps1](./0416_Validate-ModuleManifest.Integration.Tests.ps1)
+  - *Integration tests for 0416_Validate-ModuleManifest*
 - ⚙️ [0420_Validate-ComponentQuality.Integration.Tests.ps1](./0420_Validate-ComponentQuality.Integration.Tests.ps1)
   - *Integration tests for 0420_Validate-ComponentQuality*
 - ⚙️ [0425_Validate-DocumentationStructure.Integration.Tests.ps1](./0425_Validate-DocumentationStructure.Integration.Tests.ps1)
   - *Integration tests for 0425_Validate-DocumentationStructure*
 - ⚙️ [0426_Validate-TestScriptSync.Integration.Tests.ps1](./0426_Validate-TestScriptSync.Integration.Tests.ps1)
   - *Integration tests for 0426_Validate-TestScriptSync*
+- ⚙️ [0428_Get-AutomationTestCoverage.Integration.Tests.ps1](./0428_Get-AutomationTestCoverage.Integration.Tests.ps1)
+  - *Integration tests for 0428_Get-AutomationTestCoverage*
 - ⚙️ [0440_Validate-Workflows.Integration.Tests.ps1](./0440_Validate-Workflows.Integration.Tests.ps1)
   - *Integration tests for 0440_Validate-Workflows*
 - ⚙️ [0441_Test-WorkflowsLocally.Integration.Tests.ps1](./0441_Test-WorkflowsLocally.Integration.Tests.ps1)
@@ -154,10 +166,6 @@
   - *Integration tests for 0513_Enable-ContinuousReporting*
 - ⚙️ [0514_Generate-CodeMap.Integration.Tests.ps1](./0514_Generate-CodeMap.Integration.Tests.ps1)
   - *Integration tests for 0514_Generate-CodeMap*
-- ⚙️ [0514_Schedule-ReportGeneration.Integration.Tests.ps1](./0514_Schedule-ReportGeneration.Integration.Tests.ps1)
-  - *Integration tests for 0514_Schedule-ReportGeneration*
-- ⚙️ [0515_Deploy-Documentation.Integration.Tests.ps1](./0515_Deploy-Documentation.Integration.Tests.ps1)
-  - *Integration tests for 0515_Deploy-Documentation*
 - ⚙️ [0516_Schedule-ReportGeneration.Integration.Tests.ps1](./0516_Schedule-ReportGeneration.Integration.Tests.ps1)
   - *Integration tests for 0516_Schedule-ReportGeneration*
 - ⚙️ [0520_Analyze-ConfigurationUsage.Integration.Tests.ps1](./0520_Analyze-ConfigurationUsage.Integration.Tests.ps1)
@@ -170,6 +178,8 @@
   - *Integration tests for 0523_Analyze-SecurityIssues*
 - ⚙️ [0524_Generate-TechDebtReport.Integration.Tests.ps1](./0524_Generate-TechDebtReport.Integration.Tests.ps1)
   - *Integration tests for 0524_Generate-TechDebtReport*
+- ⚙️ [0525_Deploy-Documentation.Integration.Tests.ps1](./0525_Deploy-Documentation.Integration.Tests.ps1)
+  - *Integration tests for 0525_Deploy-Documentation*
 - ⚙️ [0530_View-Logs.Integration.Tests.ps1](./0530_View-Logs.Integration.Tests.ps1)
   - *Integration tests for 0530_View-Logs*
 - ⚙️ [0531_Get-WorkflowRunReport.Integration.Tests.ps1](./0531_Get-WorkflowRunReport.Integration.Tests.ps1)
@@ -250,8 +260,18 @@
   - *Integration tests for 0799_cleanup-old-tags*
 - ⚙️ [0800_Create-TestIssues.Integration.Tests.ps1](./0800_Create-TestIssues.Integration.Tests.ps1)
   - *Integration tests for 0800_Create-TestIssues*
+- ⚙️ [0800_Manage-License.Integration.Tests.ps1](./0800_Manage-License.Integration.Tests.ps1)
+  - *Integration tests for 0800_Manage-License*
+- ⚙️ [0801_Obfuscate-PreCommit.Integration.Tests.ps1](./0801_Obfuscate-PreCommit.Integration.Tests.ps1)
+  - *Integration tests for 0801_Obfuscate-PreCommit*
 - ⚙️ [0801_Parse-PesterResults.Integration.Tests.ps1](./0801_Parse-PesterResults.Integration.Tests.ps1)
   - *Integration tests for 0801_Parse-PesterResults*
+- ⚙️ [0802_Load-ObfuscatedModule.Integration.Tests.ps1](./0802_Load-ObfuscatedModule.Integration.Tests.ps1)
+  - *Integration tests for 0802_Load-ObfuscatedModule*
+- ⚙️ [0803_Setup-LicenseInfrastructure.Integration.Tests.ps1](./0803_Setup-LicenseInfrastructure.Integration.Tests.ps1)
+  - *Integration tests for 0803_Setup-LicenseInfrastructure*
+- ⚙️ [0804_Deploy-LicenseToGitHub.Integration.Tests.ps1](./0804_Deploy-LicenseToGitHub.Integration.Tests.ps1)
+  - *Integration tests for 0804_Deploy-LicenseToGitHub*
 - ⚙️ [0805_Analyze-OpenIssues.Integration.Tests.ps1](./0805_Analyze-OpenIssues.Integration.Tests.ps1)
   - *Integration tests for 0805_Analyze-OpenIssues*
 - ⚙️ [0810_Create-IssueFromTestFailure.Integration.Tests.ps1](./0810_Create-IssueFromTestFailure.Integration.Tests.ps1)
@@ -276,8 +296,12 @@
   - *Integration tests for 0832_Generate-PromptFromData*
 - ⚙️ [0840_Validate-WorkflowAutomation.Integration.Tests.ps1](./0840_Validate-WorkflowAutomation.Integration.Tests.ps1)
   - *Integration tests for 0840_Validate-WorkflowAutomation*
+- ⚙️ [0841_Validate-WorkflowIntegration.Integration.Tests.ps1](./0841_Validate-WorkflowIntegration.Integration.Tests.ps1)
+  - *Integration tests for 0841_Validate-WorkflowIntegration*
 - ⚙️ [0850_Deploy-PREnvironment.Integration.Tests.ps1](./0850_Deploy-PREnvironment.Integration.Tests.ps1)
   - *Integration tests for 0850_Deploy-PREnvironment*
+- ⚙️ [0850_Install-GitHub-Runner.Integration.Tests.ps1](./0850_Install-GitHub-Runner.Integration.Tests.ps1)
+  - *Integration tests for 0850_Install-GitHub-Runner*
 - ⚙️ [0851_Cleanup-PREnvironment.Integration.Tests.ps1](./0851_Cleanup-PREnvironment.Integration.Tests.ps1)
   - *Integration tests for 0851_Cleanup-PREnvironment*
 - ⚙️ [0852_Validate-PRDockerDeployment.Integration.Tests.ps1](./0852_Validate-PRDockerDeployment.Integration.Tests.ps1)
@@ -288,6 +312,14 @@
   - *Integration tests for 0854_Manage-PRContainer*
 - ⚙️ [0860_Validate-Deployments.Integration.Tests.ps1](./0860_Validate-Deployments.Integration.Tests.ps1)
   - *Integration tests for 0860_Validate-Deployments*
+- ⚙️ [0870_Create-LicenseStorage.Integration.Tests.ps1](./0870_Create-LicenseStorage.Integration.Tests.ps1)
+  - *Integration tests for 0870_Create-LicenseStorage*
+- ⚙️ [0875_Verify-LicenseBackup.Integration.Tests.ps1](./0875_Verify-LicenseBackup.Integration.Tests.ps1)
+  - *Integration tests for 0875_Verify-LicenseBackup*
+- ⚙️ [0876_Rotate-LicenseKeys.Integration.Tests.ps1](./0876_Rotate-LicenseKeys.Integration.Tests.ps1)
+  - *Integration tests for 0876_Rotate-LicenseKeys*
+- ⚙️ [0877_Rotate-GitHubCredentials.Integration.Tests.ps1](./0877_Rotate-GitHubCredentials.Integration.Tests.ps1)
+  - *Integration tests for 0877_Rotate-GitHubCredentials*
 - ⚙️ [0900_Test-SelfDeployment.Integration.Tests.ps1](./0900_Test-SelfDeployment.Integration.Tests.ps1)
   - *Integration tests for 0900_Test-SelfDeployment*
 - ⚙️ [0901_Test-LocalDeployment.Integration.Tests.ps1](./0901_Test-LocalDeployment.Integration.Tests.ps1)
@@ -310,12 +342,14 @@
   - *Integration tests for 0965_Test-PlaybookCompatibility*
 - ⚙️ [0966_Run-LocalValidation.Integration.Tests.ps1](./0966_Run-LocalValidation.Integration.Tests.ps1)
   - *Integration tests for 0966_Run-LocalValidation*
-- ⚙️ [0966_Test-OrchestrationEngine.Integration.Tests.ps1](./0966_Test-OrchestrationEngine.Integration.Tests.ps1)
-  - *Integration tests for 0966_Test-OrchestrationEngine*
+- ⚙️ [0967_Test-OrchestrationEngine.Integration.Tests.ps1](./0967_Test-OrchestrationEngine.Integration.Tests.ps1)
+  - *Integration tests for 0967_Test-OrchestrationEngine*
+- ⚙️ [0968_Migrate-PlaybooksV2.Integration.Tests.ps1](./0968_Migrate-PlaybooksV2.Integration.Tests.ps1)
+  - *Integration tests for 0968_Migrate-PlaybooksV2*
 - ⚙️ [9999_Reset-Machine.Integration.Tests.ps1](./9999_Reset-Machine.Integration.Tests.ps1)
   - *Integration tests for 9999_Reset-Machine*
 
 ---
 
-*Generated by AitherZero Project Indexer* • Last updated: 2025-11-07 02:18:52 UTC
+*Generated by AitherZero Project Indexer* • Last updated: 2025-11-08 23:14:55 UTC
 

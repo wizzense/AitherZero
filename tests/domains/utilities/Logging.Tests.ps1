@@ -156,7 +156,7 @@ Describe "Logging Module Tests" {
             Start-Sleep -Milliseconds 100
             Write-CustomLog -Level "Warning" -Message "Message 2"
 
-            $logs = Get-Logs -StartTime $startTime
+            $logs = Get-Log -StartTime $startTime
 
             $logs.Count | Should -Be 2
             $logs[0].Message | Should -Match "Message 1"
@@ -170,7 +170,7 @@ Describe "Logging Module Tests" {
             Write-CustomLog -Level "Warning" -Message "Warning message"
             Write-CustomLog -Level "Error" -Message "Error message"
 
-            $warnings = Get-Logs -Level "WARNING"
+            $warnings = Get-Log -Level "WARNING"
 
             $warnings.Count | Should -Be 1
             $warnings[0].Message | Should -Match "Warning message"
@@ -183,7 +183,7 @@ Describe "Logging Module Tests" {
             Write-CustomLog -Level "Information" -Message "Different message"
             Write-CustomLog -Level "Information" -Message "Another ABC test"
 
-            $filtered = Get-Logs -Pattern "ABC"
+            $filtered = Get-Log -Pattern "ABC"
 
             $filtered.Count | Should -Be 2
         }

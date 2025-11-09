@@ -54,7 +54,7 @@ try {
         Write-HookLog "Development task detected: feature/function creation"
         $contextToAdd += @"
 **AitherZero Development Context:**
-- Use existing patterns from automation-scripts/ and domains/
+- Use existing patterns from automation-scripts/ and aithercore/
 - Follow PowerShell best practices and include comment-based help
 - Consider adding tests in tests/ directory
 - Update documentation if creating public functions
@@ -121,7 +121,7 @@ Use orchestration: ``./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-qui
 - Main initialization: ``Initialize-AitherModules.ps1`` or ``Initialize-AitherEnvironment.ps1``
 - Cross-platform bootstrap: ``bootstrap.ps1`` (PowerShell) or ``bootstrap.sh`` (bash)
 - Configuration in config.psd1 with hierarchical settings
-- Module discovery from domains/ directory
+- Module discovery from aithercore/ directory
 - Environment validation: ``az 0500``
 "@
     }
@@ -192,7 +192,7 @@ For Git operations, you MUST use orchestrated playbooks:
         $contextToAdd += @"
 **AitherZero Documentation Context:**
 - Main documentation in README.md and CLAUDE.md
-- Module-specific documentation in domains/*/README.md
+- Module-specific documentation in aithercore/*/README.md
 - Auto-generated docs: ``az 0521``
 - Comment-based help for PowerShell functions
 - Examples in examples/ directory

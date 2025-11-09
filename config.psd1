@@ -6,12 +6,12 @@
 .DESCRIPTION
     This is the master configuration manifest for the AitherZero infrastructure automation platform.
     Every aspect of the system is configuration-driven through this file for true CI/CD automation.
-    
+
     This file serves as both:
     - Configuration store for all components
     - Manifest defining features, dependencies, and capabilities
     - Source of truth for automation workflows
-    
+
     Configuration Features:
     - Native PowerShell Data File (.psd1) format
     - IntelliSense support in IDEs
@@ -20,28 +20,28 @@
     - Feature dependency mapping
     - Platform abstraction layer
     - CI/CD automation profiles
-    
+
     Configuration Precedence (highest to lowest):
     1. Command-line parameters
     2. Environment variables (AITHERZERO_*)
     3. config.local.psd1 (local overrides, gitignored)
     4. This file (config.psd1) - Master manifest
     5. Module defaults (fallback only)
-    
+
     Automation Philosophy:
     Everything must be configuration-driven. No hardcoded values in scripts.
     All automation scripts read from this configuration manifest.
-    
+
 .EXAMPLE
     # Override via environment variable for CI/CD:
     $env:AITHERZERO_PROFILE = "Full"
     $env:AITHERZERO_ENVIRONMENT = "Production"
-    
+
 .EXAMPLE
     # Load in automation scripts:
     $config = Get-Configuration
     $shouldInstall = $config.Features.Node.Enabled
-    
+
 .NOTES
     Version: 2.0 - Configuration-Driven Architecture
     This file is the single source of truth for all AitherZero operations
@@ -52,1666 +52,1846 @@
     # ===================================================================
     # PLATFORM MANIFEST - System Capabilities and Dependencies
     # ===================================================================
-    Manifest = @{
-        Name = 'AitherZero'
-        Version = '2.0.0'
-        Type = 'Infrastructure Automation Platform'
-        Description = 'Configuration-driven infrastructure automation with number-based orchestration'
-        
+    Manifest                 = @{
+        Name                = 'AitherZero'
+        Version             = '2.0.0'
+        Type                = 'Infrastructure Automation Platform'
+        Description         = 'Configuration-driven infrastructure automation with number-based orchestration'
+
         # Platform support matrix
-        SupportedPlatforms = @{
+        SupportedPlatforms  = @{
             Windows = @{
-                Versions = @('10', '11', 'Server2019', 'Server2022')
+                Versions          = @('10', '11', 'Server2019', 'Server2022')
                 MinimumPowerShell = '7.0'
-                RequiredFeatures = @('PowerShell7', 'Git')
-                OptionalFeatures = @('HyperV', 'WSL2', 'Docker', 'Containers')
+                RequiredFeatures  = @('PowerShell7', 'Git')
+                OptionalFeatures  = @('HyperV', 'WSL2', 'Docker', 'Containers')
             }
-            Linux = @{
-                Distributions = @('Ubuntu 20.04+', 'Debian 11+', 'RHEL 8+', 'CentOS 8+')
+            Linux   = @{
+                Distributions     = @('Ubuntu 20.04+', 'Debian 11+', 'RHEL 8+', 'CentOS 8+')
                 MinimumPowerShell = '7.0'
-                RequiredPackages = @('curl', 'wget', 'git')
-                PackageManagers = @('apt', 'yum', 'dnf')
+                RequiredPackages  = @('curl', 'wget', 'git')
+                PackageManagers   = @('apt', 'yum', 'dnf')
             }
-            macOS = @{
-                Versions = @('11.0+', '12.0+', '13.0+')
+            macOS   = @{
+                Versions          = @('11.0+', '12.0+', '13.0+')
                 MinimumPowerShell = '7.0'
-                RequiredTools = @('brew', 'git')
+                RequiredTools     = @('brew', 'git')
             }
         }
-        
+
         # Feature dependency graph
         FeatureDependencies = @{
             # Core features that everything depends on
-            Core = @{
-                PowerShell7 = @{ Required = $true; MinVersion = '7.0'; Scripts = @() }
-                Git = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207') }
+            Core            = @{
+                PowerShell7   = @{ Required = $true; MinVersion = '7.0'; Scripts = @() }
+                Git           = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207') }
                 Configuration = @{ Required = $true; Internal = $true }
-                Logging = @{ Required = $true; Internal = $true }
-                MCPServers = @{ Required = $false; Scripts = @('0010'); Description = 'MCP server setup and validation' }
+                Logging       = @{ Required = $true; Internal = $true }
+                MCPServers    = @{ Required = $false; Scripts = @('0010'); Description = 'MCP server setup and validation' }
             }
-            
+
             # Development environment
-            Development = @{
-                Node = @{ 
+            Development     = @{
+                Node     = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0201')
-                    Features = @('npm', 'yarn', 'vite', 'nodemon')
+                    Scripts   = @('0201')
+                    Features  = @('npm', 'yarn', 'vite', 'nodemon')
                 }
-                Python = @{
+                Python   = @{
                     DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0206', '0204')  # Install Python and Poetry
-                    Features = @('pip', 'poetry', 'virtualenv')
+                    Scripts   = @('0206', '0204')  # Install Python and Poetry
+                    Features  = @('pip', 'poetry', 'virtualenv')
                 }
-                VSCode = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0210')
+                VSCode   = @{
+                    DependsOn  = @('Core.PowerShell7')
+                    Scripts    = @('0210')
                     Extensions = @('ms-vscode.powershell', 'github.copilot')
                 }
-                Docker = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0208')
+                Docker   = @{
+                    DependsOn         = @('Core.PowerShell7')
+                    Scripts           = @('0208')
                     RequiresElevation = $true
                 }
                 DevTools = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0205', '0209', '0211', '0214', '0215', '0216', '0219')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0205', '0209', '0211', '0214', '0215', '0216', '0219')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
                     Description = 'Additional development utilities'
                 }
-                AITools = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0217', '0218')  # Claude Code, Gemini CLI
+                AITools  = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0217', '0218')  # Claude Code, Gemini CLI
                     Description = 'AI-powered development tools'
                 }
                 CloudCLI = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0212', '0213')  # Azure CLI, AWS CLI
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0212', '0213')  # Azure CLI, AWS CLI
                     Description = 'Cloud provider command-line tools'
                 }
             }
-            
-            # Infrastructure components  
-            Infrastructure = @{
-                System = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0100')  # Configure-System
+
+            # Infrastructure components
+            Infrastructure  = @{
+                System               = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0100')  # Configure-System
                     Description = 'Base system configuration'
                 }
-                HyperV = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0105')
-                    RequiresElevation = $true
+                HyperV               = @{
+                    DependsOn            = @('Core.PowerShell7')
+                    Scripts              = @('0105')
+                    RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
                 }
-                WSL2 = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0106')
-                    RequiresElevation = $true
+                WSL2                 = @{
+                    DependsOn            = @('Core.PowerShell7')
+                    Scripts              = @('0106')
+                    RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
                 }
-                WindowsAdminCenter = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0107')
-                    RequiresElevation = $true
+                WindowsAdminCenter   = @{
+                    DependsOn            = @('Core.PowerShell7')
+                    Scripts              = @('0107')
+                    RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
                 }
                 CertificateAuthority = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0104')
-                    RequiresElevation = $true
+                    DependsOn            = @('Core.PowerShell7')
+                    Scripts              = @('0104')
+                    RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
                 }
-                PXE = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0112')
-                    RequiresElevation = $true
+                PXE                  = @{
+                    DependsOn            = @('Core.PowerShell7')
+                    Scripts              = @('0112')
+                    RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
                 }
-                OpenTofu = @{
+                OpenTofu             = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts = @('0008', '0009')
+                    Scripts   = @('0008', '0009')
                 }
-                Go = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0007')
+                Go                   = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0007')
                     Description = 'Go language runtime'
                 }
-                ValidationTools = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0006')
+                ValidationTools      = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0006')
                     Description = 'Code validation and analysis tools'
                 }
             }
-            
+
             # Testing and quality assurance
-            Testing = @{
-                TestingTools = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0400')
+            Testing         = @{
+                TestingTools      = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0400')
                     Description = 'Install Pester and PSScriptAnalyzer'
                 }
-                Pester = @{
-                    DependsOn = @('Testing.TestingTools')
-                    Scripts = @('0402', '0403', '0409', '0411', '0480', '0490')
-                    MinVersion = '5.0.0'
+                Pester            = @{
+                    DependsOn   = @('Testing.TestingTools')
+                    Scripts     = @('0402', '0403', '0409', '0411', '0480', '0490')
+                    MinVersion  = '5.0.0'
                     Description = 'Unit, integration, and smart testing'
                 }
-                PSScriptAnalyzer = @{
-                    DependsOn = @('Testing.TestingTools')
-                    Scripts = @('0404', '0415')
-                    MinVersion = '1.20.0'
+                PSScriptAnalyzer  = @{
+                    DependsOn   = @('Testing.TestingTools')
+                    Scripts     = @('0404', '0415')
+                    MinVersion  = '1.20.0'
                     Description = 'Static code analysis and cache management'
                 }
-                CodeQuality = @{
-                    DependsOn = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                    Scripts = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0420', '0425', '0426')
-                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, component quality, documentation structure validation, test-script synchronization'
+                CodeQuality       = @{
+                    DependsOn   = @('Core.PowerShell7', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
+                    Scripts     = @('0405', '0406', '0407', '0408', '0412', '0413', '0414', '0416', '0420', '0425', '0426', '0428')
+                    Description = 'Module manifests, AST validation, syntax checks, coverage generation, config validation, optimized tests, component quality, documentation structure validation, test-script synchronization, test discovery validation, test coverage analysis'
                 }
-                WorkflowTesting = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0440', '0441', '0442', '0443')
+                WorkflowTesting   = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0440', '0441', '0442', '0443')
                     Description = 'GitHub Actions workflow validation and local testing'
                 }
                 TestOrchestration = @{
-                    DependsOn = @('Testing.Pester')
-                    Scripts = @('0450', '0460', '0470')
+                    DependsOn   = @('Testing.Pester')
+                    Scripts     = @('0450', '0460', '0470')
                     Description = 'Test orchestration and result publishing'
                 }
             }
-            
+
             # Reporting and analytics
-            Reporting = @{
-                SystemInfo = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0500', '0501')
+            Reporting       = @{
+                SystemInfo     = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0500', '0501')
                     Description = 'Environment validation and system information'
                 }
                 ProjectReports = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0510', '0511', '0512', '0513', '0514', '0516')
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0510', '0511', '0512', '0513', '0514', '0516')
                     Description = 'Project reports, dashboards, scheduling, and automated report generation'
                 }
-                Analysis = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0515', '0520', '0521', '0522', '0523', '0524')
+                Analysis       = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0520', '0521', '0522', '0523', '0524', '0525')
                     Description = 'Documentation deployment, configuration, code quality, security, and tech debt analysis'
                 }
-                Logging = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0530', '0531', '0550', '0830')
+                Logging        = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0530', '0531', '0550', '0830')
                     Description = 'Log viewing, workflow reports, health dashboard, and comprehensive log search'
                 }
-                CI = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0599')
+                CI             = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0599')
                     Description = 'CI progress reporting'
                 }
             }
-            
+
             # Git automation and workflows
-            Git = @{
-                GitSetup = @{
-                    DependsOn = @('Core.Git')
-                    Scripts = @('0700')
+            Git             = @{
+                GitSetup      = @{
+                    DependsOn   = @('Core.Git')
+                    Scripts     = @('0700')
                     Description = 'Git environment configuration'
                 }
-                GitWorkflow = @{
-                    DependsOn = @('Core.Git')
-                    Scripts = @('0701', '0702', '0703', '0704', '0705', '0709', '0798', '0799')
+                GitWorkflow   = @{
+                    DependsOn   = @('Core.Git')
+                    Scripts     = @('0701', '0702', '0703', '0704', '0705', '0709', '0798', '0799')
                     Description = 'Branch creation, commits, PRs, comments, changelog generation, and tag cleanup'
                 }
                 GitHubRunners = @{
-                    DependsOn = @('Core.Git', 'Core.PowerShell7')
-                    Scripts = @('0720', '0721', '0722', '0723')
+                    DependsOn   = @('Core.Git', 'Core.PowerShell7')
+                    Scripts     = @('0720', '0721', '0722', '0723')
                     Description = 'GitHub Actions runner setup and configuration'
                 }
             }
-            
+
             # AI agents and automation
-            AIAgents = @{
-                Setup = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0730')
+            AIAgents        = @{
+                Setup          = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0730')
                     Description = 'AI agent setup and configuration'
                 }
-                CodeReview = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0731', '0735')
+                CodeReview     = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0731', '0735')
                     Description = 'AI-powered code review and security analysis'
                 }
                 TestGeneration = @{
-                    DependsOn = @('Core.PowerShell7', 'Testing.Pester')
-                    Scripts = @('0732')
+                    DependsOn   = @('Core.PowerShell7', 'Testing.Pester')
+                    Scripts     = @('0732')
                     Description = 'AI-powered test generation'
                 }
-                Documentation = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0733', '0744', '0745', '0746')
+                Documentation  = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0733', '0744', '0745', '0746')
                     Description = 'AI-powered documentation generation, auto-documentation, project indexing, and orchestration'
                 }
-                Optimization = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0734', '0737', '0738', '0739')
+                Optimization   = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0734', '0737', '0738', '0739')
                     Description = 'AI performance optimization, monitoring, training, and validation'
                 }
-                Workflows = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0736', '0740', '0741', '0742', '0743')
+                Workflows      = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0736', '0740', '0741', '0742', '0743')
                     Description = 'AI workflow generation, integration, and automation'
                 }
-                MCPServer = @{
-                    DependsOn = @('Core.PowerShell7', 'Development.Node')
-                    Scripts = @('0750', '0751', '0752', '0753', '0754')
+                MCPServer      = @{
+                    DependsOn   = @('Core.PowerShell7', 'Development.Node')
+                    Scripts     = @('0750', '0751', '0752', '0753', '0754')
                     Description = 'Model Context Protocol server for AI integration - build, start, demo, use, and create new servers from template'
                 }
             }
-            
+
             # Issue management and tracking
             IssueManagement = @{
-                Creation = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0800', '0810', '0825', '0832')
+                Creation     = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0800', '0810', '0825', '0832')
                     Description = 'Issue creation from tests, manual triggers, file generation, and prompt generation'
                 }
-                Analysis = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0801', '0805', '0815', '0816')
+                Analysis     = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0801', '0805', '0815', '0816')
                     Description = 'Result parsing, issue analysis, setup, and automation health monitoring'
                 }
-                Workflow = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0820', '0821', '0822', '0831')
+                Workflow     = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0820', '0821', '0822', '0831')
                     Description = 'Work context, continuation prompts, issue creation testing, and templates'
                 }
-                Automation = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0840')
-                    Description = 'Automated workflow validation and priority-based issue processing'
+                Automation   = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0840', '0841')
+                    Description = 'Automated workflow validation, priority-based issue processing, and workflow integration validation'
                 }
                 PRDeployment = @{
-                    DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts = @('0850', '0851', '0852', '0853', '0854', '0860')
+                    DependsOn   = @('Core.PowerShell7', 'Core.Git')
+                    Scripts     = @('0850', '0851', '0852', '0853', '0854', '0860')
                     Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, container management, and deployment validation'
                 }
             }
-            
+
             # Deployment and validation
-            Deployment = @{
-                Infrastructure = @{
-                    DependsOn = @('Infrastructure.OpenTofu')
-                    Scripts = @('0300')
+            Deployment      = @{
+                Infrastructure        = @{
+                    DependsOn   = @('Infrastructure.OpenTofu')
+                    Scripts     = @('0300')
                     Description = 'Infrastructure deployment automation'
                 }
-                Validation = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0900', '0901')
+                Validation            = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0900', '0901')
                     Description = 'Self-deployment and local deployment testing'
                 }
-                TestGeneration = @{
-                    DependsOn = @('Core.PowerShell7', 'Testing.Pester')
-                    Scripts = @('0950', '0951')
+                TestGeneration        = @{
+                    DependsOn   = @('Core.PowerShell7', 'Testing.Pester')
+                    Scripts     = @('0950', '0951')
                     Description = 'Automatic test generation system - generates unit, integration, and functional tests for all automation scripts'
                 }
                 DocumentationTracking = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0960', '0961')
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0960', '0961')
                     Description = 'Documentation freshness tracking and directory documentation validation'
                 }
-                Orchestration = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0962', '0963', '0964', '0965', '0966')
-                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, and local validation'
+                Orchestration         = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0962', '0963', '0964', '0965', '0966', '0967', '0968')
+                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, local validation, orchestration engine testing, and playbook v2 migration'
                 }
             }
-            
-            # Maintenance and cleanup
-            Maintenance = @{
-                Environment = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('0000', '0002', '0003')
-                    Description = 'Environment cleanup, directory setup, and config sync'
+
+            Maintenance     = @{
+                Environment       = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0000', '0002', '0003', '0004')
+                    Description = 'Environment cleanup, directory setup, config sync, and git hooks setup'
                 }
-                Reset = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts = @('9999')
-                    Description = 'Complete machine reset'
+                Reset             = @{
+                    DependsOn         = @('Core.PowerShell7')
+                    Scripts           = @('9999')
+                    Description       = 'Complete machine reset'
                     RequiresElevation = $true
                 }
                 QualityValidation = @{
                     DependsOn = @('Testing.CodeQuality')
-                    Scripts = @()  # 0420 is part of Testing.CodeQuality
-                    Features = @('error-handling', 'logging', 'test-coverage', 'ui-integration', 'github-actions', 'static-analysis')
+                    Scripts   = @()  # 0420 is part of Testing.CodeQuality
+                    Features  = @('error-handling', 'logging', 'test-coverage', 'ui-integration', 'github-actions', 'static-analysis')
                 }
             }
         }
-        
+
         # Script execution profiles - what gets run for each profile
-        ExecutionProfiles = @{
-            Minimal = @{
-                Description = 'Essential components only for basic operation'
-                Features = @('Core.PowerShell7', 'Core.Git')
-                ScriptRanges = @('0000-0099')
+        ExecutionProfiles   = @{
+            Minimal   = @{
+                Description   = 'Essential components only for basic operation'
+                Features      = @('Core.PowerShell7', 'Core.Git')
+                ScriptRanges  = @('0000-0099')
                 EstimatedTime = '2-5 minutes'
             }
-            Standard = @{
-                Description = 'Common development environment'
-                Features = @('Core', 'Development.Node', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
-                ScriptRanges = @('0000-0299', '0400-0499')
+            Standard  = @{
+                Description   = 'Common development environment'
+                Features      = @('Core', 'Development.Node', 'Testing.Pester', 'Testing.PSScriptAnalyzer')
+                ScriptRanges  = @('0000-0299', '0400-0499')
                 EstimatedTime = '5-15 minutes'
             }
             Developer = @{
-                Description = 'Full development environment with all tools'
-                Features = @('Core', 'Development', 'Testing')
-                ScriptRanges = @('0000-0499')
+                Description   = 'Full development environment with all tools'
+                Features      = @('Core', 'Development', 'Testing')
+                ScriptRanges  = @('0000-0499')
                 EstimatedTime = '15-30 minutes'
             }
-            Full = @{
-                Description = 'Everything including infrastructure components'
-                Features = @('*')
-                ScriptRanges = @('*')
+            Full      = @{
+                Description   = 'Everything including infrastructure components'
+                Features      = @('*')
+                ScriptRanges  = @('*')
                 EstimatedTime = '30-60 minutes'
             }
-            CI = @{
-                Description = 'Optimized for CI/CD environments'
-                Features = @('Core', 'Testing', 'Development.Node')
-                ScriptRanges = @('0000-0010', '0201', '0400-0450')
-                Parallel = $true
+            CI        = @{
+                Description    = 'Optimized for CI/CD environments'
+                Features       = @('Core', 'Testing', 'Development.Node')
+                ScriptRanges   = @('0000-0010', '0201', '0400-0450')
+                Parallel       = $true
                 NonInteractive = $true
-                EstimatedTime = '3-8 minutes'
+                EstimatedTime  = '3-8 minutes'
             }
         }
-        
+
         # Domain module structure (actual repository state)
-        Domains = @{
-            'ai-agents' = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation' = @{ Modules = 5; Description = 'Orchestration engine and script utilities' }
-            'cli' = @{ Modules = 1; Description = 'CLI cmdlets and interactive interface' }
-            'configuration' = @{ Modules = 2; Description = 'Unified configuration management' }
-            'development' = @{ Modules = 4; Description = 'Developer tools and Git automation' }
-            'documentation' = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
-            'infrastructure' = @{ Modules = 1; Description = 'Infrastructure automation and management' }
-            'reporting' = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
-            'security' = @{ Modules = 1; Description = 'Security and credential management' }
-            'testing' = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
-            'utilities' = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
+        # Note: Playbooks are stored in library/playbooks/, OrchestrationEngine is in automation domain
+        Domains             = @{
+            'ai-agents'      = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
+            'automation'     = @{ Modules = 5; Description = 'Orchestration engine and script utilities' }
+            'cli'            = @{ Modules = 1; Description = 'CLI cmdlets and interactive interface' }
+            'configuration'  = @{ Modules = 2; Description = 'Unified configuration management' }
+            'development'    = @{ Modules = 4; Description = 'Developer tools and Git automation' }
+            'documentation'  = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
+            'infrastructure' = @{ Modules = 2; Description = 'Infrastructure automation and management' }
+            'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
+            'security'       = @{ Modules = 3; Description = 'Security and credential management' }
+            'testing'        = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
+            'utilities'      = @{ Modules = 11; Description = 'Core utilities, logging, and maintenance' }
         }
-        
-        # Script inventory by range (138 total files, 137 unique numbers)
+
+        # Script inventory by range (173 total files, 166 unique numbers)
         # All scripts now have unique numbers
         # Counts represent unique script NUMBERS, not total files
-        ScriptInventory = @{
-            '0000-0099' = @{ Count = 8; Category = 'Environment Setup' }
-            '0100-0199' = @{ Count = 6; Category = 'Infrastructure' }
-            '0200-0299' = @{ Count = 17; Category = 'Development Tools' }
+        ScriptInventory     = @{
+            '0000-0099' = @{ Count = 10; Category = 'Environment Setup' }
+            '0100-0199' = @{ Count = 8; Category = 'Infrastructure' }
+            '0200-0299' = @{ Count = 18; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
-            '0400-0499' = @{ Count = 26; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 18; Category = 'Reporting & Analytics' }
+            '0400-0499' = @{ Count = 28; Category = 'Testing & Quality' }
+            '0500-0599' = @{ Count = 22; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 20; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 11; Category = 'Validation & Test Generation' }
+            '0800-0899' = @{ Count = 28; Category = 'Issue Management & PR Deployment' }
+            '0900-0999' = @{ Count = 15; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
-        
+
         # Configuration schema version for validation
-        SchemaVersion = '2.0'
-        LastUpdated = '2025-11-03'
+        SchemaVersion       = '2.0'
+        LastUpdated         = '2025-11-03'
     }
-    
+
     # ===================================================================
     # CORE CONFIGURATION - Fundamental System Settings
     # ===================================================================
-    Core = @{
+    Core                     = @{
         # Platform and environment
-        Name = 'AitherZero'
-        Version = '2.0.0'
-        Platform = 'auto'  # auto, windows, linux, macos
-        Environment = 'Development'  # Development, Testing, Staging, Production, CI
-        
+        Name               = 'AitherZero'
+        Version            = '2.0.0'
+        Platform           = 'auto'  # auto, windows, linux, macos
+        Environment        = 'Development'  # Development, Testing, Staging, Production, CI
+
         # Execution profiles - determines which features/scripts are enabled
-        Profile = 'Standard'  # Minimal, Standard, Developer, Full, CI, Custom
-        
+        Profile            = 'Standard'  # Minimal, Standard, Developer, Full, CI, Custom
+
         # Behavior settings
-        AutoStart = $true
-        NonInteractive = $false  # Automatically set to true in CI environments
-        CI = $false  # Automatically detected in CI environments
-        
+        AutoStart          = $true
+        NonInteractive     = $false  # Automatically set to true in CI environments
+        CI                 = $false  # Automatically detected in CI environments
+
         # User experience
         ClearScreenOnStart = $true  # Clear screen when starting interactive mode
         ShowWelcomeMessage = $true
-        EnableAnimations = $true    # Disable in CI automatically
-        
+        EnableAnimations   = $true    # Disable in CI automatically
+
         # Monitoring and analytics
-        UsageAnalytics = $false
-        TelemetryEnabled = $false
-        ErrorReporting = $true
-        CheckForUpdates = $true
-        
+        UsageAnalytics     = $false
+        TelemetryEnabled   = $false
+        ErrorReporting     = $true
+        CheckForUpdates    = $true
+
         # Debugging and development
-        DebugMode = $false
-        VerboseOutput = $false
-        WhatIf = $false  # Preview mode - show what would be done
-        DryRun = $false  # Test mode - validate but don't execute
-        
+        DebugMode          = $false
+        VerboseOutput      = $false
+        WhatIf             = $false  # Preview mode - show what would be done
+        DryRun             = $false  # Test mode - validate but don't execute
+
         # Execution control
-        ContinueOnError = $false
-        SkipPrerequisites = $false
-        ForceReinstall = $false
-        
+        ContinueOnError    = $false
+        SkipPrerequisites  = $false
+        ForceReinstall     = $false
+
         # Output and reporting
-        OutputFormat = 'Console'  # Console, JSON, XML, Markdown - automatically set to JSON in CI
-        ShowProgress = $true
-        ShowMemoryUsage = $false
-        ShowExecutionTime = $true
-        
+        OutputFormat       = 'Console'  # Console, JSON, XML, Markdown - automatically set to JSON in CI
+        ShowProgress       = $true
+        ShowMemoryUsage    = $false
+        ShowExecutionTime  = $true
+
         # Configuration management
-        ConfigValidation = $true
-        ConfigHotReload = $true
-        ConfigBackup = $true
-        
+        ConfigValidation   = $true
+        ConfigHotReload    = $true
+        ConfigBackup       = $true
+
         # Session management
-        SaveSession = $true
-        RestoreOnStart = $false
-        SessionTimeout = 3600
+        SaveSession        = $true
+        RestoreOnStart     = $false
+        SessionTimeout     = 3600
     }
-    
+
     # ===================================================================
     # FEATURES - Component Installation and Configuration
     # ===================================================================
-    Features = @{
+    Features                 = @{
         # Core requirements - always installed based on dependencies
-        Core = @{
+        Core           = @{
             PowerShell7 = @{
-                Enabled = $true
-                Required = $true
-                Version = '7.0+'
+                Enabled       = $true
+                Required      = $true
+                Version       = '7.0+'
                 InstallScript = $null  # PowerShell 7 installation handled by bootstrap
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Installer = @{
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Installer     = @{
                     Windows = 'https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.msi'
-                    Linux = 'package-manager'  # Handled by bootstrap
-                    macOS = 'package-manager'  # Handled by bootstrap
+                    Linux   = 'package-manager'  # Handled by bootstrap
+                    macOS   = 'package-manager'  # Handled by bootstrap
                 }
             }
-            Git = @{
-                Enabled = $true
-                Required = $true
-                Version = '2.0+'
+            Git         = @{
+                Enabled       = $true
+                Required      = $true
+                Version       = '2.0+'
                 InstallScript = '0207'
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Platforms     = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
-                    UserName = ''  # Prompt if empty
-                    UserEmail = ''  # Prompt if empty
+                    UserName      = ''  # Prompt if empty
+                    UserEmail     = ''  # Prompt if empty
                     DefaultBranch = 'main'
-                    AutoFetch = $true
+                    AutoFetch     = $true
                 }
-                Installer = @{
+                Installer     = @{
                     Windows = 'https://github.com/git-for-windows/git/releases/download/v2.48.1.windows.1/Git-2.48.1-64-bit.exe'
-                    Linux = 'package-manager'
-                    macOS = 'package-manager'
+                    Linux   = 'package-manager'
+                    macOS   = 'package-manager'
                 }
             }
         }
-        
+
         # Development tools
-        Development = @{
-            Node = @{
-                Enabled = $true  # Enabled by default for Standard+ profiles
-                Version = 'latest-v20.x'
+        Development    = @{
+            Node   = @{
+                Enabled       = $true  # Enabled by default for Standard+ profiles
+                Version       = 'latest-v20.x'
                 InstallScript = '0201'
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Platforms     = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
-                    InstallNpm = $true
-                    InstallYarn = $true
-                    InstallPnpm = $false
+                    InstallNpm     = $true
+                    InstallYarn    = $true
+                    InstallPnpm    = $false
                     GlobalPackages = @('yarn', 'vite', 'nodemon', '@types/node')
                     PackageManager = 'auto'  # auto, winget, chocolatey, apt, yum, brew
                 }
-                Installer = @{
+                Installer     = @{
                     Windows = 'https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi'
-                    Linux = 'package-manager'
-                    macOS = 'package-manager'
+                    Linux   = 'package-manager'
+                    macOS   = 'package-manager'
                 }
             }
             Python = @{
-                Enabled = $false
-                Version = '3.12+'
+                Enabled       = $false
+                Version       = '3.12+'
                 InstallScript = '0206'
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Platforms     = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
-                    InstallPip = $true
-                    InstallPoetry = $false
+                    InstallPip       = $true
+                    InstallPoetry    = $false
                     CreateVirtualEnv = $true
-                    DefaultPackages = @('pip', 'setuptools', 'wheel')
+                    DefaultPackages  = @('pip', 'setuptools', 'wheel')
                 }
             }
             VSCode = @{
-                Enabled = $false
+                Enabled       = $false
                 InstallScript = '0210'
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Platforms     = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
                     Extensions = @(
                         'ms-vscode.powershell'
                         'ms-azuretools.vscode-docker'
                         'github.copilot'
+                        'github.copilot-chat'
                         'ms-python.python'
                         'ms-vscode.vscode-json'
+                        'ms-vsliveshare.vsliveshare'
+                        'eamodio.gitlens'
                     )
-                    Settings = @{
-                        AutoSave = 'afterDelay'
+                    Settings   = @{
+                        AutoSave     = 'afterDelay'
                         FormatOnSave = $true
-                        TabSize = 4
+                        TabSize      = 4
                     }
                 }
             }
-            Docker = @{
-                Enabled = $false
-                InstallScript = '0208'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                RequiresElevation = $true
-                Configuration = @{
-                    StartOnBoot = $true
-                    WSL2Backend = $true  # Windows only
-                    Resources = @{
-                        Memory = '4GB'
-                        CPUs = 2
-                        Disk = '60GB'
-                    }
-                }
-            }
-        }
-        
-        # Infrastructure components
-        Infrastructure = @{
-            System = @{
-                Enabled = $false
-                InstallScript = '0100'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = 'Base system configuration'
-            }
-            HyperV = @{
-                Enabled = $false
-                InstallScript = '0105'
-                Platforms = @('Windows')
-                RequiresElevation = $true
-                Configuration = @{
-                    PrepareHost = $false
-                    EnableManagementTools = $true
-                    DefaultVMPath = 'C:\VMs'
-                    DefaultVHDPath = 'C:\VHDs'
-                }
-            }
-            WSL2 = @{
-                Enabled = $false
-                InstallScript = '0106'
-                Platforms = @('Windows')
-                RequiresElevation = $true
-                Configuration = @{
-                    Distribution = 'Ubuntu'
-                    Version = '2'
-                    Settings = @{
-                        Memory = '4GB'
-                        Processors = 2
-                        SwapSize = '2GB'
-                        LocalhostForwarding = $true
-                    }
-                }
-            }
-            WindowsAdminCenter = @{
-                Enabled = $false
-                InstallScript = '0106'
-                Platforms = @('Windows')
-                RequiresElevation = $true
-                Description = 'Windows Admin Center for remote management'
-            }
-            CertificateAuthority = @{
-                Enabled = $false
-                InstallScript = '0104'
-                Platforms = @('Windows')
-                RequiresElevation = $true
-                Description = 'Certificate Authority installation'
-            }
-            PXE = @{
-                Enabled = $false
-                InstallScript = '0112'
-                Platforms = @('Windows')
-                RequiresElevation = $true
-                Description = 'PXE boot configuration'
-            }
-            OpenTofu = @{
+            GitHubCLI = @{
                 Enabled = $false
                 Version = 'latest'
-                InstallScript = '0008'
-                InitializeScript = '0009'
+                InstallScript = '0211'
                 Platforms = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
-                    Initialize = $false
-                    WorkingDirectory = './infrastructure'
+                    AuthMethod = 'browser'  # browser, token
+                    DefaultEditor = 'vim'
+                    Protocol = 'https'
                 }
             }
             Go = @{
                 Enabled = $false
-                Version = 'latest'
-                InstallScript = '0007'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = 'Go programming language'
-            }
-            ValidationTools = @{
-                Enabled = $true  # Enabled by default for code quality
-                InstallScript = '0006'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = 'Validation and linting tools (actionlint, etc.)'
-            }
-        }
-        
-        # Cloud and DevOps tools
-        Cloud = @{
-            GitHubCLI = @{
-                Enabled = $true  # Required for git automation
-                InstallScript = '0207'  # Integrated with Git installation
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Configuration = @{
-                    Authenticate = $false  # Manual auth required
-                    Editor = 'code'
-                    GitProtocol = 'https'
-                }
-                Installer = @{
-                    Windows = 'https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi'
-                    Linux = 'package-manager'
-                    macOS = 'package-manager'
-                }
-            }
-            AzureCLI = @{
-                Enabled = $false
+                Version = '1.21+'
                 InstallScript = '0212'
                 Platforms = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    GOPATH = '$HOME/go'
+                    InstallTools = @('gopls', 'golangci-lint')
+                }
             }
-            AWSCLI = @{
-                Enabled = $false
-                InstallScript = '0213'
-                Platforms = @('Windows', 'Linux', 'macOS')
+            Docker = @{
+                Enabled           = $false
+                InstallScript     = '0208'
+                Platforms         = @('Windows', 'Linux', 'macOS')
+                RequiresElevation = $true
+                Configuration     = @{
+                    StartOnBoot = $true
+                    WSL2Backend = $true  # Windows only
+                    Resources   = @{
+                        Memory = '4GB'
+                        CPUs   = 2
+                        Disk   = '60GB'
+                    }
+                }
             }
         }
-        
+
+        # Infrastructure components
+        Infrastructure = @{
+            System               = @{
+                Enabled       = $false
+                InstallScript = '0100'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = 'Base system configuration'
+            }
+            HyperV               = @{
+                Enabled           = $false
+                InstallScript     = '0105'
+                Platforms         = @('Windows')
+                RequiresElevation = $true
+                Configuration     = @{
+                    PrepareHost           = $false
+                    EnableManagementTools = $true
+                    DefaultVMPath         = 'C:\VMs'
+                    DefaultVHDPath        = 'C:\VHDs'
+                }
+            }
+            WSL2                 = @{
+                Enabled           = $false
+                InstallScript     = '0106'
+                Platforms         = @('Windows')
+                RequiresElevation = $true
+                Configuration     = @{
+                    Distribution = 'Ubuntu'
+                    Version      = '2'
+                    Settings     = @{
+                        Memory              = '4GB'
+                        Processors          = 2
+                        SwapSize            = '2GB'
+                        LocalhostForwarding = $true
+                    }
+                }
+            }
+            WindowsAdminCenter   = @{
+                Enabled           = $false
+                InstallScript     = '0106'
+                Platforms         = @('Windows')
+                RequiresElevation = $true
+                Description       = 'Windows Admin Center for remote management'
+            }
+            CertificateAuthority = @{
+                Enabled           = $false
+                InstallScript     = '0104'
+                Platforms         = @('Windows')
+                RequiresElevation = $true
+                Description       = 'Certificate Authority installation'
+            }
+            PXE                  = @{
+                Enabled           = $false
+                InstallScript     = '0112'
+                Platforms         = @('Windows')
+                RequiresElevation = $true
+                Description       = 'PXE boot configuration'
+            }
+            OpenTofu             = @{
+                Enabled          = $false
+                Version          = 'latest'
+                InstallScript    = '0008'
+                InitializeScript = '0009'
+                Platforms        = @('Windows', 'Linux', 'macOS')
+                Configuration    = @{
+                    Initialize       = $false
+                    WorkingDirectory = './infrastructure'
+                }
+            }
+            Go                   = @{
+                Enabled       = $false
+                Version       = 'latest'
+                InstallScript = '0007'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = 'Go programming language'
+            }
+            ValidationTools      = @{
+                Enabled       = $true  # Enabled by default for code quality
+                InstallScript = '0006'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = 'Validation and linting tools (actionlint, etc.)'
+            }
+        }
+
+        # Cloud and DevOps tools
+        Cloud          = @{
+            GitHubCLI = @{
+                Enabled       = $true  # Required for git automation
+                InstallScript = '0207'  # Integrated with Git installation
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Configuration = @{
+                    Authenticate = $false  # Manual auth required
+                    Editor       = 'code'
+                    GitProtocol  = 'https'
+                }
+                Installer     = @{
+                    Windows = 'https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi'
+                    Linux   = 'package-manager'
+                    macOS   = 'package-manager'
+                }
+            }
+            AzureCLI  = @{
+                Enabled       = $false
+                InstallScript = '0212'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+            }
+            AWSCLI    = @{
+                Enabled       = $false
+                InstallScript = '0213'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+            }
+        }
+
         # AI Development Tools
-        AITools = @{
+        AITools        = @{
             ClaudeCode = @{
-                Enabled = $false
+                Enabled       = $false
                 InstallScript = '0217'
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Platforms     = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
                     APIKeyEnvVar = 'ANTHROPIC_API_KEY'
-                    Model = 'claude-3-sonnet-20240229'
+                    Model        = 'claude-3-sonnet-20240229'
                 }
             }
-            GeminiCLI = @{
-                Enabled = $false
+            GeminiCLI  = @{
+                Enabled       = $false
                 InstallScript = '0218'
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Platforms     = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
                     APIKeyEnvVar = 'GOOGLE_API_KEY'
-                    Model = 'gemini-pro'
+                    Model        = 'gemini-pro'
                 }
             }
         }
-        
+
         # Additional Development Tools
-        DevTools = @{
+        DevTools       = @{
             Sysinternals = @{
-                Enabled = $false
+                Enabled       = $false
                 InstallScript = '0205'
-                Platforms = @('Windows')
-                Description = 'Windows Sysinternals Suite'
+                Platforms     = @('Windows')
+                Description   = 'Windows Sysinternals Suite'
             }
-            SevenZip = @{
-                Enabled = $false
+            SevenZip     = @{
+                Enabled       = $false
                 InstallScript = '0209'
-                Platforms = @('Windows')
-                Description = 'File compression utility'
+                Platforms     = @('Windows')
+                Description   = 'File compression utility'
             }
             VSBuildTools = @{
-                Enabled = $false
-                InstallScript = '0211'
-                Platforms = @('Windows')
-                Description = 'Visual Studio Build Tools'
+                Enabled           = $false
+                InstallScript     = '0211'
+                Platforms         = @('Windows')
+                Description       = 'Visual Studio Build Tools'
                 RequiresElevation = $true
             }
-            Packer = @{
-                Enabled = $false
+            Packer       = @{
+                Enabled       = $false
                 InstallScript = '0214'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = 'HashiCorp Packer for image building'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = 'HashiCorp Packer for image building'
             }
-            Chocolatey = @{
-                Enabled = $false
-                InstallScript = '0215'
-                Platforms = @('Windows')
-                Description = 'Windows package manager'
+            Chocolatey   = @{
+                Enabled           = $false
+                InstallScript     = '0215'
+                Platforms         = @('Windows')
+                Description       = 'Windows package manager'
                 RequiresElevation = $true
             }
-            Poetry = @{
-                Enabled = $false
+            Poetry       = @{
+                Enabled       = $false
                 InstallScript = '0204'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = 'Python dependency management'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = 'Python dependency management'
             }
         }
-        
+
         # Testing and quality tools
-        Testing = @{
-            Pester = @{
-                Enabled = $true  # Always enabled for Standard+ profiles
-                Version = '5.0.0+'
+        Testing        = @{
+            Pester            = @{
+                Enabled       = $true  # Always enabled for Standard+ profiles
+                Version       = '5.0.0+'
                 InstallScript = '0400'
-                Required = $true
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Required      = $true
+                Platforms     = @('Windows', 'Linux', 'macOS')
             }
-            PSScriptAnalyzer = @{
-                Enabled = $true  # Always enabled for Standard+ profiles
-                Version = '1.20.0+'
+            PSScriptAnalyzer  = @{
+                Enabled       = $true  # Always enabled for Standard+ profiles
+                Version       = '1.20.0+'
                 InstallScript = '0400'
-                Required = $true
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Required      = $true
+                Platforms     = @('Windows', 'Linux', 'macOS')
             }
-            Act = @{
-                Enabled = $false
+            Act               = @{
+                Enabled       = $false
                 InstallScript = '0442'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = 'Local GitHub Actions testing with nektos/act'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = 'Local GitHub Actions testing with nektos/act'
             }
-            PowerShellYaml = @{
-                Enabled = $false
+            PowerShellYaml    = @{
+                Enabled       = $false
                 InstallScript = '0443'
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = 'YAML parsing for workflow validation'
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = 'YAML parsing for workflow validation'
             }
             QualityValidation = @{
-                Enabled = $true  # Always enabled for Standard+ profiles
+                Enabled       = $true  # Always enabled for Standard+ profiles
                 InstallScript = '0420'
-                Required = $false
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Required      = $false
+                Platforms     = @('Windows', 'Linux', 'macOS')
                 Configuration = @{
-                    MinimumScore = 70  # Minimum quality score required (0-100)
-                    FailOnWarnings = $false  # Fail validation on warnings
-                    SkipChecks = @()  # Checks to skip: ErrorHandling, Logging, TestCoverage, UIIntegration, GitHubActions, PSScriptAnalyzer
-                    ReportFormat = 'Text'  # Text, HTML, JSON
-                    ReportPath = './reports/quality'
+                    MinimumScore     = 70  # Minimum quality score required (0-100)
+                    FailOnWarnings   = $false  # Fail validation on warnings
+                    SkipChecks       = @()  # Checks to skip: ErrorHandling, Logging, TestCoverage, UIIntegration, GitHubActions, PSScriptAnalyzer
+                    ReportFormat     = 'Text'  # Text, HTML, JSON
+                    ReportPath       = './library/reports/quality'
                     AutoCreateIssues = $true  # Create GitHub issues for failures in CI
-                    IssueLabels = @('quality-validation', 'automated', 'needs-fix')
+                    IssueLabels      = @('quality-validation', 'automated', 'needs-fix')
                 }
             }
             AutoTestGenerator = @{
-                Enabled = $true  # Automatic test generation system
+                Enabled       = $true  # Automatic test generation system
                 InstallScript = '0950'
-                Required = $false
-                Platforms = @('Windows', 'Linux', 'macOS')
-                Description = '100% automatic test generation for all automation scripts'
+                Required      = $false
+                Platforms     = @('Windows', 'Linux', 'macOS')
+                Description   = '100% automatic test generation for all automation scripts'
                 Configuration = @{
-                    Mode = 'Full'  # Full, Quick, Changed, Watch
-                    Force = $false  # Regenerate existing tests
-                    RunTests = $false  # Run tests after generation
-                    AutoGenerate = $true  # Auto-generate on script changes
-                    TestsPath = './tests'
+                    Mode           = 'Full'  # Full, Quick, Changed, Watch
+                    Force          = $false  # Regenerate existing tests
+                    RunTests       = $false  # Run tests after generation
+                    AutoGenerate   = $true  # Auto-generate on script changes
+                    TestsPath      = './tests'
                     CoverageTarget = 100  # Target test coverage percentage
                 }
             }
         }
     }
-    
+
     # ===================================================================
     # AUTOMATION - Orchestration and Execution Control
     # ===================================================================
-    Automation = @{
+    Automation               = @{
         # Script execution settings
-        ScriptsPath = './automation-scripts'
-        DefaultTimeout = 3600
-        MaxTimeout = 7200  # Maximum allowed timeout (2 hours)
-        MaxConcurrency = 4
-        ParallelExecution = $true
-        DefaultMode = 'Parallel'  # Parallel, Sequential, Staged, Conditional
-        
+        ScriptsPath             = './library/automation-scripts'
+        DefaultTimeout          = 3600
+        MaxTimeout              = 7200  # Maximum allowed timeout (2 hours)
+        MaxConcurrency          = 4
+        ParallelExecution       = $true
+        DefaultMode             = 'Parallel'  # Parallel, Sequential, Staged, Conditional
+
+        # Success criteria defaults - applied to all playbooks unless overridden
+        # Individual playbooks can override these in their SuccessCriteria section
+        DefaultSuccessCriteria  = @{
+            RequireAllSuccess      = $true   # Default: 100% success required (strict mode)
+            MinimumSuccessCount    = 0       # Ignored when RequireAllSuccess is true
+            MinimumSuccessPercent  = 100     # Alternative: percentage-based threshold
+            AllowedFailures        = @()     # Default: no failures allowed
+            StopOnError            = $false  # Continue through all steps by default
+        }
+
         # Error handling and retries
-        ContinueOnError = $false
-        MaxRetries = 3
-        RetryDelay = 5
-        EnableRollback = $false
-        
+        ContinueOnError         = $false
+        MaxRetries              = 3
+        RetryDelay              = 5
+        EnableRollback          = $false
+
         # Execution control
-        ValidateBeforeRun = $true
-        SkipConfirmation = $false
-        RequiredModules = @('ThreadJob')
+        ValidateBeforeRun       = $true
+        SkipConfirmation        = $false
+        RequiredModules         = @('ThreadJob')
         AutoInstallDependencies = $true
-        
+
         # Progress and monitoring
-        ShowProgress = $true
-        ShowDependencies = $true
-        ExecutionHistory = $true
-        HistoryRetentionDays = 30
-        CacheExecutionPlans = $true
-        NotificationEnabled = $true
-        
+        ShowProgress            = $true
+        ShowDependencies        = $true
+        ExecutionHistory        = $true
+        HistoryRetentionDays    = 30
+        CacheExecutionPlans     = $true
+        NotificationEnabled     = $true
+
         # Script range defaults - defines behavior per script number range
-        ScriptRangeDefaults = @{
+        ScriptRangeDefaults     = @{
             '0000-0099' = @{
-                Name = 'Environment Setup'
-                DefaultTimeout = 300  # 5 minutes
-                ContinueOnError = $false
+                Name              = 'Environment Setup'
+                DefaultTimeout    = 300  # 5 minutes
+                ContinueOnError   = $false
                 RequiresElevation = $true
-                Stage = 'Setup'
-                AllowParallel = $false  # Sequential for setup scripts
+                Stage             = 'Setup'
+                AllowParallel     = $false  # Sequential for setup scripts
             }
             '0100-0199' = @{
-                Name = 'Infrastructure'
-                DefaultTimeout = 600  # 10 minutes
-                ContinueOnError = $false
+                Name              = 'Infrastructure'
+                DefaultTimeout    = 600  # 10 minutes
+                ContinueOnError   = $false
                 RequiresElevation = $true
-                Stage = 'Infrastructure'
-                AllowParallel = $true
+                Stage             = 'Infrastructure'
+                AllowParallel     = $true
             }
             '0200-0299' = @{
-                Name = 'Development Tools'
-                DefaultTimeout = 900  # 15 minutes
-                ContinueOnError = $true  # Can continue if optional tools fail
+                Name              = 'Development Tools'
+                DefaultTimeout    = 900  # 15 minutes
+                ContinueOnError   = $true  # Can continue if optional tools fail
                 RequiresElevation = $false
-                Stage = 'Development'
-                AllowParallel = $true
+                Stage             = 'Development'
+                AllowParallel     = $true
             }
             '0400-0499' = @{
-                Name = 'Testing & Validation'
-                DefaultTimeout = 600  # 10 minutes
-                ContinueOnError = $true  # Show all test results
+                Name              = 'Testing & Validation'
+                DefaultTimeout    = 600  # 10 minutes
+                ContinueOnError   = $true  # Show all test results
                 RequiresElevation = $false
-                Stage = 'Testing'
-                AllowParallel = $true
+                Stage             = 'Testing'
+                AllowParallel     = $true
             }
             '0500-0599' = @{
-                Name = 'Reporting & Metrics'
-                DefaultTimeout = 300  # 5 minutes
-                ContinueOnError = $true
+                Name              = 'Reporting & Metrics'
+                DefaultTimeout    = 300  # 5 minutes
+                ContinueOnError   = $true
                 RequiresElevation = $false
-                Stage = 'Reporting'
-                AllowParallel = $true
+                Stage             = 'Reporting'
+                AllowParallel     = $true
             }
             '0700-0799' = @{
-                Name = 'Git Automation'
-                DefaultTimeout = 180  # 3 minutes
-                ContinueOnError = $false
+                Name              = 'Git Automation'
+                DefaultTimeout    = 180  # 3 minutes
+                ContinueOnError   = $false
                 RequiresElevation = $false
-                Stage = 'Development'
-                AllowParallel = $false
+                Stage             = 'Development'
+                AllowParallel     = $false
             }
             '0800-0899' = @{
-                Name = 'Issue Management'
-                DefaultTimeout = 120  # 2 minutes
-                ContinueOnError = $true
+                Name              = 'Issue Management'
+                DefaultTimeout    = 120  # 2 minutes
+                ContinueOnError   = $true
                 RequiresElevation = $false
-                Stage = 'Development'
-                AllowParallel = $true
+                Stage             = 'Development'
+                AllowParallel     = $true
             }
             '0900-0999' = @{
-                Name = 'Validation & Diagnostics'
-                DefaultTimeout = 300  # 5 minutes
-                ContinueOnError = $true
+                Name              = 'Validation & Diagnostics'
+                DefaultTimeout    = 300  # 5 minutes
+                ContinueOnError   = $true
                 RequiresElevation = $false
-                Stage = 'Testing'
-                AllowParallel = $true
+                Stage             = 'Testing'
+                AllowParallel     = $true
             }
             '9000-9999' = @{
-                Name = 'Maintenance & Cleanup'
-                DefaultTimeout = 600  # 10 minutes
-                ContinueOnError = $true
+                Name              = 'Maintenance & Cleanup'
+                DefaultTimeout    = 600  # 10 minutes
+                ContinueOnError   = $true
                 RequiresElevation = $true
-                Stage = 'Maintenance'
-                AllowParallel = $false
+                Stage             = 'Maintenance'
+                AllowParallel     = $false
             }
         }
-        
+
         # Execution profiles mapping
-        Profiles = @{
-            Minimal = @{
-                Description = 'Core infrastructure deployment only'
-                Scripts = @('0000-0099', '0100-0199')
+        Profiles                = @{
+            Minimal   = @{
+                Description    = 'Core infrastructure deployment only'
+                Scripts        = @('0000-0099', '0100-0199')
                 MaxConcurrency = 2
-                Features = @('Core')
+                Features       = @('Core')
             }
-            Standard = @{
-                Description = 'Production-ready automation'
-                Scripts = @('0000-0299', '0400-0499')
+            Standard  = @{
+                Description    = 'Production-ready automation'
+                Scripts        = @('0000-0299', '0400-0499')
                 MaxConcurrency = 4
-                Features = @('Core', 'Development.Node', 'Testing')
+                Features       = @('Core', 'Development.Node', 'Testing')
             }
             Developer = @{
-                Description = 'Complete development environment'
-                Scripts = @('0000-0499')
+                Description    = 'Complete development environment'
+                Scripts        = @('0000-0499')
                 MaxConcurrency = 6
-                Features = @('Core', 'Development', 'Testing')
+                Features       = @('Core', 'Development', 'Testing')
             }
-            Full = @{
-                Description = 'Everything including optional components'
-                Scripts = @('*')
+            Full      = @{
+                Description    = 'Everything including optional components'
+                Scripts        = @('*')
                 MaxConcurrency = 8
-                Features = @('*')
+                Features       = @('*')
             }
         }
-        
+
         # Playbook registry - centralized playbook management
-        Playbooks = @{
-            'test-orchestration' = @{
-                Enabled = $true
-                Description = 'Simple test playbook for validation'
-                RequiresApproval = $false
+        Playbooks               = @{
+            'test-orchestration'     = @{
+                Enabled             = $true
+                Description         = 'Simple test playbook for validation'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
             }
-            'project-health-check' = @{
-                Enabled = $true
-                Description = 'Complete project health validation (matches GitHub Actions)'
-                RequiresApproval = $false
+            'project-health-check'   = @{
+                Enabled             = $true
+                Description         = 'Complete project health validation (matches GitHub Actions)'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
-                ScriptDefaults = @{
+                ScriptDefaults      = @{
                     DefaultTimeout = 300  # Override range defaults for this playbook
                 }
             }
-            'pr-validation-fast' = @{
-                Enabled = $true
-                Description = 'Fast PR validation (syntax + config)'
-                RequiresApproval = $false
+            'pr-validation-fast'     = @{
+                Enabled             = $true
+                Description         = 'Fast PR validation (syntax + config)'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
-                ScriptDefaults = @{
+                ScriptDefaults      = @{
                     '0407' = @{ Timeout = 60 }   # Faster syntax check
                     '0413' = @{ Timeout = 30 }   # Faster config validation
                 }
             }
-            'pr-validation-full' = @{
-                Enabled = $true
-                Description = 'Full PR validation (syntax, quality, tests)'
-                RequiresApproval = $false
+            'pr-validation-full'     = @{
+                Enabled             = $true
+                Description         = 'Full PR validation (syntax, quality, tests)'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
             }
-            'code-quality-fast' = @{
-                Enabled = $true
-                Description = 'Quick code quality checks'
-                RequiresApproval = $false
+            'code-quality-fast'      = @{
+                Enabled             = $true
+                Description         = 'Quick code quality checks'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
             }
-            'code-quality-full' = @{
-                Enabled = $true
-                Description = 'Comprehensive code quality analysis'
-                RequiresApproval = $false
+            'code-quality-full'      = @{
+                Enabled             = $true
+                Description         = 'Comprehensive code quality analysis'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
             }
             'integration-tests-full' = @{
-                Enabled = $true
-                Description = 'Full integration test suite'
-                RequiresApproval = $false
+                Enabled             = $true
+                Description         = 'Full integration test suite'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
-                ScriptDefaults = @{
-                    DefaultTimeout = 600
+                ScriptDefaults      = @{
+                    DefaultTimeout  = 600
                     ContinueOnError = $true
                 }
             }
-            'diagnose-ci' = @{
-                Enabled = $true
-                Description = 'Diagnose CI/CD failures'
-                RequiresApproval = $false
+            'diagnose-ci'            = @{
+                Enabled             = $true
+                Description         = 'Diagnose CI/CD failures'
+                RequiresApproval    = $false
                 AllowedEnvironments = @('Dev', 'CI')
             }
-            'fix-ci-validation' = @{
-                Enabled = $false  # Disabled by default - maintenance only
-                Description = 'Fix CI validation issues'
-                RequiresApproval = $true
+            'fix-ci-validation'      = @{
+                Enabled             = $false  # Disabled by default - maintenance only
+                Description         = 'Fix CI validation issues'
+                RequiresApproval    = $true
                 AllowedEnvironments = @('Dev')
             }
         }
     }
-    
+
     # ===================================================================
     # USER INTERFACE - Display and Interaction Settings
     # ===================================================================
-    UI = @{
+    UI                       = @{
         # Visual settings
-        ShowHints = $true
-        MenuStyle = 'Interactive'
+        ShowHints          = $true
+        MenuStyle          = 'Interactive'
         ClearScreenOnStart = $true
-        TerminalWidth = 'auto'
-        EnableAnimations = $false  # Disabled in CI automatically
-        EnableColors = $true
+        TerminalWidth      = 'auto'
+        EnableAnimations   = $false  # Disabled in CI automatically
+        EnableColors       = $true
         ShowWelcomeMessage = $true
-        ProgressBarStyle = 'Classic'
-        EnableEmoji = $true
-        ShowExecutionTime = $true
-        
+        ProgressBarStyle   = 'Classic'
+        EnableEmoji        = $true
+        ShowExecutionTime  = $true
+
         # Modal UI Settings (VIM-like interface)
-        ModalUI = @{
-            Enabled = $true  # Enable VIM-like modal UI enhancements
-            DefaultMode = 'Normal'  # Starting mode (Normal, Command, Search)
-            VimBindings = $true  # Use VIM-style keys (h,j,k,l)
+        ModalUI            = @{
+            Enabled           = $true  # Enable VIM-like modal UI enhancements
+            DefaultMode       = 'Normal'  # Starting mode (Normal, Command, Search)
+            VimBindings       = $true  # Use VIM-style keys (h,j,k,l)
             ShowModeIndicator = $true  # Show current mode in UI
-            CommandHistory = $true  # Enable command history
-            MaxHistoryItems = 50  # Maximum history entries
-            SearchAsYouType = $true  # Real-time search filtering
-            QuickSelection = $true  # Enable number selection (1-9, 0)
-            
+            CommandHistory    = $true  # Enable command history
+            MaxHistoryItems   = 50  # Maximum history entries
+            SearchAsYouType   = $true  # Real-time search filtering
+            QuickSelection    = $true  # Enable number selection (1-9, 0)
+
             # Key binding customization (advanced users)
-            KeyBindings = @{
+            KeyBindings       = @{
                 # Can override default bindings here
                 # Format: @{ Mode = @{ 'Key' = @{ Action = 'ActionName'; Description = 'Description' } } }
                 # Example: Normal = @{ 'x' = @{ Action = 'Delete-Item'; Description = 'Delete item' } }
             }
         }
-        
+
         # Themes
-        Theme = 'Default'
-        Themes = @{
+        Theme              = 'Default'
+        Themes             = @{
             Default = @{
                 Primary = 'Cyan'
                 Warning = 'Yellow'
                 Success = 'Green'
-                Error = 'Red'
-                Info = 'White'
-                Muted = 'DarkGray'
+                Error   = 'Red'
+                Info    = 'White'
+                Muted   = 'DarkGray'
             }
-            Dark = @{
+            Dark    = @{
                 Primary = 'DarkCyan'
                 Warning = 'DarkYellow'
                 Success = 'DarkGreen'
-                Error = 'DarkRed'
-                Info = 'Gray'
-                Muted = 'DarkGray'
+                Error   = 'DarkRed'
+                Info    = 'Gray'
+                Muted   = 'DarkGray'
             }
         }
     }
-    
+
     # ===================================================================
     # TESTING - Test Execution and Quality Assurance
     # ===================================================================
-    Testing = @{
+    Testing                  = @{
         # Testing framework
-        Framework = 'Pester'
-        ShowProgress = $true
+        Framework          = 'Pester'
+        ShowProgress       = $true
         NotifyOnCompletion = $true
-        ShowSkipped = $true
-        
+        ShowSkipped        = $true
+
         # Test execution profiles
-        Profiles = @{
-            Quick = @{
+        Profiles           = @{
+            Quick    = @{
                 Description = 'Fast validation for development'
-                Categories = @('Unit', 'Syntax')
-                Timeout = 300
-                FailFast = $true
+                Categories  = @('Unit', 'Syntax')
+                Timeout     = 300
+                FailFast    = $true
             }
             Standard = @{
                 Description = 'Default test suite'
-                Categories = @('Unit', 'Integration', 'Syntax')
-                Timeout = 900
-                FailFast = $false
+                Categories  = @('Unit', 'Integration', 'Syntax')
+                Timeout     = 900
+                FailFast    = $false
             }
-            Full = @{
+            Full     = @{
                 Description = 'Complete validation including performance'
-                Categories = @('*')
-                Timeout = 3600
-                FailFast = $false
+                Categories  = @('*')
+                Timeout     = 3600
+                FailFast    = $false
             }
-            CI = @{
-                Description = 'Continuous Integration suite'
-                Categories = @('Unit', 'Integration', 'E2E')
-                Timeout = 1800
-                FailFast = $true
+            CI       = @{
+                Description     = 'Continuous Integration suite'
+                Categories      = @('Unit', 'Integration', 'E2E')
+                Timeout         = 1800
+                FailFast        = $true
                 GenerateReports = $true
-                Platforms = @('Windows', 'Linux', 'macOS')
+                Platforms       = @('Windows', 'Linux', 'macOS')
             }
         }
-        
+
         # Pester configuration
-        Pester = @{
+        Pester             = @{
             # Parallel execution settings - optimized for performance
             Parallel = @{
-                Enabled = $true
-                BlockSize = 3   # Base block size for Pester parallel execution
-                Workers = 4     # Balanced worker count for CI environments
+                Enabled          = $true
+                BlockSize        = 3   # Base block size for Pester parallel execution
+                Workers          = 4     # Balanced worker count for CI environments
                 ProcessIsolation = $false  # Disable process isolation for faster execution
             }
-            
+
             # Output settings - optimized for CI/CD
-            Output = @{
-                Verbosity = 'Minimal'     # Minimal output for speed
-                CIFormat = $true          # Use CI-friendly output format
+            Output   = @{
+                Verbosity           = 'Minimal'     # Minimal output for speed
+                CIFormat            = $true          # Use CI-friendly output format
                 StackTraceVerbosity = 'FirstLine'  # Reduce verbose output
-                ShowPassedTests = $false  # Only show failures for speed
+                ShowPassedTests     = $false  # Only show failures for speed
             }
-            
+
             # Run settings
-            Run = @{
-                PassThru = $true  # Return result object
-                Exit = $false     # Don't exit PowerShell after tests
+            Run      = @{
+                PassThru      = $true  # Return result object
+                Exit          = $false     # Don't exit PowerShell after tests
                 TestExtension = '.Tests.ps1'  # Test file extension
             }
-            
+
             # Filter settings - control which tests to run
             # NOTE: To run ALL tests, leave Tag empty or set to @()
-            Filter = @{
-                Tag = @()  # Empty array = run all tests regardless of tags
+            Filter   = @{
+                Tag        = @()  # Empty array = run all tests regardless of tags
                 ExcludeTag = @('Skip', 'Disabled')  # Only exclude explicitly disabled tests
             }
-            
+
             # Should assertion settings
-            Should = @{
+            Should   = @{
                 ErrorAction = 'Stop'  # Stop, Continue, SilentlyContinue
             }
         }
-        
+
         # PSScriptAnalyzer settings
-        PSScriptAnalyzer = @{
-            Enabled = $true
-            OutputPath = './tests/analysis'
-            
+        PSScriptAnalyzer   = @{
+            Enabled      = $true
+            OutputPath   = './library/tests/analysis'
+
             # Select which rules to run
             IncludeRules = @('*')
-            
+
             # Exclude specific rules
             ExcludeRules = @(
                 'PSAvoidUsingWriteHost'  # We use Write-Host for UI output
                 'PSUseShouldProcessForStateChangingFunctions'  # Not all functions need ShouldProcess
             )
-            
+
             # Severity levels to check
-            Severity = @('Error', 'Warning', 'Information')
-            
+            Severity     = @('Error', 'Warning', 'Information')
+
             # Rule-specific settings
-            Rules = @{
-                PSProvideCommentHelp = @{
-                    Enable = $true
+            Rules        = @{
+                PSProvideCommentHelp  = @{
+                    Enable       = $true
                     ExportedOnly = $false
                     BlockComment = $true
-                    Placement = "begin"
+                    Placement    = "begin"
                 }
 
                 PSUseCompatibleSyntax = @{
-                    Enable = $true
+                    Enable         = $true
                     TargetVersions = @('7.0')
                 }
             }
         }
-        
+
         # Code coverage
-        CodeCoverage = @{
-            Enabled = $true
-            OutputPath = './tests/coverage'
-            Format = @('JaCoCo', 'Cobertura')
+        CodeCoverage       = @{
+            Enabled        = $true
+            OutputPath     = './library/tests/coverage'
+            Format         = @('JaCoCo', 'Cobertura')
             MinimumPercent = 80
-            ExcludePaths = @('*/tests/*', '*/legacy-to-migrate/*', '*/examples/*')
+            ExcludePaths   = @('*/tests/*', '*/legacy-to-migrate/*', '*/library/examples/*')
         }
-        
+
         # Test output
-        OutputPath = './tests/results'
-        OutputFormat = @('NUnitXml', 'JUnitXml')
-        GenerateReport = $true
+        OutputPath         = './library/tests/results'
+        OutputFormat       = @('NUnitXml', 'JUnitXml')
+        GenerateReport     = $true
         OpenReportAfterRun = $false
     }
-    
+
     # ===================================================================
     # DEVELOPMENT - Development Tools and Git Automation
     # ===================================================================
-    Development = @{
+    Development              = @{
         # Git automation
-        GitAutomation = @{
-            Enabled = $true
-            DefaultBranch = 'main'
-            AutoCommit = $false
-            AutoPR = $false
-            SignCommits = $false
-            
+        GitAutomation   = @{
+            Enabled           = $true
+            DefaultBranch     = 'main'
+            AutoCommit        = $false
+            AutoPR            = $false
+            SignCommits       = $false
+
             # Commit conventions
             CommitConventions = @{
-                Format = 'conventional'
-                SignOff = $true
-                IssueReferences = $true
-                Scopes = @('core', 'orchestration', 'infrastructure', 'tests', 'config', 'domains', 'ai', 'ui', 'automation')
-                MaxSubjectLength = 72
+                Format            = 'conventional'
+                SignOff           = $true
+                IssueReferences   = $true
+                Scopes            = @('core', 'orchestration', 'infrastructure', 'tests', 'config', 'domains', 'ai', 'ui', 'automation')
+                MaxSubjectLength  = 72
                 MaxBodyLineLength = 100
             }
-            
+
             # Branch naming
-            BranchNaming = @{
-                Pattern = '{type}/{issue-number}-{description}'
-                Types = @('feature', 'fix', 'docs', 'test', 'refactor', 'chore')
+            BranchNaming      = @{
+                Pattern   = '{type}/{issue-number}-{description}'
+                Types     = @('feature', 'fix', 'docs', 'test', 'refactor', 'chore')
                 MaxLength = 63
             }
         }
-        
+
         # AI assistance
         AIAgenticCoding = @{
-            Enabled = $true
-            Provider = 'auto'
+            Enabled            = $true
+            Provider           = 'auto'
             ValidationRequired = $true
             AutoTestGeneration = $true
-            
+
             # Code review settings
-            CodeReview = @{
+            CodeReview         = @{
                 PSScriptAnalyzer = $true
-                DependencyCheck = $true
-                ComplexityCheck = $true
-                SecurityScan = $true
+                DependencyCheck  = $true
+                ComplexityCheck  = $true
+                SecurityScan     = $true
             }
-            
+
             # Guardrails
-            Guardrails = @{
+            Guardrails         = @{
                 RequireDocumentation = $true
-                RequireTests = $true
-                RequireApproval = $true
-                MaxFilesPerCommit = 10
-                MaxLinesPerFile = 500
-                AllowedFileTypes = @('.ps1', '.psm1', '.psd1', '.json', '.md', '.yml', '.yaml')
-                BlockPatterns = @('password', 'secret', 'key', 'token')
+                RequireTests         = $true
+                RequireApproval      = $true
+                MaxFilesPerCommit    = 10
+                MaxLinesPerFile      = 500
+                AllowedFileTypes     = @('.ps1', '.psm1', '.psd1', '.json', '.md', '.yml', '.yaml')
+                BlockPatterns        = @('password', 'secret', 'key', 'token')
             }
         }
-        
+
         # Code quality
-        CodeQuality = @{
-            EnforceCodingStandards = $true
-            StrictMode = 'Latest'
+        CodeQuality     = @{
+            EnforceCodingStandards  = $true
+            StrictMode              = 'Latest'
             MaxCyclomaticComplexity = 10
-            MaxFunctionLength = 100
+            MaxFunctionLength       = 100
             RequireCommentBasedHelp = $true
             RequireTypeDeclarations = $false
         }
     }
-    
+
     # ===================================================================
     # AI - Artificial Intelligence and Automation
     # ===================================================================
-    AI = @{
+    AI                       = @{
         # General AI settings
-        Enabled = $true
-        
+        Enabled         = $true
+
         # AI providers
-        Providers = @{
+        Providers       = @{
             Claude = @{
-                Enabled = $true
-                Priority = 1
-                MaxTokens = 4096
-                Temperature = 0.7
-                ApiKeyEnvVar = 'ANTHROPIC_API_KEY'
-                Model = 'claude-3-sonnet-20240229'
+                Enabled       = $true
+                Priority      = 1
+                MaxTokens     = 4096
+                Temperature   = 0.7
+                ApiKeyEnvVar  = 'ANTHROPIC_API_KEY'
+                Model         = 'claude-3-sonnet-20240229'
                 UsageTracking = $true
             }
-            Codex = @{
-                Enabled = $true
-                Priority = 3
-                MaxTokens = 8192
-                Temperature = 0.5
-                ApiKeyEnvVar = 'OPENAI_API_KEY'
-                Model = 'gpt-4'
+            Codex  = @{
+                Enabled       = $true
+                Priority      = 3
+                MaxTokens     = 8192
+                Temperature   = 0.5
+                ApiKeyEnvVar  = 'OPENAI_API_KEY'
+                Model         = 'gpt-4'
                 UsageTracking = $true
             }
             Gemini = @{
-                Enabled = $true
-                Priority = 2
-                MaxTokens = 2048
-                Temperature = 0.9
-                ApiKeyEnvVar = 'GOOGLE_API_KEY'
-                Model = 'gemini-pro'
+                Enabled       = $true
+                Priority      = 2
+                MaxTokens     = 2048
+                Temperature   = 0.9
+                ApiKeyEnvVar  = 'GOOGLE_API_KEY'
+                Model         = 'gemini-pro'
                 UsageTracking = $true
             }
         }
-        
+
         # AI capabilities
-        TestGeneration = @{
-            Enabled = $true
-            Framework = 'Pester'
-            Version = '5.0+'
-            Provider = 'Claude'
-            CoverageTarget = 80
-            GenerateTypes = @('Unit', 'Integration', 'E2E')
-            IncludeMocking = $true
-            IncludeEdgeCases = $true
+        TestGeneration  = @{
+            Enabled                = $true
+            Framework              = 'Pester'
+            Version                = '5.0+'
+            Provider               = 'Claude'
+            CoverageTarget         = 80
+            GenerateTypes          = @('Unit', 'Integration', 'E2E')
+            IncludeMocking         = $true
+            IncludeEdgeCases       = $true
             IncludeErrorConditions = $true
         }
-        
-        CodeReview = @{
-            Enabled = $true
+
+        CodeReview      = @{
+            Enabled  = $true
             Profiles = @{
-                Quick = @{
-                    Checks = @('syntax', 'quality')
-                    Providers = @('Codex')
+                Quick         = @{
+                    Checks      = @('syntax', 'quality')
+                    Providers   = @('Codex')
                     Description = 'Fast validation for development'
-                    Timeout = 60
+                    Timeout     = 60
                 }
-                Standard = @{
-                    Checks = @('security', 'quality', 'performance')
-                    Providers = @('Claude', 'Codex')
+                Standard      = @{
+                    Checks      = @('security', 'quality', 'performance')
+                    Providers   = @('Claude', 'Codex')
                     Description = 'Default review process'
-                    Timeout = 300
+                    Timeout     = 300
                 }
                 Comprehensive = @{
-                    Checks = @('security', 'quality', 'performance', 'compliance')
-                    Providers = @('Claude', 'Gemini', 'Codex')
-                    Description = 'Full analysis with all providers'
-                    Timeout = 600
+                    Checks             = @('security', 'quality', 'performance', 'compliance')
+                    Providers          = @('Claude', 'Gemini', 'Codex')
+                    Description        = 'Full analysis with all providers'
+                    Timeout            = 600
                     FailOnHighSeverity = $true
                 }
             }
         }
-        
+
         # Usage monitoring
         UsageMonitoring = @{
-            Enabled = $true
-            TrackCosts = $true
+            Enabled         = $true
+            TrackCosts      = $true
             GenerateReports = $true
-            BudgetAlerts = @{
-                Enabled = $true
-                DailyLimit = 100
-                MonthlyLimit = 1000
+            BudgetAlerts    = @{
+                Enabled        = $true
+                DailyLimit     = 100
+                MonthlyLimit   = 1000
                 AlertThreshold = 80
             }
         }
     }
-    
+
     # ===================================================================
     # INFRASTRUCTURE - System and Infrastructure Settings
     # ===================================================================
-    Infrastructure = @{
+    Infrastructure           = @{
         # Provider settings
-        Provider = 'opentofu'
-        Hypervisor = 'hyperv'
+        Provider         = 'opentofu'
+        Hypervisor       = 'hyperv'
         WorkingDirectory = './infrastructure'
-        
+
         # Default resource settings
-        DefaultVMPath = 'C:\VMs'
-        DefaultMemory = '2GB'
-        DefaultCPU = 2
-        
+        DefaultVMPath    = 'C:\VMs'
+        DefaultMemory    = '2GB'
+        DefaultCPU       = 2
+
         # Directory paths
-        Directories = @{
-            LocalPath = 'C:/temp'
-            HyperVPath = 'C:/HyperV'
-            IsoSharePath = 'C:/iso_share'
+        Directories      = @{
+            LocalPath     = 'C:/temp'
+            HyperVPath    = 'C:/HyperV'
+            IsoSharePath  = 'C:/iso_share'
             InfraRepoPath = 'C:/Temp/base-infra'
         }
-        
+
         # HyperV specific settings
-        HyperV = @{
+        HyperV           = @{
             EnableManagementTools = $true
-            Https = $true
-            Insecure = $true
-            UseNtlm = $true
-            Timeout = '30s'
-            Port = 5986
-            ScriptPath = 'C:/Temp/tofu_%RAND%.cmd'
-            ProviderVersion = '1.2.1'
+            Https                 = $true
+            Insecure              = $true
+            UseNtlm               = $true
+            Timeout               = '30s'
+            Port                  = 5986
+            ScriptPath            = 'C:/Temp/tofu_%RAND%.cmd'
+            ProviderVersion       = '1.2.1'
         }
-        
+
         # Repository settings
-        Repositories = @{
-            RepoUrl = 'https://github.com/Aitherium/AitherLabs.git'
+        Repositories     = @{
+            RepoUrl      = 'https://github.com/Aitherium/AitherLabs.git'
             InfraRepoUrl = 'https://github.com/Aitherium/aitherium-infrastructure.git'
         }
+
+        # Git Submodule Management for Infrastructure
+        # Infrastructure repositories are configured as Git submodules for flexible, versioned deployments
+        Submodules       = @{
+            Enabled      = $true
+            AutoInit     = $true  # Automatically initialize submodules on bootstrap
+            AutoUpdate   = $false # Don't auto-update submodules (requires explicit action)
+            
+            # Default infrastructure repository (Aitherium Infrastructure)
+            # Tailored for customized mass deployments to any environment
+            Default      = @{
+                Name        = 'aitherium-infrastructure'
+                Url         = 'https://github.com/Aitherium/aitherium-infrastructure.git'
+                Path        = 'infrastructure/aitherium'
+                Branch      = 'main'
+                Description = 'Default Aitherium infrastructure templates for mass deployment'
+                Enabled     = $true
+            }
+
+            # Additional infrastructure repositories can be configured here
+            # Each entry will be managed as a separate Git submodule
+            Repositories = @{
+                # Example: Custom infrastructure for specific environments
+                # 'custom-infra' = @{
+                #     Name        = 'custom-infrastructure'
+                #     Url         = 'https://github.com/YourOrg/custom-infrastructure.git'
+                #     Path        = 'infrastructure/custom'
+                #     Branch      = 'main'
+                #     Description = 'Custom infrastructure for specific deployments'
+                #     Enabled     = $false
+                # }
+                
+                # Example: Kubernetes-specific infrastructure
+                # 'k8s-infra' = @{
+                #     Name        = 'kubernetes-infrastructure'
+                #     Url         = 'https://github.com/YourOrg/k8s-infrastructure.git'
+                #     Path        = 'infrastructure/kubernetes'
+                #     Branch      = 'main'
+                #     Description = 'Kubernetes-specific infrastructure templates'
+                #     Enabled     = $false
+                # }
+            }
+
+            # Submodule behavior settings
+            Behavior     = @{
+                RecursiveInit    = $true  # Initialize submodules recursively
+                ShallowClone     = $false # Use full clone (not shallow) for better git history
+                ParallelJobs     = 4      # Number of parallel jobs for submodule operations
+                TimeoutSeconds   = 300    # Timeout for submodule operations
+                RetryAttempts    = 3      # Number of retry attempts for failed operations
+                VerifySignatures = $false # Verify GPG signatures on submodule commits
+            }
+        }
     }
-    
+
     # ===================================================================
     # SYSTEM - Operating System Configuration
     # ===================================================================
-    System = @{
-        ComputerName = 'default-lab'
-        SetComputerName = $false
-        ConfigureFirewall = $false
-        FirewallPorts = @(3389, 5985, 5986, 445, 135, '49152-65535')
+    System                   = @{
+        ComputerName       = 'default-lab'
+        SetComputerName    = $false
+        ConfigureFirewall  = $false
+        FirewallPorts      = @(3389, 5985, 5986, 445, 135, '49152-65535')
         AllowRemoteDesktop = $false
-        SetTrustedHosts = $false
-        TrustedHosts = ''
-        SetDNSServers = $false
-        DNSServers = '8.8.8.8,1.1.1.1'
-        DisableTCPIP6 = $false
-        ConfigPXE = $false
-        SetupLabProfile = $false
+        SetTrustedHosts    = $false
+        TrustedHosts       = ''
+        SetDNSServers      = $false
+        DNSServers         = '8.8.8.8,1.1.1.1'
+        DisableTCPIP6      = $false
+        ConfigPXE          = $false
+        SetupLabProfile    = $false
+    }
+
+    # ===================================================================
+    # ENVIRONMENT CONFIGURATION - System Environment Settings
+    # ===================================================================
+    EnvironmentConfiguration = @{
+        # Automatic configuration application
+        ApplyOnBootstrap = $true      # Apply during bootstrap
+        ApplyOnStart = $false         # Apply when Start-AitherZero runs
+        
+        # Windows-specific features
+        Windows = @{
+            # Long path support (paths > 260 characters)
+            LongPathSupport = @{
+                Enabled = $true       # Enable by default for development
+                AutoApply = $true     # Automatically configure
+                Description = 'Enable NTFS long path support (> 260 characters)'
+                RegistryPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem'
+                RegistryKey = 'LongPathsEnabled'
+                RegistryValue = 1
+                RequiresRestart = $false
+            }
+            
+            # Developer Mode
+            DeveloperMode = @{
+                Enabled = $false      # Opt-in for security
+                AutoApply = $false
+                Description = 'Enable Windows Developer Mode (sideloading, SSH, etc.)'
+                RequiresRestart = $false
+            }
+            
+            # Performance settings
+            Performance = @{
+                DisableIndexing = $false  # Disable on dev paths only
+                DisableDefender = $false  # Dangerous - requires explicit opt-in
+                OptimizeForPerformance = $false
+            }
+        }
+        
+        # Cross-platform environment variables
+        EnvironmentVariables = @{
+            # System-wide variables (requires admin on Windows)
+            System = @{
+                # Example: AITHERZERO_HOME = $env:AITHERZERO_ROOT
+                # Will be populated dynamically or via config.local.psd1
+            }
+            
+            # User-level variables
+            User = @{
+                AITHERZERO_PROFILE = ''           # Override default profile
+                AITHERZERO_CONFIG_PATH = ''       # Custom config file path
+                AITHERZERO_NONINTERACTIVE = ''    # Force non-interactive mode
+            }
+            
+            # Process-level variables (current session only)
+            Process = @{
+                AITHERZERO_DEBUG = $false
+                AITHERZERO_VERBOSE = $false
+                AITHERZERO_DRYRUN = $false
+            }
+        }
+        
+        # PATH management
+        PathConfiguration = @{
+            AddToPath = $true
+            Paths = @{
+                User = @()      # User-level paths to add
+                System = @()    # System-level paths (requires admin)
+            }
+            CleanDuplicates = $true
+            ValidateExists = $true
+        }
+        
+        # Linux/macOS specific
+        Unix = @{
+            # Shell configuration
+            ShellIntegration = @{
+                Enabled = $true
+                Shells = @('bash', 'zsh', 'fish')
+                AddToProfile = $true
+            }
+            
+            # Permissions
+            EnsureExecutable = $true  # Make scripts executable
+        }
+        
+        # Validation settings
+        Validation = @{
+            ValidateBeforeApply = $true
+            BackupBeforeChanges = $true
+            RollbackOnError = $true
+            DryRunFirst = $false      # Test before applying
+        }
     }
     
     # ===================================================================
     # CERTIFICATE AUTHORITY - CA Configuration
     # ===================================================================
-    CertificateAuthority = @{
-        CommonName = 'default-lab-RootCA'
+    CertificateAuthority     = @{
+        CommonName    = 'default-lab-RootCA'
         ValidityYears = 5
-        InstallCA = $false
+        InstallCA     = $false
     }
-    
+
     # ===================================================================
     # SECURITY - Security and Access Control
     # ===================================================================
-    Security = @{
-        CredentialStore = 'LocalMachine'
-        EncryptionType = 'AES256'
-        PasswordComplexity = 'Medium'
+    Security                 = @{
+        CredentialStore        = 'LocalMachine'
+        EncryptionType         = 'AES256'
+        PasswordComplexity     = 'Medium'
         RequireSecureTransport = $true
         RequireAdminForInstall = $false
         EnforceExecutionPolicy = $false
-        AllowUnsignedScripts = $true
-        EnableMFA = $false
-        MaxLoginAttempts = 3
-        SessionTimeout = 3600
+        AllowUnsignedScripts   = $true
+        EnableMFA              = $false
+        MaxLoginAttempts       = 3
+        SessionTimeout         = 3600
     }
-    
+
     # ===================================================================
     # REPORTING - Reports and Analytics
     # ===================================================================
-    Reporting = @{
+    Reporting                = @{
         # Report generation
-        AutoGenerateReports = $true
-        DefaultFormat = 'HTML'
-        ReportPath = './reports'
-        ExportFormats = @('HTML', 'JSON', 'CSV', 'PDF', 'Markdown')
-        CompressReports = $false
-        IncludeSystemInfo = $true
+        AutoGenerateReports  = $true
+        DefaultFormat        = 'HTML'
+        ReportPath           = './library/reports'
+        ExportFormats        = @('HTML', 'JSON', 'CSV', 'PDF', 'Markdown')
+        CompressReports      = $false
+        IncludeSystemInfo    = $true
         IncludeExecutionLogs = $true
-        IncludeScreenshots = $false
-        MetricsCollection = $true
+        IncludeScreenshots   = $false
+        MetricsCollection    = $true
         MetricsRetentionDays = 90
-        TemplateEngine = 'Default'
-        
+        TemplateEngine       = 'Default'
+
         # Report distribution
-        EmailReports = $false
-        UploadToCloud = $false
-        
+        EmailReports         = $false
+        UploadToCloud        = $false
+
         # Dashboard
-        DashboardEnabled = $true
-        DashboardPort = 8080
-        DashboardAutoOpen = $false
-        ClearScreenOnStart = $false
-        
+        DashboardEnabled     = $true
+        DashboardPort        = 8080
+        DashboardAutoOpen    = $false
+        ClearScreenOnStart   = $false
+
         # Tech debt tracking
-        TechDebtReporting = @{
-            Enabled = $true
-            AutoTrack = $true
-            Schedule = 'Weekly'
+        TechDebtReporting    = @{
+            Enabled    = $true
+            AutoTrack  = $true
+            Schedule   = 'Weekly'
             Thresholds = @{
-                CodeQuality = 70
+                CodeQuality   = 70
                 Documentation = 80
-                Security = 90
-                ConfigUsage = 80
+                Security      = 90
+                ConfigUsage   = 80
             }
         }
     }
-    
+
     # ===================================================================
     # LOGGING - Logging and Audit Configuration
     # ===================================================================
-    Logging = @{
+    Logging                  = @{
         # General logging
-        Level = 'Information'
-        Path = './logs'
-        File = 'logs/aitherzero.log'
-        Console = $true
-        MaxFileSize = '10MB'
+        Level         = 'Information'
+        Path          = './logs'
+        File          = 'logs/aitherzero.log'
+        Console       = $true
+        MaxFileSize   = '10MB'
         RetentionDays = 30
-        Targets = @('Console', 'File')
-        
+        Targets       = @('Console', 'File')
+
         # Audit logging
-        AuditLogging = @{
-            Enabled = $true
-            Level = 'All'
-            ComplianceMode = $true
-            IncludeUserInfo = $true
-            IncludeSystemInfo = $true
+        AuditLogging  = @{
+            Enabled              = $true
+            Level                = 'All'
+            ComplianceMode       = $true
+            IncludeUserInfo      = $true
+            IncludeSystemInfo    = $true
             IncludeCorrelationId = $true
-            RetentionDays = 90
+            RetentionDays        = 90
         }
     }
-    
+
     # ===================================================================
     # DEPENDENCIES - Module and Package Dependencies
     # ===================================================================
-    Dependencies = @{
+    Dependencies             = @{
         # Validation settings
-        ValidateOnStart = $true
+        ValidateOnStart     = $true
         EnforceDependencies = $false
-        UpdateFrequency = 'OnChange'
-        
+        UpdateFrequency     = 'OnChange'
+
         # External PowerShell modules
-        External = @{
-            Pester = @{
-                Version = '5.0.0+'
-                Required = $false
+        External            = @{
+            Pester           = @{
+                Version     = '5.0.0+'
+                Required    = $false
                 Description = 'Testing framework'
             }
             PSScriptAnalyzer = @{
-                Version = '1.20.0+'
-                Required = $false
+                Version     = '1.20.0+'
+                Required    = $false
                 Description = 'Code quality analysis'
             }
-            ThreadJob = @{
-                Version = '2.0.3+'
-                Required = $true
+            ThreadJob        = @{
+                Version     = '2.0.3+'
+                Required    = $true
                 Description = 'Required for parallel execution'
             }
         }
-        
+
         # Internal modules and scripts (placeholder for future expansion)
-        Modules = @{}
-        Scripts = @{}
+        Modules             = @{}
+        Scripts             = @{}
     }
-    
+
     # ===================================================================
     # EXTENSION SYSTEM - Plugin Architecture
     # ===================================================================
-    Extensions = @{
+    Extensions               = @{
         # Enable extension system
-        Enabled = $true
-        
+        Enabled            = $true
+
         # Extension search paths (ordered by priority)
-        SearchPaths = @(
+        SearchPaths        = @(
             './extensions'                           # Local extensions
             "$HOME/.aitherzero/extensions"          # User extensions
             "$env:AITHERZERO_EXTENSIONS_PATH"       # Custom path via environment variable
         )
-        
+
         # Auto-load extensions at startup
-        AutoLoad = $true
-        
+        AutoLoad           = $true
+
         # Extension validation
-        RequireManifest = $true
-        RequireSignature = $false  # Set to true for production environments
-        
+        RequireManifest    = $true
+        RequireSignature   = $false  # Set to true for production environments
+
         # Reserved script number ranges
         ScriptNumberRanges = @{
-            Core = @{ Start = 0; End = 7999; Description = 'AitherZero Core Scripts' }
-            Extensions = @{ Start = 8000; End = 8999; Description = 'Extension Scripts' }
+            Core        = @{ Start = 0; End = 7999; Description = 'AitherZero Core Scripts' }
+            Extensions  = @{ Start = 8000; End = 8999; Description = 'Extension Scripts' }
             Maintenance = @{ Start = 9000; End = 9999; Description = 'Maintenance Scripts' }
         }
-        
+
         # Extension feature flags
-        Features = @{
-            CustomModes = $true           # Allow extensions to add CLI modes
+        Features           = @{
+            CustomModes    = $true           # Allow extensions to add CLI modes
             CustomCommands = $true        # Allow extensions to add PowerShell commands
-            CustomScripts = $true         # Allow extensions to add automation scripts
-            CustomDomains = $true         # Allow extensions to add domain modules
-            HotReload = $false           # Hot-reload extensions without restart (experimental)
+            CustomScripts  = $true         # Allow extensions to add automation scripts
+            CustomDomains  = $true         # Allow extensions to add domain modules
+            HotReload      = $false           # Hot-reload extensions without restart (experimental)
         }
-        
+
         # Registered extensions (populated at runtime by ExtensionManager)
-        Loaded = @()
+        Loaded             = @()
     }
-    
+
     # ===================================================================
     # AUTOMATED ISSUE MANAGEMENT - GitHub Issue Automation
     # ===================================================================
     AutomatedIssueManagement = @{
         # Issue creation settings
-        AutoCreateIssues = $true
+        AutoCreateIssues       = $true
         CreateFromTestFailures = $true
-        CreateFromCodeQuality = $true
-        CreateFromSecurity = $true
-        
+        CreateFromCodeQuality  = $true
+        CreateFromSecurity     = $true
+
         # Priority-based processing
-        PriorityLabels = @{
-            Enabled = $true
-            Required = $true  # Priority label REQUIRED before automated processing
-            ValidLabels = @('P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10')
+        PriorityLabels         = @{
+            Enabled         = $true
+            Required        = $true  # Priority label REQUIRED before automated processing
+            ValidLabels     = @('P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10')
             DefaultPriority = 'P5'  # Default if not specified
-            
+
             # Priority definitions
-            P1 = @{ Name = 'Critical'; SLA = '4 hours'; AutoProcess = $true }
-            P2 = @{ Name = 'High'; SLA = '24 hours'; AutoProcess = $true }
-            P3 = @{ Name = 'Medium'; SLA = '48 hours'; AutoProcess = $true }
-            P4 = @{ Name = 'Normal'; SLA = '1 week'; AutoProcess = $true }
-            P5 = @{ Name = 'Low'; SLA = '2 weeks'; AutoProcess = $true }
-            P6toP10 = @{ Name = 'Backlog'; SLA = 'As capacity allows'; AutoProcess = $true }
+            P1              = @{ Name = 'Critical'; SLA = '4 hours'; AutoProcess = $true }
+            P2              = @{ Name = 'High'; SLA = '24 hours'; AutoProcess = $true }
+            P3              = @{ Name = 'Medium'; SLA = '48 hours'; AutoProcess = $true }
+            P4              = @{ Name = 'Normal'; SLA = '1 week'; AutoProcess = $true }
+            P5              = @{ Name = 'Low'; SLA = '2 weeks'; AutoProcess = $true }
+            P6toP10         = @{ Name = 'Backlog'; SLA = 'As capacity allows'; AutoProcess = $true }
         }
-        
+
         # Automated processing rules
-        AutomatedProcessing = @{
-            Enabled = $true
-            RequirePriorityLabel = $true  # Must have P1-P10 label to be auto-processed
+        AutomatedProcessing    = @{
+            Enabled               = $true
+            RequirePriorityLabel  = $true  # Must have P1-P10 label to be auto-processed
             RequireManualApproval = $false  # Set to true to require @copilot mention
-            MinimumAgeHours = 2  # Wait 2 hours before auto-processing (allows manual triage)
-            MaxIssuesPerRun = 5  # Limit concurrent processing
-            
+            MinimumAgeHours       = 2  # Wait 2 hours before auto-processing (allows manual triage)
+            MaxIssuesPerRun       = 5  # Limit concurrent processing
+
             # Filters
-            RequiredLabels = @('copilot-task')  # Must have these labels
-            ExcludedLabels = @('on-hold', 'blocked', 'wontfix')  # Skip these
+            RequiredLabels        = @('copilot-task')  # Must have these labels
+            ExcludedLabels        = @('on-hold', 'blocked', 'wontfix')  # Skip these
         }
-        
+
         # PR-based grouping (Phase 2)
-        PRGrouping = @{
-            Enabled = $true
-            MinimumGroupSize = 2  # Minimum issues to create group PR (except P1/P2)
-            GroupByType = $true  # Group by issue type (code-quality, testing, security)
-            GroupByDomain = $true  # Group by file/domain context
-            GroupByPriority = $true  # Final grouping by priority level
-            
+        PRGrouping             = @{
+            Enabled                  = $true
+            MinimumGroupSize         = 2  # Minimum issues to create group PR (except P1/P2)
+            GroupByType              = $true  # Group by issue type (code-quality, testing, security)
+            GroupByDomain            = $true  # Group by file/domain context
+            GroupByPriority          = $true  # Final grouping by priority level
+
             # Grouping rules
-            AlwaysGroupTypes = @('code-quality', 'testing', 'security', 'maintenance')
+            AlwaysGroupTypes         = @('code-quality', 'testing', 'security', 'maintenance')
             SingleIssuePRForPriority = @('P1', 'P2')  # Create individual PR for these priorities
-            
+
             # Branch naming
-            BranchPrefix = 'auto-fix/'
-            BranchPattern = '{type}-{context}-{priority}-{timestamp}'
-            
+            BranchPrefix             = 'auto-fix/'
+            BranchPattern            = '{type}-{context}-{priority}-{timestamp}'
+
             # PR settings
-            PRTitlePattern = '🤖 [{priority}] Fix {type} issues in {context}'
-            AddCopilotMention = $true  # Mention @copilot in PR
-            LinkIssuesToPR = $true  # Add comments linking issues to PR
-            AddInProgressLabel = $true  # Add in-progress label to grouped issues
+            PRTitlePattern           = '🤖 [{priority}] Fix {type} issues in {context}'
+            AddCopilotMention        = $true  # Mention @copilot in PR
+            LinkIssuesToPR           = $true  # Add comments linking issues to PR
+            AddInProgressLabel       = $true  # Add in-progress label to grouped issues
         }
-        
+
         # Workflow integration
-        Workflows = @{
-            IssueCreation = 'auto-create-issues-from-failures.yml'
-            CopilotAgent = 'automated-copilot-agent.yml'
-            PRAutomation = 'copilot-pr-automation.yml'
+        Workflows              = @{
+            IssueCreation  = 'auto-create-issues-from-failures.yml'
+            CopilotAgent   = 'automated-copilot-agent.yml'
+            PRAutomation   = 'copilot-pr-automation.yml'
             IssueCommenter = 'copilot-issue-commenter.yml'
-            IssueCleanup = 'close-auto-issues.yml'  # Phase 1: Close existing auto-created issues
-            PRGrouping = 'auto-create-prs-for-issues.yml'  # Phase 2: Group issues and create PRs
+            IssueCleanup   = 'close-auto-issues.yml'  # Phase 1: Close existing auto-created issues
+            PRGrouping     = 'auto-create-prs-for-issues.yml'  # Phase 2: Group issues and create PRs
         }
-        
+
         # Label management
-        Labels = @{
-            AutoCreated = 'auto-created'
-            CopilotTask = 'copilot-task'
-            CopilotPR = 'copilot-pr'  # PRs created for grouped issues
+        Labels                 = @{
+            AutoCreated   = 'auto-created'
+            CopilotTask   = 'copilot-task'
+            CopilotPR     = 'copilot-pr'  # PRs created for grouped issues
             NeedsPriority = 'needs-priority'  # Issues awaiting priority assignment
-            TestFailure = 'test-failure'
-            CodeQuality = 'code-quality'
-            Security = 'security'
-            NeedsFix = 'needs-fix'
-            InProgress = 'in-progress'  # Issues linked to active PR
-            NeedsReview = 'needs-review'
+            TestFailure   = 'test-failure'
+            CodeQuality   = 'code-quality'
+            Security      = 'security'
+            NeedsFix      = 'needs-fix'
+            InProgress    = 'in-progress'  # Issues linked to active PR
+            NeedsReview   = 'needs-review'
         }
     }
 }

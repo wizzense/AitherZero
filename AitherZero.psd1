@@ -16,9 +16,22 @@
         'Invoke-AitherScript', 'Get-AitherScript', 'Invoke-AitherSequence',
         'Invoke-AitherPlaybook', 'Get-AitherPlaybook',
         'Get-AitherConfig', 'Set-AitherConfig', 'Switch-AitherEnvironment',
+        'Get-AitherEnvironment', 'Set-AitherEnvironment', 'Set-AitherEnvVariable',
+        'New-AitherDeploymentArtifact', 'New-AitherUnattendXml', 'New-AitherBrewfile',
         'Show-AitherDashboard', 'Get-AitherMetrics', 'Export-AitherMetrics',
         'Get-AitherPlatform', 'Test-AitherAdmin', 'Get-AitherVersion', 'Test-AitherCommand',
         'Write-AitherLog',
+
+        # From EnvironmentConfig Module (NEW)
+        'Get-EnvironmentConfiguration', 'Set-EnvironmentConfiguration',
+        'Get-WindowsLongPathStatus', 'Enable-WindowsLongPathSupport',
+        'Get-WindowsDeveloperModeStatus', 'Enable-WindowsDeveloperMode',
+        'Update-EnvironmentVariable', 'Add-PathEntries', 'Add-ShellIntegration',
+
+        # From DeploymentArtifacts Module (NEW)
+        'New-WindowsUnattendXml', 'New-WindowsRegistryFile',
+        'New-LinuxCloudInitConfig', 'New-LinuxShellScript',
+        'New-MacOSBrewfile', 'New-Dockerfile', 'New-DeploymentArtifacts',
 
         # From Logging modules
         'Write-CustomLog', 'Write-ConfigLog', 'Write-TestingLog',
@@ -65,6 +78,16 @@
         'Get-ProjectRoot', 'Write-ScriptLog', 'Test-IsAdministrator', 'Get-PlatformName',
         'Test-CommandAvailable', 'Get-GitHubToken', 'Invoke-WithRetry', 'Test-GitRepository',
         'Get-ScriptMetadata', 'Format-Duration', 'Test-FeatureOrPrompt',
+
+        # From Security modules
+        'Invoke-SSHCommand', 'Test-SSHConnection', 'ConvertFrom-SecureStringSecurely',
+        
+        # From Encryption
+        'Protect-String', 'Unprotect-String', 'Protect-File', 'Unprotect-File', 
+        'New-EncryptionKey', 'Get-DataHash',
+        
+        # From LicenseManager
+        'New-License', 'Test-License', 'Get-LicenseFromGitHub', 'Get-LicenseKey', 'Find-License',
 
         # Wildcard for any additional functions
         '*'

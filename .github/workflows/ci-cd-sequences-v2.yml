@@ -118,7 +118,7 @@ jobs:
           path: |
             reports/**/*
             logs/**/*.log
-            tests/results/**/*
+            library/tests/results/**/*
           retention-days: 14
 
       - name: ✅ Sequence Execution Summary

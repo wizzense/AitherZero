@@ -105,7 +105,7 @@ When an existing issue is found, it gets a comment like:
 
 ### Latest Failure Details
 
-**File:** `domains/infrastructure/VmManagement.psm1`
+**File:** `aithercore/infrastructure/VmManagement.psm1`
 **Line:** 142
 
 Expected parameter 'Name' but received null

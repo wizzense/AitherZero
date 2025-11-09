@@ -11,17 +11,19 @@ aitherzero orchestrate test-orchestrated                  # 10min (default)
 open reports/dashboard.html
 
 # Regenerate tests
-./automation-scripts/0951_Regenerate-FunctionalTests.ps1 -Mode Sample -Force
+./library/library/automation-scripts/0951_Regenerate-FunctionalTests.ps1 -Mode Sample -Force
 ```
 
 ## What Changed
 
 ### Before
+
 - 8+ orchestration scripts (confusing)
 - Results scattered in 3+ locations
 - Tests only checked "file exists" (useless)
 
-### After  
+### After
+
 - **ONE** playbook: `test-orchestrated.json`
 - **ONE** dashboard: `reports/dashboard.html`
 - **Functional** tests: validate actual behavior
@@ -87,16 +89,18 @@ Context '🎭 Mocked Dependencies' {
 ## Files
 
 ### Core
-- `domains/orchestration/playbooks/testing/test-orchestrated.json` - Main playbook
+
+- `aithercore/orchestration/playbooks/testing/test-orchestrated.json` - Main playbook
 - `.github/workflows/unified-testing.yml` - CI/CD workflow
-- `domains/testing/FunctionalTestGenerator.psm1` - Test generator
-- `automation-scripts/0951_Regenerate-FunctionalTests.ps1` - Batch regeneration
+- `aithercore/testing/FunctionalTestGenerator.psm1` - Test generator
+- `library/automation-scripts/0951_Regenerate-FunctionalTests.ps1` - Batch regeneration
 
 ### Deprecated (Don't Use)
-- `automation-scripts/0460_Orchestrate-Tests.ps1` → Use playbook
-- `automation-scripts/0470_Orchestrate-SimpleTesting.ps1` → Use playbook
-- `automation-scripts/0480_Test-Simple.ps1` → Use playbook
-- `automation-scripts/0490_AI-TestRunner.ps1` → Use playbook
+
+- `library/automation-scripts/0460_Orchestrate-Tests.ps1` → Use playbook
+- `library/automation-scripts/0470_Orchestrate-SimpleTesting.ps1` → Use playbook
+- `library/automation-scripts/0480_Test-Simple.ps1` → Use playbook
+- `library/automation-scripts/0490_AI-TestRunner.ps1` → Use playbook
 
 ## Metrics
 
@@ -110,6 +114,7 @@ Context '🎭 Mocked Dependencies' {
 ## CI/CD
 
 The `unified-testing.yml` workflow:
+
 1. Runs playbook on push/PR
 2. Generates dashboard
 3. Publishes to GitHub Pages
@@ -118,11 +123,13 @@ The `unified-testing.yml` workflow:
 ## Troubleshooting
 
 **Tests fail?**
+
 - Check `reports/dashboard.html` for prioritized issues
 - Review logs: `logs/transcript-*.log`
 
 **Want to customize?**
-- Edit `domains/orchestration/playbooks/testing/test-orchestrated.json`
+
+- Edit `aithercore/orchestration/playbooks/testing/test-orchestrated.json`
 - Add/remove stages
 - Adjust timeouts
 - Create custom profiles
@@ -131,12 +138,12 @@ The `unified-testing.yml` workflow:
 
 | Old Command | New Command |
 |-------------|-------------|
-| `./automation-scripts/0409_Run-AllTests.ps1` | `aitherzero orchestrate test-orchestrated --profile full` |
-| `./automation-scripts/0480_Test-Simple.ps1` | `aitherzero orchestrate test-orchestrated --profile quick` |
+| `./library/library/automation-scripts/0409_Run-AllTests.ps1` | `aitherzero orchestrate test-orchestrated --profile full` |
+| `./library/library/automation-scripts/0480_Test-Simple.ps1` | `aitherzero orchestrate test-orchestrated --profile quick` |
 | Multiple result files | One dashboard: `reports/dashboard.html` |
 
 ---
 
-**Version:** 2.0  
-**Status:** Production Ready  
+**Version:** 2.0
+**Status:** Production Ready
 **Documentation:** This file replaces 6 previous guides

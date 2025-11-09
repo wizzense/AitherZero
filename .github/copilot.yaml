@@ -54,7 +54,7 @@ agents:
       - compliance
       - vulnerability-scanning
     file_patterns:
-      - "domains/security/**/*"
+      - "aithercore/security/**/*"
       - "**/*security*.ps1"
       - "**/*certificate*.ps1"
       - "**/*credential*.ps1"
@@ -111,7 +111,7 @@ agents:
       - console-interface
       - accessibility
     file_patterns:
-      - "domains/experience/**/*"
+      - "aithercore/experience/**/*"
       - "**/*ui*.ps1"
       - "**/*menu*.ps1"
       - "**/*interface*.ps1"
@@ -141,7 +141,7 @@ agents:
       - powershell-modules
       - performance
     file_patterns:
-      - "domains/**/*.psm1"
+      - "aithercore/**/*.psm1"
       - "**/*api*.ps1"
       - "**/*module*.ps1"
       - "automation-scripts/02[0-9][0-9]_*.ps1"  # 0200-0299 range

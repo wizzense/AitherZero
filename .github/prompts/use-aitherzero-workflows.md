@@ -56,7 +56,7 @@ AitherZero.psd1 (Module Manifest)
 
 ### Domain Structure
 
-Located in `/domains/`:
+Located in `/aithercore/`:
 
 | Domain | Functions | Purpose |
 |--------|-----------|---------|
@@ -176,7 +176,7 @@ az 0520
 
 ## Orchestration Playbooks
 
-Located in `/domains/orchestration/playbooks/`:
+Located in `/aithercore/orchestration/playbooks/`:
 
 ### Testing Playbooks
 
@@ -306,8 +306,8 @@ catch {
 | Path | Purpose |
 |------|---------|
 | `/automation-scripts/` | Numbered scripts (0000-9999) |
-| `/domains/` | PowerShell modules by domain |
-| `/domains/orchestration/playbooks/` | Workflow definitions |
+| `/aithercore/` | PowerShell modules by domain |
+| `/aithercore/orchestration/playbooks/` | Workflow definitions |
 | `/tests/` | Pester tests (unit + integration) |
 | `/reports/` | Generated reports and metrics |
 | `/logs/` | Transcript logs |
@@ -416,7 +416,7 @@ Get-Content ./reports/TestReport-Aggregated-*.json | ConvertFrom-Json | Format-L
 az 0701 -Type feature -Name "new-vm-management"
 
 # 2. Add code to appropriate domain
-# domains/infrastructure/VMManagement.psm1
+# aithercore/infrastructure/VMManagement.psm1
 
 # 3. Add tests
 # tests/unit/VMManagement.Tests.ps1
@@ -460,10 +460,10 @@ ls ./automation-scripts/*0402*
 
 ```powershell
 # List available playbooks
-Get-ChildItem ./domains/orchestration/playbooks/ -Recurse -Filter "*.json"
+Get-ChildItem ./aithercore/orchestration/playbooks/ -Recurse -Filter "*.json"
 
 # Validate playbook JSON
-Get-Content ./domains/orchestration/playbooks/testing/test-quick.json | ConvertFrom-Json
+Get-Content ./aithercore/orchestration/playbooks/testing/test-quick.json | ConvertFrom-Json
 ```
 
 ## When to Use This Prompt
