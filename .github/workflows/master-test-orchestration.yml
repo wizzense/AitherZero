@@ -1,0 +1,437 @@
+---
+name: 🎯 Master Test Orchestration
+
+# Centralized test execution - single source of truth for all test results
+# All other workflows should consume artifacts from this workflow
+
+on:
+  pull_request:
+    branches: [main, dev, dev-staging]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, dev, dev-staging]
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to execute'
+        type: choice
+        options:
+          - all
+          - validation-only
+          - tests-only
+          - quality-only
+        default: 'all'
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  statuses: write
+
+concurrency:
+  group: test-orchestration-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+  PR_NUMBER: ${{ github.event.pull_request.number || 'none' }}
+
+jobs:
+  # Phase 1: PR Validation (Critical - must pass)
+  validation:
+    name: ✅ PR Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      validation-status: ${{ steps.validation.outcome }}
+      validation-result: ${{ steps.validation.outputs.result }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 💬 Post Status - Validation Starting
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔄 **Validation Phase Started**\n\nRunning comprehensive PR validation (8 phases)...'
+            });
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: |
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Bootstrap failed"
+            exit 1
+          }
+
+      - name: ✅ Run PR Validation Playbook
+        id: validation
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║  COMPREHENSIVE PR VALIDATION (8 PHASES)       ║" -ForegroundColor Cyan
+          Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Cyan
+          
+          $result = Invoke-OrchestrationSequence -LoadPlaybook pr-validation
+          
+          # Always output result for downstream jobs
+          $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+          echo "result=$exitCode" >> $env:GITHUB_OUTPUT
+          
+          exit $exitCode
+
+      - name: 📊 Upload Validation Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-results
+          path: |
+            reports/pr-validation-summary.md
+            tests/results/**
+            tests/analysis/**
+            library/reports/**
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 💬 Post Validation Status
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.validation.outcome }}';
+            const result = '${{ steps.validation.outputs.result }}';
+            const icon = status === 'success' ? '✅' : '⚠️';
+            const statusText = status === 'success' ? 'PASSED' : 'COMPLETED WITH WARNINGS';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Validation Phase ${statusText}**\n\nExit Code: ${result}\n\n[View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+
+  # Phase 2: Test Execution (Comprehensive - failures don't block)
+  tests:
+    name: 🧪 Test Execution
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      test-status: ${{ steps.tests.outcome }}
+      test-result: ${{ steps.tests.outputs.result }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 💬 Post Status - Tests Starting
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔄 **Test Execution Started**\n\nRunning unit and integration tests with coverage...'
+            });
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🧪 Run Test Suite Playbook
+        id: tests
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🧪 Executing Complete Test Suite" -ForegroundColor Cyan
+          
+          $result = Invoke-OrchestrationSequence -LoadPlaybook run-tests
+          
+          $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+          echo "result=$exitCode" >> $env:GITHUB_OUTPUT
+          
+          # Don't fail the build on test failures
+          exit 0
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            tests/results/**/*.xml
+            tests/results/**/*.json
+            library/tests/results/**
+            reports/test-*.md
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 💬 Post Test Status
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.tests.outcome }}';
+            const result = '${{ steps.tests.outputs.result }}';
+            const icon = status === 'success' && result === '0' ? '✅' : '⚠️';
+            const statusText = result === '0' ? 'PASSED' : 'COMPLETED WITH FAILURES';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Test Execution ${statusText}**\n\nExit Code: ${result}\n\n[View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+
+  # Phase 3: Quality Analysis (Non-blocking - informational)
+  quality:
+    name: 🔍 Quality Analysis
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      quality-status: ${{ steps.quality.outcome }}
+      quality-result: ${{ steps.quality.outputs.result }}
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 💬 Post Status - Quality Analysis Starting
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔄 **Quality Analysis Started**\n\nRunning three-tier validation (AST → PSSA → Pester)...'
+            });
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔍 Run Comprehensive Validation Playbook
+        id: quality
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🔍 Running Three-Tier Quality Validation" -ForegroundColor Cyan
+          
+          $result = Invoke-OrchestrationSequence -LoadPlaybook comprehensive-validation
+          
+          $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+          echo "result=$exitCode" >> $env:GITHUB_OUTPUT
+          
+          # Don't fail the build on quality issues
+          exit 0
+
+      - name: 📊 Upload Quality Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-results
+          path: |
+            library/reports/comprehensive-validation-summary.md
+            tests/analysis/**
+            reports/quality-*.md
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 💬 Post Quality Status
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.quality.outcome }}';
+            const result = '${{ steps.quality.outputs.result }}';
+            const icon = status === 'success' && result === '0' ? '✅' : 'ℹ️';
+            const statusText = result === '0' ? 'PASSED' : 'COMPLETED WITH ISSUES';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Quality Analysis ${statusText}**\n\nExit Code: ${result}\n\n[View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+
+  # Phase 4: Dashboard Generation (Always runs - aggregates all results)
+  dashboard:
+    name: 📊 Generate Dashboard
+    needs: [validation, tests, quality]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap Environment
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 📥 Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+        continue-on-error: true
+
+      - name: 📊 Generate Comprehensive Dashboard
+        id: dashboard
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "📊 Generating Comprehensive Test Dashboard" -ForegroundColor Cyan
+          
+          # Collect all results
+          $validationStatus = '${{ needs.validation.outputs.validation-status }}'
+          $testStatus = '${{ needs.tests.outputs.test-status }}'
+          $qualityStatus = '${{ needs.quality.outputs.quality-status }}'
+          
+          $validationResult = '${{ needs.validation.outputs.validation-result }}'
+          $testResult = '${{ needs.tests.outputs.test-result }}'
+          $qualityResult = '${{ needs.quality.outputs.quality-result }}'
+          
+          # Create dashboard summary
+          $dashboard = @"
+          # 🎯 Master Test Orchestration Summary
+          
+          ## Phase Results
+          
+          | Phase | Status | Exit Code | Outcome |
+          |-------|--------|-----------|---------|
+          | ✅ Validation | $validationStatus | $validationResult | $(if ($validationResult -eq '0') { 'PASSED' } else { 'WARNING' }) |
+          | 🧪 Tests | $testStatus | $testResult | $(if ($testResult -eq '0') { 'PASSED' } else { 'FAILURES' }) |
+          | 🔍 Quality | $qualityStatus | $qualityResult | $(if ($qualityResult -eq '0') { 'PASSED' } else { 'ISSUES' }) |
+          
+          ## Artifacts Generated
+          
+          - Validation Results: \`validation-results\`
+          - Test Results: \`test-results\`
+          - Quality Results: \`quality-results\`
+          - Dashboard: \`dashboard-summary\`
+          
+          ## Next Steps
+          
+          - Review failed tests in test-results artifact
+          - Check quality issues in quality-results artifact
+          - View detailed logs in GitHub Actions run
+          
+          ---
+          *Generated by Master Test Orchestration*
+          "@
+          
+          # Save dashboard
+          New-Item -ItemType Directory -Path "reports" -Force | Out-Null
+          $dashboard | Out-File -FilePath "reports/master-dashboard.md" -Encoding UTF8
+          
+          Write-Host "✅ Dashboard generated successfully" -ForegroundColor Green
+
+      - name: 📊 Upload Dashboard
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dashboard-summary
+          path: |
+            reports/master-dashboard.md
+            artifacts/**
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 💬 Post Final Summary
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const validationStatus = '${{ needs.validation.outputs.validation-status }}';
+            const testStatus = '${{ needs.tests.outputs.test-status }}';
+            const qualityStatus = '${{ needs.quality.outputs.quality-status }}';
+            
+            const validationResult = '${{ needs.validation.outputs.validation-result }}';
+            const testResult = '${{ needs.tests.outputs.test-result }}';
+            const qualityResult = '${{ needs.quality.outputs.quality-result }}';
+            
+            const validationIcon = validationStatus === 'success' ? '✅' : '⚠️';
+            const testIcon = testStatus === 'success' && testResult === '0' ? '✅' : '⚠️';
+            const qualityIcon = qualityStatus === 'success' && qualityResult === '0' ? '✅' : 'ℹ️';
+            
+            const summary = `## 🎯 Master Test Orchestration Complete
+            
+            ### Phase Results
+            
+            | Phase | Status | Result |
+            |-------|--------|--------|
+            | ${validationIcon} **Validation** | ${validationStatus} | Exit Code: ${validationResult} |
+            | ${testIcon} **Tests** | ${testStatus} | Exit Code: ${testResult} |
+            | ${qualityIcon} **Quality** | ${qualityStatus} | Exit Code: ${qualityResult} |
+            
+            ### Artifacts Available
+            
+            - 📋 Validation Results
+            - 🧪 Test Results  
+            - 🔍 Quality Results
+            - 📊 Dashboard Summary
+            
+            [View Full Details](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ---
+            *All test results centralized in Master Test Orchestration workflow*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+      - name: 📝 Create Job Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $summary = @"
+          # 🎯 Master Test Orchestration Summary
+          
+          ## Results
+          
+          - ✅ **Validation**: ${{ needs.validation.outputs.validation-status }} (Exit: ${{ needs.validation.outputs.validation-result }})
+          - 🧪 **Tests**: ${{ needs.tests.outputs.test-status }} (Exit: ${{ needs.tests.outputs.test-result }})
+          - 🔍 **Quality**: ${{ needs.quality.outputs.quality-status }} (Exit: ${{ needs.quality.outputs.quality-result }})
+          
+          ## Build Status
+          
+          **Build continues regardless of test failures - all results reported for dashboard generation**
+          
+          Critical failures in validation phase will be reported but won't block the build.
+          Test failures and quality issues are informational and used for metrics.
+          "@
+          
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8 -Append

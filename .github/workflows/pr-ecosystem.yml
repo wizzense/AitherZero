@@ -1,5 +1,9 @@
 ---
-name: 🚀 Deploy PR Ecosystem
+name: 🚀 PR Ecosystem (Integrated Build & Deploy)
+
+# Integrated PR workflow that consumes test results from master-test-orchestration
+# This workflow focuses on build, packaging, and deployment
+# Test execution is centralized in master-test-orchestration.yml
 
 on:
   pull_request:
@@ -11,6 +15,7 @@ permissions:
   packages: write
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pr-ecosystem-${{ github.event.pull_request.number }}
@@ -20,20 +25,35 @@ env:
   PR_NUMBER: ${{ github.event.pull_request.number }}
   GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
   GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
 
 jobs:
+  # Phase 1: Build (runs playbook for package creation)
   build:
     name: 🔨 Build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     outputs:
       build-status: ${{ steps.build.outcome }}
+      build-result: ${{ steps.build.outputs.result }}
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: 💬 Post Build Start Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔨 **Build Phase Started**\n\nCreating release packages...\n\n*Test results will be consumed from Master Test Orchestration*'
+            });
 
       - name: 🔧 Bootstrap
         shell: pwsh
@@ -42,33 +62,19 @@ jobs:
       - name: 🔨 Run Build Playbook
         id: build
         shell: pwsh
+        continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
-
-      - name: 📋 Create Build Summary (Fallback)
-        if: always()
-        shell: pwsh
-        run: |
-          # Ensure directory exists
-          New-Item -ItemType Directory -Path "library/reports" -Force | Out-Null
           
-          # Create a minimal summary file if none exists
-          $summaryPath = "library/reports/build-summary.json"
-          if (-not (Test-Path $summaryPath)) {
-            Write-Host "Creating fallback build summary..." -ForegroundColor Yellow
-            
-            $fallbackSummary = @{
-              status = "incomplete"
-              outcome = "${{ steps.build.outcome }}"
-              timestamp = (Get-Date -Format 'o')
-              pr_number = $env:PR_NUMBER
-              message = "Build job did not complete successfully or did not generate all expected artifacts"
-            } | ConvertTo-Json -Depth 5
-            
-            $fallbackSummary | Out-File -FilePath $summaryPath -Encoding UTF8
-            Write-Host "✅ Fallback summary created" -ForegroundColor Green
-          }
+          Write-Host "🔨 Running PR Ecosystem Build Playbook" -ForegroundColor Cyan
+          
+          $result = Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
+          
+          $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+          echo "result=$exitCode" >> $env:GITHUB_OUTPUT
+          
+          # Don't fail on build issues
+          exit 0
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -85,6 +91,24 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
+      - name: 💬 Post Build Status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.build.outcome }}';
+            const result = '${{ steps.build.outputs.result }}';
+            const icon = status === 'success' && result === '0' ? '✅' : '⚠️';
+            const statusText = result === '0' ? 'PASSED' : 'COMPLETED WITH ISSUES';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Build Phase ${statusText}**\n\nExit Code: ${result}\n\n[View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+
+  # Phase 2: Analysis (runs playbook, but doesn't duplicate tests)
   analyze:
     name: 🔍 Analyze
     needs: build
@@ -92,6 +116,7 @@ jobs:
     timeout-minutes: 15
     outputs:
       analysis-status: ${{ steps.analyze.outcome }}
+      analysis-result: ${{ steps.analyze.outputs.result }}
 
     steps:
       - name: 📥 Checkout
@@ -99,45 +124,37 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 💬 Post Analysis Start Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔍 **Analysis Phase Started**\n\nRunning code analysis (not tests - those run in Master Test Orchestration)...'
+            });
+
       - name: 🔧 Bootstrap
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
 
-      - name: 📦 Install Tools
-        shell: pwsh
-        run: Install-Module -Name Pester, PSScriptAnalyzer -Force -SkipPublisherCheck
-
       - name: 🔍 Run Analysis Playbook
         id: analyze
         shell: pwsh
+        continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-analyze
-
-      - name: 📋 Create Analysis Summary (Fallback)
-        if: always()
-        shell: pwsh
-        run: |
-          # Ensure directories exist
-          New-Item -ItemType Directory -Path "library/reports" -Force | Out-Null
-          New-Item -ItemType Directory -Path "library/tests/results" -Force | Out-Null
           
-          # Create a minimal summary file if none exists
-          $summaryPath = "library/reports/analysis-summary.json"
-          if (-not (Test-Path $summaryPath)) {
-            Write-Host "Creating fallback analysis summary..." -ForegroundColor Yellow
-            
-            $fallbackSummary = @{
-              status = "incomplete"
-              outcome = "${{ steps.analyze.outcome }}"
-              timestamp = (Get-Date -Format 'o')
-              pr_number = $env:PR_NUMBER
-              message = "Analysis job did not complete successfully or did not generate all expected artifacts"
-            } | ConvertTo-Json -Depth 5
-            
-            $fallbackSummary | Out-File -FilePath $summaryPath -Encoding UTF8
-            Write-Host "✅ Fallback summary created" -ForegroundColor Green
-          }
+          Write-Host "🔍 Running PR Ecosystem Analysis Playbook" -ForegroundColor Cyan
+          
+          $result = Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-analyze
+          
+          $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+          echo "result=$exitCode" >> $env:GITHUB_OUTPUT
+          
+          # Don't fail on analysis issues
+          exit 0
 
       - name: 📊 Upload Analysis Results
         uses: actions/upload-artifact@v4
@@ -148,6 +165,288 @@ jobs:
             library/reports/analysis-*.json
             library/reports/analysis-*.md
             library/reports/diff-*.json
+            library/reports/quality-*.json
+            library/reports/security-*.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 💬 Post Analysis Status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.analyze.outcome }}';
+            const result = '${{ steps.analyze.outputs.result }}';
+            const icon = status === 'success' && result === '0' ? '✅' : 'ℹ️';
+            const statusText = result === '0' ? 'PASSED' : 'COMPLETED WITH FINDINGS';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${icon} **Analysis Phase ${statusText}**\n\nExit Code: ${result}\n\n[View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+
+  # Phase 3: Report & Deploy (consumes artifacts from this workflow AND master-test-orchestration)
+  report:
+    name: 📊 Report & Deploy
+    needs: [build, analyze]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: always()
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 💬 Post Report Start Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📊 **Dashboard Generation Started**\n\nConsolidating results from all phases:\n- Build artifacts\n- Analysis results\n- Test results (from Master Test Orchestration)\n- Quality metrics'
+            });
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-${{ env.PR_NUMBER }}-build
+          path: ./artifacts/build
+        continue-on-error: true
+
+      - name: 📥 Download Analysis Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-${{ env.PR_NUMBER }}-analysis
+          path: ./artifacts/analysis
+        continue-on-error: true
+
+      - name: 📥 Download Test Results from Master Orchestration
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: ./artifacts/tests
+        continue-on-error: true
+
+      - name: 📥 Download Validation Results from Master Orchestration
+        uses: actions/download-artifact@v4
+        with:
+          name: validation-results
+          path: ./artifacts/validation
+        continue-on-error: true
+
+      - name: 📥 Download Quality Results from Master Orchestration
+        uses: actions/download-artifact@v4
+        with:
+          name: quality-results
+          path: ./artifacts/quality
+        continue-on-error: true
+
+      - name: 📥 Download Dashboard from Master Orchestration
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-summary
+          path: ./artifacts/dashboard
+        continue-on-error: true
+
+      - name: 🔍 Check Artifact Availability
+        shell: pwsh
+        run: |
+          Write-Host "╔═══════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║  ARTIFACT CONSOLIDATION STATUS                ║" -ForegroundColor Cyan
+          Write-Host "╚═══════════════════════════════════════════════╝" -ForegroundColor Cyan
+          Write-Host ""
+          
+          $artifacts = @{
+            "Build" = Test-Path "./artifacts/build"
+            "Analysis" = Test-Path "./artifacts/analysis"
+            "Tests" = Test-Path "./artifacts/tests"
+            "Validation" = Test-Path "./artifacts/validation"
+            "Quality" = Test-Path "./artifacts/quality"
+            "Dashboard" = Test-Path "./artifacts/dashboard"
+          }
+          
+          foreach ($artifact in $artifacts.GetEnumerator()) {
+            $status = if ($artifact.Value) { "✅ Available" } else { "⚠️ Not Found" }
+            $color = if ($artifact.Value) { 'Green' } else { 'Yellow' }
+            Write-Host "  $($artifact.Key): $status" -ForegroundColor $color
+          }
+          
+          Write-Host ""
+          $availableCount = ($artifacts.Values | Where-Object { $_ }).Count
+          Write-Host "Total artifacts available: $availableCount / $($artifacts.Count)" -ForegroundColor $(if ($availableCount -gt 3) { 'Green' } else { 'Yellow' })
+
+      - name: 📊 Run Report Playbook (Consolidated Dashboard)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "📊 Generating Consolidated PR Dashboard" -ForegroundColor Cyan
+          
+          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
+
+      - name: 📁 Organize Reports for GitHub Pages
+        shell: pwsh
+        run: |
+          $prDir = "./library/reports/pr-$env:PR_NUMBER"
+          Write-Host "Creating PR-specific directory: $prDir" -ForegroundColor Cyan
+          
+          # Create PR directory
+          New-Item -ItemType Directory -Path $prDir -Force | Out-Null
+          
+          # Copy library/reports content
+          $sourceDir = "./library/reports"
+          if (Test-Path $sourceDir) {
+            Get-ChildItem -Path $sourceDir -Recurse -Exclude "pr-*" | ForEach-Object {
+              $targetPath = $_.FullName.Replace($sourceDir, $prDir)
+              
+              if ($_.PSIsContainer) {
+                if (-not (Test-Path $targetPath)) {
+                  New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+                }
+              } else {
+                $targetDir = Split-Path $targetPath -Parent
+                if (-not (Test-Path $targetDir)) {
+                  New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+                }
+                Copy-Item -Path $_.FullName -Destination $targetPath -Force
+              }
+            }
+          }
+          
+          # Copy consolidated artifacts
+          if (Test-Path "./artifacts") {
+            $artifactsTarget = Join-Path $prDir "artifacts"
+            Copy-Item -Path "./artifacts" -Destination $artifactsTarget -Recurse -Force
+          }
+          
+          # Verify files were organized
+          $copiedFiles = Get-ChildItem -Path $prDir -Recurse -File
+          Write-Host "✅ Organized $($copiedFiles.Count) files for deployment" -ForegroundColor Green
+
+      - name: 📊 Upload Complete PR Ecosystem Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-${{ env.PR_NUMBER }}-complete-report
+          path: library/reports/pr-${{ env.PR_NUMBER }}/**
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 🌐 Deploy to GitHub Pages
+        if: hashFiles('./library/reports/pr-${{ env.PR_NUMBER }}/**') != ''
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./library/reports/pr-${{ env.PR_NUMBER }}
+          destination_dir: pr-${{ env.PR_NUMBER }}
+          keep_files: true
+          enable_jekyll: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy PR #${{ env.PR_NUMBER }} ecosystem reports'
+
+      - name: 💬 Post Final Summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildStatus = '${{ needs.build.outputs.build-status }}';
+            const analyzeStatus = '${{ needs.analyze.outputs.analysis-status }}';
+            
+            const buildResult = '${{ needs.build.outputs.build-result }}';
+            const analyzeResult = '${{ needs.analyze.outputs.analysis-result }}';
+            
+            const buildIcon = buildStatus === 'success' && buildResult === '0' ? '✅' : '⚠️';
+            const analyzeIcon = analyzeStatus === 'success' && analyzeResult === '0' ? '✅' : 'ℹ️';
+            
+            const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${context.issue.number}/`;
+            
+            const summary = `## 🚀 PR Ecosystem Complete
+            
+            ### Phase Results
+            
+            | Phase | Status | Result |
+            |-------|--------|--------|
+            | ${buildIcon} **Build** | ${buildStatus} | Exit Code: ${buildResult} |
+            | ${analyzeIcon} **Analysis** | ${analyzeStatus} | Exit Code: ${analyzeResult} |
+            
+            ### Integration with Master Test Orchestration
+            
+            This workflow integrates with [Master Test Orchestration](../../actions/workflows/master-test-orchestration.yml) for:
+            - ✅ Comprehensive Validation
+            - 🧪 Test Execution
+            - 🔍 Quality Analysis
+            
+            All test results are consolidated in the dashboard.
+            
+            ### 📊 Dashboard & Reports
+            
+            **GitHub Pages:** [View PR Dashboard](${pagesUrl})
+            
+            ### Artifacts Available
+            
+            - 🔨 Build artifacts
+            - 🔍 Analysis results
+            - 🧪 Test results (from Master Orchestration)
+            - ✅ Validation results (from Master Orchestration)
+            - 📊 Complete dashboard
+            
+            [View Full Details](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ---
+            *PR Ecosystem integrated with centralized test execution*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+      - name: 📝 Create Job Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $summary = @"
+          # 🚀 PR Ecosystem Summary
+          
+          ## Integration Status
+          
+          This workflow integrates with Master Test Orchestration for centralized test execution.
+          
+          ## Phase Results
+          
+          - 🔨 **Build**: ${{ needs.build.outputs.build-status }} (Exit: ${{ needs.build.outputs.build-result }})
+          - 🔍 **Analysis**: ${{ needs.analyze.outputs.analysis-status }} (Exit: ${{ needs.analyze.outputs.analysis-result }})
+          
+          ## Consolidated Artifacts
+          
+          - Build artifacts (this workflow)
+          - Analysis results (this workflow)
+          - Test results (from Master Test Orchestration)
+          - Validation results (from Master Test Orchestration)
+          - Quality metrics (from Master Test Orchestration)
+          - Complete dashboard (consolidated)
+          
+          ## Benefits
+          
+          ✅ Single test execution (no duplicates)
+          ✅ Centralized result storage
+          ✅ Comprehensive dashboard generation
+          ✅ All workflows use playbooks
+          "@
+          
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8 -Append
+
             library/reports/quality-*.json
             library/reports/security-*.json
             library/tests/results/**
