@@ -1,7 +1,7 @@
 {
   "name": "@aitherzero/mcp-server",
-  "version": "0.1.0",
-  "description": "Model Context Protocol server for AitherZero infrastructure automation",
+  "version": "2.0.0",
+  "description": "Model Context Protocol server for AitherZero infrastructure automation platform - v2.0 with enhanced GitHub Copilot integration",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -28,7 +28,9 @@
     "devops",
     "ai-assistant",
     "claude",
-    "copilot"
+    "copilot",
+    "github-copilot",
+    "agent-mode"
   ],
   "repository": {
     "type": "git",
