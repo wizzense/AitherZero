@@ -3,23 +3,23 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0427_Validate-TestDiscoveryFix
+    Unit tests for 0850_Install-GitHub-Runner
 .DESCRIPTION
     Auto-generated comprehensive tests with environment awareness
-    Script: 0427_Validate-TestDiscoveryFix
-    Stage: Testing
-    Description: Checks that:
+    Script: 0850_Install-GitHub-Runner
+    Stage: CI/CD Infrastructure
+    Description: Downloads, installs, and configures a GitHub Actions self-hosted runner.
     Supports WhatIf: False
-    Generated: 2025-11-08 00:28:33
+    Generated: 2025-11-07 21:40:55
 #>
 
-Describe '0427_Validate-TestDiscoveryFix' -Tag 'Unit', 'AutomationScript', 'Testing' {
+Describe '0724_Install-GitHub-Runner' -Tag 'Unit', 'AutomationScript', 'CI/CD Infrastructure' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0427_Validate-TestDiscoveryFix.ps1'
-        $script:ScriptName = '0427_Validate-TestDiscoveryFix'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0724_Install-GitHub-Runner.ps1'
+        $script:ScriptName = '0724_Install-GitHub-Runner'
 
         # Import test helpers for environment detection
         $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
@@ -57,8 +57,46 @@ Describe '0427_Validate-TestDiscoveryFix' -Tag 'Unit', 'AutomationScript', 'Test
 
     }
 
+    Context 'Parameters' {
+        It 'Should have parameter: Repository' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Repository') | Should -Be $true
+        }
+
+        It 'Should have parameter: Token' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Token') | Should -Be $true
+        }
+
+        It 'Should have parameter: RunnerName' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('RunnerName') | Should -Be $true
+        }
+
+        It 'Should have parameter: RunnerGroup' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('RunnerGroup') | Should -Be $true
+        }
+
+        It 'Should have parameter: Labels' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('Labels') | Should -Be $true
+        }
+
+        It 'Should have parameter: InstallAsService' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('InstallAsService') | Should -Be $true
+        }
+
+        It 'Should have parameter: WorkDirectory' {
+            $cmd = Get-Command $script:ScriptPath
+            $cmd.Parameters.ContainsKey('WorkDirectory') | Should -Be $true
+        }
+
+    }
+
     Context 'Metadata' {
-        It 'Should be in stage: Testing' {
+        It 'Should be in stage: CI/CD Infrastructure' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }

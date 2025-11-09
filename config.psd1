@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -114,13 +114,13 @@
                 }
                 DevTools = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0205', '0209', '0211', '0214', '0215', '0216', '0219')  # Sysinternals, 7Zip, VS Build Tools, Packer, Chocolatey, PowerShell Profile
+                    Scripts     = @('0205', '0209', '0214', '0215', '0216', '0219', '0221')  # Sysinternals, 7Zip, Packer, Chocolatey, PowerShell Profile, VS Build Tools
                     Description = 'Additional development utilities'
                 }
                 AITools  = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0217', '0218')  # Claude Code, Gemini CLI
-                    Description = 'AI-powered development tools'
+                    Scripts     = @('0217', '0218', '0220')  # Claude Code, Gemini CLI, Install AI CLIs
+                    Description = 'AI-powered development tools (Claude, Gemini, OpenAI, and other AI CLIs)'
                 }
                 CloudCLI = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -165,6 +165,16 @@
                     Scripts              = @('0112')
                     RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
+                }
+                Submodules           = @{
+                    DependsOn   = @('Core.PowerShell7', 'Core.Git')
+                    Scripts     = @('0109')
+                    Description = 'Initialize infrastructure Git submodules'
+                }
+                ISOArtifacts         = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0195')
+                    Description = 'Inject artifacts into ISO images'
                 }
                 OpenTofu             = @{
                     DependsOn = @('Core.PowerShell7', 'Core.Git')
@@ -227,13 +237,13 @@
                 }
                 ProjectReports = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0510', '0511', '0512', '0513', '0514', '0516')
-                    Description = 'Project reports, dashboards, scheduling, and automated report generation'
+                    Scripts     = @('0510', '0511', '0512', '0515', '0516')
+                    Description = 'Project reports, dashboards, build metadata, scheduling, and automated report generation'
                 }
                 Analysis       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0520', '0521', '0522', '0523', '0524', '0525')
-                    Description = 'Documentation deployment, configuration, code quality, security, and tech debt analysis'
+                    Scripts     = @('0513', '0514', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527')
+                    Description = 'Changelog generation, diff analysis, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, and code mapping'
                 }
                 Logging        = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -254,6 +264,11 @@
                     Scripts     = @('0700')
                     Description = 'Git environment configuration'
                 }
+                GitHubCLI     = @{
+                    DependsOn   = @('Core.Git')
+                    Scripts     = @('0211')
+                    Description = 'GitHub CLI installation and configuration'
+                }
                 GitWorkflow   = @{
                     DependsOn   = @('Core.Git')
                     Scripts     = @('0701', '0702', '0703', '0704', '0705', '0709', '0798', '0799')
@@ -261,8 +276,8 @@
                 }
                 GitHubRunners = @{
                     DependsOn   = @('Core.Git', 'Core.PowerShell7')
-                    Scripts     = @('0720', '0721', '0722', '0723')
-                    Description = 'GitHub Actions runner setup and configuration'
+                    Scripts     = @('0720', '0721', '0722', '0723', '0724')
+                    Description = 'GitHub Actions runner setup, configuration, and installation'
                 }
             }
 
@@ -307,30 +322,55 @@
 
             # Issue management and tracking
             IssueManagement = @{
-                Creation     = @{
+                Creation           = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0800', '0810', '0825', '0832')
-                    Description = 'Issue creation from tests, manual triggers, file generation, and prompt generation'
+                    Scripts     = @('0810', '0825', '0832')
+                    Description = 'Issue creation from manual triggers, file generation, and prompt generation'
                 }
-                Analysis     = @{
+                TestIssues         = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0801', '0805', '0815', '0816')
-                    Description = 'Result parsing, issue analysis, setup, and automation health monitoring'
+                    Scripts     = @('0800')
+                    Description = 'Create test issues for automation validation'
                 }
-                Workflow     = @{
+                Analysis           = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0805', '0815', '0816')
+                    Description = 'Issue analysis, setup, and automation health monitoring'
+                }
+                ResultParsing      = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0801')
+                    Description = 'Parse Pester test results for issue tracking'
+                }
+                LicenseManagement  = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0802', '0803', '0804')
+                    Description = 'License infrastructure, obfuscation, GitHub deployment'
+                }
+                Workflow           = @{
                     DependsOn   = @('Core.PowerShell7')
                     Scripts     = @('0820', '0821', '0822', '0831')
                     Description = 'Work context, continuation prompts, issue creation testing, and templates'
                 }
-                Automation   = @{
+                Automation         = @{
                     DependsOn   = @('Core.PowerShell7')
                     Scripts     = @('0840', '0841')
                     Description = 'Automated workflow validation, priority-based issue processing, and workflow integration validation'
                 }
-                PRDeployment = @{
+                PRDeployment       = @{
                     DependsOn   = @('Core.PowerShell7', 'Core.Git')
-                    Scripts     = @('0850', '0851', '0852', '0853', '0854', '0860')
-                    Description = 'Ephemeral PR environment deployment, cleanup, Docker validation, container management, and deployment validation'
+                    Scripts     = @('0851', '0852', '0853', '0854', '0860')
+                    Description = 'Ephemeral PR environment cleanup, Docker validation, container management, and deployment validation'
+                }
+                PREnvironment      = @{
+                    DependsOn   = @('Core.PowerShell7', 'Core.Git')
+                    Scripts     = @('0850')
+                    Description = 'Deploy ephemeral PR environments'
+                }
+                LicenseOperations  = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0870', '0875', '0876', '0877', '0878', '0879')
+                    Description = 'License storage, backup verification, key rotation, credential rotation, license management, and pre-commit obfuscation'
                 }
             }
 
@@ -340,6 +380,11 @@
                     DependsOn   = @('Infrastructure.OpenTofu')
                     Scripts     = @('0300')
                     Description = 'Infrastructure deployment automation'
+                }
+                Packaging             = @{
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0902')
+                    Description = 'Create release packages and build artifacts'
                 }
                 Validation            = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -358,16 +403,16 @@
                 }
                 Orchestration         = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0962', '0963', '0964', '0965', '0966', '0967', '0968')
-                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, local validation, orchestration engine testing, and playbook v2 migration'
+                    Scripts     = @('0962', '0963', '0964', '0965', '0966', '0967', '0968', '0969', '0970')
+                    Description = 'Playbook execution, orchestration demos, GitHub workflow conversion, compatibility testing, local validation, orchestration engine testing, playbook v2 migration, PR ecosystem validation, and playbook validation'
                 }
             }
 
             Maintenance     = @{
                 Environment       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0000', '0002', '0003', '0004')
-                    Description = 'Environment cleanup, directory setup, config sync, and git hooks setup'
+                    Scripts     = @('0000', '0001', '0002', '0003', '0004')
+                    Description = 'Environment cleanup, environment configuration, directory setup, config sync, and git hooks setup'
                 }
                 Reset             = @{
                     DependsOn         = @('Core.PowerShell7')
@@ -435,25 +480,48 @@
             'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
-        # Script inventory by range (173 total files, 166 unique numbers)
-        # All scripts now have unique numbers
+        # Script inventory by range (180 total files, 173 unique numbers)
+        # All scripts now have unique numbers (duplicates resolved in Phase 2)
         # Counts represent unique script NUMBERS, not total files
         ScriptInventory     = @{
             '0000-0099' = @{ Count = 10; Category = 'Environment Setup' }
             '0100-0199' = @{ Count = 8; Category = 'Infrastructure' }
-            '0200-0299' = @{ Count = 18; Category = 'Development Tools' }
+            '0200-0299' = @{ Count = 19; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 28; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 22; Category = 'Reporting & Analytics' }
-            '0700-0799' = @{ Count = 35; Category = 'Git & AI Automation' }
-            '0800-0899' = @{ Count = 28; Category = 'Issue Management & PR Deployment' }
+            '0500-0599' = @{ Count = 24; Category = 'Reporting & Analytics' }
+            '0700-0799' = @{ Count = 36; Category = 'Git & AI Automation' }
+            '0800-0899' = @{ Count = 30; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 16; Category = 'Validation & Test Generation' }
             '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
 
+        # Test inventory - comprehensive test file tracking
+        TestInventory       = @{
+            Unit = @{ Count = 184
+                Path  = 'tests/unit'
+            }
+            Integration = @{ Count = 175
+                Path  = 'tests/integration'
+            }
+            Total = 359
+        }
+
+        # Playbook inventory - orchestration playbook tracking
+        PlaybookInventory = @{ Count = 21
+            Path  = 'library/playbooks'
+            Types = @('validation', 'quality', 'testing', 'ecosystem', 'pr-environment')
+        }
+
+        # Workflow inventory - GitHub Actions workflow tracking
+        WorkflowInventory = @{ Count = 18
+            Path  = '.github/workflows'
+            Categories = @('ci', 'automation', 'security', 'publishing', 'validation')
+        }
+
         # Configuration schema version for validation
         SchemaVersion       = '2.0'
-        LastUpdated         = '2025-11-03'
+        LastUpdated         = '2025-11-09'
     }
 
     # ===================================================================
@@ -479,9 +547,11 @@
         ShowWelcomeMessage = $true
         EnableAnimations   = $true    # Disable in CI automatically
 
-        # Monitoring and analytics
-        UsageAnalytics     = $false
-        TelemetryEnabled   = $false
+        # Removed unused features (Phase 4 tech debt cleanup):
+        # - UsageAnalytics: Not implemented
+        # - TelemetryEnabled: Not implemented
+        # Use logging and ErrorReporting instead for diagnostics
+        
         ErrorReporting     = $true
         CheckForUpdates    = $true
 
@@ -998,31 +1068,26 @@
             }
         }
 
-        # Execution profiles mapping
-        Profiles                = @{
-            Minimal   = @{
-                Description    = 'Core infrastructure deployment only'
-                Scripts        = @('0000-0099', '0100-0199')
+        # Execution profiles mapping - references Manifest.ExecutionProfiles
+        # Profiles are defined in Manifest.ExecutionProfiles (lines 432-465)
+        # This section provides automation-specific settings for each profile
+        ProfileSettings         = @{
+            Minimal = @{
                 MaxConcurrency = 2
-                Features       = @('Core')
             }
-            Standard  = @{
-                Description    = 'Production-ready automation'
-                Scripts        = @('0000-0299', '0400-0499')
+            Standard = @{
                 MaxConcurrency = 4
-                Features       = @('Core', 'Development.Node', 'Testing')
             }
             Developer = @{
-                Description    = 'Complete development environment'
-                Scripts        = @('0000-0499')
                 MaxConcurrency = 6
-                Features       = @('Core', 'Development', 'Testing')
             }
-            Full      = @{
-                Description    = 'Everything including optional components'
-                Scripts        = @('*')
+            Full = @{
                 MaxConcurrency = 8
-                Features       = @('*')
+            }
+            CI = @{
+                MaxConcurrency = 4
+                Parallel = $true
+                NonInteractive = $true
             }
         }
 
@@ -1663,7 +1728,7 @@
         RequireAdminForInstall = $false
         EnforceExecutionPolicy = $false
         AllowUnsignedScripts   = $true
-        EnableMFA              = $false
+        # EnableMFA = $false  # Removed - not implemented (Phase 4 tech debt cleanup)
         MaxLoginAttempts       = 3
         SessionTimeout         = 3600
     }
@@ -1685,9 +1750,10 @@
         MetricsRetentionDays = 90
         TemplateEngine       = 'Default'
 
-        # Report distribution
-        EmailReports         = $false
-        UploadToCloud        = $false
+        # Removed unused features (Phase 4 tech debt cleanup):
+        # - EmailReports: Not implemented
+        # - UploadToCloud: Not implemented
+        # Use local report generation and manual distribution instead
 
         # Dashboard
         DashboardEnabled     = $true

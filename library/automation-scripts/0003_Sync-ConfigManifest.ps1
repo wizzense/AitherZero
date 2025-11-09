@@ -1,31 +1,34 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Synchronize config.psd1 with actual automation scripts
+    Comprehensive synchronization of config.psd1 with repository state
 .DESCRIPTION
-    Automatically discovers automation scripts in the automation-scripts directory
-    and compares them with the scripts listed in config.psd1 manifest.
+    Automatically discovers and synchronizes all inventory in config.psd1:
+    - Automation scripts in library/automation-scripts
+    - Test files (unit and integration tests)
+    - Playbooks in library/playbooks
+    - GitHub Actions workflows in .github/workflows
     
-    Reports missing scripts and optionally updates config.psd1 with discovered scripts.
-    Helps keep configuration in sync when new automation scripts are added.
+    Reports missing items and optionally updates config.psd1 with discovered inventory.
+    Ensures config.psd1 remains the single source of truth for the repository.
     
     Exit Codes:
-    0 - All scripts are registered or updated successfully
-    1 - Missing scripts found (when not in Fix mode)
+    0 - All inventory synchronized or updated successfully
+    1 - Missing items found (when not in Fix mode)
     2 - Execution error
 
 .PARAMETER Fix
-    Automatically add missing scripts to config.psd1
+    Automatically update config.psd1 with discovered inventory
 .PARAMETER DryRun
     Show what would be changed without making changes
 .PARAMETER Verbose
     Show detailed information about the sync process
 .EXAMPLE
     ./automation-scripts/0003_Sync-ConfigManifest.ps1
-    Check for missing scripts in config.psd1
+    Check for missing items in config.psd1
 .EXAMPLE
     ./automation-scripts/0003_Sync-ConfigManifest.ps1 -Fix
-    Automatically add missing scripts to config.psd1
+    Automatically update config.psd1 with discovered inventory
 .EXAMPLE
     ./automation-scripts/0003_Sync-ConfigManifest.ps1 -DryRun
     Preview what would be changed
@@ -33,7 +36,10 @@
     Stage: Environment Setup
     Order: 0003
     Dependencies: None
-    Tags: configuration, maintenance, automation
+    Tags: configuration, maintenance, automation, inventory, comprehensive
+    
+    This is the ONLY config sync script - no separate "comprehensive" version needed.
+    All inventory tracking is handled here.
 #>
 
 [CmdletBinding()]
@@ -50,14 +56,17 @@ $scriptMetadata = @{
     Stage = 'Environment'
     Order = '0003'
     Name = 'Sync-ConfigManifest'
-    Description = 'Synchronize config.psd1 with automation scripts'
-    Tags = @('configuration', 'maintenance', 'automation')
+    Description = 'Comprehensive synchronization of config.psd1 with repository state (scripts, tests, playbooks, workflows)'
+    Tags = @('configuration', 'maintenance', 'automation', 'inventory', 'comprehensive')
 }
 
 # Paths
 $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $configPath = Join-Path $projectRoot "config.psd1"
 $scriptsPath = Join-Path $projectRoot "library/automation-scripts"
+$testsPath = Join-Path $projectRoot "tests"
+$playbooksPath = Join-Path $projectRoot "library/playbooks"
+$workflowsPath = Join-Path $projectRoot ".github/workflows"
 
 function Write-SyncLog {
     param(
@@ -292,6 +301,140 @@ if ($configDuplicates) {
     exit 2
 }
 
+# ===================================================================
+# COMPREHENSIVE INVENTORY TRACKING
+# ===================================================================
+
 Write-Host ""
-Write-Host "✅ Configuration is in sync" -ForegroundColor Green
+Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║           Comprehensive Inventory Validation                 ║" -ForegroundColor Cyan
+Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host ""
+
+# Discover test files
+Write-SyncLog "Discovering test files..." -Level Info
+$unitTests = @(Get-ChildItem -Path (Join-Path $testsPath "unit") -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue)
+$integrationTests = @(Get-ChildItem -Path (Join-Path $testsPath "integration") -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue)
+$totalTests = $unitTests.Count + $integrationTests.Count
+
+Write-SyncLog "Found $($unitTests.Count) unit tests, $($integrationTests.Count) integration tests (Total: $totalTests)" -Level Success
+
+# Discover playbooks
+Write-SyncLog "Discovering playbooks..." -Level Info
+$playbooks = @(Get-ChildItem -Path $playbooksPath -Filter "*.psd1" -ErrorAction SilentlyContinue)
+Write-SyncLog "Found $($playbooks.Count) playbooks" -Level Success
+
+# Discover workflows
+Write-SyncLog "Discovering workflows..." -Level Info
+$workflows = @(Get-ChildItem -Path $workflowsPath -Filter "*.yml" -ErrorAction SilentlyContinue) + 
+             @(Get-ChildItem -Path $workflowsPath -Filter "*.yaml" -ErrorAction SilentlyContinue)
+Write-SyncLog "Found $($workflows.Count) workflows" -Level Success
+
+# Compare with config.psd1
+Write-Host ""
+Write-Host "Inventory Validation:" -ForegroundColor Cyan
+Write-Host ""
+
+$inventoryMismatches = @()
+
+# Check TestInventory
+if ($config.Manifest.TestInventory) {
+    $configUnitTests = $config.Manifest.TestInventory.Unit.Count
+    $configIntegrationTests = $config.Manifest.TestInventory.Integration.Count
+    $configTotalTests = $config.Manifest.TestInventory.Total
+    
+    if ($configUnitTests -ne $unitTests.Count) {
+        $inventoryMismatches += "TestInventory.Unit: Config=$configUnitTests, Actual=$($unitTests.Count)"
+    }
+    if ($configIntegrationTests -ne $integrationTests.Count) {
+        $inventoryMismatches += "TestInventory.Integration: Config=$configIntegrationTests, Actual=$($integrationTests.Count)"
+    }
+    if ($configTotalTests -ne $totalTests) {
+        $inventoryMismatches += "TestInventory.Total: Config=$configTotalTests, Actual=$totalTests"
+    }
+    
+    Write-Host "  Test Inventory:" -ForegroundColor White
+    Write-Host "    Unit: $($unitTests.Count)" -ForegroundColor $(if ($configUnitTests -eq $unitTests.Count) { 'Green' } else { 'Yellow' })
+    Write-Host "    Integration: $($integrationTests.Count)" -ForegroundColor $(if ($configIntegrationTests -eq $integrationTests.Count) { 'Green' } else { 'Yellow' })
+    Write-Host "    Total: $totalTests" -ForegroundColor $(if ($configTotalTests -eq $totalTests) { 'Green' } else { 'Yellow' })
+} else {
+    $inventoryMismatches += "TestInventory section missing from config.psd1"
+    Write-Host "  Test Inventory: NOT CONFIGURED" -ForegroundColor Yellow
+}
+
+# Check PlaybookInventory
+if ($config.Manifest.PlaybookInventory) {
+    $configPlaybooks = $config.Manifest.PlaybookInventory.Count
+    if ($configPlaybooks -ne $playbooks.Count) {
+        $inventoryMismatches += "PlaybookInventory: Config=$configPlaybooks, Actual=$($playbooks.Count)"
+    }
+    Write-Host "  Playbook Inventory: $($playbooks.Count)" -ForegroundColor $(if ($configPlaybooks -eq $playbooks.Count) { 'Green' } else { 'Yellow' })
+} else {
+    $inventoryMismatches += "PlaybookInventory section missing from config.psd1"
+    Write-Host "  Playbook Inventory: NOT CONFIGURED" -ForegroundColor Yellow
+}
+
+# Check WorkflowInventory
+if ($config.Manifest.WorkflowInventory) {
+    $configWorkflows = $config.Manifest.WorkflowInventory.Count
+    if ($configWorkflows -ne $workflows.Count) {
+        $inventoryMismatches += "WorkflowInventory: Config=$configWorkflows, Actual=$($workflows.Count)"
+    }
+    Write-Host "  Workflow Inventory: $($workflows.Count)" -ForegroundColor $(if ($configWorkflows -eq $workflows.Count) { 'Green' } else { 'Yellow' })
+} else {
+    $inventoryMismatches += "WorkflowInventory section missing from config.psd1"
+    Write-Host "  Workflow Inventory: NOT CONFIGURED" -ForegroundColor Yellow
+}
+
+Write-Host ""
+
+if ($inventoryMismatches.Count -gt 0) {
+    Write-SyncLog "Inventory mismatches detected:" -Level Warning
+    Write-Host ""
+    foreach ($mismatch in $inventoryMismatches) {
+        Write-Host "  ⚠️  $mismatch" -ForegroundColor Yellow
+    }
+    Write-Host ""
+    
+    if ($Fix) {
+        Write-SyncLog "Updating config.psd1 inventory sections..." -Level Info
+        
+        # Update TestInventory
+        $configContent = Get-Content -Path $configPath -Raw
+        $configContent = $configContent -replace "Unit\s*=\s*@\{\s*Count\s*=\s*\d+", "Unit = @{ Count = $($unitTests.Count)"
+        $configContent = $configContent -replace "Integration\s*=\s*@\{\s*Count\s*=\s*\d+", "Integration = @{ Count = $($integrationTests.Count)"
+        $configContent = $configContent -replace "TestInventory\s*=\s*@\{[^}]*Total\s*=\s*\d+", {
+            $match = $_.Value
+            $match -replace "Total\s*=\s*\d+", "Total = $totalTests"
+        }
+        
+        # Update PlaybookInventory
+        $configContent = $configContent -replace "PlaybookInventory\s*=\s*@\{\s*Count\s*=\s*\d+", "PlaybookInventory = @{ Count = $($playbooks.Count)"
+        
+        # Update WorkflowInventory
+        $configContent = $configContent -replace "WorkflowInventory\s*=\s*@\{\s*Count\s*=\s*\d+", "WorkflowInventory = @{ Count = $($workflows.Count)"
+        
+        if (-not $DryRun) {
+            Set-Content -Path $configPath -Value $configContent -NoNewline
+            Write-SyncLog "Config.psd1 inventory sections updated successfully!" -Level Success
+        } else {
+            Write-SyncLog "Dry run - no changes made" -Level Info
+        }
+    } else {
+        Write-Host "💡 Run with -Fix to automatically update config.psd1" -ForegroundColor Cyan
+    }
+} else {
+    Write-SyncLog "All inventory counts match config.psd1" -Level Success
+}
+
+Write-Host ""
+Write-Host "✅ Configuration sync complete" -ForegroundColor Green
+Write-Host ""
+Write-Host "Summary:" -ForegroundColor Cyan
+Write-Host "  Scripts: $($discoveredScripts.Count) unique numbers" -ForegroundColor White
+Write-Host "  Tests: $totalTests files ($($unitTests.Count) unit + $($integrationTests.Count) integration)" -ForegroundColor White
+Write-Host "  Playbooks: $($playbooks.Count) files" -ForegroundColor White
+Write-Host "  Workflows: $($workflows.Count) files" -ForegroundColor White
+Write-Host ""
+
 exit 0

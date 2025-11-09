@@ -3,19 +3,19 @@
 
 <#
 .SYNOPSIS
-    Integration tests for 0212_Install-Go
+    Integration tests for 0850_Install-GitHub-Runner
 .DESCRIPTION
     Auto-generated integration tests
     Supports WhatIf: False
-    Generated: 2025-11-07 21:40:54
+    Generated: 2025-11-07 21:40:55
 #>
 
-Describe '0212_Install-Go Integration' -Tag 'Integration', 'AutomationScript' {
+Describe '0724_Install-GitHub-Runner Integration' -Tag 'Integration', 'AutomationScript' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0212_Install-Go.ps1'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0724_Install-GitHub-Runner.ps1'
     }
 
     Context 'Integration' {

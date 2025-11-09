@@ -10,6 +10,13 @@
     # Sequential execution of all validation checks
     Sequence = @(
         @{
+            Script = '0003_Sync-ConfigManifest.ps1'
+            Description = 'Config Sync Validation (comprehensive inventory check)'
+            Parameters = @{}
+            ContinueOnError = $false
+            Timeout = 60
+        },
+        @{
             Script = '0407_Validate-Syntax.ps1'
             Description = 'Syntax Validation (matches quick-health-check.yml)'
             Parameters = @{ All = $true }

@@ -3,23 +3,23 @@
 
 <#
 .SYNOPSIS
-    Unit tests for 0850_Install-GitHub-Runner
+    Unit tests for 0211_Install-VSBuildTools
 .DESCRIPTION
     Auto-generated comprehensive tests with environment awareness
-    Script: 0850_Install-GitHub-Runner
-    Stage: CI/CD Infrastructure
-    Description: Downloads, installs, and configures a GitHub Actions self-hosted runner.
-    Supports WhatIf: False
-    Generated: 2025-11-07 21:40:55
+    Script: 0211_Install-VSBuildTools
+    Stage: Development
+    Description: Install Visual Studio Build Tools
+    Supports WhatIf: True
+    Generated: 2025-11-04 20:50:00
 #>
 
-Describe '0850_Install-GitHub-Runner' -Tag 'Unit', 'AutomationScript', 'CI/CD Infrastructure' {
+Describe '0221_Install-VSBuildTools' -Tag 'Unit', 'AutomationScript', 'Development' {
 
     BeforeAll {
         # Compute path relative to repository root using $PSScriptRoot
         $repoRoot = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-        $script:ScriptPath = Join-Path $repoRoot 'automation-scripts/0850_Install-GitHub-Runner.ps1'
-        $script:ScriptName = '0850_Install-GitHub-Runner'
+        $script:ScriptPath = Join-Path $repoRoot 'library/automation-scripts/0221_Install-VSBuildTools.ps1'
+        $script:ScriptName = '0221_Install-VSBuildTools'
 
         # Import test helpers for environment detection
         $testHelpersPath = Join-Path (Split-Path $PSScriptRoot -Parent) "../../TestHelpers.psm1"
@@ -48,55 +48,22 @@ Describe '0850_Install-GitHub-Runner' -Tag 'Unit', 'AutomationScript', 'CI/CD In
             $errors.Count | Should -Be 0
         }
 
-        It 'Should not require WhatIf support' {
-            # Script does not implement SupportsShouldProcess
-            # This is acceptable for read-only or simple scripts
+        It 'Should support WhatIf' {
             $content = Get-Content $script:ScriptPath -Raw
-            $content -notmatch 'SupportsShouldProcess' | Should -Be $true
+            $content | Should -Match 'SupportsShouldProcess'
         }
-
     }
 
     Context 'Parameters' {
-        It 'Should have parameter: Repository' {
+        It 'Should have parameter: Configuration' {
             $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('Repository') | Should -Be $true
-        }
-
-        It 'Should have parameter: Token' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('Token') | Should -Be $true
-        }
-
-        It 'Should have parameter: RunnerName' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('RunnerName') | Should -Be $true
-        }
-
-        It 'Should have parameter: RunnerGroup' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('RunnerGroup') | Should -Be $true
-        }
-
-        It 'Should have parameter: Labels' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('Labels') | Should -Be $true
-        }
-
-        It 'Should have parameter: InstallAsService' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('InstallAsService') | Should -Be $true
-        }
-
-        It 'Should have parameter: WorkDirectory' {
-            $cmd = Get-Command $script:ScriptPath
-            $cmd.Parameters.ContainsKey('WorkDirectory') | Should -Be $true
+            $cmd.Parameters.ContainsKey('Configuration') | Should -Be $true
         }
 
     }
 
     Context 'Metadata' {
-        It 'Should be in stage: CI/CD Infrastructure' {
+        It 'Should be in stage: Development' {
             $content = Get-Content $script:ScriptPath -First 40
             ($content -join ' ') | Should -Match '(Stage:|Category:)'
         }
@@ -108,12 +75,11 @@ Describe '0850_Install-GitHub-Runner' -Tag 'Unit', 'AutomationScript', 'CI/CD In
     }
 
     Context 'Execution' {
-        It 'Should be executable (no WhatIf support)' {
-            # Script does not support -WhatIf parameter
-            # Verify script can be dot-sourced without errors
+        It 'Should execute with WhatIf without throwing' {
             {
-                $cmd = Get-Command $script:ScriptPath -ErrorAction Stop
-                $cmd | Should -Not -BeNullOrEmpty
+                $params = @{ WhatIf = $true }
+                $params.Configuration = @{}
+                & $script:ScriptPath @params
             } | Should -Not -Throw
         }
     }
