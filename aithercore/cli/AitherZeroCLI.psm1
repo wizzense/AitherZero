@@ -1068,12 +1068,12 @@ function Switch-AitherEnvironment {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, Position=0)]
-        [ValidateSet('Development', 'Production', 'Staging', 'Test')]
+        [ValidateSet('Development', 'Testing', 'Staging', 'Production')]
         [string]$Name
     )
     
     if (Get-Command Switch-ConfigurationEnvironment -ErrorAction SilentlyContinue) {
-        Switch-ConfigurationEnvironment -Name $Name
+        Switch-ConfigurationEnvironment -Environment $Name
         Write-AitherStatus "Switched to $Name environment" -Type Success
     }
     else {
