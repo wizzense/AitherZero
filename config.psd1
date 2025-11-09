@@ -242,8 +242,8 @@
                 }
                 Analysis       = @{
                     DependsOn   = @('Core.PowerShell7')
-                    Scripts     = @('0513', '0514', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527')
-                    Description = 'Changelog generation, diff analysis, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, and code mapping'
+                    Scripts     = @('0513', '0514', '0517', '0518', '0519', '0520', '0521', '0522', '0523', '0524', '0525', '0526', '0527', '0528')
+                    Description = 'Changelog generation, diff analysis, aggregate analysis results, recommendations, PR comments, documentation deployment, configuration, code quality, security, tech debt analysis, continuous reporting, code mapping, and quality metrics'
                 }
                 Logging        = @{
                     DependsOn   = @('Core.PowerShell7')
