@@ -422,18 +422,6 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 💬 Post Test Start Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🧪 **Comprehensive Test Execution Started**\n\n- Unit Tests (9 ranges in parallel)\n- Domain Tests (6 modules in parallel)\n- Integration Tests (4 suites in parallel)\n\nResults will be posted as each suite completes...'
-            });
-
       - name: 📥 Download All Results
         uses: actions/download-artifact@v4
         with:
