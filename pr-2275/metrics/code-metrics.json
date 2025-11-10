@@ -1,24 +1,13 @@
 {
-  "CodebaseStats": {
-    "TotalLines": 38353,
-    "CommentLines": 2680,
-    "BlankLines": 6289,
-    "TotalFiles": 49,
-    "CodeLines": 29384
+  "Timestamp": "2025-11-10T07:25:17Z",
+  "FileTypes": {
+    ".psm1": 48,
+    ".psd1": 1
   },
   "Functions": {
     "MaxLength": 0,
     "AverageLength": 0,
     "Total": 604
-  },
-  "Timestamp": "2025-11-10T07:07:38Z",
-  "FileTypes": {
-    ".psm1": 48,
-    ".psd1": 1
-  },
-  "Complexity": {
-    "AverageComplexity": 0,
-    "HighComplexityFunctions": []
   },
   "Modules": [
     {
@@ -261,5 +250,16 @@
       "Path": "aithercore/ai-agents/CopilotOrchestrator.psm1",
       "Lines": 583
     }
-  ]
+  ],
+  "CodebaseStats": {
+    "TotalFiles": 49,
+    "CommentLines": 2680,
+    "BlankLines": 6289,
+    "CodeLines": 29384,
+    "TotalLines": 38353
+  },
+  "Complexity": {
+    "AverageComplexity": 0,
+    "HighComplexityFunctions": []
+  }
 }

@@ -1,14 +1,14 @@
 {
+  "LookbackDays": 30,
+  "Workflows": [],
+  "Timestamp": "2025-11-10T07:25:15Z",
   "Summary": {
-    "SuccessRate": 0.0,
-    "TotalMinutesUsed": 0,
     "SuccessfulRuns": 0,
-    "TotalRuns": 0,
+    "SuccessRate": 0.0,
     "AverageDuration": 0,
+    "TotalRuns": 0,
+    "TotalMinutesUsed": 0,
     "FailedRuns": 0
   },
-  "LookbackDays": 30,
-  "Branch": "dev-staging",
-  "Workflows": [],
-  "Timestamp": "2025-11-10T07:07:38Z"
+  "Branch": "dev-staging"
 }
