@@ -224,7 +224,7 @@ jobs:
     name: 🚀 PR Ecosystem (Full Pipeline)
     needs: orchestration
     if: needs.orchestration.outputs.run-pr-workflow == 'true'
-    uses: ./.github/workflows/pr-complete.yml
+    uses: ./.github/workflows/02-pr-validation-build.yml
     with:
       pr_number: ${{ github.event.pull_request.number }}
     secrets: inherit
@@ -246,7 +246,7 @@ jobs:
     name: 🚀 Release Automation
     needs: orchestration
     if: needs.orchestration.outputs.run-release == 'true'
-    uses: ./.github/workflows/release-automation.yml
+    uses: ./.github/workflows/20-release-automation.yml
     secrets: inherit
     permissions:
       contents: write
@@ -403,7 +403,7 @@ jobs:
       needs.orchestration.outputs.run-docs == 'true' && 
       needs.orchestration.outputs.run-pr-workflow != 'true' &&
       needs.orchestration.outputs.run-release != 'true'
-    uses: ./.github/workflows/documentation.yml
+    uses: ./.github/workflows/06-documentation.yml
     secrets: inherit
     permissions:
       contents: write
