@@ -372,23 +372,20 @@ Invoke-Pester -Path "./tests"
 
 ### Script Analysis & AST Parsing
 
-**Use ScriptAnalysis cmdlets instead of complex AST parser syntax!**
+**Use TestingFramework cmdlets for AST parsing and syntax validation!**
 
-AitherZero provides easy-to-use cmdlets for PowerShell script analysis using the Abstract Syntax Tree (AST) parser:
+AitherZero's TestingFramework module provides cmdlets for PowerShell script analysis using the Abstract Syntax Tree (AST) parser:
 
 **Test Script Syntax:**
 ```powershell
-# Simple boolean check - returns True/False
-Test-ScriptSyntax ./my-script.ps1
+# Validate syntax across all files
+Test-SyntaxValidation -Path ./aithercore
 
-# Detailed error information
-Test-ScriptSyntax ./my-script.ps1 -Detailed
+# Validate AST with custom checks
+Test-ASTValidation -Path ./my-script.ps1 -CheckSyntax -CheckParameters
 
-# Pipeline support for batch validation
-Get-ChildItem *.ps1 | Test-ScriptSyntax
-
-# Check script blocks
-Test-ScriptSyntax -ScriptBlock { Get-Process; Write-Host "test" }
+# Get PSScriptAnalyzer results
+Invoke-ScriptAnalysis -Path ./aithercore -Recurse
 ```
 
 **Get Script AST:**
@@ -419,15 +416,6 @@ $func.Definition  # Full function code
 $func.StartLine   # Line number
 ```
 
-**Comprehensive Analysis:**
-```powershell
-# Analyze everything about a script
-Invoke-ScriptAnalysis ./my-script.ps1
-
-# Returns: Valid, ErrorCount, FunctionCount, ParameterCount, 
-#          HasCommentHelp, TokenCount, LineCount
-```
-
 **❌ OLD WAY (Don't use):**
 ```powershell
 # Complex and hard to remember - avoid this!
@@ -440,9 +428,10 @@ $ast = [System.Management.Automation.Language.Parser]::ParseFile(
 **✅ NEW WAY (Use this):**
 ```powershell
 # Simple, pipeline-friendly, and easy to remember
-Test-ScriptSyntax ./script.ps1 -Detailed
+Test-SyntaxValidation -Path ./script.ps1
 Get-ScriptAST ./script.ps1 | Select-Object -ExpandProperty AST
 Find-ScriptFunction ./script.ps1
+Invoke-ScriptAnalysis -Path ./aithercore -Recurse  # PSScriptAnalyzer
 ```
 
 ### Automatic Test Generation System

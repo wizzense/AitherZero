@@ -79,8 +79,8 @@
         'Test-CommandAvailable', 'Get-GitHubToken', 'Invoke-WithRetry', 'Test-GitRepository',
         'Get-ScriptMetadata', 'Format-Duration', 'Test-FeatureOrPrompt',
 
-        # From ScriptAnalysis (AST parsing utilities)
-        'Test-ScriptSyntax', 'Get-ScriptAST', 'Find-ScriptFunction', 'Invoke-ScriptAnalysis',
+        # From TestingFramework (AST parsing helpers)
+        'Get-ScriptAST', 'Find-ScriptFunction',
 
         # From Security modules
         'Invoke-SSHCommand', 'Test-SSHConnection', 'ConvertFrom-SecureStringSecurely',

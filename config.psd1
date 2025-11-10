@@ -477,7 +477,7 @@
             'reporting'      = @{ Modules = 3; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 3; Description = 'Security and credential management' }
             'testing'        = @{ Modules = 13; Description = 'Testing framework, quality validation, and test generation' }
-            'utilities'      = @{ Modules = 11; Description = 'Core utilities, logging, and maintenance' }
+            'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
         # Script inventory by range (180 total files, 173 unique numbers)
