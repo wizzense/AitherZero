@@ -1,0 +1,16 @@
+{
+  "Timestamp": "2025-11-10T14:12:36Z",
+  "PSScriptAnalyzer": {
+    "Warning": 0,
+    "TotalIssues": 0,
+    "ByRule": {},
+    "Information": 0,
+    "Error": 0
+  },
+  "Trends": {
+    "IssuesLastWeek": 0,
+    "IssuesThisWeek": 0,
+    "Trend": "stable"
+  },
+  "QualityScore": 100
+}

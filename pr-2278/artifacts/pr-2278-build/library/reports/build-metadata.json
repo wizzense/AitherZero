@@ -1,0 +1,53 @@
+{
+  "generated_at": "2025-11-10T14:10:36Z",
+  "environment": {
+    "workflow": "🚀 PR Ecosystem - Complete Validation & Build",
+    "job": "build",
+    "powershell_version": "7.4.13",
+    "os": "Ubuntu 24.04.3 LTS",
+    "run_number": "15",
+    "ci": true,
+    "platform": "GitHub Actions",
+    "runner_os": "Linux",
+    "run_id": "19234415250"
+  },
+  "git": {
+    "commits_count": "1",
+    "tag": null,
+    "commit_short": "852e86b1",
+    "commit_sha": "852e86b1efdb6377dfda20e57dffbe3ba1d14ab5",
+    "commit_author": "Copilot",
+    "commit_date": "2025-11-10T14:08:47Z",
+    "branch": "HEAD",
+    "commit_message": [
+      "Merge d11b701b68ff3583163a1f2a88f8e936def35ab0 into cffc97023f5740f959228105f2729c0733b50f31",
+      ""
+    ]
+  },
+  "pr": {
+    "number": 2278,
+    "head_branch": "copilot/fix-error-logging-workflows",
+    "head_sha": "852e86b1efdb6377dfda20e57dffbe3ba1d14ab5",
+    "title": null,
+    "base_branch": "dev-staging",
+    "base_sha": null,
+    "url": "https://github.com/wizzense/AitherZero/pull/2278",
+    "author": "Copilot"
+  },
+  "pages": {
+    "pr_reports": "https://wizzense.github.io/AitherZero/2278/merge/pr-2278/reports/",
+    "branch_path": "/2278/merge",
+    "base_url": "https://wizzense.github.io/AitherZero/2278/merge",
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2278/merge/pr-2278/",
+    "branch": "2278/merge"
+  },
+  "version": "1.0.0",
+  "artifacts": {
+    "container_image_base": "ghcr.io/wizzense/aitherzero",
+    "pr_container_tags": [
+      "pr-2278-852e86b1",
+      "pr-2278-latest"
+    ],
+    "package_prefix": "AitherZero-PR2278"
+  }
+}
