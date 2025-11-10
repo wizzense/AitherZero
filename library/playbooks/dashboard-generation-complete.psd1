@@ -1,6 +1,6 @@
 @{
     Name = "dashboard-generation-complete"
-    Description = "Complete dashboard generation with parallel metrics collection"
+    Description = "Complete dashboard generation with sequential metrics collection"
     Version = "1.0.0"
     
     Variables = @{
@@ -8,13 +8,18 @@
         MetricsDir = "reports/metrics"
     }
     
+    # Common configuration for all metrics collection scripts (0520-0524)
+    # ContinueOnError=$true: Allow dashboard generation even if individual metric collection fails
+    # Timeout=60: Each collection script has 60 seconds to complete
+    # These are identical because all metrics are equally important but non-critical
+    
     Sequence = @(
         # Collect ring metrics
         @{
             Script = "0520"
             Description = "Collect ring deployment metrics"
             Parameters = @{
-                OutputDir = "reports/metrics"
+                OutputPath = "reports/metrics/ring-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -25,7 +30,7 @@
             Script = "0521"
             Description = "Collect workflow health metrics"
             Parameters = @{
-                OutputDir = "reports/metrics"
+                OutputPath = "reports/metrics/workflow-health.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -36,7 +41,7 @@
             Script = "0522"
             Description = "Collect code quality metrics"
             Parameters = @{
-                OutputDir = "reports/metrics"
+                OutputPath = "reports/metrics/code-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -47,7 +52,7 @@
             Script = "0523"
             Description = "Collect test result metrics"
             Parameters = @{
-                OutputDir = "reports/metrics"
+                OutputPath = "reports/metrics/test-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -58,7 +63,7 @@
             Script = "0524"
             Description = "Collect quality analysis metrics"
             Parameters = @{
-                OutputDir = "reports/metrics"
+                OutputPath = "reports/metrics/quality-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -69,8 +74,8 @@
             Script = "0525"
             Description = "Generate HTML dashboard from collected metrics"
             Parameters = @{
-                OutputDir = "reports/dashboard"
-                MetricsDir = "reports/metrics"
+                OutputPath = "reports/dashboard/index.html"
+                MetricsPath = "reports/metrics"
             }
             ContinueOnError = $false
             Timeout = 120
@@ -88,6 +93,8 @@
         Author = "AitherZero Team"
         Created = "2025-01-10"
         Tags = @("dashboard", "reporting", "metrics", "visualization")
-        EstimatedDuration = "300s"
+        # Worst-case: 5 collection scripts × 60s + 1 dashboard script × 120s = 420s
+        # Adding buffer for execution overhead brings total to 450s
+        EstimatedDuration = "450s"
     }
 }
