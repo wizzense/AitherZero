@@ -111,7 +111,7 @@ try {
     # Write metrics to JSON
     $metrics | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
     
-    Write-ScriptLog "Test metrics aggregated: $($metrics.Summary.TotalTests) tests, $($metrics.Summary.PassRate)% pass rate" -Level 'Success'
+    Write-ScriptLog "Test metrics aggregated: $($metrics.Summary.TotalTests) tests, $($metrics.Summary.PassRate)% pass rate" -Level 'Information'
     
     exit 0
 }

@@ -119,7 +119,7 @@ try {
     # Write metrics to JSON
     $metrics | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
     
-    Write-ScriptLog "Code metrics collected: $($metrics.CodebaseStats.TotalFiles) files, $($metrics.CodebaseStats.TotalLines) lines" -Level 'Success'
+    Write-ScriptLog "Code metrics collected: $($metrics.CodebaseStats.TotalFiles) files, $($metrics.CodebaseStats.TotalLines) lines" -Level 'Information'
     
     exit 0
 }

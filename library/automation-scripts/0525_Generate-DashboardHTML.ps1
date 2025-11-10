@@ -40,7 +40,7 @@ try {
     Write-ScriptLog "Generating dashboard HTML..." -Source "0525_Generate-DashboardHTML"
     
     # Initialize dashboard session
-    $session = Initialize-DashboardSession -OutputPath $OutputPath
+    $session = Initialize-DashboardSession -ProjectPath $projectRoot -OutputPath $OutputPath
     
     # Load all metrics
     $metrics = @{}
@@ -130,8 +130,8 @@ try {
     # Complete session
     Complete-DashboardSession -Session $session
     
-    Write-ScriptLog "Dashboard generated successfully at $OutputPath" -Level 'Success'
-    Write-ScriptLog "Health: $healthScore% | Tests: $testPassRate% | Coverage: $coverage% | Quality: $qualityScore" -Level 'Success'
+    Write-ScriptLog "Dashboard generated successfully at $OutputPath" -Level 'Information'
+    Write-ScriptLog "Health: $healthScore% | Tests: $testPassRate% | Coverage: $coverage% | Quality: $qualityScore" -Level 'Information'
     
     exit 0
 }

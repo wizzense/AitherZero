@@ -105,7 +105,7 @@ try {
     # Write metrics to JSON
     $metrics | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
     
-    Write-ScriptLog "Quality metrics collected: $($metrics.PSScriptAnalyzer.TotalIssues) issues, score: $($metrics.QualityScore)" -Level 'Success'
+    Write-ScriptLog "Quality metrics collected: $($metrics.PSScriptAnalyzer.TotalIssues) issues, score: $($metrics.QualityScore)" -Level 'Information'
     
     exit 0
 }

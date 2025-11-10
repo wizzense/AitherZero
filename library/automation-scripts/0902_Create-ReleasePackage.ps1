@@ -266,7 +266,7 @@ function New-ZipPackage {
             Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
             
             $packageSize = (Get-Item $DestinationPath).Length / 1MB
-            Write-ScriptLog "ZIP package created: $([math]::Round($packageSize, 2)) MB" -Level Success
+            Write-ScriptLog "ZIP package created: $([math]::Round($packageSize, 2)) MB" -Level Information
             
             return $true
         } catch {
@@ -311,7 +311,7 @@ function New-TarGzPackage {
                     
                     if (Test-Path $DestinationPath) {
                         $packageSize = (Get-Item $DestinationPath).Length / 1MB
-                        Write-ScriptLog "TAR.GZ package created: $([math]::Round($packageSize, 2)) MB" -Level Success
+                        Write-ScriptLog "TAR.GZ package created: $([math]::Round($packageSize, 2)) MB" -Level Information
                         $success = $true
                     } else {
                         Write-ScriptLog "TAR.GZ package was not created" -Level Error
@@ -464,11 +464,11 @@ try {
     
     foreach ($package in $createdPackages) {
         $size = (Get-Item $package).Length / 1MB
-        Write-ScriptLog "  ✓ $package ($([math]::Round($size, 2)) MB)" -Level Success
+        Write-ScriptLog "  ✓ $package ($([math]::Round($size, 2)) MB)" -Level Information
     }
     
     if ($success) {
-        Write-ScriptLog "Package creation completed successfully" -Level Success
+        Write-ScriptLog "Package creation completed successfully" -Level Information
         exit 0
     } else {
         Write-ScriptLog "Package creation failed" -Level Error

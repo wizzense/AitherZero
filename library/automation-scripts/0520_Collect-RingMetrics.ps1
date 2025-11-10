@@ -54,7 +54,7 @@ if (Test-Path $loggingModule) {
 }
 
 function Write-ScriptLog {
-    param([string]$Level = 'Information', [string]$Message)
+    param([string]$Message, [string]$Level = 'Information')
     
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $Level -Message $Message -Source "0520_Collect-RingMetrics"
