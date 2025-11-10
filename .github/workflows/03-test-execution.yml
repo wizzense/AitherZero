@@ -479,7 +479,7 @@ jobs:
           files: |
             artifacts/**/*.xml
           check_name: 'Test Results Summary'
-          comment_mode: always
+          comment_mode: off
 
       - name: 💬 Post Summary Comment
         if: always() && github.event_name == 'pull_request'
@@ -493,6 +493,7 @@ jobs:
             let totalPassed = 0;
             let totalFailed = 0;
             let totalTests = 0;
+            const results = [];  // Track individual test suite results
             
             const artifactDir = './artifacts';
             
@@ -512,9 +513,23 @@ jobs:
                       const total = parseInt(match[1]);
                       const failures = parseInt(match[2]);
                       const errors = parseInt(match[3]);
+                      const passed = total - failures - errors;
+                      const failed = failures + errors;
+                      
                       totalTests += total;
-                      totalFailed += failures + errors;
-                      totalPassed += total - failures - errors;
+                      totalFailed += failed;
+                      totalPassed += passed;
+                      
+                      // Extract test suite name from file path
+                      // Artifact structure: ./artifacts/unit-0000-0099/Unit-0000-0099.xml
+                      // or ./artifacts/domain-configuration/Domain-configuration.xml
+                      const dirName = path.basename(path.dirname(filePath));
+                      results.push({
+                        name: dirName,
+                        passed: passed,
+                        failed: failed,
+                        total: total
+                      });
                     }
                   } catch (e) {
                     console.log(`Could not parse ${file}`);
