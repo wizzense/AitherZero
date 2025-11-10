@@ -393,7 +393,7 @@
                 }
                 TestGeneration        = @{
                     DependsOn   = @('Core.PowerShell7', 'Testing.Pester')
-                    Scripts     = @('0950', '0951')
+                    Scripts     = @('0950')
                     Description = 'Automatic test generation system - generates unit, integration, and functional tests for all automation scripts'
                 }
                 DocumentationTracking = @{
@@ -468,19 +468,19 @@
         # Note: Playbooks are stored in library/playbooks/, OrchestrationEngine is in automation domain
         Domains             = @{
             'ai-agents'      = @{ Modules = 3; Description = 'AI integration and workflow orchestration' }
-            'automation'     = @{ Modules = 5; Description = 'Orchestration engine and script utilities' }
+            'automation'     = @{ Modules = 4; Description = 'Orchestration engine and script utilities' }
             'cli'            = @{ Modules = 1; Description = 'CLI cmdlets and interactive interface' }
             'configuration'  = @{ Modules = 2; Description = 'Unified configuration management' }
             'development'    = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation'  = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
             'infrastructure' = @{ Modules = 2; Description = 'Infrastructure automation and management' }
-            'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
+            'reporting'      = @{ Modules = 3; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 3; Description = 'Security and credential management' }
-            'testing'        = @{ Modules = 13; Description = 'Testing framework, quality validation, and test generation' }
+            'testing'        = @{ Modules = 11; Description = 'Testing framework, quality validation, and test generation' }
             'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
-        # Script inventory by range (180 total files, 173 unique numbers)
+        # Script inventory by range (174 total files, 174 unique numbers)
         # All scripts now have unique numbers (duplicates resolved in Phase 2)
         # Counts represent unique script NUMBERS, not total files
         ScriptInventory     = @{
@@ -492,8 +492,8 @@
             '0500-0599' = @{ Count = 25; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 36; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 30; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 17; Category = 'Validation & Test Generation' }
-            '9000-9999' = @{ Count = 0; Category = 'Maintenance' }
+            '0900-0999' = @{ Count = 16; Category = 'Validation & Test Generation' }
+            '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
 
         # Test inventory - comprehensive test file tracking

@@ -11,7 +11,7 @@ aitherzero orchestrate test-orchestrated                  # 10min (default)
 open reports/dashboard.html
 
 # Regenerate tests
-./library/library/automation-scripts/0951_Regenerate-FunctionalTests.ps1 -Mode Sample -Force
+./library/automation-scripts/0950_Generate-AllTests.ps1 -Mode Full -Force
 ```
 
 ## What Changed
@@ -92,8 +92,8 @@ Context '🎭 Mocked Dependencies' {
 
 - `aithercore/orchestration/playbooks/testing/test-orchestrated.json` - Main playbook
 - `.github/workflows/unified-testing.yml` - CI/CD workflow
-- `aithercore/testing/FunctionalTestGenerator.psm1` - Test generator
-- `library/automation-scripts/0951_Regenerate-FunctionalTests.ps1` - Batch regeneration
+- `aithercore/testing/AutoTestGenerator.psm1` - Test generator
+- `library/automation-scripts/0950_Generate-AllTests.ps1` - Batch regeneration
 
 ### Deprecated (Don't Use)
 
