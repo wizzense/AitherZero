@@ -54,16 +54,38 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 💬 Post Start Status
+      - name: 💬 Create Workflow Status Comment
+        id: create_comment
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.createComment({
+            const comment = await github.rest.issues.createComment({
               issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 **PR Complete Workflow Started**\n\n**Phase 1:** ⚡ Quick Validation\n- Syntax check\n- Config validation\n- Manifest validation'
+              body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${new Date().toISOString()}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ⚡ Quick Validation | 🔄 Running | Syntax, Config, Manifests |
+            | 🔨 Build & Package | ⏳ Pending | Runtime packages |
+            | 🔍 Quality Analysis | ⏳ Pending | PSScriptAnalyzer, Component quality |
+            | 📊 Dashboard | ⏳ Pending | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
             });
+            return comment.data.id;
 
       - name: 🔧 Bootstrap
         shell: pwsh
@@ -72,7 +94,6 @@ jobs:
       - name: ⚡ Quick Validation (Syntax + Config + Manifests)
         id: validate
         shell: pwsh
-        continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
@@ -97,19 +118,54 @@ jobs:
           
           Write-Host "✅ Quick validation passed" -ForegroundColor Green
 
-      - name: 💬 Post Validation Result
+      - name: 💬 Update Status - Validation Complete
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const status = '${{ steps.validate.outcome }}';
             const icon = status === 'success' ? '✅' : '❌';
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+            const statusText = status === 'success' ? 'PASSED' : 'FAILED';
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${icon} **Quick Validation ${status === 'success' ? 'PASSED' : 'FAILED'}**`
+              issue_number: process.env.PR_NUMBER
             });
+            
+            const trackingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('WORKFLOW_STATUS_COMMENT:pr-validation-build')
+            );
+            
+            if (trackingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: trackingComment.id,
+                body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${trackingComment.created_at}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ${icon} Quick Validation | **${statusText}** | Completed at ${new Date().toISOString()} |
+            | 🔨 Build & Package | 🔄 Running | Runtime packages |
+            | 🔍 Quality Analysis | ⏳ Pending | PSScriptAnalyzer, Component quality |
+            | 📊 Dashboard | ⏳ Pending | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
+              });
+            }
 
   # ============================================================================
   # PHASE 2: Build & Package (TESTS REMOVED - handled by other workflows)
@@ -128,17 +184,6 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 💬 Post Build Start
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 2:** 🔨 Build & Package Started (Tests handled by separate workflows)'
-            });
-
       - name: 🔧 Bootstrap
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
@@ -146,7 +191,6 @@ jobs:
       - name: 🔨 Run Build Playbook (Skipping Tests)
         id: build
         shell: pwsh
-        continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
@@ -154,17 +198,43 @@ jobs:
           # Self-deployment test (0900) runs ALL tests and is redundant
           # Tests are handled by separate dedicated test workflows
           
+          # Track failures but continue to collect all results
+          $failedSteps = @()
+          $ErrorActionPreference = 'Continue'
+          
           # Call individual build scripts instead of full playbook
           Write-Host "🔧 Running syntax validation..." -ForegroundColor Cyan
           & "./library/automation-scripts/0407*.ps1" -All
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ Syntax validation failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+            $failedSteps += "Syntax validation (0407)"
+          }
           
-          Write-Host "📊 Generating build metadata..." -ForegroundColor Cyan
+          Write-Host "`n📊 Generating build metadata..." -ForegroundColor Cyan
           & "./library/automation-scripts/0515*.ps1" -OutputPath "library/reports/build-metadata.json" -IncludePRInfo -IncludeGitInfo -IncludeEnvironmentInfo
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ Build metadata generation failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+            $failedSteps += "Build metadata (0515)"
+          }
           
-          Write-Host "📦 Creating release package..." -ForegroundColor Cyan
+          Write-Host "`n📦 Creating release package..." -ForegroundColor Cyan
           & "./library/automation-scripts/0902*.ps1" -PackageFormat Both -OnlyRuntime
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ Release package creation failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+            $failedSteps += "Release package (0902)"
+          }
           
-          Write-Host "✅ Build complete (tests skipped - handled elsewhere)" -ForegroundColor Green
+          # Report final status
+          if ($failedSteps.Count -gt 0) {
+            Write-Host "`n❌ Build completed with failures:" -ForegroundColor Red
+            foreach ($step in $failedSteps) {
+              Write-Host "  - $step" -ForegroundColor Red
+            }
+            exit 1
+          } else {
+            Write-Host "`n✅ Build complete (tests skipped - handled elsewhere)" -ForegroundColor Green
+            exit 0
+          }
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -179,19 +249,59 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      - name: 💬 Post Build Result
+      - name: 💬 Update Status - Build Complete
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ steps.build.outcome }}';
-            const icon = status === 'success' ? '✅' : '⚠️';
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+            const validationStatus = '${{ needs.quick-validation.result }}';
+            const buildStatus = '${{ steps.build.outcome }}';
+            
+            const validationIcon = validationStatus === 'success' ? '✅' : '❌';
+            const buildIcon = buildStatus === 'success' ? '✅' : '❌';
+            
+            const validationText = validationStatus === 'success' ? 'PASSED' : 'FAILED';
+            const buildText = buildStatus === 'success' ? 'PASSED' : 'FAILED';
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${icon} **Build & Package ${status === 'success' ? 'PASSED' : 'COMPLETED WITH ISSUES'}**`
+              issue_number: process.env.PR_NUMBER
             });
+            
+            const trackingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('WORKFLOW_STATUS_COMMENT:pr-validation-build')
+            );
+            
+            if (trackingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: trackingComment.id,
+                body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${trackingComment.created_at}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ${validationIcon} Quick Validation | **${validationText}** | Syntax, Config, Manifests |
+            | ${buildIcon} Build & Package | **${buildText}** | Completed at ${new Date().toISOString()} |
+            | 🔍 Quality Analysis | 🔄 Running | PSScriptAnalyzer, Component quality |
+            | 📊 Dashboard | ⏳ Pending | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
+              });
+            }
 
   # ============================================================================
   # PHASE 2B: Quality Analysis
@@ -210,17 +320,6 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 💬 Post Quality Start
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 4:** 🔍 Quality Analysis Started\n\n- PSScriptAnalyzer\n- Component Quality\n- Security Scan'
-            });
-
       - name: 🔧 Bootstrap
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
@@ -228,15 +327,38 @@ jobs:
       - name: 🔍 Run Quality Analysis
         id: quality
         shell: pwsh
-        continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
+          # Track failures but continue to collect all results
+          $failedSteps = @()
+          $ErrorActionPreference = 'Continue'
+          
           Write-Host "🔍 Running PSScriptAnalyzer" -ForegroundColor Cyan
           & "./library/automation-scripts/0404*.ps1" -UseCache
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ PSScriptAnalyzer failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+            $failedSteps += "PSScriptAnalyzer (0404)"
+          }
           
-          Write-Host "🔍 Running Component Quality Check" -ForegroundColor Cyan
+          Write-Host "`n🔍 Running Component Quality Check" -ForegroundColor Cyan
           & "./library/automation-scripts/0420*.ps1" -Path "./aithercore" -Recursive
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "⚠️ Component quality check failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+            $failedSteps += "Component quality (0420)"
+          }
+          
+          # Report final status
+          if ($failedSteps.Count -gt 0) {
+            Write-Host "`n❌ Quality analysis completed with failures:" -ForegroundColor Red
+            foreach ($step in $failedSteps) {
+              Write-Host "  - $step" -ForegroundColor Red
+            }
+            exit 1
+          } else {
+            Write-Host "`n✅ Quality analysis passed" -ForegroundColor Green
+            exit 0
+          }
 
       - name: 📊 Upload Quality Results
         uses: actions/upload-artifact@v4
@@ -249,19 +371,62 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      - name: 💬 Post Quality Result
+      - name: 💬 Update Status - Quality Complete
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ steps.quality.outcome }}';
-            const icon = status === 'success' ? '✅' : 'ℹ️';
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+            const validationStatus = '${{ needs.quick-validation.result }}';
+            const buildStatus = '${{ needs.build.result }}';
+            const qualityStatus = '${{ steps.quality.outcome }}';
+            
+            const validationIcon = validationStatus === 'success' ? '✅' : '❌';
+            const buildIcon = buildStatus === 'success' ? '✅' : '❌';
+            const qualityIcon = qualityStatus === 'success' ? '✅' : '❌';
+            
+            const validationText = validationStatus === 'success' ? 'PASSED' : 'FAILED';
+            const buildText = buildStatus === 'success' ? 'PASSED' : 'FAILED';
+            const qualityText = qualityStatus === 'success' ? 'PASSED' : 'FAILED';
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${icon} **Quality Analysis ${status === 'success' ? 'PASSED' : 'COMPLETED'}**`
+              issue_number: process.env.PR_NUMBER
             });
+            
+            const trackingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('WORKFLOW_STATUS_COMMENT:pr-validation-build')
+            );
+            
+            if (trackingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: trackingComment.id,
+                body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${trackingComment.created_at}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ${validationIcon} Quick Validation | **${validationText}** | Syntax, Config, Manifests |
+            | ${buildIcon} Build & Package | **${buildText}** | Runtime packages |
+            | ${qualityIcon} Quality Analysis | **${qualityText}** | Completed at ${new Date().toISOString()} |
+            | 📊 Dashboard | 🔄 Running | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
+              });
+            }
 
   # ============================================================================
   # PHASE 3: Dashboard Generation & Deployment
@@ -278,40 +443,46 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 💬 Post Dashboard Start
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 3:** 📊 Dashboard Generation Started\n\nConsolidating build and quality results...\n\n> **Note:** Docker images built by deploy-pr-environment workflow'
-            });
-
       - name: 🔧 Bootstrap
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
 
       - name: 📥 Download All Artifacts
+        id: download-artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
         continue-on-error: true
 
       - name: 📊 Generate Consolidated Dashboard
+        id: dashboard
         shell: pwsh
-        continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
           Write-Host "📊 Generating Modular Dashboard (5 parallel collectors + HTML generation)" -ForegroundColor Cyan
           
+          # Track failures but continue to generate what we can
+          $failedSteps = @()
+          $ErrorActionPreference = 'Continue'
+          
           # Use new modular dashboard generation playbook
-          Invoke-AitherPlaybook -Name dashboard-generation-complete
+          try {
+            Invoke-AitherPlaybook -Name dashboard-generation-complete
+            Write-Host "✅ Dashboard generation playbook completed" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Dashboard generation playbook failed: $_" -ForegroundColor Yellow
+            $failedSteps += "Dashboard generation playbook"
+          }
           
           # Run report playbook
-          Invoke-AitherPlaybook -Name pr-ecosystem-report
+          try {
+            Invoke-AitherPlaybook -Name pr-ecosystem-report
+            Write-Host "✅ PR ecosystem report completed" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ PR ecosystem report failed: $_" -ForegroundColor Yellow
+            $failedSteps += "PR ecosystem report"
+          }
           
           # Organize for GitHub Pages
           $prDir = "./library/reports/pr-$env:PR_NUMBER"
@@ -321,12 +492,17 @@ jobs:
           if (Test-Path "./reports/dashboard") {
             Copy-Item -Path "./reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
             Write-Host "✅ Copied modern dashboard" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️ Dashboard output not found" -ForegroundColor Yellow
+            $failedSteps += "Dashboard output copy"
           }
           
           # Copy metrics
           if (Test-Path "./reports/metrics") {
             Copy-Item -Path "./reports/metrics" -Destination "$prDir/metrics" -Recurse -Force
             Write-Host "✅ Copied metrics JSONs" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️ Metrics output not found" -ForegroundColor Yellow
           }
           
           # Copy legacy reports
@@ -346,9 +522,21 @@ jobs:
           # Copy artifacts
           if (Test-Path "./artifacts") {
             Copy-Item -Path "./artifacts" -Destination "$prDir/artifacts" -Recurse -Force
+            Write-Host "✅ Copied artifacts" -ForegroundColor Green
           }
           
-          Write-Host "✅ Complete dashboard generated with modern modular architecture" -ForegroundColor Green
+          # Report final status (warn but don't fail - dashboard is best-effort)
+          if ($failedSteps.Count -gt 0) {
+            Write-Host "`n⚠️ Dashboard generation completed with warnings:" -ForegroundColor Yellow
+            foreach ($step in $failedSteps) {
+              Write-Host "  - $step" -ForegroundColor Yellow
+            }
+            Write-Host "`n✅ Partial dashboard generated" -ForegroundColor Green
+            exit 0  # Don't fail - we want partial dashboard deployed
+          } else {
+            Write-Host "`n✅ Complete dashboard generated with modern modular architecture" -ForegroundColor Green
+            exit 0
+          }
 
       - name: 📦 Upload Dashboard
         uses: actions/upload-artifact@v4
@@ -377,17 +565,30 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const validationStatus = '${{ needs.quick-validation.outputs.status }}';
-            const buildStatus = '${{ needs.build.outputs.status }}';
-            const qualityStatus = '${{ needs.quality-analysis.outputs.status }}';
+            // Use needs.<job>.result instead of outputs.status for reliable status checking
+            // .result is always available even when jobs fail, while outputs may be undefined
+            const validationStatus = '${{ needs.quick-validation.result }}';
+            const buildStatus = '${{ needs.build.result }}';
+            const qualityStatus = '${{ needs.quality-analysis.result }}';
             
             const validationIcon = validationStatus === 'success' ? '✅' : '❌';
-            const buildIcon = buildStatus === 'success' ? '✅' : '⚠️';
-            const qualityIcon = qualityStatus === 'success' ? '✅' : 'ℹ️';
+            const buildIcon = buildStatus === 'success' ? '✅' : '❌';
+            const qualityIcon = qualityStatus === 'success' ? '✅' : '❌';
             
             const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${process.env.PR_NUMBER}/`;
             const dockerImageTag = `ghcr.io/${context.repo.owner}/${context.repo.repo}:pr-${process.env.PR_NUMBER}`.toLowerCase();
             const workflowUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
+            
+            // Convert result status to user-friendly text
+            const statusText = (result) => {
+              switch(result) {
+                case 'success': return 'PASSED';
+                case 'failure': return 'FAILED';
+                case 'cancelled': return 'CANCELLED';
+                case 'skipped': return 'SKIPPED';
+                default: return result.toUpperCase();
+              }
+            };
             
             const summary = `## 🚀 PR Validation & Build - COMPLETE
             
@@ -395,9 +596,9 @@ jobs:
             
             | Phase | Status | Details |
             |-------|--------|---------|
-            | ${validationIcon} **Quick Validation** | ${validationStatus} | Syntax, Config, Manifests |
-            | ${buildIcon} **Build & Package** | ${buildStatus} | Runtime packages created |
-            | ${qualityIcon} **Quality Analysis** | ${qualityStatus} | PSScriptAnalyzer, Component quality |
+            | ${validationIcon} **Quick Validation** | ${statusText(validationStatus)} | Syntax, Config, Manifests |
+            | ${buildIcon} **Build & Package** | ${statusText(buildStatus)} | Runtime packages created |
+            | ${qualityIcon} **Quality Analysis** | ${statusText(qualityStatus)} | PSScriptAnalyzer, Component quality |
             | 📊 **Dashboard** | Generated | Comprehensive metrics dashboard |
             
             ### 🔗 Key Links
