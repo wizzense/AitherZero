@@ -49,4 +49,4 @@ jobs:
           DOC_MODE: ${{ github.event.inputs.mode || 'Incremental' }}
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-OrchestrationSequence -LoadPlaybook generate-documentation
+          Invoke-AitherPlaybook -Name generate-documentation

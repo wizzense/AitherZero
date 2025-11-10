@@ -55,9 +55,8 @@
     
     # Variables available to all scripts
     Variables = @{
-        CI = "true"
-        AITHERZERO_CI = "true"
-        AITHERZERO_NONINTERACTIVE = "true"
+        # CI variable is automatically set by GitHub Actions and other CI platforms
+        # Non-interactive mode is derived from CI detection in Configuration module
         ReportsPath = "./reports"
         TestResultsPath = "./library/tests/results"
         CoverageThreshold = 70

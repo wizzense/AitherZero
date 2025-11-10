@@ -93,7 +93,7 @@
         Timeout = 20
         Environment = @{
             AITHERZERO_PROFILE = 'Deployment'
-            AITHERZERO_NONINTERACTIVE = 'true'
+            # Non-interactive mode is derived from CI detection
         }
         Secrets = @('DEPLOY_KEY', 'REGISTRY_TOKEN')
     }

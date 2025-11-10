@@ -36,8 +36,6 @@ concurrency:
 
 env:
   PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
-  AITHERZERO_CI: true
-  AITHERZERO_NONINTERACTIVE: true
   AITHERZERO_SUPPRESS_BANNER: true
 
 jobs:
@@ -371,7 +369,7 @@ jobs:
         continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
+          Invoke-AitherPlaybook -Name pr-ecosystem-build
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -642,7 +640,7 @@ jobs:
           Write-Host "📊 Generating Consolidated Dashboard" -ForegroundColor Cyan
           
           # Run report playbook
-          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
+          Invoke-AitherPlaybook -Name pr-ecosystem-report
           
           # Organize for GitHub Pages
           $prDir = "./library/reports/pr-$env:PR_NUMBER"
