@@ -1,18 +1,21 @@
 ---
-name: 🎯 Master CI/CD Orchestrator
+name: 🎯 PR Ecosystem & CI/CD Orchestrator
 
 # Central coordination workflow that orchestrates all CI/CD processes
-# This is the single source of truth for build, test, and release automation
+# This is the SINGLE ENTRY POINT for PR validation, builds, tests, and releases
+# ⚡ For PRs: Automatically runs complete PR ecosystem (validation → testing → build → deploy)
+# 🚀 For Pushes: Runs CI/CD pipeline
+# 📦 For Releases: Executes full release workflow
 
 on:
   pull_request:
     branches: [main, dev, dev-staging]
     types: [opened, synchronize, reopened, ready_for_review]
-  
+
   push:
     branches: [main, dev, dev-staging]
     tags: ['v*']
-  
+
   workflow_dispatch:
     inputs:
       workflow:
@@ -26,7 +29,7 @@ on:
           - build
           - release
           - documentation
-      
+
       force_all_tests:
         description: 'Force all tests regardless of file changes'
         type: boolean
@@ -213,11 +216,12 @@ jobs:
           echo "  Release: ${RUN_RELEASE}"
 
   # ============================================================================
-  # PR WORKFLOW: Complete PR validation (delegates to pr-complete.yml)
+  # PR ECOSYSTEM: Complete PR validation (delegates to pr-complete.yml)
+  # Runs: Quick validation → Comprehensive testing → Build → Quality → Dashboard
   # ============================================================================
-  
-  pr-workflow:
-    name: 🚀 PR Complete Workflow
+
+  pr-ecosystem:
+    name: 🚀 PR Ecosystem (Full Pipeline)
     needs: orchestration
     if: needs.orchestration.outputs.run-pr-workflow == 'true'
     uses: ./.github/workflows/pr-complete.yml

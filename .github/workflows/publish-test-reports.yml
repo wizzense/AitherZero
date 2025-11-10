@@ -13,8 +13,8 @@ on:
       - 'library/reports/**'
       - 'library/tests/results/**'
       - 'library/tests/coverage/**'
-  pull_request:
-    types: [opened, synchronize, reopened]
+  # DO NOT add pull_request trigger here - it causes premature execution before tests run
+  # This workflow should ONLY run after test-execution.yml completes via workflow_run trigger
   workflow_dispatch:
     inputs:
       force_publish:
@@ -40,7 +40,7 @@ jobs:
   collect-reports:
     name: 📥 Collect Test Reports and Generate Dashboard
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
 
     steps:
       - name: 📥 Checkout Repository
@@ -104,37 +104,17 @@ jobs:
           
           Write-Host "✅ Test results organized" -ForegroundColor Green
 
-      - name: 🎯 Run Comprehensive Tests for Dashboard
+      - name: 📊 Generate Dashboard with Modular Playbook
         shell: pwsh
         run: |
-          Write-Host "🧪 Running tests to generate fresh metrics..." -ForegroundColor Cyan
+          Write-Host "📊 Generating dashboard using modular playbook..." -ForegroundColor Cyan
           
-          # Run quick validation to get current metrics
-          if (Test-Path "./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1") {
-            Write-Host "Running PSScriptAnalyzer for quality metrics..." -ForegroundColor Yellow
-            ./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1 -Fast -ErrorAction Continue
-          }
+          # Import AitherZero module
+          Import-Module ./AitherZero.psd1 -Force -ErrorAction Stop
           
-          # Run unit tests for test metrics
-          if (Test-Path "./library/automation-scripts/0402_Run-UnitTests.ps1") {
-            Write-Host "Running unit tests for coverage metrics..." -ForegroundColor Yellow
-            ./library/automation-scripts/0402_Run-UnitTests.ps1 -NoCoverage -ErrorAction Continue
-          }
-          
-          Write-Host "✅ Test execution completed" -ForegroundColor Green
-
-      - name: 📊 Generate Comprehensive Dashboard
-        shell: pwsh
-        run: |
-          Write-Host "📊 Generating comprehensive project dashboard..." -ForegroundColor Cyan
-          
-          # Generate main dashboard with all metrics
-          ./library/automation-scripts/0512_Generate-Dashboard.ps1 -Format All
-          
-          # Generate project report
-          if (Test-Path "./library/automation-scripts/0510_Generate-ProjectReport.ps1") {
-            ./library/automation-scripts/0510_Generate-ProjectReport.ps1 -ErrorAction Continue
-          }
+          # Use new modular dashboard generation playbook
+          # This runs 5 metrics collectors in parallel, then generates HTML
+          Invoke-AitherPlaybook -Name dashboard-generation-complete -ErrorAction Continue
           
           Write-Host "✅ Dashboard generated successfully" -ForegroundColor Green
 
