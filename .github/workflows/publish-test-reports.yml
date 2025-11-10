@@ -146,6 +146,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
           PR_BASE: ${{ github.event.pull_request.base.ref }}
+          PR_STATE: ${{ github.event.pull_request.state }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
         run: |
@@ -172,7 +173,7 @@ jobs:
 
 **Title:** $env:PR_TITLE  
 **Branch:** ``$env:PR_BRANCH`` → ``$env:PR_BASE``  
-**Status:** ${{ github.event.pull_request.state }}  
+**Status:** $env:PR_STATE  
 **Updated:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
 
 ## 📊 Quick Links
