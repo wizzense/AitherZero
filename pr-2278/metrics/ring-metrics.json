@@ -2,132 +2,132 @@
   "Rings": [
     {
       "Name": "main",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "🎯 Main (Production)",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "🎯 Main (Production)"
+      }
     },
     {
       "Name": "dev-staging",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "🔄 Dev-Staging (Pre-Release)",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "🔄 Dev-Staging (Pre-Release)"
+      }
     },
     {
       "Name": "dev",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "🛠️ Dev (Integration)",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "🛠️ Dev (Integration)"
+      }
     },
     {
       "Name": "ring-0",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "⚙️ Ring 0 (Core)",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "⚙️ Ring 0 (Core)"
+      }
     },
     {
       "Name": "ring-0-integrations",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "🔗 Ring 0 Integrations",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "🔗 Ring 0 Integrations"
+      }
     },
     {
       "Name": "ring-1",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "✨ Ring 1 (Features)",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "✨ Ring 1 (Features)"
+      }
     },
     {
       "Name": "ring-1-integrations",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "🧩 Ring 1 Integrations",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "🧩 Ring 1 Integrations"
+      }
     },
     {
       "Name": "ring-2",
+      "DeploymentStatus": "Unknown",
       "TestPassRate": 0,
       "QualityScore": 0,
       "ActivePRs": 0,
       "CommitsLast7Days": 0,
+      "DisplayName": "🧪 Ring 2 (Experimental)",
       "Health": "Branch Not Found",
       "LastCommit": {
+        "Date": "",
         "SHA": "",
         "Message": "",
-        "Date": "",
         "Author": ""
-      },
-      "DeploymentStatus": "Unknown",
-      "DisplayName": "🧪 Ring 2 (Experimental)"
+      }
     }
   ],
-  "Timestamp": "2025-11-10T14:51:50.0976221+00:00"
+  "Timestamp": "2025-11-10T15:06:16.7649170+00:00"
 }
