@@ -282,20 +282,21 @@ jobs:
           $templatePath = "./library/_templates/release-notes.md"
           if (Test-Path $templatePath) {
             $releaseNotes = Get-Content $templatePath -Raw
-            $releaseNotes = $releaseNotes -replace '{{VERSION}}', $version
-            $releaseNotes = $releaseNotes -replace '{{RELEASE_DATE}}', $buildInfo.BuildDate
-            $releaseNotes = $releaseNotes -replace '{{BUILD_NUMBER}}', $buildInfo.BuildNumber
-            $releaseNotes = $releaseNotes -replace '{{MODULE_COUNT}}', '11 domains'
-            $releaseNotes = $releaseNotes -replace '{{FUNCTION_COUNT}}', '200+'
-            $releaseNotes = $releaseNotes -replace '{{SCRIPT_COUNT}}', '175'
-            $releaseNotes = $releaseNotes -replace '{{PLAYBOOK_COUNT}}', '25'
-            $releaseNotes = $releaseNotes -replace '{{DOWNLOAD_URL}}', "https://github.com/${{ github.repository }}/releases/download/v$version/AitherZero-v$version.zip"
-            $releaseNotes = $releaseNotes -replace '{{INSTALL_SCRIPT_URL}}', "https://raw.githubusercontent.com/${{ github.repository }}/main/bootstrap.ps1"
-            $releaseNotes = $releaseNotes -replace '{{REPOSITORY_LOWER}}', $env:REPO_LOWER
-            $releaseNotes = $releaseNotes -replace '{{CHANGELOG}}', "See commits since $lastTag"
-            $releaseNotes = $releaseNotes -replace '{{DOCS_URL}}', "${{ github.server_url }}/${{ github.repository }}/blob/main/README.md"
-            $releaseNotes = $releaseNotes -replace '{{DOCKER_URL}}', "https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
-            $releaseNotes = $releaseNotes -replace '{{REPO_URL}}', "${{ github.server_url }}/${{ github.repository }}"
+            # Use -creplace with escaped braces to avoid regex quantifier issues
+            $releaseNotes = $releaseNotes -creplace '\{\{VERSION\}\}', $version
+            $releaseNotes = $releaseNotes -creplace '\{\{RELEASE_DATE\}\}', $buildInfo.BuildDate
+            $releaseNotes = $releaseNotes -creplace '\{\{BUILD_NUMBER\}\}', $buildInfo.BuildNumber
+            $releaseNotes = $releaseNotes -creplace '\{\{MODULE_COUNT\}\}', '11 domains'
+            $releaseNotes = $releaseNotes -creplace '\{\{FUNCTION_COUNT\}\}', '200+'
+            $releaseNotes = $releaseNotes -creplace '\{\{SCRIPT_COUNT\}\}', '175'
+            $releaseNotes = $releaseNotes -creplace '\{\{PLAYBOOK_COUNT\}\}', '25'
+            $releaseNotes = $releaseNotes -creplace '\{\{DOWNLOAD_URL\}\}', "https://github.com/${{ github.repository }}/releases/download/v$version/AitherZero-v$version.zip"
+            $releaseNotes = $releaseNotes -creplace '\{\{INSTALL_SCRIPT_URL\}\}', "https://raw.githubusercontent.com/${{ github.repository }}/main/bootstrap.ps1"
+            $releaseNotes = $releaseNotes -creplace '\{\{REPOSITORY_LOWER\}\}', $env:REPO_LOWER
+            $releaseNotes = $releaseNotes -creplace '\{\{CHANGELOG\}\}', "See commits since $lastTag"
+            $releaseNotes = $releaseNotes -creplace '\{\{DOCS_URL\}\}', "${{ github.server_url }}/${{ github.repository }}/blob/main/README.md"
+            $releaseNotes = $releaseNotes -creplace '\{\{DOCKER_URL\}\}', "https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
+            $releaseNotes = $releaseNotes -creplace '\{\{REPO_URL\}\}', "${{ github.server_url }}/${{ github.repository }}"
           } else {
             Write-Host "⚠️ Release notes template not found, using minimal content" -ForegroundColor Yellow
             $releaseNotes = "# AitherZero $version`n`nSee https://github.com/${{ github.repository }} for details."

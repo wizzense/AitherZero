@@ -312,7 +312,7 @@ jobs:
           }
           
           # Copy ring status HTML and JSON
-          Copy-Item "./reports/ring-status/index.html" "$reportsDir/ring-status.html" -Force
+          Copy-Item "./reports/ring-status/ring-status.html" "$reportsDir/ring-status.html" -Force
           Copy-Item "./reports/ring-status/ring-status-data.json" "$reportsDir/ring-status-data.json" -Force
           
           Write-Host "✅ Copied to reports/ for Jekyll deployment" -ForegroundColor Green
