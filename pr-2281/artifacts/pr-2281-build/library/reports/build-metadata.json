@@ -1,0 +1,53 @@
+{
+  "generated_at": "2025-11-10T15:24:22Z",
+  "pages": {
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2281/merge/pr-2281/",
+    "branch_path": "/2281/merge",
+    "base_url": "https://wizzense.github.io/AitherZero/2281/merge",
+    "branch": "2281/merge",
+    "pr_reports": "https://wizzense.github.io/AitherZero/2281/merge/pr-2281/reports/"
+  },
+  "artifacts": {
+    "package_prefix": "AitherZero-PR2281",
+    "container_image_base": "ghcr.io/wizzense/aitherzero",
+    "pr_container_tags": [
+      "pr-2281-a46acb5d",
+      "pr-2281-latest"
+    ]
+  },
+  "version": "1.0.0",
+  "pr": {
+    "base_branch": "dev-staging",
+    "title": null,
+    "head_sha": "a46acb5dd13354bb71c46a002a0adb51f911f4e7",
+    "number": 2281,
+    "url": "https://github.com/wizzense/AitherZero/pull/2281",
+    "author": "wizzense",
+    "head_branch": "copilot/fix-comment-issues-in-tests",
+    "base_sha": null
+  },
+  "git": {
+    "commit_author": "Copilot",
+    "commit_sha": "a46acb5dd13354bb71c46a002a0adb51f911f4e7",
+    "commit_date": "2025-11-10T07:23:14-08:00",
+    "commit_message": [
+      "Merge 4ba620936b66a25c0508d0946b7dbd7b44b5a7cf into fd15d1cf08af143ff723412037a1fbb545c2415e",
+      ""
+    ],
+    "branch": "HEAD",
+    "tag": null,
+    "commit_short": "a46acb5d",
+    "commits_count": "1"
+  },
+  "environment": {
+    "workflow": "🚀 PR Ecosystem - Complete Validation & Build",
+    "runner_os": "Linux",
+    "run_id": "19236647141",
+    "job": "build",
+    "platform": "GitHub Actions",
+    "os": "Ubuntu 24.04.3 LTS",
+    "run_number": "38",
+    "ci": true,
+    "powershell_version": "7.4.13"
+  }
+}
