@@ -458,7 +458,6 @@ try {
     }
     
     # Summary
-    Write-ScriptLog ""
     Write-ScriptLog "=== Package Creation Summary ===" -Level Information
     Write-ScriptLog "Packages created: $($createdPackages.Count)"
     
