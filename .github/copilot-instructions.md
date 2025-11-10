@@ -370,6 +370,81 @@ Invoke-Pester -Path "./tests/aithercore/configuration" -CodeCoverage "./aitherco
 Invoke-Pester -Path "./tests"
 ```
 
+### Script Analysis & AST Parsing
+
+**Use ScriptAnalysis cmdlets instead of complex AST parser syntax!**
+
+AitherZero provides easy-to-use cmdlets for PowerShell script analysis using the Abstract Syntax Tree (AST) parser:
+
+**Test Script Syntax:**
+```powershell
+# Simple boolean check - returns True/False
+Test-ScriptSyntax ./my-script.ps1
+
+# Detailed error information
+Test-ScriptSyntax ./my-script.ps1 -Detailed
+
+# Pipeline support for batch validation
+Get-ChildItem *.ps1 | Test-ScriptSyntax
+
+# Check script blocks
+Test-ScriptSyntax -ScriptBlock { Get-Process; Write-Host "test" }
+```
+
+**Get Script AST:**
+```powershell
+# Extract AST for advanced analysis
+$ast = Get-ScriptAST ./my-script.ps1
+
+# Find all functions using AST
+$functions = $ast.AST.FindAll({ 
+    $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] 
+}, $true)
+
+# Include tokens and errors
+Get-ScriptAST ./script.ps1 -IncludeTokens -IncludeErrors
+```
+
+**Find Functions:**
+```powershell
+# Find all functions in a script/module
+Find-ScriptFunction ./module.psm1
+
+# Find specific functions (supports wildcards)
+Find-ScriptFunction ./script.ps1 -Name "Write-*"
+
+# Get function definition
+$func = Find-ScriptFunction ./script.ps1 -Name "MyFunction"
+$func.Definition  # Full function code
+$func.StartLine   # Line number
+```
+
+**Comprehensive Analysis:**
+```powershell
+# Analyze everything about a script
+Invoke-ScriptAnalysis ./my-script.ps1
+
+# Returns: Valid, ErrorCount, FunctionCount, ParameterCount, 
+#          HasCommentHelp, TokenCount, LineCount
+```
+
+**❌ OLD WAY (Don't use):**
+```powershell
+# Complex and hard to remember - avoid this!
+$errors = $null; $tokens = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile(
+    'script.ps1', [ref]$tokens, [ref]$errors
+)
+```
+
+**✅ NEW WAY (Use this):**
+```powershell
+# Simple, pipeline-friendly, and easy to remember
+Test-ScriptSyntax ./script.ps1 -Detailed
+Get-ScriptAST ./script.ps1 | Select-Object -ExpandProperty AST
+Find-ScriptFunction ./script.ps1
+```
+
 ### Automatic Test Generation System
 
 **CRITICAL: DO NOT WRITE TESTS MANUALLY!** AitherZero has a 100% automated test generation system.
