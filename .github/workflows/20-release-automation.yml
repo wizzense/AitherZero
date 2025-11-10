@@ -68,7 +68,7 @@ jobs:
           # Syntax validation
           try {
             Write-Host "  📝 Syntax validation..." -ForegroundColor Cyan
-            & "./library/automation-scripts/0407_*.ps1"
+            & "./library/automation-scripts/0407_*.ps1" -All
             Write-Host "  ✅ Syntax validation passed" -ForegroundColor Green
           } catch {
             $errors += "Syntax validation failed: $_"
