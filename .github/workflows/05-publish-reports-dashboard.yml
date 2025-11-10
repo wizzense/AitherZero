@@ -46,7 +46,7 @@ jobs:
       pr-title: ${{ steps.extract-pr-context.outputs.pr-title || github.event.pull_request.title }}
       pr-branch: ${{ steps.extract-pr-context.outputs.pr-branch || github.event.pull_request.head.ref }}
       pr-base: ${{ steps.extract-pr-context.outputs.pr-base || github.event.pull_request.base.ref }}
-      has-pr: ${{ steps.extract-pr-context.outputs.has-pr == 'true' || github.event.pull_request != null }}
+      has-pr: ${{ steps.extract-pr-context.outputs.has-pr == 'true' || github.event.pull_request != '' }}
       branch-path-prefix: ${{ steps.determine-branch-path.outputs.path-prefix }}
       deployment-url-base: ${{ steps.determine-branch-path.outputs.url-base }}
 
@@ -127,8 +127,6 @@ jobs:
           
           echo "path-prefix=${pathPrefix}" >> $env:GITHUB_OUTPUT
           echo "url-base=${urlBase}" >> $env:GITHUB_OUTPUT
-        env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: 🔧 Bootstrap Environment
         shell: pwsh
@@ -585,7 +583,7 @@ jobs:
             try {
               comment = fs.readFileSync(templatePath, 'utf8');
               const replacements = {
-                '{{PAGE_URL}}': prDashboardUrl,  // Use branch-aware URL
+                '{{PAGE_URL}}': prDashboardUrl,  // Use PR-specific dashboard URL
                 '{{PR_NUMBER}}': prNumber,
                 '{{PR_BASE}}': prBase,
                 '{{PACKAGE_URL}}': packageUrl,
