@@ -112,166 +112,7 @@ jobs:
             });
 
   # ============================================================================
-  # PHASE 2: Comprehensive Testing (ALL TEST GROUPS RUN IN PARALLEL!)
-  # Unit, Domain, and Integration tests all start simultaneously
-  # ============================================================================
-  
-  unit-tests:
-    name: 🧪 Unit [${{ matrix.range }}]
-    needs: quick-validation
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-
-    strategy:
-      fail-fast: false
-      max-parallel: 9
-      matrix:
-        range: ${{ fromJson('["0000-0099", "0100-0199", "0200-0299", "0300-0399", "0400-0499", "0500-0599", "0700-0799", "0800-0899", "0900-0999"]') }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔧 Bootstrap
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
-
-      - name: 🧪 Run Unit Tests [${{ matrix.range }}]
-        shell: pwsh
-        run: |
-          Import-Module ./AitherZero.psd1 -Force
-          
-          Write-Host "🧪 Running unit tests for range: ${{ matrix.range }}" -ForegroundColor Cyan
-          
-          $testsPath = "library/tests/unit/automation-scripts/${{ matrix.range }}"
-          if (Test-Path $testsPath) {
-            Invoke-Pester -Path $testsPath -Output Detailed -CI
-          } else {
-            Write-Host "⚠️ No tests found for range ${{ matrix.range }}" -ForegroundColor Yellow
-          }
-
-      - name: 📊 Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: unit-test-results-${{ matrix.range }}
-          path: library/tests/results/**
-          retention-days: 30
-          if-no-files-found: warn
-
-  domain-tests:
-    name: 🔧 Domain [${{ matrix.module }}]
-    needs: quick-validation
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-
-    strategy:
-      fail-fast: false
-      max-parallel: 6
-      matrix:
-        module: ${{ fromJson('["configuration", "documentation", "infrastructure", "security", "testing", "utilities"]') }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔧 Bootstrap
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
-
-      - name: 🔧 Run Domain Tests [${{ matrix.module }}]
-        shell: pwsh
-        run: |
-          Import-Module ./AitherZero.psd1 -Force
-          
-          Write-Host "🔧 Running domain tests for: ${{ matrix.module }}" -ForegroundColor Cyan
-          
-          $testsPath = "library/tests/aithercore/${{ matrix.module }}"
-          if (Test-Path $testsPath) {
-            Invoke-Pester -Path $testsPath -Output Detailed -CI
-          } else {
-            Write-Host "⚠️ No tests found for domain ${{ matrix.module }}" -ForegroundColor Yellow
-          }
-
-      - name: 📊 Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: domain-test-results-${{ matrix.module }}
-          path: library/tests/results/**
-          retention-days: 30
-          if-no-files-found: warn
-
-  integration-tests:
-    name: 🔗 Integration [${{ matrix.suite }}]
-    needs: quick-validation
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    continue-on-error: true
-
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        suite: ${{ fromJson('["automation-scripts", "orchestration", "bootstrap", "modules"]') }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔧 Bootstrap
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
-
-      - name: 🔗 Run Integration Tests [${{ matrix.suite }}]
-        shell: pwsh
-        run: |
-          Import-Module ./AitherZero.psd1 -Force
-          
-          Write-Host "🔗 Running integration tests for: ${{ matrix.suite }}" -ForegroundColor Cyan
-          
-          $testsPath = "library/tests/integration/${{ matrix.suite }}"
-          if (Test-Path $testsPath) {
-            Invoke-Pester -Path $testsPath -Output Detailed -CI
-          } else {
-            Write-Host "⚠️ No tests found for suite ${{ matrix.suite }}" -ForegroundColor Yellow
-          }
-
-      - name: 📊 Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: integration-test-results-${{ matrix.suite }}
-          path: library/tests/results/**
-          retention-days: 30
-          if-no-files-found: warn
-
-  test-summary:
-    name: 📊 Test Summary
-    needs: [unit-tests, domain-tests, integration-tests]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: 💬 Post Test Summary
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ **Comprehensive Testing Complete**\n\n- Unit tests: Completed\n- Domain tests: Completed\n- Integration tests: Completed\n\n*All test results uploaded as artifacts*'
-            });
-
-  # ============================================================================
-  # PHASE 3: Build & Package (RUNS IN PARALLEL with testing)
+  # PHASE 2: Build & Package (TESTS REMOVED - handled by other workflows)
   # ============================================================================
   
   build:
@@ -295,20 +136,35 @@ jobs:
               issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '**Phase 3:** 🔨 Build & Package Started'
+              body: '**Phase 2:** 🔨 Build & Package Started (Tests handled by separate workflows)'
             });
 
       - name: 🔧 Bootstrap
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
 
-      - name: 🔨 Run Build Playbook
+      - name: 🔨 Run Build Playbook (Skipping Tests)
         id: build
         shell: pwsh
         continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-AitherPlaybook -Name pr-ecosystem-build
+          
+          # Run build without self-deployment test
+          # Self-deployment test (0900) runs ALL tests and is redundant
+          # Tests are handled by separate dedicated test workflows
+          
+          # Call individual build scripts instead of full playbook
+          Write-Host "🔧 Running syntax validation..." -ForegroundColor Cyan
+          & "./library/automation-scripts/0407*.ps1" -All
+          
+          Write-Host "📊 Generating build metadata..." -ForegroundColor Cyan
+          & "./library/automation-scripts/0515*.ps1" -OutputPath "library/reports/build-metadata.json" -IncludePRInfo -IncludeGitInfo -IncludeEnvironmentInfo
+          
+          Write-Host "📦 Creating release package..." -ForegroundColor Cyan
+          & "./library/automation-scripts/0902*.ps1" -PackageFormat Both -OnlyRuntime
+          
+          Write-Host "✅ Build complete (tests skipped - handled elsewhere)" -ForegroundColor Green
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -338,138 +194,7 @@ jobs:
             });
 
   # ============================================================================
-  # PHASE 3B: Docker Container Build (RUNS IN PARALLEL with testing and build)
-  # ============================================================================
-  
-  build-docker-image:
-    name: 🐳 Build PR Docker Image
-    needs: quick-validation
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    outputs:
-      status: ${{ steps.docker-build.outcome }}
-      image-tag: ${{ steps.docker-meta.outputs.tags }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 💬 Post Docker Build Start
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 3B:** 🐳 Docker Container Build Started'
-            });
-
-      - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔐 Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔤 Set Lowercase Repository Name
-        id: repo-name
-        run: |
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
-          echo "Using lowercase repository name: ${REPO_LOWER}"
-
-      - name: 📋 Extract Docker Metadata
-        id: docker-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ steps.repo-name.outputs.repo-lower }}
-          tags: |
-            type=raw,value=pr-${{ env.PR_NUMBER }}
-            type=raw,value=pr-${{ env.PR_NUMBER }}-${{ github.sha }}
-            type=ref,event=pr
-          labels: |
-            org.opencontainers.image.title=AitherZero (PR #${{ env.PR_NUMBER }})
-            org.opencontainers.image.description=Enterprise infrastructure automation platform with AI-powered orchestration. Provides PowerShell-based automation for infrastructure deployment, testing, and management across Windows, Linux, and macOS. (PR build)
-            org.opencontainers.image.vendor=Aitherium Organization
-            org.opencontainers.image.authors=wizzense
-            org.opencontainers.image.url=https://github.com/wizzense/AitherZero
-            org.opencontainers.image.documentation=https://github.com/wizzense/AitherZero/blob/main/README.md
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.licenses=MIT
-            org.opencontainers.image.revision=${{ github.sha }}
-            com.aitherzero.pr.number=${{ env.PR_NUMBER }}
-            com.aitherzero.build.type=pr
-
-      - name: 🔨 Build and Push Docker Image
-        id: docker-build
-        uses: docker/build-push-action@v5
-        continue-on-error: true
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.docker-meta.outputs.tags }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            VERSION=pr-${{ env.PR_NUMBER }}
-            BUILD_DATE=${{ github.event.repository.updated_at }}
-            VCS_REF=${{ github.sha }}
-
-      - name: 🧪 Test Docker Image
-        if: steps.docker-build.outcome == 'success'
-        shell: bash
-        run: |
-          echo "🧪 Testing Docker image..."
-          IMAGE_TAG="ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}"
-          
-          docker run --rm ${IMAGE_TAG} pwsh -NoProfile -Command "
-            Write-Host '✅ Container started' -ForegroundColor Green;
-            if (Test-Path /opt/aitherzero/AitherZero.psd1) {
-              Write-Host '✅ Module manifest found' -ForegroundColor Green;
-            } else {
-              Write-Error '❌ Module manifest not found';
-              exit 1;
-            }
-          "
-          
-          echo "✅ Docker image test passed"
-
-      - name: 💬 Post Docker Build Result
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const status = '${{ steps.docker-build.outcome }}';
-            const icon = status === 'success' ? '✅' : '⚠️';
-            const imageTag = 'ghcr.io/${{ steps.repo-name.outputs.repo-lower }}:pr-${{ env.PR_NUMBER }}';
-            let body = `${icon} **Docker Container Build ${status === 'success' ? 'PASSED' : 'COMPLETED WITH ISSUES'}**\n\n`;
-            
-            if (status === 'success') {
-              body += `**Docker Image:** \`${imageTag}\`\n\n`;
-              body += '**Quick Test:**\n';
-              body += '```bash\n';
-              body += `docker pull ${imageTag}\n`;
-              body += `docker run -it --rm ${imageTag}\n`;
-              body += '```';
-            }
-            
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
-
-  # ============================================================================
-  # PHASE 4: Quality Analysis
+  # PHASE 2B: Quality Analysis
   # ============================================================================
   
   quality-analysis:
@@ -539,12 +264,12 @@ jobs:
             });
 
   # ============================================================================
-  # PHASE 5: Dashboard Generation & Deployment
+  # PHASE 3: Dashboard Generation & Deployment
   # ============================================================================
   
   dashboard:
     name: 📊 Dashboard & Deploy
-    needs: [test-summary, build, build-docker-image, quality-analysis]
+    needs: [build, quality-analysis]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -561,7 +286,7 @@ jobs:
               issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '**Phase 5:** 📊 Dashboard Generation Started\n\nConsolidating all results...'
+              body: '**Phase 3:** 📊 Dashboard Generation Started\n\nConsolidating build and quality results...\n\n> **Note:** Docker images built by deploy-pr-environment workflow'
             });
 
       - name: 🔧 Bootstrap
@@ -654,12 +379,10 @@ jobs:
           script: |
             const validationStatus = '${{ needs.quick-validation.outputs.status }}';
             const buildStatus = '${{ needs.build.outputs.status }}';
-            const dockerStatus = '${{ needs.build-docker-image.outputs.status }}';
             const qualityStatus = '${{ needs.quality-analysis.outputs.status }}';
             
             const validationIcon = validationStatus === 'success' ? '✅' : '❌';
             const buildIcon = buildStatus === 'success' ? '✅' : '⚠️';
-            const dockerIcon = dockerStatus === 'success' ? '✅' : '⚠️';
             const qualityIcon = qualityStatus === 'success' ? '✅' : 'ℹ️';
             
             const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${process.env.PR_NUMBER}/`;
@@ -672,11 +395,12 @@ jobs:
             | Phase | Status |
             |-------|--------|
             | ${validationIcon} **Quick Validation** | ${validationStatus} |
-            | 🧪 **Comprehensive Testing** | Matrix Complete |
             | ${buildIcon} **Build & Package** | ${buildStatus} |
-            | ${dockerIcon} **Docker Container** | ${dockerStatus} |
             | ${qualityIcon} **Quality Analysis** | ${qualityStatus} |
             | 📊 **Dashboard** | Generated |
+            
+            > **Note:** Tests handled by dedicated test workflows  
+            > **Note:** Docker images built by deploy-pr-environment workflow
             
             ### 📊 Dashboard
             
@@ -684,28 +408,27 @@ jobs:
             
             ### 🐳 Docker Image
             
-            ${dockerStatus === 'success' ? `**Image:** \`${dockerImageTag}\`
+            Docker images are built by the **deploy-pr-environment** workflow.
+            
+            **Expected Image Tag:** \`${dockerImageTag}\`
             
             **Quick Test:**
             \`\`\`bash
             docker pull ${dockerImageTag}
             docker run -it --rm ${dockerImageTag}
-            \`\`\`` : '*Docker build failed or was skipped*'}
+            \`\`\`
             
             ### 📦 Artifacts
             
-            - Unit test results (9 ranges)
-            - Domain test results (6 modules)
-            - Integration test results (4 suites)
             - Build packages (ZIP, TAR.GZ)
-            - Docker container image${dockerStatus === 'success' ? '' : ' (failed)'}
             - Quality analysis results
             - Complete dashboard
+            - Docker images (from deploy-pr-environment workflow)
             
             [View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})
             
             ---
-            *Complete PR workflow - all phases executed including Docker container build*`;
+            *Streamlined PR workflow - Build, Quality, and Dashboard (Tests and Docker handled by dedicated workflows)*`;
             
             github.rest.issues.createComment({
               issue_number: process.env.PR_NUMBER,
