@@ -2,9 +2,15 @@
 name: 🚀 PR Complete Workflow
 
 # Complete PR workflow that orchestrates all validation, testing, building, and reporting
-# Called by master-ci-cd.yml orchestrator - does not trigger independently
+# Triggers directly on PR events AND can be called by master-ci-cd.yml orchestrator
 
 on:
+  # Direct PR triggers for immediate execution
+  pull_request:
+    branches: [main, dev, dev-staging]
+    types: [opened, synchronize, reopened, ready_for_review]
+  
+  # Reusable workflow call (for orchestration)
   workflow_call:
     inputs:
       pr_number:
