@@ -5,7 +5,7 @@ name: 📊 Publish Test Reports & Dashboard to GitHub Pages
 # Integrates with test-execution.yml and generates navigable reports for each PR
 on:
   workflow_run:
-    workflows: ["🧪 Test Execution (Complete Suite)", "✅ PR Validation (v2 - CLI)", "🔍 Quality Validation (v2 - CLI)"]
+    workflows: ["🧪 Test Execution (Complete Suite)", "✅ PR Validation (v2 - CLI)", "🔍 Quality Validation (v2 - CLI)", "🚀 PR Complete Workflow"]
     types: [completed]
   push:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
