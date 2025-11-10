@@ -41,6 +41,14 @@ jobs:
     name: 📥 Collect Test Reports and Generate Dashboard
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    outputs:
+      pr-number: ${{ steps.extract-pr-context.outputs.pr-number || github.event.pull_request.number }}
+      pr-title: ${{ steps.extract-pr-context.outputs.pr-title || github.event.pull_request.title }}
+      pr-branch: ${{ steps.extract-pr-context.outputs.pr-branch || github.event.pull_request.head.ref }}
+      pr-base: ${{ steps.extract-pr-context.outputs.pr-base || github.event.pull_request.base.ref }}
+      has-pr: ${{ steps.extract-pr-context.outputs.has-pr == 'true' || github.event.pull_request != '' }}
+      branch-path-prefix: ${{ steps.determine-branch-path.outputs.path-prefix }}
+      deployment-url-base: ${{ steps.determine-branch-path.outputs.url-base }}
 
     steps:
       - name: 📥 Checkout Repository
@@ -48,6 +56,77 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
           fetch-depth: 0
+
+      - name: 🔍 Extract PR Context from workflow_run
+        id: extract-pr-context
+        if: github.event.workflow_run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Extract PR information from workflow_run event
+            const workflowRun = context.payload.workflow_run;
+            
+            if (workflowRun && workflowRun.pull_requests && workflowRun.pull_requests.length > 0) {
+              const pr = workflowRun.pull_requests[0];
+              core.info(`Found PR #${pr.number} in workflow_run event`);
+              
+              // Fetch full PR details from GitHub API to get title and state
+              const { data: prData } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+              
+              core.setOutput('pr-number', pr.number.toString());
+              core.setOutput('pr-title', prData.title);
+              core.setOutput('pr-branch', pr.head.ref);
+              core.setOutput('pr-base', pr.base.ref);
+              core.setOutput('pr-state', prData.state);
+              core.setOutput('has-pr', 'true');
+              
+              core.info(`PR Details: #${pr.number} - ${prData.title}`);
+              core.info(`Branch: ${pr.head.ref} → ${pr.base.ref}`);
+            } else {
+              core.info('No PR context found in workflow_run event');
+              core.setOutput('has-pr', 'false');
+            }
+
+      - name: 🗂️ Determine Branch-Specific Deployment Path
+        id: determine-branch-path
+        shell: pwsh
+        env:
+          PR_BASE: ${{ steps.extract-pr-context.outputs.pr-base || github.event.pull_request.base.ref || 'main' }}
+        run: |
+          $baseBranch = $env:PR_BASE
+          Write-Host "📍 Determining deployment path for base branch: $baseBranch" -ForegroundColor Cyan
+          
+          # Map base branch to deployment path prefix
+          $pathPrefix = switch ($baseBranch) {
+            'main'        { '' }
+            'dev'         { 'dev/' }
+            'dev-staging' { 'dev-staging/' }
+            'develop'     { 'develop/' }
+            'ring-0'      { 'ring-0/' }
+            'ring-1'      { 'ring-1/' }
+            'ring-2'      { 'ring-2/' }
+            default       { '' }  # Default to root for unknown branches
+          }
+          
+          # Determine URL base for GitHub Pages
+          $repoName = "$env:GITHUB_REPOSITORY" -replace '.*/(.*)$', '$1'
+          $repoOwner = "$env:GITHUB_REPOSITORY" -replace '(.*)/.*$', '$1'
+          
+          if ($pathPrefix) {
+            $urlBase = "https://${repoOwner}.github.io/${repoName}/${pathPrefix}"
+          } else {
+            $urlBase = "https://${repoOwner}.github.io/${repoName}/"
+          }
+          
+          Write-Host "✅ Path prefix: '$pathPrefix'" -ForegroundColor Green
+          Write-Host "✅ URL base: $urlBase" -ForegroundColor Green
+          
+          echo "path-prefix=${pathPrefix}" >> $env:GITHUB_OUTPUT
+          echo "url-base=${urlBase}" >> $env:GITHUB_OUTPUT
 
       - name: 🔧 Bootstrap Environment
         shell: pwsh
@@ -125,20 +204,36 @@ jobs:
           Write-Host "✅ Dashboard generated successfully" -ForegroundColor Green
 
       - name: 🏷️ Generate PR-Specific Dashboard with Container Info
-        if: github.event.pull_request
+        if: github.event.pull_request || steps.extract-pr-context.outputs.has-pr == 'true'
         shell: pwsh
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
-          PR_BASE: ${{ github.event.pull_request.base.ref }}
-          PR_STATE: ${{ github.event.pull_request.state }}
+          # Use PR context from either pull_request event or extracted workflow_run context
+          PR_NUMBER: ${{ github.event.pull_request.number || steps.extract-pr-context.outputs.pr-number }}
+          PR_TITLE: ${{ github.event.pull_request.title || steps.extract-pr-context.outputs.pr-title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref || steps.extract-pr-context.outputs.pr-branch }}
+          PR_BASE: ${{ github.event.pull_request.base.ref || steps.extract-pr-context.outputs.pr-base }}
+          PR_STATE: ${{ github.event.pull_request.state || steps.extract-pr-context.outputs.pr-state }}
+          BRANCH_PATH_PREFIX: ${{ steps.determine-branch-path.outputs.path-prefix }}
+          DEPLOYMENT_URL_BASE: ${{ steps.determine-branch-path.outputs.url-base }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           Write-Host "🏷️ Generating PR-specific dashboard for PR #$env:PR_NUMBER..." -ForegroundColor Cyan
+          Write-Host "  Base branch: $env:PR_BASE" -ForegroundColor Yellow
+          Write-Host "  Branch path prefix: '$env:BRANCH_PATH_PREFIX'" -ForegroundColor Yellow
+          Write-Host "  Deployment URL base: $env:DEPLOYMENT_URL_BASE" -ForegroundColor Yellow
           
-          $prDir = "library/reports/pr-$env:PR_NUMBER"
+          # Determine PR directory with branch-specific path
+          # If branch path prefix is empty (main), use library/reports/pr-{number}
+          # Otherwise use {prefix}library/reports/pr-{number}
+          if ($env:BRANCH_PATH_PREFIX) {
+            $prDir = "${env:BRANCH_PATH_PREFIX}library/reports/pr-$env:PR_NUMBER"
+          } else {
+            $prDir = "library/reports/pr-$env:PR_NUMBER"
+          }
+          
+          Write-Host "  Creating PR dashboard at: $prDir" -ForegroundColor Cyan
           New-Item -ItemType Directory -Path $prDir -Force | Out-Null
           
           # Copy main dashboard to PR-specific location
@@ -418,7 +513,9 @@ jobs:
         shell: pwsh
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ needs.collect-reports.outputs.pr-number }}
+          PR_BASE: ${{ needs.collect-reports.outputs.pr-base }}
+          BRANCH_PATH_PREFIX: ${{ needs.collect-reports.outputs.branch-path-prefix }}
         run: |
           Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
           Write-Host "🔗 Main URL: $env:PAGE_URL" -ForegroundColor Cyan
@@ -428,7 +525,13 @@ jobs:
           Write-Host "  - Navigation Index: ${env:PAGE_URL}index.html"
           
           if ($env:PR_NUMBER) {
-            Write-Host "  - PR #$env:PR_NUMBER Dashboard: ${env:PAGE_URL}library/reports/pr-$env:PR_NUMBER/"
+            # Build branch-aware PR dashboard URL
+            if ($env:BRANCH_PATH_PREFIX) {
+              $prDashboardUrl = "${env:PAGE_URL}${env:BRANCH_PATH_PREFIX}library/reports/pr-$env:PR_NUMBER/"
+            } else {
+              $prDashboardUrl = "${env:PAGE_URL}library/reports/pr-$env:PR_NUMBER/"
+            }
+            Write-Host "  - PR #$env:PR_NUMBER Dashboard ($env:PR_BASE): $prDashboardUrl" -ForegroundColor Green
           }
           
           Write-Host ""
@@ -437,18 +540,36 @@ jobs:
           Write-Host "📈 Coverage: ${env:PAGE_URL}library/tests/coverage/"
 
       - name: 💬 Comment on PR with Dashboard Link
-        if: github.event.pull_request
+        if: needs.collect-reports.outputs.has-pr == 'true'
         uses: actions/github-script@v7
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ needs.collect-reports.outputs.pr-number }}
+          PR_BASE: ${{ needs.collect-reports.outputs.pr-base }}
+          BRANCH_PATH_PREFIX: ${{ needs.collect-reports.outputs.branch-path-prefix }}
+          DEPLOYMENT_URL_BASE: ${{ needs.collect-reports.outputs.deployment-url-base }}
           REPOSITORY: ${{ github.repository }}
         with:
           script: |
             const fs = require('fs');
             const pageUrl = process.env.PAGE_URL;
             const prNumber = process.env.PR_NUMBER;
+            const prBase = process.env.PR_BASE;
+            const branchPathPrefix = process.env.BRANCH_PATH_PREFIX;
+            const deploymentUrlBase = process.env.DEPLOYMENT_URL_BASE;
             const repository = process.env.REPOSITORY;
+            
+            // Build branch-aware PR dashboard URL
+            let prDashboardUrl;
+            if (branchPathPrefix) {
+              prDashboardUrl = `${pageUrl}${branchPathPrefix}library/reports/pr-${prNumber}/`;
+            } else {
+              prDashboardUrl = `${pageUrl}library/reports/pr-${prNumber}/`;
+            }
+            
+            core.info(`PR Dashboard URL: ${prDashboardUrl}`);
+            core.info(`Base Branch: ${prBase}`);
+            core.info(`Branch Path Prefix: ${branchPathPrefix}`);
             
             // Calculate Docker container info
             const dynamicPort = 8080 + (parseInt(prNumber) % 100);
@@ -462,8 +583,9 @@ jobs:
             try {
               comment = fs.readFileSync(templatePath, 'utf8');
               const replacements = {
-                '{{PAGE_URL}}': pageUrl,
+                '{{PAGE_URL}}': prDashboardUrl,  // Use PR-specific dashboard URL
                 '{{PR_NUMBER}}': prNumber,
+                '{{PR_BASE}}': prBase,
                 '{{PACKAGE_URL}}': packageUrl,
                 '{{IMAGE_NAME_LOWER}}': imageNameLower,
                 '{{CONTAINER_NAME}}': containerName,
@@ -474,7 +596,7 @@ jobs:
               }
             } catch (error) {
               console.log('Template not found, using fallback');
-              comment = `## Dashboard Published\n\nView your PR dashboard at: ${pageUrl}library/reports/pr-${prNumber}/`;
+              comment = `## 📊 Dashboard Published\n\nView your PR dashboard at: ${prDashboardUrl}\n\n**Target Branch:** ${prBase}`;
             }
             
             const { data: comments } = await github.rest.issues.listComments({
