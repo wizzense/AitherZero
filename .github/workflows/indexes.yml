@@ -34,4 +34,4 @@ jobs:
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-OrchestrationSequence -LoadPlaybook generate-indexes
+          Invoke-AitherPlaybook -Name generate-indexes
