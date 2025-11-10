@@ -111,7 +111,7 @@
         )
         Environment = @{
             AITHERZERO_PROFILE = 'Development'
-            AITHERZERO_NONINTERACTIVE = 'true'
+            # Non-interactive mode is derived from CI detection
         }
     }
     

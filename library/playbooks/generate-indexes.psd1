@@ -16,9 +16,8 @@
     )
     
     Variables = @{
-        CI = "true"
-        AITHERZERO_CI = "true"
-        AITHERZERO_NONINTERACTIVE = "true"
+        # CI variable is automatically set by GitHub Actions and other CI platforms
+        # Non-interactive mode is derived from CI detection in Configuration module
     }
     
     Options = @{

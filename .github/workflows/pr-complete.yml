@@ -37,8 +37,6 @@ permissions:
 
 env:
   PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
-  AITHERZERO_CI: true
-  AITHERZERO_NONINTERACTIVE: true
   AITHERZERO_SUPPRESS_BANNER: true
   CONTAINER_REGISTRY: ghcr.io
 
@@ -585,7 +583,7 @@ jobs:
           # Use new modular dashboard generation playbook
           Invoke-AitherPlaybook -Name dashboard-generation-complete
           
-          # Also run legacy report playbook for compatibility
+          # Run report playbook
           Invoke-AitherPlaybook -Name pr-ecosystem-report
           
           # Organize for GitHub Pages

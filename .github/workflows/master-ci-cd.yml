@@ -50,8 +50,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AITHERZERO_CI: true
-  AITHERZERO_NONINTERACTIVE: true
   AITHERZERO_SUPPRESS_BANNER: true
 
 jobs:
@@ -323,7 +321,7 @@ jobs:
           Import-Module ./AitherZero.psd1 -Force
           
           Write-Host "🔨 Running build process" -ForegroundColor Cyan
-          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
+          Invoke-AitherPlaybook -Name pr-ecosystem-build
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4

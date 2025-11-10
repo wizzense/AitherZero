@@ -253,7 +253,7 @@ PAGES_URL = if ($env:GITHUB_REF_NAME -eq "main") {
 # Run full validation suite (includes deployment validation)
 pwsh -Command "
 Import-Module ./AitherZero.psd1 -Force
-Invoke-OrchestrationSequence -LoadPlaybook ./library/orchestration/playbooks/comprehensive-validation.psd1
+Invoke-AitherPlaybook -Name comprehensive-validation
 "
 ```
 

@@ -318,7 +318,7 @@ automation-scripts/98[0-9][0-9]_*.ps1
 Start-AitherZero -Mode Orchestrate -Playbook aitherium-org-setup
 
 # Or run the playbook directly
-Invoke-OrchestrationSequence -PlaybookPath "./orchestration/playbooks/aitherium-org-setup.psd1"
+Invoke-AitherPlaybook -Name aitherium-org-setup
 ```
 
 This orchestrates:
