@@ -47,8 +47,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AITHERZERO_CI: true
-  AITHERZERO_NONINTERACTIVE: true
   AITHERZERO_SUPPRESS_BANNER: true
 
 jobs:
