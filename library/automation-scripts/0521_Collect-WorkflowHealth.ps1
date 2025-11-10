@@ -118,8 +118,8 @@ try {
     # Write metrics to JSON
     $metrics | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
     
-    Write-ScriptLog "Workflow health metrics collected: $($metrics.Summary.TotalRuns) runs analyzed" -Level 'Success'
-    Write-ScriptLog "Success rate: $($metrics.Summary.SuccessRate)%" -Level 'Success'
+    Write-ScriptLog "Workflow health metrics collected: $($metrics.Summary.TotalRuns) runs analyzed" -Level 'Information'
+    Write-ScriptLog "Success rate: $($metrics.Summary.SuccessRate)%" -Level 'Information'
     
     exit 0
 }

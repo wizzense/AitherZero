@@ -16,7 +16,7 @@
                 HeadBranch = $env:GITHUB_HEAD_REF
                 OutputPath = "library/reports/CHANGELOG-PR$($env:PR_NUMBER).md"
                 IncludeIssueLinks = $true
-                CategorizCommits = $true
+                CategorizeCommits = $true
                 Format = "Markdown"
             }
             ContinueOnError = $false
@@ -69,51 +69,16 @@
                 IncludeQualityMetrics = $true
                 IncludeBuildArtifacts = $true
                 
-                # ULTIMATE DASHBOARD FEATURES
-                IncludeRingVisualization = $true
-                IncludeWorkflowHealth = $true
-                IncludeIssueTracking = $true
-                IncludeCodeCoverage = $true
-                IncludeSecurityScan = $true
-                IncludePerformanceMetrics = $true
-                IncludeConfigExplorer = $true
-                IncludePlaybookVisualization = $true
-                IncludeDocumentationHealth = $true
-                IncludeContributorMetrics = $true
-                IncludeDeploymentHistory = $true
-                IncludeCostAnalysis = $true
-                IncludeExecutiveSummary = $true
-                IncludeArchitectureDiagram = $true
-                IncludeRealTimeUpdates = $true
-                
                 # Data Paths
                 TestResultsPath = "library/tests/results"
-                CoverageResultsPath = "library/tests/coverage"
                 QualityAnalysisPath = "library/tests/analysis"
                 BuildMetadataPath = "library/reports/build-metadata.json"
                 ChangelogPath = "library/reports/CHANGELOG-PR$($env:PR_NUMBER).md"
                 RecommendationsPath = "library/reports/recommendations.json"
-                WorkflowRunsPath = "library/reports/workflow-history.json"
-                SecurityScanPath = "library/reports/security-scan.json"
-                
-                # Ring Dashboard Integration
-                RingDashboardPath = "library/reports/ring-status.json"
-                RingBranches = @('main', 'dev-staging', 'dev', 'ring-0', 'ring-0-integrations', 'ring-1', 'ring-1-integrations', 'ring-2')
                 
                 # Docker Integration
                 DockerRegistry = "ghcr.io"
                 DockerImageTag = "pr-$($env:PR_NUMBER)"
-                
-                # GitHub API Integration
-                GitHubToken = $env:GITHUB_TOKEN
-                RepositoryOwner = $env:GITHUB_REPOSITORY_OWNER
-                RepositoryName = ($env:GITHUB_REPOSITORY -replace '.*/','')
-                
-                # Visualization Settings
-                EnableInteractiveCharts = $true
-                EnableDarkMode = $true
-                EnableExportFeatures = $true
-                ChartLibrary = "All"  # Chart.js, D3.js, Mermaid, ECharts
             }
             ContinueOnError = $false
             Timeout = 600  # Increased for comprehensive generation
@@ -125,10 +90,9 @@
             Script = "0510"
             Description = "Generate detailed project report"
             Parameters = @{
-                OutputFormat = "Markdown"
-                IncludeMetrics = $true
-                IncludeTrends = $true
-                ShowAll = $true
+                ProjectPath = $env:GITHUB_WORKSPACE
+                OutputPath = "library/reports"
+                Format = "All"
             }
             ContinueOnError = $true
             Timeout = 180
@@ -147,7 +111,6 @@
                 RecommendationsPath = "library/reports/recommendations.json"
                 OutputPath = "library/reports/pr-comment.md"
                 IncludeDeploymentInstructions = $true
-                IncludeDockerInstructions = $true
                 IncludeQuickActions = $true
             }
             ContinueOnError = $false
