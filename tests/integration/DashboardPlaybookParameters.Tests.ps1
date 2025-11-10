@@ -94,25 +94,41 @@ Describe "Dashboard Playbook Parameter Validation" -Tag 'Integration' {
     
     Context "Parameter name validation for each script" {
         
-        foreach ($scriptNum in $script:ExpectedParameters.Keys) {
-            $scriptInfo = $script:ExpectedParameters[$scriptNum]
+        It "Should have correct parameters for script <ScriptNum> (<Description>)" -TestCases @(
+            @{ ScriptNum = '0520'; Description = 'Ring metrics collection' }
+            @{ ScriptNum = '0521'; Description = 'Workflow health metrics collection' }
+            @{ ScriptNum = '0522'; Description = 'Code metrics collection' }
+            @{ ScriptNum = '0523'; Description = 'Test metrics collection' }
+            @{ ScriptNum = '0524'; Description = 'Quality metrics collection' }
+            @{ ScriptNum = '0525'; Description = 'Dashboard HTML generation' }
+        ) {
+            param($ScriptNum, $Description)
             
-            It "Should have correct parameters for script $scriptNum ($($scriptInfo.Description))" {
-                # Find the sequence item for this script
-                $seqItem = $script:Playbook.Sequence | Where-Object { $_.Script -eq $scriptNum }
-                
-                $seqItem | Should -Not -BeNullOrEmpty -Because "Script $scriptNum should be in the sequence"
-                
-                # Verify all expected parameters are present
-                foreach ($expectedParam in $scriptInfo.ExpectedParams) {
-                    $seqItem.Parameters.Keys | Should -Contain $expectedParam -Because "Script $scriptNum requires parameter '$expectedParam'"
-                }
-            }
+            $scriptInfo = $script:ExpectedParameters[$ScriptNum]
             
-            It "Should NOT use deprecated OutputDir parameter for script $scriptNum" {
-                $seqItem = $script:Playbook.Sequence | Where-Object { $_.Script -eq $scriptNum }
-                $seqItem.Parameters.Keys | Should -Not -Contain 'OutputDir' -Because "OutputDir is not a valid parameter (should be OutputPath)"
+            # Find the sequence item for this script
+            $seqItem = $script:Playbook.Sequence | Where-Object { $_.Script -eq $ScriptNum }
+            
+            $seqItem | Should -Not -BeNullOrEmpty -Because "Script $ScriptNum should be in the sequence"
+            
+            # Verify all expected parameters are present
+            foreach ($expectedParam in $scriptInfo.ExpectedParams) {
+                $seqItem.Parameters.Keys | Should -Contain $expectedParam -Because "Script $ScriptNum requires parameter '$expectedParam'"
             }
+        }
+        
+        It "Should NOT use deprecated OutputDir parameter for script <ScriptNum>" -TestCases @(
+            @{ ScriptNum = '0520' }
+            @{ ScriptNum = '0521' }
+            @{ ScriptNum = '0522' }
+            @{ ScriptNum = '0523' }
+            @{ ScriptNum = '0524' }
+            @{ ScriptNum = '0525' }
+        ) {
+            param($ScriptNum)
+            
+            $seqItem = $script:Playbook.Sequence | Where-Object { $_.Script -eq $ScriptNum }
+            $seqItem.Parameters.Keys | Should -Not -Contain 'OutputDir' -Because "OutputDir is not a valid parameter (should be OutputPath)"
         }
         
         It "Should NOT use deprecated MetricsDir parameter for script 0525" {
@@ -123,30 +139,37 @@ Describe "Dashboard Playbook Parameter Validation" -Tag 'Integration' {
     
     Context "Script parameter extraction from actual files" {
         
-        foreach ($scriptNum in $script:ExpectedParameters.Keys) {
-            $scriptInfo = $script:ExpectedParameters[$scriptNum]
+        It "Script <ScriptNum> actual parameters should match playbook" -TestCases @(
+            @{ ScriptNum = '0520' }
+            @{ ScriptNum = '0521' }
+            @{ ScriptNum = '0522' }
+            @{ ScriptNum = '0523' }
+            @{ ScriptNum = '0524' }
+            @{ ScriptNum = '0525' }
+        ) {
+            param($ScriptNum)
             
-            It "Script $scriptNum actual parameters should match playbook" {
-                if (Test-Path $scriptInfo.ScriptPath) {
-                    # Parse the script to extract actual param block
-                    $content = Get-Content $scriptInfo.ScriptPath -Raw
+            $scriptInfo = $script:ExpectedParameters[$ScriptNum]
+            
+            if (Test-Path $scriptInfo.ScriptPath) {
+                # Parse the script to extract actual param block
+                $content = Get-Content $scriptInfo.ScriptPath -Raw
+                
+                # Extract param block using regex
+                if ($content -match '(?s)param\s*\((.*?)\)') {
+                    $paramBlock = $Matches[1]
                     
-                    # Extract param block using regex
-                    if ($content -match '(?s)param\s*\((.*?)\)') {
-                        $paramBlock = $Matches[1]
-                        
-                        # Verify each expected parameter exists in the script
-                        foreach ($expectedParam in $scriptInfo.ExpectedParams) {
-                            $paramBlock | Should -Match "\[\w+\]\`$$expectedParam" -Because "Script $scriptNum should define parameter $expectedParam"
-                        }
-                    }
-                    else {
-                        Set-ItResult -Skipped -Because "Could not parse param block for script $scriptNum"
+                    # Verify each expected parameter exists in the script
+                    foreach ($expectedParam in $scriptInfo.ExpectedParams) {
+                        $paramBlock | Should -Match "\[\w+\]\`$$expectedParam" -Because "Script $ScriptNum should define parameter $expectedParam"
                     }
                 }
                 else {
-                    Set-ItResult -Skipped -Because "Script file not found: $($scriptInfo.ScriptPath)"
+                    Set-ItResult -Skipped -Because "Could not parse param block for script $ScriptNum"
                 }
+            }
+            else {
+                Set-ItResult -Skipped -Because "Script file not found: $($scriptInfo.ScriptPath)"
             }
         }
     }

@@ -17,7 +17,6 @@ on:
         description: 'Pull Request number'
         required: false
         type: string
-    secrets: inherit
 
 concurrency:
   group: pr-ecosystem-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}
