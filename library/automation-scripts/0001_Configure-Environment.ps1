@@ -86,6 +86,12 @@ if (-not $ScriptRoot) {
 # Get project root (two levels up from automation-scripts)
 $ProjectRoot = Split-Path (Split-Path $ScriptRoot -Parent) -Parent
 
+# Import ScriptUtilities for centralized logging
+$scriptUtilsPath = Join-Path $ProjectRoot "aithercore/automation/ScriptUtilities.psm1"
+if (Test-Path $scriptUtilsPath) {
+    Import-Module $scriptUtilsPath -Force -ErrorAction SilentlyContinue
+}
+
 # Import required modules
 $modulePaths = @(
     (Join-Path $ProjectRoot 'domains/utilities/EnvironmentConfig.psm1')
@@ -103,24 +109,7 @@ foreach ($modulePath in $modulePaths) {
 
 #region Helper Functions
 
-function Write-Log {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Message,
-        
-        [ValidateSet('Information', 'Warning', 'Error', 'Success')]
-        [string]$Level = 'Information'
-    )
-    
-    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-    $colors = @{
-        Information = 'Cyan'
-        Warning = 'Yellow'
-        Error = 'Red'
-        Success = 'Green'
-    }
-    
-    $prefix = switch ($Level) {
+$prefix = switch ($Level) {
         'Information' { '[i]' }
         'Warning' { '[!]' }
         'Error' { '[x]' }
@@ -153,34 +142,34 @@ try {
     Write-Host ""
     
     # Display current environment
-    Write-Log "Detecting current environment..." -Level Information
+    Write-ScriptLog "Detecting current environment..." -Level Information
     $platform = if ($IsWindows -or $PSVersionTable.Platform -eq 'Win32NT') { 'Windows' }
                 elseif ($IsLinux) { 'Linux' }
                 elseif ($IsMacOS) { 'macOS' }
                 else { 'Unknown' }
     
-    Write-Log "Platform: $platform" -Level Information
-    Write-Log "PowerShell: $($PSVersionTable.PSVersion)" -Level Information
-    Write-Log "Category: $Category" -Level Information
-    Write-Log "Mode: $(if ($DryRun) { 'DRY RUN (preview only)' } else { 'APPLY CHANGES' })" -Level $(if ($DryRun) { 'Warning' } else { 'Information' })
+    Write-ScriptLog "Platform: $platform" -Level Information
+    Write-ScriptLog "PowerShell: $($PSVersionTable.PSVersion)" -Level Information
+    Write-ScriptLog "Category: $Category" -Level Information
+    Write-ScriptLog "Mode: $(if ($DryRun) { 'DRY RUN (preview only)' } else { 'APPLY CHANGES' })" -Level $(if ($DryRun) { 'Warning' } else { 'Information' })
     Write-Host ""
     
     # Check admin privileges
     $isAdmin = Test-AdminPrivileges
     if ($isAdmin) {
-        Write-Log "Running with elevated privileges" -Level Success
+        Write-ScriptLog "Running with elevated privileges" -Level Information
     }
     else {
-        Write-Log "Running without elevated privileges (some features may be limited)" -Level Warning
+        Write-ScriptLog "Running without elevated privileges (some features may be limited)" -Level Warning
     }
     Write-Host ""
     
     # Get current configuration status
-    Write-Log "Retrieving current environment configuration..." -Level Information
+    Write-ScriptLog "Retrieving current environment configuration..." -Level Information
     $currentStatus = Get-EnvironmentConfiguration -Category $Category
     
     if ($currentStatus) {
-        Write-Log "Current environment status retrieved successfully" -Level Success
+        Write-ScriptLog "Current environment status retrieved successfully" -Level Information
         
         # Display Windows status
         if ($currentStatus.Status.Windows) {
@@ -194,7 +183,7 @@ try {
     }
     
     # Apply configuration
-    Write-Log "Applying environment configuration..." -Level Information
+    Write-ScriptLog "Applying environment configuration..." -Level Information
     Write-Host ""
     
     $params = @{
@@ -208,11 +197,11 @@ try {
     if ($result -and $result.Success) {
         Write-Host ""
         if ($result.DryRun) {
-            Write-Log "Preview completed - no changes were applied" -Level Warning
-            Write-Log "Run without -DryRun to apply changes" -Level Information
+            Write-ScriptLog "Preview completed - no changes were applied" -Level Warning
+            Write-ScriptLog "Run without -DryRun to apply changes" -Level Information
         }
         else {
-            Write-Log "Environment configuration applied successfully" -Level Success
+            Write-ScriptLog "Environment configuration applied successfully" -Level Information
             
             if ($result.AppliedChanges.Count -gt 0) {
                 Write-Host "  Applied changes:" -ForegroundColor Green
@@ -221,19 +210,19 @@ try {
                 }
             }
             else {
-                Write-Log "No configuration changes were needed" -Level Information
+                Write-ScriptLog "No configuration changes were needed" -Level Information
             }
         }
     }
     else {
-        Write-Log "Configuration completed with warnings" -Level Warning
+        Write-ScriptLog "Configuration completed with warnings" -Level Warning
     }
     
     Write-Host ""
     
     # Generate deployment artifacts if requested
     if ($GenerateArtifacts) {
-        Write-Log "Generating deployment artifacts..." -Level Information
+        Write-ScriptLog "Generating deployment artifacts..." -Level Information
         Write-Host ""
         
         try {
@@ -244,7 +233,7 @@ try {
                 
                 if ($totalArtifacts -gt 0) {
                     Write-Host ""
-                    Write-Log "Generated $totalArtifacts deployment artifacts" -Level Success
+                    Write-ScriptLog "Generated $totalArtifacts deployment artifacts" -Level Information
                     Write-Host ""
                     Write-Host "  Artifact locations:" -ForegroundColor Cyan
                     
@@ -259,12 +248,12 @@ try {
                     }
                 }
                 else {
-                    Write-Log "No artifacts were generated (check config.*.psd1 settings)" -Level Warning
+                    Write-ScriptLog "No artifacts were generated (check config.*.psd1 settings)" -Level Warning
                 }
             }
         }
         catch {
-            Write-Log "Error generating artifacts: $($_.Exception.Message)" -Level Error
+            Write-ScriptLog "Error generating artifacts: $($_.Exception.Message)" -Level Error
         }
         
         Write-Host ""
@@ -294,8 +283,8 @@ try {
 }
 catch {
     Write-Host ""
-    Write-Log "ERROR: $($_.Exception.Message)" -Level Error
-    Write-Log "Stack trace: $($_.ScriptStackTrace)" -Level Error
+    Write-ScriptLog "ERROR: $($_.Exception.Message)" -Level Error
+    Write-ScriptLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
     Write-Host ""
     exit 1
 }

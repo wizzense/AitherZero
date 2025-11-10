@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -474,7 +474,7 @@
             'development'    = @{ Modules = 4; Description = 'Developer tools and Git automation' }
             'documentation'  = @{ Modules = 2; Description = 'Documentation generation engine and project indexing' }
             'infrastructure' = @{ Modules = 2; Description = 'Infrastructure automation and management' }
-            'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
+            'reporting'      = @{ Modules = 3; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 3; Description = 'Security and credential management' }
             'testing'        = @{ Modules = 13; Description = 'Testing framework, quality validation, and test generation' }
             'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
@@ -493,7 +493,7 @@
             '0700-0799' = @{ Count = 36; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 30; Category = 'Issue Management & PR Deployment' }
             '0900-0999' = @{ Count = 17; Category = 'Validation & Test Generation' }
-            '9000-9999' = @{ Count = 0; Category = 'Maintenance' }
+            '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
         }
 
         # Test inventory - comprehensive test file tracking

@@ -37,18 +37,27 @@ param(
     [int]$DaysOld = 30
 )
 
-function Write-Log {
-    param([string]$Message, [string]$Level = "Info")
-    $color = @{ "Error"="Red"; "Warning"="Yellow"; "Success"="Green" }[$Level] ?? "Cyan"
-    Write-Host "[$(Get-Date -F 'HH:mm:ss')] $Message" -ForegroundColor $color
+# Determine project root
+$projectRoot = if ($env:AITHERZERO_ROOT) {
+    $env:AITHERZERO_ROOT
+} elseif ($PSScriptRoot) {
+    Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+} else {
+    Get-Location
+}
+
+# Import ScriptUtilities for centralized logging
+$scriptUtilsPath = Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1"
+if (Test-Path $scriptUtilsPath) {
+    Import-Module $scriptUtilsPath -Force -ErrorAction SilentlyContinue
 }
 
 try {
-    Write-Log "PSScriptAnalyzer Cache Manager" "Success"
+    Write-ScriptLog "PSScriptAnalyzer Cache Manager" -Level Information -Source "0415"
     
     if (-not (Test-Path $CacheFile)) {
-        Write-Log "No cache file found at: $CacheFile" "Warning"
-        Write-Log "Run 0404_Run-PSScriptAnalyzer.ps1 first to create cache"
+        Write-ScriptLog "No cache file found at: $CacheFile" -Level Warning
+        Write-ScriptLog "Run 0404_Run-PSScriptAnalyzer.ps1 first to create cache"
         exit 0
     }
     
@@ -63,11 +72,11 @@ try {
     
     switch ($Action) {
         'Info' {
-            Write-Log "`nCache Statistics:"
-            Write-Log "  Location: $($cacheFile.FullName)"
-            Write-Log "  Size: $([math]::Round($cacheFile.Length / 1KB, 2)) KB"
-            Write-Log "  Entries: $($cache.Count) files"
-            Write-Log "  Last Modified: $($cacheFile.LastWriteTime)"
+            Write-ScriptLog "`nCache Statistics:"
+            Write-ScriptLog "  Location: $($cacheFile.FullName)"
+            Write-ScriptLog "  Size: $([math]::Round($cacheFile.Length / 1KB, 2)) KB"
+            Write-ScriptLog "  Entries: $($cache.Count) files"
+            Write-ScriptLog "  Last Modified: $($cacheFile.LastWriteTime)"
             
             # Calculate age distribution
             $now = Get-Date
@@ -88,22 +97,22 @@ try {
                 }
             }
             
-            Write-Log "`nAge Distribution:"
+            Write-ScriptLog "`nAge Distribution:"
             foreach ($group in $ageGroups.GetEnumerator() | Sort-Object Name) {
-                Write-Log "  $($group.Key): $($group.Value) files"
+                Write-ScriptLog "  $($group.Key): $($group.Value) files"
             }
             
             # Files with issues
             $filesWithIssues = ($cache.Values | Where-Object { $_.Issues -and $_.Issues.Count -gt 0 }).Count
-            Write-Log "`nIssue Statistics:"
-            Write-Log "  Files with issues: $filesWithIssues"
-            Write-Log "  Clean files: $($cache.Count - $filesWithIssues)"
+            Write-ScriptLog "`nIssue Statistics:"
+            Write-ScriptLog "  Files with issues: $filesWithIssues"
+            Write-ScriptLog "  Clean files: $($cache.Count - $filesWithIssues)"
         }
         
         'Clear' {
             Remove-Item $CacheFile -Force
-            Write-Log "Cache cleared" "Success"
-            Write-Log "Next analysis will rebuild cache from scratch"
+            Write-ScriptLog "Cache cleared" -Level Information
+            Write-ScriptLog "Next analysis will rebuild cache from scratch"
         }
         
         'Prune' {
@@ -127,10 +136,10 @@ try {
             
             if ($pruned -gt 0) {
                 $kept | ConvertTo-Json -Depth 5 -Compress | Set-Content -Path $CacheFile -Encoding UTF8
-                Write-Log "Pruned $pruned entries older than $DaysOld days" "Success"
-                Write-Log "Kept $($kept.Count) recent entries"
+                Write-ScriptLog "Pruned $pruned entries older than $DaysOld days" -Level Information
+                Write-ScriptLog "Kept $($kept.Count) recent entries"
             } else {
-                Write-Log "No entries older than $DaysOld days found"
+                Write-ScriptLog "No entries older than $DaysOld days found"
             }
         }
     }
@@ -138,6 +147,6 @@ try {
     exit 0
     
 } catch {
-    Write-Log "Cache management failed: $($_.Exception.Message)" "Error"
+    Write-ScriptLog "Cache management failed: $($_.Exception.Message)" -Level Error
     exit 1
 }

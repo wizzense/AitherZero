@@ -55,6 +55,21 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Determine project root
+$projectRoot = if ($env:AITHERZERO_ROOT) {
+    $env:AITHERZERO_ROOT
+} elseif ($PSScriptRoot) {
+    Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+} else {
+    Get-Location
+}
+
+# Import ScriptUtilities for centralized logging
+$scriptUtilsPath = Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1"
+if (Test-Path $scriptUtilsPath) {
+    Import-Module $scriptUtilsPath -Force -ErrorAction SilentlyContinue
+}
+
 # Script metadata
 $scriptName = 'Configure-MCPServers'
 $scriptVersion = '2.0.0'
@@ -78,16 +93,7 @@ function Write-ColorOutput {
 }
 
 # Log with custom logging if available
-function Write-LogMessage {
-    param(
-        [string]$Message,
-        [string]$Level = 'Information'
-    )
-
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $Level
-    }
-    Write-Verbose $Message
+Write-Verbose $Message
 }
 
 # Main execution
@@ -95,7 +101,7 @@ try {
     Write-ColorOutput "=== MCP Server Configuration ===" -Level 'Info'
     Write-ColorOutput "Script: $scriptName v$scriptVersion" -Level 'Info'
     Write-ColorOutput "Scope: $Scope" -Level 'Info'
-    Write-LogMessage -Message "Starting MCP server configuration (Scope: $Scope)"
+    Write-ScriptLog -Message "Starting MCP server configuration (Scope: $Scope)"
 
     # Determine workspace root
     $workspaceRoot = if ($env:AITHERZERO_ROOT) {
@@ -116,7 +122,7 @@ try {
     try {
         $nodeVersion = & node --version 2>$null
         if ($nodeVersion) {
-            Write-ColorOutput "  ✓ Node.js: $nodeVersion" -Level 'Success'
+            Write-ColorOutput "  ✓ Node.js: $nodeVersion" -Level Information
             $nodeMajor = [int]($nodeVersion -replace 'v(\d+)\..*', '$1')
             if ($nodeMajor -lt 18) {
                 Write-ColorOutput "  ⚠ Node.js version should be 18+ (current: $nodeVersion)" -Level 'Warning'
@@ -131,7 +137,7 @@ try {
     # Check GITHUB_TOKEN
     if ($env:GITHUB_TOKEN) {
         $tokenLength = $env:GITHUB_TOKEN.Length
-        Write-ColorOutput "  ✓ GITHUB_TOKEN is set ($tokenLength characters)" -Level 'Success'
+        Write-ColorOutput "  ✓ GITHUB_TOKEN is set ($tokenLength characters)" -Level Information
     } else {
         Write-ColorOutput "  ⚠ GITHUB_TOKEN not set - GitHub MCP server will not work" -Level 'Warning'
         Write-ColorOutput "    Set with: export GITHUB_TOKEN='your_token'" -Level 'Warning'
@@ -142,7 +148,7 @@ try {
     try {
         $vscodeVersion = & code --version 2>$null | Select-Object -First 1
         if ($vscodeVersion) {
-            Write-ColorOutput "  ✓ VS Code: $vscodeVersion" -Level 'Success'
+            Write-ColorOutput "  ✓ VS Code: $vscodeVersion" -Level Information
         }
     } catch {
         Write-ColorOutput "  ⚠ VS Code command not found" -Level 'Warning'
@@ -154,7 +160,7 @@ try {
         if (-not (Test-Path $vscodeDir)) {
             if ($PSCmdlet.ShouldProcess($vscodeDir, "Create .vscode directory")) {
                 New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
-                Write-LogMessage -Message "Created .vscode directory"
+                Write-ScriptLog -Message "Created .vscode directory"
             }
         }
         Join-Path $vscodeDir "mcp.json"
@@ -173,7 +179,7 @@ try {
         if (-not (Test-Path $userDir)) {
             if ($PSCmdlet.ShouldProcess($userDir, "Create user settings directory")) {
                 New-Item -ItemType Directory -Path $userDir -Force | Out-Null
-                Write-LogMessage -Message "Created user settings directory"
+                Write-ScriptLog -Message "Created user settings directory"
             }
         }
         $userMcpPath
@@ -191,7 +197,7 @@ try {
                 
                 if ($mcpConfig.servers) {
                     $serverCount = ($mcpConfig.servers | Get-Member -MemberType NoteProperty).Count
-                    Write-ColorOutput "  ✓ $serverCount MCP server(s) configured" -Level 'Success'
+                    Write-ColorOutput "  ✓ $serverCount MCP server(s) configured" -Level Information
                     foreach ($serverName in ($mcpConfig.servers | Get-Member -MemberType NoteProperty).Name) {
                         $server = $mcpConfig.servers.$serverName
                         $serverType = if ($server.type) { $server.type } else { "stdio" }
@@ -203,7 +209,7 @@ try {
 
                 if ($mcpConfig.inputs) {
                     $inputCount = $mcpConfig.inputs.Count
-                    Write-ColorOutput "  ✓ $inputCount input variable(s) defined" -Level 'Success'
+                    Write-ColorOutput "  ✓ $inputCount input variable(s) defined" -Level Information
                 }
             } catch {
                 Write-ColorOutput "  ✗ Failed to parse mcp.json: $($_.Exception.Message)" -Level 'Error'
@@ -212,7 +218,7 @@ try {
             Write-ColorOutput "  ✗ MCP config file not found: $mcpJsonPath" -Level 'Error'
         }
 
-        Write-ColorOutput "`nVerification complete." -Level 'Success'
+        Write-ColorOutput "`nVerification complete." -Level Information
         exit 0
     }
 
@@ -221,7 +227,7 @@ try {
 
     # Read existing configuration or create new
     $mcpConfig = if (Test-Path $mcpJsonPath) {
-        Write-LogMessage -Message "Reading existing MCP configuration from $mcpJsonPath"
+        Write-ScriptLog -Message "Reading existing MCP configuration from $mcpJsonPath"
         try {
             Get-Content $mcpJsonPath -Raw | ConvertFrom-Json
         } catch {
@@ -232,7 +238,7 @@ try {
             }
         }
     } else {
-        Write-LogMessage -Message "Creating new MCP configuration file"
+        Write-ScriptLog -Message "Creating new MCP configuration file"
         [PSCustomObject]@{
             servers = [PSCustomObject]@{}
             inputs = @()
@@ -330,14 +336,14 @@ try {
     
     if ($PSCmdlet.ShouldProcess($mcpJsonPath, "Write MCP configuration")) {
         $json | Set-Content -Path $mcpJsonPath -Encoding UTF8
-        Write-ColorOutput "  ✓ MCP servers configured successfully" -Level 'Success'
-        Write-LogMessage -Message "MCP servers configured in $mcpJsonPath"
+        Write-ColorOutput "  ✓ MCP servers configured successfully" -Level Information
+        Write-ScriptLog -Message "MCP servers configured in $mcpJsonPath"
     } else {
         Write-ColorOutput "  [WhatIf] Would write MCP configuration to: $mcpJsonPath" -Level 'Info'
     }
 
     # Summary
-    Write-ColorOutput "`n=== Configuration Complete ===" -Level 'Success'
+    Write-ColorOutput "`n=== Configuration Complete ===" -Level Information
     Write-ColorOutput "MCP Servers Configured (stdio transport):" -Level 'Info'
     Write-ColorOutput "  • aitherzero - AitherZero infrastructure automation" -Level 'Info'
     Write-ColorOutput "  • filesystem - Repository navigation and file operations" -Level 'Info'
@@ -364,6 +370,6 @@ try {
 
 } catch {
     Write-ColorOutput "`n✗ Error: $($_.Exception.Message)" -Level 'Error'
-    Write-LogMessage -Message "MCP configuration failed: $($_.Exception.Message)" -Level 'Error'
+    Write-ScriptLog -Message "MCP configuration failed: $($_.Exception.Message)" -Level 'Error'
     exit 1
 }
