@@ -159,7 +159,6 @@ jobs:
       - name: 🧪 Run Unit Tests
         id: test
         shell: pwsh
-        continue-on-error: true
         run: |
           Write-Host "⚡ Running unit tests for range: ${{ matrix.range }}" -ForegroundColor Cyan
 
@@ -185,7 +184,10 @@ jobs:
             "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
             "total=$($result.TotalCount)" >> $env:GITHUB_OUTPUT
 
-            if ($result.FailedCount -gt 0) { exit 1 }
+            if ($result.FailedCount -gt 0) { 
+              Write-Host "❌ Unit tests FAILED for ${{ matrix.range }}" -ForegroundColor Red
+              exit 1 
+            }
           } else {
             Write-Host "⏭️  No tests found for range ${{ matrix.range }}" -ForegroundColor Yellow
             "passed=0" >> $env:GITHUB_OUTPUT
@@ -247,7 +249,6 @@ jobs:
       - name: 🧪 Run Domain Tests
         id: test
         shell: pwsh
-        continue-on-error: true
         run: |
           Write-Host "⚡ Running domain tests for: ${{ matrix.module }}" -ForegroundColor Cyan
 
@@ -273,7 +274,10 @@ jobs:
             "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
             "total=$($result.TotalCount)" >> $env:GITHUB_OUTPUT
 
-            if ($result.FailedCount -gt 0) { exit 1 }
+            if ($result.FailedCount -gt 0) { 
+              Write-Host "❌ Domain tests FAILED for ${{ matrix.module }}" -ForegroundColor Red
+              exit 1 
+            }
           } else {
             Write-Host "⏭️  No tests found for domain ${{ matrix.module }}" -ForegroundColor Yellow
             "passed=0" >> $env:GITHUB_OUTPUT
@@ -335,7 +339,6 @@ jobs:
       - name: 🧪 Run Integration Tests
         id: test
         shell: pwsh
-        continue-on-error: true
         run: |
           Write-Host "⚡ Running integration tests for: ${{ matrix.suite }}" -ForegroundColor Cyan
 
@@ -374,7 +377,10 @@ jobs:
             "failed=$($result.FailedCount)" >> $env:GITHUB_OUTPUT
             "total=$($result.TotalCount)" >> $env:GITHUB_OUTPUT
 
-            if ($result.FailedCount -gt 0) { exit 1 }
+            if ($result.FailedCount -gt 0) { 
+              Write-Host "❌ Integration tests FAILED for ${{ matrix.suite }}" -ForegroundColor Red
+              exit 1 
+            }
           } else {
             Write-Host "⏭️  No tests found for suite ${{ matrix.suite }}" -ForegroundColor Yellow
             "passed=0" >> $env:GITHUB_OUTPUT
@@ -429,6 +435,7 @@ jobs:
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
       - name: 📊 Generate Coverage Report
+        id: coverage
         shell: pwsh
         continue-on-error: true
         run: |
@@ -439,8 +446,13 @@ jobs:
           # Run coverage generation script if available
           if (Test-Path "./library/automation-scripts/0406_Generate-Coverage.ps1") {
             & ./library/automation-scripts/0406_Generate-Coverage.ps1
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "✅ Coverage report generated successfully" -ForegroundColor Green
+            } else {
+              Write-Host "⚠️ Coverage generation failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+            }
           } else {
-            Write-Host "⚠️  Coverage script not found" -ForegroundColor Yellow
+            Write-Host "⚠️ Coverage script not found" -ForegroundColor Yellow
           }
 
       - name: 📊 Upload Coverage
