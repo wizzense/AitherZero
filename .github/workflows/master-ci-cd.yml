@@ -5,10 +5,9 @@ name: 🎯 Master CI/CD Orchestrator
 # This is the single source of truth for build, test, and release automation
 
 on:
-  # PR triggers temporarily disabled - pr-complete.yml runs directly now
-  # pull_request:
-  #   branches: [main, dev, dev-staging]
-  #   types: [opened, synchronize, reopened, ready_for_review]
+  pull_request:
+    branches: [main, dev, dev-staging]
+    types: [opened, synchronize, reopened, ready_for_review]
   
   push:
     branches: [main, dev, dev-staging]

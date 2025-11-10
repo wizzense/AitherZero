@@ -879,16 +879,14 @@ jobs:
             
             # Check if ring status link already exists
             if ($content -notmatch 'ring-status\.html') {
-              # Find the dashboard section and add ring status link
-              $ringStatusLink = @"
-
-## 🔄 Ring Status Dashboard
-
-View real-time status across all development rings:
-- [Ring Status Dashboard](./reports/ring-status.html) - Branch status, PRs, and health metrics
-- [Ring Status Data (JSON)](./reports/ring-status-data.json) - Raw data API
-
-"@
+              # Load ring status link template
+              $templatePath = "./library/_templates/ring-status-link.md"
+              if (Test-Path $templatePath) {
+                $ringStatusLink = Get-Content $templatePath -Raw
+              } else {
+                # Fallback if template not found
+                $ringStatusLink = "`n## 🔄 Ring Status Dashboard`n`nView real-time status across all development rings.`n"
+              }
               
               # Insert after the main dashboard link or at the end
               if ($content -match '## .* Dashboard') {
