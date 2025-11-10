@@ -1,53 +1,53 @@
 {
-  "version": "1.0.0",
   "environment": {
-    "job": "build",
-    "runner_os": "Linux",
-    "ci": true,
     "os": "Ubuntu 24.04.3 LTS",
-    "powershell_version": "7.4.13",
-    "platform": "GitHub Actions",
-    "run_id": "19234480253",
     "workflow": "🚀 PR Ecosystem - Complete Validation & Build",
-    "run_number": "17"
+    "platform": "GitHub Actions",
+    "run_number": "21",
+    "job": "build",
+    "powershell_version": "7.4.13",
+    "ci": true,
+    "runner_os": "Linux",
+    "run_id": "19235449480"
   },
-  "generated_at": "2025-11-10T14:14:48Z",
-  "pr": {
-    "title": null,
-    "author": "Copilot",
-    "base_branch": "dev-staging",
-    "url": "https://github.com/wizzense/AitherZero/pull/2278",
-    "base_sha": null,
-    "head_branch": "copilot/fix-error-logging-workflows",
-    "head_sha": "7f208f7c62fd633b04429d903165b139815abfd5",
-    "number": 2278
-  },
-  "git": {
-    "commits_count": "1",
-    "commit_date": "2025-11-10T14:10:56Z",
-    "commit_author": "Copilot",
-    "commit_message": [
-      "Merge b7538c5f5a076b767bd03641083f109f01730cad into cffc97023f5740f959228105f2729c0733b50f31",
-      ""
-    ],
-    "branch": "HEAD",
-    "tag": null,
-    "commit_short": "7f208f7c",
-    "commit_sha": "7f208f7c62fd633b04429d903165b139815abfd5"
+  "version": "1.0.0",
+  "artifacts": {
+    "container_image_base": "ghcr.io/wizzense/aitherzero",
+    "package_prefix": "AitherZero-PR2278",
+    "pr_container_tags": [
+      "pr-2278-ff595eea",
+      "pr-2278-latest"
+    ]
   },
   "pages": {
     "pr_dashboard": "https://wizzense.github.io/AitherZero/2278/merge/pr-2278/",
     "branch": "2278/merge",
-    "branch_path": "/2278/merge",
     "pr_reports": "https://wizzense.github.io/AitherZero/2278/merge/pr-2278/reports/",
-    "base_url": "https://wizzense.github.io/AitherZero/2278/merge"
+    "base_url": "https://wizzense.github.io/AitherZero/2278/merge",
+    "branch_path": "/2278/merge"
   },
-  "artifacts": {
-    "package_prefix": "AitherZero-PR2278",
-    "pr_container_tags": [
-      "pr-2278-7f208f7c",
-      "pr-2278-latest"
+  "generated_at": "2025-11-10T14:45:26Z",
+  "pr": {
+    "base_branch": "dev-staging",
+    "title": null,
+    "head_branch": "copilot/fix-error-logging-workflows",
+    "head_sha": "ff595eeae1a6d8abafb7edb225d6e648d4336df1",
+    "number": 2278,
+    "url": "https://github.com/wizzense/AitherZero/pull/2278",
+    "base_sha": null,
+    "author": "Copilot"
+  },
+  "git": {
+    "tag": null,
+    "commit_short": "ff595eea",
+    "commit_message": [
+      "Merge 527094ab029b39cb9299f3e95d5ef90628608852 into cffc97023f5740f959228105f2729c0733b50f31",
+      ""
     ],
-    "container_image_base": "ghcr.io/wizzense/aitherzero"
+    "commit_date": "2025-11-10T14:43:24Z",
+    "commit_author": "Copilot",
+    "commits_count": "1",
+    "branch": "HEAD",
+    "commit_sha": "ff595eeae1a6d8abafb7edb225d6e648d4336df1"
   }
 }
