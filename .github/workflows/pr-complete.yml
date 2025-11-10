@@ -336,12 +336,12 @@ jobs:
             });
 
   # ============================================================================
-  # PHASE 3: Build & Package
+  # PHASE 3: Build & Package (RUNS IN PARALLEL with testing)
   # ============================================================================
   
   build:
     name: 🔨 Build & Package
-    needs: test-summary
+    needs: quick-validation
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -403,12 +403,12 @@ jobs:
             });
 
   # ============================================================================
-  # PHASE 3B: Docker Container Build (Parallel with Quality Analysis)
+  # PHASE 3B: Docker Container Build (RUNS IN PARALLEL with testing and build)
   # ============================================================================
   
   build-docker-image:
     name: 🐳 Build PR Docker Image
-    needs: build
+    needs: quick-validation
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
