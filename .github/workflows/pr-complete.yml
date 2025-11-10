@@ -116,75 +116,14 @@ jobs:
             });
 
   # ============================================================================
-  # PHASE 2: Comprehensive Testing (Matrix-Based)
+  # PHASE 2: Comprehensive Testing (ALL TEST GROUPS RUN IN PARALLEL!)
+  # Unit, Domain, and Integration tests all start simultaneously
   # ============================================================================
   
-  test-matrix-prepare:
-    name: 🎯 Prepare Test Matrix
-    needs: quick-validation
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      unit-ranges: ${{ steps.matrix.outputs.unit-ranges }}
-      domain-modules: ${{ steps.matrix.outputs.domain-modules }}
-      integration-suites: ${{ steps.matrix.outputs.integration-suites }}
-      should-run-unit: ${{ steps.matrix.outputs.should-run-unit }}
-      should-run-domain: ${{ steps.matrix.outputs.should-run-domain }}
-      should-run-integration: ${{ steps.matrix.outputs.should-run-integration }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 💬 Post Test Prep Status
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 2:** 🧪 Comprehensive Testing Started\n\nPreparing test matrix for parallel execution...'
-            });
-
-      - name: 🔧 Bootstrap
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
-
-      - name: 🎯 Generate Test Matrix
-        id: matrix
-        shell: pwsh
-        run: |
-          Write-Host "🎯 Generating comprehensive test matrix" -ForegroundColor Cyan
-          
-          $unitRanges = @(
-            '0000-0099', '0100-0199', '0200-0299', '0300-0399',
-            '0400-0499', '0500-0599', '0700-0799', '0800-0899', '0900-0999'
-          )
-          
-          $domainModules = @(
-            'configuration', 'documentation', 'infrastructure',
-            'security', 'testing', 'utilities'
-          )
-          
-          $integrationSuites = @(
-            'automation-scripts', 'orchestration', 'bootstrap', 'modules'
-          )
-          
-          "unit-ranges=$($unitRanges | ConvertTo-Json -Compress)" >> $env:GITHUB_OUTPUT
-          "domain-modules=$($domainModules | ConvertTo-Json -Compress)" >> $env:GITHUB_OUTPUT
-          "integration-suites=$($integrationSuites | ConvertTo-Json -Compress)" >> $env:GITHUB_OUTPUT
-          "should-run-unit=True" >> $env:GITHUB_OUTPUT
-          "should-run-domain=True" >> $env:GITHUB_OUTPUT
-          "should-run-integration=True" >> $env:GITHUB_OUTPUT
-          
-          Write-Host "✅ Matrix generated: $($unitRanges.Count) unit ranges, $($domainModules.Count) domains, $($integrationSuites.Count) integration suites" -ForegroundColor Green
-
   unit-tests:
     name: 🧪 Unit [${{ matrix.range }}]
-    needs: test-matrix-prepare
-    if: needs.test-matrix-prepare.outputs.should-run-unit == 'True'
+    needs: quick-validation
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: true
@@ -193,7 +132,7 @@ jobs:
       fail-fast: false
       max-parallel: 9
       matrix:
-        range: ${{ fromJson(needs.test-matrix-prepare.outputs.unit-ranges) }}
+        range: ${{ fromJson('["0000-0099", "0100-0199", "0200-0299", "0300-0399", "0400-0499", "0500-0599", "0700-0799", "0800-0899", "0900-0999"]') }}
 
     steps:
       - name: 📥 Checkout
@@ -228,8 +167,8 @@ jobs:
 
   domain-tests:
     name: 🔧 Domain [${{ matrix.module }}]
-    needs: test-matrix-prepare
-    if: needs.test-matrix-prepare.outputs.should-run-domain == 'True'
+    needs: quick-validation
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: true
@@ -238,7 +177,7 @@ jobs:
       fail-fast: false
       max-parallel: 6
       matrix:
-        module: ${{ fromJson(needs.test-matrix-prepare.outputs.domain-modules) }}
+        module: ${{ fromJson('["configuration", "documentation", "infrastructure", "security", "testing", "utilities"]') }}
 
     steps:
       - name: 📥 Checkout
@@ -273,8 +212,8 @@ jobs:
 
   integration-tests:
     name: 🔗 Integration [${{ matrix.suite }}]
-    needs: test-matrix-prepare
-    if: needs.test-matrix-prepare.outputs.should-run-integration == 'True'
+    needs: quick-validation
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
     continue-on-error: true
@@ -283,7 +222,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        suite: ${{ fromJson(needs.test-matrix-prepare.outputs.integration-suites) }}
+        suite: ${{ fromJson('["automation-scripts", "orchestration", "bootstrap", "modules"]') }}
 
     steps:
       - name: 📥 Checkout
