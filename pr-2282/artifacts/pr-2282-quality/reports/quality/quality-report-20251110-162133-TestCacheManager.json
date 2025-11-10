@@ -1,0 +1,102 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/TestCacheManager.psm1",
+  "FileName": "TestCacheManager.psm1",
+  "Timestamp": "2025-11-10T16:21:10.3055677+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 61.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Remove-Item, Remove-Item"
+      ],
+      "Score": 70,
+      "Details": {
+        "TryCatchBlocks": 0
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks",
+        "Some functions may lack logging statements"
+      ],
+      "Score": 70,
+      "Details": {
+        "FunctionCount": 8,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Verbose": 7
+        },
+        "TotalLoggingCalls": 7.0,
+        "HasErrorLevel": false,
+        "HasWarningLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/TestCacheManager.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding [CmdletBinding()] for advanced parameter support",
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 70,
+      "Details": {
+        "HelpSections": 2,
+        "ParameterCount": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "ShouldBeInCI": true,
+        "Workflows": [],
+        "IntegratedInWorkflows": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "3 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 85,
+      "Details": {
+        "Errors": 0,
+        "TopIssues": [
+          "Line 304: PSReviewUnusedParameter - The parameter 'TestPath' has been declared but not used.",
+          "Line 357: PSReviewUnusedParameter - The parameter 'BasePath' has been declared but not used.",
+          "Line 295: PSUseSingularNouns - The cmdlet 'Test-ShouldRunTests' uses a plural noun. A singular noun should be used instead."
+        ],
+        "Warnings": 3,
+        "TotalIssues": 3
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 0,
+    "Skipped": 0,
+    "Failed": 1,
+    "Warnings": 5,
+    "TotalChecks": 6
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/AutoTestGenerator.psm1",
+  "FileName": "AutoTestGenerator.psm1",
+  "Timestamp": "2025-11-10T16:21:06.6486902+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 63.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Directory creation, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module"
+      ],
+      "Score": 70,
+      "Details": {
+        "TryCatchBlocks": 3,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "FunctionCount": 5,
+        "HasInfoLevel": false,
+        "LoggingStatements": {
+          "Write-.*Log": 12
+        },
+        "TotalLoggingCalls": 12.0,
+        "HasErrorLevel": true,
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/AutoTestGenerator.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 1,
+        "HasCmdletBinding": true,
+        "HelpSections": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "ShouldBeInCI": true,
+        "Workflows": [],
+        "IntegratedInWorkflows": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "9 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 55,
+      "Details": {
+        "Errors": 0,
+        "TopIssues": [
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'AutoTestGenerator.psm1'",
+          "Line 247: PSUseDeclaredVarsMoreThanAssignments - The variable 'hasValidateScript' is assigned but never used.",
+          "Line 248: PSUseDeclaredVarsMoreThanAssignments - The variable 'hasBeginBlock' is assigned but never used.",
+          "Line 249: PSUseDeclaredVarsMoreThanAssignments - The variable 'hasProcessBlock' is assigned but never used.",
+          "Line 250: PSUseDeclaredVarsMoreThanAssignments - The variable 'acceptsPipeline' is assigned but never used."
+        ],
+        "Warnings": 9,
+        "TotalIssues": 68
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 1,
+    "Skipped": 0,
+    "Failed": 2,
+    "Warnings": 3,
+    "TotalChecks": 6
+  }
+}

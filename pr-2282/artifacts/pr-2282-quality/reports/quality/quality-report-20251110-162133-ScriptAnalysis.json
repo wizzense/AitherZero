@@ -1,0 +1,100 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/ScriptAnalysis.psm1",
+  "FileName": "ScriptAnalysis.psm1",
+  "Timestamp": "2025-11-10T16:21:22.192583+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 72.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 4
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow",
+        "Some functions may lack logging statements"
+      ],
+      "Score": 75,
+      "Details": {
+        "FunctionCount": 9,
+        "HasInfoLevel": false,
+        "LoggingStatements": {
+          "Write-Error": 4
+        },
+        "TotalLoggingCalls": 4.0,
+        "HasErrorLevel": true,
+        "HasWarningLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ScriptAnalysis.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 9,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "ShouldBeInCI": true,
+        "Workflows": [],
+        "IntegratedInWorkflows": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "Errors": 0,
+        "TopIssues": [
+          "Line 21: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 25: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 28: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 31: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 34: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "Warnings": 0,
+        "TotalIssues": 56
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 3,
+    "Skipped": 0,
+    "Failed": 1,
+    "Warnings": 2,
+    "TotalChecks": 6
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/TestGenerator.psm1",
+  "FileName": "TestGenerator.psm1",
+  "Timestamp": "2025-11-10T16:21:10.5976132+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 78.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TryCatchBlocks": 2,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "FunctionCount": 8,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 13
+        },
+        "TotalLoggingCalls": 15.0,
+        "HasErrorLevel": true,
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/TestGenerator.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 1,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "ShouldBeInCI": true,
+        "Workflows": [],
+        "IntegratedInWorkflows": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "1 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 95,
+      "Details": {
+        "Errors": 0,
+        "TopIssues": "Line 141: PSUseSingularNouns - The cmdlet 'Get-ScriptTestMetadata' uses a plural noun. A singular noun should be used instead.",
+        "Warnings": 1,
+        "TotalIssues": 1
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 4,
+    "Skipped": 0,
+    "Failed": 1,
+    "Warnings": 1,
+    "TotalChecks": 6
+  }
+}

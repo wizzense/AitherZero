@@ -1,0 +1,105 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/QualityValidator.psm1",
+  "FileName": "QualityValidator.psm1",
+  "Timestamp": "2025-11-10T16:21:09.9100237+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 72.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Invoke-RestMethod, Invoke-RestMethod, Invoke-WebRequest, Invoke-WebRequest, Directory creation, Remove-Item, Remove-Item, Copy-Item, Copy-Item, Move-Item, Move-Item, Import-Module, Import-Module, Import-Module, Install-Module, Install-Module"
+      ],
+      "Score": 70,
+      "Details": {
+        "TryCatchBlocks": 4,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "FunctionCount": 10,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Verbose": 1,
+          "Write-CustomLog": 3,
+          "Write-Information": 1,
+          "Write-Warning": 2,
+          "Write-.*Log": 28,
+          "Write-Error": 3
+        },
+        "TotalLoggingCalls": 38.0,
+        "HasErrorLevel": true,
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/QualityValidator.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 8,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "ShouldBeInCI": true,
+        "Workflows": [],
+        "IntegratedInWorkflows": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "2 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 90,
+      "Details": {
+        "Errors": 0,
+        "TopIssues": [
+          "Line 248: PSAvoidAssignmentToAutomaticVariable - The Variable 'matches' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 44: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 64: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 68: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 101: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "Warnings": 2,
+        "TotalIssues": 130
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 3,
+    "Skipped": 0,
+    "Failed": 1,
+    "Warnings": 2,
+    "TotalChecks": 6
+  }
+}

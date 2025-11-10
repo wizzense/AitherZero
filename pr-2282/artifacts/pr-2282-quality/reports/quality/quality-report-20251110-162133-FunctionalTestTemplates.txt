@@ -1,0 +1,42 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: FunctionalTestTemplates.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/testing/FunctionalTestTemplates.psm1
+Timestamp: 11/10/2025 16:21:09
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 47%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 1
+  Failed: 3
+  Warnings: 2
+  Skipped: 0
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Warning] ErrorHandling - Score: 85%
+  Findings:
+    - Catch blocks should log or throw errors
+
+[Failed] Logging - Score: 0%
+  Findings:
+    - No logging statements found. Add logging for important operations.
+
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/FunctionalTestTemplates.Tests.ps1
+
+[Passed] UIIntegration - Score: 100%
+[Warning] GitHubActions - Score: 70%
+  Findings:
+    - Component should be integrated into CI/CD workflows
+
+[Failed] PSScriptAnalyzer - Score: 25%
+  Findings:
+    - 15 PSScriptAnalyzer warning(s) found
+
+================================================================================

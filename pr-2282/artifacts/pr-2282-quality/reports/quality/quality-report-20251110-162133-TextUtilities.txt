@@ -1,0 +1,39 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: TextUtilities.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/utilities/TextUtilities.psm1
+Timestamp: 11/10/2025 16:21:22
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 58%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 3
+  Failed: 2
+  Warnings: 0
+  Skipped: 1
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Passed] ErrorHandling - Score: 90%
+  Findings:
+    - Consider setting $ErrorActionPreference = 'Stop' for better error handling
+
+[Failed] Logging - Score: 0%
+  Findings:
+    - No logging statements found. Add logging for important operations.
+
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/TextUtilities.Tests.ps1
+
+[Passed] UIIntegration - Score: 100%
+[Skipped] GitHubActions - Score: 100%
+  Findings:
+    - Component does not require GitHub Actions integration
+
+[Passed] PSScriptAnalyzer - Score: 100%
+================================================================================

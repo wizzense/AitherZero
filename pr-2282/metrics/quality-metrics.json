@@ -1,16 +1,16 @@
 {
-  "Trends": {
-    "Trend": "stable",
-    "IssuesThisWeek": 0,
-    "IssuesLastWeek": 0
-  },
   "PSScriptAnalyzer": {
-    "TotalIssues": 0,
-    "Warning": 0,
     "Information": 0,
+    "ByRule": {},
     "Error": 0,
-    "ByRule": {}
+    "TotalIssues": 0,
+    "Warning": 0
+  },
+  "Trends": {
+    "IssuesThisWeek": 0,
+    "IssuesLastWeek": 0,
+    "Trend": "stable"
   },
   "QualityScore": 100,
-  "Timestamp": "2025-11-10T16:16:47Z"
+  "Timestamp": "2025-11-10T16:22:03Z"
 }

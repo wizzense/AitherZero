@@ -1,0 +1,41 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: LogViewer.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/utilities/LogViewer.psm1
+Timestamp: 11/10/2025 16:21:20
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 73%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 3
+  Failed: 1
+  Warnings: 1
+  Skipped: 1
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Warning] ErrorHandling - Score: 70%
+  Findings:
+    - Consider setting $ErrorActionPreference = 'Stop' for better error handling
+    - Catch blocks should log or throw errors
+    - Consider wrapping these risky operations in try/catch: Remove-Item
+
+[Passed] Logging - Score: 100%
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/LogViewer.Tests.ps1
+
+[Passed] UIIntegration - Score: 100%
+[Skipped] GitHubActions - Score: 100%
+  Findings:
+    - Component does not require GitHub Actions integration
+
+[Passed] PSScriptAnalyzer - Score: 95%
+  Findings:
+    - 1 PSScriptAnalyzer warning(s) found
+
+================================================================================

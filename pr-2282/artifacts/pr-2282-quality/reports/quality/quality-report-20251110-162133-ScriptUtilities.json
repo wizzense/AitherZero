@@ -1,0 +1,100 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/ScriptUtilities.psm1",
+  "FileName": "ScriptUtilities.psm1",
+  "Timestamp": "2025-11-10T16:21:25.9897561+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 75.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 6,
+        "HasFinallyBlock": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "FunctionCount": 15,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-CustomLog": 3,
+          "Write-.*Log": 20,
+          "Write-Warning": 1
+        },
+        "TotalLoggingCalls": 24.0,
+        "HasErrorLevel": true,
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ScriptUtilities.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 14,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "3 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 85,
+      "Details": {
+        "Errors": 0,
+        "TopIssues": [
+          "Line 271: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 533: PSUseOutputTypeCorrectly - The cmdlet 'Test-FeatureOrPrompt' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 537: PSUseOutputTypeCorrectly - The cmdlet 'Test-FeatureOrPrompt' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 544: PSUseOutputTypeCorrectly - The cmdlet 'Test-FeatureOrPrompt' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 556: PSUseOutputTypeCorrectly - The cmdlet 'Test-FeatureOrPrompt' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ],
+        "Warnings": 3,
+        "TotalIssues": 14
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 3,
+    "Skipped": 1,
+    "Failed": 1,
+    "Warnings": 1,
+    "TotalChecks": 6
+  }
+}

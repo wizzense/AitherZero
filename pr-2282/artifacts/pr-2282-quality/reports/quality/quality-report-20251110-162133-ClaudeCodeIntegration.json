@@ -1,0 +1,100 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/ai-agents/ClaudeCodeIntegration.psm1",
+  "FileName": "ClaudeCodeIntegration.psm1",
+  "Timestamp": "2025-11-10T16:21:31.0292678+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 76.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Import-Module"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 8,
+        "HasFinallyBlock": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "FunctionCount": 9,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 38
+        },
+        "TotalLoggingCalls": 40.0,
+        "HasErrorLevel": true,
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ClaudeCodeIntegration.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 4,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "1 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 95,
+      "Details": {
+        "Errors": 0,
+        "TopIssues": [
+          "Line 499: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 108: PSUseOutputTypeCorrectly - The cmdlet 'Initialize-ClaudeCodeIntegration' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 112: PSUseOutputTypeCorrectly - The cmdlet 'Initialize-ClaudeCodeIntegration' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 194: PSUseOutputTypeCorrectly - The cmdlet 'Invoke-ClaudeCodeCLI' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 331: PSUseOutputTypeCorrectly - The cmdlet 'Send-ClaudeMessage' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+        ],
+        "Warnings": 1,
+        "TotalIssues": 6
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 3,
+    "Skipped": 1,
+    "Failed": 1,
+    "Warnings": 1,
+    "TotalChecks": 6
+  }
+}

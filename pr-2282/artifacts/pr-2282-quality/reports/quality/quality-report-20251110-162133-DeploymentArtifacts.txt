@@ -1,0 +1,40 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: DeploymentArtifacts.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/infrastructure/DeploymentArtifacts.psm1
+Timestamp: 11/10/2025 16:21:27
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 74%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 2
+  Failed: 1
+  Warnings: 2
+  Skipped: 1
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Warning] ErrorHandling - Score: 85%
+  Findings:
+    - Consider setting $ErrorActionPreference = 'Stop' for better error handling
+    - Consider wrapping these risky operations in try/catch: Directory creation
+
+[Passed] Logging - Score: 100%
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DeploymentArtifacts.Tests.ps1
+
+[Passed] UIIntegration - Score: 100%
+[Skipped] GitHubActions - Score: 100%
+  Findings:
+    - Component does not require GitHub Actions integration
+
+[Warning] PSScriptAnalyzer - Score: 85%
+  Findings:
+    - 3 PSScriptAnalyzer warning(s) found
+
+================================================================================

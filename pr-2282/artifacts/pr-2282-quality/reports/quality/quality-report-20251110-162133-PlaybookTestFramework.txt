@@ -1,0 +1,42 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: PlaybookTestFramework.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/testing/PlaybookTestFramework.psm1
+Timestamp: 11/10/2025 16:21:09
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 69%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 3
+  Failed: 2
+  Warnings: 1
+  Skipped: 0
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Passed] ErrorHandling - Score: 90%
+  Findings:
+    - Consider wrapping these risky operations in try/catch: Directory creation, Remove-Item
+
+[Passed] Logging - Score: 90%
+  Findings:
+    - Some functions may lack logging statements
+
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/PlaybookTestFramework.Tests.ps1
+
+[Passed] UIIntegration - Score: 100%
+[Warning] GitHubActions - Score: 70%
+  Findings:
+    - Component should be integrated into CI/CD workflows
+
+[Failed] PSScriptAnalyzer - Score: 65%
+  Findings:
+    - 7 PSScriptAnalyzer warning(s) found
+
+================================================================================
