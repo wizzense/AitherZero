@@ -312,7 +312,7 @@ jobs:
         continue-on-error: true
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-build
+          Invoke-AitherPlaybook -Name pr-ecosystem-build
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -580,16 +580,31 @@ jobs:
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
-          Write-Host "📊 Generating Consolidated Dashboard" -ForegroundColor Cyan
+          Write-Host "📊 Generating Modular Dashboard (5 parallel collectors + HTML generation)" -ForegroundColor Cyan
           
-          # Run report playbook
-          Invoke-OrchestrationSequence -LoadPlaybook pr-ecosystem-report
+          # Use new modular dashboard generation playbook
+          Invoke-AitherPlaybook -Name dashboard-generation-complete
+          
+          # Also run legacy report playbook for compatibility
+          Invoke-AitherPlaybook -Name pr-ecosystem-report
           
           # Organize for GitHub Pages
           $prDir = "./library/reports/pr-$env:PR_NUMBER"
           New-Item -ItemType Directory -Path $prDir -Force | Out-Null
           
-          # Copy reports
+          # Copy dashboard output
+          if (Test-Path "./reports/dashboard") {
+            Copy-Item -Path "./reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
+            Write-Host "✅ Copied modern dashboard" -ForegroundColor Green
+          }
+          
+          # Copy metrics
+          if (Test-Path "./reports/metrics") {
+            Copy-Item -Path "./reports/metrics" -Destination "$prDir/metrics" -Recurse -Force
+            Write-Host "✅ Copied metrics JSONs" -ForegroundColor Green
+          }
+          
+          # Copy legacy reports
           if (Test-Path "./library/reports") {
             Get-ChildItem -Path "./library/reports" -Recurse -Exclude "pr-*" | ForEach-Object {
               $targetPath = $_.FullName.Replace("./library/reports", $prDir)
@@ -608,7 +623,7 @@ jobs:
             Copy-Item -Path "./artifacts" -Destination "$prDir/artifacts" -Recurse -Force
           }
           
-          Write-Host "✅ Dashboard generated" -ForegroundColor Green
+          Write-Host "✅ Complete dashboard generated with modern modular architecture" -ForegroundColor Green
 
       - name: 📦 Upload Dashboard
         uses: actions/upload-artifact@v4
