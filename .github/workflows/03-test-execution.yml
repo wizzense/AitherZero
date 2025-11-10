@@ -204,24 +204,6 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
-      - name: 💬 Post Test Status
-        if: always() && github.event_name == 'pull_request' && steps.test.outputs.total != '0'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const passed = '${{ steps.test.outputs.passed }}';
-            const failed = '${{ steps.test.outputs.failed }}';
-            const total = '${{ steps.test.outputs.total }}';
-            const range = '${{ matrix.range }}';
-            const status = failed === '0' ? '✅' : '❌';
-            
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `${status} **Unit Tests [${range}]** - Passed: ${passed}/${total} ${failed !== '0' ? `(Failed: ${failed})` : ''}`
-            });
-
   # Domain tests - Parallel execution by module
   domain-tests:
     name: 🏗️ Domain [${{ matrix.module }}]
@@ -293,24 +275,6 @@ jobs:
           path: ./library/tests/results/Domain-${{ matrix.module }}.xml
           retention-days: 7
           if-no-files-found: warn
-
-      - name: 💬 Post Test Status
-        if: always() && github.event_name == 'pull_request' && steps.test.outputs.total != '0'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const passed = '${{ steps.test.outputs.passed }}';
-            const failed = '${{ steps.test.outputs.failed }}';
-            const total = '${{ steps.test.outputs.total }}';
-            const module = '${{ matrix.module }}';
-            const status = failed === '0' ? '✅' : '❌';
-            
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `${status} **Domain Tests [${module}]** - Passed: ${passed}/${total} ${failed !== '0' ? `(Failed: ${failed})` : ''}`
-            });
 
   # Integration tests - Parallel execution by suite
   integration-tests:
@@ -396,24 +360,6 @@ jobs:
           path: ./library/tests/results/Integration-${{ matrix.suite }}.xml
           retention-days: 7
           if-no-files-found: warn
-
-      - name: 💬 Post Test Status
-        if: always() && github.event_name == 'pull_request' && steps.test.outputs.total != '0'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const passed = '${{ steps.test.outputs.passed }}';
-            const failed = '${{ steps.test.outputs.failed }}';
-            const total = '${{ steps.test.outputs.total }}';
-            const suite = '${{ matrix.suite }}';
-            const status = failed === '0' ? '✅' : '❌';
-            
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `${status} **Integration Tests [${suite}]** - Passed: ${passed}/${total} ${failed !== '0' ? `(Failed: ${failed})` : ''}`
-            });
 
   # Coverage analysis (optional)
   coverage:
@@ -594,32 +540,97 @@ jobs:
             }
             
             const successRate = totalTests > 0 ? ((totalPassed / totalTests) * 100).toFixed(2) : 0;
-            const status = totalFailed === 0 ? '✅ **ALL PASSED**' : `⚠️ **${totalFailed} FAILED**`;
+            const overallStatus = totalFailed === 0 ? '✅ ALL PASSED' : `❌ ${totalFailed} FAILED`;
+            const overallIcon = totalFailed === 0 ? '✅' : '❌';
             
-            let comment = `## 🧪 Test Execution Summary\n\n`;
-            comment += `### ${status}\n\n`;
-            comment += `| Metric | Count |\n`;
-            comment += `|--------|-------|\n`;
-            comment += `| **Total Tests** | ${totalTests} |\n`;
-            comment += `| **Passed** | ✅ ${totalPassed} |\n`;
-            comment += `| **Failed** | ${totalFailed > 0 ? '❌' : '✅'} ${totalFailed} |\n`;
-            comment += `| **Success Rate** | ${successRate}% |\n\n`;
+            // Build detailed summary with rich context
+            let comment = `## 🧪 Test Execution Workflow\n\n`;
             
-            comment += `### 📊 Test Suites\n\n`;
-            comment += `- **Unit Tests**: Automation scripts by range (0000-0999)\n`;
-            comment += `- **Domain Tests**: Module-specific tests (configuration, infrastructure, etc.)\n`;
-            comment += `- **Integration Tests**: End-to-end workflow tests\n\n`;
+            // Context header
+            comment += `**Workflow:** \`03-test-execution.yml\`  \n`;
+            comment += `**Run ID:** [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})  \n`;
+            comment += `**Commit:** \`${context.sha.substring(0, 7)}\`  \n`;
+            comment += `**Triggered:** ${new Date().toISOString()}  \n`;
+            comment += `**Event:** ${context.eventName}\n\n`;
             
-            if (totalFailed > 0) {
-              comment += `### ⚠️ Next Steps\n\n`;
-              comment += `Some tests failed. Please:\n`;
-              comment += `1. Download test artifacts from this workflow run\n`;
-              comment += `2. Review failed test details\n`;
-              comment += `3. Fix issues and push updates\n\n`;
+            comment += `---\n\n`;
+            
+            // Overall status
+            comment += `### ${overallIcon} Overall Status: ${overallStatus}\n\n`;
+            
+            // Summary table
+            comment += `| Metric | Count | Percentage |\n`;
+            comment += `|--------|-------|------------|\n`;
+            comment += `| **Total Tests** | ${totalTests} | 100% |\n`;
+            comment += `| **Passed** | ✅ ${totalPassed} | ${successRate}% |\n`;
+            comment += `| **Failed** | ${totalFailed > 0 ? '❌' : '✅'} ${totalFailed} | ${(100 - successRate).toFixed(2)}% |\n\n`;
+            
+            // Detailed breakdown by test type
+            comment += `### 📊 Test Suite Breakdown\n\n`;
+            
+            // Collect test results by type
+            const unitTests = [];
+            const domainTests = [];
+            const integrationTests = [];
+            
+            results.forEach(result => {
+              const match = result.name.match(/^(unit|domain|integration)-(.+)$/);
+              if (match) {
+                const [, type, name] = match;
+                const passed = parseInt(result.passed) || 0;
+                const failed = parseInt(result.failed) || 0;
+                const total = parseInt(result.total) || 0;
+                const status = failed === 0 ? '✅' : '❌';
+                const item = `${status} **${name}**: ${passed}/${total} passed${failed > 0 ? ` (${failed} failed)` : ''}`;
+                
+                if (type === 'unit') unitTests.push(item);
+                else if (type === 'domain') domainTests.push(item);
+                else if (type === 'integration') integrationTests.push(item);
+              }
+            });
+            
+            if (unitTests.length > 0) {
+              comment += `**🔢 Unit Tests** (by script range):\n`;
+              unitTests.forEach(item => comment += `- ${item}\n`);
+              comment += `\n`;
             }
             
+            if (domainTests.length > 0) {
+              comment += `**🏗️ Domain Tests** (by module):\n`;
+              domainTests.forEach(item => comment += `- ${item}\n`);
+              comment += `\n`;
+            }
+            
+            if (integrationTests.length > 0) {
+              comment += `**🔗 Integration Tests** (by suite):\n`;
+              integrationTests.forEach(item => comment += `- ${item}\n`);
+              comment += `\n`;
+            }
+            
+            // Coverage info if available
+            const coverageResult = results.find(r => r.name === 'coverage');
+            if (coverageResult && coverageResult.coverage) {
+              comment += `### 📈 Code Coverage\n\n`;
+              comment += `**Coverage:** ${coverageResult.coverage}%\n\n`;
+            }
+            
+            // Next steps for failures
+            if (totalFailed > 0) {
+              comment += `### ⚠️ Action Required\n\n`;
+              comment += `**${totalFailed} test(s) failed.** Please:\n\n`;
+              comment += `1. 📥 [Download test artifacts](${context.payload.repository.html_url}/actions/runs/${context.runId}) from this workflow run\n`;
+              comment += `2. 🔍 Review failed test details in the artifacts\n`;
+              comment += `3. 🔧 Fix issues and push updates\n`;
+              comment += `4. ✅ Re-run tests to verify fixes\n\n`;
+            } else {
+              comment += `### ✅ All Tests Passed!\n\n`;
+              comment += `Great work! All ${totalTests} tests passed successfully.\n\n`;
+            }
+            
+            // Footer
             comment += `---\n`;
-            comment += `*🤖 Automated by Test Execution Workflow*`;
+            comment += `_Last updated: ${new Date().toISOString()}_  \n`;
+            comment += `<!-- WORKFLOW_STATUS_COMMENT:test-execution -->`;
             
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -629,7 +640,7 @@ jobs:
             
             const existingComment = comments.find(c =>
               c.user.login === 'github-actions[bot]' &&
-              c.body.includes('Test Execution Summary')
+              c.body.includes('WORKFLOW_STATUS_COMMENT:test-execution')
             );
             
             if (existingComment) {
