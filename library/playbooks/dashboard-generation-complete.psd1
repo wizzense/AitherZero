@@ -8,7 +8,7 @@
         MetricsDir = "reports/metrics"
     }
     
-    Sequences = @(
+    Sequence = @(
         @{
             Name = "collect-metrics"
             Description = "Collect all metrics in parallel"
