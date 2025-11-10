@@ -4,9 +4,9 @@ name: 🔄 Ring Status Dashboard
 # Generate comprehensive status dashboard for ring-based branching strategy
 on:
   push:
-    branches: [main, develop, dev, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+    branches: [main, dev-staging, dev, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
   pull_request:
-    branches: [main, develop, dev, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+    branches: [main, dev-staging, dev, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
   schedule:
     # Update dashboard every hour
     - cron: '0 * * * *'
@@ -57,16 +57,16 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            // Define ring structure
+            // Define ring structure (FIXED: dev-staging instead of develop)
             const rings = [
-              { name: 'main', displayName: 'Main (Production)', color: '#28a745', description: 'Production-ready code' },
-              { name: 'develop', displayName: 'Develop (Pre-Release)', color: '#0366d6', description: 'Release candidate' },
-              { name: 'dev', displayName: 'Dev (Integration)', color: '#6f42c1', description: 'Development integration' },
-              { name: 'ring-0', displayName: 'Ring 0 (Core Foundation)', color: '#d73a49', description: 'Core infrastructure changes' },
-              { name: 'ring-0-integrations', displayName: 'Ring 0 Integrations', color: '#e36209', description: 'Core feature integration' },
-              { name: 'ring-1', displayName: 'Ring 1 (Features)', color: '#0366d6', description: 'New feature development' },
-              { name: 'ring-1-integrations', displayName: 'Ring 1 Integrations', color: '#0969da', description: 'Feature integration testing' },
-              { name: 'ring-2', displayName: 'Ring 2 (Experimental)', color: '#8b949e', description: 'Experimental features' }
+              { name: 'main', displayName: '🎯 Main (Production)', color: '#28a745', description: 'Production-ready releases', icon: '🚀' },
+              { name: 'dev-staging', displayName: '🔄 Dev-Staging (Pre-Release)', color: '#0366d6', description: 'Release candidate staging', icon: '📦' },
+              { name: 'dev', displayName: '🛠️ Dev (Integration)', color: '#6f42c1', description: 'Development integration', icon: '🔧' },
+              { name: 'ring-0', displayName: '⚙️ Ring 0 (Core)', color: '#d73a49', description: 'Core infrastructure', icon: '🏗️' },
+              { name: 'ring-0-integrations', displayName: '🔗 Ring 0 Integrations', color: '#e36209', description: 'Core integration', icon: '🔌' },
+              { name: 'ring-1', displayName: '✨ Ring 1 (Features)', color: '#0366d6', description: 'Feature development', icon: '💡' },
+              { name: 'ring-1-integrations', displayName: '🧩 Ring 1 Integrations', color: '#0969da', description: 'Feature integration', icon: '🔀' },
+              { name: 'ring-2', displayName: '🧪 Ring 2 (Experimental)', color: '#8b949e', description: 'Experimental features', icon: '🔬' }
             ];
 
             const statusData = {

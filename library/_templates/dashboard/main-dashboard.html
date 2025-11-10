@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ProjectName}} - Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --border: #30363d;
+            --accent: #58a6ff;
+        }
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .dashboard-header {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-4px);
+        }
+        .chart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-4">
+        <div class="dashboard-header">
+            <h1>🎯 {{ProjectName}}</h1>
+            <p class="mb-0">Generated: {{Timestamp}} | PR #{{PRNumber}}</p>
+        </div>
+        
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6 class="text-secondary">Health Score</h6>
+                    <h2>{{HealthScore}}%</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6 class="text-secondary">Test Pass Rate</h6>
+                    <h2>{{TestPassRate}}%</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6 class="text-secondary">Coverage</h6>
+                    <h2>{{Coverage}}%</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6 class="text-secondary">Quality Score</h6>
+                    <h2>{{QualityScore}}/100</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h4>📊 Dashboard Content</h4>
+            <div id="content">{{MainContent}}</div>
+        </div>
+    </div>
+</body>
+</html>
