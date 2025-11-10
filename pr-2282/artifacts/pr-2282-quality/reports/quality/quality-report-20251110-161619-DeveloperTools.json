@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/DeveloperTools.psm1",
+  "FileName": "DeveloperTools.psm1",
+  "Timestamp": "2025-11-10T16:16:14.7524527+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 57.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Invoke-WebRequest, Directory creation, Remove-Item, Remove-Item, Remove-Item, Import-Module, Import-Module"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 2,
+        "HasErrorActionPreference": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "LoggingStatements": {
+          "Write-.*Log": 35,
+          "Write-CustomLog": 2
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "FunctionCount": 24,
+        "TotalLoggingCalls": 37.0,
+        "HasInfoLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DeveloperTools.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 2,
+        "HasCmdletBinding": true,
+        "HelpSections": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "14 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 30,
+      "Details": {
+        "TotalIssues": 34,
+        "TopIssues": [
+          "Line 82: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 132: PSUseOutputTypeCorrectly - The cmdlet 'Install-DevelopmentEnvironment' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 160: PSUseOutputTypeCorrectly - The cmdlet 'Install-DeveloperTool' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 176: PSUseOutputTypeCorrectly - The cmdlet 'Install-DeveloperTool' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 180: PSUseOutputTypeCorrectly - The cmdlet 'Install-DeveloperTool' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ],
+        "Errors": 0,
+        "Warnings": 14
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 2,
+    "Passed": 1,
+    "Warnings": 2
+  }
+}

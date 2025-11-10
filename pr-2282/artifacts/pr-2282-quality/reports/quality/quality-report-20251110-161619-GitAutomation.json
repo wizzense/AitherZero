@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/GitAutomation.psm1",
+  "FileName": "GitAutomation.psm1",
+  "Timestamp": "2025-11-10T16:16:15.8241963+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 76.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Import-Module"
+      ],
+      "Score": 95,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 5,
+        "HasFinallyBlock": true,
+        "HasErrorActionPreference": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-CustomLog": 3,
+          "Write-.*Log": 26
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "FunctionCount": 7,
+        "TotalLoggingCalls": 30.0,
+        "HasInfoLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/GitAutomation.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 4,
+        "HasCmdletBinding": true,
+        "HelpSections": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TotalIssues": 5,
+        "TopIssues": [
+          "Line 97: PSUseOutputTypeCorrectly - The cmdlet 'Get-GitRepository' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 173: PSUseOutputTypeCorrectly - The cmdlet 'New-GitBranch' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 216: PSUseOutputTypeCorrectly - The cmdlet 'New-GitBranch' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 335: PSUseOutputTypeCorrectly - The cmdlet 'Invoke-GitCommit' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 514: PSUseOutputTypeCorrectly - The cmdlet 'Get-GitStatus' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+        ],
+        "Errors": 0,
+        "Warnings": 0
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 1,
+    "Passed": 3,
+    "Warnings": 1
+  }
+}

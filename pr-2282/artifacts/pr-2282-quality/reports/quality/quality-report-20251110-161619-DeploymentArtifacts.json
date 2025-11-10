@@ -1,0 +1,99 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/infrastructure/DeploymentArtifacts.psm1",
+  "FileName": "DeploymentArtifacts.psm1",
+  "Timestamp": "2025-11-10T16:16:13.6935184+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 74.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Directory creation"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 7,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "LoggingStatements": {
+          "Write-.*Log": 36,
+          "Write-CustomLog": 2
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "FunctionCount": 11,
+        "TotalLoggingCalls": 38.0,
+        "HasInfoLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DeploymentArtifacts.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 8,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "3 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 85,
+      "Details": {
+        "TotalIssues": 155,
+        "TopIssues": [
+          "Line 48: PSUseApprovedVerbs - The cmdlet 'Ensure-OutputDirectory' uses an unapproved verb.",
+          "Line 319: PSUseDeclaredVarsMoreThanAssignments - The variable 'cloudInitConfig' is assigned but never used.",
+          "Line 867: PSUseOutputTypeCorrectly - The cmdlet 'New-DeploymentArtifacts' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 770: PSUseSingularNouns - The cmdlet 'New-DeploymentArtifacts' uses a plural noun. A singular noun should be used instead.",
+          "Line 13: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "Errors": 0,
+        "Warnings": 3
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 1,
+    "Passed": 2,
+    "Warnings": 2
+  }
+}

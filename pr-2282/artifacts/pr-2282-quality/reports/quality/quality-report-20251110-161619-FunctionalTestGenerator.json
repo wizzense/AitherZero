@@ -1,0 +1,104 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/FunctionalTestGenerator.psm1",
+  "FileName": "FunctionalTestGenerator.psm1",
+  "Timestamp": "2025-11-10T16:15:54.1869008+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 67.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Invoke-RestMethod, Invoke-WebRequest, Invoke-WebRequest, Directory creation, Directory creation, Remove-Item"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 1,
+        "HasErrorActionPreference": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow",
+        "Some functions may lack logging statements"
+      ],
+      "Score": 75,
+      "Details": {
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-Error": 1
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "FunctionCount": 9,
+        "TotalLoggingCalls": 2.0,
+        "HasInfoLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/FunctionalTestGenerator.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 1,
+        "HasCmdletBinding": true,
+        "HelpSections": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "Workflows": [],
+        "IntegratedInWorkflows": false,
+        "ShouldBeInCI": true
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "3 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 85,
+      "Details": {
+        "TotalIssues": 69,
+        "TopIssues": [
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'FunctionalTestGenerator.psm1'",
+          "Line 350: PSReviewUnusedParameter - The parameter 'Strategy' has been declared but not used.",
+          "Line 446: PSReviewUnusedParameter - The parameter 'Type' has been declared but not used.",
+          "Line 102: PSUseOutputTypeCorrectly - The cmdlet 'New-FunctionalTest' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 116: PSUseOutputTypeCorrectly - The cmdlet 'New-FunctionalTest' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+        ],
+        "Errors": 0,
+        "Warnings": 3
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 0,
+    "Failed": 1,
+    "Passed": 1,
+    "Warnings": 4
+  }
+}

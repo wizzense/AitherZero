@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/ThreeTierValidation.psm1",
+  "FileName": "ThreeTierValidation.psm1",
+  "Timestamp": "2025-11-10T16:15:58.5029198+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 63.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Catch blocks should log or throw errors"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 3,
+        "HasErrorActionPreference": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks",
+        "Some functions may lack logging statements"
+      ],
+      "Score": 70,
+      "Details": {
+        "LoggingStatements": {
+          "Write-Information": 2
+        },
+        "HasWarningLevel": false,
+        "HasErrorLevel": false,
+        "FunctionCount": 8,
+        "TotalLoggingCalls": 2.0,
+        "HasInfoLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ThreeTierValidation.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 4,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "2 PSScriptAnalyzer error(s) found",
+        "2 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 60,
+      "Details": {
+        "TotalIssues": 118,
+        "TopIssues": [
+          "Line 565: PSAvoidAssignmentToAutomaticVariable - The Variable 'error' cannot be assigned since it is a readonly automatic variable that is built into PowerShell, please use a different name.",
+          "Line 586: PSAvoidAssignmentToAutomaticVariable - The Variable 'error' cannot be assigned since it is a readonly automatic variable that is built into PowerShell, please use a different name.",
+          "Line 8: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 15: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 22: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "Errors": 2,
+        "Warnings": 2
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 2,
+    "Passed": 1,
+    "Warnings": 2
+  }
+}

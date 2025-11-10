@@ -1,0 +1,99 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/ai-agents/AIWorkflowOrchestrator.psm1",
+  "FileName": "AIWorkflowOrchestrator.psm1",
+  "Timestamp": "2025-11-10T16:16:16.3594376+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 66.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Import-Module"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 4,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "LoggingStatements": {
+          "Write-.*Log": 20,
+          "Write-CustomLog": 2
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "FunctionCount": 10,
+        "TotalLoggingCalls": 22.0,
+        "HasInfoLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/AIWorkflowOrchestrator.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 3,
+        "HasCmdletBinding": true,
+        "HelpSections": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "11 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 45,
+      "Details": {
+        "TotalIssues": 14,
+        "TopIssues": [
+          "Line 41: PSReviewUnusedParameter - The parameter 'Configuration' has been declared but not used.",
+          "Line 386: PSReviewUnusedParameter - The parameter 'WorkflowId' has been declared but not used.",
+          "Line 425: PSReviewUnusedParameter - The parameter 'Parameters' has been declared but not used.",
+          "Line 385: PSUseApprovedVerbs - The cmdlet 'Execute-WorkflowTasks' uses an unapproved verb.",
+          "Line 90: PSUseOutputTypeCorrectly - The cmdlet 'Initialize-AIWorkflowOrchestrator' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ],
+        "Errors": 0,
+        "Warnings": 11
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 2,
+    "Passed": 2,
+    "Warnings": 1
+  }
+}

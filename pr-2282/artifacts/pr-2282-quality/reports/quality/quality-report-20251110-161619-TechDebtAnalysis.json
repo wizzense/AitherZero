@@ -1,0 +1,104 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/reporting/TechDebtAnalysis.psm1",
+  "FileName": "TechDebtAnalysis.psm1",
+  "Timestamp": "2025-11-10T16:15:49.4512398+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 69.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Remove-Item"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 0,
+        "HasErrorActionPreference": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 80,
+      "Details": {
+        "LoggingStatements": {
+          "Write-.*Log": 11,
+          "Write-CustomLog": 2
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": false,
+        "FunctionCount": 11,
+        "TotalLoggingCalls": 13.0,
+        "HasInfoLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/TechDebtAnalysis.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 85,
+      "Details": {
+        "ParameterCount": 10,
+        "HasCmdletBinding": true,
+        "HelpSections": 2
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "Workflows": [],
+        "IntegratedInWorkflows": false,
+        "ShouldBeInCI": true
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "1 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 95,
+      "Details": {
+        "TotalIssues": 6,
+        "TopIssues": [
+          "Line 56: PSAvoidOverwritingBuiltInCmdlets - 'Get-FileHash' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden",
+          "Line 90: PSUseOutputTypeCorrectly - The cmdlet 'Test-CacheValid' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 98: PSUseOutputTypeCorrectly - The cmdlet 'Test-CacheValid' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 107: PSUseOutputTypeCorrectly - The cmdlet 'Test-CacheValid' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 111: PSUseOutputTypeCorrectly - The cmdlet 'Test-CacheValid' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ],
+        "Errors": 0,
+        "Warnings": 1
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 0,
+    "Failed": 1,
+    "Passed": 1,
+    "Warnings": 4
+  }
+}

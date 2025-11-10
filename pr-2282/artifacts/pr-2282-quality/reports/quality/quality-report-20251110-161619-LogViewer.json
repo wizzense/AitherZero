@@ -1,0 +1,97 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/LogViewer.psm1",
+  "FileName": "LogViewer.psm1",
+  "Timestamp": "2025-11-10T16:16:06.1233901+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 73.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Catch blocks should log or throw errors",
+        "Consider wrapping these risky operations in try/catch: Remove-Item"
+      ],
+      "Score": 70,
+      "Details": {
+        "TryCatchBlocks": 1
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "LoggingStatements": {
+          "Write-Verbose": 2,
+          "Write-CustomLog": 2,
+          "Write-.*Log": 16
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "FunctionCount": 8,
+        "TotalLoggingCalls": 20.0,
+        "HasInfoLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/LogViewer.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 6,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "1 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 95,
+      "Details": {
+        "TotalIssues": 2,
+        "TopIssues": [
+          "Line 131: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'LogViewer.psm1'"
+        ],
+        "Errors": 0,
+        "Warnings": 1
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 1,
+    "Passed": 3,
+    "Warnings": 1
+  }
+}

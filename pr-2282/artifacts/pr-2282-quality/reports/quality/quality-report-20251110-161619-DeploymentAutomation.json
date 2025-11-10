@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/DeploymentAutomation.psm1",
+  "FileName": "DeploymentAutomation.psm1",
+  "Timestamp": "2025-11-10T16:16:08.4014208+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 69.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Import-Module, Install-Module"
+      ],
+      "Score": 80,
+      "Details": {
+        "HasErrorLogging": true,
+        "HasFinallyBlock": true,
+        "TryCatchBlocks": 5
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-CustomLog": 3,
+          "Write-.*Log": 31
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "FunctionCount": 13,
+        "TotalLoggingCalls": 35.0,
+        "HasInfoLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DeploymentAutomation.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 8,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "7 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 65,
+      "Details": {
+        "TotalIssues": 11,
+        "TopIssues": [
+          "Line 345: PSReviewUnusedParameter - The parameter 'Configuration' has been declared but not used.",
+          "Line 215: PSUseSingularNouns - The cmdlet 'Get-AutomationScripts' uses a plural noun. A singular noun should be used instead.",
+          "Line 262: PSUseSingularNouns - The cmdlet 'Get-ScriptMetadata' uses a plural noun. A singular noun should be used instead.",
+          "Line 435: PSUseUsingScopeModifierInNewRunspaces - The variable '$Script' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier.",
+          "Line 435: PSUseUsingScopeModifierInNewRunspaces - The variable '$Configuration' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+        ],
+        "Errors": 0,
+        "Warnings": 7
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 2,
+    "Passed": 2,
+    "Warnings": 1
+  }
+}

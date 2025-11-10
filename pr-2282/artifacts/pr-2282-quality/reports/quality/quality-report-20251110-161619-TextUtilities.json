@@ -1,0 +1,90 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/TextUtilities.psm1",
+  "FileName": "TextUtilities.psm1",
+  "Timestamp": "2025-11-10T16:16:08.1105867+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 58.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 0
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Failed",
+      "Findings": [
+        "No logging statements found. Add logging for important operations."
+      ],
+      "Score": 0,
+      "Details": {
+        "TotalLoggingCalls": 0.0,
+        "LoggingStatements": {}
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/TextUtilities.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 1,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TotalIssues": 8,
+        "TopIssues": [
+          "Line 36: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 40: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 46: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 56: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 61: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "Errors": 0,
+        "Warnings": 0
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 2,
+    "Passed": 3,
+    "Warnings": 0
+  }
+}
