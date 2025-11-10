@@ -20,7 +20,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$Path = (Split-Path $PSScriptRoot -Parent),
+    [string]$Path = (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent),
     [string]$OutputPath,
     
     # Performance & Mode Options
@@ -220,7 +220,7 @@ try {
         # Key automation scripts (most important)
         $keyPattern = '^(0[0-4]\d{2}_|0815_|0820_|0830_|0835_|0400_|0402_|0404_)'
         $keyAutomationScripts = @()
-        $automationPath = Join-Path $Path 'automation-scripts'
+        $automationPath = Join-Path $Path 'library/automation-scripts'
         if (Test-Path $automationPath) {
             $keyAutomationScripts = Get-ChildItem $automationPath -Filter '*.ps1' | 
                                    Where-Object { $_.Name -match $keyPattern } |
@@ -229,7 +229,7 @@ try {
         
         # Essential domain modules
         $domainFiles = @()
-        $domainsPath = Join-Path $Path 'domains'
+        $domainsPath = Join-Path $Path 'aithercore'
         if (Test-Path $domainsPath) {
             $domainFiles = Get-ChildItem $domainsPath -Filter '*.psm1' -Recurse | 
                           Select-Object -First 5 -ExpandProperty FullName

@@ -476,7 +476,7 @@
             'infrastructure' = @{ Modules = 2; Description = 'Infrastructure automation and management' }
             'reporting'      = @{ Modules = 2; Description = 'Analytics, reporting, and tech debt analysis' }
             'security'       = @{ Modules = 3; Description = 'Security and credential management' }
-            'testing'        = @{ Modules = 9; Description = 'Testing framework, quality validation, and test generation' }
+            'testing'        = @{ Modules = 13; Description = 'Testing framework, quality validation, and test generation' }
             'utilities'      = @{ Modules = 10; Description = 'Core utilities, logging, and maintenance' }
         }
 
@@ -489,32 +489,32 @@
             '0200-0299' = @{ Count = 19; Category = 'Development Tools' }
             '0300-0399' = @{ Count = 1; Category = 'Deployment' }
             '0400-0499' = @{ Count = 28; Category = 'Testing & Quality' }
-            '0500-0599' = @{ Count = 24; Category = 'Reporting & Analytics' }
+            '0500-0599' = @{ Count = 25; Category = 'Reporting & Analytics' }
             '0700-0799' = @{ Count = 36; Category = 'Git & AI Automation' }
             '0800-0899' = @{ Count = 30; Category = 'Issue Management & PR Deployment' }
-            '0900-0999' = @{ Count = 16; Category = 'Validation & Test Generation' }
-            '9000-9999' = @{ Count = 1; Category = 'Maintenance' }
+            '0900-0999' = @{ Count = 17; Category = 'Validation & Test Generation' }
+            '9000-9999' = @{ Count = 0; Category = 'Maintenance' }
         }
 
         # Test inventory - comprehensive test file tracking
         TestInventory       = @{
-            Unit = @{ Count = 184
-                Path  = 'tests/unit'
+            Unit = @{ Count = 168
+                Path  = 'library/tests/unit'
             }
-            Integration = @{ Count = 175
-                Path  = 'tests/integration'
+            Integration = @{ Count = 167
+                Path  = 'library/tests/integration'
             }
-            Total = 359
+            Total = 335
         }
 
         # Playbook inventory - orchestration playbook tracking
-        PlaybookInventory = @{ Count = 21
+        PlaybookInventory = @{ Count = 25
             Path  = 'library/playbooks'
             Types = @('validation', 'quality', 'testing', 'ecosystem', 'pr-environment')
         }
 
         # Workflow inventory - GitHub Actions workflow tracking
-        WorkflowInventory = @{ Count = 18
+        WorkflowInventory = @{ Count = 16
             Path  = '.github/workflows'
             Categories = @('ci', 'automation', 'security', 'publishing', 'validation')
         }

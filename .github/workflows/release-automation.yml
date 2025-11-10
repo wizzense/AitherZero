@@ -278,106 +278,30 @@ jobs:
             $lastTag = "Initial release"
           }
 
-          $releaseNotes = @"
-          # AitherZero v$version
-
-          $(if ($isPrerelease) { "🚧 **Pre-Release** - Use with caution in production environments" } else { "🚀 **Stable Release**" })
-
-          ## 📋 Build Information
-          - **Version:** $($buildInfo.Version)
-          - **Build:** #$($buildInfo.BuildNumber)
-          - **Commit:** [$($buildInfo.CommitShort)](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-          - **Build Date:** $($buildInfo.BuildDate)
-          - **Environment:** $($buildInfo.BuildEnvironment)
-
-          ## ✨ AitherZero Features
-          - **Cross-Platform:** Windows, Linux, and macOS support
-          - **Number-Based Orchestration:** Systematic script execution (0000-9999)
-          - **Domain Architecture:** Modular design with specialized domains
-          - **CI/CD Integration:** GitHub Actions workflows for automation
-          - **Infrastructure as Code:** OpenTofu/Terraform support
-          - **Comprehensive Testing:** Automated validation and reporting
-          - **MCP Server:** AI assistant integration via Model Context Protocol
-          - **Container Support:** Docker images for isolated environments
-
-          ## 📦 What's Included
-
-          ### AitherZero Platform
-          - Complete PowerShell module with all domains
-          - 100+ automation scripts organized by number ranges
-          - Cross-platform bootstrap and setup scripts
-          - Comprehensive test suite and validation tools
-          - Documentation and examples
-          - CI/CD workflow templates
-
-          ### MCP Server Package
-          - Model Context Protocol server for AI assistants (Claude, GitHub Copilot, etc.)
-          - Execute automation scripts via natural language
-          - Infrastructure management through conversational AI
-          - Package: \`@aitherzero/mcp-server@$($version -replace '^v','')\`
-
-          ### Docker Image
-          - Pre-configured container with AitherZero installed
-          - Multi-platform support (amd64, arm64)
-          - Non-root user for security
-          - Image: \`ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')\`
-
-          ## 🚀 Quick Installation
-
-          ### Platform (One-Line Install)
-          ```powershell
-          # PowerShell 5.1+ (auto-upgrades to PowerShell 7)
-          iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
-          ```
-
-          ### MCP Server
-          ```bash
-          # Install from GitHub Packages
-          npm install @aitherzero/mcp-server@$($version -replace '^v','')
-
-          # Or use the tarball from release assets
-          curl -L https://github.com/${{ github.repository }}/releases/download/v$($version)/aitherzero-mcp-server-$($version -replace '^v','').tgz -o mcp-server.tgz
-          npm install mcp-server.tgz
-          ```
-
-          ### Docker Container
-          ```bash
-          # Pull the image
-          docker pull ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')
-
-          # Run interactively
-          docker run -it --rm ghcr.io/$env:REPO_LOWER:$($version -replace '^v','')
-
-          # Run with docker-compose
-          docker-compose up -d
-          ```
-
-          ### Manual Installation
-          1. Download and extract `AitherZero-v$version.zip`
-          2. Open PowerShell in the extracted directory
-          3. Run: `./bootstrap.ps1 -Mode New`
-
-          ### Verification
-          ```powershell
-          # Verify installation
-          ./az.ps1 0407          # Syntax validation
-          ./Start-AitherZero.ps1  # Interactive mode
-          ```
-
-          ## 🎯 Quick Start Commands
-          ```powershell
-          # Environment and validation
-          ./az.ps1 0407          # Validate PowerShell syntax
-          ./az.ps1 0402          # Run unit tests
-          ./az.ps1 0404          # Code quality analysis
-
-          # System setup (Windows)
-          # Note: PowerShell 7 is ensured by bootstrap.ps1
-          ./az.ps1 0105          # Install Hyper-V
-          ./az.ps1 0106          # Install WSL2
-
-          # Development tools
-          ./az.ps1 0207          # Install Git
+          # Load release notes template and replace placeholders
+          $templatePath = "./library/_templates/release-notes.md"
+          if (Test-Path $templatePath) {
+            $releaseNotes = Get-Content $templatePath -Raw
+            # Use -creplace with escaped braces to avoid regex quantifier issues
+            $releaseNotes = $releaseNotes -creplace '\{\{VERSION\}\}', $version
+            $releaseNotes = $releaseNotes -creplace '\{\{RELEASE_DATE\}\}', $buildInfo.BuildDate
+            $releaseNotes = $releaseNotes -creplace '\{\{BUILD_NUMBER\}\}', $buildInfo.BuildNumber
+            $releaseNotes = $releaseNotes -creplace '\{\{MODULE_COUNT\}\}', '11 domains'
+            $releaseNotes = $releaseNotes -creplace '\{\{FUNCTION_COUNT\}\}', '200+'
+            $releaseNotes = $releaseNotes -creplace '\{\{SCRIPT_COUNT\}\}', '175'
+            $releaseNotes = $releaseNotes -creplace '\{\{PLAYBOOK_COUNT\}\}', '25'
+            $releaseNotes = $releaseNotes -creplace '\{\{DOWNLOAD_URL\}\}', "https://github.com/${{ github.repository }}/releases/download/v$version/AitherZero-v$version.zip"
+            $releaseNotes = $releaseNotes -creplace '\{\{INSTALL_SCRIPT_URL\}\}', "https://raw.githubusercontent.com/${{ github.repository }}/main/bootstrap.ps1"
+            $releaseNotes = $releaseNotes -creplace '\{\{REPOSITORY_LOWER\}\}', $env:REPO_LOWER
+            $releaseNotes = $releaseNotes -creplace '\{\{CHANGELOG\}\}', "See commits since $lastTag"
+            $releaseNotes = $releaseNotes -creplace '\{\{DOCS_URL\}\}', "${{ github.server_url }}/${{ github.repository }}/blob/main/README.md"
+            $releaseNotes = $releaseNotes -creplace '\{\{DOCKER_URL\}\}', "https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
+            $releaseNotes = $releaseNotes -creplace '\{\{REPO_URL\}\}', "${{ github.server_url }}/${{ github.repository }}"
+          } else {
+            Write-Host "⚠️ Release notes template not found, using minimal content" -ForegroundColor Yellow
+            $releaseNotes = "# AitherZero $version`n`nSee https://github.com/${{ github.repository }} for details."
+          }
+          
           ./az.ps1 0208          # Install Docker
           ./az.ps1 0210          # Install VS Code
 

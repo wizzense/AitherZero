@@ -5,7 +5,7 @@ name: 📊 Publish Test Reports & Dashboard to GitHub Pages
 # Integrates with test-execution.yml and generates navigable reports for each PR
 on:
   workflow_run:
-    workflows: ["🧪 Test Execution (Complete Suite)", "✅ PR Validation (v2 - CLI)", "🔍 Quality Validation (v2 - CLI)"]
+    workflows: ["🧪 Test Execution (Complete Suite)", "✅ PR Validation (v2 - CLI)", "🔍 Quality Validation (v2 - CLI)", "🚀 PR Complete Workflow"]
     types: [completed]
   push:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
@@ -146,6 +146,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
           PR_BASE: ${{ github.event.pull_request.base.ref }}
+          PR_STATE: ${{ github.event.pull_request.state }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
         run: |
@@ -166,62 +167,38 @@ jobs:
           $packageUrl = "https://github.com/$env:GITHUB_REPOSITORY/pkgs/container/aitherzero"
           $containerName = "aitherzero-pr-$env:PR_NUMBER"
           
-          # Create PR-specific index with Docker container information
-          $prIndexContent = @"
-# 🎯 PR #$env:PR_NUMBER Dashboard
-
-**Title:** $env:PR_TITLE  
-**Branch:** ``$env:PR_BRANCH`` → ``$env:PR_BASE``  
-**Status:** ${{ github.event.pull_request.state }}  
-**Updated:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-
-## 📊 Quick Links
-
-- [View Dashboard](dashboard.html) - Comprehensive metrics and status
-- [Back to Main Dashboard](../dashboard.html)
-- [All PRs](/prs/)
-
----
-
-## 🐳 Docker Container
-
-### Container Information
-- **Package**: [GitHub Container Registry]($packageUrl)
-- **Image Tag**: ``ghcr.io/$imageNameLower:pr-$env:PR_NUMBER-latest``
-- **Container Name**: ``$containerName``
-- **Port**: $dynamicPort (formula: 8080 + PR# % 100)
-
-### 📥 Pull & Run Commands
-
-````bash
-# Pull the latest PR container
-docker pull ghcr.io/$imageNameLower:pr-$env:PR_NUMBER-latest
-
-# Run the container
-docker run -d \
-  --name $containerName \
-  -p ${dynamicPort}:8080 \
-  -e PR_NUMBER=$env:PR_NUMBER \
-  -e DEPLOYMENT_ENVIRONMENT=preview \
-  ghcr.io/$imageNameLower:pr-$env:PR_NUMBER-latest
-
-# View logs
-docker logs $containerName
-
-# Access the container
-docker exec -it $containerName pwsh
-````
-
-### 🔗 Container Links
-- **Package Page**: [$packageUrl]($packageUrl)
-- **All Tags**: View all available tags for this PR in the package registry
-- **Pull Command**: See above for the latest tag
-
----
-
-## 📈 Latest Test Results
-
-"@
+          # Create PR-specific index with Docker container information using template
+          $dynamicPort = 8080 + ([int]$env:PR_NUMBER % 100)
+          $imageNameLower = "$env:GITHUB_REPOSITORY".ToLower()
+          $packageUrl = "https://github.com/$env:GITHUB_REPOSITORY/pkgs/container/aitherzero"
+          $containerName = "aitherzero-pr-$env:PR_NUMBER"
+          
+          # Load template and replace placeholders
+          $templatePath = "./library/_templates/pr-dashboard-index.md"
+          if (Test-Path $templatePath) {
+            $prIndexContent = Get-Content $templatePath -Raw
+            $replacements = @{
+              '{{PR_NUMBER}}' = $env:PR_NUMBER
+              '{{PR_TITLE}}' = $env:PR_TITLE
+              '{{PR_BRANCH}}' = $env:PR_BRANCH
+              '{{PR_BASE}}' = $env:PR_BASE
+              '{{PR_STATE}}' = $env:PR_STATE
+              '{{TIMESTAMP}}' = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+              '{{PACKAGE_URL}}' = $packageUrl
+              '{{IMAGE_NAME_LOWER}}' = $imageNameLower
+              '{{CONTAINER_NAME}}' = $containerName
+              '{{DYNAMIC_PORT}}' = $dynamicPort
+              '{{SERVER_URL}}' = $env:GITHUB_SERVER_URL
+              '{{REPOSITORY}}' = $env:GITHUB_REPOSITORY
+              '{{RUN_ID}}' = $env:GITHUB_RUN_ID
+            }
+            foreach ($key in $replacements.Keys) {
+              $prIndexContent = $prIndexContent -replace [regex]::Escape($key), $replacements[$key]
+            }
+          } else {
+            Write-Host "Template not found, using minimal content" -ForegroundColor Yellow
+            $prIndexContent = "# PR Dashboard`n`nSee workflow run for details."
+          }
           
           # Add test result summary if available
           $testResults = Get-ChildItem "library/tests/results" -Filter "*.xml" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -232,44 +209,32 @@ docker exec -it $containerName pwsh
               $failures = [int]$testXml.'test-results'.failures
               $errors = [int]$testXml.'test-results'.errors
               $passed = $total - $failures - $errors
+              $successRate = [math]::Round(($passed / $total) * 100, 1)
               
-              $prIndexContent += @"
-
-### Test Summary
-- ✅ **Passed:** $passed
-- ❌ **Failed:** $($failures + $errors)
-- 📊 **Total:** $total
-- 🎯 **Success Rate:** $([math]::Round(($passed / $total) * 100, 1))%
-
-"@
+              $testSummary = "`n### Test Summary`n"
+              $testSummary += "- ✅ **Passed:** $passed`n"
+              $testSummary += "- ❌ **Failed:** $($failures + $errors)`n"
+              $testSummary += "- 📊 **Total:** $total`n"
+              $testSummary += "- 🎯 **Success Rate:** $successRate%`n`n"
+              $prIndexContent += $testSummary
             } catch {
-              Write-Host "⚠️ Could not parse test results: $_" -ForegroundColor Yellow
+              Write-Host "Could not parse test results" -ForegroundColor Yellow
             }
           }
           
           # Add deployment status section
-          $prIndexContent += @"
-
----
-
-## 🚀 Deployment Status
-
-Check the [GitHub Actions workflow runs]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions) for:
-- ✅ **Container Build**: View build logs and container publishing status
-- ✅ **Test Execution**: See all test results and coverage
-- ✅ **Quality Validation**: Code quality and linting results
-
-### How to Test This PR
-
-1. **Pull the Docker image** (see commands above)
-2. **Run the container** with the provided command
-3. **Access the environment** at ``http://localhost:$dynamicPort``
-4. **Review the dashboard** for metrics and test results
-
----
-
-*🤖 Auto-generated dashboard for PR #$env:PR_NUMBER*
-"@
+          $deploymentSection = "`n---`n`n## 🚀 Deployment Status`n`n"
+          $deploymentSection += "Check the [GitHub Actions workflow runs]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions) for:`n"
+          $deploymentSection += "- ✅ **Container Build**: View build logs and container publishing status`n"
+          $deploymentSection += "- ✅ **Test Execution**: See all test results and coverage`n"
+          $deploymentSection += "- ✅ **Quality Validation**: Code quality and linting results`n`n"
+          $deploymentSection += "### How to Test This PR`n`n"
+          $deploymentSection += "1. **Pull the Docker image** (see commands above)`n"
+          $deploymentSection += "2. **Run the container** with the provided command`n"
+          $deploymentSection += "3. **Access the environment** at ``http://localhost:$dynamicPort```n"
+          $deploymentSection += "4. **Review the dashboard** for metrics and test results`n`n"
+          $deploymentSection += "---`n`n*🤖 Auto-generated dashboard for PR #$env:PR_NUMBER*`n"
+          $prIndexContent += $deploymentSection
           
           $prIndexContent | Out-File -FilePath "$prDir/index.md" -Encoding UTF8
           
@@ -305,45 +270,30 @@ Check the [GitHub Actions workflow runs]($env:GITHUB_SERVER_URL/$env:GITHUB_REPO
           $imageNameLower = "$env:GITHUB_REPOSITORY".ToLower()
           $packageUrl = "https://github.com/$env:GITHUB_REPOSITORY/pkgs/container/aitherzero"
           
-          $indexContent = @"
-# 🎯 AitherZero Project Dashboard
-
-**Last Updated:** $timestamp
-
-## 🚀 Main Dashboard
-
-📊 [**View Comprehensive Dashboard**](library/reports/dashboard.html) - Real-time project metrics, test results, and code quality
-
----
-
-## 📦 Latest Release
-
-- **Version:** $latestRelease
-- **Release Page:** [$releaseUrl]($releaseUrl)
-- **Packages:** [GitHub Releases]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases)
-
-### 🐳 Docker Images
-
-- **Latest Release:** ``ghcr.io/$imageNameLower:latest``
-- **Version Tag:** ``ghcr.io/$imageNameLower:$latestRelease``
-- **Package Registry:** [$packageUrl]($packageUrl)
-
-### 📥 Quick Install
-
-````powershell
-# One-line install (PowerShell)
-iwr -useb https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/main/bootstrap.ps1 | iex
-
-# Docker
-docker pull ghcr.io/$imageNameLower:latest
-docker run -it --rm ghcr.io/$imageNameLower:latest
-````
-
----
-
-## 📋 Pull Request Dashboards
-
-"@
+          # Build main dashboard content without here-strings
+          $indexContent = "# 🎯 AitherZero Project Dashboard`n`n"
+          $indexContent += "**Last Updated:** $timestamp`n`n"
+          $indexContent += "## 🚀 Main Dashboard`n`n"
+          $indexContent += "📊 [**View Comprehensive Dashboard**](library/reports/dashboard.html) - Real-time project metrics, test results, and code quality`n`n"
+          $indexContent += "---`n`n"
+          $indexContent += "## 📦 Latest Release`n`n"
+          $indexContent += "- **Version:** $latestRelease`n"
+          $indexContent += "- **Release Page:** [$releaseUrl]($releaseUrl)`n"
+          $indexContent += "- **Packages:** [GitHub Releases]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases)`n`n"
+          $indexContent += "### 🐳 Docker Images`n`n"
+          $indexContent += "- **Latest Release:** ``ghcr.io/$imageNameLower:latest```n"
+          $indexContent += "- **Version Tag:** ``ghcr.io/$imageNameLower:$latestRelease```n"
+          $indexContent += "- **Package Registry:** [$packageUrl]($packageUrl)`n`n"
+          $indexContent += "### 📥 Quick Install`n`n"
+          $indexContent += "````powershell`n"
+          $indexContent += "# One-line install (PowerShell)`n"
+          $indexContent += "iwr -useb https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/main/bootstrap.ps1 | iex`n`n"
+          $indexContent += "# Docker`n"
+          $indexContent += "docker pull ghcr.io/$imageNameLower:latest`n"
+          $indexContent += "docker run -it --rm ghcr.io/$imageNameLower:latest`n"
+          $indexContent += "```````n`n"
+          $indexContent += "---`n`n"
+          $indexContent += "## 📋 Pull Request Dashboards`n`n"
           
           if ($prDirs.Count -gt 0) {
             foreach ($prDir in $prDirs) {
@@ -369,53 +319,39 @@ docker run -it --rm ghcr.io/$imageNameLower:latest
             $indexContent += "*No open PRs with dashboards*`n"
           }
           
-          $indexContent += @"
-
----
-
-## 📚 Additional Resources
-
-- [Test Reports](library/tests/results/) - Raw test execution data
-- [Coverage Reports](library/tests/coverage/) - Code coverage analysis
-- [Quality Metrics](library/reports/psscriptanalyzer-fast-results.json) - PSScriptAnalyzer results
-- [Project Reports](library/reports/) - All generated reports
-
-### 🐳 Container Registry
-
-All Docker containers are published to GitHub Container Registry:
-- **Main Package:** [$packageUrl]($packageUrl)
-- **Latest Release:** ``ghcr.io/$imageNameLower:latest``
-- **PR Containers:** ``ghcr.io/$imageNameLower:pr-{number}-latest``
-- **Version Tags:** ``ghcr.io/$imageNameLower:{version}``
-
-### 📦 Release Artifacts
-
-Each release includes:
-- ✅ **Platform Package** - AitherZero-v{version}.zip/tar.gz
-- ✅ **MCP Server** - @aitherzero/mcp-server@{version}
-- ✅ **Docker Images** - Multi-platform (amd64, arm64)
-- ✅ **Build Info** - Complete build metadata
-
----
-
-## 🎓 Dashboard Guide
-
-### Health Scores
-- 🟢 **90-100**: Excellent
-- 🟡 **70-89**: Good  
-- 🟠 **50-69**: Needs Work
-- 🔴 **0-49**: Urgent
-
-### Priority Actions
-1. Fix Critical/Error items
-2. Address failing tests
-3. Review warnings
-4. Plan new features
-
----
-
-*Generated: $timestamp*
-"@
+          # Add resources section without here-strings
+          $indexContent += "`n---`n`n"
+          $indexContent += "## 📚 Additional Resources`n`n"
+          $indexContent += "- [Test Reports](library/tests/results/) - Raw test execution data`n"
+          $indexContent += "- [Coverage Reports](library/tests/coverage/) - Code coverage analysis`n"
+          $indexContent += "- [Quality Metrics](library/reports/psscriptanalyzer-fast-results.json) - PSScriptAnalyzer results`n"
+          $indexContent += "- [Project Reports](library/reports/) - All generated reports`n`n"
+          $indexContent += "### 🐳 Container Registry`n`n"
+          $indexContent += "All Docker containers are published to GitHub Container Registry:`n"
+          $indexContent += "- **Main Package:** [$packageUrl]($packageUrl)`n"
+          $indexContent += "- **Latest Release:** ``ghcr.io/$imageNameLower:latest```n"
+          $indexContent += "- **PR Containers:** ``ghcr.io/$imageNameLower:pr-{number}-latest```n"
+          $indexContent += "- **Version Tags:** ``ghcr.io/$imageNameLower:{version}```n`n"
+          $indexContent += "### 📦 Release Artifacts`n`n"
+          $indexContent += "Each release includes:`n"
+          $indexContent += "- ✅ **Platform Package** - AitherZero-v{version}.zip/tar.gz`n"
+          $indexContent += "- ✅ **MCP Server** - @aitherzero/mcp-server@{version}`n"
+          $indexContent += "- ✅ **Docker Images** - Multi-platform (amd64, arm64)`n"
+          $indexContent += "- ✅ **Build Info** - Complete build metadata`n`n"
+          $indexContent += "---`n`n"
+          $indexContent += "## 🎓 Dashboard Guide`n`n"
+          $indexContent += "### Health Scores`n"
+          $indexContent += "- 🟢 **90-100**: Excellent`n"
+          $indexContent += "- 🟡 **70-89**: Good`n"
+          $indexContent += "- 🟠 **50-69**: Needs Work`n"
+          $indexContent += "- 🔴 **0-49**: Urgent`n`n"
+          $indexContent += "### Priority Actions`n"
+          $indexContent += "1. Fix Critical/Error items`n"
+          $indexContent += "2. Address failing tests`n"
+          $indexContent += "3. Review warnings`n"
+          $indexContent += "4. Plan new features`n`n"
+          $indexContent += "---`n`n"
+          $indexContent += "*Generated: $timestamp*`n"
           
           $indexContent | Out-File -FilePath "index.md" -Encoding UTF8
           
@@ -523,6 +459,7 @@ Each release includes:
           REPOSITORY: ${{ github.repository }}
         with:
           script: |
+            const fs = require('fs');
             const pageUrl = process.env.PAGE_URL;
             const prNumber = process.env.PR_NUMBER;
             const repository = process.env.REPOSITORY;
@@ -533,54 +470,26 @@ Each release includes:
             const packageUrl = `https://github.com/${repository}/pkgs/container/aitherzero`;
             const containerName = `aitherzero-pr-${prNumber}`;
             
-            const comment = `## 📊 Dashboard & Container Published
-
-Your PR-specific dashboard and Docker container have been published!
-
-### 🔗 Quick Links
-- **[View PR Dashboard](${pageUrl}library/reports/pr-${prNumber}/)** - Your PR's current status
-- **[Main Project Dashboard](${pageUrl}library/reports/dashboard.html)** - Overall project health
-- **[All Test Results](${pageUrl}library/tests/results/)** - Detailed test data
-
-### 🐳 Docker Container
-
-Your PR has a dedicated Docker container published to GitHub Container Registry:
-
-**Container Information:**
-- **Package**: [GitHub Container Registry](${packageUrl})
-- **Image Tag**: \`ghcr.io/${imageNameLower}:pr-${prNumber}-latest\`
-- **Container Name**: \`${containerName}\`
-- **Port**: ${dynamicPort} (formula: 8080 + PR# % 100)
-
-**Quick Start:**
-\`\`\`bash
-# Pull the latest PR container
-docker pull ghcr.io/${imageNameLower}:pr-${prNumber}-latest
-
-# Run the container
-docker run -d \\
-  --name ${containerName} \\
-  -p ${dynamicPort}:8080 \\
-  -e PR_NUMBER=${prNumber} \\
-  -e DEPLOYMENT_ENVIRONMENT=preview \\
-  ghcr.io/${imageNameLower}:pr-${prNumber}-latest
-
-# View logs
-docker logs ${containerName}
-
-# Access the container
-docker exec -it ${containerName} pwsh
-\`\`\`
-
-### 📈 What's Included
-- ✅ Test execution results
-- 📊 Code coverage metrics
-- 🔍 Quality analysis
-- 📋 Project status
-- 🐳 Docker container ready to run
-
----
-*🤖 Auto-generated by publish-test-reports workflow*`;
+            // Load comment template and replace placeholders
+            let comment = '';
+            const templatePath = './library/_templates/pr-dashboard-comment.md';
+            try {
+              comment = fs.readFileSync(templatePath, 'utf8');
+              const replacements = {
+                '{{PAGE_URL}}': pageUrl,
+                '{{PR_NUMBER}}': prNumber,
+                '{{PACKAGE_URL}}': packageUrl,
+                '{{IMAGE_NAME_LOWER}}': imageNameLower,
+                '{{CONTAINER_NAME}}': containerName,
+                '{{DYNAMIC_PORT}}': dynamicPort
+              };
+              for (const [key, value] of Object.entries(replacements)) {
+                comment = comment.replaceAll(key, value);
+              }
+            } catch (error) {
+              console.log('Template not found, using fallback');
+              comment = `## Dashboard Published\n\nView your PR dashboard at: ${pageUrl}library/reports/pr-${prNumber}/`;
+            }
             
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
