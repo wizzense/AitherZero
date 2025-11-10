@@ -13,8 +13,8 @@ on:
       - 'library/reports/**'
       - 'library/tests/results/**'
       - 'library/tests/coverage/**'
-  pull_request:
-    types: [opened, synchronize, reopened]
+  # DO NOT add pull_request trigger here - it causes premature execution before tests run
+  # This workflow should ONLY run after test-execution.yml completes via workflow_run trigger
   workflow_dispatch:
     inputs:
       force_publish:
