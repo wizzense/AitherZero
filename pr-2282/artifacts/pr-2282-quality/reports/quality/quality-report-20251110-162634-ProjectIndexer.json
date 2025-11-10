@@ -1,0 +1,97 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/documentation/ProjectIndexer.psm1",
+  "FileName": "ProjectIndexer.psm1",
+  "Timestamp": "2025-11-10T16:26:01.7229521+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 79.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Import-Module"
+      ],
+      "Score": 95,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "TryCatchBlocks": 5,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TotalLoggingCalls": 32.0,
+        "HasInfoLevel": true,
+        "FunctionCount": 15,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 30
+        },
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ProjectIndexer.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 10,
+        "HasCmdletBinding": true,
+        "HelpSections": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TotalIssues": 113,
+        "Warnings": 0,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 48: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 81: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 87: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 96: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 107: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 4,
+    "Warnings": 0,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 1
+  }
+}

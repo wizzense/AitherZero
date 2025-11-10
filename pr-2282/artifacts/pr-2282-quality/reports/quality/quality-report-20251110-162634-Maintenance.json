@@ -1,0 +1,104 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Maintenance.psm1",
+  "FileName": "Maintenance.psm1",
+  "Timestamp": "2025-11-10T16:26:21.0357487+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 65.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Directory creation, Remove-Item, Remove-Item, Remove-Item, Remove-Item, Remove-Item, Remove-Item"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "HasFinallyBlock": true,
+        "TryCatchBlocks": 2,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "TotalLoggingCalls": 36.0,
+        "HasInfoLevel": false,
+        "FunctionCount": 12,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 34
+        },
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Maintenance.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [
+        "No parameters defined. Consider adding parameters for flexibility"
+      ],
+      "Score": 90,
+      "Details": {
+        "ParameterCount": 0,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "4 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 80,
+      "Details": {
+        "TotalIssues": 8,
+        "Warnings": 4,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 463: PSReviewUnusedParameter - The parameter 'Force' has been declared but not used.",
+          "Line 494: PSUseApprovedVerbs - The cmdlet 'Unload-AitherModules' uses an unapproved verb.",
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'Maintenance.psm1'",
+          "Line 84: PSUseOutputTypeCorrectly - The cmdlet 'Reset-AitherEnvironment' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 93: PSUseOutputTypeCorrectly - The cmdlet 'Reset-AitherEnvironment' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 1,
+    "Warnings": 3,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 1
+  }
+}

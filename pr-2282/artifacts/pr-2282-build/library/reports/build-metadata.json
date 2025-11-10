@@ -1,53 +1,53 @@
 {
+  "generated_at": "2025-11-10T16:24:33Z",
   "git": {
-    "branch": "HEAD",
-    "commit_sha": "af7d8835e9e282844f11ebad9ed6b0aa2409bb66",
-    "commit_message": [
-      "Merge 610f691cdc61c15cece49a17baa42a2674f894d9 into acae41bc4802a377cb51b466895500ed16efc7e1",
-      ""
-    ],
-    "commit_short": "af7d8835",
     "tag": null,
     "commit_author": "Copilot",
+    "commit_sha": "96c6a99f0769a3ddcb1a6533d37cb49d12b5103e",
+    "branch": "HEAD",
+    "commit_short": "96c6a99f",
+    "commit_date": "2025-11-10T16:17:11Z",
     "commits_count": "1",
-    "commit_date": "2025-11-10T16:09:23Z"
+    "commit_message": [
+      "Merge 7a21e39328f1adfabf88d0546136321ab831febb into acae41bc4802a377cb51b466895500ed16efc7e1",
+      ""
+    ]
   },
   "version": "1.0.0",
   "environment": {
-    "job": "build",
-    "run_number": "51",
+    "run_id": "19238272401",
+    "os": "Ubuntu 24.04.3 LTS",
     "platform": "GitHub Actions",
-    "run_id": "19238042891",
     "workflow": "🚀 PR Ecosystem - Complete Validation & Build",
     "ci": true,
+    "run_number": "53",
     "powershell_version": "7.4.13",
-    "runner_os": "Linux",
-    "os": "Ubuntu 24.04.3 LTS"
+    "job": "build",
+    "runner_os": "Linux"
   },
-  "generated_at": "2025-11-10T16:19:30Z",
   "pages": {
-    "base_url": "https://wizzense.github.io/AitherZero/2282/merge",
-    "pr_reports": "https://wizzense.github.io/AitherZero/2282/merge/pr-2282/reports/",
-    "pr_dashboard": "https://wizzense.github.io/AitherZero/2282/merge/pr-2282/",
     "branch_path": "/2282/merge",
-    "branch": "2282/merge"
-  },
-  "artifacts": {
-    "package_prefix": "AitherZero-PR2282",
-    "pr_container_tags": [
-      "pr-2282-af7d8835",
-      "pr-2282-latest"
-    ],
-    "container_image_base": "ghcr.io/wizzense/aitherzero"
+    "base_url": "https://wizzense.github.io/AitherZero/2282/merge",
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2282/merge/pr-2282/",
+    "branch": "2282/merge",
+    "pr_reports": "https://wizzense.github.io/AitherZero/2282/merge/pr-2282/reports/"
   },
   "pr": {
-    "head_sha": "af7d8835e9e282844f11ebad9ed6b0aa2409bb66",
-    "url": "https://github.com/wizzense/AitherZero/pull/2282",
-    "author": "Copilot",
     "base_sha": null,
     "head_branch": "copilot/fix-module-initialization-errors",
-    "title": null,
     "number": 2282,
-    "base_branch": "dev-staging"
+    "base_branch": "dev-staging",
+    "author": "Copilot",
+    "url": "https://github.com/wizzense/AitherZero/pull/2282",
+    "head_sha": "96c6a99f0769a3ddcb1a6533d37cb49d12b5103e",
+    "title": null
+  },
+  "artifacts": {
+    "pr_container_tags": [
+      "pr-2282-96c6a99f",
+      "pr-2282-latest"
+    ],
+    "package_prefix": "AitherZero-PR2282",
+    "container_image_base": "ghcr.io/wizzense/aitherzero"
   }
 }

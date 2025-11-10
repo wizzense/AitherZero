@@ -1,0 +1,103 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/cli/AitherZeroCLI.psm1",
+  "FileName": "AitherZeroCLI.psm1",
+  "Timestamp": "2025-11-10T16:26:15.5462098+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 64.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 3
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [
+        "Some functions may lack logging statements"
+      ],
+      "Score": 90,
+      "Details": {
+        "TotalLoggingCalls": 23.0,
+        "HasInfoLevel": true,
+        "FunctionCount": 25,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 12,
+          "Write-.*Log": 6,
+          "Write-CustomLog": 2,
+          "Write-Verbose": 1,
+          "Write-Error": 2
+        },
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/AitherZeroCLI.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 57,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "12 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 40,
+      "Details": {
+        "TotalIssues": 406,
+        "Warnings": 12,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 749: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 11: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 25: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 43: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 46: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 3,
+    "Warnings": 0,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 2
+  }
+}

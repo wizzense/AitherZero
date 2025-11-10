@@ -1,0 +1,104 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/FunctionalTestGenerator.psm1",
+  "FileName": "FunctionalTestGenerator.psm1",
+  "Timestamp": "2025-11-10T16:26:09.4852279+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 67.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Invoke-RestMethod, Invoke-WebRequest, Invoke-WebRequest, Directory creation, Directory creation, Remove-Item"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "TryCatchBlocks": 1,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow",
+        "Some functions may lack logging statements"
+      ],
+      "Score": 75,
+      "Details": {
+        "TotalLoggingCalls": 2.0,
+        "HasInfoLevel": false,
+        "FunctionCount": 9,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-Error": 1
+        },
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/FunctionalTestGenerator.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 1,
+        "HasCmdletBinding": true,
+        "HelpSections": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "Workflows": [],
+        "ShouldBeInCI": true,
+        "IntegratedInWorkflows": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "3 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 85,
+      "Details": {
+        "TotalIssues": 69,
+        "Warnings": 3,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 7: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 14: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 16: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 72: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 75: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 1,
+    "Warnings": 4,
+    "TotalChecks": 6,
+    "Skipped": 0,
+    "Failed": 1
+  }
+}

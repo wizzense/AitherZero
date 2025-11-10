@@ -1,0 +1,103 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/security/Security.psm1",
+  "FileName": "Security.psm1",
+  "Timestamp": "2025-11-10T16:26:28.2761716+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 56.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Directory creation, Copy-Item"
+      ],
+      "Score": 80,
+      "Details": {
+        "HasFinallyBlock": true,
+        "TryCatchBlocks": 17,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TotalLoggingCalls": 39.0,
+        "HasInfoLevel": true,
+        "FunctionCount": 24,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 4,
+          "Write-.*Log": 32,
+          "Write-CustomLog": 2,
+          "Write-Verbose": 1
+        },
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Security.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "ParameterCount": 58,
+        "HasCmdletBinding": true,
+        "HelpSections": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "4 PSScriptAnalyzer error(s) found",
+        "12 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 0,
+      "Details": {
+        "TotalIssues": 386,
+        "Warnings": 12,
+        "Errors": 4,
+        "TopIssues": [
+          "Line 1084: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 1037: PSAvoidUsingConvertToSecureStringWithPlainText - File 'Security.psm1' uses ConvertTo-SecureString with plaintext. This will expose secure information. Encrypted standard strings should be used instead.",
+          "Line 1185: PSAvoidUsingConvertToSecureStringWithPlainText - File 'Security.psm1' uses ConvertTo-SecureString with plaintext. This will expose secure information. Encrypted standard strings should be used instead.",
+          "Line 1318: PSAvoidUsingConvertToSecureStringWithPlainText - File 'Security.psm1' uses ConvertTo-SecureString with plaintext. This will expose secure information. Encrypted standard strings should be used instead.",
+          "Line 1758: PSAvoidUsingConvertToSecureStringWithPlainText - File 'Security.psm1' uses ConvertTo-SecureString with plaintext. This will expose secure information. Encrypted standard strings should be used instead."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 2,
+    "Warnings": 1,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Failed": 2
+  }
+}
