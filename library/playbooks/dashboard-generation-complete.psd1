@@ -9,33 +9,85 @@
     }
     
     Sequence = @(
+        # Collect ring metrics
         @{
-            Name = "collect-metrics"
-            Description = "Collect all metrics in parallel"
-            Scripts = @(
-                @{ Number = "0520"; AllowParallel = $true }  # Ring metrics
-                @{ Number = "0521"; AllowParallel = $true }  # Workflow health
-                @{ Number = "0522"; AllowParallel = $true }  # Code metrics
-                @{ Number = "0523"; AllowParallel = $true }  # Test metrics
-                @{ Number = "0524"; AllowParallel = $true }  # Quality metrics
-            )
+            Script = "0520"
+            Description = "Collect ring deployment metrics"
+            Parameters = @{
+                OutputDir = "reports/metrics"
+            }
             ContinueOnError = $true
-            MaxParallel = 5
-        }
+            Timeout = 60
+        },
+        
+        # Collect workflow health metrics
         @{
-            Name = "generate-dashboard"
+            Script = "0521"
+            Description = "Collect workflow health metrics"
+            Parameters = @{
+                OutputDir = "reports/metrics"
+            }
+            ContinueOnError = $true
+            Timeout = 60
+        },
+        
+        # Collect code metrics
+        @{
+            Script = "0522"
+            Description = "Collect code quality metrics"
+            Parameters = @{
+                OutputDir = "reports/metrics"
+            }
+            ContinueOnError = $true
+            Timeout = 60
+        },
+        
+        # Collect test metrics
+        @{
+            Script = "0523"
+            Description = "Collect test result metrics"
+            Parameters = @{
+                OutputDir = "reports/metrics"
+            }
+            ContinueOnError = $true
+            Timeout = 60
+        },
+        
+        # Collect quality metrics
+        @{
+            Script = "0524"
+            Description = "Collect quality analysis metrics"
+            Parameters = @{
+                OutputDir = "reports/metrics"
+            }
+            ContinueOnError = $true
+            Timeout = 60
+        },
+        
+        # Generate dashboard HTML from collected metrics
+        @{
+            Script = "0525"
             Description = "Generate HTML dashboard from collected metrics"
-            Scripts = @(
-                @{ Number = "0525"; AllowParallel = $false }  # Generate dashboard HTML
-            )
-            DependsOn = @("collect-metrics")
+            Parameters = @{
+                OutputDir = "reports/dashboard"
+                MetricsDir = "reports/metrics"
+            }
+            ContinueOnError = $false
+            Timeout = 120
         }
     )
+    
+    Options = @{
+        Parallel = $false
+        MaxConcurrency = 1
+        StopOnError = $false
+        CaptureOutput = $true
+    }
     
     Metadata = @{
         Author = "AitherZero Team"
         Created = "2025-01-10"
         Tags = @("dashboard", "reporting", "metrics", "visualization")
-        EstimatedDuration = "120s"
+        EstimatedDuration = "300s"
     }
 }
