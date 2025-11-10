@@ -121,3 +121,7 @@ infrastructure/*/
 !infrastructure/README.md
 !infrastructure/index.md
 !infrastructure/.gitkeep
+
+# Dashboard and documentation deployment artifacts
+library/docs-deploy/
+reports/metrics/
