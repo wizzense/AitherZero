@@ -372,6 +372,7 @@ jobs:
           name: pr-${{ env.PR_NUMBER }}-quality
           path: |
             library/tests/analysis/**
+            library/reports/quality/**
             library/reports/quality-*.json
           retention-days: 30
           if-no-files-found: warn
