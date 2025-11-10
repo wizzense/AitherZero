@@ -387,52 +387,81 @@ jobs:
             
             const pagesUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${process.env.PR_NUMBER}/`;
             const dockerImageTag = `ghcr.io/${context.repo.owner}/${context.repo.repo}:pr-${process.env.PR_NUMBER}`.toLowerCase();
+            const workflowUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
             
-            const summary = `## 🚀 PR Complete Workflow - FINISHED
+            const summary = `## 🚀 PR Validation & Build - COMPLETE
             
-            ### Phase Results
+            ### 📋 Phase Results
             
-            | Phase | Status |
-            |-------|--------|
-            | ${validationIcon} **Quick Validation** | ${validationStatus} |
-            | ${buildIcon} **Build & Package** | ${buildStatus} |
-            | ${qualityIcon} **Quality Analysis** | ${qualityStatus} |
-            | 📊 **Dashboard** | Generated |
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ${validationIcon} **Quick Validation** | ${validationStatus} | Syntax, Config, Manifests |
+            | ${buildIcon} **Build & Package** | ${buildStatus} | Runtime packages created |
+            | ${qualityIcon} **Quality Analysis** | ${qualityStatus} | PSScriptAnalyzer, Component quality |
+            | 📊 **Dashboard** | Generated | Comprehensive metrics dashboard |
             
-            > **Note:** Tests handled by dedicated test workflows  
-            > **Note:** Docker images built by deploy-pr-environment workflow
+            ### 🔗 Key Links
             
-            ### 📊 Dashboard
-            
-            **GitHub Pages:** [View PR Dashboard](${pagesUrl})
+            - 📊 **Dashboard**: [View PR Dashboard](${pagesUrl})
+            - 🧪 **Tests**: See [Test Execution workflow](${context.payload.repository.html_url}/actions/workflows/03-test-execution.yml) for comprehensive test results
+            - 🐳 **Docker**: See [Deploy PR Environment workflow](${context.payload.repository.html_url}/actions/workflows/04-deploy-pr-environment.yml) for container deployment
+            - 📦 **Artifacts**: [Download from this run](${workflowUrl})
             
             ### 🐳 Docker Image
-            
-            Docker images are built by the **deploy-pr-environment** workflow.
             
             **Expected Image Tag:** \`${dockerImageTag}\`
             
             **Quick Test:**
             \`\`\`bash
+            # Pull and run the PR container
             docker pull ${dockerImageTag}
             docker run -it --rm ${dockerImageTag}
             \`\`\`
             
-            ### 📦 Artifacts
+            ### 📦 Available Artifacts
             
-            - Build packages (ZIP, TAR.GZ)
-            - Quality analysis results
-            - Complete dashboard
-            - Docker images (from deploy-pr-environment workflow)
+            - ✅ Build packages (ZIP, TAR.GZ)
+            - ✅ Build metadata (JSON)
+            - ✅ Quality analysis results (PSScriptAnalyzer, Component quality)
+            - ✅ Comprehensive dashboard (HTML, JSON, Markdown)
+            - 🐳 Docker image (from deploy-pr-environment workflow)
+            - 🧪 Test results (from test-execution workflow)
             
-            [View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            ### 🎯 Next Steps
+            
+            1. **Review Dashboard**: [View comprehensive metrics](${pagesUrl})
+            2. **Check Tests**: Review test execution results in separate workflow
+            3. **Test Docker Image**: Pull and test the container image
+            4. **Review Quality**: Check PSScriptAnalyzer and quality metrics
             
             ---
-            *Streamlined PR workflow - Build, Quality, and Dashboard (Tests and Docker handled by dedicated workflows)*`;
+            *⚡ Powered by AitherZero PR Ecosystem - Validation → Build → Quality → Dashboard*
             
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+            [View Workflow Run](${workflowUrl})`;
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: summary
+              issue_number: process.env.PR_NUMBER
             });
+            
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('PR Validation & Build - COMPLETE')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: summary
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: process.env.PR_NUMBER,
+                body: summary
+              });
+            }
