@@ -191,7 +191,7 @@ The orchestration engine will:
 
 Then in workflow:
 ```powershell
-Invoke-OrchestrationSequence -LoadPlaybook test-suite -ConfigFile "./config.ci.psd1"
+Invoke-AitherPlaybook -Name test-suite -Variables @{ ConfigFile = "./config.ci.psd1" }
 ```
 
 ## Debugging Parallelism Issues
@@ -200,7 +200,7 @@ Invoke-OrchestrationSequence -LoadPlaybook test-suite -ConfigFile "./config.ci.p
 
 ```powershell
 $env:AITHERZERO_LOG_LEVEL = 'Information'
-Invoke-OrchestrationSequence -LoadPlaybook myplaybook -Verbose
+Invoke-AitherPlaybook -Name myplaybook -Variables @{ Verbose = $true }
 ```
 
 ### Check Orchestration Mode
