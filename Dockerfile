@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/powershell:7.4-ubuntu-22.04
 # Add container metadata labels following OpenContainers specification
 LABEL org.opencontainers.image.title="AitherZero" \
       org.opencontainers.image.description="Enterprise infrastructure automation platform with AI-powered orchestration. Provides PowerShell-based automation for infrastructure deployment, testing, and management across Windows, Linux, and macOS." \
-      org.opencontainers.image.vendor="Aitherium Corporation" \
+      org.opencontainers.image.vendor="Aitherium Organization" \
       org.opencontainers.image.authors="wizzense" \
       org.opencontainers.image.url="https://github.com/wizzense/AitherZero" \
       org.opencontainers.image.documentation="https://github.com/wizzense/AitherZero/blob/main/README.md" \
