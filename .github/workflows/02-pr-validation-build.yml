@@ -105,7 +105,12 @@ jobs:
           
           foreach ($script in $scripts) {
             Write-Host "`nRunning $script..." -ForegroundColor Yellow
-            $result = & "./library/automation-scripts/${script}*.ps1"
+            # Script 0407 requires -All switch to validate all files
+            if ($script -eq '0407') {
+              $result = & "./library/automation-scripts/${script}*.ps1" -All
+            } else {
+              $result = & "./library/automation-scripts/${script}*.ps1"
+            }
             if ($LASTEXITCODE -ne 0) {
               $failed += $script
             }
