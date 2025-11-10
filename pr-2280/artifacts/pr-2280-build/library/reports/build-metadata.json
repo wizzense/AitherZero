@@ -1,0 +1,53 @@
+{
+  "git": {
+    "commit_message": [
+      "Merge d459780b10adc06ce20b0832d3611ff863a606a0 into fd15d1cf08af143ff723412037a1fbb545c2415e",
+      ""
+    ],
+    "tag": null,
+    "branch": "HEAD",
+    "commits_count": "1",
+    "commit_short": "4fe59e24",
+    "commit_sha": "4fe59e24cb67cdc50b8c0db0b2d8f7a9e1a11cd6",
+    "commit_author": "Copilot",
+    "commit_date": "2025-11-10T07:23:23-08:00"
+  },
+  "artifacts": {
+    "pr_container_tags": [
+      "pr-2280-4fe59e24",
+      "pr-2280-latest"
+    ],
+    "package_prefix": "AitherZero-PR2280",
+    "container_image_base": "ghcr.io/wizzense/aitherzero"
+  },
+  "version": "1.0.0",
+  "pr": {
+    "number": 2280,
+    "head_branch": "copilot/deploy-dev-staging-page",
+    "author": "wizzense",
+    "head_sha": "4fe59e24cb67cdc50b8c0db0b2d8f7a9e1a11cd6",
+    "base_branch": "dev-staging",
+    "url": "https://github.com/wizzense/AitherZero/pull/2280",
+    "title": null,
+    "base_sha": null
+  },
+  "generated_at": "2025-11-10T15:24:30Z",
+  "pages": {
+    "pr_reports": "https://wizzense.github.io/AitherZero/2280/merge/pr-2280/reports/",
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2280/merge/pr-2280/",
+    "branch": "2280/merge",
+    "branch_path": "/2280/merge",
+    "base_url": "https://wizzense.github.io/AitherZero/2280/merge"
+  },
+  "environment": {
+    "platform": "GitHub Actions",
+    "run_id": "19236652377",
+    "os": "Ubuntu 24.04.3 LTS",
+    "ci": true,
+    "runner_os": "Linux",
+    "job": "build",
+    "powershell_version": "7.4.13",
+    "run_number": "39",
+    "workflow": "🚀 PR Ecosystem - Complete Validation & Build"
+  }
+}
