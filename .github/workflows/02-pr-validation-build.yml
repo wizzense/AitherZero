@@ -54,16 +54,38 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: 💬 Post Start Status
+      - name: 💬 Create Workflow Status Comment
+        id: create_comment
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.createComment({
+            const comment = await github.rest.issues.createComment({
               issue_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 **PR Complete Workflow Started**\n\n**Phase 1:** ⚡ Quick Validation\n- Syntax check\n- Config validation\n- Manifest validation'
+              body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${new Date().toISOString()}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ⚡ Quick Validation | 🔄 Running | Syntax, Config, Manifests |
+            | 🔨 Build & Package | ⏳ Pending | Runtime packages |
+            | 🔍 Quality Analysis | ⏳ Pending | PSScriptAnalyzer, Component quality |
+            | 📊 Dashboard | ⏳ Pending | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
             });
+            return comment.data.id;
 
       - name: 🔧 Bootstrap
         shell: pwsh
@@ -96,19 +118,54 @@ jobs:
           
           Write-Host "✅ Quick validation passed" -ForegroundColor Green
 
-      - name: 💬 Post Validation Result
+      - name: 💬 Update Status - Validation Complete
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const status = '${{ steps.validate.outcome }}';
             const icon = status === 'success' ? '✅' : '❌';
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+            const statusText = status === 'success' ? 'PASSED' : 'FAILED';
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${icon} **Quick Validation ${status === 'success' ? 'PASSED' : 'FAILED'}**`
+              issue_number: process.env.PR_NUMBER
             });
+            
+            const trackingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('WORKFLOW_STATUS_COMMENT:pr-validation-build')
+            );
+            
+            if (trackingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: trackingComment.id,
+                body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${trackingComment.created_at}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ${icon} Quick Validation | **${statusText}** | Completed at ${new Date().toISOString()} |
+            | 🔨 Build & Package | 🔄 Running | Runtime packages |
+            | 🔍 Quality Analysis | ⏳ Pending | PSScriptAnalyzer, Component quality |
+            | 📊 Dashboard | ⏳ Pending | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
+              });
+            }
 
   # ============================================================================
   # PHASE 2: Build & Package (TESTS REMOVED - handled by other workflows)
@@ -126,17 +183,6 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-
-      - name: 💬 Post Build Start
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 2:** 🔨 Build & Package Started (Tests handled by separate workflows)'
-            });
 
       - name: 🔧 Bootstrap
         shell: pwsh
@@ -203,20 +249,59 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      - name: 💬 Post Build Result
+      - name: 💬 Update Status - Build Complete
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ steps.build.outcome }}';
-            const icon = status === 'success' ? '✅' : '❌';
-            const statusText = status === 'success' ? 'PASSED' : 'FAILED';
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+            const validationStatus = '${{ needs.quick-validation.result }}';
+            const buildStatus = '${{ steps.build.outcome }}';
+            
+            const validationIcon = validationStatus === 'success' ? '✅' : '❌';
+            const buildIcon = buildStatus === 'success' ? '✅' : '❌';
+            
+            const validationText = validationStatus === 'success' ? 'PASSED' : 'FAILED';
+            const buildText = buildStatus === 'success' ? 'PASSED' : 'FAILED';
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${icon} **Build & Package ${statusText}**`
+              issue_number: process.env.PR_NUMBER
             });
+            
+            const trackingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('WORKFLOW_STATUS_COMMENT:pr-validation-build')
+            );
+            
+            if (trackingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: trackingComment.id,
+                body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${trackingComment.created_at}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ${validationIcon} Quick Validation | **${validationText}** | Syntax, Config, Manifests |
+            | ${buildIcon} Build & Package | **${buildText}** | Completed at ${new Date().toISOString()} |
+            | 🔍 Quality Analysis | 🔄 Running | PSScriptAnalyzer, Component quality |
+            | 📊 Dashboard | ⏳ Pending | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
+              });
+            }
 
   # ============================================================================
   # PHASE 2B: Quality Analysis
@@ -234,17 +319,6 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-
-      - name: 💬 Post Quality Start
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 4:** 🔍 Quality Analysis Started\n\n- PSScriptAnalyzer\n- Component Quality\n- Security Scan'
-            });
 
       - name: 🔧 Bootstrap
         shell: pwsh
@@ -297,20 +371,62 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      - name: 💬 Post Quality Result
+      - name: 💬 Update Status - Quality Complete
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ steps.quality.outcome }}';
-            const icon = status === 'success' ? '✅' : '❌';
-            const statusText = status === 'success' ? 'PASSED' : 'FAILED';
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+            const validationStatus = '${{ needs.quick-validation.result }}';
+            const buildStatus = '${{ needs.build.result }}';
+            const qualityStatus = '${{ steps.quality.outcome }}';
+            
+            const validationIcon = validationStatus === 'success' ? '✅' : '❌';
+            const buildIcon = buildStatus === 'success' ? '✅' : '❌';
+            const qualityIcon = qualityStatus === 'success' ? '✅' : '❌';
+            
+            const validationText = validationStatus === 'success' ? 'PASSED' : 'FAILED';
+            const buildText = buildStatus === 'success' ? 'PASSED' : 'FAILED';
+            const qualityText = qualityStatus === 'success' ? 'PASSED' : 'FAILED';
+            
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `${icon} **Quality Analysis ${statusText}**`
+              repo: context.repo.owner,
+              issue_number: process.env.PR_NUMBER
             });
+            
+            const trackingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('WORKFLOW_STATUS_COMMENT:pr-validation-build')
+            );
+            
+            if (trackingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: trackingComment.id,
+                body: `## 🚀 PR Validation & Build Workflow
+
+            **Workflow:** \`02-pr-validation-build.yml\`  
+            **Run ID:** ${context.runId}  
+            **Commit:** \`${context.sha.substring(0, 7)}\`  
+            **Started:** ${trackingComment.created_at}
+
+            ---
+
+            ### 📊 Progress
+
+            | Phase | Status | Details |
+            |-------|--------|---------|
+            | ${validationIcon} Quick Validation | **${validationText}** | Syntax, Config, Manifests |
+            | ${buildIcon} Build & Package | **${buildText}** | Runtime packages |
+            | ${qualityIcon} Quality Analysis | **${qualityText}** | Completed at ${new Date().toISOString()} |
+            | 📊 Dashboard | 🔄 Running | Metrics & reports |
+
+            ---
+            _Last updated: ${new Date().toISOString()}_
+            <!-- WORKFLOW_STATUS_COMMENT:pr-validation-build -->`
+              });
+            }
 
   # ============================================================================
   # PHASE 3: Dashboard Generation & Deployment
@@ -326,17 +442,6 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
-
-      - name: 💬 Post Dashboard Start
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Phase 3:** 📊 Dashboard Generation Started\n\nConsolidating build and quality results...\n\n> **Note:** Docker images built by deploy-pr-environment workflow'
-            });
 
       - name: 🔧 Bootstrap
         shell: pwsh
