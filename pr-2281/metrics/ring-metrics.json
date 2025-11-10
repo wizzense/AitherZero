@@ -1,133 +1,133 @@
 {
   "Rings": [
     {
-      "TestPassRate": 0,
-      "LastCommit": {
-        "Author": "",
-        "SHA": "",
-        "Message": "",
-        "Date": ""
-      },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
-      "QualityScore": 0,
-      "DisplayName": "🎯 Main (Production)",
-      "Health": "Branch Not Found",
       "Name": "main",
-      "DeploymentStatus": "Unknown"
-    },
-    {
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
       "TestPassRate": 0,
       "LastCommit": {
         "Author": "",
-        "SHA": "",
         "Message": "",
-        "Date": ""
+        "Date": "",
+        "SHA": ""
       },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
       "QualityScore": 0,
-      "DisplayName": "🔄 Dev-Staging (Pre-Release)",
-      "Health": "Branch Not Found",
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "🎯 Main (Production)",
+      "CommitsLast7Days": 0
+    },
+    {
       "Name": "dev-staging",
-      "DeploymentStatus": "Unknown"
-    },
-    {
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
       "TestPassRate": 0,
       "LastCommit": {
         "Author": "",
-        "SHA": "",
         "Message": "",
-        "Date": ""
+        "Date": "",
+        "SHA": ""
       },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
       "QualityScore": 0,
-      "DisplayName": "🛠️ Dev (Integration)",
-      "Health": "Branch Not Found",
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "🔄 Dev-Staging (Pre-Release)",
+      "CommitsLast7Days": 0
+    },
+    {
       "Name": "dev",
-      "DeploymentStatus": "Unknown"
-    },
-    {
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
       "TestPassRate": 0,
       "LastCommit": {
         "Author": "",
-        "SHA": "",
         "Message": "",
-        "Date": ""
+        "Date": "",
+        "SHA": ""
       },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
       "QualityScore": 0,
-      "DisplayName": "⚙️ Ring 0 (Core)",
-      "Health": "Branch Not Found",
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "🛠️ Dev (Integration)",
+      "CommitsLast7Days": 0
+    },
+    {
       "Name": "ring-0",
-      "DeploymentStatus": "Unknown"
-    },
-    {
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
       "TestPassRate": 0,
       "LastCommit": {
         "Author": "",
-        "SHA": "",
         "Message": "",
-        "Date": ""
+        "Date": "",
+        "SHA": ""
       },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
       "QualityScore": 0,
-      "DisplayName": "🔗 Ring 0 Integrations",
-      "Health": "Branch Not Found",
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "⚙️ Ring 0 (Core)",
+      "CommitsLast7Days": 0
+    },
+    {
       "Name": "ring-0-integrations",
-      "DeploymentStatus": "Unknown"
-    },
-    {
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
       "TestPassRate": 0,
       "LastCommit": {
         "Author": "",
-        "SHA": "",
         "Message": "",
-        "Date": ""
+        "Date": "",
+        "SHA": ""
       },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
       "QualityScore": 0,
-      "DisplayName": "✨ Ring 1 (Features)",
-      "Health": "Branch Not Found",
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "🔗 Ring 0 Integrations",
+      "CommitsLast7Days": 0
+    },
+    {
       "Name": "ring-1",
-      "DeploymentStatus": "Unknown"
-    },
-    {
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
       "TestPassRate": 0,
       "LastCommit": {
         "Author": "",
-        "SHA": "",
         "Message": "",
-        "Date": ""
+        "Date": "",
+        "SHA": ""
       },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
       "QualityScore": 0,
-      "DisplayName": "🧩 Ring 1 Integrations",
-      "Health": "Branch Not Found",
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "✨ Ring 1 (Features)",
+      "CommitsLast7Days": 0
+    },
+    {
       "Name": "ring-1-integrations",
-      "DeploymentStatus": "Unknown"
-    },
-    {
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
       "TestPassRate": 0,
       "LastCommit": {
         "Author": "",
-        "SHA": "",
         "Message": "",
-        "Date": ""
+        "Date": "",
+        "SHA": ""
       },
-      "CommitsLast7Days": 0,
-      "ActivePRs": 0,
       "QualityScore": 0,
-      "DisplayName": "🧪 Ring 2 (Experimental)",
-      "Health": "Branch Not Found",
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "🧩 Ring 1 Integrations",
+      "CommitsLast7Days": 0
+    },
+    {
       "Name": "ring-2",
-      "DeploymentStatus": "Unknown"
+      "Health": "Branch Not Found",
+      "ActivePRs": 0,
+      "TestPassRate": 0,
+      "LastCommit": {
+        "Author": "",
+        "Message": "",
+        "Date": "",
+        "SHA": ""
+      },
+      "QualityScore": 0,
+      "DeploymentStatus": "Unknown",
+      "DisplayName": "🧪 Ring 2 (Experimental)",
+      "CommitsLast7Days": 0
     }
   ],
-  "Timestamp": "2025-11-10T15:25:54.8621378+00:00"
+  "Timestamp": "2025-11-10T15:30:36.2460743+00:00"
 }
