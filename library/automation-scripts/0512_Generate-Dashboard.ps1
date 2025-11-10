@@ -42,7 +42,38 @@ param(
     [string]$OutputPath = (Join-Path $ProjectPath "reports"),
     [ValidateSet('HTML', 'Markdown', 'JSON', 'All')]
     [string]$Format = 'All',
-    [switch]$Open
+    [switch]$Open,
+    
+    # PR and Git Context
+    [string]$PRNumber = $env:PR_NUMBER,
+    [string]$BaseBranch = $env:GITHUB_BASE_REF,
+    [string]$HeadBranch = $env:GITHUB_HEAD_REF,
+    
+    # Feature Toggles - COMPREHENSIVE DASHBOARD
+    [switch]$IncludeBootstrapQuickstart = $true,
+    [switch]$IncludeContainerInfo = $true,
+    [switch]$IncludeDockerImageInfo = $true,
+    [switch]$IncludePRContext = $true,
+    [switch]$IncludeDiffAnalysis = $true,
+    [switch]$IncludeChangelog = $true,
+    [switch]$IncludeRecommendations = $true,
+    [switch]$IncludeHistoricalTrends = $true,
+    [switch]$IncludeCodeMap = $true,
+    [switch]$IncludeDependencyGraph = $true,
+    [switch]$IncludeTestResults = $true,
+    [switch]$IncludeQualityMetrics = $true,
+    [switch]$IncludeBuildArtifacts = $true,
+    
+    # Data Paths for Integration
+    [string]$TestResultsPath = "library/tests/results",
+    [string]$QualityAnalysisPath = "library/tests/analysis",
+    [string]$BuildMetadataPath = "library/reports/build-metadata.json",
+    [string]$ChangelogPath = "library/reports/CHANGELOG-PR*.md",
+    [string]$RecommendationsPath = "library/reports/recommendations.json",
+    
+    # Docker Integration
+    [string]$DockerRegistry = ($env:CONTAINER_REGISTRY ?? "ghcr.io"),
+    [string]$DockerImageTag = ($env:DOCKER_IMAGE_TAG ?? "pr-$PRNumber")
 )
 
 $ErrorActionPreference = 'Stop'
