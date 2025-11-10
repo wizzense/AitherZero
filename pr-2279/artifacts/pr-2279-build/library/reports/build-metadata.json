@@ -1,0 +1,53 @@
+{
+  "environment": {
+    "runner_os": "Linux",
+    "job": "build",
+    "os": "Ubuntu 24.04.3 LTS",
+    "ci": true,
+    "platform": "GitHub Actions",
+    "run_number": "37",
+    "powershell_version": "7.4.13",
+    "run_id": "19236637776",
+    "workflow": "🚀 PR Ecosystem - Complete Validation & Build"
+  },
+  "pages": {
+    "branch": "2279/merge",
+    "base_url": "https://wizzense.github.io/AitherZero/2279/merge",
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2279/merge/pr-2279/",
+    "branch_path": "/2279/merge",
+    "pr_reports": "https://wizzense.github.io/AitherZero/2279/merge/pr-2279/reports/"
+  },
+  "version": "1.0.0",
+  "pr": {
+    "author": "wizzense",
+    "head_sha": "9394f79ee5a83fb7a8f2264762b878872c03e65d",
+    "base_branch": "dev-staging",
+    "url": "https://github.com/wizzense/AitherZero/pull/2279",
+    "title": null,
+    "number": 2279,
+    "base_sha": null,
+    "head_branch": "copilot/fix-quick-validation-failure"
+  },
+  "artifacts": {
+    "pr_container_tags": [
+      "pr-2279-9394f79e",
+      "pr-2279-latest"
+    ],
+    "package_prefix": "AitherZero-PR2279",
+    "container_image_base": "ghcr.io/wizzense/aitherzero"
+  },
+  "generated_at": "2025-11-10T15:24:27Z",
+  "git": {
+    "commit_message": [
+      "Merge 5c453140d204ac8cbdfdc6c3459eac1492e75b92 into 006732f1995d5acd20d386643a113060d1591e6e",
+      ""
+    ],
+    "commit_short": "9394f79e",
+    "commits_count": "1",
+    "tag": null,
+    "branch": "HEAD",
+    "commit_date": "2025-11-10T15:16:00Z",
+    "commit_author": "Copilot",
+    "commit_sha": "9394f79ee5a83fb7a8f2264762b878872c03e65d"
+  }
+}
