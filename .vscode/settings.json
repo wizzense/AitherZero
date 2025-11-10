@@ -1,15 +1,5 @@
 {
-  "terminal.integrated.profiles.linux": {
-    "PowerShell": {
-      "path": "pwsh",
-      "args": [
-        "-NoExit",
-        "-Command",
-        "& { if (Test-Path ./AitherZero.psd1) { Import-Module ./AitherZero.psd1 -Force } }"
-      ]
-    }
-  },
-  "terminal.integrated.env.linux": {
+  "terminal.integrated.env.windows": {
     "AITHERZERO_ROOT": "${workspaceFolder}"
   },
   "terminal.integrated.profiles.windows": {
@@ -22,12 +12,22 @@
       ]
     }
   },
-  "powershell.startAutomatically": false,
   "terminal.integrated.env.osx": {
     "AITHERZERO_ROOT": "${workspaceFolder}"
   },
+  "powershell.startAutomatically": false,
   "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "terminal.integrated.env.windows": {
+  "terminal.integrated.profiles.linux": {
+    "PowerShell": {
+      "args": [
+        "-NoExit",
+        "-Command",
+        "& { if (Test-Path ./AitherZero.psd1) { Import-Module ./AitherZero.psd1 -Force } }"
+      ],
+      "path": "pwsh"
+    }
+  },
+  "terminal.integrated.env.linux": {
     "AITHERZERO_ROOT": "${workspaceFolder}"
   }
 }
