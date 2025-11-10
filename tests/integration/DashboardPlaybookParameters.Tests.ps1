@@ -22,33 +22,40 @@ BeforeAll {
     $script:Playbook = & $scriptBlock
     
     # Define expected parameters for each script
+    # Note: These are the specific "Collect" scripts, not the "Analyze" scripts with the same numbers
     $script:ExpectedParameters = @{
         '0520' = @{
+            ScriptName = '0520_Collect-RingMetrics.ps1'
             ScriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0520_Collect-RingMetrics.ps1"
             ExpectedParams = @('OutputPath')
             Description = "Ring metrics collection"
         }
         '0521' = @{
+            ScriptName = '0521_Collect-WorkflowHealth.ps1'
             ScriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0521_Collect-WorkflowHealth.ps1"
             ExpectedParams = @('OutputPath')
             Description = "Workflow health metrics collection"
         }
         '0522' = @{
+            ScriptName = '0522_Collect-CodeMetrics.ps1'
             ScriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0522_Collect-CodeMetrics.ps1"
             ExpectedParams = @('OutputPath')
             Description = "Code metrics collection"
         }
         '0523' = @{
+            ScriptName = '0523_Collect-TestMetrics.ps1'
             ScriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0523_Collect-TestMetrics.ps1"
             ExpectedParams = @('OutputPath')
             Description = "Test metrics collection"
         }
         '0524' = @{
+            ScriptName = '0524_Collect-QualityMetrics.ps1'
             ScriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0524_Collect-QualityMetrics.ps1"
             ExpectedParams = @('OutputPath')
             Description = "Quality metrics collection"
         }
         '0525' = @{
+            ScriptName = '0525_Generate-DashboardHTML.ps1'
             ScriptPath = Join-Path $script:ProjectRoot "library/automation-scripts/0525_Generate-DashboardHTML.ps1"
             ExpectedParams = @('OutputPath', 'MetricsPath')
             Description = "Dashboard HTML generation"
