@@ -53,6 +53,7 @@ if ($env:PATH -notlike "*$automationPath*") {
 $modulesToLoad = @(
     # Core utilities first
     './aithercore/utilities/Logging.psm1',
+    './aithercore/utilities/ScriptAnalysis.psm1',
 
     # Configuration (both old and new for backward compatibility)
     './aithercore/configuration/Configuration.psm1',

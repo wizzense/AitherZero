@@ -92,10 +92,6 @@ function Write-ColorOutput {
     Write-Host $Message -ForegroundColor $color
 }
 
-# Log with custom logging if available
-Write-Verbose $Message
-}
-
 # Main execution
 try {
     Write-ColorOutput "=== MCP Server Configuration ===" -Level 'Info'

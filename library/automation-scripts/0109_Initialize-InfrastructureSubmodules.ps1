@@ -84,28 +84,6 @@ if (Test-Path $ScriptUtilPath) {
 $ScriptName = "Initialize-InfrastructureSubmodules"
 $Stage = "Environment"
 
-# Logging helper with fallback
-else { $Level }
-    
-    $color = @{
-        'Error' = 'Red'
-        'Warning' = 'Yellow'
-        'Information' = 'Green'  # Green for info messages
-        'Success' = 'Green'
-        'Debug' = 'Gray'
-    }[$Level]
-    
-    if (Get-Command Write-ScriptLog -ErrorAction SilentlyContinue) {
-        Write-ScriptLog -Message $Message -Level $logLevel
-    }
-    elseif (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $logLevel -Source $ScriptName
-    }
-    else {
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
-}
-
 #endregion Setup and Initialization
 
 #region Main Script

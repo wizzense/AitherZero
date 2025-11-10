@@ -109,16 +109,6 @@ foreach ($modulePath in $modulePaths) {
 
 #region Helper Functions
 
-$prefix = switch ($Level) {
-        'Information' { '[i]' }
-        'Warning' { '[!]' }
-        'Error' { '[x]' }
-        'Success' { '[✓]' }
-    }
-    
-    Write-Host "$timestamp $prefix $Message" -ForegroundColor $colors[$Level]
-}
-
 function Test-AdminPrivileges {
     if ($IsWindows -or $PSVersionTable.Platform -eq 'Win32NT') {
         $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
