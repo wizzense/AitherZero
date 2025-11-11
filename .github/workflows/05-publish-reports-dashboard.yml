@@ -154,8 +154,15 @@ jobs:
           Write-Host "📦 Organizing test results from new test structure..." -ForegroundColor Cyan
           
           # Check if artifacts were downloaded
-          if ('${{ steps.download-artifacts.outcome }}' -ne 'success') {
-            Write-Host "⚠️ Artifact download was not successful, continuing with available data..." -ForegroundColor Yellow
+          $artifactsDownloaded = '${{ steps.download-artifacts.outcome }}' -eq 'success'
+          $hasTestData = $false
+          
+          if (-not $artifactsDownloaded) {
+            Write-Host "" -ForegroundColor Yellow
+            Write-Host "⚠️  WARNING: Test artifacts were NOT downloaded!" -ForegroundColor Yellow
+            Write-Host "⚠️  This means the test-execution workflow did NOT run or failed." -ForegroundColor Yellow
+            Write-Host "⚠️  Dashboard will be generated WITHOUT actual test results." -ForegroundColor Yellow
+            Write-Host "" -ForegroundColor Yellow
           }
           
           # Ensure directories exist
@@ -167,16 +174,23 @@ jobs:
           if (Test-Path "./downloaded-artifacts") {
             Write-Host "Copying test artifacts from test-execution.yml..." -ForegroundColor Yellow
             
+            $xmlCount = 0
+            $jsonCount = 0
+            $coverageCount = 0
+            
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.xml" | ForEach-Object {
               $destPath = Join-Path "library/tests/results" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
               Write-Host "  ✓ Test Result: $($_.Name)" -ForegroundColor Green
+              $xmlCount++
+              $hasTestData = $true
             }
             
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.json" | ForEach-Object {
               $destPath = Join-Path "library/tests/results" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
               Write-Host "  ✓ Test Data: $($_.Name)" -ForegroundColor Green
+              $jsonCount++
             }
             
             # Copy coverage data
@@ -187,6 +201,7 @@ jobs:
                 Copy-Item $_.FullName -Destination "library/tests/coverage" -Force
               }
               Write-Host "  ✓ Coverage: $($_.Name)" -ForegroundColor Green
+              $coverageCount++
             }
             
             # Copy performance metrics and validation results
@@ -201,9 +216,26 @@ jobs:
               Copy-Item $_.FullName -Destination $destPath -Force
               Write-Host "  ✓ Validation Results: $($_.Name)" -ForegroundColor Green
             }
+            
+            Write-Host "" -ForegroundColor Cyan
+            Write-Host "📊 Test artifacts summary:" -ForegroundColor Cyan
+            Write-Host "   - Test result files (XML): $xmlCount" -ForegroundColor Cyan
+            Write-Host "   - Test data files (JSON): $jsonCount" -ForegroundColor Cyan
+            Write-Host "   - Coverage files: $coverageCount" -ForegroundColor Cyan
+          } else {
+            Write-Host "" -ForegroundColor Red
+            Write-Host "❌ No test artifacts directory found!" -ForegroundColor Red
+            Write-Host "❌ The downloaded-artifacts directory does not exist." -ForegroundColor Red
           }
           
-          Write-Host "✅ Test results organized" -ForegroundColor Green
+          if ($hasTestData) {
+            Write-Host "" -ForegroundColor Green
+            Write-Host "✅ Test results organized successfully" -ForegroundColor Green
+          } else {
+            Write-Host "" -ForegroundColor Red
+            Write-Host "❌ NO TEST RESULTS FOUND - Dashboard will show placeholder data" -ForegroundColor Red
+            Write-Host "❌ Verify that pr-check.yml and test-execution workflows are running" -ForegroundColor Red
+          }
 
       - name: 📊 Generate Dashboard with Modular Playbook
         shell: pwsh
