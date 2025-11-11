@@ -38,7 +38,7 @@ param(
 )
 
 # Initialize
-$script:ProjectRoot = Split-Path $PSScriptRoot -Parent
+$script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $script:TestGeneratorModule = Join-Path $script:ProjectRoot 'aithercore/testing/AutoTestGenerator.psm1'
 
 # Logging
