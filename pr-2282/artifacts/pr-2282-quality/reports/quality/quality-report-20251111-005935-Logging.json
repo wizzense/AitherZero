@@ -1,0 +1,104 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Logging.psm1",
+  "FileName": "Logging.psm1",
+  "Timestamp": "2025-11-11T00:59:19.8531074+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 57.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Failed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Directory creation, Directory creation, Directory creation, Remove-Item, Remove-Item, Move-Item, Move-Item"
+      ],
+      "Score": 60,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 2
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 80,
+      "Details": {
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 47.0,
+        "HasErrorLevel": false,
+        "FunctionCount": 25,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 4,
+          "Write-.*Log": 29,
+          "Write-CustomLog": 14
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Logging.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 2,
+        "ParameterCount": 9
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "8 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 60,
+      "Details": {
+        "Errors": 0,
+        "TotalIssues": 22,
+        "Warnings": 8,
+        "TopIssues": [
+          "Line 478: PSAvoidGlobalVars - Found global variable 'global:AitherZeroLoggingInitialized'.",
+          "Line 480: PSAvoidGlobalVars - Found global variable 'global:AitherZeroLoggingInitialized'.",
+          "Line 144: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 145: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 445: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 3,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 2,
+    "Passed": 0
+  }
+}

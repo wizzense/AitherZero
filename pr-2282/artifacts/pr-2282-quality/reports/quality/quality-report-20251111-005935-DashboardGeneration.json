@@ -1,0 +1,102 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/reporting/DashboardGeneration.psm1",
+  "FileName": "DashboardGeneration.psm1",
+  "Timestamp": "2025-11-11T00:59:05.9819742+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 70.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Directory creation"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 3
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 10.0,
+        "HasErrorLevel": true,
+        "FunctionCount": 8,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Verbose": 5,
+          "Write-Warning": 2,
+          "Write-Error": 3
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DashboardGeneration.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 2,
+        "ParameterCount": 9
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "4 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 80,
+      "Details": {
+        "Errors": 0,
+        "TotalIssues": 46,
+        "Warnings": 4,
+        "TopIssues": [
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'DashboardGeneration.psm1'",
+          "Line 51: PSUseOutputTypeCorrectly - The cmdlet 'Initialize-DashboardSession' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 88: PSUseOutputTypeCorrectly - The cmdlet 'Get-DashboardMetrics' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 113: PSUseOutputTypeCorrectly - The cmdlet 'New-DashboardHTML' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 128: PSUseOutputTypeCorrectly - The cmdlet 'New-DashboardHTML' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 1,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 3,
+    "Passed": 1
+  }
+}

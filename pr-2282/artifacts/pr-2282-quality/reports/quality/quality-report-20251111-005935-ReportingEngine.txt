@@ -1,0 +1,43 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: ReportingEngine.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/reporting/ReportingEngine.psm1
+Timestamp: 11/11/2025 00:59:06
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 56%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 1
+  Failed: 3
+  Warnings: 2
+  Skipped: 0
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Failed] ErrorHandling - Score: 55%
+  Findings:
+    - Catch blocks should log or throw errors
+    - Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Directory creation, Directory creation, Import-Module, Import-Module
+
+[Warning] Logging - Score: 80%
+  Findings:
+    - Consider adding error logging in catch blocks
+
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ReportingEngine.Tests.ps1
+
+[Passed] UIIntegration - Score: 100%
+[Warning] GitHubActions - Score: 70%
+  Findings:
+    - Component should be integrated into CI/CD workflows
+
+[Failed] PSScriptAnalyzer - Score: 30%
+  Findings:
+    - 14 PSScriptAnalyzer warning(s) found
+
+================================================================================

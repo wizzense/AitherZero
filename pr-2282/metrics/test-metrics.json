@@ -1,40 +1,40 @@
 {
+  "Coverage": {
+    "TotalLines": 0,
+    "LineRate": 0.0,
+    "BranchRate": 0.0,
+    "CoveredLines": 0
+  },
+  "FailedTests": [],
+  "Timestamp": "2025-11-11T01:00:16Z",
   "Summary": {
+    "SkippedTests": 0,
     "PassRate": 0.0,
     "FailedTests": 0,
-    "SkippedTests": 0,
     "PassedTests": 0,
     "TotalDuration": 0,
     "TotalTests": 0
   },
-  "Timestamp": "2025-11-10T16:27:01Z",
-  "Coverage": {
-    "CoveredLines": 0,
-    "LineRate": 0.0,
-    "BranchRate": 0.0,
-    "TotalLines": 0
-  },
-  "FailedTests": [],
   "Categories": {
-    "Unit": {
-      "Skipped": 0,
-      "Total": 0,
-      "Passed": 0,
+    "Integration": {
       "Duration": 0,
+      "Skipped": 0,
+      "Passed": 0,
+      "Total": 0,
+      "Failed": 0
+    },
+    "Unit": {
+      "Duration": 0,
+      "Skipped": 0,
+      "Passed": 0,
+      "Total": 0,
       "Failed": 0
     },
     "Domain": {
-      "Skipped": 0,
-      "Total": 0,
-      "Passed": 0,
       "Duration": 0,
-      "Failed": 0
-    },
-    "Integration": {
       "Skipped": 0,
-      "Total": 0,
       "Passed": 0,
-      "Duration": 0,
+      "Total": 0,
       "Failed": 0
     }
   }

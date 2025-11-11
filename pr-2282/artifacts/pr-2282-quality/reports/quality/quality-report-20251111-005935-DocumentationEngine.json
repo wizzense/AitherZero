@@ -1,0 +1,99 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/documentation/DocumentationEngine.psm1",
+  "FileName": "DocumentationEngine.psm1",
+  "Timestamp": "2025-11-11T00:59:01.586842+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 63.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module"
+      ],
+      "Score": 70,
+      "Details": {
+        "TryCatchBlocks": 5,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 69.0,
+        "HasErrorLevel": true,
+        "FunctionCount": 34,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-.*Log": 67,
+          "Write-CustomLog": 2
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DocumentationEngine.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 4,
+        "ParameterCount": 1
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "11 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 45,
+      "Details": {
+        "Errors": 0,
+        "TotalIssues": 131,
+        "Warnings": 11,
+        "TopIssues": [
+          "Line 1082: PSAvoidOverwritingBuiltInCmdlets - 'ConvertTo-Html' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden",
+          "Line 54: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 85: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 88: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 92: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 2,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 1,
+    "Passed": 2
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/configuration/ConfigManager.psm1",
+  "FileName": "ConfigManager.psm1",
+  "Timestamp": "2025-11-11T00:59:15.2938241+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 65.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TryCatchBlocks": 5,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks",
+        "Some functions may lack logging statements"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 10.0,
+        "HasErrorLevel": false,
+        "FunctionCount": 13,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Verbose": 9,
+          "Write-Warning": 1
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ConfigManager.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 2,
+        "ParameterCount": 4
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "6 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 70,
+      "Details": {
+        "Errors": 0,
+        "TotalIssues": 102,
+        "Warnings": 6,
+        "TopIssues": [
+          "Line 582: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 30: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 34: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 36: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 39: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 1,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 3,
+    "Passed": 1
+  }
+}

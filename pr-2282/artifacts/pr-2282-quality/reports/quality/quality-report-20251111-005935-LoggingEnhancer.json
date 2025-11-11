@@ -1,0 +1,90 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/LoggingEnhancer.psm1",
+  "FileName": "LoggingEnhancer.psm1",
+  "Timestamp": "2025-11-11T00:59:22.021964+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 76.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "TryCatchBlocks": 0
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 80,
+      "Details": {
+        "HasWarningLevel": false,
+        "TotalLoggingCalls": 26.0,
+        "HasErrorLevel": false,
+        "FunctionCount": 11,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-.*Log": 18,
+          "Write-CustomLog": 8
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/LoggingEnhancer.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 4,
+        "ParameterCount": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "Errors": 0,
+        "TotalIssues": 1,
+        "Warnings": 0,
+        "TopIssues": "Line 290: PSUseOutputTypeCorrectly - The cmdlet 'Get-OperationSummary' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 1,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 1,
+    "Passed": 3
+  }
+}

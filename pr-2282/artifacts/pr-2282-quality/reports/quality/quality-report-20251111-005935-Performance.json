@@ -1,0 +1,103 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Performance.psm1",
+  "FileName": "Performance.psm1",
+  "Timestamp": "2025-11-11T00:59:23.7708718+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 70.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "HasErrorLogging": true,
+        "TryCatchBlocks": 2
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 80,
+      "Details": {
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 21.0,
+        "HasErrorLevel": false,
+        "FunctionCount": 11,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-.*Log": 10,
+          "Write-CustomLog": 10
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Performance.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 2,
+        "ParameterCount": 25
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "1 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 95,
+      "Details": {
+        "Errors": 0,
+        "TotalIssues": 8,
+        "Warnings": 1,
+        "TopIssues": [
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'Performance.psm1'",
+          "Line 54: PSUseOutputTypeCorrectly - The cmdlet 'Start-PerformanceTimer' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 111: PSUseOutputTypeCorrectly - The cmdlet 'Stop-PerformanceTimer' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 153: PSUseOutputTypeCorrectly - The cmdlet 'Measure-Performance' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 416: PSUseOutputTypeCorrectly - The cmdlet 'Measure-FileProcessing' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 1,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 2,
+    "Passed": 2
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/security/Security.psm1",
+  "FileName": "Security.psm1",
+  "Timestamp": "2025-11-11T00:59:28.7087661+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 56.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Directory creation, Copy-Item"
+      ],
+      "Score": 80,
+      "Details": {
+        "TryCatchBlocks": 17,
+        "HasFinallyBlock": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 39.0,
+        "HasErrorLevel": true,
+        "FunctionCount": 24,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Verbose": 1,
+          "Write-Warning": 4,
+          "Write-.*Log": 32,
+          "Write-CustomLog": 2
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Security.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 4,
+        "ParameterCount": 58
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "4 PSScriptAnalyzer error(s) found",
+        "12 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 0,
+      "Details": {
+        "Errors": 4,
+        "TotalIssues": 386,
+        "Warnings": 12,
+        "TopIssues": [
+          "Line 1084: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 153: PSAvoidAssignmentToAutomaticVariable - The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 1938: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 38: PSAvoidGlobalVars - Found global variable 'global:AitherZeroSecurityInitialized'.",
+          "Line 31: PSPossibleIncorrectComparisonWithNull - $null should be on the left side of equality comparisons."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 2,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 1,
+    "Passed": 2
+  }
+}

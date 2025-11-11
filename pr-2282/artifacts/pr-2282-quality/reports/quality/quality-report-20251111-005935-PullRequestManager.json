@@ -1,0 +1,102 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/PullRequestManager.psm1",
+  "FileName": "PullRequestManager.psm1",
+  "Timestamp": "2025-11-11T00:59:31.9539224+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 73.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Import-Module, Import-Module"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 8,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 31.0,
+        "HasErrorLevel": true,
+        "FunctionCount": 9,
+        "HasInfoLevel": false,
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-.*Log": 26,
+          "Write-CustomLog": 4
+        }
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/PullRequestManager.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 3,
+        "ParameterCount": 8
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "2 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 90,
+      "Details": {
+        "Errors": 0,
+        "TotalIssues": 8,
+        "Warnings": 2,
+        "TopIssues": [
+          "Line 188: PSUseOutputTypeCorrectly - The cmdlet 'New-PullRequest' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 293: PSUseOutputTypeCorrectly - The cmdlet 'Update-PullRequest' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 467: PSUseOutputTypeCorrectly - The cmdlet 'Merge-PullRequest' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 512: PSUseOutputTypeCorrectly - The cmdlet 'Enable-PullRequestAutoMerge' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 545: PSUseOutputTypeCorrectly - The cmdlet 'Add-PullRequestComment' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Failed": 1,
+    "TotalChecks": 6,
+    "Skipped": 1,
+    "Warnings": 1,
+    "Passed": 3
+  }
+}

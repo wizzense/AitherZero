@@ -1,15 +1,7 @@
 {
-  "CodebaseStats": {
-    "TotalLines": 38725,
-    "BlankLines": 6353,
-    "CommentLines": 2699,
-    "TotalFiles": 50,
-    "CodeLines": 29673
-  },
-  "Functions": {
-    "Total": 608,
-    "MaxLength": 0,
-    "AverageLength": 0
+  "FileTypes": {
+    ".psm1": 45,
+    ".psd1": 1
   },
   "Modules": [
     {
@@ -38,11 +30,6 @@
       "Lines": 394
     },
     {
-      "Path": "aithercore/testing/AdvancedTestGenerator.psm1",
-      "Name": "AdvancedTestGenerator",
-      "Lines": 1051
-    },
-    {
       "Path": "aithercore/testing/AitherTestFramework.psm1",
       "Name": "AitherTestFramework",
       "Lines": 529
@@ -61,11 +48,6 @@
       "Path": "aithercore/testing/FunctionalTestFramework.psm1",
       "Name": "FunctionalTestFramework",
       "Lines": 769
-    },
-    {
-      "Path": "aithercore/testing/FunctionalTestGenerator.psm1",
-      "Name": "FunctionalTestGenerator",
-      "Lines": 458
     },
     {
       "Path": "aithercore/testing/FunctionalTestTemplates.psm1",
@@ -95,7 +77,7 @@
     {
       "Path": "aithercore/testing/TestingFramework.psm1",
       "Name": "TestingFramework",
-      "Lines": 1201
+      "Lines": 1356
     },
     {
       "Path": "aithercore/testing/ThreeTierValidation.psm1",
@@ -163,19 +145,9 @@
       "Lines": 702
     },
     {
-      "Path": "aithercore/utilities/ScriptAnalysis.psm1",
-      "Name": "ScriptAnalysis",
-      "Lines": 372
-    },
-    {
       "Path": "aithercore/utilities/TextUtilities.psm1",
       "Name": "TextUtilities",
       "Lines": 69
-    },
-    {
-      "Path": "aithercore/automation/AsyncOrchestration.psm1",
-      "Name": "AsyncOrchestration",
-      "Lines": 459
     },
     {
       "Path": "aithercore/automation/DeploymentAutomation.psm1",
@@ -258,13 +230,21 @@
       "Lines": 583
     }
   ],
-  "Timestamp": "2025-11-10T16:26:59Z",
-  "FileTypes": {
-    ".psd1": 1,
-    ".psm1": 49
+  "Functions": {
+    "MaxLength": 0,
+    "Total": 566,
+    "AverageLength": 0
+  },
+  "CodebaseStats": {
+    "TotalFiles": 46,
+    "TotalLines": 36540,
+    "CommentLines": 2558,
+    "BlankLines": 5982,
+    "CodeLines": 28000
   },
   "Complexity": {
-    "HighComplexityFunctions": [],
-    "AverageComplexity": 0
-  }
+    "AverageComplexity": 0,
+    "HighComplexityFunctions": []
+  },
+  "Timestamp": "2025-11-11T01:00:13Z"
 }
