@@ -4,17 +4,24 @@ name: 📊 Publish Test Reports & Dashboard to GitHub Pages
 # Publish comprehensive test reports, dashboards, and PR-specific status to GitHub Pages
 # Integrates with test-execution.yml and generates navigable reports for each PR
 'on':
+  # Called by master orchestrator for coordinated execution
+  workflow_call:
+    inputs:
+      force_publish:
+        description: 'Force publish even if no changes detected'
+        type: boolean
+        default: true
+      pr_number:
+        description: 'PR number for PR-specific publishing'
+        type: string
+        required: false
+  
+  # Automatic trigger after test completion
   workflow_run:
     workflows: ["🧪 Test Execution (Complete Suite)", "✅ PR Validation (v2 - CLI)", "🔍 Quality Validation (v2 - CLI)", "🚀 PR Complete Workflow"]
     types: [completed]
-  push:
-    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
-    paths:
-      - 'library/reports/**'
-      - 'library/tests/results/**'
-      - 'library/tests/coverage/**'
-  # DO NOT add pull_request trigger here - it causes premature execution before tests run
-  # This workflow should ONLY run after test-execution.yml completes via workflow_run trigger
+  
+  # Manual trigger
   workflow_dispatch:
     inputs:
       force_publish:

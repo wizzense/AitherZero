@@ -9,16 +9,19 @@ name: 🧪 Test Execution (Complete Suite)
 # - Coverage reporting and artifact collection
 
 'on':
-  push:
-    branches: [main, develop, dev, dev-staging]
-    paths:
-      - 'aithercore/**'
-      - 'library/automation-scripts/**'
-      - 'library/tests/**'
-      - '**.ps1'
-      - '**.psm1'
-  pull_request:
-    branches: [main, develop, dev, dev-staging]
+  # Called by master orchestrator for coordinated execution
+  workflow_call:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        type: string
+        default: 'all'
+      coverage:
+        description: 'Generate coverage report'
+        type: boolean
+        default: false
+  
+  # Direct triggers for standalone testing
   workflow_dispatch:
     inputs:
       test_suite:

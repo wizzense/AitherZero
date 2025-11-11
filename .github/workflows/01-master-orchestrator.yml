@@ -224,8 +224,8 @@ jobs:
   # Runs: Quick validation → Comprehensive testing → Build → Quality → Dashboard
   # ============================================================================
 
-  pr-ecosystem:
-    name: 🚀 PR Ecosystem (Full Pipeline)
+  pr-validation:
+    name: 🚀 PR Validation & Build
     needs: orchestration
     if: needs.orchestration.outputs.run-pr-workflow == 'true'
     uses: ./.github/workflows/02-pr-validation-build.yml
@@ -240,6 +240,40 @@ jobs:
       id-token: write
       checks: write
       statuses: write
+      actions: read
+
+  pr-tests:
+    name: 🧪 PR Test Execution
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true' &&
+      needs.orchestration.outputs.run-tests == 'true'
+    uses: ./.github/workflows/03-test-execution.yml
+    with:
+      test_suite: 'all'
+      coverage: true
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+  pr-dashboard:
+    name: 📊 PR Dashboard Publishing
+    needs: [orchestration, pr-validation, pr-tests]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/05-publish-reports-dashboard.yml
+    with:
+      force_publish: true
+      pr_number: ${{ github.event.pull_request.number }}
+    secrets: inherit
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
       actions: read
 
   # ============================================================================
@@ -418,7 +452,7 @@ jobs:
 
   summary:
     name: 📊 Workflow Summary
-    needs: [orchestration, pr-ecosystem, release-workflow, standalone-tests, standalone-build, standalone-docker, standalone-docs]
+    needs: [orchestration, pr-validation, pr-tests, pr-dashboard, release-workflow, standalone-tests, standalone-build, standalone-docker, standalone-docs]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -437,7 +471,9 @@ jobs:
           echo "### Executed Workflows" >> $GITHUB_STEP_SUMMARY
           echo "| Workflow | Executed | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| PR Complete | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-ecosystem.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Validation | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-validation.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Tests | ${{ needs.orchestration.outputs.run-tests }} | ${{ needs.pr-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Dashboard | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-dashboard.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Release | ${{ needs.orchestration.outputs.run-release }} | ${{ needs.release-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Tests | ${{ needs.orchestration.outputs.run-tests }} | ${{ needs.standalone-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ needs.orchestration.outputs.run-build }} | ${{ needs.standalone-build.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
