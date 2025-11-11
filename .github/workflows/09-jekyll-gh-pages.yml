@@ -1,32 +1,20 @@
 # Jekyll site to GitHub Pages - Enhanced with Reports
-# Branch-specific deployments: main → /, dev → /dev, dev-staging → /dev-staging
+# Coordinated deployment: only runs after tests complete and reports are generated
+# Flow: Push → Tests → Dashboard → Jekyll → GitHub Pages
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 'on':
-  # Runs on pushes targeting the default branch and ring branches
-  push:
-    branches:
-      [
-        "main",
-        "dev",
-        "develop",
-        "dev-staging",
-        "ring-0",
-        "ring-0-integrations",
-        "ring-1",
-        "ring-1-integrations",
-        "ring-2",
-      ]
-    # NOTE: Paths filter removed to ensure deployment on every push
-    # Previously only triggered when specific files changed, causing dashboard deployment to be skipped
-    # Now runs on every push to ensure reports and dashboards are always deployed
-    # paths:
-    #   - "library/reports/**"
-    #   - "library/**"
-    #   - "index.md"
-    #   - "_config.yml"
-    #   - "integrations/mcp-server/README.md"
-    #   - "integrations/mcp-server/QUICKSTART.md"
+  # NOTE: Push trigger removed - Jekyll now ONLY runs when triggered by dashboard workflow
+  # This ensures Jekyll deployment happens AFTER tests run and reports are generated
+  # The complete flow is: Push → 03-test-execution → 05-publish-reports-dashboard → 09-jekyll-gh-pages
+  #
+  # Previous behavior: Jekyll ran on every push, potentially before tests completed
+  # New behavior: Jekyll runs only after dashboard workflow triggers it (after tests complete)
+  #
+  # Benefits:
+  # - Dashboard always includes latest test results
+  # - No race conditions between test execution and deployment
+  # - Single coordinated workflow chain
 
   # Triggered by 05-publish-reports-dashboard.yml after reports are generated
   workflow_dispatch:
@@ -44,9 +32,6 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
         description: 'Run ID of the workflow that generated reports'
         required: false
         type: string
-
-  # Allows you to run this workflow manually from the Actions tab
-  # workflow_dispatch already defined above
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
