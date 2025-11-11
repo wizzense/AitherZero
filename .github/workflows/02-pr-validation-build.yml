@@ -4,7 +4,7 @@ name: 🚀 PR Ecosystem - Complete Validation & Build
 # Complete PR workflow that orchestrates all validation, testing, building, and reporting
 # This workflow runs automatically when PRs are opened, updated, or moved out of draft
 
-on:
+'on':
   # This workflow is called by 01-master-orchestrator.yml via workflow_call
   # Direct PR triggers removed to prevent duplicate runs and cancellations
   # The orchestrator handles all PR events and calls this workflow as needed
