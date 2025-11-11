@@ -32,6 +32,16 @@ try {
     # Fallback to basic output
 }
 
+# Import PlaybookHelpers module
+try {
+    $playbookHelpersPath = Join-Path $PSScriptRoot "PlaybookHelpers.psm1"
+    if (Test-Path $playbookHelpersPath) {
+        Import-Module $playbookHelpersPath -Force -Global -ErrorAction SilentlyContinue
+    }
+} catch {
+    # Helpers are optional
+}
+
 function Write-OrchestrationLog {
     param(
         [string]$Message,
@@ -45,30 +55,6 @@ function Write-OrchestrationLog {
     } else {
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
         Write-Host "[$timestamp] [ORCH] $Message"
-    }
-}
-
-function Get-NormalizedExitCode {
-    <#
-    .SYNOPSIS
-        Normalize exit code, treating null as success (0)
-    .DESCRIPTION
-        Helper function to handle null $LASTEXITCODE or exit codes from job results.
-        Treats null values as success (exit code 0) to ensure consistent exit code handling.
-    .PARAMETER ExitCode
-        The exit code to normalize (can be null)
-    .EXAMPLE
-        $exitCode = Get-NormalizedExitCode -ExitCode $LASTEXITCODE
-    #>
-    param(
-        [Parameter(Mandatory = $false)]
-        [object]$ExitCode
-    )
-    
-    if ($null -eq $ExitCode) { 
-        return 0 
-    } else { 
-        return $ExitCode 
     }
 }
 
@@ -1218,7 +1204,8 @@ function ConvertTo-NormalizedScriptDefinition {
         $scriptProp = $Definition['Script'] ?? $Definition['script'] ?? $Definition['ScriptPath'] ?? $Definition['scriptPath']
         if (-not $scriptProp) {
             $normalized.Valid = $false
-            $normalized.ValidationIssues += "Script definition missing 'Script' property"
+            $contextInfo = if ($ScriptNumber -ne 'Unknown') { " (Script #$ScriptNumber)" } else { "" }
+            $normalized.ValidationIssues += "Script definition$contextInfo missing 'Script' property. Available properties: $($Definition.Keys -join ', ')"
             return $normalized
         }
         $normalized.Script = $scriptProp
@@ -3403,4 +3390,8 @@ Export-ModuleMember -Function @(
     'Test-AitherAll'
     'Invoke-AitherDeploy'
     'Get-AitherConfig'
+    'New-PlaybookTemplate'
+    'Test-PlaybookDefinition'
+    'Get-PlaybookScriptInfo'
+    'ConvertTo-NormalizedParameter'
 ) -Alias @('seq', 'azw', 'aztest', 'azdeploy', 'azconfig')
