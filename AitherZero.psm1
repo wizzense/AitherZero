@@ -77,7 +77,6 @@ $modulesToLoad = @(
 
     # Automation (exports Invoke-OrchestrationSequence)
     './aithercore/automation/OrchestrationEngine.psm1',
-    './aithercore/automation/AsyncOrchestration.psm1',
     './aithercore/automation/GitHubWorkflowParser.psm1',
     './aithercore/automation/DeploymentAutomation.psm1',
     './aithercore/automation/ScriptUtilities.psm1',

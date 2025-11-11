@@ -60,7 +60,6 @@
             
             Components = @{
                 OrchestrationEngine = @{ Minimum = 85; Target = 95 }
-                AsyncOrchestration = @{ Minimum = 80; Target = 90 }
                 Playbooks = @{ Minimum = 75; Target = 85 }
                 ScriptUtilities = @{ Minimum = 85; Target = 95 }
             }

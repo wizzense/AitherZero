@@ -319,8 +319,6 @@ See [README.md](./README.md) for detailed information about this directory.
   - *Analyze GitHub Actions workflows for triggers, usage, and status*
 - ⚙️ [0950_Generate-AllTests.ps1](./0950_Generate-AllTests.ps1)
   - *Automatic Test Generation Orchestrator - "The 100% Solution"*
-- ⚙️ [0951_Generate-AllTests.ps1](./0951_Generate-AllTests.ps1)
-  - *Generate all tests with enhanced functional validation*
 - ⚙️ [0960_Track-DocumentationFreshness.ps1](./0960_Track-DocumentationFreshness.ps1)
   - *Track documentation freshness relative to code changes.*
 - ⚙️ [0961_Validate-DirectoryDocumentation.ps1](./0961_Validate-DirectoryDocumentation.ps1)
