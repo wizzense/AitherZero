@@ -248,6 +248,18 @@ jobs:
           
           # For non-root deployments, reorganize the site structure
           if [ "${DEST_DIR}" != "." ] && [ -n "${DEST_DIR}" ]; then
+            # Validate DEST_DIR doesn't contain path traversal sequences
+            if [[ "${DEST_DIR}" =~ \.\. ]] || [[ "${DEST_DIR}" =~ ^/ ]]; then
+              echo "❌ Invalid destination directory: ${DEST_DIR}"
+              exit 1
+            fi
+            
+            # Verify Jekyll build produced content
+            if [ ! "$(ls -A ./_site)" ]; then
+              echo "❌ Error: Jekyll build produced empty _site directory"
+              exit 1
+            fi
+            
             echo "🔄 Reorganizing site for branch-specific path: /${DEST_DIR}/"
             
             # Create temporary staging directory
@@ -255,8 +267,20 @@ jobs:
             
             # Move built site to the branch-specific subdirectory
             mkdir -p "./_site_staged/${DEST_DIR}"
-            mv ./_site/* "./_site_staged/${DEST_DIR}/" 2>/dev/null || true
-            mv ./_site/.* "./_site_staged/${DEST_DIR}/" 2>/dev/null || true
+            
+            # Move regular files and directories if any exist
+            if ls ./_site/* >/dev/null 2>&1; then
+              mv ./_site/* "./_site_staged/${DEST_DIR}/"
+            fi
+            
+            # Move hidden files (dotfiles), excluding . and ..
+            shopt -s dotglob nullglob
+            for item in ./_site/.*; do
+              if [[ "$(basename "$item")" != "." ]] && [[ "$(basename "$item")" != ".." ]]; then
+                mv "$item" "./_site_staged/${DEST_DIR}/"
+              fi
+            done
+            shopt -u dotglob nullglob
             
             # Replace _site with staged version
             rm -rf ./_site
@@ -267,12 +291,12 @@ jobs:
             ls -la ./_site/
             if [ -d "./_site/${DEST_DIR}" ]; then
               echo "📂 Branch directory contents:"
-              ls -la "./_site/${DEST_DIR}/" | head -15
+              ls -la "./_site/${DEST_DIR}/"
             fi
           else
             echo "ℹ️  Main branch - deploying to root (no reorganization needed)"
             echo "📂 Site structure:"
-            ls -la ./_site/ | head -15
+            ls -la ./_site/
           fi
 
       - name: 📤 Upload Pages Artifact

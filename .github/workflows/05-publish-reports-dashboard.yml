@@ -583,9 +583,17 @@ jobs:
             
             // Determine the actual branch to trigger on
             // Priority: PR head branch > ref_name (for push events)
-            const branch = prBranch || refName;
+            // Use explicit check to handle empty strings (not just falsy values)
+            const branch = prBranch && prBranch.trim() ? prBranch : refName;
+            
+            // Validate that branch is non-empty before proceeding
+            if (!branch || branch.trim() === '') {
+              core.setFailed('Cannot determine branch name for Jekyll deployment. Both prBranch and refName are empty.');
+              return;
+            }
             
             console.log(`Triggering Jekyll deployment for branch: ${branch}`);
+            console.log(`  Resolved from: ${prBranch && prBranch.trim() ? 'pr-branch output' : 'ref_name'}`);
             if (prNumber) {
               console.log(`PR context: #${prNumber} (head: ${prBranch})`);
             }
