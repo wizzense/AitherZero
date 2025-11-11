@@ -16,6 +16,11 @@ name: Diagnose CI Failures
     types: [completed]
     branches: [dev, main]
 
+# Concurrency control for diagnostics workflow
+concurrency:
+  group: diagnose-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
