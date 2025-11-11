@@ -187,7 +187,7 @@ jobs:
           PR_BASE: ${{ github.event.pull_request.base.ref }}
         run: |
           Write-Host "`n## 📦 PR #$env:PR_NUMBER Build Artifacts" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          Write-Host "**Target Branch:** \`$env:PR_BASE\`" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          Write-Host "**Target Branch:** ``$env:PR_BASE``" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
           Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
           
           if (Test-Path "AitherZero-*.zip") {
@@ -195,7 +195,7 @@ jobs:
             Write-Host "### Generated Packages" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
             foreach ($pkg in $packages) {
               $sizeMB = [math]::Round($pkg.Length / 1MB, 2)
-              Write-Host "- \`$($pkg.Name)\` ($sizeMB MB)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+              Write-Host "- ``$($pkg.Name)`` ($sizeMB MB)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
             }
           }
           

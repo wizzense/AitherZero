@@ -50,8 +50,8 @@ $script:Platform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } e
 #region Module Imports
 $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $modulePaths = @(
-    "$projectRoot/domains/ai-agents/ClaudeCodeIntegration.psm1"
-    "$projectRoot/domains/ai-agents/AIWorkflowOrchestrator.psm1"
+    "$projectRoot/aithercore/ai-agents/CopilotOrchestrator.psm1"
+    "$projectRoot/aithercore/ai-agents/AIWorkflowOrchestrator.psm1"
     "$projectRoot/aithercore/utilities/Logging.psm1"
     "$projectRoot/aithercore/configuration/Configuration.psm1"
 )
