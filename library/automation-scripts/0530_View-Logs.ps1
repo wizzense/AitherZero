@@ -30,7 +30,7 @@ param(
 $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 # Import LogViewer module
-$logViewerPath = Join-Path $ProjectRoot "domains/utilities/LogViewer.psm1"
+$logViewerPath = Join-Path $ProjectRoot "aithercore/utilities/LogViewer.psm1"
 if (Test-Path $logViewerPath) {
     Import-Module $logViewerPath -Force
 } else {
