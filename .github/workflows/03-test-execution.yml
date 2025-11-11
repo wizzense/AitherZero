@@ -7,8 +7,24 @@ name: 🧪 Test Execution (Complete Suite)
 # - Integration tests (automation-scripts, orchestration, etc.)
 # - Parallel execution for optimal performance
 # - Coverage reporting and artifact collection
+#
+# TRIGGERS:
+# 1. Push events to main/dev/dev-staging/ring-* branches (validates all merges)
+# 2. Called by pr-check.yml for PR validation (via workflow_call)
+# 3. Manual execution via workflow_dispatch
+#
+# OUTPUTS:
+# - Test results (XML, JSON) published as artifacts
+# - Coverage reports uploaded
+# - Triggers 05-publish-reports-dashboard.yml after completion (for branch pushes)
+#
+# Part of the complete build ecosystem that runs on every push!
 
 'on':
+  # Trigger on push to protected branches for full validation
+  push:
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+  
   # Called by master orchestrator for coordinated execution
   workflow_call:
     inputs:

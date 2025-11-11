@@ -1,10 +1,23 @@
 # AitherZero CI/CD Pipeline (Consolidated)
 
-## Overview
+## 🎯 Overview
 
-This is a **simple, fast, and reliable** CI/CD pipeline. No more spam, no more race conditions, no more bottlenecks.
+This is a **simple, fast, and reliable** CI/CD pipeline with **complete branch build ecosystem**.
 
 **13 workflows → 6 workflows** (3 core + 3 supporting)
+
+## 🚀 Complete Branch Build Ecosystem
+
+**Every push to main, dev, dev-staging, or ring-* branches gets a fully-published build:**
+
+- 🐳 **Docker Container** - Multi-platform image in GHCR
+- 🧪 **Test Execution** - Comprehensive validation
+- 📊 **Dashboard & Reports** - Interactive metrics
+- 📄 **GitHub Pages** - Branch-specific deployment
+
+**See:** [BRANCH-BUILD-ECOSYSTEM.md](BRANCH-BUILD-ECOSYSTEM.md) for complete details!
+
+---
 
 ## Core Workflows (What You Need to Know)
 
@@ -23,16 +36,18 @@ This is a **simple, fast, and reliable** CI/CD pipeline. No more spam, no more r
 
 **Jobs run in parallel** for maximum speed.
 
-### 2. `deploy.yml` - Deployment
+### 2. `deploy.yml` - Branch Deployment
 
 **Triggers:** Push to main, dev, dev-staging, ring-* branches
 
 **What it does:**
-- 🐳 **Build & Push Docker** - Build and push images to ghcr.io
-- 🎯 **Deploy to Staging** - Deploy to real staging environment (dev-staging branch only)
-- 📊 **Publish Dashboard** - Generate and publish branch-specific dashboards
+- 🐳 **Build & Push Docker** - Multi-platform images to ghcr.io
+- 🎯 **Deploy to Staging** - Real staging environment (dev-staging only)
+- 📊 **Comprehensive Summary** - Links to tests, dashboard, and all artifacts
 
-**Branch-specific concurrency:** No global locks. PRs don't block each other.
+**Branch-specific concurrency:** No global locks. Branches don't block each other.
+
+**Part of complete build ecosystem** - triggers tests and dashboard publishing!
 
 ### 3. `release.yml` - Release Automation
 
@@ -51,15 +66,18 @@ This is a **simple, fast, and reliable** CI/CD pipeline. No more spam, no more r
 
 ### 4. `03-test-execution.yml` - Test Execution
 
-**Used by:** `pr-check.yml` (via workflow_call)
-
-**Can also run standalone:** Manual workflow_dispatch
+**Triggers:** 
+- **Push to main/dev/dev-staging/ring-*** (NEW - validates all branch pushes!)
+- Called by `pr-check.yml` (via workflow_call)
+- Manual execution (workflow_dispatch)
 
 Comprehensive test suite with parallel execution:
 - Unit tests (by script ranges)
 - Domain tests (by module)
 - Integration tests (by suite)
 - Coverage analysis (optional)
+
+**Triggers after completion:** `05-publish-reports-dashboard.yml` for branch pushes
 
 **Posts detailed test summary comment** when called from PR context.
 

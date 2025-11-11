@@ -1,9 +1,30 @@
 ---
 name: 🚀 Deploy (Consolidated)
 
-# Single workflow for Docker builds and deployments (push events)
-# Handles: Docker builds, container registry, staging deployments
-# NOTE: GitHub Pages deployment handled by 09-jekyll-gh-pages.yml to avoid conflicts
+# Branch deployment workflow for main, dev, dev-staging, and ring branches
+# Triggers on push events and builds complete deployment ecosystem:
+#
+# 1. Docker Image Build & Push (this workflow)
+#    - Builds multi-platform images (amd64, arm64)
+#    - Pushes to GitHub Container Registry (ghcr.io)
+#    - Tags with branch name and commit SHA
+#
+# 2. Test Execution (03-test-execution.yml - triggers in parallel)
+#    - Runs comprehensive test suite
+#    - Generates test reports and coverage
+#    - Validates code quality
+#
+# 3. Dashboard Publishing (05-publish-reports-dashboard.yml - after tests)
+#    - Collects test results and metrics
+#    - Generates interactive dashboard
+#    - Publishes to branch-specific GitHub Pages path
+#
+# 4. GitHub Pages Deployment (09-jekyll-gh-pages.yml - on paths)
+#    - Builds Jekyll site
+#    - Deploys to branch-specific subdirectory
+#    - Provides navigation and documentation
+#
+# Result: Every push gets Docker image, tests, reports, and GitHub Pages!
 
 'on':
   push:
@@ -159,14 +180,43 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Determine branch path for GitHub Pages
+          BRANCH_PATH=""
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            BRANCH_PATH="${{ github.ref_name }}/"
+          fi
+          
           echo "### 📦 Docker Image" >> $GITHUB_STEP_SUMMARY
-          echo "- **Built:** ${{ needs.build-and-push-docker.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag:** \`$(echo "${{ needs.build-and-push-docker.outputs.image-tag }}" | head -n 1)\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ needs.build-and-push-docker.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** \`$(echo "${{ needs.build-and-push-docker.outputs.image-tag }}" | head -n 1)\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** [GitHub Container Registry](https://github.com/${{ github.repository }}/pkgs/container/$(echo ${{ github.repository }} | cut -d/ -f2 | tr '[:upper:]' '[:lower:]'))" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🎯 Staging" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ needs.deploy-to-staging.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🧪 Tests & Validation" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Execution:** Running in parallel workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** [Test Execution (Complete Suite)](https://github.com/${{ github.repository }}/actions/workflows/03-test-execution.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Check workflow runs for latest results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Dashboard" >> $GITHUB_STEP_SUMMARY
-          echo "- **Note:** Dashboard publishing handled by separate Jekyll workflow" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.ref_name != 'main' && github.ref_name || '' }}" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 📊 Dashboard & Reports" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reports URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH}library/reports/" >> $GITHUB_STEP_SUMMARY
+          echo "- **Publishing:** Handled by Jekyll workflow after test completion" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** [Jekyll GitHub Pages](https://github.com/${{ github.repository }}/actions/workflows/09-jekyll-gh-pages.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🎯 Staging Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ needs.deploy-to-staging.result || 'skipped (only for dev-staging branch)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [Docker Registry](https://github.com/${{ github.repository }}/pkgs/container/$(echo ${{ github.repository }} | cut -d/ -f2 | tr '[:upper:]' '[:lower:]'))" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Pages Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH})" >> $GITHUB_STEP_SUMMARY
+          echo "- [All Workflow Runs](https://github.com/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Complete build ecosystem includes: Docker image, test execution, reports dashboard, and GitHub Pages deployment.*" >> $GITHUB_STEP_SUMMARY
