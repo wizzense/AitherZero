@@ -100,8 +100,7 @@ $modulesToLoad = @(
     './aithercore/utilities/Maintenance.psm1',
     './aithercore/utilities/LogViewer.psm1',
     
-    # AI Agents (ClaudeCodeIntegration has syntax errors - temporarily excluded)
-    # './aithercore/ai-agents/ClaudeCodeIntegration.psm1',
+    # AI Agents
     './aithercore/ai-agents/CopilotOrchestrator.psm1',
     './aithercore/ai-agents/AIWorkflowOrchestrator.psm1',
     

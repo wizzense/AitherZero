@@ -1,0 +1,31 @@
+{
+  "ModuleTimings": {},
+  "TopSlowestModules": null,
+  "Performance": {
+    "MemoryRating": "Excellent",
+    "LoadTimeRating": "Excellent"
+  },
+  "Environment": {
+    "CI": true,
+    "PSVersion": "7.4.13",
+    "OS": "Linux"
+  },
+  "Modules": {
+    "ExportedCommands": 313,
+    "LoadedCount": 0,
+    "Total": 0,
+    "LoadPercentage": 100.0
+  },
+  "ModuleLoadTime": {
+    "TotalMs": 1085.2,
+    "PerModule": 0,
+    "TotalSeconds": 1.09
+  },
+  "Memory": {
+    "AfterLoadMB": 34.76,
+    "BaselineMB": 8.39,
+    "IncreaseMB": 26.36,
+    "IncreasePercent": 314.06
+  },
+  "Timestamp": "2025-11-11T04:26:58.0696004+00:00"
+}
