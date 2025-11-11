@@ -38,6 +38,7 @@ Describe '0799_cleanup-old-tags Integration' -Tag 'Integration', 'AutomationScri
                 $errors = $null
                 [System.Management.Automation.Language.Parser]::ParseFile(
                     $script:ScriptPath, [ref]$null, [ref]$errors
+                )
                 if ($errors.Count -gt 0) { throw "Parse errors: $errors" }
             } | Should -Not -Throw
         }
