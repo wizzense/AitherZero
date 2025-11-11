@@ -391,16 +391,16 @@ jobs:
           $indexContent += "- **Release Page:** [$releaseUrl]($releaseUrl)`n"
           $indexContent += "- **Packages:** [GitHub Releases]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases)`n`n"
           $indexContent += "### 🐳 Docker Images`n`n"
-          $indexContent += "- **Latest Release:** ``ghcr.io/$imageNameLower:latest```n"
-          $indexContent += "- **Version Tag:** ``ghcr.io/$imageNameLower:$latestRelease```n"
+          $indexContent += "- **Latest Release:** ``ghcr.io/${imageNameLower}:latest```n"
+          $indexContent += "- **Version Tag:** ``ghcr.io/${imageNameLower}:$latestRelease```n"
           $indexContent += "- **Package Registry:** [$packageUrl]($packageUrl)`n`n"
           $indexContent += "### 📥 Quick Install`n`n"
           $indexContent += "````powershell`n"
           $indexContent += "# One-line install (PowerShell)`n"
           $indexContent += "iwr -useb https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/main/bootstrap.ps1 | iex`n`n"
           $indexContent += "# Docker`n"
-          $indexContent += "docker pull ghcr.io/$imageNameLower:latest`n"
-          $indexContent += "docker run -it --rm ghcr.io/$imageNameLower:latest`n"
+          $indexContent += "docker pull ghcr.io/${imageNameLower}:latest`n"
+          $indexContent += "docker run -it --rm ghcr.io/${imageNameLower}:latest`n"
           $indexContent += "```````n`n"
           $indexContent += "---`n`n"
           $indexContent += "## 📋 Pull Request Dashboards`n`n"
@@ -423,7 +423,7 @@ jobs:
               
               # Include Docker container info for each PR
               $prDynamicPort = 8080 + ([int]$prNum % 100)
-              $indexContent += "- [PR #$prNum - $prTitle](library/reports/$($prDir.Name)/) 🐳 ``ghcr.io/$imageNameLower:pr-$prNum-latest`` (port: $prDynamicPort)`n"
+              $indexContent += "- [PR #$prNum - $prTitle](library/reports/$($prDir.Name)/) 🐳 ``ghcr.io/${imageNameLower}:pr-$prNum-latest`` (port: $prDynamicPort)`n"
             }
           } else {
             $indexContent += "*No open PRs with dashboards*`n"
@@ -439,9 +439,9 @@ jobs:
           $indexContent += "### 🐳 Container Registry`n`n"
           $indexContent += "All Docker containers are published to GitHub Container Registry:`n"
           $indexContent += "- **Main Package:** [$packageUrl]($packageUrl)`n"
-          $indexContent += "- **Latest Release:** ``ghcr.io/$imageNameLower:latest```n"
-          $indexContent += "- **PR Containers:** ``ghcr.io/$imageNameLower:pr-{number}-latest```n"
-          $indexContent += "- **Version Tags:** ``ghcr.io/$imageNameLower:{version}```n`n"
+          $indexContent += "- **Latest Release:** ``ghcr.io/${imageNameLower}:latest```n"
+          $indexContent += "- **PR Containers:** ``ghcr.io/${imageNameLower}:pr-{number}-latest```n"
+          $indexContent += "- **Version Tags:** ``ghcr.io/${imageNameLower}:{version}```n`n"
           $indexContent += "### 📦 Release Artifacts`n`n"
           $indexContent += "Each release includes:`n"
           $indexContent += "- ✅ **Platform Package** - AitherZero-v{version}.zip/tar.gz`n"
