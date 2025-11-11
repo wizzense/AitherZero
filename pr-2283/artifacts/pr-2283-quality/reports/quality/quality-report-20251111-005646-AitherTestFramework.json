@@ -1,0 +1,106 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/AitherTestFramework.psm1",
+  "FileName": "AitherTestFramework.psm1",
+  "Timestamp": "2025-11-11T00:56:18.4405035+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 65.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Directory creation, Remove-Item, Import-Module"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 5,
+        "HasErrorLogging": true,
+        "HasErrorActionPreference": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Failed",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow",
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 65,
+      "Details": {
+        "TotalLoggingCalls": 18.0,
+        "FunctionCount": 12,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 16
+        },
+        "HasErrorLevel": false,
+        "HasInfoLevel": false,
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/AitherTestFramework.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 2,
+        "ParameterCount": 3
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "Workflows": [],
+        "ShouldBeInCI": true,
+        "IntegratedInWorkflows": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "3 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 85,
+      "Details": {
+        "TopIssues": [
+          "Line 456: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'AitherTestFramework.psm1'",
+          "Line 300: PSUseDeclaredVarsMoreThanAssignments - The variable 'framework' is assigned but never used.",
+          "Line 149: PSUseOutputTypeCorrectly - The cmdlet 'Initialize-TestFramework' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 193: PSUseOutputTypeCorrectly - The cmdlet 'Register-TestSuite' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+        ],
+        "TotalIssues": 9,
+        "Warnings": 3,
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Skipped": 0,
+    "Passed": 0,
+    "TotalChecks": 6,
+    "Failed": 2,
+    "Warnings": 4
+  }
+}

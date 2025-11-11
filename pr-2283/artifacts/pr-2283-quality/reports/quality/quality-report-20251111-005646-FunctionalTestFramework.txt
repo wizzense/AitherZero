@@ -1,0 +1,42 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: FunctionalTestFramework.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/testing/FunctionalTestFramework.psm1
+Timestamp: 11/11/2025 00:56:21
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 68%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 2
+  Failed: 1
+  Warnings: 3
+  Skipped: 0
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Warning] ErrorHandling - Score: 70%
+  Findings:
+    - Consider wrapping these risky operations in try/catch: Invoke-WebRequest, Invoke-WebRequest, Directory creation, Directory creation, Directory creation, Remove-Item
+
+[Passed] Logging - Score: 90%
+  Findings:
+    - Some functions may lack logging statements
+
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/FunctionalTestFramework.Tests.ps1
+
+[Passed] UIIntegration - Score: 100%
+[Warning] GitHubActions - Score: 70%
+  Findings:
+    - Component should be integrated into CI/CD workflows
+
+[Warning] PSScriptAnalyzer - Score: 80%
+  Findings:
+    - 4 PSScriptAnalyzer warning(s) found
+
+================================================================================

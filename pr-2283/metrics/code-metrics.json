@@ -1,0 +1,250 @@
+{
+  "FileTypes": {
+    ".psm1": 45,
+    ".psd1": 1
+  },
+  "Timestamp": "2025-11-11T00:57:14Z",
+  "Modules": [
+    {
+      "Path": "aithercore/documentation/DocumentationEngine.psm1",
+      "Lines": 1146,
+      "Name": "DocumentationEngine"
+    },
+    {
+      "Path": "aithercore/documentation/ProjectIndexer.psm1",
+      "Lines": 843,
+      "Name": "ProjectIndexer"
+    },
+    {
+      "Path": "aithercore/reporting/DashboardGeneration.psm1",
+      "Lines": 272,
+      "Name": "DashboardGeneration"
+    },
+    {
+      "Path": "aithercore/reporting/ReportingEngine.psm1",
+      "Lines": 1517,
+      "Name": "ReportingEngine"
+    },
+    {
+      "Path": "aithercore/reporting/TechDebtAnalysis.psm1",
+      "Lines": 394,
+      "Name": "TechDebtAnalysis"
+    },
+    {
+      "Path": "aithercore/testing/AitherTestFramework.psm1",
+      "Lines": 529,
+      "Name": "AitherTestFramework"
+    },
+    {
+      "Path": "aithercore/testing/AutoTestGenerator.psm1",
+      "Lines": 714,
+      "Name": "AutoTestGenerator"
+    },
+    {
+      "Path": "aithercore/testing/CoreTestSuites.psm1",
+      "Lines": 408,
+      "Name": "CoreTestSuites"
+    },
+    {
+      "Path": "aithercore/testing/FunctionalTestFramework.psm1",
+      "Lines": 769,
+      "Name": "FunctionalTestFramework"
+    },
+    {
+      "Path": "aithercore/testing/FunctionalTestTemplates.psm1",
+      "Lines": 614,
+      "Name": "FunctionalTestTemplates"
+    },
+    {
+      "Path": "aithercore/testing/PlaybookTestFramework.psm1",
+      "Lines": 633,
+      "Name": "PlaybookTestFramework"
+    },
+    {
+      "Path": "aithercore/testing/QualityValidator.psm1",
+      "Lines": 1069,
+      "Name": "QualityValidator"
+    },
+    {
+      "Path": "aithercore/testing/TestCacheManager.psm1",
+      "Lines": 406,
+      "Name": "TestCacheManager"
+    },
+    {
+      "Path": "aithercore/testing/TestGenerator.psm1",
+      "Lines": 547,
+      "Name": "TestGenerator"
+    },
+    {
+      "Path": "aithercore/testing/TestingFramework.psm1",
+      "Lines": 1201,
+      "Name": "TestingFramework"
+    },
+    {
+      "Path": "aithercore/testing/ThreeTierValidation.psm1",
+      "Lines": 675,
+      "Name": "ThreeTierValidation"
+    },
+    {
+      "Path": "aithercore/configuration/ConfigManager.psm1",
+      "Lines": 667,
+      "Name": "ConfigManager"
+    },
+    {
+      "Path": "aithercore/configuration/Configuration.psm1",
+      "Lines": 1544,
+      "Name": "Configuration"
+    },
+    {
+      "Path": "aithercore/cli/AitherZeroCLI.psm1",
+      "Lines": 1840,
+      "Name": "AitherZeroCLI"
+    },
+    {
+      "Path": "aithercore/utilities/Bootstrap.psm1",
+      "Lines": 713,
+      "Name": "Bootstrap"
+    },
+    {
+      "Path": "aithercore/utilities/EnvironmentConfig.psm1",
+      "Lines": 864,
+      "Name": "EnvironmentConfig"
+    },
+    {
+      "Path": "aithercore/utilities/Logging.psm1",
+      "Lines": 967,
+      "Name": "Logging"
+    },
+    {
+      "Path": "aithercore/utilities/LoggingDashboard.psm1",
+      "Lines": 600,
+      "Name": "LoggingDashboard"
+    },
+    {
+      "Path": "aithercore/utilities/LoggingEnhancer.psm1",
+      "Lines": 403,
+      "Name": "LoggingEnhancer"
+    },
+    {
+      "Path": "aithercore/utilities/LogViewer.psm1",
+      "Lines": 566,
+      "Name": "LogViewer"
+    },
+    {
+      "Path": "aithercore/utilities/Maintenance.psm1",
+      "Lines": 576,
+      "Name": "Maintenance"
+    },
+    {
+      "Path": "aithercore/utilities/PackageManager.psm1",
+      "Lines": 490,
+      "Name": "PackageManager"
+    },
+    {
+      "Path": "aithercore/utilities/Performance.psm1",
+      "Lines": 702,
+      "Name": "Performance"
+    },
+    {
+      "Path": "aithercore/utilities/TextUtilities.psm1",
+      "Lines": 69,
+      "Name": "TextUtilities"
+    },
+    {
+      "Path": "aithercore/automation/DeploymentAutomation.psm1",
+      "Lines": 633,
+      "Name": "DeploymentAutomation"
+    },
+    {
+      "Path": "aithercore/automation/GitHubWorkflowParser.psm1",
+      "Lines": 558,
+      "Name": "GitHubWorkflowParser"
+    },
+    {
+      "Path": "aithercore/automation/OrchestrationEngine.psm1",
+      "Lines": 3406,
+      "Name": "OrchestrationEngine"
+    },
+    {
+      "Path": "aithercore/automation/ScriptUtilities.psm1",
+      "Lines": 575,
+      "Name": "ScriptUtilities"
+    },
+    {
+      "Path": "aithercore/security/Encryption.psm1",
+      "Lines": 520,
+      "Name": "Encryption"
+    },
+    {
+      "Path": "aithercore/security/LicenseManager.psm1",
+      "Lines": 581,
+      "Name": "LicenseManager"
+    },
+    {
+      "Path": "aithercore/security/Security.psm1",
+      "Lines": 2097,
+      "Name": "Security"
+    },
+    {
+      "Path": "aithercore/infrastructure/DeploymentArtifacts.psm1",
+      "Lines": 889,
+      "Name": "DeploymentArtifacts"
+    },
+    {
+      "Path": "aithercore/infrastructure/Infrastructure.psm1",
+      "Lines": 965,
+      "Name": "Infrastructure"
+    },
+    {
+      "Path": "aithercore/development/DeveloperTools.psm1",
+      "Lines": 779,
+      "Name": "DeveloperTools"
+    },
+    {
+      "Path": "aithercore/development/GitAutomation.psm1",
+      "Lines": 581,
+      "Name": "GitAutomation"
+    },
+    {
+      "Path": "aithercore/development/IssueTracker.psm1",
+      "Lines": 617,
+      "Name": "IssueTracker"
+    },
+    {
+      "Path": "aithercore/development/PullRequestManager.psm1",
+      "Lines": 648,
+      "Name": "PullRequestManager"
+    },
+    {
+      "Path": "aithercore/ai-agents/AIWorkflowOrchestrator.psm1",
+      "Lines": 456,
+      "Name": "AIWorkflowOrchestrator"
+    },
+    {
+      "Path": "aithercore/ai-agents/ClaudeCodeIntegration.psm1",
+      "Lines": 707,
+      "Name": "ClaudeCodeIntegration"
+    },
+    {
+      "Path": "aithercore/ai-agents/CopilotOrchestrator.psm1",
+      "Lines": 583,
+      "Name": "CopilotOrchestrator"
+    }
+  ],
+  "Complexity": {
+    "AverageComplexity": 0,
+    "HighComplexityFunctions": []
+  },
+  "CodebaseStats": {
+    "CommentLines": 2553,
+    "BlankLines": 5952,
+    "TotalLines": 36385,
+    "TotalFiles": 46,
+    "CodeLines": 27880
+  },
+  "Functions": {
+    "Total": 564,
+    "MaxLength": 0,
+    "AverageLength": 0
+  }
+}

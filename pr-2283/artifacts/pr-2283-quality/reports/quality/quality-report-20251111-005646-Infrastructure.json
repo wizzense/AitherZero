@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/infrastructure/Infrastructure.psm1",
+  "FileName": "Infrastructure.psm1",
+  "Timestamp": "2025-11-11T00:56:40.4249213+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 66.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 12,
+        "HasErrorLogging": true,
+        "HasFinallyBlock": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "TotalLoggingCalls": 74.0,
+        "FunctionCount": 13,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 72
+        },
+        "HasErrorLevel": true,
+        "HasInfoLevel": false,
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Infrastructure.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 4,
+        "ParameterCount": 19
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "9 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 55,
+      "Details": {
+        "TopIssues": [
+          "Line 33: PSAvoidGlobalVars - Found global variable 'global:AitherZeroInfrastructureInitialized'.",
+          "Line 240: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 264: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 322: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 349: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "TotalIssues": 41,
+        "Warnings": 9,
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Skipped": 1,
+    "Passed": 2,
+    "TotalChecks": 6,
+    "Failed": 2,
+    "Warnings": 1
+  }
+}

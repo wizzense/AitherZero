@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/security/Encryption.psm1",
+  "FileName": "Encryption.psm1",
+  "Timestamp": "2025-11-11T00:56:38.0669734+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 74.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 6,
+        "HasErrorLogging": true,
+        "HasFinallyBlock": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "TotalLoggingCalls": 17.0,
+        "FunctionCount": 7,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 15
+        },
+        "HasErrorLevel": true,
+        "HasInfoLevel": false,
+        "HasWarningLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Encryption.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasCmdletBinding": true,
+        "HelpSections": 4,
+        "ParameterCount": 12
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "1 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 95,
+      "Details": {
+        "TopIssues": [
+          "Line 50: PSAvoidGlobalVars - Found global variable 'global:AitherZeroEncryptionInitialized'.",
+          "Line 6: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 11: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 35: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 56: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "TotalIssues": 92,
+        "Warnings": 1,
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Skipped": 1,
+    "Passed": 3,
+    "TotalChecks": 6,
+    "Failed": 1,
+    "Warnings": 1
+  }
+}

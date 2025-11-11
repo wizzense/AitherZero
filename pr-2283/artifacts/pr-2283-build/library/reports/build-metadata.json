@@ -1,0 +1,53 @@
+{
+  "git": {
+    "commit_date": "2025-11-10T16:42:36Z",
+    "commit_sha": "3705fdcff83357c8a6df62c1e92aee90f1d6f79b",
+    "commits_count": "1",
+    "tag": null,
+    "branch": "HEAD",
+    "commit_message": [
+      "Merge 428225515781400f953aa7b75cd205b5d09127ef into acae41bc4802a377cb51b466895500ed16efc7e1",
+      ""
+    ],
+    "commit_short": "3705fdcf",
+    "commit_author": "Copilot"
+  },
+  "environment": {
+    "runner_os": "Linux",
+    "powershell_version": "7.4.13",
+    "ci": true,
+    "workflow": "🚀 PR Ecosystem - Complete Validation & Build",
+    "os": "Ubuntu 24.04.3 LTS",
+    "job": "build",
+    "platform": "GitHub Actions",
+    "run_number": "62",
+    "run_id": "19251182998"
+  },
+  "pages": {
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2283/merge/pr-2283/",
+    "branch_path": "/2283/merge",
+    "branch": "2283/merge",
+    "base_url": "https://wizzense.github.io/AitherZero/2283/merge",
+    "pr_reports": "https://wizzense.github.io/AitherZero/2283/merge/pr-2283/reports/"
+  },
+  "generated_at": "2025-11-11T00:54:41Z",
+  "version": "1.0.0",
+  "artifacts": {
+    "package_prefix": "AitherZero-PR2283",
+    "pr_container_tags": [
+      "pr-2283-3705fdcf",
+      "pr-2283-latest"
+    ],
+    "container_image_base": "ghcr.io/wizzense/aitherzero"
+  },
+  "pr": {
+    "number": 2283,
+    "base_branch": "dev-staging",
+    "author": "wizzense",
+    "base_sha": null,
+    "head_branch": "copilot/remove-old-testing-modules",
+    "url": "https://github.com/wizzense/AitherZero/pull/2283",
+    "title": null,
+    "head_sha": "3705fdcff83357c8a6df62c1e92aee90f1d6f79b"
+  }
+}
