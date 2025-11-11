@@ -373,7 +373,7 @@ jobs:
 
 [OK] **Deployment complete!** Your PR dashboard is now live.
 
-### 📍 Live URLs
+### [URLs] Live URLs
 
 - [Main] **Main Dashboard:** [${dashboardUrl}](${dashboardUrl})
 - [Dashboard] **PR #${prNumber} Dashboard:** [${prDashboardUrl}](${prDashboardUrl})
