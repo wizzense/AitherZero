@@ -2,7 +2,7 @@
 # Branch-specific deployments: main → /, dev → /dev, dev-staging → /dev-staging
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
-on:
+'on':
   # Runs on pushes targeting the default branch and ring branches
   push:
     branches:

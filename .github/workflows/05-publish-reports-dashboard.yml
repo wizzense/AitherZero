@@ -3,7 +3,7 @@ name: 📊 Publish Test Reports & Dashboard to GitHub Pages
 
 # Publish comprehensive test reports, dashboards, and PR-specific status to GitHub Pages
 # Integrates with test-execution.yml and generates navigable reports for each PR
-on:
+'on':
   workflow_run:
     workflows: ["🧪 Test Execution (Complete Suite)", "✅ PR Validation (v2 - CLI)", "🔍 Quality Validation (v2 - CLI)", "🚀 PR Complete Workflow"]
     types: [completed]

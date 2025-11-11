@@ -5,7 +5,7 @@ name: 🏷️ Update PR Title with Branch Info
 # Format: [source→target] Title
 # Example: [devstaging→dev] Add new feature
 
-on:
+'on':
   pull_request:
     types: [opened, synchronize, reopened]
 

@@ -1,6 +1,6 @@
 name: Diagnose CI Failures
 
-on:
+'on':
   workflow_dispatch:
     inputs:
       run_id:

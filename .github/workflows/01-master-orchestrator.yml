@@ -7,7 +7,7 @@ name: 🎯 PR Ecosystem & CI/CD Orchestrator
 # 🚀 For Pushes: Runs CI/CD pipeline
 # 📦 For Releases: Executes full release workflow
 
-on:
+'on':
   pull_request:
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
     types: [opened, synchronize, reopened, ready_for_review]

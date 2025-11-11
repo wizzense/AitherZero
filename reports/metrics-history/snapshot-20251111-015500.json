@@ -1,0 +1,49 @@
+{
+  "Date": "2025-11-11",
+  "Functions": 984,
+  "DocumentationCoverage": {
+    "Percentage": 10.0,
+    "FunctionsWithDocs": 98,
+    "FunctionsWithoutDocs": 884,
+    "TotalFunctions": 984
+  },
+  "Timestamp": "2025-11-11T01:55:00.5675376+00:00",
+  "QualityCoverage": {
+    "ScoreBreakdown": {
+      "PSScriptAnalyzer": 67,
+      "CodeCoverage": 20,
+      "DocumentationCoverage": 10.0,
+      "TestCoverage": 0.0
+    },
+    "FailedFiles": 0,
+    "TotalIssues": 22,
+    "TotalValidated": 263,
+    "WarningFiles": 22,
+    "PassedFiles": 241,
+    "Percentage": 0,
+    "AverageScore": 30.8
+  },
+  "Tests": {
+    "Total": 2739,
+    "Unit": 351,
+    "Passed": 552,
+    "Duration": "49.2s",
+    "Failed": 2019,
+    "Skipped": 168,
+    "LastRun": "2025-11-11 01:53:39",
+    "SuccessRate": 20.2,
+    "Integration": 344
+  },
+  "LinesOfCode": 103404,
+  "TestCoverage": {
+    "TotalFiles": 1,
+    "Percentage": 0.0,
+    "FilesWithTests": 0,
+    "FilesWithoutTests": 1
+  },
+  "LineCoverage": {
+    "CoveredLines": 0,
+    "Percentage": 0,
+    "TotalLines": 0
+  }
+}

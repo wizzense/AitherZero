@@ -8,7 +8,7 @@ name: 🧪 Test Execution (Complete Suite)
 # - Parallel execution for optimal performance
 # - Coverage reporting and artifact collection
 
-on:
+'on':
   push:
     branches: [main, develop, dev, dev-staging]
     paths:

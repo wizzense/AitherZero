@@ -1,7 +1,7 @@
 ---
 name: 🗂️ Project Indexes
 
-on:
+'on':
   pull_request:
     types: [opened, synchronize, reopened]
   push:
