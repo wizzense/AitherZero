@@ -494,13 +494,23 @@ jobs:
           $prDir = "./library/reports/pr-$env:PR_NUMBER"
           New-Item -ItemType Directory -Path $prDir -Force | Out-Null
           
-          # Copy dashboard output
+          # Copy dashboard output from reports/dashboard/ (from 0525 script)
           if (Test-Path "./reports/dashboard") {
             Copy-Item -Path "./reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
-            Write-Host "✅ Copied modern dashboard" -ForegroundColor Green
+            Write-Host "✅ Copied modular dashboard (reports/dashboard/)" -ForegroundColor Green
           } else {
-            Write-Host "⚠️ Dashboard output not found" -ForegroundColor Yellow
-            $failedSteps += "Dashboard output copy"
+            Write-Host "⚠️ Modular dashboard not found at reports/dashboard/" -ForegroundColor Yellow
+            $failedSteps += "Modular dashboard copy"
+          }
+          
+          # Copy individual dashboard files from reports/ (from 0512 script)
+          $dashboardFiles = @('dashboard.html', 'dashboard.json', 'dashboard.md')
+          foreach ($file in $dashboardFiles) {
+            $sourcePath = "./reports/$file"
+            if (Test-Path $sourcePath) {
+              Copy-Item -Path $sourcePath -Destination $prDir -Force
+              Write-Host "✅ Copied $file from reports/" -ForegroundColor Green
+            }
           }
           
           # Copy metrics

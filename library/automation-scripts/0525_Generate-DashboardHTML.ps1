@@ -39,8 +39,9 @@ Import-Module (Join-Path $projectRoot "aithercore/reporting/DashboardGeneration.
 try {
     Write-ScriptLog "Generating dashboard HTML..." -Source "0525_Generate-DashboardHTML"
     
-    # Initialize dashboard session
-    $session = Initialize-DashboardSession -ProjectPath $projectRoot -OutputPath $OutputPath
+    # Initialize dashboard session - use parent directory, not file path
+    $outputDir = Split-Path $OutputPath -Parent
+    $session = Initialize-DashboardSession -ProjectPath $projectRoot -OutputPath $outputDir
     
     # Load all metrics
     $metrics = @{}
@@ -56,7 +57,7 @@ try {
         $path = Join-Path $MetricsPath $metricFiles[$key]
         if (Test-Path $path) {
             Write-ScriptLog "Loading $key metrics from $path..."
-            $metrics[$key] = Import-MetricsFromJSON -Path $path
+            $metrics[$key] = Import-MetricsFromJSON -FilePath $path -Category $key
         }
         else {
             Write-ScriptLog "$key metrics not found at $path, using defaults" -Level 'Warning'
@@ -124,11 +125,8 @@ try {
     # Write HTML
     $template | Set-Content -Path $OutputPath -Encoding UTF8
     
-    # Register in session
-    Register-DashboardMetrics -Session $session -MetricsData $metrics
-    
-    # Complete session
-    Complete-DashboardSession -Session $session
+    # Complete dashboard session
+    Complete-DashboardSession
     
     Write-ScriptLog "Dashboard generated successfully at $OutputPath" -Level 'Information'
     Write-ScriptLog "Health: $healthScore% | Tests: $testPassRate% | Coverage: $coverage% | Quality: $qualityScore" -Level 'Information'
