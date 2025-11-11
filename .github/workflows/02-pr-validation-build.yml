@@ -5,12 +5,9 @@ name: 🚀 PR Ecosystem - Complete Validation & Build
 # This workflow runs automatically when PRs are opened, updated, or moved out of draft
 
 on:
-  # Direct PR triggers - THIS MAKES THE WORKFLOW RUN!
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
-  
-  # Reusable workflow call (for orchestration if needed)
+  # This workflow is called by 01-master-orchestrator.yml via workflow_call
+  # Direct PR triggers removed to prevent duplicate runs and cancellations
+  # The orchestrator handles all PR events and calls this workflow as needed
   workflow_call:
     inputs:
       pr_number:
