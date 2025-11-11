@@ -411,10 +411,10 @@ jobs:
   # ============================================================================
   # FINAL SUMMARY
   # ============================================================================
-  
+
   summary:
     name: 📊 Workflow Summary
-    needs: [orchestration, pr-workflow, release-workflow, standalone-tests, standalone-build, standalone-docker, standalone-docs]
+    needs: [orchestration, pr-ecosystem, release-workflow, standalone-tests, standalone-build, standalone-docker, standalone-docs]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -433,7 +433,7 @@ jobs:
           echo "### Executed Workflows" >> $GITHUB_STEP_SUMMARY
           echo "| Workflow | Executed | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| PR Complete | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Complete | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-ecosystem.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Release | ${{ needs.orchestration.outputs.run-release }} | ${{ needs.release-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Tests | ${{ needs.orchestration.outputs.run-tests }} | ${{ needs.standalone-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ needs.orchestration.outputs.run-build }} | ${{ needs.standalone-build.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
