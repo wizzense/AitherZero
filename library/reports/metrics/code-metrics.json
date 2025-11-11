@@ -1,15 +1,10 @@
 {
-  "CodebaseStats": {
-    "TotalFiles": 46,
-    "TotalLines": 36540,
-    "CommentLines": 2558,
-    "BlankLines": 5982,
-    "CodeLines": 28000
+  "Functions": {
+    "MaxLength": 0,
+    "AverageLength": 0,
+    "Total": 437
   },
-  "Complexity": {
-    "AverageComplexity": 0,
-    "HighComplexityFunctions": []
-  },
+  "Timestamp": "2025-11-11T07:03:45Z",
   "Modules": [
     {
       "Lines": 1146,
@@ -52,44 +47,9 @@
       "Path": "aithercore/testing/CoreTestSuites.psm1"
     },
     {
-      "Lines": 769,
-      "Name": "FunctionalTestFramework",
-      "Path": "aithercore/testing/FunctionalTestFramework.psm1"
-    },
-    {
-      "Lines": 614,
-      "Name": "FunctionalTestTemplates",
-      "Path": "aithercore/testing/FunctionalTestTemplates.psm1"
-    },
-    {
-      "Lines": 633,
-      "Name": "PlaybookTestFramework",
-      "Path": "aithercore/testing/PlaybookTestFramework.psm1"
-    },
-    {
-      "Lines": 1069,
-      "Name": "QualityValidator",
-      "Path": "aithercore/testing/QualityValidator.psm1"
-    },
-    {
-      "Lines": 406,
-      "Name": "TestCacheManager",
-      "Path": "aithercore/testing/TestCacheManager.psm1"
-    },
-    {
-      "Lines": 547,
-      "Name": "TestGenerator",
-      "Path": "aithercore/testing/TestGenerator.psm1"
-    },
-    {
       "Lines": 1356,
       "Name": "TestingFramework",
       "Path": "aithercore/testing/TestingFramework.psm1"
-    },
-    {
-      "Lines": 675,
-      "Name": "ThreeTierValidation",
-      "Path": "aithercore/testing/ThreeTierValidation.psm1"
     },
     {
       "Lines": 667,
@@ -107,11 +67,6 @@
       "Path": "aithercore/cli/AitherZeroCLI.psm1"
     },
     {
-      "Lines": 713,
-      "Name": "Bootstrap",
-      "Path": "aithercore/utilities/Bootstrap.psm1"
-    },
-    {
       "Lines": 864,
       "Name": "EnvironmentConfig",
       "Path": "aithercore/utilities/EnvironmentConfig.psm1"
@@ -120,16 +75,6 @@
       "Lines": 967,
       "Name": "Logging",
       "Path": "aithercore/utilities/Logging.psm1"
-    },
-    {
-      "Lines": 600,
-      "Name": "LoggingDashboard",
-      "Path": "aithercore/utilities/LoggingDashboard.psm1"
-    },
-    {
-      "Lines": 403,
-      "Name": "LoggingEnhancer",
-      "Path": "aithercore/utilities/LoggingEnhancer.psm1"
     },
     {
       "Lines": 566,
@@ -152,11 +97,6 @@
       "Path": "aithercore/utilities/Performance.psm1"
     },
     {
-      "Lines": 69,
-      "Name": "TextUtilities",
-      "Path": "aithercore/utilities/TextUtilities.psm1"
-    },
-    {
       "Lines": 633,
       "Name": "DeploymentAutomation",
       "Path": "aithercore/automation/DeploymentAutomation.psm1"
@@ -167,9 +107,14 @@
       "Path": "aithercore/automation/GitHubWorkflowParser.psm1"
     },
     {
-      "Lines": 3406,
+      "Lines": 3397,
       "Name": "OrchestrationEngine",
       "Path": "aithercore/automation/OrchestrationEngine.psm1"
+    },
+    {
+      "Lines": 704,
+      "Name": "PlaybookHelpers",
+      "Path": "aithercore/automation/PlaybookHelpers.psm1"
     },
     {
       "Lines": 575,
@@ -202,11 +147,6 @@
       "Path": "aithercore/infrastructure/Infrastructure.psm1"
     },
     {
-      "Lines": 779,
-      "Name": "DeveloperTools",
-      "Path": "aithercore/development/DeveloperTools.psm1"
-    },
-    {
       "Lines": 581,
       "Name": "GitAutomation",
       "Path": "aithercore/development/GitAutomation.psm1"
@@ -227,24 +167,24 @@
       "Path": "aithercore/ai-agents/AIWorkflowOrchestrator.psm1"
     },
     {
-      "Lines": 707,
-      "Name": "ClaudeCodeIntegration",
-      "Path": "aithercore/ai-agents/ClaudeCodeIntegration.psm1"
-    },
-    {
       "Lines": 583,
       "Name": "CopilotOrchestrator",
       "Path": "aithercore/ai-agents/CopilotOrchestrator.psm1"
     }
   ],
-  "FileTypes": {
-    ".psm1": 45,
-    ".psd1": 1
+  "Complexity": {
+    "HighComplexityFunctions": [],
+    "AverageComplexity": 0
   },
-  "Timestamp": "2025-11-11T01:38:21Z",
-  "Functions": {
-    "AverageLength": 0,
-    "MaxLength": 0,
-    "Total": 566
+  "FileTypes": {
+    ".psd1": 1,
+    ".psm1": 33
+  },
+  "CodebaseStats": {
+    "BlankLines": 4860,
+    "CommentLines": 2045,
+    "TotalFiles": 34,
+    "CodeLines": 22346,
+    "TotalLines": 29251
   }
 }

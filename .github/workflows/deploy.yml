@@ -1,9 +1,9 @@
 ---
 name: 🚀 Deploy (Consolidated)
 
-# Single workflow for all deployment (push events)
-# Replaces: Parts of 04-deploy-pr-environment, 05-publish-reports-dashboard, 09-jekyll-gh-pages, 30-ring-status-dashboard
-# Handles: Docker builds, environment deployments, dashboard publishing
+# Single workflow for Docker builds and deployments (push events)
+# Handles: Docker builds, container registry, staging deployments
+# NOTE: GitHub Pages deployment handled by 09-jekyll-gh-pages.yml to avoid conflicts
 
 'on':
   push:
@@ -136,100 +136,18 @@ jobs:
           echo "✅ Staging deployment complete"
 
   # ============================================================================
-  # PUBLISH-DASHBOARD: Generate and publish dashboards to GitHub Pages
+  # PUBLISH-DASHBOARD: Dashboard publishing is handled by 09-jekyll-gh-pages.yml
+  # This job is disabled to avoid GitHub Pages deployment conflicts
   # ============================================================================
-  publish-dashboard:
-    name: 📊 Publish Dashboard
-    needs: build-and-push-docker
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 🔧 Bootstrap
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-
-      - name: 📊 Generate Dashboard
-        shell: pwsh
-        run: |
-          Import-Module ./AitherZero.psd1 -Force
-          
-          Write-Host "📊 Generating comprehensive dashboard for ${{ github.ref_name }}" -ForegroundColor Cyan
-          
-          # Use the complete dashboard generation playbook
-          # This runs metrics collection (0520-0524) + HTML generation (0525) sequentially
-          Invoke-AitherPlaybook -Name dashboard-generation-complete -ErrorAction Continue
-          
-          # Collect ring-specific metrics if applicable
-          if ("${{ github.ref_name }}" -match "^ring-") {
-            Write-Host "📊 Collecting ring-specific metrics..." -ForegroundColor Cyan
-            & "./library/automation-scripts/0520_Collect-RingMetrics.ps1" -ErrorAction Continue
-          }
-          
-          Write-Host "✅ Dashboard generation complete" -ForegroundColor Green
-          
-          # Copy coverage files to reports directory for GitHub Pages deployment
-          Write-Host "`n📊 Copying coverage files to reports directory..." -ForegroundColor Cyan
-          if (Test-Path "./library/tests/coverage") {
-            $targetPath = "./library/reports/tests/coverage"
-            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
-            Copy-Item -Path "./library/tests/coverage/*" -Destination $targetPath -Recurse -Force
-            Write-Host "✅ Coverage files copied to $targetPath" -ForegroundColor Green
-          } else {
-            Write-Host "⚠️  No coverage files found at ./library/tests/coverage" -ForegroundColor Yellow
-          }
-          
-          # List generated files for verification
-          Write-Host "`n📂 Generated files for deployment:" -ForegroundColor Yellow
-          if (Test-Path "./library/reports/dashboard") {
-            Write-Host "Dashboard:" -ForegroundColor Cyan
-            Get-ChildItem -Path "./library/reports/dashboard" -Recurse | Select-Object -ExpandProperty FullName
-          }
-          if (Test-Path "./library/reports/metrics") {
-            Write-Host "Metrics:" -ForegroundColor Cyan
-            Get-ChildItem -Path "./library/reports/metrics" -Recurse | Select-Object -ExpandProperty FullName
-          }
-          if (Test-Path "./library/reports/tests/coverage") {
-            Write-Host "Coverage:" -ForegroundColor Cyan
-            Get-ChildItem -Path "./library/reports/tests/coverage" -Recurse | Select-Object -ExpandProperty FullName
-          }
-
-      - name: 🌐 Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./library/reports
-          destination_dir: ${{ github.ref_name != 'main' && github.ref_name || '' }}
-          keep_files: true
-          enable_jekyll: false  # Already built, deploy static files
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'Deploy dashboard for ${{ github.ref_name }}'
-          
-      - name: 📊 Report Deployment URLs
-        shell: pwsh
-        env:
-          BRANCH: ${{ github.ref_name }}
-        run: |
-          $baseUrl = "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-          $branchPath = if ($env:BRANCH -eq "main") { "" } else { "/$env:BRANCH" }
-          $dashboardUrl = "${baseUrl}${branchPath}/dashboard/"
-          
-          Write-Host "✅ Dashboard deployed successfully!" -ForegroundColor Green
-          Write-Host "📊 Dashboard URL: $dashboardUrl" -ForegroundColor Cyan
-          Write-Host "📈 Metrics: ${baseUrl}${branchPath}/metrics/" -ForegroundColor Cyan
+  # NOTE: Dashboard generation and publishing moved to 09-jekyll-gh-pages.yml
+  # to avoid conflicts with Jekyll-based GitHub Pages deployment
 
   # ============================================================================
   # SUMMARY: Deployment summary
   # ============================================================================
   summary:
     name: 📋 Summary
-    needs: [build-and-push-docker, deploy-to-staging, publish-dashboard]
+    needs: [build-and-push-docker, deploy-to-staging]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -250,5 +168,5 @@ jobs:
           echo "- **Status:** ${{ needs.deploy-to-staging.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📊 Dashboard" >> $GITHUB_STEP_SUMMARY
-          echo "- **Published:** ${{ needs.publish-dashboard.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.ref_name }}/" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note:** Dashboard publishing handled by separate Jekyll workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.ref_name != 'main' && github.ref_name || '' }}" >> $GITHUB_STEP_SUMMARY

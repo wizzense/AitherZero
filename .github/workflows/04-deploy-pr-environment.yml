@@ -3,6 +3,11 @@ name: Deploy PR Environment and Releases
 
 # Deploy ephemeral test environments for PRs AND build/publish release images
 'on':
+  # Deploy on PR events
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+  
   workflow_call:
   
   push:
@@ -27,8 +32,9 @@ name: Deploy PR Environment and Releases
         default: false
 
 # Prevent concurrent deployments for the same PR or release
+# Using pr-env prefix to avoid conflicts with pr-check workflow
 concurrency:
-  group: deploy-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.release.tag_name || github.ref_name }}
+  group: pr-env-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.event.release.tag_name || github.ref_name }}
   cancel-in-progress: false  # Don't cancel in-progress deployments
 
 permissions:
