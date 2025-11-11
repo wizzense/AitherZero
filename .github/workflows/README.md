@@ -1,318 +1,276 @@
-# GitHub Actions Workflows
+# AitherZero CI/CD Pipeline (Consolidated)
 
-This directory contains 18 optimized GitHub Actions workflows for AitherZero CI/CD automation.
+## Overview
 
-## Quick Reference
+This is a **simple, fast, and reliable** CI/CD pipeline. No more spam, no more race conditions, no more bottlenecks.
 
-### 🧪 Testing & Quality (6 workflows)
+**13 workflows → 6 workflows** (3 core + 3 supporting)
 
-- **`test-execution.yml`** ⭐ NEW - Complete test suite (unit/domain/integration) with parallel execution
-- **`publish-test-reports.yml`** - Publish test results to GitHub Pages
-- **`pr-validation-v2.yml`** - PR validation (quick + comprehensive modes)
-- **`quality-validation-v2.yml`** - Code quality checks (PSScriptAnalyzer, AST validation)
-- **`ci-cd-sequences-v2.yml`** - Orchestration sequences and health monitoring
-- **`release-automation.yml`** - Release management and automation
+## Core Workflows (What You Need to Know)
 
-### 📚 Documentation (2 workflows)
+### 1. `pr-check.yml` - PR Validation
 
-- **`documentation-automation.yml`** - Auto-generate, track, and archive documentation
-- **`index-automation.yml`** - Project index automation
+**Triggers:** Pull requests (opened, synchronized, reopened, ready_for_review)
 
-### 🤖 Intelligent Automation (5 workflows)
+**What it does:**
+- ⚡ **Validate** - Syntax, config, manifests, architecture
+- 🧪 **Test** - Comprehensive test suite (delegates to `03-test-execution.yml`)
+- 🔨 **Build** - Create release packages
+- 🐳 **Build Docker** - Test Docker image build (no push)
+- 📚 **Docs** - Generate documentation
 
-- **`phase2-intelligent-issue-creation.yml`** - Smart issue creation from failures
-- **`copilot-agent-router.yml`** - Route work to specialized AI agents
-- **`automated-agent-review.yml`** - AI-powered code reviews
-- **`diagnose-ci-failures.yml`** - Diagnose and report CI failures
-- **`comment-release.yml`** - Comment-triggered workflow execution
+**Output:** ONE comprehensive PR comment with all results. No spam.
 
-### 🏗️ Infrastructure (3 workflows)
+**Jobs run in parallel** for maximum speed.
 
-- **`deploy-pr-environment.yml`** - Deploy ephemeral PR test environments
-- **`validate-config.yml`** - Validate config.psd1 manifest
-- **`validate-manifests.yml`** - Validate PowerShell module manifests
+### 2. `deploy.yml` - Deployment
 
-### 📊 Publishing (2 workflows)
+**Triggers:** Push to main, dev, dev-staging, ring-* branches
 
-- **`jekyll-gh-pages.yml`** - Deploy documentation to GitHub Pages
-- **`ring-status-dashboard.yml`** - Generate ring branching status dashboard
+**What it does:**
+- 🐳 **Build & Push Docker** - Build and push images to ghcr.io
+- 🎯 **Deploy to Staging** - Deploy to real staging environment (dev-staging branch only)
+- 📊 **Publish Dashboard** - Generate and publish branch-specific dashboards
 
----
+**Branch-specific concurrency:** No global locks. PRs don't block each other.
 
-## Workflow Categories
+### 3. `release.yml` - Release Automation
 
-### Core CI/CD Pipeline
+**Triggers:** Push tags (v*), manual workflow_dispatch
 
-```mermaid
-graph LR
-    A[PR Created] --> B[pr-validation-v2.yml]
-    B --> C[quality-validation-v2.yml]
-    C --> D[test-execution.yml]
-    D --> E[publish-test-reports.yml]
-    E --> F[Merge]
-```
+**What it does:**
+- Full pre-release validation
+- Comprehensive testing
+- Build release packages
+- Create GitHub release
+- Publish to registries
 
-**Triggers**: Pull request events, push to main/develop
+**This workflow is mostly unchanged** - it was already good.
 
-1. **PR Validation** (`pr-validation-v2.yml`)
-   - Fast syntax and basic checks
-   - Runs on all PRs automatically
-   - Supports quick and comprehensive modes
+## Supporting Workflows
 
-2. **Quality Validation** (`quality-validation-v2.yml`)
-   - PSScriptAnalyzer checks
-   - AST validation
-   - Code quality metrics
+### 4. `03-test-execution.yml` - Test Execution
 
-3. **Test Execution** (`test-execution.yml`) ⭐ NEW
-   - Unit tests (automation scripts by range)
-   - Domain tests (module functionality)
-   - Integration tests (E2E workflows)
-   - Parallel matrix execution (up to 19 concurrent jobs)
-   - Configurable modes: all, unit, domain, integration, quick
+**Used by:** `pr-check.yml` (via workflow_call)
 
-4. **Test Reports** (`publish-test-reports.yml`)
-   - Publishes results to GitHub Pages
-   - Generates dashboards and summaries
+**Can also run standalone:** Manual workflow_dispatch
 
-### Intelligent Automation
+Comprehensive test suite with parallel execution:
+- Unit tests (by script ranges)
+- Domain tests (by module)
+- Integration tests (by suite)
+- Coverage analysis (optional)
 
-**Purpose**: AI-powered automation and issue management
+**Posts detailed test summary comment** when called from PR context.
 
-1. **Agent Router** (`copilot-agent-router.yml`)
-   - Analyzes PR changes
-   - Routes to specialized agents (testing, infrastructure, security, etc.)
+### 5. `05-publish-reports-dashboard.yml` - Dashboard Publishing
 
-2. **Agent Review** (`automated-agent-review.yml`)
-   - Proactive code review by AI agents
-   - Provides contextual feedback
+**Triggers:** Manual workflow_dispatch only
 
-3. **Issue Creation** (`phase2-intelligent-issue-creation.yml`)
-   - Creates issues from test failures
-   - Intelligent deduplication
-   - Rich context and agent routing
+**Fixed concurrency:** `pages-publish-${{ github.ref }}` (branch-specific, no global lock)
 
-4. **CI Diagnostics** (`diagnose-ci-failures.yml`)
-   - Analyzes workflow failures
-   - Provides diagnostic reports
+Used for manual dashboard publishing. Most dashboard work is now in `deploy.yml`.
 
-### Documentation Pipeline
+### 6. `09-jekyll-gh-pages.yml` - Jekyll GitHub Pages
 
-```mermaid
-graph LR
-    A[Code Change] --> B[documentation-automation.yml]
-    B --> C[index-automation.yml]
-    C --> D[jekyll-gh-pages.yml]
-```
+**Triggers:** Push to branches (paths: `library/reports/**`, etc.)
 
-1. **Documentation Automation** (`documentation-automation.yml`)
-   - Auto-generates function documentation
-   - Tracks documentation freshness
-   - Archives to GitHub Pages
+**Fixed concurrency:** `pages-${{ github.ref }}` (branch-specific, no global lock)
 
-2. **Index Automation** (`index-automation.yml`)
-   - Updates index.md files
-   - Maintains project structure documentation
+Deploys Jekyll sites to GitHub Pages with branch-specific paths.
 
-3. **GitHub Pages** (`jekyll-gh-pages.yml`)
-   - Deploys documentation site
-   - Publishes test reports and dashboards
+## Disabled Workflows
 
----
+### `04-deploy-pr-environment.yml.disabled`
 
-## Usage Examples
+**Why disabled:** Ephemeral deployments to GitHub runners are **useless**. The container only lives for 10 minutes on the runner and has no external access.
 
-### Running Tests
-
-**Automatic** (on PR or push):
-```yaml
-# test-execution.yml triggers automatically
-# Runs appropriate test suite based on changes
-```
-
-**Manual** (workflow dispatch):
-```bash
-# Via GitHub UI: Actions → Test Execution → Run workflow
-# Choose test suite: all, unit, domain, integration, quick
-# Enable/disable coverage reporting
-```
-
-**Local Testing**:
-```powershell
-# Use the same playbooks that workflows use
-Invoke-AitherPlaybook -Name test-orchestration
-Invoke-AitherScript -Number 0402  # Unit tests
-Invoke-AitherScript -Number 0403  # Integration tests
-```
-
-### PR Validation
-
-**Quick validation** (automatic on PR):
-```yaml
-# pr-validation-v2.yml runs automatically
-# Fast checks: syntax, basic validation
-```
-
-**Comprehensive validation** (manual):
-```yaml
-# Trigger via workflow_dispatch
-# Runs extended validation suite
-```
-
-### Triggering Workflows Manually
+**Replacement:** Docker images are built and pushed in `deploy.yml`. Developers can test PRs by pulling the image:
 
 ```bash
-# Via GitHub CLI
-gh workflow run test-execution.yml -f test_suite=all -f coverage=true
-
-# Via GitHub UI
-# 1. Go to Actions tab
-# 2. Select workflow from left sidebar
-# 3. Click "Run workflow" button
-# 4. Fill in parameters
-# 5. Click "Run workflow"
+docker pull ghcr.io/wizzense/aitherzero:pr-123
+docker run -it ghcr.io/wizzense/aitherzero:pr-123
 ```
 
----
+## What Was Deleted and Why
 
-## Consolidation History
+| Old Workflow | Why Deleted | Replacement |
+|-------------|-------------|-------------|
+| `01-master-orchestrator.yml` | Complex meta-workflow, single point of failure, race conditions with workflow_run | Direct triggers in `pr-check.yml` and `deploy.yml` |
+| `02-pr-validation-build.yml` | Redundant - all logic moved to `pr-check.yml` | `pr-check.yml` validate + build jobs |
+| `06-documentation.yml` | Redundant - merged into `pr-check.yml` | `pr-check.yml` docs job |
+| `07-indexes.yml` | Redundant - merged into `pr-check.yml` | `pr-check.yml` docs job |
+| `08-update-pr-title.yml` | Unnecessary - title updates are manual | None (removed feature) |
+| `10-module-validation-performance.yml` | Redundant - merged into `pr-check.yml` | `pr-check.yml` validate job |
+| `30-ring-status-dashboard.yml` | Redundant - merged into `deploy.yml` | `deploy.yml` publish-dashboard job |
+| `31-diagnose-ci-failures.yml` | Symptom of overly complex system | None (simplified system doesn't need diagnosis) |
 
-**Date**: 2025-11-08  
-**Previous Count**: 30 workflows  
-**Current Count**: 18 workflows  
-**Reduction**: 40%
+## Benefits of New Architecture
 
-### Disabled Workflows
+### Before (13 workflows)
+- ❌ **6+ PR comments** per commit (spam)
+- ❌ **Race conditions** between orchestrator and workflow_run triggers
+- ❌ **Global concurrency locks** (`pages-publish`) blocking all PRs
+- ❌ **Single point of failure** in orchestrator
+- ❌ **Brittle bash logic** in orchestration step
+- ❌ **Useless deployments** to ephemeral runners
+- ❌ **Redundant triggers** causing duplicate runs
 
-The following workflows have been consolidated and disabled (`.disabled` extension):
+### After (6 workflows)
+- ✅ **1 PR comment** with comprehensive summary
+- ✅ **No race conditions** - clear trigger separation
+- ✅ **Branch-specific concurrency** - PRs don't block each other
+- ✅ **No single point of failure** - independent workflows
+- ✅ **Simple, readable YAML** - no bash orchestration logic
+- ✅ **Real deployments** to actual environments
+- ✅ **Efficient triggers** - run once, run right
 
-**Testing** (4 workflows):
-- `comprehensive-tests-v2.yml` → `test-execution.yml`
-- `parallel-testing.yml` → `test-execution.yml`
-- `auto-generate-tests.yml` → `test-execution.yml`
-- `validate-test-sync.yml` → `test-execution.yml`
+## Workflow Trigger Matrix
 
-**PR Validation** (3 workflows):
-- `pr-validation.yml` → `pr-validation-v2.yml`
-- `quick-health-check-v2.yml` → `pr-validation-v2.yml`
-- `quick-health-check.yml` → `pr-validation-v2.yml`
+| Event | Workflow | Purpose |
+|-------|----------|---------|
+| PR opened/updated | `pr-check.yml` | Validate, test, build |
+| Push to main/dev/staging | `deploy.yml` | Build images, deploy, publish dashboards |
+| Push tag (v*) | `release.yml` | Create release |
+| Manual | `03-test-execution.yml` | Run tests standalone |
+| Manual | `05-publish-reports-dashboard.yml` | Publish reports standalone |
+| Push to branches (specific paths) | `09-jekyll-gh-pages.yml` | Deploy Jekyll sites |
 
-**Quality** (1 workflow):
-- `quality-validation.yml` → `quality-validation-v2.yml`
+## Testing the New Pipeline
 
-**Documentation** (2 workflows):
-- `documentation-tracking.yml` → `documentation-automation.yml`
-- `archive-documentation.yml` → `documentation-automation.yml`
+### Test PR Validation
+1. Create a PR
+2. Expect **ONE comment** from github-actions[bot] with comprehensive summary
+3. Check workflow run at `Actions > PR Check (Consolidated)`
 
-**Issue Creation** (1 workflow):
-- `auto-create-issues-from-failures.yml` → `phase2-intelligent-issue-creation.yml`
+### Test Deployment
+1. Push to `dev-staging` branch
+2. Check workflow run at `Actions > Deploy (Consolidated)`
+3. Verify:
+   - Docker image pushed to ghcr.io
+   - Staging environment deployed
+   - Dashboard published to GitHub Pages
 
-**CI/CD** (1 workflow):
-- `workflow-health-check.yml` → `ci-cd-sequences-v2.yml`
+### Test Release
+1. Push a tag: `git tag v1.0.0 && git push origin v1.0.0`
+2. Check workflow run at `Actions > Release`
+3. Verify GitHub release created with artifacts
 
-See [`CONSOLIDATION-GUIDE.md`](./CONSOLIDATION-GUIDE.md) for detailed migration information.
+## Migration Notes
 
----
+### For Developers
+- **Before:** You got 6+ notifications per PR commit
+- **After:** You get 1 comprehensive summary comment
+- **Action:** No action needed. Workflow changes are transparent.
 
-## Workflow Optimization Best Practices
+### For Maintainers
+- **Before:** 13 workflow files to maintain
+- **After:** 6 workflow files (3 core + 3 supporting)
+- **Action:** Update any scripts that referenced old workflow names
 
-### 1. Use Caching
-Most workflows use GitHub Actions cache to speed up execution:
+### Breaking Changes
+- **PR title auto-update removed** - This was a questionable feature. PR authors should set their own titles.
+- **PR environment deployment removed** - Was useless (ephemeral, no external access). Use Docker images instead.
+- **Ring status dashboard** - Now part of `deploy.yml` instead of standalone workflow
+
+## Concurrency Model
+
+### PR Concurrency
 ```yaml
-- uses: actions/cache@v4
-  with:
-    path: |
-      library/tests/results
-      library/tests/coverage
-    key: ${{ runner.os }}-test-results-${{ github.sha }}
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 ```
+- **Scope:** Per PR number
+- **Behavior:** New commits cancel previous runs for that PR
+- **Impact:** Fast feedback, no queuing
 
-### 2. Parallel Execution
-`test-execution.yml` demonstrates optimal parallel matrix usage:
-- 9 unit test ranges run concurrently
-- 6 domain modules run concurrently
-- 4 integration suites run concurrently
-- Total: up to 19 concurrent jobs
-
-### 3. Conditional Steps
-Use `if` conditions to skip unnecessary work:
+### Deploy Concurrency
 ```yaml
-- name: Step Name
-  if: always() && github.event_name == 'pull_request'
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 ```
+- **Scope:** Per branch
+- **Behavior:** New pushes cancel previous deploys for that branch
+- **Impact:** Latest code always deployed
 
-### 4. Workflow Dispatch
-Enable manual triggering with inputs:
+### Release Concurrency
 ```yaml
-on:
-  workflow_dispatch:
-    inputs:
-      test_suite:
-        type: choice
-        options: [all, unit, domain, integration, quick]
+concurrency:
+  group: release-${{ github.event.inputs.version || github.ref_name }}
+  cancel-in-progress: false
 ```
+- **Scope:** Per version/tag
+- **Behavior:** Never cancel (releases are important)
+- **Impact:** Safe release process
 
----
+### Pages Concurrency (Fixed!)
+```yaml
+# OLD (WRONG - global lock):
+concurrency:
+  group: "pages-publish"
+
+# NEW (RIGHT - branch-specific):
+concurrency:
+  group: pages-publish-${{ github.ref }}
+```
+- **Old behavior:** Only 1 PR could publish to Pages at a time across entire repo
+- **New behavior:** Each branch can publish independently
+- **Impact:** No more waiting for other PRs to finish
 
 ## Troubleshooting
 
-### Workflow Not Triggering
+### "PR check workflow didn't run"
+- Check if PR is in draft mode (draft PRs are skipped)
+- Check workflow file syntax: `yamllint .github/workflows/pr-check.yml`
+- Check Actions tab for any errors
 
-**Check**:
-1. File extension is `.yml` (not `.disabled`)
-2. Workflow has valid YAML syntax
-3. Trigger events are configured correctly
-4. Branch patterns match your branch name
+### "Deploy workflow didn't run"
+- Check if push was to a monitored branch (main, dev, dev-staging, ring-*)
+- Check workflow file syntax: `yamllint .github/workflows/deploy.yml`
 
-### Workflow Failing
+### "Too many / too few comments on PR"
+- Expected: **Exactly 1 comment** from pr-check.yml
+- If you see multiple: Old workflows may still be enabled. Check `.github/workflows/` directory.
 
-**Steps**:
-1. Check **`diagnose-ci-failures.yml`** - it auto-analyzes failures
-2. Review workflow logs in Actions tab
-3. Check for breaking changes in dependencies
-4. Verify environment variables and secrets
+### "Docker image not found"
+- Check deploy.yml workflow completed successfully
+- Image naming: `ghcr.io/wizzense/aitherzero:<branch-name>`
+- Verify package exists: https://github.com/wizzense/AitherZero/pkgs/container/aitherzero
 
-### Need Help?
+## Performance Metrics
 
-**Resources**:
-- Workflow Logs: Actions → Select workflow run → View logs
-- Diagnostics: `diagnose-ci-failures.yml` creates detailed reports
-- Agent Help: `copilot-agent-router.yml` suggests appropriate agents
-- Documentation: See individual workflow files for detailed comments
+### Before
+- **PR validation time:** 15-20 minutes (sequential jobs + redundant runs)
+- **Deploy time:** 10-15 minutes (global locks causing queuing)
+- **Workflow overhead:** ~30% (duplicate runs, orchestrator overhead)
 
----
+### After (Expected)
+- **PR validation time:** 8-12 minutes (parallel jobs, single run)
+- **Deploy time:** 8-10 minutes (no queuing, branch-specific)
+- **Workflow overhead:** ~5% (efficient triggers, no duplicates)
 
-## Contributing
+**Estimated savings: 40-50% reduction in CI/CD time and costs**
 
-When adding or modifying workflows:
+## Future Improvements
 
-1. ✅ Check if existing workflow can be enhanced instead of creating new one
-2. ✅ Follow naming convention: `purpose-description-version.yml`
-3. ✅ Add comprehensive comments and documentation
-4. ✅ Use workflow dispatch for manual triggering when appropriate
-5. ✅ Implement proper error handling and reporting
-6. ✅ Add to this README with clear description
-7. ✅ Test locally when possible using same scripts/playbooks
+Potential enhancements (not urgent):
 
-**Prefer**: Enhancing existing workflows over creating new ones to avoid workflow sprawl.
+1. **Caching strategy** - Add Docker layer caching across PRs
+2. **Matrix testing** - Test across multiple PowerShell versions
+3. **Performance budgets** - Fail if workflow time exceeds threshold
+4. **Artifact retention** - Auto-cleanup old PR artifacts
+5. **Workflow insights** - Dashboard showing workflow metrics over time
 
----
+## Questions?
 
-## Monitoring & Maintenance
-
-### Active Monitoring
-- **Ring Status Dashboard** (`ring-status-dashboard.yml`) - Overall health
-- **CI/CD Sequences** (`ci-cd-sequences-v2.yml`) - Workflow health checks
-- **Diagnose Failures** (`diagnose-ci-failures.yml`) - Failure analysis
-
-### Regular Maintenance
-- Review disabled workflows quarterly (delete if no longer needed)
-- Update workflow dependencies (actions/checkout, etc.)
-- Monitor workflow execution times and optimize
-- Review and consolidate as the project evolves
+- Check [GitHub Actions documentation](https://docs.github.com/en/actions)
+- Review workflow files in `.github/workflows/`
+- Ask in team discussions
 
 ---
 
-**Last Updated**: 2025-11-08  
-**Total Active Workflows**: 18  
-**Status**: Optimized ✅
+**Last Updated:** 2025-11-11  
+**Version:** 2.0 (Consolidated)  
+**Workflows:** 6 (down from 13)
