@@ -574,13 +574,23 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const branch = context.ref.replace('refs/heads/', '');
+            // Use the actual branch name from PR context or extracted values
+            // For PR events, context.ref is 'refs/pull/<id>/merge' which doesn't exist as a branch
+            // Use pr-branch output (from PR head ref) or fall back to ref_name
+            const prBranch = '${{ needs.collect-reports.outputs.pr-branch }}';
             const prNumber = '${{ needs.collect-reports.outputs.pr-number }}';
+            const refName = '${{ github.ref_name }}';
+            
+            // Determine the actual branch to trigger on
+            // Priority: PR head branch > ref_name (for push events)
+            const branch = prBranch || refName;
             
             console.log(`Triggering Jekyll deployment for branch: ${branch}`);
             if (prNumber) {
-              console.log(`PR context: #${prNumber}`);
+              console.log(`PR context: #${prNumber} (head: ${prBranch})`);
             }
+            console.log(`Event type: ${context.eventName}`);
+            console.log(`Original ref: ${context.ref}`);
             
             try {
               await github.rest.actions.createWorkflowDispatch({

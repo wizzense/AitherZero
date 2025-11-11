@@ -237,6 +237,44 @@ jobs:
           echo "📂 Build output:"
           ls -la ./_site/
 
+      - name: 📂 Stage Build for Branch-Specific Deployment
+        run: |
+          DEST_DIR="${{ needs.setup.outputs.destination-dir }}"
+          BRANCH="${{ needs.setup.outputs.branch-name }}"
+          
+          echo "📂 Staging build for branch-specific deployment..."
+          echo "  - Branch: ${BRANCH}"
+          echo "  - Destination directory: ${DEST_DIR}"
+          
+          # For non-root deployments, reorganize the site structure
+          if [ "${DEST_DIR}" != "." ] && [ -n "${DEST_DIR}" ]; then
+            echo "🔄 Reorganizing site for branch-specific path: /${DEST_DIR}/"
+            
+            # Create temporary staging directory
+            mkdir -p ./_site_staged
+            
+            # Move built site to the branch-specific subdirectory
+            mkdir -p "./_site_staged/${DEST_DIR}"
+            mv ./_site/* "./_site_staged/${DEST_DIR}/" 2>/dev/null || true
+            mv ./_site/.* "./_site_staged/${DEST_DIR}/" 2>/dev/null || true
+            
+            # Replace _site with staged version
+            rm -rf ./_site
+            mv ./_site_staged ./_site
+            
+            echo "✅ Site staged under /${DEST_DIR}/"
+            echo "📂 Final structure:"
+            ls -la ./_site/
+            if [ -d "./_site/${DEST_DIR}" ]; then
+              echo "📂 Branch directory contents:"
+              ls -la "./_site/${DEST_DIR}/" | head -15
+            fi
+          else
+            echo "ℹ️  Main branch - deploying to root (no reorganization needed)"
+            echo "📂 Site structure:"
+            ls -la ./_site/ | head -15
+          fi
+
       - name: 📤 Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
