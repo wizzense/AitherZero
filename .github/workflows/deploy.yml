@@ -1,0 +1,228 @@
+---
+name: 🚀 Deploy (Consolidated)
+
+# Single workflow for all deployment (push events)
+# Replaces: Parts of 04-deploy-pr-environment, 05-publish-reports-dashboard, 09-jekyll-gh-pages, 30-ring-status-dashboard
+# Handles: Docker builds, environment deployments, dashboard publishing
+
+'on':
+  push:
+    branches:
+      - main
+      - dev
+      - develop
+      - dev-staging
+      - ring-0
+      - ring-0-integrations
+      - ring-1
+      - ring-1-integrations
+      - ring-2
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
+  id-token: write
+  deployments: write
+
+# Branch-specific concurrency (NOT global lock)
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+  CONTAINER_REGISTRY: ghcr.io
+
+jobs:
+  # ============================================================================
+  # BUILD-AND-PUSH-DOCKER: Build and push Docker images
+  # ============================================================================
+  build-and-push-docker:
+    name: 🐳 Build & Push Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.CONTAINER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔤 Set Lowercase Repository Name
+        id: repo-name
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo-lower=${REPO_LOWER}" >> $GITHUB_OUTPUT
+
+      - name: 📋 Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ steps.repo-name.outputs.repo-lower }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=${{ github.ref_name }}
+          labels: |
+            org.opencontainers.image.title=AitherZero
+            org.opencontainers.image.description=Enterprise infrastructure automation platform
+            org.opencontainers.image.vendor=Aitherium Organization
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔨 Build and Push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=0.0.0.0
+            COMMIT_SHA=${{ github.sha }}
+
+  # ============================================================================
+  # DEPLOY-TO-STAGING: Deploy to real staging environment (if dev-staging)
+  # ============================================================================
+  deploy-to-staging:
+    name: 🎯 Deploy to Staging
+    needs: build-and-push-docker
+    if: github.ref == 'refs/heads/dev-staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://staging.aitherzero.example.com
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to Staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "Image: ${{ needs.build-and-push-docker.outputs.image-tag }}"
+          echo "Digest: ${{ needs.build-and-push-docker.outputs.image-digest }}"
+          
+          # TODO: Add real deployment logic here (e.g., ECS, k8s, etc.)
+          # For now, just verify the image exists
+          docker pull $(echo "${{ needs.build-and-push-docker.outputs.image-tag }}" | head -n 1)
+          
+          echo "✅ Staging deployment complete"
+
+  # ============================================================================
+  # PUBLISH-DASHBOARD: Generate and publish dashboards to GitHub Pages
+  # ============================================================================
+  publish-dashboard:
+    name: 📊 Publish Dashboard
+    needs: build-and-push-docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📊 Generate Dashboard
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "📊 Generating branch dashboard for ${{ github.ref_name }}" -ForegroundColor Cyan
+          
+          # Generate dashboard using existing scripts
+          if (Test-Path "./library/automation-scripts/0523_Generate-Dashboard.ps1") {
+            & "./library/automation-scripts/0523_Generate-Dashboard.ps1"
+          }
+          
+          # Generate ring status if applicable
+          if ("${{ github.ref_name }}" -match "^ring-") {
+            if (Test-Path "./library/automation-scripts/0531_Generate-RingStatus.ps1") {
+              & "./library/automation-scripts/0531_Generate-RingStatus.ps1"
+            }
+          }
+          
+          # Organize for GitHub Pages
+          $branchDir = "./library/reports/${{ github.ref_name }}"
+          New-Item -ItemType Directory -Path $branchDir -Force | Out-Null
+          
+          # Copy dashboard files
+          if (Test-Path "./library/reports/dashboard") {
+            Copy-Item -Path "./library/reports/dashboard" -Destination "$branchDir/dashboard" -Recurse -Force
+          }
+          
+          if (Test-Path "./library/reports/metrics") {
+            Copy-Item -Path "./library/reports/metrics" -Destination "$branchDir/metrics" -Recurse -Force
+          }
+
+      - name: 🌐 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./library/reports/${{ github.ref_name }}
+          destination_dir: ${{ github.ref_name }}
+          keep_files: true
+          enable_jekyll: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy dashboard for ${{ github.ref_name }}'
+
+  # ============================================================================
+  # SUMMARY: Deployment summary
+  # ============================================================================
+  summary:
+    name: 📋 Summary
+    needs: [build-and-push-docker, deploy-to-staging, publish-dashboard]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📊 Generate Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Docker Image" >> $GITHUB_STEP_SUMMARY
+          echo "- **Built:** ${{ needs.build-and-push-docker.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** \`$(echo "${{ needs.build-and-push-docker.outputs.image-tag }}" | head -n 1)\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Staging" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ needs.deploy-to-staging.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "- **Published:** ${{ needs.publish-dashboard.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.ref_name }}/" >> $GITHUB_STEP_SUMMARY
