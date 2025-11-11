@@ -538,101 +538,90 @@ jobs:
             _config.yml
           retention-days: 30
 
-  publish-to-pages:
-    name: 🚀 Publish to GitHub Pages
+  # ============================================================================
+  # TRIGGER-JEKYLL-DEPLOYMENT: Trigger Jekyll workflow for unified deployment
+  # ============================================================================
+  trigger-jekyll-deployment:
+    name: 🎯 Trigger Jekyll Deployment
     runs-on: ubuntu-latest
     needs: collect-reports
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: 📊 Download Combined Reports
-        uses: actions/download-artifact@v4
-        with:
-          name: combined-reports
-          path: ./
-
-      - name: 🔧 Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: 🏗️ Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./
-          destination: ./_site
-
-      - name: 📤 Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./_site
-
-      - name: 🚀 Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: 📋 Report Deployment
+      - name: 📋 Report Status
         shell: pwsh
         env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           PR_NUMBER: ${{ needs.collect-reports.outputs.pr-number }}
           PR_BASE: ${{ needs.collect-reports.outputs.pr-base }}
-          BRANCH_PATH_PREFIX: ${{ needs.collect-reports.outputs.branch-path-prefix }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
-          Write-Host "🔗 Main URL: $env:PAGE_URL" -ForegroundColor Cyan
+          Write-Host "✅ Reports and dashboard generated successfully!" -ForegroundColor Green
           Write-Host ""
-          Write-Host "📊 Available Dashboards:" -ForegroundColor Yellow
-          Write-Host "  - Main Dashboard: ${env:PAGE_URL}library/reports/dashboard.html"
-          Write-Host "  - Navigation Index: ${env:PAGE_URL}index.html"
-          
+          Write-Host "📊 Generated Content:" -ForegroundColor Yellow
+          Write-Host "  - Test reports collected from test execution"
+          Write-Host "  - Interactive dashboard created"
+          Write-Host "  - PR-specific content prepared"
+          Write-Host ""
+          Write-Host "🚀 Next Step: Jekyll workflow will deploy to GitHub Pages" -ForegroundColor Cyan
+          Write-Host "  - Branch: $env:BRANCH_NAME" -ForegroundColor Yellow
           if ($env:PR_NUMBER) {
-            # Build branch-aware PR dashboard URL
-            if ($env:BRANCH_PATH_PREFIX) {
-              $prDashboardUrl = "${env:PAGE_URL}${env:BRANCH_PATH_PREFIX}library/reports/pr-$env:PR_NUMBER/"
-            } else {
-              $prDashboardUrl = "${env:PAGE_URL}library/reports/pr-$env:PR_NUMBER/"
-            }
-            Write-Host "  - PR #$env:PR_NUMBER Dashboard ($env:PR_BASE): $prDashboardUrl" -ForegroundColor Green
+            Write-Host "  - PR: #$env:PR_NUMBER → $env:PR_BASE" -ForegroundColor Yellow
           }
-          
           Write-Host ""
-          Write-Host "📂 All Reports: ${env:PAGE_URL}library/reports/"
-          Write-Host "🧪 Test Results: ${env:PAGE_URL}library/tests/results/"
-          Write-Host "📈 Coverage: ${env:PAGE_URL}library/tests/coverage/"
+          Write-Host "⏳ Triggering Jekyll deployment workflow..." -ForegroundColor Cyan
 
-      - name: 💬 Comment on PR with Dashboard Link
+      - name: 🚀 Trigger Jekyll GitHub Pages Deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const prNumber = '${{ needs.collect-reports.outputs.pr-number }}';
+            
+            console.log(`Triggering Jekyll deployment for branch: ${branch}`);
+            if (prNumber) {
+              console.log(`PR context: #${prNumber}`);
+            }
+            
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: '09-jekyll-gh-pages.yml',
+                ref: branch,
+                inputs: {
+                  triggered_by: 'dashboard-workflow',
+                  pr_number: prNumber || '',
+                  reports_run_id: context.runId.toString()
+                }
+              });
+              
+              console.log('✅ Jekyll deployment workflow triggered successfully!');
+              core.info('Jekyll workflow will build complete site with reports and deploy to GitHub Pages');
+            } catch (error) {
+              core.setFailed(`Failed to trigger Jekyll workflow: ${error.message}`);
+            }
+
+      - name: 💬 Comment on PR with Deployment Status
         if: needs.collect-reports.outputs.has-pr == 'true'
         uses: actions/github-script@v7
         env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           PR_NUMBER: ${{ needs.collect-reports.outputs.pr-number }}
           PR_BASE: ${{ needs.collect-reports.outputs.pr-base }}
-          BRANCH_PATH_PREFIX: ${{ needs.collect-reports.outputs.branch-path-prefix }}
-          DEPLOYMENT_URL_BASE: ${{ needs.collect-reports.outputs.deployment-url-base }}
           REPOSITORY: ${{ github.repository }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
         with:
           script: |
-            const fs = require('fs');
-            const pageUrl = process.env.PAGE_URL;
             const prNumber = process.env.PR_NUMBER;
             const prBase = process.env.PR_BASE;
-            const branchPathPrefix = process.env.BRANCH_PATH_PREFIX;
-            const deploymentUrlBase = process.env.DEPLOYMENT_URL_BASE;
             const repository = process.env.REPOSITORY;
+            const repoOwner = process.env.REPO_OWNER;
+            const repoName = process.env.REPO_NAME;
             
-            // Build branch-aware PR dashboard URL
-            let prDashboardUrl;
-            if (branchPathPrefix) {
-              prDashboardUrl = `${pageUrl}${branchPathPrefix}library/reports/pr-${prNumber}/`;
-            } else {
-              prDashboardUrl = `${pageUrl}library/reports/pr-${prNumber}/`;
-            }
-            
-            core.info(`PR Dashboard URL: ${prDashboardUrl}`);
-            core.info(`Base Branch: ${prBase}`);
-            core.info(`Branch Path Prefix: ${branchPathPrefix}`);
+            // Calculate expected deployment URL
+            const baseUrl = `https://${repoOwner}.github.io/${repoName}`;
+            const dashboardUrl = `${baseUrl}/library/reports/dashboard.html`;
+            const prDashboardUrl = `${baseUrl}/library/reports/pr-${prNumber}/`;
             
             // Calculate Docker container info
             const dynamicPort = 8080 + (parseInt(prNumber) % 100);
@@ -640,27 +629,36 @@ jobs:
             const packageUrl = `https://github.com/${repository}/pkgs/container/aitherzero`;
             const containerName = `aitherzero-pr-${prNumber}`;
             
-            // Load comment template and replace placeholders
-            let comment = '';
-            const templatePath = './library/_templates/pr-dashboard-comment.md';
-            try {
-              comment = fs.readFileSync(templatePath, 'utf8');
-              const replacements = {
-                '{{PAGE_URL}}': prDashboardUrl,  // Use PR-specific dashboard URL
-                '{{PR_NUMBER}}': prNumber,
-                '{{PR_BASE}}': prBase,
-                '{{PACKAGE_URL}}': packageUrl,
-                '{{IMAGE_NAME_LOWER}}': imageNameLower,
-                '{{CONTAINER_NAME}}': containerName,
-                '{{DYNAMIC_PORT}}': dynamicPort
-              };
-              for (const [key, value] of Object.entries(replacements)) {
-                comment = comment.replaceAll(key, value);
-              }
-            } catch (error) {
-              console.log('Template not found, using fallback');
-              comment = `## 📊 Dashboard Published\n\nView your PR dashboard at: ${prDashboardUrl}\n\n**Target Branch:** ${prBase}`;
-            }
+            const comment = `## 📊 Dashboard & Reports Prepared
+
+✅ **Test reports and dashboard generated successfully!**
+
+🚀 **Deployment Status:** Jekyll workflow triggered - site will be published shortly
+
+### 📍 Deployment URLs (Available after Jekyll completes)
+
+- 🎯 **Main Dashboard:** [${dashboardUrl}](${dashboardUrl})
+- 📊 **PR #${prNumber} Dashboard:** [${prDashboardUrl}](${prDashboardUrl})
+- 📁 **All Reports:** [${baseUrl}/library/reports/](${baseUrl}/library/reports/)
+
+### 🐳 Docker Container
+
+\`\`\`bash
+# Pull and run this PR's container
+docker pull ghcr.io/${imageNameLower}:pr-${prNumber}-latest
+docker run -it -p ${dynamicPort}:8080 ghcr.io/${imageNameLower}:pr-${prNumber}-latest
+\`\`\`
+
+- **Container Name:** \`${containerName}\`
+- **Port:** \`${dynamicPort}\`
+- **Registry:** [${packageUrl}](${packageUrl})
+
+### ⏳ Next Steps
+
+The Jekyll deployment workflow is building the complete site with your reports. Check the [Actions tab](https://github.com/${repository}/actions/workflows/09-jekyll-gh-pages.yml) for deployment progress.
+
+---
+*Target Branch:* \`${prBase}\` | *Updated:* ${new Date().toUTCString()}`;
             
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -670,7 +668,7 @@ jobs:
             
             const existingComment = comments.find(c => 
               c.user.login === 'github-actions[bot]' && 
-              c.body.includes('Dashboard & Container Published')
+              (c.body.includes('Dashboard & Reports Prepared') || c.body.includes('Dashboard & Container Published'))
             );
             
             if (existingComment) {
@@ -680,6 +678,7 @@ jobs:
                 comment_id: existingComment.id,
                 body: comment
               });
+              console.log('Updated existing PR comment');
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -687,4 +686,5 @@ jobs:
                 issue_number: prNumber,
                 body: comment
               });
+              console.log('Created new PR comment');
             }

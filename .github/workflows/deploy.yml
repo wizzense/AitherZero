@@ -9,22 +9,22 @@ name: 🚀 Deploy (Consolidated)
 #    - Pushes to GitHub Container Registry (ghcr.io)
 #    - Tags with branch name and commit SHA
 #
-# 2. Test Execution (03-test-execution.yml - triggers in parallel)
+# 2. Test Execution (03-test-execution.yml - triggers in parallel on push)
 #    - Runs comprehensive test suite
 #    - Generates test reports and coverage
 #    - Validates code quality
 #
-# 3. Dashboard Publishing (05-publish-reports-dashboard.yml - after tests)
+# 3. Dashboard Publishing (05-publish-reports-dashboard.yml - after tests via workflow_run)
 #    - Collects test results and metrics
 #    - Generates interactive dashboard
-#    - Publishes to branch-specific GitHub Pages path
+#    - Triggers Jekyll deployment workflow
 #
-# 4. GitHub Pages Deployment (09-jekyll-gh-pages.yml - on paths)
-#    - Builds Jekyll site
-#    - Deploys to branch-specific subdirectory
-#    - Provides navigation and documentation
+# 4. GitHub Pages Deployment (09-jekyll-gh-pages.yml - triggered by dashboard workflow)
+#    - Downloads reports from dashboard workflow
+#    - Builds complete Jekyll site with reports included
+#    - Deploys to GitHub Pages via actions/deploy-pages
 #
-# Result: Every push gets Docker image, tests, reports, and GitHub Pages!
+# Result: Every push gets Docker image, tests, reports dashboard, and GitHub Pages deployment!
 
 'on':
   push:
@@ -157,11 +157,12 @@ jobs:
           echo "✅ Staging deployment complete"
 
   # ============================================================================
-  # PUBLISH-DASHBOARD: Dashboard publishing is handled by 09-jekyll-gh-pages.yml
-  # This job is disabled to avoid GitHub Pages deployment conflicts
+  # NOTE: Dashboard publishing is now handled by the linked workflow chain:
+  # 1. 05-publish-reports-dashboard.yml generates reports and dashboard
+  # 2. Triggers 09-jekyll-gh-pages.yml via workflow_dispatch
+  # 3. Jekyll workflow builds complete site with reports and deploys via actions/deploy-pages
+  # This ensures single deployment method and proper workflow coordination.
   # ============================================================================
-  # NOTE: Dashboard generation and publishing moved to 09-jekyll-gh-pages.yml
-  # to avoid conflicts with Jekyll-based GitHub Pages deployment
 
   # ============================================================================
   # SUMMARY: Deployment summary
@@ -202,10 +203,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           echo "### 📊 Dashboard & Reports" >> $GITHUB_STEP_SUMMARY
-          echo "- **Dashboard URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Reports URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH}library/reports/" >> $GITHUB_STEP_SUMMARY
-          echo "- **Publishing:** Handled by Jekyll workflow after test completion" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workflow:** [Jekyll GitHub Pages](https://github.com/${{ github.repository }}/actions/workflows/09-jekyll-gh-pages.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH}library/reports/" >> $GITHUB_STEP_SUMMARY
+          echo "- **Publishing:** Triggered automatically after test completion" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Chain:** Tests → Dashboard Generation → Jekyll Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Check [Test Execution](https://github.com/${{ github.repository }}/actions/workflows/03-test-execution.yml) and [Jekyll Deployment](https://github.com/${{ github.repository }}/actions/workflows/09-jekyll-gh-pages.yml)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           echo "### 🎯 Staging Deployment" >> $GITHUB_STEP_SUMMARY

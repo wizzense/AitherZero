@@ -17,22 +17,43 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
         "ring-1-integrations",
         "ring-2",
       ]
-    paths:
-      - "library/reports/**"
-      - "library/**"
-      - "index.md"
-      - "_config.yml"
-      - "integrations/mcp-server/README.md"
-      - "integrations/mcp-server/QUICKSTART.md"
+    # NOTE: Paths filter removed to ensure deployment on every push
+    # Previously only triggered when specific files changed, causing dashboard deployment to be skipped
+    # Now runs on every push to ensure reports and dashboards are always deployed
+    # paths:
+    #   - "library/reports/**"
+    #   - "library/**"
+    #   - "index.md"
+    #   - "_config.yml"
+    #   - "integrations/mcp-server/README.md"
+    #   - "integrations/mcp-server/QUICKSTART.md"
+
+  # Triggered by 05-publish-reports-dashboard.yml after reports are generated
+  workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: 'Workflow that triggered this deployment'
+        required: false
+        default: 'manual'
+        type: string
+      pr_number:
+        description: 'PR number if triggered from PR workflow'
+        required: false
+        type: string
+      reports_run_id:
+        description: 'Run ID of the workflow that generated reports'
+        required: false
+        type: string
 
   # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  # workflow_dispatch already defined above
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: write  # Required for peaceiris/actions-gh-pages
+  contents: read
   pages: write
   id-token: write
+  actions: read  # Required to download artifacts from other workflows
 
 # Branch-specific concurrency to allow parallel deployments
 concurrency:
@@ -99,6 +120,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: 📊 Download Reports (if available)
+        if: github.event.inputs.reports_run_id != ''
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: combined-reports
+          run-id: ${{ github.event.inputs.reports_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./
+
+      - name: 📋 Report Context
+        run: |
+          echo "🔍 Deployment Context:"
+          echo "  - Triggered by: ${{ github.event.inputs.triggered_by || 'push' }}"
+          echo "  - Branch: ${{ needs.setup.outputs.branch-name }}"
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            echo "  - PR: #${{ github.event.inputs.pr_number }}"
+          fi
+          if [ -n "${{ github.event.inputs.reports_run_id }}" ]; then
+            echo "  - Reports from run: ${{ github.event.inputs.reports_run_id }}"
+          fi
+          echo ""
+          
+          # Check if reports were downloaded
+          if [ -d "./library/reports" ]; then
+            echo "✅ Reports found:"
+            ls -la ./library/reports/ | head -10
+          else
+            echo "ℹ️  No reports artifact (this is normal for documentation-only changes)"
+          fi
 
       - name: Create Branch-Specific Config
         run: |
@@ -200,73 +252,135 @@ jobs:
           echo "📂 Build output:"
           ls -la ./_site/
 
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+      - name: 📤 Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: jekyll-site-${{ needs.setup.outputs.branch-name }}
-          path: ./_site/
-          retention-days: 7
-
-  # Deployment job using peaceiris/actions-gh-pages for branch-specific deployments
-  deploy:
-    name: Deploy to GitHub Pages
-    runs-on: ubuntu-latest
-    needs: [setup, build]
-    steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: jekyll-site-${{ needs.setup.outputs.branch-name }}
           path: ./_site
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
-          destination_dir: ${{ needs.setup.outputs.destination-dir }}
-          keep_files: true
-          enable_jekyll: false  # Already built
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'Deploy ${{ needs.setup.outputs.branch-name }} branch to GitHub Pages'
+  # Deployment job using actions/deploy-pages (unified with dashboard workflow)
+  deploy:
+    name: 🚀 Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: 🔧 Setup Pages
+        uses: actions/configure-pages@v5
 
-      - name: Report Deployment
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: 📋 Report Deployment
         shell: pwsh
         env:
           BRANCH: ${{ needs.setup.outputs.branch-name }}
-          DEPLOYMENT_URL: ${{ needs.setup.outputs.deployment-url }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           BASE_URL: ${{ needs.setup.outputs.base-url }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
         run: |
           Write-Host "✅ Successfully deployed to GitHub Pages!" -ForegroundColor Green
           Write-Host "🌿 Branch: $env:BRANCH" -ForegroundColor Cyan
-          Write-Host "🔗 Deployment URL: $env:DEPLOYMENT_URL" -ForegroundColor Cyan
+          Write-Host "🔗 Deployment URL: $env:PAGE_URL" -ForegroundColor Cyan
           Write-Host ""
           Write-Host "📊 Available Pages:" -ForegroundColor Yellow
-          Write-Host "  - Branch Info: ${env:DEPLOYMENT_URL}branch-info.html"
-          Write-Host "  - Dashboard: ${env:DEPLOYMENT_URL}library/reports/dashboard.html"
-          Write-Host "  - Reports: ${env:DEPLOYMENT_URL}library/reports/"
-          Write-Host "  - Docs: ${env:DEPLOYMENT_URL}docs/"
+          Write-Host "  - Main Dashboard: ${env:PAGE_URL}library/reports/dashboard.html"
+          Write-Host "  - Branch Info: ${env:PAGE_URL}branch-info.html"
+          Write-Host "  - All Reports: ${env:PAGE_URL}library/reports/"
+          
+          if ($env:PR_NUMBER) {
+            Write-Host "  - PR #$env:PR_NUMBER Dashboard: ${env:PAGE_URL}library/reports/pr-$env:PR_NUMBER/" -ForegroundColor Green
+          }
+          
           Write-Host ""
-          Write-Host "🔄 Other Deployments:" -ForegroundColor Yellow
-          Write-Host "  - Main: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-          Write-Host "  - Dev: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/dev/"
-          Write-Host "  - Dev-Staging: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/dev-staging/"
-          Write-Host ""
-          Write-Host "⏱️ Deployment Duration: <5 minutes is normal" -ForegroundColor Cyan
+          Write-Host "⏱️ Deployment complete! Pages will be available in ~1-2 minutes." -ForegroundColor Cyan
 
-      - name: Diagnose Deployment Failure
+      - name: 💬 Update PR Comment (if from PR)
+        if: github.event.inputs.pr_number != ''
+        uses: actions/github-script@v7
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          REPOSITORY: ${{ github.repository }}
+        with:
+          script: |
+            const pageUrl = process.env.PAGE_URL;
+            const prNumber = process.env.PR_NUMBER;
+            const repository = process.env.REPOSITORY;
+            
+            const dashboardUrl = `${pageUrl}library/reports/dashboard.html`;
+            const prDashboardUrl = `${pageUrl}library/reports/pr-${prNumber}/`;
+            
+            const imageNameLower = repository.toLowerCase();
+            const dynamicPort = 8080 + (parseInt(prNumber) % 100);
+            const packageUrl = `https://github.com/${repository}/pkgs/container/aitherzero`;
+            const containerName = `aitherzero-pr-${prNumber}`;
+            
+            const comment = `## 📊 Dashboard & Container Published
+
+✅ **Deployment complete!** Your PR dashboard is now live.
+
+### 📍 Live URLs
+
+- 🎯 **Main Dashboard:** [${dashboardUrl}](${dashboardUrl})
+- 📊 **PR #${prNumber} Dashboard:** [${prDashboardUrl}](${prDashboardUrl})
+- 📁 **All Reports:** [${pageUrl}library/reports/](${pageUrl}library/reports/)
+
+### 🐳 Docker Container
+
+\`\`\`bash
+# Pull and run this PR's container
+docker pull ghcr.io/${imageNameLower}:pr-${prNumber}-latest
+docker run -it -p ${dynamicPort}:8080 ghcr.io/${imageNameLower}:pr-${prNumber}-latest
+\`\`\`
+
+- **Container Name:** \`${containerName}\`
+- **Port:** \`${dynamicPort}\`
+- **Registry:** [${packageUrl}](${packageUrl})
+
+---
+*Deployed:* ${new Date().toUTCString()}`;
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const existingComment = comments.find(c => 
+              c.user.login === 'github-actions[bot]' && 
+              (c.body.includes('Dashboard & Reports Prepared') || c.body.includes('Dashboard & Container Published'))
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+              console.log('✅ Updated PR comment with deployment URLs');
+            }
+
+      - name: ❌ Diagnose Deployment Failure
         if: failure()
         run: |
           echo "::error::❌ GitHub Pages deployment failed!"
           echo "::error::"
           echo "::error::Common causes:"
           echo "::error::  1. GitHub Pages not enabled in repository settings"
-          echo "::error::  2. Workflow permissions insufficient (need write access)"
-          echo "::error::  3. Pages source not set to 'GitHub Actions' or 'gh-pages branch'"
+          echo "::error::  2. GitHub Pages source not set to 'GitHub Actions'"
+          echo "::error::  3. Workflow permissions insufficient"
           echo "::error::"
           echo "::error::Resolution steps:"
-          echo "::error::  • Settings → Pages → Source → 'gh-pages branch' (for peaceiris/actions-gh-pages)"
+          echo "::error::  • Settings → Pages → Source → 'GitHub Actions'"
           echo "::error::  • Settings → Actions → General → 'Read and write permissions'"
           echo "::error::"
-          echo "::error::See DEPLOYMENT-DIAGNOSIS.md for detailed troubleshooting"
+          echo "::error::Current deployment method: actions/deploy-pages@v4"
+          echo "::error::Requires GitHub Pages source to be set to 'GitHub Actions'"
