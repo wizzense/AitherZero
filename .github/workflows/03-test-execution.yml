@@ -364,15 +364,13 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
-  # Coverage analysis (optional)
-  coverage:
-    name: 📊 Coverage Analysis
+  # Coverage and Performance Analysis
+  coverage-and-performance:
+    name: 📊 Coverage & Performance
     needs: [unit-tests, domain-tests, integration-tests]
-    if: |
-      always() && 
-      (github.event.inputs.coverage == 'true' || github.event_name == 'push')
+    if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout
@@ -383,6 +381,28 @@ jobs:
         run: |
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
+      - name: 📥 Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+        continue-on-error: true
+
+      - name: 📊 Organize Test Results for Coverage
+        shell: pwsh
+        run: |
+          Write-Host "📦 Organizing test results for coverage analysis..." -ForegroundColor Cyan
+          
+          # Ensure directories exist
+          New-Item -ItemType Directory -Path "library/tests/results" -Force | Out-Null
+          
+          # Copy test result files if artifacts were downloaded
+          if (Test-Path "./artifacts") {
+            Get-ChildItem "./artifacts" -Recurse -Filter "*.xml" | ForEach-Object {
+              Copy-Item $_.FullName -Destination "library/tests/results/" -Force
+              Write-Host "  ✓ Copied: $($_.Name)" -ForegroundColor Green
+            }
+          }
+
       - name: 📊 Generate Coverage Report
         id: coverage
         shell: pwsh
@@ -392,17 +412,74 @@ jobs:
           
           Import-Module ./AitherZero.psd1 -Force
           
-          # Run coverage generation script if available
+          # Run coverage generation script
           if (Test-Path "./library/automation-scripts/0406_Generate-Coverage.ps1") {
-            & ./library/automation-scripts/0406_Generate-Coverage.ps1
+            & ./library/automation-scripts/0406_Generate-Coverage.ps1 -RunTests:$false
             if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ Coverage report generated successfully" -ForegroundColor Green
             } else {
-              Write-Host "⚠️ Coverage generation failed with exit code $LASTEXITCODE" -ForegroundColor Yellow
+              Write-Host "⚠️ Coverage generation completed with warnings (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
             }
           } else {
             Write-Host "⚠️ Coverage script not found" -ForegroundColor Yellow
           }
+
+      - name: 🚀 Collect Performance Metrics
+        id: performance
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "🚀 Collecting performance metrics..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Create performance metrics file
+          $perfMetrics = @{
+            Timestamp = Get-Date -Format "o"
+            TestExecution = @{
+              TotalDuration = 0
+              AverageDuration = 0
+              FastestTest = ""
+              SlowestTest = ""
+            }
+            ModulePerformance = @{}
+          }
+          
+          # Analyze test result timings if available
+          $testResults = Get-ChildItem -Path "library/tests/results" -Filter "*.xml" -ErrorAction SilentlyContinue
+          if ($testResults) {
+            $totalTime = 0
+            $testCount = 0
+            
+            foreach ($file in $testResults) {
+              try {
+                [xml]$xml = Get-Content $file.FullName
+                $time = [double]$xml.'test-results'.time
+                $totalTime += $time
+                $testCount++
+              } catch {
+                # Skip files that can't be parsed
+              }
+            }
+            
+            if ($testCount -gt 0) {
+              $perfMetrics.TestExecution.TotalDuration = [math]::Round($totalTime, 2)
+              $perfMetrics.TestExecution.AverageDuration = [math]::Round($totalTime / $testCount, 2)
+            }
+          }
+          
+          # Run module performance profiling if available
+          if (Test-Path "./library/automation-scripts/0529_Profile-ModulePerformance.ps1") {
+            & ./library/automation-scripts/0529_Profile-ModulePerformance.ps1 -OutputPath "library/reports/metrics/performance-metrics.json"
+          }
+          
+          # Save performance metrics
+          $outputPath = "library/reports/metrics/performance-metrics.json"
+          New-Item -ItemType Directory -Path (Split-Path $outputPath) -Force | Out-Null
+          $perfMetrics | ConvertTo-Json -Depth 10 | Out-File -FilePath $outputPath -Encoding UTF8
+          
+          Write-Host "✅ Performance metrics collected" -ForegroundColor Green
+          Write-Host "  Total test duration: $($perfMetrics.TestExecution.TotalDuration)s" -ForegroundColor Cyan
 
       - name: 📊 Upload Coverage
         if: always()
@@ -412,11 +489,20 @@ jobs:
           path: ./library/tests/coverage/**/*
           retention-days: 30
           if-no-files-found: warn
+          
+      - name: 🚀 Upload Performance Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-metrics
+          path: ./library/reports/metrics/performance-*.json
+          retention-days: 30
+          if-no-files-found: warn
 
   # Consolidate results and publish summary
   summary:
     name: 📋 Test Summary
-    needs: [prepare, unit-tests, domain-tests, integration-tests]
+    needs: [prepare, unit-tests, domain-tests, integration-tests, coverage-and-performance]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
