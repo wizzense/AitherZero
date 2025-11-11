@@ -20,8 +20,8 @@
 
 [CmdletBinding()]
 param(
-    [string]$OutputPath = "reports/dashboard/index.html",
-    [string]$MetricsPath = "reports/metrics",
+    [string]$OutputPath = "library/reports/dashboard/index.html",
+    [string]$MetricsPath = "library/reports/metrics",
     [string]$TemplatesPath = "library/_templates/dashboard",
     [string]$ProjectName = "AitherZero",
     [string]$PRNumber = "",

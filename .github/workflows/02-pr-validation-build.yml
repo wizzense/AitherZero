@@ -494,31 +494,31 @@ jobs:
           $prDir = "./library/reports/pr-$env:PR_NUMBER"
           New-Item -ItemType Directory -Path $prDir -Force | Out-Null
           
-          # Copy dashboard output from reports/dashboard/ (from 0525 script)
-          if (Test-Path "./reports/dashboard") {
-            Copy-Item -Path "./reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
-            Write-Host "✅ Copied modular dashboard (reports/dashboard/)" -ForegroundColor Green
+          # Copy dashboard output from library/reports/dashboard/ (modular dashboard)
+          if (Test-Path "./library/reports/dashboard") {
+            Copy-Item -Path "./library/reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
+            Write-Host "✅ Copied modular dashboard (library/reports/dashboard/)" -ForegroundColor Green
           } else {
-            Write-Host "⚠️ Modular dashboard not found at reports/dashboard/" -ForegroundColor Yellow
+            Write-Host "⚠️ Modular dashboard not found at library/reports/dashboard/" -ForegroundColor Yellow
             $failedSteps += "Modular dashboard copy"
           }
           
-          # Copy individual dashboard files from reports/ (from 0512 script)
+          # Copy individual dashboard files from library/reports/ (comprehensive dashboard)
           $dashboardFiles = @('dashboard.html', 'dashboard.json', 'dashboard.md')
           foreach ($file in $dashboardFiles) {
-            $sourcePath = "./reports/$file"
+            $sourcePath = "./library/reports/$file"
             if (Test-Path $sourcePath) {
               Copy-Item -Path $sourcePath -Destination $prDir -Force
-              Write-Host "✅ Copied $file from reports/" -ForegroundColor Green
+              Write-Host "✅ Copied $file from library/reports/" -ForegroundColor Green
             }
           }
           
           # Copy metrics
-          if (Test-Path "./reports/metrics") {
-            Copy-Item -Path "./reports/metrics" -Destination "$prDir/metrics" -Recurse -Force
+          if (Test-Path "./library/reports/metrics") {
+            Copy-Item -Path "./library/reports/metrics" -Destination "$prDir/metrics" -Recurse -Force
             Write-Host "✅ Copied metrics JSONs" -ForegroundColor Green
           } else {
-            Write-Host "⚠️ Metrics output not found" -ForegroundColor Yellow
+            Write-Host "⚠️ Metrics output not found at library/reports/metrics/" -ForegroundColor Yellow
           }
           
           # Copy legacy reports

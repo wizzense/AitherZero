@@ -236,14 +236,11 @@ jobs:
           Write-Host "  Creating PR dashboard at: $prDir" -ForegroundColor Cyan
           New-Item -ItemType Directory -Path $prDir -Force | Out-Null
           
-          # Copy main dashboard to PR-specific location
-          # Check both reports/ and library/reports/ for dashboard files
+          # Copy main dashboard to PR-specific location (only from library/reports/)
           $dashboardSources = @(
-            @{ Source = "reports/dashboard.html"; Dest = "dashboard.html" }
-            @{ Source = "reports/dashboard.json"; Dest = "dashboard.json" }
-            @{ Source = "reports/dashboard.md"; Dest = "dashboard.md" }
             @{ Source = "library/reports/dashboard.html"; Dest = "dashboard.html" }
             @{ Source = "library/reports/dashboard.json"; Dest = "dashboard.json" }
+            @{ Source = "library/reports/dashboard.md"; Dest = "dashboard.md" }
           )
           
           foreach ($item in $dashboardSources) {
@@ -255,8 +252,8 @@ jobs:
           }
           
           # Copy modular dashboard directory if it exists
-          if (Test-Path "reports/dashboard") {
-            Copy-Item "reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
+          if (Test-Path "library/reports/dashboard") {
+            Copy-Item "library/reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
             Write-Host "✅ Copied modular dashboard directory" -ForegroundColor Green
           }
           
@@ -465,16 +462,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Copy dashboard files from reports/ to library/reports/ for consistency
-          # (Playbooks generate in reports/, but some workflows expect library/reports/)
-          if [ -f "reports/dashboard.html" ]; then
-            cp -f reports/dashboard.html library/reports/dashboard.html
-            cp -f reports/dashboard.json library/reports/dashboard.json 2>/dev/null || true
-            cp -f reports/dashboard.md library/reports/dashboard.md 2>/dev/null || true
-            echo "✅ Copied dashboard files to library/reports/"
-          fi
-          
-          # Add reports and dashboards
+          # Add reports and dashboards (all in library/reports/)
           git add library/reports/dashboard.* library/reports/psscriptanalyzer-fast-results.json
           git add library/reports/pr-*/
           git add library/reports/README.md library/reports/index.md
