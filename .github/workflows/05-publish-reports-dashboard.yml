@@ -32,6 +32,8 @@ permissions:
   pages: write
   id-token: write
   actions: read
+  pull-requests: write
+  issues: write
 
 concurrency:
   group: publish-reports-dashboard-${{ github.ref }}
