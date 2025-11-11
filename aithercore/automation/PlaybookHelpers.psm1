@@ -305,19 +305,24 @@ function Test-PlaybookDefinition {
     # Load playbook
     if ($Path) {
         try {
+            Write-Verbose "Loading playbook from: $Path"
             $content = Get-Content -Path $Path -Raw
+            Write-Verbose "Parsing playbook content ($(($content -split "`n").Count) lines)"
             $scriptBlock = [scriptblock]::Create($content)
             $PlaybookData = & $scriptBlock
             
             # Ensure it's a hashtable
             if ($PlaybookData -isnot [hashtable]) {
+                Write-Verbose "Playbook returned type: $($PlaybookData.GetType().Name) (expected: Hashtable)"
                 $result.Errors += "Playbook file must return a hashtable, got $($PlaybookData.GetType().Name)"
                 $result.IsValid = $false
                 return $result
             }
             
+            Write-Verbose "Successfully loaded playbook with $($PlaybookData.Keys.Count) top-level properties"
             $result.Info += "Loaded playbook from: $Path"
         } catch {
+            Write-Verbose "Failed to load playbook: $($_.Exception.Message)"
             $result.Errors += "Failed to load playbook: $($_.Exception.Message)"
             $result.IsValid = $false
             return $result
@@ -326,28 +331,47 @@ function Test-PlaybookDefinition {
     
     # Validate required properties
     if (-not $PlaybookData.ContainsKey('Name')) {
+        Write-Verbose "Validation failed: Missing 'Name' property"
         $result.Errors += "Missing required property: 'Name'"
         $result.IsValid = $false
     } else {
         $result.PlaybookName = $PlaybookData.Name
+        Write-Verbose "Playbook name: $($result.PlaybookName)"
     }
     
     if (-not ($PlaybookData.ContainsKey('Sequence') -or $PlaybookData.ContainsKey('sequence'))) {
+        Write-Verbose "Validation failed: Missing 'Sequence' property"
         $result.Errors += "Missing required property: 'Sequence'"
         $result.IsValid = $false
         return $result  # Can't continue without Sequence
     }
     
-    # Get sequence
-    $sequence = if ($PlaybookData.ContainsKey('Sequence')) {
-        @($PlaybookData.Sequence)  # Force array
+    # Get sequence - ensure it's always an array
+    $sequenceRaw = if ($PlaybookData.ContainsKey('Sequence')) {
+        Write-Verbose "Found 'Sequence' property (case: Sequence)"
+        $PlaybookData.Sequence
     } elseif ($PlaybookData.ContainsKey('sequence')) {
-        @($PlaybookData.sequence)  # Force array
+        Write-Verbose "Found 'Sequence' property (case: sequence)"
+        $PlaybookData.sequence
     } else {
-        @()  # Empty array
+        Write-Verbose "No Sequence property found"
+        $null
     }
     
+    # Convert to array safely
+    if ($null -eq $sequenceRaw) {
+        $sequence = @()
+    } elseif ($sequenceRaw -is [System.Collections.IList]) {
+        $sequence = @($sequenceRaw)
+    } else {
+        # Single item - wrap in array
+        $sequence = @($sequenceRaw)
+    }
+    
+    Write-Verbose "Sequence contains $($sequence.Count) script(s)"
+    
     if ($sequence.Count -eq 0) {
+        Write-Verbose "Validation failed: Empty sequence"
         $result.Errors += "Sequence is empty - at least one script required"
         $result.IsValid = $false
         return $result
@@ -363,9 +387,12 @@ function Test-PlaybookDefinition {
         $scriptDef = $sequence[$i]
         $scriptIndex = $i + 1
         
+        Write-Verbose "Validating script #$scriptIndex..."
+        
         # Check if it's a hashtable
         if ($scriptDef -isnot [hashtable]) {
             $typename = if ($scriptDef) { $scriptDef.GetType().Name } else { 'null' }
+            Write-Verbose "Script #$scriptIndex validation failed: Expected hashtable, got $typename"
             $result.Errors += "Script #$scriptIndex : Must be a hashtable, got $typename"
             $result.IsValid = $false
             continue
@@ -374,10 +401,13 @@ function Test-PlaybookDefinition {
         # Validate Script property
         $scriptProp = $scriptDef['Script'] ?? $scriptDef['script']
         if (-not $scriptProp) {
+            Write-Verbose "Script #$scriptIndex validation failed: Missing 'Script' property"
             $result.Errors += "Script #$scriptIndex : Missing 'Script' property"
             $result.IsValid = $false
             continue
         }
+        
+        Write-Verbose "Script #$scriptIndex : Script property = '$scriptProp'"
         
         # Extract script number
         $scriptNumber = $null
