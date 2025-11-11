@@ -1,53 +1,53 @@
 {
   "environment": {
-    "run_number": "73",
-    "run_id": "19251634944",
-    "job": "build",
-    "runner_os": "Linux",
     "workflow": "🚀 PR Ecosystem - Complete Validation & Build",
     "ci": true,
     "os": "Ubuntu 24.04.3 LTS",
+    "runner_os": "Linux",
+    "run_number": "71",
     "platform": "GitHub Actions",
-    "powershell_version": "7.4.13"
+    "run_id": "19251579181",
+    "powershell_version": "7.4.13",
+    "job": "build"
   },
-  "generated_at": "2025-11-11T01:17:32Z",
-  "artifacts": {
-    "container_image_base": "ghcr.io/wizzense/aitherzero",
-    "package_prefix": "AitherZero-PR2284",
-    "pr_container_tags": [
-      "pr-2284-346bf2d2",
-      "pr-2284-latest"
-    ]
+  "pages": {
+    "branch": "2284/merge",
+    "base_url": "https://wizzense.github.io/AitherZero/2284/merge",
+    "pr_reports": "https://wizzense.github.io/AitherZero/2284/merge/pr-2284/reports/",
+    "branch_path": "/2284/merge",
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2284/merge/pr-2284/"
+  },
+  "pr": {
+    "author": "Copilot",
+    "title": null,
+    "head_branch": "copilot/address-validation-playbook-issues",
+    "head_sha": "346bf2d2f70a53cc44815ec782d207f6d1ec902a",
+    "base_branch": "dev-staging",
+    "base_sha": null,
+    "url": "https://github.com/wizzense/AitherZero/pull/2284",
+    "number": 2284
   },
   "git": {
-    "commit_sha": "346bf2d2f70a53cc44815ec782d207f6d1ec902a",
+    "commit_date": "2025-11-11T01:14:19Z",
     "commit_message": [
       "Merge 602a31daf64789f834022d11413d5d24405f5fcb into a793d843059c56e0309a44aad6ef2d2ae5cd3a8b",
       ""
     ],
     "commit_author": "Copilot",
-    "branch": "HEAD",
-    "commit_date": "2025-11-11T01:14:19Z",
-    "commits_count": "1",
     "commit_short": "346bf2d2",
-    "tag": null
+    "tag": null,
+    "commits_count": "1",
+    "commit_sha": "346bf2d2f70a53cc44815ec782d207f6d1ec902a",
+    "branch": "HEAD"
   },
-  "pr": {
-    "title": null,
-    "author": "wizzense",
-    "base_branch": "dev-staging",
-    "number": 2284,
-    "base_sha": null,
-    "head_branch": "copilot/address-validation-playbook-issues",
-    "head_sha": "346bf2d2f70a53cc44815ec782d207f6d1ec902a",
-    "url": "https://github.com/wizzense/AitherZero/pull/2284"
-  },
-  "pages": {
-    "branch_path": "/2284/merge",
-    "pr_dashboard": "https://wizzense.github.io/AitherZero/2284/merge/pr-2284/",
-    "base_url": "https://wizzense.github.io/AitherZero/2284/merge",
-    "branch": "2284/merge",
-    "pr_reports": "https://wizzense.github.io/AitherZero/2284/merge/pr-2284/reports/"
-  },
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "generated_at": "2025-11-11T01:22:29Z",
+  "artifacts": {
+    "package_prefix": "AitherZero-PR2284",
+    "container_image_base": "ghcr.io/wizzense/aitherzero",
+    "pr_container_tags": [
+      "pr-2284-346bf2d2",
+      "pr-2284-latest"
+    ]
+  }
 }

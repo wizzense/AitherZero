@@ -1,0 +1,100 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/security/LicenseManager.psm1",
+  "FileName": "LicenseManager.psm1",
+  "Timestamp": "2025-11-11T01:23:41.1671498+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 72.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 5,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "FunctionCount": 6,
+        "HasInfoLevel": false,
+        "TotalLoggingCalls": 27.0,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 25
+        },
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/LicenseManager.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 11,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "3 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 85,
+      "Details": {
+        "Warnings": 3,
+        "Errors": 0,
+        "TotalIssues": 113,
+        "TopIssues": [
+          "Line 46: PSAvoidGlobalVars - Found global variable 'global:AitherZeroLicenseManagerInitialized'.",
+          "Line 395: PSUseDeclaredVarsMoreThanAssignments - The variable 'authStatus' is assigned but never used.",
+          "Line 402: PSUseDeclaredVarsMoreThanAssignments - The variable 'url' is assigned but never used.",
+          "Line 6: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 11: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Warnings": 2,
+    "Skipped": 1,
+    "Failed": 1,
+    "Passed": 2
+  }
+}

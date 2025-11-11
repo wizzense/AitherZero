@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/OrchestrationEngine.psm1",
+  "FileName": "OrchestrationEngine.psm1",
+  "Timestamp": "2025-11-11T01:23:39.4513352+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 58.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Remove-Item"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 12,
+        "HasErrorLogging": true,
+        "HasFinallyBlock": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "FunctionCount": 40,
+        "HasInfoLevel": true,
+        "TotalLoggingCalls": 96.0,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-.*Log": 92,
+          "Write-CustomLog": 3,
+          "Write-Warning": 1
+        },
+        "HasWarningLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/OrchestrationEngine.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 53,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "19 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 5,
+      "Details": {
+        "Warnings": 19,
+        "Errors": 0,
+        "TotalIssues": 348,
+        "TopIssues": [
+          "Line 31: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 2021: PSUseUsingScopeModifierInNewRunspaces - The variable '$ScriptPath' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier.",
+          "Line 2021: PSUseUsingScopeModifierInNewRunspaces - The variable '$Config' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier.",
+          "Line 2021: PSUseUsingScopeModifierInNewRunspaces - The variable '$Vars' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier.",
+          "Line 2025: PSUseUsingScopeModifierInNewRunspaces - The variable '$ScriptPath' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Warnings": 1,
+    "Skipped": 1,
+    "Failed": 2,
+    "Passed": 2
+  }
+}

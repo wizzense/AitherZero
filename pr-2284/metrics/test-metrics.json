@@ -1,41 +1,41 @@
 {
+  "FailedTests": [],
   "Categories": {
-    "Domain": {
+    "Integration": {
       "Failed": 0,
       "Passed": 0,
-      "Duration": 0,
+      "Skipped": 0,
       "Total": 0,
-      "Skipped": 0
+      "Duration": 0
     },
     "Unit": {
       "Failed": 0,
       "Passed": 0,
-      "Duration": 0,
+      "Skipped": 0,
       "Total": 0,
-      "Skipped": 0
+      "Duration": 0
     },
-    "Integration": {
+    "Domain": {
       "Failed": 0,
       "Passed": 0,
-      "Duration": 0,
+      "Skipped": 0,
       "Total": 0,
-      "Skipped": 0
+      "Duration": 0
     }
   },
-  "Timestamp": "2025-11-11T01:19:57Z",
   "Coverage": {
-    "CoveredLines": 0,
     "TotalLines": 0,
-    "BranchRate": 0.0,
-    "LineRate": 0.0
+    "CoveredLines": 0,
+    "LineRate": 0.0,
+    "BranchRate": 0.0
   },
+  "Timestamp": "2025-11-11T01:24:10Z",
   "Summary": {
     "FailedTests": 0,
-    "SkippedTests": 0,
     "TotalTests": 0,
+    "PassRate": 0.0,
     "PassedTests": 0,
-    "TotalDuration": 0,
-    "PassRate": 0.0
-  },
-  "FailedTests": []
+    "SkippedTests": 0,
+    "TotalDuration": 0
+  }
 }

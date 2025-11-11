@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/LoggingDashboard.psm1",
+  "FileName": "LoggingDashboard.psm1",
+  "Timestamp": "2025-11-11T01:23:36.6896275+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 63.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TryCatchBlocks": 1,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Failed",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow",
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 65,
+      "Details": {
+        "FunctionCount": 16,
+        "HasInfoLevel": false,
+        "TotalLoggingCalls": 22.0,
+        "HasErrorLevel": false,
+        "LoggingStatements": {
+          "Write-.*Log": 22
+        },
+        "HasWarningLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/LoggingDashboard.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [
+        "No parameters defined. Consider adding parameters for flexibility"
+      ],
+      "Score": 90,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 0,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "8 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 60,
+      "Details": {
+        "Warnings": 8,
+        "Errors": 0,
+        "TotalIssues": 9,
+        "TopIssues": [
+          "Line 43: PSReviewUnusedParameter - The parameter 'ShowTranscript' has been declared but not used.",
+          "Line 188: PSUseApprovedVerbs - The cmdlet 'Process-MenuChoice' uses an unapproved verb.",
+          "Line 385: PSUseApprovedVerbs - The cmdlet 'Toggle-AutoRefresh' uses an unapproved verb.",
+          "Line 504: PSUseApprovedVerbs - The cmdlet 'Toggle-TranscriptLogging' uses an unapproved verb.",
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'LoggingDashboard.psm1'"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "TotalChecks": 6,
+    "Warnings": 0,
+    "Skipped": 1,
+    "Failed": 3,
+    "Passed": 2
+  }
+}
