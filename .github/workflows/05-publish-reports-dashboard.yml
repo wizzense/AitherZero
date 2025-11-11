@@ -4,6 +4,11 @@ name: 📊 Publish Test Reports & Dashboard to GitHub Pages
 # Publish comprehensive test reports, dashboards, and PR-specific status to GitHub Pages
 # Integrates with test-execution.yml and generates navigable reports for each PR
 'on':
+  # Triggered on PR events for complete ecosystem deployment
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+  
   # Triggered after test execution completes
   workflow_run:
     workflows: ["🧪 Test Execution (Complete Suite)"]

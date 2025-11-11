@@ -78,6 +78,7 @@ AitherZero uses a consolidated, event-driven workflow architecture designed to m
 
 #### `05-publish-reports-dashboard.yml` - Dashboard Publishing
 - **Trigger:** 
+  - `pull_request` (opened, synchronize, reopened, ready_for_review) - **NEW for complete PR ecosystem**
   - `workflow_run` (after `03-test-execution.yml` completes)
   - `workflow_dispatch` (manual)
 - **Concurrency Group:** `pages-publish-${{ github.ref }}`
@@ -86,7 +87,9 @@ AitherZero uses a consolidated, event-driven workflow architecture designed to m
   - Collect reports (download artifacts, organize results, generate dashboard)
   - Publish to Pages (Jekyll build and deployment)
 
-**Automatic Trigger:** Runs after `03-test-execution.yml` completes to publish test results.
+**Automatic Triggers:** 
+- Runs on PR events for complete PR ecosystem deployment
+- Runs after `03-test-execution.yml` completes to publish test results
 
 ### Release Workflows
 
@@ -137,27 +140,150 @@ AitherZero uses a consolidated, event-driven workflow architecture designed to m
 - Push workflows use branch reference for isolation
 - Release workflows preserve in-progress deployments (`cancel-in-progress: false`)
 
+## Complete PR Ecosystem
+
+**Every PR gets a self-contained deployment ecosystem** with all components deployed based on the target branch (main, dev, dev-staging, or ring branches).
+
+### PR Ecosystem Components
+
+When a PR is opened against **main**, **dev**, **dev-staging**, or any **ring-** branch, the following workflows collaborate to create a complete ecosystem:
+
+#### 1. 🐳 Docker Container (via `04-deploy-pr-environment.yml`)
+- **Published to**: GitHub Container Registry (GHCR)
+- **Image Tags**:
+  - `ghcr.io/{owner}/{repo}:pr-{number}-{branch}-latest` (primary tag)
+  - `ghcr.io/{owner}/{repo}:pr-{number}-latest` (quick reference)
+  - `ghcr.io/{owner}/{repo}:pr-{number}-{commit}` (commit-specific)
+  - `ghcr.io/{owner}/{repo}:{ring}-pr-{number}-latest` (ring-specific)
+- **Multi-platform**: Linux amd64 (arm64 optional)
+- **Build Args**: PR number, branch, commit SHA, deployment ring
+- **Labels**: Full OCI labels with PR metadata
+
+**Example for PR #123 targeting dev:**
+```bash
+docker pull ghcr.io/wizzense/aitherzero:pr-123-dev-latest
+docker run -it --rm ghcr.io/wizzense/aitherzero:pr-123-dev-latest
+```
+
+#### 2. 📊 GitHub Pages Dashboard (via `05-publish-reports-dashboard.yml`)
+- **URL Pattern**: `https://{owner}.github.io/{repo}/{branch-path}library/reports/pr-{number}/`
+- **Branch-Specific Paths**:
+  - **main** → `/{repo}/library/reports/pr-{number}/`
+  - **dev** → `/{repo}/dev/library/reports/pr-{number}/`
+  - **dev-staging** → `/{repo}/dev-staging/library/reports/pr-{number}/`
+  - **ring-0/1/2** → `/{repo}/ring-{0|1|2}/library/reports/pr-{number}/`
+- **Contents**:
+  - Full dashboard HTML with metrics visualization
+  - Test results and coverage reports
+  - Code quality metrics
+  - Workflow health metrics
+  - Ring deployment metrics
+  - Container deployment information
+
+**Example for PR #123 targeting dev:**
+```
+https://wizzense.github.io/AitherZero/dev/library/reports/pr-123/
+```
+
+#### 3. 📦 Release Packages (via `pr-check.yml`)
+- **Formats**: Both ZIP and TAR.GZ
+- **Naming**: `AitherZero-v{version}-pr{number}.{zip|tar.gz}`
+- **Contents**: Complete runtime package with all modules
+- **Availability**: GitHub Actions artifacts (30-day retention)
+- **Metadata**: Full build metadata with PR info (branch, commit, timestamp)
+
+**Artifact Name**: `build-artifacts-pr-{number}`
+
+#### 4. 📋 Test Results (via `pr-check.yml` → `03-test-execution.yml`)
+- **Unit Tests**: By script range (0000-0099, 0100-0199, etc.)
+- **Domain Tests**: By module (configuration, infrastructure, security, etc.)
+- **Integration Tests**: Full system integration
+- **Coverage**: Code coverage metrics
+- **Performance**: Performance metrics and timing
+
+### PR Ecosystem Flow
+
+```
+PR #123 opened against 'dev' branch
+│
+├── pr-check.yml (concurrency: pr-check-123)
+│   ├── ✅ Validation (syntax, config, manifests)
+│   ├── ✅ Tests (calls 03-test-execution.yml)
+│   ├── ✅ Build Packages → 📦 Artifacts available
+│   ├── ✅ Build Docker (test only, no push)
+│   ├── ✅ Docs generation
+│   └── ✅ Summary with ecosystem links
+│
+├── 04-deploy-pr-environment.yml (concurrency: pr-env-123)
+│   ├── ✅ Check deployment trigger
+│   ├── ✅ Validate Docker config
+│   ├── ✅ Build and PUSH container → 🐳 ghcr.io/.../pr-123-dev-latest
+│   ├── ✅ Deploy environment
+│   └── ✅ Security scan & status comment
+│
+└── 05-publish-reports-dashboard.yml (concurrency: pages-publish-123)
+    ├── ✅ Collect test results
+    ├── ✅ Generate dashboard (playbook: dashboard-generation-complete)
+    ├── ✅ Create PR-specific dashboard
+    ├── ✅ Build Jekyll site
+    └── ✅ Deploy to Pages → 📊 .../dev/library/reports/pr-123/
+
+Result: Complete self-contained ecosystem for PR #123 on 'dev' branch! 🎉
+```
+
+### Branch-Aware Deployment
+
+Each target branch has its own deployment path on GitHub Pages:
+
+| Target Branch | Docker Tag Prefix | Pages Path | Deployment Ring |
+|---------------|-------------------|------------|-----------------|
+| `main` | `pr-{N}-main-` | `/library/reports/pr-{N}/` | production |
+| `dev` | `pr-{N}-dev-` | `/dev/library/reports/pr-{N}/` | dev |
+| `dev-staging` | `pr-{N}-dev-staging-` | `/dev-staging/library/reports/pr-{N}/` | staging |
+| `ring-0` | `pr-{N}-ring-0-` | `/ring-0/library/reports/pr-{N}/` | ring-0 |
+| `ring-1` | `pr-{N}-ring-1-` | `/ring-1/library/reports/pr-{N}/` | ring-1 |
+| `ring-2` | `pr-{N}-ring-2-` | `/ring-2/library/reports/pr-{N}/` | ring-2 |
+
+### Accessing PR Ecosystem
+
+After workflows complete, the PR comment will include:
+
+- 🐳 **Docker**: Pull command with exact image tag
+- 📊 **Dashboard**: Direct URL to PR-specific GitHub Pages deployment
+- 📦 **Packages**: Link to workflow artifacts
+- 🧪 **Tests**: Summary with links to detailed results
+
+**Everything is isolated by PR number and target branch!**
+
 ## Event Flow Examples
 
-### Example 1: PR Opened
+### Example 1: PR Opened (Complete Ecosystem)
 ```
-Event: pull_request (opened) on PR #123
+Event: pull_request (opened) on PR #123 targeting 'dev'
 ├── pr-check.yml (concurrency: pr-check-123)
 │   ├── Validate (syntax, config, manifests)
 │   ├── Test (calls 03-test-execution.yml)
-│   ├── Build (packages)
-│   ├── Build Docker (container)
-│   ├── Docs (generation)
-│   └── Summary
+│   ├── Build Packages → 📦 build-artifacts-pr-123
+│   ├── Build Docker (test build only)
+│   ├── Docs generation
+│   └── Summary with full ecosystem info
 │
-└── 04-deploy-pr-environment.yml (concurrency: pr-env-123)
-    ├── Check deployment conditions
-    ├── Validate Docker config
-    ├── Build and push PR container
-    ├── Deploy PR environment
-    └── Post status comment
+├── 04-deploy-pr-environment.yml (concurrency: pr-env-123)
+│   ├── Check deployment conditions
+│   ├── Validate Docker config
+│   ├── Build and PUSH PR container → 🐳 ghcr.io/.../pr-123-dev-latest
+│   ├── Deploy PR environment
+│   └── Post status comment with container info
+│
+└── 05-publish-reports-dashboard.yml (concurrency: pages-publish-123)
+    ├── Download test artifacts
+    ├── Generate dashboard (playbook)
+    ├── Create PR-specific dashboard
+    ├── Build Jekyll site
+    └── Deploy to Pages → 📊 .../dev/library/reports/pr-123/
 
-Both run in parallel (different concurrency groups)
+All run in parallel (different concurrency groups)
+Result: Complete self-contained ecosystem for PR #123! 🎉
 ```
 
 ### Example 2: Push to Main (Code Change)

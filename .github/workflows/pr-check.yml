@@ -131,19 +131,25 @@ jobs:
       - name: 🔨 Build Packages
         id: build
         shell: pwsh
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
-          Write-Host "🔨 Building release packages" -ForegroundColor Cyan
+          Write-Host "🔨 Building release packages for PR #$env:PR_NUMBER" -ForegroundColor Cyan
+          Write-Host "  Branch: $env:PR_BRANCH → $env:PR_BASE" -ForegroundColor Yellow
           
           $failed = @()
           
-          # Generate build metadata
+          # Generate build metadata with PR info
           Write-Host "`n📊 Generating build metadata..." -ForegroundColor Yellow
           & "./library/automation-scripts/0515_Generate-BuildMetadata.ps1" -OutputPath "library/reports/build-metadata.json" -IncludePRInfo -IncludeGitInfo -IncludeEnvironmentInfo
           if ($LASTEXITCODE -ne 0) { $failed += "Metadata" }
           
-          # Create release package
+          # Create release package with PR context
           Write-Host "`n📦 Creating release package..." -ForegroundColor Yellow
           & "./library/automation-scripts/0902_Create-ReleasePackage.ps1" -PackageFormat Both -OnlyRuntime
           if ($LASTEXITCODE -ne 0) { $failed += "Package" }
@@ -153,19 +159,48 @@ jobs:
             exit 1
           }
           
-          Write-Host "`n✅ Build complete" -ForegroundColor Green
+          # List generated packages
+          Write-Host "`n📦 Generated packages:" -ForegroundColor Green
+          Get-ChildItem -Path "." -Filter "AitherZero-*" | ForEach-Object {
+            Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)" -ForegroundColor Cyan
+          }
+          
+          Write-Host "`n✅ Build complete for PR #$env:PR_NUMBER" -ForegroundColor Green
 
       - name: 📦 Upload Build Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-pr-${{ github.event.pull_request.number }}
           path: |
             library/reports/build-*.json
             AitherZero-*.zip
             AitherZero-*.tar.gz
           retention-days: 30
           if-no-files-found: warn
+      
+      - name: 📋 Build Summary
+        if: always()
+        shell: pwsh
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+        run: |
+          Write-Host "`n## 📦 PR #$env:PR_NUMBER Build Artifacts" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          Write-Host "**Target Branch:** \`$env:PR_BASE\`" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          
+          if (Test-Path "AitherZero-*.zip") {
+            $packages = Get-ChildItem -Path "." -Filter "AitherZero-*"
+            Write-Host "### Generated Packages" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            foreach ($pkg in $packages) {
+              $sizeMB = [math]::Round($pkg.Length / 1MB, 2)
+              Write-Host "- \`$($pkg.Name)\` ($sizeMB MB)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            }
+          }
+          
+          Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          Write-Host "**Download artifacts from the Actions tab after workflow completion.**" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
 
   # ============================================================================
   # BUILD-DOCKER: Build Docker image (test build only, no push)
@@ -292,9 +327,21 @@ jobs:
             const overallIcon = hasFailures ? '❌' : '✅';
             const overallStatus = hasFailures ? 'FAILED' : 'PASSED';
             
+            // Generate PR ecosystem information
+            const repoLower = context.repo.owner.toLowerCase() + '/' + context.repo.repo.toLowerCase();
+            const prBase = context.payload.pull_request.base.ref;
+            const prBranch = context.payload.pull_request.head.ref;
+            const branchSlug = prBranch.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
+            
+            // Determine branch-specific paths
+            let branchPath = '';
+            if (prBase !== 'main') {
+              branchPath = prBase === 'dev' ? 'dev/' : prBase === 'dev-staging' ? 'dev-staging/' : '';
+            }
+            
             const comment = `## ${overallIcon} PR Check - ${overallStatus}
             
-            ### 📋 Results
+            ### 📋 Validation Results
             
             | Check | Status | Details |
             |-------|--------|---------|
@@ -304,10 +351,35 @@ jobs:
             | ${icon(dockerResult)} **Docker** | ${dockerResult.toUpperCase()} | Container build test |
             | ${icon(docsResult)} **Docs** | ${docsResult.toUpperCase()} | Documentation generation |
             
-            ### 🔗 Links
-            - [Workflow Run](${runUrl})
-            - [Test Results](${runUrl}#summary) (see artifacts)
-            - [Build Artifacts](${runUrl}#artifacts)
+            ### 🚀 PR Ecosystem Status
+            
+            This PR will get a complete self-contained deployment ecosystem when merged to **${prBase}**:
+            
+            #### 🐳 Docker Container
+            - **Registry**: GitHub Container Registry (GHCR)
+            - **Image Tag**: \`ghcr.io/${repoLower}:pr-${prNumber}-${branchSlug}-latest\`
+            - **Additional Tags**: \`pr-${prNumber}-latest\`, \`pr-${prNumber}-<commit>\`
+            - **Package URL**: https://github.com/${context.repo.owner}/${context.repo.repo}/pkgs/container/aitherzero
+            - **Status**: Will be published by \`04-deploy-pr-environment.yml\` workflow
+            
+            #### 📊 Dashboard & GitHub Pages
+            - **Dashboard URL**: https://${context.repo.owner}.github.io/${context.repo.repo}/${branchPath}library/reports/pr-${prNumber}/
+            - **Test Results**: Branch-aware deployment based on target branch
+            - **Metrics**: Full metrics collection (ring, workflow, code, test, quality)
+            - **Status**: Will be published by \`05-publish-reports-dashboard.yml\` workflow
+            
+            #### 📦 Release Packages
+            - **Format**: Both ZIP and TAR.GZ
+            - **Naming**: \`AitherZero-v{version}-pr${prNumber}.zip/tar.gz\`
+            - **Contents**: Complete runtime package with all modules
+            - **Availability**: Download from [Build Artifacts](${runUrl}#artifacts)
+            - **Status**: ${buildResult === 'success' ? '✅ Available now' : '❌ Build failed'}
+            
+            ### 🔗 Quick Links
+            - [Workflow Run](${runUrl}) - Full execution details
+            - [Test Artifacts](${runUrl}#artifacts) - Test results and coverage
+            - [Build Artifacts](${runUrl}#artifacts) - Release packages
+            - [Container Packages](https://github.com/${context.repo.owner}/${context.repo.repo}/pkgs/container/aitherzero) - Docker images
             
             ${hasFailures ? `
             ### ⚠️ Action Required
@@ -316,14 +388,21 @@ jobs:
             1. Review the [workflow run](${runUrl}) for details
             2. Fix the issues
             3. Push updates to re-run checks
-            ` : `
-            ### ✅ Ready to Merge
             
-            All checks passed! Your PR is ready for review.
+            **Note**: The complete PR ecosystem (Docker, Dashboard, Packages) will only be deployed when all checks pass.
+            ` : `
+            ### ✅ Ready for Complete Deployment
+            
+            All checks passed! When additional workflows complete, you'll have:
+            - 🐳 Docker container published to GHCR
+            - 📊 Dashboard deployed to GitHub Pages
+            - 📦 Release packages available as artifacts
+            
+            Your PR has a complete self-contained deployment ecosystem! 🎉
             `}
             
             ---
-            *Last updated: ${new Date().toISOString()}*
+            *Last updated: ${new Date().toISOString()}* | *Target: ${prBase}*
             `;
             
             // Find and update or create comment
