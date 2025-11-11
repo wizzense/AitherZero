@@ -4,6 +4,8 @@ name: Release Automation
 'on':
   push:
     tags: ['v*']
+  workflow_call:
+    # Called by 01-master-orchestrator.yml for release events
   workflow_dispatch:
     inputs:
       version:
@@ -18,6 +20,8 @@ name: Release Automation
         description: 'Run comprehensive tests before release'
         type: boolean
         default: true
+
+# No concurrency group needed - controlled by master orchestrator when called via workflow_call
 
 permissions:
   contents: write

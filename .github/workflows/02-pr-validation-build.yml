@@ -15,9 +15,8 @@ name: 🚀 PR Ecosystem - Complete Validation & Build
         required: false
         type: string
 
-concurrency:
-  group: pr-ecosystem-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}
-  cancel-in-progress: true
+# No concurrency group needed - controlled by master orchestrator (01-master-orchestrator.yml)
+# The orchestrator's concurrency group ensures only one PR ecosystem workflow runs at a time
 
 permissions:
   contents: write
